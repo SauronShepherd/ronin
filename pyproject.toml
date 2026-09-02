@@ -13,6 +13,7 @@ readme = "README.md"
 [project.optional-dependencies]
 dev = [
   "hypothesis>=6.138,<7",
+  "mutmut==3.7.0",
   "mypy>=1.17,<2",
   "pytest>=8.4,<9",
   "pytest-cov>=6.2,<7",
@@ -53,3 +54,9 @@ source = ["studio_core"]
 [tool.coverage.report]
 fail_under = 100
 show_missing = true
+
+[tool.mutmut]
+source_paths = ["python/studio_core"]
+pytest_add_cli_args = ["-o", "addopts="]
+pytest_add_cli_args_test_selection = ["tests"]
+mutate_only_covered_lines = true
