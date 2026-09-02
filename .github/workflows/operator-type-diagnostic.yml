@@ -6,7 +6,7 @@ on:
       - automation/operator-contracts
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   types:
@@ -18,25 +18,25 @@ jobs:
           python-version: "3.11"
       - name: Install development dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Prepare strict type fix and capture diagnostics
+      - name: Apply final strict type fix
         run: |
           python - <<'PY'
           from pathlib import Path
           path = Path("python/studio_core/operators.py")
           text = path.read_text(encoding="utf-8")
-          old = '''def _require_unique_names(values: tuple[object, ...], field_name: str) -> None:\n    names = [getattr(value, "name") for value in values]\n'''
+          old = '''def _require_unique_names(values: tuple[object, ...], field_name: str) -> None:\n    names = [value.name for value in values]\n'''
           new = '''def _require_unique_names(\n    values: tuple[OperatorPort, ...] | tuple[OperatorParameter, ...], field_name: str\n) -> None:\n    names = [value.name for value in values]\n'''
           if old not in text:
               raise SystemExit("target type block not found")
           path.write_text(text.replace(old, new), encoding="utf-8")
           PY
           ruff format python/studio_core/operators.py
-          ruff check python/studio_core/operators.py tests/test_operators.py > operator-types.txt 2>&1 || true
-          mypy python tools >> operator-types.txt 2>&1 || true
-      - name: Upload diagnostics
-        uses: actions/upload-artifact@v4
-        with:
-          name: operator-type-fix
-          path: |
-            operator-types.txt
-            python/studio_core/operators.py
+          ruff check python/studio_core/operators.py tests/test_operators.py
+          mypy python tools
+      - name: Commit type fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add python/studio_core/operators.py
+          git commit -m "fix(core): keep operator metadata strictly typed"
+          git push
