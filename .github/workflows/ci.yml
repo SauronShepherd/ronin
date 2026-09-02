@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Format
+        run: ruff format --check python tests tools
+      - name: Lint
+        run: ruff check python tests tools
+      - name: Types
+        run: mypy python tools
+      - name: Architecture contracts
+        run: python tools/architecture_gate.py python/studio_core
+      - name: Tests
+        run: pytest
