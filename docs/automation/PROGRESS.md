@@ -154,3 +154,26 @@ Implemented on validation branch `automation/diagnostic-contracts`:
 Validation/publication evidence will be recorded only after pull-request CI and the final `main` workflow complete successfully; no gate result is claimed in advance.
 
 Next E1 priority after this increment: portable `.ronin/` project configuration with deterministic serialization and machine-specific checkout/auth state kept outside committed project intent.
+
+## 2026-09-02 — E1 portable project manifest
+
+Objective: make project Git/runtime intent cloneable and deterministic without committing machine-specific authentication or checkout state.
+
+Implemented on validation branch `feat/portable-project-manifest`:
+
+- Added neutral repository `adapter_id` and explicit `manual` / `fetch` / `fast-forward` synchronization policy to `RepositoryBinding`.
+- Added immutable `ProjectManifest` with canonical path `.ronin/project.json` and exact schema identifier `ronin.project/v1`.
+- Added deterministic JSON serialization/deserialization for project identity, primary/supporting repositories, default refs/subdirectories/sync policy, opaque runtime profile references, capability requirements and resolution policy.
+- `ProjectManifest.from_project()` strips workspace `auth_ref` values; committed intent never contains resolved credentials, connection bindings, tokens or local checkout paths.
+- V1 deserialization rejects missing/unknown keys and malformed nested shapes rather than silently discarding future or corrupt intent.
+- Kept filesystem I/O, atomic persistence, provider auth resolution and on-disk migration outside `studio_core`; the design reuses `sdp-studio` versioned metadata ideas without copying its Pydantic/YAML/provider-specific persistence boundary.
+- Added adversarial tests for schema/key drift, malformed mappings/sequences, invalid repository/execution values, auth exclusion, deterministic ordering and capability-only execution.
+- Updated `PROJECTS_AND_EXECUTION.md`, backlog and ADR-AUTO-010 to make the portable/project-workspace boundary normative.
+
+Validation history so far:
+
+1. The first PR run passed the dedicated negative architecture gate and stopped at Ruff format, proving formatting remained enforced before later checks.
+2. The repository-pinned Ruff 0.16.5 formatter was applied on a temporary branch-only helper workflow; the helper was removed immediately after committing canonical formatting.
+3. Full authoritative PR and post-publication `main` evidence is recorded only after all required jobs complete successfully; no green result is claimed in advance.
+
+Next E1 priority after this increment: formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
