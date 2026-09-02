@@ -177,3 +177,29 @@ Validation history so far:
 3. Full authoritative PR and post-publication `main` evidence is recorded only after all required jobs complete successfully; no green result is claimed in advance.
 
 Next E1 priority after this increment: formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
+
+## 2026-09-02 — E1 stable instance identity
+
+Objective: make node identity reproducible across authoring, import, serialization and replay, including symmetric graphs with semantically identical nodes, without clocks, randomness or topology-dependent tie-breakers in the pure core.
+
+Implemented on validation branch `feat/stable-instance-key-allocation`:
+
+- Added immutable `InstanceAnchor` provenance for bounded `authoring` and `import` boundaries.
+- Added deterministic `allocate_instance_keys()`; duplicate anchors are rejected instead of silently disambiguated by insertion order, graph traversal, clocks or process state.
+- Persisted `instance_key` in canonical node serialization so identity evidence survives round trips.
+- Deserialization now reconstructs canonical node semantics, re-derives `NodeId`, and rejects any serialized ID/key/semantic mismatch.
+- Added golden identity vectors plus adversarial tests for malformed anchors, duplicate provenance, tampered identity evidence and missing persisted keys.
+- Added a symmetric-graph property proving two identical transforms with distinct stable anchors remain distinct while reversed node/edge insertion order canonicalizes identically.
+- Kept label changes outside identity while preserving labels as normal serialized presentation metadata.
+- Added `docs/product/IR_IDENTITY.md` and ADR-AUTO-011 to make the authoring/import provenance boundary normative.
+- Reused the proven `sdp-studio` concept that document IDs are allocated before lowering and carried through source provenance; its wall-clock/random ULID allocator is intentionally not copied into `studio_core`.
+- `ronin-old` was inspected for notebook identity behavior but does not contain a reusable graph identity mechanism for this slice.
+
+Validation history:
+
+1. The first PR run passed format, lint, strict mypy, architecture contracts and `gates-negative`, then exposed two test-contract errors: an existing direct `Node` fixture lacked the newly required key, and the new symmetry test incorrectly expected a renamed serialized label to disappear.
+2. Those tests were corrected without changing the identity design or weakening gates.
+3. Exact-head PR run `33675180034` then completed successfully for `quality` and `gates-negative`; Format, Lint, Types, Architecture contracts and Tests all passed, including the enforced 100% line/branch coverage threshold.
+4. This progress-log commit is followed by another authoritative exact-head PR CI pass before publication; post-`main` evidence is only claimed after the published SHA is verified.
+
+Next E1 priority after this increment: introduce mutation testing for `studio_core` and establish a target threshold without reducing the existing 100% line/branch coverage gate.
