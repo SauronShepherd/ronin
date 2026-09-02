@@ -218,7 +218,9 @@ def builtin_diagnostic_catalog() -> DiagnosticCatalog:
                 checks=(
                     "Inspect partitioning, skew, concurrency, and configured resource limits.",
                 ),
-                remediation="Reduce resource pressure or select an approved profile with more capacity.",
+                remediation=(
+                    "Reduce resource pressure or select an approved profile with more capacity."
+                ),
                 documentation_key="diagnostic.execution.resource-exhausted",
             ),
             DiagnosticRule(
@@ -230,7 +232,9 @@ def builtin_diagnostic_catalog() -> DiagnosticCatalog:
                 ),
                 message="The selected runtime cannot satisfy the requested execution capability.",
                 checks=("Compare the request with the resolved runtime capability evidence.",),
-                remediation="Choose a compatible runtime profile or adjust the requested capability.",
+                remediation=(
+                    "Choose a compatible runtime profile or adjust the requested capability."
+                ),
                 documentation_key="diagnostic.execution.capability-unsupported",
             ),
             DiagnosticRule(
@@ -250,7 +254,9 @@ def builtin_diagnostic_catalog() -> DiagnosticCatalog:
                 predicates=(DiagnosticPredicate("category", "equals", "dependency.missing"),),
                 message="A required runtime dependency is unavailable.",
                 checks=("Verify the resolved runtime dependency inventory and required versions.",),
-                remediation="Install an approved dependency or select a runtime profile that provides it.",
+                remediation=(
+                    "Install an approved dependency or select a runtime profile that provides it."
+                ),
                 documentation_key="diagnostic.dependency.missing",
             ),
             DiagnosticRule(
@@ -272,7 +278,9 @@ def builtin_diagnostic_catalog() -> DiagnosticCatalog:
                 predicates=(DiagnosticPredicate("category", "equals", "state.mutation-detected"),),
                 message="Execution attempted to mutate shared runtime state.",
                 checks=("Locate mutable runtime configuration changes in user-owned code.",),
-                remediation="Move configuration into the runtime profile or an approved isolated boundary.",
+                remediation=(
+                    "Move configuration into the runtime profile or an approved isolated boundary."
+                ),
                 documentation_key="diagnostic.state.mutation-detected",
             ),
         )
