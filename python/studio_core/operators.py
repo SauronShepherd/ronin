@@ -145,7 +145,9 @@ class OperatorCatalog:
     operators: tuple[OperatorContract, ...] = ()
 
     def __post_init__(self) -> None:
-        canonical = tuple(sorted(self.operators, key=lambda item: (item.ref.name, item.ref.version)))
+        canonical = tuple(
+            sorted(self.operators, key=lambda item: (item.ref.name, item.ref.version))
+        )
         refs = [operator.ref for operator in canonical]
         if len(refs) != len(set(refs)):
             raise ValueError("operator references must be unique within a catalog")
