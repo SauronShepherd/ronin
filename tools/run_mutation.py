@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -14,11 +15,14 @@ def run_mutation() -> None:
         raise RuntimeError("temporary mutation source alias already exists")
     if not _SOURCE_TARGET.is_dir():
         raise RuntimeError("python source root is missing")
+    executable = shutil.which("mutmut")
+    if executable is None:
+        raise RuntimeError("mutmut executable is missing")
 
     _SOURCE_ALIAS.symlink_to(_SOURCE_TARGET, target_is_directory=True)
     try:
-        subprocess.run(["mutmut", "run"], check=True)
-        subprocess.run(["mutmut", "export-cicd-stats"], check=True)
+        subprocess.run([executable, "run"], check=True)
+        subprocess.run([executable, "export-cicd-stats"], check=True)
     finally:
         _SOURCE_ALIAS.unlink(missing_ok=True)
 
