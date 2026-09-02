@@ -70,9 +70,10 @@ class ProjectManifest:
 
     @classmethod
     def from_data(cls, value: Mapping[str, object]) -> ProjectManifest:
-        _require_exact_keys(value, {"schema", "project"}, "manifest")
-        schema = _require_str(value.get("schema"), "schema")
-        project_data = _require_mapping(value.get("project"), "project")
+        manifest_data = _require_mapping(value, "manifest")
+        _require_exact_keys(manifest_data, {"schema", "project"}, "manifest")
+        schema = _require_str(manifest_data.get("schema"), "schema")
+        project_data = _require_mapping(manifest_data.get("project"), "project")
         _require_exact_keys(project_data, {"id", "name", "repositories", "execution"}, "project")
         repositories_data = _require_sequence(project_data.get("repositories"), "repositories")
         return cls(
