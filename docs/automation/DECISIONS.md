@@ -91,3 +91,15 @@ Adapters and validation layers emit bounded immutable `DiagnosticFact` values us
 Arbitrary regular expressions, YAML loading, provider log parsing, runtime I/O and vendor-specific rule packs are not part of the canonical domain. Adapter-specific parsers may translate raw Spark, Kubernetes, Databricks, Fabric or future provider errors into the same neutral fact categories, preserving portability while allowing rich runtime diagnostics.
 
 The built-in catalog is intentionally a portable seed adapted from proven `sdp-studio` failure classes such as unresolved schema fields, type mismatches, resource exhaustion, unsupported capabilities, execution-mode mismatch, missing dependencies, access denial and shared-state mutation. Adding canonical rules requires provider-neutral semantics plus golden-test evidence.
+
+## ADR-AUTO-010 — Portable project intent is deterministic JSON; workspace auth stays outside it
+
+**Status:** accepted — 2026-09-02
+
+Ronin adopts a single repository-local project manifest at `.ronin/project.json`, identified by schema `ronin.project/v1`. The core representation is immutable and serializes with deterministic ordering. Parsing is strict: unknown or missing v1 keys fail rather than being silently ignored, so schema evolution must be explicit.
+
+The manifest records project identity, primary/supporting Git repository intent, opaque repository adapter IDs, default refs, optional repository-relative subdirectories, sync policy, runtime-profile intent, capability requirements and execution resolution. Git synchronization is deliberately bounded to `manual`, `fetch`, or `fast-forward`; automatic merge/rebase semantics are not canonical project behavior.
+
+Workspace-only state is not committed. Repository `auth_ref` values remain valid on workspace `Project` objects but `ProjectManifest.from_project()` strips them, and local checkout paths, resolved credentials/tokens, runtime discovery snapshots and execution results remain application/storage concerns. A remote URI is portable repository identity and may remain in the manifest as long as it contains no embedded credentials.
+
+This adapts the versioned project-metadata and environment-reference ideas from `sdp-studio` without importing its Pydantic models, YAML/filesystem persistence, provider-specific environment overrides, clock/random defaults, or resolved runtime state into `studio_core`. File I/O and future on-disk migrations must be implemented outside the pure domain.
