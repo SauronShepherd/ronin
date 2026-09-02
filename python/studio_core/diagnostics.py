@@ -215,7 +215,9 @@ def builtin_diagnostic_catalog() -> DiagnosticCatalog:
                     DiagnosticPredicate("category", "equals", "execution.resource-exhausted"),
                 ),
                 message="Execution exhausted an assigned compute or memory resource.",
-                checks=("Inspect partitioning, skew, concurrency, and configured resource limits.",),
+                checks=(
+                    "Inspect partitioning, skew, concurrency, and configured resource limits.",
+                ),
                 remediation="Reduce resource pressure or select an approved profile with more capacity.",
                 documentation_key="diagnostic.execution.resource-exhausted",
             ),
@@ -257,7 +259,9 @@ def builtin_diagnostic_catalog() -> DiagnosticCatalog:
                 severity="error",
                 predicates=(DiagnosticPredicate("category", "equals", "access.denied"),),
                 message="Execution was denied access to a required resource.",
-                checks=("Inspect the effective identity and least-privilege authorization evidence.",),
+                checks=(
+                    "Inspect the effective identity and least-privilege authorization evidence.",
+                ),
                 remediation="Grant only the required permission or correct the resource binding.",
                 documentation_key="diagnostic.access.denied",
             ),
