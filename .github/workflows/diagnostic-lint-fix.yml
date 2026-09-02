@@ -1,4 +1,4 @@
-name: Diagnostic lint report
+name: Diagnostic lint fix
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - automation/diagnostic-contracts
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   lint:
@@ -14,14 +14,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: automation/diagnostic-contracts
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install development dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Capture Ruff report
-        run: ruff check . > lint.txt 2>&1 || true
-      - uses: actions/upload-artifact@v4
-        with:
-          name: diagnostic-lint-report
-          path: lint.txt
+      - name: Wrap overlong remediation expressions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('python/studio_core/diagnostics.py')
+          text = path.read_text(encoding='utf-8')
+          replacements = {
+              '                remediation="Reduce resource pressure or select an approved profile with more capacity.",': '                remediation=(\n                    "Reduce resource pressure or select an approved profile with more capacity."\n                ),',
+              '                remediation="Choose a compatible runtime profile or adjust the requested capability.",': '                remediation=(\n                    "Choose a compatible runtime profile or adjust the requested capability."\n                ),',
+              '                remediation="Install an approved dependency or select a runtime profile that provides it.",': '                remediation=(\n                    "Install an approved dependency or select a runtime profile that provides it."\n                ),',
+              '                remediation="Move configuration into the runtime profile or an approved isolated boundary.",': '                remediation=(\n                    "Move configuration into the runtime profile or an approved isolated boundary."\n                ),',
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'missing expected line: {old}')
+              text = text.replace(old, new)
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Verify Ruff
+        run: |
+          ruff format .
+          ruff check .
+      - name: Commit lint fixes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add python/studio_core/diagnostics.py
+          git commit -m 'style: wrap diagnostic remediation strings'
+          git push origin HEAD:automation/diagnostic-contracts
