@@ -199,7 +199,7 @@ def test_node_validation_checks_ports_and_modes() -> None:
     )
     violations = validate_operator_node(node, OperatorCatalog((contract,)))
     codes = [item.code for item in violations]
-    assert codes.count("RONIN-OP-005") == 2
+    assert codes.count("RONIN-OP-005") == 3
     assert codes.count("RONIN-OP-006") == 2
     assert codes.count("RONIN-OP-007") == 1
 
@@ -225,7 +225,7 @@ def test_node_validation_accepts_all_parameter_kinds_and_extra_policy() -> None:
     node = _node(
         contract.ref,
         params={
-            "any": None,
+            "any": "anything",
             "array": ["x"],
             "boolean": True,
             "expression": "x > 1",
