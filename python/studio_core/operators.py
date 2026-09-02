@@ -202,15 +202,18 @@ def validate_operator_node(node: Node, catalog: OperatorCatalog) -> tuple[Operat
                 )
             )
             continue
-        if parameter.name in parameters and not _is_missing(parameters[parameter.name]):
-            if not _matches_parameter_kind(parameters[parameter.name], parameter.kind):
-                violations.append(
-                    OperatorViolation(
-                        "RONIN-OP-003",
-                        f"operator parameter has incompatible type: {parameter.name}",
-                        f"params.{parameter.name}",
-                    )
+        if (
+            parameter.name in parameters
+            and not _is_missing(parameters[parameter.name])
+            and not _matches_parameter_kind(parameters[parameter.name], parameter.kind)
+        ):
+            violations.append(
+                OperatorViolation(
+                    "RONIN-OP-003",
+                    f"operator parameter has incompatible type: {parameter.name}",
+                    f"params.{parameter.name}",
                 )
+            )
     if not contract.allow_extra_parameters:
         for name in sorted(set(parameters) - set(declared_parameters)):
             violations.append(
