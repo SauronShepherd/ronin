@@ -36,6 +36,19 @@ def _node(key: str, *, inputs: tuple[Port, ...] = (), outputs: tuple[Port, ...] 
     )
 
 
+def _serialized_node() -> dict[str, object]:
+    node = Node.create(
+        operator=OperatorRef("source.table"),
+        instance_key="serialized",
+        params={"table": "orders"},
+        outputs=(Port("out", "batch", SchemaRef("orders", "v1")),),
+        origin=Origin("imported", "source.py:1"),
+        ownership="RECONCILED",
+        label="Orders",
+    )
+    return Pipeline((node,)).to_data()
+
+
 def test_ir_objects_are_immutable() -> None:
     node_id = NodeId("a")
     with pytest.raises(FrozenInstanceError):
@@ -154,6 +167,8 @@ def test_pipeline_rejects_edge_to_unknown_node() -> None:
     source = _node("source", outputs=(BATCH_OUT,))
     with pytest.raises(ValueError, match="unknown node"):
         Pipeline((source,), (Edge(source.id, "out", NodeId("missing"), "in"),))
+    with pytest.raises(ValueError, match="unknown node"):
+        Pipeline((source,), (Edge(NodeId("missing"), "out", source.id, "in"),))
 
 
 def test_pipeline_rejects_missing_or_duplicate_port_name() -> None:
@@ -183,6 +198,13 @@ def test_pipeline_allows_one_untyped_schema_endpoint() -> None:
     pipeline = Pipeline((source, sink), (Edge(source.id, "out", sink.id, "in"),))
     assert pipeline.edges == (Edge(source.id, "out", sink.id, "in"),)
 
+    untyped_source = _node("untyped-source", outputs=(BATCH_OUT,))
+    typed_sink = _node("typed-sink", inputs=(Port("in", "batch", SchemaRef("a")),))
+    assert Pipeline(
+        (untyped_source, typed_sink),
+        (Edge(untyped_source.id, "out", typed_sink.id, "in"),),
+    ).edges
+
 
 def test_pipeline_rejects_cycle() -> None:
     left = _node("left", inputs=(BATCH_IN,), outputs=(BATCH_OUT,))
@@ -193,6 +215,120 @@ def test_pipeline_rejects_cycle() -> None:
     )
     with pytest.raises(ValueError, match="cycle"):
         Pipeline((left, right), edges)
+
+
+def test_pipeline_validates_converging_dag_before_target_is_ready() -> None:
+    source = _node("root", outputs=(BATCH_OUT,))
+    left = _node("left-branch", inputs=(BATCH_IN,), outputs=(BATCH_OUT,))
+    right = _node("right-branch", inputs=(BATCH_IN,), outputs=(BATCH_OUT,))
+    sink = _node("join", inputs=(Port("left"), Port("right")))
+    edges = (
+        Edge(source.id, "out", left.id, "in"),
+        Edge(source.id, "out", right.id, "in"),
+        Edge(left.id, "out", sink.id, "left"),
+        Edge(right.id, "out", sink.id, "right"),
+    )
+    assert len(Pipeline((source, left, right, sink), edges).edges) == 4
+
+
+def test_from_json_rejects_non_object_payload() -> None:
+    with pytest.raises(TypeError, match="pipeline"):
+        Pipeline.from_json("[]")
+
+
+def test_from_data_rejects_invalid_top_level_shapes() -> None:
+    cases = (
+        ({"config": [], "nodes": [], "edges": []}, TypeError),
+        ({"config": {1: "main"}, "nodes": [], "edges": []}, TypeError),
+        ({"config": {"name": 1}, "nodes": [], "edges": []}, TypeError),
+        ({"config": {"name": "main"}, "nodes": 1, "edges": []}, TypeError),
+        ({"config": {"name": "main"}, "nodes": [], "edges": "bad"}, TypeError),
+    )
+    for payload, error in cases:
+        with pytest.raises(error):
+            Pipeline.from_data(payload)  # type: ignore[arg-type]
+
+
+def test_from_data_rejects_invalid_node_enums_and_metadata_types() -> None:
+    for field, value, error, match in (
+        ("ownership", "INVALID", ValueError, "ownership"),
+        ("label", 7, TypeError, "label"),
+    ):
+        data = _serialized_node()
+        node = data["nodes"][0]  # type: ignore[index]
+        node[field] = value  # type: ignore[index]
+        with pytest.raises(error, match=match):
+            Pipeline.from_data(data)
+
+    data = _serialized_node()
+    node = data["nodes"][0]  # type: ignore[index]
+    origin = node["origin"]  # type: ignore[index]
+    origin["view"] = "INVALID"  # type: ignore[index]
+    with pytest.raises(ValueError, match="origin view"):
+        Pipeline.from_data(data)
+
+    data = _serialized_node()
+    node = data["nodes"][0]  # type: ignore[index]
+    origin = node["origin"]  # type: ignore[index]
+    origin["reference"] = 9  # type: ignore[index]
+    with pytest.raises(TypeError, match="origin.reference"):
+        Pipeline.from_data(data)
+
+
+def test_from_data_rejects_invalid_operator_port_and_schema_types() -> None:
+    data = _serialized_node()
+    node = data["nodes"][0]  # type: ignore[index]
+    operator = node["operator"]  # type: ignore[index]
+    operator["version"] = True  # type: ignore[index]
+    with pytest.raises(TypeError, match="integer"):
+        Pipeline.from_data(data)
+
+    data = _serialized_node()
+    node = data["nodes"][0]  # type: ignore[index]
+    output = node["outputs"][0]  # type: ignore[index]
+    output["kind"] = "invalid"  # type: ignore[index]
+    with pytest.raises(ValueError, match="port.kind"):
+        Pipeline.from_data(data)
+
+    data = _serialized_node()
+    node = data["nodes"][0]  # type: ignore[index]
+    output = node["outputs"][0]  # type: ignore[index]
+    schema = output["schema"]  # type: ignore[index]
+    schema["version"] = 1  # type: ignore[index]
+    with pytest.raises(TypeError, match="schema.version"):
+        Pipeline.from_data(data)
+
+    data = _serialized_node()
+    node = data["nodes"][0]  # type: ignore[index]
+    output = node["outputs"][0]  # type: ignore[index]
+    output["schema"] = []  # type: ignore[index]
+    with pytest.raises(TypeError, match="schema"):
+        Pipeline.from_data(data)
+
+
+def test_from_data_rejects_invalid_nested_collection_shapes() -> None:
+    for field, value, match in (
+        ("operator", [], "operator"),
+        ("params", [], "params"),
+        ("inputs", "bad", "inputs"),
+        ("outputs", 3, "outputs"),
+        ("origin", [], "origin"),
+    ):
+        data = _serialized_node()
+        node = data["nodes"][0]  # type: ignore[index]
+        node[field] = value  # type: ignore[index]
+        with pytest.raises(TypeError, match=match):
+            Pipeline.from_data(data)
+
+
+def test_from_data_rejects_invalid_edge_field_type() -> None:
+    source = _node("edge-source", outputs=(BATCH_OUT,))
+    sink = _node("edge-sink", inputs=(BATCH_IN,))
+    data = Pipeline((source, sink), (Edge(source.id, "out", sink.id, "in"),)).to_data()
+    edge = data["edges"][0]  # type: ignore[index]
+    edge["source_port"] = 7  # type: ignore[index]
+    with pytest.raises(TypeError, match="edge.source_port"):
+        Pipeline.from_data(data)
 
 
 @given(st.text(min_size=1), st.dictionaries(st.text(min_size=1), st.integers(), max_size=5))
