@@ -95,3 +95,22 @@ Validation evidence before publication:
 - No quality gate was weakened and no vendor-specific runtime behavior entered the pure core.
 
 The next related slice is a pure execution-profile catalog/resolver: adapters advertise concrete profiles and capabilities, while deterministic core resolution returns compatibility evidence suitable for UI explanations and later run snapshots. Operator/diagnostic catalog migration from `sdp-studio` remains the adjacent E1 reuse priority.
+
+## 2026-09-02 — E1 provider-neutral runtime profile resolution
+
+Objective: close the project execution-intent loop with a pure catalog/resolver while reusing the mature capability/probing concepts in `sdp-studio` without importing its environment/subprocess/vendor coupling into the canonical domain.
+
+Implemented on validation branch `automation/runtime-profile-resolver`:
+
+- Added immutable `RuntimeCapability`, `RuntimeProfile` and canonical `RuntimeCatalog` snapshots for adapter-advertised runtime state.
+- Added deterministic resolution for exact runtime requests, capability-only intent and compatible fallback.
+- Required capabilities are never relaxed; preferred requirements affect ranking only.
+- Unavailable profiles are evaluated for evidence but cannot be selected.
+- Every evaluated requirement records advertised value, satisfaction and a stable explanation suitable for UI/API diagnostics.
+- Added a small provider-neutral constraint grammar: exact strings plus equality/inequality and ordered numeric dotted versions, with comma-separated conjunctions.
+- Provider-specific version/channel semantics remain adapter responsibilities and do not enter `studio_core`.
+- Adapted the design from `sdp-studio` capability validation and runtime probing while explicitly separating pure compatibility from adapter I/O.
+- Added unit/adversarial tests covering canonicalization, duplicates, strict and compatible semantics, missing capabilities/values, unavailable profiles, ranking/tie-break behavior, all supported operators and invalid constraint syntax.
+- Updated `PROJECTS_AND_EXECUTION.md`, backlog and ADRs to make the resolver boundary normative.
+
+Validation/publication evidence is recorded after the pull-request CI and final `main` workflow complete; no result is claimed green before GitHub Actions reports it.
