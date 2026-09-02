@@ -1,10 +1,18 @@
-# Ronin Studio
+# Ronin
 
-Ronin Studio is being built from the product, architecture, construction and test specifications defined for the unified Studio project. The target is a local-first, Git-native environment where reactive notebooks and visual Spark pipelines are two views of a shared intermediate representation.
+Ronin is being built as a professional, free, open-source and self-hostable **Data + AI platform**. The target spans data integration, engineering, SQL, lakehouse, streaming, governance/lineage/ontology, BI/semantic models, data science, ML/MLOps, GenAI/RAG/agents, security, observability and FinOps in one coherent product.
+
+Ronin is local-first and vendor-neutral: it should be useful on a laptop, reproducible in Docker/Compose and scalable on Kubernetes, while supporting commercial and open runtimes through replaceable adapters rather than a mandatory proprietary control plane.
+
+## Projects and runtimes
+
+Ronin is multi-project. Each project selects a primary Git repository (with optional supporting repositories) and an execution profile. Execution can point to adapter-discovered profiles such as Microsoft Fabric Runtimes or Databricks Runtime/LTS profiles, local Spark, Spark Connect, Kubernetes or future engines, while the canonical core models compatibility as provider-neutral capabilities rather than vendor-specific branches.
+
+See [`docs/product/PROJECTS_AND_EXECUTION.md`](docs/product/PROJECTS_AND_EXECUTION.md) for the project/repository/runtime contract.
 
 ## Current status
 
-The repository is at **E0 — Foundation**. This commit establishes the Python package layout, static-quality configuration, an executable architecture boundary check and CI. Product capabilities described by the specification are **not yet claimed as implemented**.
+The repository is in **E1 — Core IR/domain foundations**. Pure immutable graph primitives, executable architecture boundaries and strict quality gates exist; the broader product capabilities above are targets and are not yet claimed as implemented.
 
 ## Development
 
@@ -13,13 +21,14 @@ python -m pip install -e '.[dev]'
 make check
 ```
 
-`make check` runs formatting/linting, strict type checking, the architecture gate and tests. The architecture gate rejects forbidden I/O in pure domain packages before product code is allowed to grow around the wrong dependency direction.
+`make check` runs formatting/linting, strict type checking, the architecture gate and tests. `studio_core` currently has a mandatory 100% line/branch coverage gate.
 
 ## Layout
 
 - `python/` — product Python packages.
 - `tests/` — executable quality and architecture contracts.
 - `tools/` — repository quality gates.
+- `docs/product/` — product and domain contracts.
 - `docs/automation/` — durable progress, backlog and decision log for incremental autonomous work.
 
-The project deliberately starts with a narrow foundation. New packages and capabilities are added only with their tests and evidence.
+Ronin reuses mature implementation ideas and code from the author's `sdp-studio` and `ronin-old` repositories where that accelerates the target architecture without reviving historical defects or vendor coupling.

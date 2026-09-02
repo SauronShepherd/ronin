@@ -41,3 +41,17 @@ The IR is deliberately execution-agnostic. Spark, SQL, ML, GenAI and agent-speci
 The test specification requires zero-exclusion 100% line/branch coverage for pure domain layers. Now that `studio_core` contains meaningful behavior, the repository enforces that requirement directly through pytest-cov. Hypothesis and randomized test ordering are included in the development test toolchain to exercise determinism and insertion-order invariants.
 
 Coverage failures are treated as missing behavioral evidence, not as a reason to lower the threshold. The first E1 implementation added adversarial deserialization and converging-DAG tests until the full core gate passed.
+
+## ADR-AUTO-006 — Project owns Git bindings and execution intent; adapters own vendor runtime semantics
+
+**Status:** accepted — 2026-09-02
+
+Ronin is explicitly multi-project. A project owns exactly one primary Git repository plus optional supporting repositories, and owns its desired execution profile. This makes repository/runtime selection a first-class product concept instead of a global application setting.
+
+The design adapts useful ideas already present in `sdp-studio` (`ProjectMetadata`, environment overrides, `RuntimeProfile` and `RuntimeCapabilities`) but removes Pydantic/time/random/runtime-provider state from the pure core. Repository credentials are references only and HTTP remotes may not embed credentials.
+
+Execution intent is split into an opaque adapter-owned `RuntimeProfileRef` and provider-neutral `CapabilityRequirement`s. This permits user-facing selections such as Fabric Runtime or Databricks Runtime/LTS while keeping the canonical domain free of provider-specific branches. Adapters discover concrete profiles and capabilities; later resolver code produces a resolved runtime snapshot for run evidence/replay.
+
+A project may request strict profile resolution or compatible fallback. Compatible fallback may only relax preferred characteristics; all required capabilities remain mandatory.
+
+Post-publication GitHub Actions verification is also mandatory operational policy: after updating `main`, the builder must inspect workflows for the published SHA and continue correcting any regression caused by the change until required Actions are green or the increment is reverted.

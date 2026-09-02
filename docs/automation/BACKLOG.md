@@ -18,30 +18,37 @@ Still required:
 3. Add manifest validation only when Kubernetes/Compose/Helm artifacts enter the repository; do not create placeholder infrastructure merely to satisfy a gate.
 4. Evaluate augmenting the in-repo dependency gate with `import-linter` once multiple real packages exist. The negatively-tested AST gate remains authoritative until an additional tool proves equivalent or stronger coverage.
 
-## E1 — Core IR
+## E1 — Core IR and project domain
 
-Completed in the first slice:
+Completed:
 
 - Immutable `NodeId`, `Port`, `Node`, `Edge` and `Pipeline` primitives.
 - Canonical node/edge ordering independent of insertion order.
 - Stable semantic node identity using semantic content plus an explicit stable instance key; labels do not affect identity.
 - Canonical JSON serialization/deserialization with deterministic round-trip behavior.
 - Edge validation for unknown nodes, exact ports, batch/stream compatibility, schema compatibility and cycles.
-- Hypothesis properties for deterministic identity and canonical insertion order.
-- Adversarial deserialization tests and randomized test ordering.
-- 100% line/branch coverage gate for `studio_core` from the first meaningful domain implementation.
+- Hypothesis properties, adversarial deserialization tests and 100% line/branch coverage for `studio_core`.
+- Multi-project pure-domain contracts: `Project`, canonical `ProjectCollection`, primary/supporting Git repository bindings, secret/connection references, runtime profile references and provider-neutral capability requirements.
+- Per-project execution intent supports exact adapter-owned runtime profiles and compatible capability-based resolution without vendor branches in the core.
 
 Next:
 
 1. Adapt the mature `sdp-studio` operator and diagnostics catalogs into provider-neutral Ronin contracts with golden tests.
-2. Formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
-3. Introduce mutation testing for `studio_core` and reach the target threshold without reducing coverage.
-4. Add notebook cells and dependency analysis only after operator/diagnostic contracts are stable.
+2. Add an execution-profile catalog/resolver boundary: adapters advertise profiles/capabilities; pure resolution returns compatibility evidence and no runtime I/O.
+3. Define portable `.ronin/` project configuration and deterministic serialization for repository-independent project intent; keep machine-specific checkout/auth bindings outside committed config.
+4. Formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
+5. Introduce mutation testing for `studio_core` and reach the target threshold without reducing coverage.
+6. Add notebook cells and dependency analysis only after operator/diagnostic contracts are stable.
 
 ## Later reuse
 
 - Reuse/adapt `sdp-studio` codegen, source maps, runners, debug, collaboration, auth/scheduling, React/XYFlow/Monaco and deployment work behind Ronin boundaries.
+- Reuse `sdp-studio` runtime capability discovery and environment concepts behind the new neutral project/execution contracts rather than retaining vendor booleans in the core.
 - Selectively reuse `ronin-old` native execution/Gluten/Velox and hardened redaction/session ideas; do not revive its monolithic API/controller architecture.
+
+## Operational invariant
+
+After every publication/deployment to `main`, inspect the GitHub Actions runs for that SHA. A builder execution is not complete while mandatory workflows are still running or failing. Fix regressions and republish/recheck until green; if the increment cannot safely be made green, revert it rather than weakening a gate.
 
 ## Security carry-over
 

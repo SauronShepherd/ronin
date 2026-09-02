@@ -1,0 +1,52 @@
+# Projects, Git repositories, and execution profiles
+
+Ronin is a multi-project Data + AI platform. A project is the primary unit a user switches between in the product UI and the unit to which repository, execution, policy, lineage, cost, observability, and collaboration context attach.
+
+## Project model
+
+Every usable project has a stable project ID, a human-readable name, exactly one **primary Git repository**, optional supporting repositories, and one selected execution profile. A workspace/application boundary can expose many projects and switch active context without restarting the platform.
+
+The primary repository is where the project code and portable Ronin configuration live. Supporting repositories allow shared libraries, documentation, infrastructure, models, or other project-owned assets to participate without making a hosting provider part of the core model.
+
+Repository bindings are hosting-neutral. GitHub, GitLab, Bitbucket, self-hosted Git, SSH remotes, local repositories, and future Git-compatible systems belong behind adapters. Credentials are never embedded in repository URLs or persisted as literal tokens; project configuration stores `secret://` or `connection://` references only.
+
+A future portable repository layout should place non-secret execution and project intent in a versioned `.ronin/` configuration so cloning a repository preserves reproducibility. Workspace registration data such as credential bindings or local checkout paths remains outside the portable file when it is machine/user specific.
+
+## Execution profile model
+
+Ronin separates two concepts that commercial platforms often collapse:
+
+1. **Runtime profile reference** — an opaque `adapter_id + profile_id` identifying a concrete profile exposed by an adapter. This permits UX presets such as a Microsoft Fabric Runtime, a Databricks Runtime/LTS profile, a local Spark environment, Spark Connect, Kubernetes, or other engines without hard-coding those vendors into the canonical domain.
+2. **Capability requirements** — provider-neutral requirements such as `spark.version`, `python.version`, `engine.spark`, GPU availability, streaming, ML libraries, table-format support, isolation, or other typed capabilities. Requirements can be mandatory or preferred.
+
+A project may pin a concrete runtime profile, express only capability requirements, or combine both. `strict` resolution means the selected constraints must be satisfied exactly according to adapter semantics. `compatible` resolution allows an adapter/resolver to choose an alternative profile only if all required capabilities remain satisfied; preferred capabilities influence ranking but may not override required constraints.
+
+Ronin core never branches on vendor names. Adapters discover currently available runtime profiles and their capabilities, and a resolver compares those advertised capabilities with project requirements.
+
+## Examples
+
+The following names are illustrative adapter-owned identifiers, not hard-coded Ronin runtime versions:
+
+- A project may select adapter `fabric-runtime` plus a profile discovered from the connected Fabric environment.
+- Another project may select adapter `databricks-runtime` plus an LTS profile discovered from the connected Databricks environment.
+- A local project may select `spark-local/default` and require a particular Python/Spark compatibility range.
+- A portable project may omit a concrete runtime reference and require capabilities only, allowing Ronin to resolve an eligible local, container, Kubernetes, or remote runtime.
+
+The adapters, not `studio_core`, know how Microsoft Fabric, Databricks, Spark distributions, Kubernetes, cloud services, or future systems name and provision their runtimes.
+
+## Run reproducibility
+
+Project intent is not enough for audit/replay. Every actual execution should later persist a **resolved runtime snapshot** alongside the run evidence: project ID, repository commit, dirty-patch hash when relevant, adapter ID, resolved profile ID, engine/runtime versions, environment/package lock or digest, container image digest where applicable, required/preferred capability evaluation, and effective non-secret runtime configuration.
+
+This makes runs comparable even when a provider later changes the meaning or availability of a friendly profile such as an "LTS" channel.
+
+## UX target
+
+The product shell should provide a persistent project switcher. Project creation/editing should expose two independent steps:
+
+- **Code** — select/create/link the primary Git repository and optional supporting repositories; choose default ref and credential connection.
+- **Compute / Runtime** — browse adapter-discovered runtime profiles and inspect their capabilities, or specify capability requirements and let Ronin resolve compatible targets.
+
+Before execution, the UI should explain incompatibilities rather than silently changing runtime semantics. It should show which requested capabilities are satisfied, missing, downgraded, or supplied by an adapter-specific extension.
+
+Future environments such as development/test/production may override the selected runtime profile or connections while preserving the same project identity and portable code. That environment layer must not duplicate project semantics or introduce vendor-specific branches into the core.

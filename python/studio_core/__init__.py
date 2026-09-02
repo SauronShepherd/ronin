@@ -15,9 +15,20 @@ from .ir import (
     freeze_value,
     thaw_value,
 )
+from .projects import (
+    CapabilityRequirement,
+    ExecutionProfile,
+    Project,
+    ProjectCollection,
+    ProjectId,
+    RepositoryBinding,
+    RuntimeProfileRef,
+)
 
 __all__ = (
+    "CapabilityRequirement",
     "Edge",
+    "ExecutionProfile",
     "FrozenList",
     "FrozenMap",
     "Node",
@@ -27,6 +38,11 @@ __all__ = (
     "Pipeline",
     "PipelineConfig",
     "Port",
+    "Project",
+    "ProjectCollection",
+    "ProjectId",
+    "RepositoryBinding",
+    "RuntimeProfileRef",
     "SchemaRef",
     "freeze_value",
     "thaw_value",
