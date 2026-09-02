@@ -24,6 +24,15 @@ from .projects import (
     RepositoryBinding,
     RuntimeProfileRef,
 )
+from .runtime_profiles import (
+    ProfileEvaluation,
+    RequirementCheck,
+    RuntimeCapability,
+    RuntimeCatalog,
+    RuntimeProfile,
+    RuntimeResolution,
+    resolve_runtime,
+)
 
 __all__ = (
     "CapabilityRequirement",
@@ -38,12 +47,19 @@ __all__ = (
     "Pipeline",
     "PipelineConfig",
     "Port",
+    "ProfileEvaluation",
     "Project",
     "ProjectCollection",
     "ProjectId",
     "RepositoryBinding",
+    "RequirementCheck",
+    "RuntimeCapability",
+    "RuntimeCatalog",
+    "RuntimeProfile",
     "RuntimeProfileRef",
+    "RuntimeResolution",
     "SchemaRef",
     "freeze_value",
+    "resolve_runtime",
     "thaw_value",
 )
