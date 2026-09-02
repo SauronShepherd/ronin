@@ -1,5 +1,13 @@
 """Pure, provider-neutral domain primitives for Ronin."""
 
+from .diagnostics import (
+    DiagnosticCatalog,
+    DiagnosticFact,
+    DiagnosticFinding,
+    DiagnosticPredicate,
+    DiagnosticRule,
+    builtin_diagnostic_catalog,
+)
 from .ids import NodeId
 from .ir import (
     Edge,
@@ -46,6 +54,11 @@ from .runtime_profiles import (
 
 __all__ = (
     "CapabilityRequirement",
+    "DiagnosticCatalog",
+    "DiagnosticFact",
+    "DiagnosticFinding",
+    "DiagnosticPredicate",
+    "DiagnosticRule",
     "Edge",
     "ExecutionProfile",
     "FrozenList",
@@ -74,6 +87,7 @@ __all__ = (
     "RuntimeProfileRef",
     "RuntimeResolution",
     "SchemaRef",
+    "builtin_diagnostic_catalog",
     "builtin_operator_catalog",
     "freeze_value",
     "operator_parameter_value",
