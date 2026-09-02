@@ -7,9 +7,10 @@ import ast
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
-    "studio_core": frozenset(),
+    "studio_core": frozenset[str](),
     "studio_notebook": frozenset({"studio_core"}),
     "studio_codegen": frozenset({"studio_core"}),
     "studio_bridge": frozenset({"studio_core", "studio_notebook", "studio_codegen"}),
@@ -246,7 +247,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("roots", nargs="*", type=Path, default=[Path("python")])
     args = parser.parse_args()
-    return run_gate(args.roots)
+    roots = cast(list[Path], args.roots)
+    return run_gate(roots)
 
 
 if __name__ == "__main__":
