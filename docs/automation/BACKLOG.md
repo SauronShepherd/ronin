@@ -30,15 +30,16 @@ Completed:
 - Hypothesis properties, adversarial deserialization tests and 100% line/branch coverage for `studio_core`.
 - Multi-project pure-domain contracts: `Project`, canonical `ProjectCollection`, primary/supporting Git repository bindings, secret/connection references, runtime profile references and provider-neutral capability requirements.
 - Per-project execution intent supports exact adapter-owned runtime profiles and compatible capability-based resolution without vendor branches in the core.
+- Provider-neutral `RuntimeProfile`/`RuntimeCatalog` advertisement snapshots and pure deterministic resolution with per-requirement compatibility evidence, required/preferred semantics, availability filtering and stable fallback ranking.
 
 Next:
 
 1. Adapt the mature `sdp-studio` operator and diagnostics catalogs into provider-neutral Ronin contracts with golden tests.
-2. Add an execution-profile catalog/resolver boundary: adapters advertise profiles/capabilities; pure resolution returns compatibility evidence and no runtime I/O.
-3. Define portable `.ronin/` project configuration and deterministic serialization for repository-independent project intent; keep machine-specific checkout/auth bindings outside committed config.
-4. Formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
-5. Introduce mutation testing for `studio_core` and reach the target threshold without reducing coverage.
-6. Add notebook cells and dependency analysis only after operator/diagnostic contracts are stable.
+2. Define portable `.ronin/` project configuration and deterministic serialization for repository-independent project intent; keep machine-specific checkout/auth bindings outside committed config.
+3. Formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
+4. Introduce mutation testing for `studio_core` and reach the target threshold without reducing coverage.
+5. Add notebook cells and dependency analysis only after operator/diagnostic contracts are stable.
+6. Add an adapter-side runtime discovery SPI and resolved-runtime execution snapshot after the operator/diagnostic contract is stable; reuse `sdp-studio` probing behind that boundary rather than moving I/O into `studio_core`.
 
 ## Later reuse
 
