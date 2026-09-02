@@ -137,4 +137,20 @@ Validation history:
 3. The official `python -m pytest` command then exposed one test expectation error and 99.53% coverage; the expectation was corrected and unreachable/dead branching was removed while adding evidence for the `any` parameter kind.
 4. Final PR and post-publication workflow evidence must be recorded only after those Actions complete successfully.
 
-Next E1 priority: adapt `sdp-studio` diagnostics into a safe provider-neutral diagnostic contract/matcher with deterministic findings and golden tests; runtime/provider-specific error normalization remains outside the pure core.
+## 2026-09-02 — E1 portable diagnostic contracts
+
+Objective: adapt the mature `sdp-studio` diagnostic semantics into safe deterministic Ronin domain contracts while keeping runtime/provider parsing outside the pure core.
+
+Implemented on validation branch `automation/diagnostic-contracts`:
+
+- Added immutable `DiagnosticPredicate`, `DiagnosticRule`, `DiagnosticFact`, `DiagnosticFinding` and canonical `DiagnosticCatalog` contracts.
+- Replaced YAML-defined regular expressions with a bounded non-executable predicate grammar (`equals`, `contains`, `prefix`) over normalized category/code/message/source facts.
+- Matching uses deterministic AND semantics and returns stable immutable findings carrying checks, remediation, documentation keys and normalized source evidence.
+- Raw Spark, Kubernetes, Databricks, Fabric and future provider errors are intentionally adapter concerns; the core contains no provider parser or vendor-specific rule branch.
+- Added a portable seed catalog adapted from proven `sdp-studio` failure categories: unresolved fields, type mismatch, resource exhaustion, unsupported capabilities, execution-mode mismatch, missing dependencies, access denial and shared-state mutation.
+- Added golden/adversarial tests for metadata bounds, unsafe/invalid matcher input, canonical ordering, duplicate rejection, all matcher operations, case sensitivity, actionable findings and vendor-neutral seed output.
+- Explicit finding ordering uses string-only keys so optional remediation/documentation metadata never creates runtime-dependent comparison failures.
+
+Validation/publication evidence will be recorded only after pull-request CI and the final `main` workflow complete successfully; no gate result is claimed in advance.
+
+Next E1 priority after this increment: portable `.ronin/` project configuration with deterministic serialization and machine-specific checkout/auth state kept outside committed project intent.
