@@ -15,6 +15,16 @@ from .ir import (
     freeze_value,
     thaw_value,
 )
+from .operators import (
+    OperatorCatalog,
+    OperatorContract,
+    OperatorParameter,
+    OperatorPort,
+    OperatorViolation,
+    builtin_operator_catalog,
+    operator_parameter_value,
+    validate_operator_node,
+)
 from .projects import (
     CapabilityRequirement,
     ExecutionProfile,
@@ -42,7 +52,12 @@ __all__ = (
     "FrozenMap",
     "Node",
     "NodeId",
+    "OperatorCatalog",
+    "OperatorContract",
+    "OperatorParameter",
+    "OperatorPort",
     "OperatorRef",
+    "OperatorViolation",
     "Origin",
     "Pipeline",
     "PipelineConfig",
@@ -59,7 +74,10 @@ __all__ = (
     "RuntimeProfileRef",
     "RuntimeResolution",
     "SchemaRef",
+    "builtin_operator_catalog",
     "freeze_value",
+    "operator_parameter_value",
     "resolve_runtime",
     "thaw_value",
+    "validate_operator_node",
 )
