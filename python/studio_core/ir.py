@@ -31,7 +31,7 @@ FrozenValue: TypeAlias = Scalar | FrozenList | FrozenMap
 def freeze_value(value: object) -> FrozenValue:
     """Convert JSON-compatible values to deterministic, hashable domain values."""
     if value is None or isinstance(value, (bool, int, float, str)):
-        return cast(Scalar, value)
+        return value
     if isinstance(value, Mapping):
         items: list[tuple[str, FrozenValue]] = []
         for key, child in value.items():
@@ -200,12 +200,12 @@ def _validate_pipeline(nodes: tuple[Node, ...], edges: tuple[Edge, ...]) -> None
     incoming: dict[NodeId, int] = {node.id: 0 for node in nodes}
     outgoing: dict[NodeId, list[NodeId]] = {node.id: [] for node in nodes}
     for edge in edges:
-        source = by_id.get(edge.source)
-        target = by_id.get(edge.target)
-        if source is None or target is None:
+        source_node = by_id.get(edge.source)
+        target_node = by_id.get(edge.target)
+        if source_node is None or target_node is None:
             raise ValueError("edge references unknown node")
-        source_port = _port_by_name(source.outputs, edge.source_port)
-        target_port = _port_by_name(target.inputs, edge.target_port)
+        source_port = _port_by_name(source_node.outputs, edge.source_port)
+        target_port = _port_by_name(target_node.inputs, edge.target_port)
         if source_port.kind != target_port.kind:
             raise ValueError("edge connects incompatible port kinds")
         if (
@@ -214,18 +214,18 @@ def _validate_pipeline(nodes: tuple[Node, ...], edges: tuple[Edge, ...]) -> None
             and source_port.schema != target_port.schema
         ):
             raise ValueError("edge connects incompatible schemas")
-        outgoing[source.id].append(target.id)
-        incoming[target.id] += 1
+        outgoing[source_node.id].append(target_node.id)
+        incoming[target_node.id] += 1
 
     ready = sorted(node_id for node_id, count in incoming.items() if count == 0)
     visited = 0
     while ready:
         current = ready.pop(0)
         visited += 1
-        for target in sorted(outgoing[current]):
-            incoming[target] -= 1
-            if incoming[target] == 0:
-                ready.append(target)
+        for target_id in sorted(outgoing[current]):
+            incoming[target_id] -= 1
+            if incoming[target_id] == 0:
+                ready.append(target_id)
                 ready.sort()
     if visited != len(nodes):
         raise ValueError("pipeline contains a cycle")
