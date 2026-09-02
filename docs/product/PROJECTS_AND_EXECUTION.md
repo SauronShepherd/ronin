@@ -19,9 +19,19 @@ Ronin separates two concepts that commercial platforms often collapse:
 1. **Runtime profile reference** — an opaque `adapter_id + profile_id` identifying a concrete profile exposed by an adapter. This permits UX presets such as a Microsoft Fabric Runtime, a Databricks Runtime/LTS profile, a local Spark environment, Spark Connect, Kubernetes, or other engines without hard-coding those vendors into the canonical domain.
 2. **Capability requirements** — provider-neutral requirements such as `spark.version`, `python.version`, `engine.spark`, GPU availability, streaming, ML libraries, table-format support, isolation, or other typed capabilities. Requirements can be mandatory or preferred.
 
-A project may pin a concrete runtime profile, express only capability requirements, or combine both. `strict` resolution means the selected constraints must be satisfied exactly according to adapter semantics. `compatible` resolution allows an adapter/resolver to choose an alternative profile only if all required capabilities remain satisfied; preferred capabilities influence ranking but may not override required constraints.
+A project may pin a concrete runtime profile, express only capability requirements, or combine both. `strict` resolution means a requested concrete profile must exist, be available, and satisfy every required capability. `compatible` resolution may select an alternative advertised profile, but it never relaxes required capabilities; preferred capabilities only influence ranking.
 
-Ronin core never branches on vendor names. Adapters discover currently available runtime profiles and their capabilities, and a resolver compares those advertised capabilities with project requirements.
+Ronin core never branches on vendor names. Adapters discover currently available runtime profiles and normalize their capabilities into immutable `RuntimeProfile` snapshots. The pure resolver consumes only those snapshots and project intent, so discovery/provisioning I/O remains outside `studio_core`.
+
+## Deterministic compatibility evidence
+
+Every evaluated profile produces explicit evidence for each requirement: the advertised value, whether it satisfied the requirement, and a stable reason. A profile is compatible only when it is available and all required requirements pass. Missing or failed preferred requirements do not make a profile incompatible.
+
+For the portable core grammar, a capability constraint is either an exact string (`delta`, `true`, `cuda`) or a comma-separated conjunction using `==`, `!=`, `>=`, `<=`, `>` and `<`. Ordered comparisons use numeric dotted versions such as `>=3.11,<4`; arbitrary provider version syntax must be normalized by the adapter before advertisement rather than interpreted by vendor-specific code in the core.
+
+Resolution is deterministic. A compatible explicitly requested profile wins first. Otherwise, compatible-mode or capability-only resolution ranks candidates by the number of satisfied preferred requirements, then by stable `adapter_id`/`profile_id` ordering. An unavailable profile is never selected. The resolver never silently converts a required failure into a downgrade.
+
+This evidence is designed for API/UI explanations and later resolved-runtime run snapshots. It is intentionally separate from adapter probing, provisioning, billing metadata, credentials, and runtime execution.
 
 ## Examples
 
