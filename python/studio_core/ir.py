@@ -87,6 +87,7 @@ DEFAULT_ORIGIN = Origin("system")
 @dataclass(frozen=True, slots=True)
 class Node:
     id: NodeId
+    instance_key: str
     operator: OperatorRef
     params: tuple[tuple[str, FrozenValue], ...] = ()
     inputs: tuple[Port, ...] = ()
@@ -94,6 +95,10 @@ class Node:
     origin: Origin = DEFAULT_ORIGIN
     ownership: Ownership = "GRAPH"
     label: str | None = field(default=None, compare=False, hash=False)
+
+    def __post_init__(self) -> None:
+        if not self.instance_key:
+            raise ValueError("instance_key must be non-empty")
 
     @classmethod
     def create(
@@ -116,16 +121,15 @@ class Node:
         )
         canonical_inputs = tuple(sorted(inputs))
         canonical_outputs = tuple(sorted(outputs))
-        semantic = _canonical_json(
-            {
-                "operator": {"name": operator.name, "version": operator.version},
-                "params": {key: thaw_value(value) for key, value in frozen_params},
-                "inputs": [_port_to_data(port) for port in canonical_inputs],
-                "outputs": [_port_to_data(port) for port in canonical_outputs],
-            }
+        semantic = _node_semantic_payload(
+            operator,
+            frozen_params,
+            canonical_inputs,
+            canonical_outputs,
         )
         return cls(
             id=NodeId.derive(semantic, instance_key),
+            instance_key=instance_key,
             operator=operator,
             params=frozen_params,
             inputs=canonical_inputs,
@@ -242,6 +246,22 @@ def _canonical_json(value: object) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
+def _node_semantic_payload(
+    operator: OperatorRef,
+    params: tuple[tuple[str, FrozenValue], ...],
+    inputs: tuple[Port, ...],
+    outputs: tuple[Port, ...],
+) -> str:
+    return _canonical_json(
+        {
+            "operator": {"name": operator.name, "version": operator.version},
+            "params": {key: thaw_value(value) for key, value in params},
+            "inputs": [_port_to_data(port) for port in inputs],
+            "outputs": [_port_to_data(port) for port in outputs],
+        }
+    )
+
+
 def _schema_to_data(schema: SchemaRef | None) -> object:
     if schema is None:
         return None
@@ -276,6 +296,7 @@ def _port_from_data(value: Mapping[str, object]) -> Port:
 def _node_to_data(node: Node) -> dict[str, object]:
     return {
         "id": node.id.value,
+        "instance_key": node.instance_key,
         "operator": {"name": node.operator.name, "version": node.operator.version},
         "params": {key: thaw_value(value) for key, value in node.params},
         "inputs": [_port_to_data(port) for port in node.inputs],
@@ -287,7 +308,7 @@ def _node_to_data(node: Node) -> dict[str, object]:
 
 
 def _node_from_data(value: Mapping[str, object]) -> Node:
-    operator = _require_mapping(value.get("operator"), "operator")
+    operator_data = _require_mapping(value.get("operator"), "operator")
     params = _require_mapping(value.get("params"), "params")
     inputs = _require_sequence(value.get("inputs"), "inputs")
     outputs = _require_sequence(value.get("outputs"), "outputs")
@@ -304,21 +325,26 @@ def _node_from_data(value: Mapping[str, object]) -> Node:
         raise TypeError("origin.reference must be a string or null")
     if label is not None and not isinstance(label, str):
         raise TypeError("label must be a string or null")
-    return Node(
-        id=NodeId(_require_str(value.get("id"), "id")),
-        operator=OperatorRef(
-            name=_require_str(operator.get("name"), "operator.name"),
-            version=_require_int(operator.get("version"), "operator.version"),
-        ),
-        params=tuple(sorted(((key, freeze_value(child)) for key, child in params.items()))),
-        inputs=tuple(sorted(_port_from_data(_require_mapping(item, "input")) for item in inputs)),
-        outputs=tuple(
-            sorted(_port_from_data(_require_mapping(item, "output")) for item in outputs)
-        ),
+
+    operator = OperatorRef(
+        name=_require_str(operator_data.get("name"), "operator.name"),
+        version=_require_int(operator_data.get("version"), "operator.version"),
+    )
+    instance_key = _require_str(value.get("instance_key"), "instance_key")
+    expected_id = NodeId(_require_str(value.get("id"), "id"))
+    node = Node.create(
+        operator=operator,
+        instance_key=instance_key,
+        params=params,
+        inputs=tuple(_port_from_data(_require_mapping(item, "input")) for item in inputs),
+        outputs=tuple(_port_from_data(_require_mapping(item, "output")) for item in outputs),
         origin=Origin(cast(OriginView, origin_view), reference),
         ownership=cast(Ownership, ownership),
         label=label,
     )
+    if node.id != expected_id:
+        raise ValueError("node id does not match semantic content and instance_key")
+    return node
 
 
 def _edge_to_data(edge: Edge) -> dict[str, object]:
