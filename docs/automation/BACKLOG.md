@@ -33,14 +33,14 @@ Completed:
 - Provider-neutral `RuntimeProfile`/`RuntimeCatalog` advertisement snapshots and pure deterministic resolution with per-requirement compatibility evidence, required/preferred semantics, availability filtering and stable fallback ranking.
 - Versioned provider-neutral operator contracts for ports, semantic parameters, modes and required/forbidden capabilities; deterministic `OperatorCatalog`, stable validation evidence and a portable seed catalog adapted from mature `sdp-studio` semantics with golden/adversarial tests.
 - Provider-neutral diagnostic facts/rules/findings with a bounded non-regex predicate grammar, deterministic `DiagnosticCatalog` matching and a portable actionable seed adapted from mature `sdp-studio` failure categories with golden/adversarial tests; raw runtime/provider normalization stays outside `studio_core`.
+- Portable `.ronin/project.json` schema with deterministic serialization/deserialization, provider-neutral Git adapter/default-ref/sync intent, and strict exclusion of machine-specific auth bindings from committed project configuration.
 
 Next:
 
-1. Define portable `.ronin/` project configuration and deterministic serialization for repository-independent project intent; keep machine-specific checkout/auth bindings outside committed config.
-2. Formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
-3. Introduce mutation testing for `studio_core` and reach the target threshold without reducing coverage.
-4. Add notebook cells and dependency analysis only after operator/diagnostic contracts are stable.
-5. Add an adapter-side runtime discovery SPI and resolved-runtime execution snapshot; reuse `sdp-studio` probing and provider error normalization behind that boundary rather than moving I/O or vendor parsing into `studio_core`.
+1. Formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
+2. Introduce mutation testing for `studio_core` and reach the target threshold without reducing coverage.
+3. Add notebook cells and dependency analysis only after operator/diagnostic contracts are stable.
+4. Add an adapter-side runtime discovery SPI and resolved-runtime execution snapshot; reuse `sdp-studio` probing and provider error normalization behind that boundary rather than moving I/O or vendor parsing into `studio_core`.
 
 ## Later reuse
 
