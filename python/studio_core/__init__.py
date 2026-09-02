@@ -33,6 +33,7 @@ from .operators import (
     operator_parameter_value,
     validate_operator_node,
 )
+from .project_manifest import PROJECT_MANIFEST_PATH, PROJECT_MANIFEST_SCHEMA, ProjectManifest
 from .projects import (
     CapabilityRequirement,
     ExecutionProfile,
@@ -40,6 +41,7 @@ from .projects import (
     ProjectCollection,
     ProjectId,
     RepositoryBinding,
+    RepositorySyncPolicy,
     RuntimeProfileRef,
 )
 from .runtime_profiles import (
@@ -72,6 +74,8 @@ __all__ = (
     "OperatorRef",
     "OperatorViolation",
     "Origin",
+    "PROJECT_MANIFEST_PATH",
+    "PROJECT_MANIFEST_SCHEMA",
     "Pipeline",
     "PipelineConfig",
     "Port",
@@ -79,7 +83,9 @@ __all__ = (
     "Project",
     "ProjectCollection",
     "ProjectId",
+    "ProjectManifest",
     "RepositoryBinding",
+    "RepositorySyncPolicy",
     "RequirementCheck",
     "RuntimeCapability",
     "RuntimeCatalog",
