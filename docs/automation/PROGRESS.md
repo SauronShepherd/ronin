@@ -2,7 +2,7 @@
 
 ## Current stage
 
-**E1 — Core IR**
+**E1 — Core IR and project domain**
 
 The repository began with only `LICENSE`. Work first established executable foundations; product behavior is now entering the pure domain incrementally and remains subject to the same gates.
 
@@ -68,4 +68,30 @@ Validation history deliberately retained as evidence that gates are active:
 4. All 28 functional tests initially passed but coverage was 91.99%; the 100% threshold was kept and missing adversarial/topology branches were tested.
 5. Final pre-publication validation of product code passed format, lint, strict mypy, architecture contracts, gates-negative, Hypothesis/randomized tests and 100% line/branch coverage.
 
-No issue was opened: every defect discovered by the gates was local to this increment and corrected before publication. The next E1 product slice should adapt the mature operator/diagnostic catalogs from `sdp-studio`, while E0 security/governance hardening remains an explicit parallel prerequisite before execution/session work.
+No issue was opened: every defect discovered by the gates was local to this increment and corrected before publication.
+
+## 2026-09-02 — E1 multi-project Git and execution intent
+
+Objective: make project context a first-class domain concept so Ronin can manage multiple projects, each with its own Git repository and execution/runtime intent, without turning Fabric, Databricks or any other provider into the canonical model.
+
+Implemented:
+
+- Added immutable `ProjectId`, `Project`, and canonical `ProjectCollection` contracts.
+- Each project requires exactly one primary Git repository and may attach supporting repositories.
+- Git bindings are hosting-neutral and include alias, URI, default ref, optional subdirectory, role and credential reference.
+- Repository configuration rejects embedded HTTP credentials, literal auth material and repository-root path escapes.
+- Added opaque adapter-owned `RuntimeProfileRef` plus provider-neutral `CapabilityRequirement` contracts.
+- Execution intent can pin a concrete runtime profile, express capabilities only, or combine both; `strict` and `compatible` resolution policies are explicit.
+- Capability requirements distinguish mandatory and preferred characteristics and are canonicalized deterministically.
+- User-facing adapters may expose Fabric Runtime, Databricks Runtime/LTS, Spark local/Connect/Kubernetes or future profiles while `studio_core` remains free of vendor branches.
+- Added `docs/product/PROJECTS_AND_EXECUTION.md` defining project switching, Git/runtime UX, future portable `.ronin/` configuration and resolved-runtime snapshots for audit/replay.
+- Updated README, backlog and ADRs so multi-project repository/runtime selection is a permanent product requirement.
+
+Validation evidence before publication:
+
+- The temporary PR workflow caught formatter drift twice before the change reached `main`.
+- Diagnostics isolated the remaining formatter mismatch to `tests/test_projects.py`; the repository's pinned Ruff version then generated the canonical formatting on the temporary validation branch.
+- Temporary diagnostic workflow changes are not part of the publication candidate; the original read-only CI workflow is restored before full validation.
+- No quality gate was weakened and no vendor-specific runtime behavior entered the pure core.
+
+The next related slice is a pure execution-profile catalog/resolver: adapters advertise concrete profiles and capabilities, while deterministic core resolution returns compatibility evidence suitable for UI explanations and later run snapshots. Operator/diagnostic catalog migration from `sdp-studio` remains the adjacent E1 reuse priority.
