@@ -307,7 +307,9 @@ def _node_from_data(value: Mapping[str, object]) -> Node:
         ),
         params=tuple(sorted(((key, freeze_value(child)) for key, child in params.items()))),
         inputs=tuple(sorted(_port_from_data(_require_mapping(item, "input")) for item in inputs)),
-        outputs=tuple(sorted(_port_from_data(_require_mapping(item, "output")) for item in outputs)),
+        outputs=tuple(
+            sorted(_port_from_data(_require_mapping(item, "output")) for item in outputs)
+        ),
         origin=Origin(cast(OriginView, origin_view), reference),
         ownership=cast(Ownership, ownership),
         label=label,
