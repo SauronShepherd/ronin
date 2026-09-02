@@ -10,7 +10,6 @@ from typing import Literal, TypeAlias, cast
 from .ids import NodeId
 
 Scalar: TypeAlias = None | bool | int | float | str
-FrozenValue: TypeAlias = Scalar | "FrozenList" | "FrozenMap"
 PortKind: TypeAlias = Literal["batch", "stream"]
 Ownership: TypeAlias = Literal["GRAPH", "USER", "RECONCILED"]
 OriginView: TypeAlias = Literal["graph", "notebook", "imported", "system"]
@@ -24,6 +23,9 @@ class FrozenList:
 @dataclass(frozen=True, slots=True)
 class FrozenMap:
     items: tuple[tuple[str, FrozenValue], ...]
+
+
+FrozenValue: TypeAlias = Scalar | FrozenList | FrozenMap
 
 
 def freeze_value(value: object) -> FrozenValue:
