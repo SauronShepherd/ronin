@@ -15,4 +15,4 @@ architecture:
 	python tools/architecture_gate.py python/studio_core
 
 test:
-	pytest
+	python -m pytest

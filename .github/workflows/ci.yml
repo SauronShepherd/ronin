@@ -28,4 +28,4 @@ jobs:
       - name: Architecture contracts
         run: python tools/architecture_gate.py python/studio_core
       - name: Tests
-        run: pytest
+        run: python -m pytest
