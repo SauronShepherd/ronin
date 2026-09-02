@@ -103,3 +103,15 @@ The manifest records project identity, primary/supporting Git repository intent,
 Workspace-only state is not committed. Repository `auth_ref` values remain valid on workspace `Project` objects but `ProjectManifest.from_project()` strips them, and local checkout paths, resolved credentials/tokens, runtime discovery snapshots and execution results remain application/storage concerns. A remote URI is portable repository identity and may remain in the manifest as long as it contains no embedded credentials.
 
 This adapts the versioned project-metadata and environment-reference ideas from `sdp-studio` without importing its Pydantic models, YAML/filesystem persistence, provider-specific environment overrides, clock/random defaults, or resolved runtime state into `studio_core`. File I/O and future on-disk migrations must be implemented outside the pure domain.
+
+## ADR-AUTO-011 — Stable node identity requires persisted authoring/import provenance
+
+**Status:** accepted — 2026-09-02
+
+A pure graph-structure rule cannot assign stable distinct identities to two automorphic or otherwise structurally identical nodes without introducing an arbitrary traversal/order tie-breaker. Ronin therefore treats stable instance identity as provenance supplied by the boundary that owns the source document, not as something invented by graph canonicalization.
+
+`InstanceAnchor` is the canonical pure contract for that provenance. Its bounded `authoring` and `import` origins pair with a caller-supplied stable reference; `studio_core` deterministically derives an `instance_key` from the pair. Batch allocation rejects duplicate anchors rather than silently disambiguating with sequence numbers, clocks, randomness or current topology. Editors/importers remain responsible for choosing and persisting references that survive unrelated edits.
+
+Canonical `Node` now persists `instance_key` alongside `NodeId`. Deserialization reconstructs the canonical semantic payload, re-derives the identifier, and rejects an ID/key/semantic mismatch. Labels, canvas coordinates, insertion order, graph traversal order and runtime/provider state remain outside identity.
+
+This deliberately adapts `sdp-studio`'s useful property that document IDs are allocated before lowering and propagated through IR/source provenance. Ronin does not reuse `sdp-studio`'s ULID generator inside `studio_core` because it reads wall-clock time and OS randomness. A future authoring adapter may use an opaque random ID implementation at its side-effect boundary; once allocated, the resulting stable anchor is persisted and passed explicitly into the pure domain.
