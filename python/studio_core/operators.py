@@ -332,7 +332,9 @@ def builtin_operator_catalog() -> OperatorCatalog:
     )
 
 
-def _require_unique_names(values: tuple[object, ...], field_name: str) -> None:
+def _require_unique_names(
+    values: tuple[OperatorPort, ...] | tuple[OperatorParameter, ...], field_name: str
+) -> None:
     names = [value.name for value in values]
     if len(names) != len(set(names)):
         raise ValueError(f"{field_name} names must be unique")
