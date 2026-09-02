@@ -206,9 +206,7 @@ def test_execution_profile_rejects_empty_invalid_or_duplicate_requirements() -> 
         )
     duplicate = CapabilityRequirement("spark.version", ">=3.5")
     with pytest.raises(ValueError, match="unique"):
-        ExecutionProfile(
-            requirements=(duplicate, CapabilityRequirement("spark.version", "<4"))
-        )
+        ExecutionProfile(requirements=(duplicate, CapabilityRequirement("spark.version", "<4")))
 
 
 def test_project_requires_exactly_one_primary_repository() -> None:
