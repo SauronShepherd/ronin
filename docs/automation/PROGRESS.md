@@ -114,3 +114,27 @@ Implemented on validation branch `automation/runtime-profile-resolver`:
 - Updated `PROJECTS_AND_EXECUTION.md`, backlog and ADRs to make the resolver boundary normative.
 
 Validation/publication evidence is recorded after the pull-request CI and final `main` workflow complete; no result is claimed green before GitHub Actions reports it.
+
+## 2026-09-02 — E1 portable operator contracts
+
+Objective: reuse the mature `sdp-studio` operator semantics while establishing a smaller, immutable and engine-neutral Ronin contract before codegen, plugin discovery or runtime execution depend on it.
+
+Implemented on validation branch `automation/operator-contracts`:
+
+- Added immutable `OperatorPort`, `OperatorParameter`, `OperatorContract`, `OperatorCatalog` and `OperatorViolation` domain types.
+- Operator versions are explicit through `OperatorRef`; catalogs canonicalize ordering and reject duplicate references.
+- Contracts describe logical ports, semantic parameter kinds, batch/stream modes and required/forbidden capability names without engine/provider branches.
+- Added deterministic node-to-contract validation for missing contracts, missing/invalid parameters, undeclared parameters, missing/duplicate/undeclared ports and unsupported port modes.
+- Added a deliberately small portable seed catalog adapted from proven `sdp-studio` source/transform/quality/output semantics; plugin discovery, compiler hooks, previews and UI widgets stay outside `studio_core`.
+- Added a golden snapshot for seed operator IDs/categories/versions plus adversarial tests for canonicalization, version selection, metadata validity, parameter typing, port validation and vendor-neutral catalog output.
+- Retained the 100% line/branch coverage requirement; test diagnostics exposed and corrected both an incorrect expected violation count and unexercised domain behavior rather than lowering the threshold.
+- Temporary diagnostic workflows were used only on the validation branch to obtain exact Ruff/mypy/pytest evidence where Actions logs were not directly exposed, and are removed from the publication candidate.
+
+Validation history:
+
+1. Ruff format and lint failures were corrected using the repository-pinned formatter/linter without weakening rules.
+2. Strict mypy exposed an over-broad `object` annotation in metadata canonicalization; it was replaced with explicit `OperatorPort`/`OperatorParameter` typing.
+3. The official `python -m pytest` command then exposed one test expectation error and 99.53% coverage; the expectation was corrected and unreachable/dead branching was removed while adding evidence for the `any` parameter kind.
+4. Final PR and post-publication workflow evidence must be recorded only after those Actions complete successfully.
+
+Next E1 priority: adapt `sdp-studio` diagnostics into a safe provider-neutral diagnostic contract/matcher with deterministic findings and golden tests; runtime/provider-specific error normalization remains outside the pure core.
