@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 RepositoryRole = Literal["primary", "supporting"]
+RepositorySyncPolicy = Literal["manual", "fetch", "fast-forward"]
 RequirementLevel = Literal["required", "preferred"]
 ResolutionPolicy = Literal["strict", "compatible"]
 
@@ -40,13 +41,18 @@ class RepositoryBinding:
     default_ref: str = "main"
     auth_ref: str | None = None
     subdirectory: str | None = None
+    adapter_id: str = "git"
+    sync_policy: RepositorySyncPolicy = "manual"
 
     def __post_init__(self) -> None:
         _require_text(self.alias, "repository alias")
         _require_text(self.uri, "repository uri")
         _require_text(self.default_ref, "repository default ref")
+        _require_text(self.adapter_id, "repository adapter id")
         if self.role not in {"primary", "supporting"}:
             raise ValueError("repository role must be primary or supporting")
+        if self.sync_policy not in {"manual", "fetch", "fast-forward"}:
+            raise ValueError("repository sync policy must be manual, fetch, or fast-forward")
         if self.auth_ref is not None and not self.auth_ref.startswith(
             ("secret://", "connection://")
         ):
