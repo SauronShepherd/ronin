@@ -1,0 +1,10 @@
+[
+  {"id": "access.denied", "severity": "error"},
+  {"id": "dependency.missing", "severity": "error"},
+  {"id": "execution.capability-unsupported", "severity": "error"},
+  {"id": "execution.mode-mismatch", "severity": "error"},
+  {"id": "execution.resource-exhausted", "severity": "error"},
+  {"id": "schema.type-mismatch", "severity": "error"},
+  {"id": "schema.unresolved-field", "severity": "error"},
+  {"id": "state.mutation-detected", "severity": "warning"}
+]
