@@ -193,6 +193,7 @@ def test_node_validation_checks_ports_and_modes() -> None:
     )
     node = Node(
         id=NodeId("node"),
+        instance_key="operator-validation",
         operator=contract.ref,
         inputs=(Port("extra", "stream"), Port("extra", "stream")),
         outputs=(Port("wrong", "stream"),),
