@@ -103,9 +103,7 @@ def test_manifest_supports_capability_only_execution_and_null_values() -> None:
     assert isinstance(execution, dict)
     assert isinstance(repositories, list)
     execution["runtime"] = None
-    execution["requirements"] = [
-        {"constraint": None, "level": "required", "name": "sql.execution"}
-    ]
+    execution["requirements"] = [{"constraint": None, "level": "required", "name": "sql.execution"}]
     repositories[0]["subdirectory"] = None
     manifest = ProjectManifest.from_data(data)
     assert manifest.project.execution.runtime is None
@@ -304,9 +302,12 @@ def test_repository_binding_validates_adapter_and_sync_policy() -> None:
     )
     assert repository.adapter_id == "custom-git-adapter"
     assert repository.sync_policy == "fetch"
-    assert RepositoryBinding(
-        "code", "https://git.example.test/team/code.git", role="primary"
-    ).sync_policy == "manual"
+    assert (
+        RepositoryBinding(
+            "code", "https://git.example.test/team/code.git", role="primary"
+        ).sync_policy
+        == "manual"
+    )
     with pytest.raises(ValueError, match="adapter id"):
         RepositoryBinding(
             "code",

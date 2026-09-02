@@ -162,8 +162,12 @@ def _execution_from_data(value: Mapping[str, object]) -> ExecutionProfile:
         runtime_mapping = _require_mapping(runtime_data, "execution.runtime")
         _require_exact_keys(runtime_mapping, {"adapter_id", "profile_id"}, "execution.runtime")
         runtime = RuntimeProfileRef(
-            adapter_id=_require_str(runtime_mapping.get("adapter_id"), "execution.runtime.adapter_id"),
-            profile_id=_require_str(runtime_mapping.get("profile_id"), "execution.runtime.profile_id"),
+            adapter_id=_require_str(
+                runtime_mapping.get("adapter_id"), "execution.runtime.adapter_id"
+            ),
+            profile_id=_require_str(
+                runtime_mapping.get("profile_id"), "execution.runtime.profile_id"
+            ),
         )
     return ExecutionProfile(
         runtime=runtime,
