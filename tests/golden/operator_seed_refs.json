@@ -1,0 +1,10 @@
+[
+  {"category":"outputs","name":"dataset.materialized_view","version":1},
+  {"category":"quality","name":"quality.row_count_range","version":1},
+  {"category":"sources","name":"source.file","version":1},
+  {"category":"sources","name":"source.table","version":1},
+  {"category":"transforms","name":"transform.derive","version":1},
+  {"category":"transforms","name":"transform.filter","version":1},
+  {"category":"transforms","name":"transform.join","version":1},
+  {"category":"transforms","name":"transform.select","version":1}
+]
