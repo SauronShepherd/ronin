@@ -58,5 +58,13 @@ show_missing = true
 [tool.mutmut]
 source_paths = ["src/studio_core"]
 pytest_add_cli_args = ["-o", "addopts="]
-pytest_add_cli_args_test_selection = ["tests"]
+pytest_add_cli_args_test_selection = [
+  "tests/test_core_ir.py",
+  "tests/test_diagnostics.py",
+  "tests/test_instance_keys.py",
+  "tests/test_operators.py",
+  "tests/test_project_manifest.py",
+  "tests/test_projects.py",
+  "tests/test_runtime_profiles.py",
+]
 mutate_only_covered_lines = true
