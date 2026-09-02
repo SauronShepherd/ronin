@@ -2,9 +2,9 @@
 
 ## Current stage
 
-**E0 — Foundation**
+**E1 — Core IR**
 
-The repository began with only `LICENSE`. No legacy product implementation is assumed to exist here. Work therefore starts from executable foundations rather than applying fixes from the historical Fakebrick review to absent code.
+The repository began with only `LICENSE`. Work first established executable foundations; product behavior is now entering the pure domain incrementally and remains subject to the same gates.
 
 ## 2026-09-02 — Foundation baseline
 
@@ -30,11 +30,6 @@ Verified gates on `a55d58a128c9bcf2b5f253756cf4a43951beb379`:
 - GitHub Actions `Types` (`mypy` strict): success.
 - GitHub Actions `Architecture contracts`: success.
 - GitHub Actions `Tests`: success.
-- Local stdlib checks before publication: `python -m compileall -q python tools tests`, `python tools/architecture_gate.py python/studio_core`, TOML parsing, and direct execution of all three architecture test functions.
-
-Local installation of Ruff/mypy/pytest was attempted but the execution environment could not resolve package-index DNS. This did not reduce the gate: GitHub Actions installed the declared dependencies and supplied the authoritative full-toolchain result.
-
-No issue was opened in this run because no separable product defect remained unresolved: both problems discovered by CI were corrected within the same E0 increment.
 
 ## 2026-09-02 — Package dependency contracts and negative gates
 
@@ -42,28 +37,35 @@ Completed in this increment:
 
 - Extended `tools/architecture_gate.py` from a pure-I/O check into the executable package-dependency matrix defined by the technical architecture.
 - Declared allowed imports for `studio_core`, notebook, codegen, bridge, native, debug, runners, kernel, orchestrator, storage, server and CLI layers before those packages are implemented.
-- Added explicit failures for undeclared `studio_*` packages and unknown project imports, preventing new layers from appearing outside the architecture by accident.
-- Hardened pure-domain I/O detection to catch `os.environ` through aliases and `from os import environ`, in addition to direct access.
-- Added `tools/gates_negative.py` and a dedicated GitHub Actions `gates-negative` job. It proves the architecture gate rejects deliberate forbidden-I/O, environment-access and forbidden-layer fixtures.
-- Expanded architecture tests to cover allowed dependencies, forbidden dependencies, undeclared packages and negative-gate behavior.
-- Added `tools/__init__.py` and explicit `argparse` typing so repository tooling itself passes `mypy --strict`.
+- Added explicit failures for undeclared `studio_*` packages and unknown project imports.
+- Hardened pure-domain I/O detection to catch environment access through aliases/from-imports.
+- Added a dedicated negative-gate CI job proving deliberate architecture violations fail.
+- Expanded architecture tests and made repository tooling strict-typed.
 
-Publication history and evidence:
+Verified on `94c01b16b4eb4e8994928192272585d2d267f217` and recorded on documentation SHA `66cc9c7fe9950a4f151286f10a6a1db4700a069c`: quality and gates-negative jobs succeeded without weakening rules.
 
-1. `3ae0db949c6aaad15598b178956a12e14adf4749` — dependency contracts and negative-gate job. The new negative gate passed; the quality job correctly rejected non-canonical formatting.
-2. `cc1980e8caeed2ab1febab0bf590e250fbcc7ea0` — normalized formatter output. Format and lint passed; strict mypy then exposed package/typing ambiguity in the tooling.
-3. `94c01b16b4eb4e8994928192272585d2d267f217` — made tooling an explicit package and removed the strict-typing ambiguity.
+## 2026-09-02 — E1 canonical immutable IR
 
-Verified gates on `94c01b16b4eb4e8994928192272585d2d267f217`:
+Objective: introduce the first meaningful product-domain behavior by adapting the strongest IR ideas already present in `sdp-studio` into Ronin's stricter pure, provider-neutral core.
 
-- GitHub Actions `quality`: success.
-- `Format`: success.
-- `Lint`: success.
-- `Types` (`mypy --strict`): success.
-- `Architecture contracts`: success.
-- `Tests`: success.
-- GitHub Actions `gates-negative`: success; all deliberate architecture violations were rejected.
+Implemented:
 
-The intermediate failures were corrected without weakening any rule. They are retained in history as evidence that format, typing and negative gates are active rather than decorative.
+- `python/studio_core/ids.py`: deterministic `NodeId` derived from semantic content plus an explicit stable instance key, without clock/random/environment dependencies.
+- `python/studio_core/ir.py`: immutable `SchemaRef`, `Port`, `OperatorRef`, `Origin`, `Node`, `Edge`, `PipelineConfig` and `Pipeline` contracts.
+- JSON-compatible values are frozen into recursively immutable/canonical structures before entering domain objects.
+- Nodes canonicalize params and ports; pipelines canonicalize node/edge insertion order.
+- Pipeline validation rejects duplicate identities, unknown nodes, ambiguous/missing ports, batch/stream incompatibility, incompatible schemas and cycles.
+- Canonical JSON serialization/deserialization preserves typed metadata and deterministic ordering.
+- Node labels are intentionally excluded from semantic identity; identical semantic nodes remain distinguishable through the required stable `instance_key`.
+- `tests/test_core_ir.py` adds unit, adversarial and Hypothesis property tests, including random test ordering.
+- `pyproject.toml` now enforces 100% line and branch coverage for `studio_core` with zero exclusions.
 
-No issue was opened because no separable defect remains unresolved from this increment. The next highest-value E0 work is security/static gate expansion and documentation/governance contracts before starting E1.
+Validation history deliberately retained as evidence that gates are active:
+
+1. Initial validation was rejected by canonical formatting.
+2. The next pass found a function-call default and import-order issue; the default was redesigned around an immutable module constant rather than suppressed.
+3. `mypy --strict` then exposed topology variable shadowing; variables were clarified instead of cast/suppressed.
+4. All 28 functional tests initially passed but coverage was 91.99%; the 100% threshold was kept and missing adversarial/topology branches were tested.
+5. Final pre-publication validation of product code passed format, lint, strict mypy, architecture contracts, gates-negative, Hypothesis/randomized tests and 100% line/branch coverage.
+
+No issue was opened: every defect discovered by the gates was local to this increment and corrected before publication. The next E1 product slice should adapt the mature operator/diagnostic catalogs from `sdp-studio`, while E0 security/governance hardening remains an explicit parallel prerequisite before execution/session work.
