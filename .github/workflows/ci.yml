@@ -26,6 +26,16 @@ jobs:
       - name: Types
         run: mypy python tools
       - name: Architecture contracts
-        run: python tools/architecture_gate.py python/studio_core
+        run: python -m tools.architecture_gate python
       - name: Tests
         run: python -m pytest
+
+  gates-negative:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Prove architecture gate rejects deliberate violations
+        run: python -m tools.gates_negative

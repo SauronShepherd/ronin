@@ -1,6 +1,6 @@
-.PHONY: check format lint typecheck architecture test
+.PHONY: check format lint typecheck architecture gates-negative test
 
-check: format lint typecheck architecture test
+check: format lint typecheck architecture gates-negative test
 
 format:
 	ruff format --check python tests tools
@@ -12,7 +12,10 @@ typecheck:
 	mypy python tools
 
 architecture:
-	python tools/architecture_gate.py python/studio_core
+	python -m tools.architecture_gate python
+
+gates-negative:
+	python -m tools.gates_negative
 
 test:
 	python -m pytest
