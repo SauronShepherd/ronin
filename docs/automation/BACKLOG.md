@@ -4,10 +4,21 @@ Items are ordered by the construction plan and by risk. Selection is always reva
 
 ## E0 — Foundation
 
-1. Expand static gates toward the specification: import-linter, secrets/dependency scanning, manifest validation and documentation contracts.
-2. Add a general gates-negative harness so every quality gate has a deliberate failing fixture.
-3. Establish governance files and ADR structure before substantive domain code arrives.
-4. Add coverage and mutation gates only when executable product code exists; do not create meaningless percentage targets over empty packages.
+Completed:
+
+- Executable pure-domain I/O boundary.
+- Executable package dependency matrix for all planned `studio_*` layers.
+- Dedicated negative-gate harness proving deliberate I/O, environment and layer violations fail.
+- Ruff, strict mypy, pytest and CI baseline.
+
+Next:
+
+1. Add secret and dependency security gates (`gitleaks`, dependency audit) with negative fixtures where practical.
+2. Add documentation contracts so status, architecture decisions and generated evidence cannot silently drift from the repository.
+3. Establish governance files and a durable ADR structure before substantive domain code arrives.
+4. Add manifest validation only when Kubernetes/Compose/Helm artifacts enter the repository; do not create placeholder infrastructure merely to satisfy a gate.
+5. Add coverage and mutation gates when executable product behavior exists; do not create meaningless percentage targets over empty packages.
+6. Evaluate augmenting the in-repo dependency gate with `import-linter` once multiple domain/adaptor packages exist. The current AST gate remains authoritative until an additional tool demonstrates equivalent or stronger coverage.
 
 ## E1 — Core IR
 
