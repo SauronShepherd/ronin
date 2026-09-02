@@ -5,16 +5,18 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ronin-studio"
 version = "0.0.0"
-description = "Local-first, Git-native data engineering studio for Spark pipelines and reactive notebooks."
+description = "Open-source, local-first Data + AI platform with vendor-neutral execution contracts."
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 readme = "README.md"
 
 [project.optional-dependencies]
 dev = [
+  "hypothesis>=6.138,<7",
   "mypy>=1.17,<2",
   "pytest>=8.4,<9",
   "pytest-cov>=6.2,<7",
+  "pytest-randomly>=3.16,<4",
   "ruff>=0.12,<1",
 ]
 
@@ -42,4 +44,12 @@ packages = ["studio_core"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra --strict-config --strict-markers"
+addopts = "-ra --strict-config --strict-markers --cov=studio_core --cov-branch --cov-report=term-missing --cov-fail-under=100"
+
+[tool.coverage.run]
+branch = true
+source = ["studio_core"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
