@@ -8,9 +8,26 @@ Every usable project has a stable project ID, a human-readable name, exactly one
 
 The primary repository is where the project code and portable Ronin configuration live. Supporting repositories allow shared libraries, documentation, infrastructure, models, or other project-owned assets to participate without making a hosting provider part of the core model.
 
-Repository bindings are hosting-neutral. GitHub, GitLab, Bitbucket, self-hosted Git, SSH remotes, local repositories, and future Git-compatible systems belong behind adapters. Credentials are never embedded in repository URLs or persisted as literal tokens; project configuration stores `secret://` or `connection://` references only.
+Repository bindings are hosting-neutral. GitHub, GitLab, Bitbucket, self-hosted Git, SSH remotes, local repositories, and future Git-compatible systems belong behind adapters. Credentials are never embedded in repository URLs or persisted as literal tokens. Workspace bindings may hold `secret://` or `connection://` references, but committed project intent never contains those auth references.
 
-A future portable repository layout should place non-secret execution and project intent in a versioned `.ronin/` configuration so cloning a repository preserves reproducibility. Workspace registration data such as credential bindings or local checkout paths remains outside the portable file when it is machine/user specific.
+Each repository declares an opaque `adapter_id`, a default ref, optional repository-relative subdirectory, and a bounded sync policy. `manual` performs no automatic remote synchronization, `fetch` may refresh remote refs without moving the checkout, and `fast-forward` may advance the selected checkout only when Git can do so without merge or rebase. Provider-specific authentication and transport behavior belongs to adapters.
+
+## Portable `.ronin/` project configuration
+
+The canonical repository-local project manifest is `.ronin/project.json` with schema identifier `ronin.project/v1`. `studio_core.ProjectManifest` serializes it as deterministic UTF-8 JSON with recursively stable domain ordering and JSON keys sorted by the serializer. The pure core reads/writes data and strings only; filesystem discovery, atomic writes, checkout registration, and migrations that touch files belong to CLI/storage/application boundaries.
+
+The manifest commits only portable project intent:
+
+- project ID and name;
+- primary/supporting repository alias, URI, opaque Git adapter ID, default ref, optional subdirectory, and sync policy;
+- opaque execution runtime profile reference when pinned;
+- provider-neutral required/preferred capability requirements and resolution policy.
+
+Machine/user-specific state is deliberately excluded: resolved credentials, `auth_ref` bindings, tokens, local checkout paths, runtime discovery snapshots, and resolved execution state. `ProjectManifest.from_project()` strips repository auth references when projecting a workspace project into committed intent. A workspace may reattach credential references after loading the manifest without changing the portable project identity.
+
+Schema parsing is strict for `ronin.project/v1`: missing or unknown keys are rejected rather than silently discarded. Future schema evolution must use an explicit version/migration boundary rather than making older cores reinterpret newer intent.
+
+This design adapts the useful versioned project-metadata idea from `sdp-studio` while intentionally not importing its Pydantic, YAML/filesystem persistence, provider-specific environment settings, clock/random defaults, or resolved runtime state into Ronin's canonical domain.
 
 ## Execution profile model
 
@@ -54,7 +71,7 @@ This makes runs comparable even when a provider later changes the meaning or ava
 
 The product shell should provide a persistent project switcher. Project creation/editing should expose two independent steps:
 
-- **Code** — select/create/link the primary Git repository and optional supporting repositories; choose default ref and credential connection.
+- **Code** — select/create/link the primary Git repository and optional supporting repositories; choose adapter, default ref, sync policy, and workspace credential connection.
 - **Compute / Runtime** — browse adapter-discovered runtime profiles and inspect their capabilities, or specify capability requirements and let Ronin resolve compatible targets.
 
 Before execution, the UI should explain incompatibilities rather than silently changing runtime semantics. It should show which requested capabilities are satisfied, missing, downgraded, or supplied by an adapter-specific extension.
