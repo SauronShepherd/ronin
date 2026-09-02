@@ -67,3 +67,15 @@ Adapters advertise immutable `RuntimeProfile` snapshots containing an opaque pro
 The initial portable constraint grammar supports exact strings plus `==`, `!=`, `>=`, `<=`, `>` and `<`, with comma-separated conjunctions. Ordered comparison is deliberately limited to numeric dotted versions. Provider-specific version/channel semantics must be normalized by adapters before advertisement instead of creating vendor branches in core.
 
 This resolver does not provision compute, read credentials, probe runtimes or persist run state. A later adapter/runtime boundary will reuse hardened discovery and execution code from `sdp-studio` and persist the selected profile plus evaluation evidence in resolved-runtime snapshots for audit/replay.
+
+## ADR-AUTO-008 — Operator semantics are versioned pure data; discovery and execution hooks are boundaries
+
+**Status:** accepted — 2026-09-02
+
+Ronin reuses the mature `sdp-studio` operator-registry semantics but does not copy its entry-point discovery, mutable registry, compiler-hook strings or runtime-specific assumptions into `studio_core`.
+
+The canonical operator model is immutable, provider-neutral and versioned by `OperatorRef`. It describes logical input/output ports, semantic parameter kinds, supported batch/stream modes and required/forbidden capability names. `OperatorCatalog` canonicalizes ordering and rejects duplicate versions. Node validation returns stable `OperatorViolation` evidence rather than invoking compilers or runtimes.
+
+Plugin discovery, UI widget metadata, compiler implementations, schema inference, preview execution and provider-specific capability normalization belong outside the pure domain and will consume these contracts through replaceable boundaries. This keeps authored graphs portable while still allowing richer adapters and plugins to extend behavior.
+
+The initial built-in catalog is intentionally a small portable seed adapted from proven `sdp-studio` operators. Adding an operator to the canonical seed requires semantic portability and golden-test evidence; engine/provider-specific operators may exist behind adapters without becoming canonical product assumptions.
