@@ -145,9 +145,7 @@ def test_builtin_operator_catalog_matches_golden_seed_and_is_portable() -> None:
         }
         for operator in catalog.operators
     ]
-    expected = json.loads(
-        Path("tests/golden/operator_seed_refs.json").read_text(encoding="utf-8")
-    )
+    expected = json.loads(Path("tests/golden/operator_seed_refs.json").read_text(encoding="utf-8"))
     assert projection == expected
     assert catalog.get(OperatorRef("transform.join")) is not None
     assert "spark" not in catalog.to_json().lower()
@@ -180,10 +178,7 @@ def test_node_validation_reports_missing_unknown_and_bad_parameters() -> None:
         ("RONIN-OP-003", "params.limit"),
         ("RONIN-OP-004", "params.extra"),
     ]
-    missing_contract = validate_operator_node(
-        _node(OperatorRef("unknown")),
-        catalog,
-    )
+    missing_contract = validate_operator_node(_node(OperatorRef("unknown")), catalog)
     assert missing_contract[0].code == "RONIN-OP-001"
 
 
