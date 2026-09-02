@@ -21,11 +21,16 @@ def _rule(
     remediation: str | None = None,
     documentation_key: str | None = None,
 ) -> DiagnosticRule:
+    actual_predicates = (
+        predicates
+        if predicates is not None
+        else (DiagnosticPredicate("category", "equals", "test"),)
+    )
     return DiagnosticRule(
         id=rule_id,
         title="Test rule",
         severity=severity,  # type: ignore[arg-type]
-        predicates=predicates or (DiagnosticPredicate("category", "equals", "test"),),
+        predicates=actual_predicates,
         message="Test diagnostic message.",
         checks=checks,
         remediation=remediation,
