@@ -374,9 +374,7 @@ def _matches_parameter_kind(value: FrozenValue, kind: ParameterKind) -> bool:
         return isinstance(value, (int, float)) and not isinstance(value, bool)
     if kind == "array":
         return isinstance(value, FrozenList)
-    if kind == "object":
-        return isinstance(value, FrozenMap)
-    raise AssertionError(f"unhandled operator parameter kind: {kind}")
+    return isinstance(value, FrozenMap)
 
 
 def _validate_ports(
