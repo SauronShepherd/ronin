@@ -79,6 +79,9 @@ class Origin:
     reference: str | None = None
 
 
+DEFAULT_ORIGIN = Origin("system")
+
+
 @dataclass(frozen=True, slots=True)
 class Node:
     id: NodeId
@@ -86,7 +89,7 @@ class Node:
     params: tuple[tuple[str, FrozenValue], ...] = ()
     inputs: tuple[Port, ...] = ()
     outputs: tuple[Port, ...] = ()
-    origin: Origin = Origin("system")
+    origin: Origin = DEFAULT_ORIGIN
     ownership: Ownership = "GRAPH"
     label: str | None = field(default=None, compare=False, hash=False)
 
@@ -99,7 +102,7 @@ class Node:
         params: Mapping[str, object] | None = None,
         inputs: Sequence[Port] = (),
         outputs: Sequence[Port] = (),
-        origin: Origin = Origin("system"),
+        origin: Origin = DEFAULT_ORIGIN,
         ownership: Ownership = "GRAPH",
         label: str | None = None,
     ) -> Node:
