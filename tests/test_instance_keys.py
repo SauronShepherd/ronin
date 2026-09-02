@@ -135,7 +135,7 @@ def test_symmetric_identical_nodes_remain_distinct_and_order_independent() -> No
     )
 
     first = Pipeline((source, left, right), edges)
-    second = Pipeline((right, source, renamed_left), tuple(reversed(edges)))
+    second = Pipeline((right, source, left), tuple(reversed(edges)))
 
     assert left.id != right.id
     assert renamed_left.id == left.id
