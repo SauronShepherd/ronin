@@ -114,7 +114,7 @@ class DiagnosticFact:
                 _require_text(value, field_name, max_length=limit)
 
 
-@dataclass(frozen=True, order=True, slots=True)
+@dataclass(frozen=True, slots=True)
 class DiagnosticFinding:
     """Stable evidence produced when a rule matches one normalized fact."""
 
@@ -174,7 +174,7 @@ class DiagnosticCatalog:
             for rule in self.rules
             if all(_matches(predicate, fact) for predicate in rule.predicates)
         ]
-        return tuple(sorted(findings))
+        return tuple(sorted(findings, key=_finding_sort_key))
 
     def to_data(self) -> dict[str, object]:
         return {"rules": [rule.to_data() for rule in self.rules]}
@@ -275,8 +275,18 @@ def builtin_diagnostic_catalog() -> DiagnosticCatalog:
     )
 
 
+def _fact_value(fact: DiagnosticFact, field: DiagnosticField) -> str:
+    if field == "category":
+        return fact.category
+    if field == "code":
+        return fact.code
+    if field == "message":
+        return fact.message
+    return fact.source
+
+
 def _matches(predicate: DiagnosticPredicate, fact: DiagnosticFact) -> bool:
-    actual = getattr(fact, predicate.field)
+    actual = _fact_value(fact, predicate.field)
     expected = predicate.value
     if not predicate.case_sensitive:
         actual = actual.casefold()
@@ -286,3 +296,17 @@ def _matches(predicate: DiagnosticPredicate, fact: DiagnosticFact) -> bool:
     if predicate.kind == "contains":
         return expected in actual
     return actual.startswith(expected)
+
+
+def _finding_sort_key(finding: DiagnosticFinding) -> tuple[str, ...]:
+    return (
+        finding.rule_id,
+        finding.severity,
+        finding.message,
+        finding.fact_category,
+        finding.fact_code,
+        finding.fact_source,
+        finding.documentation_key or "",
+        finding.remediation or "",
+        *finding.checks,
+    )
