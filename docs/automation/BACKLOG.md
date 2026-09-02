@@ -32,15 +32,15 @@ Completed:
 - Per-project execution intent supports exact adapter-owned runtime profiles and compatible capability-based resolution without vendor branches in the core.
 - Provider-neutral `RuntimeProfile`/`RuntimeCatalog` advertisement snapshots and pure deterministic resolution with per-requirement compatibility evidence, required/preferred semantics, availability filtering and stable fallback ranking.
 - Versioned provider-neutral operator contracts for ports, semantic parameters, modes and required/forbidden capabilities; deterministic `OperatorCatalog`, stable validation evidence and a portable seed catalog adapted from mature `sdp-studio` semantics with golden/adversarial tests.
+- Provider-neutral diagnostic facts/rules/findings with a bounded non-regex predicate grammar, deterministic `DiagnosticCatalog` matching and a portable actionable seed adapted from mature `sdp-studio` failure categories with golden/adversarial tests; raw runtime/provider normalization stays outside `studio_core`.
 
 Next:
 
-1. Adapt the mature `sdp-studio` diagnostics catalog into a safe provider-neutral Ronin diagnostic contract/matcher with deterministic findings and golden tests; keep runtime/vendor normalization outside `studio_core`.
-2. Define portable `.ronin/` project configuration and deterministic serialization for repository-independent project intent; keep machine-specific checkout/auth bindings outside committed config.
-3. Formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
-4. Introduce mutation testing for `studio_core` and reach the target threshold without reducing coverage.
-5. Add notebook cells and dependency analysis only after operator/diagnostic contracts are stable.
-6. Add an adapter-side runtime discovery SPI and resolved-runtime execution snapshot after the operator/diagnostic contract is stable; reuse `sdp-studio` probing behind that boundary rather than moving I/O into `studio_core`.
+1. Define portable `.ronin/` project configuration and deterministic serialization for repository-independent project intent; keep machine-specific checkout/auth bindings outside committed config.
+2. Formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
+3. Introduce mutation testing for `studio_core` and reach the target threshold without reducing coverage.
+4. Add notebook cells and dependency analysis only after operator/diagnostic contracts are stable.
+5. Add an adapter-side runtime discovery SPI and resolved-runtime execution snapshot; reuse `sdp-studio` probing and provider error normalization behind that boundary rather than moving I/O or vendor parsing into `studio_core`.
 
 ## Later reuse
 
