@@ -55,3 +55,15 @@ Execution intent is split into an opaque adapter-owned `RuntimeProfileRef` and p
 A project may request strict profile resolution or compatible fallback. Compatible fallback may only relax preferred characteristics; all required capabilities remain mandatory.
 
 Post-publication GitHub Actions verification is also mandatory operational policy: after updating `main`, the builder must inspect workflows for the published SHA and continue correcting any regression caused by the change until required Actions are green or the increment is reverted.
+
+## ADR-AUTO-007 — Runtime discovery is adapter I/O; compatibility resolution is pure evidence
+
+**Status:** accepted — 2026-09-02
+
+The mature `sdp-studio` runtime code is useful evidence and a reuse source, but its probing layer necessarily reads environment state, invokes binaries and branches on concrete adapters. Those behaviors remain outside Ronin's pure domain.
+
+Adapters advertise immutable `RuntimeProfile` snapshots containing an opaque profile reference, availability and provider-neutral capability name/value pairs. `studio_core` deterministically evaluates those snapshots against project execution intent and returns explicit per-requirement evidence. Required capability failures are never downgraded; preferred matches rank compatible fallback candidates, with stable adapter/profile ordering as a deterministic tie-breaker.
+
+The initial portable constraint grammar supports exact strings plus `==`, `!=`, `>=`, `<=`, `>` and `<`, with comma-separated conjunctions. Ordered comparison is deliberately limited to numeric dotted versions. Provider-specific version/channel semantics must be normalized by adapters before advertisement instead of creating vendor branches in core.
+
+This resolver does not provision compute, read credentials, probe runtimes or persist run state. A later adapter/runtime boundary will reuse hardened discovery and execution code from `sdp-studio` and persist the selected profile plus evaluation evidence in resolved-runtime snapshots for audit/replay.
