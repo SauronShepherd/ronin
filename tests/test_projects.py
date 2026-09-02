@@ -46,7 +46,12 @@ def test_text_contracts_reject_blank_and_line_break_values() -> None:
     with pytest.raises(ValueError, match="repository uri"):
         RepositoryBinding("code", "", role="primary")
     with pytest.raises(ValueError, match="default ref"):
-        RepositoryBinding("code", "https://example.test/repo.git", role="primary", default_ref="")
+        RepositoryBinding(
+            "code",
+            "https://example.test/repo.git",
+            role="primary",
+            default_ref="",
+        )
 
 
 def test_repository_binding_supports_remote_and_local_git_without_vendor_coupling() -> None:
@@ -68,7 +73,11 @@ def test_repository_binding_supports_remote_and_local_git_without_vendor_couplin
 
 def test_repository_binding_rejects_invalid_role_or_literal_auth_material() -> None:
     with pytest.raises(ValueError, match="role"):
-        RepositoryBinding("code", "https://example.test/repo.git", role="owner")  # type: ignore[arg-type]
+        RepositoryBinding(
+            "code",
+            "https://example.test/repo.git",
+            role="owner",  # type: ignore[arg-type]
+        )
     with pytest.raises(ValueError, match="auth_ref"):
         RepositoryBinding(
             "code",
@@ -76,12 +85,15 @@ def test_repository_binding_rejects_invalid_role_or_literal_auth_material() -> N
             role="primary",
             auth_ref="plain-token-value",
         )
-    assert RepositoryBinding(
-        "code",
-        "https://example.test/repo.git",
-        role="primary",
-        auth_ref="secret://git-token",
-    ).auth_ref == "secret://git-token"
+    assert (
+        RepositoryBinding(
+            "code",
+            "https://example.test/repo.git",
+            role="primary",
+            auth_ref="secret://git-token",
+        ).auth_ref
+        == "secret://git-token"
+    )
 
 
 def test_repository_binding_rejects_embedded_http_credentials() -> None:
@@ -92,22 +104,33 @@ def test_repository_binding_rejects_embedded_http_credentials() -> None:
             role="primary",
         )
     assert RepositoryBinding(
-        "code", "https://example.test/team/repo.git", role="primary"
+        "code",
+        "https://example.test/team/repo.git",
+        role="primary",
     ).uri.endswith("repo.git")
 
 
 def test_repository_subdirectory_must_stay_inside_repository() -> None:
     with pytest.raises(ValueError, match="subdirectory"):
         RepositoryBinding(
-            "code", "https://example.test/repo.git", role="primary", subdirectory=""
+            "code",
+            "https://example.test/repo.git",
+            role="primary",
+            subdirectory="",
         )
     with pytest.raises(ValueError, match="repository root"):
         RepositoryBinding(
-            "code", "https://example.test/repo.git", role="primary", subdirectory="/absolute"
+            "code",
+            "https://example.test/repo.git",
+            role="primary",
+            subdirectory="/absolute",
         )
     with pytest.raises(ValueError, match="repository root"):
         RepositoryBinding(
-            "code", "https://example.test/repo.git", role="primary", subdirectory="../escape"
+            "code",
+            "https://example.test/repo.git",
+            role="primary",
+            subdirectory="../escape",
         )
     with pytest.raises(ValueError, match="repository root"):
         RepositoryBinding(
@@ -160,7 +183,11 @@ def test_execution_profile_can_pin_runtime_and_require_capabilities() -> None:
         resolution="compatible",
     )
     assert first == second
-    assert [item.name for item in first.requirements] == ["gpu", "python.version", "spark.version"]
+    assert [item.name for item in first.requirements] == [
+        "gpu",
+        "python.version",
+        "spark.version",
+    ]
 
 
 def test_execution_profile_can_be_capability_only() -> None:
@@ -179,7 +206,9 @@ def test_execution_profile_rejects_empty_invalid_or_duplicate_requirements() -> 
         )
     duplicate = CapabilityRequirement("spark.version", ">=3.5")
     with pytest.raises(ValueError, match="unique"):
-        ExecutionProfile(requirements=(duplicate, CapabilityRequirement("spark.version", "<4")))
+        ExecutionProfile(
+            requirements=(duplicate, CapabilityRequirement("spark.version", "<4"))
+        )
 
 
 def test_project_requires_exactly_one_primary_repository() -> None:

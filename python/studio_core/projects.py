@@ -51,8 +51,7 @@ class RepositoryBinding:
             ("secret://", "connection://")
         ):
             raise ValueError("repository auth_ref must be a secret:// or connection:// reference")
-        lower_uri = self.uri.lower()
-        if lower_uri.startswith(("http://", "https://")):
+        if self.uri.lower().startswith(("http://", "https://")):
             authority = self.uri.split("://", maxsplit=1)[1].split("/", maxsplit=1)[0]
             if "@" in authority:
                 raise ValueError("repository uri must not embed HTTP credentials")
@@ -128,7 +127,9 @@ class Project:
         aliases = [repository.alias for repository in canonical_repositories]
         if len(aliases) != len(set(aliases)):
             raise ValueError("repository aliases must be unique within a project")
-        primaries = [repository for repository in canonical_repositories if repository.role == "primary"]
+        primaries = [
+            repository for repository in canonical_repositories if repository.role == "primary"
+        ]
         if len(primaries) != 1:
             raise ValueError("project requires exactly one primary repository")
         object.__setattr__(self, "repositories", canonical_repositories)
@@ -140,7 +141,7 @@ class Project:
 
 @dataclass(frozen=True, slots=True)
 class ProjectCollection:
-    """Canonical collection used by workspace/application boundaries for multi-project UX."""
+    """Canonical collection for multi-project workspace/application boundaries."""
 
     projects: tuple[Project, ...] = ()
 
