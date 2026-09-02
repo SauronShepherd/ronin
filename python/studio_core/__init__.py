@@ -8,7 +8,7 @@ from .diagnostics import (
     DiagnosticRule,
     builtin_diagnostic_catalog,
 )
-from .ids import NodeId
+from .ids import InstanceAnchor, NodeId, allocate_instance_keys
 from .ir import (
     Edge,
     FrozenList,
@@ -65,6 +65,7 @@ __all__ = (
     "ExecutionProfile",
     "FrozenList",
     "FrozenMap",
+    "InstanceAnchor",
     "Node",
     "NodeId",
     "OperatorCatalog",
@@ -93,6 +94,7 @@ __all__ = (
     "RuntimeProfileRef",
     "RuntimeResolution",
     "SchemaRef",
+    "allocate_instance_keys",
     "builtin_diagnostic_catalog",
     "builtin_operator_catalog",
     "freeze_value",
