@@ -62,9 +62,7 @@ PURE_DOMAIN_PACKAGES = frozenset(
         "studio_native",
     }
 )
-FORBIDDEN_IMPORT_ROOTS = frozenset(
-    {"requests", "sqlite3", "subprocess", "urllib.request"}
-)
+FORBIDDEN_IMPORT_ROOTS = frozenset({"requests", "sqlite3", "subprocess", "urllib.request"})
 FORBIDDEN_CALLS = frozenset({"open", "builtins.open"})
 
 
@@ -89,10 +87,7 @@ def _project_package(module: str) -> str | None:
 
 
 def _import_is_forbidden(module: str) -> bool:
-    return any(
-        module == root or module.startswith(f"{root}.")
-        for root in FORBIDDEN_IMPORT_ROOTS
-    )
+    return any(module == root or module.startswith(f"{root}.") for root in FORBIDDEN_IMPORT_ROOTS)
 
 
 def _collect_aliases(tree: ast.AST) -> dict[str, str]:
@@ -123,9 +118,7 @@ def _dotted_name(node: ast.AST, aliases: dict[str, str]) -> str | None:
     return None
 
 
-def _dependency_violations(
-    tree: ast.AST, path: Path, source: str | None
-) -> list[Violation]:
+def _dependency_violations(tree: ast.AST, path: Path, source: str | None) -> list[Violation]:
     if source is None:
         return []
     if source not in PROJECT_DEPENDENCIES:
@@ -167,9 +160,7 @@ def _dependency_violations(
     return violations
 
 
-def _io_violations(
-    tree: ast.AST, path: Path, source: str | None
-) -> list[Violation]:
+def _io_violations(tree: ast.AST, path: Path, source: str | None) -> list[Violation]:
     if source not in PURE_DOMAIN_PACKAGES:
         return []
 
@@ -197,9 +188,7 @@ def _io_violations(
                         f"forbidden import {node.module!r}",
                     )
                 )
-            if node.module == "os" and any(
-                alias.name == "environ" for alias in node.names
-            ):
+            if node.module == "os" and any(alias.name == "environ" for alias in node.names):
                 violations.append(
                     Violation(
                         path,
@@ -211,9 +200,7 @@ def _io_violations(
         elif isinstance(node, ast.Call):
             name = _dotted_name(node.func, aliases)
             if name in FORBIDDEN_CALLS:
-                violations.append(
-                    Violation(path, node.lineno, "IO002", f"forbidden call {name!r}")
-                )
+                violations.append(Violation(path, node.lineno, "IO002", f"forbidden call {name!r}"))
         elif isinstance(node, ast.Attribute):
             name = _dotted_name(node, aliases)
             if name == "os.environ":
@@ -231,18 +218,14 @@ def _io_violations(
 def inspect_file(path: Path) -> list[Violation]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     source = _source_package(path)
-    return _dependency_violations(tree, path, source) + _io_violations(
-        tree, path, source
-    )
+    return _dependency_violations(tree, path, source) + _io_violations(tree, path, source)
 
 
 def iter_python_files(roots: Iterable[Path]) -> Iterable[Path]:
     for root in roots:
         if not root.exists():
             continue
-        yield from sorted(
-            path for path in root.rglob("*.py") if "__pycache__" not in path.parts
-        )
+        yield from sorted(path for path in root.rglob("*.py") if "__pycache__" not in path.parts)
 
 
 def inspect_roots(roots: Iterable[Path]) -> list[Violation]:

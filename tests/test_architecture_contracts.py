@@ -20,9 +20,7 @@ def test_current_project_respects_architecture_contracts() -> None:
 
 def test_gate_rejects_forbidden_io() -> None:
     with tempfile.TemporaryDirectory() as directory:
-        path = _fixture(
-            directory, "studio_core", "import sqlite3\nopen('state.txt')\n"
-        )
+        path = _fixture(directory, "studio_core", "import sqlite3\nopen('state.txt')\n")
         violations = inspect_file(path)
 
     assert {violation.rule for violation in violations} == {"IO001", "IO002"}
@@ -54,9 +52,7 @@ def test_gate_rejects_environment_access_through_from_import() -> None:
 
 def test_gate_rejects_forbidden_project_dependency() -> None:
     with tempfile.TemporaryDirectory() as directory:
-        path = _fixture(
-            directory, "studio_core", "from studio_server import app\n"
-        )
+        path = _fixture(directory, "studio_core", "from studio_server import app\n")
         violations = inspect_file(path)
 
     assert [violation.rule for violation in violations] == ["DEP001"]
@@ -64,11 +60,7 @@ def test_gate_rejects_forbidden_project_dependency() -> None:
 
 def test_gate_allows_declared_project_dependency() -> None:
     with tempfile.TemporaryDirectory() as directory:
-        path = _fixture(
-            directory,
-            "studio_notebook",
-            "from studio_core import diagnostics\n",
-        )
+        path = _fixture(directory, "studio_notebook", "from studio_core import diagnostics\n")
         violations = inspect_file(path)
 
     assert violations == []

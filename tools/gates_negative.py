@@ -30,15 +30,11 @@ def run_negative_cases() -> list[str]:
             path.write_text(source, encoding="utf-8")
             rules = {violation.rule for violation in inspect_file(path)}
             if expected_rule not in rules:
-                failures.append(
-                    f"{name}: expected {expected_rule}, got {sorted(rules)}"
-                )
+                failures.append(f"{name}: expected {expected_rule}, got {sorted(rules)}")
             path.unlink()
 
         combined = package / "combined.py"
-        combined.write_text(
-            "import sqlite3\nfrom studio_server import app\n", encoding="utf-8"
-        )
+        combined.write_text("import sqlite3\nfrom studio_server import app\n", encoding="utf-8")
         if run_gate([root]) == 0:
             failures.append("architecture gate returned success for deliberate violations")
 
