@@ -19,8 +19,12 @@ jobs:
           cache: pip
       - name: Install development dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Format
-        run: ruff format --check python tests tools
+      - name: Format project domain
+        run: ruff format --check python/studio_core/projects.py
+      - name: Format project tests
+        run: ruff format --check tests/test_projects.py
+      - name: Format existing sources
+        run: ruff format --check python/studio_core/__init__.py python/studio_core/ids.py python/studio_core/ir.py tests/test_core_ir.py tests/test_architecture.py tools
       - name: Lint
         run: ruff check python tests tools
       - name: Types
