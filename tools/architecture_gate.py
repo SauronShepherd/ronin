@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import argparse
 import ast
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 FORBIDDEN_IMPORT_ROOTS = frozenset(
     {
