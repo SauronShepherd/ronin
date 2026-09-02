@@ -11,21 +11,37 @@ Completed:
 - Dedicated negative-gate harness proving deliberate I/O, environment and layer violations fail.
 - Ruff, strict mypy, pytest and CI baseline.
 
-Next:
+Still required:
 
 1. Add secret and dependency security gates (`gitleaks`, dependency audit) with negative fixtures where practical.
-2. Add documentation contracts so status, architecture decisions and generated evidence cannot silently drift from the repository.
-3. Establish governance files and a durable ADR structure before substantive domain code arrives.
-4. Add manifest validation only when Kubernetes/Compose/Helm artifacts enter the repository; do not create placeholder infrastructure merely to satisfy a gate.
-5. Add coverage and mutation gates when executable product behavior exists; do not create meaningless percentage targets over empty packages.
-6. Evaluate augmenting the in-repo dependency gate with `import-linter` once multiple domain/adaptor packages exist. The current AST gate remains authoritative until an additional tool demonstrates equivalent or stronger coverage.
+2. Add documentation/governance contracts and ASF-ready community files without claiming current ASF status.
+3. Add manifest validation only when Kubernetes/Compose/Helm artifacts enter the repository; do not create placeholder infrastructure merely to satisfy a gate.
+4. Evaluate augmenting the in-repo dependency gate with `import-linter` once multiple real packages exist. The negatively-tested AST gate remains authoritative until an additional tool proves equivalent or stronger coverage.
 
 ## E1 — Core IR
 
-1. Implement immutable `NodeId`, `Port`, `Node`, `Edge` and `Pipeline` primitives with canonical ordering.
-2. Add deterministic stable identifiers and serialization round-trip properties.
-3. Introduce operator and diagnostics catalogs with golden tests.
-4. Add notebook cells and dependency analysis only after core IR contracts are stable.
+Completed in the first slice:
+
+- Immutable `NodeId`, `Port`, `Node`, `Edge` and `Pipeline` primitives.
+- Canonical node/edge ordering independent of insertion order.
+- Stable semantic node identity using semantic content plus an explicit stable instance key; labels do not affect identity.
+- Canonical JSON serialization/deserialization with deterministic round-trip behavior.
+- Edge validation for unknown nodes, exact ports, batch/stream compatibility, schema compatibility and cycles.
+- Hypothesis properties for deterministic identity and canonical insertion order.
+- Adversarial deserialization tests and randomized test ordering.
+- 100% line/branch coverage gate for `studio_core` from the first meaningful domain implementation.
+
+Next:
+
+1. Adapt the mature `sdp-studio` operator and diagnostics catalogs into provider-neutral Ronin contracts with golden tests.
+2. Formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
+3. Introduce mutation testing for `studio_core` and reach the target threshold without reducing coverage.
+4. Add notebook cells and dependency analysis only after operator/diagnostic contracts are stable.
+
+## Later reuse
+
+- Reuse/adapt `sdp-studio` codegen, source maps, runners, debug, collaboration, auth/scheduling, React/XYFlow/Monaco and deployment work behind Ronin boundaries.
+- Selectively reuse `ronin-old` native execution/Gluten/Velox and hardened redaction/session ideas; do not revive its monolithic API/controller architecture.
 
 ## Security carry-over
 
