@@ -25,6 +25,7 @@ Completed:
 - Immutable `NodeId`, `Port`, `Node`, `Edge` and `Pipeline` primitives.
 - Canonical node/edge ordering independent of insertion order.
 - Stable semantic node identity using semantic content plus an explicit stable instance key; labels do not affect identity.
+- Stable `InstanceAnchor` allocation contract for authoring/import boundaries, persisted `instance_key` evidence in canonical IR, identity verification during deserialization, and symmetric-graph invariants that do not depend on traversal order.
 - Canonical JSON serialization/deserialization with deterministic round-trip behavior.
 - Edge validation for unknown nodes, exact ports, batch/stream compatibility, schema compatibility and cycles.
 - Hypothesis properties, adversarial deserialization tests and 100% line/branch coverage for `studio_core`.
@@ -37,10 +38,9 @@ Completed:
 
 Next:
 
-1. Formalize stable `instance_key` allocation at authoring/import boundaries and extend identity properties for symmetric/structurally identical graphs.
-2. Introduce mutation testing for `studio_core` and reach the target threshold without reducing coverage.
-3. Add notebook cells and dependency analysis only after operator/diagnostic contracts are stable.
-4. Add an adapter-side runtime discovery SPI and resolved-runtime execution snapshot; reuse `sdp-studio` probing and provider error normalization behind that boundary rather than moving I/O or vendor parsing into `studio_core`.
+1. Introduce mutation testing for `studio_core` and reach the target threshold without reducing coverage.
+2. Add notebook cells and dependency analysis only after operator/diagnostic contracts are stable.
+3. Add an adapter-side runtime discovery SPI and resolved-runtime execution snapshot; reuse `sdp-studio` probing and provider error normalization behind that boundary rather than moving I/O or vendor parsing into `studio_core`.
 
 ## Later reuse
 
