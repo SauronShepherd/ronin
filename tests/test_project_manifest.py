@@ -109,6 +109,11 @@ def test_manifest_supports_capability_only_execution_and_null_values() -> None:
     assert manifest.project.execution.runtime is None
     assert manifest.project.execution.requirements[0].constraint is None
     assert manifest.project.repositories[0].subdirectory is None
+    serialized_project = manifest.to_data()["project"]
+    assert isinstance(serialized_project, dict)
+    serialized_execution = serialized_project["execution"]
+    assert isinstance(serialized_execution, dict)
+    assert serialized_execution["runtime"] is None
 
 
 def test_manifest_rejects_top_level_project_and_repository_key_drift() -> None:
