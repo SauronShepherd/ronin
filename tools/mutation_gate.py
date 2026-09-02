@@ -41,7 +41,9 @@ def validate_stats(stats: Mapping[str, object], threshold: float = MUTATION_THRE
         raise ValueError(f"mutation stats missing keys: {', '.join(missing)}")
     if not 0.0 <= threshold <= 100.0:
         raise ValueError("mutation threshold must be between 0 and 100")
-    if any(not isinstance(stats[key], int) or isinstance(stats[key], bool) for key in _REQUIRED_KEYS):
+    if any(
+        not isinstance(stats[key], int) or isinstance(stats[key], bool) for key in _REQUIRED_KEYS
+    ):
         raise TypeError("mutation stats values must be integers")
 
     counts = cast(Mapping[str, int], stats)
