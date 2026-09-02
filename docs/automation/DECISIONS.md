@@ -79,3 +79,15 @@ The canonical operator model is immutable, provider-neutral and versioned by `Op
 Plugin discovery, UI widget metadata, compiler implementations, schema inference, preview execution and provider-specific capability normalization belong outside the pure domain and will consume these contracts through replaceable boundaries. This keeps authored graphs portable while still allowing richer adapters and plugins to extend behavior.
 
 The initial built-in catalog is intentionally a small portable seed adapted from proven `sdp-studio` operators. Adding an operator to the canonical seed requires semantic portability and golden-test evidence; engine/provider-specific operators may exist behind adapters without becoming canonical product assumptions.
+
+## ADR-AUTO-009 — Diagnostics match normalized facts; provider error parsing stays in adapters
+
+**Status:** accepted — 2026-09-02
+
+The mature `sdp-studio` diagnostic catalog provides useful failure categories, checks and remediation, but its canonical matcher loads YAML-defined regular expressions and the shipped rules encode Spark and Kubernetes error syntax. Ronin reuses the semantic categories and actionable guidance without moving those provider/runtime assumptions into `studio_core`.
+
+Adapters and validation layers emit bounded immutable `DiagnosticFact` values using provider-neutral categories plus optional normalized code, message and source evidence. The pure core matches facts using a deliberately small grammar of equality, substring containment and prefix predicates. Rules are immutable data, predicates compose with deterministic AND semantics, and `DiagnosticCatalog` canonicalizes rule order and emits stable `DiagnosticFinding` evidence.
+
+Arbitrary regular expressions, YAML loading, provider log parsing, runtime I/O and vendor-specific rule packs are not part of the canonical domain. Adapter-specific parsers may translate raw Spark, Kubernetes, Databricks, Fabric or future provider errors into the same neutral fact categories, preserving portability while allowing rich runtime diagnostics.
+
+The built-in catalog is intentionally a portable seed adapted from proven `sdp-studio` failure classes such as unresolved schema fields, type mismatches, resource exhaustion, unsupported capabilities, execution-mode mismatch, missing dependencies, access denial and shared-state mutation. Adding canonical rules requires provider-neutral semantics plus golden-test evidence.
