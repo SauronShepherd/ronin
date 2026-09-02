@@ -214,6 +214,6 @@ def _numeric_version(value: str) -> tuple[int, ...]:
     parts = value.split(".")
     if not parts or any(not part.isdigit() for part in parts):
         raise ValueError(
-            "ordered capability constraint requires a numeric dotted version: " f"{value!r}"
+            f"ordered capability constraint requires a numeric dotted version: {value!r}"
         )
     return tuple(int(part) for part in parts)
