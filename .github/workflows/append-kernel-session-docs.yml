@@ -1,0 +1,79 @@
+name: Append kernel session automation records
+
+on:
+  push:
+    branches:
+      - feat/kernel-execution-session
+    paths:
+      - .github/workflows/append-kernel-session-docs.yml
+
+permissions:
+  contents: write
+
+jobs:
+  append:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/kernel-execution-session
+          fetch-depth: 1
+      - name: Append decision and progress records
+        shell: bash
+        run: |
+          cat >> docs/automation/DECISIONS.md <<'EOF'
+
+## ADR-AUTO-018 — Session controls gate side effects; concrete executors prove isolation
+
+**Status:** accepted — 2026-09-03
+
+Prepared notebook intent and reproducibility evidence are not sufficient authorization to execute code. `KernelExecutionSession` is therefore the fail-closed operational control boundary between an immutable `NotebookExecutionRequest` and a side-effecting `KernelCellExecutor`.
+
+The session validates an explicit `SessionPolicy` before delegating side effects. Required directive permissions are checked before the executor receives a cell. The default policy accepts only container or Kubernetes isolation and requires a dedicated identity plus network and filesystem isolation; process execution is an explicit opt-in. `ExecutorIsolation` records adapter assertions, not proof. Every concrete executor must be separately qualified with integration/adversarial tests that demonstrate the isolation it claims.
+
+Cancellation is represented by a small signal protocol so local, container, Kubernetes and future remote executors can implement interruption without provider-specific branches in the canonical notebook model. Executor crashes are normalized to `kernel.executor.error`; raw exception text is not persisted as failure evidence. Executor results must preserve the requested `CellId`.
+
+Operational evidence is ordered by the existing `ExecutionAttemptId` plus contiguous `ExecutionEventId.sequence`. Event messages are redacted before storage. The first local sink is append-only canonical JSONL with flush and fsync on every event, rejects mixed attempts and sequence gaps, and requires no external service. It is intentionally replaceable: restart/resume and shared durable stores remain later sink implementations.
+
+This adapts `ronin-old` redaction and hardened session/pod concepts and `sdp-studio` typed event-envelope semantics without copying mutable notebook rewriting, direct subprocess execution or provider-specific lifecycle into the canonical boundary. The concrete local/container launcher remains a separate adapter task tracked by issue #16.
+EOF
+
+          cat >> docs/automation/PROGRESS.md <<'EOF'
+
+## 2026-09-03 — E1 fail-closed kernel execution-session controls
+
+Objective: establish the operational safety/evidence boundary that must exist before a real local/container kernel launcher can execute prepared notebook cells.
+
+Implemented:
+
+- Added `KernelExecutionSession` and `KernelCellExecutor` contracts around immutable `NotebookExecutionRequest` values.
+- Added explicit `ExecutorIsolation` facts and `SessionPolicy`; default execution requires container/Kubernetes mode, a dedicated identity, network isolation and filesystem isolation. Process mode requires an explicit relaxed policy.
+- Enforced normalized directive permissions before executor side effects. Missing permissions produce `kernel.permission.denied` and durable failure events without invoking the executor.
+- Added thread-safe cancellation signaling and deterministic stop behavior before/between cells and for executor-reported cancellation.
+- Added ordered `ExecutionEvent` evidence using the existing attempt+sequence identity, automatic operational-text credential redaction, and an append-only JSONL sink that flushes and fsyncs every event while rejecting mixed attempts and sequence gaps.
+- Normalized unexpected executor exceptions to `kernel.executor.error` without persisting raw adapter exception text, and reject executor cell-identity drift.
+- Added adversarial tests for permission denial, isolation policy, cancellation, redaction, event ordering/durability, success/failure/cancel states, adapter crashes and identity drift. Existing 100% line/branch coverage remains mandatory.
+
+Reuse/evidence:
+
+- Adapted the useful redaction categories from `ronin-old/fakebric/redaction.py` and strengthened them with URI credential handling.
+- Reused security concepts from `ronin-old/fakebric/session_pod.py` (dedicated non-root identity, service isolation and restricted runtime posture) as neutral policy requirements rather than Kubernetes-specific canonical state.
+- Reused `sdp-studio` typed run-event-envelope semantics as evidence for normalized operational event kinds; no stronger reusable kernel/session control boundary was found.
+
+Validation history:
+
+- PR #17 initial candidate `cdd208ac3c8faa2b868aa81bb69f267e116778f6` passed formatting and the negative architecture gate; Ruff correctly rejected one unused fake-executor argument (`ARG002`). The test was fixed by asserting the prepared cell identity rather than suppressing lint.
+- Corrected candidate `4ac4a7905f635399c2b519fafe694a9891b801bb` passed format, lint, strict mypy, architecture contracts and the full 100% line/branch test gate. A subsequent review identified that executor exceptions could escape without normalized durable failure evidence; that gap was fixed before publication and covered with a regression test.
+- Final publication remains contingent on an exact-head PR CI and the post-merge `main` workflow run completing all required jobs successfully; gates are not weakened to publish this slice.
+
+Follow-up:
+
+- Issue #16 tracks the first concrete local/container executor and its real cancellation/isolation/resource/cost qualification. Declared isolation facts must not be treated as proof without adapter integration tests.
+- Next adjacent E1 work is a concrete runtime-evidence collector and restart/resume-capable durable event storage, after the concrete executor boundary is proven.
+EOF
+
+          git config user.name "ronin-automation"
+          git config user.email "automation@users.noreply.github.com"
+          git add docs/automation/DECISIONS.md docs/automation/PROGRESS.md
+          git commit -m "docs: record kernel execution session decision"
+          git push origin HEAD:feat/kernel-execution-session
