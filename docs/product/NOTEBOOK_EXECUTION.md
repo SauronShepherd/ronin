@@ -20,6 +20,8 @@ Deserialization is strict. Unknown or missing v1 keys, unsupported schema versio
 
 Import adapters supply source-stable references and an explicit namespace. For nbformat 4.5+ inputs, the persisted Jupyter cell `id` is a natural adapter-side reference when present. Older or foreign formats require the importer to allocate and persist an equivalent stable external reference before subsequent round trips; the pure domain never invents identity from list position.
 
+Canonical JSON is a transport-neutral representation, not a filesystem API. Reading, writing, migration and format-specific conversion remain adapter/application concerns so the pure notebook package stays usable in local, air-gapped and distributed deployments alike.
+
 ## Dependency analysis
 
 `studio_notebook` performs pure deterministic dependency analysis. It produces:
