@@ -32,6 +32,7 @@ Completed:
 - Multi-project pure-domain contracts: `Project`, canonical `ProjectCollection`, primary/supporting Git repository bindings, secret/connection references, runtime profile references and provider-neutral capability requirements.
 - Per-project execution intent supports exact adapter-owned runtime profiles and compatible capability-based resolution without vendor branches in the core.
 - Provider-neutral `RuntimeProfile`/`RuntimeCatalog` advertisement snapshots and pure deterministic resolution with per-requirement compatibility evidence, required/preferred semantics, availability filtering and stable fallback ranking.
+- Adapter-side `studio_runners` runtime discovery SPI with deterministic adapter ordering, normalized discovery issues, provider-failure containment, and canonical `RuntimeCatalog` assembly; immutable `ResolvedRuntimeSnapshot` evidence freezes the selected profile and compatibility checks before execution without clocks, secrets or provider configuration entering `studio_core`.
 - Versioned provider-neutral operator contracts for ports, semantic parameters, modes and required/forbidden capabilities; deterministic `OperatorCatalog`, stable validation evidence and a portable seed catalog adapted from mature `sdp-studio` semantics with golden/adversarial tests.
 - Provider-neutral diagnostic facts/rules/findings with a bounded non-regex predicate grammar, deterministic `DiagnosticCatalog` matching and a portable actionable seed adapted from mature `sdp-studio` failure categories with golden/adversarial tests; raw runtime/provider normalization stays outside `studio_core`.
 - Portable `.ronin/project.json` schema with deterministic serialization/deserialization, provider-neutral Git adapter/default-ref/sync intent, and strict exclusion of machine-specific auth bindings from committed project configuration.
@@ -40,8 +41,8 @@ Completed:
 
 Next:
 
-1. Add an adapter-side runtime discovery SPI and resolved-runtime execution snapshot; reuse `sdp-studio` probing and provider error normalization behind that boundary rather than moving I/O or vendor parsing into `studio_core`.
-2. Add portable notebook serialization/import identity and then a kernel execution-evidence boundary; adapt useful `ronin-old` magic semantics only behind adapters, never its subprocess/mutation behavior inside `studio_notebook`.
+1. Add portable notebook serialization/import identity and then a kernel execution-evidence boundary; adapt useful `ronin-old` magic semantics only behind adapters, never its subprocess/mutation behavior inside `studio_notebook`.
+2. Extend runtime execution evidence with repository revision/dirty-patch identity plus adapter-normalized effective non-secret runtime configuration, package/environment digests and eventual resource/cost/observability references; do not let execution evidence mutate authored project intent.
 3. Ratchet mutation quality upward when new tests make that sustainable; never lower the threshold merely to make CI pass.
 
 ## Later reuse
