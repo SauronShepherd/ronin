@@ -265,7 +265,10 @@ class KernelExecutionSession:
                 return tuple(results)
 
             self._emit("cell.started", cell_id=cell.cell_id)
-            result = self.executor.execute(cell, self.cancellation)
+            try:
+                result = self.executor.execute(cell, self.cancellation)
+            except Exception:
+                result = CellExecutionResult(cell.cell_id, "failed", "kernel.executor.error")
             if result.cell_id != cell.cell_id:
                 raise ValueError("kernel executor must preserve cell identity")
             results.append(result)
