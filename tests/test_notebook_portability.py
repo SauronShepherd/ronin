@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from studio_notebook import (
     NOTEBOOK_DOCUMENT_SCHEMA,
     CellId,
@@ -58,9 +57,7 @@ def _portable_document() -> NotebookDocument:
     intro_identity = CellIdentityAnchor("authoring", "demo", "intro")
     code_identity = CellIdentityAnchor("authoring", "demo", "code")
     sql_identity = CellIdentityAnchor("authoring", "demo", "sql")
-    intro_id, code_id, sql_id = allocate_cell_ids(
-        (intro_identity, code_identity, sql_identity)
-    )
+    intro_id, code_id, sql_id = allocate_cell_ids((intro_identity, code_identity, sql_identity))
     notebook = Notebook(
         (
             NotebookCell(intro_id, "markdown", "# Café"),
@@ -139,15 +136,11 @@ def test_notebook_document_strictly_rejects_shape_drift() -> None:
     data = document.to_data()
 
     with pytest.raises(ValueError, match="keys mismatch"):
-        NotebookDocument.from_data(
-            {"schema": NOTEBOOK_DOCUMENT_SCHEMA, "cells": [], "extra": 1}
-        )
+        NotebookDocument.from_data({"schema": NOTEBOOK_DOCUMENT_SCHEMA, "cells": [], "extra": 1})
     with pytest.raises(ValueError, match="keys mismatch"):
         NotebookDocument.from_data({"schema": NOTEBOOK_DOCUMENT_SCHEMA})
     with pytest.raises(TypeError, match="cells must be an array"):
-        NotebookDocument.from_data(
-            {"schema": NOTEBOOK_DOCUMENT_SCHEMA, "cells": "not-array"}
-        )
+        NotebookDocument.from_data({"schema": NOTEBOOK_DOCUMENT_SCHEMA, "cells": "not-array"})
     with pytest.raises(TypeError, match="cell must be an object"):
         NotebookDocument.from_data({"schema": NOTEBOOK_DOCUMENT_SCHEMA, "cells": [1]})
     with pytest.raises(TypeError, match="string keys"):

@@ -17,6 +17,9 @@ python/studio_core/projects.py
 python/studio_core/runtime_profiles.py
 python/studio_notebook/__init__.py
 python/studio_notebook/dependencies.py
+python/studio_notebook/identity.py
+python/studio_notebook/importing.py
+python/studio_notebook/serialization.py
 python/studio_runners/__init__.py
 python/studio_runners/discovery.py
 tests/test_architecture_contracts.py
@@ -26,6 +29,7 @@ tests/test_diagnostics.py
 tests/test_instance_keys.py
 tests/test_mutation_gate.py
 tests/test_notebook_dependencies.py
+tests/test_notebook_portability.py
 tests/test_operators.py
 tests/test_project_manifest.py
 tests/test_projects.py

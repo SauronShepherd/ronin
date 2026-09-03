@@ -37,9 +37,7 @@ def import_notebook(namespace: str, cells: Sequence[NotebookImportCell]) -> Note
     """Build a canonical document from explicit stable source-cell references."""
     identities = tuple(CellIdentityAnchor("import", namespace, cell.reference) for cell in cells)
     cell_ids = allocate_cell_ids(identities)
-    by_reference = {
-        cell.reference: cell_id for cell, cell_id in zip(cells, cell_ids, strict=True)
-    }
+    by_reference = {cell.reference: cell_id for cell, cell_id in zip(cells, cell_ids, strict=True)}
     if len(by_reference) != len(cells):
         raise ValueError("import cell references must be unique")
 
