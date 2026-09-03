@@ -40,10 +40,8 @@ jobs:
           cache: pip
       - name: Install development dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Mutation tests and evidence export
-        run: python -m tools.run_mutation
-      - name: Mutation score gate
-        run: python -m tools.mutation_gate mutants/mutmut-cicd-stats.json
+      - name: Mutation tests and score gate
+        run: make mutation
 
   gates-negative:
     runs-on: ubuntu-latest
