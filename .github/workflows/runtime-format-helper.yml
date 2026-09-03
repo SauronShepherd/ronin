@@ -1,4 +1,4 @@
-name: Runtime format helper
+name: Runtime documentation helper
 
 on:
   push:
@@ -8,25 +8,81 @@ permissions:
   contents: write
 
 jobs:
-  format:
+  document:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-      - name: Install development dependencies
-        run: python -m pip install -e '.[dev]'
-      - name: Apply canonical formatting
-        run: ruff format python tests tools
-      - name: Commit formatting when needed
+      - name: Append durable runtime discovery records
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          additions = {
+              Path("docs/automation/DECISIONS.md"): """
+
+## ADR-AUTO-014 — Runtime discovery is a typed adapter SPI; selection evidence is immutable core data
+
+**Status:** accepted — 2026-09-03
+
+Ronin now makes the runtime-discovery boundary executable rather than leaving it as an architectural promise. `studio_runners` owns the side-effecting `RuntimeDiscoveryAdapter` SPI and normalizes adapter-owned profile advertisements into the existing provider-neutral `RuntimeProfile`/`RuntimeCatalog` contracts. Adapter IDs are unique, discovery runs in stable adapter order, and every advertised profile must belong to the reporting adapter.
+
+Operational discovery failures do not cross the boundary as raw provider exceptions. The coordinator emits stable `runtime.discovery_failed` evidence without embedding `str(exc)`, so tokens, connection strings or other provider details accidentally present in exception text are not copied into canonical evidence. Adapters may return additional normalized issues, but they are responsible for redaction before doing so. Provider-specific probing, environment access, subprocesses, SDK calls and version/channel parsing remain outside `studio_core`.
+
+A successful pure `RuntimeResolution` can now be frozen as `ResolvedRuntimeSnapshot` before execution. The snapshot records the requested profile reference, the complete selected immutable `RuntimeProfile` capability advertisement, resolution policy, exact-versus-fallback selection, requirement checks and preferred-match count. It deliberately has no implicit clock, random ID, credential, provider configuration or mutable runtime handle. Inconsistent hand-built resolution objects fail closed rather than producing misleading audit evidence.
+
+This adapts the mature `sdp-studio` separation between runtime adapters/probes and capability validation, plus its hardened secret/error handling, while rejecting its provider branches and untyped profile dictionaries as canonical Ronin domain state. Later execution evidence may attach repository revision, effective non-secret runtime configuration, package/image digests, resource/cost data and observability references around this snapshot without mutating authored project intent.
+""",
+              Path("docs/automation/PROGRESS.md"): """
+
+## 2026-09-03 — E1 runtime discovery and resolved-runtime evidence
+
+Objective: close the gap between pure runtime compatibility and real adapter probing while keeping provider I/O, raw errors and credentials outside Ronin's canonical domain.
+
+Implemented on validation branch `feat/runtime-discovery-evidence` / PR #12:
+
+- Added `studio_runners` as the first concrete I/O-side runtime package, matching the pre-existing architecture dependency matrix.
+- Added a minimal typed `RuntimeDiscoveryAdapter` SPI plus immutable `RuntimeDiscoveryResult`, `RuntimeDiscoveryIssue` and `RuntimeDiscoveryReport` contracts.
+- Discovery validates unique adapter identities, probes in stable adapter order, verifies that advertised profile references belong to the reporting adapter, and assembles the existing canonical `RuntimeCatalog` consumed by pure resolution.
+- Unexpected provider exceptions are contained as stable `runtime.discovery_failed` evidence without copying exception text, preventing accidental credential/connection leakage through generic probe failures.
+- Added pure immutable `ResolvedRuntimeSnapshot` evidence in `studio_core`, freezing the requested reference, selected runtime profile/capabilities, resolution policy, exact/fallback flag and requirement checks before execution begins.
+- Snapshot construction fails closed for inconsistent manually-constructed resolution state and returns no snapshot for `no_match`.
+- Extended strict mypy and mandatory 100% line/branch coverage to `studio_runners`; the existing mutation threshold and architecture/negative gates were not reduced.
+- Reused `sdp-studio`'s proven adapter/probe boundary, availability concept, safe command/probe practices and secret/error normalization as design evidence. Provider branches, environment/subprocess work and `dict[str, Any]` configuration remain behind adapters rather than being copied into `studio_core`.
+- `ronin-old` was rechecked as a reuse source; its notebook/magic execution behavior is not part of this runtime-discovery slice and remains reserved for a later kernel boundary.
+
+Validation history:
+
+1. The first PR run failed only at the repository formatter, while `gates-negative` succeeded and mutation remained independently active; no gate was changed.
+2. A temporary branch-only workflow ran the repository's installed Ruff formatter and committed only canonical formatting changes.
+3. The temporary helper is removed before the publication candidate. Authoritative exact-head PR CI and post-publication `main` CI are recorded only after they complete successfully.
+
+Next E1 priority: portable notebook serialization/import identity, followed by a kernel execution-evidence boundary. Runtime evidence then expands with repository revision/dirty-patch identity and adapter-normalized effective non-secret environment/package/image data.
+""",
+              Path("docs/product/PROJECTS_AND_EXECUTION.md"): """
+
+## Runtime discovery boundary and pre-execution snapshot
+
+Runtime discovery is an application/adapter operation, not a core calculation. A `studio_runners` discovery adapter owns whatever environment reads, executable probes, SDK/API calls or provider-specific normalization are required to determine its currently available profiles. It returns only canonical `RuntimeProfile` advertisements plus safe normalized discovery issues. The cross-adapter coordinator probes adapters in deterministic ID order, rejects ambiguous adapter/profile identity, and contains unexpected raw provider exceptions behind a stable non-secret failure code.
+
+The resulting `RuntimeCatalog` is then passed to the existing pure resolver. When resolution succeeds, `snapshot_runtime_resolution()` freezes a `ResolvedRuntimeSnapshot` containing the requested profile reference, complete selected profile/capability advertisement, resolution policy, exact-versus-fallback selection, and the selected profile's requirement checks. No wall clock, random identifier, secret, connection string, process handle or provider configuration is invented by this core snapshot.
+
+This snapshot is the immutable compatibility/selection nucleus for later run evidence. Execution boundaries may attach repository commit/dirty-patch identity, effective non-secret configuration, dependency locks, image/environment digests, attempt IDs, timestamps, logs, metrics, traces, lineage and cost/resource attribution. Those operational records surround the authored project and resolved-runtime snapshot; they never rewrite either one.
+""",
+          }
+
+          for path, text in additions.items():
+              current = path.read_text(encoding="utf-8")
+              marker = text.strip().splitlines()[0]
+              if marker not in current:
+                  path.write_text(current.rstrip() + text + "\n", encoding="utf-8")
+          PY
+      - name: Commit documentation
         run: |
           if git diff --quiet; then
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add python tests tools
-          git commit -m "style: apply canonical runtime formatting"
+          git add docs
+          git commit -m "docs: record runtime discovery contracts"
           git push origin HEAD:feat/runtime-discovery-evidence
