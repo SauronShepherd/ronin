@@ -278,3 +278,30 @@ Validation history:
 3. The temporary helper is removed before the publication candidate. Authoritative exact-head PR CI and post-publication `main` CI are recorded only after they complete successfully.
 
 Next E1 priority: portable notebook serialization/import identity, followed by a kernel execution-evidence boundary. Runtime evidence then expands with repository revision/dirty-patch identity and adapter-normalized effective non-secret environment/package/image data.
+
+
+## 2026-09-03 — E1 portable notebook identity and serialization
+
+Objective: make notebooks cloneable, reviewable and importable without identity churn or runtime/provider state leaking into authored intent.
+
+Implemented on validation branch `feat/notebook-portable-format` / PR #13:
+
+- Added deterministic `CellIdentityAnchor` provenance for `authoring` and `import` boundaries, deriving stable SHA-256 `CellId` values from boundary + namespace + source-stable reference.
+- Added strict versioned `NotebookDocument` serialization under schema `ronin.notebook/v1`; JSON round trips are deterministic and preserve authored order/dependencies.
+- Persisted identity anchors are verified against cell IDs during deserialization; unknown/missing v1 keys, malformed types, unsupported schema versions and tampered IDs fail closed.
+- Added pure `NotebookImportCell` / `import_notebook()` mapping from source-stable references, preserving cell identity across source edits and unrelated reordering while resolving dependency references explicitly.
+- Canonical notebook serialization excludes outputs, execution counters, timestamps, provider/runtime metadata, credentials and mutable kernel/session state.
+- Reused `ronin-old` as interoperability evidence for nbformat 4 and persisted Jupyter cell IDs, but did not copy its mutable `%%sql`/`%%configure`/`%pip` rewriting or subprocess execution into `studio_notebook`. A search of `sdp-studio` did not surface a stronger canonical notebook model suitable for direct reuse.
+- Added golden, round-trip and adversarial tests for stable identity vectors, namespace separation, duplicate/unknown references, shape/schema drift, malformed nested values and tamper detection. Local focused tests reached 100% line/branch coverage for the three new notebook modules before PR validation.
+
+Validation/publication evidence is recorded only after the exact final PR head and the published `main` SHA complete required GitHub Actions successfully. No gate is lowered or claimed green in advance.
+
+Next E1 priority after this increment: introduce a kernel execution-evidence boundary that consumes immutable authored notebook intent plus resolved runtime/repository evidence, adapting useful `ronin-old` magic semantics behind typed adapters without mutating the notebook.
+
+
+Validation history for this increment:
+
+1. PR CI run `33734665505` exposed only repository-format drift; `gates-negative` remained green and no gate was changed.
+2. Exact repository Ruff formatting was applied on the validation branch. PR CI run `33734842752` then passed Format, Lint, strict Types and Architecture contracts; all 129 tests passed, while the mandatory coverage gate correctly identified one unreachable redundant duplicate-reference guard as uncovered (99.88%% total).
+3. The unreachable duplicate guard was removed rather than adding a contrived test or lowering coverage. Exact-head SHA `0558448ec1183a2caa1a1bcd6afc15da66f94b62`, CI run `33734983351`, completed `quality`, `gates-negative` and `mutation` successfully. `quality` passed Format, Lint, strict Types, Architecture contracts and Tests with the mandatory 100%% line/branch coverage gate; mutation retained the existing strict score gate.
+4. A documentation-only validation-evidence commit follows this run; the temporary helper is removed before the final publication candidate, which must pass another exact-head PR CI before merge. Post-`main` success is recorded only after the published SHA is verified.

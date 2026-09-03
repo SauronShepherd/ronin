@@ -156,3 +156,14 @@ Operational discovery failures do not cross the boundary as raw provider excepti
 A successful pure `RuntimeResolution` can now be frozen as `ResolvedRuntimeSnapshot` before execution. The snapshot records the requested profile reference, the complete selected immutable `RuntimeProfile` capability advertisement, resolution policy, exact-versus-fallback selection, requirement checks and preferred-match count. It deliberately has no implicit clock, random ID, credential, provider configuration or mutable runtime handle. Inconsistent hand-built resolution objects fail closed rather than producing misleading audit evidence.
 
 This adapts the mature `sdp-studio` separation between runtime adapters/probes and capability validation, plus its hardened secret/error handling, while rejecting its provider branches and untyped profile dictionaries as canonical Ronin domain state. Later execution evidence may attach repository revision, effective non-secret runtime configuration, package/image digests, resource/cost data and observability references around this snapshot without mutating authored project intent.
+
+
+## ADR-AUTO-015 — Notebook cell identity is persisted provenance; runtime state is separate
+
+**Status:** accepted — 2026-09-03
+
+Portable Ronin notebooks use schema `ronin.notebook/v1` and deterministic JSON. A canonical cell persists both its `CellId` and a `CellIdentityAnchor` made from a bounded `authoring`/`import` boundary, a stable document namespace and a source-stable reference. Deserialization re-derives every ID and rejects mismatches, so copied/tampered IDs cannot silently detach identity from provenance. Identity is deliberately independent of mutable source text, cell position, clocks, randomness, runtime/provider metadata and execution outputs.
+
+Import adapters own source-specific reference allocation. Nbformat 4.5+ persisted cell IDs are suitable references when present; older or foreign formats must allocate and persist an equivalent stable external reference at the adapter boundary. `studio_notebook` does not infer identity from list position because insertion/reordering would make unrelated edits rewrite identity. Duplicate import references, unknown dependency references and schema/key drift fail closed.
+
+Authored notebook intent contains only ordered cells, source/language, explicit dependencies and identity provenance. Execution counters, outputs, timestamps, kernels, packages, provider configuration, credentials and mutable session state belong to later kernel/orchestrator evidence and must never be folded back into the authored document as a side effect of execution. This adapts the useful nbformat/persisted-cell-id behavior visible in `ronin-old` while rejecting its service/runtime mixing and mutable magic rewriting as canonical document behavior. `sdp-studio` did not expose a stronger reusable canonical notebook model for this slice.
