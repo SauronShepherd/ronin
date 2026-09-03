@@ -41,15 +41,15 @@ select = ["E", "F", "I", "B", "UP", "SIM", "S", "ASYNC", "C4", "PT", "RET", "ARG
 python_version = "3.11"
 strict = true
 mypy_path = "python"
-packages = ["studio_core", "studio_notebook", "studio_runners"]
+packages = ["studio_core", "studio_notebook", "studio_runners", "studio_kernel"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra --strict-config --strict-markers --cov=studio_core --cov=studio_notebook --cov=studio_runners --cov-branch --cov-report=term-missing --cov-fail-under=100"
+addopts = "-ra --strict-config --strict-markers --cov=studio_core --cov=studio_notebook --cov=studio_runners --cov=studio_kernel --cov-branch --cov-report=term-missing --cov-fail-under=100"
 
 [tool.coverage.run]
 branch = true
-source = ["studio_core", "studio_notebook", "studio_runners"]
+source = ["studio_core", "studio_notebook", "studio_runners", "studio_kernel"]
 
 [tool.coverage.report]
 fail_under = 100

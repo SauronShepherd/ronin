@@ -38,14 +38,24 @@ The pure analyzer does not parse Python, SQL, Scala or vendor-specific magic syn
 
 Kernel/session behavior belongs outside the pure notebook domain. This includes package installation, environment configuration, filesystem/network access, secret resolution, Spark/session creation, SQL dialect dispatch, container/pod lifecycle, cancellation, resource accounting and provider-specific notebook magics.
 
-`ronin-old` contains useful prior behavior for `%%sql`, `%%configure` and `%pip`, but that implementation mutates notebook objects and can invoke subprocesses. Ronin therefore treats it as reuse evidence for future kernel/adapters rather than copying it into `studio_notebook`.
+`studio_kernel` is the typed preparation/evidence boundary around that side-effecting behavior. `prepare_notebook_execution()` consumes the exact immutable `NotebookDocument`, a successful `ResolvedRuntimeSnapshot`, a `RepositoryRevision`, and a `KernelRequestAdapter`. It first requires a valid canonical dependency graph and emits requests only for executable cells in deterministic dependency order.
+
+The adapter owns language- and magic-specific interpretation. It may return a separate `executable_source`, normalized `KernelDirective` fields and explicit required permissions, while every `CellExecutionRequest` retains the original authored source independently. Preparation fails closed if an adapter changes the cell identity or returns a directive under a different adapter identity. Preparing a run therefore cannot silently rewrite `%pip`, `%%sql`, `%%configure` or future syntax back into the authored notebook.
+
+Repository evidence records a lowercase Git object ID and, when the checkout is dirty, an optional SHA-256 identity for the dirty patch. Runtime selection evidence remains the immutable provider-neutral snapshot from `studio_core`; kernel preparation does not add provider configuration, credentials, wall-clock time or random IDs to either authored intent or runtime selection.
+
+`ronin-old` contains useful prior behavior for `%%sql`, `%%configure` and `%pip`, but that implementation mutates notebook objects and can invoke subprocesses. Ronin treats those semantics as adapter reuse evidence rather than copying their mutation/subprocess boundary into canonical notebook or kernel contracts.
 
 The historical Fakebric notebook shape also demonstrates useful nbformat 4 interoperability and persisted Jupyter cell IDs, but it mixed execution outputs, runtime metadata and notebook validation into the service/runtime layer. Ronin reuses the interoperability lesson while keeping canonical authored intent and runtime evidence separate.
 
-Adapters may translate supported magics into typed execution requests, but they must preserve security boundaries, audit evidence, cost/resource attribution, reproducibility and explicit failure semantics. No adapter-specific syntax becomes part of the canonical notebook dependency graph merely because a provider supports it.
+No adapter-specific syntax becomes part of the canonical notebook dependency graph merely because a provider supports it. Actual kernel/session I/O, isolation, secret resolution, cancellation, permission enforcement, redaction, package installation and provider-specific lifecycle behavior remain adapter/orchestrator responsibilities.
 
 ## Evidence and future integration
 
-Cell dependency analysis and the portable document are the document-level execution contract. Later kernel/orchestrator slices should attach run evidence without mutating the authored notebook: resolved runtime profile, cell attempt IDs, repository revision, timestamps, exit state, logs, metrics, traces, lineage, resource/cost attribution and materialized outputs.
+Per-cell execution results use normalized immutable states (`succeeded`, `failed`, `cancelled`). Failed results require a stable failure code instead of copying an arbitrary raw provider exception into canonical evidence. Results may attach typed references for logs, metrics, traces, lineage, materialized outputs, resource usage and cost; the referenced storage/observability systems remain replaceable.
+
+`NotebookExecutionEvidence` binds those results back to the exact prepared request and rejects duplicate or unknown result cell identities. It may represent partial evidence while a run is active, and exposes whether every requested executable cell has a result without mutating the underlying document or request.
+
+Later kernel/orchestrator slices should add durable cell/run attempt identities and timestamps at the operational event boundary, plus adapter-normalized effective non-secret runtime configuration, environment/package locks or digests, image identity, cancellation evidence and durable event storage. These records must surround the immutable notebook/runtime/repository nucleus rather than rewrite it.
 
 Data lineage is related but distinct from cell execution dependencies. Assets read or written by a cell should be represented through lineage/evidence contracts rather than overloaded into the cell DAG. This separation allows Ronin to explain both *why a cell ran after another cell* and *which data/model/knowledge assets influenced its result*.
