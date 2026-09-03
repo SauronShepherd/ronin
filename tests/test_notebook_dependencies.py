@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_notebook import CellId, Notebook, NotebookCell, analyze_notebook_dependencies
 
 
