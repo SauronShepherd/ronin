@@ -144,7 +144,6 @@ The core does not infer hidden dependencies by parsing Python, SQL, Scala or ven
 
 `ronin-old` provides useful prior semantics for `%%sql`, `%%configure` and `%pip`, but its implementation mutates notebook cells and can invoke subprocesses. Those behaviors are not copied into the pure domain. Future `studio_kernel`/adapter work may adapt the useful parsing semantics behind typed execution requests, permissions, audit/evidence, resource/cost attribution and reproducibility controls.
 
-
 ## ADR-AUTO-014 — Runtime discovery is a typed adapter SPI; selection evidence is immutable core data
 
 **Status:** accepted — 2026-09-03
@@ -157,7 +156,6 @@ A successful pure `RuntimeResolution` can now be frozen as `ResolvedRuntimeSnaps
 
 This adapts the mature `sdp-studio` separation between runtime adapters/probes and capability validation, plus its hardened secret/error handling, while rejecting its provider branches and untyped profile dictionaries as canonical Ronin domain state. Later execution evidence may attach repository revision, effective non-secret runtime configuration, package/image digests, resource/cost data and observability references around this snapshot without mutating authored project intent.
 
-
 ## ADR-AUTO-015 — Notebook cell identity is persisted provenance; runtime state is separate
 
 **Status:** accepted — 2026-09-03
@@ -167,3 +165,15 @@ Portable Ronin notebooks use schema `ronin.notebook/v1` and deterministic JSON. 
 Import adapters own source-specific reference allocation. Nbformat 4.5+ persisted cell IDs are suitable references when present; older or foreign formats must allocate and persist an equivalent stable external reference at the adapter boundary. `studio_notebook` does not infer identity from list position because insertion/reordering would make unrelated edits rewrite identity. Duplicate import references, unknown dependency references and schema/key drift fail closed.
 
 Authored notebook intent contains only ordered cells, source/language, explicit dependencies and identity provenance. Execution counters, outputs, timestamps, kernels, packages, provider configuration, credentials and mutable session state belong to later kernel/orchestrator evidence and must never be folded back into the authored document as a side effect of execution. This adapts the useful nbformat/persisted-cell-id behavior visible in `ronin-old` while rejecting its service/runtime mixing and mutable magic rewriting as canonical document behavior. `sdp-studio` did not expose a stronger reusable canonical notebook model for this slice.
+
+## ADR-AUTO-016 — Kernel preparation is adapter-owned; execution evidence surrounds authored intent
+
+**Status:** accepted — 2026-09-03
+
+`studio_kernel` is the typed boundary between immutable notebook intent and side-effecting execution adapters. A prepared notebook execution binds the exact `NotebookDocument`, a successful immutable `ResolvedRuntimeSnapshot`, and a `RepositoryRevision` containing the Git object ID plus an optional dirty-patch SHA-256. It does not rewrite any of those inputs or invent clocks, random attempt IDs, credentials or provider state.
+
+Language- and magic-specific interpretation belongs to `KernelRequestAdapter`. An adapter may translate constructs such as `%pip`, `%%sql` or future provider syntax into an `executable_source` plus a normalized `KernelDirective` and explicit permission requirements, while the request retains the original authored source independently. Preparation fails closed if dependencies are invalid, the adapter changes `CellId`, or the directive claims a different adapter identity. This preserves reviewable authored semantics while permitting provider-specific execution behavior behind replaceable adapters.
+
+Per-cell results are immutable normalized outcomes (`succeeded`, `failed`, `cancelled`). Raw provider exceptions do not become canonical failure state; failed results require a stable failure code. Cross-cutting execution artifacts are represented by typed references for logs, metrics, traces, lineage, outputs, resource usage and cost so later storage/observability systems can remain replaceable. Actual kernel/session I/O, cancellation, isolation, secret resolution, permission enforcement, redaction and durable event persistence remain future adapter/orchestrator responsibilities.
+
+The design uses `ronin-old` only as behavioral evidence for useful notebook-magic concepts and deliberately rejects its mutable cell rewriting and direct subprocess behavior as the canonical contract. No stronger reusable kernel contract was found in the inspected `sdp-studio` material for this slice.
