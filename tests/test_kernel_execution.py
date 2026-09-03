@@ -6,7 +6,9 @@ import pytest
 from studio_core import ResolvedRuntimeSnapshot, RuntimeProfile, RuntimeProfileRef
 from studio_kernel import (
     CellExecutionResult,
+    ExecutionAttemptId,
     ExecutionEvidenceReference,
+    ExecutionReproducibilitySnapshot,
     KernelDirective,
     KernelDirectiveField,
     NotebookExecutionEvidence,
@@ -67,6 +69,21 @@ class _Adapter:
         )
 
 
+def _prepare(
+    document: NotebookDocument,
+    adapter: _Adapter = _Adapter(),
+    repository: RepositoryRevision = RepositoryRevision("a" * 40),
+) -> object:
+    return prepare_notebook_execution(
+        document,
+        _runtime(),
+        repository,
+        adapter,
+        attempt_id=ExecutionAttemptId("attempt-001"),
+        reproducibility=ExecutionReproducibilitySnapshot(),
+    )
+
+
 def test_repository_revision_validates_clean_and_dirty_git_identity() -> None:
     clean = RepositoryRevision("a" * 40)
     dirty = RepositoryRevision("b" * 64, "c" * 64)
@@ -115,16 +132,22 @@ def test_directives_are_canonical_and_fail_closed_on_invalid_metadata() -> None:
 
 def test_prepare_notebook_execution_preserves_authored_intent_and_dependency_order() -> None:
     document = _document()
+    reproducibility = ExecutionReproducibilitySnapshot()
+    attempt_id = ExecutionAttemptId("attempt-001")
     request = prepare_notebook_execution(
         document,
         _runtime(),
         RepositoryRevision("a" * 40, "b" * 64),
         _Adapter(),
+        attempt_id=attempt_id,
+        reproducibility=reproducibility,
     )
 
     assert request.document is document
     assert request.runtime == _runtime()
     assert request.repository.dirty_patch_sha256 == "b" * 64
+    assert request.attempt_id == attempt_id
+    assert request.reproducibility is reproducibility
     assert [cell.cell_id for cell in request.cells] == [
         document.notebook.cells[1].id,
         document.notebook.cells[2].id,
@@ -138,38 +161,19 @@ def test_prepare_notebook_execution_preserves_authored_intent_and_dependency_ord
 
 def test_prepare_notebook_execution_rejects_invalid_graph_and_adapter_identity_drift() -> None:
     with pytest.raises(ValueError, match="invalid dependencies"):
-        prepare_notebook_execution(
-            _document(invalid_dependency=True),
-            _runtime(),
-            RepositoryRevision("a" * 40),
-            _Adapter(),
-        )
+        _prepare(_document(invalid_dependency=True))
     with pytest.raises(ValueError, match="kernel adapter id"):
-        prepare_notebook_execution(
-            _document(), _runtime(), RepositoryRevision("a" * 40), _Adapter(adapter_id=" bad ")
-        )
+        _prepare(_document(), _Adapter(adapter_id=" bad "))
     with pytest.raises(ValueError, match="preserve cell identity"):
-        prepare_notebook_execution(
-            _document(),
-            _runtime(),
-            RepositoryRevision("a" * 40),
-            _Adapter(wrong_cell=True),
-        )
+        _prepare(_document(), _Adapter(wrong_cell=True))
     with pytest.raises(ValueError, match="must match"):
-        prepare_notebook_execution(
-            _document(),
-            _runtime(),
-            RepositoryRevision("a" * 40),
-            _Adapter(wrong_adapter=True),
-        )
+        _prepare(_document(), _Adapter(wrong_adapter=True))
 
 
 def test_results_normalize_failure_and_cross_cutting_evidence() -> None:
-    document = _document()
-    request = prepare_notebook_execution(
-        document, _runtime(), RepositoryRevision("a" * 40), _Adapter()
-    )
-    first, second = request.cells
+    request = _prepare(_document())
+    assert hasattr(request, "cells")
+    first, second = request.cells  # type: ignore[attr-defined]
     refs = (
         ExecutionEvidenceReference("trace", "otel://trace/123"),
         ExecutionEvidenceReference("cost", "cost://run/cell-1"),
@@ -177,11 +181,11 @@ def test_results_normalize_failure_and_cross_cutting_evidence() -> None:
     )
     success = CellExecutionResult(first.cell_id, "succeeded", evidence=refs)
     failure = CellExecutionResult(second.cell_id, "failed", "kernel.sql.syntax")
-    evidence = NotebookExecutionEvidence(request, (success, failure))
+    evidence = NotebookExecutionEvidence(request, (success, failure))  # type: ignore[arg-type]
 
     assert success.evidence == tuple(sorted(refs))
     assert evidence.is_complete is True
-    assert NotebookExecutionEvidence(request, (success,)).is_complete is False
+    assert NotebookExecutionEvidence(request, (success,)).is_complete is False  # type: ignore[arg-type]
 
     with pytest.raises(ValueError, match="unsupported execution evidence kind"):
         ExecutionEvidenceReference("unknown", "ref")  # type: ignore[arg-type]
@@ -201,7 +205,10 @@ def test_results_normalize_failure_and_cross_cutting_evidence() -> None:
     with pytest.raises(ValueError, match="evidence references must be unique"):
         CellExecutionResult(first.cell_id, "succeeded", evidence=(duplicate_ref, duplicate_ref))
     with pytest.raises(ValueError, match="unique cell ids"):
-        NotebookExecutionEvidence(request, (success, success))
+        NotebookExecutionEvidence(request, (success, success))  # type: ignore[arg-type]
     unknown = CellIdentityAnchor("authoring", "nb", "unknown").cell_id()
     with pytest.raises(ValueError, match="requested cells"):
-        NotebookExecutionEvidence(request, (CellExecutionResult(unknown, "succeeded"),))
+        NotebookExecutionEvidence(  # type: ignore[arg-type]
+            request,
+            (CellExecutionResult(unknown, "succeeded"),),
+        )
