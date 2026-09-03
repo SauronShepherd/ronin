@@ -40,11 +40,12 @@ Completed:
 - Immutable `studio_notebook` cells with explicit executable-cell dependencies, deterministic topological execution order/parallel levels, fail-closed cycle/unknown/non-executable dependency evidence, and Markdown kept outside execution semantics. The 100% line/branch coverage and strict typing gates now include `studio_notebook`.
 - Portable `ronin.notebook/v1` deterministic JSON with persisted/verifiable `CellIdentityAnchor` provenance, stable authoring/import IDs, strict unknown-field/schema rejection, pure import mapping from source-stable cell references and explicit exclusion of runtime outputs/metadata from authored notebook intent.
 - Typed `studio_kernel` execution-evidence boundary with immutable notebook/runtime/repository-bound requests, adapter-owned source/magic preparation that must preserve cell identity, normalized per-cell outcomes, explicit permission requirements and typed log/metric/trace/lineage/output/resource/cost references. Authored notebook source is never mutated by preparation.
+- Immutable execution reproducibility snapshots bound to an explicit durable attempt ID, with deterministic event identities, adapter-normalized effective non-secret settings, and typed SHA-256 identities for package locks, environments, runtime images and runtime artifacts. Secret-looking setting names and duplicate evidence keys fail closed; authored project/notebook intent remains unchanged.
 
 Next:
 
-1. Extend the run snapshot around the resolved runtime and `RepositoryRevision` with adapter-normalized effective non-secret runtime configuration, package/environment locks or digests and container/image identity; preserve authored project/notebook intent unchanged.
-2. Add the first real kernel execution adapter/session boundary with cancellation, isolation, permission enforcement, redaction and durable attempt/evidence emission; adapt useful `ronin-old` magic semantics only behind that boundary rather than reintroducing subprocess or notebook mutation into canonical contracts.
+1. Add the first real kernel execution adapter/session boundary with cancellation, isolation, permission enforcement, redaction and durable ordered event/evidence emission; adapt useful `ronin-old` magic semantics only behind that boundary rather than reintroducing subprocess or notebook mutation into canonical contracts.
+2. Add a concrete runtime-evidence collector adapter that derives effective non-secret settings and verifies package/environment/image/artifact digests from real local/container execution without putting provider logic into `studio_kernel`.
 3. Ratchet mutation quality upward when new tests make that sustainable; never lower the threshold merely to make CI pass.
 
 ## Later reuse
