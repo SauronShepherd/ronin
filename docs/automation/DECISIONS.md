@@ -143,3 +143,16 @@ The canonical notebook document separates presentation order from execution inte
 The core does not infer hidden dependencies by parsing Python, SQL, Scala or vendor-specific notebook magics. Authoring/import adapters may propose dependency changes, but canonical execution intent changes only through an explicit document update that can be reviewed and versioned.
 
 `ronin-old` provides useful prior semantics for `%%sql`, `%%configure` and `%pip`, but its implementation mutates notebook cells and can invoke subprocesses. Those behaviors are not copied into the pure domain. Future `studio_kernel`/adapter work may adapt the useful parsing semantics behind typed execution requests, permissions, audit/evidence, resource/cost attribution and reproducibility controls.
+
+
+## ADR-AUTO-014 — Runtime discovery is a typed adapter SPI; selection evidence is immutable core data
+
+**Status:** accepted — 2026-09-03
+
+Ronin now makes the runtime-discovery boundary executable rather than leaving it as an architectural promise. `studio_runners` owns the side-effecting `RuntimeDiscoveryAdapter` SPI and normalizes adapter-owned profile advertisements into the existing provider-neutral `RuntimeProfile`/`RuntimeCatalog` contracts. Adapter IDs are unique, discovery runs in stable adapter order, and every advertised profile must belong to the reporting adapter.
+
+Operational discovery failures do not cross the boundary as raw provider exceptions. The coordinator emits stable `runtime.discovery_failed` evidence without embedding `str(exc)`, so tokens, connection strings or other provider details accidentally present in exception text are not copied into canonical evidence. Adapters may return additional normalized issues, but they are responsible for redaction before doing so. Provider-specific probing, environment access, subprocesses, SDK calls and version/channel parsing remain outside `studio_core`.
+
+A successful pure `RuntimeResolution` can now be frozen as `ResolvedRuntimeSnapshot` before execution. The snapshot records the requested profile reference, the complete selected immutable `RuntimeProfile` capability advertisement, resolution policy, exact-versus-fallback selection, requirement checks and preferred-match count. It deliberately has no implicit clock, random ID, credential, provider configuration or mutable runtime handle. Inconsistent hand-built resolution objects fail closed rather than producing misleading audit evidence.
+
+This adapts the mature `sdp-studio` separation between runtime adapters/probes and capability validation, plus its hardened secret/error handling, while rejecting its provider branches and untyped profile dictionaries as canonical Ronin domain state. Later execution evidence may attach repository revision, effective non-secret runtime configuration, package/image digests, resource/cost data and observability references around this snapshot without mutating authored project intent.

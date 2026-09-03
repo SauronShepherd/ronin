@@ -77,3 +77,12 @@ The product shell should provide a persistent project switcher. Project creation
 Before execution, the UI should explain incompatibilities rather than silently changing runtime semantics. It should show which requested capabilities are satisfied, missing, downgraded, or supplied by an adapter-specific extension.
 
 Future environments such as development/test/production may override the selected runtime profile or connections while preserving the same project identity and portable code. That environment layer must not duplicate project semantics or introduce vendor-specific branches into the core.
+
+
+## Runtime discovery boundary and pre-execution snapshot
+
+Runtime discovery is an application/adapter operation, not a core calculation. A `studio_runners` discovery adapter owns whatever environment reads, executable probes, SDK/API calls or provider-specific normalization are required to determine its currently available profiles. It returns only canonical `RuntimeProfile` advertisements plus safe normalized discovery issues. The cross-adapter coordinator probes adapters in deterministic ID order, rejects ambiguous adapter/profile identity, and contains unexpected raw provider exceptions behind a stable non-secret failure code.
+
+The resulting `RuntimeCatalog` is then passed to the existing pure resolver. When resolution succeeds, `snapshot_runtime_resolution()` freezes a `ResolvedRuntimeSnapshot` containing the requested profile reference, complete selected profile/capability advertisement, resolution policy, exact-versus-fallback selection, and the selected profile's requirement checks. No wall clock, random identifier, secret, connection string, process handle or provider configuration is invented by this core snapshot.
+
+This snapshot is the immutable compatibility/selection nucleus for later run evidence. Execution boundaries may attach repository commit/dirty-patch identity, effective non-secret configuration, dependency locks, image/environment digests, attempt IDs, timestamps, logs, metrics, traces, lineage and cost/resource attribution. Those operational records surround the authored project and resolved-runtime snapshot; they never rewrite either one.
