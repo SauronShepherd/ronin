@@ -57,7 +57,9 @@ def import_notebook(namespace: str, cells: Sequence[NotebookImportCell]) -> Note
                 id=cell_id,
                 kind=cell.kind,
                 source=cell.source,
-                dependencies=tuple(by_reference[reference] for reference in cell.dependency_references),
+                dependencies=tuple(
+                    by_reference[reference] for reference in cell.dependency_references
+                ),
                 language=cell.language,
             )
         )
