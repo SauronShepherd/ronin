@@ -99,7 +99,9 @@ class ReproducibilityDigest:
         }:
             raise ValueError("unsupported reproducibility digest kind")
         _require_text(self.reference, "reproducibility digest reference")
-        if len(self.sha256) != 64 or any(character not in "0123456789abcdef" for character in self.sha256):
+        if len(self.sha256) != 64 or any(
+            character not in "0123456789abcdef" for character in self.sha256
+        ):
             raise ValueError("reproducibility digest must be a lowercase SHA-256 hex digest")
 
 
