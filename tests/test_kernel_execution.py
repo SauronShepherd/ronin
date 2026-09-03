@@ -12,6 +12,7 @@ from studio_kernel import (
     KernelDirective,
     KernelDirectiveField,
     NotebookExecutionEvidence,
+    NotebookExecutionRequest,
     PreparedCell,
     RepositoryRevision,
     prepare_notebook_execution,
@@ -71,14 +72,14 @@ class _Adapter:
 
 def _prepare(
     document: NotebookDocument,
-    adapter: _Adapter = _Adapter(),
-    repository: RepositoryRevision = RepositoryRevision("a" * 40),
-) -> object:
+    adapter: _Adapter | None = None,
+    repository: RepositoryRevision | None = None,
+) -> NotebookExecutionRequest:
     return prepare_notebook_execution(
         document,
         _runtime(),
-        repository,
-        adapter,
+        repository or RepositoryRevision("a" * 40),
+        adapter or _Adapter(),
         attempt_id=ExecutionAttemptId("attempt-001"),
         reproducibility=ExecutionReproducibilitySnapshot(),
     )
@@ -172,8 +173,7 @@ def test_prepare_notebook_execution_rejects_invalid_graph_and_adapter_identity_d
 
 def test_results_normalize_failure_and_cross_cutting_evidence() -> None:
     request = _prepare(_document())
-    assert hasattr(request, "cells")
-    first, second = request.cells  # type: ignore[attr-defined]
+    first, second = request.cells
     refs = (
         ExecutionEvidenceReference("trace", "otel://trace/123"),
         ExecutionEvidenceReference("cost", "cost://run/cell-1"),
@@ -181,11 +181,11 @@ def test_results_normalize_failure_and_cross_cutting_evidence() -> None:
     )
     success = CellExecutionResult(first.cell_id, "succeeded", evidence=refs)
     failure = CellExecutionResult(second.cell_id, "failed", "kernel.sql.syntax")
-    evidence = NotebookExecutionEvidence(request, (success, failure))  # type: ignore[arg-type]
+    evidence = NotebookExecutionEvidence(request, (success, failure))
 
     assert success.evidence == tuple(sorted(refs))
     assert evidence.is_complete is True
-    assert NotebookExecutionEvidence(request, (success,)).is_complete is False  # type: ignore[arg-type]
+    assert NotebookExecutionEvidence(request, (success,)).is_complete is False
 
     with pytest.raises(ValueError, match="unsupported execution evidence kind"):
         ExecutionEvidenceReference("unknown", "ref")  # type: ignore[arg-type]
@@ -205,10 +205,7 @@ def test_results_normalize_failure_and_cross_cutting_evidence() -> None:
     with pytest.raises(ValueError, match="evidence references must be unique"):
         CellExecutionResult(first.cell_id, "succeeded", evidence=(duplicate_ref, duplicate_ref))
     with pytest.raises(ValueError, match="unique cell ids"):
-        NotebookExecutionEvidence(request, (success, success))  # type: ignore[arg-type]
+        NotebookExecutionEvidence(request, (success, success))
     unknown = CellIdentityAnchor("authoring", "nb", "unknown").cell_id()
     with pytest.raises(ValueError, match="requested cells"):
-        NotebookExecutionEvidence(  # type: ignore[arg-type]
-            request,
-            (CellExecutionResult(unknown, "succeeded"),),
-        )
+        NotebookExecutionEvidence(request, (CellExecutionResult(unknown, "succeeded"),))
