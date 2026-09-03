@@ -33,8 +33,12 @@ class RepositoryRevision:
     dirty_patch_sha256: str | None = None
 
     def __post_init__(self) -> None:
-        if len(self.commit) not in {40, 64} or any(ch not in "0123456789abcdef" for ch in self.commit):
-            raise ValueError("repository commit must be a lowercase 40- or 64-character hex object id")
+        if len(self.commit) not in {40, 64} or any(
+            ch not in "0123456789abcdef" for ch in self.commit
+        ):
+            raise ValueError(
+                "repository commit must be a lowercase 40- or 64-character hex object id"
+            )
         if self.dirty_patch_sha256 is not None and (
             len(self.dirty_patch_sha256) != 64
             or any(ch not in "0123456789abcdef" for ch in self.dirty_patch_sha256)
