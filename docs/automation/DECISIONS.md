@@ -115,3 +115,19 @@ A pure graph-structure rule cannot assign stable distinct identities to two auto
 Canonical `Node` now persists `instance_key` alongside `NodeId`. Deserialization reconstructs the canonical semantic payload, re-derives the identifier, and rejects an ID/key/semantic mismatch. Labels, canvas coordinates, insertion order, graph traversal order and runtime/provider state remain outside identity.
 
 This deliberately adapts `sdp-studio`'s useful property that document IDs are allocated before lowering and propagated through IR/source provenance. Ronin does not reuse `sdp-studio`'s ULID generator inside `studio_core` because it reads wall-clock time and OS randomness. A future authoring adapter may use an opaque random ID implementation at its side-effect boundary; once allocated, the resulting stable anchor is persisted and passed explicitly into the pure domain.
+
+## ADR-AUTO-012 — Mutation testing is an independent semantic quality gate
+
+**Status:** accepted — 2026-09-03
+
+`studio_core` keeps its mandatory 100% line and branch coverage gate with zero exclusions. Mutation testing supplements that evidence; it never replaces or weakens coverage. The mutation gate is pinned to `mutmut==3.7.0` because mutation behavior and the exported CI evidence schema are themselves part of the quality contract.
+
+The minimum accepted mutation score is 90%. Ronin counts only killed mutants as positive evidence: `killed / (total - skipped)`. Survivors reduce the score, while `no_tests`, `suspicious`, `timeout`, interrupted checks and segfaults make the evidence invalid and fail the gate. Production exclusions and `pragma: no mutate` escapes are not accepted as a way to reach the threshold. The target may be ratcheted upward as tests strengthen, but it must not be lowered merely to make CI pass.
+
+Mutmut 3.x mutates code inside functions and methods; module-level executable code is outside its current mutation scope. Ronin records that limitation rather than pretending to cover it: normal tests, architecture checks and the independent 100% line/branch gate continue to protect the whole pure-domain package, and the mutation tool can be revisited when a stronger compatible option is available.
+
+The repository uses a temporary `src -> python` source alias only inside the mutation job because mutmut's generated-mutant layout assumes a source root distinct from the project package directory. This is a tooling-boundary workaround, not a package-layout or domain-architecture change. Mutation runs select the pure-domain behavioral test files explicitly and clear pytest's global coverage addopts so mutants are killed by behavioral assertions, not by coverage-plugin side effects; the normal `quality` job still runs every test with full coverage enforcement.
+
+Initial mutation evidence was 1,599 killed and 508 survived out of 2,107 total (75.89%), with no invalid categories. Rather than weaken the threshold, Ronin added complete deterministic snapshots for the built-in provider-neutral operator and diagnostic catalogs plus exact metadata-boundary assertions. The resulting evidence is 1,899 killed and 208 survived out of 2,107 total (90.13%), again with zero invalid categories. CI retains the compact exported counts and survivor list as a short-lived artifact so the gate is auditable even when log transport is truncated.
+
+A reuse search across `SauronShepherd/sdp-studio` and `SauronShepherd/ronin-old` did not surface mutation-testing machinery suitable for reuse, so this quality boundary is implemented directly in Ronin.
