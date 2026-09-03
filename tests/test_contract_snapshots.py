@@ -1,7 +1,12 @@
 import hashlib
 
 import pytest
-from studio_core import DiagnosticPredicate, OperatorPort, builtin_diagnostic_catalog, builtin_operator_catalog
+from studio_core import (
+    DiagnosticPredicate,
+    OperatorPort,
+    builtin_diagnostic_catalog,
+    builtin_operator_catalog,
+)
 
 
 def _sha256(value: str) -> str:
