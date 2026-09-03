@@ -19,9 +19,10 @@ The repository is in **E1 — Core IR/domain foundations**. Pure immutable graph
 ```bash
 python -m pip install -e '.[dev]'
 make check
+make mutation
 ```
 
-`make check` runs formatting/linting, strict type checking, the architecture gate and tests. `studio_core` currently has a mandatory 100% line/branch coverage gate.
+`make check` runs formatting/linting, strict type checking, the architecture gate and tests. `studio_core` has a mandatory 100% line/branch coverage gate with zero exclusions. `make mutation` is the separate, more expensive mutation-quality gate; it requires at least 90% killed mutants and rejects incomplete or invalid mutation evidence.
 
 ## Layout
 
