@@ -297,3 +297,11 @@ Implemented on validation branch `feat/notebook-portable-format` / PR #13:
 Validation/publication evidence is recorded only after the exact final PR head and the published `main` SHA complete required GitHub Actions successfully. No gate is lowered or claimed green in advance.
 
 Next E1 priority after this increment: introduce a kernel execution-evidence boundary that consumes immutable authored notebook intent plus resolved runtime/repository evidence, adapting useful `ronin-old` magic semantics behind typed adapters without mutating the notebook.
+
+
+Validation history for this increment:
+
+1. PR CI run `33734665505` exposed only repository-format drift; `gates-negative` remained green and no gate was changed.
+2. Exact repository Ruff formatting was applied on the validation branch. PR CI run `33734842752` then passed Format, Lint, strict Types and Architecture contracts; all 129 tests passed, while the mandatory coverage gate correctly identified one unreachable redundant duplicate-reference guard as uncovered (99.88%% total).
+3. The unreachable duplicate guard was removed rather than adding a contrived test or lowering coverage. Exact-head SHA `0558448ec1183a2caa1a1bcd6afc15da66f94b62`, CI run `33734983351`, completed `quality`, `gates-negative` and `mutation` successfully. `quality` passed Format, Lint, strict Types, Architecture contracts and Tests with the mandatory 100%% line/branch coverage gate; mutation retained the existing strict score gate.
+4. A documentation-only validation-evidence commit follows this run; the temporary helper is removed before the final publication candidate, which must pass another exact-head PR CI before merge. Post-`main` success is recorded only after the published SHA is verified.
