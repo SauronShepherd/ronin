@@ -6,10 +6,13 @@ import pytest
 from studio_core import ResolvedRuntimeSnapshot, RuntimeProfile, RuntimeProfileRef
 from studio_kernel import (
     CellExecutionResult,
+    ExecutionAttemptId,
     ExecutionEvidenceReference,
+    ExecutionReproducibilitySnapshot,
     KernelDirective,
     KernelDirectiveField,
     NotebookExecutionEvidence,
+    NotebookExecutionRequest,
     PreparedCell,
     RepositoryRevision,
     prepare_notebook_execution,
@@ -67,6 +70,21 @@ class _Adapter:
         )
 
 
+def _prepare(
+    document: NotebookDocument,
+    adapter: _Adapter | None = None,
+    repository: RepositoryRevision | None = None,
+) -> NotebookExecutionRequest:
+    return prepare_notebook_execution(
+        document,
+        _runtime(),
+        repository or RepositoryRevision("a" * 40),
+        adapter or _Adapter(),
+        attempt_id=ExecutionAttemptId("attempt-001"),
+        reproducibility=ExecutionReproducibilitySnapshot(),
+    )
+
+
 def test_repository_revision_validates_clean_and_dirty_git_identity() -> None:
     clean = RepositoryRevision("a" * 40)
     dirty = RepositoryRevision("b" * 64, "c" * 64)
@@ -115,16 +133,22 @@ def test_directives_are_canonical_and_fail_closed_on_invalid_metadata() -> None:
 
 def test_prepare_notebook_execution_preserves_authored_intent_and_dependency_order() -> None:
     document = _document()
+    reproducibility = ExecutionReproducibilitySnapshot()
+    attempt_id = ExecutionAttemptId("attempt-001")
     request = prepare_notebook_execution(
         document,
         _runtime(),
         RepositoryRevision("a" * 40, "b" * 64),
         _Adapter(),
+        attempt_id=attempt_id,
+        reproducibility=reproducibility,
     )
 
     assert request.document is document
     assert request.runtime == _runtime()
     assert request.repository.dirty_patch_sha256 == "b" * 64
+    assert request.attempt_id == attempt_id
+    assert request.reproducibility is reproducibility
     assert [cell.cell_id for cell in request.cells] == [
         document.notebook.cells[1].id,
         document.notebook.cells[2].id,
@@ -138,37 +162,17 @@ def test_prepare_notebook_execution_preserves_authored_intent_and_dependency_ord
 
 def test_prepare_notebook_execution_rejects_invalid_graph_and_adapter_identity_drift() -> None:
     with pytest.raises(ValueError, match="invalid dependencies"):
-        prepare_notebook_execution(
-            _document(invalid_dependency=True),
-            _runtime(),
-            RepositoryRevision("a" * 40),
-            _Adapter(),
-        )
+        _prepare(_document(invalid_dependency=True))
     with pytest.raises(ValueError, match="kernel adapter id"):
-        prepare_notebook_execution(
-            _document(), _runtime(), RepositoryRevision("a" * 40), _Adapter(adapter_id=" bad ")
-        )
+        _prepare(_document(), _Adapter(adapter_id=" bad "))
     with pytest.raises(ValueError, match="preserve cell identity"):
-        prepare_notebook_execution(
-            _document(),
-            _runtime(),
-            RepositoryRevision("a" * 40),
-            _Adapter(wrong_cell=True),
-        )
+        _prepare(_document(), _Adapter(wrong_cell=True))
     with pytest.raises(ValueError, match="must match"):
-        prepare_notebook_execution(
-            _document(),
-            _runtime(),
-            RepositoryRevision("a" * 40),
-            _Adapter(wrong_adapter=True),
-        )
+        _prepare(_document(), _Adapter(wrong_adapter=True))
 
 
 def test_results_normalize_failure_and_cross_cutting_evidence() -> None:
-    document = _document()
-    request = prepare_notebook_execution(
-        document, _runtime(), RepositoryRevision("a" * 40), _Adapter()
-    )
+    request = _prepare(_document())
     first, second = request.cells
     refs = (
         ExecutionEvidenceReference("trace", "otel://trace/123"),

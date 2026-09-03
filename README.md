@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/ronin-logo.webp" alt="Ronin logo" width="360">
+</p>
+
 # Ronin
 
 Ronin is being built as a professional, free, open-source and self-hostable **Data + AI platform**. The target spans data integration, engineering, SQL, lakehouse, streaming, governance/lineage/ontology, BI/semantic models, data science, ML/MLOps, GenAI/RAG/agents, security, observability and FinOps in one coherent product.
@@ -12,7 +16,7 @@ See [`docs/product/PROJECTS_AND_EXECUTION.md`](docs/product/PROJECTS_AND_EXECUTI
 
 ## Current status
 
-The repository is in **E1 — Core IR/domain foundations**. Pure immutable graph primitives, executable architecture boundaries and strict quality gates exist; the broader product capabilities above are targets and are not yet claimed as implemented.
+The repository is in **E1 — Core IR/domain foundations**. Pure immutable graph primitives, executable architecture boundaries, portable notebook/runtime contracts and strict quality gates exist; the broader product capabilities above are targets and are not yet claimed as implemented.
 
 ## Development
 
@@ -22,7 +26,7 @@ make check
 make mutation
 ```
 
-`make check` runs formatting/linting, strict type checking, the architecture gate and tests. `studio_core` has a mandatory 100% line/branch coverage gate with zero exclusions. `make mutation` is the separate, more expensive mutation-quality gate; it requires at least 90% killed mutants and rejects incomplete or invalid mutation evidence.
+`make check` runs formatting/linting, strict type checking, the architecture gate and tests. Configured product packages have a mandatory 100% line/branch coverage gate with zero exclusions. `make mutation` is the separate, more expensive mutation-quality gate for `studio_core`; it requires at least 90% killed mutants and rejects incomplete or invalid mutation evidence.
 
 ## Layout
 

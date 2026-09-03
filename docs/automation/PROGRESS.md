@@ -328,3 +328,26 @@ Validation history:
 4. Documentation/decision updates follow that verified product-code head. The final PR head must pass another authoritative CI before merge, and post-`main` success is recorded only after the published SHA is verified.
 
 Next E1 priority: extend the immutable run snapshot with effective non-secret runtime configuration, environment/package/image digests and durable attempt/event identity, then introduce the first real kernel/session adapter with cancellation, isolation, permission enforcement and redacted durable evidence.
+
+## 2026-09-03 — E1 runtime reproducibility evidence
+
+Objective: make a notebook execution explainable and replayable beyond runtime-profile selection by binding the attempt to effective non-secret configuration and immutable environment/package/image identities, while also adding the supplied Ronin brand asset to the public README.
+
+Implemented on validation branch `feat/runtime-reproducibility-evidence` / PR #15:
+
+- Added explicit durable `ExecutionAttemptId` and deterministic `ExecutionEventId(attempt, sequence)` contracts; identity allocation remains an orchestration concern rather than using clocks/randomness inside `studio_kernel`.
+- Added canonical `EffectiveRuntimeSetting` evidence for adapter-normalized non-secret effective configuration. Obvious credential/password/token/API-key/private-key names fail closed, while adapters remain responsible for classification/redaction before the boundary.
+- Added typed SHA-256 `ReproducibilityDigest` evidence for package locks, environments, runtime images and runtime artifacts, with canonical ordering and duplicate-key rejection.
+- Bound `NotebookExecutionRequest` to both the explicit attempt identity and `ExecutionReproducibilitySnapshot`, preserving authored notebook/project intent unchanged.
+- Added adversarial tests for secret-looking setting names, malformed identities/digests, duplicate evidence, all supported digest kinds and request binding. The existing strict typing, architecture, 100% line/branch coverage and mutation gates were not reduced.
+- Reused `sdp-studio` artifact-hash/runtime-safety concepts and `ronin-old` redaction/base-image-lock patterns as evidence while keeping provider/runtime I/O behind adapters.
+- Added the user-supplied Ronin logo as `docs/assets/ronin-logo.webp` and surfaced it at the top of `README.md`.
+
+Validation history:
+
+1. PR run `33743098636` exposed only canonical Ruff formatting drift in the new digest check; the exact formatter output was applied without changing a gate.
+2. PR run `33743206537` then passed format but Ruff correctly rejected two constructed default arguments in a test helper (`B008`). The helper was redesigned with explicit optional values and a concrete request return type; no lint suppression was added.
+3. Product-code HEAD `c1d8b6c20b2dec6f43a8f1888181013532ee65e4`, PR CI run `33743273629`, passed Format, Lint, strict Types, Architecture contracts, Tests with the mandatory 100% line/branch coverage gate, `gates-negative`, and the existing mutation score gate.
+4. These documentation records and removal of the failed temporary branch-only helper require another authoritative exact-head PR CI before publication. Post-`main` evidence is only claimed after the published SHA completes required workflows successfully.
+
+Next E1 priority: implement the first real kernel/session adapter boundary with cancellation, isolation, permission enforcement, redaction and durable ordered event/evidence emission, then attach concrete local/container reproducibility collectors behind the neutral contracts.

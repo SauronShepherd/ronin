@@ -8,6 +8,8 @@ from typing import Literal, Protocol, TypeAlias
 from studio_core import ResolvedRuntimeSnapshot
 from studio_notebook import CellId, NotebookCell, NotebookDocument, analyze_notebook_dependencies
 
+from .reproducibility import ExecutionAttemptId, ExecutionReproducibilitySnapshot
+
 ExecutionState: TypeAlias = Literal["succeeded", "failed", "cancelled"]
 EvidenceKind: TypeAlias = Literal[
     "log",
@@ -112,6 +114,8 @@ class NotebookExecutionRequest:
     document: NotebookDocument
     runtime: ResolvedRuntimeSnapshot
     repository: RepositoryRevision
+    attempt_id: ExecutionAttemptId
+    reproducibility: ExecutionReproducibilitySnapshot
     cells: tuple[CellExecutionRequest, ...]
 
 
@@ -171,6 +175,9 @@ def prepare_notebook_execution(
     runtime: ResolvedRuntimeSnapshot,
     repository: RepositoryRevision,
     adapter: KernelRequestAdapter,
+    *,
+    attempt_id: ExecutionAttemptId,
+    reproducibility: ExecutionReproducibilitySnapshot,
 ) -> NotebookExecutionRequest:
     """Prepare executable cells without mutating authored notebook intent."""
     _require_text(adapter.adapter_id, "kernel adapter id")
@@ -198,4 +205,11 @@ def prepare_notebook_execution(
             )
         )
 
-    return NotebookExecutionRequest(document, runtime, repository, tuple(requests))
+    return NotebookExecutionRequest(
+        document,
+        runtime,
+        repository,
+        attempt_id,
+        reproducibility,
+        tuple(requests),
+    )

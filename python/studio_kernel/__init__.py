@@ -13,11 +13,22 @@ from .contracts import (
     RepositoryRevision,
     prepare_notebook_execution,
 )
+from .reproducibility import (
+    EffectiveRuntimeSetting,
+    ExecutionAttemptId,
+    ExecutionEventId,
+    ExecutionReproducibilitySnapshot,
+    ReproducibilityDigest,
+)
 
 __all__ = (
     "CellExecutionRequest",
     "CellExecutionResult",
+    "EffectiveRuntimeSetting",
+    "ExecutionAttemptId",
+    "ExecutionEventId",
     "ExecutionEvidenceReference",
+    "ExecutionReproducibilitySnapshot",
     "KernelDirective",
     "KernelDirectiveField",
     "KernelRequestAdapter",
@@ -25,5 +36,6 @@ __all__ = (
     "NotebookExecutionRequest",
     "PreparedCell",
     "RepositoryRevision",
+    "ReproducibilityDigest",
     "prepare_notebook_execution",
 )
