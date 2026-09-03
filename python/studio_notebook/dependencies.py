@@ -6,7 +6,11 @@ from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
 CellKind: TypeAlias = Literal["code", "markdown", "sql"]
-ViolationCode: TypeAlias = Literal["unknown_dependency", "dependency_cycle"]
+ViolationCode: TypeAlias = Literal[
+    "unknown_dependency",
+    "non_executable_dependency",
+    "dependency_cycle",
+]
 
 
 @dataclass(frozen=True, order=True, slots=True)
@@ -39,8 +43,11 @@ class NotebookCell:
             raise ValueError("cell dependencies must be unique")
         if self.id in canonical_dependencies:
             raise ValueError("cell may not depend on itself")
-        if self.kind == "markdown" and self.language is not None:
-            raise ValueError("markdown cells may not declare an execution language")
+        if self.kind == "markdown":
+            if self.language is not None:
+                raise ValueError("markdown cells may not declare an execution language")
+            if canonical_dependencies:
+                raise ValueError("markdown cells may not declare execution dependencies")
         if self.kind in {"code", "sql"}:
             if (
                 self.language is None
@@ -81,20 +88,33 @@ class NotebookDependencyAnalysis:
 
 
 def analyze_notebook_dependencies(notebook: Notebook) -> NotebookDependencyAnalysis:
-    """Resolve explicit cell dependencies into stable execution evidence."""
+    """Resolve explicit executable-cell dependencies into stable execution evidence."""
     index = {cell.id: position for position, cell in enumerate(notebook.cells)}
     by_id = {cell.id: cell for cell in notebook.cells}
+    executable_cells = tuple(cell for cell in notebook.cells if cell.kind != "markdown")
     violations: list[CellDependencyViolation] = []
 
-    for cell in notebook.cells:
+    for cell in executable_cells:
         for dependency_id in cell.dependencies:
-            if dependency_id not in by_id:
+            dependency = by_id.get(dependency_id)
+            if dependency is None:
                 violations.append(
                     CellDependencyViolation(
                         code="unknown_dependency",
                         cell_id=cell.id,
                         dependency_id=dependency_id,
                         message=f"cell {cell.id} depends on unknown cell {dependency_id}",
+                    )
+                )
+            elif dependency.kind == "markdown":
+                violations.append(
+                    CellDependencyViolation(
+                        code="non_executable_dependency",
+                        cell_id=cell.id,
+                        dependency_id=dependency_id,
+                        message=(
+                            f"cell {cell.id} depends on non-executable cell {dependency_id}"
+                        ),
                     )
                 )
 
@@ -114,9 +134,9 @@ def analyze_notebook_dependencies(notebook: Notebook) -> NotebookDependencyAnaly
             ),
         )
 
-    incoming = {cell.id: len(cell.dependencies) for cell in notebook.cells}
-    outgoing = {cell.id: [] for cell in notebook.cells}
-    for cell in notebook.cells:
+    incoming = {cell.id: len(cell.dependencies) for cell in executable_cells}
+    outgoing = {cell.id: [] for cell in executable_cells}
+    for cell in executable_cells:
         for dependency_id in cell.dependencies:
             outgoing[dependency_id].append(cell.id)
 
@@ -138,8 +158,8 @@ def analyze_notebook_dependencies(notebook: Notebook) -> NotebookDependencyAnaly
                     next_ready.append(dependent)
         ready = sorted(next_ready, key=lambda cell_id: index[cell_id])
 
-    if len(order) != len(notebook.cells):
-        cyclic = tuple(cell.id for cell in notebook.cells if incoming[cell.id] > 0)
+    if len(order) != len(executable_cells):
+        cyclic = tuple(cell.id for cell in executable_cells if incoming[cell.id] > 0)
         cycle_violations = tuple(
             CellDependencyViolation(
                 code="dependency_cycle",
