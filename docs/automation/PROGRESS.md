@@ -203,3 +203,30 @@ Validation history:
 4. This progress-log commit is followed by another authoritative exact-head PR CI pass before publication; post-`main` evidence is only claimed after the published SHA is verified.
 
 Next E1 priority after this increment: introduce mutation testing for `studio_core` and establish a target threshold without reducing the existing 100% line/branch coverage gate.
+
+## 2026-09-03 — E1 mutation-quality gate
+
+Objective: add independent semantic test-strength evidence for `studio_core` while preserving the existing zero-exclusion 100% line/branch coverage gate.
+
+Implemented on validation branch `feat/mutation-gate` / PR #10:
+
+- Pinned `mutmut==3.7.0` in development dependencies and configured mutation only for `studio_core`.
+- Added a strict repository gate requiring at least 90% killed mutants. Only killed mutants count positively; `no_tests`, suspicious outcomes, timeouts, interrupted checks and segfaults invalidate the evidence and fail the gate.
+- Kept all production code free of mutation exclusions and `pragma: no mutate` escapes.
+- Added an isolated mutation job to CI. A temporary `src -> python` alias accommodates mutmut's generated-mutant layout without changing Ronin's package structure.
+- Cleared pytest's global coverage addopts only inside mutation execution so mutants are killed by behavioral assertions rather than coverage-plugin side effects. The normal `quality` job continues to run all tests and enforce 100% line/branch coverage.
+- Added short-lived mutation evidence artifacts containing exported counts and the exact survivor list, making failures auditable even when Actions log transport is truncated.
+- Added deterministic complete snapshots of the provider-neutral built-in operator and diagnostic catalogs plus exact metadata boundary tests. These are product regression contracts, not mutation-tool-specific production exceptions.
+- Reuse searches across `sdp-studio` and `ronin-old` did not surface existing mutation-testing machinery suitable for adoption.
+
+Validation history retained because it demonstrates active gates rather than a weakened path to green:
+
+1. The first mutation configuration exposed both Ruff formatting drift and a mutmut copied-test import problem; the mutation selection was narrowed to pure-domain test suites while normal CI remained unchanged.
+2. Attempts to wrap mutmut through Python subprocesses were rejected by repository security lint rules S607/S603; no lint suppression was added. An in-process Click wrapper also proved unreliable and was removed.
+3. Splitting mutation execution, evidence export and score enforcement isolated the real blocker: mutation execution/export succeeded while the strict score failed.
+4. Exact baseline evidence from run `33717248317` on `bbecf5056b1adb26e2805be3e0e5f541ce8ecfe3` was 1,599 killed, 508 survived, 2,107 total = 75.89%, with zero invalid categories.
+5. Rather than lowering 90%, complete portable catalog snapshots and boundary assertions were added. A semantically correct but Ruff-unformatted test revision already achieved 1,899 killed / 208 survived / 2,107 total = 90.13%.
+6. The formatted exact head `0cc7a4470e7c1bb472b90b0b098b631202f39b49`, run `33717624489`, completed `quality`, `mutation` and `gates-negative` successfully together. `quality` includes the mandatory 100% line/branch coverage gate; mutation evidence is exactly 1,899 killed, 208 survived, 2,107 total = 90.13%, with all invalid-evidence categories zero.
+7. Documentation commits following that validated product/test head require a final authoritative exact-head PR CI pass before merge. Post-`main` evidence is recorded only after the published SHA is verified.
+
+Next E1 priority after this increment: notebook cells and deterministic dependency analysis, followed by adapter-side runtime discovery and resolved-runtime execution snapshots.
