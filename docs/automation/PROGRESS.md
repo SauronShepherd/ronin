@@ -230,3 +230,26 @@ Validation history retained because it demonstrates active gates rather than a w
 7. Documentation commits following that validated product/test head require a final authoritative exact-head PR CI pass before merge. Post-`main` evidence is recorded only after the published SHA is verified.
 
 Next E1 priority after this increment: notebook cells and deterministic dependency analysis, followed by adapter-side runtime discovery and resolved-runtime execution snapshots.
+
+## 2026-09-03 — E1 notebook dependency contracts
+
+Objective: establish portable notebook document and execution intent before kernel, session or runtime behavior enters the repository.
+
+Implemented on validation branch `feat/notebook-dependency-contracts` / PR #11:
+
+- Added pure `studio_notebook` contracts for immutable `CellId`, `NotebookCell`, `Notebook`, dependency findings and deterministic analysis.
+- Executable `code` and `sql` cells require an explicit language and may depend only on executable cells; Markdown remains document content and is excluded from the execution DAG.
+- Explicit dependencies resolve into a stable topological execution order plus parallel-ready levels, with authored order used only as a deterministic tie-breaker.
+- Unknown dependencies, dependencies on non-executable cells and cycles fail closed with stable evidence and no partial execution plan.
+- Extended strict mypy and the zero-exclusion 100% line/branch coverage gate to `studio_notebook`; the existing mutation gate remains scoped to `studio_core` and its 90% threshold was not changed.
+- Inspected `ronin-old` notebook magic handling. Its useful `%%sql`, `%%configure` and `%pip` semantics remain reuse candidates for future kernel/adapters, while its mutation and subprocess behavior is deliberately not copied into the pure notebook domain.
+- Added `docs/product/NOTEBOOK_EXECUTION.md`, ADR-AUTO-013 and backlog updates defining the notebook/runtime boundary and the next execution priorities.
+
+Validation history retained as active-gate evidence:
+
+1. Initial PR validation stopped at Ruff format; the repository-pinned formatter output was captured on a temporary branch-only helper, applied exactly, and the helper was removed.
+2. The next authoritative run passed format and exposed two Ruff lint findings (`SIM102` and import ordering). Exact diagnostics were captured without suppressions; the code/imports were corrected and the temporary helper was removed.
+3. Exact-head SHA `be496dc6d7cd7df198d0f76b011da662049b3a84`, CI run `33726922409`, completed `quality`, `mutation` and `gates-negative` successfully. `quality` passed Format, Lint, strict Types, Architecture contracts and Tests with the mandatory 100% line/branch coverage gate; mutation retained the existing strict score gate.
+4. This progress-log commit is followed by another authoritative exact-head PR CI pass before publication. Post-`main` success is recorded only after the published SHA is verified.
+
+Next E1 priority after this increment: add an adapter-side runtime discovery SPI and immutable resolved-runtime execution snapshot, reusing mature `sdp-studio` probing/normalization behind that boundary; portable notebook serialization/import identity and kernel execution evidence follow immediately after.

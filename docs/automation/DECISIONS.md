@@ -122,7 +122,7 @@ This deliberately adapts `sdp-studio`'s useful property that document IDs are al
 
 `studio_core` keeps its mandatory 100% line and branch coverage gate with zero exclusions. Mutation testing supplements that evidence; it never replaces or weakens coverage. The mutation gate is pinned to `mutmut==3.7.0` because mutation behavior and the exported CI evidence schema are themselves part of the quality contract.
 
-The minimum accepted mutation score is 90%. Ronin counts only killed mutants as positive evidence: `killed / (total - skipped)`. Survivors reduce the score, while `no_tests`, `suspicious`, `timeout`, interrupted checks and segfaults make the evidence invalid and fail the gate. Production exclusions and `pragma: no mutate` escapes are not accepted as a way to reach the threshold. The target may be ratcheted upward as tests strengthen, but it must not be lowered merely to make CI pass.
+The minimum accepted mutation score is 90%. Ronin counts only killed mutants as positive evidence: `killed / (total - skipped)`. Survivors reduce the score, while `no_tests`, suspicious outcomes, timeouts, interrupted checks and segfaults make the evidence invalid and fail the gate. Production exclusions and `pragma: no mutate` escapes are not accepted as a way to reach the threshold. The target may be ratcheted upward as tests strengthen, but it must not be lowered merely to make CI pass.
 
 Mutmut 3.x mutates code inside functions and methods; module-level executable code is outside its current mutation scope. Ronin records that limitation rather than pretending to cover it: normal tests, architecture checks and the independent 100% line/branch gate continue to protect the whole pure-domain package, and the mutation tool can be revisited when a stronger compatible option is available.
 
@@ -131,3 +131,15 @@ The repository uses a temporary `src -> python` source alias only inside the mut
 Initial mutation evidence was 1,599 killed and 508 survived out of 2,107 total (75.89%), with no invalid categories. Rather than weaken the threshold, Ronin added complete deterministic snapshots for the built-in provider-neutral operator and diagnostic catalogs plus exact metadata-boundary assertions. The resulting evidence is 1,899 killed and 208 survived out of 2,107 total (90.13%), again with zero invalid categories. CI retains the compact exported counts and survivor list as a short-lived artifact so the gate is auditable even when log transport is truncated.
 
 A reuse search across `SauronShepherd/sdp-studio` and `SauronShepherd/ronin-old` did not surface mutation-testing machinery suitable for reuse, so this quality boundary is implemented directly in Ronin.
+
+## ADR-AUTO-013 — Notebook execution dependencies are explicit pure intent
+
+**Status:** accepted — 2026-09-03
+
+The canonical notebook document separates presentation order from execution intent. Executable `code` and `sql` cells may declare explicit dependencies on other executable cells; Markdown remains document content and cannot enter the execution DAG. Independent executable cells use authored order only as a deterministic tie-breaker.
+
+`studio_notebook` performs no filesystem, network, subprocess, environment, kernel or provider work. Its dependency analyzer returns a complete deterministic execution order and parallel levels only for a valid graph; unknown dependencies, dependencies on non-executable cells and cycles fail closed with stable evidence and no partial plan.
+
+The core does not infer hidden dependencies by parsing Python, SQL, Scala or vendor-specific notebook magics. Authoring/import adapters may propose dependency changes, but canonical execution intent changes only through an explicit document update that can be reviewed and versioned.
+
+`ronin-old` provides useful prior semantics for `%%sql`, `%%configure` and `%pip`, but its implementation mutates notebook cells and can invoke subprocesses. Those behaviors are not copied into the pure domain. Future `studio_kernel`/adapter work may adapt the useful parsing semantics behind typed execution requests, permissions, audit/evidence, resource/cost attribution and reproducibility controls.

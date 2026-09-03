@@ -36,11 +36,12 @@ Completed:
 - Provider-neutral diagnostic facts/rules/findings with a bounded non-regex predicate grammar, deterministic `DiagnosticCatalog` matching and a portable actionable seed adapted from mature `sdp-studio` failure categories with golden/adversarial tests; raw runtime/provider normalization stays outside `studio_core`.
 - Portable `.ronin/project.json` schema with deterministic serialization/deserialization, provider-neutral Git adapter/default-ref/sync intent, and strict exclusion of machine-specific auth bindings from committed project configuration.
 - Mutation testing for `studio_core` with pinned `mutmut==3.7.0`, auditable CI evidence, a strict 90% minimum score, and complete portable seed-contract snapshots; verified score is 1,899 killed / 2,107 total = 90.13%, with 208 survivors and zero invalid-evidence categories, while the independent 100% line/branch coverage gate remains mandatory.
+- Immutable `studio_notebook` cells with explicit executable-cell dependencies, deterministic topological execution order/parallel levels, fail-closed cycle/unknown/non-executable dependency evidence, and Markdown kept outside execution semantics. The 100% line/branch coverage and strict typing gates now include `studio_notebook`.
 
 Next:
 
-1. Add notebook cells and dependency analysis now that operator/diagnostic contracts have stable portable snapshots.
-2. Add an adapter-side runtime discovery SPI and resolved-runtime execution snapshot; reuse `sdp-studio` probing and provider error normalization behind that boundary rather than moving I/O or vendor parsing into `studio_core`.
+1. Add an adapter-side runtime discovery SPI and resolved-runtime execution snapshot; reuse `sdp-studio` probing and provider error normalization behind that boundary rather than moving I/O or vendor parsing into `studio_core`.
+2. Add portable notebook serialization/import identity and then a kernel execution-evidence boundary; adapt useful `ronin-old` magic semantics only behind adapters, never its subprocess/mutation behavior inside `studio_notebook`.
 3. Ratchet mutation quality upward when new tests make that sustainable; never lower the threshold merely to make CI pass.
 
 ## Later reuse
