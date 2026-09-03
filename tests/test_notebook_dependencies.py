@@ -27,6 +27,13 @@ def test_cell_contract_rejects_invalid_execution_metadata() -> None:
         NotebookCell(CellId("x"), "shell", "echo x")  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="execution language"):
         NotebookCell(CellId("x"), "markdown", "hello", language="markdown")
+    with pytest.raises(ValueError, match="execution dependencies"):
+        NotebookCell(
+            CellId("x"),
+            "markdown",
+            "hello",
+            dependencies=(CellId("code"),),
+        )
     with pytest.raises(ValueError, match="require"):
         NotebookCell(CellId("x"), "code", "pass")
     with pytest.raises(ValueError, match="trimmed"):
@@ -60,7 +67,9 @@ def test_dependency_analysis_is_stable_and_preserves_authored_ties() -> None:
     analysis = analyze_notebook_dependencies(notebook)
 
     assert analysis.is_valid
-    assert analysis.execution_order == tuple(CellId(value) for value in ("extract", "lookup", "join", "publish"))
+    assert analysis.execution_order == tuple(
+        CellId(value) for value in ("extract", "lookup", "join", "publish")
+    )
     assert analysis.levels == (
         (CellId("extract"), CellId("lookup")),
         (CellId("join"),),
@@ -69,14 +78,50 @@ def test_dependency_analysis_is_stable_and_preserves_authored_ties() -> None:
 
 
 def test_dependency_analysis_reorders_forward_dependencies() -> None:
-    notebook = Notebook((code("consumer", dependencies=("producer",)), code("producer")))
+    notebook = Notebook(
+        (code("consumer", dependencies=("producer",)), code("producer"))
+    )
     analysis = analyze_notebook_dependencies(notebook)
     assert analysis.is_valid
     assert analysis.execution_order == (CellId("producer"), CellId("consumer"))
 
 
+def test_markdown_is_document_content_not_an_execution_step() -> None:
+    notebook = Notebook(
+        (
+            NotebookCell(CellId("intro"), "markdown", "# Intro"),
+            code("run"),
+        )
+    )
+    analysis = analyze_notebook_dependencies(notebook)
+    assert analysis.is_valid
+    assert analysis.execution_order == (CellId("run"),)
+    assert analysis.levels == ((CellId("run"),),)
+
+
+def test_non_executable_dependency_returns_actionable_evidence() -> None:
+    notebook = Notebook(
+        (
+            NotebookCell(CellId("intro"), "markdown", "# Intro"),
+            code("consumer", dependencies=("intro",)),
+        )
+    )
+    analysis = analyze_notebook_dependencies(notebook)
+    assert not analysis.is_valid
+    assert analysis.execution_order == ()
+    assert analysis.levels == ()
+    assert len(analysis.violations) == 1
+    violation = analysis.violations[0]
+    assert violation.code == "non_executable_dependency"
+    assert violation.cell_id == CellId("consumer")
+    assert violation.dependency_id == CellId("intro")
+    assert "non-executable cell intro" in violation.message
+
+
 def test_unknown_dependency_returns_actionable_evidence() -> None:
-    analysis = analyze_notebook_dependencies(Notebook((code("consumer", dependencies=("missing",)),)))
+    analysis = analyze_notebook_dependencies(
+        Notebook((code("consumer", dependencies=("missing",)),))
+    )
     assert not analysis.is_valid
     assert analysis.execution_order == ()
     assert analysis.levels == ()
@@ -88,14 +133,38 @@ def test_unknown_dependency_returns_actionable_evidence() -> None:
     assert "unknown cell missing" in violation.message
 
 
+def test_invalid_dependencies_are_sorted_deterministically() -> None:
+    analysis = analyze_notebook_dependencies(
+        Notebook(
+            (
+                code("z", dependencies=("missing-z",)),
+                code("a", dependencies=("missing-a",)),
+            )
+        )
+    )
+    assert tuple(item.cell_id for item in analysis.violations) == (
+        CellId("a"),
+        CellId("z"),
+    )
+
+
 def test_cycle_returns_all_involved_cells_without_partial_plan() -> None:
     analysis = analyze_notebook_dependencies(
-        Notebook((code("a", dependencies=("b",)), code("b", dependencies=("a",)), code("free")))
+        Notebook(
+            (
+                code("a", dependencies=("b",)),
+                code("b", dependencies=("a",)),
+                code("free"),
+            )
+        )
     )
     assert not analysis.is_valid
     assert analysis.execution_order == ()
     assert analysis.levels == ()
-    assert tuple(item.cell_id for item in analysis.violations) == (CellId("a"), CellId("b"))
+    assert tuple(item.cell_id for item in analysis.violations) == (
+        CellId("a"),
+        CellId("b"),
+    )
     assert all(item.code == "dependency_cycle" for item in analysis.violations)
 
 
