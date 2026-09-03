@@ -48,9 +48,10 @@ class NotebookCell:
                 raise ValueError("markdown cells may not declare an execution language")
             if canonical_dependencies:
                 raise ValueError("markdown cells may not declare execution dependencies")
-        if self.kind in {"code", "sql"}:
-            if self.language is None or not self.language or self.language.strip() != self.language:
-                raise ValueError("executable cells require a non-empty trimmed language")
+        if self.kind in {"code", "sql"} and (
+            self.language is None or not self.language or self.language.strip() != self.language
+        ):
+            raise ValueError("executable cells require a non-empty trimmed language")
         object.__setattr__(self, "dependencies", canonical_dependencies)
 
 
@@ -64,7 +65,7 @@ class Notebook:
             raise ValueError("notebook cell ids must be unique")
 
 
-@dataclass(frozen=True, order=True, slots=True)
+@dataclass(frozen=True, slots=True)
 class CellDependencyViolation:
     code: ViolationCode
     cell_id: CellId
@@ -108,7 +109,7 @@ def analyze_notebook_dependencies(notebook: Notebook) -> NotebookDependencyAnaly
                         code="non_executable_dependency",
                         cell_id=cell.id,
                         dependency_id=dependency_id,
-                        message=(f"cell {cell.id} depends on non-executable cell {dependency_id}"),
+                        message=f"cell {cell.id} depends on non-executable cell {dependency_id}",
                     )
                 )
 
@@ -129,7 +130,7 @@ def analyze_notebook_dependencies(notebook: Notebook) -> NotebookDependencyAnaly
         )
 
     incoming = {cell.id: len(cell.dependencies) for cell in executable_cells}
-    outgoing = {cell.id: [] for cell in executable_cells}
+    outgoing: dict[CellId, list[CellId]] = {cell.id: [] for cell in executable_cells}
     for cell in executable_cells:
         for dependency_id in cell.dependencies:
             outgoing[dependency_id].append(cell.id)
