@@ -1,4 +1,4 @@
-.PHONY: check format lint typecheck architecture gates-negative test
+.PHONY: check format lint typecheck architecture gates-negative test mutation
 
 check: format lint typecheck architecture gates-negative test
 
@@ -19,3 +19,9 @@ gates-negative:
 
 test:
 	python -m pytest
+
+mutation:
+	@rm -rf mutants
+	@test ! -e src && test ! -L src
+	@ln -s python src; trap 'rm -f src' 0; mutmut run && mutmut export-cicd-stats
+	@python -m tools.mutation_gate mutants/mutmut-cicd-stats.json
