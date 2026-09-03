@@ -53,7 +53,17 @@ jobs:
       - name: Report mutation evidence
         run: |
           cat mutants/mutmut-cicd-stats.json
-          mutmut results
+          mutmut results | tee mutants/mutmut-results.txt
+      - name: Upload mutation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-evidence
+          path: |
+            mutants/mutmut-cicd-stats.json
+            mutants/mutmut-results.txt
+          if-no-files-found: error
+          retention-days: 7
       - name: Mutation score gate
         run: python -m tools.mutation_gate mutants/mutmut-cicd-stats.json
       - name: Cleanup mutation source alias
