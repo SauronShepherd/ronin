@@ -10,6 +10,16 @@ The authored document order is presentation intent. It is not, by itself, an exe
 
 Markdown is document content, not an execution step. Markdown cells cannot declare execution dependencies, and executable cells cannot depend on Markdown. This prevents documentation layout from silently becoming runtime semantics.
 
+## Portable identity and serialization
+
+Canonical notebook files use schema `ronin.notebook/v1`. Serialization is deterministic JSON and records only authored intent: ordered cells, stable IDs, persisted identity provenance, source, language and explicit dependencies. Runtime outputs, execution counters, timestamps, provider metadata, credentials and mutable kernel state are intentionally excluded.
+
+A cell ID is derived from a persisted `CellIdentityAnchor` containing a bounded boundary (`authoring` or `import`), a stable namespace for the owning source document, and a source-stable cell reference. Identity therefore survives source edits and unrelated reordering; it is not derived from mutable cell content, current position, clocks or randomness inside `studio_notebook`.
+
+Deserialization is strict. Unknown or missing v1 keys, unsupported schema versions, malformed identities and any mismatch between a persisted cell ID and its identity anchor fail closed. Schema evolution must therefore be explicit rather than silently dropping unknown semantics.
+
+Import adapters supply source-stable references and an explicit namespace. For nbformat 4.5+ inputs, the persisted Jupyter cell `id` is a natural adapter-side reference when present. Older or foreign formats require the importer to allocate and persist an equivalent stable external reference before subsequent round trips; the pure domain never invents identity from list position.
+
 ## Dependency analysis
 
 `studio_notebook` performs pure deterministic dependency analysis. It produces:
@@ -28,10 +38,12 @@ Kernel/session behavior belongs outside the pure notebook domain. This includes 
 
 `ronin-old` contains useful prior behavior for `%%sql`, `%%configure` and `%pip`, but that implementation mutates notebook objects and can invoke subprocesses. Ronin therefore treats it as reuse evidence for future kernel/adapters rather than copying it into `studio_notebook`.
 
+The historical Fakebric notebook shape also demonstrates useful nbformat 4 interoperability and persisted Jupyter cell IDs, but it mixed execution outputs, runtime metadata and notebook validation into the service/runtime layer. Ronin reuses the interoperability lesson while keeping canonical authored intent and runtime evidence separate.
+
 Adapters may translate supported magics into typed execution requests, but they must preserve security boundaries, audit evidence, cost/resource attribution, reproducibility and explicit failure semantics. No adapter-specific syntax becomes part of the canonical notebook dependency graph merely because a provider supports it.
 
 ## Evidence and future integration
 
-Cell dependency analysis is the document-level execution contract. Later kernel/orchestrator slices should attach run evidence without mutating the authored notebook: resolved runtime profile, cell attempt IDs, timestamps, exit state, logs, metrics, traces, lineage, resource/cost attribution and materialized outputs.
+Cell dependency analysis and the portable document are the document-level execution contract. Later kernel/orchestrator slices should attach run evidence without mutating the authored notebook: resolved runtime profile, cell attempt IDs, repository revision, timestamps, exit state, logs, metrics, traces, lineage, resource/cost attribution and materialized outputs.
 
 Data lineage is related but distinct from cell execution dependencies. Assets read or written by a cell should be represented through lineage/evidence contracts rather than overloaded into the cell DAG. This separation allows Ronin to explain both *why a cell ran after another cell* and *which data/model/knowledge assets influenced its result*.
