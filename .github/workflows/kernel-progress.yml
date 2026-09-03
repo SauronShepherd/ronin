@@ -51,3 +51,5 @@ EOF
           git add docs/automation/PROGRESS.md
           git commit -m 'docs: record kernel execution progress [progress-recorded]'
           git push
+
+# Trigger the helper only after the workflow exists on the branch.
