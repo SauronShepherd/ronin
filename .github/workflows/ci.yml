@@ -50,6 +50,10 @@ jobs:
         run: mutmut run
       - name: Export mutation evidence
         run: mutmut export-cicd-stats
+      - name: Report mutation evidence
+        run: |
+          cat mutants/mutmut-cicd-stats.json
+          mutmut results
       - name: Mutation score gate
         run: python -m tools.mutation_gate mutants/mutmut-cicd-stats.json
       - name: Cleanup mutation source alias
