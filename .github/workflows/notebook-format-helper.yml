@@ -1,0 +1,30 @@
+name: Notebook format helper
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  format-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Apply formatter to notebook slice
+        run: ruff format python/studio_notebook tests/test_notebook_dependencies.py
+      - name: Upload canonical formatting
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-format-evidence
+          path: |
+            python/studio_notebook/dependencies.py
+            tests/test_notebook_dependencies.py
+          if-no-files-found: error
+          retention-days: 1
