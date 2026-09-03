@@ -42,7 +42,11 @@ class NotebookCell:
         if self.kind == "markdown" and self.language is not None:
             raise ValueError("markdown cells may not declare an execution language")
         if self.kind in {"code", "sql"}:
-            if self.language is None or not self.language or self.language.strip() != self.language:
+            if (
+                self.language is None
+                or not self.language
+                or self.language.strip() != self.language
+            ):
                 raise ValueError("executable cells require a non-empty trimmed language")
         object.__setattr__(self, "dependencies", canonical_dependencies)
 
@@ -95,7 +99,20 @@ def analyze_notebook_dependencies(notebook: Notebook) -> NotebookDependencyAnaly
                 )
 
     if violations:
-        return NotebookDependencyAnalysis((), (), tuple(sorted(violations)))
+        return NotebookDependencyAnalysis(
+            (),
+            (),
+            tuple(
+                sorted(
+                    violations,
+                    key=lambda item: (
+                        item.code,
+                        item.cell_id.value,
+                        item.dependency_id.value if item.dependency_id is not None else "",
+                    ),
+                )
+            ),
+        )
 
     incoming = {cell.id: len(cell.dependencies) for cell in notebook.cells}
     outgoing = {cell.id: [] for cell in notebook.cells}
@@ -103,7 +120,10 @@ def analyze_notebook_dependencies(notebook: Notebook) -> NotebookDependencyAnaly
         for dependency_id in cell.dependencies:
             outgoing[dependency_id].append(cell.id)
 
-    ready = sorted((cell_id for cell_id, count in incoming.items() if count == 0), key=index.get)
+    ready = sorted(
+        (cell_id for cell_id, count in incoming.items() if count == 0),
+        key=lambda cell_id: index[cell_id],
+    )
     order: list[CellId] = []
     levels: list[tuple[CellId, ...]] = []
     while ready:
@@ -112,11 +132,11 @@ def analyze_notebook_dependencies(notebook: Notebook) -> NotebookDependencyAnaly
         order.extend(current_level)
         next_ready: list[CellId] = []
         for current in current_level:
-            for dependent in sorted(outgoing[current], key=index.get):
+            for dependent in sorted(outgoing[current], key=lambda cell_id: index[cell_id]):
                 incoming[dependent] -= 1
                 if incoming[dependent] == 0:
                     next_ready.append(dependent)
-        ready = sorted(next_ready, key=index.get)
+        ready = sorted(next_ready, key=lambda cell_id: index[cell_id])
 
     if len(order) != len(notebook.cells):
         cyclic = tuple(cell.id for cell in notebook.cells if incoming[cell.id] > 0)
