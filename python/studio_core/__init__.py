@@ -8,6 +8,7 @@ from .diagnostics import (
     DiagnosticRule,
     builtin_diagnostic_catalog,
 )
+from .execution_snapshots import ResolvedRuntimeSnapshot, snapshot_runtime_resolution
 from .ids import InstanceAnchor, NodeId, allocate_instance_keys
 from .ir import (
     Edge,
@@ -88,6 +89,7 @@ __all__ = (
     "RepositoryBinding",
     "RepositorySyncPolicy",
     "RequirementCheck",
+    "ResolvedRuntimeSnapshot",
     "RuntimeCapability",
     "RuntimeCatalog",
     "RuntimeProfile",
@@ -100,6 +102,7 @@ __all__ = (
     "freeze_value",
     "operator_parameter_value",
     "resolve_runtime",
+    "snapshot_runtime_resolution",
     "thaw_value",
     "validate_operator_node",
 )
