@@ -33,11 +33,7 @@ def snapshot_runtime_resolution(
         raise ValueError("selected runtime resolution requires a selected profile")
 
     evaluation = next(
-        (
-            item
-            for item in resolution.evaluations
-            if item.profile.ref == resolution.selected.ref
-        ),
+        (item for item in resolution.evaluations if item.profile.ref == resolution.selected.ref),
         None,
     )
     if evaluation is None:
