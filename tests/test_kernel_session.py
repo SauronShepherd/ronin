@@ -80,6 +80,7 @@ class _Executor:
         if self.cancel_token is not None:
             self.cancel_token.cancel()
         result = self.results.pop(0)
+        assert cell.cell_id == result.cell_id
         if self.wrong_cell:
             return CellExecutionResult(CellId("wrong"), result.state, result.failure_code)
         assert cancellation.is_cancelled is (self.cancel_token is not None)
