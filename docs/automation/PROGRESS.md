@@ -253,3 +253,28 @@ Validation history retained as active-gate evidence:
 4. This progress-log commit is followed by another authoritative exact-head PR CI pass before publication. Post-`main` success is recorded only after the published SHA is verified.
 
 Next E1 priority after this increment: add an adapter-side runtime discovery SPI and immutable resolved-runtime execution snapshot, reusing mature `sdp-studio` probing/normalization behind that boundary; portable notebook serialization/import identity and kernel execution evidence follow immediately after.
+
+
+## 2026-09-03 — E1 runtime discovery and resolved-runtime evidence
+
+Objective: close the gap between pure runtime compatibility and real adapter probing while keeping provider I/O, raw errors and credentials outside Ronin's canonical domain.
+
+Implemented on validation branch `feat/runtime-discovery-evidence` / PR #12:
+
+- Added `studio_runners` as the first concrete I/O-side runtime package, matching the pre-existing architecture dependency matrix.
+- Added a minimal typed `RuntimeDiscoveryAdapter` SPI plus immutable `RuntimeDiscoveryResult`, `RuntimeDiscoveryIssue` and `RuntimeDiscoveryReport` contracts.
+- Discovery validates unique adapter identities, probes in stable adapter order, verifies that advertised profile references belong to the reporting adapter, and assembles the existing canonical `RuntimeCatalog` consumed by pure resolution.
+- Unexpected provider exceptions are contained as stable `runtime.discovery_failed` evidence without copying exception text, preventing accidental credential/connection leakage through generic probe failures.
+- Added pure immutable `ResolvedRuntimeSnapshot` evidence in `studio_core`, freezing the requested reference, selected runtime profile/capabilities, resolution policy, exact/fallback flag and requirement checks before execution begins.
+- Snapshot construction fails closed for inconsistent manually-constructed resolution state and returns no snapshot for `no_match`.
+- Extended strict mypy and mandatory 100% line/branch coverage to `studio_runners`; the existing mutation threshold and architecture/negative gates were not reduced.
+- Reused `sdp-studio`'s proven adapter/probe boundary, availability concept, safe command/probe practices and secret/error normalization as design evidence. Provider branches, environment/subprocess work and `dict[str, Any]` configuration remain behind adapters rather than being copied into `studio_core`.
+- `ronin-old` was rechecked as a reuse source; its notebook/magic execution behavior is not part of this runtime-discovery slice and remains reserved for a later kernel boundary.
+
+Validation history:
+
+1. The first PR run failed only at the repository formatter, while `gates-negative` succeeded and mutation remained independently active; no gate was changed.
+2. A temporary branch-only workflow ran the repository's installed Ruff formatter and committed only canonical formatting changes.
+3. The temporary helper is removed before the publication candidate. Authoritative exact-head PR CI and post-publication `main` CI are recorded only after they complete successfully.
+
+Next E1 priority: portable notebook serialization/import identity, followed by a kernel execution-evidence boundary. Runtime evidence then expands with repository revision/dirty-patch identity and adapter-normalized effective non-secret environment/package/image data.
