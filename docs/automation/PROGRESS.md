@@ -305,3 +305,26 @@ Validation history for this increment:
 2. Exact repository Ruff formatting was applied on the validation branch. PR CI run `33734842752` then passed Format, Lint, strict Types and Architecture contracts; all 129 tests passed, while the mandatory coverage gate correctly identified one unreachable redundant duplicate-reference guard as uncovered (99.88%% total).
 3. The unreachable duplicate guard was removed rather than adding a contrived test or lowering coverage. Exact-head SHA `0558448ec1183a2caa1a1bcd6afc15da66f94b62`, CI run `33734983351`, completed `quality`, `gates-negative` and `mutation` successfully. `quality` passed Format, Lint, strict Types, Architecture contracts and Tests with the mandatory 100%% line/branch coverage gate; mutation retained the existing strict score gate.
 4. A documentation-only validation-evidence commit follows this run; the temporary helper is removed before the final publication candidate, which must pass another exact-head PR CI before merge. Post-`main` success is recorded only after the published SHA is verified.
+
+## 2026-09-03 — E1 kernel execution evidence boundary
+
+Objective: connect immutable notebook intent to future side-effecting kernels through a typed, provider-neutral request/evidence boundary without mutating authored cells or leaking raw runtime/provider state into canonical contracts.
+
+Implemented on validation branch `feat/kernel-execution-evidence` / PR #14:
+
+- Added `studio_kernel` with immutable `RepositoryRevision`, `CellExecutionRequest`, `NotebookExecutionRequest`, `CellExecutionResult` and `NotebookExecutionEvidence` contracts around the existing `NotebookDocument` and `ResolvedRuntimeSnapshot`.
+- Added a typed `KernelRequestAdapter` preparation SPI. Language/magic adapters may translate authored syntax into separate executable source plus normalized directives and explicit permission requirements, but must preserve `CellId` and adapter identity; authored source remains independently retained and unchanged.
+- Preparation fails closed for invalid canonical notebook dependency graphs, adapter identity drift and cell-identity drift. Markdown remains outside execution requests.
+- Added normalized failure codes and typed references for logs, metrics, traces, lineage, outputs, resource usage and cost so observability/FinOps/lineage storage remains replaceable rather than embedded in notebook state.
+- Added strict Git revision evidence using a lowercase SHA-1/SHA-256 object ID plus optional dirty-patch SHA-256, binding execution to repository state without putting checkout paths or credentials into the request.
+- Extended strict mypy and mandatory 100% line/branch coverage to `studio_kernel`; architecture and mutation gates were not reduced.
+- Rechecked `ronin-old` as reuse evidence for `%pip`, `%%sql` and `%%configure` behavior. Its mutable cell rewriting/direct subprocess model was deliberately not copied. The inspected `sdp-studio` material did not expose a stronger reusable notebook-kernel contract for this slice.
+
+Validation history:
+
+1. Initial PR CI run `33739751728` passed `gates-negative` and stopped only at repository formatting; no gate was changed.
+2. A temporary branch-only workflow applied the repository-pinned Ruff formatter exactly and was removed before the publication candidate.
+3. Exact-head product-code SHA `184bc945231629f7a4b106bcf69c3332f78d09c1`, CI run `33739918662`, completed `quality`, `gates-negative` and `mutation` successfully. `quality` passed Format, Lint, strict Types, Architecture contracts and Tests with the mandatory 100% line/branch coverage gate; mutation retained the existing strict score gate.
+4. Documentation/decision updates follow that verified product-code head. The final PR head must pass another authoritative CI before merge, and post-`main` success is recorded only after the published SHA is verified.
+
+Next E1 priority: extend the immutable run snapshot with effective non-secret runtime configuration, environment/package/image digests and durable attempt/event identity, then introduce the first real kernel/session adapter with cancellation, isolation, permission enforcement and redacted durable evidence.
