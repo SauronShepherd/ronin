@@ -177,3 +177,15 @@ Language- and magic-specific interpretation belongs to `KernelRequestAdapter`. A
 Per-cell results are immutable normalized outcomes (`succeeded`, `failed`, `cancelled`). Raw provider exceptions do not become canonical failure state; failed results require a stable failure code. Cross-cutting execution artifacts are represented by typed references for logs, metrics, traces, lineage, outputs, resource usage and cost so later storage/observability systems can remain replaceable. Actual kernel/session I/O, cancellation, isolation, secret resolution, permission enforcement, redaction and durable event persistence remain future adapter/orchestrator responsibilities.
 
 The design uses `ronin-old` only as behavioral evidence for useful notebook-magic concepts and deliberately rejects its mutable cell rewriting and direct subprocess behavior as the canonical contract. No stronger reusable kernel contract was found in the inspected `sdp-studio` material for this slice.
+
+## ADR-AUTO-017 — Effective runtime reproducibility is immutable execution evidence, not authored intent
+
+**Status:** accepted — 2026-09-03
+
+A prepared execution carries an explicit `ExecutionAttemptId` plus an immutable `ExecutionReproducibilitySnapshot`. Attempt identity is allocated by the orchestration boundary and passed into `studio_kernel`; the canonical contract does not manufacture clocks, randomness or provider handles. Durable events derive identity from that attempt plus a non-negative sequence so storage/replay layers can preserve a stable total order without embedding wall-clock behavior in the domain.
+
+Effective runtime configuration is evidence produced after adapter resolution, not project or notebook authoring state. Adapters must normalize values before crossing the boundary and must never pass resolved secrets. `EffectiveRuntimeSetting` intentionally rejects names that look like common credential/token/password/API-key/private-key material as a second fail-closed defense, but this check is not a substitute for adapter-side secret classification and redaction. Raw environment dumps, provider configuration objects and credentials are not canonical execution evidence.
+
+Reproducibility artifacts use typed SHA-256 identities for package locks, environments, runtime images and runtime artifacts. The canonical contract stores a stable reference plus digest; acquiring bytes, resolving container repository digests, hashing artifacts and verifying remote/provider state remain adapter responsibilities. Duplicate setting names and duplicate digest kind/reference pairs fail closed so evidence cannot silently become ambiguous.
+
+This adapts proven ideas from `sdp-studio` artifact hashing/runtime-profile safety and `ronin-old` secret-redaction and immutable base-image inspection without copying provider-specific execution or mutable runtime state into the canonical model. The next execution slice should consume these contracts through a real session adapter with cancellation, isolation, permission checks, redacted durable event emission and resource/cost/trace linkage.
