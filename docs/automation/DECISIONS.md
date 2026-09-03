@@ -189,3 +189,17 @@ Effective runtime configuration is evidence produced after adapter resolution, n
 Reproducibility artifacts use typed SHA-256 identities for package locks, environments, runtime images and runtime artifacts. The canonical contract stores a stable reference plus digest; acquiring bytes, resolving container repository digests, hashing artifacts and verifying remote/provider state remain adapter responsibilities. Duplicate setting names and duplicate digest kind/reference pairs fail closed so evidence cannot silently become ambiguous.
 
 This adapts proven ideas from `sdp-studio` artifact hashing/runtime-profile safety and `ronin-old` secret-redaction and immutable base-image inspection without copying provider-specific execution or mutable runtime state into the canonical model. The next execution slice should consume these contracts through a real session adapter with cancellation, isolation, permission checks, redacted durable event emission and resource/cost/trace linkage.
+
+## ADR-AUTO-018 — Session controls gate side effects; concrete executors prove isolation
+
+**Status:** accepted — 2026-09-03
+
+Prepared notebook intent and reproducibility evidence are not sufficient authorization to execute code. `KernelExecutionSession` is therefore the fail-closed operational control boundary between an immutable `NotebookExecutionRequest` and a side-effecting `KernelCellExecutor`.
+
+The session validates an explicit `SessionPolicy` before delegating side effects. Required directive permissions are checked before the executor receives a cell. The default policy accepts only container or Kubernetes isolation and requires a dedicated identity plus network and filesystem isolation; process execution is an explicit opt-in. `ExecutorIsolation` records adapter assertions, not proof. Every concrete executor must be separately qualified with integration/adversarial tests that demonstrate the isolation it claims.
+
+Cancellation is represented by a small signal protocol so local, container, Kubernetes and future remote executors can implement interruption without provider-specific branches in the canonical notebook model. Executor crashes are normalized to `kernel.executor.error`; raw exception text is not persisted as failure evidence. Executor results must preserve the requested `CellId`.
+
+Operational evidence is ordered by the existing `ExecutionAttemptId` plus contiguous `ExecutionEventId.sequence`. Event messages are redacted before storage. The first local sink is append-only canonical JSONL with flush and fsync on every event, rejects mixed attempts and sequence gaps, and requires no external service. It is intentionally replaceable: restart/resume and shared durable stores remain later sink implementations.
+
+This adapts `ronin-old` redaction and hardened session/pod concepts and `sdp-studio` typed event-envelope semantics without copying mutable notebook rewriting, direct subprocess execution or provider-specific lifecycle into the canonical boundary. The concrete local/container launcher remains a separate adapter task tracked by issue #16.

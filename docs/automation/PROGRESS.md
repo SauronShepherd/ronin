@@ -351,3 +351,35 @@ Validation history:
 4. These documentation records and removal of the failed temporary branch-only helper require another authoritative exact-head PR CI before publication. Post-`main` evidence is only claimed after the published SHA completes required workflows successfully.
 
 Next E1 priority: implement the first real kernel/session adapter boundary with cancellation, isolation, permission enforcement, redaction and durable ordered event/evidence emission, then attach concrete local/container reproducibility collectors behind the neutral contracts.
+
+## 2026-09-03 — E1 fail-closed kernel execution-session controls
+
+Objective: establish the operational safety/evidence boundary that must exist before a real local/container kernel launcher can execute prepared notebook cells.
+
+Implemented:
+
+- Added `KernelExecutionSession` and `KernelCellExecutor` contracts around immutable `NotebookExecutionRequest` values.
+- Added explicit `ExecutorIsolation` facts and `SessionPolicy`; default execution requires container/Kubernetes mode, a dedicated identity, network isolation and filesystem isolation. Process mode requires an explicit relaxed policy.
+- Enforced normalized directive permissions before executor side effects. Missing permissions produce `kernel.permission.denied` and durable failure events without invoking the executor.
+- Added thread-safe cancellation signaling and deterministic stop behavior before/between cells and for executor-reported cancellation.
+- Added ordered `ExecutionEvent` evidence using the existing attempt+sequence identity, automatic operational-text credential redaction, and an append-only JSONL sink that flushes and fsyncs every event while rejecting mixed attempts and sequence gaps.
+- Normalized unexpected executor exceptions to `kernel.executor.error` without persisting raw adapter exception text, and reject executor cell-identity drift.
+- Added adversarial tests for permission denial, isolation policy, cancellation, redaction, event ordering/durability, success/failure/cancel states, adapter crashes and identity drift. Existing 100% line/branch coverage remains mandatory.
+
+Reuse/evidence:
+
+- Adapted the useful redaction categories from `ronin-old/fakebric/redaction.py` and strengthened them with URI credential handling.
+- Reused security concepts from `ronin-old/fakebric/session_pod.py` (dedicated non-root identity, service isolation and restricted runtime posture) as neutral policy requirements rather than Kubernetes-specific canonical state.
+- Reused `sdp-studio` typed run-event-envelope semantics as evidence for normalized operational event kinds; no stronger reusable kernel/session control boundary was found.
+
+Validation history:
+
+- PR #17 initial candidate `cdd208ac3c8faa2b868aa81bb69f267e116778f6` passed formatting and the negative architecture gate; Ruff correctly rejected one unused fake-executor argument (`ARG002`). The test was fixed by asserting the prepared cell identity rather than suppressing lint.
+- Corrected candidate `4ac4a7905f635399c2b519fafe694a9891b801bb` passed format, lint, strict mypy, architecture contracts and the full 100% line/branch test gate. A subsequent review identified that executor exceptions could escape without normalized durable failure evidence; that gap was fixed before publication and covered with a regression test.
+- A temporary append-only documentation helper was rejected by GitHub before jobs started and was removed immediately; it made no repository-content changes.
+- Final publication remains contingent on an exact-head PR CI and the post-merge `main` workflow run completing all required jobs successfully; gates are not weakened to publish this slice.
+
+Follow-up:
+
+- Issue #16 tracks the first concrete local/container executor and its real cancellation/isolation/resource/cost qualification. Declared isolation facts must not be treated as proof without adapter integration tests.
+- Next adjacent E1 work is a concrete runtime-evidence collector and restart/resume-capable durable event storage, after the concrete executor boundary is proven.

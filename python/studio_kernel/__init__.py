@@ -1,4 +1,4 @@
-"""Kernel request preparation and immutable execution-evidence contracts."""
+"""Kernel request preparation, session controls and execution-evidence contracts."""
 
 from .contracts import (
     CellExecutionRequest,
@@ -20,22 +20,44 @@ from .reproducibility import (
     ExecutionReproducibilitySnapshot,
     ReproducibilityDigest,
 )
+from .session import (
+    CancellationSignal,
+    CancellationToken,
+    ExecutionEvent,
+    ExecutionEventSink,
+    ExecutorIsolation,
+    JsonlExecutionEventSink,
+    KernelCellExecutor,
+    KernelExecutionSession,
+    SessionPolicy,
+    redact_sensitive_text,
+)
 
 __all__ = (
+    "CancellationSignal",
+    "CancellationToken",
     "CellExecutionRequest",
     "CellExecutionResult",
     "EffectiveRuntimeSetting",
     "ExecutionAttemptId",
+    "ExecutionEvent",
     "ExecutionEventId",
+    "ExecutionEventSink",
     "ExecutionEvidenceReference",
     "ExecutionReproducibilitySnapshot",
+    "ExecutorIsolation",
+    "JsonlExecutionEventSink",
+    "KernelCellExecutor",
     "KernelDirective",
     "KernelDirectiveField",
+    "KernelExecutionSession",
     "KernelRequestAdapter",
     "NotebookExecutionEvidence",
     "NotebookExecutionRequest",
     "PreparedCell",
     "RepositoryRevision",
     "ReproducibilityDigest",
+    "SessionPolicy",
     "prepare_notebook_execution",
+    "redact_sensitive_text",
 )

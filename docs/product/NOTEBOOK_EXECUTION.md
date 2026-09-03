@@ -50,12 +50,24 @@ The historical Fakebric notebook shape also demonstrates useful nbformat 4 inter
 
 No adapter-specific syntax becomes part of the canonical notebook dependency graph merely because a provider supports it. Actual kernel/session I/O, isolation, secret resolution, cancellation, permission enforcement, redaction, package installation and provider-specific lifecycle behavior remain adapter/orchestrator responsibilities.
 
+## Execution-session controls
+
+`KernelExecutionSession` is the fail-closed control boundary around a concrete `KernelCellExecutor`. It does not launch processes, containers or pods itself. Instead, the executor advertises normalized isolation facts and performs the actual side effect only after the session policy has accepted those facts and the cell's declared permission requirements.
+
+The default `SessionPolicy` accepts container or Kubernetes isolation and requires a dedicated identity plus network and filesystem isolation. Process execution is therefore an explicit opt-in policy choice rather than an accidental local default. A concrete adapter must truthfully implement the isolation it advertises; `ExecutorIsolation` is a contract assertion, not cryptographic proof. Adapter qualification and integration tests must verify real enforcement before an executor is treated as production-safe.
+
+Permissions are checked before the executor receives the cell. Missing permissions produce the normalized `kernel.permission.denied` result and ordered `permission.denied`, `cell.failed` and `session.failed` events without invoking the executor. Cancellation uses a small signal protocol so local processes, containers, Kubernetes jobs and future remote runtimes can implement their own interruption mechanism without entering the canonical notebook model.
+
+Operational events reuse the durable `ExecutionAttemptId` plus contiguous `ExecutionEventId.sequence`. The initial `JsonlExecutionEventSink` writes canonical JSON Lines, flushes and fsyncs every event, rejects mixed attempts and out-of-order sequence numbers, and redacts common bearer/token/password/API-key and URI-credential forms before persistence. This gives local/offline deployments durable evidence without requiring a distributed event service; restart/resume and shared durable stores remain later replaceable sink implementations.
+
+Executor exceptions are normalized to `kernel.executor.error`; raw adapter exception text is not written to the event ledger. An executor result that changes the requested `CellId` is rejected. These controls surround the existing immutable notebook/runtime/repository/reproducibility nucleus rather than modifying authored intent.
+
 ## Evidence and future integration
 
 Per-cell execution results use normalized immutable states (`succeeded`, `failed`, `cancelled`). Failed results require a stable failure code instead of copying an arbitrary raw provider exception into canonical evidence. Results may attach typed references for logs, metrics, traces, lineage, materialized outputs, resource usage and cost; the referenced storage/observability systems remain replaceable.
 
 `NotebookExecutionEvidence` binds those results back to the exact prepared request and rejects duplicate or unknown result cell identities. It may represent partial evidence while a run is active, and exposes whether every requested executable cell has a result without mutating the underlying document or request.
 
-Later kernel/orchestrator slices should add durable cell/run attempt identities and timestamps at the operational event boundary, plus adapter-normalized effective non-secret runtime configuration, environment/package locks or digests, image identity, cancellation evidence and durable event storage. These records must surround the immutable notebook/runtime/repository nucleus rather than rewrite it.
+The next concrete execution slice should implement and qualify local/container executors behind `KernelCellExecutor`, including enforceable isolation, cancellation propagation and resource/cost evidence, then add runtime-evidence collectors for effective settings and package/environment/image/artifact digests. Concrete launchers must not reintroduce notebook mutation or provider branches into the canonical contracts.
 
 Data lineage is related but distinct from cell execution dependencies. Assets read or written by a cell should be represented through lineage/evidence contracts rather than overloaded into the cell DAG. This separation allows Ronin to explain both *why a cell ran after another cell* and *which data/model/knowledge assets influenced its result*.
