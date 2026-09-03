@@ -78,9 +78,7 @@ def test_dependency_analysis_is_stable_and_preserves_authored_ties() -> None:
 
 
 def test_dependency_analysis_reorders_forward_dependencies() -> None:
-    notebook = Notebook(
-        (code("consumer", dependencies=("producer",)), code("producer"))
-    )
+    notebook = Notebook((code("consumer", dependencies=("producer",)), code("producer")))
     analysis = analyze_notebook_dependencies(notebook)
     assert analysis.is_valid
     assert analysis.execution_order == (CellId("producer"), CellId("consumer"))
