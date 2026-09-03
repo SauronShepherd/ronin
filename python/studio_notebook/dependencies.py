@@ -49,11 +49,7 @@ class NotebookCell:
             if canonical_dependencies:
                 raise ValueError("markdown cells may not declare execution dependencies")
         if self.kind in {"code", "sql"}:
-            if (
-                self.language is None
-                or not self.language
-                or self.language.strip() != self.language
-            ):
+            if self.language is None or not self.language or self.language.strip() != self.language:
                 raise ValueError("executable cells require a non-empty trimmed language")
         object.__setattr__(self, "dependencies", canonical_dependencies)
 
@@ -112,9 +108,7 @@ def analyze_notebook_dependencies(notebook: Notebook) -> NotebookDependencyAnaly
                         code="non_executable_dependency",
                         cell_id=cell.id,
                         dependency_id=dependency_id,
-                        message=(
-                            f"cell {cell.id} depends on non-executable cell {dependency_id}"
-                        ),
+                        message=(f"cell {cell.id} depends on non-executable cell {dependency_id}"),
                     )
                 )
 
