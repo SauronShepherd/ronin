@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from studio_core import ResolvedRuntimeSnapshot, RuntimeProfile, RuntimeProfileRef
 from studio_kernel import (
+    CancellationSignal,
     CancellationToken,
     CellExecutionRequest,
     CellExecutionResult,
@@ -74,7 +75,7 @@ class _Executor:
     def execute(
         self,
         cell: CellExecutionRequest,
-        cancellation: CancellationToken,
+        cancellation: CancellationSignal,
     ) -> CellExecutionResult:
         if self.cancel_token is not None:
             self.cancel_token.cancel()
