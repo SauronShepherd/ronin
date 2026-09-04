@@ -59,11 +59,10 @@ jobs:
           docker run --detach --name ronin-smoke "$LOCAL_IMAGE"
           trap 'docker rm -f ronin-smoke >/dev/null 2>&1 || true' EXIT
           for _ in $(seq 1 30); do
-            status="$(docker inspect --format='{{.State.Health.Status}}' ronin-smoke)"
-            if [ "$status" = "healthy" ]; then
+            if docker exec ronin-smoke python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=1).read()"; then
               exit 0
             fi
-            if [ "$status" = "unhealthy" ]; then
+            if [ "$(docker inspect --format='{{.State.Running}}' ronin-smoke)" != "true" ]; then
               docker logs ronin-smoke
               exit 1
             fi
