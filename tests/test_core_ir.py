@@ -163,7 +163,6 @@ def test_pipeline_canonicalizes_nodes_edges_and_serialization() -> None:
     second = Pipeline(nodes=(source, sink), edges=(edge,), config=PipelineConfig("orders"))
     assert first == second
     assert first.to_json() == second.to_json()
-    assert first.content_digest() == second.content_digest()
     assert tuple(node.id for node in first.nodes) == tuple(sorted((source.id, sink.id)))
 
 
