@@ -95,6 +95,11 @@ def test_jsonl_sink_rejects_partial_existing_event(tmp_path: Path) -> None:
         (_event_line("attempt-1", "0") + "\n", "invalid event sequence"),
         (_event_line("attempt-1", True) + "\n", "invalid event sequence"),
         (_event_line("attempt-1", -1) + "\n", "invalid event sequence"),
+        (_event_line("attempt-1", 0, kind=123) + "\n", "invalid event kind"),
+        (_event_line("attempt-1", 0, cell_id=123) + "\n", "invalid cell identity"),
+        (_event_line("attempt-1", 0, message=123) + "\n", "invalid event message"),
+        (_event_line("attempt-1", 0, kind="not-an-event") + "\n", "invalid event semantics"),
+        (_event_line("attempt-1", 0, message="bad\x00message") + "\n", "invalid event semantics"),
         (
             _event_line("attempt-1", 0) + "\n" + _event_line("attempt-2", 1) + "\n",
             "mixes execution attempts",
