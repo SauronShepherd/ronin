@@ -213,3 +213,13 @@ The local JSONL execution-event sink must be able to reopen durable evidence aft
 This guarantee is deliberately narrower than execution resume. `KernelExecutionSession` still owns in-memory progression through prepared cells and starts its own event sequence at zero; reopening a sink does not by itself reconstruct executor state, infer which side effects completed, or make a workload safe to rerun. A future resumable execution protocol must combine durable state-machine/checkpoint evidence with idempotency rules and explicit replay semantics rather than treating an appendable log as proof that side effects can be repeated.
 
 The JSONL sink is also explicitly single-writer. `flush` plus `fsync` gives local durability for a completed append but does not provide cross-process mutual exclusion, leases, compare-and-swap, or transactional uniqueness. Shared/distributed event storage must guarantee that `(attempt_id, sequence)` remains unique under concurrent writers through an appropriate storage contract. Those guarantees belong behind the replaceable event-sink boundary rather than adding filesystem-locking assumptions to the canonical kernel domain.
+
+## ADR-AUTO-021 — Cycle participation means strongly connected dependency membership
+
+**Status:** accepted — 2026-09-04
+
+Notebook dependency diagnostics must distinguish a cell that actually participates in a directed cycle from a cell that is only transitively blocked by one. Residual positive indegree after Kahn-style topological processing is sufficient to prove that a complete execution plan cannot be produced, but it is not sufficient evidence that every residual cell belongs to a cycle.
+
+`studio_notebook` therefore computes actual strongly connected components for residual executable cells and emits `dependency_cycle` only for cells in cyclic components. Downstream blocked cells remain excluded from cycle-participation evidence. The analyzer still fails closed and returns no partial execution order or levels when any cycle exists, preserving ADR-AUTO-013's execution-safety contract while making the diagnostic evidence precise and suitable for UI remediation, audit and future automated repair tooling.
+
+The implementation is deterministic and provider-neutral: authored notebook order is used only to stabilize traversal and finding order, not to redefine graph semantics. An adversarial regression test covers a two-cell cycle with a multi-level downstream blocked chain.
