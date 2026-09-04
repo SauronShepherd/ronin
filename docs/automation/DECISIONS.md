@@ -235,3 +235,13 @@ Notebook dependency diagnostics must distinguish a cell that actually participat
 `studio_notebook` therefore computes actual strongly connected components for residual executable cells and emits `dependency_cycle` only for cells in cyclic components. Downstream blocked cells remain excluded from cycle-participation evidence. The analyzer still fails closed and returns no partial execution order or levels when any cycle exists, preserving ADR-AUTO-013's execution-safety contract while making the diagnostic evidence precise and suitable for UI remediation, audit and future automated repair tooling.
 
 The implementation is deterministic and provider-neutral: authored notebook order is used only to stabilize traversal and finding order, not to redefine graph semantics. An adversarial regression test covers a two-cell cycle with a multi-level downstream blocked chain.
+
+## ADR-AUTO-022 — Execution sessions are single-use and durable evidence is defensively redacted at construction boundaries
+
+**Status:** accepted — 2026-09-04
+
+A `KernelExecutionSession` represents one execution attempt and is intentionally single-use. Re-entering the same in-memory session after it has started is rejected before isolation validation or event emission can cause a second set of side effects. Retry/resume semantics must therefore be modeled explicitly by future orchestrator Job/Run/Attempt state rather than by calling `run()` twice on the same session object.
+
+Secret prevention remains a layered responsibility. Adapters must avoid placing credentials in operational text, but durable kernel evidence also applies centralized defensive redaction to event messages, evidence references and normalized failure codes. The redactor covers named secret fields, bearer credentials, common provider-token shapes, JWT-like values, PEM private keys and URI user-info credentials. This is defense in depth, not a guarantee that arbitrary unknown secret formats can safely enter evidence.
+
+Unexpected executor exceptions remain normalized to `kernel.executor.error`. The session may persist only the exception type name as bounded operational context; arbitrary exception messages are deliberately discarded because they commonly contain connection details, provider errors or secrets. This strengthens ADR-AUTO-018 without changing the provider-neutral kernel/runner boundary or upgrading any container isolation assertion into proof.
