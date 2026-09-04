@@ -163,7 +163,7 @@ Implemented on validation branch `feat/portable-project-manifest`:
 
 - Added neutral repository `adapter_id` and explicit `manual` / `fetch` / `fast-forward` synchronization policy to `RepositoryBinding`.
 - Added immutable `ProjectManifest` with canonical path `.ronin/project.json` and exact schema identifier `ronin.project/v1`.
-- Added deterministic JSON serialization/deserialization for project identity, primary/supporting repositories, default refs/subdirectories/sync policy, opaque runtime profile references, capability requirements and resolution policy.
+- Added deterministic JSON serialization/deserialization for project identity, primary/supporting repositories, default refs/subdirectories/sync policy, opaque runtime profile references, capability requirements and execution resolution policy.
 - `ProjectManifest.from_project()` strips workspace `auth_ref` values; committed intent never contains resolved credentials, connection bindings, tokens or local checkout paths.
 - V1 deserialization rejects missing/unknown keys and malformed nested shapes rather than silently discarding future or corrupt intent.
 - Kept filesystem I/O, atomic persistence, provider auth resolution and on-disk migration outside `studio_core`; the design reuses `sdp-studio` versioned metadata ideas without copying its Pydantic/YAML/provider-specific persistence boundary.
@@ -213,7 +213,7 @@ Implemented on validation branch `feat/mutation-gate` / PR #10:
 - Pinned `mutmut==3.7.0` in development dependencies and configured mutation only for `studio_core`.
 - Added a strict repository gate requiring at least 90% killed mutants. Only killed mutants count positively; `no_tests`, suspicious outcomes, timeouts, interrupted checks and segfaults invalidate the evidence and fail the gate.
 - Kept all production code free of mutation exclusions and `pragma: no mutate` escapes.
-- Added an isolated mutation job to CI. A temporary `src -> python` source alias accommodates mutmut's generated-mutant layout without changing Ronin's package structure.
+- Added an isolated mutation job to CI. A temporary `src -> python` alias accommodates mutmut's generated-mutant layout without changing Ronin's package structure.
 - Cleared pytest's global coverage addopts only inside mutation execution so mutants are killed by behavioral assertions rather than coverage-plugin side effects. The normal `quality` job continues to run all tests and enforce 100% line/branch coverage.
 - Added short-lived mutation evidence artifacts containing exported counts and the exact survivor list, making failures auditable even when Actions log transport is truncated.
 - Added deterministic complete snapshots of the provider-neutral built-in operator and diagnostic catalogs plus exact metadata boundary tests. These are product regression contracts, not mutation-tool-specific production exceptions.
