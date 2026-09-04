@@ -248,6 +248,7 @@ def _pure_domain_violations(tree: ast.AST, path: Path, source: str | None) -> li
                     Violation(path, node.lineno, "IO003", "environment access is forbidden")
                 )
 
+        line = getattr(node, "lineno", 1)
         for module in modules:
             root = module.split(".", maxsplit=1)[0]
             if root.startswith("studio_"):
@@ -256,7 +257,7 @@ def _pure_domain_violations(tree: ast.AST, path: Path, source: str | None) -> li
                 violations.append(
                     Violation(
                         path,
-                        node.lineno,
+                        line,
                         "IO004",
                         f"nondeterministic import {module!r} is forbidden in pure domain code",
                     )
@@ -267,7 +268,7 @@ def _pure_domain_violations(tree: ast.AST, path: Path, source: str | None) -> li
                 violations.append(
                     Violation(
                         path,
-                        node.lineno,
+                        line,
                         "IO001",
                         f"import {module!r} is not allowed in pure domain code",
                     )
