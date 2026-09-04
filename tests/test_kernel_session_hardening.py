@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -56,7 +57,7 @@ def _request() -> NotebookExecutionRequest:
 class _SuccessExecutor:
     isolation: ExecutorIsolation = ExecutorIsolation("container", True, True, True)
 
-    def execute(
+    async def execute(
         self,
         cell: CellExecutionRequest,
         cancellation: CancellationSignal,
@@ -69,7 +70,7 @@ class _SuccessExecutor:
 class _ExplodingExecutor:
     isolation: ExecutorIsolation = ExecutorIsolation("container", True, True, True)
 
-    def execute(
+    async def execute(
         self,
         _cell: CellExecutionRequest,
         _cancellation: CancellationSignal,
@@ -114,21 +115,22 @@ def test_kernel_session_is_single_use(tmp_path: Path) -> None:
         JsonlExecutionEventSink(tmp_path / "events.jsonl"),
         CancellationToken(),
     )
-    assert session.run()[0].state == "succeeded"
+    assert asyncio.run(session.run())[0].state == "succeeded"
     with pytest.raises(ValueError, match="already started"):
-        session.run()
+        asyncio.run(session.run())
 
 
 def test_executor_exception_preserves_type_without_raw_message(tmp_path: Path) -> None:
     path = tmp_path / "events.jsonl"
-    result = KernelExecutionSession(
-        _request(),
-        _ExplodingExecutor(),
-        SessionPolicy(),
-        JsonlExecutionEventSink(path),
-        CancellationToken(),
-    ).run()[0]
-
+    result = asyncio.run(
+        KernelExecutionSession(
+            _request(),
+            _ExplodingExecutor(),
+            SessionPolicy(),
+            JsonlExecutionEventSink(path),
+            CancellationToken(),
+        ).run()
+    )[0]
     assert result.failure_code == "kernel.executor.error"
     failed = next(event for event in _events(path) if event["kind"] == "cell.failed")
     message = str(failed["message"])
