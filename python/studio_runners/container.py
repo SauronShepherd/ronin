@@ -168,7 +168,7 @@ class AsyncioCommandRunner:
         if len(encoded) > self.max_output_bytes:
             output = encoded[: self.max_output_bytes].decode("utf-8", errors="ignore")
         return CommandOutcome(
-            int(process.returncode if process.returncode is not None else -1),
+            cast(int, process.returncode),
             output,
             cancelled,
             timed_out,
