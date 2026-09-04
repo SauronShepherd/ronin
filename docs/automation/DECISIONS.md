@@ -203,3 +203,13 @@ Cancellation is represented by a small signal protocol so local, container, Kube
 Operational evidence is ordered by the existing `ExecutionAttemptId` plus contiguous `ExecutionEventId.sequence`. Event messages are redacted before storage. The first local sink is append-only canonical JSONL with flush and fsync on every event, rejects mixed attempts and sequence gaps, and requires no external service. It is intentionally replaceable: restart/resume and shared durable stores remain later sink implementations.
 
 This adapts `ronin-old` redaction and hardened session/pod concepts and `sdp-studio` typed event-envelope semantics without copying mutable notebook rewriting, direct subprocess execution or provider-specific lifecycle into the canonical boundary. The concrete local/container launcher remains a separate adapter task tracked by issue #16.
+
+## ADR-AUTO-019 — Restart-safe JSONL is a single-writer recovery baseline, not workload resume
+
+**Status:** accepted — 2026-09-04
+
+The local JSONL execution-event sink must be able to reopen durable evidence after a process restart without silently duplicating or mixing event identities. On construction it therefore scans an existing complete ledger, validates the full persisted event shape and semantics, enforces one `ExecutionAttemptId` with a contiguous sequence starting at zero, and restores the next append sequence. A partial final write, malformed or semantically invalid event, mixed attempt, or sequence gap fails closed before further evidence is appended.
+
+This guarantee is deliberately narrower than execution resume. `KernelExecutionSession` still owns in-memory progression through prepared cells and starts its own event sequence at zero; reopening a sink does not by itself reconstruct executor state, infer which side effects completed, or make a workload safe to rerun. A future resumable execution protocol must combine durable state-machine/checkpoint evidence with idempotency rules and explicit replay semantics rather than treating an appendable log as proof that side effects can be repeated.
+
+The JSONL sink is also explicitly single-writer. `flush` plus `fsync` gives local durability for a completed append but does not provide cross-process mutual exclusion, leases, compare-and-swap, or transactional uniqueness. Shared/distributed event storage must guarantee that `(attempt_id, sequence)` remains unique under concurrent writers through an appropriate storage contract. Those guarantees belong behind the replaceable event-sink boundary rather than adding filesystem-locking assumptions to the canonical kernel domain.
