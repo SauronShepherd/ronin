@@ -86,3 +86,41 @@ def test_asyncio_task_cancellation_kills_reaps_and_cleans_up(
         assert task.done()
 
     asyncio.run(scenario())
+
+
+def test_task_cancellation_cleanup_is_idempotent_for_completed_process_and_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _CompletedProcess:
+        returncode = 0
+        killed = False
+
+        def kill(self) -> None:
+            self.killed = True
+
+    cleanup_calls: list[tuple[str, ...]] = []
+
+    async def fake_cleanup(_self: AsyncioCommandRunner, args: tuple[str, ...]) -> None:
+        cleanup_calls.append(args)
+
+    monkeypatch.setattr(AsyncioCommandRunner, "_cleanup", fake_cleanup)
+
+    async def scenario() -> None:
+        runner = AsyncioCommandRunner()
+        process = _CompletedProcess()
+        wait_task = asyncio.create_task(asyncio.sleep(0, result=0))
+        output_task = asyncio.create_task(asyncio.sleep(0, result=(b"", False)))
+        await asyncio.gather(wait_task, output_task)
+        await runner._reap_after_task_cancellation(  # noqa: SLF001
+            process,  # type: ignore[arg-type]
+            wait_task,
+            output_task,
+            ("docker", "rm", "-f", "ronin-test"),
+        )
+        assert cleanup_calls == [("docker", "rm", "-f", "ronin-test")]
+        assert process.killed is False
+        assert wait_task.done()
+        assert output_task.done()
+        assert output_task.cancelled() is False
+
+    asyncio.run(scenario())
