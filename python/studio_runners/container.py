@@ -92,7 +92,7 @@ class CommandOutcome:
 
 
 class CancellableCommandRunner(Protocol):
-    def run(
+    async def run(
         self,
         args: tuple[str, ...],
         *,
@@ -105,7 +105,7 @@ class CancellableCommandRunner(Protocol):
 
 @dataclass(frozen=True, slots=True)
 class AsyncioCommandRunner:
-    """Argument-array subprocess runner with bounded redacted output and hard cancellation."""
+    """Awaitable subprocess runner with bounded redacted output and hard cancellation."""
 
     poll_seconds: float = 0.02
     cleanup_timeout_seconds: float = 5.0
@@ -117,7 +117,7 @@ class AsyncioCommandRunner:
         if self.max_output_bytes < 1:
             raise ValueError("command runner output limit must be positive")
 
-    def run(
+    async def run(
         self,
         args: tuple[str, ...],
         *,
@@ -128,15 +128,71 @@ class AsyncioCommandRunner:
     ) -> CommandOutcome:
         if not args or not cancellation_args:
             raise ValueError("execution and cancellation commands must be non-empty")
-        return asyncio.run(
-            self._run_async(
-                args,
-                input_text=input_text,
-                cancellation=cancellation,
-                timeout_seconds=timeout_seconds,
-                cancellation_args=cancellation_args,
-            )
+        started = time.monotonic()
+        process = await asyncio.create_subprocess_exec(
+            *args,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
         )
+        stdin = cast(asyncio.StreamWriter, process.stdin)
+        stdout = cast(asyncio.StreamReader, process.stdout)
+        output_task = asyncio.create_task(self._collect_output(stdout))
+        wait_task = asyncio.create_task(process.wait())
+        try:
+            stdin.write(input_text.encode())
+            await stdin.drain()
+            stdin.close()
+            cancelled = False
+            timed_out = False
+            needs_cleanup = False
+            while not wait_task.done():
+                elapsed = time.monotonic() - started
+                cancelled = cancellation.is_cancelled
+                timed_out = elapsed >= timeout_seconds
+                if cancelled or timed_out:
+                    needs_cleanup = True
+                    await self._cleanup(cancellation_args)
+                    if process.returncode is None:
+                        process.kill()
+                    break
+                await asyncio.sleep(self.poll_seconds)
+            returncode = await asyncio.shield(wait_task)
+            raw_output, truncated = await asyncio.shield(output_task)
+            if needs_cleanup:
+                await self._cleanup(cancellation_args)
+            duration_ms = max(0, int((time.monotonic() - started) * 1000))
+            output = (
+                _TRUNCATED_OUTPUT
+                if truncated
+                else redact_sensitive_text(raw_output.decode("utf-8", errors="replace"))
+            )
+            return CommandOutcome(returncode, output, cancelled, timed_out, duration_ms)
+        except asyncio.CancelledError:
+            await self._reap_after_task_cancellation(
+                process,
+                wait_task,
+                output_task,
+                cancellation_args,
+            )
+            raise
+
+    async def _reap_after_task_cancellation(
+        self,
+        process: asyncio.subprocess.Process,
+        wait_task: asyncio.Task[int],
+        output_task: asyncio.Task[tuple[bytes, bool]],
+        cancellation_args: tuple[str, ...],
+    ) -> None:
+        try:
+            await self._cleanup(cancellation_args)
+        finally:
+            if process.returncode is None:
+                process.kill()
+            await asyncio.gather(wait_task, return_exceptions=True)
+            if not output_task.done():
+                output_task.cancel()
+            await asyncio.gather(output_task, return_exceptions=True)
 
     async def _collect_output(self, stream: asyncio.StreamReader) -> tuple[bytes, bool]:
         captured = bytearray()
@@ -147,57 +203,6 @@ class AsyncioCommandRunner:
             if len(chunk) > remaining:
                 truncated = True
         return bytes(captured), truncated
-
-    async def _run_async(
-        self,
-        args: tuple[str, ...],
-        *,
-        input_text: str,
-        cancellation: CancellationSignal,
-        timeout_seconds: float,
-        cancellation_args: tuple[str, ...],
-    ) -> CommandOutcome:
-        started = time.monotonic()
-        process = await asyncio.create_subprocess_exec(
-            *args,
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
-        )
-        stdin = cast(asyncio.StreamWriter, process.stdin)
-        stdout = cast(asyncio.StreamReader, process.stdout)
-        stdin.write(input_text.encode())
-        await stdin.drain()
-        stdin.close()
-        output_task = asyncio.create_task(self._collect_output(stdout))
-        wait_task = asyncio.create_task(process.wait())
-
-        cancelled = False
-        timed_out = False
-        needs_cleanup = False
-        while not wait_task.done():
-            elapsed = time.monotonic() - started
-            cancelled = cancellation.is_cancelled
-            timed_out = elapsed >= timeout_seconds
-            if cancelled or timed_out:
-                needs_cleanup = True
-                await self._cleanup(cancellation_args)
-                if process.returncode is None:
-                    process.kill()
-                break
-            await asyncio.sleep(self.poll_seconds)
-
-        returncode = await wait_task
-        raw_output, truncated = await output_task
-        if needs_cleanup:
-            await self._cleanup(cancellation_args)
-        duration_ms = max(0, int((time.monotonic() - started) * 1000))
-        output = (
-            _TRUNCATED_OUTPUT
-            if truncated
-            else redact_sensitive_text(raw_output.decode("utf-8", errors="replace"))
-        )
-        return CommandOutcome(returncode, output, cancelled, timed_out, duration_ms)
 
     async def _cleanup(self, args: tuple[str, ...]) -> None:
         cleanup = await asyncio.create_subprocess_exec(
@@ -311,7 +316,7 @@ class DockerContainerKernelExecutor:
             *self.config.command,
         )
 
-    def execute(
+    async def execute(
         self,
         cell: CellExecutionRequest,
         cancellation: CancellationSignal,
@@ -327,9 +332,8 @@ class DockerContainerKernelExecutor:
             return CellExecutionResult(
                 cell.cell_id, "failed", "kernel.container.engine_unavailable"
             )
-
         name = self._container_name(cell)
-        outcome = self.runner.run(
+        outcome = await self.runner.run(
             self._docker_args(engine, cell),
             input_text=cell.executable_source,
             cancellation=cancellation,

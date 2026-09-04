@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import sys
 import threading
@@ -48,7 +49,7 @@ class _Runner:
     outcome: CommandOutcome
     calls: list[tuple[tuple[str, ...], str, float, tuple[str, ...]]] = field(default_factory=list)
 
-    def run(
+    async def run(
         self,
         args: tuple[str, ...],
         *,
@@ -116,7 +117,6 @@ def test_container_config_requires_immutable_clean_identity_and_command() -> Non
     ContainerExecutorConfig(_IMAGE)
     ContainerExecutorConfig("repo/image@sha256:" + "b" * 64)
     ContainerExecutorConfig(_IMAGE, user="1000:1000")
-
     for image in ("python:latest", " sha256:" + "a" * 64, "bad image@sha256:" + "a" * 64):
         with pytest.raises(ValueError, match="container image"):
             ContainerExecutorConfig(image)
@@ -135,19 +135,17 @@ def test_container_executor_materializes_hardened_isolation_and_evidence() -> No
     executor, runner, evidence = _executor(
         CommandOutcome(0, "token=secret-value", False, False, 17)
     )
-
-    result = executor.execute(_cell(source="print('executed')"), CancellationToken())
-
+    result = asyncio.run(executor.execute(_cell(source="print('executed')"), CancellationToken()))
     assert result.state == "succeeded"
     assert result.evidence == (
         ExecutionEvidenceReference("log", "memory://log"),
         ExecutionEvidenceReference("resource", "memory://resource"),
     )
     assert executor.isolation.mode == "container"
+    assert executor.isolation.qualification_status == "declared"
     assert executor.isolation.dedicated_identity is True
     assert executor.isolation.network_isolated is True
     assert executor.isolation.filesystem_isolated is True
-
     args, source, timeout, cancellation_args = runner.calls[0]
     assert source == "print('executed')"
     assert timeout == 300.0
@@ -164,7 +162,6 @@ def test_container_executor_materializes_hardened_isolation_and_evidence() -> No
     assert args[args.index("--workdir") + 1] == _EXPECTED_WORKDIR
     assert args[-4:] == (_IMAGE, "python", "-I", "-")
     assert cancellation_args[:3] == ("/usr/bin/docker", "rm", "-f")
-
     log_payload = evidence.payloads[0][1]
     resource_payload = evidence.payloads[1][1]
     assert "secret-value" not in str(log_payload)
@@ -185,7 +182,7 @@ def test_container_executor_normalizes_runtime_outcomes(
     outcome: CommandOutcome, state: str, failure: str | None
 ) -> None:
     executor, _, _ = _executor(outcome)
-    result = executor.execute(_cell(), CancellationToken())
+    result = asyncio.run(executor.execute(_cell(), CancellationToken()))
     assert result.state == state
     assert result.failure_code == failure
     assert {reference.kind for reference in result.evidence} == {"log", "resource"}
@@ -195,16 +192,14 @@ def test_container_executor_fails_closed_before_launch() -> None:
     executor, runner, _ = _executor(CommandOutcome(0, "", False, False, 1))
     token = CancellationToken()
     token.cancel()
-    assert executor.execute(_cell(), token).state == "cancelled"
+    assert asyncio.run(executor.execute(_cell(), token)).state == "cancelled"
     assert runner.calls == []
-
-    unsupported = executor.execute(_cell(language="sql"), CancellationToken())
+    unsupported = asyncio.run(executor.execute(_cell(language="sql"), CancellationToken()))
     assert unsupported.failure_code == "kernel.container.language_unsupported"
     assert runner.calls == []
-
     executor.engine_path = None
     executor.config = ContainerExecutorConfig(_IMAGE, engine="ronin-engine-that-does-not-exist")
-    unavailable = executor.execute(_cell(), CancellationToken())
+    unavailable = asyncio.run(executor.execute(_cell(), CancellationToken()))
     assert unavailable.failure_code == "kernel.container.engine_unavailable"
     assert runner.calls == []
 
@@ -231,12 +226,14 @@ def test_local_evidence_store_persists_canonical_opaque_json(tmp_path: Path) -> 
 
 
 def test_asyncio_command_runner_redacts_output_within_limit() -> None:
-    outcome = AsyncioCommandRunner(max_output_bytes=256).run(
-        (sys.executable, "-c", "print('token=super-secret-value')"),
-        input_text="",
-        cancellation=CancellationToken(),
-        timeout_seconds=2.0,
-        cancellation_args=(sys.executable, "-c", "pass"),
+    outcome = asyncio.run(
+        AsyncioCommandRunner(max_output_bytes=256).run(
+            (sys.executable, "-c", "print('token=super-secret-value')"),
+            input_text="",
+            cancellation=CancellationToken(),
+            timeout_seconds=2.0,
+            cancellation_args=(sys.executable, "-c", "pass"),
+        )
     )
     assert outcome.returncode == 0
     assert outcome.cancelled is False
@@ -247,12 +244,14 @@ def test_asyncio_command_runner_redacts_output_within_limit() -> None:
 
 
 def test_asyncio_command_runner_discards_oversized_output_fail_closed() -> None:
-    outcome = AsyncioCommandRunner(max_output_bytes=32).run(
-        (sys.executable, "-c", "print('token=super-secret-value-' + 'x' * 100)"),
-        input_text="",
-        cancellation=CancellationToken(),
-        timeout_seconds=2.0,
-        cancellation_args=(sys.executable, "-c", "pass"),
+    outcome = asyncio.run(
+        AsyncioCommandRunner(max_output_bytes=32).run(
+            (sys.executable, "-c", "print('token=super-secret-value-' + 'x' * 100)"),
+            input_text="",
+            cancellation=CancellationToken(),
+            timeout_seconds=2.0,
+            cancellation_args=(sys.executable, "-c", "pass"),
+        )
     )
     assert outcome.returncode == 0
     assert outcome.output == "[OUTPUT TRUNCATED]"
@@ -261,12 +260,14 @@ def test_asyncio_command_runner_discards_oversized_output_fail_closed() -> None:
 
 def test_asyncio_command_runner_times_out_and_kills_slow_cleanup() -> None:
     runner = AsyncioCommandRunner(poll_seconds=0.005, cleanup_timeout_seconds=0.005)
-    outcome = runner.run(
-        (sys.executable, "-c", "import time; time.sleep(10)"),
-        input_text="",
-        cancellation=CancellationToken(),
-        timeout_seconds=0.01,
-        cancellation_args=(sys.executable, "-c", "import time; time.sleep(10)"),
+    outcome = asyncio.run(
+        runner.run(
+            (sys.executable, "-c", "import time; time.sleep(10)"),
+            input_text="",
+            cancellation=CancellationToken(),
+            timeout_seconds=0.01,
+            cancellation_args=(sys.executable, "-c", "import time; time.sleep(10)"),
+        )
     )
     assert outcome.timed_out is True
     assert outcome.cancelled is False
@@ -278,12 +279,14 @@ def test_asyncio_command_runner_observes_cancellation() -> None:
     timer = threading.Thread(target=lambda: (time.sleep(0.02), token.cancel()))
     timer.start()
     try:
-        outcome = AsyncioCommandRunner(poll_seconds=0.005).run(
-            (sys.executable, "-c", "import time; time.sleep(10)"),
-            input_text="",
-            cancellation=token,
-            timeout_seconds=2.0,
-            cancellation_args=(sys.executable, "-c", "pass"),
+        outcome = asyncio.run(
+            AsyncioCommandRunner(poll_seconds=0.005).run(
+                (sys.executable, "-c", "import time; time.sleep(10)"),
+                input_text="",
+                cancellation=token,
+                timeout_seconds=2.0,
+                cancellation_args=(sys.executable, "-c", "pass"),
+            )
         )
     finally:
         timer.join()
@@ -326,10 +329,7 @@ def test_asyncio_command_runner_does_not_kill_already_exited_process_on_cancel(
     async def fake_create_subprocess_exec(*_args: str, **_kwargs: object) -> _Process:
         return process
 
-    async def no_cleanup(
-        _self: AsyncioCommandRunner,
-        _args: tuple[str, ...],
-    ) -> None:
+    async def no_cleanup(_self: AsyncioCommandRunner, _args: tuple[str, ...]) -> None:
         return None
 
     monkeypatch.setattr(
@@ -338,15 +338,15 @@ def test_asyncio_command_runner_does_not_kill_already_exited_process_on_cancel(
     monkeypatch.setattr(AsyncioCommandRunner, "_cleanup", no_cleanup)
     token = CancellationToken()
     token.cancel()
-
-    outcome = AsyncioCommandRunner().run(
-        ("fake-engine",),
-        input_text="",
-        cancellation=token,
-        timeout_seconds=1.0,
-        cancellation_args=("fake-engine", "rm", "-f", "fake-container"),
+    outcome = asyncio.run(
+        AsyncioCommandRunner().run(
+            ("fake-engine",),
+            input_text="",
+            cancellation=token,
+            timeout_seconds=1.0,
+            cancellation_args=("fake-engine", "rm", "-f", "fake-container"),
+        )
     )
-
     assert outcome.cancelled is True
     assert outcome.returncode == 0
     assert process.killed is False
@@ -359,21 +359,24 @@ def test_asyncio_command_runner_validates_configuration_and_commands() -> None:
         AsyncioCommandRunner(cleanup_timeout_seconds=0)
     with pytest.raises(ValueError, match="output"):
         AsyncioCommandRunner(max_output_bytes=0)
-
     runner = AsyncioCommandRunner()
     with pytest.raises(ValueError, match="commands"):
-        runner.run(
-            (),
-            input_text="",
-            cancellation=CancellationToken(),
-            timeout_seconds=1.0,
-            cancellation_args=(sys.executable,),
+        asyncio.run(
+            runner.run(
+                (),
+                input_text="",
+                cancellation=CancellationToken(),
+                timeout_seconds=1.0,
+                cancellation_args=(sys.executable,),
+            )
         )
     with pytest.raises(ValueError, match="commands"):
-        runner.run(
-            (sys.executable,),
-            input_text="",
-            cancellation=CancellationToken(),
-            timeout_seconds=1.0,
-            cancellation_args=(),
+        asyncio.run(
+            runner.run(
+                (sys.executable,),
+                input_text="",
+                cancellation=CancellationToken(),
+                timeout_seconds=1.0,
+                cancellation_args=(),
+            )
         )
