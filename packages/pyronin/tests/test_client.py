@@ -39,13 +39,16 @@ def test_submit_status_cancel_events_and_wait(monkeypatch: pytest.MonkeyPatch) -
 def test_list_jobs_and_validation() -> None:
     transport = FakeTransport([[{"id": "job-1", "state": "failed", "failure_code": "x"}]])
     client = Ronin(transport=transport)
-    assert client.list_jobs(state=JobState.FAILED)[0].failure_code == "x"
+    assert client.list_jobs(project="demo", state=JobState.FAILED)[0].failure_code == "x"
+    assert transport.calls[0][4] == {"project": "demo", "state": "failed"}
     with pytest.raises(ValueError):
         Ronin()
     with pytest.raises(ValueError):
         Ronin("https://example.test", transport=transport)
     with pytest.raises(ValueError):
         client.submit(project="", target="x")
+    with pytest.raises(ValueError):
+        client.list_jobs(project="")
 
 
 @pytest.mark.parametrize("payload", [{}, {"id": "", "state": "queued"}, {"id": "job", "state": "unknown"}, {"id": "job", "state": "failed", "failure_code": 7}])
