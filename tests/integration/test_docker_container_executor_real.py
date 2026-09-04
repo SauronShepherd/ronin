@@ -218,7 +218,8 @@ async def _exercise_timeout_cleanup() -> tuple[str, str | None, tuple[str, ...]]
 
 def test_real_docker_isolation_limits_usage_and_cleanup() -> None:
     _EVIDENCE_ROOT.mkdir(parents=True, exist_ok=True)
-    assert _IMAGE.startswith("sha256:") and len(_IMAGE) == 71
+    assert _IMAGE.startswith("sha256:")
+    assert len(_IMAGE) == 71
 
     limits = ContainerExecutionLimits(cpus="0.5", memory="128m", pids=32, timeout_seconds=10.0)
     executor = _executor("docker-real-probe", limits)
@@ -294,7 +295,9 @@ def test_real_docker_isolation_limits_usage_and_cleanup() -> None:
             "timeout_failure": timeout_failure,
             "timeout_containers_remaining": list(timeout_names),
         },
-        "cost_evidence": "not_emitted; local resource usage is measured but currency cost is unknown",
+        "cost_evidence": (
+            "not_emitted; local resource usage is measured but currency cost is unknown"
+        ),
     }
     (_EVIDENCE_ROOT / "qualification-summary.json").write_text(
         json.dumps(summary, sort_keys=True, indent=2) + "\n",
