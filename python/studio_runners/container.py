@@ -92,7 +92,7 @@ class CommandOutcome:
 
 
 class CancellableCommandRunner(Protocol):
-    def run(
+    async def run(
         self,
         args: tuple[str, ...],
         *,
@@ -105,7 +105,7 @@ class CancellableCommandRunner(Protocol):
 
 @dataclass(frozen=True, slots=True)
 class AsyncioCommandRunner:
-    """Argument-array subprocess runner with bounded redacted output and hard cancellation."""
+    """Awaitable subprocess runner with bounded redacted output and hard cancellation."""
 
     poll_seconds: float = 0.02
     cleanup_timeout_seconds: float = 5.0
@@ -117,7 +117,7 @@ class AsyncioCommandRunner:
         if self.max_output_bytes < 1:
             raise ValueError("command runner output limit must be positive")
 
-    def run(
+    async def run(
         self,
         args: tuple[str, ...],
         *,
@@ -128,35 +128,6 @@ class AsyncioCommandRunner:
     ) -> CommandOutcome:
         if not args or not cancellation_args:
             raise ValueError("execution and cancellation commands must be non-empty")
-        return asyncio.run(
-            self._run_async(
-                args,
-                input_text=input_text,
-                cancellation=cancellation,
-                timeout_seconds=timeout_seconds,
-                cancellation_args=cancellation_args,
-            )
-        )
-
-    async def _collect_output(self, stream: asyncio.StreamReader) -> tuple[bytes, bool]:
-        captured = bytearray()
-        truncated = False
-        while chunk := await stream.read(_READ_CHUNK_BYTES):
-            remaining = max(0, self.max_output_bytes - len(captured))
-            captured.extend(chunk[:remaining])
-            if len(chunk) > remaining:
-                truncated = True
-        return bytes(captured), truncated
-
-    async def _run_async(
-        self,
-        args: tuple[str, ...],
-        *,
-        input_text: str,
-        cancellation: CancellationSignal,
-        timeout_seconds: float,
-        cancellation_args: tuple[str, ...],
-    ) -> CommandOutcome:
         started = time.monotonic()
         process = await asyncio.create_subprocess_exec(
             *args,
@@ -171,7 +142,6 @@ class AsyncioCommandRunner:
         stdin.close()
         output_task = asyncio.create_task(self._collect_output(stdout))
         wait_task = asyncio.create_task(process.wait())
-
         cancelled = False
         timed_out = False
         needs_cleanup = False
@@ -186,7 +156,6 @@ class AsyncioCommandRunner:
                     process.kill()
                 break
             await asyncio.sleep(self.poll_seconds)
-
         returncode = await wait_task
         raw_output, truncated = await output_task
         if needs_cleanup:
@@ -198,6 +167,16 @@ class AsyncioCommandRunner:
             else redact_sensitive_text(raw_output.decode("utf-8", errors="replace"))
         )
         return CommandOutcome(returncode, output, cancelled, timed_out, duration_ms)
+
+    async def _collect_output(self, stream: asyncio.StreamReader) -> tuple[bytes, bool]:
+        captured = bytearray()
+        truncated = False
+        while chunk := await stream.read(_READ_CHUNK_BYTES):
+            remaining = max(0, self.max_output_bytes - len(captured))
+            captured.extend(chunk[:remaining])
+            if len(chunk) > remaining:
+                truncated = True
+        return bytes(captured), truncated
 
     async def _cleanup(self, args: tuple[str, ...]) -> None:
         cleanup = await asyncio.create_subprocess_exec(
@@ -311,7 +290,7 @@ class DockerContainerKernelExecutor:
             *self.config.command,
         )
 
-    def execute(
+    async def execute(
         self,
         cell: CellExecutionRequest,
         cancellation: CancellationSignal,
@@ -327,9 +306,8 @@ class DockerContainerKernelExecutor:
             return CellExecutionResult(
                 cell.cell_id, "failed", "kernel.container.engine_unavailable"
             )
-
         name = self._container_name(cell)
-        outcome = self.runner.run(
+        outcome = await self.runner.run(
             self._docker_args(engine, cell),
             input_text=cell.executable_source,
             cancellation=cancellation,
