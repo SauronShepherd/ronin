@@ -52,11 +52,14 @@ def test_gate_rejects_environment_access_through_from_import() -> None:
 
 def test_gate_rejects_real_io_network_process_and_unsafe_deserialization_imports() -> None:
     with tempfile.TemporaryDirectory() as directory:
-        path = _fixture(
-            directory,
-            "studio_core",
-            "from pathlib import Path\nimport io\nimport socket\nimport pickle\nfrom urllib import request\n",
+        source = (
+            "from pathlib import Path\n"
+            "import io\n"
+            "import socket\n"
+            "import pickle\n"
+            "from urllib import request\n"
         )
+        path = _fixture(directory, "studio_core", source)
         violations = inspect_file(path)
 
     assert [violation.rule for violation in violations] == ["IO001"] * 5
@@ -76,11 +79,16 @@ def test_gate_rejects_os_side_effects_and_getenv() -> None:
 
 def test_gate_rejects_nondeterministic_sources_separately() -> None:
     with tempfile.TemporaryDirectory() as directory:
-        path = _fixture(
-            directory,
-            "studio_core",
-            "import time\nimport random\nimport uuid\nimport os\nVALUE = time.time() + random.random()\nTOKEN = os.urandom(4)\nID = uuid.uuid4()\n",
+        source = (
+            "import time\n"
+            "import random\n"
+            "import uuid\n"
+            "import os\n"
+            "VALUE = time.time() + random.random()\n"
+            "TOKEN = os.urandom(4)\n"
+            "ID = uuid.uuid4()\n"
         )
+        path = _fixture(directory, "studio_core", source)
         violations = inspect_file(path)
 
     assert all(violation.rule == "IO004" for violation in violations)
