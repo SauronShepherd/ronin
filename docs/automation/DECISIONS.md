@@ -130,7 +130,7 @@ The repository uses a temporary `src -> python` source alias only inside the mut
 
 Initial mutation evidence was 1,599 killed and 508 survived out of 2,107 total (75.89%), with no invalid categories. Rather than weaken the threshold, Ronin added complete deterministic snapshots for the built-in provider-neutral operator and diagnostic catalogs plus exact metadata-boundary assertions. The resulting evidence is 1,899 killed and 208 survived out of 2,107 total (90.13%), again with zero invalid categories. CI retains the compact exported counts and survivor list as a short-lived artifact so the gate is auditable even when log transport is truncated.
 
-A reuse search across `SauronShepherd/sdp-studio` and `SauronShepherd/ronin-old` did not surface mutation-testing machinery suitable for reuse, so this quality boundary is implemented directly in Ronin.
+A reuse search across `SauronShepherd/sdp-studio` and `SauronShepherd/ronin-old` did not surface mutation-testing machinery suitable for adoption, so this quality boundary is implemented directly in Ronin.
 
 ## ADR-AUTO-013 — Notebook execution dependencies are explicit pure intent
 
@@ -213,6 +213,18 @@ The local JSONL execution-event sink must be able to reopen durable evidence aft
 This guarantee is deliberately narrower than execution resume. `KernelExecutionSession` still owns in-memory progression through prepared cells and starts its own event sequence at zero; reopening a sink does not by itself reconstruct executor state, infer which side effects completed, or make a workload safe to rerun. A future resumable execution protocol must combine durable state-machine/checkpoint evidence with idempotency rules and explicit replay semantics rather than treating an appendable log as proof that side effects can be repeated.
 
 The JSONL sink is also explicitly single-writer. `flush` plus `fsync` gives local durability for a completed append but does not provide cross-process mutual exclusion, leases, compare-and-swap, or transactional uniqueness. Shared/distributed event storage must guarantee that `(attempt_id, sequence)` remains unique under concurrent writers through an appropriate storage contract. Those guarantees belong behind the replaceable event-sink boundary rather than adding filesystem-locking assumptions to the canonical kernel domain.
+
+## ADR-AUTO-020 — Concrete container execution is a runner adapter; isolation claims require qualification
+
+**Status:** accepted — 2026-09-04
+
+`studio_kernel` remains the provider-neutral execution/session contract and must not contain Docker, Kubernetes, subprocess or container-engine lifecycle logic. Concrete launchers live in the side-effecting `studio_runners` adapter layer, which may depend one-way on `studio_kernel` contracts. The executable architecture matrix therefore permits `studio_runners -> studio_kernel`; the reverse edge remains forbidden, preserving an acyclic contract-to-adapter boundary.
+
+The first local container adapter uses Docker-compatible argument-array execution but models only neutral execution facts at the kernel boundary. It requires an immutable container image identity: either a repository digest (`repo@sha256:...`) or a local image ID (`sha256:...`). Supporting local image IDs is deliberate for offline/air-gapped use and avoids making a registry a prerequisite for reproducible local execution.
+
+The adapter materializes a hardened baseline with an explicit non-root uid/gid, `--network none`, a read-only root filesystem, dropped Linux capabilities, `no-new-privileges`, PID/CPU/memory ceilings, and a bounded isolated tmpfs. Cancellation and timeout actively remove the named container rather than merely cancelling the caller. Operational output is bounded and redacted both by the command runner and again at the evidence-persistence boundary so a replaceable runner cannot bypass credential redaction.
+
+These command-line controls justify an `ExecutorIsolation` assertion only as implementation intent. They are not production qualification evidence by themselves. Issue #16 remains open until integration/adversarial tests against a real container engine demonstrate the effective uid, network/filesystem/capability restrictions, cancellation cleanup and cgroup limits. Likewise, configured CPU/memory ceilings are recorded as limits, not observed usage; cost evidence must not be synthesized from limits. Observed resource accounting and provider-neutral local/showback cost evidence require a later qualified collector.
 
 ## ADR-AUTO-021 — Cycle participation means strongly connected dependency membership
 
