@@ -44,13 +44,7 @@ def _require_text(value: str, name: str) -> None:
 
 @dataclass(frozen=True, slots=True)
 class ExecutorIsolation:
-    """Versioned isolation claim declared or evidenced by an executor adapter.
-
-    Boolean properties describe the adapter's requested/effective isolation contract.
-    ``qualification_status`` states how strongly those properties have been proven for
-    the identified runtime. A claim must never be upgraded from ``declared`` merely
-    because command-line flags were constructed successfully.
-    """
+    """Versioned isolation claim declared or evidenced by an executor adapter."""
 
     mode: IsolationMode
     dedicated_identity: bool
@@ -67,7 +61,6 @@ class ExecutorIsolation:
             raise ValueError("unsupported executor isolation mode")
         if self.qualification_status not in _QUALIFICATION_RANK:
             raise ValueError("unsupported isolation qualification status")
-
         metadata = (
             self.qualification_scheme,
             self.qualification_version,
@@ -112,7 +105,6 @@ class SessionPolicy:
             raise ValueError("session permissions must be unique")
         for permission in permissions:
             _require_text(permission, "session permission")
-
         modes = tuple(sorted(self.allowed_isolation_modes))
         if not modes:
             raise ValueError("session policy must allow at least one isolation mode")
@@ -122,7 +114,6 @@ class SessionPolicy:
             raise ValueError("unsupported allowed isolation mode")
         if self.minimum_isolation_qualification not in _QUALIFICATION_RANK:
             raise ValueError("unsupported minimum isolation qualification")
-
         object.__setattr__(self, "granted_permissions", permissions)
         object.__setattr__(self, "allowed_isolation_modes", modes)
 
@@ -217,7 +208,6 @@ def _decode_ledger_identity(line: str) -> tuple[ExecutionAttemptId, int]:
         raise ValueError("existing event ledger contains invalid JSON") from exc
     if not isinstance(payload, dict) or set(payload) != _EVENT_LEDGER_KEYS:
         raise ValueError("existing event ledger has invalid event shape")
-
     attempt_id = payload["attempt_id"]
     sequence = payload["sequence"]
     kind = payload["kind"]
@@ -233,7 +223,6 @@ def _decode_ledger_identity(line: str) -> tuple[ExecutionAttemptId, int]:
         raise ValueError("existing event ledger has invalid cell identity")
     if not isinstance(message, str):
         raise ValueError("existing event ledger has invalid event message")
-
     try:
         event = ExecutionEvent(
             ExecutionEventId(ExecutionAttemptId(attempt_id), sequence),
@@ -262,7 +251,6 @@ class JsonlExecutionEventSink:
             return
         if not raw.endswith("\n"):
             raise ValueError("existing event ledger ends with a partial event")
-
         attempt_id: ExecutionAttemptId | None = None
         next_sequence = 0
         for line in raw.splitlines():
@@ -274,7 +262,6 @@ class JsonlExecutionEventSink:
             if sequence != next_sequence:
                 raise ValueError("existing event ledger sequence is not contiguous")
             next_sequence += 1
-
         self._attempt_id = attempt_id
         self._next_sequence = next_sequence
 
@@ -285,7 +272,6 @@ class JsonlExecutionEventSink:
             raise ValueError("event sink may persist only one execution attempt")
         if event.event_id.sequence != self._next_sequence:
             raise ValueError("execution events must be appended in contiguous sequence order")
-
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8", newline="\n") as handle:
             handle.write(event.to_json())
@@ -296,12 +282,12 @@ class JsonlExecutionEventSink:
 
 
 class KernelCellExecutor(Protocol):
-    """Concrete adapter boundary that performs one prepared cell side effect."""
+    """Awaitable adapter boundary that performs one prepared cell side effect."""
 
     @property
     def isolation(self) -> ExecutorIsolation: ...
 
-    def execute(
+    async def execute(
         self,
         cell: CellExecutionRequest,
         cancellation: CancellationSignal,
@@ -310,7 +296,7 @@ class KernelCellExecutor(Protocol):
 
 @dataclass(slots=True)
 class KernelExecutionSession:
-    """Run prepared cells behind policy, cancellation, redaction and durable events."""
+    """Run prepared cells asynchronously behind policy and durable evidence controls."""
 
     request: NotebookExecutionRequest
     executor: KernelCellExecutor
@@ -336,19 +322,17 @@ class KernelExecutionSession:
         self.event_sink.append(event)
         self._next_sequence += 1
 
-    def run(self) -> tuple[CellExecutionResult, ...]:
+    async def run(self) -> tuple[CellExecutionResult, ...]:
         if self._started:
             raise ValueError("session already started")
         self.policy.validate_isolation(self.executor.isolation)
         self._started = True
         self._emit("session.started")
         results: list[CellExecutionResult] = []
-
         for cell in self.request.cells:
             if self.cancellation.is_cancelled:
                 self._emit("session.cancelled")
                 return tuple(results)
-
             missing_permissions = self.policy.missing_permissions(cell)
             if missing_permissions:
                 self._emit(
@@ -365,18 +349,16 @@ class KernelExecutionSession:
                 self._emit("cell.failed", cell_id=cell.cell_id, message=result.failure_code or "")
                 self._emit("session.failed")
                 return tuple(results)
-
             self._emit("cell.started", cell_id=cell.cell_id)
             failure_detail = ""
             try:
-                result = self.executor.execute(cell, self.cancellation)
+                result = await self.executor.execute(cell, self.cancellation)
             except Exception as exc:
                 failure_detail = type(exc).__name__
                 result = CellExecutionResult(cell.cell_id, "failed", "kernel.executor.error")
             if result.cell_id != cell.cell_id:
                 raise ValueError("kernel executor must preserve cell identity")
             results.append(result)
-
             if result.state == "succeeded":
                 self._emit("cell.succeeded", cell_id=cell.cell_id)
                 continue
@@ -384,13 +366,11 @@ class KernelExecutionSession:
                 self._emit("cell.cancelled", cell_id=cell.cell_id)
                 self._emit("session.cancelled")
                 return tuple(results)
-
             message = result.failure_code or ""
             if failure_detail:
                 message = f"{message}; executor exception: {failure_detail}"
             self._emit("cell.failed", cell_id=cell.cell_id, message=message)
             self._emit("session.failed")
             return tuple(results)
-
         self._emit("session.completed")
         return tuple(results)
