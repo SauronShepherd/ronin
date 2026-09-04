@@ -11,7 +11,7 @@ import shutil
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Protocol
+from typing import Literal, Protocol, cast
 
 from studio_kernel import (
     CancellationSignal,
@@ -214,6 +214,7 @@ class LocalExecutionEvidenceStore:
     ) -> ExecutionEvidenceReference:
         if kind not in {"log", "resource"}:
             raise ValueError("local container evidence store supports log/resource evidence only")
+        evidence_kind = cast(Literal["log", "resource"], kind)
         attempt_key = hashlib.sha256(str(attempt_id).encode("utf-8")).hexdigest()[:24]
         cell_key = hashlib.sha256(str(cell.cell_id).encode("utf-8")).hexdigest()[:24]
         directory = self.root / attempt_key / cell_key
@@ -227,7 +228,7 @@ class LocalExecutionEvidenceStore:
             os.fsync(handle.fileno())
         os.replace(temporary, target)
         return ExecutionEvidenceReference(
-            kind, f"local-evidence://{attempt_key}/{cell_key}/{kind}.json"
+            evidence_kind, f"local-evidence://{attempt_key}/{cell_key}/{kind}.json"
         )
 
 
