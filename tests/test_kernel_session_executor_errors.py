@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -26,7 +27,7 @@ from studio_notebook import CellId, Notebook, NotebookDocument
 class _CrashingExecutor:
     isolation: ExecutorIsolation = ExecutorIsolation("container", True, True, True)
 
-    def execute(
+    async def execute(
         self,
         cell: CellExecutionRequest,
         cancellation: CancellationSignal,
@@ -61,15 +62,15 @@ def test_executor_exception_is_normalized_without_persisting_raw_exception(tmp_p
         (cell,),
     )
     event_path = tmp_path / "events.jsonl"
-
-    results = KernelExecutionSession(
-        request,
-        _CrashingExecutor(),
-        SessionPolicy(),
-        JsonlExecutionEventSink(event_path),
-        CancellationToken(),
-    ).run()
-
+    results = asyncio.run(
+        KernelExecutionSession(
+            request,
+            _CrashingExecutor(),
+            SessionPolicy(),
+            JsonlExecutionEventSink(event_path),
+            CancellationToken(),
+        ).run()
+    )
     assert results == (CellExecutionResult(cell.cell_id, "failed", "kernel.executor.error"),)
     persisted = event_path.read_text(encoding="utf-8")
     assert "kernel.executor.error" in persisted
