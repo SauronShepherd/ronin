@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import heapq
 import json
 import math
@@ -251,10 +250,6 @@ class Pipeline:
 
     def to_json(self) -> str:
         return _canonical_json(self.to_data())
-
-    def content_digest(self) -> str:
-        """Return a deterministic SHA-256 digest of the canonical pipeline document."""
-        return hashlib.sha256(self.to_json().encode()).hexdigest()
 
     @classmethod
     def from_data(cls, data: Mapping[str, object]) -> Pipeline:
