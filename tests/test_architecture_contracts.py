@@ -50,6 +50,43 @@ def test_gate_rejects_environment_access_through_from_import() -> None:
     assert [violation.rule for violation in violations] == ["IO003"]
 
 
+def test_gate_rejects_real_io_network_process_and_unsafe_deserialization_imports() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        path = _fixture(
+            directory,
+            "studio_core",
+            "from pathlib import Path\nimport io\nimport socket\nimport pickle\nfrom urllib import request\n",
+        )
+        violations = inspect_file(path)
+
+    assert [violation.rule for violation in violations] == ["IO001"] * 5
+
+
+def test_gate_rejects_os_side_effects_and_getenv() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        path = _fixture(
+            directory,
+            "studio_core",
+            "import os\nos.getenv('TOKEN')\nos.system('echo unsafe')\n",
+        )
+        violations = inspect_file(path)
+
+    assert [violation.rule for violation in violations] == ["IO003", "IO001"]
+
+
+def test_gate_rejects_nondeterministic_sources_separately() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        path = _fixture(
+            directory,
+            "studio_core",
+            "import time\nimport random\nimport uuid\nimport os\nVALUE = time.time() + random.random()\nTOKEN = os.urandom(4)\nID = uuid.uuid4()\n",
+        )
+        violations = inspect_file(path)
+
+    assert all(violation.rule == "IO004" for violation in violations)
+    assert len(violations) >= 4
+
+
 def test_gate_rejects_forbidden_project_dependency() -> None:
     with tempfile.TemporaryDirectory() as directory:
         path = _fixture(directory, "studio_core", "from studio_server import app\n")
@@ -66,12 +103,43 @@ def test_gate_allows_declared_project_dependency() -> None:
     assert violations == []
 
 
+def test_gate_allows_explicit_pure_standard_library_imports() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        path = _fixture(
+            directory,
+            "studio_core",
+            "import json\nimport hashlib\nfrom urllib.parse import urlsplit\n",
+        )
+        violations = inspect_file(path)
+
+    assert violations == []
+
+
 def test_gate_rejects_undeclared_project_package() -> None:
     with tempfile.TemporaryDirectory() as directory:
         path = _fixture(directory, "studio_future", "VALUE = 1\n")
         violations = inspect_file(path)
 
     assert [violation.rule for violation in violations] == ["DEP000"]
+
+
+def test_source_package_is_relative_to_gate_root_not_checkout_parent_name() -> None:
+    with tempfile.TemporaryDirectory(prefix="studio_workspace_") as directory:
+        path = _fixture(directory, "studio_core", "VALUE = 1\n")
+        root = Path(directory) / "python"
+        violations = inspect_file(path, root=root)
+
+    assert violations == []
+
+
+def test_gate_reports_syntax_error_as_violation_instead_of_crashing() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        path = _fixture(directory, "studio_core", "def broken(:\n")
+        violations = inspect_file(path)
+
+    assert len(violations) == 1
+    assert violations[0].rule == "PARSE001"
+    assert "invalid Python syntax" in violations[0].detail
 
 
 def test_negative_gate_harness_detects_all_fixtures() -> None:
