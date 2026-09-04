@@ -383,3 +383,23 @@ Follow-up:
 
 - Issue #16 tracks the first concrete local/container executor and its real cancellation/isolation/resource/cost qualification. Declared isolation facts must not be treated as proof without adapter integration tests.
 - Next adjacent E1 work is a concrete runtime-evidence collector and restart/resume-capable durable event storage, after the concrete executor boundary is proven.
+
+## 2026-09-04 — E1 restart-safe execution event ledger
+
+Objective: make local durable execution evidence fail closed across process restarts before a concrete executor depends on it, without claiming multi-writer or workload-resume semantics that the JSONL sink does not provide.
+
+Implemented through PR #19 and published as `0d7a1a84e1e8634153f32e9bcce94378fbf9f6f8`:
+
+- `JsonlExecutionEventSink` now reconstructs the existing execution attempt and next contiguous event sequence from a complete JSONL ledger.
+- Recovery validates the complete persisted event shape and semantics, including attempt identity, sequence, event kind, optional cell identity and message constraints; corrupt/tampered events fail closed before append.
+- Partial trailing writes, invalid JSON, mixed attempts and sequence gaps are rejected instead of being silently extended with ambiguous evidence.
+- The sink remains deliberately single-writer. Concurrent/shared durable storage requires explicit arbitration, leasing or transactional append semantics and remains a separate backlog item.
+- Added adversarial regression coverage for restart recovery, empty ledgers, partial writes, malformed shapes/types/semantics, mixed attempts and sequence discontinuities.
+- No new architecture ADR was added because this strengthens ADR-AUTO-018's replaceable durable-event-sink contract rather than changing the canonical boundary.
+
+Validation evidence:
+
+- Exact PR head `801859b03911b757442180aec143ab780f781cd2`, CI run `33833922259`: `quality`, `gates-negative` and `mutation` all completed successfully; `quality` retained format, lint, strict typing, architecture contracts and mandatory 100% line/branch coverage.
+- Published `main` SHA `0d7a1a84e1e8634153f32e9bcce94378fbf9f6f8`, CI run `33834053217`: `quality`, `gates-negative` and `mutation` all completed successfully.
+
+Next E1 priority: issue #16, the first concrete local/container `KernelCellExecutor`, followed by concrete runtime-evidence collection. Shared/multi-writer durable event storage remains separate and must preserve unique `(attempt_id, sequence)` identities under concurrency.
