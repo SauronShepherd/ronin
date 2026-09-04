@@ -130,7 +130,9 @@ def test_container_config_requires_immutable_clean_identity_and_command() -> Non
 
 
 def test_container_executor_materializes_hardened_isolation_and_evidence() -> None:
-    executor, runner, evidence = _executor(CommandOutcome(0, "token=secret-value", False, False, 17))
+    executor, runner, evidence = _executor(
+        CommandOutcome(0, "token=secret-value", False, False, 17)
+    )
 
     result = executor.execute(_cell(source="print('executed')"), CancellationToken())
 
