@@ -42,12 +42,13 @@ Completed:
 - Typed `studio_kernel` execution-evidence boundary with immutable notebook/runtime/repository-bound requests, adapter-owned source/magic preparation that must preserve cell identity, normalized per-cell outcomes, explicit permission requirements and typed log/metric/trace/lineage/output/resource/cost references. Authored notebook source is never mutated by preparation.
 - Immutable execution reproducibility snapshots bound to an explicit durable attempt ID, with deterministic event identities, adapter-normalized effective non-secret settings, and typed SHA-256 identities for package locks, environments, runtime images and runtime artifacts. Secret-looking setting names and duplicate evidence keys fail closed; authored project/notebook intent remains unchanged.
 - Fail-closed `KernelExecutionSession` controls around concrete executors: cancellation signals, exact permission checks before side effects, explicit isolation-policy validation, normalized executor-crash failures, automatic operational-text redaction and contiguous per-attempt events. The initial local durable sink is append-only JSONL with flush+fsync per event; actual process/container/Kubernetes launch remains behind `KernelCellExecutor` and must truthfully satisfy the declared isolation facts.
+- Restart-safe single-writer JSONL event-ledger recovery: an existing attempt is recovered with its next sequence, while partial writes, invalid JSON/event shapes, mixed attempts and non-contiguous sequences fail closed before any append. Multi-writer/shared-storage arbitration remains a later storage concern.
 
 Next:
 
 1. Implement and qualify the first concrete local/container `KernelCellExecutor` behind the session boundary (issue #16), including real cancellation propagation, enforceable isolation, resource/cost evidence and adversarial integration tests. Do not treat executor-declared isolation facts as proof without adapter qualification.
 2. Add a concrete runtime-evidence collector adapter that derives effective non-secret settings and verifies package/environment/image/artifact digests from real local/container execution without putting provider logic into `studio_kernel`.
-3. Evolve the JSONL event sink toward restart/resume and shared durable storage semantics while preserving deterministic attempt/event identity and redaction.
+3. Evolve event persistence from the restart-safe single-writer JSONL baseline toward shared durable storage semantics with explicit writer arbitration/lease or transactional append guarantees; never permit duplicate `(attempt_id, sequence)` identities under concurrent writers.
 4. Ratchet mutation quality upward when new tests make that sustainable; never lower the threshold merely to make CI pass.
 
 ## Later reuse

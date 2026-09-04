@@ -8,7 +8,7 @@ import re
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal, Protocol, TypeAlias
+from typing import Literal, Protocol, TypeAlias, cast
 
 from studio_notebook import CellId
 
@@ -34,6 +34,7 @@ _SECRET_PATTERN = re.compile(
     r"([^\s,\"';}]+)"
 )
 _URI_CREDENTIAL_PATTERN = re.compile(r"(?i)([a-z][a-z0-9+.-]*://[^\s:/@]+:)([^\s/@]+)(@)")
+_EVENT_LEDGER_KEYS = frozenset({"attempt_id", "sequence", "kind", "cell_id", "message"})
 
 
 def _require_text(value: str, name: str) -> None:
@@ -172,13 +173,73 @@ class ExecutionEventSink(Protocol):
     def append(self, event: ExecutionEvent) -> None: ...
 
 
+def _decode_ledger_identity(line: str) -> tuple[ExecutionAttemptId, int]:
+    try:
+        payload = json.loads(line)
+    except json.JSONDecodeError as exc:
+        raise ValueError("existing event ledger contains invalid JSON") from exc
+    if not isinstance(payload, dict) or set(payload) != _EVENT_LEDGER_KEYS:
+        raise ValueError("existing event ledger has invalid event shape")
+
+    attempt_id = payload["attempt_id"]
+    sequence = payload["sequence"]
+    kind = payload["kind"]
+    cell_id = payload["cell_id"]
+    message = payload["message"]
+    if not isinstance(attempt_id, str):
+        raise ValueError("existing event ledger has invalid attempt identity")
+    if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 0:
+        raise ValueError("existing event ledger has invalid event sequence")
+    if not isinstance(kind, str):
+        raise ValueError("existing event ledger has invalid event kind")
+    if cell_id is not None and not isinstance(cell_id, str):
+        raise ValueError("existing event ledger has invalid cell identity")
+    if not isinstance(message, str):
+        raise ValueError("existing event ledger has invalid event message")
+
+    try:
+        event = ExecutionEvent(
+            ExecutionEventId(ExecutionAttemptId(attempt_id), sequence),
+            cast(ExecutionEventKind, kind),
+            CellId(cell_id) if cell_id is not None else None,
+            message,
+        )
+    except ValueError as exc:
+        raise ValueError("existing event ledger contains invalid event semantics") from exc
+    return event.event_id.attempt_id, event.event_id.sequence
+
+
 @dataclass(slots=True)
 class JsonlExecutionEventSink:
-    """Append-only fsynced JSONL sink that rejects out-of-order event identities."""
+    """Restart-safe single-writer JSONL sink with contiguous event identities."""
 
     path: Path
     _attempt_id: ExecutionAttemptId | None = field(default=None, init=False, repr=False)
     _next_sequence: int = field(default=0, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        if not self.path.exists():
+            return
+        raw = self.path.read_text(encoding="utf-8")
+        if not raw:
+            return
+        if not raw.endswith("\n"):
+            raise ValueError("existing event ledger ends with a partial event")
+
+        attempt_id: ExecutionAttemptId | None = None
+        next_sequence = 0
+        for line in raw.splitlines():
+            current_attempt, sequence = _decode_ledger_identity(line)
+            if attempt_id is None:
+                attempt_id = current_attempt
+            elif current_attempt != attempt_id:
+                raise ValueError("existing event ledger mixes execution attempts")
+            if sequence != next_sequence:
+                raise ValueError("existing event ledger sequence is not contiguous")
+            next_sequence += 1
+
+        self._attempt_id = attempt_id
+        self._next_sequence = next_sequence
 
     def append(self, event: ExecutionEvent) -> None:
         if self._attempt_id is None:
