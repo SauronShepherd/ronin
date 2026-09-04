@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from bisect import bisect_left
 from dataclasses import dataclass
 from typing import Literal
 
@@ -159,4 +160,7 @@ class ProjectCollection:
         object.__setattr__(self, "projects", canonical_projects)
 
     def get(self, project_id: ProjectId) -> Project | None:
-        return next((project for project in self.projects if project.id == project_id), None)
+        index = bisect_left(self.projects, project_id.value, key=lambda project: project.id.value)
+        if index < len(self.projects) and self.projects[index].id == project_id:
+            return self.projects[index]
+        return None
