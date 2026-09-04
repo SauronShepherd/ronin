@@ -36,7 +36,7 @@ _DOCKER = shutil.which("docker")
 if _DOCKER is None:
     raise RuntimeError("dedicated Docker qualification requires the docker client")
 
-_PROBE_SOURCE = r'''
+_PROBE_SOURCE = r"""
 import json
 import os
 from pathlib import Path
@@ -108,7 +108,7 @@ payload = {
     "cpu_usage_usec": cpu_usage_usec(),
 }
 print(json.dumps(payload, sort_keys=True))
-'''
+"""
 
 
 def _cell(cell_id: str, source: str) -> CellExecutionRequest:
@@ -228,7 +228,9 @@ def test_real_docker_isolation_limits_usage_and_cleanup() -> None:
     assert result.failure_code is None
     assert {reference.kind for reference in result.evidence} == {"log", "resource"}
     log_reference = next(reference for reference in result.evidence if reference.kind == "log")
-    resource_reference = next(reference for reference in result.evidence if reference.kind == "resource")
+    resource_reference = next(
+        reference for reference in result.evidence if reference.kind == "resource"
+    )
     log_payload = _read_evidence(log_reference.ref)
     resource_payload = _read_evidence(resource_reference.ref)
     probe = cast(dict[str, object], json.loads(cast(str, log_payload["output"])))
