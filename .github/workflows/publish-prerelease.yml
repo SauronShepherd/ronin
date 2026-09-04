@@ -1,0 +1,271 @@
+name: Publish prerelease artifacts
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/publish-prerelease.yml"
+      - "docker/**"
+      - "packages/pyronin/**"
+  push:
+    tags:
+      - "v*.*.*a*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-prerelease-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  IMAGE_NAME: ghcr.io/sauronshepherd/ronin
+  LOCAL_IMAGE: ronin-prerelease:${{ github.sha }}
+
+jobs:
+  build-pyronin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - name: Install pinned release tooling
+        run: python -m pip install --disable-pip-version-check "build==1.6.0" "pytest==8.4.2"
+      - name: Build pyronin once
+        run: python -m build packages/pyronin
+      - name: Install the built wheel
+        run: python -m pip install --disable-pip-version-check --force-reinstall --no-deps packages/pyronin/dist/*.whl
+      - name: Test the built wheel
+        run: python -m pytest packages/pyronin/tests -q -o addopts=
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pyronin-dist
+          path: packages/pyronin/dist/*
+          if-no-files-found: error
+          retention-days: 1
+
+  build-and-smoke-image:
+    needs: build-pyronin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Build image once
+        run: docker build --file docker/Dockerfile --tag "$LOCAL_IMAGE" .
+      - name: Smoke test exact image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach --name ronin-smoke "$LOCAL_IMAGE"
+          trap 'docker rm -f ronin-smoke >/dev/null 2>&1 || true' EXIT
+          for _ in $(seq 1 30); do
+            if docker exec ronin-smoke python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=1).read()"; then
+              exit 0
+            fi
+            if [ "$(docker inspect --format='{{.State.Running}}' ronin-smoke)" != "true" ]; then
+              docker logs ronin-smoke
+              exit 1
+            fi
+            sleep 1
+          done
+          docker logs ronin-smoke
+          exit 1
+      - name: Save exact release image
+        if: startsWith(github.ref, 'refs/tags/')
+        run: docker save "$LOCAL_IMAGE" | gzip > ronin-image.tar.gz
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: ronin-image
+          path: ronin-image.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+
+  validate-release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build-pyronin
+    runs-on: ubuntu-latest
+    outputs:
+      package-version: ${{ steps.version.outputs.package-version }}
+      image-version: ${{ steps.version.outputs.image-version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Require release commit to be reachable from main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --no-tags
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || {
+            echo "Release tags must point to commits reachable from main." >&2
+            exit 1
+          }
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: pyronin-dist
+          path: dist
+      - name: Enforce tag, source, and wheel version equality
+        id: version
+        shell: bash
+        run: |
+          python - <<'PY'
+          import ast
+          import glob
+          import os
+          import re
+          import tomllib
+          import zipfile
+          from email.parser import Parser
+          from pathlib import Path
+
+          tag = os.environ["GITHUB_REF_NAME"]
+          match = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)a(\d+)", tag)
+          if match is None:
+              raise SystemExit(f"Invalid prerelease tag {tag!r}; expected vMAJOR.MINOR.PATCHaN")
+
+          major, minor, patch, alpha = match.groups()
+          package_version = f"{major}.{minor}.{patch}a{alpha}"
+          image_version = f"{major}.{minor}.{patch}-alpha.{alpha}"
+
+          with Path("packages/pyronin/pyproject.toml").open("rb") as handle:
+              source_version = tomllib.load(handle)["project"]["version"]
+          if source_version != package_version:
+              raise SystemExit(
+                  f"Tag {tag} resolves to {package_version}, but pyproject.toml declares {source_version}"
+              )
+
+          module = ast.parse(Path("packages/pyronin/src/pyronin/__init__.py").read_text())
+          module_version = None
+          for node in module.body:
+              if isinstance(node, ast.Assign):
+                  for target in node.targets:
+                      if isinstance(target, ast.Name) and target.id == "__version__":
+                          module_version = ast.literal_eval(node.value)
+          if module_version != package_version:
+              raise SystemExit(
+                  f"pyronin.__version__ is {module_version!r}, expected {package_version!r}"
+              )
+
+          wheels = glob.glob("dist/*.whl")
+          if len(wheels) != 1:
+              raise SystemExit(f"Expected exactly one wheel, found: {wheels}")
+          with zipfile.ZipFile(wheels[0]) as wheel:
+              metadata_paths = [name for name in wheel.namelist() if name.endswith(".dist-info/METADATA")]
+              if len(metadata_paths) != 1:
+                  raise SystemExit(f"Expected one wheel METADATA file, found: {metadata_paths}")
+              metadata = Parser().parsestr(wheel.read(metadata_paths[0]).decode("utf-8"))
+          wheel_version = metadata.get("Version")
+          if wheel_version != package_version:
+              raise SystemExit(
+                  f"Built wheel version is {wheel_version!r}, expected {package_version!r}"
+              )
+
+          output = Path(os.environ["GITHUB_OUTPUT"])
+          with output.open("a", encoding="utf-8") as handle:
+              handle.write(f"package-version={package_version}\n")
+              handle.write(f"image-version={image_version}\n")
+          PY
+
+  release-evidence:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - build-pyronin
+      - build-and-smoke-image
+      - validate-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: pyronin-dist
+          path: dist
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ronin-image
+          path: .
+      - name: Load exact smoke-tested image
+        run: gunzip -c ronin-image.tar.gz | docker load
+      - name: Generate Python distribution SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        with:
+          path: dist
+          format: spdx-json
+          output-file: pyronin.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Generate container SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        with:
+          image: ${{ env.LOCAL_IMAGE }}
+          format: spdx-json
+          output-file: ronin-image.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Attest exact Python distributions
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: dist/*
+      - name: Attest exact saved container image
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: ronin-image.tar.gz
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-evidence
+          path: |
+            pyronin.spdx.json
+            ronin-image.spdx.json
+          if-no-files-found: error
+          retention-days: 90
+
+  publish-pypi:
+    needs:
+      - build-pyronin
+      - validate-release
+      - release-evidence
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: pyronin-dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+
+  publish-ghcr:
+    needs:
+      - build-and-smoke-image
+      - validate-release
+      - release-evidence
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ronin-image
+          path: .
+      - name: Load exact smoke-tested image
+        run: gunzip -c ronin-image.tar.gz | docker load
+      - name: Authenticate to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+      - name: Publish immutable prerelease and alpha alias
+        shell: bash
+        run: |
+          set -euo pipefail
+          version_tag="$IMAGE_NAME:${{ needs.validate-release.outputs.image-version }}"
+          alpha_tag="$IMAGE_NAME:alpha"
+          docker tag "$LOCAL_IMAGE" "$version_tag"
+          docker tag "$LOCAL_IMAGE" "$alpha_tag"
+          docker push "$version_tag"
+          docker push "$alpha_tag"
