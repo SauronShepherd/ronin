@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from typing import Literal
 
 from .projects import CapabilityRequirement, ExecutionProfile, RuntimeProfileRef
 
 ResolutionStatus = Literal["selected", "no_match"]
-_VERSION_PREFIX = re.compile(r"^(\d+(?:\.\d+)*)")
 
 
 def _require_text(value: str, field_name: str) -> None:
@@ -178,8 +176,8 @@ def _matches_constraint(value: str, constraint: str) -> tuple[bool, str]:
     terms = tuple(part.strip() for part in constraint.split(","))
     results = tuple(_matches_term(value, term) for term in terms)
     if any(result is None for result in results):
-        return False, "ordered constraint could not compare advertised version"
-    satisfied = all(cast_result for cast_result in results if cast_result is not None)
+        return False, "ordered constraint requires numeric dotted advertised version"
+    satisfied = all(result for result in results if result is not None)
     return satisfied, "constraint satisfied" if satisfied else "constraint not satisfied"
 
 
@@ -205,8 +203,8 @@ def _matches_term(value: str, term: str) -> bool | None:
 
 
 def _compare_versions(left: str, right: str) -> int | None:
-    left_parts = _version_release(left)
-    right_parts = _version_release(right)
+    left_parts = _numeric_version(left)
+    right_parts = _numeric_version(right)
     if left_parts is None or right_parts is None:
         return None
     width = max(len(left_parts), len(right_parts))
@@ -215,8 +213,8 @@ def _compare_versions(left: str, right: str) -> int | None:
     return (padded_left > padded_right) - (padded_left < padded_right)
 
 
-def _version_release(value: str) -> tuple[int, ...] | None:
-    match = _VERSION_PREFIX.match(value)
-    if match is None:
+def _numeric_version(value: str) -> tuple[int, ...] | None:
+    parts = value.split(".")
+    if not parts or any(not part.isdigit() for part in parts):
         return None
-    return tuple(int(part) for part in match.group(1).split("."))
+    return tuple(int(part) for part in parts)
