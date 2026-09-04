@@ -35,9 +35,10 @@ def test_project_id_is_immutable_and_stringifies() -> None:
         project_id.value = "changed"  # type: ignore[misc]
 
 
-def test_text_contracts_reject_blank_and_line_break_values() -> None:
-    with pytest.raises(ValueError, match="project id"):
-        ProjectId(" ")
+def test_text_contracts_reject_blank_untrimmed_and_line_break_values() -> None:
+    for value in (" ", " orders", "orders "):
+        with pytest.raises(ValueError, match="project id"):
+            ProjectId(value)
     with pytest.raises(ValueError, match="line breaks"):
         ProjectId("bad\nid")
     with pytest.raises(ValueError, match="repository alias"):
@@ -95,13 +96,20 @@ def test_repository_binding_rejects_invalid_role_or_literal_auth_material() -> N
     )
 
 
-def test_repository_binding_rejects_embedded_http_credentials() -> None:
-    with pytest.raises(ValueError, match="credentials"):
-        RepositoryBinding(
-            "code",
-            "https://user:token@example.test/team/repo.git",
-            role="primary",
-        )
+def test_repository_binding_rejects_embedded_credentials_for_url_schemes() -> None:
+    for uri in (
+        "https://user:token@example.test/team/repo.git",
+        "http://user:token@example.test/team/repo.git",
+        "ssh://user:token@example.test/team/repo.git",
+    ):
+        with pytest.raises(ValueError, match="credentials"):
+            RepositoryBinding("code", uri, role="primary")
+    for uri in (
+        " https://user:token@example.test/team/repo.git",
+        "\thttps://user:token@example.test/team/repo.git",
+    ):
+        with pytest.raises(ValueError, match="trimmed"):
+            RepositoryBinding("code", uri, role="primary")
     assert RepositoryBinding(
         "code",
         "https://example.test/team/repo.git",
@@ -117,27 +125,14 @@ def test_repository_subdirectory_must_stay_inside_repository() -> None:
             role="primary",
             subdirectory="",
         )
-    with pytest.raises(ValueError, match="repository root"):
-        RepositoryBinding(
-            "code",
-            "https://example.test/repo.git",
-            role="primary",
-            subdirectory="/absolute",
-        )
-    with pytest.raises(ValueError, match="repository root"):
-        RepositoryBinding(
-            "code",
-            "https://example.test/repo.git",
-            role="primary",
-            subdirectory="../escape",
-        )
-    with pytest.raises(ValueError, match="repository root"):
-        RepositoryBinding(
-            "code",
-            "https://example.test/repo.git",
-            role="primary",
-            subdirectory="safe\\..\\escape",
-        )
+    for subdirectory in ("/absolute", "../escape", "safe\\..\\escape", "C:/secrets"):
+        with pytest.raises(ValueError, match="repository root"):
+            RepositoryBinding(
+                "code",
+                "https://example.test/repo.git",
+                role="primary",
+                subdirectory=subdirectory,
+            )
 
 
 def test_capability_requirement_validates_name_constraint_and_level() -> None:
@@ -149,6 +144,13 @@ def test_capability_requirement_validates_name_constraint_and_level() -> None:
         CapabilityRequirement("spark.version", " ")
     with pytest.raises(ValueError, match="level"):
         CapabilityRequirement("spark.version", level="maybe")  # type: ignore[arg-type]
+    for constraint, message in (
+        (">=4,,<5", "empty term"),
+        (">=", "missing a value"),
+        (">=four", "version-like"),
+    ):
+        with pytest.raises(ValueError, match=message):
+            CapabilityRequirement("spark.version", constraint)
 
 
 def test_runtime_profile_reference_is_opaque_and_provider_neutral() -> None:

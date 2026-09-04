@@ -63,8 +63,64 @@ PURE_DOMAIN_PACKAGES = frozenset(
         "studio_native",
     }
 )
-FORBIDDEN_IMPORT_ROOTS = frozenset({"requests", "sqlite3", "subprocess", "urllib.request"})
-FORBIDDEN_CALLS = frozenset({"open", "builtins.open"})
+PURE_STDLIB_IMPORT_ROOTS = frozenset(
+    {
+        "__future__",
+        "abc",
+        "ast",
+        "bisect",
+        "collections",
+        "copy",
+        "dataclasses",
+        "decimal",
+        "enum",
+        "fractions",
+        "functools",
+        "hashlib",
+        "heapq",
+        "itertools",
+        "json",
+        "math",
+        "operator",
+        "re",
+        "typing",
+    }
+)
+PURE_STDLIB_EXACT_IMPORTS = frozenset({"urllib.parse"})
+NONDETERMINISTIC_IMPORT_ROOTS = frozenset({"datetime", "random", "secrets", "time", "uuid"})
+NONDETERMINISTIC_CALLS = frozenset(
+    {
+        "datetime.datetime.now",
+        "datetime.datetime.today",
+        "datetime.datetime.utcnow",
+        "os.urandom",
+        "random.random",
+        "random.randrange",
+        "random.randint",
+        "secrets.token_bytes",
+        "secrets.token_hex",
+        "secrets.token_urlsafe",
+        "time.monotonic",
+        "time.time",
+        "uuid.uuid1",
+        "uuid.uuid4",
+    }
+)
+ENVIRONMENT_NAMES = frozenset({"os.environ", "os.getenv"})
+FORBIDDEN_OS_CALLS = frozenset(
+    {
+        "os.mkdir",
+        "os.makedirs",
+        "os.popen",
+        "os.remove",
+        "os.removedirs",
+        "os.rename",
+        "os.replace",
+        "os.rmdir",
+        "os.system",
+        "os.unlink",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -78,17 +134,24 @@ class Violation:
         return f"{self.path}:{self.line}: {self.rule}: {self.detail}"
 
 
-def _source_package(path: Path) -> str | None:
-    return next((part for part in path.parts if part.startswith("studio_")), None)
+def _source_package(path: Path, root: Path | None = None) -> str | None:
+    if root is not None:
+        try:
+            relative = path.resolve().relative_to(root.resolve())
+        except ValueError:
+            relative = path
+        if relative.parts:
+            candidate = relative.parts[0]
+            return candidate if candidate.startswith("studio_") else None
+    return next(
+        (part for part in reversed(path.parent.parts) if part.startswith("studio_")),
+        None,
+    )
 
 
 def _project_package(module: str) -> str | None:
     root = module.split(".", maxsplit=1)[0]
     return root if root.startswith("studio_") else None
-
-
-def _import_is_forbidden(module: str) -> bool:
-    return any(module == root or module.startswith(f"{root}.") for root in FORBIDDEN_IMPORT_ROOTS)
 
 
 def _collect_aliases(tree: ast.AST) -> dict[str, str]:
@@ -161,78 +224,120 @@ def _dependency_violations(tree: ast.AST, path: Path, source: str | None) -> lis
     return violations
 
 
-def _io_violations(tree: ast.AST, path: Path, source: str | None) -> list[Violation]:
+def _allowed_pure_import(module: str) -> bool:
+    root = module.split(".", maxsplit=1)[0]
+    return root in PURE_STDLIB_IMPORT_ROOTS or module in PURE_STDLIB_EXACT_IMPORTS
+
+
+def _pure_domain_violations(tree: ast.AST, path: Path, source: str | None) -> list[Violation]:
     if source not in PURE_DOMAIN_PACKAGES:
         return []
 
     aliases = _collect_aliases(tree)
     violations: list[Violation] = []
     for node in ast.walk(tree):
+        modules: list[str] = []
         if isinstance(node, ast.Import):
-            for alias in node.names:
-                if _import_is_forbidden(alias.name):
-                    violations.append(
-                        Violation(
-                            path,
-                            node.lineno,
-                            "IO001",
-                            f"forbidden import {alias.name!r}",
-                        )
-                    )
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            if _import_is_forbidden(node.module):
+            modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            modules.append(node.module)
+            if node.module == "os" and any(
+                alias.name in {"environ", "getenv"} for alias in node.names
+            ):
+                violations.append(
+                    Violation(path, node.lineno, "IO003", "environment access is forbidden")
+                )
+
+        line = getattr(node, "lineno", 1)
+        for module in modules:
+            root = module.split(".", maxsplit=1)[0]
+            if root.startswith("studio_"):
+                continue
+            if root in NONDETERMINISTIC_IMPORT_ROOTS:
                 violations.append(
                     Violation(
                         path,
-                        node.lineno,
+                        line,
+                        "IO004",
+                        f"nondeterministic import {module!r} is forbidden in pure domain code",
+                    )
+                )
+            elif root == "os":
+                continue
+            elif not _allowed_pure_import(module):
+                violations.append(
+                    Violation(
+                        path,
+                        line,
                         "IO001",
-                        f"forbidden import {node.module!r}",
+                        f"import {module!r} is not allowed in pure domain code",
                     )
                 )
-            if node.module == "os" and any(alias.name == "environ" for alias in node.names):
+
+        if isinstance(node, ast.Call):
+            name = _dotted_name(node.func, aliases)
+            if name in {"open", "builtins.open"}:
+                violations.append(Violation(path, node.lineno, "IO002", f"forbidden call {name!r}"))
+            elif name in ENVIRONMENT_NAMES:
+                violations.append(
+                    Violation(path, node.lineno, "IO003", "environment access is forbidden")
+                )
+            elif name in NONDETERMINISTIC_CALLS:
                 violations.append(
                     Violation(
                         path,
                         node.lineno,
-                        "IO003",
-                        "environment access is forbidden",
+                        "IO004",
+                        f"nondeterministic call {name!r} is forbidden in pure domain code",
                     )
                 )
-        elif isinstance(node, ast.Call):
-            name = _dotted_name(node.func, aliases)
-            if name in FORBIDDEN_CALLS:
-                violations.append(Violation(path, node.lineno, "IO002", f"forbidden call {name!r}"))
+            elif name in FORBIDDEN_OS_CALLS:
+                violations.append(
+                    Violation(path, node.lineno, "IO001", f"forbidden side-effect call {name!r}")
+                )
         elif isinstance(node, ast.Attribute):
             name = _dotted_name(node, aliases)
             if name == "os.environ":
                 violations.append(
-                    Violation(
-                        path,
-                        node.lineno,
-                        "IO003",
-                        "environment access is forbidden",
-                    )
+                    Violation(path, node.lineno, "IO003", "environment access is forbidden")
                 )
+
     return violations
 
 
-def inspect_file(path: Path) -> list[Violation]:
-    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    source = _source_package(path)
-    return _dependency_violations(tree, path, source) + _io_violations(tree, path, source)
+def inspect_file(path: Path, *, root: Path | None = None) -> list[Violation]:
+    try:
+        source_text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        return [Violation(path, 1, "PARSE001", f"source is not valid UTF-8: {exc}")]
+    try:
+        tree = ast.parse(source_text, filename=str(path))
+    except SyntaxError as exc:
+        return [
+            Violation(
+                path,
+                exc.lineno or 1,
+                "PARSE001",
+                f"source contains invalid Python syntax: {exc.msg}",
+            )
+        ]
+    source = _source_package(path, root)
+    return _dependency_violations(tree, path, source) + _pure_domain_violations(tree, path, source)
 
 
-def iter_python_files(roots: Iterable[Path]) -> Iterable[Path]:
+def iter_python_files(roots: Iterable[Path]) -> Iterable[tuple[Path, Path]]:
     for root in roots:
         if not root.exists():
             continue
-        yield from sorted(path for path in root.rglob("*.py") if "__pycache__" not in path.parts)
+        yield from (
+            (root, path) for path in sorted(root.rglob("*.py")) if "__pycache__" not in path.parts
+        )
 
 
 def inspect_roots(roots: Iterable[Path]) -> list[Violation]:
     violations: list[Violation] = []
-    for path in iter_python_files(roots):
-        violations.extend(inspect_file(path))
+    for root, path in iter_python_files(roots):
+        violations.extend(inspect_file(path, root=root))
     return violations
 
 

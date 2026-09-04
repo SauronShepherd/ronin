@@ -61,6 +61,7 @@ pytest_add_cli_args = ["-o", "addopts="]
 pytest_add_cli_args_test_selection = [
   "tests/test_contract_snapshots.py",
   "tests/test_core_ir.py",
+  "tests/test_core_ir_invariant_edges.py",
   "tests/test_diagnostics.py",
   "tests/test_instance_keys.py",
   "tests/test_operators.py",
