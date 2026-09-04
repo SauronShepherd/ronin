@@ -241,7 +241,9 @@ def _pure_domain_violations(tree: ast.AST, path: Path, source: str | None) -> li
             modules.extend(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
             modules.append(node.module)
-            if node.module == "os" and any(alias.name in {"environ", "getenv"} for alias in node.names):
+            if node.module == "os" and any(
+                alias.name in {"environ", "getenv"} for alias in node.names
+            ):
                 violations.append(
                     Violation(path, node.lineno, "IO003", "environment access is forbidden")
                 )
@@ -319,9 +321,7 @@ def inspect_file(path: Path, *, root: Path | None = None) -> list[Violation]:
             )
         ]
     source = _source_package(path, root)
-    return _dependency_violations(tree, path, source) + _pure_domain_violations(
-        tree, path, source
-    )
+    return _dependency_violations(tree, path, source) + _pure_domain_violations(tree, path, source)
 
 
 def iter_python_files(roots: Iterable[Path]) -> Iterable[tuple[Path, Path]]:
@@ -329,9 +329,7 @@ def iter_python_files(roots: Iterable[Path]) -> Iterable[tuple[Path, Path]]:
         if not root.exists():
             continue
         yield from (
-            (root, path)
-            for path in sorted(root.rglob("*.py"))
-            if "__pycache__" not in path.parts
+            (root, path) for path in sorted(root.rglob("*.py")) if "__pycache__" not in path.parts
         )
 
 
