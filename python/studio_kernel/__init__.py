@@ -13,6 +13,7 @@ from .contracts import (
     RepositoryRevision,
     prepare_notebook_execution,
 )
+from .redaction import redact_sensitive_text
 from .reproducibility import (
     EffectiveRuntimeSetting,
     ExecutionAttemptId,
@@ -30,7 +31,6 @@ from .session import (
     KernelCellExecutor,
     KernelExecutionSession,
     SessionPolicy,
-    redact_sensitive_text,
 )
 
 __all__ = (

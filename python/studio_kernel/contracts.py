@@ -8,6 +8,7 @@ from typing import Literal, Protocol, TypeAlias
 from studio_core import ResolvedRuntimeSnapshot
 from studio_notebook import CellId, NotebookCell, NotebookDocument, analyze_notebook_dependencies
 
+from .redaction import redact_sensitive_text
 from .reproducibility import ExecutionAttemptId, ExecutionReproducibilitySnapshot
 
 ExecutionState: TypeAlias = Literal["succeeded", "failed", "cancelled"]
@@ -128,6 +129,7 @@ class ExecutionEvidenceReference:
         if self.kind not in {"log", "metric", "trace", "lineage", "output", "resource", "cost"}:
             raise ValueError("unsupported execution evidence kind")
         _require_text(self.ref, "execution evidence reference")
+        object.__setattr__(self, "ref", redact_sensitive_text(self.ref))
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,6 +146,7 @@ class CellExecutionResult:
             if self.failure_code is None:
                 raise ValueError("failed cell execution requires a normalized failure code")
             _require_text(self.failure_code, "failure code")
+            object.__setattr__(self, "failure_code", redact_sensitive_text(self.failure_code))
         elif self.failure_code is not None:
             raise ValueError("non-failed cell execution may not contain a failure code")
         evidence = tuple(sorted(self.evidence))
