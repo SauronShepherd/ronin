@@ -76,9 +76,7 @@ class ExecutorIsolation:
         )
         if self.qualification_status == "declared":
             if any(value is not None for value in metadata):
-                raise ValueError(
-                    "declared isolation claims must not carry qualification evidence"
-                )
+                raise ValueError("declared isolation claims must not carry qualification evidence")
             return
         if any(value is None for value in metadata):
             raise ValueError(
