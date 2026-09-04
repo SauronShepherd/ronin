@@ -1,5 +1,5 @@
-from dataclasses import FrozenInstanceError
 import json
+from dataclasses import FrozenInstanceError
 
 import pytest
 from hypothesis import given
