@@ -6,6 +6,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Literal, cast
 
 import pytest
 from studio_kernel import (
@@ -72,8 +73,10 @@ class _EvidenceStore:
     ) -> ExecutionEvidenceReference:
         assert attempt_id == ExecutionAttemptId("attempt-1")
         assert cell.cell_id == CellId("cell-1")
+        assert kind in {"log", "resource"}
+        evidence_kind = cast(Literal["log", "resource"], kind)
         self.payloads.append((kind, payload))
-        return ExecutionEvidenceReference(kind, f"memory://{kind}")  # type: ignore[arg-type]
+        return ExecutionEvidenceReference(evidence_kind, f"memory://{kind}")
 
 
 def _executor(
