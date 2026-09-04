@@ -1,0 +1,66 @@
+name: Docker Qualification
+
+on:
+  pull_request:
+    paths:
+      - "python/studio_kernel/**"
+      - "python/studio_runners/**"
+      - "tests/integration/test_docker_container_executor_real.py"
+      - ".github/workflows/docker-qualification.yml"
+  push:
+    branches: [main]
+    paths:
+      - "python/studio_kernel/**"
+      - "python/studio_runners/**"
+      - "tests/integration/test_docker_container_executor_real.py"
+      - ".github/workflows/docker-qualification.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  real-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Bootstrap immutable qualification image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull python:3.11-slim
+          image_id="$(docker image inspect --format '{{.Id}}' python:3.11-slim)"
+          repo_digest="$(docker image inspect --format '{{index .RepoDigests 0}}' python:3.11-slim)"
+          test "${image_id#sha256:}" != "$image_id"
+          printf 'RONIN_DOCKER_QUALIFICATION_IMAGE=%s\n' "$image_id" >> "$GITHUB_ENV"
+          printf 'RONIN_DOCKER_QUALIFICATION_REPO_DIGEST=%s\n' "$repo_digest" >> "$GITHUB_ENV"
+          printf 'Qualification image ID: %s\n' "$image_id"
+          printf 'Bootstrap repository digest: %s\n' "$repo_digest"
+      - name: Run real Docker adversarial qualification
+        env:
+          RONIN_REAL_DOCKER_QUALIFICATION: "1"
+          RONIN_DOCKER_QUALIFICATION_EVIDENCE: artifacts/docker-qualification
+        run: |
+          mkdir -p artifacts/docker-qualification
+          python -m pytest -o addopts= -q tests/integration/test_docker_container_executor_real.py
+      - name: Print qualification evidence
+        if: always()
+        run: |
+          find artifacts/docker-qualification -type f -maxdepth 4 -print -exec cat {} \;
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-qualification-${{ github.sha }}
+          path: artifacts/docker-qualification
+          if-no-files-found: error
+          retention-days: 14
