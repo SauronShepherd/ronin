@@ -263,28 +263,35 @@ def test_constraint_grammar_supports_exact_inequality_and_numeric_ranges() -> No
     assert all(check.satisfied for check in result.evaluations[0].checks)
 
 
-def test_invalid_constraint_syntax_is_explicit() -> None:
-    profile = _profile(
-        "runtime",
-        "bad-constraint",
-        RuntimeCapability("version", "4.0"),
+def test_ordered_constraints_accept_common_runtime_version_suffixes() -> None:
+    versions = (
+        "14.3.x-scala2.12",
+        "3.11.9rc1",
+        "1.2.3-beta",
+        "17-LTS",
+        "3.5.0+build.1",
     )
-    for constraint, message in (
-        (">=4,,<5", "empty term"),
-        (">=", "missing a value"),
-        (">=four", "numeric dotted version"),
-    ):
-        intent = ExecutionProfile(requirements=(CapabilityRequirement("version", constraint),))
-        with pytest.raises(ValueError, match=message):
-            resolve_runtime(intent, RuntimeCatalog((profile,)))
-
-    non_numeric_advertisement = _profile(
-        "runtime",
-        "named",
-        RuntimeCapability("version", "latest"),
-    )
-    with pytest.raises(ValueError, match="numeric dotted version"):
-        resolve_runtime(
-            ExecutionProfile(requirements=(CapabilityRequirement("version", ">=4"),)),
-            RuntimeCatalog((non_numeric_advertisement,)),
+    for index, version in enumerate(versions):
+        profile = _profile(
+            "runtime",
+            f"version-{index}",
+            RuntimeCapability("version", version),
         )
+        result = resolve_runtime(
+            ExecutionProfile(requirements=(CapabilityRequirement("version", ">=1"),)),
+            RuntimeCatalog((profile,)),
+        )
+        assert result.status == "selected"
+        assert result.evaluations[0].checks[0].reason == "constraint satisfied"
+
+
+def test_noncomparable_advertised_version_is_evidence_not_exception() -> None:
+    profile = _profile("runtime", "named", RuntimeCapability("version", "latest"))
+    result = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("version", ">=4"),)),
+        RuntimeCatalog((profile,)),
+    )
+    assert result.status == "no_match"
+    check = result.evaluations[0].checks[0]
+    assert check.satisfied is False
+    assert check.reason == "ordered constraint could not compare advertised version"
