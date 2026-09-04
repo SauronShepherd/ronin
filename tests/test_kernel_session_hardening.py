@@ -119,7 +119,7 @@ def test_kernel_session_is_single_use(tmp_path: Path) -> None:
         session.run()
 
 
-def test_executor_exception_is_normalized_but_redacted_detail_is_persisted(tmp_path: Path) -> None:
+def test_executor_exception_preserves_type_without_raw_message(tmp_path: Path) -> None:
     path = tmp_path / "events.jsonl"
     result = KernelExecutionSession(
         _request(),
@@ -133,6 +133,5 @@ def test_executor_exception_is_normalized_but_redacted_detail_is_persisted(tmp_p
     failed = next(event for event in _events(path) if event["kind"] == "cell.failed")
     message = str(failed["message"])
     assert "RuntimeError" in message
-    assert "connection failed" in message
+    assert "connection failed" not in message
     assert "TOPSECRET" not in message
-    assert "[REDACTED]" in message
