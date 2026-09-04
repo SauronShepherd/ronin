@@ -86,6 +86,7 @@ PURE_STDLIB_IMPORT_ROOTS = frozenset(
         "typing",
     }
 )
+PURE_STDLIB_EXACT_IMPORTS = frozenset({"urllib.parse"})
 NONDETERMINISTIC_IMPORT_ROOTS = frozenset({"datetime", "random", "secrets", "time", "uuid"})
 NONDETERMINISTIC_CALLS = frozenset(
     {
@@ -103,6 +104,21 @@ NONDETERMINISTIC_CALLS = frozenset(
         "time.time",
         "uuid.uuid1",
         "uuid.uuid4",
+    }
+)
+ENVIRONMENT_NAMES = frozenset({"os.environ", "os.getenv"})
+FORBIDDEN_OS_CALLS = frozenset(
+    {
+        "os.mkdir",
+        "os.makedirs",
+        "os.popen",
+        "os.remove",
+        "os.removedirs",
+        "os.rename",
+        "os.replace",
+        "os.rmdir",
+        "os.system",
+        "os.unlink",
     }
 )
 
@@ -208,6 +224,11 @@ def _dependency_violations(tree: ast.AST, path: Path, source: str | None) -> lis
     return violations
 
 
+def _allowed_pure_import(module: str) -> bool:
+    root = module.split(".", maxsplit=1)[0]
+    return root in PURE_STDLIB_IMPORT_ROOTS or module in PURE_STDLIB_EXACT_IMPORTS
+
+
 def _pure_domain_violations(tree: ast.AST, path: Path, source: str | None) -> list[Violation]:
     if source not in PURE_DOMAIN_PACKAGES:
         return []
@@ -220,6 +241,10 @@ def _pure_domain_violations(tree: ast.AST, path: Path, source: str | None) -> li
             modules.extend(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
             modules.append(node.module)
+            if node.module == "os" and any(alias.name in {"environ", "getenv"} for alias in node.names):
+                violations.append(
+                    Violation(path, node.lineno, "IO003", "environment access is forbidden")
+                )
 
         for module in modules:
             root = module.split(".", maxsplit=1)[0]
@@ -234,7 +259,9 @@ def _pure_domain_violations(tree: ast.AST, path: Path, source: str | None) -> li
                         f"nondeterministic import {module!r} is forbidden in pure domain code",
                     )
                 )
-            elif root not in PURE_STDLIB_IMPORT_ROOTS:
+            elif root == "os":
+                continue
+            elif not _allowed_pure_import(module):
                 violations.append(
                     Violation(
                         path,
@@ -246,7 +273,13 @@ def _pure_domain_violations(tree: ast.AST, path: Path, source: str | None) -> li
 
         if isinstance(node, ast.Call):
             name = _dotted_name(node.func, aliases)
-            if name in NONDETERMINISTIC_CALLS:
+            if name in {"open", "builtins.open"}:
+                violations.append(Violation(path, node.lineno, "IO002", f"forbidden call {name!r}"))
+            elif name in ENVIRONMENT_NAMES:
+                violations.append(
+                    Violation(path, node.lineno, "IO003", "environment access is forbidden")
+                )
+            elif name in NONDETERMINISTIC_CALLS:
                 violations.append(
                     Violation(
                         path,
@@ -254,6 +287,16 @@ def _pure_domain_violations(tree: ast.AST, path: Path, source: str | None) -> li
                         "IO004",
                         f"nondeterministic call {name!r} is forbidden in pure domain code",
                     )
+                )
+            elif name in FORBIDDEN_OS_CALLS:
+                violations.append(
+                    Violation(path, node.lineno, "IO001", f"forbidden side-effect call {name!r}")
+                )
+        elif isinstance(node, ast.Attribute):
+            name = _dotted_name(node, aliases)
+            if name == "os.environ":
+                violations.append(
+                    Violation(path, node.lineno, "IO003", "environment access is forbidden")
                 )
 
     return violations
