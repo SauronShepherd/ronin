@@ -120,5 +120,10 @@ def test_session_start_is_atomic_across_concurrent_callers() -> None:
 
     assert sorted(outcomes) == ["completed", "session already started"]
     assert executor.calls == 1
-    assert [event.kind for event in sink.events].count("session.started") == 1
-    assert [event.event_id.sequence for event in sink.events] == [0, 1, 2]
+    assert [event.kind for event in sink.events] == [
+        "session.started",
+        "cell.started",
+        "cell.succeeded",
+        "session.completed",
+    ]
+    assert [event.event_id.sequence for event in sink.events] == [0, 1, 2, 3]
