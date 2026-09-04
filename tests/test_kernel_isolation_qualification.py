@@ -83,7 +83,9 @@ def test_isolation_claim_and_policy_reject_unknown_qualification_values() -> Non
             cast(IsolationQualification, "certified"),
         )
     with pytest.raises(ValueError, match="minimum isolation qualification"):
-        SessionPolicy(minimum_isolation_qualification=cast(IsolationQualification, "certified"))
+        SessionPolicy(
+            minimum_isolation_qualification=cast(IsolationQualification, "certified")
+        )
 
 
 def test_session_policy_can_require_tested_or_qualified_isolation() -> None:
