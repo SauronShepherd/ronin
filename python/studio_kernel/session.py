@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -13,6 +12,7 @@ from typing import Literal, Protocol, TypeAlias, cast
 from studio_notebook import CellId
 
 from .contracts import CellExecutionRequest, CellExecutionResult, NotebookExecutionRequest
+from .redaction import redact_sensitive_text
 from .reproducibility import ExecutionAttemptId, ExecutionEventId
 
 IsolationMode: TypeAlias = Literal["process", "container", "kubernetes"]
@@ -28,28 +28,12 @@ ExecutionEventKind: TypeAlias = Literal[
     "permission.denied",
 ]
 
-_SECRET_PATTERN = re.compile(
-    r"(?ix)(authorization\s*[:=]\s*bearer\s+|"
-    r"[\"']?(?:token|secret|password|passwd|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)"
-    r"([^\s,\"';}]+)"
-)
-_URI_CREDENTIAL_PATTERN = re.compile(r"(?i)([a-z][a-z0-9+.-]*://[^\s:/@]+:)([^\s/@]+)(@)")
 _EVENT_LEDGER_KEYS = frozenset({"attempt_id", "sequence", "kind", "cell_id", "message"})
 
 
 def _require_text(value: str, name: str) -> None:
     if not value or value.strip() != value or "\n" in value or "\r" in value:
         raise ValueError(f"{name} must be non-empty, trimmed, and single-line")
-
-
-def redact_sensitive_text(value: object) -> str:
-    """Redact common credentials before operational text reaches durable storage."""
-    text = str(value)
-    text = _SECRET_PATTERN.sub(lambda match: f"{match.group(1)}[REDACTED]", text)
-    return _URI_CREDENTIAL_PATTERN.sub(
-        lambda match: f"{match.group(1)}[REDACTED]{match.group(3)}",
-        text,
-    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -281,6 +265,7 @@ class KernelExecutionSession:
     event_sink: ExecutionEventSink
     cancellation: CancellationSignal
     _next_sequence: int = field(default=0, init=False, repr=False)
+    _started: bool = field(default=False, init=False, repr=False)
 
     def _emit(
         self,
@@ -299,7 +284,10 @@ class KernelExecutionSession:
         self._next_sequence += 1
 
     def run(self) -> tuple[CellExecutionResult, ...]:
+        if self._started:
+            raise ValueError("session already started")
         self.policy.validate_isolation(self.executor.isolation)
+        self._started = True
         self._emit("session.started")
         results: list[CellExecutionResult] = []
 
@@ -326,9 +314,11 @@ class KernelExecutionSession:
                 return tuple(results)
 
             self._emit("cell.started", cell_id=cell.cell_id)
+            failure_detail = ""
             try:
                 result = self.executor.execute(cell, self.cancellation)
-            except Exception:
+            except Exception as exc:
+                failure_detail = redact_sensitive_text(f"{type(exc).__name__}: {exc}")
                 result = CellExecutionResult(cell.cell_id, "failed", "kernel.executor.error")
             if result.cell_id != cell.cell_id:
                 raise ValueError("kernel executor must preserve cell identity")
@@ -342,7 +332,10 @@ class KernelExecutionSession:
                 self._emit("session.cancelled")
                 return tuple(results)
 
-            self._emit("cell.failed", cell_id=cell.cell_id, message=result.failure_code or "")
+            message = result.failure_code or ""
+            if failure_detail:
+                message = f"{message}; {failure_detail}"
+            self._emit("cell.failed", cell_id=cell.cell_id, message=message)
             self._emit("session.failed")
             return tuple(results)
 
