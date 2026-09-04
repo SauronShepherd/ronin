@@ -102,19 +102,19 @@ def _cycle_members(
         if start in visited:
             continue
         visited.add(start)
-        stack: list[tuple[CellId, int]] = [(start, 0)]
-        while stack:
-            current, offset = stack[-1]
+        traversal_stack: list[tuple[CellId, int]] = [(start, 0)]
+        while traversal_stack:
+            current, offset = traversal_stack[-1]
             neighbors = residual_outgoing[current]
             if offset < len(neighbors):
                 neighbor = neighbors[offset]
-                stack[-1] = (current, offset + 1)
+                traversal_stack[-1] = (current, offset + 1)
                 if neighbor not in visited:
                     visited.add(neighbor)
-                    stack.append((neighbor, 0))
+                    traversal_stack.append((neighbor, 0))
                 continue
             finish_order.append(current)
-            stack.pop()
+            traversal_stack.pop()
 
     reverse: dict[CellId, list[CellId]] = {cell_id: [] for cell_id in ordered_residual}
     for source in ordered_residual:
@@ -128,16 +128,16 @@ def _cycle_members(
             continue
         assigned.add(start)
         component: list[CellId] = []
-        stack = [start]
-        while stack:
-            current = stack.pop()
+        component_stack: list[CellId] = [start]
+        while component_stack:
+            current = component_stack.pop()
             component.append(current)
             for neighbor in sorted(
                 reverse[current], key=lambda cell_id: index[cell_id], reverse=True
             ):
                 if neighbor not in assigned:
                     assigned.add(neighbor)
-                    stack.append(neighbor)
+                    component_stack.append(neighbor)
         if len(component) > 1:
             cyclic.update(component)
 
