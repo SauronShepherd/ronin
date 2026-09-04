@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import time
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Mapping, Protocol
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, urlencode
-from urllib.request import Request, urlopen
+from urllib.parse import quote, urlencode, urlsplit
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 __version__ = "0.1.0a2"
+
+_DEFAULT_MAX_RESPONSE_BYTES = 1024 * 1024
 
 
 class RoninError(Exception):
@@ -76,17 +79,73 @@ class Transport(Protocol):
     ) -> object: ...
 
 
+class _RejectRedirects(HTTPRedirectHandler):
+    def redirect_request(
+        self,
+        req: Request,
+        fp: object,
+        code: int,
+        msg: str,
+        headers: object,
+        newurl: str,
+    ) -> None:
+        del req, fp, code, msg, headers, newurl
+        return None
+
+
+def _is_loopback_host(hostname: str | None) -> bool:
+    if hostname is None:
+        return False
+    if hostname.casefold() == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(hostname).is_loopback
+    except ValueError:
+        return False
+
+
+def _read_bounded(stream: object, max_bytes: int) -> bytes:
+    read = getattr(stream, "read")
+    body = read(max_bytes + 1)
+    if len(body) > max_bytes:
+        raise TransportError("Ronin response exceeded configured byte limit")
+    return body
+
+
 @dataclass(frozen=True, slots=True)
 class HTTPTransport:
     base_url: str
     token: str | None = None
     timeout: float = 30.0
+    max_response_bytes: int = _DEFAULT_MAX_RESPONSE_BYTES
+    allow_insecure_localhost: bool = False
 
     def __post_init__(self) -> None:
-        if not self.base_url.strip():
-            raise ValueError("base_url must be non-empty")
+        if not self.base_url.strip() or self.base_url.strip() != self.base_url:
+            raise ValueError("base_url must be non-empty and trimmed")
+        parsed = urlsplit(self.base_url)
+        if parsed.scheme not in {"http", "https"} or parsed.hostname is None:
+            raise ValueError("base_url must be an absolute http(s) URL")
+        if parsed.username is not None or parsed.password is not None:
+            raise ValueError("base_url must not contain credentials")
+        if parsed.query or parsed.fragment:
+            raise ValueError("base_url must not contain query or fragment components")
         if self.timeout <= 0:
             raise ValueError("timeout must be positive")
+        if self.max_response_bytes < 1:
+            raise ValueError("max_response_bytes must be positive")
+        if self.token is not None:
+            if not self.token or self.token.strip() != self.token:
+                raise ValueError("token must be non-empty and trimmed when supplied")
+            insecure_loopback = (
+                parsed.scheme == "http"
+                and self.allow_insecure_localhost
+                and _is_loopback_host(parsed.hostname)
+            )
+            if parsed.scheme != "https" and not insecure_loopback:
+                raise ValueError(
+                    "authenticated HTTP requires HTTPS; insecure transport is allowed only for explicit loopback development"
+                )
 
     def request(
         self,
@@ -97,27 +156,33 @@ class HTTPTransport:
         headers: Mapping[str, str] | None = None,
         query: Mapping[str, str] | None = None,
     ) -> object:
+        if not path.startswith("/") or path.startswith("//"):
+            raise ValueError("path must be an origin-relative absolute path")
         url = self.base_url.rstrip("/") + path
         if query:
             url += "?" + urlencode(query)
         request_headers = {"Accept": "application/json"}
-        if self.token:
-            request_headers["Authorization"] = f"Bearer {self.token}"
         if headers:
             request_headers.update(headers)
+        if self.token:
+            request_headers["Authorization"] = f"Bearer {self.token}"
         data = None
         if payload is not None:
             request_headers["Content-Type"] = "application/json"
             data = json.dumps(dict(payload), separators=(",", ":")).encode("utf-8")
         request = Request(url, data=data, headers=request_headers, method=method)
+        opener = build_opener(_RejectRedirects())
         try:
-            with urlopen(request, timeout=self.timeout) as response:  # noqa: S310
-                body = response.read()
+            with opener.open(request, timeout=self.timeout) as response:  # noqa: S310
+                body = _read_bounded(response, self.max_response_bytes)
         except HTTPError as exc:
-            body = exc.read().decode("utf-8", errors="replace").strip()
-            raise APIError(exc.code, body or exc.reason) from exc
+            try:
+                _read_bounded(exc, self.max_response_bytes)
+            except TransportError as limit_error:
+                raise APIError(exc.code, "error response exceeded configured byte limit") from limit_error
+            raise APIError(exc.code, "request failed") from exc
         except URLError as exc:
-            raise TransportError(f"Ronin endpoint unavailable: {exc.reason}") from exc
+            raise TransportError("Ronin endpoint unavailable") from exc
         if not body:
             return None
         try:
