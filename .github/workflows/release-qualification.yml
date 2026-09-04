@@ -1,0 +1,80 @@
+name: Release qualification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  python-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install pinned build frontend
+        run: python -m pip install 'build==1.6.0'
+      - name: Build source and wheel artifacts
+        run: python -m build
+      - name: Require exactly one wheel and one source distribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find dist -maxdepth 1 -type f -name '*.whl' | wc -l)" -eq 1
+          test "$(find dist -maxdepth 1 -type f -name '*.tar.gz' | wc -l)" -eq 1
+      - name: Install and smoke wheel outside checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/ronin-wheel-venv
+          /tmp/ronin-wheel-venv/bin/python -m pip install dist/*.whl
+          cd /tmp
+          /tmp/ronin-wheel-venv/bin/python - <<'PY'
+          from pathlib import Path
+          import studio_core
+          import studio_kernel
+          import studio_notebook
+          import studio_runners
+
+          checkout = Path("${GITHUB_WORKSPACE}").resolve()
+          for package in (studio_core, studio_kernel, studio_notebook, studio_runners):
+              location = Path(package.__file__).resolve()
+              if location.is_relative_to(checkout):
+                  raise SystemExit(f"source-tree leakage: {package.__name__} -> {location}")
+          PY
+      - name: Install and smoke source distribution outside checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/ronin-sdist-venv
+          /tmp/ronin-sdist-venv/bin/python -m pip install dist/*.tar.gz
+          cd /tmp
+          /tmp/ronin-sdist-venv/bin/python - <<'PY'
+          from pathlib import Path
+          import studio_core
+          import studio_kernel
+          import studio_notebook
+          import studio_runners
+
+          checkout = Path("${GITHUB_WORKSPACE}").resolve()
+          for package in (studio_core, studio_kernel, studio_notebook, studio_runners):
+              location = Path(package.__file__).resolve()
+              if location.is_relative_to(checkout):
+                  raise SystemExit(f"source-tree leakage: {package.__name__} -> {location}")
+          PY
+      - name: Upload exact build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ronin-studio-python-artifacts
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
