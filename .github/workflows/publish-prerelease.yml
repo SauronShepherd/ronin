@@ -21,8 +21,9 @@ jobs:
         with:
           python-version: "3.11"
       - run: python -m pip install --upgrade build pytest
-      - run: python -m pytest packages/pyronin/tests -q
       - run: python -m build packages/pyronin
+      - run: python -m pip install packages/pyronin/dist/*.whl
+      - run: python -m pytest -c packages/pyronin/pyproject.toml packages/pyronin/tests -q
       - uses: actions/upload-artifact@v4
         with:
           name: pyronin-dist
@@ -44,6 +45,7 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
 
   publish-ghcr:
+    needs: build-pyronin
     runs-on: ubuntu-latest
     permissions:
       contents: read
