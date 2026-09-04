@@ -163,7 +163,7 @@ Implemented on validation branch `feat/portable-project-manifest`:
 
 - Added neutral repository `adapter_id` and explicit `manual` / `fetch` / `fast-forward` synchronization policy to `RepositoryBinding`.
 - Added immutable `ProjectManifest` with canonical path `.ronin/project.json` and exact schema identifier `ronin.project/v1`.
-- Added deterministic JSON serialization/deserialization for project identity, primary/supporting repositories, default refs/subdirectories/sync policy, opaque runtime profile references, capability requirements and execution resolution policy.
+- Added deterministic JSON serialization/deserialization for project identity, primary/supporting repositories, default refs/subdirectories/sync policy, opaque runtime profile references, capability requirements and resolution policy.
 - `ProjectManifest.from_project()` strips workspace `auth_ref` values; committed intent never contains resolved credentials, connection bindings, tokens or local checkout paths.
 - V1 deserialization rejects missing/unknown keys and malformed nested shapes rather than silently discarding future or corrupt intent.
 - Kept filesystem I/O, atomic persistence, provider auth resolution and on-disk migration outside `studio_core`; the design reuses `sdp-studio` versioned metadata ideas without copying its Pydantic/YAML/provider-specific persistence boundary.
