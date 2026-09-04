@@ -76,13 +76,22 @@ class ExecutorIsolation:
         )
         if self.qualification_status == "declared":
             if any(value is not None for value in metadata):
-                raise ValueError("declared isolation claims must not carry qualification evidence")
+                raise ValueError(
+                    "declared isolation claims must not carry qualification evidence"
+                )
             return
         if any(value is None for value in metadata):
-            raise ValueError("tested/qualified isolation claims require complete qualification evidence")
+            raise ValueError(
+                "tested/qualified isolation claims require complete qualification evidence"
+            )
         for value, name in zip(
             cast(tuple[str, str, str, str], metadata),
-            ("qualification scheme", "qualification version", "runtime identity", "evidence reference"),
+            (
+                "qualification scheme",
+                "qualification version",
+                "runtime identity",
+                "evidence reference",
+            ),
             strict=True,
         ):
             _require_text(value, name)
