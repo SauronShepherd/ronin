@@ -23,7 +23,7 @@ from studio_kernel import (
     redact_sensitive_text,
 )
 
-_IMAGE_DIGEST = re.compile(r"^.+@sha256:[0-9a-f]{64}$")
+_IMMUTABLE_IMAGE = re.compile(r"^(?:[^\s]+@)?sha256:[0-9a-f]{64}$")
 _CPU_LIMIT = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
 _MEMORY_LIMIT = re.compile(r"^[1-9][0-9]*(?:[kKmMgG])?$")
 
@@ -65,8 +65,8 @@ class ContainerExecutorConfig:
 
     def __post_init__(self) -> None:
         _require_single_line(self.image, "container image")
-        if not _IMAGE_DIGEST.fullmatch(self.image):
-            raise ValueError("container image must use an immutable sha256 repository digest")
+        if not _IMMUTABLE_IMAGE.fullmatch(self.image):
+            raise ValueError("container image must use an immutable sha256 digest or image id")
         _require_single_line(self.engine, "container engine")
         _require_single_line(self.user, "container user")
         if not self.command:
@@ -315,7 +315,7 @@ class DockerContainerKernelExecutor:
             cell,
             {
                 "container_name": name,
-                "output": outcome.output,
+                "output": redact_sensitive_text(outcome.output),
                 "returncode": outcome.returncode,
             },
         )
