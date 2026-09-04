@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import sys
 import threading
@@ -289,6 +290,64 @@ def test_asyncio_command_runner_observes_cancellation() -> None:
         timer.join()
     assert outcome.cancelled is True
     assert outcome.timed_out is False
+
+
+def test_asyncio_command_runner_does_not_kill_already_exited_process_on_cancel(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _Stdin:
+        def write(self, _data: bytes) -> None:
+            return None
+
+        async def drain(self) -> None:
+            return None
+
+        def close(self) -> None:
+            return None
+
+    class _Process:
+        def __init__(self) -> None:
+            self.stdin = _Stdin()
+            self.stdout = asyncio.StreamReader()
+            self.stdout.feed_eof()
+            self.returncode: int | None = 0
+            self.killed = False
+
+        async def wait(self) -> int:
+            return 0
+
+        def kill(self) -> None:
+            self.killed = True
+
+    process = _Process()
+
+    async def fake_create_subprocess_exec(*_args: str, **_kwargs: object) -> _Process:
+        return process
+
+    async def no_cleanup(
+        _self: AsyncioCommandRunner,
+        _args: tuple[str, ...],
+    ) -> None:
+        return None
+
+    monkeypatch.setattr(
+        "studio_runners.container.asyncio.create_subprocess_exec", fake_create_subprocess_exec
+    )
+    monkeypatch.setattr(AsyncioCommandRunner, "_cleanup", no_cleanup)
+    token = CancellationToken()
+    token.cancel()
+
+    outcome = AsyncioCommandRunner().run(
+        ("fake-engine",),
+        input_text="",
+        cancellation=token,
+        timeout_seconds=1.0,
+        cancellation_args=("fake-engine", "rm", "-f", "fake-container"),
+    )
+
+    assert outcome.cancelled is True
+    assert outcome.returncode == 0
+    assert process.killed is False
 
 
 def test_asyncio_command_runner_validates_configuration_and_commands() -> None:
