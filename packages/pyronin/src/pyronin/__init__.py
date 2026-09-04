@@ -11,7 +11,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
-__version__ = "0.1.0a1"
+__version__ = "0.1.0a2"
 
 
 class RoninError(Exception):
@@ -171,23 +171,25 @@ class Ronin:
         return JobHandle(self, job.id)
 
     def get_job(self, job_id: str) -> Job:
-        return _parse_job(self._transport.request("GET", _job_path(job_id)))
+        return _parse_job(self._transport.request("GET", f"/v1/jobs/{quote(job_id, safe='')}"))
 
-    def list_jobs(self, *, state: JobState | None = None) -> tuple[Job, ...]:
-        query = {"state": state.value} if state is not None else None
+    def list_jobs(self, *, project: str | None = None) -> list[Job]:
+        query = {"project": project} if project is not None else None
         payload = self._transport.request("GET", "/v1/jobs", query=query)
         if not isinstance(payload, list):
-            raise ProtocolError("job list must be a JSON array")
-        return tuple(_parse_job(item) for item in payload)
+            raise ProtocolError("Expected a list of jobs")
+        return [_parse_job(item) for item in payload]
 
-    def _cancel(self, job_id: str) -> Job:
-        return _parse_job(self._transport.request("POST", f"{_job_path(job_id)}/cancel"))
+    def _cancel_job(self, job_id: str) -> Job:
+        return _parse_job(
+            self._transport.request("POST", f"/v1/jobs/{quote(job_id, safe='')}/cancel")
+        )
 
-    def _events(self, job_id: str) -> tuple[JobEvent, ...]:
-        payload = self._transport.request("GET", f"{_job_path(job_id)}/events")
+    def _events(self, job_id: str) -> list[JobEvent]:
+        payload = self._transport.request("GET", f"/v1/jobs/{quote(job_id, safe='')}/events")
         if not isinstance(payload, list):
-            raise ProtocolError("job events must be a JSON array")
-        return tuple(_parse_event(item) for item in payload)
+            raise ProtocolError("Expected a list of job events")
+        return [_parse_event(item) for item in payload]
 
 
 @dataclass(frozen=True, slots=True)
@@ -195,17 +197,8 @@ class JobHandle:
     client: Ronin
     id: str
 
-    def get(self) -> Job:
-        return self.client.get_job(self.id)
-
     def status(self) -> JobState:
-        return self.get().state
-
-    def cancel(self) -> Job:
-        return self.client._cancel(self.id)
-
-    def events(self) -> tuple[JobEvent, ...]:
-        return self.client._events(self.id)
+        return self.client.get_job(self.id).state
 
     def wait(self, *, poll_interval: float = 1.0, timeout: float | None = None) -> Job:
         if poll_interval <= 0:
@@ -214,51 +207,57 @@ class JobHandle:
             raise ValueError("timeout must be positive")
         started = time.monotonic()
         while True:
-            job = self.get()
+            job = self.client.get_job(self.id)
             if job.state.terminal:
                 return job
             if timeout is not None and time.monotonic() - started >= timeout:
-                raise TimeoutError(f"job {self.id!r} did not reach a terminal state")
+                raise TimeoutError(f"Timed out waiting for Ronin job {self.id}")
             time.sleep(poll_interval)
 
+    def cancel(self) -> Job:
+        return self.client._cancel_job(self.id)
 
-def _job_path(job_id: str) -> str:
-    if not job_id:
-        raise ValueError("job_id must be non-empty")
-    return f"/v1/jobs/{quote(job_id, safe='')}"
+    def events(self) -> list[JobEvent]:
+        return self.client._events(self.id)
 
 
 def _parse_job(payload: object) -> Job:
     if not isinstance(payload, dict):
-        raise ProtocolError("job payload must be a JSON object")
-    job_id = payload.get("id")
-    state_value = payload.get("state")
-    failure_code = payload.get("failure_code")
-    if not isinstance(job_id, str) or not job_id:
-        raise ProtocolError("job id must be a non-empty string")
-    if not isinstance(state_value, str):
-        raise ProtocolError("job state must be a string")
+        raise ProtocolError("Expected a job object")
     try:
-        state = JobState(state_value)
+        job_id = payload["id"]
+        state = payload["state"]
+    except KeyError as exc:
+        raise ProtocolError(f"Job payload missing {exc.args[0]!r}") from exc
+    if not isinstance(job_id, str) or not job_id:
+        raise ProtocolError("Job id must be a non-empty string")
+    if not isinstance(state, str):
+        raise ProtocolError("Job state must be a string")
+    try:
+        job_state = JobState(state)
     except ValueError as exc:
-        raise ProtocolError(f"unknown job state: {state_value!r}") from exc
+        raise ProtocolError(f"Unknown job state {state!r}") from exc
+    failure_code = payload.get("failure_code")
     if failure_code is not None and not isinstance(failure_code, str):
-        raise ProtocolError("failure_code must be a string or null")
-    return Job(job_id, state, failure_code)
+        raise ProtocolError("failure_code must be a string when present")
+    return Job(job_id, job_state, failure_code)
 
 
 def _parse_event(payload: object) -> JobEvent:
     if not isinstance(payload, dict):
-        raise ProtocolError("job event must be a JSON object")
-    sequence = payload.get("sequence")
-    kind = payload.get("kind")
-    message = payload.get("message")
+        raise ProtocolError("Expected a job event object")
+    try:
+        sequence = payload["sequence"]
+        kind = payload["kind"]
+        message = payload["message"]
+    except KeyError as exc:
+        raise ProtocolError(f"Job event payload missing {exc.args[0]!r}") from exc
     if not isinstance(sequence, int) or sequence < 0:
-        raise ProtocolError("event sequence must be a non-negative integer")
+        raise ProtocolError("Job event sequence must be a non-negative integer")
     if not isinstance(kind, str) or not kind:
-        raise ProtocolError("event kind must be a non-empty string")
+        raise ProtocolError("Job event kind must be a non-empty string")
     if not isinstance(message, str):
-        raise ProtocolError("event message must be a string")
+        raise ProtocolError("Job event message must be a string")
     return JobEvent(sequence, kind, message)
 
 
