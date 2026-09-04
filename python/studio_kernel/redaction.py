@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 _NAMED_SECRET_PATTERN = re.compile(
-    r"(?ix)([\"']?[\w.-]*(?:token|secret|password|passwd|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)"
+    r"(?ix)([\"']?[\w.-]*(?:token|secret|password|passwd|api[_-]?key)[\w.-]*[\"']?\s*[:=]\s*[\"']?)"
     r"([^\s,\"';}]+)"
 )
 _BEARER_PATTERN = re.compile(r"(?i)(\bbearer\s+)([^\s,;]+)")
