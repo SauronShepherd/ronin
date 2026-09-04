@@ -2,20 +2,42 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Literal
+from urllib.parse import urlsplit
 
 RepositoryRole = Literal["primary", "supporting"]
 RepositorySyncPolicy = Literal["manual", "fetch", "fast-forward"]
 RequirementLevel = Literal["required", "preferred"]
 ResolutionPolicy = Literal["strict", "compatible"]
 
+_ORDERED_OPERATORS = (">=", "<=", ">", "<")
+_ALL_OPERATORS = (">=", "<=", "==", "!=", ">", "<")
+_VERSION_PREFIX = re.compile(r"^\d+(?:\.\d+)*")
+_WINDOWS_ABSOLUTE = re.compile(r"^[A-Za-z]:/")
+
 
 def _require_text(value: str, field_name: str) -> None:
-    if not value.strip():
-        raise ValueError(f"{field_name} must be non-empty")
+    if not value or value.strip() != value:
+        raise ValueError(f"{field_name} must be non-empty and trimmed")
     if "\n" in value or "\r" in value:
         raise ValueError(f"{field_name} must not contain line breaks")
+
+
+def _validate_constraint(constraint: str) -> None:
+    terms = tuple(part.strip() for part in constraint.split(","))
+    if any(not term for term in terms):
+        raise ValueError("capability constraint contains an empty term")
+    for term in terms:
+        operator = next((candidate for candidate in _ALL_OPERATORS if term.startswith(candidate)), None)
+        if operator is None:
+            continue
+        expected = term[len(operator) :].strip()
+        if not expected:
+            raise ValueError("capability constraint is missing a value")
+        if operator in _ORDERED_OPERATORS and _VERSION_PREFIX.match(expected) is None:
+            raise ValueError("ordered capability constraint requires a version-like value")
 
 
 @dataclass(frozen=True, order=True, slots=True)
@@ -57,14 +79,19 @@ class RepositoryBinding:
             ("secret://", "connection://")
         ):
             raise ValueError("repository auth_ref must be a secret:// or connection:// reference")
-        if self.uri.lower().startswith(("http://", "https://")):
-            authority = self.uri.split("://", maxsplit=1)[1].split("/", maxsplit=1)[0]
-            if "@" in authority:
-                raise ValueError("repository uri must not embed HTTP credentials")
+
+        parsed = urlsplit(self.uri)
+        if parsed.username is not None or parsed.password is not None:
+            raise ValueError("repository uri must not embed credentials")
+
         if self.subdirectory is not None:
             _require_text(self.subdirectory, "repository subdirectory")
             normalized = self.subdirectory.replace("\\", "/")
-            if normalized.startswith("/") or ".." in normalized.split("/"):
+            if (
+                normalized.startswith("/")
+                or _WINDOWS_ABSOLUTE.match(normalized) is not None
+                or ".." in normalized.split("/")
+            ):
                 raise ValueError("repository subdirectory must stay within the repository root")
 
 
@@ -80,6 +107,7 @@ class CapabilityRequirement:
         _require_text(self.name, "capability name")
         if self.constraint is not None:
             _require_text(self.constraint, "capability constraint")
+            _validate_constraint(self.constraint)
         if self.level not in {"required", "preferred"}:
             raise ValueError("capability level must be required or preferred")
 
