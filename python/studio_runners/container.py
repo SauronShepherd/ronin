@@ -29,6 +29,8 @@ _MEMORY_LIMIT = re.compile(r"^[1-9][0-9]*(?:[kKmMgG])?$")
 _CONTAINER_USER = re.compile(r"^[1-9][0-9]*:[1-9][0-9]*$")
 _READ_CHUNK_BYTES = 64 * 1024
 _TRUNCATED_OUTPUT = "[OUTPUT TRUNCATED]"
+_CONTAINER_TMPFS = "/tmp:rw,noexec,nosuid,nodev,size=64m"  # noqa: S108
+_CONTAINER_WORKDIR = "/tmp"  # noqa: S108
 
 
 def _require_single_line(value: str, name: str) -> None:
@@ -162,12 +164,12 @@ class AsyncioCommandRunner:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
-        assert process.stdin is not None
-        assert process.stdout is not None
-        process.stdin.write(input_text.encode("utf-8"))
-        await process.stdin.drain()
-        process.stdin.close()
-        output_task = asyncio.create_task(self._collect_output(process.stdout))
+        stdin = cast(asyncio.StreamWriter, process.stdin)
+        stdout = cast(asyncio.StreamReader, process.stdout)
+        stdin.write(input_text.encode())
+        await stdin.drain()
+        stdin.close()
+        output_task = asyncio.create_task(self._collect_output(stdout))
         wait_task = asyncio.create_task(process.wait())
 
         cancelled = False
@@ -237,8 +239,8 @@ class LocalExecutionEvidenceStore:
         if kind not in {"log", "resource"}:
             raise ValueError("local container evidence store supports log/resource evidence only")
         evidence_kind = cast(Literal["log", "resource"], kind)
-        attempt_key = hashlib.sha256(str(attempt_id).encode("utf-8")).hexdigest()[:24]
-        cell_key = hashlib.sha256(str(cell.cell_id).encode("utf-8")).hexdigest()[:24]
+        attempt_key = hashlib.sha256(str(attempt_id).encode()).hexdigest()[:24]
+        cell_key = hashlib.sha256(str(cell.cell_id).encode()).hexdigest()[:24]
         directory = self.root / attempt_key / cell_key
         directory.mkdir(parents=True, exist_ok=True)
         target = directory / f"{kind}.json"
@@ -248,7 +250,7 @@ class LocalExecutionEvidenceStore:
             handle.write(text)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, target)
+        temporary.replace(target)
         return ExecutionEvidenceReference(
             evidence_kind, f"local-evidence://{attempt_key}/{cell_key}/{kind}.json"
         )
@@ -274,7 +276,7 @@ class DockerContainerKernelExecutor:
         return shutil.which(self.config.engine)
 
     def _container_name(self, cell: CellExecutionRequest) -> str:
-        identity = f"{self.attempt_id}:{cell.cell_id}".encode("utf-8")
+        identity = f"{self.attempt_id}:{cell.cell_id}".encode()
         return "ronin-" + hashlib.sha256(identity).hexdigest()[:32]
 
     def _docker_args(self, engine: str, cell: CellExecutionRequest) -> tuple[str, ...]:
@@ -301,9 +303,9 @@ class DockerContainerKernelExecutor:
             "--user",
             self.config.user,
             "--tmpfs",
-            "/tmp:rw,noexec,nosuid,nodev,size=64m",
+            _CONTAINER_TMPFS,
             "--workdir",
-            "/tmp",
+            _CONTAINER_WORKDIR,
             "-i",
             self.config.image,
             *self.config.command,
