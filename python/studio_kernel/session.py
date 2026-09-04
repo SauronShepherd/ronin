@@ -8,7 +8,7 @@ import re
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal, Protocol, TypeAlias
+from typing import Literal, Protocol, TypeAlias, cast
 
 from studio_notebook import CellId
 
@@ -180,13 +180,33 @@ def _decode_ledger_identity(line: str) -> tuple[ExecutionAttemptId, int]:
         raise ValueError("existing event ledger contains invalid JSON") from exc
     if not isinstance(payload, dict) or set(payload) != _EVENT_LEDGER_KEYS:
         raise ValueError("existing event ledger has invalid event shape")
+
     attempt_id = payload["attempt_id"]
     sequence = payload["sequence"]
+    kind = payload["kind"]
+    cell_id = payload["cell_id"]
+    message = payload["message"]
     if not isinstance(attempt_id, str):
         raise ValueError("existing event ledger has invalid attempt identity")
     if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 0:
         raise ValueError("existing event ledger has invalid event sequence")
-    return ExecutionAttemptId(attempt_id), sequence
+    if not isinstance(kind, str):
+        raise ValueError("existing event ledger has invalid event kind")
+    if cell_id is not None and not isinstance(cell_id, str):
+        raise ValueError("existing event ledger has invalid cell identity")
+    if not isinstance(message, str):
+        raise ValueError("existing event ledger has invalid event message")
+
+    try:
+        event = ExecutionEvent(
+            ExecutionEventId(ExecutionAttemptId(attempt_id), sequence),
+            cast(ExecutionEventKind, kind),
+            CellId(cell_id) if cell_id is not None else None,
+            message,
+        )
+    except ValueError as exc:
+        raise ValueError("existing event ledger contains invalid event semantics") from exc
+    return event.event_id.attempt_id, event.event_id.sequence
 
 
 @dataclass(slots=True)
