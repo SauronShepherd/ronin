@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 from studio_core import (
     Node,
-    NodeId,
     OperatorCatalog,
     OperatorContract,
     OperatorParameter,
@@ -191,10 +190,9 @@ def test_node_validation_checks_ports_and_modes() -> None:
         outputs=(OperatorPort("out"),),
         modes=("batch",),
     )
-    node = Node(
-        id=NodeId("node"),
-        instance_key="operator-validation",
+    node = Node.create(
         operator=contract.ref,
+        instance_key="operator-validation",
         inputs=(Port("extra", "stream"), Port("extra", "stream")),
         outputs=(Port("wrong", "stream"),),
     )
