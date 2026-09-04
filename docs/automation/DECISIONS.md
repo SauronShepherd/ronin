@@ -30,7 +30,7 @@ A dedicated `gates-negative` CI job is mandatory for these architecture rules. A
 
 `sdp-studio` already contains useful deterministic IR lowering, graph semantics and source-provenance concepts. Ronin reuses those ideas rather than reimplementing the data-engineering core from zero, but the canonical `studio_core` boundary is stricter: it has no Pydantic, filesystem, clock, randomness, database, Spark or provider dependency.
 
-The first E1 slice introduces immutable `NodeId`, `Port`, `Node`, `Edge` and `Pipeline` primitives, canonical ordering, canonical JSON and explicit topology/port validation. Node identity is derived from semantic content plus a required stable `instance_key`. User-facing labels are excluded from identity so renames do not invalidate semantic identity/source-map relationships, while the instance key permits two otherwise identical nodes to remain distinct.
+The first E1 slice introduces immutable `NodeId`, `Port`, `Node`, `Edge` and `Pipeline` primitives, canonical ordering, canonical JSON and explicit topology/port validation. Node identity is derived from semantic content plus a required stable instance key. User-facing labels are excluded from identity so renames do not invalidate semantic identity/source-map relationships, while the instance key permits two otherwise identical nodes to remain distinct.
 
 The IR is deliberately execution-agnostic. Spark, SQL, ML, GenAI and agent-specific behavior must enter through operator catalogs and adapters rather than becoming assumptions in the identity/topology model.
 
@@ -110,7 +110,7 @@ This adapts the versioned project-metadata and environment-reference ideas from 
 
 A pure graph-structure rule cannot assign stable distinct identities to two automorphic or otherwise structurally identical nodes without introducing an arbitrary traversal/order tie-breaker. Ronin therefore treats stable instance identity as provenance supplied by the boundary that owns the source document, not as something invented by graph canonicalization.
 
-`InstanceAnchor` is the canonical pure contract for that provenance. Its bounded `authoring` and `import` origins pair with a caller-supplied stable reference; `studio_core` deterministically derives an `instance_key` from the pair. Batch allocation rejects duplicate anchors rather than silently disambiguated with sequence numbers, clocks, randomness or current topology. Editors/importers remain responsible for choosing and persisting references that survive unrelated edits.
+`InstanceAnchor` is the canonical pure contract for that provenance. Its bounded `authoring` and `import` origins pair with a caller-supplied stable reference; `studio_core` deterministically derives an `instance_key` from the pair. Batch allocation rejects duplicate anchors rather than silently disambiguating with sequence numbers, clocks, randomness or current topology. Editors/importers remain responsible for choosing and persisting references that survive unrelated edits.
 
 Canonical `Node` now persists `instance_key` alongside `NodeId`. Deserialization reconstructs the canonical semantic payload, re-derives the identifier, and rejects an ID/key/semantic mismatch. Labels, canvas coordinates, insertion order, graph traversal order and runtime/provider state remain outside identity.
 
