@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import json
 import sys
 import threading
@@ -305,11 +304,14 @@ def test_asyncio_command_runner_does_not_kill_already_exited_process_on_cancel(
         def close(self) -> None:
             return None
 
+    class _Stdout:
+        async def read(self, _limit: int) -> bytes:
+            return b""
+
     class _Process:
         def __init__(self) -> None:
             self.stdin = _Stdin()
-            self.stdout = asyncio.StreamReader()
-            self.stdout.feed_eof()
+            self.stdout = _Stdout()
             self.returncode: int | None = 0
             self.killed = False
 
