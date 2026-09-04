@@ -140,12 +140,10 @@ class AsyncioCommandRunner:
         captured = bytearray()
         truncated = False
         while chunk := await stream.read(_READ_CHUNK_BYTES):
-            remaining = self.max_output_bytes - len(captured)
-            if remaining > 0:
-                captured.extend(chunk[:remaining])
-            if len(chunk) > max(0, remaining):
+            remaining = max(0, self.max_output_bytes - len(captured))
+            captured.extend(chunk[:remaining])
+            if len(chunk) > remaining:
                 truncated = True
-                captured.clear()
         return bytes(captured), truncated
 
     async def _run_async(
