@@ -38,7 +38,7 @@ The IR is deliberately execution-agnostic. Spark, SQL, ML, GenAI and agent-speci
 
 **Status:** accepted — 2026-09-02
 
-The test specification requires zero-exclusion 100% line/branch coverage for pure domain layers. Now that `studio_core` contains meaningful behavior, the repository enforces that requirement directly through pytest-cov. Hypothesis and randomized test ordering are included in the development test toolchain to exercise determinism and insertion-order invariants.
+The test specification requires zero-exclusion 100% line and branch coverage for pure domain layers. Now that `studio_core` contains meaningful behavior, the repository enforces that requirement directly through pytest-cov. Hypothesis and randomized test ordering are included in the development test toolchain to exercise determinism and insertion-order invariants.
 
 Coverage failures are treated as missing behavioral evidence, not as a reason to lower the threshold. The first E1 implementation added adversarial deserialization and converging-DAG tests until the full core gate passed.
 
@@ -213,6 +213,18 @@ The local JSONL execution-event sink must be able to reopen durable evidence aft
 This guarantee is deliberately narrower than execution resume. `KernelExecutionSession` still owns in-memory progression through prepared cells and starts its own event sequence at zero; reopening a sink does not by itself reconstruct executor state, infer which side effects completed, or make a workload safe to rerun. A future resumable execution protocol must combine durable state-machine/checkpoint evidence with idempotency rules and explicit replay semantics rather than treating an appendable log as proof that side effects can be repeated.
 
 The JSONL sink is also explicitly single-writer. `flush` plus `fsync` gives local durability for a completed append but does not provide cross-process mutual exclusion, leases, compare-and-swap, or transactional uniqueness. Shared/distributed event storage must guarantee that `(attempt_id, sequence)` remains unique under concurrent writers through an appropriate storage contract. Those guarantees belong behind the replaceable event-sink boundary rather than adding filesystem-locking assumptions to the canonical kernel domain.
+
+## ADR-AUTO-020 — Concrete container execution is a runner adapter; isolation claims require qualification
+
+**Status:** accepted — 2026-09-04
+
+`studio_kernel` remains the provider-neutral execution/session contract and must not contain Docker, Kubernetes, subprocess or container-engine lifecycle logic. Concrete launchers live in the side-effecting `studio_runners` adapter layer, which may depend one-way on `studio_kernel` contracts. The executable architecture matrix therefore permits `studio_runners -> studio_kernel`; the reverse edge remains forbidden, preserving an acyclic contract-to-adapter boundary.
+
+The first local container adapter uses Docker-compatible argument-array execution but models only neutral execution facts at the kernel boundary. It requires an immutable container image identity: either a repository digest (`repo@sha256:...`) or a local image ID (`sha256:...`). Supporting local image IDs is deliberate for offline/air-gapped use and avoids making a registry a prerequisite for reproducible local execution.
+
+The adapter materializes a hardened baseline with an explicit non-root uid/gid, `--network none`, a read-only root filesystem, dropped Linux capabilities, `no-new-privileges`, PID/CPU/memory ceilings, and a bounded isolated tmpfs. Cancellation and timeout actively remove the named container rather than merely cancelling the caller. Operational output is bounded and redacted both by the command runner and again at the evidence-persistence boundary so a replaceable runner cannot bypass credential redaction.
+
+These command-line controls justify an `ExecutorIsolation` assertion only as implementation intent. They are not production qualification evidence by themselves. Issue #16 remains open until integration/adversarial tests against a real container engine demonstrate the effective uid, network/filesystem/capability restrictions, cancellation cleanup and cgroup limits. Likewise, configured CPU/memory ceilings are recorded as limits, not observed usage; cost evidence must not be synthesized from limits. Observed resource accounting and provider-neutral local/showback cost evidence require a later qualified collector.
 
 ## ADR-AUTO-021 — Cycle participation means strongly connected dependency membership
 

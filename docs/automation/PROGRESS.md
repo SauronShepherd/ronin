@@ -424,3 +424,34 @@ Validation history:
 4. Documentation commits follow that verified product/test head. The final exact PR head must complete the same required workflow set successfully before merge; post-publication `main` evidence is only claimed after the published SHA is verified.
 
 Next E1 priority remains issue #16: qualify the first concrete local/container `KernelCellExecutor` against a real engine, including effective isolation, cancellation cleanup and observed resource/cost evidence. PR #20 is kept separate so this correctness fix does not bypass or dilute executor qualification.
+
+## 2026-09-04 — E1 first hardened container kernel executor
+
+Objective: advance issue #16 from a protocol-only boundary to the first concrete local container executor while preserving the precise notebook diagnostics already published on `main`, keeping Docker lifecycle out of the canonical kernel contract, and not claiming isolation/resource evidence that has not yet been qualified.
+
+Implemented on `feat/container-kernel-executor-main` / PR #32 by transplanting the previously validated product/test slice from PR #20 onto current `main`:
+
+- Added `DockerContainerKernelExecutor` in side-effecting `studio_runners`, implementing the existing structural `KernelCellExecutor` protocol through a one-way `studio_runners -> studio_kernel` dependency. `studio_kernel` remains free of Docker/provider lifecycle logic.
+- Added immutable container execution configuration with CPU, memory, PID and timeout ceilings. Workloads must reference an immutable repository digest (`repo@sha256:...`) or local image ID (`sha256:...`), allowing reproducible air-gapped/local execution without requiring a registry.
+- Materialized a hardened Docker command plan: explicit non-root uid/gid, `--network none`, read-only root filesystem, all capabilities dropped, `no-new-privileges`, bounded PIDs/CPU/memory, isolated bounded tmpfs, no volume mounts, and deterministic named containers.
+- Added a bounded argument-array asyncio command runner with explicit cancellation/timeout cleanup. Cancellation and timeout invoke `docker rm -f`, kill the client process if required, and perform a second best-effort cleanup to reduce container-creation races.
+- Added normalized pre-launch and runtime failures for unsupported language, missing engine, timeout and non-zero exit; pre-cancelled requests cause no launch side effect.
+- Added replaceable `ExecutionEvidenceStore` plus a local fsynced JSON implementation. The executor persists redacted log evidence and resource evidence containing duration plus configured ceilings, explicitly labeled `duration_and_enforced_limits_only` rather than presenting limits as observed usage.
+- Redaction is applied independently at the command-runner layer and again immediately before evidence persistence, so a faulty replaceable runner cannot bypass the durable-evidence credential boundary.
+- Added unit/adversarial tests covering immutable-image validation, invalid limits/commands, hardening flags, isolation assertions, pre-launch failures, success/cancel/timeout/non-zero normalization, local evidence persistence, output bounds/redaction, process timeout cleanup and cancellation observation.
+- Reused `ronin-old/fakebric/session_pod.py` security posture as design evidence (non-root identity, dropped capabilities, no privilege escalation, bounded resources). Existing PR #20 implementation was reused rather than reimplemented; no vendor branches were introduced into canonical notebook/kernel contracts.
+
+Scope/risk intentionally retained:
+
+- `ExecutorIsolation` remains an adapter assertion. This slice proves construction of the hardened command and cancellation behavior at the subprocess boundary, but does not yet qualify effective Docker uid/network/filesystem/capability isolation against a real engine.
+- CPU/memory values are configured ceilings, not observed consumption; no cost reference is fabricated from them. Real cgroup/resource measurement and provider-neutral local/showback cost evidence remain required before issue #16 closes.
+- The currently available conversation file surface did not expose the historical uploaded product specification files; repository product contracts were used and no unavailable document is claimed as read.
+
+Validation evidence:
+
+- Original product/test head from PR #20, `809ab85baedb21b20d1ed32cd9cb756d996edd9a`, CI run `33857119614`, completed `quality`, `gates-negative` and `mutation` successfully.
+- Current-main integration product/test head `73696ac45b738151426d5e458373564a04477191`, PR #32 CI run `33863062367`, completed `quality`, `gates-negative` and `mutation` successfully. `quality` passed Format, Lint, strict Types, Architecture contracts and Tests with the mandatory coverage gate.
+- Documentation commits follow that verified product/test head. The final exact PR head must again complete `quality`, `gates-negative` and `mutation` successfully before publication.
+- Post-publication `main` success is recorded only after the published SHA completes required workflows successfully; no gate is weakened and no green state is claimed in advance.
+
+Next E1 priority: finish #16 with real Docker integration/adversarial qualification and observed resource/cost evidence, then implement the concrete runtime-reproducibility collector. PR #21 remains separate until its real status and scope are inspected.
