@@ -71,8 +71,8 @@ class _ExplodingExecutor:
 
     def execute(
         self,
-        cell: CellExecutionRequest,
-        cancellation: CancellationSignal,
+        _cell: CellExecutionRequest,
+        _cancellation: CancellationSignal,
     ) -> CellExecutionResult:
         raise RuntimeError("connection failed token=TOPSECRET")
 
