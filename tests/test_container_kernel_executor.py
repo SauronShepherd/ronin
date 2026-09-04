@@ -113,14 +113,16 @@ def test_container_limits_reject_invalid_values(kwargs: dict[str, object], messa
 def test_container_config_requires_immutable_clean_identity_and_command() -> None:
     ContainerExecutorConfig(_IMAGE)
     ContainerExecutorConfig("repo/image@sha256:" + "b" * 64)
+    ContainerExecutorConfig(_IMAGE, user="1000:1000")
 
     for image in ("python:latest", " sha256:" + "a" * 64, "bad image@sha256:" + "a" * 64):
         with pytest.raises(ValueError):
             ContainerExecutorConfig(image)
     with pytest.raises(ValueError, match="engine"):
         ContainerExecutorConfig(_IMAGE, engine="bad\nengine")
-    with pytest.raises(ValueError, match="user"):
-        ContainerExecutorConfig(_IMAGE, user="")
+    for user in ("", "root", "0:0", "0:1000", "1000:0", "1000"):
+        with pytest.raises(ValueError, match="user"):
+            ContainerExecutorConfig(_IMAGE, user=user)
     with pytest.raises(ValueError, match="command"):
         ContainerExecutorConfig(_IMAGE, command=())
     with pytest.raises(ValueError, match="argument"):
@@ -224,10 +226,9 @@ def test_local_evidence_store_persists_canonical_opaque_json(tmp_path: Path) -> 
         store.persist_json("cost", ExecutionAttemptId("attempt-1"), cell, {})
 
 
-def test_asyncio_command_runner_redacts_and_bounds_output() -> None:
-    runner = AsyncioCommandRunner(max_output_bytes=32)
-    outcome = runner.run(
-        (sys.executable, "-c", "print('token=super-secret-value-' + 'x' * 100)"),
+def test_asyncio_command_runner_redacts_output_within_limit() -> None:
+    outcome = AsyncioCommandRunner(max_output_bytes=256).run(
+        (sys.executable, "-c", "print('token=super-secret-value')"),
         input_text="",
         cancellation=CancellationToken(),
         timeout_seconds=2.0,
@@ -237,8 +238,21 @@ def test_asyncio_command_runner_redacts_and_bounds_output() -> None:
     assert outcome.cancelled is False
     assert outcome.timed_out is False
     assert "super-secret-value" not in outcome.output
-    assert len(outcome.output.encode("utf-8")) <= 32
+    assert "[REDACTED]" in outcome.output
     assert outcome.duration_ms >= 0
+
+
+def test_asyncio_command_runner_discards_oversized_output_fail_closed() -> None:
+    outcome = AsyncioCommandRunner(max_output_bytes=32).run(
+        (sys.executable, "-c", "print('token=super-secret-value-' + 'x' * 100)"),
+        input_text="",
+        cancellation=CancellationToken(),
+        timeout_seconds=2.0,
+        cancellation_args=(sys.executable, "-c", "pass"),
+    )
+    assert outcome.returncode == 0
+    assert outcome.output == "[OUTPUT TRUNCATED]"
+    assert "super-secret-value" not in outcome.output
 
 
 def test_asyncio_command_runner_times_out_and_kills_slow_cleanup() -> None:
