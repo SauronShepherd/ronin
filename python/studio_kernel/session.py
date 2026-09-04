@@ -318,7 +318,7 @@ class KernelExecutionSession:
             try:
                 result = self.executor.execute(cell, self.cancellation)
             except Exception as exc:
-                failure_detail = redact_sensitive_text(f"{type(exc).__name__}: {exc}")
+                failure_detail = type(exc).__name__
                 result = CellExecutionResult(cell.cell_id, "failed", "kernel.executor.error")
             if result.cell_id != cell.cell_id:
                 raise ValueError("kernel executor must preserve cell identity")
@@ -334,7 +334,7 @@ class KernelExecutionSession:
 
             message = result.failure_code or ""
             if failure_detail:
-                message = f"{message}; {failure_detail}"
+                message = f"{message}; executor exception: {failure_detail}"
             self._emit("cell.failed", cell_id=cell.cell_id, message=message)
             self._emit("session.failed")
             return tuple(results)
