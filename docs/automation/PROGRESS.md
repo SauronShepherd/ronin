@@ -403,3 +403,32 @@ Validation evidence:
 - Published `main` SHA `0d7a1a84e1e8634153f32e9bcce94378fbf9f6f8`, CI run `33834053217`: `quality`, `gates-negative` and `mutation` all completed successfully.
 
 Next E1 priority: issue #16, the first concrete local/container `KernelCellExecutor`, followed by concrete runtime-evidence collection. Shared/multi-writer durable event storage remains separate and must preserve unique `(attempt_id, sequence)` identities under concurrency.
+
+## 2026-09-04 — E1 first hardened container kernel executor
+
+Objective: advance issue #16 from a protocol-only boundary to the first concrete local container executor without moving Docker lifecycle into the canonical kernel contract or claiming isolation/resource evidence that has not yet been qualified.
+
+Implemented on `feat/container-kernel-executor` / PR #20:
+
+- Added `DockerContainerKernelExecutor` in side-effecting `studio_runners`, implementing the existing structural `KernelCellExecutor` protocol through a one-way `studio_runners -> studio_kernel` dependency. `studio_kernel` remains free of Docker/provider lifecycle logic.
+- Added immutable container execution configuration with CPU, memory, PID and timeout ceilings. Workloads must reference an immutable repository digest (`repo@sha256:...`) or local image ID (`sha256:...`), allowing reproducible air-gapped/local execution without requiring a registry.
+- Materialized a hardened Docker command plan: explicit non-root uid/gid, `--network none`, read-only root filesystem, all capabilities dropped, `no-new-privileges`, bounded PIDs/CPU/memory, isolated bounded tmpfs, no volume mounts, and deterministic named containers.
+- Added a bounded argument-array asyncio command runner adapted from `sdp-studio`'s cancellable process runner. Cancellation and timeout invoke explicit `docker rm -f` cleanup and fall back to killing the client process if required.
+- Added normalized pre-launch and runtime failures for unsupported language, missing engine, timeout and non-zero exit; pre-cancelled requests cause no launch side effect.
+- Added replaceable `ExecutionEvidenceStore` plus a local fsynced JSON implementation. The executor persists redacted log evidence and resource evidence containing duration plus enforced ceilings, explicitly labeled `duration_and_enforced_limits_only` rather than presenting limits as observed usage.
+- Redaction is applied independently at the command-runner layer and again immediately before evidence persistence, so a faulty replaceable runner cannot bypass the durable-evidence credential boundary.
+- Added unit/adversarial tests covering immutable-image validation, invalid limits/commands, all hardening flags, isolation assertions, pre-launch failures, success/cancel/timeout/non-zero normalization, local evidence persistence, output bounds/redaction, process timeout cleanup and cancellation observation.
+- Reused `ronin-old/fakebric/session_pod.py` security posture as design evidence (non-root, restricted privilege/capabilities, isolated runtime posture) and `sdp-studio`'s bounded cancellable subprocess runner rather than reimplementing those lessons blindly.
+
+Scope/risk intentionally retained:
+
+- `ExecutorIsolation` remains an adapter assertion. This slice proves construction of the hardened command and cancellation behavior at the subprocess boundary, but does not yet qualify effective Docker uid/network/filesystem/capability isolation against a real engine.
+- CPU/memory values are configured ceilings, not observed consumption; no cost reference is fabricated from them. Real cgroup/resource measurement and provider-neutral local/showback cost evidence remain required before issue #16 closes.
+- The currently available conversation file surface did not expose the six historical uploaded specification files, so this run could not truthfully reread them. The implementation was checked against the newer normative repository contracts in `docs/product/NOTEBOOK_EXECUTION.md`, BACKLOG and ADR-AUTO-018/019/020.
+
+Validation evidence:
+
+- Authoritative PR CI for the final exact head must complete `quality`, `gates-negative` and `mutation` successfully before publication. The GitHub-hosted jobs were queued during implementation; no green result is claimed in this entry before they actually run.
+- The local execution environment had no outbound DNS and could not clone GitHub, so local CI duplication was not claimed as evidence. Repository gates remain authoritative and were not reduced.
+
+Next E1 priority: finish #16 with real Docker integration/adversarial qualification and observed resource/cost evidence, then implement the concrete runtime-reproducibility collector.
