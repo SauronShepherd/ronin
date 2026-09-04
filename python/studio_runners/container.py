@@ -11,7 +11,7 @@ import shutil
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal, Protocol, cast
+from typing import Literal, Protocol
 
 from studio_kernel import (
     CancellationSignal,
@@ -26,6 +26,8 @@ from studio_kernel import (
 _IMMUTABLE_IMAGE = re.compile(r"^(?:[^\s]+@)?sha256:[0-9a-f]{64}$")
 _CPU_LIMIT = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
 _MEMORY_LIMIT = re.compile(r"^[1-9][0-9]*(?:[kKmMgG])?$")
+_CONTAINER_USER = re.compile(r"^[1-9][0-9]*:[1-9][0-9]*$")
+_READ_CHUNK_BYTES = 64 * 1024
 
 
 def _require_single_line(value: str, name: str) -> None:
@@ -69,6 +71,8 @@ class ContainerExecutorConfig:
             raise ValueError("container image must use an immutable sha256 digest or image id")
         _require_single_line(self.engine, "container engine")
         _require_single_line(self.user, "container user")
+        if not _CONTAINER_USER.fullmatch(self.user):
+            raise ValueError("container user must be an explicit non-root numeric uid:gid")
         if not self.command:
             raise ValueError("container command must not be empty")
         for argument in self.command:
@@ -131,6 +135,13 @@ class AsyncioCommandRunner:
             )
         )
 
+    async def _collect_output(self, stream: asyncio.StreamReader) -> bytes:
+        captured = bytearray()
+        while chunk := await stream.read(_READ_CHUNK_BYTES):
+            remaining = max(0, self.max_output_bytes - len(captured))
+            captured.extend(chunk[:remaining])
+        return bytes(captured)
+
     async def _run_async(
         self,
         args: tuple[str, ...],
@@ -147,10 +158,17 @@ class AsyncioCommandRunner:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
-        communication = asyncio.create_task(process.communicate(input_text.encode("utf-8")))
+        assert process.stdin is not None
+        assert process.stdout is not None
+        process.stdin.write(input_text.encode("utf-8"))
+        await process.stdin.drain()
+        process.stdin.close()
+        output_task = asyncio.create_task(self._collect_output(process.stdout))
+        wait_task = asyncio.create_task(process.wait())
+
         cancelled = False
         timed_out = False
-        while not communication.done():
+        while not wait_task.done():
             elapsed = time.monotonic() - started
             cancelled = cancellation.is_cancelled
             timed_out = elapsed >= timeout_seconds
@@ -161,19 +179,14 @@ class AsyncioCommandRunner:
                 break
             await asyncio.sleep(self.poll_seconds)
 
-        stdout, _ = await communication
+        returncode = await wait_task
+        raw_output = await output_task
         duration_ms = max(0, int((time.monotonic() - started) * 1000))
-        output = redact_sensitive_text(stdout.decode("utf-8", errors="replace"))
+        output = redact_sensitive_text(raw_output.decode("utf-8", errors="replace"))
         encoded = output.encode("utf-8")
         if len(encoded) > self.max_output_bytes:
             output = encoded[: self.max_output_bytes].decode("utf-8", errors="ignore")
-        return CommandOutcome(
-            cast(int, process.returncode),
-            output,
-            cancelled,
-            timed_out,
-            duration_ms,
-        )
+        return CommandOutcome(returncode, output, cancelled, timed_out, duration_ms)
 
     async def _cleanup(self, args: tuple[str, ...]) -> None:
         cleanup = await asyncio.create_subprocess_exec(
@@ -192,7 +205,7 @@ class AsyncioCommandRunner:
 class ExecutionEvidenceStore(Protocol):
     def persist_json(
         self,
-        kind: str,
+        kind: Literal["log", "resource"],
         attempt_id: ExecutionAttemptId,
         cell: CellExecutionRequest,
         payload: dict[str, object],
@@ -207,14 +220,13 @@ class LocalExecutionEvidenceStore:
 
     def persist_json(
         self,
-        kind: str,
+        kind: Literal["log", "resource"],
         attempt_id: ExecutionAttemptId,
         cell: CellExecutionRequest,
         payload: dict[str, object],
     ) -> ExecutionEvidenceReference:
         if kind not in {"log", "resource"}:
             raise ValueError("local container evidence store supports log/resource evidence only")
-        evidence_kind = cast(Literal["log", "resource"], kind)
         attempt_key = hashlib.sha256(str(attempt_id).encode("utf-8")).hexdigest()[:24]
         cell_key = hashlib.sha256(str(cell.cell_id).encode("utf-8")).hexdigest()[:24]
         directory = self.root / attempt_key / cell_key
@@ -228,7 +240,7 @@ class LocalExecutionEvidenceStore:
             os.fsync(handle.fileno())
         os.replace(temporary, target)
         return ExecutionEvidenceReference(
-            evidence_kind, f"local-evidence://{attempt_key}/{cell_key}/{kind}.json"
+            kind, f"local-evidence://{attempt_key}/{cell_key}/{kind}.json"
         )
 
 
