@@ -38,8 +38,8 @@ def test_typed_identity_encoding_is_stable_for_every_frozen_value_kind() -> None
     assert _frozen_comparison_key(True) == ("bool", True)
     assert _frozen_comparison_key(7) == ("int", 7)
     assert _frozen_comparison_key(-3) == ("int", -3)
-    assert _frozen_comparison_key(1.5) == ("float", float(1.5).hex())
-    assert _frozen_comparison_key(-0.0) == ("float", float(-0.0).hex())
+    assert _frozen_comparison_key(1.5) == ("float", 1.5.hex())
+    assert _frozen_comparison_key(-0.0) == ("float", (-0.0).hex())
     assert _frozen_comparison_key("orders") == ("str", "orders")
     assert _frozen_comparison_key(FrozenList((1, True, "x"))) == (
         "list",
@@ -71,5 +71,5 @@ def test_canonical_json_encoding_is_compact_sorted_unicode_and_strict() -> None:
     assert _canonical_json({"z": 1, "a": "ñ"}) == '{"a":"ñ","z":1}'
     assert _canonical_json([True, None, 1.5]) == "[true,null,1.5]"
     for value in (math.nan, math.inf, -math.inf):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Out of range float values"):
             _canonical_json({"value": value})
