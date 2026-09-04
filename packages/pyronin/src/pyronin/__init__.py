@@ -173,9 +173,20 @@ class Ronin:
     def get_job(self, job_id: str) -> Job:
         return _parse_job(self._transport.request("GET", f"/v1/jobs/{quote(job_id, safe='')}"))
 
-    def list_jobs(self, *, project: str | None = None) -> list[Job]:
-        query = {"project": project} if project is not None else None
-        payload = self._transport.request("GET", "/v1/jobs", query=query)
+    def list_jobs(
+        self,
+        *,
+        project: str | None = None,
+        state: JobState | None = None,
+    ) -> list[Job]:
+        query: dict[str, str] = {}
+        if project is not None:
+            if not project.strip():
+                raise ValueError("project must be non-empty when supplied")
+            query["project"] = project
+        if state is not None:
+            query["state"] = state.value
+        payload = self._transport.request("GET", "/v1/jobs", query=query or None)
         if not isinstance(payload, list):
             raise ProtocolError("Expected a list of jobs")
         return [_parse_job(item) for item in payload]
