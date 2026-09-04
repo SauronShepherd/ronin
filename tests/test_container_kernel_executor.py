@@ -28,6 +28,8 @@ from studio_runners.container import (
 )
 
 _IMAGE = "sha256:" + "a" * 64
+_EXPECTED_TMPFS = "/tmp:rw,noexec,nosuid,nodev,size=64m"  # noqa: S108
+_EXPECTED_WORKDIR = "/tmp"  # noqa: S108
 
 
 def _cell(language: str = "python", source: str = "print('ok')") -> CellExecutionRequest:
@@ -116,7 +118,7 @@ def test_container_config_requires_immutable_clean_identity_and_command() -> Non
     ContainerExecutorConfig(_IMAGE, user="1000:1000")
 
     for image in ("python:latest", " sha256:" + "a" * 64, "bad image@sha256:" + "a" * 64):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="container image"):
             ContainerExecutorConfig(image)
     with pytest.raises(ValueError, match="engine"):
         ContainerExecutorConfig(_IMAGE, engine="bad\nengine")
@@ -150,7 +152,7 @@ def test_container_executor_materializes_hardened_isolation_and_evidence() -> No
     assert source == "print('executed')"
     assert timeout == 300.0
     assert args[:5] == ("/usr/bin/docker", "run", "--rm", "--name", cancellation_args[-1])
-    assert ("--network", "none") == (args[5], args[6])
+    assert (args[5], args[6]) == ("--network", "none")
     assert "--read-only" in args
     assert args[args.index("--cap-drop") + 1] == "ALL"
     assert args[args.index("--security-opt") + 1] == "no-new-privileges"
@@ -158,8 +160,8 @@ def test_container_executor_materializes_hardened_isolation_and_evidence() -> No
     assert args[args.index("--memory") + 1] == "512m"
     assert args[args.index("--cpus") + 1] == "1.0"
     assert args[args.index("--user") + 1] == "65532:65532"
-    assert args[args.index("--tmpfs") + 1] == "/tmp:rw,noexec,nosuid,nodev,size=64m"
-    assert args[args.index("--workdir") + 1] == "/tmp"
+    assert args[args.index("--tmpfs") + 1] == _EXPECTED_TMPFS
+    assert args[args.index("--workdir") + 1] == _EXPECTED_WORKDIR
     assert args[-4:] == (_IMAGE, "python", "-I", "-")
     assert cancellation_args[:3] == ("/usr/bin/docker", "rm", "-f")
 
