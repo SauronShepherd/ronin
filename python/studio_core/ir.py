@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import heapq
 import json
+import math
+from bisect import bisect_left
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Literal, TypeAlias, cast
@@ -30,6 +33,8 @@ FrozenValue: TypeAlias = Scalar | FrozenList | FrozenMap
 
 def freeze_value(value: object) -> FrozenValue:
     """Convert JSON-compatible values to deterministic, hashable domain values."""
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("IR float values must be finite")
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
     if isinstance(value, Mapping):
@@ -50,6 +55,25 @@ def thaw_value(value: FrozenValue) -> object:
     if isinstance(value, FrozenList):
         return [thaw_value(child) for child in value.items]
     return value
+
+
+def _frozen_comparison_key(value: FrozenValue) -> object:
+    if value is None:
+        return ("null",)
+    if isinstance(value, bool):
+        return ("bool", value)
+    if isinstance(value, int):
+        return ("int", value)
+    if isinstance(value, float):
+        return ("float", value.hex())
+    if isinstance(value, str):
+        return ("str", value)
+    if isinstance(value, FrozenList):
+        return ("list", tuple(_frozen_comparison_key(child) for child in value.items))
+    return (
+        "map",
+        tuple((key, _frozen_comparison_key(child)) for key, child in value.items),
+    )
 
 
 @dataclass(frozen=True, order=True, slots=True)
@@ -84,7 +108,13 @@ class Origin:
 DEFAULT_ORIGIN = Origin("system")
 
 
-@dataclass(frozen=True, slots=True)
+def _port_sort_key(port: Port) -> tuple[str, str, str, str]:
+    if port.schema is None:
+        return (port.name, port.kind, "", "")
+    return (port.name, port.kind, port.schema.name, port.schema.version or "")
+
+
+@dataclass(frozen=True, slots=True, eq=False)
 class Node:
     id: NodeId
     instance_key: str
@@ -99,6 +129,44 @@ class Node:
     def __post_init__(self) -> None:
         if not self.instance_key:
             raise ValueError("instance_key must be non-empty")
+        canonical_params = tuple(sorted(self.params, key=lambda item: item[0]))
+        names = [name for name, _ in canonical_params]
+        if len(names) != len(set(names)):
+            raise ValueError("node parameter names must be unique")
+        canonical_inputs = tuple(sorted(self.inputs, key=_port_sort_key))
+        canonical_outputs = tuple(sorted(self.outputs, key=_port_sort_key))
+        object.__setattr__(self, "params", canonical_params)
+        object.__setattr__(self, "inputs", canonical_inputs)
+        object.__setattr__(self, "outputs", canonical_outputs)
+        expected = NodeId.derive(
+            _node_semantic_payload(
+                self.operator,
+                canonical_params,
+                canonical_inputs,
+                canonical_outputs,
+            ),
+            self.instance_key,
+        )
+        if self.id != expected:
+            raise ValueError("node id does not match semantic content and instance_key")
+
+    def _comparison_key(self) -> object:
+        return (
+            self.id,
+            self.instance_key,
+            self.operator,
+            tuple((key, _frozen_comparison_key(value)) for key, value in self.params),
+            self.inputs,
+            self.outputs,
+            self.origin,
+            self.ownership,
+        )
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Node) and self._comparison_key() == other._comparison_key()
+
+    def __hash__(self) -> int:
+        return hash(self._comparison_key())
 
     @classmethod
     def create(
@@ -119,8 +187,8 @@ class Node:
                 key=lambda item: item[0],
             )
         )
-        canonical_inputs = tuple(sorted(inputs))
-        canonical_outputs = tuple(sorted(outputs))
+        canonical_inputs = tuple(sorted(inputs, key=_port_sort_key))
+        canonical_outputs = tuple(sorted(outputs, key=_port_sort_key))
         semantic = _node_semantic_payload(
             operator,
             frozen_params,
@@ -140,7 +208,11 @@ class Node:
         )
 
     def param(self, name: str) -> FrozenValue | None:
-        return dict(self.params).get(name)
+        names = tuple(key for key, _ in self.params)
+        index = bisect_left(names, name)
+        if index < len(self.params) and self.params[index][0] == name:
+            return self.params[index][1]
+        return None
 
 
 @dataclass(frozen=True, order=True, slots=True)
@@ -221,16 +293,16 @@ def _validate_pipeline(nodes: tuple[Node, ...], edges: tuple[Edge, ...]) -> None
         outgoing[source_node.id].append(target_node.id)
         incoming[target_node.id] += 1
 
-    ready = sorted(node_id for node_id, count in incoming.items() if count == 0)
+    ready = [node_id for node_id, count in incoming.items() if count == 0]
+    heapq.heapify(ready)
     visited = 0
     while ready:
-        current = ready.pop(0)
+        current = heapq.heappop(ready)
         visited += 1
         for target_id in sorted(outgoing[current]):
             incoming[target_id] -= 1
             if incoming[target_id] == 0:
-                ready.append(target_id)
-                ready.sort()
+                heapq.heappush(ready, target_id)
     if visited != len(nodes):
         raise ValueError("pipeline contains a cycle")
 
@@ -243,7 +315,13 @@ def _port_by_name(ports: tuple[Port, ...], name: str) -> Port:
 
 
 def _canonical_json(value: object) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
 
 
 def _node_semantic_payload(

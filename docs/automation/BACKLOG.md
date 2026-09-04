@@ -10,6 +10,8 @@ Completed:
 - Executable package dependency matrix for all planned `studio_*` layers.
 - Dedicated negative-gate harness proving deliberate I/O, environment and layer violations fail.
 - Ruff, strict mypy, pytest and CI baseline.
+- Fail-closed pure-domain architecture inspection rejects unknown non-stdlib imports, nondeterministic imports/calls, filesystem/process/environment effects and invalid Python syntax rather than relying on a narrow side-effect denylist.
+- Pull-request CI cancels obsolete runs while `main` push validation is never cancelled, reducing stale evidence without weakening publication checks.
 
 Still required:
 
@@ -17,6 +19,7 @@ Still required:
 2. Add documentation/governance contracts and ASF-ready community files without claiming current ASF status.
 3. Add manifest validation only when Kubernetes/Compose/Helm artifacts enter the repository; do not create placeholder infrastructure merely to satisfy a gate.
 4. Evaluate augmenting the in-repo dependency gate with `import-linter` once multiple real packages exist. The negatively-tested AST gate remains authoritative until an additional tool proves equivalent or stronger coverage.
+5. Protect `main` and release tags through GitHub repository rulesets: require pull requests and mandatory checks on `main`, block force-push/deletion, and make release tags immutable. This is repository administration, not an in-code substitute; it must not be marked implemented until the repository reports the rules as active.
 
 ## E1 — Core IR and project domain
 
@@ -28,8 +31,10 @@ Completed:
 - Stable `InstanceAnchor` allocation contract for authoring/import boundaries, persisted `instance_key` evidence in canonical IR, identity verification during deserialization, and symmetric-graph invariants that do not depend on traversal order.
 - Canonical JSON serialization/deserialization with deterministic round-trip behavior.
 - Edge validation for unknown nodes, exact ports, batch/stream compatibility, schema compatibility and cycles.
+- IR boundary hardening rejects non-finite numeric values, prevents invalid direct `Node` construction, uses total deterministic port ordering and keeps semantic identity explicitly typed rather than relying on presentation or insertion state.
 - Hypothesis properties, adversarial deserialization tests and 100% line/branch coverage for `studio_core`.
 - Multi-project pure-domain contracts: `Project`, canonical `ProjectCollection`, primary/supporting Git repository bindings, secret/connection references, runtime profile references and provider-neutral capability requirements.
+- Project/repository/runtime validation trims and validates user-controlled text, rejects credential-bearing repository URIs and Windows-absolute repository subdirectories, constrains capability-expression grammar, and keeps provider-specific ordered version strings out of core comparison semantics.
 - Per-project execution intent supports exact adapter-owned runtime profiles and compatible capability-based resolution without vendor branches in the core.
 - Provider-neutral `RuntimeProfile`/`RuntimeCatalog` advertisement snapshots and pure deterministic resolution with per-requirement compatibility evidence, required/preferred semantics, availability filtering and stable fallback ranking.
 - Adapter-side `studio_runners` runtime discovery SPI with deterministic adapter ordering, normalized discovery issues, provider-failure containment, and canonical `RuntimeCatalog` assembly; immutable `ResolvedRuntimeSnapshot` evidence freezes the selected profile and compatibility checks before execution without clocks, secrets or provider configuration entering `studio_core`.
@@ -50,15 +55,26 @@ Completed:
 Next:
 
 1. Finish issue #16 by qualifying the container executor against a real Docker engine: adversarially prove effective non-root/network/filesystem/capability isolation, cancellation cleanup and configured cgroup ceilings, then collect observed CPU/memory usage and provider-neutral cost/showback evidence where meaningful. Do not promote configured limits into observed-usage claims.
-2. Add a concrete runtime-evidence collector adapter that derives effective non-secret settings and verifies package/environment/image/artifact digests from real local/container execution without putting provider logic into `studio_kernel`.
-3. Evolve event persistence from the restart-safe single-writer JSONL baseline toward shared durable storage semantics with explicit writer arbitration/lease or transactional append guarantees; never permit duplicate `(attempt_id, sequence)` identities under concurrent writers.
-4. Ratchet mutation quality upward when new tests make that sustainable; never lower the threshold merely to make CI pass.
+2. Replace free-form isolation authorization facts with a typed, versioned Ronin isolation claim that distinguishes requested policy, declared adapter properties, qualification status/scheme/runtime identity/evidence, and observed attempt evidence. Production policy must be able to require `QUALIFIED`; the current Docker executor remains `DECLARED` until #16 proves it.
+3. Move event-loop ownership out of `AsyncioCommandRunner.run()`: the command/executor port should be awaitable, and only an explicit outer synchronous shell may bridge with `asyncio.run()`. Preserve a provider-neutral kernel contract while preparing for an async control plane.
+4. Extend mutation qualification to high-risk `studio_kernel` and `studio_runners` behavior first, then `studio_notebook`. Keep the current `studio_core` >=90% gate and 100% line/branch coverage unchanged; establish package-specific baselines from real mutation evidence and ratchet upward rather than inventing a passing threshold.
+5. Add crash/restart state-machine qualification spanning session, executor result, event append, evidence persistence and cleanup. Terminal state must be unique/monotonic and recovery must not double-finalize or duplicate durable identity.
+6. Add at least one true notebook -> kernel -> real runtime -> durable evidence -> restart/recovery E2E journey after the real Docker boundary is qualified.
+7. Add a concrete runtime-evidence collector adapter that derives effective non-secret settings and verifies package/environment/image/artifact digests from real local/container execution without putting provider logic into `studio_kernel`.
+8. Evolve event persistence from the restart-safe single-writer JSONL baseline toward shared durable storage semantics with explicit writer arbitration/lease or transactional append guarantees; never permit duplicate `(attempt_id, sequence)` identities under concurrent writers.
+9. Introduce explicit Ronin `Job -> Run -> Attempt` orchestration semantics for retry/replay/idempotency before adding distributed scheduling. A retry must create a new attempt; it must never reuse one execution session.
+10. Integrate the already-validated distribution/public-contract work from PR #21 onto current `main`, then add a clean-room build/install smoke for the root `ronin-studio` artifact as distinct evidence from `pyronin` packaging.
+11. Add bounded deterministic performance guards for notebook DAG analysis, ledger replay and evidence persistence without destructive load testing.
+12. Add a real temporary-Git adapter qualification when the concrete repository adapter lands: object identity, dirty patch digest, detached HEAD/ref movement and credential/path safety.
+13. Add an optional OTLP/OpenTelemetry exporter behind Ronin-native evidence/event semantics. OTLP is transport/correlation only; Ronin keeps canonical attempt, evidence, lineage, policy, redaction, retention and cost semantics.
+14. Ratchet mutation quality upward when new tests make that sustainable; never lower an existing threshold merely to make CI pass.
 
 ## Later reuse
 
 - Reuse/adapt `sdp-studio` codegen, source maps, runners, debug, collaboration, auth/scheduling, React/XYFlow/Monaco and deployment work behind Ronin boundaries.
 - Reuse `sdp-studio` runtime capability discovery and environment concepts behind the new neutral project/execution contracts rather than retaining vendor booleans in the core.
 - Selectively reuse `ronin-old` native execution/Gluten/Velox and hardened redaction/session ideas; do not revive its monolithic API/controller architecture.
+- Treat OpenTelemetry/OTLP, gVisor and Kata as replaceable ecosystem integrations/qualification targets, never as canonical Ronin domain semantics.
 
 ## Operational invariant
 
@@ -67,3 +83,5 @@ After every publication/deployment to `main`, inspect the GitHub Actions runs fo
 ## Security carry-over
 
 The historical Fakebrick review contains P0/P1 findings (control-plane isolation, secrets, pod recreation, authorization and JWT validation). They remain requirements for E2, but none should be marked fixed until corresponding runtime code exists in this repository and regression tests prove the property.
+
+The 2026-09-04 continuous-QA and architecture reviews were produced against historical SHA `23d27ecff31a4296723fd549875d0f044c1d2cc8`. Their findings are reconciled against current `main` before implementation: session single-use and durable redaction are already published; real Docker qualification, broader mutation, typed isolation qualification, async boundary ownership, release-root protection, security scans, state-machine/E2E evidence and clean release qualification remain tracked above until independently proven.

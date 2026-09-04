@@ -1,3 +1,4 @@
+import json
 from dataclasses import FrozenInstanceError
 
 import pytest
@@ -70,11 +71,14 @@ def test_freeze_value_is_canonical_hashable_and_round_trips() -> None:
     assert hash(first) == hash(second)
 
 
-def test_freeze_value_rejects_non_string_mapping_keys_and_unsupported_values() -> None:
+def test_freeze_value_rejects_non_string_mapping_keys_unsupported_and_nonfinite_values() -> None:
     with pytest.raises(TypeError, match="keys"):
         freeze_value({1: "invalid"})
     with pytest.raises(TypeError, match="unsupported"):
         freeze_value(object())
+    for value in (float("nan"), float("inf"), float("-inf")):
+        with pytest.raises(ValueError, match="finite"):
+            freeze_value(value)
 
 
 def test_node_identity_ignores_label_but_uses_stable_instance_key() -> None:
@@ -108,6 +112,39 @@ def test_node_identity_requires_non_empty_instance_key() -> None:
         Node.create(operator=OperatorRef("source.table"), instance_key="")
 
 
+def test_node_identity_distinguishes_python_numeric_types_consistently() -> None:
+    operator = OperatorRef("transform.identity")
+    integer = Node.create(operator=operator, instance_key="k", params={"x": 1})
+    floating = Node.create(operator=operator, instance_key="k", params={"x": 1.0})
+    boolean = Node.create(operator=operator, instance_key="k", params={"x": True})
+    zero = Node.create(operator=operator, instance_key="k", params={"x": 0.0})
+    negative_zero = Node.create(operator=operator, instance_key="k", params={"x": -0.0})
+
+    assert integer != floating
+    assert integer.id != floating.id
+    assert integer != boolean
+    assert integer.id != boolean.id
+    assert zero != negative_zero
+    assert zero.id != negative_zero.id
+
+
+def test_node_direct_constructor_rejects_mismatched_identity() -> None:
+    with pytest.raises(ValueError, match="node id"):
+        Node(NodeId("deadbeef"), "k", OperatorRef("transform.identity"))
+
+
+def test_node_ports_have_total_canonical_order_with_optional_schema() -> None:
+    node = Node.create(
+        operator=OperatorRef("transform.identity"),
+        instance_key="ports",
+        inputs=(Port("a", "batch", SchemaRef("s")), Port("a", "batch", None)),
+    )
+    assert node.inputs == (
+        Port("a", "batch", None),
+        Port("a", "batch", SchemaRef("s")),
+    )
+
+
 def test_node_param_returns_frozen_value_or_none() -> None:
     node = Node.create(
         operator=OperatorRef("source.table"),
@@ -129,7 +166,7 @@ def test_pipeline_canonicalizes_nodes_edges_and_serialization() -> None:
     assert tuple(node.id for node in first.nodes) == tuple(sorted((source.id, sink.id)))
 
 
-def test_pipeline_round_trip_preserves_typed_values_and_metadata() -> None:
+def test_pipeline_json_is_strict_and_round_trip_preserves_typed_values_and_metadata() -> None:
     schema = SchemaRef("orders", "v1")
     source = Node.create(
         operator=OperatorRef("source.table", 2),
@@ -147,9 +184,11 @@ def test_pipeline_round_trip_preserves_typed_values_and_metadata() -> None:
         ownership="USER",
     )
     pipeline = Pipeline((sink, source), (Edge(source.id, "out", sink.id, "in"),))
-    restored = Pipeline.from_json(pipeline.to_json())
+    payload = pipeline.to_json()
+    restored = Pipeline.from_json(payload)
     assert restored == pipeline
     assert restored.to_data() == pipeline.to_data()
+    json.loads(payload, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
 
 
 def test_empty_pipeline_round_trips() -> None:
@@ -344,6 +383,7 @@ def test_node_id_is_deterministic_for_arbitrary_json_params(
         params=dict(reversed(list(params.items()))),
     )
     assert first.id == second.id
+    assert first == second
 
 
 @given(st.lists(st.text(min_size=1), unique=True, max_size=8))

@@ -245,3 +245,15 @@ A `KernelExecutionSession` represents one execution attempt and is intentionally
 Secret prevention remains a layered responsibility. Adapters must avoid placing credentials in operational text, but durable kernel evidence also applies centralized defensive redaction to event messages, evidence references and normalized failure codes. The redactor covers named secret fields, bearer credentials, common provider-token shapes, JWT-like values, PEM private keys and URI user-info credentials. This is defense in depth, not a guarantee that arbitrary unknown secret formats can safely enter evidence.
 
 Unexpected executor exceptions remain normalized to `kernel.executor.error`. The session may persist only the exception type name as bounded operational context; arbitrary exception messages are deliberately discarded because they commonly contain connection details, provider errors or secrets. This strengthens ADR-AUTO-018 without changing the provider-neutral kernel/runner boundary or upgrading any container isolation assertion into proof.
+
+## ADR-AUTO-023 — Review findings are reconciled against the current trust boundary before closure
+
+**Status:** accepted — 2026-09-04
+
+External or continuous reviews are evidence tied to the exact repository SHA they analyzed, not timeless statements about `main`. Before implementing or closing a finding, Ronin reconciles the reviewed SHA against current `main`, recent verified changes, open issues/PRs and the executable architecture contracts. A finding already fixed on a newer exact SHA is recorded as superseded rather than reimplemented; a still-valid finding remains open until direct evidence proves it.
+
+When an already-validated PR contains the needed implementation but is based on stale history, Ronin reuses the validated product/test changes on current `main` rather than merging the stale branch wholesale. Current contracts introduced later must be preserved deliberately. In particular, the strengthened pure-domain architecture gate from the earlier hardening work is integrated while retaining ADR-AUTO-020's current one-way `studio_runners -> studio_kernel` dependency required by the concrete container adapter.
+
+Security/release language must distinguish repository code from repository administration. A CI workflow can require checks and validate release provenance, but it cannot make `main` or a tag immutable by itself. Branch/tag rulesets are therefore a required governance control and may only be marked implemented when GitHub reports them active; absence of administration capability in an automation connection is a blocker, not permission to fabricate an equivalent claim.
+
+Likewise, declared container isolation and configured resource ceilings remain different from qualified/observed facts. The architecture will evolve toward typed, versioned isolation qualification and observed attempt evidence, but the current Docker adapter remains unqualified until real-engine tests close issue #16.

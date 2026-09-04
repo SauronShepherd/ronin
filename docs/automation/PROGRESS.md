@@ -254,7 +254,6 @@ Validation history retained as active-gate evidence:
 
 Next E1 priority after this increment: add an adapter-side runtime discovery SPI and immutable resolved-runtime execution snapshot, reusing mature `sdp-studio` probing/normalization behind that boundary; portable notebook serialization/import identity and kernel execution evidence follow immediately after.
 
-
 ## 2026-09-03 — E1 runtime discovery and resolved-runtime evidence
 
 Objective: close the gap between pure runtime compatibility and real adapter probing while keeping provider I/O, raw errors and credentials outside Ronin's canonical domain.
@@ -279,7 +278,6 @@ Validation history:
 
 Next E1 priority: portable notebook serialization/import identity, followed by a kernel execution-evidence boundary. Runtime evidence then expands with repository revision/dirty-patch identity and adapter-normalized effective non-secret environment/package/image data.
 
-
 ## 2026-09-03 — E1 portable notebook identity and serialization
 
 Objective: make notebooks cloneable, reviewable and importable without identity churn or runtime/provider state leaking into authored intent.
@@ -297,7 +295,6 @@ Implemented on validation branch `feat/notebook-portable-format` / PR #13:
 Validation/publication evidence is recorded only after the exact final PR head and the published `main` SHA complete required GitHub Actions successfully. No gate is lowered or claimed green in advance.
 
 Next E1 priority after this increment: introduce a kernel execution-evidence boundary that consumes immutable authored notebook intent plus resolved runtime/repository evidence, adapting useful `ronin-old` magic semantics behind typed adapters without mutating the notebook.
-
 
 Validation history for this increment:
 
@@ -482,3 +479,37 @@ Validation evidence:
 - The final documentation head must complete `quality`, `gates-negative` and `mutation` successfully before merge. After publication, the exact `main` SHA must again complete all required jobs successfully.
 
 Next E1 priority remains issue #16: real Docker-engine adversarial qualification for effective identity/network/filesystem/capability isolation, cancellation/timeout cleanup races and cgroup ceilings, followed by observed CPU/memory and truthful provider-neutral local/showback cost evidence.
+
+## 2026-09-04 — Review backlog reconciliation and validated hardening integration
+
+Objective: consume the supplied continuous-QA and architecture reviews as exact-SHA evidence, reconcile their findings against the newer published `main`, and integrate already-validated corrections without merging stale branches or weakening newer contracts.
+
+Review reconciliation:
+
+- Both supplied reports analyzed historical SHA `23d27ecff31a4296723fd549875d0f044c1d2cc8`, not the then-current `main` `de42602cc21c550a7099a2aea1f6696d524b9086`.
+- The reports' single-use-session and durable-redaction findings were already superseded by PR #33 / ADR-AUTO-022 and were not reimplemented.
+- The reports' real-Docker qualification, broader mutation, typed isolation qualification, async event-loop ownership, state-machine/E2E, security-scan, clean-package and repository-protection findings remain real and are now explicit backlog items.
+- Current GitHub branch metadata reports `main` without repository protection. The available GitHub automation connection exposes ruleset/branch-protection reads but no administration write, so repository rulesets are recorded as an external governance prerequisite rather than falsely represented as code-complete.
+
+Reused implementation instead of reimplementation:
+
+- PR #24 exact head `59c8b397263c20b7ff4a42554c192e35e0b5837b` had already passed its authoritative CI and supplied IR/canonicalization hardening plus adversarial tests.
+- PR #25 exact head `4f61393622addd9adefd236aa25d5600c5c200d4` had already passed CI and supplied project/repository/runtime boundary validation.
+- PR #27 exact head `91e046c4d7c65eb6962abb452fadc9f4bc002225` had already passed CI and supplied the stronger fail-closed pure-domain architecture gate. Its stale dependency table was not copied literally: the current ADR-AUTO-020 `studio_runners -> studio_kernel` edge is deliberately preserved.
+- PR #29 exact head `783bfad127651faaebf53162456cbeb3ee6ea349` had already passed CI and supplied pull-request workflow concurrency cancellation while retaining non-cancelling `main` validation.
+- These changes were transplanted onto current `main` in PR #34 rather than merging their older common base.
+
+Implemented in PR #34:
+
+- Core IR now rejects non-finite numeric content, strengthens direct-construction invariants, uses deterministic total ordering and carries the previously reviewed invariant-edge tests.
+- Project/runtime contracts reject whitespace/control-edge invalid values, credential-bearing repository URIs, Windows-absolute repository subdirectories and ambiguous/provider-specific ordered-version semantics that belong in adapters.
+- The architecture gate now uses a fail-closed stdlib allowlist for pure-domain code, detects nondeterministic imports/calls and more side-effect forms, rejects invalid Python syntax, and keeps deliberate negative tests as proof that the gate is active.
+- PR CI now cancels obsolete branch/PR runs but never cancels `main` push validation.
+- BACKLOG and ADR-AUTO-023 were updated so review findings are tied to their analyzed SHA and stale validated PRs are reused without overwriting newer architectural decisions.
+
+Validation evidence:
+
+- Product/test integration SHA `36afa90ed1f0c55d507f748654e112fe5df74159`, PR #34 CI run `33871453780`, completed successfully for `quality`, `gates-negative` and `mutation`; `quality` passed Format, Lint, strict Types, Architecture contracts and Tests.
+- Documentation updates follow that verified product/test SHA and therefore trigger a new exact-head CI run. No final PR-head or post-`main` green claim is made until those runs complete.
+
+Next execution priorities from the reconciled reviews are unchanged by documentation: finish issue #16 with real Docker qualification, establish typed isolation qualification, remove event-loop ownership from the runner boundary, extend mutation evidence into kernel/runners/notebook, and integrate the already-green distribution/release work from PR #21 without conflating release smoke with runtime-isolation proof.
