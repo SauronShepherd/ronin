@@ -190,8 +190,10 @@ class AsyncioCommandRunner:
         if needs_cleanup:
             await self._cleanup(cancellation_args)
         duration_ms = max(0, int((time.monotonic() - started) * 1000))
-        output = _TRUNCATED_OUTPUT if truncated else redact_sensitive_text(
-            raw_output.decode("utf-8", errors="replace")
+        output = (
+            _TRUNCATED_OUTPUT
+            if truncated
+            else redact_sensitive_text(raw_output.decode("utf-8", errors="replace"))
         )
         return CommandOutcome(returncode, output, cancelled, timed_out, duration_ms)
 
@@ -320,7 +322,9 @@ class DockerContainerKernelExecutor:
             )
         engine = self._engine()
         if engine is None:
-            return CellExecutionResult(cell.cell_id, "failed", "kernel.container.engine_unavailable")
+            return CellExecutionResult(
+                cell.cell_id, "failed", "kernel.container.engine_unavailable"
+            )
 
         name = self._container_name(cell)
         outcome = self.runner.run(
@@ -359,9 +363,7 @@ class DockerContainerKernelExecutor:
         if outcome.cancelled:
             return CellExecutionResult(cell.cell_id, "cancelled", evidence=evidence)
         if outcome.timed_out:
-            return CellExecutionResult(
-                cell.cell_id, "failed", "kernel.container.timeout", evidence
-            )
+            return CellExecutionResult(cell.cell_id, "failed", "kernel.container.timeout", evidence)
         if outcome.returncode != 0:
             return CellExecutionResult(
                 cell.cell_id, "failed", "kernel.container.nonzero_exit", evidence
