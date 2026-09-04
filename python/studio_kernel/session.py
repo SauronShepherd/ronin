@@ -16,6 +16,7 @@ from .redaction import redact_sensitive_text
 from .reproducibility import ExecutionAttemptId, ExecutionEventId
 
 IsolationMode: TypeAlias = Literal["process", "container", "kubernetes"]
+IsolationQualification: TypeAlias = Literal["declared", "tested", "qualified"]
 ExecutionEventKind: TypeAlias = Literal[
     "session.started",
     "session.completed",
@@ -29,6 +30,11 @@ ExecutionEventKind: TypeAlias = Literal[
 ]
 
 _EVENT_LEDGER_KEYS = frozenset({"attempt_id", "sequence", "kind", "cell_id", "message"})
+_QUALIFICATION_RANK: dict[IsolationQualification, int] = {
+    "declared": 0,
+    "tested": 1,
+    "qualified": 2,
+}
 
 
 def _require_text(value: str, name: str) -> None:
@@ -38,16 +44,48 @@ def _require_text(value: str, name: str) -> None:
 
 @dataclass(frozen=True, slots=True)
 class ExecutorIsolation:
-    """Isolation facts declared by a concrete executor adapter."""
+    """Versioned isolation claim declared or evidenced by an executor adapter.
+
+    Boolean properties describe the adapter's requested/effective isolation contract.
+    ``qualification_status`` states how strongly those properties have been proven for
+    the identified runtime. A claim must never be upgraded from ``declared`` merely
+    because command-line flags were constructed successfully.
+    """
 
     mode: IsolationMode
     dedicated_identity: bool
     network_isolated: bool
     filesystem_isolated: bool
+    qualification_status: IsolationQualification = "declared"
+    qualification_scheme: str | None = None
+    qualification_version: str | None = None
+    runtime_identity: str | None = None
+    evidence_ref: str | None = None
 
     def __post_init__(self) -> None:
         if self.mode not in {"process", "container", "kubernetes"}:
             raise ValueError("unsupported executor isolation mode")
+        if self.qualification_status not in _QUALIFICATION_RANK:
+            raise ValueError("unsupported isolation qualification status")
+
+        metadata = (
+            self.qualification_scheme,
+            self.qualification_version,
+            self.runtime_identity,
+            self.evidence_ref,
+        )
+        if self.qualification_status == "declared":
+            if any(value is not None for value in metadata):
+                raise ValueError("declared isolation claims must not carry qualification evidence")
+            return
+        if any(value is None for value in metadata):
+            raise ValueError("tested/qualified isolation claims require complete qualification evidence")
+        for value, name in zip(
+            cast(tuple[str, str, str, str], metadata),
+            ("qualification scheme", "qualification version", "runtime identity", "evidence reference"),
+            strict=True,
+        ):
+            _require_text(value, name)
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +97,7 @@ class SessionPolicy:
     require_dedicated_identity: bool = True
     require_network_isolation: bool = True
     require_filesystem_isolation: bool = True
+    minimum_isolation_qualification: IsolationQualification = "declared"
 
     def __post_init__(self) -> None:
         permissions = tuple(sorted(self.granted_permissions))
@@ -74,6 +113,8 @@ class SessionPolicy:
             raise ValueError("allowed isolation modes must be unique")
         if any(mode not in {"process", "container", "kubernetes"} for mode in modes):
             raise ValueError("unsupported allowed isolation mode")
+        if self.minimum_isolation_qualification not in _QUALIFICATION_RANK:
+            raise ValueError("unsupported minimum isolation qualification")
 
         object.__setattr__(self, "granted_permissions", permissions)
         object.__setattr__(self, "allowed_isolation_modes", modes)
@@ -95,6 +136,11 @@ class SessionPolicy:
             raise ValueError("executor must provide network isolation")
         if self.require_filesystem_isolation and not isolation.filesystem_isolated:
             raise ValueError("executor must provide filesystem isolation")
+        if (
+            _QUALIFICATION_RANK[isolation.qualification_status]
+            < _QUALIFICATION_RANK[self.minimum_isolation_qualification]
+        ):
+            raise ValueError("executor isolation qualification is below session policy minimum")
 
 
 class CancellationSignal(Protocol):
