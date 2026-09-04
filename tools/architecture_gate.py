@@ -18,7 +18,7 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
     "studio_debug": frozenset(
         {"studio_core", "studio_notebook", "studio_codegen", "studio_native"}
     ),
-    "studio_runners": frozenset({"studio_core", "studio_native"}),
+    "studio_runners": frozenset({"studio_core", "studio_native", "studio_kernel"}),
     "studio_kernel": frozenset({"studio_core", "studio_notebook"}),
     "studio_orchestrator": frozenset({"studio_core", "studio_runners"}),
     "studio_storage": frozenset({"studio_core"}),
