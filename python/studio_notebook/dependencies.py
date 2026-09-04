@@ -84,6 +84,66 @@ class NotebookDependencyAnalysis:
         return not self.violations
 
 
+def _cycle_members(
+    outgoing: dict[CellId, list[CellId]],
+    residual: set[CellId],
+    index: dict[CellId, int],
+) -> tuple[CellId, ...]:
+    """Return only cells that belong to a strongly connected dependency component."""
+    ordered_residual = tuple(sorted(residual, key=lambda cell_id: index[cell_id]))
+    residual_outgoing = {
+        cell_id: tuple(sorted(outgoing[cell_id], key=lambda dependent: index[dependent]))
+        for cell_id in ordered_residual
+    }
+
+    visited: set[CellId] = set()
+    finish_order: list[CellId] = []
+    for start in ordered_residual:
+        if start in visited:
+            continue
+        visited.add(start)
+        traversal_stack: list[tuple[CellId, int]] = [(start, 0)]
+        while traversal_stack:
+            current, offset = traversal_stack[-1]
+            neighbors = residual_outgoing[current]
+            if offset < len(neighbors):
+                neighbor = neighbors[offset]
+                traversal_stack[-1] = (current, offset + 1)
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    traversal_stack.append((neighbor, 0))
+                continue
+            finish_order.append(current)
+            traversal_stack.pop()
+
+    reverse: dict[CellId, list[CellId]] = {cell_id: [] for cell_id in ordered_residual}
+    for source in ordered_residual:
+        for target in residual_outgoing[source]:
+            reverse[target].append(source)
+
+    assigned: set[CellId] = set()
+    cyclic: set[CellId] = set()
+    for start in reversed(finish_order):
+        if start in assigned:
+            continue
+        assigned.add(start)
+        component: list[CellId] = []
+        component_stack: list[CellId] = [start]
+        while component_stack:
+            current = component_stack.pop()
+            component.append(current)
+            for neighbor in sorted(
+                reverse[current], key=lambda cell_id: index[cell_id], reverse=True
+            ):
+                if neighbor not in assigned:
+                    assigned.add(neighbor)
+                    component_stack.append(neighbor)
+        if len(component) > 1:
+            cyclic.update(component)
+
+    return tuple(sorted(cyclic, key=lambda cell_id: index[cell_id]))
+
+
 def analyze_notebook_dependencies(notebook: Notebook) -> NotebookDependencyAnalysis:
     """Resolve explicit executable-cell dependencies into stable execution evidence."""
     index = {cell.id: position for position, cell in enumerate(notebook.cells)}
@@ -154,7 +214,8 @@ def analyze_notebook_dependencies(notebook: Notebook) -> NotebookDependencyAnaly
         ready = sorted(next_ready, key=lambda cell_id: index[cell_id])
 
     if len(order) != len(executable_cells):
-        cyclic = tuple(cell.id for cell in executable_cells if incoming[cell.id] > 0)
+        residual = {cell.id for cell in executable_cells if incoming[cell.id] > 0}
+        cyclic = _cycle_members(outgoing, residual, index)
         cycle_violations = tuple(
             CellDependencyViolation(
                 code="dependency_cycle",

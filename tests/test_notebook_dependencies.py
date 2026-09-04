@@ -165,6 +165,29 @@ def test_cycle_returns_all_involved_cells_without_partial_plan() -> None:
     assert all(item.code == "dependency_cycle" for item in analysis.violations)
 
 
+def test_cycle_diagnostics_exclude_cells_only_blocked_downstream() -> None:
+    analysis = analyze_notebook_dependencies(
+        Notebook(
+            (
+                code("a", dependencies=("b",)),
+                code("b", dependencies=("a",)),
+                code("blocked", dependencies=("a",)),
+                code("blocked-leaf", dependencies=("blocked",)),
+                code("free"),
+            )
+        )
+    )
+
+    assert not analysis.is_valid
+    assert analysis.execution_order == ()
+    assert analysis.levels == ()
+    assert tuple(item.cell_id for item in analysis.violations) == (
+        CellId("a"),
+        CellId("b"),
+    )
+    assert all("participates in a dependency cycle" in item.message for item in analysis.violations)
+
+
 def test_empty_notebook_has_empty_valid_plan() -> None:
     analysis = analyze_notebook_dependencies(Notebook())
     assert analysis.is_valid
