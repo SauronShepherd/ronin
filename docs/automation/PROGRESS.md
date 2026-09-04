@@ -213,7 +213,7 @@ Implemented on validation branch `feat/mutation-gate` / PR #10:
 - Pinned `mutmut==3.7.0` in development dependencies and configured mutation only for `studio_core`.
 - Added a strict repository gate requiring at least 90% killed mutants. Only killed mutants count positively; `no_tests`, suspicious outcomes, timeouts, interrupted checks and segfaults invalidate the evidence and fail the gate.
 - Kept all production code free of mutation exclusions and `pragma: no mutate` escapes.
-- Added an isolated mutation job to CI. A temporary `src -> python` alias accommodates mutmut's generated-mutant layout without changing Ronin's package structure.
+- Added an isolated mutation job to CI. A temporary `src -> python` source alias accommodates mutmut's generated-mutant layout without changing Ronin's package structure.
 - Cleared pytest's global coverage addopts only inside mutation execution so mutants are killed by behavioral assertions rather than coverage-plugin side effects. The normal `quality` job continues to run all tests and enforce 100% line/branch coverage.
 - Added short-lived mutation evidence artifacts containing exported counts and the exact survivor list, making failures auditable even when Actions log transport is truncated.
 - Added deterministic complete snapshots of the provider-neutral built-in operator and diagnostic catalogs plus exact metadata boundary tests. These are product regression contracts, not mutation-tool-specific production exceptions.
@@ -403,3 +403,24 @@ Validation evidence:
 - Published `main` SHA `0d7a1a84e1e8634153f32e9bcce94378fbf9f6f8`, CI run `33834053217`: `quality`, `gates-negative` and `mutation` all completed successfully.
 
 Next E1 priority: issue #16, the first concrete local/container `KernelCellExecutor`, followed by concrete runtime-evidence collection. Shared/multi-writer durable event storage remains separate and must preserve unique `(attempt_id, sequence)` identities under concurrency.
+
+## 2026-09-04 — E1 precise notebook cycle diagnostics
+
+Objective: close the P1 correctness gap tracked in issue #22 where cells merely blocked downstream by a dependency cycle were incorrectly reported as members of that cycle.
+
+Implemented on `fix/notebook-cycle-membership` / PR #23:
+
+- Replaced residual-positive-indegree cycle membership reporting with deterministic strongly connected component analysis restricted to residual executable cells.
+- `dependency_cycle` evidence now names only cells that actually participate in a directed cycle; downstream blocked chains are excluded while the analyzer still fails closed with no partial execution plan.
+- Added an adversarial regression covering a two-cell cycle, two downstream blocked levels and an independent executable cell.
+- Preserved provider neutrality and authored-order determinism; no runtime/provider assumptions or side effects entered `studio_notebook`.
+- Updated BACKLOG and recorded ADR-AUTO-021 so precise cycle membership is a durable product/evidence contract.
+
+Validation history:
+
+1. The first PR candidate `6f4a781f422ba45f10e825499033411e95b0da5e`, CI run `33856709511`, passed formatting/lint and `gates-negative` but strict mypy rejected reuse of one local stack variable across two incompatible iterative traversal shapes. No suppression or gate change was used.
+2. The SCC implementation was corrected with explicitly typed traversal/component stacks in `5ba07638a91d202b544b6d535ef61b271d71152b`.
+3. Exact product/test head `5ba07638a91d202b544b6d535ef61b271d71152b`, CI run `33856787363`, completed `quality`, `gates-negative` and `mutation` successfully. `quality` passed Format, Lint, strict Types, Architecture contracts and Tests with the mandatory 100% line/branch coverage gate.
+4. Documentation commits follow that verified product/test head. The final exact PR head must complete the same required workflow set successfully before merge; post-publication `main` evidence is only claimed after the published SHA is verified.
+
+Next E1 priority remains issue #16: qualify the first concrete local/container `KernelCellExecutor` against a real engine, including effective isolation, cancellation cleanup and observed resource/cost evidence. PR #20 is kept separate so this correctness fix does not bypass or dilute executor qualification.
