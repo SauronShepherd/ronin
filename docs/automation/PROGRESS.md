@@ -455,3 +455,30 @@ Validation evidence:
 - Post-publication `main` success is recorded only after the published SHA completes required workflows successfully; no gate is weakened and no green state is claimed in advance.
 
 Next E1 priority: finish #16 with real Docker integration/adversarial qualification and observed resource/cost evidence, then implement the concrete runtime-reproducibility collector. PR #21 remains separate until its real status and scope are inspected.
+
+## 2026-09-04 — E1 kernel session/evidence hardening
+
+Objective: close a concrete execution-boundary security gap before adding more runtime features, while preserving the new container executor boundary and keeping retry/resume semantics explicit rather than accidental.
+
+Implemented on `fix/kernel-session-evidence-main` / PR #33 by reusing the already-green #26 product/test slice on top of current `main`:
+
+- `KernelExecutionSession` is now single-use. A second `run()` call on the same session is rejected before it can duplicate executor side effects or durable events.
+- Centralized defensive redaction in `studio_kernel.redaction`, adapting the earlier `ronin-old/fakebric/redaction.py` concept and extending it to prefixed/suffixed named secrets, bearer credentials, JWT-like values, common provider-token shapes, PEM private keys and URI user-info credentials.
+- `ExecutionEvidenceReference.ref` and failed `CellExecutionResult.failure_code` are defensively redacted at construction time, complementing event-message and runner/evidence-store redaction rather than relying on a single sink.
+- Unexpected executor exceptions remain normalized to `kernel.executor.error`; durable `cell.failed` evidence may retain only the exception type name for bounded diagnostics and deliberately discards the arbitrary exception message.
+- Added regression/adversarial tests for the expanded redaction surface, evidence/failure-code protection, single-use session behavior and exception-type evidence without raw secret-bearing exception text.
+- No container isolation assertion is upgraded by this work. Issue #16 still requires real-engine qualification and observed resource accounting before closure.
+
+Reuse/evidence:
+
+- The verified implementation from PR #26 was transplanted rather than reimplemented.
+- `ronin-old/fakebric/redaction.py` was inspected directly as reuse evidence; its useful named-secret pattern informed the current centralized redactor, while the current boundary adds materially stronger coverage and typing.
+- PR #21 was inspected in the preceding execution and remains a separate distribution/public-contract slice; this security increment does not conflate SDK/release work with kernel execution semantics.
+
+Validation evidence:
+
+- Original PR #26 exact head `9082c70a5660dba818b7dd6577e13f9504e3cfea`, CI run `33858569484`, completed successfully before reuse.
+- Current-main product/test integration head `1725037999117950f6fcf95045085587b6455004`: `quality` and `gates-negative` completed successfully in PR #33 run `33867461869`; mutation remained in progress when continuity docs were added, so no final exact-head green claim is made for that intermediate SHA.
+- The final documentation head must complete `quality`, `gates-negative` and `mutation` successfully before merge. After publication, the exact `main` SHA must again complete all required jobs successfully.
+
+Next E1 priority remains issue #16: real Docker-engine adversarial qualification for effective identity/network/filesystem/capability isolation, cancellation/timeout cleanup races and cgroup ceilings, followed by observed CPU/memory and truthful provider-neutral local/showback cost evidence.
