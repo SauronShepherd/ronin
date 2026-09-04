@@ -30,7 +30,9 @@ def _validate_constraint(constraint: str) -> None:
     if any(not term for term in terms):
         raise ValueError("capability constraint contains an empty term")
     for term in terms:
-        operator = next((candidate for candidate in _ALL_OPERATORS if term.startswith(candidate)), None)
+        operator = next(
+            (candidate for candidate in _ALL_OPERATORS if term.startswith(candidate)), None
+        )
         if operator is None:
             continue
         expected = term[len(operator) :].strip()
