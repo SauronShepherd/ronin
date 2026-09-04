@@ -2,7 +2,7 @@
 
 `pyronin` is the official Python SDK for the Ronin control plane.
 
-> **Alpha:** `0.1.0a1` establishes the public client shape while the Ronin control-plane API is still under active development.
+> **Alpha:** `0.1.0a2` establishes the public client shape while the Ronin control-plane API is still under active development.
 
 ## Install
 
