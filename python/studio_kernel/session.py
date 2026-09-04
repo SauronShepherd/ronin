@@ -305,6 +305,7 @@ class KernelExecutionSession:
     cancellation: CancellationSignal
     _next_sequence: int = field(default=0, init=False, repr=False)
     _started: bool = field(default=False, init=False, repr=False)
+    _start_lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
 
     def _emit(
         self,
@@ -323,10 +324,11 @@ class KernelExecutionSession:
         self._next_sequence += 1
 
     async def run(self) -> tuple[CellExecutionResult, ...]:
-        if self._started:
-            raise ValueError("session already started")
         self.policy.validate_isolation(self.executor.isolation)
-        self._started = True
+        with self._start_lock:
+            if self._started:
+                raise ValueError("session already started")
+            self._started = True
         self._emit("session.started")
         results: list[CellExecutionResult] = []
         for cell in self.request.cells:
