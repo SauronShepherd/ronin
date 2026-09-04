@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Literal
 
 from .projects import CapabilityRequirement, ExecutionProfile, RuntimeProfileRef
 
 ResolutionStatus = Literal["selected", "no_match"]
+_VERSION_PREFIX = re.compile(r"^(\d+(?:\.\d+)*)")
 
 
 def _require_text(value: str, field_name: str) -> None:
-    if not value.strip():
-        raise ValueError(f"{field_name} must be non-empty")
+    if not value or value.strip() != value:
+        raise ValueError(f"{field_name} must be non-empty and trimmed")
     if "\n" in value or "\r" in value:
         raise ValueError(f"{field_name} must not contain line breaks")
 
@@ -168,29 +170,30 @@ def _check(
             False,
             "constraint requires a capability value",
         )
-    satisfied = _matches_constraint(capability.value, requirement.constraint)
-    reason = "constraint satisfied" if satisfied else "constraint not satisfied"
+    satisfied, reason = _matches_constraint(capability.value, requirement.constraint)
     return RequirementCheck(requirement, capability.value, satisfied, reason)
 
 
-def _matches_constraint(value: str, constraint: str) -> bool:
+def _matches_constraint(value: str, constraint: str) -> tuple[bool, str]:
     terms = tuple(part.strip() for part in constraint.split(","))
-    if any(not term for term in terms):
-        raise ValueError("capability constraint contains an empty term")
-    return all(_matches_term(value, term) for term in terms)
+    results = tuple(_matches_term(value, term) for term in terms)
+    if any(result is None for result in results):
+        return False, "ordered constraint could not compare advertised version"
+    satisfied = all(cast_result for cast_result in results if cast_result is not None)
+    return satisfied, "constraint satisfied" if satisfied else "constraint not satisfied"
 
 
-def _matches_term(value: str, term: str) -> bool:
+def _matches_term(value: str, term: str) -> bool | None:
     for operator in (">=", "<=", "==", "!=", ">", "<"):
         if term.startswith(operator):
             expected = term[len(operator) :].strip()
-            if not expected:
-                raise ValueError("capability constraint is missing a value")
             if operator == "==":
                 return value == expected
             if operator == "!=":
                 return value != expected
             comparison = _compare_versions(value, expected)
+            if comparison is None:
+                return None
             if operator == ">=":
                 return comparison >= 0
             if operator == "<=":
@@ -201,19 +204,19 @@ def _matches_term(value: str, term: str) -> bool:
     return value == term
 
 
-def _compare_versions(left: str, right: str) -> int:
-    left_parts = _numeric_version(left)
-    right_parts = _numeric_version(right)
+def _compare_versions(left: str, right: str) -> int | None:
+    left_parts = _version_release(left)
+    right_parts = _version_release(right)
+    if left_parts is None or right_parts is None:
+        return None
     width = max(len(left_parts), len(right_parts))
     padded_left = left_parts + (0,) * (width - len(left_parts))
     padded_right = right_parts + (0,) * (width - len(right_parts))
     return (padded_left > padded_right) - (padded_left < padded_right)
 
 
-def _numeric_version(value: str) -> tuple[int, ...]:
-    parts = value.split(".")
-    if not parts or any(not part.isdigit() for part in parts):
-        raise ValueError(
-            f"ordered capability constraint requires a numeric dotted version: {value!r}"
-        )
-    return tuple(int(part) for part in parts)
+def _version_release(value: str) -> tuple[int, ...] | None:
+    match = _VERSION_PREFIX.match(value)
+    if match is None:
+        return None
+    return tuple(int(part) for part in match.group(1).split("."))
