@@ -38,7 +38,7 @@ def test_typed_identity_encoding_is_stable_for_every_frozen_value_kind() -> None
     assert _frozen_comparison_key(True) == ("bool", True)
     assert _frozen_comparison_key(7) == ("int", 7)
     assert _frozen_comparison_key(-3) == ("int", -3)
-    assert _frozen_comparison_key(1.5) == ("float", 1.5.hex())
+    assert _frozen_comparison_key(1.5) == ("float", (1.5).hex())
     assert _frozen_comparison_key(-0.0) == ("float", (-0.0).hex())
     assert _frozen_comparison_key("orders") == ("str", "orders")
     assert _frozen_comparison_key(FrozenList((1, True, "x"))) == (
