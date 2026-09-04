@@ -110,7 +110,7 @@ This adapts the versioned project-metadata and environment-reference ideas from 
 
 A pure graph-structure rule cannot assign stable distinct identities to two automorphic or otherwise structurally identical nodes without introducing an arbitrary traversal/order tie-breaker. Ronin therefore treats stable instance identity as provenance supplied by the boundary that owns the source document, not as something invented by graph canonicalization.
 
-`InstanceAnchor` is the canonical pure contract for that provenance. Its bounded `authoring` and `import` origins pair with a caller-supplied stable reference; `studio_core` deterministically derives an `instance_key` from the pair. Batch allocation rejects duplicate anchors rather than silently disambiguating with sequence numbers, clocks, randomness or current topology. Editors/importers remain responsible for choosing and persisting references that survive unrelated edits.
+`InstanceAnchor` is the canonical pure contract for that provenance. Its bounded `authoring` and `import` origins pair with a caller-supplied stable reference; `studio_core` deterministically derives an `instance_key` from the pair. Batch allocation rejects duplicate anchors rather than silently disambiguated with sequence numbers, clocks, randomness or current topology. Editors/importers remain responsible for choosing and persisting references that survive unrelated edits.
 
 Canonical `Node` now persists `instance_key` alongside `NodeId`. Deserialization reconstructs the canonical semantic payload, re-derives the identifier, and rejects an ID/key/semantic mismatch. Labels, canvas coordinates, insertion order, graph traversal order and runtime/provider state remain outside identity.
 
@@ -130,7 +130,7 @@ The repository uses a temporary `src -> python` source alias only inside the mut
 
 Initial mutation evidence was 1,599 killed and 508 survived out of 2,107 total (75.89%), with no invalid categories. Rather than weaken the threshold, Ronin added complete deterministic snapshots for the built-in provider-neutral operator and diagnostic catalogs plus exact metadata-boundary assertions. The resulting evidence is 1,899 killed and 208 survived out of 2,107 total (90.13%), again with zero invalid categories. CI retains the compact exported counts and survivor list as a short-lived artifact so the gate is auditable even when log transport is truncated.
 
-A reuse search across `SauronShepherd/sdp-studio` and `SauronShepherd/ronin-old` did not surface mutation-testing machinery suitable for adoption, so this quality boundary is implemented directly in Ronin.
+A reuse search across `SauronShepherd/sdp-studio` and `SauronShepherd/ronin-old` did not surface mutation-testing machinery suitable for reuse, so this quality boundary is implemented directly in Ronin.
 
 ## ADR-AUTO-013 — Notebook execution dependencies are explicit pure intent
 
