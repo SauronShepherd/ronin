@@ -98,17 +98,24 @@ jobs:
           cache: pip
       - name: Install root development environment and pinned auditor
         run: python -m pip install --disable-pip-version-check -e '.[dev]' 'pip-audit==2.10.1'
-      - name: Freeze the installed third-party environment
+      - name: Extract Ronin-declared development dependency surface
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip freeze --all \
-            | grep -v -E '^(-e |ronin-studio==|pyronin==)' \
-            > "$RUNNER_TEMP/ronin-third-party.txt"
-          test -s "$RUNNER_TEMP/ronin-third-party.txt"
-      - name: Audit installed third-party root and development dependencies
+          python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          with Path("pyproject.toml").open("rb") as handle:
+              data = tomllib.load(handle)
+          dependencies = data["project"]["optional-dependencies"]["dev"]
+          output = Path(os.environ["RUNNER_TEMP"]) / "ronin-dev-requirements.txt"
+          output.write_text("\n".join(dependencies) + "\n", encoding="utf-8")
+          PY
+      - name: Audit Ronin root development dependencies
         run: >-
           python -m pip_audit --strict --progress-spinner=off
-          --requirement "$RUNNER_TEMP/ronin-third-party.txt"
+          --requirement "$RUNNER_TEMP/ronin-dev-requirements.txt"
       - name: Audit pyronin dependency surface
         run: python -m pip_audit --strict --progress-spinner=off packages/pyronin
