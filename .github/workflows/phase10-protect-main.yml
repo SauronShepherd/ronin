@@ -1,0 +1,47 @@
+name: Phase 10 protect main
+
+on:
+  push:
+    branches: [chore/v01-scope-freeze]
+    paths: [".github/workflows/phase10-protect-main.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  protect:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: chore/v01-scope-freeze
+      - name: Configure protection and self-remove
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          response="$(gh api --method PUT "repos/$GITHUB_REPOSITORY/branches/main/protection" --input - 2>&1 <<'JSON'
+          {
+            "required_status_checks": {
+              "strict": true,
+              "contexts": ["quality", "test", "gates-negative", "docker-qualification"]
+            },
+            "enforce_admins": true,
+            "required_pull_request_reviews": null,
+            "restrictions": null,
+            "required_linear_history": true,
+            "allow_force_pushes": false,
+            "allow_deletions": false
+          }
+          JSON
+          )"
+          status=$?
+          set -e
+          printf '%s\n' "$response"
+          git rm .github/workflows/phase10-protect-main.yml
+          git config user.name "Ronin Autonomous Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "chore(repo): remove branch-protection helper"
+          git push origin HEAD:chore/v01-scope-freeze
+          exit "$status"
