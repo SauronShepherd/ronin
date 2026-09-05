@@ -22,10 +22,7 @@ def _write_report(path: Path, cases: list[str]) -> Path:
 
 
 def _case(name: str, child: str = "") -> str:
-    return (
-        f'<testcase classname="tests.e2e.test_v01_journey" name="{name}">'
-        f"{child}</testcase>"
-    )
+    return f'<testcase classname="tests.e2e.test_v01_journey" name="{name}">{child}</testcase>'
 
 
 def test_strict_gate_accepts_exactly_all_fifteen_passing_steps(tmp_path: Path) -> None:
