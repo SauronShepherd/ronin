@@ -95,7 +95,7 @@ class _RejectRedirects(HTTPRedirectHandler):
         newurl: str,
     ) -> None:
         del req, fp, code, msg, headers, newurl
-        return None
+        return
 
 
 def _is_loopback_host(hostname: str | None) -> bool:
@@ -175,7 +175,7 @@ class HTTPTransport:
         if payload is not None:
             request_headers["Content-Type"] = "application/json"
             data = json.dumps(dict(payload), separators=(",", ":")).encode("utf-8")
-        request = Request(url, data=data, headers=request_headers, method=method)
+        request = Request(url, data=data, headers=request_headers, method=method)  # noqa: S310
         opener = build_opener(_RejectRedirects())
         try:
             with opener.open(request, timeout=self.timeout) as response:  # noqa: S310
