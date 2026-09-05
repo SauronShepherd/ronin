@@ -4,13 +4,15 @@ _Last synchronized: 2026-09-05. Scope authority: `docs/product/V01_SCOPE.md`. Ta
 
 The v0.1 plan is eight weeks. Each week has one objective, an explicit pull-request sequence, measurable exit criteria, and a pre-decided cut line. Work outside the frozen v0.1 scope does not enter these weeks.
 
+**Release-acceptance invariant.** Ordinary PR/main CI may run the frozen journey as explicitly named non-blocking progress telemetry while capabilities are still landing. A release/tag publication gate is different: it must verify the exact fifteen frozen required step names and fail closed if any step is skipped, xfailed, failed, errored, deselected/missing, renamed/unexpected, duplicated, or otherwise not executed. Machine-readable live/passed/skipped/xfail/missing counts are evidence; a normal pytest exit code alone is not release acceptance evidence.
+
 ## Week 1 — 7–13 September: close review defects and prepare durable-execution contracts
 
 **Objective.** Remove the known trust/performance defects that would contaminate durable orchestration, while landing the package/gate/quality scaffolding needed for E2 work.
 
-**Pull requests.** Execute PR-01 through PR-12 from `BACKLOG.md`: cancellation terminal evidence; runner reap/truncation; Docker limits; isolation qualification default; quality perimeter; tier gates/lock; runtime redaction/version comparison; architecture `os` closure; core performance indexes; async event sink; T1 properties; SDK resilience.
+**Pull requests.** Execute PR-01 through PR-12 from `BACKLOG.md`: cancellation terminal evidence; runner reap/truncation; Docker limits; isolation qualification default; quality perimeter; tier gates/lock; runtime redaction/version comparison; architecture `os` closure; core performance indexes; async event sink; T1 properties; SDK resilience. P1 trust corrections that prevent false release evidence may land additively without reordering this product queue.
 
-**Exit criteria.** All twelve Week-1 proving tests pass or the corresponding issue is explicitly carried with a documented blocker; `make check` is green from the hash-locked environment; no open P0 defect is unowned.
+**Exit criteria.** All twelve Week-1 proving tests pass or the corresponding issue is explicitly carried with a documented blocker; `make check` is green from the hash-locked environment; no open P0 defect is unowned; no CI check named or treated as strict v0.1 E2E acceptance can be green while required steps are skipped.
 
 **Cut line.** Friday 18 September: if `JobStore` fails its contract suite, fix `RetryPolicy.max_runs = 1`; retries are out of v0.1.
 
@@ -70,7 +72,7 @@ The v0.1 plan is eight weeks. Each week has one objective, an explicit pull-requ
 
 **Pull requests.** Activate all e2e steps; add non-functional budget tests; security/secret/vulnerability/license qualification; release provenance/SBOM; targeted chaos/recovery tests only after the acceptance journey is green.
 
-**Exit criteria.** Fifteen acceptance steps pass; p95/event/health/RSS/`make check` budgets meet `V01_SCOPE.md`; no known secret or vulnerability ships; exact-head release evidence is reproducible.
+**Exit criteria.** Fifteen acceptance steps execute and pass under the strict release gate; p95/event/health/RSS/`make check` budgets meet `V01_SCOPE.md`; no known secret or vulnerability ships; exact-head release evidence is reproducible.
 
 **Cut line.** Monday 19 October: any earlier slippage consumes Week 7 as buffer. Ship without chaos tests if necessary, never without the acceptance journey.
 
@@ -78,9 +80,9 @@ The v0.1 plan is eight weeks. Each week has one objective, an explicit pull-requ
 
 **Objective.** Stabilize only: documentation, clean-room verification, compatibility checks, release notes, immutable release publication.
 
-**Pull requests.** Fix release-blocking defects only; finalize quickstart/limitations/security docs; verify Python 3.11/3.12 and supported Docker path; tag and publish v0.1.0 after all gates are green.
+**Pull requests.** Fix release-blocking defects only; finalize quickstart/limitations/security docs; verify Python 3.11/3.12 and supported Docker path; tag and publish v0.1.0 only after the strict acceptance gate and all other release gates are green.
 
-**Exit criteria.** Clean hash-locked `make check`; all fifteen e2e steps pass; demo regenerates byte-for-byte; release artifacts have immutable provenance; `main` and release-tag protection is active; no P0/P1 release blocker remains.
+**Exit criteria.** Clean hash-locked `make check`; strict acceptance evidence reports all fifteen required steps live and passed with zero skipped/xfail/failed/error/missing/unexpected outcomes; demo regenerates byte-for-byte; release artifacts have immutable provenance; `main` and release-tag protection is active or the governing release policy explicitly records a later decision; no P0/P1 release blocker remains.
 
 **Cut line.** No feature substitution. Defer optional surfaces rather than weakening trust, reproducibility, acceptance, or security gates.
 
@@ -95,7 +97,7 @@ The v0.1 plan is eight weeks. Each week has one objective, an explicit pull-requ
 | Fri 16 Oct: packaging not green | Dockerfile only, no Compose. Document `docker run`. |
 | Mon 19 Oct: anything behind | Week 7 is consumed as buffer. Ship without chaos tests, never without the acceptance journey. |
 
-**Never cut:** the fifteen-step acceptance journey, a green `make check`, and shipping with no known secrets or vulnerabilities.
+**Never cut:** the fifteen-step acceptance journey, a green `make check`, and shipping with no known secrets or vulnerabilities. Progress telemetry never substitutes for strict release acceptance.
 
 ## Post-v0.1 horizon, not scheduled
 

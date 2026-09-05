@@ -85,7 +85,8 @@ jobs:
       - name: Prove architecture gate rejects deliberate violations
         run: python -m tools.gates_negative
 
-  e2e:
+  acceptance-progress:
+    name: v0.1 acceptance progress (non-blocking)
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -98,8 +99,19 @@ jobs:
         run: |
           python -m pip install --require-hashes -r requirements-dev.lock
           python -m pip install -e . --no-deps
-      - name: Acceptance journey slot
-        run: python -m pytest tests/e2e -m e2e -v
+      - name: Run frozen acceptance scaffold for progress telemetry
+        run: |
+          python -m pytest tests/e2e -m e2e -v --junitxml=/tmp/v01-acceptance.xml
+          python -m tools.v01_acceptance_gate /tmp/v01-acceptance.xml \
+            --progress-only \
+            --evidence-json=/tmp/v01-acceptance-progress.json
+      - name: Upload acceptance progress evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: v01-acceptance-progress
+          path: /tmp/v01-acceptance-progress.json
+          if-no-files-found: error
+          retention-days: 7
 
   verification:
     name: verification
@@ -124,11 +136,12 @@ jobs:
         run: |
           source .venv-verify/bin/activate
           time make check
-      - name: Run acceptance skeleton
+      - name: Run acceptance scaffold without release claim
         shell: bash
         run: |
           source .venv-verify/bin/activate
-          python -m pytest tests/e2e -m e2e -v
+          python -m pytest tests/e2e -m e2e -v --junitxml=/tmp/v01-verification.xml
+          python -m tools.v01_acceptance_gate /tmp/v01-verification.xml --progress-only
       - name: Prove demo regeneration is byte-identical
         shell: bash
         run: |

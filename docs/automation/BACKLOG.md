@@ -8,6 +8,8 @@ E0/E1 already provide deterministic core/project/runtime/operator/diagnostic/not
 
 The P1 analyst handoffs #68 and #94 identified the same remaining false-negative edge in pull-request secret qualification: an intermediate candidate commit could introduce a detector-triggering value and later remove it before the final tree scan. PR #97 hardens the existing qualification by scanning the protected base history, the complete pull-request candidate range, and the current tree, with temporary multi-commit negative and clean conformance repositories. This security correction is additive and does not change the frozen Week-1 product queue below.
 
+The P1 QA/Security handoffs #93 and #96 identify the same release-trust defect: the development `e2e` check could report success while all fifteen frozen v0.1 acceptance steps were skipped. The Builder correction separates non-blocking acceptance-progress telemetry from strict release qualification, requires the exact fifteen-step manifest at tag publication, rejects skipped/xfailed/failed/errored/missing/renamed/duplicate evidence, and emits machine-readable counts. This is an additive trust correction to the frozen acceptance invariant; it does not implement or reorder the Week-1 product queue.
+
 ## Next
 
 Exactly these twelve Week-1 items are selectable. Do not select work outside this list until it is rewritten by a later approved phase/week transition.
@@ -49,7 +51,7 @@ Items below are out of scope by decision, not by omission. See `docs/product/V01
 | Fri 16 Oct: packaging not green | Dockerfile only, no Compose. Document `docker run`. |
 | Mon 19 Oct: anything behind | Week 7 becomes buffer. Ship without chaos tests, never without the acceptance journey. |
 
-Never cut the fifteen-step acceptance journey, a green `make check`, or the requirement to ship with no known secrets or vulnerabilities.
+Never cut the fifteen-step acceptance journey, a green `make check`, or the requirement to ship with no known secrets or vulnerabilities. A release/tag workflow may report progress separately, but it must not publish v0.1 artifacts unless strict acceptance proves all fifteen required steps executed and passed.
 
 ## Operational invariant
 
