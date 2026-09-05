@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from bisect import bisect_left
 from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
@@ -156,7 +157,10 @@ class DiagnosticCatalog:
         object.__setattr__(self, "rules", canonical)
 
     def get(self, rule_id: str) -> DiagnosticRule | None:
-        return next((rule for rule in self.rules if rule.id == rule_id), None)
+        index = bisect_left(self.rules, rule_id, key=lambda rule: rule.id)
+        if index < len(self.rules) and self.rules[index].id == rule_id:
+            return self.rules[index]
+        return None
 
     def match(self, fact: DiagnosticFact) -> tuple[DiagnosticFinding, ...]:
         findings = [
