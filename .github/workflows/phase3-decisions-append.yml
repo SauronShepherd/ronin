@@ -1,0 +1,166 @@
+name: Phase 3 decisions append
+
+on:
+  push:
+    branches: [chore/v01-scope-freeze]
+    paths:
+      - ".github/workflows/phase3-decisions-append.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  append:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: chore/v01-scope-freeze
+      - name: Append accepted v0.1 ADRs and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat >> docs/automation/DECISIONS.md <<'EOF'
+
+## ADR-V01-001 — SQLite is the v0.1 durable store
+
+**Status:** Accepted
+**Date:** 2026-09-05
+**Unblocks:** Week 2
+
+### Context
+
+E2 requires transactional persistence for Job → Run → Attempt, idempotency, leases, cell results and the durable event ledger. The v0.1 scope is local-first and explicitly excludes Postgres, HA and multi-node operation.
+
+### Decision
+
+Use SQLite with WAL mode, `foreign_keys=ON`, `synchronous=FULL` and `busy_timeout=5000`. Define a pure `JobStore` Protocol in `studio_orchestrator`; implement `SqliteJobStore` only in `studio_storage`.
+
+### Rationale
+
+SQLite matches the single-node local-first scope, is deterministic to qualify in tests, and gives a real transaction boundary. One transaction is the unit for idempotent job creation and for exactly-one attempt/event identity constraints.
+
+### Consequences
+
+v0.1 is effectively single-writer under contention. Every storage implementation test must run through the `JobStore` conformance contract, while SQLite configuration and migration I/O remain outside pure packages.
+
+### Alternatives rejected
+
+- Postgres: operational scope and deployment complexity are explicitly out of v0.1.
+- Raw files/JSONL as the job store: insufficient transactional and uniqueness guarantees for durable lifecycle state.
+
+## ADR-V01-002 — FastAPI is confined to the v0.1 server adapter
+
+**Status:** Accepted
+**Date:** 2026-09-05
+**Unblocks:** Week 4
+
+### Context
+
+Week 4 needs a small authenticated HTTP control plane whose schema can be proved against the published `pyronin` SDK without coupling the domain to a web framework.
+
+### Decision
+
+Use exact-pinned FastAPI, uvicorn and Pydantic dependencies confined to `studio_server`. Domain, orchestration and storage contracts remain framework-independent.
+
+### Rationale
+
+FastAPI provides a compact ASGI surface, generated OpenAPI and typed request/response validation that fit SDK contract testing while keeping the framework at the adapter edge.
+
+### Consequences
+
+Framework types may not leak into pure packages. Exact versions are locked and audited. OpenAPI becomes executable compatibility evidence for `pyronin`.
+
+### Alternatives rejected
+
+- Flask: weaker first-class OpenAPI/type contract for this slice.
+- `http.server`: too little production protocol machinery for the control plane.
+- Hand-rolled ASGI: unnecessary protocol and security surface for v0.1.
+
+## ADR-V01-003 — Quality is tiered without weakening the pure core
+
+**Status:** Accepted
+**Date:** 2026-09-05
+**Unblocks:** Week 1 and all subsequent weeks
+
+### Context
+
+Uniform 100% coverage across adapters creates low-value churn, while lowering the existing pure-domain standard would discard valuable trust evidence. The whole repository still needs one format/lint/type/architecture perimeter.
+
+### Decision
+
+Define three coverage tiers: T1 `studio_core`, `studio_notebook`, `studio_orchestrator` require 100% line and branch coverage with zero exclusions and `studio_core` mutation score >=90% nightly; T2 `studio_kernel`, `studio_runners`, `studio_storage`, `studio_vcs` require >=90% line coverage plus contract suites; T3 `studio_server`, `studio_cli`, `pyronin` and Docker edge code require >=75% line coverage with the v0.1 e2e journey as the release guarantee. Format, lint, typing and architecture checks cover `python`, `tests`, `tools`, `packages` and `docker`. Mutation is nightly/manual, not a pull-request blocker.
+
+### Rationale
+
+The policy keeps deterministic domain behavior maximally qualified while matching adapter coverage effort to risk and relying on contract/e2e tests where line coverage alone is weak evidence.
+
+### Consequences
+
+CI runs Python 3.11 and 3.12 test matrices, a hash-locked development environment, tier-specific coverage commands and separate nightly mutation evidence. Tier thresholds may ratchet upward, not downward to make CI pass.
+
+### Alternatives rejected
+
+- Uniform 100% across every adapter: high maintenance cost with poor signal at I/O edges.
+- Lowering pure-domain coverage or mutation: removes proven semantic evidence and is forbidden.
+
+## ADR-V01-004 — Clocks and generated IDs live at I/O boundaries
+
+**Status:** Accepted
+**Date:** 2026-09-05
+**Unblocks:** Week 2
+
+### Context
+
+Durable lifecycle records require timestamps and externally unique Job/Run identities, but clocks and randomness would make pure state transitions non-deterministic and harder to replay.
+
+### Decision
+
+Pure packages remain clock- and randomness-free. Orchestrator transitions receive `now: str` explicitly as UTC RFC3339 with `Z`. Storage/server boundaries read the clock. `JobId` and `RunId` use UUIDv7 generated at an I/O boundary and are then passed into pure code as values.
+
+### Rationale
+
+Explicit time and identity inputs make transition logic replayable, property-testable and independent of process-global state while preserving sortable externally unique IDs.
+
+### Consequences
+
+Adapters own validation/generation of current time and UUIDv7. Pure tests use fixed values. No global clock, RNG or service locator is introduced into domain code.
+
+### Alternatives rejected
+
+- Calling clocks/random generators inside the domain: breaks deterministic replay.
+- A global clock/ID service locator: hidden mutable dependency and awkward concurrency semantics.
+
+## ADR-V01-005 — Crash resume is per-cell record replay, not interpreter recovery
+
+**Status:** Accepted
+**Date:** 2026-09-05
+**Unblocks:** Week 3
+
+### Context
+
+The v0.1 acceptance journey requires a killed worker to resume at cell 4 after cells 1–3 succeeded. The current isolation model executes cells through replaceable container boundaries and has durable per-cell evidence; restoring arbitrary in-memory interpreter state would be a much larger capability.
+
+### Decision
+
+Resume only from durable per-cell records. Every cell starts in a clean container execution context. A replacement attempt skips cells with successful persisted `cell_result` records and executes the first unfinished cell onward. No Python/interpreter/kernel memory snapshot is restored. The limitation is documented, and the demo uses idempotent/file-mediated cells compatible with this contract.
+
+### Rationale
+
+Record-level resume is explicit, auditable and compatible with the existing durable event/evidence model. It proves crash recovery without inventing unsafe or runtime-specific state serialization.
+
+### Consequences
+
+Cells that depend on implicit interpreter memory across boundaries are unsupported in v0.1. Durable artifacts/inputs must carry required state. Later snapshot/checkpoint features need a new explicit contract.
+
+### Alternatives rejected
+
+- Stateful kernel/interpreter snapshots: runtime-specific, security-sensitive and outside v0.1.
+- Whole-run-only replay: simpler but fails the frozen acceptance journey's per-cell resume requirement.
+EOF
+          git rm .github/workflows/phase3-decisions-append.yml
+          git config user.name "Ronin Autonomous Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/automation/DECISIONS.md
+          git commit -m "docs(decisions): accept five v0.1 architecture decisions"
+          git push origin HEAD:chore/v01-scope-freeze
