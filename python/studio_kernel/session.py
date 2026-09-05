@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import threading
@@ -355,6 +356,10 @@ class KernelExecutionSession:
             failure_detail = ""
             try:
                 result = await self.executor.execute(cell, self.cancellation)
+            except asyncio.CancelledError:
+                self._emit("cell.cancelled", cell_id=cell.cell_id)
+                self._emit("session.cancelled")
+                raise
             except Exception as exc:
                 failure_detail = type(exc).__name__
                 result = CellExecutionResult(cell.cell_id, "failed", "kernel.executor.error")
