@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from bisect import bisect_left
 from dataclasses import dataclass
 from typing import Literal
 
@@ -51,10 +52,10 @@ class RuntimeProfile:
         object.__setattr__(self, "capabilities", canonical)
 
     def capability(self, name: str) -> RuntimeCapability | None:
-        return next(
-            (capability for capability in self.capabilities if capability.name == name),
-            None,
-        )
+        index = bisect_left(self.capabilities, name, key=lambda capability: capability.name)
+        if index < len(self.capabilities) and self.capabilities[index].name == name:
+            return self.capabilities[index]
+        return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,7 +77,15 @@ class RuntimeCatalog:
         object.__setattr__(self, "profiles", canonical)
 
     def get(self, ref: RuntimeProfileRef) -> RuntimeProfile | None:
-        return next((profile for profile in self.profiles if profile.ref == ref), None)
+        key = (ref.adapter_id, ref.profile_id)
+        index = bisect_left(
+            self.profiles,
+            key,
+            key=lambda profile: (profile.ref.adapter_id, profile.ref.profile_id),
+        )
+        if index < len(self.profiles) and self.profiles[index].ref == ref:
+            return self.profiles[index]
+        return None
 
 
 @dataclass(frozen=True, slots=True)
