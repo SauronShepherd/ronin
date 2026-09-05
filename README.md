@@ -4,6 +4,10 @@
 
 # Ronin
 
+## What v0.1 is and is not
+
+The frozen v0.1 scope, explicit non-goals, fifteen-step acceptance journey, and non-functional budgets are defined in [`docs/product/V01_SCOPE.md`](docs/product/V01_SCOPE.md).
+
 Ronin is being built as a professional, free, open-source and self-hostable **Data + AI platform**. The target spans data integration, engineering, SQL, lakehouse, streaming, governance/lineage/ontology, BI/semantic models, data science, ML/MLOps, GenAI/RAG/agents, security, observability and FinOps in one coherent product.
 
 Ronin is local-first and vendor-neutral: it should be useful on a laptop, reproducible in Docker/Compose and scalable on Kubernetes, while supporting commercial and open runtimes through replaceable adapters rather than a mandatory proprietary control plane.
