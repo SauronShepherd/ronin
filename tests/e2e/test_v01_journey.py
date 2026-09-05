@@ -75,9 +75,7 @@ def test_journey_progress_is_reported(record_property) -> None:
     """Emit how many acceptance steps are live without gating on that count."""
     steps = [value for name, value in globals().items() if name.startswith("test_step_")]
     skipped = sum(
-        1
-        for step in steps
-        if any(mark.name == "skip" for mark in getattr(step, "pytestmark", []))
+        1 for step in steps if any(mark.name == "skip" for mark in getattr(step, "pytestmark", []))
     )
     record_property("acceptance_steps_live", len(steps) - skipped)
     record_property("acceptance_steps_total", len(steps))
