@@ -14,16 +14,25 @@ from tools.v01_acceptance_gate import (
 
 def _write_report(path: Path, cases: list[str]) -> Path:
     body = "\n".join(cases)
-    path.write_text(f'<testsuite tests="{len(cases)}">{body}</testsuite>', encoding="utf-8")
+    path.write_text(
+        f'<testsuite tests="{len(cases)}">{body}</testsuite>',
+        encoding="utf-8",
+    )
     return path
 
 
 def _case(name: str, child: str = "") -> str:
-    return f'<testcase classname="tests.e2e.test_v01_journey" name="{name}">{child}</testcase>'
+    return (
+        f'<testcase classname="tests.e2e.test_v01_journey" name="{name}">'
+        f"{child}</testcase>"
+    )
 
 
 def test_strict_gate_accepts_exactly_all_fifteen_passing_steps(tmp_path: Path) -> None:
-    report = _write_report(tmp_path / "passing.xml", [_case(name) for name in EXPECTED_STEP_NAMES])
+    report = _write_report(
+        tmp_path / "passing.xml",
+        [_case(name) for name in EXPECTED_STEP_NAMES],
+    )
 
     counts = evaluate_junit(report)
 
@@ -65,7 +74,10 @@ def test_strict_gate_rejects_missing_and_renamed_steps(tmp_path: Path) -> None:
 
 def test_strict_gate_rejects_xfailed_required_step(tmp_path: Path) -> None:
     cases = [_case(name) for name in EXPECTED_STEP_NAMES]
-    cases[0] = _case(EXPECTED_STEP_NAMES[0], '<skipped type="pytest.xfail" message="known defect"/>')
+    cases[0] = _case(
+        EXPECTED_STEP_NAMES[0],
+        '<skipped type="pytest.xfail" message="known defect"/>',
+    )
     report = _write_report(tmp_path / "xfailed.xml", cases)
 
     counts = evaluate_junit(report)
