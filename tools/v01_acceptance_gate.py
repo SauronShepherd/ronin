@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -70,7 +70,14 @@ class AcceptanceCounts:
 
     def to_evidence(self) -> dict[str, int | bool]:
         return {
-            **asdict(self),
+            "live": self.live,
+            "passed": self.passed,
+            "skipped": self.skipped,
+            "xfailed": self.xfailed,
+            "failed": self.failed,
+            "errors": self.errors,
+            "missing": self.missing,
+            "unexpected": self.unexpected,
             "total_expected": self.total_expected,
             "strict_success": self.is_strict_success,
         }
