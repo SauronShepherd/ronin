@@ -15,7 +15,7 @@ dev = [
   "hypothesis>=6.138,<7",
   "mutmut==3.7.0",
   "mypy>=1.17,<2",
-  "pytest>=8.4,<9",
+  "pytest>=9.0.3,<10",
   "pytest-cov>=6.2,<7",
   "pytest-randomly>=3.16,<4",
   "ruff>=0.12,<1",
