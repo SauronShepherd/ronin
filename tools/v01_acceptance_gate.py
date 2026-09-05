@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+import json
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -66,6 +67,13 @@ class AcceptanceCounts:
                 self.unexpected,
             )
         )
+
+    def to_evidence(self) -> dict[str, int | bool]:
+        return {
+            **asdict(self),
+            "total_expected": self.total_expected,
+            "strict_success": self.is_strict_success,
+        }
 
 
 def evaluate_junit(report_path: Path) -> AcceptanceCounts:
@@ -131,18 +139,30 @@ def _format_counts(counts: AcceptanceCounts) -> str:
         f"live={counts.live} passed={counts.passed} skipped={counts.skipped} "
         f"xfailed={counts.xfailed} failed={counts.failed} errors={counts.errors} "
         f"missing={counts.missing} unexpected={counts.unexpected} "
-        f"total={counts.total_expected}"
+        f"total={counts.total_expected} strict_success={str(counts.is_strict_success).lower()}"
+    )
+
+
+def _write_evidence(path: Path, counts: AcceptanceCounts) -> None:
+    path.write_text(
+        json.dumps(counts.to_evidence(), sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
     )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("junit_report", type=Path)
+    parser.add_argument("--evidence-json", type=Path)
+    parser.add_argument("--progress-only", action="store_true")
     args = parser.parse_args()
     try:
         counts = evaluate_junit(args.junit_report)
         print(_format_counts(counts))
-        require_strict_success(counts)
+        if args.evidence_json is not None:
+            _write_evidence(args.evidence_json, counts)
+        if not args.progress_only:
+            require_strict_success(counts)
     except AcceptanceGateError as exc:
         print(f"v0.1 acceptance gate failed: {exc}")
         return 1
