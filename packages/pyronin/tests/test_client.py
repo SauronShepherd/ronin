@@ -1,9 +1,8 @@
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Mapping
 
 import pytest
-
-from pyronin import JobHandle, JobState, ProtocolError, Ronin
+from pyronin import JobState, ProtocolError, Ronin
 
 
 @dataclass
