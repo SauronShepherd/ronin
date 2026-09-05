@@ -8,9 +8,13 @@ This checklist turns the Saturday planning pass into an auditable release-prepar
 - [x] Phase 4 — eight-week construction plan and frozen E3–E10 backlog recorded.
 - [x] Phase 5 — five missing v0.1 package skeletons and import smoke tests added.
 - [x] Phase 6 — nine-package architecture matrix and negative cases executable.
-- [ ] Phase 7 — hash-locked dependency install and final tiered `make check` green.
+- [x] Phase 7 — hash-locked dependency install, tiered coverage gates, Python 3.11/3.12 matrix, repository-wide quality perimeter, and nightly/manual mutation policy green.
 - [x] Phase 8 — demo manifest/notebook committed and byte-for-byte regenerable.
-- [ ] Phase 9 — twelve Week-1 issues attached to the `v0.1.0` milestone due 2026-11-01.
-- [ ] Phase 10 — exact-head final verification, PR publication, main protection, merge/post-merge evidence and progress entry complete.
+- [x] Phase 9 — all fifteen acceptance-step placeholders exist; twelve Week-1 issues #75–#86 are attached to milestone `v0.1.0` due 2026-11-01.
+- [ ] Phase 10 — repository-side final verification, PR publication, and progress entry are complete; merge/post-merge evidence follows the final exact-head run, but enabling `main` branch protection is externally blocked by unavailable GitHub administration permission.
+
+## External administration blocker
+
+The prepared protection policy requires up-to-date checks `quality`, `test`, `gates-negative`, and `docker-qualification`, linear history, and no force pushes. A direct repository Actions API attempt (run `33956464592`) returned HTTP 403 `Resource not accessible by integration`; the connected GitHub App exposes branch-protection state read-only. No protection setting was partially applied.
 
 No v0.1 product behavior is implemented by this day gate; it prepares executable contracts, fixtures, quality policy and work sequencing for Week 1.
