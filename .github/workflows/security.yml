@@ -19,16 +19,20 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
-      - name: Scan protected history, current tree, and prove fail-closed detection
+      - name: Scan protected history, candidate history, current tree, and prove fail-closed detection
         shell: bash
         run: |
           set -euo pipefail
           image="ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:b109bc5f8f76a38196a3e413704fc5b9e3c32360bce4e4b603bd6f45b3721dbb"
           history_report="$RUNNER_TEMP/gitleaks-history.json"
+          candidate_report="$RUNNER_TEMP/gitleaks-candidate-history.json"
           tree_report="$RUNNER_TEMP/gitleaks-tree.json"
-          history_ref="HEAD"
+          protected_history_ref="HEAD"
+          candidate_history_ref=""
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            history_ref="origin/$GITHUB_BASE_REF"
+            protected_history_ref="origin/$GITHUB_BASE_REF"
+            base_sha="$(git merge-base "origin/$GITHUB_BASE_REF" HEAD)"
+            candidate_history_ref="$base_sha..HEAD"
           fi
 
           set +e
@@ -36,9 +40,21 @@ jobs:
             --volume "$GITHUB_WORKSPACE:/repo:ro" \
             --volume "$RUNNER_TEMP:/out" \
             "$image" \
-            git --redact --no-banner --log-opts="$history_ref" \
+            git --redact --no-banner --log-opts="$protected_history_ref" \
             --report-format=json --report-path=/out/gitleaks-history.json /repo
           history_status=$?
+
+          candidate_status=0
+          if [ -n "$candidate_history_ref" ]; then
+            docker run --rm \
+              --volume "$GITHUB_WORKSPACE:/repo:ro" \
+              --volume "$RUNNER_TEMP:/out" \
+              "$image" \
+              git --redact --no-banner --log-opts="$candidate_history_ref" \
+              --report-format=json --report-path=/out/gitleaks-candidate-history.json /repo
+            candidate_status=$?
+          fi
+
           docker run --rm \
             --volume "$GITHUB_WORKSPACE:/repo:ro" \
             --volume "$RUNNER_TEMP:/out" \
@@ -48,12 +64,16 @@ jobs:
           tree_status=$?
           set -e
 
-          HISTORY_REPORT="$history_report" TREE_REPORT="$tree_report" python - <<'PY'
+          HISTORY_REPORT="$history_report" CANDIDATE_REPORT="$candidate_report" TREE_REPORT="$tree_report" python - <<'PY'
           import json
           import os
           from pathlib import Path
 
-          for label, variable in (("history", "HISTORY_REPORT"), ("tree", "TREE_REPORT")):
+          for label, variable in (
+              ("protected-history", "HISTORY_REPORT"),
+              ("candidate-history", "CANDIDATE_REPORT"),
+              ("tree", "TREE_REPORT"),
+          ):
               report_path = Path(os.environ[variable])
               findings = (
                   json.loads(report_path.read_text(encoding="utf-8"))
@@ -72,18 +92,72 @@ jobs:
                   )
           PY
 
-          fixture="$(mktemp -d)"
-          trap 'rm -rf "$fixture"' EXIT
-          printf '%s%s%s\n' 'aws_access_key_id = "' 'AKIA' 'Z3N7W6X5V4U2TQRS"' > "$fixture/secret.txt"
-          if docker run --rm \
-            --volume "$fixture:/fixture:ro" \
-            "$image" \
-            dir --redact --no-banner /fixture; then
-            echo "Gitleaks failed to reject the deliberate synthetic secret fixture." >&2
-            exit 1
-          fi
+          prove_candidate_history_detection() {
+            fixture="$(mktemp -d)"
+            git -C "$fixture" init -q
+            git -C "$fixture" config user.name "Ronin Security Fixture"
+            git -C "$fixture" config user.email "security-fixture@example.invalid"
+            printf '%s\n' 'baseline' > "$fixture/fixture.txt"
+            git -C "$fixture" add fixture.txt
+            git -C "$fixture" commit -q -m baseline
+            base_sha="$(git -C "$fixture" rev-parse HEAD)"
 
-          if [ "$history_status" -ne 0 ] || [ "$tree_status" -ne 0 ]; then
+            printf '%s%s%s\n' 'aws_access_key_id = "' 'AKIA' 'Z3N7W6X5V4U2TQRS"' > "$fixture/fixture.txt"
+            git -C "$fixture" add fixture.txt
+            git -C "$fixture" commit -q -m introduce-synthetic-detector-fixture
+            printf '%s\n' 'clean final tree' > "$fixture/fixture.txt"
+            git -C "$fixture" add fixture.txt
+            git -C "$fixture" commit -q -m remove-synthetic-detector-fixture
+
+            if docker run --rm \
+              --volume "$fixture:/repo:ro" \
+              "$image" \
+              git --redact --no-banner --log-opts="$base_sha..HEAD" /repo; then
+              echo "Gitleaks failed to reject a removed synthetic detector fixture in candidate history." >&2
+              rm -rf "$fixture"
+              exit 1
+            fi
+            if ! docker run --rm \
+              --volume "$fixture:/repo:ro" \
+              "$image" \
+              dir --redact --no-banner /repo; then
+              echo "Gitleaks unexpectedly rejected the clean final tree in the negative candidate-history fixture." >&2
+              rm -rf "$fixture"
+              exit 1
+            fi
+            rm -rf "$fixture"
+          }
+
+          prove_clean_candidate_history() {
+            fixture="$(mktemp -d)"
+            git -C "$fixture" init -q
+            git -C "$fixture" config user.name "Ronin Security Fixture"
+            git -C "$fixture" config user.email "security-fixture@example.invalid"
+            printf '%s\n' 'baseline' > "$fixture/fixture.txt"
+            git -C "$fixture" add fixture.txt
+            git -C "$fixture" commit -q -m baseline
+            base_sha="$(git -C "$fixture" rev-parse HEAD)"
+            printf '%s\n' 'clean change one' > "$fixture/fixture.txt"
+            git -C "$fixture" add fixture.txt
+            git -C "$fixture" commit -q -m clean-one
+            printf '%s\n' 'clean change two' > "$fixture/fixture.txt"
+            git -C "$fixture" add fixture.txt
+            git -C "$fixture" commit -q -m clean-two
+            if ! docker run --rm \
+              --volume "$fixture:/repo:ro" \
+              "$image" \
+              git --redact --no-banner --log-opts="$base_sha..HEAD" /repo; then
+              echo "Gitleaks unexpectedly rejected clean candidate history." >&2
+              rm -rf "$fixture"
+              exit 1
+            fi
+            rm -rf "$fixture"
+          }
+
+          prove_candidate_history_detection
+          prove_clean_candidate_history
+
+          if [ "$history_status" -ne 0 ] || [ "$candidate_status" -ne 0 ] || [ "$tree_status" -ne 0 ]; then
             echo "Repository secret scan failed; sanitized finding metadata is printed above." >&2
             exit 1
           fi

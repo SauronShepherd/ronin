@@ -6,6 +6,8 @@ This backlog is deliberately narrow for v0.1. Selection must be revalidated agai
 
 E0/E1 already provide deterministic core/project/runtime/operator/diagnostic/notebook/kernel contracts, restart-safe single-writer execution evidence, hardened and real-engine-qualified Docker execution, async execution ports, 100% line/branch coverage on the original gated packages, and repository secret/dependency qualification. `docs/automation/PROGRESS.md` retains the detailed publication history.
 
+The P1 analyst handoffs #68 and #94 identified the same remaining false-negative edge in pull-request secret qualification: an intermediate candidate commit could introduce a detector-triggering value and later remove it before the final tree scan. PR #97 hardens the existing qualification by scanning the protected base history, the complete pull-request candidate range, and the current tree, with temporary multi-commit negative and clean conformance repositories. This security correction is additive and does not change the frozen Week-1 product queue below.
+
 ## Next
 
 Exactly these twelve Week-1 items are selectable. Do not select work outside this list until it is rewritten by a later approved phase/week transition.
