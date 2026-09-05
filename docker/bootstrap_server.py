@@ -23,13 +23,14 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(404)
         self.end_headers()
 
-    def log_message(self, format: str, *args: object) -> None:
+    def log_message(self, _format: str, *_args: object) -> None:
         return
 
 
 def main() -> None:
     port = int(os.environ.get("RONIN_PORT", "8080"))
-    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    # Binding all interfaces is intentional inside the container network namespace.
+    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)  # noqa: S104
     server.serve_forever()
 
 

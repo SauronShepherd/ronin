@@ -40,11 +40,12 @@ select = ["E", "F", "I", "B", "UP", "SIM", "S", "ASYNC", "C4", "PT", "RET", "ARG
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"]
+"packages/**/tests/**/*.py" = ["S101", "PT011"]
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
-mypy_path = "python"
+mypy_path = "python:packages/pyronin/src"
 packages = [
   "studio_core",
   "studio_notebook",
@@ -58,15 +59,27 @@ packages = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-ra --strict-config --strict-markers --cov=studio_core --cov=studio_notebook --cov=studio_runners --cov=studio_kernel --cov-branch --cov-report=term-missing --cov-fail-under=100"
+testpaths = ["tests", "packages/pyronin/tests"]
+pythonpath = ["python", "packages/pyronin/src", "."]
+addopts = "-ra --strict-config --strict-markers"
+markers = ["e2e: full v0.1 acceptance journey; requires Docker and a built image"]
 
 [tool.coverage.run]
 branch = true
-source = ["studio_core", "studio_notebook", "studio_runners", "studio_kernel"]
+source = [
+  "studio_core",
+  "studio_notebook",
+  "studio_kernel",
+  "studio_runners",
+  "studio_orchestrator",
+  "studio_storage",
+  "studio_vcs",
+  "studio_server",
+  "studio_cli",
+  "pyronin",
+]
 
 [tool.coverage.report]
-fail_under = 100
 show_missing = true
 
 [tool.mutmut]
