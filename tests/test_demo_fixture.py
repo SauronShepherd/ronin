@@ -39,6 +39,14 @@ def test_demo_cell_identity_vectors_are_stable() -> None:
         identity.reference: cell.id.value
         for cell, identity in zip(document.notebook.cells, document.cell_identities, strict=True)
     }
-    assert by_reference["intro"] == "aacc1d52a1fbc20634d366de68a7ad855931e5d39762f05f6697121c6baf66fd"
-    assert by_reference["extract-customers"] == "5712e1391ca1bd28b844a6df1a125f71a09910870bb668e7c58fc6eddbbe1fd4"
-    assert by_reference["extract-orders"] == "d5b4f0a27829cea13e582da482bfeb869c70dc515995bd10a9a9eb02abad7c9b"
+    assert (
+        by_reference["intro"] == "aacc1d52a1fbc20634d366de68a7ad855931e5d39762f05f6697121c6baf66fd"
+    )
+    assert (
+        by_reference["extract-customers"]
+        == "5712e1391ca1bd28b844a6df1a125f71a09910870bb668e7c58fc6eddbbe1fd4"
+    )
+    assert (
+        by_reference["extract-orders"]
+        == "d5b4f0a27829cea13e582da482bfeb869c70dc515995bd10a9a9eb02abad7c9b"
+    )
