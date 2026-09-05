@@ -73,10 +73,7 @@ class _TaskCancelledExecutor:
 
 
 def _event_kinds(path: Path) -> list[str]:
-    return [
-        json.loads(line)["kind"]
-        for line in path.read_text(encoding="utf-8").splitlines()
-    ]
+    return [json.loads(line)["kind"] for line in path.read_text(encoding="utf-8").splitlines()]
 
 
 def test_task_cancellation_terminalizes_durable_attempt_and_propagates(tmp_path: Path) -> None:
