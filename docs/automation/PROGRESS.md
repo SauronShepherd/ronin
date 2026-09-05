@@ -538,3 +538,39 @@ Validation history:
 4. Canonical documentation synchronization follows that verified product/security head. The final exact PR head must complete both Security qualification and the unchanged CI workflow successfully before merge. Post-publication `main` evidence is recorded only after the resulting SHA completes its applicable push workflows.
 
 Next recommended security/release slice: reconcile #43's clean-room artifact identity and immutable OCI provenance against current `main`, coordinating its exact build dependency policy with #58 rather than merging stale contributor PR #39 wholesale.
+
+
+## 2026-09-05 — v0.1 scope freeze and Week-1 preparation
+
+Objective: convert the Saturday v0.1 decisions into executable repository artifacts so Monday 7 September starts from a frozen scope, accepted architecture decisions, a bounded eight-week construction plan, enforceable quality policy, a deterministic demo fixture, and a proving-test issue queue. No v0.1 product behavior was implemented in this increment.
+
+Completed:
+
+- Froze `docs/product/V01_SCOPE.md` to one v0.1 sentence, twelve in-scope capabilities, explicit prohibitions, the fifteen-step acceptance journey, and non-functional budgets; README links the scope in the first screenfull.
+- Accepted ADR-V01-001 through ADR-V01-005 covering SQLite durability, FastAPI containment, tiered quality, boundary-owned clocks/UUIDv7, and per-cell record-level crash resume.
+- Rewote `docs/automation/CONSTRUCTION_PLAN.md` as an eight-week plan with six automatic cut lines; rewrote `BACKLOG.md` so `Next` contains exactly twelve Week-1 proving slices and E3-E10 are frozen through 2026-11-01.
+- Added importable skeletons for `studio_orchestrator`, `studio_storage`, `studio_vcs`, `studio_server`, and `studio_cli`; the architecture matrix now contains exactly the nine v0.1 packages, treats orchestrator as pure, and rejects low-level OS/filesystem/environment access in pure code.
+- Implemented ADR-V01-003 as executable CI: repository-wide format/lint/type perimeter, T1/T2/T3 coverage gates, Python 3.11/3.12 test matrix, nightly/manual mutation, stable `test` aggregation, and hash-locked `requirements-dev.lock` installation.
+- Added the deterministic six-cell demo under `examples/demo`, including project manifest, stable notebook identities, `[2, 1, 1, 1]` execution levels, byte-for-byte regeneration, and explicit record-level-resume documentation.
+- Added `tests/e2e/test_v01_journey.py` with all fifteen acceptance steps individually represented and week-tagged skips plus live/total burn-down properties.
+- Created milestone `v0.1.0`, due 2026-11-01, and attached twelve Week-1 issues #75-#86. Each issue names the defect/gap, exact change, proving acceptance path, and out-of-scope boundary.
+- Made Docker Qualification a stable PR/main check and switched it to pinned actions plus the hash-locked development environment.
+
+Exact-head verification on PR #74 head `385a5d1768c9c2d447d13b6eb8a91eb57fcee72a`:
+
+- CI run `33956529119`: success. `quality`, `gates-negative`, `test (3.11)`, `test (3.12)`, stable `test`, `e2e`, and `verification` all succeeded; mutation was correctly skipped on the pull request.
+- Clean `.venv-verify` installation used `python -m pip install --require-hashes -r requirements-dev.lock` followed by `python -m pip install -e . --no-deps`.
+- Clean `make check`: 65 files canonically formatted; Ruff green; strict mypy green across 33 source files; architecture and negative gates green; 239 tests passed with 16 expected skips in 9.16 seconds; total `make check` wall time 12.889 seconds.
+- Tier coverage from the clean run: T1 100% line/branch, T2 100%, T3 82% (thresholds 100/90/75 respectively).
+- Clean acceptance skeleton: 1 burn-down test passed and all 15 v0.1 journey steps skipped with explicit W3/W4/W5/W6 reasons.
+- Demo regeneration produced no diff.
+- Docker Qualification run `33956529137`: success, including the real-engine adversarial qualification and uploaded evidence.
+- Security qualification run `33956529120`: success.
+- Publish prerelease artifacts run `33956529112`: success.
+
+Repository protection status:
+
+- The stable checks needed for protection now exist as `quality`, `test`, `gates-negative`, and `docker-qualification`, with a linear-history/no-force-push policy prepared.
+- Enabling `main` protection is externally blocked by GitHub administration permission. Direct repository Actions API attempt run `33956464592` returned HTTP 403 `Resource not accessible by integration`; the connected GitHub App likewise exposes branch protection only read-only. The temporary helper removed itself and no protection setting was partially applied.
+
+Monday starting point: execute the Week-1 queue #75-#86 under milestone `v0.1.0`, preserving the frozen scope, accepted ADRs, hash-locked quality gates, and the fifteen-step acceptance journey as the release contract.
