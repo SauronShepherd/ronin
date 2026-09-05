@@ -1,30 +1,47 @@
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Mapping
 
 import pytest
-
-from pyronin import JobHandle, JobState, ProtocolError, Ronin
+from pyronin import JobState, ProtocolError, Ronin
 
 
 @dataclass
 class FakeTransport:
     responses: list[object]
-    calls: list[tuple[str, str, Mapping[str, object] | None, Mapping[str, str] | None, Mapping[str, str] | None]] = field(default_factory=list)
+    calls: list[
+        tuple[
+            str,
+            str,
+            Mapping[str, object] | None,
+            Mapping[str, str] | None,
+            Mapping[str, str] | None,
+        ]
+    ] = field(default_factory=list)
 
-    def request(self, method: str, path: str, *, payload: Mapping[str, object] | None = None, headers: Mapping[str, str] | None = None, query: Mapping[str, str] | None = None) -> object:
+    def request(
+        self,
+        method: str,
+        path: str,
+        *,
+        payload: Mapping[str, object] | None = None,
+        headers: Mapping[str, str] | None = None,
+        query: Mapping[str, str] | None = None,
+    ) -> object:
         self.calls.append((method, path, payload, headers, query))
         return self.responses.pop(0)
 
 
 def test_submit_status_cancel_events_and_wait(monkeypatch: pytest.MonkeyPatch) -> None:
-    transport = FakeTransport([
-        {"id": "job/a", "state": "queued"},
-        {"id": "job/a", "state": "running"},
-        [{"sequence": 0, "kind": "job.started", "message": "running"}],
-        {"id": "job/a", "state": "cancelling"},
-        {"id": "job/a", "state": "running"},
-        {"id": "job/a", "state": "succeeded"},
-    ])
+    transport = FakeTransport(
+        [
+            {"id": "job/a", "state": "queued"},
+            {"id": "job/a", "state": "running"},
+            [{"sequence": 0, "kind": "job.started", "message": "running"}],
+            {"id": "job/a", "state": "cancelling"},
+            {"id": "job/a", "state": "running"},
+            {"id": "job/a", "state": "succeeded"},
+        ]
+    )
     client = Ronin(transport=transport)
     job = client.submit(project="demo", target="etl", idempotency_key="once")
     assert job.id == "job/a"
@@ -51,7 +68,15 @@ def test_list_jobs_and_validation() -> None:
         client.list_jobs(project="")
 
 
-@pytest.mark.parametrize("payload", [{}, {"id": "", "state": "queued"}, {"id": "job", "state": "unknown"}, {"id": "job", "state": "failed", "failure_code": 7}])
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"id": "", "state": "queued"},
+        {"id": "job", "state": "unknown"},
+        {"id": "job", "state": "failed", "failure_code": 7},
+    ],
+)
 def test_invalid_job_payloads_fail_closed(payload: dict[str, object]) -> None:
     with pytest.raises(ProtocolError):
         Ronin(transport=FakeTransport([payload])).get_job("job")

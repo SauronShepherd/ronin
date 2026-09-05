@@ -12,57 +12,39 @@ from typing import cast
 PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
     "studio_core": frozenset[str](),
     "studio_notebook": frozenset({"studio_core"}),
-    "studio_codegen": frozenset({"studio_core"}),
-    "studio_bridge": frozenset({"studio_core", "studio_notebook", "studio_codegen"}),
-    "studio_native": frozenset({"studio_core"}),
-    "studio_debug": frozenset(
-        {"studio_core", "studio_notebook", "studio_codegen", "studio_native"}
-    ),
-    "studio_runners": frozenset({"studio_core", "studio_native", "studio_kernel"}),
+    "studio_vcs": frozenset({"studio_core"}),
     "studio_kernel": frozenset({"studio_core", "studio_notebook"}),
-    "studio_orchestrator": frozenset({"studio_core", "studio_runners"}),
-    "studio_storage": frozenset({"studio_core"}),
+    "studio_orchestrator": frozenset({"studio_core", "studio_notebook", "studio_kernel"}),
+    "studio_runners": frozenset({"studio_core", "studio_kernel"}),
+    "studio_storage": frozenset(
+        {"studio_core", "studio_notebook", "studio_kernel", "studio_orchestrator"}
+    ),
     "studio_server": frozenset(
         {
             "studio_core",
             "studio_notebook",
-            "studio_codegen",
-            "studio_bridge",
-            "studio_native",
-            "studio_debug",
-            "studio_runners",
             "studio_kernel",
+            "studio_runners",
             "studio_orchestrator",
             "studio_storage",
+            "studio_vcs",
         }
     ),
     "studio_cli": frozenset(
         {
             "studio_core",
             "studio_notebook",
-            "studio_codegen",
-            "studio_bridge",
-            "studio_native",
-            "studio_debug",
-            "studio_runners",
             "studio_kernel",
+            "studio_runners",
             "studio_orchestrator",
             "studio_storage",
+            "studio_vcs",
             "studio_server",
         }
     ),
 }
 PROJECT_PACKAGES = frozenset(PROJECT_DEPENDENCIES)
-PURE_DOMAIN_PACKAGES = frozenset(
-    {
-        "studio_core",
-        "studio_notebook",
-        "studio_codegen",
-        "studio_bridge",
-        "studio_debug",
-        "studio_native",
-    }
-)
+PURE_DOMAIN_PACKAGES = frozenset({"studio_core", "studio_notebook", "studio_orchestrator"})
 PURE_STDLIB_IMPORT_ROOTS = frozenset(
     {
         "__future__",
@@ -205,12 +187,7 @@ def _dependency_violations(tree: ast.AST, path: Path, source: str | None) -> lis
                 continue
             if target not in PROJECT_PACKAGES:
                 violations.append(
-                    Violation(
-                        path,
-                        node.lineno,
-                        "DEP002",
-                        f"unknown project import {target!r}",
-                    )
+                    Violation(path, node.lineno, "DEP002", f"unknown project import {target!r}")
                 )
             elif target not in allowed:
                 violations.append(
@@ -262,8 +239,6 @@ def _pure_domain_violations(tree: ast.AST, path: Path, source: str | None) -> li
                         f"nondeterministic import {module!r} is forbidden in pure domain code",
                     )
                 )
-            elif root == "os":
-                continue
             elif not _allowed_pure_import(module):
                 violations.append(
                     Violation(

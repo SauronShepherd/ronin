@@ -1,0 +1,84 @@
+{
+  "cells": [
+    {
+      "dependencies": [],
+      "id": "aacc1d52a1fbc20634d366de68a7ad855931e5d39762f05f6697121c6baf66fd",
+      "identity": {
+        "boundary": "import",
+        "namespace": "examples/demo/notebooks/etl.ronin.json",
+        "reference": "intro"
+      },
+      "kind": "markdown",
+      "language": null,
+      "source": "# Demo ETL\n\nSix-cell demo notebook used by the Ronin v0.1 acceptance journey."
+    },
+    {
+      "dependencies": [],
+      "id": "5712e1391ca1bd28b844a6df1a125f71a09910870bb668e7c58fc6eddbbe1fd4",
+      "identity": {
+        "boundary": "import",
+        "namespace": "examples/demo/notebooks/etl.ronin.json",
+        "reference": "extract-customers"
+      },
+      "kind": "code",
+      "language": "python",
+      "source": "import json, pathlib\nrows = [{\"id\": i, \"region\": \"eu\" if i % 2 else \"us\"} for i in range(100)]\npathlib.Path('/tmp/customers.json').write_text(json.dumps(rows))\nprint(f'extracted {len(rows)} customers')"
+    },
+    {
+      "dependencies": [],
+      "id": "d5b4f0a27829cea13e582da482bfeb869c70dc515995bd10a9a9eb02abad7c9b",
+      "identity": {
+        "boundary": "import",
+        "namespace": "examples/demo/notebooks/etl.ronin.json",
+        "reference": "extract-orders"
+      },
+      "kind": "code",
+      "language": "python",
+      "source": "import json, pathlib\nrows = [{\"id\": i, \"customer_id\": i % 100, \"amount\": i * 3} for i in range(500)]\npathlib.Path('/tmp/orders.json').write_text(json.dumps(rows))\nprint(f'extracted {len(rows)} orders')"
+    },
+    {
+      "dependencies": [
+        "5712e1391ca1bd28b844a6df1a125f71a09910870bb668e7c58fc6eddbbe1fd4",
+        "d5b4f0a27829cea13e582da482bfeb869c70dc515995bd10a9a9eb02abad7c9b"
+      ],
+      "id": "8cd03bb998a201549a19406a05a7565af64576c6c977ca07738f2b79e0f6b7ef",
+      "identity": {
+        "boundary": "import",
+        "namespace": "examples/demo/notebooks/etl.ronin.json",
+        "reference": "join-and-aggregate"
+      },
+      "kind": "code",
+      "language": "python",
+      "source": "import json, pathlib\ncustomers = {c['id']: c for c in json.loads(pathlib.Path('/tmp/customers.json').read_text())}\norders = json.loads(pathlib.Path('/tmp/orders.json').read_text())\ntotals = {}\nfor o in orders:\n    region = customers[o['customer_id']]['region']\n    totals[region] = totals.get(region, 0) + o['amount']\npathlib.Path('/tmp/totals.json').write_text(json.dumps(totals))\nprint(totals)"
+    },
+    {
+      "dependencies": [
+        "8cd03bb998a201549a19406a05a7565af64576c6c977ca07738f2b79e0f6b7ef"
+      ],
+      "id": "53e0c61339e6a33de3fc18043148f91036da0a6100df1b4fe5bd648338fa7e4f",
+      "identity": {
+        "boundary": "import",
+        "namespace": "examples/demo/notebooks/etl.ronin.json",
+        "reference": "quality-check"
+      },
+      "kind": "code",
+      "language": "python",
+      "source": "import json, pathlib\ntotals = json.loads(pathlib.Path('/tmp/totals.json').read_text())\nassert set(totals) == {'eu', 'us'}, totals\nassert all(v > 0 for v in totals.values()), totals\nprint('quality checks passed')"
+    },
+    {
+      "dependencies": [
+        "53e0c61339e6a33de3fc18043148f91036da0a6100df1b4fe5bd648338fa7e4f"
+      ],
+      "id": "19ce67dba42eac79f2710ebc65dd63ee67028a2f08613f72ed8d441c82d0090f",
+      "identity": {
+        "boundary": "import",
+        "namespace": "examples/demo/notebooks/etl.ronin.json",
+        "reference": "publish"
+      },
+      "kind": "code",
+      "language": "python",
+      "source": "import json, pathlib\ntotals = json.loads(pathlib.Path('/tmp/totals.json').read_text())\nprint(json.dumps({'dataset': 'revenue_by_region', 'rows': len(totals), 'totals': totals}))"
+    }
+  ],
+  "schema": "ronin.notebook/v1"
+}

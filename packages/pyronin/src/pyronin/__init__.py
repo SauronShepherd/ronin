@@ -5,9 +5,10 @@ from __future__ import annotations
 import ipaddress
 import json
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Mapping, Protocol
+from typing import Protocol
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -79,6 +80,10 @@ class Transport(Protocol):
     ) -> object: ...
 
 
+class _Readable(Protocol):
+    def read(self, size: int = -1) -> bytes: ...
+
+
 class _RejectRedirects(HTTPRedirectHandler):
     def redirect_request(
         self,
@@ -90,7 +95,7 @@ class _RejectRedirects(HTTPRedirectHandler):
         newurl: str,
     ) -> None:
         del req, fp, code, msg, headers, newurl
-        return None
+        return
 
 
 def _is_loopback_host(hostname: str | None) -> bool:
@@ -104,9 +109,8 @@ def _is_loopback_host(hostname: str | None) -> bool:
         return False
 
 
-def _read_bounded(stream: object, max_bytes: int) -> bytes:
-    read = getattr(stream, "read")
-    body = read(max_bytes + 1)
+def _read_bounded(stream: _Readable, max_bytes: int) -> bytes:
+    body = stream.read(max_bytes + 1)
     if len(body) > max_bytes:
         raise TransportError("Ronin response exceeded configured byte limit")
     return body
@@ -144,7 +148,8 @@ class HTTPTransport:
             )
             if parsed.scheme != "https" and not insecure_loopback:
                 raise ValueError(
-                    "authenticated HTTP requires HTTPS; insecure transport is allowed only for explicit loopback development"
+                    "authenticated HTTP requires HTTPS; insecure transport is allowed only for "
+                    "explicit loopback development"
                 )
 
     def request(
@@ -170,7 +175,7 @@ class HTTPTransport:
         if payload is not None:
             request_headers["Content-Type"] = "application/json"
             data = json.dumps(dict(payload), separators=(",", ":")).encode("utf-8")
-        request = Request(url, data=data, headers=request_headers, method=method)
+        request = Request(url, data=data, headers=request_headers, method=method)  # noqa: S310
         opener = build_opener(_RejectRedirects())
         try:
             with opener.open(request, timeout=self.timeout) as response:  # noqa: S310
@@ -179,7 +184,10 @@ class HTTPTransport:
             try:
                 _read_bounded(exc, self.max_response_bytes)
             except TransportError as limit_error:
-                raise APIError(exc.code, "error response exceeded configured byte limit") from limit_error
+                raise APIError(
+                    exc.code,
+                    "error response exceeded configured byte limit",
+                ) from limit_error
             raise APIError(exc.code, "request failed") from exc
         except URLError as exc:
             raise TransportError("Ronin endpoint unavailable") from exc
@@ -262,7 +270,10 @@ class Ronin:
         )
 
     def _events(self, job_id: str) -> list[JobEvent]:
-        payload = self._transport.request("GET", f"/v1/jobs/{quote(job_id, safe='')}/events")
+        payload = self._transport.request(
+            "GET",
+            f"/v1/jobs/{quote(job_id, safe='')}/events",
+        )
         if not isinstance(payload, list):
             raise ProtocolError("Expected a list of job events")
         return [_parse_event(item) for item in payload]

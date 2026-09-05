@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import json
 import threading
+from collections.abc import Iterator
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Iterator
 
 import pytest
-
 from pyronin import APIError, HTTPTransport, TransportError
 
 
@@ -15,7 +14,7 @@ class _Handler(BaseHTTPRequestHandler):
     seen_authorization: str | None = None
 
     def log_message(self, _format: str, *_args: object) -> None:
-        return None
+        return
 
     def do_GET(self) -> None:  # noqa: N802
         type(self).seen_authorization = self.headers.get("Authorization")
@@ -73,14 +72,14 @@ def _server() -> Iterator[str]:
 
 def test_authenticated_plaintext_is_rejected_before_request() -> None:
     with pytest.raises(ValueError, match="requires HTTPS"):
-        HTTPTransport("http://example.test", token="synthetic-token")
+        HTTPTransport("http://example.test", token="synthetic-token")  # noqa: S106
 
 
 def test_explicit_loopback_development_opt_in_is_narrow() -> None:
     with _server() as base_url:
         transport = HTTPTransport(
             base_url,
-            token="synthetic-token",
+            token="synthetic-token",  # noqa: S106
             allow_insecure_localhost=True,
         )
         assert transport.request("GET", "/ok") == {"ok": True}
@@ -88,7 +87,7 @@ def test_explicit_loopback_development_opt_in_is_narrow() -> None:
     with pytest.raises(ValueError, match="requires HTTPS"):
         HTTPTransport(
             "http://example.test",
-            token="synthetic-token",
+            token="synthetic-token",  # noqa: S106
             allow_insecure_localhost=True,
         )
 

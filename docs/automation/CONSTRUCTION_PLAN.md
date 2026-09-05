@@ -1,228 +1,113 @@
-# Ronin canonical construction plan
-
-_Last synchronized: 2026-09-05. Reviewed repository baseline: `main` at `e275b3a41649975da13ef9af787111467cc664d3`; real Docker qualification, typed isolation qualification and async execution ports are already published. This Builder slice adds repository secret/dependency qualification and is not considered published until exact-head and post-merge evidence are green._
-
-## Vision and principles
-
-Ronin is a complete, professional, free, open-source, self-hostable and vendor-neutral Data + AI platform. The product must cover the whole lifecycle from ingestion and storage through engineering, SQL, streaming, governance, BI, ML, GenAI and agents, while feeling like one coherent product with shared identity, projects, assets, search, lineage, policy, costs, execution, observability, Git and administration.
-
-Permanent principles: capability-first canonical domain; replaceable adapters/SPIs; local-first progressive enhancement; immutable/deterministic representations where practical; event/evidence-first execution; explicit failure over silent semantic loss; secure-by-default; portable/exportable artifacts; no mandatory proprietary control plane; no provider branches in canonical domain; Apache-2.0 and open-development habits compatible with a possible future ASF path without claiming ASF status.
-
-## Architecture target and boundaries
-
-Canonical domain packages own immutable product semantics and may not perform filesystem, network, process, environment or provider I/O. Side effects live behind adapters. Current executable dependency rules are enforced by `tools/architecture_gate.py`.
-
-Target layers:
-
-- `studio_core`: IDs, projects, Git intent, runtime capability requirements/resolution, operator and diagnostic contracts, canonical IR.
-- `studio_notebook`: portable authored notebooks and explicit execution dependency graphs.
-- `studio_kernel`: preparation, execution requests/results, reproducibility, session policy and execution evidence contracts.
-- `studio_runners`: concrete local/container/runtime adapters; never the canonical domain.
-- `studio_orchestrator`: Job -> Run -> Attempt, retries, leases, scheduling, reconciliation, quotas and dispatch.
-- `studio_storage`: transactional metadata/evidence/artifact persistence, retention, backup/restore and shared-writer guarantees.
-- `studio_server`: composition root and API boundary.
-- `studio_cli` and SDKs: stable user-facing control-plane clients.
-- Future domain/application packages for catalog/governance, semantic/BI, ML/GenAI/agents, FinOps and observability should consume shared core contracts rather than fork identity/evidence/cost semantics.
-
-Architecture debt to remove before E2 public API stabilization: orchestrator must depend on execution ports/contracts rather than concrete runner implementations; privileged runtime execution should remain isolated from the web/control plane.
-
-## Complete Data + AI capability map
-
-Status vocabulary: IMPLEMENTED, PARTIAL, PLANNED, BLOCKED, DEBT.
+# Ronin v0.1 construction plan
 
-| Capability | State | Current evidence / target |
-|---|---|---|
-| Product foundation, strict typing, architecture gates | IMPLEMENTED | E0 quality gates, pure-domain allowlist, negative-gate tests |
-| Multi-project workspaces | PARTIAL | `Project`, `ProjectCollection`; workspace UX/storage/admin pending |
-| Git multi-repository project configuration | PARTIAL | primary/supporting bindings, neutral adapters, `.ronin/project.json`; real Git adapter qualification pending |
-| Runtime profiles/capability negotiation | PARTIAL | neutral catalog/resolver/snapshots; ambiguity-safe selection policy, versioned capability semantics and dispatch binding pending |
-| Canonical graph/IR | PARTIAL | immutable deterministic IR/operators/diagnostics; cross-language canonical vectors and broader operator semantics pending |
-| Data integration/ingestion/connectors | PLANNED | adapter/plugin model, batch/CDC/file/API connectors |
-| Lakehouse/object storage/table formats | PLANNED | neutral storage/table SPI; Iceberg/Delta/Hudi candidates only via evidence/adapters |
-| Data engineering/codegen | PLANNED | reuse mature `sdp-studio` graph/codegen/source-map/runtime work |
-| Notebooks | PARTIAL | portable authored notebooks, DAG, kernel contracts; interactive UX/runtime journeys pending |
-| SQL/warehouse/federation | PLANNED | neutral query/warehouse SPI, catalogs, pushdown/federation |
-| Streaming/real-time | PLANNED | stream contracts, checkpoint/recovery, event-time semantics, observability |
-| Data quality/observability | PARTIAL | diagnostic/evidence primitives; rule authoring, profiling, SLAs/SLOs and runtime integration pending |
-| Catalog/governance/lineage/ontology | PLANNED | shared asset identity, metadata, policies, lineage graph, glossary/ontology/search |
-| BI/semantic layer/metrics/reporting | PLANNED | semantic models, governed metrics, query acceleration, dashboards/reporting adapters |
-| Data science | PLANNED | environments, experiments, notebooks, reproducibility, distributed compute |
-| Feature engineering/store | PLANNED | offline/online feature definitions, lineage, freshness, point-in-time correctness |
-| AutoML/HPO | PLANNED | replaceable optimization engines, evidence/cost tracking |
-| MLOps/model registry/serving/monitoring | PLANNED | model artifacts, promotion, serving SPI, drift/quality/cost monitoring |
-| AI/LLM gateway | PLANNED | provider-neutral routing/fallback, model catalog, quotas, token/latency/cost evidence |
-| Prompt/evaluation suites | PLANNED | versioned prompts/datasets/judges, reproducible eval runs |
-| RAG/knowledge/vector/hybrid search | PLANNED | neutral retrieval/index SPI linked to catalog/ontology/lineage |
-| Agents/agentic workflows | PLANNED | canonical `AgentRuntime` SPI, durable event ledger, tools/permissions/approvals, replay, OTel, cost per step |
-| Security/compliance | PARTIAL | qualified local-container isolation, redaction and repository security qualification; scoped grants, RBAC/ABAC, secrets, audit and tenant isolation pending |
-| FinOps | PLANNED | resource/cost attribution for every workload, budgets/quotas/alerts/forecast/showback/chargeback |
-| Observability/operations | PARTIAL | structured execution evidence and durable ledger baseline; OTel, SLOs, alerts, runbooks pending |
-| API/SDK/CLI/plugin system | PARTIAL | alpha `pyronin`; stable server/state-machine/OpenAPI/CLI/plugins pending |
-| Packaging/release/supply chain | PARTIAL | prerelease pipeline plus repository secret/dependency qualification; clean-room OCI provenance and exact dependency/license locking still require reconciliation |
-| Local/Docker/Compose/Kubernetes/air-gap | PARTIAL | hardened local Docker executor with real-engine qualification; Compose/Kubernetes/air-gap lifecycle incomplete |
-| Backup/restore/DR | PLANNED | metadata/artifact backup contracts, restore validation, RPO/RTO profiles |
-| Performance/scalability | PLANNED | deterministic benchmarks, bounded DAG/ledger/evidence guards, distributed scheduling/storage |
+_Last synchronized: 2026-09-05. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
-## Milestones E0 -> E10
+The v0.1 plan is eight weeks. Each week has one objective, an explicit pull-request sequence, measurable exit criteria, and a pre-decided cut line. Work outside the frozen v0.1 scope does not enter these weeks.
 
-- **E0 Foundation**: repository hygiene, architecture/quality/security/release gates, community/license/governance baseline. Quality and repository security qualification are implemented; repository rulesets, exact dependency/license locking and community/security policy work remain.
-- **E1 Canonical execution foundation**: project/Git/runtime/IR/notebook/kernel/evidence/local runner contracts. Real-engine isolation qualification and async-safe execution ports are complete. Exit now requires Job/Run/Attempt semantics, shared persistence direction, scoped grants/runtime binding and E2-ready public boundaries.
-- **E2 Durable control plane**: orchestrator, storage, server API, authn/authz, leases/idempotency/retry/reconciliation, project/workspace persistence, audit, first end-to-end local journey.
-- **E3 Data engineering platform**: ingestion, codegen, source maps, pipelines, scheduling, SQL, lakehouse, Git collaboration; reuse `sdp-studio` aggressively behind current boundaries.
-- **E4 Streaming and data reliability**: streaming runtimes, checkpoints, data quality, data observability, SLAs/SLOs, incident evidence.
-- **E5 Catalog, governance and semantic/BI**: asset catalog, lineage, glossary/ontology, policy, search, semantic layer, governed metrics and reporting.
-- **E6 Data science and MLOps**: experiments, feature engineering, AutoML/HPO, registry, serving, monitoring, distributed training.
-- **E7 GenAI/RAG**: AI gateway, prompt/version/evaluation systems, knowledge/retrieval/indexing, safety/policy hooks, complete cost/token accounting.
-- **E8 Agents**: `AgentRuntime` SPI, tool schemas, scoped permissions, approvals, durable replay/resume, evaluation, multi-agent graphs and per-step evidence/cost.
-- **E9 Enterprise operations**: HA, DR, multi-tenant isolation, compliance evidence, advanced FinOps, quotas/budgets, Kubernetes scale, air-gap qualification.
-- **E10 Ecosystem and maturity**: stable APIs/SDKs, plugin ecosystem, compatibility matrix, reproducible releases, community governance, performance leadership backed by benchmarks.
+## Week 1 — 7–13 September: close review defects and prepare durable-execution contracts
 
-Dependencies are directional: E0/E1 trust boundaries precede durable orchestration; durable identity/evidence/cost/lineage contracts precede broad feature proliferation; local correctness precedes distributed scale.
+**Objective.** Remove the known trust/performance defects that would contaminate durable orchestration, while landing the package/gate/quality scaffolding needed for E2 work.
 
-## Prioritized backlog
+**Pull requests.** Execute PR-01 through PR-12 from `BACKLOG.md`: cancellation terminal evidence; runner reap/truncation; Docker limits; isolation qualification default; quality perimeter; tier gates/lock; runtime redaction/version comparison; architecture `os` closure; core performance indexes; async event sink; T1 properties; SDK resilience.
 
-### P0
+**Exit criteria.** All twelve Week-1 proving tests pass or the corresponding issue is explicitly carried with a documented blocker; `make check` is green from the hash-locked environment; no open P0 defect is unowned.
 
-1. Keep `main` green after every publication; never weaken quality/security gates.
-2. Define canonical Job -> Run -> Attempt state machine and idempotency/retry semantics before stabilizing public `/v1/jobs` (#49).
-3. Reconcile clean-room release/provenance hardening from PR #39 onto current `main` only when exact-head CI/release qualification is green (#43).
-4. Establish exact dependency locking and transitive license qualification coordinated with repository vulnerability auditing (#58).
-5. Keep the construction plan synchronized on every autonomous execution; never select completed Docker/async work from stale text.
+**Cut line.** Friday 18 September: if `JobStore` fails its contract suite, fix `RetryPolicy.max_runs = 1`; retries are out of v0.1.
 
-### P1
+## Week 2 — 14–20 September: transactional Job → Run → Attempt storage
 
-1. Shared durable storage semantics: transaction/lease/CAS or equivalent uniqueness for `(attempt_id, sequence)` and workload state.
-2. Runtime capability negotiation: versioned/namespaced semantics, ambiguity-safe policy and dispatch-time binding (#50/#61; resolve the decision conflict before implementation).
-3. Real runtime reproducibility collector and Git checkout qualification.
-4. Extend mutation qualification to `studio_kernel`, `studio_runners`, then `studio_notebook` with evidence-based ratcheting (#47).
-5. Replace free-form permissions with typed scoped grants plus policy/evidence provenance (#52).
-6. First notebook -> kernel -> real runtime -> durable evidence -> restart/recovery end-to-end journey after lifecycle/storage prerequisites (#57).
-7. Portable content-addressed evidence/artifact references before durable storage hardens arbitrary strings (#53).
-8. Cross-language canonical identity encoding and duplicate-member rejection before additional language implementations (#56).
-9. Root control-plane server skeleton and OpenAPI contract tests for `pyronin` after the lifecycle contract (#54).
-10. Reuse `sdp-studio` codegen/source maps/runtimes/debug/Git/collaboration behind current interfaces.
-11. Harden repository URI query/fragment secret handling (#55), immutable CI action pins (#46), security policy (#45), and Docker qualification base-image pinning (#60) as focused trust-boundary slices.
+**Objective.** Define the pure lifecycle/state-machine and prove a SQLite adapter against it.
 
-### P2
+**Pull requests.** Add pure lifecycle IDs/states/transitions and `JobStore` protocol in `studio_orchestrator`; add SQLite schema/migrations, WAL/FULL/foreign-key/busy-timeout setup, idempotency uniqueness and store conformance suite in `studio_storage`; add cursor-safe storage queries needed by the future API.
 
-- Connector/plugin SDK, local object/table storage, SQL/query SPI, ingestion pipelines, lineage graph, OTel exporter, data quality engine, semantic metrics foundation, Compose/Kubernetes packaging.
-- Deterministic performance guards, backup/restore tests, accessibility and UX foundations.
-- After E2 durability, decide and qualify the first portable open-table data journey (#59); do not preselect a vendor/format without the documented adapter-focused decision.
+**Exit criteria.** Transactional create/read/update, idempotency and unique `(attempt_id, sequence)` behavior are proven under concurrent access; no clock/random/database I/O enters pure packages; migration tests pass from an empty database.
 
-### P3
+**Cut line.** The 18 September retry cut above applies automatically if the store contract is not green.
 
-- Advanced distributed scale, additional proprietary adapters, ecosystem marketplace/discovery, sophisticated optimization and recommendation systems after core contracts are stable.
+## Week 3 — 21–27 September: worker leases, crash reclamation and per-cell resume
 
-## Vertical-slice construction strategy
+**Objective.** Execute one durable local run through worker claim, heartbeat, lease expiry, attempt replacement and record-level resume.
 
-Each slice must deliver one coherent user/system capability end-to-end: canonical contract -> adapter -> persistence/evidence -> API/SDK/UX surface when applicable -> tests -> operational docs. Prefer slices that strengthen several future domains through shared primitives (identity, policy, evidence, cost, lineage) instead of isolated demos.
+**Pull requests.** Add lease/heartbeat/reclaim transitions; worker loop; durable cell-result persistence; resume selection from succeeded cell records; crash/restart integration test with the demo notebook and real Docker qualification boundary.
 
-Before writing new capability code, search `SauronShepherd/sdp-studio` and `SauronShepherd/ronin-old` for reusable implementations and tests. Reuse semantics and mature code where boundaries permit; do not inherit provider branches, mutable global state, weak typing or mixed control/data-plane architecture.
+**Exit criteria.** Kill/restart test proves a new attempt resumes at cell 4 without re-running cells 1–3; terminal state is unique/monotonic; no residual container remains after cancellation/failure.
 
-## Acceptance criteria and quality gates
+**Cut line.** Sunday 27 September: if local end-to-end does not resume, v0.1 re-runs the whole run after a crash and documents that limitation.
 
-A capability is not competitive merely because an API/class exists. It is accepted only when it is usable, testable, observable, maintainable and operable.
+## Week 4 — 28 September–4 October: HTTP control plane and SDK contract
 
-Required gates by risk: Ruff format/lint, strict mypy, executable architecture contracts and negative fixtures, mandatory 100% line/branch coverage for covered pure-domain areas, mutation evidence with non-decreasing thresholds, unit/property/golden/contract/integration/adversarial/security/E2E/performance tests as appropriate, clean artifact install smoke, secret/dependency scans, immutable provenance for releases, and exact-SHA GitHub Actions evidence before merge and after publication.
+**Objective.** Make durable jobs remotely controllable through one bounded authenticated API whose OpenAPI contract matches `pyronin`.
 
-Repository security qualification is fail-closed: pull requests scan protected base history plus the complete mergeable/current tree with an immutable scanner image and execution-time synthetic negative evidence. Dependency vulnerability audits target Ronin-declared dependency surfaces, not arbitrary hosted-runner packages. Exact lock/license qualification remains a separate stronger requirement.
+**Pull requests.** Add exact-pinned FastAPI/uvicorn/pydantic in `studio_server`; bearer-token scope model; `/v1/jobs` submit/status/list/cancel/events/evidence endpoints; OpenAPI golden/contract tests; align `pyronin` schemas/errors/retry behavior.
 
-## Security and isolation
+**Exit criteria.** Acceptance steps 5 and 10–15 are live against the real server; bounded request/response/error behavior and secure token transport defaults are tested; SDK contract tests consume generated OpenAPI.
 
-- No secrets in canonical authored state or durable evidence; redaction is defense in depth, not primary containment.
-- Permissions evolve from free-form strings to typed versioned grants with resource scope and policy provenance.
-- Runtime isolation claims distinguish declared/tested/qualified evidence. Production policy may require QUALIFIED; the local Docker adapter is now real-engine qualified.
-- Web/control plane must not require Docker daemon/root access; privileged execution belongs in isolated runner/agent boundaries.
-- Authentication, authorization, audit, tenant/project isolation, encryption, key/secret adapters, supply-chain verification and policy evaluation are first-class product surfaces.
-- Repository URI credentials belong behind `auth_ref`; query/fragment hardening remains tracked by #55.
+**Cut line.** Sunday 4 October: if HTTP is not green, drop cursor pagination, `/evidence`, and scopes; keep one token and the core job endpoints.
 
-## Persistence, recovery and DR
+## Week 5 — 5–11 October: CLI and local Git revision capture
 
-Current JSONL event storage is a local, restart-safe, single-writer baseline only. E2 must add transactional workload state, leases/heartbeats/reconciliation, monotonic terminal-state rules, idempotency keys, artifact stores, retention and migration/versioning. Backup/restore must be tested, not documented only; later HA/DR profiles define RPO/RTO with evidence.
+**Objective.** Expose the supported local workflow through `ronin` and bind execution to a reproducible local checkout revision.
 
-## Observability, evidence, lineage and explainability
+**Pull requests.** Add `studio_vcs` commit + dirty digest capture; add CLI composition and `serve`, `worker`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, `cancel`, `doctor`; enable the console entry point; document per-cell record-level resume limitations.
 
-Every relevant workload (pipeline, query, notebook, Spark job, stream, training, deployment, inference, LLM/RAG/agent/tool execution) must emit correlated structured logs, metrics, traces, execution evidence, lineage and diagnostics. OpenTelemetry is a transport/integration, not the canonical domain. Evidence should support replay/debugging, policy decisions, source mapping and explainability without leaking secrets.
+**Exit criteria.** Acceptance steps 2–4 and CLI portions of 5, 10–14 are live; Git qualification covers detached HEAD, ref movement, dirty digest, path safety and credential exclusion.
 
-## FinOps
+**Cut line.** Sunday 11 October: if CLI is not green, ship server + SDK + `serve`/`worker`/`doctor` only.
 
-Resource and cost evidence must be attributable by workspace/project/user/run/attempt/asset when reasonable. Local execution records resources even when no cloud invoice exists. Build budgets, quotas, thresholds, alerts, forecasting, showback/chargeback and recommendation evidence on top of truthful observed usage; never synthesize cost from configured ceilings alone.
+## Week 6 — 12–18 October: packaging, image, Compose and zero-to-demo quickstart
 
-## Packaging, release and supply chain
+**Objective.** Deliver one reproducible OCI image and a documented local startup path that reaches the demo journey from zero.
 
-Produce reproducible wheels/containers/charts with exact-version/tag validation, clean-room install smoke, SBOM, provenance/attestation tied to immutable OCI subjects, pinned release dependencies/actions/base images and immutable semantic release tags. Keep `alpha`/edge aliases explicitly mutable only where intentional. Repository branch/tag protection is an external administrative prerequisite and must not be marked implemented until GitHub reports it active.
+**Pull requests.** Add production Dockerfile, image healthcheck, Compose topology, immutable base-image identity, clean-room install smoke, quickstart and release artifact provenance inputs.
 
-The repository secret/dependency qualification gate is independent from release reproducibility: it blocks secret leakage and known vulnerable declared dependencies, while #43/#58 own immutable build-backend/artifact provenance and exact locked dependency/license evidence respectively.
+**Exit criteria.** `docker compose up -d` is healthy under 60 seconds; quickstart completes under ten minutes on a clean host; image runs server and worker without privileged web/control-plane Docker access.
 
-## Deployment matrix
+**Cut line.** Friday 16 October: if packaging is not green, ship Dockerfile only, no Compose, and document `docker run`.
 
-- **Laptop/local**: no mandatory distributed services; filesystem/SQLite-like local adapters may be used outside pure domain when appropriate.
-- **Docker/Compose**: reproducible single-host control plane + runner/storage profiles.
-- **Kubernetes**: scalable stateless control plane, isolated runners, persistent stores, quotas/policies, HA/DR options.
-- **Air-gap/private**: local image IDs/digests, offline package/model/artifact mirrors, exportable manifests/SBOMs and no mandatory SaaS callback.
+## Week 7 — 19–25 October: acceptance, security, performance and buffer
 
-## API, SDK, CLI and plugins
+**Objective.** Turn every remaining skipped acceptance step green and qualify release budgets/trust properties.
 
-`pyronin` remains alpha until the server state machine and OpenAPI contract exist. Public APIs require pagination, bounded responses/errors, secure authenticated transport defaults and compatibility/versioning. Add async SDK only after server semantics are stable. CLI should be a thin outer shell over the same contracts. Plugins/adapters expose capabilities and versioned contracts, not vendor branches in core.
+**Pull requests.** Activate all e2e steps; add non-functional budget tests; security/secret/vulnerability/license qualification; release provenance/SBOM; targeted chaos/recovery tests only after the acceptance journey is green.
 
-## Git multi-project
+**Exit criteria.** Fifteen acceptance steps pass; p95/event/health/RSS/`make check` budgets meet `V01_SCOPE.md`; no known secret or vulnerability ships; exact-head release evidence is reproducible.
 
-Each project owns one primary repository plus optional supporting repositories, neutral adapter IDs, default refs and sync policies. Next implementation steps: reject secret-bearing URL query/fragment components, real Git adapter, safe checkout/root validation including symlink escape, dirty patch artifact support, object/ref identity evidence, auth-reference resolution outside committed manifests, and provider adapters without domain coupling.
+**Cut line.** Monday 19 October: any earlier slippage consumes Week 7 as buffer. Ship without chaos tests if necessary, never without the acceptance journey.
 
-## Runtimes
+## Week 8 — 26 October–1 November: release candidate and v0.1.0
 
-Projects may select nominal profiles (including ecosystem-specific profiles) and/or neutral requirements for engine, language versions, GPU, formats, libraries, streaming, ML and isolation. Adapters normalize provider semantics. The current lexical fallback is not a long-term product policy: #50/#61 must establish versioned capability semantics and an explicit ambiguity-safe ranking/binding contract before heterogeneous provider growth.
+**Objective.** Stabilize only: documentation, clean-room verification, compatibility checks, release notes, immutable release publication.
 
-## ML, GenAI and agents
+**Pull requests.** Fix release-blocking defects only; finalize quickstart/limitations/security docs; verify Python 3.11/3.12 and supported Docker path; tag and publish v0.1.0 after all gates are green.
 
-ML must cover experiments, datasets/features, environments, HPO/AutoML, distributed training, registry, deployment and monitoring with lineage/cost/evidence. GenAI adds a provider-neutral gateway, model catalog/routing/fallback, prompt versioning, evaluation suites, token/latency/cost accounting, safety/policy hooks, RAG and knowledge integration. Agents use a canonical `AgentRuntime` SPI with durable event ledger, typed tools, permissions/approvals, replay/resume, evaluation, OTel/audit and multi-agent graphs; Apache Maka or any other framework is only an adapter candidate justified by evidence.
+**Exit criteria.** Clean hash-locked `make check`; all fifteen e2e steps pass; demo regenerates byte-for-byte; release artifacts have immutable provenance; `main` and release-tag protection is active; no P0/P1 release blocker remains.
 
-## BI and semantic layer
+**Cut line.** No feature substitution. Defer optional surfaces rather than weakening trust, reproducibility, acceptance, or security gates.
 
-Build governed semantic models and metrics as first-class assets linked to lineage/catalog/policy. Query engines and dashboard/reporting tools are adapters. The semantic layer must support consistent metric definitions, access policy, caching/acceleration evidence, versioning and exportability.
+## Pre-decided automatic cuts
 
-## Catalog, governance and ontology
+| Trigger | Automatic cut |
+|---|---|
+| Fri 18 Sep: `JobStore` fails its contract suite | `RetryPolicy.max_runs = 1` fixed. No retries in v0.1. |
+| Sun 27 Sep: local end-to-end does not resume | v0.1 re-runs the whole run after a crash. Documented limitation. |
+| Sun 4 Oct: HTTP not green | Drop cursor pagination, `/evidence`, and scopes. Single token. |
+| Sun 11 Oct: CLI not green | Ship server + SDK + `serve`/`worker`/`doctor` only. |
+| Fri 16 Oct: packaging not green | Dockerfile only, no Compose. Document `docker run`. |
+| Mon 19 Oct: anything behind | Week 7 is consumed as buffer. Ship without chaos tests, never without the acceptance journey. |
 
-A shared asset graph must unify datasets, tables, files, pipelines, notebooks, queries, models, prompts, vector indexes, agents and reports. Governance includes ownership, classification, policy, glossary/ontology, lineage, search, audit and lifecycle/retention. Avoid separate catalog islands per workload type.
+**Never cut:** the fifteen-step acceptance journey, a green `make check`, and shipping with no known secrets or vulnerabilities.
 
-## Performance and scalability
+## Post-v0.1 horizon, not scheduled
 
-Establish deterministic micro/contract benchmarks before optimization; add regression budgets for DAG analysis, canonicalization, ledger replay, storage, query planning and API paths. Scale via replaceable storage/queue/compute adapters after semantics are proven locally. Performance claims require benchmark methodology and reproducible evidence.
-
-## OSS reuse and adapters
-
-Primary reuse sources: `sdp-studio` for data engineering IR/graph/operator semantics, codegen/source maps, runtimes/debug, Git/collaboration, auth/scheduling, UI and deployment; `ronin-old` for selective native execution/Gluten/Velox, execution results, redaction, notebook/session/isolation concepts. Third-party OSS or proprietary services are selected by correctness, maturity, security, interop, portability, cost, licensing, community, maintainability and UX; no brand receives canonical status by default.
-
-Repository-level security/release qualification does not justify copying product code from either historical project. For the current slice, the reusable evidence source is contributor PR #40's defensive intent and failing CI, reconciled on a Builder-owned current-main branch rather than modifying or merging the contributor PR.
-
-## Risks, blockers and external/admin dependencies
-
-- `main` currently lacks repository protection/rulesets (#31/#63); this needs GitHub administration and cannot be faked by CI.
-- Release/provenance PR #39 and contributor security PR #40 are stale/independent branches; validated semantics must be reconciled on Builder-owned current-main branches rather than autonomously taking over contributor work.
-- Dependency range solving remains non-reproducible until #58 lands even after vulnerability qualification is active.
-- Broad platform scope risks fragmented UX; shared identity/evidence/policy/cost/lineage primitives are the countermeasure.
-- Cross-language canonicalization must be defined before public content-addressed identities are expanded (#56).
-- `PRODUCT_CONSTITUTION.md` and `CAPABILITY_MAP.md` remain absent and are explicitly tracked by #48; this security slice does not fabricate them as unrelated scope.
-
-## Current evidence snapshot
-
-- Starting/current reviewed `main`: `e275b3a41649975da13ef9af787111467cc664d3`, which completed real Docker qualification in PR #42.
-- Async execution boundary is already published at `8f3b3e9af29884d535693e5594072b8db3124df2`; typed isolation qualification is already published at `29279ccad665bf6bf4528f046c48cb6d70394fd8`.
-- Contributor PR #39 (`be6e78510fe64b2bf3dd5e8b3b3876a5fb87509c`) contains reusable release-hardening semantics but predates current `main` and remains contributor-owned.
-- Contributor PR #40 (`78f79d7d43d69470b4431e568ca159c683615eef`) proved normal CI could be green while security qualification failed; its secret-like finding was traced to its synthetic scanner fixture rather than a confirmed credential, and its dependency audit mishandled the local Ronin package.
-- Builder PR #64 implements the reconciled security gate. Product/security head `f9ebb48d8e49af33c8203d1dae7d3cd349ea1371` passed Security qualification run `33943552981` and CI run `33943552862` before canonical documentation synchronization; the final documentation head must pass the same authoritative workflow set before merge.
-- The security gate exposed `pytest 8.4.2` as affected by `PYSEC-2026-1845`; the declared development range was advanced to patched `pytest>=9.0.3,<10` rather than adding an ignore.
-
-## Next executable slice
-
-**Reconcile prerelease artifact identity and OCI provenance (#43), then coordinate its exact build dependency policy with #58.**
-
-Concrete scope for the next Builder execution:
-
-1. Re-read current `main`, #43/#58, open contributor PR #39 and all new handoffs before selecting work.
-2. Reuse PR #39's already-reviewed clean-room artifact and immutable OCI-subject concepts without modifying or merging the stale contributor branch.
-3. Exact-pin or otherwise reproducibly lock PEP 517 build backends through the same policy that #58 will use for required dependency graphs.
-4. Build once, smoke the exact wheel/sdist/image outside source-tree leakage, stage the exact image by immutable commit reference, capture the registry digest, and attest that immutable OCI subject.
-5. Refuse semantic prerelease tag repoints while retaining only explicitly documented mutable aliases.
-6. Keep release/security/quality gates independent and fail closed; do not mask dependency or provenance failures.
-7. Run all exact-head workflows, update canonical records, merge only when green, then verify resulting `main` workflows.
+The former E3–E10 roadmap remains a product horizon only and is intentionally unscheduled until v0.1 is tagged.
+
+- **E3 — Data engineering:** ingestion/connectors, codegen/source maps, pipelines, SQL, lakehouse, Git collaboration.
+- **E4 — Streaming and reliability:** streaming runtimes, checkpoints, data quality/observability and SLAs/SLOs.
+- **E5 — Catalog/governance/semantic BI:** catalog, lineage, glossary/ontology, policy/search, semantic models, metrics and reporting.
+- **E6 — Data science/MLOps:** experiments, features, AutoML/HPO, registry, serving, monitoring and distributed training.
+- **E7 — GenAI/RAG:** AI gateway, prompt/version/evaluation systems, retrieval/indexing, safety and token/cost evidence.
+- **E8 — Agents:** `AgentRuntime` SPI, tools, scoped permissions, approvals, durable replay/resume, evaluation and multi-agent graphs.
+- **E9 — Enterprise operations:** HA/DR, multi-tenancy, compliance, advanced FinOps, Kubernetes scale and air-gap qualification.
+- **E10 — Ecosystem/maturity:** stable APIs/SDKs, plugins, compatibility matrix, reproducible releases, governance and benchmark-led optimization.
+
+These are frozen by `BACKLOG.md`; autonomous work must not select them before v0.1 ships.

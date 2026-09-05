@@ -2,18 +2,9 @@ name: Docker Qualification
 
 on:
   pull_request:
-    paths:
-      - "python/studio_kernel/**"
-      - "python/studio_runners/**"
-      - "tests/integration/test_docker_container_executor_real.py"
-      - ".github/workflows/docker-qualification.yml"
   push:
     branches: [main]
-    paths:
-      - "python/studio_kernel/**"
-      - "python/studio_runners/**"
-      - "tests/integration/test_docker_container_executor_real.py"
-      - ".github/workflows/docker-qualification.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -23,16 +14,20 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  real-docker:
-    runs-on: ubuntu-latest
+  docker-qualification:
+    name: docker-qualification
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.11"
           cache: pip
-      - name: Install development dependencies
-        run: python -m pip install -e '.[dev]'
+          cache-dependency-path: requirements-dev.lock
+      - name: Install hash-locked development environment
+        run: |
+          python -m pip install --require-hashes -r requirements-dev.lock
+          python -m pip install -e . --no-deps
       - name: Bootstrap immutable qualification image
         shell: bash
         run: |
@@ -58,7 +53,7 @@ jobs:
           find artifacts/docker-qualification -type f -maxdepth 4 -print -exec cat {} \;
       - name: Upload qualification evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: docker-qualification-${{ github.sha }}
           path: artifacts/docker-qualification
