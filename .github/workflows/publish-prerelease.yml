@@ -209,10 +209,6 @@ jobs:
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
           subject-path: dist/*
-      - name: Attest exact saved container image
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
-        with:
-          subject-path: ronin-image.tar.gz
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-evidence
@@ -248,6 +244,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
@@ -259,13 +257,49 @@ jobs:
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: echo "$GHCR_TOKEN" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
-      - name: Publish immutable prerelease and alpha alias
+      - name: Push commit staging reference and capture OCI digest
+        id: registry
         shell: bash
+        run: |
+          set -euo pipefail
+          staging_tag="$IMAGE_NAME:sha-$GITHUB_SHA"
+          docker tag "$LOCAL_IMAGE" "$staging_tag"
+          docker push "$staging_tag"
+          manifest_json="$(docker buildx imagetools inspect "$staging_tag" --format '{{json .Manifest}}')"
+          digest="$(python -c 'import json,sys; print(json.load(sys.stdin)["digest"])' <<<"$manifest_json")"
+          case "$digest" in
+            sha256:[0-9a-f][0-9a-f]*) ;;
+            *) echo "Invalid registry digest: $digest" >&2; exit 1 ;;
+          esac
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "staging-tag=$staging_tag" >> "$GITHUB_OUTPUT"
+      - name: Attest published OCI subject
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-name: ${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.registry.outputs.digest }}
+          push-to-registry: true
+      - name: Publish immutable semantic tag and mutable alpha alias
+        shell: bash
+        env:
+          REGISTRY_DIGEST: ${{ steps.registry.outputs.digest }}
         run: |
           set -euo pipefail
           version_tag="$IMAGE_NAME:${{ needs.validate-release.outputs.image-version }}"
           alpha_tag="$IMAGE_NAME:alpha"
-          docker tag "$LOCAL_IMAGE" "$version_tag"
-          docker tag "$LOCAL_IMAGE" "$alpha_tag"
-          docker push "$version_tag"
-          docker push "$alpha_tag"
+
+          if existing_json="$(docker buildx imagetools inspect "$version_tag" --format '{{json .Manifest}}' 2>/dev/null)"; then
+            existing_digest="$(python -c 'import json,sys; print(json.load(sys.stdin)["digest"])' <<<"$existing_json")"
+            if [ "$existing_digest" != "$REGISTRY_DIGEST" ]; then
+              echo "Refusing to repoint immutable semantic tag $version_tag from $existing_digest to $REGISTRY_DIGEST" >&2
+              exit 1
+            fi
+          else
+            docker buildx imagetools create --tag "$version_tag" "$IMAGE_NAME@$REGISTRY_DIGEST"
+          fi
+
+          version_json="$(docker buildx imagetools inspect "$version_tag" --format '{{json .Manifest}}')"
+          version_digest="$(python -c 'import json,sys; print(json.load(sys.stdin)["digest"])' <<<"$version_json")"
+          test "$version_digest" = "$REGISTRY_DIGEST"
+
+          docker buildx imagetools create --tag "$alpha_tag" "$IMAGE_NAME@$REGISTRY_DIGEST"
