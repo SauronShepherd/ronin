@@ -3,7 +3,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from tools.architecture_gate import inspect_file, inspect_roots
+from tools.architecture_gate import PROJECT_DEPENDENCIES, inspect_file, inspect_roots
 from tools.gates_negative import run_negative_cases
 
 
@@ -16,6 +16,20 @@ def _fixture(directory: str, package: str, source: str) -> Path:
 
 def test_current_project_respects_architecture_contracts() -> None:
     assert inspect_roots([Path("python")]) == []
+
+
+def test_matrix_contains_exactly_the_nine_v01_packages() -> None:
+    assert set(PROJECT_DEPENDENCIES) == {
+        "studio_core",
+        "studio_notebook",
+        "studio_kernel",
+        "studio_runners",
+        "studio_orchestrator",
+        "studio_storage",
+        "studio_vcs",
+        "studio_server",
+        "studio_cli",
+    }
 
 
 def test_gate_rejects_forbidden_io() -> None:
@@ -35,7 +49,7 @@ def test_gate_rejects_environment_access_through_import_alias() -> None:
         )
         violations = inspect_file(path)
 
-    assert [violation.rule for violation in violations] == ["IO003"]
+    assert {violation.rule for violation in violations} == {"IO001", "IO003"}
 
 
 def test_gate_rejects_environment_access_through_from_import() -> None:
@@ -47,7 +61,7 @@ def test_gate_rejects_environment_access_through_from_import() -> None:
         )
         violations = inspect_file(path)
 
-    assert [violation.rule for violation in violations] == ["IO003"]
+    assert {violation.rule for violation in violations} == {"IO001", "IO003"}
 
 
 def test_gate_rejects_real_io_network_process_and_unsafe_deserialization_imports() -> None:
@@ -74,7 +88,20 @@ def test_gate_rejects_os_side_effects_and_getenv() -> None:
         )
         violations = inspect_file(path)
 
-    assert [violation.rule for violation in violations] == ["IO003", "IO001"]
+    assert [violation.rule for violation in violations].count("IO001") == 2
+    assert [violation.rule for violation in violations].count("IO003") == 1
+
+
+def test_gate_rejects_low_level_os_calls() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        path = _fixture(
+            directory,
+            "studio_core",
+            "import os\nos.open('/etc/passwd', os.O_RDONLY)\n",
+        )
+        violations = inspect_file(path)
+
+    assert "IO001" in {violation.rule for violation in violations}
 
 
 def test_gate_rejects_nondeterministic_sources_separately() -> None:
@@ -91,8 +118,9 @@ def test_gate_rejects_nondeterministic_sources_separately() -> None:
         path = _fixture(directory, "studio_core", source)
         violations = inspect_file(path)
 
-    assert all(violation.rule == "IO004" for violation in violations)
-    assert len(violations) >= 4
+    rules = [violation.rule for violation in violations]
+    assert "IO001" in rules
+    assert rules.count("IO004") >= 4
 
 
 def test_gate_rejects_forbidden_project_dependency() -> None:
