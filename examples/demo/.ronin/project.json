@@ -1,0 +1,26 @@
+{
+  "project": {
+    "execution": {
+      "requirements": [
+        {"constraint": null, "level": "required", "name": "container"},
+        {"constraint": ">=3.11", "level": "required", "name": "python"}
+      ],
+      "resolution": "compatible",
+      "runtime": {"adapter_id": "docker", "profile_id": "python-3.11-slim"}
+    },
+    "id": "demo",
+    "name": "Ronin demo project",
+    "repositories": [
+      {
+        "adapter_id": "git",
+        "alias": "demo",
+        "default_ref": "main",
+        "role": "primary",
+        "subdirectory": "examples/demo",
+        "sync_policy": "manual",
+        "uri": "https://github.com/SauronShepherd/ronin"
+      }
+    ]
+  },
+  "schema": "ronin.project/v1"
+}
