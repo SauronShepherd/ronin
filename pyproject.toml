@@ -10,6 +10,10 @@ requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 readme = "README.md"
 
+# TODO(W5): enable when studio_cli.main exists.
+# [project.scripts]
+# ronin = "studio_cli:main"
+
 [project.optional-dependencies]
 dev = [
   "hypothesis>=6.138,<7",
@@ -41,7 +45,17 @@ select = ["E", "F", "I", "B", "UP", "SIM", "S", "ASYNC", "C4", "PT", "RET", "ARG
 python_version = "3.11"
 strict = true
 mypy_path = "python"
-packages = ["studio_core", "studio_notebook", "studio_runners", "studio_kernel"]
+packages = [
+  "studio_core",
+  "studio_notebook",
+  "studio_runners",
+  "studio_kernel",
+  "studio_orchestrator",
+  "studio_storage",
+  "studio_vcs",
+  "studio_server",
+  "studio_cli",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
