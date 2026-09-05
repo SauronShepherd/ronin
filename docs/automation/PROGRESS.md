@@ -513,3 +513,28 @@ Validation evidence:
 - Documentation updates follow that verified product/test SHA and therefore trigger a new exact-head CI run. No final PR-head or post-`main` green claim is made until those runs complete.
 
 Next execution priorities from the reconciled reviews are unchanged by documentation: finish issue #16 with real Docker qualification, establish typed isolation qualification, remove event-loop ownership from the runner boundary, extend mutation evidence into kernel/runners/notebook, and integrate the already-green distribution/release work from PR #21 without conflating release smoke with runtime-isolation proof.
+
+## 2026-09-05 — Repository secret and dependency qualification
+
+Objective: close handoff #44 with an authoritative fail-closed repository security gate while keeping local Ronin packages and unrelated hosted-runner packages out of third-party vulnerability semantics.
+
+Implemented on `automation/release-integrity-qualification` / PR #64:
+
+- Added `.github/workflows/security.yml` with read-only repository permissions and pull-request/main execution.
+- Secret qualification uses Gitleaks v8.30.1 pinned by immutable OCI digest. Pull requests scan protected base-branch history plus the complete current/mergeable tree; `main` pushes scan `HEAD` history plus the current tree.
+- Scanner output is reduced to sanitized rule/path/line/commit metadata; secret values are never printed by Ronin's reporting step.
+- A synthetic AWS-shaped negative fixture is assembled only at workflow execution time and must be rejected, proving the scanner fails closed without permanently storing a detector-triggering literal in repository history.
+- Dependency qualification derives the root `project.optional-dependencies.dev` surface directly from `pyproject.toml` and audits it with pinned `pip-audit==2.10.1`; `packages/pyronin` is audited independently. Local Ronin packages and arbitrary hosted-runner/bootstrap packages are not modeled as third-party project requirements.
+- Security qualification found `pytest 8.4.2` affected by `PYSEC-2026-1845`; the development range was advanced to `pytest>=9.0.3,<10` rather than adding an ignore. The normal quality suite passed with the patched major version.
+- Contributor PR #40 was used as advisory/reuse evidence only. Its earlier secret-like finding was traced to its own deliberate synthetic scanner fixture at contributor commit `78f79d7d43d6`; no confirmed credential requiring rotation was identified. The contributor PR was not modified or merged.
+- Build-backend reproducibility, exact dependency locks/license inventory and OCI release provenance remain separate #43/#58 work and are not falsely marked complete.
+- BACKLOG, DECISIONS and CONSTRUCTION_PLAN were reconciled so already-published real Docker qualification, typed isolation qualification and async execution ports are no longer selected as outstanding work.
+
+Validation history:
+
+1. Initial Builder head `449e14ee7584880bab12944b7ed3251e0dcf50c3`, Security run `33943428922`, failed usefully: Gitleaks detected the literal synthetic fixture stored by that draft plus PR #40's fixture from unrelated fetched refs, and `pip-audit --skip-editable` still rejected local `ronin-studio` under strict mode.
+2. Head `73a46458a038641f96eb52e1d673085abca77cd6`, Security run `33943488094`, proved the corrected secret path green and fail-closed. Its dependency job then exposed real declared `pytest 8.4.2` vulnerability `PYSEC-2026-1845` plus unrelated hosted-runner `setuptools` noise.
+3. Product/security head `f9ebb48d8e49af33c8203d1dae7d3cd349ea1371`, Security run `33943552981`, completed successfully; CI run `33943552862` also completed successfully for `quality`, `gates-negative` and `mutation`, with Format, Lint, strict Types, Architecture contracts and Tests green.
+4. Canonical documentation synchronization follows that verified product/security head. The final exact PR head must complete both Security qualification and the unchanged CI workflow successfully before merge. Post-publication `main` evidence is recorded only after the resulting SHA completes its applicable push workflows.
+
+Next recommended security/release slice: reconcile #43's clean-room artifact identity and immutable OCI provenance against current `main`, coordinating its exact build dependency policy with #58 rather than merging stale contributor PR #39 wholesale.
