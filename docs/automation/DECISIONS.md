@@ -257,3 +257,13 @@ When an already-validated PR contains the needed implementation but is based on 
 Security/release language must distinguish repository code from repository administration. A CI workflow can require checks and validate release provenance, but it cannot make `main` or a tag immutable by itself. Branch/tag rulesets are therefore a required governance control and may only be marked implemented when GitHub reports them active; absence of administration capability in an automation connection is a blocker, not permission to fabricate an equivalent claim.
 
 Likewise, declared container isolation and configured resource ceilings remain different from qualified/observed facts. The architecture will evolve toward typed, versioned isolation qualification and observed attempt evidence, but the current Docker adapter remains unqualified until real-engine tests close issue #16.
+
+## ADR-AUTO-024 — Security qualification scans mergeable repository state and declared dependency surfaces
+
+**Status:** accepted — 2026-09-05
+
+Repository secret qualification must fail closed without treating unrelated open-branch history as part of the pull request being authorized. On pull requests, Ronin therefore scans the protected base-branch history and separately scans the complete mergeable working tree; on `main` pushes it scans `HEAD` history plus the current tree. The scanner image is immutable by digest and reports only sanitized rule/path/line/commit metadata. Deliberate scanner-negative evidence is generated at workflow execution time from split components so the repository does not permanently contain a token-shaped fixture that poisons its own history.
+
+Dependency vulnerability qualification is scoped to dependency surfaces declared by Ronin, not to arbitrary packages preinstalled by the hosted runner. The root job derives the `project.optional-dependencies.dev` requirements from `pyproject.toml` and audits that resolved requirement set; the `pyronin` project is audited independently. Local Ronin packages are not modeled as third-party PyPI requirements. Build-backend reproducibility and the full exact transitive lock/license graph remain separate release-integrity work tracked by #43 and #58.
+
+A vulnerability found in a declared dependency is remediated rather than ignored: the security gate exposed `pytest 8.4.2` as affected by `PYSEC-2026-1845`, so the supported development range now starts at patched `pytest 9.0.3`. No broad vulnerability ignore or quality-gate reduction is permitted to make the security workflow green.
