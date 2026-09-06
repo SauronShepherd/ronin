@@ -134,23 +134,18 @@ class DurableWorkerExecution:
             for ref in evidence
             if ref.cell_id == identity.cell_id and ref.role == "cell-result"
         )
-        artifacts: list[ArtifactRef] = []
-        for ref in refs:
-            artifact = _artifact_ref(ref)
-            if artifact is None:
-                return False
-            artifacts.append(artifact)
-        verified = bool(artifacts)
-        for artifact in artifacts:
-            if not await asyncio.to_thread(self.artifact_store.verify, artifact):
-                verified = False
-                break
+        if not refs:
+            return False
+        artifact = _artifact_ref(refs[-1])
+        if artifact is None:
+            return False
+        verified = await asyncio.to_thread(self.artifact_store.verify, artifact)
         record = CellResumeRecord(
             run_id=result.run_id,
             cell_id=result.cell_id,
             state=result.state,
             execution_identity_digest=result.execution_identity_digest,
-            artifact_digests=tuple(artifact.digest for artifact in artifacts),
+            artifact_digests=(artifact.digest,),
         )
         return can_resume_cell(identity, record, artifacts_verified=verified)
 
@@ -251,6 +246,7 @@ class DurableWorkerExecution:
         if str(request.attempt_id) != str(claim.attempt_id):
             raise WorkerExecutionError("kernel request attempt does not match claimed attempt")
         self.policy.validate_isolation(self.executor.isolation)
+        self._sequence = 0
 
         cancellation = CancellationToken()
         lease_lost = asyncio.Event()
