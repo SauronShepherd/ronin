@@ -139,6 +139,7 @@ class AsyncioCommandRunner:
         stdout = cast(asyncio.StreamReader, process.stdout)
         output_task = asyncio.create_task(self._collect_output(stdout))
         wait_task = asyncio.create_task(process.wait())
+        completed_normally = False
         try:
             stdin.write(input_text.encode())
             await stdin.drain()
@@ -162,22 +163,24 @@ class AsyncioCommandRunner:
             if needs_cleanup:
                 await self._cleanup(cancellation_args)
             duration_ms = max(0, int((time.monotonic() - started) * 1000))
-            output = (
-                _TRUNCATED_OUTPUT
-                if truncated
-                else redact_sensitive_text(raw_output.decode("utf-8", errors="replace"))
-            )
+            output = self._format_output(raw_output, truncated)
+            completed_normally = True
             return CommandOutcome(returncode, output, cancelled, timed_out, duration_ms)
-        except asyncio.CancelledError:
-            await self._reap_after_task_cancellation(
-                process,
-                wait_task,
-                output_task,
-                cancellation_args,
-            )
-            raise
+        finally:
+            if not completed_normally:
+                await self._reap_process(process, wait_task, output_task, cancellation_args)
 
-    async def _reap_after_task_cancellation(
+    def _format_output(self, raw_output: bytes, truncated: bool) -> str:
+        output = redact_sensitive_text(raw_output.decode("utf-8", errors="replace"))
+        if not truncated:
+            return output
+        marker = f"\n{_TRUNCATED_OUTPUT}"
+        if self.max_output_bytes <= len(marker):
+            return _TRUNCATED_OUTPUT[: self.max_output_bytes]
+        prefix_limit = self.max_output_bytes - len(marker)
+        return output[:prefix_limit] + marker
+
+    async def _reap_process(
         self,
         process: asyncio.subprocess.Process,
         wait_task: asyncio.Task[int],
@@ -193,6 +196,15 @@ class AsyncioCommandRunner:
             if not output_task.done():
                 output_task.cancel()
             await asyncio.gather(output_task, return_exceptions=True)
+
+    async def _reap_after_task_cancellation(
+        self,
+        process: asyncio.subprocess.Process,
+        wait_task: asyncio.Task[int],
+        output_task: asyncio.Task[tuple[bytes, bool]],
+        cancellation_args: tuple[str, ...],
+    ) -> None:
+        await self._reap_process(process, wait_task, output_task, cancellation_args)
 
     async def _collect_output(self, stream: asyncio.StreamReader) -> tuple[bytes, bool]:
         captured = bytearray()
