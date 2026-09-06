@@ -31,6 +31,9 @@ package-dir = {"" = "python"}
 [tool.setuptools.packages.find]
 where = ["python"]
 
+[tool.setuptools.package-data]
+studio_storage = ["migrations/*.sql"]
+
 [tool.ruff]
 target-version = "py311"
 line-length = 100
