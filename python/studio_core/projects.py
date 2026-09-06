@@ -86,6 +86,8 @@ class RepositoryBinding:
         parsed = urlsplit(self.uri)
         if parsed.username is not None or parsed.password is not None:
             raise ValueError("repository uri must not embed credentials")
+        if parsed.query or parsed.fragment:
+            raise ValueError("repository uri must not include query or fragment components")
 
         if self.subdirectory is not None:
             _require_text(self.subdirectory, "repository subdirectory")
