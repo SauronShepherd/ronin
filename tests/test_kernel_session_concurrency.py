@@ -66,7 +66,17 @@ class _BlockingExecutor:
     release: threading.Event
     calls: int = 0
     lock: threading.Lock = field(default_factory=threading.Lock)
-    isolation: ExecutorIsolation = ExecutorIsolation("container", True, True, True)
+    isolation: ExecutorIsolation = ExecutorIsolation(
+        "container",
+        True,
+        True,
+        True,
+        "tested",
+        "ronin/test-isolation",
+        "1",
+        "test-runtime",
+        "test-evidence://isolation",
+    )
 
     async def execute(
         self,

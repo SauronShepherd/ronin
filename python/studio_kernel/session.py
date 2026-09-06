@@ -98,7 +98,7 @@ class SessionPolicy:
     require_dedicated_identity: bool = True
     require_network_isolation: bool = True
     require_filesystem_isolation: bool = True
-    minimum_isolation_qualification: IsolationQualification = "declared"
+    minimum_isolation_qualification: IsolationQualification = "tested"
 
     def __post_init__(self) -> None:
         permissions = tuple(sorted(self.granted_permissions))

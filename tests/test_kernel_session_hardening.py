@@ -26,6 +26,18 @@ from studio_kernel import (
 )
 from studio_notebook import CellId, Notebook, NotebookDocument
 
+_TESTED_ISOLATION = ExecutorIsolation(
+    "container",
+    True,
+    True,
+    True,
+    "tested",
+    "ronin/test-isolation",
+    "1",
+    "test-runtime",
+    "test-evidence://isolation",
+)
+
 
 def _request() -> NotebookExecutionRequest:
     cell = CellExecutionRequest(
@@ -55,7 +67,7 @@ def _request() -> NotebookExecutionRequest:
 
 @dataclass
 class _SuccessExecutor:
-    isolation: ExecutorIsolation = ExecutorIsolation("container", True, True, True)
+    isolation: ExecutorIsolation = _TESTED_ISOLATION
 
     async def execute(
         self,
@@ -68,7 +80,7 @@ class _SuccessExecutor:
 
 @dataclass
 class _ExplodingExecutor:
-    isolation: ExecutorIsolation = ExecutorIsolation("container", True, True, True)
+    isolation: ExecutorIsolation = _TESTED_ISOLATION
 
     async def execute(
         self,

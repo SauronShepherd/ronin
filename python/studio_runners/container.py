@@ -288,7 +288,17 @@ class DockerContainerKernelExecutor:
 
     @property
     def isolation(self) -> ExecutorIsolation:
-        return ExecutorIsolation("container", True, True, True)
+        return ExecutorIsolation(
+            "container",
+            True,
+            True,
+            True,
+            "tested",
+            "ronin/docker-isolation",
+            "1",
+            self.config.image,
+            "qualification://docker/real-adversarial-v1",
+        )
 
     def _engine(self) -> str | None:
         if self.engine_path is not None:
