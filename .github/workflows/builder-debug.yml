@@ -37,7 +37,7 @@ jobs:
           lint_exit=$?
           mypy python tools packages/pyronin/src docker > /tmp/mypy.log 2>&1
           mypy_exit=$?
-          summary=$(grep -E "FAILED|ERROR|TOTAL|coverage|passed|failed|error" /tmp/test.log | tail -n 6 | tr '\n' ';' | cut -c1-220)
+          summary=$(grep -E "ImportError|ModuleNotFoundError|TypeError|ValueError|AttributeError|NameError|SyntaxError" /tmp/test.log | tail -n 3 | tr '\n' ';' | cut -c1-240)
           status="test=${test_exit},format=${format_exit},lint=${lint_exit},mypy=${mypy_exit}"
           echo "summary=${summary}" >> "$GITHUB_OUTPUT"
           echo "status=${status}" >> "$GITHUB_OUTPUT"
