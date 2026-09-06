@@ -30,14 +30,14 @@ class GitRevision:
 
 
 def _git(path: Path, *args: str, timeout: float = 10.0) -> bytes:
-    command = ("git", "--no-optional-locks", "-C", str(path), *args)
+    location = path if path.is_dir() else path.parent
+    command = ("git", "--no-optional-locks", "-C", str(location), *args)
     try:
         completed = subprocess.run(  # noqa: S603
             command,
             check=False,
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             timeout=timeout,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
