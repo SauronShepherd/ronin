@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import FrozenInstanceError
 
 import pytest
-
 from studio_orchestrator import (
     Attempt,
     AttemptId,
@@ -85,7 +84,7 @@ def test_identifiers_are_validated_ordered_and_immutable() -> None:
 
 @pytest.mark.parametrize("value", ["", " x", "x ", "x\n", "x\r", "x" * 257])
 def test_identifier_rejects_invalid_text(value: str) -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be|at most"):
         JobId(value)
 
 
@@ -163,6 +162,7 @@ def test_run_reclaim_path_preserves_identity() -> None:
     assert reclaimed.id == run.id
     assert reclaimed.job_id == run.job_id
     assert reclaimed.state is RunState.PENDING
+    assert make_run().transition(RunState.FAILED, now=LATER).state is RunState.FAILED
 
 
 @pytest.mark.parametrize("state", [RunState.CANCELLED, RunState.SUCCEEDED, RunState.FAILED])
