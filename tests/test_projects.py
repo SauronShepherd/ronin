@@ -117,6 +117,26 @@ def test_repository_binding_rejects_embedded_credentials_for_url_schemes() -> No
     ).uri.endswith("repo.git")
 
 
+def test_repository_binding_rejects_query_and_fragment_components() -> None:
+    for uri in (
+        "https://example.test/team/repo.git?token=do-not-persist",
+        "https://example.test/team/repo.git#access_token=do-not-persist",
+        "ssh://example.test/team/repo.git?signature=do-not-persist",
+    ):
+        with pytest.raises(ValueError, match="query or fragment"):
+            RepositoryBinding("code", uri, role="primary")
+
+    assert (
+        RepositoryBinding(
+            "code",
+            "https://example.test/team/repo.git",
+            role="primary",
+            auth_ref="secret://repository-credential",
+        ).auth_ref
+        == "secret://repository-credential"
+    )
+
+
 def test_repository_subdirectory_must_stay_inside_repository() -> None:
     with pytest.raises(ValueError, match="subdirectory"):
         RepositoryBinding(
