@@ -4,24 +4,36 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Sequence
+from pathlib import Path
 
 from studio_orchestrator import (
     AttemptId,
     AttemptState,
+    ClaimedRun,
     Instant,
+    Job,
+    JobId,
     JobState,
     LeaseToken,
+    Page,
+    Run,
+    RunId,
     RunState,
     StoredCellResult,
     StoredEvidenceRef,
     StoredExecutionEvent,
 )
-
 from studio_storage.sqlite import SqliteJobStore as _BaseSqliteJobStore
 
 
-class SqliteJobStore(_BaseSqliteJobStore):
-    """SQLite store whose worker writes are fenced by the active Attempt lease."""
+class SqliteJobStore:
+    """SQLite JobStore with active-lease fencing for worker-originated mutations."""
+
+    def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
+        self._inner = _BaseSqliteJobStore(path, migration_now=migration_now)
+
+    def _connect(self) -> sqlite3.Connection:
+        return self._inner._connect()
 
     @staticmethod
     def _active_attempt_row(
@@ -41,6 +53,64 @@ class SqliteJobStore(_BaseSqliteJobStore):
         if row is None:
             raise ValueError("attempt lease ownership lost")
         return row
+
+    def create_job(self, job: Job, run: Run) -> Job:
+        return self._inner.create_job(job, run)
+
+    def get_job(self, job_id: JobId) -> Job | None:
+        return self._inner.get_job(job_id)
+
+    def list_jobs(
+        self,
+        *,
+        project_id: str | None,
+        state: JobState | None,
+        limit: int,
+        cursor: str | None,
+    ) -> Page:
+        return self._inner.list_jobs(
+            project_id=project_id,
+            state=state,
+            limit=limit,
+            cursor=cursor,
+        )
+
+    def request_cancel(self, job_id: JobId, *, now: Instant | str) -> Job:
+        return self._inner.request_cancel(job_id, now=now)
+
+    def claim_next_run(
+        self,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        attempt_id: AttemptId,
+        lease_seconds: int,
+        now: Instant | str,
+    ) -> ClaimedRun | None:
+        return self._inner.claim_next_run(
+            owner=owner,
+            lease_token=lease_token,
+            attempt_id=attempt_id,
+            lease_seconds=lease_seconds,
+            now=now,
+        )
+
+    def heartbeat(
+        self,
+        attempt_id: AttemptId,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        expires_at: Instant | str,
+        now: Instant | str,
+    ) -> bool:
+        return self._inner.heartbeat(
+            attempt_id,
+            owner=owner,
+            lease_token=lease_token,
+            expires_at=expires_at,
+            now=now,
+        )
 
     def append_events(
         self,
@@ -86,6 +156,9 @@ class SqliteJobStore(_BaseSqliteJobStore):
             raise
         finally:
             connection.close()
+
+    def read_events(self, run_id: RunId, *, since: int) -> tuple[StoredExecutionEvent, ...]:
+        return self._inner.read_events(run_id, since=since)
 
     def put_cell_result(
         self,
@@ -133,6 +206,9 @@ class SqliteJobStore(_BaseSqliteJobStore):
         finally:
             connection.close()
 
+    def read_cell_results(self, run_id: RunId) -> tuple[StoredCellResult, ...]:
+        return self._inner.read_cell_results(run_id)
+
     def put_evidence(
         self,
         attempt_id: AttemptId,
@@ -176,6 +252,9 @@ class SqliteJobStore(_BaseSqliteJobStore):
             raise
         finally:
             connection.close()
+
+    def read_evidence(self, run_id: RunId) -> tuple[StoredEvidenceRef, ...]:
+        return self._inner.read_evidence(run_id)
 
     def complete_attempt(
         self,
@@ -249,6 +328,9 @@ class SqliteJobStore(_BaseSqliteJobStore):
             raise
         finally:
             connection.close()
+
+    def reclaim_expired(self, *, now: Instant | str) -> tuple[RunId, ...]:
+        return self._inner.reclaim_expired(now=now)
 
 
 __all__ = ("SqliteJobStore",)
