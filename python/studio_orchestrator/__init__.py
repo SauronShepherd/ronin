@@ -29,7 +29,7 @@ from studio_orchestrator.store import (
     StoredExecutionEvent,
 )
 
-__all__ = [
+__all__ = (
     "Attempt",
     "AttemptId",
     "AttemptLimitExceeded",
@@ -52,4 +52,4 @@ __all__ = [
     "StoredCellResult",
     "StoredEvidenceRef",
     "StoredExecutionEvent",
-]
+)
