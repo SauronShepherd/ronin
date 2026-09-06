@@ -33,7 +33,13 @@ class LocalArtifactStore:
             raise ValueError("artifact role must be non-empty, trimmed, and single-line")
         digest = hashlib.sha256(data).hexdigest()
         target = self._path_for_digest(digest)
-        if not target.exists():
+        needs_write = not target.exists()
+        if not needs_write:
+            existing = target.read_bytes()
+            needs_write = (
+                len(existing) != len(data) or hashlib.sha256(existing).hexdigest() != digest
+            )
+        if needs_write:
             target.parent.mkdir(parents=True, exist_ok=True)
             with NamedTemporaryFile(dir=target.parent, delete=False) as handle:
                 temporary = Path(handle.name)
