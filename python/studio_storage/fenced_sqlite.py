@@ -24,16 +24,18 @@ from studio_orchestrator import (
     StoredExecutionEvent,
 )
 from studio_storage.sqlite import SqliteJobStore as _BaseSqliteJobStore
+from studio_storage.sqlite import open_database
 
 
 class SqliteJobStore:
     """SQLite JobStore with active-lease fencing for worker-originated mutations."""
 
     def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
+        self._path = path
         self._inner = _BaseSqliteJobStore(path, migration_now=migration_now)
 
     def _connect(self) -> sqlite3.Connection:
-        return self._inner._connect()
+        return open_database(self._path)
 
     @staticmethod
     def _active_attempt_row(
