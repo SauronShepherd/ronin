@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
+from studio_orchestrator.instants import Instant
 from studio_orchestrator.lifecycle import (
     AttemptId,
     AttemptState,
@@ -39,7 +40,10 @@ class StoredExecutionEvent:
     sequence: int
     kind: str
     message: str
-    occurred_at: str
+    occurred_at: Instant
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "occurred_at", Instant(self.occurred_at))
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,7 +54,10 @@ class StoredCellResult:
     execution_identity_digest: str
     state: str
     result_json: str
-    updated_at: str
+    updated_at: Instant
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "updated_at", Instant(self.updated_at))
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,7 +86,7 @@ class JobStore(Protocol):
         cursor: str | None,
     ) -> Page: ...
 
-    def request_cancel(self, job_id: JobId, *, now: str) -> Job: ...
+    def request_cancel(self, job_id: JobId, *, now: Instant) -> Job: ...
 
     def claim_next_run(
         self,
@@ -88,7 +95,7 @@ class JobStore(Protocol):
         lease_token: LeaseToken,
         attempt_id: AttemptId,
         lease_seconds: int,
-        now: str,
+        now: Instant,
     ) -> ClaimedRun | None: ...
 
     def heartbeat(
@@ -97,8 +104,8 @@ class JobStore(Protocol):
         *,
         owner: str,
         lease_token: LeaseToken,
-        expires_at: str,
-        now: str,
+        expires_at: Instant,
+        now: Instant,
     ) -> bool: ...
 
     def append_events(
@@ -130,10 +137,10 @@ class JobStore(Protocol):
         failure_code: str | None,
         owner: str,
         lease_token: LeaseToken,
-        now: str,
+        now: Instant,
     ) -> None: ...
 
-    def reclaim_expired(self, *, now: str) -> tuple[RunId, ...]: ...
+    def reclaim_expired(self, *, now: Instant) -> tuple[RunId, ...]: ...
 
 
 __all__ = [

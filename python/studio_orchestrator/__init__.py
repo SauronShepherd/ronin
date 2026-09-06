@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from studio_orchestrator.instants import Instant
 from studio_orchestrator.lifecycle import (
     Attempt,
     AttemptId,
@@ -38,6 +39,7 @@ __all__ = (
     "CellExecutionIdentity",
     "CellResumeRecord",
     "ClaimedRun",
+    "Instant",
     "InvalidTransition",
     "Job",
     "JobId",

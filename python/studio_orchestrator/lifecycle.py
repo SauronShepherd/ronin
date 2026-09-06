@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from enum import StrEnum
 
+from studio_orchestrator.instants import Instant
+
 
 class LifecycleError(ValueError):
     """Base error for invalid durable-lifecycle operations."""
@@ -28,6 +30,20 @@ def _require_text(name: str, value: str) -> str:
     if len(value) > 256:
         raise ValueError(f"{name} must be at most 256 characters")
     return value
+
+
+def _require_instant(name: str, value: Instant | str) -> Instant:
+    try:
+        return value if isinstance(value, Instant) else Instant(value)
+    except ValueError as exc:
+        raise ValueError(f"{name}: {exc}") from exc
+
+
+def _require_monotonic(name: str, value: Instant | str, floor: Instant) -> Instant:
+    instant = _require_instant(name, value)
+    if instant < floor:
+        raise ValueError(f"{name} must not move backwards")
+    return instant
 
 
 @dataclass(frozen=True, slots=True, order=True)
@@ -174,29 +190,38 @@ class RetryPolicy:
 class Lease:
     owner: str
     token: LeaseToken
-    acquired_at: str
-    expires_at: str
-    heartbeat_at: str
+    acquired_at: Instant
+    expires_at: Instant
+    heartbeat_at: Instant
 
     def __post_init__(self) -> None:
         _require_text("lease owner", self.owner)
-        _require_text("acquired_at", self.acquired_at)
-        _require_text("expires_at", self.expires_at)
-        _require_text("heartbeat_at", self.heartbeat_at)
+        acquired = _require_instant("acquired_at", self.acquired_at)
+        heartbeat = _require_instant("heartbeat_at", self.heartbeat_at)
+        expires = _require_instant("expires_at", self.expires_at)
+        if heartbeat < acquired:
+            raise ValueError("heartbeat_at must not precede acquired_at")
+        if expires <= heartbeat:
+            raise ValueError("expires_at must be after heartbeat_at")
+        object.__setattr__(self, "acquired_at", acquired)
+        object.__setattr__(self, "heartbeat_at", heartbeat)
+        object.__setattr__(self, "expires_at", expires)
 
     def renew(
         self,
         *,
         owner: str,
         token: LeaseToken,
-        expires_at: str,
-        now: str,
+        expires_at: Instant | str,
+        now: Instant | str,
     ) -> Lease:
         if owner != self.owner or token != self.token:
             raise LeaseLost("lease ownership no longer matches")
-        _require_text("expires_at", expires_at)
-        _require_text("now", now)
-        return replace(self, expires_at=expires_at, heartbeat_at=now)
+        heartbeat = _require_monotonic("now", now, self.heartbeat_at)
+        expiry = _require_instant("expires_at", expires_at)
+        if expiry <= heartbeat:
+            raise ValueError("expires_at must be after now")
+        return replace(self, expires_at=expiry, heartbeat_at=heartbeat)
 
 
 @dataclass(frozen=True, slots=True)
@@ -206,16 +231,18 @@ class Job:
     idempotency_key: str
     request_digest: str
     state: JobState
-    created_at: str
-    updated_at: str
+    created_at: Instant
+    updated_at: Instant
     failure_code: str | None = None
 
     def __post_init__(self) -> None:
         _require_text("project id", self.project_id)
         _require_text("idempotency key", self.idempotency_key)
         _require_text("request digest", self.request_digest)
-        _require_text("created_at", self.created_at)
-        _require_text("updated_at", self.updated_at)
+        created = _require_instant("created_at", self.created_at)
+        updated = _require_monotonic("updated_at", self.updated_at, created)
+        object.__setattr__(self, "created_at", created)
+        object.__setattr__(self, "updated_at", updated)
         if self.failure_code is not None:
             _require_text("failure code", self.failure_code)
 
@@ -223,15 +250,15 @@ class Job:
         self,
         target: JobState,
         *,
-        now: str,
+        now: Instant | str,
         failure_code: str | None = None,
     ) -> Job:
         if target not in _JOB_TRANSITIONS[self.state]:
             raise InvalidTransition(f"job {self.state.value} -> {target.value} is not legal")
-        _require_text("now", now)
+        instant = _require_monotonic("now", now, self.updated_at)
         if failure_code is not None:
             _require_text("failure code", failure_code)
-        return replace(self, state=target, updated_at=now, failure_code=failure_code)
+        return replace(self, state=target, updated_at=instant, failure_code=failure_code)
 
 
 @dataclass(frozen=True, slots=True)
@@ -240,22 +267,25 @@ class Run:
     job_id: JobId
     ordinal: int
     state: RunState
-    not_before: str
-    created_at: str
-    updated_at: str
+    not_before: Instant
+    created_at: Instant
+    updated_at: Instant
 
     def __post_init__(self) -> None:
         if self.ordinal < 1:
             raise ValueError("run ordinal must be positive")
-        _require_text("not_before", self.not_before)
-        _require_text("created_at", self.created_at)
-        _require_text("updated_at", self.updated_at)
+        not_before = _require_instant("not_before", self.not_before)
+        created = _require_instant("created_at", self.created_at)
+        updated = _require_monotonic("updated_at", self.updated_at, created)
+        object.__setattr__(self, "not_before", not_before)
+        object.__setattr__(self, "created_at", created)
+        object.__setattr__(self, "updated_at", updated)
 
-    def transition(self, target: RunState, *, now: str) -> Run:
+    def transition(self, target: RunState, *, now: Instant | str) -> Run:
         if target not in _RUN_TRANSITIONS[self.state]:
             raise InvalidTransition(f"run {self.state.value} -> {target.value} is not legal")
-        _require_text("now", now)
-        return replace(self, state=target, updated_at=now)
+        instant = _require_monotonic("now", now, self.updated_at)
+        return replace(self, state=target, updated_at=instant)
 
 
 @dataclass(frozen=True, slots=True)
@@ -265,15 +295,17 @@ class Attempt:
     ordinal: int
     state: AttemptState
     lease: Lease | None
-    created_at: str
-    updated_at: str
+    created_at: Instant
+    updated_at: Instant
     failure_code: str | None = None
 
     def __post_init__(self) -> None:
         if not 1 <= self.ordinal <= 10:
             raise AttemptLimitExceeded("attempt ordinal must be between 1 and 10")
-        _require_text("created_at", self.created_at)
-        _require_text("updated_at", self.updated_at)
+        created = _require_instant("created_at", self.created_at)
+        updated = _require_monotonic("updated_at", self.updated_at, created)
+        object.__setattr__(self, "created_at", created)
+        object.__setattr__(self, "updated_at", updated)
         if self.failure_code is not None:
             _require_text("failure code", self.failure_code)
 
@@ -281,19 +313,19 @@ class Attempt:
         self,
         target: AttemptState,
         *,
-        now: str,
+        now: Instant | str,
         failure_code: str | None = None,
     ) -> Attempt:
         if target not in _ATTEMPT_TRANSITIONS[self.state]:
             raise InvalidTransition(f"attempt {self.state.value} -> {target.value} is not legal")
-        _require_text("now", now)
+        instant = _require_monotonic("now", now, self.updated_at)
         if failure_code is not None:
             _require_text("failure code", failure_code)
         lease = None if target.terminal else self.lease
         return replace(
             self,
             state=target,
-            updated_at=now,
+            updated_at=instant,
             failure_code=failure_code,
             lease=lease,
         )
