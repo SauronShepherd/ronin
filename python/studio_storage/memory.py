@@ -122,13 +122,13 @@ class InMemoryJobStore:
                     if run.state is RunState.PENDING:
                         self._runs[run_id] = run.transition(RunState.CANCELLED, now=now)
                     else:
-                        cancelling = run.transition(RunState.CANCELLING, now=now)
-                        self._runs[run_id] = cancelling.transition(RunState.CANCELLED, now=now)
+                        cancelling_run = run.transition(RunState.CANCELLING, now=now)
+                        self._runs[run_id] = cancelling_run.transition(RunState.CANCELLED, now=now)
             if job.state is JobState.QUEUED:
                 updated = job.transition(JobState.CANCELLED, now=now)
             else:
-                cancelling = job.transition(JobState.CANCELLING, now=now)
-                updated = cancelling.transition(JobState.CANCELLED, now=now)
+                cancelling_job = job.transition(JobState.CANCELLING, now=now)
+                updated = cancelling_job.transition(JobState.CANCELLED, now=now)
             self._jobs[job_id] = updated
             return updated
 
