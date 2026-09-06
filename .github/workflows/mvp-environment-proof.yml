@@ -1,0 +1,69 @@
+name: MVP environment proof
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mvp-environment-proof.yml"
+      - ".dockerignore"
+      - "compose.probe.yaml"
+      - "docker/Dockerfile.probe"
+      - "docker/bootstrap_server.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mvp-environment-proof-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Resolve host Docker environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "RONIN_HOST_WORKSPACE=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+          echo "DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)" >> "$GITHUB_ENV"
+          echo "RONIN_PROBE_IMAGE=ronin-probe:$GITHUB_SHA" >> "$GITHUB_ENV"
+      - name: Build probe image
+        run: docker build --file docker/Dockerfile.probe --tag "ronin-probe:$GITHUB_SHA" .
+      - name: Validate Compose graph
+        run: docker compose -f compose.probe.yaml config --quiet
+      - name: Start probe services
+        run: docker compose -f compose.probe.yaml up -d --wait --wait-timeout 60
+      - name: Prove Docker socket supplementary group
+        run: docker compose -f compose.probe.yaml exec -T worker docker ps >/dev/null
+      - name: Prove read-only cross-uid Git workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(docker compose -f compose.probe.yaml exec -T worker git --no-optional-locks -C "$RONIN_HOST_WORKSPACE" rev-parse HEAD | tr -d '\r')"
+          test "$actual" = "$GITHUB_SHA"
+          docker compose -f compose.probe.yaml exec -T worker git --no-optional-locks -C "$RONIN_HOST_WORKSPACE" status --porcelain=v1 --untracked-files=all >/dev/null
+      - name: Prove sibling container launch
+        run: docker compose -f compose.probe.yaml exec -T worker docker run --rm --network none python:3.11-slim-bookworm python -c "print('ok')"
+      - name: Prove health dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(docker inspect --format='{{.State.Health.Status}}' ronin-probe-server-1)" = healthy
+          test "$(docker inspect --format='{{.HostConfig.RestartPolicy.Name}}' ronin-probe-worker-1)" = no
+      - name: Capture diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          docker compose -f compose.probe.yaml ps -a || true
+          docker compose -f compose.probe.yaml logs --no-color || true
+          docker info || true
+      - name: Teardown and assert cleanup
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f compose.probe.yaml down -v --remove-orphans
+          test -z "$(docker ps -aq --filter name=ronin-probe-)"
