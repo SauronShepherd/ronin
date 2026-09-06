@@ -1,0 +1,121 @@
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+import shutil
+from pathlib import Path
+
+import pytest
+from studio_orchestrator import (
+    AttemptId,
+    Instant,
+    Job,
+    JobId,
+    JobState,
+    LeaseToken,
+    Run,
+    RunId,
+    RunState,
+)
+from studio_runners import ContainerExecutionLimits
+from studio_storage import SqliteJobStore
+from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
+
+if os.environ.get("RONIN_REAL_DOCKER_QUALIFICATION") != "1":
+    pytest.skip(
+        "real Docker qualification runs only in the dedicated CI job",
+        allow_module_level=True,
+    )
+
+_IMAGE = os.environ["RONIN_DOCKER_QUALIFICATION_IMAGE"]
+_DOCKER = shutil.which("docker")
+if _DOCKER is None:
+    raise RuntimeError("dedicated Docker qualification requires the docker client")
+
+_NOW = Instant("2026-09-06T20:00:00.000000Z")
+
+
+def _seed(config: LocalWorkerRuntimeConfig) -> None:
+    store = SqliteJobStore(config.database_path, migration_now=_NOW)
+    store.create_job(
+        Job(
+            id=JobId("job-real-demo"),
+            project_id="examples/demo",
+            idempotency_key="real-demo-key",
+            request_digest="b" * 64,
+            state=JobState.QUEUED,
+            created_at=_NOW,
+            updated_at=_NOW,
+            target="notebooks/etl.ronin.json",
+            parameters_json='{"mode":"qualification"}',
+        ),
+        Run(
+            id=RunId("run-real-demo"),
+            job_id=JobId("job-real-demo"),
+            ordinal=1,
+            state=RunState.PENDING,
+            not_before=_NOW,
+            created_at=_NOW,
+            updated_at=_NOW,
+        ),
+    )
+
+
+def _log_outputs(root: Path) -> tuple[str, ...]:
+    outputs: list[str] = []
+    for path in sorted(root.glob("*/*/log.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        outputs.append(str(payload["output"]).strip())
+    return tuple(outputs)
+
+
+def test_real_docker_worker_executes_clean_container_demo(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        config = LocalWorkerRuntimeConfig(
+            paths=WorkerPaths(Path.cwd(), tmp_path),
+            owner="worker-real-demo",
+            image=_IMAGE,
+            limits=ContainerExecutionLimits(
+                cpus="0.5",
+                memory="128m",
+                pids=32,
+                timeout_seconds=10.0,
+            ),
+            heartbeat_interval_seconds=10.0,
+        )
+        _seed(config)
+
+        async with LocalWorkerRuntime(
+            config,
+            migration_now=_NOW,
+            engine_path=_DOCKER,
+            now=lambda: _NOW,
+        ) as runtime:
+            outcome = await runtime.run_once(
+                attempt_id=AttemptId("attempt-real-demo-1"),
+                lease_token=LeaseToken("lease-real-demo-1"),
+            )
+
+        assert outcome.execution is not None
+        assert outcome.execution.state.value == "succeeded"
+        assert len(outcome.execution.executed_cell_ids) == 5
+        assert outcome.execution.reused_cell_ids == ()
+
+        store = SqliteJobStore(config.database_path, migration_now=_NOW)
+        job = store.get_job(JobId("job-real-demo"))
+        assert job is not None
+        assert job.state is JobState.SUCCEEDED
+        assert len(store.read_cell_results(RunId("run-real-demo"))) == 5
+
+        outputs = _log_outputs(config.execution_evidence_root)
+        assert len(outputs) == 5
+        assert any("extracted 100 customers" in output for output in outputs)
+        assert any("extracted 500 orders" in output for output in outputs)
+        assert any("quality checks passed" in output for output in outputs)
+        publish = next(output for output in outputs if '"dataset": "revenue_by_region"' in output)
+        published = json.loads(publish)
+        assert published["rows"] == 2
+        assert published["totals"] == {"eu": 187500, "us": 186750}
+
+    asyncio.run(scenario())

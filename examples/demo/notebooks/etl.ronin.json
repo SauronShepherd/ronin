@@ -22,7 +22,7 @@
       },
       "kind": "code",
       "language": "python",
-      "source": "import json, pathlib\nrows = [{\"id\": i, \"region\": \"eu\" if i % 2 else \"us\"} for i in range(100)]\npathlib.Path('/tmp/customers.json').write_text(json.dumps(rows))\nprint(f'extracted {len(rows)} customers')"
+      "source": "rows = [{'id': i, 'region': 'eu' if i % 2 else 'us'} for i in range(100)]\nprint(f'extracted {len(rows)} customers')"
     },
     {
       "dependencies": [],
@@ -34,7 +34,7 @@
       },
       "kind": "code",
       "language": "python",
-      "source": "import json, pathlib\nrows = [{\"id\": i, \"customer_id\": i % 100, \"amount\": i * 3} for i in range(500)]\npathlib.Path('/tmp/orders.json').write_text(json.dumps(rows))\nprint(f'extracted {len(rows)} orders')"
+      "source": "rows = [{'id': i, 'customer_id': i % 100, 'amount': i * 3} for i in range(500)]\nprint(f'extracted {len(rows)} orders')"
     },
     {
       "dependencies": [
@@ -49,7 +49,7 @@
       },
       "kind": "code",
       "language": "python",
-      "source": "import json, pathlib\ncustomers = {c['id']: c for c in json.loads(pathlib.Path('/tmp/customers.json').read_text())}\norders = json.loads(pathlib.Path('/tmp/orders.json').read_text())\ntotals = {}\nfor o in orders:\n    region = customers[o['customer_id']]['region']\n    totals[region] = totals.get(region, 0) + o['amount']\npathlib.Path('/tmp/totals.json').write_text(json.dumps(totals))\nprint(totals)"
+      "source": "customers = {i: {'id': i, 'region': 'eu' if i % 2 else 'us'} for i in range(100)}\norders = [{'id': i, 'customer_id': i % 100, 'amount': i * 3} for i in range(500)]\ntotals = {}\nfor order in orders:\n    region = customers[order['customer_id']]['region']\n    totals[region] = totals.get(region, 0) + order['amount']\nprint(totals)"
     },
     {
       "dependencies": [
@@ -63,7 +63,7 @@
       },
       "kind": "code",
       "language": "python",
-      "source": "import json, pathlib\ntotals = json.loads(pathlib.Path('/tmp/totals.json').read_text())\nassert set(totals) == {'eu', 'us'}, totals\nassert all(v > 0 for v in totals.values()), totals\nprint('quality checks passed')"
+      "source": "customers = {i: {'id': i, 'region': 'eu' if i % 2 else 'us'} for i in range(100)}\norders = [{'id': i, 'customer_id': i % 100, 'amount': i * 3} for i in range(500)]\ntotals = {}\nfor order in orders:\n    region = customers[order['customer_id']]['region']\n    totals[region] = totals.get(region, 0) + order['amount']\nassert set(totals) == {'eu', 'us'}, totals\nassert all(value > 0 for value in totals.values()), totals\nprint('quality checks passed')"
     },
     {
       "dependencies": [
@@ -77,7 +77,7 @@
       },
       "kind": "code",
       "language": "python",
-      "source": "import json, pathlib\ntotals = json.loads(pathlib.Path('/tmp/totals.json').read_text())\nprint(json.dumps({'dataset': 'revenue_by_region', 'rows': len(totals), 'totals': totals}))"
+      "source": "import json\ncustomers = {i: {'id': i, 'region': 'eu' if i % 2 else 'us'} for i in range(100)}\norders = [{'id': i, 'customer_id': i % 100, 'amount': i * 3} for i in range(500)]\ntotals = {}\nfor order in orders:\n    region = customers[order['customer_id']]['region']\n    totals[region] = totals.get(region, 0) + order['amount']\nprint(json.dumps({'dataset': 'revenue_by_region', 'rows': len(totals), 'totals': totals}, sort_keys=True))"
     }
   ],
   "schema": "ronin.notebook/v1"

@@ -6,7 +6,12 @@ on:
       - "docker/**"
       - "python/studio_runners/**"
       - "python/studio_kernel/**"
+      - "python/studio_worker/**"
+      - "python/studio_server/**"
+      - "python/studio_storage/**"
+      - "examples/demo/**"
       - "tests/integration/test_docker_container_executor_real.py"
+      - "tests/integration/test_worker_runtime_real.py"
       - "requirements-dev.lock"
       - "pyproject.toml"
       - ".github/workflows/docker-qualification.yml"
@@ -54,7 +59,9 @@ jobs:
           RONIN_DOCKER_QUALIFICATION_EVIDENCE: artifacts/docker-qualification
         run: |
           mkdir -p artifacts/docker-qualification
-          python -m pytest -o addopts= -q tests/integration/test_docker_container_executor_real.py
+          python -m pytest -o addopts= -q \
+            tests/integration/test_docker_container_executor_real.py \
+            tests/integration/test_worker_runtime_real.py
       - name: Print qualification evidence
         if: always()
         run: |
