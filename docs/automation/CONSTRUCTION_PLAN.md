@@ -1,115 +1,139 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-05. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-06. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
-The v0.1 plan is eight weeks. Each week has one objective, an explicit pull-request sequence, measurable exit criteria, and a pre-decided cut line. Work outside the frozen v0.1 scope does not enter these weeks.
+The v0.1 plan remains eight weeks, but execution is now ahead of the original calendar in the durable-execution spine. Planning therefore uses capability order rather than waiting for nominal week boundaries. Each autonomous run still selects at most one coherent slice, revalidates against current `main`, and preserves all release gates.
 
 **Release-acceptance invariant.** Ordinary PR/main CI may run the frozen journey as explicitly named non-blocking progress telemetry while capabilities are still landing. A release/tag publication gate is different: it must verify the exact fifteen frozen required step names and fail closed if any step is skipped, xfailed, failed, errored, deselected/missing, renamed/unexpected, duplicated, or otherwise not executed. Machine-readable live/passed/skipped/xfail/missing counts are evidence; a normal pytest exit code alone is not release acceptance evidence.
 
-## Week 1 — 7–13 September: close review defects and prepare durable-execution contracts
+## Current position on 2026-09-06
 
-**Objective.** Remove the known trust/performance defects that would contaminate durable orchestration, while landing the package/gate/quality scaffolding needed for E2 work.
+The repository has already landed most of the original Week-2 storage foundation plus the first Week-3 lease-control composition slice:
 
-**Pull requests.** Execute PR-01 through PR-12 from `BACKLOG.md`: cancellation terminal evidence; runner reap/truncation; Docker limits; isolation qualification default; quality perimeter; tier gates/lock; runtime redaction/version comparison; architecture `os` closure; core performance indexes; async event sink; T1 properties; SDK resilience. P1 trust corrections that prevent false release evidence may land additively without reordering this product queue.
+- pure Job -> Run -> Attempt lifecycle and canonical `Instant` semantics;
+- in-memory and SQLite `JobStore` adapters with shared conformance/fencing tests;
+- immutable per-cell resume identity and artifact verification contracts;
+- bounded async `JobStore` composition;
+- `DurableExecutionService` for submit/status/cancel plus worker reclaim/claim/heartbeat.
 
-**Exit criteria.** All twelve Week-1 proving tests pass or the corresponding issue is explicitly carried with a documented blocker; `make check` is green from the hash-locked environment; no open P0 defect is unowned; no CI check named or treated as strict v0.1 E2E acceptance can be green while required steps are skipped.
+The next irreducible capability is therefore durable per-cell worker execution and resume. HTTP, CLI and packaging are adjacent integration surfaces, but autonomous execution remains serial: they are not to be opened in parallel merely because they are technically independent.
 
-**Cut line.** Friday 18 September: if `JobStore` fails its contract suite, fix `RetryPolicy.max_runs = 1`; retries are out of v0.1.
+## Phase A — completed foundation
 
-## Week 2 — 14–20 September: transactional Job → Run → Attempt storage
+**Objective.** Establish deterministic core/project/runtime/operator/diagnostic/notebook/kernel contracts, quality/architecture gates, durable lifecycle semantics and storage adapters.
 
-**Objective.** Define the pure lifecycle/state-machine and prove a SQLite adapter against it.
+**Status.** Complete on current `main` for the MVP-critical foundation. Historical details remain in `docs/automation/PROGRESS.md`.
 
-**Pull requests.** Add pure lifecycle IDs/states/transitions and `JobStore` protocol in `studio_orchestrator`; add SQLite schema/migrations, WAL/FULL/foreign-key/busy-timeout setup, idempotency uniqueness and store conformance suite in `studio_storage`; add cursor-safe storage queries needed by the future API.
+## Phase B — durable worker execution and resume
 
-**Exit criteria.** Transactional create/read/update, idempotency and unique `(attempt_id, sequence)` behavior are proven under concurrent access; no clock/random/database I/O enters pure packages; migration tests pass from an empty database.
+**Objective.** Execute one durable local Run through worker claim, heartbeat, per-cell persistence, lease expiry, replacement Attempt and record-level resume.
 
-**Cut line.** The 18 September retry cut above applies automatically if the store contract is not green.
+**Next pull-request sequence.**
 
-## Week 3 — 21–27 September: worker leases, crash reclamation and per-cell resume
+1. Add the worker execution loop over `DurableExecutionService` and existing runner/kernel/artifact capabilities.
+2. Persist cell result/evidence before starting the next cell.
+3. Reuse only cells whose immutable `CellExecutionIdentity` matches and whose referenced artifacts still exist with matching digests.
+4. Poll cancellation between cells.
+5. Treat heartbeat ownership loss as terminal for that worker's execution path: cancel active work and do not complete the Attempt.
+6. Add crash/replacement integration evidence proving the replacement Attempt resumes at the first non-reusable cell.
 
-**Objective.** Execute one durable local run through worker claim, heartbeat, lease expiry, attempt replacement and record-level resume.
+**Exit criteria.** A kill/restart test proves that completed reusable cells are not replayed; terminal state remains unique/monotonic; lost leases cannot continue writing; heartbeat tasks are always cancelled/awaited; no residual execution container remains after cancellation/failure.
 
-**Pull requests.** Add lease/heartbeat/reclaim transitions; worker loop; durable cell-result persistence; resume selection from succeeded cell records; crash/restart integration test with the demo notebook and real Docker qualification boundary.
+**Cut line.** Sunday 27 September remains the planning checkpoint. A prerelease may document whole-run replay as a limitation if resume is not ready, but final v0.1 remains governed by the frozen acceptance contract unless product scope is explicitly revised.
 
-**Exit criteria.** Kill/restart test proves a new attempt resumes at cell 4 without re-running cells 1–3; terminal state is unique/monotonic; no residual container remains after cancellation/failure.
+## Phase C — bounded HTTP control plane and SDK contract
 
-**Cut line.** Sunday 27 September: if local end-to-end does not resume, v0.1 re-runs the whole run after a crash and documents that limitation.
+**Objective.** Make durable jobs remotely controllable through one bounded authenticated API whose executable OpenAPI contract matches `pyronin`.
 
-## Week 4 — 28 September–4 October: HTTP control plane and SDK contract
+**Pull requests.** Add the frozen `/v1/jobs` submit/status/list/cancel/events/evidence surface over `DurableExecutionService`; add bearer-token authorization; define/verify dense Run-global event numbering across attempts; add OpenAPI golden/route coverage tests; align `pyronin` schemas/errors/retry behavior.
 
-**Objective.** Make durable jobs remotely controllable through one bounded authenticated API whose OpenAPI contract matches `pyronin`.
+**Framework decision.** Framework choice is an implementation detail, not a domain decision. A standard-library HTTP server is acceptable if it satisfies the same route/auth/OpenAPI/SDK/error/qualification contract; a pinned FastAPI/Pydantic stack is also acceptable if dependency-lock, typing, architecture and image costs remain justified. In either case, framework/model types stay outside canonical domain packages.
 
-**Pull requests.** Add exact-pinned FastAPI/uvicorn/pydantic in `studio_server`; bearer-token scope model; `/v1/jobs` submit/status/list/cancel/events/evidence endpoints; OpenAPI golden/contract tests; align `pyronin` schemas/errors/retry behavior.
+**Exit criteria.** Acceptance steps for submit/status/idempotency/logs/evidence/cancel/SDK are live against the real server; every documented route is exercised by tests; bounded request latency and secure token transport defaults are qualified; the API never calls synchronous durable storage directly from an event-loop thread.
 
-**Exit criteria.** Acceptance steps 5 and 10–15 are live against the real server; bounded request/response/error behavior and secure token transport defaults are tested; SDK contract tests consume generated OpenAPI.
+**Cut line.** Sunday 4 October: cut optional pagination breadth first. Do not silently delete frozen acceptance behavior without an explicit product-scope decision.
 
-**Cut line.** Sunday 4 October: if HTTP is not green, drop cursor pagination, `/evidence`, and scopes; keep one token and the core job endpoints.
-
-## Week 5 — 5–11 October: CLI and local Git revision capture
+## Phase D — CLI and local Git revision capture
 
 **Objective.** Expose the supported local workflow through `ronin` and bind execution to a reproducible local checkout revision.
 
-**Pull requests.** Add `studio_vcs` commit + dirty digest capture; add CLI composition and `serve`, `worker`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, `cancel`, `doctor`; enable the console entry point; document per-cell record-level resume limitations.
+**Pull requests.** Complete Git revision/dirty identity qualification, including executable-bit correctness; implement `studio_cli:main`; add `serve`, `worker`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, `cancel`, `doctor`; enable the console entry point only after the symbol and commands are tested.
 
-**Exit criteria.** Acceptance steps 2–4 and CLI portions of 5, 10–14 are live; Git qualification covers detached HEAD, ref movement, dirty digest, path safety and credential exclusion.
+**Exit criteria.** Acceptance steps 2–4 and CLI portions of the job journey are live; Git qualification covers detached HEAD, ref movement, dirty digest, executable-bit changes, path safety and credential exclusion.
 
-**Cut line.** Sunday 11 October: if CLI is not green, ship server + SDK + `serve`/`worker`/`doctor` only.
+**Cut line.** Sunday 11 October: a prerelease may reduce CLI breadth, but final v0.1 remains governed by `V01_SCOPE.md` unless scope is explicitly revised.
 
-## Week 6 — 12–18 October: packaging, image, Compose and zero-to-demo quickstart
+## Phase E — production image, Compose and zero-to-demo quickstart
 
 **Objective.** Deliver one reproducible OCI image and a documented local startup path that reaches the demo journey from zero.
 
-**Pull requests.** Add production Dockerfile, image healthcheck, Compose topology, immutable base-image identity, clean-room install smoke, quickstart and release artifact provenance inputs.
+**Pull requests.** Promote the proven probe-image assumptions into the production Dockerfile; build/install Ronin and `pyronin`; run non-root; preserve Docker socket GID handling and read-only workspace identity; add durable data volume, server health dependency, worker topology, immutable base-image identity, clean-room install smoke and quickstart.
 
-**Exit criteria.** `docker compose up -d` is healthy under 60 seconds; quickstart completes under ten minutes on a clean host; image runs server and worker without privileged web/control-plane Docker access.
+**Exit criteria.** `docker compose up -d` is healthy under the product budget; quickstart completes on a clean host; image runs server and worker without privileged web/control-plane Docker access; crash-acceptance worker uses explicit `restart: "no"`.
 
-**Cut line.** Friday 16 October: if packaging is not green, ship Dockerfile only, no Compose, and document `docker run`.
+**Cut line.** Friday 16 October: a prerelease may document `docker run`; final v0.1 still requires the frozen packaging acceptance behavior unless scope is explicitly revised.
 
-## Week 7 — 19–25 October: acceptance, security, performance and buffer
+## Phase F — incremental acceptance activation
 
-**Objective.** Turn every remaining skipped acceptance step green and qualify release budgets/trust properties.
+**Objective.** Turn skips live as soon as their dependencies exist instead of waiting for one large end-stage change.
 
-**Pull requests.** Activate all e2e steps; add non-functional budget tests; security/secret/vulnerability/license qualification; release provenance/SBOM; targeted chaos/recovery tests only after the acceptance journey is green.
+**Activation order.**
 
-**Exit criteria.** Fifteen acceptance steps execute and pass under the strict release gate; p95/event/health/RSS/`make check` budgets meet `V01_SCOPE.md`; no known secret or vulnerability ships; exact-head release evidence is reproducible.
+1. Compose health after Phase E.
+2. `doctor`, `validate`, `plan` after Phase D.
+3. submit/status/idempotency/SDK after Phase C.
+4. logs/evidence after run-global event ordering and portable evidence references are real.
+5. execute/crash/reclaim/resume after Phase B.
+6. cancel cleanup after worker cancellation/container cleanup are qualified.
 
-**Cut line.** Monday 19 October: any earlier slippage consumes Week 7 as buffer. Ship without chaos tests if necessary, never without the acceptance journey.
+**Exit criteria.** The progress workflow reports increasing live counts without redefining step names. The strict release gate ultimately reports all fifteen required steps live and passed with zero skipped/xfail/failed/error/missing/unexpected outcomes.
 
-## Week 8 — 26 October–1 November: release candidate and v0.1.0
+## Phase G — non-functional and release qualification
 
-**Objective.** Stabilize only: documentation, clean-room verification, compatibility checks, release notes, immutable release publication.
+**Objective.** Qualify the exact implementation against the product budgets and trust requirements rather than inferring readiness from unit tests.
 
-**Pull requests.** Fix release-blocking defects only; finalize quickstart/limitations/security docs; verify Python 3.11/3.12 and supported Docker path; tag and publish v0.1.0 only after the strict acceptance gate and all other release gates are green.
+**Pull requests.** Complete #125 with real runtime call-site contention tests; qualify p95 HTTP and storage budgets, lease/heartbeat/reclaim behavior, compose health, RSS and full `make check`; run security/secret/vulnerability/license qualification; verify deterministic demo/evidence output and targeted recovery cases.
 
-**Exit criteria.** Clean hash-locked `make check`; strict acceptance evidence reports all fifteen required steps live and passed with zero skipped/xfail/failed/error/missing/unexpected outcomes; demo regenerates byte-for-byte; release artifacts have immutable provenance; `main` and release-tag protection is active or the governing release policy explicitly records a later decision; no P0/P1 release blocker remains.
+**Exit criteria.** All product budgets in `V01_SCOPE.md` are evidenced on exact SHAs; no known secret or vulnerability ships; no release gate is weakened to achieve green.
 
-**Cut line.** No feature substitution. Defer optional surfaces rather than weakening trust, reproducibility, acceptance, or security gates.
+## Phase H — release candidate and v0.1.0
 
-## Pre-decided automatic cuts
+**Objective.** Stabilize only: documentation, clean-room verification, compatibility checks, release notes and immutable publication.
 
-| Trigger | Automatic cut |
+**Pull requests.** Fix release-blocking defects only; finalize quickstart/limitations/security docs; verify Python 3.11/3.12 and supported Docker path; synchronize package/version metadata; ensure the tested image is the image published; enable required `main`/tag protections or record the governing exception; tag and publish only after strict acceptance and every other release gate is green.
+
+**Exit criteria.** Clean hash-locked `make check`; all fifteen required acceptance steps execute and pass; demo regenerates deterministically; release artifacts have immutable provenance; zero Builder-owned PRs remain open at tagging time; no P0/P1 release blocker remains.
+
+**Cut line.** No feature substitution. Defer optional surfaces rather than weakening trust, reproducibility, durability, acceptance or security gates.
+
+## Current critical path
+
+The current ordering is:
+
+1. durable per-cell worker execution + resume;
+2. real-runtime bounded-contention qualification as call sites become concrete;
+3. HTTP/OpenAPI/SDK;
+4. CLI/Git qualification;
+5. production image/Compose;
+6. portable evidence representation where still unresolved;
+7. incremental completion of the fifteen-step acceptance journey;
+8. full non-functional/security/release qualification and publication.
+
+This ordering supersedes stale backlog entries that still treated lease-control composition as pending. It does not authorize parallel Builder PRs: each autonomous run must finish/reconcile its own prior work before selecting the next slice.
+
+## Pre-decided calendar checkpoints
+
+| Trigger | Planning response |
 |---|---|
-| Fri 18 Sep: `JobStore` fails its contract suite | `RetryPolicy.max_runs = 1` fixed. No retries in v0.1. |
-| Sun 27 Sep: local end-to-end does not resume | v0.1 re-runs the whole run after a crash. Documented limitation. |
-| Sun 4 Oct: HTTP not green | Drop cursor pagination, `/evidence`, and scopes. Single token. |
-| Sun 11 Oct: CLI not green | Ship server + SDK + `serve`/`worker`/`doctor` only. |
-| Fri 16 Oct: packaging not green | Dockerfile only, no Compose. Document `docker run`. |
-| Mon 19 Oct: anything behind | Week 7 is consumed as buffer. Ship without chaos tests, never without the acceptance journey. |
+| Fri 18 Sep: `JobStore` contract regresses | Freeze retries at one Run and fix storage before adding surfaces. |
+| Sun 27 Sep: local end-to-end does not resume | Prerelease may document whole-run replay; final v0.1 scope remains unchanged unless explicitly revised. |
+| Sun 4 Oct: HTTP not green | Cut optional pagination breadth before required job-control behavior. |
+| Sun 11 Oct: CLI not green | Cut optional CLI breadth in prerelease before weakening core server/worker behavior. |
+| Fri 16 Oct: packaging not green | Use `docker run` for prerelease if necessary; do not misrepresent final v0.1 acceptance. |
+| Mon 19 Oct: anything behind | Consume buffer and cut optional chaos breadth first. |
 
-**Never cut:** the fifteen-step acceptance journey, a green `make check`, and shipping with no known secrets or vulnerabilities. Progress telemetry never substitutes for strict release acceptance.
+**Never cut without an explicit product-scope revision:** the final fifteen-step v0.1 acceptance journey, a green `make check`, durability/trust invariants, or shipping with known secrets/vulnerabilities.
 
 ## Post-v0.1 horizon, not scheduled
 
-The former E3–E10 roadmap remains a product horizon only and is intentionally unscheduled until v0.1 is tagged.
-
-- **E3 — Data engineering:** ingestion/connectors, codegen/source maps, pipelines, SQL, lakehouse, Git collaboration.
-- **E4 — Streaming and reliability:** streaming runtimes, checkpoints, data quality/observability and SLAs/SLOs.
-- **E5 — Catalog/governance/semantic BI:** catalog, lineage, glossary/ontology, policy/search, semantic models, metrics and reporting.
-- **E6 — Data science/MLOps:** experiments, features, AutoML/HPO, registry, serving, monitoring and distributed training.
-- **E7 — GenAI/RAG:** AI gateway, prompt/version/evaluation systems, retrieval/indexing, safety and token/cost evidence.
-- **E8 — Agents:** `AgentRuntime` SPI, tools, scoped permissions, approvals, durable replay/resume, evaluation and multi-agent graphs.
-- **E9 — Enterprise operations:** HA/DR, multi-tenancy, compliance, advanced FinOps, Kubernetes scale and air-gap qualification.
-- **E10 — Ecosystem/maturity:** stable APIs/SDKs, plugins, compatibility matrix, reproducible releases, governance and benchmark-led optimization.
-
-These are frozen by `BACKLOG.md`; autonomous work must not select them before v0.1 ships.
+E3–E10 remain frozen until v0.1 ships: data engineering, streaming/reliability, catalog/governance/BI, data science/MLOps, GenAI/RAG, agents, enterprise operations and ecosystem/maturity work are not eligible autonomous slices before the v0.1 release.
