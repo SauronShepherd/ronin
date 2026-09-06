@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Barrier
 
 import pytest
 from studio_orchestrator import (
@@ -242,6 +244,51 @@ def test_attempt_event_sequences_are_per_attempt_and_run_read_is_ordered(store) 
     ]
     assert all(isinstance(event.occurred_at, Instant) for event in events)
     assert store.read_events(RunId("run-1"), since=2) == (events[2],)
+
+
+def test_concurrent_duplicate_event_sequence_has_exactly_one_winner(store) -> None:
+    store.create_job(_job(), _run())
+    claim = store.claim_next_run(
+        owner="worker-1",
+        lease_token=LeaseToken("lease-1"),
+        attempt_id=AttemptId("attempt-1"),
+        lease_seconds=30,
+        now=NOW,
+    )
+    assert claim is not None
+
+    writers = 8
+    ready = Barrier(writers)
+
+    def append(index: int) -> str:
+        ready.wait()
+        try:
+            store.append_events(
+                claim.attempt_id,
+                (
+                    StoredExecutionEvent(
+                        claim.attempt_id,
+                        0,
+                        "attempt.raced",
+                        f"writer-{index}",
+                        HEARTBEAT,
+                    ),
+                ),
+            )
+        except ValueError as exc:
+            assert "contiguous" in str(exc)
+            return "rejected"
+        return "accepted"
+
+    with ThreadPoolExecutor(max_workers=writers) as executor:
+        outcomes = list(executor.map(append, range(writers)))
+
+    assert outcomes.count("accepted") == 1
+    assert outcomes.count("rejected") == writers - 1
+    events = store.read_events(RunId("run-1"), since=0)
+    assert len(events) == 1
+    assert events[0].attempt_id == claim.attempt_id
+    assert events[0].sequence == 0
 
 
 def test_cell_results_evidence_and_terminal_completion(store) -> None:
