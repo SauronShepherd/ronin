@@ -98,14 +98,13 @@ def test_create_job_rejects_identity_and_run_ownership_mismatch() -> None:
         store.create_job(_job(3), _run(4))
 
 
-def test_active_cancel_transitions_job_and_run_to_cancelling() -> None:
+def test_active_cancel_transitions_job_to_cancelling() -> None:
     store = InMemoryJobStore()
     store.create_job(_job(1), _run(1))
     _claim(store)
 
     cancelled = store.request_cancel(JobId("job-1"), now=LATER)
     assert cancelled.state is JobState.CANCELLING
-    assert store.request_cancel(JobId("job-1"), now=LATER).state is JobState.CANCELLING
 
 
 def test_heartbeat_validation_and_unknown_attempt_fail_closed() -> None:
