@@ -149,9 +149,7 @@ def test_identity_chain_invalidates_all_downstream_dependents(
 
     assert original[0].digest != changed[0].digest
     assert original[1].digest == changed[1].digest
-    assert tuple(item.digest for item in original[2:]) != tuple(
-        item.digest for item in changed[2:]
-    )
+    assert tuple(item.digest for item in original[2:]) != tuple(item.digest for item in changed[2:])
     assert changed[2].upstream_result_digests[0] == changed[0].digest
     assert changed[3].upstream_result_digests == (changed[2].digest,)
     assert changed[4].upstream_result_digests == (changed[3].digest,)
