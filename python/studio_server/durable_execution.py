@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from studio_orchestrator import (
     AttemptId,
+    AttemptState,
     ClaimedRun,
     Instant,
     Job,
@@ -14,6 +16,9 @@ from studio_orchestrator import (
     LeaseToken,
     Run,
     RunId,
+    StoredCellResult,
+    StoredEvidenceRef,
+    StoredExecutionEvent,
 )
 from studio_storage import BoundedAsyncJobStore
 
@@ -86,13 +91,7 @@ class DurableExecutionService:
         lease_seconds: int,
         now: Instant,
     ) -> WorkerPollResult:
-        """Reclaim expired leases, then attempt one claim.
-
-        Reclamation and claim remain separate ``JobStore`` operations so their
-        existing transaction/fencing semantics stay authoritative. Backpressure is
-        propagated to the caller; this method never spins or bypasses the bounded
-        facade.
-        """
+        """Reclaim expired leases, then attempt one claim."""
 
         reclaimed = await self._store.reclaim_expired(now=now)
         claim = await self._store.claim_next_run(
@@ -120,6 +119,84 @@ class DurableExecutionService:
             owner=owner,
             lease_token=lease_token,
             expires_at=expires_at,
+            now=now,
+        )
+
+    async def worker_append_events(
+        self,
+        attempt_id: AttemptId,
+        events: Sequence[StoredExecutionEvent],
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant,
+    ) -> None:
+        """Persist attempt events only while the caller owns a live lease."""
+
+        await self._store.append_events(
+            attempt_id,
+            events,
+            owner=owner,
+            lease_token=lease_token,
+            now=now,
+        )
+
+    async def worker_put_cell_result(
+        self,
+        attempt_id: AttemptId,
+        result: StoredCellResult,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant,
+    ) -> None:
+        """Persist one reusable cell result behind lease fencing."""
+
+        await self._store.put_cell_result(
+            attempt_id,
+            result,
+            owner=owner,
+            lease_token=lease_token,
+            now=now,
+        )
+
+    async def worker_put_evidence(
+        self,
+        attempt_id: AttemptId,
+        ref: StoredEvidenceRef,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant,
+    ) -> None:
+        """Persist one durable evidence reference behind lease fencing."""
+
+        await self._store.put_evidence(
+            attempt_id,
+            ref,
+            owner=owner,
+            lease_token=lease_token,
+            now=now,
+        )
+
+    async def worker_complete_attempt(
+        self,
+        attempt_id: AttemptId,
+        *,
+        state: AttemptState,
+        failure_code: str | None,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant,
+    ) -> None:
+        """Terminalize only while the caller still owns a live lease."""
+
+        await self._store.complete_attempt(
+            attempt_id,
+            state=state,
+            failure_code=failure_code,
+            owner=owner,
+            lease_token=lease_token,
             now=now,
         )
 
