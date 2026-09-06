@@ -1,5 +1,12 @@
 """Durable worker composition for local notebook execution."""
 
+from .execution import (
+    DurableWorkerExecution,
+    WorkerExecutionError,
+    WorkerExecutionOutcome,
+    WorkerLeaseLost,
+    utc_now,
+)
 from .preparation import (
     LOCAL_DOCKER_PROFILE,
     LoadedProject,
@@ -16,8 +23,12 @@ from .preparation import (
 
 __all__ = (
     "LOCAL_DOCKER_PROFILE",
+    "DurableWorkerExecution",
     "LoadedProject",
     "PythonCellAdapter",
+    "WorkerExecutionError",
+    "WorkerExecutionOutcome",
+    "WorkerLeaseLost",
     "WorkerPaths",
     "WorkerPreparationError",
     "build_request",
@@ -26,4 +37,5 @@ __all__ = (
     "load_project",
     "resolve_runtime_snapshot",
     "runtime_snapshot_digest",
+    "utc_now",
 )

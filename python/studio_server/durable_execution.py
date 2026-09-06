@@ -122,6 +122,16 @@ class DurableExecutionService:
             now=now,
         )
 
+    async def worker_read_cell_results(self, run_id: RunId) -> tuple[StoredCellResult, ...]:
+        """Read prior checkpoints through the bounded durable-store facade."""
+
+        return await self._store.read_cell_results(run_id)
+
+    async def worker_read_evidence(self, run_id: RunId) -> tuple[StoredEvidenceRef, ...]:
+        """Read prior evidence references through the bounded durable-store facade."""
+
+        return await self._store.read_evidence(run_id)
+
     async def worker_append_events(
         self,
         attempt_id: AttemptId,
