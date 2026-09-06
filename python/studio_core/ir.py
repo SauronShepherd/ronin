@@ -208,8 +208,7 @@ class Node:
         )
 
     def param(self, name: str) -> FrozenValue | None:
-        names = tuple(key for key, _ in self.params)
-        index = bisect_left(names, name)
+        index = bisect_left(self.params, name, key=lambda item: item[0])
         if index < len(self.params) and self.params[index][0] == name:
             return self.params[index][1]
         return None
