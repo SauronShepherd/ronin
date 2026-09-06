@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from .projects import CapabilityRequirement, ExecutionProfile, RuntimeProfileRef
+from .versions import compare_releases
 
 ResolutionStatus = Literal["selected", "no_match"]
 
@@ -185,7 +186,7 @@ def _matches_constraint(value: str, constraint: str) -> tuple[bool, str]:
     terms = tuple(part.strip() for part in constraint.split(","))
     results = tuple(_matches_term(value, term) for term in terms)
     if any(result is None for result in results):
-        return False, "ordered constraint requires numeric dotted advertised version"
+        return False, "ordered constraint requires comparable advertised release"
     satisfied = all(result for result in results if result is not None)
     return satisfied, "constraint satisfied" if satisfied else "constraint not satisfied"
 
@@ -198,7 +199,7 @@ def _matches_term(value: str, term: str) -> bool | None:
                 return value == expected
             if operator == "!=":
                 return value != expected
-            comparison = _compare_versions(value, expected)
+            comparison = compare_releases(value, expected)
             if comparison is None:
                 return None
             if operator == ">=":
@@ -209,21 +210,3 @@ def _matches_term(value: str, term: str) -> bool | None:
                 return comparison > 0
             return comparison < 0
     return value == term
-
-
-def _compare_versions(left: str, right: str) -> int | None:
-    left_parts = _numeric_version(left)
-    right_parts = _numeric_version(right)
-    if left_parts is None or right_parts is None:
-        return None
-    width = max(len(left_parts), len(right_parts))
-    padded_left = left_parts + (0,) * (width - len(left_parts))
-    padded_right = right_parts + (0,) * (width - len(right_parts))
-    return (padded_left > padded_right) - (padded_left < padded_right)
-
-
-def _numeric_version(value: str) -> tuple[int, ...] | None:
-    parts = value.split(".")
-    if not parts or any(not part.isdigit() for part in parts):
-        return None
-    return tuple(int(part) for part in parts)
