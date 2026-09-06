@@ -88,6 +88,7 @@ def test_isolation_claim_and_policy_reject_unknown_qualification_values() -> Non
 
 def test_declared_isolation_rejected_by_default() -> None:
     declared = ExecutorIsolation("container", True, True, True)
+    assert SessionPolicy().minimum_isolation_qualification == "tested"
     with pytest.raises(ValueError, match="below session policy minimum"):
         SessionPolicy().validate_isolation(declared)
 
