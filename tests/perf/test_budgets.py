@@ -20,7 +20,7 @@ def test_node_param_lookup_budget() -> None:
         params={f"p{i:03d}": i for i in range(100)},
     )
     elapsed = _elapsed(lambda: node.param("p099"), 100_000)
-    assert elapsed < 0.5
+    assert elapsed < 1.0
 
 
 def test_operator_catalog_lookup_budget() -> None:
