@@ -142,7 +142,11 @@ def test_container_executor_materializes_hardened_isolation_and_evidence() -> No
         ExecutionEvidenceReference("resource", "memory://resource"),
     )
     assert executor.isolation.mode == "container"
-    assert executor.isolation.qualification_status == "declared"
+    assert executor.isolation.qualification_status == "tested"
+    assert executor.isolation.qualification_scheme == "ronin/docker-isolation"
+    assert executor.isolation.qualification_version == "1"
+    assert executor.isolation.runtime_identity == _IMAGE
+    assert executor.isolation.evidence_ref == "qualification://docker/real-adversarial-v1"
     assert executor.isolation.dedicated_identity is True
     assert executor.isolation.network_isolated is True
     assert executor.isolation.filesystem_isolated is True
