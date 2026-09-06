@@ -63,7 +63,8 @@ class BoundedAsyncJobStore:
             max_workers=max_workers,
             thread_name_prefix="ronin-job-store",
         )
-        self._slots = asyncio.Semaphore(max_in_flight)
+        self._capacity_lock = asyncio.Lock()
+        self._available_slots = max_in_flight
         self._closed = False
 
     async def __aenter__(self) -> BoundedAsyncJobStore:
@@ -204,24 +205,26 @@ class BoundedAsyncJobStore:
     async def reclaim_expired(self, *, now: Instant) -> tuple[RunId, ...]:
         return await self._call(partial(self._store.reclaim_expired, now=now))
 
-    async def _call(self, operation: Callable[[], _T]) -> _T:
-        if self._closed:
-            raise RuntimeError("job-store executor is closed")
-        if self._slots.locked():
-            raise StorageBackpressureError("job-store execution capacity exhausted")
+    async def _reserve_slot(self) -> None:
+        async with self._capacity_lock:
+            if self._closed:
+                raise RuntimeError("job-store executor is closed")
+            if self._available_slots == 0:
+                raise StorageBackpressureError("job-store execution capacity exhausted")
+            self._available_slots -= 1
 
-        await self._slots.acquire()
+    def _release_slot(self, _future: object) -> None:
+        self._available_slots += 1
+
+    async def _call(self, operation: Callable[[], _T]) -> _T:
+        await self._reserve_slot()
         loop = asyncio.get_running_loop()
         try:
             future = loop.run_in_executor(self._executor, operation)
         except BaseException:
-            self._slots.release()
+            self._available_slots += 1
             raise
-
-        def release_slot(_future: object) -> None:
-            self._slots.release()
-
-        future.add_done_callback(release_slot)
+        future.add_done_callback(self._release_slot)
         return await asyncio.shield(future)
 
 
