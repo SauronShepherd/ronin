@@ -47,7 +47,7 @@ class SqliteJobStore:
         lease_token: LeaseToken,
         now: Instant,
     ) -> sqlite3.Row:
-        row = connection.execute(
+        row: sqlite3.Row | None = connection.execute(
             "SELECT a.*,r.job_id FROM attempts a JOIN runs r ON r.run_id=a.run_id "
             "WHERE a.attempt_id=? AND a.state IN ('leased','running') "
             "AND a.lease_owner=? AND a.lease_token=? AND a.lease_expires_at>?",
