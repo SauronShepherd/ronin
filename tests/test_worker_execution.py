@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import suppress
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -181,10 +182,8 @@ class _BlockingExecutor:
         self.started.set()
         blocker = asyncio.Event()
         while not cancellation.is_cancelled:
-            try:
+            with suppress(TimeoutError):
                 await asyncio.wait_for(blocker.wait(), timeout=0.001)
-            except TimeoutError:
-                pass
         return CellExecutionResult(cell.cell_id, "cancelled")
 
 
