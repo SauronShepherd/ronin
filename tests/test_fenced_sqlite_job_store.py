@@ -62,7 +62,9 @@ def test_fenced_sqlite_delegates_read_control_paths(tmp_path: Path) -> None:
     store = _store(tmp_path)
     claim = _seed_claim(store)
     assert store.get_job(JobId("job-1")) is not None
-    assert store.list_jobs(project_id="project-1", state=JobState.RUNNING, limit=10, cursor=None).items
+    assert store.list_jobs(
+        project_id="project-1", state=JobState.RUNNING, limit=10, cursor=None
+    ).items
     assert store.heartbeat(
         claim.attempt_id,
         owner="worker-1",
@@ -146,14 +148,19 @@ def test_fenced_sqlite_terminal_completion_variants(
     assert job.state is expected_job
     if expected_job is JobState.FAILED:
         assert job.failure_code == failure_code
-    assert store.list_jobs(project_id=None, state=expected_job, limit=10, cursor=None).items == (job,)
-    assert store.claim_next_run(
-        owner="worker-2",
-        lease_token=LeaseToken("lease-next"),
-        attempt_id=AttemptId("attempt-next"),
-        lease_seconds=30,
-        now=LATER,
-    ) is None
+    assert store.list_jobs(project_id=None, state=expected_job, limit=10, cursor=None).items == (
+        job,
+    )
+    assert (
+        store.claim_next_run(
+            owner="worker-2",
+            lease_token=LeaseToken("lease-next"),
+            attempt_id=AttemptId("attempt-next"),
+            lease_seconds=30,
+            now=LATER,
+        )
+        is None
+    )
 
 
 def test_fenced_sqlite_abandoned_attempt_requeues_same_run(tmp_path: Path) -> None:
