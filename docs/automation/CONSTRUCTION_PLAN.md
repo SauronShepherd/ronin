@@ -2,21 +2,27 @@
 
 _Last synchronized: 2026-09-06. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
-The v0.1 plan remains eight weeks, but execution is now ahead of the original calendar in the durable-execution spine. Planning therefore uses capability order rather than waiting for nominal week boundaries. Each autonomous run still selects at most one coherent slice, revalidates against current `main`, and preserves all release gates.
+The v0.1 plan remains eight weeks, but execution is ahead of the original calendar in the durable-execution spine. Planning therefore uses capability order rather than waiting for nominal week boundaries. Each autonomous run still selects at most one coherent slice, revalidates against current `main`, and preserves all release gates.
 
 **Release-acceptance invariant.** Ordinary PR/main CI may run the frozen journey as explicitly named non-blocking progress telemetry while capabilities are still landing. A release/tag publication gate is different: it must verify the exact fifteen frozen required step names and fail closed if any step is skipped, xfailed, failed, errored, deselected/missing, renamed/unexpected, duplicated, or otherwise not executed. Machine-readable live/passed/skipped/xfail/missing counts are evidence; a normal pytest exit code alone is not release acceptance evidence.
 
 ## Current position on 2026-09-06
 
-The repository has already landed most of the original Week-2 storage foundation plus the first Week-3 lease-control composition slice:
+The repository now has the durable local execution spine required to move into control-plane qualification:
 
 - pure Job -> Run -> Attempt lifecycle and canonical `Instant` semantics;
 - in-memory and SQLite `JobStore` adapters with shared conformance/fencing tests;
-- immutable per-cell resume identity and artifact verification contracts;
-- bounded async `JobStore` composition;
-- `DurableExecutionService` for submit/status/cancel plus worker reclaim/claim/heartbeat.
+- immutable per-cell resume identity and explicit artifact verification;
+- bounded async JobStore and artifact-store composition;
+- `DurableExecutionService` for submit/status/cancel plus worker reclaim/claim/heartbeat and fenced worker writes;
+- safe local project/runtime preparation with exact immutable execution-image identity;
+- sequential per-cell checkpoint-before-next execution with cancellation polling, heartbeat fail-closed behavior and verified resume;
+- `LocalWorkerRuntime` composition over SQLite, local durable stores and the real Docker executor;
+- a deterministic canonical demo that succeeds across clean per-cell containers through the real Docker command path;
+- a continuous worker lifecycle with unique poll identities, signal-aware graceful shutdown and Attempt-limit continuity;
+- real OS-process crash qualification: after three real-Docker cells are durably checkpointed, a separate worker process is killed non-gracefully, the production 30-second lease is allowed to expire, and a replacement process reclaims the same Run, reuses exactly the three valid checkpoints and executes only the remaining two cells.
 
-Revalidation before the real worker loop found one missing prerequisite: worker-originated durable event/result/evidence writes were not themselves fenced by the currently active Attempt lease. #130 now precedes #57 so stale workers cannot mutate reusable Run state after lease loss or replacement.
+The process-crash evidence advances #57 but does not complete it. The frozen fifteen-step journey still depends on the HTTP/SDK, CLI/operator, portable evidence, Compose and supported cancellation surfaces; normal progress telemetry must not be represented as release acceptance.
 
 HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous execution stays serial: they are not opened in parallel merely because they are technically independent.
 
@@ -24,31 +30,25 @@ HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous exe
 
 **Objective.** Establish deterministic core/project/runtime/operator/diagnostic/notebook/kernel contracts, quality/architecture gates, durable lifecycle semantics and storage adapters.
 
-**Status.** Complete on current `main` for the MVP-critical foundation. Historical details remain in `docs/automation/PROGRESS.md`.
+**Status.** Complete on current `main` for the MVP-critical foundation. Historical details remain in `docs/automation/PROGRESS.md` and dated qualification supplements.
 
 ## Phase B — durable worker execution and resume
 
 **Objective.** Execute one durable local Run through worker claim, heartbeat, fenced per-cell persistence, lease expiry, replacement Attempt and record-level resume.
 
-**Next pull-request sequence.**
+**Status.** The core execution seam is implemented and qualified through a real OS-process death plus real Docker execution. Worker-originated durable writes are fenced; successful cells checkpoint before the next cell; corrupt/missing artifacts are not reused; cancellation and lease loss fail closed; the canonical demo is clean-container safe; graceful daemon shutdown and abrupt process death have separate qualification paths; abrupt-death qualification preserves the production 30-second lease TTL.
 
-1. Satisfy #130: every worker-originated event/result/evidence/terminal mutation must revalidate Attempt id, owner, lease token and non-expired lease atomically in the store operation; in-memory and SQLite must share stale-worker conformance vectors.
-2. Add the worker execution loop over `DurableExecutionService` and existing runner/kernel/artifact capabilities.
-3. Persist cell result/evidence before starting the next cell.
-4. Reuse only cells whose immutable `CellExecutionIdentity` matches and whose referenced artifacts still exist with matching digests.
-5. Poll cancellation between cells.
-6. Treat heartbeat ownership loss as terminal for that worker's execution path: cancel active work and do not complete the Attempt.
-7. Add crash/replacement integration evidence proving the replacement Attempt resumes at the first non-reusable cell.
+**Remaining Phase-B/product-journey work.** Wire these proven capabilities through the supported operator journey as the surrounding surfaces land, and keep #57 open until the frozen acceptance sequence itself executes end-to-end. The dedicated Docker qualification already proves executor cancellation/timeout cleanup leaves no residual execution container, but the product-level cancel step still requires the supported control-plane/operator path.
 
-**Exit criteria.** A kill/restart test proves that completed reusable cells are not replayed; terminal state remains unique/monotonic; lost or expired leases cannot continue writing; heartbeat tasks are always cancelled/awaited; no residual execution container remains after cancellation/failure.
+**Exit criteria.** A kill/restart test proves completed reusable cells are not replayed; terminal state remains unique/monotonic; lost or expired leases cannot continue writing; heartbeat tasks are always cancelled/awaited; no residual execution container remains after cancellation/failure. The first four properties are now directly qualified through the composed runtime; product-level cancellation remains tied to later API/operator activation.
 
-**Cut line.** Sunday 27 September remains the planning checkpoint. A prerelease may document whole-run replay as a limitation if resume is not ready, but final v0.1 remains governed by the frozen acceptance contract unless product scope is explicitly revised.
+**Cut line.** Sunday 27 September remains the planning checkpoint. A prerelease may document whole-run replay as a limitation only if a future regression reopens this capability; final v0.1 remains governed by the frozen acceptance contract unless product scope is explicitly revised.
 
 ## Phase C — bounded HTTP control plane and SDK contract
 
 **Objective.** Make durable jobs remotely controllable through one bounded authenticated API whose executable OpenAPI contract matches `pyronin`.
 
-**Pull requests.** Add the frozen `/v1/jobs` submit/status/list/cancel/events/evidence surface over `DurableExecutionService`; add bearer-token authorization; define/verify dense Run-global event numbering across attempts; add OpenAPI golden/route coverage tests; align `pyronin` schemas/errors/retry behavior.
+**Pull requests.** First complete #125 at the now-concrete runtime call sites, then add the frozen `/v1/jobs` submit/status/list/cancel/events/evidence surface over `DurableExecutionService`; add bearer-token authorization; define/verify dense Run-global event numbering across attempts; add OpenAPI golden/route coverage tests; align `pyronin` schemas/errors/retry behavior.
 
 **Framework decision.** Framework choice is an implementation detail, not a domain decision. A standard-library HTTP server is acceptable if it satisfies the same route/auth/OpenAPI/SDK/error/qualification contract; a pinned FastAPI/Pydantic stack is also acceptable if dependency-lock, typing, architecture and image costs remain justified. In either case, framework/model types stay outside canonical domain packages.
 
@@ -86,8 +86,8 @@ HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous exe
 2. `doctor`, `validate`, `plan` after Phase D.
 3. submit/status/idempotency/SDK after Phase C.
 4. logs/evidence after run-global event ordering and portable evidence references are real.
-5. execute/crash/reclaim/resume after Phase B.
-6. cancel cleanup after worker cancellation/container cleanup are qualified.
+5. execute/crash/reclaim/resume once the Phase-B worker capabilities are wired through the supported journey.
+6. cancel cleanup once worker cancellation/container cleanup are exercised through the supported operator path.
 
 **Exit criteria.** The progress workflow reports increasing live counts without redefining step names. The strict release gate ultimately reports all fifteen required steps live and passed with zero skipped/xfail/failed/error/missing/unexpected outcomes.
 
@@ -113,17 +113,15 @@ HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous exe
 
 The current ordering is:
 
-1. #130 fenced worker durable writes;
-2. durable per-cell worker execution + resume;
-3. real-runtime bounded-contention qualification as call sites become concrete;
-4. HTTP/OpenAPI/SDK;
-5. CLI/Git qualification;
-6. production image/Compose;
-7. portable evidence representation where still unresolved;
-8. incremental completion of the fifteen-step acceptance journey;
-9. full non-functional/security/release qualification and publication.
+1. #125 real-runtime bounded-contention qualification at the final server/worker/artifact call sites;
+2. #54 HTTP/OpenAPI/SDK;
+3. CLI/operator surface plus remaining Git qualification;
+4. production image/Compose;
+5. #53 portable evidence representation before the external API hardens it;
+6. incremental completion of the frozen fifteen-step acceptance journey, including the already-proven crash/reclaim semantics through the supported product path;
+7. full non-functional/security/release qualification and publication.
 
-This ordering supersedes stale backlog entries that treated either lease-control composition or unfenced cell writes as sufficient worker readiness. It does not authorize parallel Builder PRs: each autonomous run must finish/reconcile its own prior work before selecting the next slice.
+This ordering supersedes stale handoff bodies that still describe already-landed storage, fencing, worker-loop or process-crash prerequisites as missing. It does not authorize parallel Builder PRs: each autonomous run must finish/reconcile its own prior work before selecting the next slice.
 
 ## Pre-decided calendar checkpoints
 
