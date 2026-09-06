@@ -51,6 +51,27 @@ class InMemoryJobStore:
         self._cell_results: dict[RunId, dict[str, StoredCellResult]] = {}
         self._evidence: dict[RunId, list[StoredEvidenceRef]] = {}
 
+    def _active_attempt_for_write(
+        self,
+        attempt_id: AttemptId,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant | str,
+    ) -> Attempt:
+        current = Instant(now)
+        attempt = self._attempts.get(attempt_id)
+        if (
+            attempt is None
+            or attempt.state not in {AttemptState.LEASED, AttemptState.RUNNING}
+            or attempt.lease is None
+            or attempt.lease.owner != owner
+            or attempt.lease.token != lease_token
+            or attempt.lease.expires_at <= current
+        ):
+            raise ValueError("attempt lease ownership lost")
+        return attempt
+
     def create_job(self, job: Job, run: Run) -> Job:
         with self._lock:
             key = (job.project_id, job.idempotency_key)
@@ -256,8 +277,18 @@ class InMemoryJobStore:
         self,
         attempt_id: AttemptId,
         events: Sequence[StoredExecutionEvent],
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant | str,
     ) -> None:
         with self._lock:
+            self._active_attempt_for_write(
+                attempt_id,
+                owner=owner,
+                lease_token=lease_token,
+                now=now,
+            )
             target = self._events[attempt_id]
             expected = len(target)
             for event in events:
@@ -277,8 +308,24 @@ class InMemoryJobStore:
             merged = tuple(event for attempt in attempts for event in self._events[attempt.id])
             return merged[since:]
 
-    def put_cell_result(self, result: StoredCellResult) -> None:
+    def put_cell_result(
+        self,
+        attempt_id: AttemptId,
+        result: StoredCellResult,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant | str,
+    ) -> None:
         with self._lock:
+            attempt = self._active_attempt_for_write(
+                attempt_id,
+                owner=owner,
+                lease_token=lease_token,
+                now=now,
+            )
+            if result.run_id != attempt.run_id:
+                raise ValueError("cell result run does not match attempt")
             self._cell_results.setdefault(result.run_id, {})[result.cell_id] = result
 
     def read_cell_results(self, run_id: RunId) -> tuple[StoredCellResult, ...]:
@@ -286,8 +333,24 @@ class InMemoryJobStore:
             by_cell = self._cell_results.get(run_id, {})
             return tuple(by_cell[cell_id] for cell_id in sorted(by_cell))
 
-    def put_evidence(self, ref: StoredEvidenceRef) -> None:
+    def put_evidence(
+        self,
+        attempt_id: AttemptId,
+        ref: StoredEvidenceRef,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant | str,
+    ) -> None:
         with self._lock:
+            attempt = self._active_attempt_for_write(
+                attempt_id,
+                owner=owner,
+                lease_token=lease_token,
+                now=now,
+            )
+            if ref.run_id != attempt.run_id:
+                raise ValueError("evidence run does not match attempt")
             self._evidence.setdefault(ref.run_id, []).append(ref)
 
     def read_evidence(self, run_id: RunId) -> tuple[StoredEvidenceRef, ...]:
@@ -308,13 +371,12 @@ class InMemoryJobStore:
             raise ValueError("attempt completion state must be terminal")
         now = Instant(now)
         with self._lock:
-            attempt = self._attempts[attempt_id]
-            if (
-                attempt.lease is None
-                or attempt.lease.owner != owner
-                or attempt.lease.token != lease_token
-            ):
-                raise ValueError("attempt lease ownership lost")
+            attempt = self._active_attempt_for_write(
+                attempt_id,
+                owner=owner,
+                lease_token=lease_token,
+                now=now,
+            )
             self._attempts[attempt_id] = attempt.transition(
                 state,
                 now=now,
