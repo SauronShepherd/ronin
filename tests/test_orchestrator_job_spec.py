@@ -7,7 +7,7 @@ NOW = "2026-09-06T09:00:00.000000Z"
 LATER = "2026-09-06T09:00:01.000000Z"
 
 
-def _job(*, target: str = "notebooks/etl", parameters_json: str = "{\"limit\":10}") -> Job:
+def _job(*, target: str = "notebooks/etl", parameters_json: str = '{"limit":10}') -> Job:
     return Job(
         id=JobId("job-1"),
         project_id="examples/demo",
