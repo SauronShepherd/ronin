@@ -4,6 +4,7 @@ import pytest
 from studio_orchestrator import (
     AttemptId,
     AttemptLimitExceeded,
+    AttemptState,
     Instant,
     Job,
     JobId,
@@ -20,6 +21,7 @@ from studio_storage import InMemoryJobStore
 NOW = "2026-09-06T09:00:00.000000Z"
 LATER = "2026-09-06T09:00:10.000000Z"
 EXPIRY = "2026-09-06T09:00:30.000000Z"
+AFTER_EXPIRY = "2026-09-06T09:00:40.000000Z"
 
 
 def _job(index: int) -> Job:
@@ -107,7 +109,25 @@ def test_active_cancel_transitions_job_to_cancelling() -> None:
     assert cancelled.state is JobState.CANCELLING
 
 
-def test_heartbeat_validation_and_unknown_attempt_fail_closed() -> None:
+def test_terminal_cancel_is_idempotent_and_empty_claim_returns_none() -> None:
+    store = InMemoryJobStore()
+    assert (
+        store.claim_next_run(
+            owner="worker-1",
+            lease_token=LeaseToken("lease-empty"),
+            attempt_id=AttemptId("attempt-empty"),
+            lease_seconds=30,
+            now=NOW,
+        )
+        is None
+    )
+    store.create_job(_job(1), _run(1))
+    cancelled = store.request_cancel(JobId("job-1"), now=LATER)
+    assert cancelled.state is JobState.CANCELLED
+    assert store.request_cancel(JobId("job-1"), now=AFTER_EXPIRY) == cancelled
+
+
+def test_heartbeat_validation_and_lease_identity_fail_closed() -> None:
     store = InMemoryJobStore()
     store.create_job(_job(1), _run(1))
     claim = _claim(store)
@@ -127,6 +147,43 @@ def test_heartbeat_validation_and_unknown_attempt_fail_closed() -> None:
         expires_at=EXPIRY,
         now=LATER,
     )
+    assert not store.heartbeat(
+        claim.attempt_id,
+        owner="worker-other",
+        lease_token=claim.lease_token,
+        expires_at=AFTER_EXPIRY,
+        now=LATER,
+    )
+    assert not store.heartbeat(
+        claim.attempt_id,
+        owner="worker-1",
+        lease_token=claim.lease_token,
+        expires_at=AFTER_EXPIRY,
+        now=EXPIRY,
+    )
+
+
+def test_read_events_rejects_negative_offset() -> None:
+    store = InMemoryJobStore()
+    with pytest.raises(ValueError, match="non-negative"):
+        store.read_events(RunId("run-1"), since=-1)
+
+
+def test_direct_cancelled_completion_closes_running_job() -> None:
+    store = InMemoryJobStore()
+    store.create_job(_job(1), _run(1))
+    claim = _claim(store)
+    store.complete_attempt(
+        claim.attempt_id,
+        state=AttemptState.CANCELLED,
+        failure_code=None,
+        owner="worker-1",
+        lease_token=claim.lease_token,
+        now=LATER,
+    )
+    job = store.get_job(JobId("job-1"))
+    assert job is not None
+    assert job.state is JobState.CANCELLED
 
 
 def test_memory_rejects_cross_run_result_and_evidence() -> None:
