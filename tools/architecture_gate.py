@@ -30,6 +30,18 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_vcs",
         }
     ),
+    "studio_worker": frozenset(
+        {
+            "studio_core",
+            "studio_notebook",
+            "studio_kernel",
+            "studio_runners",
+            "studio_orchestrator",
+            "studio_storage",
+            "studio_vcs",
+            "studio_server",
+        }
+    ),
     "studio_cli": frozenset(
         {
             "studio_core",
@@ -40,6 +52,7 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_storage",
             "studio_vcs",
             "studio_server",
+            "studio_worker",
         }
     ),
 }
