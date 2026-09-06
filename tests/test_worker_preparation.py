@@ -210,7 +210,7 @@ def test_runtime_digest_supports_requirement_only_resolution() -> None:
             "Portable",
             (RepositoryBinding("main", "https://example.invalid/repo", role="primary"),),
             ExecutionProfile(requirements=(CapabilityRequirement("python", ">=3.11"),)),
-        )
+        ),
     )
     runtime = resolve_runtime_snapshot(manifest, RuntimeCatalog((LOCAL_DOCKER_PROFILE,)))
     assert runtime.requested_profile is None
