@@ -9,10 +9,9 @@ from studio_vcs import GitCaptureError, GitRevision, capture_revision
 
 def _git(path: Path, *args: str) -> str:
     completed = subprocess.run(  # noqa: S603
-        ("git", "-C", str(path), *args),
+        ("/usr/bin/git", "-C", str(path), *args),
         check=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
     )
     return completed.stdout.strip()
