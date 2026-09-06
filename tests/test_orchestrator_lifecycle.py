@@ -126,15 +126,27 @@ def test_lease_renews_only_for_current_owner_and_token() -> None:
 
 
 def test_job_intended_paths_reach_terminal_states() -> None:
-    assert make_job().transition(JobState.RUNNING, now=LATER).transition(
-        JobState.SUCCEEDED, now=EXPIRY
-    ).state is JobState.SUCCEEDED
-    assert make_job().transition(JobState.RUNNING, now=LATER).transition(
-        JobState.FAILED, now=EXPIRY, failure_code="cell_failed"
-    ).failure_code == "cell_failed"
-    assert make_job().transition(JobState.CANCELLING, now=LATER).transition(
-        JobState.CANCELLED, now=EXPIRY
-    ).state is JobState.CANCELLED
+    assert (
+        make_job()
+        .transition(JobState.RUNNING, now=LATER)
+        .transition(JobState.SUCCEEDED, now=EXPIRY)
+        .state
+        is JobState.SUCCEEDED
+    )
+    assert (
+        make_job()
+        .transition(JobState.RUNNING, now=LATER)
+        .transition(JobState.FAILED, now=EXPIRY, failure_code="cell_failed")
+        .failure_code
+        == "cell_failed"
+    )
+    assert (
+        make_job()
+        .transition(JobState.CANCELLING, now=LATER)
+        .transition(JobState.CANCELLED, now=EXPIRY)
+        .state
+        is JobState.CANCELLED
+    )
     assert make_job().transition(JobState.CANCELLED, now=LATER).state is JobState.CANCELLED
 
 
@@ -205,9 +217,7 @@ def test_attempt_cap_is_hard_and_distinct() -> None:
 
 def test_domain_value_validation_failures() -> None:
     with pytest.raises(ValueError, match="project id"):
-        make_job().__class__(
-            JobId("job-x"), "", "key", "a" * 64, JobState.QUEUED, NOW, NOW
-        )
+        make_job().__class__(JobId("job-x"), "", "key", "a" * 64, JobState.QUEUED, NOW, NOW)
     with pytest.raises(ValueError, match="run ordinal"):
         Run(RunId("run-x"), JobId("job-x"), 0, RunState.PENDING, NOW, NOW, NOW)
     with pytest.raises(ValueError, match="lease owner"):
