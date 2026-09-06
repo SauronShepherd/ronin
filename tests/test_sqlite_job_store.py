@@ -20,6 +20,8 @@ def _job() -> Job:
         JobState.QUEUED,
         NOW,
         NOW,
+        target="notebooks/etl",
+        parameters_json='{"limit":10}',
     )
 
 
@@ -42,7 +44,7 @@ def test_sqlite_configuration_migration_and_reopen(tmp_path: Path) -> None:
     first = open_database(path)
     second = open_database(path)
     try:
-        assert schema_version(first) == 1
+        assert schema_version(first) == 2
         _assert_connection_pragmas(first)
         _assert_connection_pragmas(second)
     finally:
@@ -53,6 +55,39 @@ def test_sqlite_configuration_migration_and_reopen(tmp_path: Path) -> None:
     restored = reopened.get_job(JobId("job-1"))
     assert restored is not None
     assert restored.id == JobId("job-1")
+    assert restored.target == "notebooks/etl"
+    assert restored.parameters_json == '{"limit":10}'
+
+
+def test_v1_database_upgrades_with_backward_compatible_execution_defaults(tmp_path: Path) -> None:
+    path = tmp_path / "ronin.db"
+    connection = open_database(path)
+    try:
+        script = Path("python/studio_storage/migrations/001_initial.sql").read_text(
+            encoding="utf-8"
+        )
+        connection.executescript(script)
+        connection.execute(
+            "INSERT INTO schema_migrations(version, applied_at) VALUES (1, ?)", (NOW,)
+        )
+        connection.execute(
+            "INSERT INTO jobs(job_id,project_id,idempotency_key,request_digest,state,"
+            "failure_code,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
+            ("legacy", "project-1", "legacy-key", "b" * 64, "queued", None, NOW, NOW),
+        )
+    finally:
+        connection.close()
+
+    upgraded = SqliteJobStore(path, migration_now=NOW)
+    restored = upgraded.get_job(JobId("legacy"))
+    assert restored is not None
+    assert restored.target == ""
+    assert restored.parameters_json == "{}"
+    connection = open_database(path)
+    try:
+        assert schema_version(connection) == 2
+    finally:
+        connection.close()
 
 
 def test_newer_schema_fails_closed(tmp_path: Path) -> None:
