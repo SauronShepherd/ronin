@@ -15,8 +15,9 @@ Select these items in dependency order. The environment proof may run in paralle
 1. **#99 / 49a — pure Job -> Run -> Attempt lifecycle and `JobStore` Protocol.** `studio_orchestrator` remains pure; concurrency primitives do not enter this package. Crash reclaim replaces an abandoned Attempt within the same Run, outside ordinary retry budget; `max_runs=1`, attempt cap 10.
 2. **#100 / 49b — SQLite `JobStore` and migrations.** `studio_storage` owns both `SqliteJobStore` and the concurrent `InMemoryJobStore` reference adapter. Enforce WAL, `foreign_keys=ON`, `synchronous=FULL`, `busy_timeout=5000`, durable idempotency, lease fencing and reclaim.
 3. **#101 / 49c — store conformance and concurrent claim qualification.** Run one parameterized contract suite against both adapters and prove one-winner claiming under bounded contention.
-4. **#91 — immutable per-cell resume identity.** Persist results after every cell and reuse only when the frozen Run identity and referenced artifact digests still verify.
-5. **#57 — accelerated vertical v0.1 path.** As the storage contract stabilizes, compose worker, API, CLI and Docker/Compose in parallel domains and turn acceptance steps live incrementally rather than in one final batch.
+4. **#125 — bounded non-blocking storage composition.** Async server/worker paths must offload whole synchronous `JobStore` calls through a dedicated bounded executor, fail fast with provider-neutral backpressure when capacity is exhausted, and preserve SQLite durability/fencing semantics. Blocking artifact-store calls follow the same composition rule when their first async call site lands.
+5. **#91 — immutable per-cell resume identity.** Persist results after every cell and reuse only when the frozen Run identity and referenced artifact digests still verify.
+6. **#57 — accelerated vertical v0.1 path.** As the storage contract stabilizes, compose worker, API, CLI and Docker/Compose in parallel domains and turn acceptance steps live incrementally rather than in one final batch.
 
 ### Environment proof required before production Compose
 
@@ -28,6 +29,7 @@ The Docker-host assumptions must be proved early on GitHub-hosted Linux runners:
 - Cancelling an unclaimed pending Run terminalizes Job and Run transactionally without waiting for a worker.
 - Replaying an idempotency key is a pure read after creation, including for failed/cancelled Jobs; a new Run requires a new key.
 - Exhausting ten crash-replacement Attempts fails with `failure_code="attempt_limit_exceeded"`, distinct from notebook/cell failure.
+- Blocking durable store calls never execute directly on an asyncio event-loop thread; bounded admission/backpressure is part of composition rather than canonical storage semantics.
 
 ## Frozen until v0.1 ships (2026-11-01)
 

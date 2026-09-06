@@ -73,3 +73,16 @@ Until Ronin demonstrates sustained independent participation, governance is docu
 4. `README.md` navigation/status paragraph — Ronin is currently single-maintainer with an autonomous build pipeline; automation implements accepted work but does not create human governance authority.
 
 Substantial architecture/product changes require prior public issue discussion; bounded fixes may proceed through normal PR review. Private/synchronous decisions that affect the project are summarized into the public repository record. Governance is revisited after sustained participation by multiple independent contributors.
+
+## ADR-V01-011 — Async control paths use bounded offload around the synchronous JobStore SPI
+
+**Status:** Accepted  
+**Implements:** #125
+
+The canonical `JobStore` remains synchronous and storage-neutral. Async server and worker composition must not call blocking durable store or artifact-store operations directly on an asyncio event-loop thread, and SQLite/aiosqlite/FastAPI types do not enter the canonical domain contract.
+
+For v0.1, whole synchronous `JobStore` operations are offloaded through a dedicated bounded executor. `max_workers` bounds active blocking calls; `max_in_flight` bounds active plus queued executor work. Admission beyond that bound fails immediately with a provider-neutral `StorageBackpressureError` rather than allowing an unbounded executor queue. HTTP and worker callers translate that pressure at their own boundary without spinning or bypassing the wrapper.
+
+Coroutine cancellation does not pretend to cancel or roll back a synchronous store call already executing. Its capacity reservation remains held until the store operation actually finishes. This preserves the concurrency bound and leaves transaction, durability, idempotency and lease-fencing semantics entirely with the wrapped `JobStore` adapter.
+
+The same composition rule applies to blocking artifact-store I/O when its first async call site lands; that future facade must reuse the bounded policy rather than introduce another unbounded execution path.
