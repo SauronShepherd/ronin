@@ -8,7 +8,7 @@ import os
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal, Protocol, TypeAlias, cast
+from typing import Literal, Protocol, TypeAlias, cast, runtime_checkable
 
 from studio_notebook import CellId
 
@@ -202,6 +202,11 @@ class ExecutionEventSink(Protocol):
     def append(self, event: ExecutionEvent) -> None: ...
 
 
+@runtime_checkable
+class AsyncExecutionEventSink(Protocol):
+    async def append_async(self, event: ExecutionEvent) -> None: ...
+
+
 def _decode_ledger_identity(line: str) -> tuple[ExecutionAttemptId, int]:
     try:
         payload = json.loads(line)
@@ -243,6 +248,7 @@ class JsonlExecutionEventSink:
     path: Path
     _attempt_id: ExecutionAttemptId | None = field(default=None, init=False, repr=False)
     _next_sequence: int = field(default=0, init=False, repr=False)
+    _append_lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if not self.path.exists():
@@ -267,19 +273,24 @@ class JsonlExecutionEventSink:
         self._next_sequence = next_sequence
 
     def append(self, event: ExecutionEvent) -> None:
-        if self._attempt_id is None:
-            self._attempt_id = event.event_id.attempt_id
-        elif event.event_id.attempt_id != self._attempt_id:
-            raise ValueError("event sink may persist only one execution attempt")
-        if event.event_id.sequence != self._next_sequence:
-            raise ValueError("execution events must be appended in contiguous sequence order")
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("a", encoding="utf-8", newline="\n") as handle:
-            handle.write(event.to_json())
-            handle.write("\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        self._next_sequence += 1
+        with self._append_lock:
+            if self._attempt_id is None:
+                self._attempt_id = event.event_id.attempt_id
+            elif event.event_id.attempt_id != self._attempt_id:
+                raise ValueError("event sink may persist only one execution attempt")
+            if event.event_id.sequence != self._next_sequence:
+                raise ValueError("execution events must be appended in contiguous sequence order")
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            with self.path.open("a", encoding="utf-8", newline="\n") as handle:
+                handle.write(event.to_json())
+                handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            self._next_sequence += 1
+
+    async def append_async(self, event: ExecutionEvent) -> None:
+        """Persist durably without running filesystem/fsync work on the event-loop thread."""
+        await asyncio.to_thread(self.append, event)
 
 
 class KernelCellExecutor(Protocol):
@@ -308,7 +319,7 @@ class KernelExecutionSession:
     _started: bool = field(default=False, init=False, repr=False)
     _start_lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
 
-    def _emit(
+    async def _emit(
         self,
         kind: ExecutionEventKind,
         *,
@@ -321,7 +332,10 @@ class KernelExecutionSession:
             cell_id,
             message,
         )
-        self.event_sink.append(event)
+        if isinstance(self.event_sink, AsyncExecutionEventSink):
+            await self.event_sink.append_async(event)
+        else:
+            await asyncio.to_thread(self.event_sink.append, event)
         self._next_sequence += 1
 
     async def run(self) -> tuple[CellExecutionResult, ...]:
@@ -330,15 +344,15 @@ class KernelExecutionSession:
             if self._started:
                 raise ValueError("session already started")
             self._started = True
-        self._emit("session.started")
+        await self._emit("session.started")
         results: list[CellExecutionResult] = []
         for cell in self.request.cells:
             if self.cancellation.is_cancelled:
-                self._emit("session.cancelled")
+                await self._emit("session.cancelled")
                 return tuple(results)
             missing_permissions = self.policy.missing_permissions(cell)
             if missing_permissions:
-                self._emit(
+                await self._emit(
                     "permission.denied",
                     cell_id=cell.cell_id,
                     message="missing permissions: " + ",".join(missing_permissions),
@@ -349,16 +363,18 @@ class KernelExecutionSession:
                     "kernel.permission.denied",
                 )
                 results.append(result)
-                self._emit("cell.failed", cell_id=cell.cell_id, message=result.failure_code or "")
-                self._emit("session.failed")
+                await self._emit(
+                    "cell.failed", cell_id=cell.cell_id, message=result.failure_code or ""
+                )
+                await self._emit("session.failed")
                 return tuple(results)
-            self._emit("cell.started", cell_id=cell.cell_id)
+            await self._emit("cell.started", cell_id=cell.cell_id)
             failure_detail = ""
             try:
                 result = await self.executor.execute(cell, self.cancellation)
             except asyncio.CancelledError:
-                self._emit("cell.cancelled", cell_id=cell.cell_id)
-                self._emit("session.cancelled")
+                await self._emit("cell.cancelled", cell_id=cell.cell_id)
+                await self._emit("session.cancelled")
                 raise
             except Exception as exc:
                 failure_detail = type(exc).__name__
@@ -367,17 +383,17 @@ class KernelExecutionSession:
                 raise ValueError("kernel executor must preserve cell identity")
             results.append(result)
             if result.state == "succeeded":
-                self._emit("cell.succeeded", cell_id=cell.cell_id)
+                await self._emit("cell.succeeded", cell_id=cell.cell_id)
                 continue
             if result.state == "cancelled":
-                self._emit("cell.cancelled", cell_id=cell.cell_id)
-                self._emit("session.cancelled")
+                await self._emit("cell.cancelled", cell_id=cell.cell_id)
+                await self._emit("session.cancelled")
                 return tuple(results)
             message = result.failure_code or ""
             if failure_detail:
                 message = f"{message}; executor exception: {failure_detail}"
-            self._emit("cell.failed", cell_id=cell.cell_id, message=message)
-            self._emit("session.failed")
+            await self._emit("cell.failed", cell_id=cell.cell_id, message=message)
+            await self._emit("session.failed")
             return tuple(results)
-        self._emit("session.completed")
+        await self._emit("session.completed")
         return tuple(results)
