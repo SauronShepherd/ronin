@@ -9,8 +9,20 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from studio_core import RuntimeCapability, RuntimeCatalog, RuntimeProfile
-from studio_kernel import ExecutionAttemptId, SessionPolicy
-from studio_orchestrator import AttemptId, Instant, LeaseToken, RunId
+from studio_kernel import (
+    ExecutionAttemptId,
+    NotebookExecutionRequest,
+    SessionPolicy,
+)
+from studio_orchestrator import (
+    AttemptId,
+    AttemptState,
+    CellExecutionIdentity,
+    Instant,
+    Job,
+    LeaseToken,
+    RunId,
+)
 from studio_runners import (
     AsyncioCommandRunner,
     CancellableCommandRunner,
@@ -151,8 +163,13 @@ class LocalWorkerRuntime:
         await self._service.aclose()
         self._preparation_executor.shutdown(wait=True, cancel_futures=True)
 
-    def _prepare(self, claim_attempt: AttemptId, run_id: RunId, job: object):
-        loaded = load_project(self.config.paths, job)  # type: ignore[arg-type]
+    def _prepare(
+        self,
+        claim_attempt: AttemptId,
+        run_id: RunId,
+        job: Job,
+    ) -> tuple[NotebookExecutionRequest, tuple[CellExecutionIdentity, ...]]:
+        loaded = load_project(self.config.paths, job)
         runtime = resolve_runtime_snapshot(
             loaded.manifest,
             runtime_catalog_for_image(self.config.image),
@@ -162,7 +179,7 @@ class LocalWorkerRuntime:
             request,
             run_id=run_id,
             loaded=loaded,
-            job=job,  # type: ignore[arg-type]
+            job=job,
         )
         return request, identities
 
@@ -200,7 +217,7 @@ class LocalWorkerRuntime:
         except Exception:
             await self._service.worker_complete_attempt(
                 claim.attempt_id,
-                state=__import__("studio_orchestrator").AttemptState.FAILED,
+                state=AttemptState.FAILED,
                 failure_code="worker.preparation.error",
                 owner=self.config.owner,
                 lease_token=claim.lease_token,
