@@ -271,7 +271,9 @@ def test_run_forever_shutdown_abandons_active_claim_immediately(tmp_path: Path) 
     asyncio.run(scenario())
 
 
-def test_attempt_limit_does_not_stop_worker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_attempt_limit_does_not_stop_worker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     async def scenario() -> None:
         config = _config(tmp_path, poll_seconds=0.001)
         shutdown = asyncio.Event()
@@ -283,7 +285,10 @@ def test_attempt_limit_does_not_stop_worker(tmp_path: Path, monkeypatch: pytest.
             engine_path="docker",
             now=_Clock(START),
         ) as runtime:
-            async def fake_poll(*, attempt_id: AttemptId, lease_token: LeaseToken) -> WorkerPollResult:
+
+            async def fake_poll(
+                *, attempt_id: AttemptId, lease_token: LeaseToken
+            ) -> WorkerPollResult:
                 nonlocal calls
                 del attempt_id, lease_token
                 calls += 1
