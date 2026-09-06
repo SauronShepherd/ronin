@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
 from threading import RLock
 
@@ -87,15 +88,15 @@ class InMemoryJobStore:
         offset = int(cursor) if cursor is not None else 0
         with self._lock:
             values = sorted(self._jobs.values(), key=lambda item: str(item.id))
-            values = [
+            filtered = [
                 item
                 for item in values
                 if (project_id is None or item.project_id == project_id)
                 and (state is None or item.state is state)
             ]
-            items = tuple(values[offset : offset + limit])
+            items = tuple(filtered[offset : offset + limit])
             next_offset = offset + len(items)
-            next_cursor = str(next_offset) if next_offset < len(values) else None
+            next_cursor = str(next_offset) if next_offset < len(filtered) else None
             return Page(items, next_cursor)
 
     def request_cancel(self, job_id: JobId, *, now: str) -> Job:
@@ -161,12 +162,14 @@ class InMemoryJobStore:
                 default=0,
             )
             if ordinal > 10:
-                failed_run = run.transition(RunState.FAILED, now=now)
-                failed_job = job.transition(
-                    JobState.RUNNING, now=now
-                ).transition(JobState.FAILED, now=now, failure_code="attempt_limit_exceeded")
-                self._runs[run.id] = failed_run
-                self._jobs[job.id] = failed_job
+                self._runs[run.id] = run.transition(RunState.FAILED, now=now)
+                self._jobs[job.id] = (
+                    job.transition(JobState.RUNNING, now=now).transition(
+                        JobState.FAILED,
+                        now=now,
+                        failure_code="attempt_limit_exceeded",
+                    )
+                )
                 raise AttemptLimitExceeded("attempt limit exceeded")
             lease = Lease(
                 owner=owner,
@@ -175,7 +178,7 @@ class InMemoryJobStore:
                 expires_at=_add_seconds(now, lease_seconds),
                 heartbeat_at=now,
             )
-            attempt = Attempt(
+            leased_attempt = Attempt(
                 id=attempt_id,
                 run_id=run.id,
                 ordinal=ordinal,
@@ -184,11 +187,22 @@ class InMemoryJobStore:
                 created_at=now,
                 updated_at=now,
             )
-            self._attempts[attempt_id] = attempt
+            running_attempt = leased_attempt.transition(AttemptState.RUNNING, now=now)
+            running_run = run.transition(RunState.LEASED, now=now).transition(
+                RunState.RUNNING, now=now
+            )
+            running_job = job.transition(JobState.RUNNING, now=now)
+            self._attempts[attempt_id] = running_attempt
             self._events[attempt_id] = []
-            self._runs[run.id] = run.transition(RunState.LEASED, now=now)
-            self._jobs[job.id] = job.transition(JobState.RUNNING, now=now)
-            return ClaimedRun(job=self._jobs[job.id], run=self._runs[run.id], attempt_id=attempt_id, attempt_ordinal=ordinal, lease_token=lease_token)
+            self._runs[run.id] = running_run
+            self._jobs[job.id] = running_job
+            return ClaimedRun(
+                job=running_job,
+                run=running_run,
+                attempt_id=attempt_id,
+                attempt_ordinal=ordinal,
+                lease_token=lease_token,
+            )
 
     def heartbeat(
         self,
@@ -229,7 +243,7 @@ class InMemoryJobStore:
     def append_events(
         self,
         attempt_id: AttemptId,
-        events: list[StoredExecutionEvent] | tuple[StoredExecutionEvent, ...],
+        events: Sequence[StoredExecutionEvent],
     ) -> None:
         with self._lock:
             target = self._events[attempt_id]
@@ -257,10 +271,8 @@ class InMemoryJobStore:
 
     def read_cell_results(self, run_id: RunId) -> tuple[StoredCellResult, ...]:
         with self._lock:
-            return tuple(
-                self._cell_results.get(run_id, {})[cell_id]
-                for cell_id in sorted(self._cell_results.get(run_id, {}))
-            )
+            by_cell = self._cell_results.get(run_id, {})
+            return tuple(by_cell[cell_id] for cell_id in sorted(by_cell))
 
     def put_evidence(self, ref: StoredEvidenceRef) -> None:
         with self._lock:
@@ -286,8 +298,11 @@ class InMemoryJobStore:
             attempt = self._attempts[attempt_id]
             if attempt.lease is None or attempt.lease.owner != owner or attempt.lease.token != lease_token:
                 raise ValueError("attempt lease ownership lost")
-            completed = attempt.transition(state, now=now, failure_code=failure_code)
-            self._attempts[attempt_id] = completed
+            self._attempts[attempt_id] = attempt.transition(
+                state,
+                now=now,
+                failure_code=failure_code,
+            )
             run = self._runs[attempt.run_id]
             job = self._jobs[run.job_id]
             if state is AttemptState.ABANDONED:
@@ -298,21 +313,23 @@ class InMemoryJobStore:
                 self._jobs[job.id] = job.transition(JobState.SUCCEEDED, now=now)
                 return
             if state is AttemptState.CANCELLED:
-                run_state = RunState.CANCELLED
-                job_state = JobState.CANCELLED
-            else:
-                run_state = RunState.FAILED
-                job_state = JobState.FAILED
-            if run.state is RunState.CANCELLING and run_state is RunState.CANCELLED:
-                next_run = run.transition(RunState.CANCELLED, now=now)
-            else:
-                next_run = run.transition(run_state, now=now)
-            if job.state is JobState.CANCELLING and job_state is JobState.CANCELLED:
-                next_job = job.transition(JobState.CANCELLED, now=now)
-            else:
-                next_job = job.transition(job_state, now=now, failure_code=failure_code)
-            self._runs[run.id] = next_run
-            self._jobs[job.id] = next_job
+                if run.state is RunState.CANCELLING:
+                    self._runs[run.id] = run.transition(RunState.CANCELLED, now=now)
+                else:
+                    cancelling_run = run.transition(RunState.CANCELLING, now=now)
+                    self._runs[run.id] = cancelling_run.transition(RunState.CANCELLED, now=now)
+                if job.state is JobState.CANCELLING:
+                    self._jobs[job.id] = job.transition(JobState.CANCELLED, now=now)
+                else:
+                    cancelling_job = job.transition(JobState.CANCELLING, now=now)
+                    self._jobs[job.id] = cancelling_job.transition(JobState.CANCELLED, now=now)
+                return
+            self._runs[run.id] = run.transition(RunState.FAILED, now=now)
+            self._jobs[job.id] = job.transition(
+                JobState.FAILED,
+                now=now,
+                failure_code=failure_code,
+            )
 
     def reclaim_expired(self, *, now: str) -> tuple[RunId, ...]:
         reclaimed: list[RunId] = []
@@ -323,11 +340,14 @@ class InMemoryJobStore:
                     and attempt.lease is not None
                     and attempt.lease.expires_at <= now
                 ):
-                    self._attempts[attempt_id] = attempt.transition(AttemptState.ABANDONED, now=now)
+                    self._attempts[attempt_id] = attempt.transition(
+                        AttemptState.ABANDONED,
+                        now=now,
+                    )
                     run = self._runs[attempt.run_id]
                     self._runs[run.id] = run.transition(RunState.PENDING, now=now)
                     reclaimed.append(run.id)
             return tuple(reclaimed)
 
 
-__all__ = ["IdempotencyConflict", "InMemoryJobStore"]
+__all__ = ("IdempotencyConflict", "InMemoryJobStore")
