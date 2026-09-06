@@ -1,0 +1,31 @@
+FROM python:3.11.16-slim-bookworm@sha256:528257d48c1da0dcecc2e725d1ae34498d60c965f1241e39cd6a85a8859bdf84
+
+ARG DOCKER_CLI_VERSION=27.3.1
+ARG TARGETARCH
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install --no-install-recommends -y ca-certificates curl git; \
+    case "${TARGETARCH:-amd64}" in \
+      amd64) docker_arch=x86_64 ;; \
+      arm64) docker_arch=aarch64 ;; \
+      *) echo "unsupported TARGETARCH=${TARGETARCH:-}" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://download.docker.com/linux/static/stable/${docker_arch}/docker-${DOCKER_CLI_VERSION}.tgz" -o /tmp/docker.tgz; \
+    tar -xzf /tmp/docker.tgz -C /tmp docker/docker; \
+    install -m 0755 /tmp/docker/docker /usr/local/bin/docker; \
+    apt-get purge -y curl; \
+    apt-get autoremove -y; \
+    rm -rf /tmp/docker /tmp/docker.tgz /var/lib/apt/lists/*
+
+ENV GIT_CONFIG_COUNT=1 \
+    GIT_CONFIG_KEY_0=safe.directory \
+    GIT_CONFIG_VALUE_0=* \
+    PYTHONUNBUFFERED=1
+
+RUN useradd --create-home --uid 65532 ronin
+WORKDIR /app
+COPY docker/bootstrap_server.py /app/bootstrap_server.py
+USER 65532:65532
+EXPOSE 8080
+CMD ["python", "/app/bootstrap_server.py"]
