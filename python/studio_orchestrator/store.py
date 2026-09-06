@@ -112,6 +112,10 @@ class JobStore(Protocol):
         self,
         attempt_id: AttemptId,
         events: Sequence[StoredExecutionEvent],
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant,
     ) -> None: ...
 
     def read_events(
@@ -121,11 +125,27 @@ class JobStore(Protocol):
         since: int,
     ) -> tuple[StoredExecutionEvent, ...]: ...
 
-    def put_cell_result(self, result: StoredCellResult) -> None: ...
+    def put_cell_result(
+        self,
+        attempt_id: AttemptId,
+        result: StoredCellResult,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant,
+    ) -> None: ...
 
     def read_cell_results(self, run_id: RunId) -> tuple[StoredCellResult, ...]: ...
 
-    def put_evidence(self, ref: StoredEvidenceRef) -> None: ...
+    def put_evidence(
+        self,
+        attempt_id: AttemptId,
+        ref: StoredEvidenceRef,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant,
+    ) -> None: ...
 
     def read_evidence(self, run_id: RunId) -> tuple[StoredEvidenceRef, ...]: ...
 
