@@ -247,7 +247,9 @@ def execution_identities(
         try:
             upstream = tuple(digests[str(dependency)] for dependency in cell.dependencies)
         except KeyError as exc:
-            raise WorkerPreparationError("dependency identity missing before dependent cell") from exc
+            raise WorkerPreparationError(
+                "dependency identity missing before dependent cell"
+            ) from exc
         identity = identity_for(
             cell,
             run_id=run_id,
