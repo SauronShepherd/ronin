@@ -86,17 +86,21 @@ def test_isolation_claim_and_policy_reject_unknown_qualification_values() -> Non
         SessionPolicy(minimum_isolation_qualification=cast(IsolationQualification, "certified"))
 
 
-def test_session_policy_can_require_tested_or_qualified_isolation() -> None:
+def test_declared_isolation_rejected_by_default() -> None:
+    declared = ExecutorIsolation("container", True, True, True)
+    with pytest.raises(ValueError, match="below session policy minimum"):
+        SessionPolicy().validate_isolation(declared)
+
+
+def test_session_policy_accepts_tested_or_qualified_isolation() -> None:
     declared = ExecutorIsolation("container", True, True, True)
     tested = _evidenced("tested")
     qualified = _evidenced("qualified")
 
-    SessionPolicy().validate_isolation(declared)
-    SessionPolicy(minimum_isolation_qualification="tested").validate_isolation(tested)
-    SessionPolicy(minimum_isolation_qualification="tested").validate_isolation(qualified)
+    SessionPolicy().validate_isolation(tested)
+    SessionPolicy().validate_isolation(qualified)
     SessionPolicy(minimum_isolation_qualification="qualified").validate_isolation(qualified)
+    SessionPolicy(minimum_isolation_qualification="declared").validate_isolation(declared)
 
-    with pytest.raises(ValueError, match="below session policy minimum"):
-        SessionPolicy(minimum_isolation_qualification="tested").validate_isolation(declared)
     with pytest.raises(ValueError, match="below session policy minimum"):
         SessionPolicy(minimum_isolation_qualification="qualified").validate_isolation(tested)
