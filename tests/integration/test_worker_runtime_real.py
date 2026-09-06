@@ -271,7 +271,9 @@ def test_real_process_sigkill_reclaims_same_run_and_reuses_three_cells(tmp_path:
         key="process-crash-key",
     )
 
-    first = subprocess.Popen(
+    # Every argument is constructed locally from the checked-out repository, temporary paths,
+    # and the Docker executable resolved by the dedicated qualification job.
+    first = subprocess.Popen(  # noqa: S603
         _process_args("crash", config, marker, outcome_path),
         cwd=Path.cwd(),
         text=True,
@@ -288,7 +290,7 @@ def test_real_process_sigkill_reclaims_same_run_and_reuses_three_cells(tmp_path:
         # The v0.1 lease contract is 30 seconds. Do not shortcut reclaim in qualification.
         time.sleep(31.0)
 
-        second = subprocess.run(
+        second = subprocess.run(  # noqa: S603
             _process_args("replacement", config, marker, outcome_path),
             cwd=Path.cwd(),
             text=True,
