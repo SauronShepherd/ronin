@@ -22,6 +22,7 @@ from .reproducibility import (
     ReproducibilityDigest,
 )
 from .session import (
+    AsyncExecutionEventSink,
     CancellationSignal,
     CancellationToken,
     ExecutionEvent,
@@ -35,6 +36,7 @@ from .session import (
 )
 
 __all__ = (
+    "AsyncExecutionEventSink",
     "CancellationSignal",
     "CancellationToken",
     "CellExecutionRequest",
