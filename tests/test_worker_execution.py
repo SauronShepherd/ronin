@@ -16,10 +16,11 @@ from studio_kernel import (
     RepositoryRevision,
     SessionPolicy,
 )
-from studio_notebook import NotebookDocument
+from studio_notebook import CellId, NotebookDocument
 from studio_orchestrator import (
     AttemptId,
     AttemptState,
+    CellExecutionIdentity,
     Instant,
     Job,
     JobId,
@@ -85,7 +86,11 @@ def _run() -> Run:
     )
 
 
-def _prepared(attempt_id: AttemptId, *, cells: int = 2):
+def _prepared(
+    attempt_id: AttemptId,
+    *,
+    cells: int = 2,
+) -> tuple[object, tuple[CellExecutionIdentity, ...]]:
     project_dir = Path("examples/demo")
     manifest = ProjectManifest.from_json(
         (project_dir / ".ronin" / "project.json").read_text(encoding="utf-8")
@@ -125,6 +130,7 @@ async def _claim(service: DurableExecutionService, attempt: str, lease: str):
 @dataclass
 class _SuccessExecutor:
     store: InMemoryJobStore | None = None
+    expected_first_id: str | None = None
     cancel_service: DurableExecutionService | None = None
     delay: float = 0.0
     calls: int = 0
@@ -142,8 +148,9 @@ class _SuccessExecutor:
         if self.calls == 2 and self.store is not None:
             results = self.store.read_cell_results(RunId("run-worker"))
             evidence = self.store.read_evidence(RunId("run-worker"))
-            assert [result.cell_id for result in results] == ["extract"]
-            assert evidence[-1].cell_id == "extract"
+            assert self.expected_first_id is not None
+            assert [result.cell_id for result in results] == [self.expected_first_id]
+            assert evidence[-1].cell_id == self.expected_first_id
             assert evidence[-1].role == "cell-result"
         if self.calls == 1 and self.cancel_service is not None:
             await self.cancel_service.cancel(JobId("job-worker"), now=NOW)
@@ -219,6 +226,10 @@ class _CountingHeartbeatStore(InMemoryJobStore):
         )
 
 
+def _cell_ids(identities: tuple[CellExecutionIdentity, ...]) -> tuple[str, ...]:
+    return tuple(identity.cell_id for identity in identities)
+
+
 def test_worker_configuration_and_clock_are_fail_closed(tmp_path: Path) -> None:
     executor = _SuccessExecutor()
     store = InMemoryJobStore()
@@ -275,7 +286,8 @@ def test_success_checkpoints_result_and_artifact_before_next_cell(tmp_path: Path
             await service.submit(_job(), _run())
             claim = await _claim(service, "attempt-1", "lease-1")
             request, identities = _prepared(AttemptId("attempt-1"))
-            executor = _SuccessExecutor(store=store)
+            expected_ids = _cell_ids(identities)
+            executor = _SuccessExecutor(store=store, expected_first_id=expected_ids[0])
             worker = DurableWorkerExecution(
                 service,
                 LocalArtifactStore(tmp_path / "artifacts"),
@@ -286,10 +298,11 @@ def test_success_checkpoints_result_and_artifact_before_next_cell(tmp_path: Path
             )
             outcome = await worker.run(claim, request, identities)
             assert outcome.state is AttemptState.SUCCEEDED
-            assert outcome.executed_cell_ids == ("extract", "load_customers")
+            assert outcome.executed_cell_ids == expected_ids
             assert outcome.reused_cell_ids == ()
             assert executor.calls == 2
-            assert (await service.status(JobId("job-worker"))).state is JobState.SUCCEEDED  # type: ignore[union-attr]
+            job = await service.status(JobId("job-worker"))
+            assert job is not None and job.state is JobState.SUCCEEDED
             assert len(await service.worker_read_cell_results(RunId("run-worker"))) == 2
             assert len(await service.worker_read_evidence(RunId("run-worker"))) == 2
             events = store.read_events(RunId("run-worker"), since=0)
@@ -315,7 +328,7 @@ def test_permission_denial_and_executor_exception_fail_attempt(tmp_path: Path) -
             await service.submit(_job(), _run())
             claim = await _claim(service, "attempt-1", "lease-1")
             request, identities = _prepared(AttemptId("attempt-1"), cells=1)
-            executor = ExplodingExecutor()
+            executor: _SuccessExecutor = ExplodingExecutor()
             if permission_denied:
                 first = replace(
                     request.cells[0],
@@ -327,9 +340,10 @@ def test_permission_denial_and_executor_exception_fail_attempt(tmp_path: Path) -
                 )
                 request = replace(request, cells=(first,))
                 executor = _SuccessExecutor()
+            artifact_dir = "permission" if permission_denied else "exception"
             worker = DurableWorkerExecution(
                 service,
-                LocalArtifactStore(tmp_path / ("permission" if permission_denied else "exception")),
+                LocalArtifactStore(tmp_path / artifact_dir),
                 executor,
                 POLICY,
                 "worker-1",
@@ -354,8 +368,6 @@ def test_worker_rejects_executor_cell_identity_drift(tmp_path: Path) -> None:
             cancellation: CancellationSignal,
         ) -> CellExecutionResult:
             del cell, cancellation
-            from studio_notebook import CellId
-
             return CellExecutionResult(CellId("wrong-cell"), "succeeded")
 
     async def scenario() -> None:
@@ -397,7 +409,7 @@ def test_cancellation_is_polled_between_cells(tmp_path: Path) -> None:
             )
             outcome = await worker.run(claim, request, identities)
             assert outcome.state is AttemptState.CANCELLED
-            assert outcome.executed_cell_ids == ("extract",)
+            assert outcome.executed_cell_ids == (_cell_ids(identities)[0],)
             assert executor.calls == 1
             job = await service.status(JobId("job-worker"))
             assert job is not None and job.state is JobState.CANCELLED
@@ -415,8 +427,7 @@ def test_lease_loss_cancels_active_execution_without_checkpoint_or_completion(
             claim = await _claim(service, "attempt-1", "lease-1")
             request, identities = _prepared(AttemptId("attempt-1"), cells=1)
             started = asyncio.Event()
-            executor = _BlockingExecutor(started)
-            executor.calls = 1
+            executor = _BlockingExecutor(started, calls=1)
             worker = DurableWorkerExecution(
                 service,
                 LocalArtifactStore(tmp_path / "artifacts"),
@@ -470,12 +481,12 @@ def test_crash_reclaim_reuses_verified_checkpoint_in_same_run(tmp_path: Path) ->
             await service.submit(_job(), _run())
             first_claim = await _claim(service, "attempt-1", "lease-1")
             first_request, identities = _prepared(AttemptId("attempt-1"))
+            expected_ids = _cell_ids(identities)
             started = asyncio.Event()
-            first_executor = _BlockingExecutor(started)
             first_worker = DurableWorkerExecution(
                 service,
                 artifacts,
-                first_executor,
+                _BlockingExecutor(started),
                 POLICY,
                 "worker-1",
                 heartbeat_interval_seconds=29,
@@ -487,7 +498,7 @@ def test_crash_reclaim_reuses_verified_checkpoint_in_same_run(tmp_path: Path) ->
             with pytest.raises(asyncio.CancelledError):
                 await task
             assert [item.cell_id for item in store.read_cell_results(RunId("run-worker"))] == [
-                "extract"
+                expected_ids[0]
             ]
 
             replacement = await service.worker_poll(
@@ -511,8 +522,8 @@ def test_crash_reclaim_reuses_verified_checkpoint_in_same_run(tmp_path: Path) ->
             )
             outcome = await second_worker.run(replacement.claim, second_request, identities)
             assert outcome.state is AttemptState.SUCCEEDED
-            assert outcome.reused_cell_ids == ("extract",)
-            assert outcome.executed_cell_ids == ("load_customers",)
+            assert outcome.reused_cell_ids == (expected_ids[0],)
+            assert outcome.executed_cell_ids == (expected_ids[1],)
             assert second_executor.calls == 1
             events = store.read_events(RunId("run-worker"), since=0)
             assert any(event.kind == "worker.cell.reused" for event in events)
@@ -529,6 +540,7 @@ def test_corrupt_checkpoint_artifact_forces_reexecution_after_reclaim(tmp_path: 
             await service.submit(_job(), _run())
             first_claim = await _claim(service, "attempt-1", "lease-1")
             first_request, identities = _prepared(AttemptId("attempt-1"))
+            expected_ids = _cell_ids(identities)
             started = asyncio.Event()
             first_worker = DurableWorkerExecution(
                 service,
@@ -568,7 +580,8 @@ def test_corrupt_checkpoint_artifact_forces_reexecution_after_reclaim(tmp_path: 
             )
             outcome = await worker.run(replacement.claim, second_request, identities)
             assert outcome.reused_cell_ids == ()
-            assert outcome.executed_cell_ids == ("extract", "load_customers")
+            assert outcome.executed_cell_ids == expected_ids
             assert executor.calls == 2
+            assert artifacts.verify(store.read_evidence(RunId("run-worker"))[-2])
 
     asyncio.run(scenario())
