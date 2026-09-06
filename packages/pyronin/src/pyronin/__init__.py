@@ -6,16 +6,18 @@ import ipaddress
 import json
 import time
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Protocol
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode, urlsplit
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import HTTPRedirectHandler, OpenerDirector, Request, build_opener
 
 __version__ = "0.1.0a2"
 
 _DEFAULT_MAX_RESPONSE_BYTES = 1024 * 1024
+_RETRYABLE_STATUS_CODES = frozenset({429, 502, 503, 504})
+_RETRYABLE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
 class RoninError(Exception):
@@ -36,9 +38,11 @@ class APIError(RoninError):
 
     status_code: int
     message: str
+    code: str | None = None
 
     def __str__(self) -> str:
-        return f"Ronin API error {self.status_code}: {self.message}"
+        suffix = f" [{self.code}]" if self.code else ""
+        return f"Ronin API error {self.status_code}{suffix}: {self.message}"
 
 
 class JobState(StrEnum):
@@ -116,6 +120,33 @@ def _read_bounded(stream: _Readable, max_bytes: int) -> bytes:
     return body
 
 
+def _api_error_code(body: bytes) -> str | None:
+    try:
+        payload = json.loads(body)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    code = payload.get("code")
+    if isinstance(code, str) and code and len(code) <= 128:
+        return code
+    error = payload.get("error")
+    if isinstance(error, dict):
+        nested = error.get("code")
+        if isinstance(nested, str) and nested and len(nested) <= 128:
+            return nested
+    return None
+
+
+def _request_is_retry_safe(method: str, headers: Mapping[str, str]) -> bool:
+    upper = method.upper()
+    if upper in _RETRYABLE_METHODS:
+        return True
+    if upper == "POST":
+        return any(key.casefold() == "idempotency-key" for key in headers)
+    return False
+
+
 @dataclass(frozen=True, slots=True)
 class HTTPTransport:
     base_url: str
@@ -123,6 +154,9 @@ class HTTPTransport:
     timeout: float = 30.0
     max_response_bytes: int = _DEFAULT_MAX_RESPONSE_BYTES
     allow_insecure_localhost: bool = False
+    max_retries: int = 2
+    backoff_seconds: float = 0.1
+    _opener: OpenerDirector = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if not self.base_url.strip() or self.base_url.strip() != self.base_url:
@@ -138,6 +172,10 @@ class HTTPTransport:
             raise ValueError("timeout must be positive")
         if self.max_response_bytes < 1:
             raise ValueError("max_response_bytes must be positive")
+        if self.max_retries < 0:
+            raise ValueError("max_retries must be non-negative")
+        if self.backoff_seconds < 0:
+            raise ValueError("backoff_seconds must be non-negative")
         if self.token is not None:
             if not self.token or self.token.strip() != self.token:
                 raise ValueError("token must be non-empty and trimmed when supplied")
@@ -151,6 +189,11 @@ class HTTPTransport:
                     "authenticated HTTP requires HTTPS; insecure transport is allowed only for "
                     "explicit loopback development"
                 )
+        object.__setattr__(self, "_opener", build_opener(_RejectRedirects()))
+
+    def _sleep_before_retry(self, attempt: int) -> None:
+        if self.backoff_seconds:
+            time.sleep(self.backoff_seconds * (2**attempt))
 
     def request(
         self,
@@ -175,28 +218,41 @@ class HTTPTransport:
         if payload is not None:
             request_headers["Content-Type"] = "application/json"
             data = json.dumps(dict(payload), separators=(",", ":")).encode("utf-8")
-        request = Request(url, data=data, headers=request_headers, method=method)  # noqa: S310
-        opener = build_opener(_RejectRedirects())
-        try:
-            with opener.open(request, timeout=self.timeout) as response:  # noqa: S310
-                body = _read_bounded(response, self.max_response_bytes)
-        except HTTPError as exc:
+        retry_safe = _request_is_retry_safe(method, request_headers)
+
+        for attempt in range(self.max_retries + 1):
+            request = Request(url, data=data, headers=request_headers, method=method)  # noqa: S310
             try:
-                _read_bounded(exc, self.max_response_bytes)
-            except TransportError as limit_error:
-                raise APIError(
-                    exc.code,
-                    "error response exceeded configured byte limit",
-                ) from limit_error
-            raise APIError(exc.code, "request failed") from exc
-        except URLError as exc:
-            raise TransportError("Ronin endpoint unavailable") from exc
-        if not body:
-            return None
-        try:
-            return json.loads(body)
-        except json.JSONDecodeError as exc:
-            raise TransportError("Ronin endpoint returned invalid JSON") from exc
+                with self._opener.open(request, timeout=self.timeout) as response:  # noqa: S310
+                    body = _read_bounded(response, self.max_response_bytes)
+            except HTTPError as exc:
+                try:
+                    error_body = _read_bounded(exc, self.max_response_bytes)
+                except TransportError as limit_error:
+                    raise APIError(
+                        exc.code,
+                        "error response exceeded configured byte limit",
+                    ) from limit_error
+                if (
+                    retry_safe
+                    and exc.code in _RETRYABLE_STATUS_CODES
+                    and attempt < self.max_retries
+                ):
+                    self._sleep_before_retry(attempt)
+                    continue
+                raise APIError(exc.code, "request failed", _api_error_code(error_body)) from exc
+            except URLError as exc:
+                if retry_safe and attempt < self.max_retries:
+                    self._sleep_before_retry(attempt)
+                    continue
+                raise TransportError("Ronin endpoint unavailable") from exc
+            if not body:
+                return None
+            try:
+                return json.loads(body)
+            except json.JSONDecodeError as exc:
+                raise TransportError("Ronin endpoint returned invalid JSON") from exc
+        raise AssertionError("unreachable retry loop")
 
 
 class Ronin:
