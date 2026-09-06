@@ -2,4 +2,6 @@
 
 from __future__ import annotations
 
-__all__: tuple[str, ...] = ()
+from studio_server.durable_execution import DurableExecutionService, WorkerPollResult
+
+__all__ = ("DurableExecutionService", "WorkerPollResult")
