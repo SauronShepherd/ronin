@@ -124,7 +124,9 @@ _JOB_TRANSITIONS: dict[JobState, frozenset[JobState]] = {
 }
 
 _RUN_TRANSITIONS: dict[RunState, frozenset[RunState]] = {
-    RunState.PENDING: frozenset({RunState.LEASED, RunState.CANCELLING, RunState.CANCELLED}),
+    RunState.PENDING: frozenset(
+        {RunState.LEASED, RunState.CANCELLING, RunState.CANCELLED, RunState.FAILED}
+    ),
     RunState.LEASED: frozenset({RunState.RUNNING, RunState.PENDING, RunState.CANCELLING}),
     RunState.RUNNING: frozenset(
         {RunState.PENDING, RunState.CANCELLING, RunState.SUCCEEDED, RunState.FAILED}
