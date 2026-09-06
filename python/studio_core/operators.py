@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
@@ -154,11 +155,21 @@ class OperatorCatalog:
         object.__setattr__(self, "operators", canonical)
 
     def get(self, ref: OperatorRef) -> OperatorContract | None:
-        return next((operator for operator in self.operators if operator.ref == ref), None)
+        key = (ref.name, ref.version)
+        index = bisect_left(
+            self.operators,
+            key,
+            key=lambda item: (item.ref.name, item.ref.version),
+        )
+        if index < len(self.operators) and self.operators[index].ref == ref:
+            return self.operators[index]
+        return None
 
     def latest(self, name: str) -> OperatorContract | None:
-        matches = [operator for operator in self.operators if operator.ref.name == name]
-        return max(matches, key=lambda item: item.ref.version, default=None)
+        index = bisect_right(self.operators, name, key=lambda item: item.ref.name) - 1
+        if index >= 0 and self.operators[index].ref.name == name:
+            return self.operators[index]
+        return None
 
     def to_data(self) -> dict[str, object]:
         return {"operators": [operator.to_data() for operator in self.operators]}
