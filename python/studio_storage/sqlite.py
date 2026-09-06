@@ -33,8 +33,11 @@ def _add_seconds(value: str, seconds: int) -> str:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
-    return (parsed + timedelta(seconds=seconds)).astimezone(timezone.utc).isoformat().replace(
-        "+00:00", "Z"
+    return (
+        (parsed + timedelta(seconds=seconds))
+        .astimezone(timezone.utc)
+        .isoformat()
+        .replace("+00:00", "Z")
     )
 
 
@@ -66,8 +69,11 @@ def migrate(connection: sqlite3.Connection, *, now: str) -> None:
         raise RuntimeError(f"database schema {current} is newer than supported {_SCHEMA_VERSION}")
     if current == _SCHEMA_VERSION:
         return
-    script = Path(__file__).with_name("migrations").joinpath("001_initial.sql").read_text(
-        encoding="utf-8"
+    script = (
+        Path(__file__)
+        .with_name("migrations")
+        .joinpath("001_initial.sql")
+        .read_text(encoding="utf-8")
     )
     connection.execute("BEGIN IMMEDIATE")
     try:

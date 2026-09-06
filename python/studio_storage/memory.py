@@ -35,8 +35,11 @@ def _add_seconds(value: str, seconds: int) -> str:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
-    return (parsed + timedelta(seconds=seconds)).astimezone(timezone.utc).isoformat().replace(
-        "+00:00", "Z"
+    return (
+        (parsed + timedelta(seconds=seconds))
+        .astimezone(timezone.utc)
+        .isoformat()
+        .replace("+00:00", "Z")
     )
 
 
@@ -60,7 +63,9 @@ class InMemoryJobStore:
             if existing_id is not None:
                 existing = self._jobs[existing_id]
                 if existing.request_digest != job.request_digest:
-                    raise IdempotencyConflict("idempotency key already exists for different request")
+                    raise IdempotencyConflict(
+                        "idempotency key already exists for different request"
+                    )
                 return existing
             if job.id in self._jobs or run.id in self._runs:
                 raise ValueError("job or run identity already exists")
@@ -158,7 +163,11 @@ class InMemoryJobStore:
             if job.state not in {JobState.QUEUED, JobState.RUNNING}:
                 return None
             ordinal = 1 + max(
-                (attempt.ordinal for attempt in self._attempts.values() if attempt.run_id == run.id),
+                (
+                    attempt.ordinal
+                    for attempt in self._attempts.values()
+                    if attempt.run_id == run.id
+                ),
                 default=0,
             )
             if ordinal > 10:
@@ -192,9 +201,7 @@ class InMemoryJobStore:
                 RunState.RUNNING, now=now
             )
             running_job = (
-                job.transition(JobState.RUNNING, now=now)
-                if job.state is JobState.QUEUED
-                else job
+                job.transition(JobState.RUNNING, now=now) if job.state is JobState.QUEUED else job
             )
             self._attempts[attempt_id] = running_attempt
             self._events[attempt_id] = []
@@ -300,7 +307,11 @@ class InMemoryJobStore:
             raise ValueError("attempt completion state must be terminal")
         with self._lock:
             attempt = self._attempts[attempt_id]
-            if attempt.lease is None or attempt.lease.owner != owner or attempt.lease.token != lease_token:
+            if (
+                attempt.lease is None
+                or attempt.lease.owner != owner
+                or attempt.lease.token != lease_token
+            ):
                 raise ValueError("attempt lease ownership lost")
             self._attempts[attempt_id] = attempt.transition(
                 state,

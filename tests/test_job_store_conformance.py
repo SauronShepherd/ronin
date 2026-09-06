@@ -73,13 +73,16 @@ def test_cancel_pending_terminalizes_without_attempt(store) -> None:
     store.create_job(_job(), _run())
     cancelled = store.request_cancel(JobId("job-1"), now=HEARTBEAT)
     assert cancelled.state is JobState.CANCELLED
-    assert store.claim_next_run(
-        owner="worker-1",
-        lease_token=LeaseToken("lease-1"),
-        attempt_id=AttemptId("attempt-1"),
-        lease_seconds=30,
-        now=HEARTBEAT,
-    ) is None
+    assert (
+        store.claim_next_run(
+            owner="worker-1",
+            lease_token=LeaseToken("lease-1"),
+            attempt_id=AttemptId("attempt-1"),
+            lease_seconds=30,
+            now=HEARTBEAT,
+        )
+        is None
+    )
 
 
 def test_claim_heartbeat_reclaim_and_replacement_attempt_same_run(store) -> None:
