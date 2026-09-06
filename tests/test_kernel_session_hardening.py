@@ -90,6 +90,18 @@ class _ExplodingExecutor:
         raise RuntimeError("connection failed token=TOPSECRET")
 
 
+@dataclass
+class _LongMessageExecutor:
+    isolation: ExecutorIsolation = _TESTED_ISOLATION
+
+    async def execute(
+        self,
+        _cell: CellExecutionRequest,
+        _cancellation: CancellationSignal,
+    ) -> CellExecutionResult:
+        raise RuntimeError("x" * 2000)
+
+
 def _events(path: Path) -> list[dict[str, object]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
 
@@ -132,7 +144,7 @@ def test_kernel_session_is_single_use(tmp_path: Path) -> None:
         asyncio.run(session.run())
 
 
-def test_executor_exception_preserves_type_without_raw_message(tmp_path: Path) -> None:
+def test_executor_exception_preserves_bounded_redacted_message(tmp_path: Path) -> None:
     path = tmp_path / "events.jsonl"
     result = asyncio.run(
         KernelExecutionSession(
@@ -147,5 +159,23 @@ def test_executor_exception_preserves_type_without_raw_message(tmp_path: Path) -
     failed = next(event for event in _events(path) if event["kind"] == "cell.failed")
     message = str(failed["message"])
     assert "RuntimeError" in message
-    assert "connection failed" not in message
+    assert "connection failed" in message
     assert "TOPSECRET" not in message
+    assert "[REDACTED]" in message
+
+
+def test_executor_exception_message_is_bounded(tmp_path: Path) -> None:
+    path = tmp_path / "events-long.jsonl"
+    asyncio.run(
+        KernelExecutionSession(
+            _request(),
+            _LongMessageExecutor(),
+            SessionPolicy(),
+            JsonlExecutionEventSink(path),
+            CancellationToken(),
+        ).run()
+    )
+    failed = next(event for event in _events(path) if event["kind"] == "cell.failed")
+    message = str(failed["message"])
+    assert message.endswith("...")
+    assert len(message) < 600
