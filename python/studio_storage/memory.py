@@ -12,6 +12,7 @@ from studio_orchestrator import (
     AttemptLimitExceeded,
     AttemptState,
     ClaimedRun,
+    Instant,
     Job,
     JobId,
     JobState,
@@ -31,11 +32,10 @@ class IdempotencyConflict(ValueError):
     """Raised when one idempotency key is reused for different request content."""
 
 
-def _add_seconds(value: str, seconds: int) -> str:
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=UTC)
-    return (parsed + timedelta(seconds=seconds)).astimezone(UTC).isoformat().replace("+00:00", "Z")
+def _add_seconds(value: Instant | str, seconds: int) -> Instant:
+    base = Instant(value)
+    parsed = datetime.strptime(str(base), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
+    return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
 class InMemoryJobStore:
@@ -99,7 +99,8 @@ class InMemoryJobStore:
             next_cursor = str(next_offset) if next_offset < len(filtered) else None
             return Page(items, next_cursor)
 
-    def request_cancel(self, job_id: JobId, *, now: str) -> Job:
+    def request_cancel(self, job_id: JobId, *, now: Instant | str) -> Job:
+        now = Instant(now)
         with self._lock:
             job = self._jobs[job_id]
             if job.state.terminal:
@@ -138,10 +139,11 @@ class InMemoryJobStore:
         lease_token: LeaseToken,
         attempt_id: AttemptId,
         lease_seconds: int,
-        now: str,
+        now: Instant | str,
     ) -> ClaimedRun | None:
         if lease_seconds < 1:
             raise ValueError("lease_seconds must be positive")
+        now = Instant(now)
         with self._lock:
             candidates = sorted(
                 (
@@ -216,9 +218,13 @@ class InMemoryJobStore:
         *,
         owner: str,
         lease_token: LeaseToken,
-        expires_at: str,
-        now: str,
+        expires_at: Instant | str,
+        now: Instant | str,
     ) -> bool:
+        now = Instant(now)
+        expires_at = Instant(expires_at)
+        if expires_at <= now:
+            raise ValueError("expires_at must be after now")
         with self._lock:
             attempt = self._attempts.get(attempt_id)
             if attempt is None or attempt.state not in {AttemptState.LEASED, AttemptState.RUNNING}:
@@ -296,10 +302,11 @@ class InMemoryJobStore:
         failure_code: str | None,
         owner: str,
         lease_token: LeaseToken,
-        now: str,
+        now: Instant | str,
     ) -> None:
         if not state.terminal:
             raise ValueError("attempt completion state must be terminal")
+        now = Instant(now)
         with self._lock:
             attempt = self._attempts[attempt_id]
             if (
@@ -341,7 +348,8 @@ class InMemoryJobStore:
                 failure_code=failure_code,
             )
 
-    def reclaim_expired(self, *, now: str) -> tuple[RunId, ...]:
+    def reclaim_expired(self, *, now: Instant | str) -> tuple[RunId, ...]:
+        now = Instant(now)
         reclaimed: list[RunId] = []
         with self._lock:
             for attempt_id, attempt in tuple(self._attempts.items()):
