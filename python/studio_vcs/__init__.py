@@ -2,4 +2,6 @@
 
 from __future__ import annotations
 
-__all__: tuple[str, ...] = ()
+from studio_vcs.git import GitCaptureError, GitRevision, capture_revision
+
+__all__ = ("GitCaptureError", "GitRevision", "capture_revision")
