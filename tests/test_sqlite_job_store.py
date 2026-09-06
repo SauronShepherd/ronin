@@ -63,9 +63,13 @@ def test_v1_database_upgrades_with_backward_compatible_execution_defaults(tmp_pa
     path = tmp_path / "ronin.db"
     connection = open_database(path)
     try:
-        script = Path("python/studio_storage/migrations/001_initial.sql").read_text(encoding="utf-8")
+        script = Path("python/studio_storage/migrations/001_initial.sql").read_text(
+            encoding="utf-8"
+        )
         connection.executescript(script)
-        connection.execute("INSERT INTO schema_migrations(version, applied_at) VALUES (1, ?)", (NOW,))
+        connection.execute(
+            "INSERT INTO schema_migrations(version, applied_at) VALUES (1, ?)", (NOW,)
+        )
         connection.execute(
             "INSERT INTO jobs(job_id,project_id,idempotency_key,request_digest,state,"
             "failure_code,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
