@@ -44,10 +44,10 @@ class _CrashingExecutor:
     ) -> CellExecutionResult:
         assert cell.cell_id == CellId("cell-1")
         assert cancellation.is_cancelled is False
-        raise RuntimeError("raw-adapter-detail-must-not-reach-durable-evidence")
+        raise RuntimeError("adapter connection failed token=TOPSECRET")
 
 
-def test_executor_exception_is_normalized_without_persisting_raw_exception(tmp_path: Path) -> None:
+def test_executor_exception_is_normalized_with_redacted_context(tmp_path: Path) -> None:
     cell = CellExecutionRequest(
         CellId("cell-1"),
         "print('authored')",
@@ -84,4 +84,7 @@ def test_executor_exception_is_normalized_without_persisting_raw_exception(tmp_p
     assert results == (CellExecutionResult(cell.cell_id, "failed", "kernel.executor.error"),)
     persisted = event_path.read_text(encoding="utf-8")
     assert "kernel.executor.error" in persisted
-    assert "raw-adapter-detail-must-not-reach-durable-evidence" not in persisted
+    assert "RuntimeError" in persisted
+    assert "adapter connection failed" in persisted
+    assert "TOPSECRET" not in persisted
+    assert "[REDACTED]" in persisted

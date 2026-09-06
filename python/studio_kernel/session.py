@@ -31,6 +31,7 @@ ExecutionEventKind: TypeAlias = Literal[
 ]
 
 _EVENT_LEDGER_KEYS = frozenset({"attempt_id", "sequence", "kind", "cell_id", "message"})
+_FAILURE_MESSAGE_LIMIT = 512
 _QUALIFICATION_RANK: dict[IsolationQualification, int] = {
     "declared": 0,
     "tested": 1,
@@ -41,6 +42,13 @@ _QUALIFICATION_RANK: dict[IsolationQualification, int] = {
 def _require_text(value: str, name: str) -> None:
     if not value or value.strip() != value or "\n" in value or "\r" in value:
         raise ValueError(f"{name} must be non-empty, trimmed, and single-line")
+
+
+def _bounded_failure_detail(exc: Exception) -> str:
+    detail = redact_sensitive_text(str(exc)).replace("\r", " ").replace("\n", " ").strip()
+    if len(detail) <= _FAILURE_MESSAGE_LIMIT:
+        return detail
+    return detail[: _FAILURE_MESSAGE_LIMIT - 3] + "..."
 
 
 @dataclass(frozen=True, slots=True)
@@ -377,7 +385,10 @@ class KernelExecutionSession:
                 await self._emit("session.cancelled")
                 raise
             except Exception as exc:
+                detail = _bounded_failure_detail(exc)
                 failure_detail = type(exc).__name__
+                if detail:
+                    failure_detail = f"{failure_detail}: {detail}"
                 result = CellExecutionResult(cell.cell_id, "failed", "kernel.executor.error")
             if result.cell_id != cell.cell_id:
                 raise ValueError("kernel executor must preserve cell identity")
