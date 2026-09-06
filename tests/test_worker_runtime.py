@@ -121,7 +121,9 @@ def test_runtime_config_and_catalog_fail_closed(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_run_once_executes_claim_through_sqlite_and_container_boundary(tmp_path: Path) -> None:
+async def test_run_once_executes_claim_through_sqlite_and_container_boundary(
+    tmp_path: Path,
+) -> None:
     config = _config(tmp_path)
     _seed(config)
     runner = _Runner()
