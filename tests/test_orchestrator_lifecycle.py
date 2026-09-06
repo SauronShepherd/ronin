@@ -8,6 +8,7 @@ from studio_orchestrator import (
     AttemptId,
     AttemptLimitExceeded,
     AttemptState,
+    Instant,
     InvalidTransition,
     Job,
     JobId,
@@ -21,9 +22,9 @@ from studio_orchestrator import (
     RunState,
 )
 
-NOW = "2026-09-06T09:00:00Z"
-LATER = "2026-09-06T09:00:10Z"
-EXPIRY = "2026-09-06T09:00:30Z"
+NOW = "2026-09-06T09:00:00.000000Z"
+LATER = "2026-09-06T09:00:10.000000Z"
+EXPIRY = "2026-09-06T09:00:30.000000Z"
 
 
 def make_job(state: JobState = JobState.QUEUED) -> Job:
@@ -88,6 +89,49 @@ def test_identifier_rejects_invalid_text(value: str) -> None:
         JobId(value)
 
 
+def test_lifecycle_fields_are_canonical_instants() -> None:
+    job = make_job()
+    run = make_run()
+    lease = make_lease()
+    attempt = make_attempt()
+    assert isinstance(job.created_at, Instant)
+    assert isinstance(job.updated_at, Instant)
+    assert isinstance(run.not_before, Instant)
+    assert isinstance(run.created_at, Instant)
+    assert isinstance(run.updated_at, Instant)
+    assert isinstance(lease.acquired_at, Instant)
+    assert isinstance(lease.heartbeat_at, Instant)
+    assert isinstance(lease.expires_at, Instant)
+    assert isinstance(attempt.created_at, Instant)
+    assert isinstance(attempt.updated_at, Instant)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "2026-09-06T09:00:00Z",
+        "2026-09-06T09:00:00.000Z",
+        "2026-09-06T11:00:00.000000+02:00",
+        "2026-09-06T09:00:00.000000+00:00",
+        "2026-09-06T09:00:00.000000",
+        "2026-02-30T09:00:00.000000Z",
+        "2026-09-06T24:00:00.000000Z",
+        "2026-09-06T09:00:60.000000Z",
+    ],
+)
+def test_lifecycle_rejects_noncanonical_or_invalid_instants(value: str) -> None:
+    with pytest.raises(ValueError, match="instant"):
+        Job(
+            id=JobId("job-x"),
+            project_id="project-1",
+            idempotency_key="key-x",
+            request_digest="a" * 64,
+            state=JobState.QUEUED,
+            created_at=value,
+            updated_at=NOW,
+        )
+
+
 def test_state_terminal_predicates_match_contract() -> None:
     assert JobState.CANCELLED.terminal
     assert not JobState.QUEUED.terminal
@@ -112,11 +156,11 @@ def test_lease_renews_only_for_current_owner_and_token() -> None:
     renewed = lease.renew(
         owner="worker-1",
         token=LeaseToken("token-1"),
-        expires_at="2026-09-06T09:00:40Z",
+        expires_at="2026-09-06T09:00:40.000000Z",
         now=LATER,
     )
     assert renewed.heartbeat_at == LATER
-    assert renewed.expires_at == "2026-09-06T09:00:40Z"
+    assert renewed.expires_at == "2026-09-06T09:00:40.000000Z"
     with pytest.raises(LeaseLost):
         lease.renew(
             owner="worker-2",
@@ -130,6 +174,22 @@ def test_lease_renews_only_for_current_owner_and_token() -> None:
             token=LeaseToken("token-2"),
             expires_at=EXPIRY,
             now=LATER,
+        )
+
+
+def test_clock_regression_is_rejected() -> None:
+    with pytest.raises(ValueError, match="backwards"):
+        make_job().transition(JobState.RUNNING, now="2026-09-06T08:59:59.999999Z")
+    with pytest.raises(ValueError, match="backwards"):
+        make_run().transition(RunState.LEASED, now="2026-09-06T08:59:59.999999Z")
+    with pytest.raises(ValueError, match="backwards"):
+        make_attempt().transition(AttemptState.RUNNING, now="2026-09-06T08:59:59.999999Z")
+    with pytest.raises(ValueError, match="backwards"):
+        make_lease().renew(
+            owner="worker-1",
+            token=LeaseToken("token-1"),
+            expires_at=EXPIRY,
+            now="2026-09-06T08:59:59.999999Z",
         )
 
 
