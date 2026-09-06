@@ -2,6 +2,14 @@ name: Docker Qualification
 
 on:
   pull_request:
+    paths:
+      - "docker/**"
+      - "python/studio_runners/**"
+      - "python/studio_kernel/**"
+      - "tests/integration/test_docker_container_executor_real.py"
+      - "requirements-dev.lock"
+      - "pyproject.toml"
+      - ".github/workflows/docker-qualification.yml"
   push:
     branches: [main]
   workflow_dispatch:

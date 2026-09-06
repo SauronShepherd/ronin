@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+    paths:
+      - "python/**"
+      - "pyproject.toml"
+      - "README.md"
+      - "LICENSE"
+      - ".github/workflows/release-qualification.yml"
 
 permissions:
   contents: read
