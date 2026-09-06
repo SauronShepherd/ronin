@@ -285,7 +285,10 @@ def test_concurrent_duplicate_event_sequence_has_exactly_one_winner(store) -> No
     assert outcomes.count("accepted") == 1
     rejected = [outcome for outcome in outcomes if outcome != "accepted"]
     assert len(rejected) == writers - 1
-    assert all(outcome == "rejected:event sequence must be contiguous within attempt" for outcome in rejected)
+    assert all(
+        outcome == "rejected:event sequence must be contiguous within attempt"
+        for outcome in rejected
+    )
     events = store.read_events(RunId("run-1"), since=0)
     assert len(events) == 1
     assert events[0].attempt_id == claim.attempt_id
