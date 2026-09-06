@@ -60,7 +60,17 @@ def _request(cell: CellExecutionRequest) -> NotebookExecutionRequest:
 
 @dataclass
 class _TaskCancelledExecutor:
-    isolation: ExecutorIsolation = ExecutorIsolation("container", True, True, True)
+    isolation: ExecutorIsolation = ExecutorIsolation(
+        "container",
+        True,
+        True,
+        True,
+        "tested",
+        "ronin/test-isolation",
+        "1",
+        "test-runtime",
+        "test-evidence://isolation",
+    )
 
     async def execute(
         self,
