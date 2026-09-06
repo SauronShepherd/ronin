@@ -4,7 +4,7 @@ This backlog is deliberately narrow for v0.1. Selection must be revalidated agai
 
 ## Completed foundation carried into v0.1
 
-E0/E1 already provide deterministic core/project/runtime/operator/diagnostic/notebook/kernel contracts, restart-safe single-writer execution evidence, hardened and real-engine-qualified Docker execution, async execution ports, 100% line/branch coverage on the original gated packages, and repository secret/dependency qualification. `docs/automation/PROGRESS.md` retains the detailed publication history.
+E0/E1 already provide deterministic core/project/runtime/operator/diagnostic/notebook/kernel contracts, restart-safe single-writer execution evidence, hardened and real-engine-qualified Docker execution, async execution ports, 100% line/branch coverage on the original gated packages, and repository secret/dependency qualification. `docs/automation/PROGRESS.md` retains the historical publication record; dated progress supplements may record later qualification milestones without rewriting that long-form history.
 
 Week 1 is complete on current main. PRs #105-#116 closed the runner reap/truncation, Docker resource-limit, tested-isolation, runtime-version, async-sink, redacted failure-context, core property/performance, SDK retry/transport, and repository-URI secret-boundary work. Do not reimplement those slices.
 
@@ -16,18 +16,17 @@ PR #128 completed the first Week-3 control-plane composition increment: server s
 
 The durable worker now has the first per-cell execution/restart seam: sequential execution checkpoints content-addressed evidence and the cell result before advancing; cancellation is polled between cells; heartbeat ownership loss is fail closed; heartbeat tasks are cancelled and awaited; replacement Attempts reuse only identity-matching cells whose artifact is explicitly verified; corrupt deterministic artifacts are repaired only by a valid re-execution. Blocking JobStore and artifact operations use bounded async facades rather than an event-loop thread or unbounded executor queue.
 
-The local worker runtime composition is now wired through the same durable spine: one bounded worker instance reclaims/claims from SQLite, prepares the project and immutable execution identities off the event loop, binds the exact immutable execution image into the resolved runtime snapshot, executes through the existing `ContainerKernelExecutor` adapter, and checkpoints through the local artifact/evidence stores. Runtime-instance restart qualification over the same SQLite database proves replacement-Attempt reuse of already persisted cells. PR #135 additionally made the canonical demo valid for clean per-cell containers and qualified the complete five-cell demo through `LocalWorkerRuntime -> SQLite -> DockerContainerKernelExecutor` with the real Docker command path, including durable terminal state and cell-result evidence. PR #137 adds the continuous worker poll loop with interruptible idle waits, signal-driven shutdown, unique Attempt/lease identities per poll, Attempt-limit continuity, and immediate fenced abandonment of an active claim on graceful shutdown. This is still not abrupt OS-process crash/reclaim qualification.
+The local worker runtime composition is now wired through the same durable spine. PR #135 made the canonical demo valid for clean per-cell containers and qualified the complete five-cell demo through `LocalWorkerRuntime -> SQLite -> DockerContainerKernelExecutor` with the real Docker command path, including durable terminal state and cell-result evidence. PR #137 added the continuous worker poll loop with interruptible idle waits, signal-driven shutdown, unique Attempt/lease identities per poll, Attempt-limit continuity, and immediate fenced abandonment of an active claim on graceful shutdown. The process-crash qualification that follows proves the missing abrupt-failure path: a separate worker process executes three real-Docker cells and checkpoints them, is killed non-gracefully before the fourth Docker launch, the real 30-second lease expires, and a replacement process reclaims the same Run, reuses exactly those three verified cells, executes only the remaining two, and reaches one successful terminal result. This advances #57 but does not complete the frozen fifteen-step product journey or the HTTP/SDK/operator/Compose surfaces.
 
-Current critical-path work remains the real execution seam. Select one coherent slice at a time in this order:
+Current critical-path work now moves beyond the process-crash seam. Select one coherent slice at a time in this order:
 
-1. **#57 — finish OS-process crash/reclaim qualification.** The composed worker happy path through real Docker is now proven by PR #135 and the continuous worker lifecycle by PR #137. Next start the worker as a real process, persist cells, terminate it abruptly (SIGKILL or equivalent non-graceful process death), allow the lease to expire, reclaim the same Run into a replacement Attempt, verify completed cells are reused, and prove cancellation leaves no residual execution container. The demo no longer relies on container-local `/tmp` or interpreter state crossing cell boundaries. Keep HTTP, CLI and Compose out of this slice.
-2. **#125 completion — bounded-contention qualification at real call sites.** Keep #125 open until server submit/status and worker heartbeat/reclaim/artifact paths are exercised through their final runtime entry points against the v0.1 request/lease budgets under bounded storage contention. The wrappers and service-level structural tests are necessary but not sufficient evidence.
-3. **#54 — HTTP/OpenAPI/SDK contract.** Add the frozen `/v1/jobs` surface over `DurableExecutionService`. Keep HTTP framework/model types at the boundary and preserve the canonical vendor-neutral domain. The implementation may use the standard library or a pinned framework, but the OpenAPI contract, SDK behavior and route coverage must be executable and drift-tested.
-4. **CLI / local operator surface.** Implement `serve`, `worker`, `doctor`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, and `cancel`; enable the `ronin` console entry point only when `studio_cli:main` is real and tested.
-5. **Production image + Compose.** Promote the qualified probe assumptions into the real image/topology, including non-root execution, Docker socket GID handling, read-only workspace identity, durable data volume, health dependency, sibling-container execution and `restart: "no"` for crash-acceptance workers.
-6. **#53 — portable evidence references.** Unify kernel/storage/API evidence identity before the external evidence representation hardens.
-7. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as their capabilities land; strict release qualification remains fail closed and is not replaced by progress telemetry.
-8. **Release qualification and publication.** Only after all fifteen acceptance steps execute and pass, run the full release-quality perimeter, enable required release protections, bump versions consistently, tag, publish immutable artifacts, and smoke the published artifacts by digest/version.
+1. **#125 completion — bounded-contention qualification at real call sites.** Keep #125 open until server submit/status and worker heartbeat/reclaim/artifact paths are exercised through their final runtime entry points against the v0.1 request/lease budgets under bounded storage contention. The wrappers and service-level structural tests are necessary but not sufficient evidence.
+2. **#54 — HTTP/OpenAPI/SDK contract.** Add the frozen `/v1/jobs` surface over `DurableExecutionService`. Keep HTTP framework/model types at the boundary and preserve the canonical vendor-neutral domain. The implementation may use the standard library or a pinned framework, but the OpenAPI contract, SDK behavior and route coverage must be executable and drift-tested.
+3. **CLI / local operator surface.** Implement `serve`, `worker`, `doctor`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, and `cancel`; enable the `ronin` console entry point only when `studio_cli:main` is real and tested.
+4. **Production image + Compose.** Promote the qualified probe assumptions into the real image/topology, including non-root execution, Docker socket GID handling, read-only workspace identity, durable data volume, health dependency, sibling-container execution and `restart: "no"` for crash-acceptance workers.
+5. **#53 — portable evidence references.** Unify kernel/storage/API evidence identity before the external evidence representation hardens.
+6. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as their capabilities land; strict release qualification remains fail closed and is not replaced by progress telemetry. Keep #57 open until the whole frozen journey, including API/SDK/idempotency/logs/evidence/cancel/Compose/operator steps, actually executes and passes.
+7. **Release qualification and publication.** Only after all fifteen acceptance steps execute and pass, run the full release-quality perimeter, enable required release protections, bump versions consistently, tag, publish immutable artifacts, and smoke the published artifacts by digest/version.
 
 ### Worker execution invariants
 
@@ -41,7 +40,8 @@ Every remaining worker/runtime slice must preserve all of these:
 - Resume requires both matching immutable cell identity and verified artifact availability/digest.
 - Attempt replacement reuses the same logical Run and must not replay valid completed cells.
 - Blocking durable-store and artifact operations remain outside the event-loop thread with bounded admission/backpressure.
-- Clean per-cell execution containers must not make notebook correctness depend on container-local transient state surviving across cells; any cross-cell state used by the demo must cross an explicit durable or otherwise qualified boundary.
+- Clean per-cell execution containers must not make notebook correctness depend on container-local transient state surviving across cells; the canonical v0.1 demo is now deliberately self-contained per cell.
+- Process-crash qualification must preserve the production lease TTL rather than shorten it merely to make CI faster.
 
 ### Environment proof required before production Compose
 
@@ -66,8 +66,8 @@ Acceptance should be activated incrementally instead of replacing all skips in o
 2. `doctor`, `validate`, `plan` once the CLI surface is real.
 3. submit/status/idempotency/SDK once HTTP + OpenAPI + SDK are real.
 4. logs/evidence once run-global event ordering and portable evidence output are real.
-5. execute/crash/reclaim/resume once the process-level durable worker path is real against SQLite + the container executor.
-6. cancel cleanup once worker cancellation and container cleanup are real.
+5. execute/crash/reclaim/resume once the process-level durable worker path is wired into the frozen product journey.
+6. cancel cleanup once worker cancellation and container cleanup are qualified through the supported operator path.
 
 The strict release gate remains the final authority: every frozen step must execute and pass with zero skipped/xfail/failed/error/missing/unexpected outcomes.
 
