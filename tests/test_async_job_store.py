@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import asyncio
 from threading import Event, get_ident
+from typing import cast
 
 import pytest
-from studio_orchestrator import AttemptId, Instant, JobId, LeaseToken
+from studio_orchestrator import AttemptId, Instant, JobId, JobStore, LeaseToken
 from studio_storage.async_store import BoundedAsyncJobStore, StorageBackpressureError
 
 
@@ -40,12 +41,25 @@ class _BlockingStore:
         )
 
 
+def _async_store(
+    store: _BlockingStore,
+    *,
+    max_workers: int,
+    max_in_flight: int,
+) -> BoundedAsyncJobStore:
+    return BoundedAsyncJobStore(
+        cast(JobStore, store),
+        max_workers=max_workers,
+        max_in_flight=max_in_flight,
+    )
+
+
 def test_blocking_store_io_does_not_stall_event_loop() -> None:
     store = _BlockingStore()
 
     async def scenario() -> None:
         loop_thread_id = get_ident()
-        async with BoundedAsyncJobStore(store, max_workers=1, max_in_flight=1) as async_store:  # type: ignore[arg-type]
+        async with _async_store(store, max_workers=1, max_in_flight=1) as async_store:
             task = asyncio.create_task(async_store.get_job(JobId("job-1")))
             await asyncio.to_thread(store.started.wait, 1)
 
@@ -68,7 +82,7 @@ def test_heartbeat_progresses_while_unrelated_store_io_is_blocked() -> None:
 
     async def scenario() -> None:
         loop_thread_id = get_ident()
-        async with BoundedAsyncJobStore(store, max_workers=2, max_in_flight=2) as async_store:  # type: ignore[arg-type]
+        async with _async_store(store, max_workers=2, max_in_flight=2) as async_store:
             blocked = asyncio.create_task(async_store.get_job(JobId("job-1")))
             await asyncio.to_thread(store.started.wait, 1)
 
@@ -96,7 +110,7 @@ def test_capacity_exhaustion_fails_fast_without_unbounded_queueing() -> None:
     store = _BlockingStore()
 
     async def scenario() -> None:
-        async with BoundedAsyncJobStore(store, max_workers=1, max_in_flight=1) as async_store:  # type: ignore[arg-type]
+        async with _async_store(store, max_workers=1, max_in_flight=1) as async_store:
             first = asyncio.create_task(async_store.get_job(JobId("job-1")))
             await asyncio.to_thread(store.started.wait, 1)
 
@@ -113,7 +127,7 @@ def test_cancellation_is_responsive_but_keeps_capacity_fenced_until_store_finish
     store = _BlockingStore()
 
     async def scenario() -> None:
-        async with BoundedAsyncJobStore(store, max_workers=1, max_in_flight=1) as async_store:  # type: ignore[arg-type]
+        async with _async_store(store, max_workers=1, max_in_flight=1) as async_store:
             task = asyncio.create_task(async_store.get_job(JobId("job-1")))
             await asyncio.to_thread(store.started.wait, 1)
 
@@ -141,14 +155,15 @@ def test_cancellation_is_responsive_but_keeps_capacity_fenced_until_store_finish
 
 def test_invalid_executor_bounds_and_closed_store_fail_closed() -> None:
     store = _BlockingStore()
+    typed_store = cast(JobStore, store)
 
     with pytest.raises(ValueError, match="max_workers"):
-        BoundedAsyncJobStore(store, max_workers=0)  # type: ignore[arg-type]
+        BoundedAsyncJobStore(typed_store, max_workers=0)
     with pytest.raises(ValueError, match="max_in_flight"):
-        BoundedAsyncJobStore(store, max_workers=2, max_in_flight=1)  # type: ignore[arg-type]
+        BoundedAsyncJobStore(typed_store, max_workers=2, max_in_flight=1)
 
     async def scenario() -> None:
-        async_store = BoundedAsyncJobStore(store, max_workers=1, max_in_flight=1)  # type: ignore[arg-type]
+        async_store = BoundedAsyncJobStore(typed_store, max_workers=1, max_in_flight=1)
         await async_store.aclose()
         await async_store.aclose()
         with pytest.raises(RuntimeError, match="closed"):
