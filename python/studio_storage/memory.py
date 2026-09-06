@@ -155,7 +155,7 @@ class InMemoryJobStore:
                 return None
             run = candidates[0]
             job = self._jobs[run.job_id]
-            if job.state is not JobState.QUEUED:
+            if job.state not in {JobState.QUEUED, JobState.RUNNING}:
                 return None
             ordinal = 1 + max(
                 (attempt.ordinal for attempt in self._attempts.values() if attempt.run_id == run.id),
@@ -163,12 +163,12 @@ class InMemoryJobStore:
             )
             if ordinal > 10:
                 self._runs[run.id] = run.transition(RunState.FAILED, now=now)
-                self._jobs[job.id] = (
-                    job.transition(JobState.RUNNING, now=now).transition(
-                        JobState.FAILED,
-                        now=now,
-                        failure_code="attempt_limit_exceeded",
-                    )
+                if job.state is JobState.QUEUED:
+                    job = job.transition(JobState.RUNNING, now=now)
+                self._jobs[job.id] = job.transition(
+                    JobState.FAILED,
+                    now=now,
+                    failure_code="attempt_limit_exceeded",
                 )
                 raise AttemptLimitExceeded("attempt limit exceeded")
             lease = Lease(
@@ -191,7 +191,11 @@ class InMemoryJobStore:
             running_run = run.transition(RunState.LEASED, now=now).transition(
                 RunState.RUNNING, now=now
             )
-            running_job = job.transition(JobState.RUNNING, now=now)
+            running_job = (
+                job.transition(JobState.RUNNING, now=now)
+                if job.state is JobState.QUEUED
+                else job
+            )
             self._attempts[attempt_id] = running_attempt
             self._events[attempt_id] = []
             self._runs[run.id] = running_run
