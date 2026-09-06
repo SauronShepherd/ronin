@@ -29,7 +29,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          python -m pytest tests/test_worker_runtime.py --collect-only -q > /tmp/test.log 2>&1
+          make test > /tmp/test.log 2>&1
           test_exit=$?
           ruff format --check python tests tools packages docker > /tmp/format.log 2>&1
           format_exit=$?
@@ -37,7 +37,7 @@ jobs:
           lint_exit=$?
           mypy python tools packages/pyronin/src docker > /tmp/mypy.log 2>&1
           mypy_exit=$?
-          summary=$(tail -n 12 /tmp/test.log | tr '\n' ';' | cut -c1-240)
+          summary=$(grep -E "FAILED|ERROR|passed|failed|skipped|TOTAL|coverage" /tmp/test.log | tail -n 8 | tr '\n' ';' | cut -c1-240)
           status="test=${test_exit},format=${format_exit},lint=${lint_exit},mypy=${mypy_exit}"
           echo "summary=${summary}" >> "$GITHUB_OUTPUT"
           echo "status=${status}" >> "$GITHUB_OUTPUT"
