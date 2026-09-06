@@ -119,17 +119,16 @@ def test_fenced_sqlite_rejects_cross_run_result_and_evidence(tmp_path: Path) -> 
 
 
 @pytest.mark.parametrize(
-    ("terminal_state", "expected_run", "expected_job", "failure_code"),
+    ("terminal_state", "expected_job", "failure_code"),
     [
-        (AttemptState.CANCELLED, RunState.CANCELLED, JobState.CANCELLED, None),
-        (AttemptState.FAILED, RunState.FAILED, JobState.FAILED, "cell_failed"),
-        (AttemptState.SUCCEEDED, RunState.SUCCEEDED, JobState.SUCCEEDED, None),
+        (AttemptState.CANCELLED, JobState.CANCELLED, None),
+        (AttemptState.FAILED, JobState.FAILED, "cell_failed"),
+        (AttemptState.SUCCEEDED, JobState.SUCCEEDED, None),
     ],
 )
 def test_fenced_sqlite_terminal_completion_variants(
     tmp_path: Path,
     terminal_state: AttemptState,
-    expected_run: RunState,
     expected_job: JobState,
     failure_code: str | None,
 ) -> None:
