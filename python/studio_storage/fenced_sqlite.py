@@ -23,8 +23,7 @@ from studio_orchestrator import (
     StoredEvidenceRef,
     StoredExecutionEvent,
 )
-from studio_storage.sqlite import SqliteJobStore as _BaseSqliteJobStore
-from studio_storage.sqlite import open_database
+from studio_storage.sqlite import SqliteJobStore as _BaseSqliteJobStore, open_database
 
 
 class SqliteJobStore:
