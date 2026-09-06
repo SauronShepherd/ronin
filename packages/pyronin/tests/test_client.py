@@ -1,8 +1,9 @@
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from urllib.error import URLError
 
 import pytest
-from pyronin import JobState, ProtocolError, Ronin
+from pyronin import HTTPTransport, JobState, ProtocolError, Ronin, TransportError
 
 
 @dataclass
@@ -31,6 +32,33 @@ class FakeTransport:
         return self.responses.pop(0)
 
 
+class _Response:
+    def __init__(self, body: bytes) -> None:
+        self.body = body
+
+    def __enter__(self) -> _Response:
+        return self
+
+    def __exit__(self, *_args: object) -> None:
+        return None
+
+    def read(self, size: int = -1) -> bytes:
+        return self.body if size < 0 else self.body[:size]
+
+
+class _FlakyOpener:
+    def __init__(self, failures: int) -> None:
+        self.failures = failures
+        self.calls = 0
+
+    def open(self, _request: object, *, timeout: float) -> _Response:
+        assert timeout > 0
+        self.calls += 1
+        if self.calls <= self.failures:
+            raise URLError("synthetic outage")
+        return _Response(b'{"ok":true}')
+
+
 def test_submit_status_cancel_events_and_wait(monkeypatch: pytest.MonkeyPatch) -> None:
     transport = FakeTransport(
         [
@@ -51,6 +79,32 @@ def test_submit_status_cancel_events_and_wait(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr("pyronin.time.sleep", lambda _: None)
     assert job.wait(poll_interval=0.01).state is JobState.SUCCEEDED
     assert transport.calls[0][3] == {"Idempotency-Key": "once"}
+
+
+def test_client_retries_with_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
+    transport = HTTPTransport(
+        "https://example.test",
+        max_retries=2,
+        backoff_seconds=0.25,
+    )
+    opener = _FlakyOpener(failures=2)
+    object.__setattr__(transport, "_opener", opener)
+    sleeps: list[float] = []
+    monkeypatch.setattr("pyronin.time.sleep", sleeps.append)
+
+    assert transport.request("GET", "/health") == {"ok": True}
+    assert opener.calls == 3
+    assert sleeps == [0.25, 0.5]
+
+
+def test_unsafe_submission_without_idempotency_is_not_retried() -> None:
+    transport = HTTPTransport("https://example.test", max_retries=3, backoff_seconds=0)
+    opener = _FlakyOpener(failures=3)
+    object.__setattr__(transport, "_opener", opener)
+
+    with pytest.raises(TransportError):
+        transport.request("POST", "/v1/jobs", payload={"project": "demo"})
+    assert opener.calls == 1
 
 
 def test_list_jobs_and_validation() -> None:
