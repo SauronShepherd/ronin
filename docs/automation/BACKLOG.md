@@ -6,26 +6,28 @@ This backlog is deliberately narrow for v0.1. Selection must be revalidated agai
 
 E0/E1 already provide deterministic core/project/runtime/operator/diagnostic/notebook/kernel contracts, restart-safe single-writer execution evidence, hardened and real-engine-qualified Docker execution, async execution ports, 100% line/branch coverage on the original gated packages, and repository secret/dependency qualification. `docs/automation/PROGRESS.md` retains the detailed publication history.
 
-The P1 analyst handoffs #68 and #94 identified the same remaining false-negative edge in pull-request secret qualification: an intermediate candidate commit could introduce a detector-triggering value and later remove it before the final tree scan. PR #97 hardens the existing qualification by scanning the protected base history, the complete pull-request candidate range, and the current tree, with temporary multi-commit negative and clean conformance repositories. This security correction is additive and does not change the frozen Week-1 product queue below.
+Week 1 is complete on current main. PRs #105-#116 closed the runner reap/truncation, Docker resource-limit, tested-isolation, runtime-version, async-sink, redacted failure-context, core property/performance, SDK retry/transport, and repository-URI secret-boundary work. Do not reimplement those slices.
 
-The P1 QA/Security handoffs #93 and #96 identify the same release-trust defect: the development `e2e` check could report success while all fifteen frozen v0.1 acceptance steps were skipped. The Builder correction separates non-blocking acceptance-progress telemetry from strict release qualification, requires the exact fifteen-step manifest at tag publication, rejects skipped/xfailed/failed/errored/missing/renamed/duplicate evidence, and emits machine-readable counts. This is an additive trust correction to the frozen acceptance invariant; it does not implement or reorder the Week-1 product queue.
+## Next — Week 2 durable execution spine
 
-## Next
+Select these items in dependency order. The environment proof may run in parallel because it claims only infrastructure files.
 
-Exactly these twelve Week-1 items are selectable. Do not select work outside this list until it is rewritten by a later approved phase/week transition.
+1. **#99 / 49a — pure Job -> Run -> Attempt lifecycle and `JobStore` Protocol.** `studio_orchestrator` remains pure; concurrency primitives do not enter this package. Crash reclaim replaces an abandoned Attempt within the same Run, outside ordinary retry budget; `max_runs=1`, attempt cap 10.
+2. **#100 / 49b — SQLite `JobStore` and migrations.** `studio_storage` owns both `SqliteJobStore` and the concurrent `InMemoryJobStore` reference adapter. Enforce WAL, `foreign_keys=ON`, `synchronous=FULL`, `busy_timeout=5000`, durable idempotency, lease fencing and reclaim.
+3. **#101 / 49c — store conformance and concurrent claim qualification.** Run one parameterized contract suite against both adapters and prove one-winner claiming under bounded contention.
+4. **#91 — immutable per-cell resume identity.** Persist results after every cell and reuse only when the frozen Run identity and referenced artifact digests still verify.
+5. **#57 — accelerated vertical v0.1 path.** As the storage contract stabilizes, compose worker, API, CLI and Docker/Compose in parallel domains and turn acceptance steps live incrementally rather than in one final batch.
 
-1. **PR-01 — N1: terminal evidence on task cancellation.** Proving test: `tests/test_kernel_session_task_cancellation.py::test_task_cancellation_terminalizes_durable_attempt_and_propagates`. Current main already contains the fix; retain as completed evidence and do not reimplement.
-2. **PR-02 — N3/N2: reap in `finally`; keep prefix on truncation.** Proving tests: `tests/test_runners.py::test_broken_stdin_reaps_process` and `tests/test_runners.py::test_truncation_keeps_prefix`.
-3. **PR-03 — N8: `--memory-swap`, `--ulimit`; require memory unit.** Proving test: `tests/integration/test_docker_container_executor_real.py::test_real_docker_memory_swap_capped`.
-4. **PR-04 — N4: default minimum qualification `tested`; wire real evidence.** Proving test: `tests/test_kernel_session.py::test_declared_isolation_rejected_by_default`.
-5. **PR-05 — N5/Q6: quality perimeter includes `packages` and `docker`.** Proving command: `make check` with those paths present in format/lint/type/test configuration. Phase 7 prepares most of this item.
-6. **PR-06 — ADR-V01-003: tiered coverage, nightly mutation, Python 3.12 matrix, lockfile.** Proving evidence: CI green in the new shape. Phase 7 prepares most of this item.
-7. **PR-07 — B8/B6: redacted exception message; PEP 440 comparator.** Proving test: `tests/test_runtime_profiles.py::test_databricks_lts_version_resolves`.
-8. **PR-08 — N11: remove the pure-domain `os` exemption and update the matrix.** Proving test: `tests/test_architecture_contracts.py::test_gate_rejects_low_level_os_calls`. Phase 6 delivers this item.
-9. **PR-09 — Performance: port index, `bisect` without rebuild, catalog indexes.** Proving suite: `tests/perf/test_budgets.py`.
-10. **PR-10 — N10: async event sink protocol.** Proving test: `tests/test_kernel_session.py::test_sink_does_not_block_loop`.
-11. **PR-11 — T1 property tests: round-trip, strict JSON, identity, determinism.** Proving evidence: four named invariant/property tests pass under the T1 gate.
-12. **PR-12 — N6/N7/N12: SDK structured errors, pooling, backoff, token guard.** Proving test: `packages/pyronin/tests/test_client.py::test_client_retries_with_backoff`.
+### Environment proof required before production Compose
+
+The Docker-host assumptions must be proved early on GitHub-hosted Linux runners: supplementary Docker socket GID, cross-uid read-only Git workspace, server health dependency, sibling-container launch, identical absolute workspace path, and explicit `restart: "no"` for the crash-acceptance worker. Execution containers receive source through stdin and return output through stdout/stderr; they do not inherit worker-internal mounts.
+
+### Contract corrections carried into implementation
+
+- Storage event identity is `(attempt_id, sequence)`; the API exposes a dense Run-global sequence ordered by `(attempt.ordinal, sequence)`.
+- Cancelling an unclaimed pending Run terminalizes Job and Run transactionally without waiting for a worker.
+- Replaying an idempotency key is a pure read after creation, including for failed/cancelled Jobs; a new Run requires a new key.
+- Exhausting ten crash-replacement Attempts fails with `failure_code="attempt_limit_exceeded"`, distinct from notebook/cell failure.
 
 ## Frozen until v0.1 ships (2026-11-01)
 
