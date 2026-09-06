@@ -1,0 +1,41 @@
+name: ronin-probe
+
+services:
+  server:
+    image: ${RONIN_PROBE_IMAGE:-ronin-probe:dev}
+    command: ["python", "/app/bootstrap_server.py"]
+    environment:
+      RONIN_PORT: "8080"
+      RONIN_WORKSPACE_ROOT: ${RONIN_HOST_WORKSPACE:?set RONIN_HOST_WORKSPACE}
+    volumes:
+      - ${RONIN_HOST_WORKSPACE}:${RONIN_HOST_WORKSPACE}:ro
+    ports:
+      - "127.0.0.1:18080:8080"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=2).status == 200 else 1)",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 2s
+    restart: "no"
+
+  worker:
+    image: ${RONIN_PROBE_IMAGE:-ronin-probe:dev}
+    command: ["python", "-c", "import time; time.sleep(3600)"]
+    environment:
+      RONIN_WORKSPACE_ROOT: ${RONIN_HOST_WORKSPACE:?set RONIN_HOST_WORKSPACE}
+    group_add:
+      - "${DOCKER_GID:?set DOCKER_GID from /var/run/docker.sock}"
+    volumes:
+      - ${RONIN_HOST_WORKSPACE}:${RONIN_HOST_WORKSPACE}:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: "no"
