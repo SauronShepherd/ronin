@@ -20,11 +20,20 @@ from .preparation import (
     resolve_runtime_snapshot,
     runtime_snapshot_digest,
 )
+from .runtime import (
+    LocalWorkerPollOutcome,
+    LocalWorkerRuntime,
+    LocalWorkerRuntimeConfig,
+    runtime_catalog_for_image,
+)
 
 __all__ = (
     "LOCAL_DOCKER_PROFILE",
     "DurableWorkerExecution",
     "LoadedProject",
+    "LocalWorkerPollOutcome",
+    "LocalWorkerRuntime",
+    "LocalWorkerRuntimeConfig",
     "PythonCellAdapter",
     "WorkerExecutionError",
     "WorkerExecutionOutcome",
@@ -36,6 +45,7 @@ __all__ = (
     "identity_for",
     "load_project",
     "resolve_runtime_snapshot",
+    "runtime_catalog_for_image",
     "runtime_snapshot_digest",
     "utc_now",
 )
