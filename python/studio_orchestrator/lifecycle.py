@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, replace
 from enum import StrEnum
 
@@ -209,6 +210,8 @@ class Job:
     created_at: str
     updated_at: str
     failure_code: str | None = None
+    target: str = ""
+    parameters_json: str = "{}"
 
     def __post_init__(self) -> None:
         _require_text("project id", self.project_id)
@@ -218,6 +221,14 @@ class Job:
         _require_text("updated_at", self.updated_at)
         if self.failure_code is not None:
             _require_text("failure code", self.failure_code)
+        if self.target:
+            _require_text("target", self.target)
+        try:
+            parameters = json.loads(self.parameters_json)
+        except json.JSONDecodeError as exc:
+            raise ValueError("parameters_json must be valid JSON") from exc
+        if not isinstance(parameters, dict):
+            raise ValueError("parameters_json must encode a JSON object")
 
     def transition(
         self,
