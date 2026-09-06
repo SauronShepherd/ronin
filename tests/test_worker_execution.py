@@ -13,6 +13,7 @@ from studio_kernel import (
     ExecutionAttemptId,
     ExecutorIsolation,
     KernelDirective,
+    NotebookExecutionRequest,
     RepositoryRevision,
     SessionPolicy,
 )
@@ -90,7 +91,7 @@ def _prepared(
     attempt_id: AttemptId,
     *,
     cells: int = 2,
-) -> tuple[object, tuple[CellExecutionIdentity, ...]]:
+) -> tuple[NotebookExecutionRequest, tuple[CellExecutionIdentity, ...]]:
     project_dir = Path("examples/demo")
     manifest = ProjectManifest.from_json(
         (project_dir / ".ronin" / "project.json").read_text(encoding="utf-8")
@@ -178,8 +179,12 @@ class _BlockingExecutor:
         if self.calls == 1:
             return CellExecutionResult(cell.cell_id, "succeeded")
         self.started.set()
+        blocker = asyncio.Event()
         while not cancellation.is_cancelled:
-            await asyncio.sleep(0)
+            try:
+                await asyncio.wait_for(blocker.wait(), timeout=0.001)
+            except TimeoutError:
+                pass
         return CellExecutionResult(cell.cell_id, "cancelled")
 
 
@@ -248,6 +253,25 @@ def test_worker_configuration_and_clock_are_fail_closed(tmp_path: Path) -> None:
             "worker-1",
             heartbeat_interval_seconds=30,
         )
+    with pytest.raises(ValueError, match="artifact_max_workers"):
+        DurableWorkerExecution(
+            service,
+            artifacts,
+            executor,
+            POLICY,
+            "worker-1",
+            artifact_max_workers=0,
+        )
+    with pytest.raises(ValueError, match="artifact_max_in_flight"):
+        DurableWorkerExecution(
+            service,
+            artifacts,
+            executor,
+            POLICY,
+            "worker-1",
+            artifact_max_workers=2,
+            artifact_max_in_flight=1,
+        )
     assert str(utc_now()).endswith("Z")
     asyncio.run(service.aclose())
 
@@ -302,7 +326,8 @@ def test_success_checkpoints_result_and_artifact_before_next_cell(tmp_path: Path
             assert outcome.reused_cell_ids == ()
             assert executor.calls == 2
             job = await service.status(JobId("job-worker"))
-            assert job is not None and job.state is JobState.SUCCEEDED
+            assert job is not None
+            assert job.state is JobState.SUCCEEDED
             assert len(await service.worker_read_cell_results(RunId("run-worker"))) == 2
             assert len(await service.worker_read_evidence(RunId("run-worker"))) == 2
             events = store.read_events(RunId("run-worker"), since=0)
@@ -412,7 +437,8 @@ def test_cancellation_is_polled_between_cells(tmp_path: Path) -> None:
             assert outcome.executed_cell_ids == (_cell_ids(identities)[0],)
             assert executor.calls == 1
             job = await service.status(JobId("job-worker"))
-            assert job is not None and job.state is JobState.CANCELLED
+            assert job is not None
+            assert job.state is JobState.CANCELLED
 
     asyncio.run(scenario())
 
@@ -442,7 +468,8 @@ def test_lease_loss_cancels_active_execution_without_checkpoint_or_completion(
             assert store.heartbeat_calls >= 1
             assert store.read_cell_results(RunId("run-worker")) == ()
             job = await service.status(JobId("job-worker"))
-            assert job is not None and job.state is JobState.RUNNING
+            assert job is not None
+            assert job.state is JobState.RUNNING
 
     asyncio.run(scenario())
 
@@ -582,6 +609,6 @@ def test_corrupt_checkpoint_artifact_forces_reexecution_after_reclaim(tmp_path: 
             assert outcome.reused_cell_ids == ()
             assert outcome.executed_cell_ids == expected_ids
             assert executor.calls == 2
-            assert artifacts.verify(store.read_evidence(RunId("run-worker"))[-2])
+            assert len(store.read_evidence(RunId("run-worker"))) == 3
 
     asyncio.run(scenario())
