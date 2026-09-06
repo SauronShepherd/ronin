@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import signal
+import uuid
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -16,8 +19,10 @@ from studio_kernel import (
 )
 from studio_orchestrator import (
     AttemptId,
+    AttemptLimitExceeded,
     AttemptState,
     CellExecutionIdentity,
+    ClaimedRun,
     Instant,
     Job,
     LeaseToken,
@@ -31,7 +36,7 @@ from studio_runners import (
     DockerContainerKernelExecutor,
     LocalExecutionEvidenceStore,
 )
-from studio_server import DurableExecutionService
+from studio_server import DurableExecutionService, WorkerPollResult
 from studio_storage import LocalArtifactStore, SqliteJobStore
 
 from .execution import DurableWorkerExecution, WorkerExecutionOutcome, utc_now
@@ -57,6 +62,7 @@ class LocalWorkerRuntimeConfig:
     database_name: str = "ronin.sqlite3"
     lease_seconds: int = 30
     heartbeat_interval_seconds: float = 10.0
+    poll_seconds: float = 1.0
     store_max_workers: int = 4
     store_max_in_flight: int = 8
     artifact_max_workers: int = 2
@@ -71,6 +77,8 @@ class LocalWorkerRuntimeConfig:
             raise ValueError("lease_seconds must be at least 2")
         if not 0 < self.heartbeat_interval_seconds < self.lease_seconds:
             raise ValueError("heartbeat interval must be positive and shorter than the lease")
+        if self.poll_seconds <= 0:
+            raise ValueError("poll_seconds must be positive")
         if self.store_max_workers < 1 or self.store_max_in_flight < self.store_max_workers:
             raise ValueError("invalid bounded JobStore executor limits")
         if self.artifact_max_workers < 1 or self.artifact_max_in_flight < self.artifact_max_workers:
@@ -183,28 +191,21 @@ class LocalWorkerRuntime:
         )
         return request, identities
 
-    async def run_once(
+    async def _poll(
         self,
         *,
         attempt_id: AttemptId,
         lease_token: LeaseToken,
-    ) -> LocalWorkerPollOutcome:
-        """Reclaim expired work, claim at most one Run, then execute it to a safe boundary."""
-
-        if self._closed:
-            raise RuntimeError("local worker runtime is closed")
-        poll_now = self._now()
-        polled = await self._service.worker_poll(
+    ) -> WorkerPollResult:
+        return await self._service.worker_poll(
             owner=self.config.owner,
             lease_token=lease_token,
             attempt_id=attempt_id,
             lease_seconds=self.config.lease_seconds,
-            now=poll_now,
+            now=self._now(),
         )
-        claim = polled.claim
-        if claim is None:
-            return LocalWorkerPollOutcome(polled.reclaimed_run_ids, None, None)
 
+    async def _execute_claim(self, claim: ClaimedRun) -> WorkerExecutionOutcome:
         loop = asyncio.get_running_loop()
         try:
             request, identities = await loop.run_in_executor(
@@ -248,12 +249,114 @@ class LocalWorkerRuntime:
             artifact_max_workers=self.config.artifact_max_workers,
             artifact_max_in_flight=self.config.artifact_max_in_flight,
         )
-        execution = await worker.run(claim, request, identities)
+        return await worker.run(claim, request, identities)
+
+    async def _abandon_claim(self, claim: ClaimedRun) -> None:
+        """Release one live claim immediately while preserving fencing semantics."""
+
+        try:
+            await self._service.worker_complete_attempt(
+                claim.attempt_id,
+                state=AttemptState.ABANDONED,
+                failure_code=None,
+                owner=self.config.owner,
+                lease_token=claim.lease_token,
+                now=self._now(),
+            )
+        except (KeyError, ValueError):
+            # A concurrently expired/lost lease is already fail-closed and reclaimable.
+            return
+
+    async def _wait_for_shutdown_or_poll(self, shutdown: asyncio.Event) -> None:
+        with suppress(TimeoutError):
+            await asyncio.wait_for(shutdown.wait(), timeout=self.config.poll_seconds)
+
+    async def run_once(
+        self,
+        *,
+        attempt_id: AttemptId,
+        lease_token: LeaseToken,
+    ) -> LocalWorkerPollOutcome:
+        """Reclaim expired work, claim at most one Run, then execute it to a safe boundary."""
+
+        if self._closed:
+            raise RuntimeError("local worker runtime is closed")
+        polled = await self._poll(attempt_id=attempt_id, lease_token=lease_token)
+        claim = polled.claim
+        if claim is None:
+            return LocalWorkerPollOutcome(polled.reclaimed_run_ids, None, None)
+
+        execution = await self._execute_claim(claim)
         return LocalWorkerPollOutcome(
             polled.reclaimed_run_ids,
             claim.attempt_id,
             execution,
         )
+
+    async def run_forever(self, shutdown: asyncio.Event) -> None:
+        """Poll and execute serially until shutdown, releasing an active claim immediately."""
+
+        if self._closed:
+            raise RuntimeError("local worker runtime is closed")
+        while not shutdown.is_set():
+            attempt_id = AttemptId(f"attempt-{uuid.uuid4()}")
+            lease_token = LeaseToken(f"lease-{uuid.uuid4()}")
+            try:
+                polled = await self._poll(attempt_id=attempt_id, lease_token=lease_token)
+            except AttemptLimitExceeded:
+                await self._wait_for_shutdown_or_poll(shutdown)
+                continue
+
+            claim = polled.claim
+            if claim is None:
+                await self._wait_for_shutdown_or_poll(shutdown)
+                continue
+
+            execution = asyncio.create_task(self._execute_claim(claim))
+            shutdown_wait = asyncio.create_task(shutdown.wait())
+            try:
+                done, _pending = await asyncio.wait(
+                    {execution, shutdown_wait},
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                if shutdown_wait in done and shutdown.is_set() and not execution.done():
+                    execution.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await execution
+                    await self._abandon_claim(claim)
+                    return
+                await execution
+            finally:
+                shutdown_wait.cancel()
+                with suppress(asyncio.CancelledError):
+                    await shutdown_wait
+
+    async def run_until_signalled(self) -> None:
+        """Run continuously; first SIGINT/SIGTERM requests shutdown, second cancels immediately."""
+
+        loop = asyncio.get_running_loop()
+        shutdown = asyncio.Event()
+        task = asyncio.current_task()
+        installed: list[signal.Signals] = []
+
+        def handle_signal() -> None:
+            if shutdown.is_set():
+                if task is not None:
+                    task.cancel()
+                return
+            shutdown.set()
+
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            try:
+                loop.add_signal_handler(sig, handle_signal)
+            except (NotImplementedError, RuntimeError):
+                continue
+            installed.append(sig)
+        try:
+            await self.run_forever(shutdown)
+        finally:
+            for sig in installed:
+                loop.remove_signal_handler(sig)
 
 
 __all__ = (

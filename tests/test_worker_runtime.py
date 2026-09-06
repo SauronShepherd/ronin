@@ -8,6 +8,7 @@ import pytest
 from studio_kernel import CancellationSignal
 from studio_orchestrator import (
     AttemptId,
+    AttemptLimitExceeded,
     Instant,
     Job,
     JobId,
@@ -18,6 +19,7 @@ from studio_orchestrator import (
     RunState,
 )
 from studio_runners import CommandOutcome
+from studio_server import WorkerPollResult
 from studio_storage import SqliteJobStore
 from studio_worker import (
     LocalWorkerRuntime,
@@ -57,12 +59,13 @@ def _run() -> Run:
     )
 
 
-def _config(tmp_path: Path) -> LocalWorkerRuntimeConfig:
+def _config(tmp_path: Path, *, poll_seconds: float = 1.0) -> LocalWorkerRuntimeConfig:
     return LocalWorkerRuntimeConfig(
         paths=WorkerPaths(Path.cwd(), tmp_path),
         owner="worker-runtime",
         image=IMAGE,
         heartbeat_interval_seconds=10.0,
+        poll_seconds=poll_seconds,
     )
 
 
@@ -111,6 +114,8 @@ def test_runtime_config_and_catalog_fail_closed(tmp_path: Path) -> None:
         LocalWorkerRuntimeConfig(paths, "worker", IMAGE, database_name="../ronin.sqlite3")
     with pytest.raises(ValueError, match="immutable sha256"):
         LocalWorkerRuntimeConfig(paths, "worker", "python:3.11-slim")
+    with pytest.raises(ValueError, match="poll_seconds"):
+        LocalWorkerRuntimeConfig(paths, "worker", IMAGE, poll_seconds=0.0)
 
     catalog = runtime_catalog_for_image(IMAGE)
     profile = catalog.profiles[0]
@@ -210,5 +215,91 @@ def test_restart_reclaims_same_run_and_reuses_persisted_cells(tmp_path: Path) ->
         assert final_job is not None
         assert final_job.state is JobState.SUCCEEDED
         assert len(final_store.read_cell_results(RunId("run-runtime"))) == 5
+
+    asyncio.run(scenario())
+
+
+def test_run_forever_idle_shutdown_interrupts_poll_wait(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        config = _config(tmp_path, poll_seconds=30.0)
+        shutdown = asyncio.Event()
+        async with LocalWorkerRuntime(
+            config,
+            migration_now=START,
+            engine_path="docker",
+            now=_Clock(START),
+        ) as runtime:
+            task = asyncio.create_task(runtime.run_forever(shutdown))
+            await asyncio.sleep(0)
+            shutdown.set()
+            await asyncio.wait_for(task, timeout=0.1)
+
+    asyncio.run(scenario())
+
+
+def test_run_forever_shutdown_abandons_active_claim_immediately(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        config = _config(tmp_path, poll_seconds=30.0)
+        _seed(config)
+        runner = _Runner(block_on_call=1)
+        shutdown = asyncio.Event()
+
+        async with LocalWorkerRuntime(
+            config,
+            migration_now=START,
+            command_runner=runner,
+            engine_path="docker",
+            now=_Clock(START),
+        ) as runtime:
+            task = asyncio.create_task(runtime.run_forever(shutdown))
+            await asyncio.wait_for(runner.started.wait(), timeout=2.0)
+            shutdown.set()
+            await asyncio.wait_for(task, timeout=2.0)
+
+        store = SqliteJobStore(config.database_path, migration_now=START)
+        replacement = store.claim_next_run(
+            owner="replacement-worker",
+            lease_token=LeaseToken("replacement-lease"),
+            attempt_id=AttemptId("replacement-attempt"),
+            lease_seconds=30,
+            now=START,
+        )
+        assert replacement is not None
+        assert replacement.run.id == RunId("run-runtime")
+        assert replacement.attempt_ordinal == 2
+
+    asyncio.run(scenario())
+
+
+def test_attempt_limit_does_not_stop_worker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def scenario() -> None:
+        config = _config(tmp_path, poll_seconds=0.001)
+        shutdown = asyncio.Event()
+        calls = 0
+
+        async with LocalWorkerRuntime(
+            config,
+            migration_now=START,
+            engine_path="docker",
+            now=_Clock(START),
+        ) as runtime:
+
+            async def fake_poll(
+                *, attempt_id: AttemptId, lease_token: LeaseToken
+            ) -> WorkerPollResult:
+                nonlocal calls
+                del attempt_id, lease_token
+                calls += 1
+                if calls == 1:
+                    raise AttemptLimitExceeded("attempt limit exceeded")
+                shutdown.set()
+                return WorkerPollResult((), None)
+
+            monkeypatch.setattr(runtime, "_poll", fake_poll)
+            await asyncio.wait_for(runtime.run_forever(shutdown), timeout=0.2)
+
+        assert calls == 2
 
     asyncio.run(scenario())
