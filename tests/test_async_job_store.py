@@ -13,15 +13,18 @@ class _BlockingStore:
     def __init__(self) -> None:
         self.started = Event()
         self.release = Event()
+        self.finished = Event()
         self.worker_thread_id: int | None = None
         self.heartbeat_thread_id: int | None = None
 
     def get_job(self, _job_id: JobId) -> None:
         self.worker_thread_id = get_ident()
         self.started.set()
-        if not self.release.wait(timeout=5):
-            raise RuntimeError("test store was not released")
-        return None
+        try:
+            if not self.release.wait(timeout=5):
+                raise RuntimeError("test store was not released")
+        finally:
+            self.finished.set()
 
     def heartbeat(
         self,
@@ -139,16 +142,9 @@ def test_cancellation_is_responsive_but_keeps_capacity_fenced_until_store_finish
                 await async_store.get_job(JobId("job-2"))
 
             store.release.set()
-            for _ in range(100):
-                await asyncio.sleep(0.001)
-                try:
-                    result = await async_store.get_job(JobId("job-3"))
-                except StorageBackpressureError:
-                    continue
-                assert result is None
-                break
-            else:
-                pytest.fail("capacity was not released after synchronous operation completed")
+            assert await asyncio.to_thread(store.finished.wait, 1)
+            await asyncio.sleep(0)
+            assert await async_store.get_job(JobId("job-3")) is None
 
     asyncio.run(scenario())
 
