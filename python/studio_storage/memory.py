@@ -35,12 +35,7 @@ def _add_seconds(value: str, seconds: int) -> str:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=UTC)
-    return (
-        (parsed + timedelta(seconds=seconds))
-        .astimezone(UTC)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return (parsed + timedelta(seconds=seconds)).astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 class InMemoryJobStore:
