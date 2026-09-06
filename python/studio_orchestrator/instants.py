@@ -12,9 +12,7 @@ from __future__ import annotations
 
 import re
 
-_CANONICAL = re.compile(
-    r"^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{6})Z$"
-)
+_CANONICAL = re.compile(r"^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{6})Z$")
 _MONTH_DAYS = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
 
@@ -23,9 +21,7 @@ def _is_leap_year(year: int) -> bool:
 
 
 def _assert_calendar_valid(match: re.Match[str]) -> None:
-    year, month, day, hour, minute, second, _microsecond = (
-        int(part) for part in match.groups()
-    )
+    year, month, day, hour, minute, second, _microsecond = (int(part) for part in match.groups())
     if year < 1:
         raise ValueError("instant year must be between 0001 and 9999")
     if not 1 <= month <= 12:
@@ -52,9 +48,7 @@ class Instant(str):
     def __new__(cls, value: str) -> Instant:
         match = _CANONICAL.fullmatch(value)
         if match is None:
-            raise ValueError(
-                "instant must be canonical RFC 3339 UTC: YYYY-MM-DDTHH:MM:SS.ffffffZ"
-            )
+            raise ValueError("instant must be canonical RFC 3339 UTC: YYYY-MM-DDTHH:MM:SS.ffffffZ")
         _assert_calendar_valid(match)
         return str.__new__(cls, value)
 
