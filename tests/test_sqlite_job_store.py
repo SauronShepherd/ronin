@@ -8,7 +8,7 @@ import pytest
 from studio_orchestrator import AttemptId, Job, JobId, JobState, LeaseToken, Run, RunId, RunState
 from studio_storage import SqliteJobStore, open_database, schema_version
 
-NOW = "2026-09-06T09:00:00Z"
+NOW = "2026-09-06T09:00:00.000000Z"
 
 
 def _job() -> Job:
@@ -27,20 +27,27 @@ def _run() -> Run:
     return Run(RunId("run-1"), JobId("job-1"), 1, RunState.PENDING, NOW, NOW, NOW)
 
 
+def _assert_connection_pragmas(connection: sqlite3.Connection) -> None:
+    assert connection.execute("PRAGMA journal_mode").fetchone()[0].lower() == "wal"
+    assert connection.execute("PRAGMA foreign_keys").fetchone()[0] == 1
+    assert connection.execute("PRAGMA synchronous").fetchone()[0] == 2
+    assert connection.execute("PRAGMA busy_timeout").fetchone()[0] == 5000
+
+
 def test_sqlite_configuration_migration_and_reopen(tmp_path: Path) -> None:
     path = tmp_path / "data" / "ronin.db"
     store = SqliteJobStore(path, migration_now=NOW)
     assert store.create_job(_job(), _run()).id == JobId("job-1")
 
-    connection = open_database(path)
+    first = open_database(path)
+    second = open_database(path)
     try:
-        assert schema_version(connection) == 1
-        assert connection.execute("PRAGMA journal_mode").fetchone()[0].lower() == "wal"
-        assert connection.execute("PRAGMA foreign_keys").fetchone()[0] == 1
-        assert connection.execute("PRAGMA synchronous").fetchone()[0] == 2
-        assert connection.execute("PRAGMA busy_timeout").fetchone()[0] == 5000
+        assert schema_version(first) == 1
+        _assert_connection_pragmas(first)
+        _assert_connection_pragmas(second)
     finally:
-        connection.close()
+        first.close()
+        second.close()
 
     reopened = SqliteJobStore(path, migration_now=NOW)
     restored = reopened.get_job(JobId("job-1"))
