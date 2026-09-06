@@ -219,8 +219,8 @@ class SqliteJobStore(_BaseSqliteJobStore):
                     (RunState.SUCCEEDED.value, current, run_id),
                 )
                 connection.execute(
-                    "UPDATE jobs SET state=?,failure_code=NULL,updated_at=?,row_version=row_version+1 "
-                    "WHERE job_id=?",
+                    "UPDATE jobs SET state=?,failure_code=NULL,updated_at=?,"
+                    "row_version=row_version+1 WHERE job_id=?",
                     (JobState.SUCCEEDED.value, current, job_id),
                 )
             elif state is AttemptState.CANCELLED:
