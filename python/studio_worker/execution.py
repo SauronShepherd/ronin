@@ -7,7 +7,7 @@ import json
 from collections.abc import Callable
 from contextlib import suppress
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from studio_kernel import (
     CancellationToken,
@@ -51,11 +51,11 @@ class WorkerExecutionOutcome:
 def utc_now() -> Instant:
     """Return the canonical UTC instant used at the worker composition boundary."""
 
-    return Instant(datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+    return Instant(datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
 def _plus_seconds(value: Instant, seconds: int) -> Instant:
-    parsed = datetime.strptime(str(value), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
+    parsed = datetime.strptime(str(value), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
     return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
