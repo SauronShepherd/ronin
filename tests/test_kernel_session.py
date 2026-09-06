@@ -39,6 +39,20 @@ def _runtime() -> ResolvedRuntimeSnapshot:
     )
 
 
+def _tested_isolation() -> ExecutorIsolation:
+    return ExecutorIsolation(
+        "container",
+        True,
+        True,
+        True,
+        "tested",
+        "ronin/test-isolation",
+        "1",
+        "test-runtime",
+        "test-evidence://isolation",
+    )
+
+
 def _cell(value: str, *, permissions: tuple[str, ...] = ()) -> CellExecutionRequest:
     cell_id = CellId(value)
     return CellExecutionRequest(
@@ -69,7 +83,7 @@ def _run_session(session: KernelExecutionSession) -> tuple[CellExecutionResult, 
 @dataclass
 class _Executor:
     results: list[CellExecutionResult]
-    isolation: ExecutorIsolation = ExecutorIsolation("container", True, True, True)
+    isolation: ExecutorIsolation = _tested_isolation()
     cancel_token: CancellationToken | None = None
     wrong_cell: bool = False
 
@@ -102,6 +116,11 @@ def test_redaction_covers_named_secrets_bearer_tokens_and_uri_credentials() -> N
     assert "pw" not in redacted
     assert redacted.count("[REDACTED]") == 4
     assert redact_sensitive_text(42) == "42"
+
+
+def test_declared_isolation_rejected_by_default() -> None:
+    with pytest.raises(ValueError, match="below session policy minimum"):
+        SessionPolicy().validate_isolation(ExecutorIsolation("container", True, True, True))
 
 
 def test_executor_isolation_and_session_policy_fail_closed() -> None:
@@ -137,6 +156,7 @@ def test_executor_isolation_and_session_policy_fail_closed() -> None:
         require_dedicated_identity=False,
         require_network_isolation=False,
         require_filesystem_isolation=False,
+        minimum_isolation_qualification="declared",
     )
     relaxed.validate_isolation(ExecutorIsolation("process", False, False, False))
 
