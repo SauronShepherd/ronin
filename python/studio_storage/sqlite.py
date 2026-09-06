@@ -28,7 +28,11 @@ from studio_orchestrator import (
 
 from studio_storage.memory import IdempotencyConflict
 
-_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = 2
+_MIGRATIONS = {
+    1: "001_initial.sql",
+    2: "002_job_execution_spec.sql",
+}
 
 
 def _add_seconds(value: Instant | str, seconds: int) -> Instant:
@@ -64,26 +68,21 @@ def migrate(connection: sqlite3.Connection, *, now: Instant | str) -> None:
     current = 0 if row is None or row["version"] is None else int(row["version"])
     if current > _SCHEMA_VERSION:
         raise RuntimeError(f"database schema {current} is newer than supported {_SCHEMA_VERSION}")
-    if current == _SCHEMA_VERSION:
-        return
-    script = (
-        Path(__file__)
-        .with_name("migrations")
-        .joinpath("001_initial.sql")
-        .read_text(encoding="utf-8")
-    )
-    connection.execute("BEGIN IMMEDIATE")
-    try:
-        _execute_script_in_transaction(connection, script)
-        connection.execute(
-            "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
-            (_SCHEMA_VERSION, now),
-        )
-        connection.execute("COMMIT")
-    except Exception:
-        if connection.in_transaction:
-            connection.execute("ROLLBACK")
-        raise
+    migrations_dir = Path(__file__).with_name("migrations")
+    for version in range(current + 1, _SCHEMA_VERSION + 1):
+        script = migrations_dir.joinpath(_MIGRATIONS[version]).read_text(encoding="utf-8")
+        connection.execute("BEGIN IMMEDIATE")
+        try:
+            _execute_script_in_transaction(connection, script)
+            connection.execute(
+                "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+                (version, now),
+            )
+            connection.execute("COMMIT")
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
 
 
 def schema_version(connection: sqlite3.Connection) -> int:
@@ -101,6 +100,8 @@ def _job(row: sqlite3.Row) -> Job:
         failure_code=row["failure_code"],
         created_at=row["created_at"],
         updated_at=row["updated_at"],
+        target=row["target"],
+        parameters_json=row["parameters_json"],
     )
 
 
@@ -148,7 +149,8 @@ class SqliteJobStore:
                 raise ValueError("run must belong to job")
             connection.execute(
                 "INSERT INTO jobs(job_id,project_id,idempotency_key,request_digest,state,"
-                "failure_code,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
+                "failure_code,created_at,updated_at,target,parameters_json) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?)",
                 (
                     str(job.id),
                     job.project_id,
@@ -158,6 +160,8 @@ class SqliteJobStore:
                     job.failure_code,
                     job.created_at,
                     job.updated_at,
+                    job.target,
+                    job.parameters_json,
                 ),
             )
             connection.execute(
