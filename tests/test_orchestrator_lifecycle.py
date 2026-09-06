@@ -88,6 +88,15 @@ def test_identifier_rejects_invalid_text(value: str) -> None:
         JobId(value)
 
 
+def test_state_terminal_predicates_match_contract() -> None:
+    assert JobState.CANCELLED.terminal
+    assert not JobState.QUEUED.terminal
+    assert RunState.SUCCEEDED.terminal
+    assert not RunState.PENDING.terminal
+    assert AttemptState.ABANDONED.terminal
+    assert not AttemptState.RUNNING.terminal
+
+
 def test_retry_policy_defaults_and_bounds() -> None:
     assert RetryPolicy() == RetryPolicy(max_runs=1, max_attempts=10)
     with pytest.raises(ValueError, match="max_runs"):
