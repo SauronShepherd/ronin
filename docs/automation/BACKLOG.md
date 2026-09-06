@@ -14,22 +14,26 @@ The Week-2 storage foundation is already on `main`: pure Job -> Run -> Attempt l
 
 PR #128 also completed the first Week-3 control-plane composition increment: server submit/status/cancel plus worker reclaim/claim/heartbeat now route through the bounded async durable-store facade. Do not select that slice again.
 
+A 2026-09-06 revalidation found a prerequisite before the real worker loop: worker-originated event/result/evidence writes were not tied to the active Attempt lease. #130 tracks this stale-worker write hazard. The worker loop must not land on top of unfenced resume state.
+
 Current critical-path work has moved to the first real execution seam. Select one coherent slice at a time in this order:
 
-1. **#57 / durable per-cell worker execution + resume composition.** Turn a `ClaimedRun` into sequential cell execution. Persist each cell result and evidence before starting the next cell; select reuse only through the existing immutable `CellExecutionIdentity`; verify referenced artifact digests before reuse; poll cancellation between cells; and stop immediately on lease loss without terminalizing an attempt that another worker may own.
-2. **#125 completion — bounded-contention qualification at real call sites.** Keep #125 open until server submit/status and worker heartbeat/reclaim paths are exercised through their final runtime entry points against the v0.1 request/lease budgets under bounded storage contention. The wrapper and service-level structural tests are necessary but not sufficient evidence.
-3. **#54 — HTTP/OpenAPI/SDK contract.** Add the frozen `/v1/jobs` surface over `DurableExecutionService`. Keep HTTP framework/model types at the boundary and preserve the canonical vendor-neutral domain. The implementation may use the standard library or a pinned framework, but the OpenAPI contract, SDK behavior and route coverage must be executable and drift-tested.
-4. **CLI / local operator surface.** Implement `serve`, `worker`, `doctor`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, and `cancel`; enable the `ronin` console entry point only when `studio_cli:main` is real and tested.
-5. **Production image + Compose.** Promote the qualified probe assumptions into the real image/topology, including non-root execution, Docker socket GID handling, read-only workspace identity, durable data volume, health dependency, sibling-container execution and `restart: "no"` for crash-acceptance workers.
-6. **#53 — portable evidence references.** Unify kernel/storage/API evidence identity before the external evidence representation hardens.
-7. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as their capabilities land; strict release qualification remains fail closed and is not replaced by progress telemetry.
-8. **Release qualification and publication.** Only after all fifteen acceptance steps execute and pass, run the full release-quality perimeter, enable required release protections, bump versions consistently, tag, publish immutable artifacts, and smoke the published artifacts by digest/version.
+1. **#130 — fence worker durable writes by the active Attempt lease.** Every worker-originated mutation that can affect replay/resume must prove attempt id, owner, lease token and non-expired lease in the same store operation. Shared in-memory/SQLite conformance must reject stale writes before and after reclaim/replacement.
+2. **#57 / durable per-cell worker execution + resume composition.** Turn a `ClaimedRun` into sequential cell execution only after #130 is satisfied. Persist each cell result and evidence before starting the next cell; select reuse only through the existing immutable `CellExecutionIdentity`; verify referenced artifact digests before reuse; poll cancellation between cells; and stop immediately on lease loss without terminalizing an attempt that another worker may own.
+3. **#125 completion — bounded-contention qualification at real call sites.** Keep #125 open until server submit/status and worker heartbeat/reclaim paths are exercised through their final runtime entry points against the v0.1 request/lease budgets under bounded storage contention. The wrapper and service-level structural tests are necessary but not sufficient evidence.
+4. **#54 — HTTP/OpenAPI/SDK contract.** Add the frozen `/v1/jobs` surface over `DurableExecutionService`. Keep HTTP framework/model types at the boundary and preserve the canonical vendor-neutral domain. The implementation may use the standard library or a pinned framework, but the OpenAPI contract, SDK behavior and route coverage must be executable and drift-tested.
+5. **CLI / local operator surface.** Implement `serve`, `worker`, `doctor`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, and `cancel`; enable the `ronin` console entry point only when `studio_cli:main` is real and tested.
+6. **Production image + Compose.** Promote the qualified probe assumptions into the real image/topology, including non-root execution, Docker socket GID handling, read-only workspace identity, durable data volume, health dependency, sibling-container execution and `restart: "no"` for crash-acceptance workers.
+7. **#53 — portable evidence references.** Unify kernel/storage/API evidence identity before the external evidence representation hardens.
+8. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as their capabilities land; strict release qualification remains fail closed and is not replaced by progress telemetry.
+9. **Release qualification and publication.** Only after all fifteen acceptance steps execute and pass, run the full release-quality perimeter, enable required release protections, bump versions consistently, tag, publish immutable artifacts, and smoke the published artifacts by digest/version.
 
 ### Worker execution invariants
 
 The next worker slice must preserve all of these:
 
 - Persist successful cell result/evidence before the next cell starts; end-of-run batching is not resume-safe.
+- Every worker-originated durable write is fenced by the active Attempt lease; stale or expired workers must fail before mutating events, results, evidence or terminal state.
 - Heartbeat ownership loss is fail closed: cancel active execution and do not complete the attempt.
 - Cancellation is checked between cells and must not wait for all remaining cells.
 - Heartbeat tasks are always cancelled and awaited on exit.
@@ -48,6 +52,7 @@ The Docker-host assumptions must be proved on GitHub-hosted Linux runners: suppl
 - Exhausting ten crash-replacement Attempts fails with `failure_code="attempt_limit_exceeded"`, distinct from notebook/cell failure.
 - Blocking durable store calls never execute directly on an asyncio event-loop thread; bounded admission/backpressure is part of composition rather than canonical storage semantics.
 - `CellExecutionIdentity` and artifact verification are already canonical on `main`; worker integration must consume that contract rather than invent a second resume key.
+- A successful heartbeat is not authorization for a later unfenced write: the durable write itself must revalidate current lease ownership atomically.
 
 ## Acceptance activation order
 
