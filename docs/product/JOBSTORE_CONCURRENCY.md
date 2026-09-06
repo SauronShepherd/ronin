@@ -8,6 +8,8 @@ Blocking `JobStore` and artifact-store operations must never execute directly on
 
 Async server/worker composition must place whole synchronous store operations behind a bounded offload boundary. For v0.1 the reference boundary is `studio_storage.BoundedAsyncJobStore`, which uses a dedicated thread pool and preserves the wrapped `JobStore` call as the transaction/fencing unit.
 
+`studio_server.DurableExecutionService` is the first real process-composition surface over that facade. Submit/status/cancel and worker reclaim/claim/heartbeat calls all enter through the same bounded async store; the service adds no SQLite, HTTP framework, Docker, engine, cloud or provider semantics to the canonical domain.
+
 ## Bounded admission and backpressure
 
 `BoundedAsyncJobStore(max_workers=N, max_in_flight=M)` has two independent bounds:
@@ -23,8 +25,14 @@ Cancellation of an awaiting coroutine does not cancel a synchronous operation th
 
 Server submit/status paths and worker claim/heartbeat/reclaim paths must use the bounded wrapper when they run on asyncio. A slow or contended durable operation must not prevent unrelated coroutine scheduling, cancellation handling or heartbeat timers from making progress.
 
+The composition service qualifies this structural requirement with a deterministic contention test: a blocked status read occupies one store worker while a lease heartbeat still completes on another worker and both synchronous calls execute off the event-loop thread. This is not yet the final v0.1 latency qualification; issue #125 remains open until real server/worker call sites are benchmarked against the published request and lease budgets.
+
 The wrapper does not weaken SQLite durability settings, lease fencing, idempotency, event sequencing, atomicity or conformance semantics. The same `JobStore` contract suite remains authoritative for the underlying synchronous adapters.
+
+## Worker maintenance order
+
+One worker poll performs expired-lease reclamation before attempting one new claim. These remain separate `JobStore` operations, preserving the already-qualified transaction boundaries. Replacement Attempt identity, lease token, owner, current time and lease duration are supplied by the caller; the composition layer does not introduce clocks, randomness or provider-specific scheduling semantics.
 
 ## Artifact stores
 
-The same composition rule applies to blocking artifact-store calls. The current slice exposes the `JobStore` wrapper only; server/worker composition must not introduce a second unbounded executor for artifact persistence. A later artifact-facing async facade may share the same bounded execution policy when the first async artifact call site lands.
+The same composition rule applies to blocking artifact-store calls. The current facade exposes `JobStore` composition only; server/worker composition must not introduce a second unbounded executor for artifact persistence. A later artifact-facing async facade may share the same bounded execution policy when the first async artifact call site lands.
