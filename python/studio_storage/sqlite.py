@@ -49,9 +49,16 @@ def open_database(path: Path) -> sqlite3.Connection:
     return connection
 
 
+def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
+    for statement in script.split(";"):
+        if statement.strip():
+            connection.execute(statement)
+
+
 def migrate(connection: sqlite3.Connection, *, now: str) -> None:
     connection.execute(
-        "CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)"
+        "CREATE TABLE IF NOT EXISTS schema_migrations "
+        "(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)"
     )
     row = connection.execute("SELECT MAX(version) AS version FROM schema_migrations").fetchone()
     current = 0 if row is None or row["version"] is None else int(row["version"])
@@ -64,14 +71,15 @@ def migrate(connection: sqlite3.Connection, *, now: str) -> None:
     )
     connection.execute("BEGIN IMMEDIATE")
     try:
-        connection.executescript(script)
+        _execute_script_in_transaction(connection, script)
         connection.execute(
-            "INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+            "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
             (_SCHEMA_VERSION, now),
         )
         connection.execute("COMMIT")
     except Exception:
-        connection.execute("ROLLBACK")
+        if connection.in_transaction:
+            connection.execute("ROLLBACK")
         raise
 
 
@@ -136,7 +144,8 @@ class SqliteJobStore:
             if run.job_id != job.id:
                 raise ValueError("run must belong to job")
             connection.execute(
-                "INSERT INTO jobs(job_id,project_id,idempotency_key,request_digest,state,failure_code,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
+                "INSERT INTO jobs(job_id,project_id,idempotency_key,request_digest,state,"
+                "failure_code,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
                 (
                     str(job.id),
                     job.project_id,
@@ -149,7 +158,8 @@ class SqliteJobStore:
                 ),
             )
             connection.execute(
-                "INSERT INTO runs(run_id,job_id,ordinal,state,not_before,created_at,updated_at) VALUES (?,?,?,?,?,?,?)",
+                "INSERT INTO runs(run_id,job_id,ordinal,state,not_before,created_at,updated_at) "
+                "VALUES (?,?,?,?,?,?,?)",
                 (
                     str(run.id),
                     str(run.job_id),
@@ -213,35 +223,38 @@ class SqliteJobStore:
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
-            job_row = connection.execute(
-                "SELECT * FROM jobs WHERE job_id=?", (str(job_id),)
-            ).fetchone()
-            if job_row is None:
+            row = connection.execute("SELECT * FROM jobs WHERE job_id=?", (str(job_id),)).fetchone()
+            if row is None:
                 raise KeyError(str(job_id))
-            job = _job(job_row)
+            job = _job(row)
             if job.state.terminal:
                 connection.execute("COMMIT")
                 return job
             active = connection.execute(
-                "SELECT 1 FROM attempts a JOIN runs r ON r.run_id=a.run_id WHERE r.job_id=? AND a.state IN ('leased','running') LIMIT 1",
+                "SELECT 1 FROM attempts a JOIN runs r ON r.run_id=a.run_id "
+                "WHERE r.job_id=? AND a.state IN ('leased','running') LIMIT 1",
                 (str(job_id),),
             ).fetchone()
             if active is None:
                 connection.execute(
-                    "UPDATE runs SET state='cancelled',updated_at=?,row_version=row_version+1 WHERE job_id=? AND state='pending'",
+                    "UPDATE runs SET state='cancelled',updated_at=?,row_version=row_version+1 "
+                    "WHERE job_id=? AND state='pending'",
                     (now, str(job_id)),
                 )
                 connection.execute(
-                    "UPDATE jobs SET state='cancelled',updated_at=?,row_version=row_version+1 WHERE job_id=?",
+                    "UPDATE jobs SET state='cancelled',updated_at=?,row_version=row_version+1 "
+                    "WHERE job_id=?",
                     (now, str(job_id)),
                 )
             else:
                 connection.execute(
-                    "UPDATE runs SET state='cancelling',updated_at=?,row_version=row_version+1 WHERE job_id=? AND state IN ('leased','running')",
+                    "UPDATE runs SET state='cancelling',updated_at=?,row_version=row_version+1 "
+                    "WHERE job_id=? AND state IN ('leased','running')",
                     (now, str(job_id)),
                 )
                 connection.execute(
-                    "UPDATE jobs SET state='cancelling',updated_at=?,row_version=row_version+1 WHERE job_id=?",
+                    "UPDATE jobs SET state='cancelling',updated_at=?,row_version=row_version+1 "
+                    "WHERE job_id=?",
                     (now, str(job_id)),
                 )
             updated = connection.execute(
@@ -273,7 +286,10 @@ class SqliteJobStore:
         try:
             connection.execute("BEGIN IMMEDIATE")
             run_row = connection.execute(
-                "SELECT r.* FROM runs r JOIN jobs j ON j.job_id=r.job_id WHERE r.state='pending' AND r.not_before<=? AND j.state='queued' ORDER BY r.not_before,r.run_id LIMIT 1",
+                "SELECT r.* FROM runs r JOIN jobs j ON j.job_id=r.job_id "
+                "WHERE r.state='pending' AND r.not_before<=? "
+                "AND j.state IN ('queued','running') "
+                "ORDER BY r.not_before,r.run_id LIMIT 1",
                 (now,),
             ).fetchone()
             if run_row is None:
@@ -290,21 +306,26 @@ class SqliteJobStore:
                 "SELECT COALESCE(MAX(ordinal),0)+1 AS ordinal FROM attempts WHERE run_id=?",
                 (str(run.id),),
             ).fetchone()
+            if ordinal_row is None:
+                raise AssertionError("attempt ordinal query returned no row")
             ordinal = int(ordinal_row["ordinal"])
             if ordinal > 10:
                 connection.execute(
-                    "UPDATE runs SET state='failed',updated_at=?,row_version=row_version+1 WHERE run_id=?",
+                    "UPDATE runs SET state='failed',updated_at=?,row_version=row_version+1 "
+                    "WHERE run_id=? AND state='pending'",
                     (now, str(run.id)),
                 )
                 connection.execute(
-                    "UPDATE jobs SET state='failed',failure_code='attempt_limit_exceeded',updated_at=?,row_version=row_version+1 WHERE job_id=?",
+                    "UPDATE jobs SET state='failed',failure_code='attempt_limit_exceeded',"
+                    "updated_at=?,row_version=row_version+1 WHERE job_id=?",
                     (now, str(job.id)),
                 )
                 connection.execute("COMMIT")
                 raise AttemptLimitExceeded("attempt limit exceeded")
             expiry = _add_seconds(now, lease_seconds)
             connection.execute(
-                "INSERT INTO attempts(attempt_id,run_id,ordinal,state,lease_owner,lease_token,lease_expires_at,heartbeat_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO attempts(attempt_id,run_id,ordinal,state,lease_owner,lease_token,"
+                "lease_expires_at,heartbeat_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
                 (
                     str(attempt_id),
                     str(run.id),
@@ -319,15 +340,22 @@ class SqliteJobStore:
                 ),
             )
             updated_run = connection.execute(
-                "UPDATE runs SET state='running',updated_at=?,row_version=row_version+1 WHERE run_id=? AND state='pending' RETURNING *",
+                "UPDATE runs SET state='running',updated_at=?,row_version=row_version+1 "
+                "WHERE run_id=? AND state='pending' RETURNING *",
                 (now, str(run.id)),
             ).fetchone()
             if updated_run is None:
                 raise RuntimeError("run claim lost compare-and-set")
-            updated_job = connection.execute(
-                "UPDATE jobs SET state='running',updated_at=?,row_version=row_version+1 WHERE job_id=? AND state='queued' RETURNING *",
-                (now, str(job.id)),
-            ).fetchone()
+            if job.state is JobState.QUEUED:
+                updated_job = connection.execute(
+                    "UPDATE jobs SET state='running',updated_at=?,row_version=row_version+1 "
+                    "WHERE job_id=? AND state='queued' RETURNING *",
+                    (now, str(job.id)),
+                ).fetchone()
+            else:
+                updated_job = connection.execute(
+                    "SELECT * FROM jobs WHERE job_id=? AND state='running'", (str(job.id),)
+                ).fetchone()
             if updated_job is None:
                 raise RuntimeError("job claim lost compare-and-set")
             connection.execute("COMMIT")
@@ -357,7 +385,9 @@ class SqliteJobStore:
         connection = self._connect()
         try:
             cursor = connection.execute(
-                "UPDATE attempts SET heartbeat_at=?,lease_expires_at=?,updated_at=?,row_version=row_version+1 WHERE attempt_id=? AND state IN ('leased','running') AND lease_owner=? AND lease_token=? AND lease_expires_at>?",
+                "UPDATE attempts SET heartbeat_at=?,lease_expires_at=?,updated_at=?,"
+                "row_version=row_version+1 WHERE attempt_id=? AND state IN ('leased','running') "
+                "AND lease_owner=? AND lease_token=? AND lease_expires_at>?",
                 (now, expires_at, now, str(attempt_id), owner, str(lease_token), now),
             )
             return cursor.rowcount == 1
@@ -373,15 +403,19 @@ class SqliteJobStore:
         try:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
-                "SELECT COALESCE(MAX(sequence),-1)+1 AS next_sequence FROM attempt_events WHERE attempt_id=?",
+                "SELECT COALESCE(MAX(sequence),-1)+1 AS next_sequence FROM attempt_events "
+                "WHERE attempt_id=?",
                 (str(attempt_id),),
             ).fetchone()
+            if row is None:
+                raise AssertionError("event sequence query returned no row")
             expected = int(row["next_sequence"])
             for event in events:
                 if event.attempt_id != attempt_id or event.sequence != expected:
                     raise ValueError("event sequence must be contiguous within attempt")
                 connection.execute(
-                    "INSERT INTO attempt_events(attempt_id,sequence,event_type,message,occurred_at) VALUES (?,?,?,?,?)",
+                    "INSERT INTO attempt_events(attempt_id,sequence,event_type,message,occurred_at) "
+                    "VALUES (?,?,?,?,?)",
                     (str(attempt_id), event.sequence, event.kind, event.message, event.occurred_at),
                 )
                 expected += 1
@@ -399,7 +433,9 @@ class SqliteJobStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT e.attempt_id,e.sequence,e.event_type,e.message,e.occurred_at FROM attempt_events e JOIN attempts a ON a.attempt_id=e.attempt_id WHERE a.run_id=? ORDER BY a.ordinal,e.sequence LIMIT -1 OFFSET ?",
+                "SELECT e.attempt_id,e.sequence,e.event_type,e.message,e.occurred_at "
+                "FROM attempt_events e JOIN attempts a ON a.attempt_id=e.attempt_id "
+                "WHERE a.run_id=? ORDER BY a.ordinal,e.sequence LIMIT -1 OFFSET ?",
                 (str(run_id), since),
             ).fetchall()
             return tuple(
@@ -419,7 +455,11 @@ class SqliteJobStore:
         connection = self._connect()
         try:
             connection.execute(
-                "INSERT INTO cell_results(run_id,cell_id,source_digest,execution_identity_digest,state,result_json,updated_at) VALUES (?,?,?,?,?,?,?) ON CONFLICT(run_id,cell_id) DO UPDATE SET source_digest=excluded.source_digest,execution_identity_digest=excluded.execution_identity_digest,state=excluded.state,result_json=excluded.result_json,updated_at=excluded.updated_at",
+                "INSERT INTO cell_results(run_id,cell_id,source_digest,execution_identity_digest,"
+                "state,result_json,updated_at) VALUES (?,?,?,?,?,?,?) "
+                "ON CONFLICT(run_id,cell_id) DO UPDATE SET source_digest=excluded.source_digest,"
+                "execution_identity_digest=excluded.execution_identity_digest,state=excluded.state,"
+                "result_json=excluded.result_json,updated_at=excluded.updated_at",
                 (
                     str(result.run_id),
                     result.cell_id,
@@ -458,7 +498,8 @@ class SqliteJobStore:
         connection = self._connect()
         try:
             connection.execute(
-                "INSERT OR REPLACE INTO evidence_refs(run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,storage_ref) VALUES (?,?,?,?,?,?,?,?)",
+                "INSERT OR REPLACE INTO evidence_refs(run_id,cell_id,role,digest_algorithm,digest,"
+                "media_type,size_bytes,storage_ref) VALUES (?,?,?,?,?,?,?,?)",
                 (
                     str(ref.run_id),
                     ref.cell_id,
@@ -511,7 +552,8 @@ class SqliteJobStore:
         try:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
-                "SELECT a.*,r.job_id,r.state AS run_state,j.state AS job_state FROM attempts a JOIN runs r ON r.run_id=a.run_id JOIN jobs j ON j.job_id=r.job_id WHERE a.attempt_id=?",
+                "SELECT a.*,r.job_id FROM attempts a JOIN runs r ON r.run_id=a.run_id "
+                "WHERE a.attempt_id=?",
                 (str(attempt_id),),
             ).fetchone()
             if row is None:
@@ -523,41 +565,49 @@ class SqliteJobStore:
             ):
                 raise ValueError("attempt lease ownership lost")
             connection.execute(
-                "UPDATE attempts SET state=?,failure_code=?,lease_owner=NULL,lease_token=NULL,lease_expires_at=NULL,updated_at=?,row_version=row_version+1 WHERE attempt_id=?",
+                "UPDATE attempts SET state=?,failure_code=?,lease_owner=NULL,lease_token=NULL,"
+                "lease_expires_at=NULL,updated_at=?,row_version=row_version+1 WHERE attempt_id=?",
                 (state.value, failure_code, now, str(attempt_id)),
             )
             run_id = row["run_id"]
             job_id = row["job_id"]
             if state is AttemptState.ABANDONED:
                 connection.execute(
-                    "UPDATE runs SET state='pending',not_before=?,updated_at=?,row_version=row_version+1 WHERE run_id=?",
+                    "UPDATE runs SET state='pending',not_before=?,updated_at=?,"
+                    "row_version=row_version+1 WHERE run_id=?",
                     (now, now, run_id),
                 )
             elif state is AttemptState.SUCCEEDED:
                 connection.execute(
-                    "UPDATE runs SET state='succeeded',updated_at=?,row_version=row_version+1 WHERE run_id=?",
+                    "UPDATE runs SET state='succeeded',updated_at=?,row_version=row_version+1 "
+                    "WHERE run_id=?",
                     (now, run_id),
                 )
                 connection.execute(
-                    "UPDATE jobs SET state='succeeded',failure_code=NULL,updated_at=?,row_version=row_version+1 WHERE job_id=?",
+                    "UPDATE jobs SET state='succeeded',failure_code=NULL,updated_at=?,"
+                    "row_version=row_version+1 WHERE job_id=?",
                     (now, job_id),
                 )
             elif state is AttemptState.CANCELLED:
                 connection.execute(
-                    "UPDATE runs SET state='cancelled',updated_at=?,row_version=row_version+1 WHERE run_id=?",
+                    "UPDATE runs SET state='cancelled',updated_at=?,row_version=row_version+1 "
+                    "WHERE run_id=?",
                     (now, run_id),
                 )
                 connection.execute(
-                    "UPDATE jobs SET state='cancelled',updated_at=?,row_version=row_version+1 WHERE job_id=?",
+                    "UPDATE jobs SET state='cancelled',updated_at=?,row_version=row_version+1 "
+                    "WHERE job_id=?",
                     (now, job_id),
                 )
             else:
                 connection.execute(
-                    "UPDATE runs SET state='failed',updated_at=?,row_version=row_version+1 WHERE run_id=?",
+                    "UPDATE runs SET state='failed',updated_at=?,row_version=row_version+1 "
+                    "WHERE run_id=?",
                     (now, run_id),
                 )
                 connection.execute(
-                    "UPDATE jobs SET state='failed',failure_code=?,updated_at=?,row_version=row_version+1 WHERE job_id=?",
+                    "UPDATE jobs SET state='failed',failure_code=?,updated_at=?,"
+                    "row_version=row_version+1 WHERE job_id=?",
                     (failure_code, now, job_id),
                 )
             connection.execute("COMMIT")
@@ -573,17 +623,21 @@ class SqliteJobStore:
         try:
             connection.execute("BEGIN IMMEDIATE")
             rows = connection.execute(
-                "SELECT attempt_id,run_id FROM attempts WHERE state IN ('leased','running') AND lease_expires_at<=? ORDER BY run_id,ordinal",
+                "SELECT attempt_id,run_id FROM attempts WHERE state IN ('leased','running') "
+                "AND lease_expires_at<=? ORDER BY run_id,ordinal",
                 (now,),
             ).fetchall()
             run_ids: list[RunId] = []
             for row in rows:
                 connection.execute(
-                    "UPDATE attempts SET state='abandoned',lease_owner=NULL,lease_token=NULL,lease_expires_at=NULL,updated_at=?,row_version=row_version+1 WHERE attempt_id=?",
+                    "UPDATE attempts SET state='abandoned',lease_owner=NULL,lease_token=NULL,"
+                    "lease_expires_at=NULL,updated_at=?,row_version=row_version+1 "
+                    "WHERE attempt_id=?",
                     (now, row["attempt_id"]),
                 )
                 connection.execute(
-                    "UPDATE runs SET state='pending',not_before=?,updated_at=?,row_version=row_version+1 WHERE run_id=? AND state IN ('leased','running')",
+                    "UPDATE runs SET state='pending',not_before=?,updated_at=?,"
+                    "row_version=row_version+1 WHERE run_id=? AND state IN ('leased','running')",
                     (now, now, row["run_id"]),
                 )
                 run_ids.append(RunId(row["run_id"]))
@@ -597,4 +651,4 @@ class SqliteJobStore:
             connection.close()
 
 
-__all__ = ["SqliteJobStore", "migrate", "open_database", "schema_version"]
+__all__ = ("SqliteJobStore", "migrate", "open_database", "schema_version")
