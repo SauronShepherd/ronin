@@ -115,8 +115,9 @@ def test_runtime_config_and_catalog_fail_closed(tmp_path: Path) -> None:
     catalog = runtime_catalog_for_image(IMAGE)
     profile = catalog.profiles[0]
     assert profile.ref.adapter_id == "docker"
-    assert profile.capability("execution-image") is not None
-    assert profile.capability("execution-image").value == IMAGE
+    image_capability = profile.capability("execution-image")
+    assert image_capability is not None
+    assert image_capability.value == IMAGE
 
 
 @pytest.mark.asyncio
@@ -146,7 +147,9 @@ async def test_run_once_executes_claim_through_sqlite_and_container_boundary(tmp
     assert all(args[:3] == ("docker", "rm", "-f") for args in runner.cancellation_args)
 
     store = SqliteJobStore(config.database_path, migration_now=START)
-    assert store.get_job(JobId("job-runtime")).state is JobState.SUCCEEDED
+    job = store.get_job(JobId("job-runtime"))
+    assert job is not None
+    assert job.state is JobState.SUCCEEDED
     assert len(store.read_cell_results(RunId("run-runtime"))) == 5
 
 
@@ -201,5 +204,7 @@ async def test_restart_reclaims_same_run_and_reuses_persisted_cells(tmp_path: Pa
     assert second_runner.calls == 2
 
     final_store = SqliteJobStore(config.database_path, migration_now=AFTER_EXPIRY)
-    assert final_store.get_job(JobId("job-runtime")).state is JobState.SUCCEEDED
+    final_job = final_store.get_job(JobId("job-runtime"))
+    assert final_job is not None
+    assert final_job.state is JobState.SUCCEEDED
     assert len(final_store.read_cell_results(RunId("run-runtime"))) == 5
