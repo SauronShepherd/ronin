@@ -20,6 +20,7 @@ from studio_orchestrator.lifecycle import (
     RunId,
     RunState,
 )
+from studio_orchestrator.resume import CellExecutionIdentity, CellResumeRecord, can_resume_cell
 from studio_orchestrator.store import (
     ClaimedRun,
     JobStore,
@@ -34,6 +35,8 @@ __all__ = (
     "AttemptId",
     "AttemptLimitExceeded",
     "AttemptState",
+    "CellExecutionIdentity",
+    "CellResumeRecord",
     "ClaimedRun",
     "InvalidTransition",
     "Job",
@@ -52,4 +55,5 @@ __all__ = (
     "StoredCellResult",
     "StoredEvidenceRef",
     "StoredExecutionEvent",
+    "can_resume_cell",
 )
