@@ -289,9 +289,7 @@ def test_decorated_runtime_versions_resolve(
 
 
 def test_exact_equality_remains_exact_for_decorated_versions() -> None:
-    profile = _profile(
-        "runtime", "decorated", RuntimeCapability("version", "14.3.x-scala2.12")
-    )
+    profile = _profile("runtime", "decorated", RuntimeCapability("version", "14.3.x-scala2.12"))
     result = resolve_runtime(
         ExecutionProfile(requirements=(CapabilityRequirement("version", "==14.3"),)),
         RuntimeCatalog((profile,)),
