@@ -25,7 +25,17 @@ from studio_notebook import CellId, Notebook, NotebookDocument
 
 @dataclass(frozen=True)
 class _CrashingExecutor:
-    isolation: ExecutorIsolation = ExecutorIsolation("container", True, True, True)
+    isolation: ExecutorIsolation = ExecutorIsolation(
+        "container",
+        True,
+        True,
+        True,
+        "tested",
+        "ronin/test-isolation",
+        "1",
+        "test-runtime",
+        "test-evidence://isolation",
+    )
 
     async def execute(
         self,
