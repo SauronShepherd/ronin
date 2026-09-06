@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 from studio_orchestrator import (
     AttemptId,
     AttemptState,
+    Instant,
     Job,
     JobId,
     JobState,
@@ -20,12 +20,11 @@ from studio_orchestrator import (
 )
 from studio_storage import IdempotencyConflict, InMemoryJobStore, SqliteJobStore
 
-NOW = "2026-09-06T09:00:00Z"
-HEARTBEAT = "2026-09-06T09:00:10Z"
-EXPIRY = "2026-09-06T09:00:30Z"
-AFTER_EXPIRY = "2026-09-06T09:00:31Z"
-
-StoreFactory = Callable[[], object]
+NOW = "2026-09-06T09:00:00.000000Z"
+BEFORE_EXPIRY = "2026-09-06T09:00:29.999999Z"
+HEARTBEAT = "2026-09-06T09:00:10.000000Z"
+EXPIRY = "2026-09-06T09:00:30.000000Z"
+AFTER_EXPIRY = "2026-09-06T09:00:31.000000Z"
 
 
 def _job(job_id: str = "job-1", *, digest: str = "a" * 64) -> Job:
@@ -40,13 +39,18 @@ def _job(job_id: str = "job-1", *, digest: str = "a" * 64) -> Job:
     )
 
 
-def _run(job_id: str = "job-1", run_id: str = "run-1") -> Run:
+def _run(
+    job_id: str = "job-1",
+    run_id: str = "run-1",
+    *,
+    not_before: str = NOW,
+) -> Run:
     return Run(
         id=RunId(run_id),
         job_id=JobId(job_id),
         ordinal=1,
         state=RunState.PENDING,
-        not_before=NOW,
+        not_before=not_before,
         created_at=NOW,
         updated_at=NOW,
     )
@@ -128,6 +132,73 @@ def test_claim_heartbeat_reclaim_and_replacement_attempt_same_run(store) -> None
     assert second.attempt_ordinal == 2
 
 
+def test_lease_expiry_boundary_is_identical_across_stores(store) -> None:
+    store.create_job(_job(), _run())
+    claim = store.claim_next_run(
+        owner="worker-1",
+        lease_token=LeaseToken("lease-1"),
+        attempt_id=AttemptId("attempt-1"),
+        lease_seconds=30,
+        now=NOW,
+    )
+    assert claim is not None
+    assert store.reclaim_expired(now=BEFORE_EXPIRY) == ()
+    assert not store.heartbeat(
+        AttemptId("attempt-1"),
+        owner="worker-1",
+        lease_token=LeaseToken("lease-1"),
+        expires_at="2026-09-06T09:01:00.000000Z",
+        now=EXPIRY,
+    )
+    assert store.reclaim_expired(now=EXPIRY) == (RunId("run-1"),)
+
+
+def test_claim_respects_canonical_lexical_time_order(store) -> None:
+    store.create_job(_job(), _run(not_before="2026-09-06T09:00:00.000001Z"))
+    assert (
+        store.claim_next_run(
+            owner="worker-1",
+            lease_token=LeaseToken("lease-1"),
+            attempt_id=AttemptId("attempt-1"),
+            lease_seconds=30,
+            now=NOW,
+        )
+        is None
+    )
+    claim = store.claim_next_run(
+        owner="worker-1",
+        lease_token=LeaseToken("lease-1"),
+        attempt_id=AttemptId("attempt-1"),
+        lease_seconds=30,
+        now="2026-09-06T09:00:00.000001Z",
+    )
+    assert claim is not None
+
+
+@pytest.mark.parametrize(
+    "bad_now",
+    [
+        "2026-09-06T09:00:00Z",
+        "2026-09-06T09:00:00.000Z",
+        "2026-09-06T11:00:00.000000+02:00",
+        "2026-09-06T09:00:00.000000+00:00",
+        "2026-09-06T09:00:00.000000",
+    ],
+)
+def test_store_boundaries_reject_noncanonical_instants(store, bad_now: str) -> None:
+    store.create_job(_job(), _run())
+    with pytest.raises(ValueError, match="canonical"):
+        store.claim_next_run(
+            owner="worker-1",
+            lease_token=LeaseToken("lease-1"),
+            attempt_id=AttemptId("attempt-1"),
+            lease_seconds=30,
+            now=bad_now,
+        )
+    with pytest.raises(ValueError, match="canonical"):
+        store.reclaim_expired(now=bad_now)
+
+
 def test_attempt_event_sequences_are_per_attempt_and_run_read_is_ordered(store) -> None:
     store.create_job(_job(), _run())
     first = store.claim_next_run(
@@ -169,6 +240,7 @@ def test_attempt_event_sequences_are_per_attempt_and_run_read_is_ordered(store) 
         (AttemptId("attempt-1"), 1),
         (AttemptId("attempt-2"), 0),
     ]
+    assert all(isinstance(event.occurred_at, Instant) for event in events)
     assert store.read_events(RunId("run-1"), since=2) == (events[2],)
 
 
@@ -204,6 +276,7 @@ def test_cell_results_evidence_and_terminal_completion(store) -> None:
     store.put_cell_result(result)
     store.put_evidence(evidence)
     assert store.read_cell_results(RunId("run-1")) == (result,)
+    assert isinstance(store.read_cell_results(RunId("run-1"))[0].updated_at, Instant)
     assert store.read_evidence(RunId("run-1")) == (evidence,)
 
     store.complete_attempt(
