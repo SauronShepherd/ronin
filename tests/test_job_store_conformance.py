@@ -276,15 +276,16 @@ def test_concurrent_duplicate_event_sequence_has_exactly_one_winner(store) -> No
                 ),
             )
         except ValueError as exc:
-            assert "contiguous" in str(exc)
-            return "rejected"
+            return f"rejected:{exc}"
         return "accepted"
 
     with ThreadPoolExecutor(max_workers=writers) as executor:
         outcomes = list(executor.map(append, range(writers)))
 
     assert outcomes.count("accepted") == 1
-    assert outcomes.count("rejected") == writers - 1
+    rejected = [outcome for outcome in outcomes if outcome != "accepted"]
+    assert len(rejected) == writers - 1
+    assert all(outcome == "rejected:event sequence must be contiguous within attempt" for outcome in rejected)
     events = store.read_events(RunId("run-1"), since=0)
     assert len(events) == 1
     assert events[0].attempt_id == claim.attempt_id
