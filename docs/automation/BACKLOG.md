@@ -12,18 +12,33 @@ Week 1 is complete on current main. PRs #105-#116 closed the runner reap/truncat
 
 The Week-2 storage foundation is already on `main`: pure Job -> Run -> Attempt lifecycle and `JobStore`, SQLite plus in-memory adapters/migrations, shared conformance and concurrent fencing qualification, immutable per-cell resume identity, and the bounded async `JobStore` composition boundary. The closed #91 contract must not be selected again.
 
-Current critical-path work has moved into the Week-3 vertical. Select one coherent slice at a time in this order:
+PR #128 also completed the first Week-3 control-plane composition increment: server submit/status/cancel plus worker reclaim/claim/heartbeat now route through the bounded async durable-store facade. Do not select that slice again.
 
-1. **#57 / worker lease composition — claim, heartbeat and reclaim through the bounded async store.** Real async worker control paths must use the bounded facade, preserve the 30s lease / 10s heartbeat / attempt-replacement semantics, and never call synchronous durable storage on the event loop.
-2. **#57 / durable per-cell execution + resume composition.** Persist a cell result and evidence after each successful cell, select reuse only through the immutable resume identity, verify referenced artifact digests, and resume a replacement Attempt without replaying valid cells.
-3. **#125 completion — bounded-contention qualification at real call sites.** Keep #125 open until server submit/status and worker heartbeat/reclaim call sites are qualified against the v0.1 latency/lease budgets under bounded storage contention. The wrapper alone is not sufficient evidence.
-4. **#54 — HTTP/OpenAPI/SDK contract.** Add the frozen `/v1/jobs` surface only after the durable worker path is coherent; FastAPI/Pydantic remain boundary types rather than canonical domain objects.
-5. **#53 — portable evidence references.** Unify kernel/storage/API evidence identity before the HTTP evidence representation hardens.
-6. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as worker, API, CLI and packaging capabilities land; strict release qualification remains fail closed.
+Current critical-path work has moved to the first real execution seam. Select one coherent slice at a time in this order:
+
+1. **#57 / durable per-cell worker execution + resume composition.** Turn a `ClaimedRun` into sequential cell execution. Persist each cell result and evidence before starting the next cell; select reuse only through the existing immutable `CellExecutionIdentity`; verify referenced artifact digests before reuse; poll cancellation between cells; and stop immediately on lease loss without terminalizing an attempt that another worker may own.
+2. **#125 completion — bounded-contention qualification at real call sites.** Keep #125 open until server submit/status and worker heartbeat/reclaim paths are exercised through their final runtime entry points against the v0.1 request/lease budgets under bounded storage contention. The wrapper and service-level structural tests are necessary but not sufficient evidence.
+3. **#54 — HTTP/OpenAPI/SDK contract.** Add the frozen `/v1/jobs` surface over `DurableExecutionService`. Keep HTTP framework/model types at the boundary and preserve the canonical vendor-neutral domain. The implementation may use the standard library or a pinned framework, but the OpenAPI contract, SDK behavior and route coverage must be executable and drift-tested.
+4. **CLI / local operator surface.** Implement `serve`, `worker`, `doctor`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, and `cancel`; enable the `ronin` console entry point only when `studio_cli:main` is real and tested.
+5. **Production image + Compose.** Promote the qualified probe assumptions into the real image/topology, including non-root execution, Docker socket GID handling, read-only workspace identity, durable data volume, health dependency, sibling-container execution and `restart: "no"` for crash-acceptance workers.
+6. **#53 — portable evidence references.** Unify kernel/storage/API evidence identity before the external evidence representation hardens.
+7. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as their capabilities land; strict release qualification remains fail closed and is not replaced by progress telemetry.
+8. **Release qualification and publication.** Only after all fifteen acceptance steps execute and pass, run the full release-quality perimeter, enable required release protections, bump versions consistently, tag, publish immutable artifacts, and smoke the published artifacts by digest/version.
+
+### Worker execution invariants
+
+The next worker slice must preserve all of these:
+
+- Persist successful cell result/evidence before the next cell starts; end-of-run batching is not resume-safe.
+- Heartbeat ownership loss is fail closed: cancel active execution and do not complete the attempt.
+- Cancellation is checked between cells and must not wait for all remaining cells.
+- Heartbeat tasks are always cancelled and awaited on exit.
+- Resume requires both matching immutable cell identity and verified artifact availability/digest.
+- Attempt replacement reuses the same logical Run and must not replay valid completed cells.
 
 ### Environment proof required before production Compose
 
-The Docker-host assumptions must be proved early on GitHub-hosted Linux runners: supplementary Docker socket GID, cross-uid read-only Git workspace, server health dependency, sibling-container launch, identical absolute workspace path, and explicit `restart: "no"` for the crash-acceptance worker. Execution containers receive source through stdin and return output through stdout/stderr; they do not inherit worker-internal mounts.
+The Docker-host assumptions must be proved on GitHub-hosted Linux runners: supplementary Docker socket GID, cross-uid read-only Git workspace, server health dependency, sibling-container launch, identical absolute workspace path, and explicit `restart: "no"` for the crash-acceptance worker. Execution containers receive source through stdin and return output through stdout/stderr; they do not inherit worker-internal mounts.
 
 ### Contract corrections carried into implementation
 
@@ -33,6 +48,19 @@ The Docker-host assumptions must be proved early on GitHub-hosted Linux runners:
 - Exhausting ten crash-replacement Attempts fails with `failure_code="attempt_limit_exceeded"`, distinct from notebook/cell failure.
 - Blocking durable store calls never execute directly on an asyncio event-loop thread; bounded admission/backpressure is part of composition rather than canonical storage semantics.
 - `CellExecutionIdentity` and artifact verification are already canonical on `main`; worker integration must consume that contract rather than invent a second resume key.
+
+## Acceptance activation order
+
+Acceptance should be activated incrementally instead of replacing all skips in one change:
+
+1. Compose health once the production image/topology is real.
+2. `doctor`, `validate`, `plan` once the CLI surface is real.
+3. submit/status/idempotency/SDK once HTTP + OpenAPI + SDK are real.
+4. logs/evidence once run-global event ordering and portable evidence output are real.
+5. execute/crash/reclaim/resume once durable per-cell worker execution is real.
+6. cancel cleanup once worker cancellation and container cleanup are real.
+
+The strict release gate remains the final authority: every frozen step must execute and pass with zero skipped/xfail/failed/error/missing/unexpected outcomes.
 
 ## Frozen until v0.1 ships (2026-11-01)
 
@@ -49,16 +77,18 @@ Items below are out of scope by decision, not by omission. See `docs/product/V01
 
 ## Automatic cut lines
 
+The original calendar cut lines remain release-policy guardrails, but they do not authorize weakening strict acceptance. If a capability is cut from a prerelease, it must be explicitly documented as a limitation and the artifact must not be represented as the completed v0.1 MVP.
+
 | Trigger | Automatic cut |
 |---|---|
 | Fri 18 Sep: `JobStore` fails its contract suite | `RetryPolicy.max_runs = 1` fixed. No retries in v0.1. |
-| Sun 27 Sep: local end-to-end does not resume | v0.1 re-runs the whole run after a crash. Documented limitation. |
-| Sun 4 Oct: HTTP not green | Drop cursor pagination, `/evidence`, and scopes. Single token. |
-| Sun 11 Oct: CLI not green | Ship server + SDK + `serve`/`worker`/`doctor` only. |
-| Fri 16 Oct: packaging not green | Dockerfile only, no Compose. Document `docker run`. |
-| Mon 19 Oct: anything behind | Week 7 becomes buffer. Ship without chaos tests, never without the acceptance journey. |
+| Sun 27 Sep: local end-to-end does not resume | A prerelease may document whole-run replay as a limitation; final v0.1 still requires the frozen acceptance contract unless product scope is explicitly revised. |
+| Sun 4 Oct: HTTP not green | Drop cursor pagination first; do not silently remove frozen acceptance endpoints without an explicit scope decision. |
+| Sun 11 Oct: CLI not green | A prerelease may ship server + SDK + minimal operational commands; final v0.1 remains governed by `V01_SCOPE.md`. |
+| Fri 16 Oct: packaging not green | A prerelease may document `docker run`; final v0.1 still requires the frozen Compose acceptance step unless scope is explicitly revised. |
+| Mon 19 Oct: anything behind | Week 7 becomes buffer. Cut optional chaos breadth before trust, durability, security or acceptance evidence. |
 
-Never cut the fifteen-step acceptance journey, a green `make check`, or the requirement to ship with no known secrets or vulnerabilities. A release/tag workflow may report progress separately, but it must not publish v0.1 artifacts unless strict acceptance proves all fifteen required steps executed and passed.
+Never cut the fifteen-step final v0.1 acceptance journey, a green `make check`, or the requirement to ship with no known secrets or vulnerabilities without an explicit product-scope decision. A release/tag workflow may report progress separately, but it must not publish v0.1 artifacts unless strict acceptance proves all fifteen required steps executed and passed.
 
 ## Operational invariant
 
