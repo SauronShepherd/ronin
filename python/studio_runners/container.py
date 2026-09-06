@@ -171,9 +171,12 @@ class AsyncioCommandRunner:
                 await self._reap_process(process, wait_task, output_task, cancellation_args)
 
     def _format_output(self, raw_output: bytes, truncated: bool) -> str:
-        output = redact_sensitive_text(raw_output.decode("utf-8", errors="replace"))
+        decoded = raw_output.decode("utf-8", errors="replace")
+        output = redact_sensitive_text(decoded)
         if not truncated:
             return output
+        if output != decoded:
+            return _TRUNCATED_OUTPUT
         marker = f"\n{_TRUNCATED_OUTPUT}"
         if self.max_output_bytes <= len(marker):
             return _TRUNCATED_OUTPUT[: self.max_output_bytes]
