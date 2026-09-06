@@ -12,25 +12,24 @@ Week 1 is complete on current main. PRs #105-#116 closed the runner reap/truncat
 
 The Week-2 storage foundation is already on `main`: pure Job -> Run -> Attempt lifecycle and `JobStore`, SQLite plus in-memory adapters/migrations, shared conformance and concurrent fencing qualification, immutable per-cell resume identity, and the bounded async `JobStore` composition boundary. The closed #91 contract must not be selected again.
 
-PR #128 also completed the first Week-3 control-plane composition increment: server submit/status/cancel plus worker reclaim/claim/heartbeat now route through the bounded async durable-store facade. Do not select that slice again.
+PR #128 completed the first Week-3 control-plane composition increment: server submit/status/cancel plus worker reclaim/claim/heartbeat route through the bounded async durable-store facade. PR #131 then fenced worker-originated event/result/evidence/terminal writes by active Attempt lease, and PR #132 added safe worker project/runtime preparation plus transitive execution identities. Do not select those slices again.
 
-A 2026-09-06 revalidation found a prerequisite before the real worker loop: worker-originated event/result/evidence writes were not tied to the active Attempt lease. #130 tracks this stale-worker write hazard. The worker loop must not land on top of unfenced resume state.
+The durable worker now has the first per-cell execution/restart seam: sequential execution checkpoints content-addressed evidence and the cell result before advancing; cancellation is polled between cells; heartbeat ownership loss is fail closed; heartbeat tasks are cancelled and awaited; replacement Attempts reuse only identity-matching cells whose artifact is explicitly verified; corrupt deterministic artifacts are repaired only by a valid re-execution. Blocking JobStore and artifact operations use bounded async facades rather than an event-loop thread or unbounded executor queue.
 
-Current critical-path work has moved to the first real execution seam. Select one coherent slice at a time in this order:
+Current critical-path work remains the real execution seam. Select one coherent slice at a time in this order:
 
-1. **#130 — fence worker durable writes by the active Attempt lease.** Every worker-originated mutation that can affect replay/resume must prove attempt id, owner, lease token and non-expired lease in the same store operation. Shared in-memory/SQLite conformance must reject stale writes before and after reclaim/replacement.
-2. **#57 / durable per-cell worker execution + resume composition.** Turn a `ClaimedRun` into sequential cell execution only after #130 is satisfied. Persist each cell result and evidence before starting the next cell; select reuse only through the existing immutable `CellExecutionIdentity`; verify referenced artifact digests before reuse; poll cancellation between cells; and stop immediately on lease loss without terminalizing an attempt that another worker may own.
-3. **#125 completion — bounded-contention qualification at real call sites.** Keep #125 open until server submit/status and worker heartbeat/reclaim paths are exercised through their final runtime entry points against the v0.1 request/lease budgets under bounded storage contention. The wrapper and service-level structural tests are necessary but not sufficient evidence.
-4. **#54 — HTTP/OpenAPI/SDK contract.** Add the frozen `/v1/jobs` surface over `DurableExecutionService`. Keep HTTP framework/model types at the boundary and preserve the canonical vendor-neutral domain. The implementation may use the standard library or a pinned framework, but the OpenAPI contract, SDK behavior and route coverage must be executable and drift-tested.
-5. **CLI / local operator surface.** Implement `serve`, `worker`, `doctor`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, and `cancel`; enable the `ronin` console entry point only when `studio_cli:main` is real and tested.
-6. **Production image + Compose.** Promote the qualified probe assumptions into the real image/topology, including non-root execution, Docker socket GID handling, read-only workspace identity, durable data volume, health dependency, sibling-container execution and `restart: "no"` for crash-acceptance workers.
-7. **#53 — portable evidence references.** Unify kernel/storage/API evidence identity before the external evidence representation hardens.
-8. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as their capabilities land; strict release qualification remains fail closed and is not replaced by progress telemetry.
-9. **Release qualification and publication.** Only after all fifteen acceptance steps execute and pass, run the full release-quality perimeter, enable required release protections, bump versions consistently, tag, publish immutable artifacts, and smoke the published artifacts by digest/version.
+1. **#57 — finish worker runtime composition and crash qualification.** Wire claim -> safe project load -> runtime resolution -> request/identity preparation -> `ContainerKernelExecutor` -> durable per-cell execution against the SQLite store and local artifact store. Qualify process-level crash/reclaim in the same Run with a replacement Attempt, checkpoint-before-next ordering, cancellation cleanup and no residual execution container. Keep HTTP, CLI and Compose out of this slice.
+2. **#125 completion — bounded-contention qualification at real call sites.** Keep #125 open until server submit/status and worker heartbeat/reclaim/artifact paths are exercised through their final runtime entry points against the v0.1 request/lease budgets under bounded storage contention. The wrappers and service-level structural tests are necessary but not sufficient evidence.
+3. **#54 — HTTP/OpenAPI/SDK contract.** Add the frozen `/v1/jobs` surface over `DurableExecutionService`. Keep HTTP framework/model types at the boundary and preserve the canonical vendor-neutral domain. The implementation may use the standard library or a pinned framework, but the OpenAPI contract, SDK behavior and route coverage must be executable and drift-tested.
+4. **CLI / local operator surface.** Implement `serve`, `worker`, `doctor`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, and `cancel`; enable the `ronin` console entry point only when `studio_cli:main` is real and tested.
+5. **Production image + Compose.** Promote the qualified probe assumptions into the real image/topology, including non-root execution, Docker socket GID handling, read-only workspace identity, durable data volume, health dependency, sibling-container execution and `restart: "no"` for crash-acceptance workers.
+6. **#53 — portable evidence references.** Unify kernel/storage/API evidence identity before the external evidence representation hardens.
+7. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as their capabilities land; strict release qualification remains fail closed and is not replaced by progress telemetry.
+8. **Release qualification and publication.** Only after all fifteen acceptance steps execute and pass, run the full release-quality perimeter, enable required release protections, bump versions consistently, tag, publish immutable artifacts, and smoke the published artifacts by digest/version.
 
 ### Worker execution invariants
 
-The next worker slice must preserve all of these:
+Every remaining worker/runtime slice must preserve all of these:
 
 - Persist successful cell result/evidence before the next cell starts; end-of-run batching is not resume-safe.
 - Every worker-originated durable write is fenced by the active Attempt lease; stale or expired workers must fail before mutating events, results, evidence or terminal state.
@@ -39,6 +38,7 @@ The next worker slice must preserve all of these:
 - Heartbeat tasks are always cancelled and awaited on exit.
 - Resume requires both matching immutable cell identity and verified artifact availability/digest.
 - Attempt replacement reuses the same logical Run and must not replay valid completed cells.
+- Blocking durable-store and artifact operations remain outside the event-loop thread with bounded admission/backpressure.
 
 ### Environment proof required before production Compose
 
@@ -51,8 +51,9 @@ The Docker-host assumptions must be proved on GitHub-hosted Linux runners: suppl
 - Replaying an idempotency key is a pure read after creation, including for failed/cancelled Jobs; a new Run requires a new key.
 - Exhausting ten crash-replacement Attempts fails with `failure_code="attempt_limit_exceeded"`, distinct from notebook/cell failure.
 - Blocking durable store calls never execute directly on an asyncio event-loop thread; bounded admission/backpressure is part of composition rather than canonical storage semantics.
-- `CellExecutionIdentity` and artifact verification are already canonical on `main`; worker integration must consume that contract rather than invent a second resume key.
+- `CellExecutionIdentity` and artifact verification are canonical; worker integration consumes that contract rather than inventing a second resume key.
 - A successful heartbeat is not authorization for a later unfenced write: the durable write itself must revalidate current lease ownership atomically.
+- A corrupt content-addressed artifact is never reused; deterministic re-execution may atomically repair the expected digest before a new durable checkpoint is recorded.
 
 ## Acceptance activation order
 
@@ -62,7 +63,7 @@ Acceptance should be activated incrementally instead of replacing all skips in o
 2. `doctor`, `validate`, `plan` once the CLI surface is real.
 3. submit/status/idempotency/SDK once HTTP + OpenAPI + SDK are real.
 4. logs/evidence once run-global event ordering and portable evidence output are real.
-5. execute/crash/reclaim/resume once durable per-cell worker execution is real.
+5. execute/crash/reclaim/resume once the process-level durable worker path is real against SQLite + the container executor.
 6. cancel cleanup once worker cancellation and container cleanup are real.
 
 The strict release gate remains the final authority: every frozen step must execute and pass with zero skipped/xfail/failed/error/missing/unexpected outcomes.
