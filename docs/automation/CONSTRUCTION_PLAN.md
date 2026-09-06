@@ -16,7 +16,9 @@ The repository has already landed most of the original Week-2 storage foundation
 - bounded async `JobStore` composition;
 - `DurableExecutionService` for submit/status/cancel plus worker reclaim/claim/heartbeat.
 
-The next irreducible capability is therefore durable per-cell worker execution and resume. HTTP, CLI and packaging are adjacent integration surfaces, but autonomous execution remains serial: they are not to be opened in parallel merely because they are technically independent.
+Revalidation before the real worker loop found one missing prerequisite: worker-originated durable event/result/evidence writes were not themselves fenced by the currently active Attempt lease. #130 now precedes #57 so stale workers cannot mutate reusable Run state after lease loss or replacement.
+
+HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous execution stays serial: they are not opened in parallel merely because they are technically independent.
 
 ## Phase A — completed foundation
 
@@ -26,18 +28,19 @@ The next irreducible capability is therefore durable per-cell worker execution a
 
 ## Phase B — durable worker execution and resume
 
-**Objective.** Execute one durable local Run through worker claim, heartbeat, per-cell persistence, lease expiry, replacement Attempt and record-level resume.
+**Objective.** Execute one durable local Run through worker claim, heartbeat, fenced per-cell persistence, lease expiry, replacement Attempt and record-level resume.
 
 **Next pull-request sequence.**
 
-1. Add the worker execution loop over `DurableExecutionService` and existing runner/kernel/artifact capabilities.
-2. Persist cell result/evidence before starting the next cell.
-3. Reuse only cells whose immutable `CellExecutionIdentity` matches and whose referenced artifacts still exist with matching digests.
-4. Poll cancellation between cells.
-5. Treat heartbeat ownership loss as terminal for that worker's execution path: cancel active work and do not complete the Attempt.
-6. Add crash/replacement integration evidence proving the replacement Attempt resumes at the first non-reusable cell.
+1. Satisfy #130: every worker-originated event/result/evidence/terminal mutation must revalidate Attempt id, owner, lease token and non-expired lease atomically in the store operation; in-memory and SQLite must share stale-worker conformance vectors.
+2. Add the worker execution loop over `DurableExecutionService` and existing runner/kernel/artifact capabilities.
+3. Persist cell result/evidence before starting the next cell.
+4. Reuse only cells whose immutable `CellExecutionIdentity` matches and whose referenced artifacts still exist with matching digests.
+5. Poll cancellation between cells.
+6. Treat heartbeat ownership loss as terminal for that worker's execution path: cancel active work and do not complete the Attempt.
+7. Add crash/replacement integration evidence proving the replacement Attempt resumes at the first non-reusable cell.
 
-**Exit criteria.** A kill/restart test proves that completed reusable cells are not replayed; terminal state remains unique/monotonic; lost leases cannot continue writing; heartbeat tasks are always cancelled/awaited; no residual execution container remains after cancellation/failure.
+**Exit criteria.** A kill/restart test proves that completed reusable cells are not replayed; terminal state remains unique/monotonic; lost or expired leases cannot continue writing; heartbeat tasks are always cancelled/awaited; no residual execution container remains after cancellation/failure.
 
 **Cut line.** Sunday 27 September remains the planning checkpoint. A prerelease may document whole-run replay as a limitation if resume is not ready, but final v0.1 remains governed by the frozen acceptance contract unless product scope is explicitly revised.
 
@@ -110,16 +113,17 @@ The next irreducible capability is therefore durable per-cell worker execution a
 
 The current ordering is:
 
-1. durable per-cell worker execution + resume;
-2. real-runtime bounded-contention qualification as call sites become concrete;
-3. HTTP/OpenAPI/SDK;
-4. CLI/Git qualification;
-5. production image/Compose;
-6. portable evidence representation where still unresolved;
-7. incremental completion of the fifteen-step acceptance journey;
-8. full non-functional/security/release qualification and publication.
+1. #130 fenced worker durable writes;
+2. durable per-cell worker execution + resume;
+3. real-runtime bounded-contention qualification as call sites become concrete;
+4. HTTP/OpenAPI/SDK;
+5. CLI/Git qualification;
+6. production image/Compose;
+7. portable evidence representation where still unresolved;
+8. incremental completion of the fifteen-step acceptance journey;
+9. full non-functional/security/release qualification and publication.
 
-This ordering supersedes stale backlog entries that still treated lease-control composition as pending. It does not authorize parallel Builder PRs: each autonomous run must finish/reconcile its own prior work before selecting the next slice.
+This ordering supersedes stale backlog entries that treated either lease-control composition or unfenced cell writes as sufficient worker readiness. It does not authorize parallel Builder PRs: each autonomous run must finish/reconcile its own prior work before selecting the next slice.
 
 ## Pre-decided calendar checkpoints
 
