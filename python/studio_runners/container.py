@@ -25,7 +25,7 @@ from studio_kernel import (
 
 _IMMUTABLE_IMAGE = re.compile(r"^(?:[^\s]+@)?sha256:[0-9a-f]{64}$")
 _CPU_LIMIT = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
-_MEMORY_LIMIT = re.compile(r"^[1-9][0-9]*(?:[kKmMgG])?$")
+_MEMORY_LIMIT = re.compile(r"^[1-9][0-9]*[kKmMgG]$")
 _CONTAINER_USER = re.compile(r"^[1-9][0-9]*:[1-9][0-9]*$")
 _READ_CHUNK_BYTES = 64 * 1024
 _TRUNCATED_OUTPUT = "[OUTPUT TRUNCATED]"
@@ -45,15 +45,18 @@ class ContainerExecutionLimits:
     cpus: str = "1.0"
     memory: str = "512m"
     pids: int = 128
+    nofile: int = 1024
     timeout_seconds: float = 300.0
 
     def __post_init__(self) -> None:
         if not _CPU_LIMIT.fullmatch(self.cpus) or float(self.cpus) <= 0:
             raise ValueError("container CPU limit must be a positive decimal")
         if not _MEMORY_LIMIT.fullmatch(self.memory):
-            raise ValueError("container memory limit must be a positive Docker size")
+            raise ValueError("container memory limit must include an explicit k/m/g Docker unit")
         if self.pids < 1:
             raise ValueError("container PID limit must be positive")
+        if self.nofile < 1:
+            raise ValueError("container nofile limit must be positive")
         if self.timeout_seconds <= 0:
             raise ValueError("container timeout must be positive")
 
@@ -328,6 +331,10 @@ class DockerContainerKernelExecutor:
             str(limits.pids),
             "--memory",
             limits.memory,
+            "--memory-swap",
+            limits.memory,
+            "--ulimit",
+            f"nofile={limits.nofile}:{limits.nofile}",
             "--cpus",
             limits.cpus,
             "--user",
@@ -385,7 +392,9 @@ class DockerContainerKernelExecutor:
                 "limits": {
                     "cpus": self.config.limits.cpus,
                     "memory": self.config.limits.memory,
+                    "memory_swap": self.config.limits.memory,
                     "pids": self.config.limits.pids,
+                    "nofile": self.config.limits.nofile,
                 },
                 "measurement_scope": "duration_and_enforced_limits_only",
             },
