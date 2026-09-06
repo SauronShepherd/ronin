@@ -7,7 +7,17 @@ import shutil
 from pathlib import Path
 
 import pytest
-from studio_orchestrator import AttemptId, Instant, Job, JobId, JobState, LeaseToken, Run, RunId, RunState
+from studio_orchestrator import (
+    AttemptId,
+    Instant,
+    Job,
+    JobId,
+    JobState,
+    LeaseToken,
+    Run,
+    RunId,
+    RunState,
+)
 from studio_runners import ContainerExecutionLimits
 from studio_storage import SqliteJobStore
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
