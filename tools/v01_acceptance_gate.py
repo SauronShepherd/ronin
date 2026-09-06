@@ -86,7 +86,9 @@ class AcceptanceCounts:
 def evaluate_junit(report_path: Path) -> AcceptanceCounts:
     """Evaluate pytest JUnit XML against the exact frozen v0.1 step manifest."""
     try:
-        root = ElementTree.parse(report_path).getroot()
+        # The gate only consumes JUnit XML generated locally by pytest in the same trusted CI
+        # job. External or user-supplied XML is outside this tool's trust boundary.
+        root = ElementTree.parse(report_path).getroot()  # noqa: S314
     except (ElementTree.ParseError, OSError) as exc:
         raise AcceptanceGateError("v0.1 acceptance report is missing or invalid") from exc
 
