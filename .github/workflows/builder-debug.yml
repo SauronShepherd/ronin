@@ -45,7 +45,7 @@ jobs:
 
   expose:
     needs: diagnose
-    name: ${{ needs.diagnose.outputs.status }} :: ${{ needs.diagnose.outputs.summary }}
+    name: "${{ needs.diagnose.outputs.status }} -- ${{ needs.diagnose.outputs.summary }}"
     runs-on: ubuntu-24.04
     steps:
       - run: echo diagnostic summary exposed in job name
