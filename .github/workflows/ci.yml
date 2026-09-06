@@ -131,11 +131,22 @@ jobs:
           source .venv-verify/bin/activate
           python -m pip install --require-hashes -r requirements-dev.lock
           python -m pip install -e . --no-deps
-      - name: Run clean make check
+      - name: Prove installed packages import in the clean environment
         shell: bash
         run: |
           source .venv-verify/bin/activate
-          time make check
+          python - <<'PY'
+          import studio_cli
+          import studio_core
+          import studio_kernel
+          import studio_notebook
+          import studio_orchestrator
+          import studio_runners
+          import studio_server
+          import studio_storage
+          import studio_vcs
+          print("clean imports ok")
+          PY
       - name: Run acceptance scaffold without release claim
         shell: bash
         run: |
@@ -148,6 +159,12 @@ jobs:
           source .venv-verify/bin/activate
           python examples/demo/build_fixture.py
           git diff --exit-code examples/demo/
+      - name: Run full clean make check on nightly/manual qualification
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          source .venv-verify/bin/activate
+          time make check
 
   mutation:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
