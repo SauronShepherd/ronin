@@ -12,6 +12,7 @@ from studio_orchestrator import (
     AttemptLimitExceeded,
     AttemptState,
     ClaimedRun,
+    Instant,
     Job,
     JobId,
     JobState,
@@ -30,11 +31,10 @@ from studio_storage.memory import IdempotencyConflict
 _SCHEMA_VERSION = 1
 
 
-def _add_seconds(value: str, seconds: int) -> str:
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=UTC)
-    return (parsed + timedelta(seconds=seconds)).astimezone(UTC).isoformat().replace("+00:00", "Z")
+def _add_seconds(value: Instant | str, seconds: int) -> Instant:
+    base = Instant(value)
+    parsed = datetime.strptime(str(base), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
+    return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
 def open_database(path: Path) -> sqlite3.Connection:
@@ -54,7 +54,8 @@ def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) 
             connection.execute(statement)
 
 
-def migrate(connection: sqlite3.Connection, *, now: str) -> None:
+def migrate(connection: sqlite3.Connection, *, now: Instant | str) -> None:
+    now = Instant(now)
     connection.execute(
         "CREATE TABLE IF NOT EXISTS schema_migrations "
         "(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)"
@@ -116,7 +117,7 @@ def _run(row: sqlite3.Row) -> Run:
 
 
 class SqliteJobStore:
-    def __init__(self, path: Path, *, migration_now: str) -> None:
+    def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
         self._path = path
         connection = open_database(path)
         try:
@@ -221,7 +222,8 @@ class SqliteJobStore:
         finally:
             connection.close()
 
-    def request_cancel(self, job_id: JobId, *, now: str) -> Job:
+    def request_cancel(self, job_id: JobId, *, now: Instant | str) -> Job:
+        now = Instant(now)
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
@@ -280,10 +282,11 @@ class SqliteJobStore:
         lease_token: LeaseToken,
         attempt_id: AttemptId,
         lease_seconds: int,
-        now: str,
+        now: Instant | str,
     ) -> ClaimedRun | None:
         if lease_seconds < 1:
             raise ValueError("lease_seconds must be positive")
+        now = Instant(now)
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
@@ -381,9 +384,13 @@ class SqliteJobStore:
         *,
         owner: str,
         lease_token: LeaseToken,
-        expires_at: str,
-        now: str,
+        expires_at: Instant | str,
+        now: Instant | str,
     ) -> bool:
+        now = Instant(now)
+        expires_at = Instant(expires_at)
+        if expires_at <= now:
+            raise ValueError("expires_at must be after now")
         connection = self._connect()
         try:
             cursor = connection.execute(
@@ -547,10 +554,11 @@ class SqliteJobStore:
         failure_code: str | None,
         owner: str,
         lease_token: LeaseToken,
-        now: str,
+        now: Instant | str,
     ) -> None:
         if not state.terminal:
             raise ValueError("attempt completion state must be terminal")
+        now = Instant(now)
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
@@ -621,7 +629,8 @@ class SqliteJobStore:
         finally:
             connection.close()
 
-    def reclaim_expired(self, *, now: str) -> tuple[RunId, ...]:
+    def reclaim_expired(self, *, now: Instant | str) -> tuple[RunId, ...]:
+        now = Instant(now)
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
