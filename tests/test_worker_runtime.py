@@ -120,93 +120,95 @@ def test_runtime_config_and_catalog_fail_closed(tmp_path: Path) -> None:
     assert image_capability.value == IMAGE
 
 
-@pytest.mark.asyncio
-async def test_run_once_executes_claim_through_sqlite_and_container_boundary(
-    tmp_path: Path,
-) -> None:
-    config = _config(tmp_path)
-    _seed(config)
-    runner = _Runner()
+def test_run_once_executes_claim_through_sqlite_and_container_boundary(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        config = _config(tmp_path)
+        _seed(config)
+        runner = _Runner()
 
-    async with LocalWorkerRuntime(
-        config,
-        migration_now=START,
-        command_runner=runner,
-        engine_path="docker",
-        now=_Clock(START),
-    ) as runtime:
-        outcome = await runtime.run_once(
-            attempt_id=AttemptId("attempt-runtime-1"),
-            lease_token=LeaseToken("lease-runtime-1"),
+        async with LocalWorkerRuntime(
+            config,
+            migration_now=START,
+            command_runner=runner,
+            engine_path="docker",
+            now=_Clock(START),
+        ) as runtime:
+            outcome = await runtime.run_once(
+                attempt_id=AttemptId("attempt-runtime-1"),
+                lease_token=LeaseToken("lease-runtime-1"),
+            )
+
+        assert outcome.attempt_id == AttemptId("attempt-runtime-1")
+        assert outcome.execution is not None
+        assert outcome.execution.state.value == "succeeded"
+        assert len(outcome.execution.executed_cell_ids) == 5
+        assert outcome.execution.reused_cell_ids == ()
+        assert runner.calls == 5
+        assert all(args[:3] == ("docker", "rm", "-f") for args in runner.cancellation_args)
+
+        store = SqliteJobStore(config.database_path, migration_now=START)
+        job = store.get_job(JobId("job-runtime"))
+        assert job is not None
+        assert job.state is JobState.SUCCEEDED
+        assert len(store.read_cell_results(RunId("run-runtime"))) == 5
+
+    asyncio.run(scenario())
+
+
+def test_restart_reclaims_same_run_and_reuses_persisted_cells(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        config = _config(tmp_path)
+        _seed(config)
+        first_runner = _Runner(block_on_call=4)
+
+        runtime1 = LocalWorkerRuntime(
+            config,
+            migration_now=START,
+            command_runner=first_runner,
+            engine_path="docker",
+            now=_Clock(START),
         )
-
-    assert outcome.attempt_id == AttemptId("attempt-runtime-1")
-    assert outcome.execution is not None
-    assert outcome.execution.state.value == "succeeded"
-    assert len(outcome.execution.executed_cell_ids) == 5
-    assert outcome.execution.reused_cell_ids == ()
-    assert runner.calls == 5
-    assert all(args[:3] == ("docker", "rm", "-f") for args in runner.cancellation_args)
-
-    store = SqliteJobStore(config.database_path, migration_now=START)
-    job = store.get_job(JobId("job-runtime"))
-    assert job is not None
-    assert job.state is JobState.SUCCEEDED
-    assert len(store.read_cell_results(RunId("run-runtime"))) == 5
-
-
-@pytest.mark.asyncio
-async def test_restart_reclaims_same_run_and_reuses_persisted_cells(tmp_path: Path) -> None:
-    config = _config(tmp_path)
-    _seed(config)
-    first_runner = _Runner(block_on_call=4)
-
-    runtime1 = LocalWorkerRuntime(
-        config,
-        migration_now=START,
-        command_runner=first_runner,
-        engine_path="docker",
-        now=_Clock(START),
-    )
-    first_task = asyncio.create_task(
-        runtime1.run_once(
-            attempt_id=AttemptId("attempt-runtime-1"),
-            lease_token=LeaseToken("lease-runtime-1"),
+        first_task = asyncio.create_task(
+            runtime1.run_once(
+                attempt_id=AttemptId("attempt-runtime-1"),
+                lease_token=LeaseToken("lease-runtime-1"),
+            )
         )
-    )
-    await asyncio.wait_for(first_runner.started.wait(), timeout=2.0)
+        await asyncio.wait_for(first_runner.started.wait(), timeout=2.0)
 
-    store = SqliteJobStore(config.database_path, migration_now=START)
-    persisted_before_crash = store.read_cell_results(RunId("run-runtime"))
-    assert len(persisted_before_crash) == 3
+        store = SqliteJobStore(config.database_path, migration_now=START)
+        persisted_before_crash = store.read_cell_results(RunId("run-runtime"))
+        assert len(persisted_before_crash) == 3
 
-    first_task.cancel()
-    with pytest.raises(asyncio.CancelledError):
-        await first_task
-    await runtime1.aclose()
+        first_task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await first_task
+        await runtime1.aclose()
 
-    second_runner = _Runner()
-    async with LocalWorkerRuntime(
-        config,
-        migration_now=AFTER_EXPIRY,
-        command_runner=second_runner,
-        engine_path="docker",
-        now=_Clock(AFTER_EXPIRY),
-    ) as runtime2:
-        outcome = await runtime2.run_once(
-            attempt_id=AttemptId("attempt-runtime-2"),
-            lease_token=LeaseToken("lease-runtime-2"),
-        )
+        second_runner = _Runner()
+        async with LocalWorkerRuntime(
+            config,
+            migration_now=AFTER_EXPIRY,
+            command_runner=second_runner,
+            engine_path="docker",
+            now=_Clock(AFTER_EXPIRY),
+        ) as runtime2:
+            outcome = await runtime2.run_once(
+                attempt_id=AttemptId("attempt-runtime-2"),
+                lease_token=LeaseToken("lease-runtime-2"),
+            )
 
-    assert outcome.reclaimed_run_ids == (RunId("run-runtime"),)
-    assert outcome.attempt_id == AttemptId("attempt-runtime-2")
-    assert outcome.execution is not None
-    assert len(outcome.execution.reused_cell_ids) == 3
-    assert len(outcome.execution.executed_cell_ids) == 2
-    assert second_runner.calls == 2
+        assert outcome.reclaimed_run_ids == (RunId("run-runtime"),)
+        assert outcome.attempt_id == AttemptId("attempt-runtime-2")
+        assert outcome.execution is not None
+        assert len(outcome.execution.reused_cell_ids) == 3
+        assert len(outcome.execution.executed_cell_ids) == 2
+        assert second_runner.calls == 2
 
-    final_store = SqliteJobStore(config.database_path, migration_now=AFTER_EXPIRY)
-    final_job = final_store.get_job(JobId("job-runtime"))
-    assert final_job is not None
-    assert final_job.state is JobState.SUCCEEDED
-    assert len(final_store.read_cell_results(RunId("run-runtime"))) == 5
+        final_store = SqliteJobStore(config.database_path, migration_now=AFTER_EXPIRY)
+        final_job = final_store.get_job(JobId("job-runtime"))
+        assert final_job is not None
+        assert final_job.state is JobState.SUCCEEDED
+        assert len(final_store.read_cell_results(RunId("run-runtime"))) == 5
+
+    asyncio.run(scenario())
