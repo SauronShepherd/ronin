@@ -11,7 +11,6 @@ else instead of normalizing ambiguous boundary input:
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 
 _CANONICAL = re.compile(
     r"^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{6})Z$"
@@ -42,22 +41,26 @@ def _assert_calendar_valid(match: re.Match[str]) -> None:
         raise ValueError("instant second is out of range")
 
 
-@dataclass(frozen=True, slots=True, order=True)
-class Instant:
-    """One canonical, totally ordered UTC instant."""
+class Instant(str):
+    """One canonical, totally ordered UTC instant.
 
-    value: str
+    ``Instant`` subclasses ``str`` deliberately: SQLite persists lifecycle
+    instants as TEXT, and the one canonical representation makes lexical order
+    identical to chronological order without adapter-specific encodings.
+    """
 
-    def __post_init__(self) -> None:
-        match = _CANONICAL.fullmatch(self.value)
+    def __new__(cls, value: str) -> Instant:
+        match = _CANONICAL.fullmatch(value)
         if match is None:
             raise ValueError(
                 "instant must be canonical RFC 3339 UTC: YYYY-MM-DDTHH:MM:SS.ffffffZ"
             )
         _assert_calendar_valid(match)
+        return str.__new__(cls, value)
 
-    def __str__(self) -> str:
-        return self.value
+    @property
+    def value(self) -> str:
+        return str(self)
 
 
 __all__ = ("Instant",)
