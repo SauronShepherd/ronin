@@ -263,25 +263,40 @@ def test_constraint_grammar_supports_exact_inequality_and_numeric_ranges() -> No
     assert all(check.satisfied for check in result.evaluations[0].checks)
 
 
-def test_suffixed_versions_are_not_interpreted_by_core() -> None:
-    for index, version in enumerate(
-        (
-            "14.3.x-scala2.12",
-            "3.11.9rc1",
-            "1.2.3-beta",
-            "17-LTS",
-            "3.5.0+build.1",
-        )
-    ):
-        profile = _profile("runtime", f"version-{index}", RuntimeCapability("version", version))
-        result = resolve_runtime(
-            ExecutionProfile(requirements=(CapabilityRequirement("version", ">=1"),)),
-            RuntimeCatalog((profile,)),
-        )
-        assert result.status == "no_match"
-        check = result.evaluations[0].checks[0]
-        assert check.satisfied is False
-        assert check.reason == "ordered constraint requires numeric dotted advertised version"
+@pytest.mark.parametrize(
+    ("advertised", "constraint", "satisfied"),
+    [
+        ("14.3.x-scala2.12", ">=14.3", True),
+        ("14.3.x-scala2.12", ">=14.4", False),
+        ("3.11.9rc1", ">=3.11", True),
+        ("3.11.0rc1", ">=3.11.0", False),
+        ("1.2.3-beta", ">=1.2", True),
+        ("17-LTS", ">=17", True),
+        ("3.5", ">=3.5.0", True),
+    ],
+)
+def test_decorated_runtime_versions_resolve(
+    advertised: str, constraint: str, satisfied: bool
+) -> None:
+    profile = _profile("runtime", "decorated", RuntimeCapability("version", advertised))
+    result = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("version", constraint),)),
+        RuntimeCatalog((profile,)),
+    )
+    check = result.evaluations[0].checks[0]
+    assert check.satisfied is satisfied
+    assert result.status == ("selected" if satisfied else "no_match")
+
+
+def test_exact_equality_remains_exact_for_decorated_versions() -> None:
+    profile = _profile(
+        "runtime", "decorated", RuntimeCapability("version", "14.3.x-scala2.12")
+    )
+    result = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("version", "==14.3"),)),
+        RuntimeCatalog((profile,)),
+    )
+    assert result.status == "no_match"
 
 
 def test_noncomparable_advertised_version_is_evidence_not_exception() -> None:
@@ -293,4 +308,4 @@ def test_noncomparable_advertised_version_is_evidence_not_exception() -> None:
     assert result.status == "no_match"
     check = result.evaluations[0].checks[0]
     assert check.satisfied is False
-    assert check.reason == "ordered constraint requires numeric dotted advertised version"
+    assert check.reason == "ordered constraint requires comparable advertised release"
