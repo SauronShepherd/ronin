@@ -30,7 +30,7 @@ coverage-t1:
 
 coverage-t2:
 	coverage report --fail-under=90 \
-		--include="*/studio_kernel/*,*/studio_runners/*,*/studio_storage/*,*/studio_vcs/*"
+		--include="*/studio_kernel/*,*/studio_runners/*,*/studio_storage/*,*/studio_vcs/*,*/studio_worker/*"
 
 coverage-t3:
 	coverage report --fail-under=75 \

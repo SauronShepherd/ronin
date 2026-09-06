@@ -58,6 +58,7 @@ packages = [
   "studio_storage",
   "studio_vcs",
   "studio_server",
+  "studio_worker",
   "studio_cli",
 ]
 
@@ -78,6 +79,7 @@ source = [
   "studio_storage",
   "studio_vcs",
   "studio_server",
+  "studio_worker",
   "studio_cli",
   "pyronin",
 ]

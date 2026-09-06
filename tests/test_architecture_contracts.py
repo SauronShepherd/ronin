@@ -18,7 +18,7 @@ def test_current_project_respects_architecture_contracts() -> None:
     assert inspect_roots([Path("python")]) == []
 
 
-def test_matrix_contains_exactly_the_nine_v01_packages() -> None:
+def test_matrix_contains_exactly_the_ten_v01_packages() -> None:
     assert set(PROJECT_DEPENDENCIES) == {
         "studio_core",
         "studio_notebook",
@@ -28,6 +28,7 @@ def test_matrix_contains_exactly_the_nine_v01_packages() -> None:
         "studio_storage",
         "studio_vcs",
         "studio_server",
+        "studio_worker",
         "studio_cli",
     }
 
