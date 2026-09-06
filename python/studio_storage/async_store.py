@@ -157,8 +157,21 @@ class BoundedAsyncJobStore:
         self,
         attempt_id: AttemptId,
         events: Sequence[StoredExecutionEvent],
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant,
     ) -> None:
-        await self._call(partial(self._store.append_events, attempt_id, events))
+        await self._call(
+            partial(
+                self._store.append_events,
+                attempt_id,
+                events,
+                owner=owner,
+                lease_token=lease_token,
+                now=now,
+            )
+        )
 
     async def read_events(
         self,
@@ -168,14 +181,48 @@ class BoundedAsyncJobStore:
     ) -> tuple[StoredExecutionEvent, ...]:
         return await self._call(partial(self._store.read_events, run_id, since=since))
 
-    async def put_cell_result(self, result: StoredCellResult) -> None:
-        await self._call(partial(self._store.put_cell_result, result))
+    async def put_cell_result(
+        self,
+        attempt_id: AttemptId,
+        result: StoredCellResult,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant,
+    ) -> None:
+        await self._call(
+            partial(
+                self._store.put_cell_result,
+                attempt_id,
+                result,
+                owner=owner,
+                lease_token=lease_token,
+                now=now,
+            )
+        )
 
     async def read_cell_results(self, run_id: RunId) -> tuple[StoredCellResult, ...]:
         return await self._call(partial(self._store.read_cell_results, run_id))
 
-    async def put_evidence(self, ref: StoredEvidenceRef) -> None:
-        await self._call(partial(self._store.put_evidence, ref))
+    async def put_evidence(
+        self,
+        attempt_id: AttemptId,
+        ref: StoredEvidenceRef,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant,
+    ) -> None:
+        await self._call(
+            partial(
+                self._store.put_evidence,
+                attempt_id,
+                ref,
+                owner=owner,
+                lease_token=lease_token,
+                now=now,
+            )
+        )
 
     async def read_evidence(self, run_id: RunId) -> tuple[StoredEvidenceRef, ...]:
         return await self._call(partial(self._store.read_evidence, run_id))
