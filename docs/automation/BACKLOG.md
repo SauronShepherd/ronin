@@ -8,16 +8,18 @@ E0/E1 already provide deterministic core/project/runtime/operator/diagnostic/not
 
 Week 1 is complete on current main. PRs #105-#116 closed the runner reap/truncation, Docker resource-limit, tested-isolation, runtime-version, async-sink, redacted failure-context, core property/performance, SDK retry/transport, and repository-URI secret-boundary work. Do not reimplement those slices.
 
-## Next — Week 2 durable execution spine
+## Durable execution spine status
 
-Select these items in dependency order. The environment proof may run in parallel because it claims only infrastructure files.
+The Week-2 storage foundation is already on `main`: pure Job -> Run -> Attempt lifecycle and `JobStore`, SQLite plus in-memory adapters/migrations, shared conformance and concurrent fencing qualification, immutable per-cell resume identity, and the bounded async `JobStore` composition boundary. The closed #91 contract must not be selected again.
 
-1. **#99 / 49a — pure Job -> Run -> Attempt lifecycle and `JobStore` Protocol.** `studio_orchestrator` remains pure; concurrency primitives do not enter this package. Crash reclaim replaces an abandoned Attempt within the same Run, outside ordinary retry budget; `max_runs=1`, attempt cap 10.
-2. **#100 / 49b — SQLite `JobStore` and migrations.** `studio_storage` owns both `SqliteJobStore` and the concurrent `InMemoryJobStore` reference adapter. Enforce WAL, `foreign_keys=ON`, `synchronous=FULL`, `busy_timeout=5000`, durable idempotency, lease fencing and reclaim.
-3. **#101 / 49c — store conformance and concurrent claim qualification.** Run one parameterized contract suite against both adapters and prove one-winner claiming under bounded contention.
-4. **#125 — bounded non-blocking storage composition.** Async server/worker paths must offload whole synchronous `JobStore` calls through a dedicated bounded executor, fail fast with provider-neutral backpressure when capacity is exhausted, and preserve SQLite durability/fencing semantics. Blocking artifact-store calls follow the same composition rule when their first async call site lands.
-5. **#91 — immutable per-cell resume identity.** Persist results after every cell and reuse only when the frozen Run identity and referenced artifact digests still verify.
-6. **#57 — accelerated vertical v0.1 path.** As the storage contract stabilizes, compose worker, API, CLI and Docker/Compose in parallel domains and turn acceptance steps live incrementally rather than in one final batch.
+Current critical-path work has moved into the Week-3 vertical. Select one coherent slice at a time in this order:
+
+1. **#57 / worker lease composition — claim, heartbeat and reclaim through the bounded async store.** Real async worker control paths must use the bounded facade, preserve the 30s lease / 10s heartbeat / attempt-replacement semantics, and never call synchronous durable storage on the event loop.
+2. **#57 / durable per-cell execution + resume composition.** Persist a cell result and evidence after each successful cell, select reuse only through the immutable resume identity, verify referenced artifact digests, and resume a replacement Attempt without replaying valid cells.
+3. **#125 completion — bounded-contention qualification at real call sites.** Keep #125 open until server submit/status and worker heartbeat/reclaim call sites are qualified against the v0.1 latency/lease budgets under bounded storage contention. The wrapper alone is not sufficient evidence.
+4. **#54 — HTTP/OpenAPI/SDK contract.** Add the frozen `/v1/jobs` surface only after the durable worker path is coherent; FastAPI/Pydantic remain boundary types rather than canonical domain objects.
+5. **#53 — portable evidence references.** Unify kernel/storage/API evidence identity before the HTTP evidence representation hardens.
+6. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as worker, API, CLI and packaging capabilities land; strict release qualification remains fail closed.
 
 ### Environment proof required before production Compose
 
@@ -30,6 +32,7 @@ The Docker-host assumptions must be proved early on GitHub-hosted Linux runners:
 - Replaying an idempotency key is a pure read after creation, including for failed/cancelled Jobs; a new Run requires a new key.
 - Exhausting ten crash-replacement Attempts fails with `failure_code="attempt_limit_exceeded"`, distinct from notebook/cell failure.
 - Blocking durable store calls never execute directly on an asyncio event-loop thread; bounded admission/backpressure is part of composition rather than canonical storage semantics.
+- `CellExecutionIdentity` and artifact verification are already canonical on `main`; worker integration must consume that contract rather than invent a second resume key.
 
 ## Frozen until v0.1 ships (2026-11-01)
 
