@@ -37,7 +37,7 @@ if _DOCKER is None:
     raise RuntimeError("dedicated Docker qualification requires the docker client")
 
 _NOW = Instant("2026-09-06T20:00:00.000000Z")
-_PROCESS_PROBE = r'''
+_PROCESS_PROBE = r"""
 from __future__ import annotations
 
 import asyncio
@@ -123,7 +123,7 @@ async def main() -> None:
 
 
 asyncio.run(main())
-'''
+"""
 
 
 def _seed(
