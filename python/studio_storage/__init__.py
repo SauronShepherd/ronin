@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 from studio_storage.artifacts import ArtifactIntegrityError, ArtifactRef, LocalArtifactStore
+from studio_storage.async_store import BoundedAsyncJobStore, StorageBackpressureError
 from studio_storage.memory import IdempotencyConflict, InMemoryJobStore
 from studio_storage.sqlite import SqliteJobStore, migrate, open_database, schema_version
 
 __all__ = (
     "ArtifactIntegrityError",
     "ArtifactRef",
+    "BoundedAsyncJobStore",
     "IdempotencyConflict",
     "InMemoryJobStore",
     "LocalArtifactStore",
     "SqliteJobStore",
+    "StorageBackpressureError",
     "migrate",
     "open_database",
     "schema_version",
