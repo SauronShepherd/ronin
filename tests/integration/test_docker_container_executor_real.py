@@ -39,6 +39,7 @@ if _DOCKER is None:
 _PROBE_SOURCE = r"""
 import json
 import os
+import resource
 from pathlib import Path
 
 
@@ -89,6 +90,7 @@ def memory_current_bytes():
 
 tmp_probe = Path("/tmp/ronin-qualification-write")
 tmp_probe.write_text("ok", encoding="utf-8")
+nofile_soft, nofile_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
 payload = {
     "uid": os.getuid(),
     "gid": os.getgid(),
@@ -98,14 +100,18 @@ payload = {
     "cap_eff": status_value("CapEff"),
     "no_new_privs": status_value("NoNewPrivs"),
     "memory_max": read_text("/sys/fs/cgroup/memory.max"),
+    "memory_swap_max": read_text("/sys/fs/cgroup/memory.swap.max"),
     "pids_max": read_text("/sys/fs/cgroup/pids.max"),
     "cpu_max": read_text("/sys/fs/cgroup/cpu.max"),
     "memory_limit_v1": read_text("/sys/fs/cgroup/memory/memory.limit_in_bytes"),
+    "memory_memsw_limit_v1": read_text("/sys/fs/cgroup/memory/memory.memsw.limit_in_bytes"),
     "pids_limit_v1": read_text("/sys/fs/cgroup/pids/pids.max"),
     "cpu_quota_v1": read_text("/sys/fs/cgroup/cpu/cpu.cfs_quota_us"),
     "cpu_period_v1": read_text("/sys/fs/cgroup/cpu/cpu.cfs_period_us"),
     "memory_current_bytes": memory_current_bytes(),
     "cpu_usage_usec": cpu_usage_usec(),
+    "nofile_soft": nofile_soft,
+    "nofile_hard": nofile_hard,
 }
 print(json.dumps(payload, sort_keys=True))
 """
@@ -216,6 +222,39 @@ async def _exercise_timeout_cleanup() -> tuple[str, str | None, tuple[str, ...]]
     return result.state, result.failure_code, await _docker_ps_names(container_name)
 
 
+def test_real_docker_memory_swap_capped() -> None:
+    limits = ContainerExecutionLimits(
+        cpus="0.5",
+        memory="128m",
+        pids=32,
+        nofile=1024,
+        timeout_seconds=10.0,
+    )
+    executor = _executor("docker-real-resource-limits", limits)
+    result = asyncio.run(
+        executor.execute(_cell("resource-limit-probe", _PROBE_SOURCE), CancellationToken())
+    )
+    assert result.state == "succeeded"
+    log_reference = next(reference for reference in result.evidence if reference.kind == "log")
+    probe = cast(
+        dict[str, object],
+        json.loads(cast(str, _read_evidence(log_reference.ref)["output"])),
+    )
+
+    memory_swap_max = probe["memory_swap_max"]
+    if isinstance(memory_swap_max, str):
+        assert int(memory_swap_max) == 0
+    else:
+        memory_limit_v1 = probe["memory_limit_v1"]
+        memory_memsw_limit_v1 = probe["memory_memsw_limit_v1"]
+        assert isinstance(memory_limit_v1, str)
+        assert isinstance(memory_memsw_limit_v1, str)
+        assert int(memory_memsw_limit_v1) == int(memory_limit_v1)
+
+    assert probe["nofile_soft"] == 1024
+    assert probe["nofile_hard"] == 1024
+
+
 def test_real_docker_isolation_limits_usage_and_cleanup() -> None:
     _EVIDENCE_ROOT.mkdir(parents=True, exist_ok=True)
     assert _IMAGE.startswith("sha256:")
@@ -255,7 +294,13 @@ def test_real_docker_isolation_limits_usage_and_cleanup() -> None:
     assert int(cpu_usage) >= 0
 
     assert resource_payload["measurement_scope"] == "duration_and_enforced_limits_only"
-    assert resource_payload["limits"] == {"cpus": "0.5", "memory": "128m", "pids": 32}
+    assert resource_payload["limits"] == {
+        "cpus": "0.5",
+        "memory": "128m",
+        "memory_swap": "128m",
+        "nofile": 1024,
+        "pids": 32,
+    }
 
     cancelled_state, cancellation_names = asyncio.run(_exercise_cancellation_cleanup())
     timeout_state, timeout_failure, timeout_names = asyncio.run(_exercise_timeout_cleanup())
@@ -281,6 +326,8 @@ def test_real_docker_isolation_limits_usage_and_cleanup() -> None:
             "cgroup_version": cgroup_version,
             "cpus": "0.5",
             "memory_bytes": 128 * 1024 * 1024,
+            "memory_swap": "disabled",
+            "nofile": 1024,
             "pids": 32,
         },
         "observed_usage": {
