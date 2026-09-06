@@ -16,7 +16,7 @@ def test_artifact_round_trip_is_content_addressed(tmp_path: Path) -> None:
     assert store.verify(first)
 
 
-def test_corrupted_artifact_fails_closed(tmp_path: Path) -> None:
+def test_corrupted_artifact_fails_closed_and_same_content_repairs_it(tmp_path: Path) -> None:
     root = tmp_path / "artifacts"
     store = LocalArtifactStore(root)
     ref = store.put_bytes(role="stdout", data=b"hello", media_type="text/plain")
@@ -25,6 +25,11 @@ def test_corrupted_artifact_fails_closed(tmp_path: Path) -> None:
     assert not store.verify(ref)
     with pytest.raises(ArtifactIntegrityError, match="digest"):
         store.get_bytes(ref)
+
+    repaired = store.put_bytes(role="stdout", data=b"hello", media_type="text/plain")
+    assert repaired == ref
+    assert store.verify(repaired)
+    assert store.get_bytes(repaired) == b"hello"
 
 
 def test_invalid_reference_cannot_escape_store(tmp_path: Path) -> None:
