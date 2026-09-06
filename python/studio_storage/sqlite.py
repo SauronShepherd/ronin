@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Sequence
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from studio_orchestrator import (
@@ -24,6 +24,7 @@ from studio_orchestrator import (
     StoredEvidenceRef,
     StoredExecutionEvent,
 )
+
 from studio_storage.memory import IdempotencyConflict
 
 _SCHEMA_VERSION = 1
@@ -32,10 +33,10 @@ _SCHEMA_VERSION = 1
 def _add_seconds(value: str, seconds: int) -> str:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
     return (
         (parsed + timedelta(seconds=seconds))
-        .astimezone(timezone.utc)
+        .astimezone(UTC)
         .isoformat()
         .replace("+00:00", "Z")
     )
@@ -420,7 +421,8 @@ class SqliteJobStore:
                 if event.attempt_id != attempt_id or event.sequence != expected:
                     raise ValueError("event sequence must be contiguous within attempt")
                 connection.execute(
-                    "INSERT INTO attempt_events(attempt_id,sequence,event_type,message,occurred_at) "
+                    "INSERT INTO attempt_events("
+                    "attempt_id,sequence,event_type,message,occurred_at) "
                     "VALUES (?,?,?,?,?)",
                     (str(attempt_id), event.sequence, event.kind, event.message, event.occurred_at),
                 )

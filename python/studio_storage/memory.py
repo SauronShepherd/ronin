@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from threading import RLock
 
 from studio_orchestrator import (
@@ -34,10 +34,10 @@ class IdempotencyConflict(ValueError):
 def _add_seconds(value: str, seconds: int) -> str:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
     return (
         (parsed + timedelta(seconds=seconds))
-        .astimezone(timezone.utc)
+        .astimezone(UTC)
         .isoformat()
         .replace("+00:00", "Z")
     )

@@ -4,6 +4,7 @@ import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import pytest
 from studio_orchestrator import AttemptId, Job, JobId, JobState, LeaseToken, Run, RunId, RunState
 from studio_storage import SqliteJobStore, open_database, schema_version
 
@@ -57,12 +58,8 @@ def test_newer_schema_fails_closed(tmp_path: Path) -> None:
     connection.commit()
     connection.close()
 
-    try:
+    with pytest.raises(RuntimeError, match="newer than supported"):
         SqliteJobStore(path, migration_now=NOW)
-    except RuntimeError as exc:
-        assert "newer than supported" in str(exc)
-    else:
-        raise AssertionError("newer schema must fail closed")
 
 
 def test_twenty_concurrent_claimers_have_one_winner(tmp_path: Path) -> None:
