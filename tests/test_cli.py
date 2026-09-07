@@ -52,7 +52,7 @@ def test_validate_and_plan_reuse_canonical_demo_contracts(capsys) -> None:
     assert "3: publish" in plan_output.out
 
 
-@pytest.mark.parametrize("target", ["../outside", "/tmp/outside", " missing "])
+@pytest.mark.parametrize("target", ["../outside", "/outside", " missing "])
 def test_plan_rejects_unsafe_or_malformed_targets(target: str, capsys) -> None:
     assert main(["plan", "examples/demo", "-t", target]) == 2
     output = capsys.readouterr()
