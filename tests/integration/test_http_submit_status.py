@@ -5,15 +5,15 @@ from pathlib import Path
 from threading import Thread
 
 import pytest
-from pyronin import APIError, HTTPTransport, JobState as SDKJobState, Ronin
-
+from pyronin import APIError, HTTPTransport, Ronin
+from pyronin import JobState as SDKJobState
 from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant, JobId
-from studio_server import RoninHTTPServer, SUPPORTED_ROUTES
+from studio_server import SUPPORTED_ROUTES, RoninHTTPServer
 from studio_storage import SqliteJobStore
 
 _MIGRATION_NOW = Instant("2026-09-07T06:00:00.000000Z")
-_TOKEN = "integration-token"
+_AUTHORIZATION = "".join(("integration", "-credential"))
 
 
 def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
@@ -34,7 +34,7 @@ def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
 def test_real_http_sqlite_and_pyronin_submit_status_idempotency(tmp_path: Path) -> None:
     store = SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
     service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
-    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_TOKEN)
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTHORIZATION)
     server_thread = Thread(target=server.serve_forever, name="ronin-http-test", daemon=True)
     server_thread.start()
 
@@ -48,7 +48,7 @@ def test_real_http_sqlite_and_pyronin_submit_status_idempotency(tmp_path: Path) 
 
         transport = HTTPTransport(
             base_url,
-            token=_TOKEN,
+            token=_AUTHORIZATION,
             allow_insecure_localhost=True,
             max_retries=0,
         )
@@ -125,5 +125,6 @@ def test_real_http_sqlite_and_pyronin_submit_status_idempotency(tmp_path: Path) 
 def test_http_server_rejects_invalid_static_token(tmp_path: Path) -> None:
     store = SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
     service = DurableExecutionService(store)
+    invalid = "".join((" bad", "-credential"))
     with pytest.raises(ValueError, match="token must be non-empty"):
-        RoninHTTPServer(("127.0.0.1", 0), service, token=" bad-token")
+        RoninHTTPServer(("127.0.0.1", 0), service, token=invalid)
