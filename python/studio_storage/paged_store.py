@@ -164,6 +164,13 @@ def _validate_limit(limit: int) -> None:
 class InMemoryJobStore(_InMemoryJobStore):
     """Reference adapter with stable newest-first and Run-event keyset paging."""
 
+    def get_run_id_for_job(self, job_id: JobId) -> RunId | None:
+        with self._lock:
+            matches = [run for run in self._runs.values() if run.job_id == job_id]
+            if not matches:
+                return None
+            return max(matches, key=lambda run: run.ordinal).id
+
     def list_jobs(
         self,
         *,
@@ -256,6 +263,17 @@ class InMemoryJobStore(_InMemoryJobStore):
 
 class SqliteJobStore(_SqliteJobStore):
     """SQLite adapter with stable newest-first and Run-event keyset paging."""
+
+    def get_run_id_for_job(self, job_id: JobId) -> RunId | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT run_id FROM runs WHERE job_id=? ORDER BY ordinal DESC LIMIT 1",
+                (str(job_id),),
+            ).fetchone()
+            return None if row is None else RunId(row["run_id"])
+        finally:
+            connection.close()
 
     def list_jobs(
         self,
@@ -354,7 +372,10 @@ class SqliteJobStore(_SqliteJobStore):
 
 
 class BoundedAsyncJobStore(_BoundedAsyncJobStore):
-    """Bounded async facade extended with the C0 event-page read contract."""
+    """Bounded async facade extended with C0 service-read contracts."""
+
+    async def get_run_id_for_job(self, job_id: JobId) -> RunId | None:
+        return await self._call(partial(self._store.get_run_id_for_job, job_id))
 
     async def read_event_page(
         self,
