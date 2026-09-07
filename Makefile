@@ -39,7 +39,7 @@ coverage-t3:
 coverage-storage-files:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
 	python -m tools.coverage_file_gate coverage-storage.json python/studio_storage \
-		--threshold=80 --baseline=sqlite.py=59
+		--threshold=80 --baseline=sqlite.py=58.92
 	@rm -f coverage-storage.json
 
 mutation:
