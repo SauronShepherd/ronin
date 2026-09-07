@@ -1,14 +1,14 @@
 # JobStore concurrency boundary
 
-Ronin's canonical `JobStore` remains a synchronous, storage-neutral protocol. SQLite, in-memory, future database adapters and their transaction/fencing behavior stay behind that protocol; asyncio, FastAPI and worker-loop concerns do not become canonical domain semantics.
+Ronin's canonical `JobStore` remains a synchronous, storage-neutral protocol. SQLite, in-memory, future database adapters and their transaction/fencing behavior stay behind that protocol; asyncio, HTTP frameworks and worker-loop concerns do not become canonical domain semantics.
 
 ## Rule
 
 Blocking `JobStore` and artifact-store operations must never execute directly on an asyncio event-loop thread.
 
-Async server/worker composition must place whole synchronous store operations behind a bounded offload boundary. For v0.1 the reference boundary is `studio_storage.BoundedAsyncJobStore`, which uses a dedicated thread pool and preserves the wrapped `JobStore` call as the transaction/fencing unit.
+Async server/worker composition must place whole synchronous store operations behind a bounded offload boundary. For v0.1 the reference JobStore boundary is `studio_storage.BoundedAsyncJobStore`, which uses a dedicated thread pool and preserves the wrapped `JobStore` call as the transaction/fencing unit.
 
-`studio_server.DurableExecutionService` is the first real process-composition surface over that facade. Submit/status/cancel and worker reclaim/claim/heartbeat calls all enter through the same bounded async store; the service adds no SQLite, HTTP framework, Docker, engine, cloud or provider semantics to the canonical domain.
+`studio_execution.DurableExecutionService` is the shared HTTP-neutral application-composition surface over that facade. Submit/status/cancel and worker reclaim/claim/heartbeat/write calls all enter through the same bounded async store; the service adds no SQLite, HTTP framework, Docker, engine, cloud or provider semantics. `studio_server` and `studio_worker` both depend on this shared layer, and worker code is forbidden by the executable architecture gate from importing `studio_server`.
 
 ## Bounded admission and backpressure
 
@@ -25,9 +25,9 @@ Cancellation of an awaiting coroutine does not cancel a synchronous operation th
 
 Server submit/status paths and worker claim/heartbeat/reclaim paths must use the bounded wrapper when they run on asyncio. A slow or contended durable operation must not prevent unrelated coroutine scheduling, cancellation handling or heartbeat timers from making progress.
 
-The composition service qualifies this structural requirement with a deterministic contention test: a blocked status read occupies one store worker while a lease heartbeat still completes on another worker and both synchronous calls execute off the event-loop thread. This is not yet the final v0.1 latency qualification; issue #125 remains open until real server/worker call sites are benchmarked against the published request and lease budgets.
+The shared execution service qualifies this structural requirement with deterministic contention tests, and the real SQLite/local-artifact integration qualification proves unrelated heartbeat/artifact progress through the real adapters. This is still not the final v0.1 HTTP latency qualification; issue #125 remains open until the supported HTTP runtime entry points are benchmarked against the published request budgets and the final worker entry points are qualified against production lease settings.
 
-The wrapper does not weaken SQLite durability settings, lease fencing, idempotency, event sequencing, atomicity or conformance semantics. The same `JobStore` contract suite remains authoritative for the underlying synchronous adapters.
+The wrapper does not weaken SQLite FULL durability settings, lease fencing, idempotency, event sequencing, atomicity or conformance semantics. The same `JobStore` contract suite remains authoritative for the underlying synchronous adapters.
 
 ## Worker maintenance order
 
@@ -35,4 +35,4 @@ One worker poll performs expired-lease reclamation before attempting one new cla
 
 ## Artifact stores
 
-The same composition rule applies to blocking artifact-store calls. The current facade exposes `JobStore` composition only; server/worker composition must not introduce a second unbounded executor for artifact persistence. A later artifact-facing async facade may share the same bounded execution policy when the first async artifact call site lands.
+The same composition rule applies to blocking artifact-store calls. `studio_storage.BoundedAsyncArtifactStore` provides bounded offload for local artifact persistence and verification; worker code consumes that facade rather than introducing an unbounded executor or leaking filesystem-provider semantics into the shared execution service.
