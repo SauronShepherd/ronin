@@ -137,7 +137,10 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
 
         events_one = first.events(limit=2)
         assert [item.sequence for item in events_one.items] == [0, 1]
-        assert [item.attempt_id for item in events_one.items] == [str(first_attempt), str(first_attempt)]
+        assert [item.attempt_id for item in events_one.items] == [
+            str(first_attempt),
+            str(first_attempt),
+        ]
         assert [item.attempt_sequence for item in events_one.items] == [0, 1]
         events_two = first.events(since=events_one.next_since, limit=2)
         assert [item.sequence for item in events_two.items] == [2]
