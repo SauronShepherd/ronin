@@ -20,14 +20,23 @@ The local worker runtime composition is now wired through the same durable spine
 
 #125 is now complete when combined across its landed qualification slices: bounded async store/artifact structure, real SQLite/local-artifact contention, real authenticated HTTP POST/GET p95 budgets under bounded SQLite contention, and final `LocalWorkerRuntime` heartbeat/reclaim/artifact call-site qualification at the unchanged production 30-second lease and 10-second heartbeat settings. Do not select #125 again unless a regression or changed acceptance criterion reopens it.
 
-Current critical-path work now moves beyond the contention prerequisite. Select one coherent slice at a time in this order:
+## Acceptance truth and current critical path
 
-1. **#54 — HTTP/OpenAPI/SDK contract.** Continue the frozen `/v1/jobs` surface over `DurableExecutionService`. Keep HTTP framework/model types at the boundary and preserve the canonical vendor-neutral domain. The implementation may use the standard library or a pinned framework, but the OpenAPI contract, SDK behavior and route coverage must be executable and drift-tested.
-2. **CLI / local operator surface.** Implement `serve`, `worker`, `doctor`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, and `cancel`; enable the `ronin` console entry point only when `studio_cli:main` is real and tested.
-3. **Production image + Compose.** Promote the qualified probe assumptions into the real image/topology, including non-root execution, Docker socket GID handling, read-only workspace identity, durable data volume, health dependency, sibling-container execution and `restart: "no"` for crash-acceptance workers.
-4. **#53 — portable evidence references.** Unify kernel/storage/API evidence identity before the external evidence representation hardens.
-5. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as their capabilities land; strict release qualification remains fail closed and is not replaced by progress telemetry. Keep #57 open until the whole frozen journey, including API/SDK/idempotency/logs/evidence/cancel/Compose/operator steps, actually executes and passes.
-6. **Release qualification and publication.** Only after all fifteen acceptance steps execute and pass, run the full release-quality perimeter, enable required release protections, bump versions consistently, tag, publish immutable artifacts, and smoke the published artifacts by digest/version.
+The frozen journey currently has two execution contexts that must not be conflated. The Docker-capable qualification is the authoritative execution environment for worker crash/reclaim/resume steps 6-9. Ordinary non-Docker CI may still report those tests skipped and is telemetry only. Release publication must consume exact-SHA evidence from the Docker-capable qualification rather than re-run the journey in an environment that cannot activate those steps.
+
+Docker Qualification must enforce an exact named skip allowance, not an unconditional progress-only gate. The allowance is a ratchet: it must exactly equal the current skipped-step set, so a newly skipped live step or a stale allowance for a step that has become live both fail the qualification. Strict release acceptance remains unchanged and requires all fifteen frozen steps passing with an empty allowance.
+
+Select one coherent slice at a time in this order:
+
+1. **Acceptance truth wiring.** Make exact-SHA Docker-capable JUnit/provenance the single release acceptance evidence source; keep strict publication fail closed; replace unconditional progress-only qualification with an exact skip ratchet. Do not continue public API contract expansion until this is landed and post-merge qualified.
+2. **C0 — storage contracts before public list/events.** Fix the Run-global event projection and pagination contract before `/events` freezes it: storage keeps `(attempt_id, sequence)` identity while the API projection provides dense Run-global ordering with bounded reads and unambiguous `since`/`next_since`. Replace UUID `ORDER BY job_id` plus OFFSET with stable newest-first keyset pagination and defensive cursor parsing before list endpoints ship.
+3. **D0 — local CLI foundation.** Land the console entry point plus HTTP-independent `doctor`, `validate`, and `plan` commands. These local capabilities do not depend on #54 and should activate frozen steps 2-4 before the network/operator CLI breadth.
+4. **#54 — remaining HTTP/OpenAPI/SDK contract.** Continue the frozen `/v1/jobs` surface over `DurableExecutionService` after C0. Implement list/cancel/events and their executable OpenAPI/SDK coverage without freezing broken storage semantics. Keep HTTP framework/model types at the boundary and preserve the canonical vendor-neutral domain.
+5. **#53 — portable evidence references before `/evidence`.** Unify kernel/storage/API evidence identity before the public evidence endpoint hardens that representation.
+6. **#54 evidence completion + D1 operator surface.** Expose evidence after #53, finish SDK drift/error/retry alignment, then implement `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, and `cancel` over supported product paths.
+7. **Production image + Compose.** Promote the qualified probe assumptions into the real image/topology, including non-root execution, Docker socket GID handling, read-only workspace identity, durable data volume, health dependency, sibling-container execution and `restart: "no"` for crash-acceptance workers.
+8. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as their capabilities land; keep #57 open until the entire frozen journey executes and passes in the authoritative qualification context.
+9. **Release blockers and publication.** Close remaining trust/process blockers, empty the acceptance skip allowance, require strict 15/15 exact-SHA evidence, enable required release protections, bump versions consistently, tag, publish immutable artifacts, and smoke published artifacts by digest/version.
 
 ### Worker execution invariants
 
@@ -63,14 +72,14 @@ The Docker-host assumptions must be proved on GitHub-hosted Linux runners: suppl
 
 Acceptance should be activated incrementally instead of replacing all skips in one change:
 
-1. Compose health once the production image/topology is real.
-2. `doctor`, `validate`, `plan` once the CLI surface is real.
-3. submit/status/idempotency/SDK once HTTP + OpenAPI + SDK are real.
+1. `doctor`, `validate`, `plan` once D0 is real.
+2. Compose health once the production image/topology is real.
+3. submit/status/idempotency/SDK once the supported HTTP + OpenAPI + SDK + operator path is real.
 4. logs/evidence once run-global event ordering and portable evidence output are real.
-5. execute/crash/reclaim/resume once the process-level durable worker path is wired into the frozen product journey.
+5. execute/crash/reclaim/resume through the supported product journey, while preserving the already-qualified worker semantics.
 6. cancel cleanup once worker cancellation and container cleanup are qualified through the supported operator path.
 
-The strict release gate remains the final authority: every frozen step must execute and pass with zero skipped/xfail/failed/error/missing/unexpected outcomes.
+The exact skip allowance in Docker Qualification must shrink whenever one of these steps becomes live. The strict release gate remains the final authority: every frozen step must execute and pass with zero skipped/xfail/failed/error/missing/unexpected outcomes.
 
 ## Frozen until v0.1 ships (2026-11-01)
 
