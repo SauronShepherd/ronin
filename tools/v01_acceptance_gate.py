@@ -120,7 +120,9 @@ def evaluate_junit(report_path: Path) -> AcceptanceCounts:
 
     missing = len(expected - outcomes.keys())
     passed = sum(outcome == "passed" for outcome in outcomes.values())
-    skipped_steps = tuple(name for name in EXPECTED_STEP_NAMES if outcomes.get(name) == "skipped")
+    skipped_steps = tuple(
+        name for name in EXPECTED_STEP_NAMES if outcomes.get(name) == "skipped"
+    )
     xfailed = sum(outcome == "xfailed" for outcome in outcomes.values())
     failed = sum(outcome == "failed" for outcome in outcomes.values())
     errors = sum(outcome == "errors" for outcome in outcomes.values())
@@ -154,14 +156,19 @@ def _parse_allowed_steps(value: str) -> tuple[str, ...]:
             raise AcceptanceGateError(f"invalid allowed step {token!r}")
         number = int(token)
         if number < 1 or number > len(EXPECTED_STEP_NAMES):
-            raise AcceptanceGateError(f"allowed step {number:02d} is outside the frozen journey")
+            raise AcceptanceGateError(
+                f"allowed step {number:02d} is outside the frozen journey"
+            )
         if number in numbers:
             raise AcceptanceGateError(f"allowed step {number:02d} is duplicated")
         numbers.append(number)
     return tuple(EXPECTED_STEP_NAMES[number - 1] for number in numbers)
 
 
-def require_exact_allowed_skips(counts: AcceptanceCounts, allowed_steps: tuple[str, ...]) -> None:
+def require_exact_allowed_skips(
+    counts: AcceptanceCounts,
+    allowed_steps: tuple[str, ...],
+) -> None:
     """Allow only the exact named skip set; fail on stale allowances or new skips."""
     if any((counts.xfailed, counts.failed, counts.errors, counts.missing, counts.unexpected)):
         raise AcceptanceGateError("acceptance qualification contains non-skip failures")
@@ -175,7 +182,9 @@ def require_exact_allowed_skips(counts: AcceptanceCounts, allowed_steps: tuple[s
             detail.append("new skips=" + ",".join(missing_allowance))
         if stale_allowance:
             detail.append("stale allowances=" + ",".join(stale_allowance))
-        raise AcceptanceGateError("allowed skip set does not exactly match evidence: " + "; ".join(detail))
+        raise AcceptanceGateError(
+            "allowed skip set does not exactly match evidence: " + "; ".join(detail)
+        )
 
 
 def _format_counts(counts: AcceptanceCounts) -> str:
@@ -199,6 +208,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("junit_report", type=Path)
     parser.add_argument("--evidence-json", type=Path)
+    parser.add_argument("--progress-only", action="store_true")
     parser.add_argument(
         "--allow-skipped",
         default=None,
@@ -215,7 +225,12 @@ def main() -> int:
         print(_format_counts(counts))
         if args.evidence_json is not None:
             _write_evidence(args.evidence_json, counts)
-        if args.allow_skipped is None:
+        if args.progress_only:
+            if args.allow_skipped is not None or args.allow_skipped_reason is not None:
+                raise AcceptanceGateError(
+                    "--progress-only cannot be combined with skip allowances"
+                )
+        elif args.allow_skipped is None:
             if args.allow_skipped_reason is not None:
                 raise AcceptanceGateError("--allow-skipped-reason requires --allow-skipped")
             require_strict_success(counts)
