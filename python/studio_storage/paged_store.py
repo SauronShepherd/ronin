@@ -9,6 +9,7 @@ from functools import partial
 from typing import Any
 
 from studio_orchestrator import (
+    AttemptId,
     EventPage,
     Instant,
     JobId,
@@ -16,6 +17,7 @@ from studio_orchestrator import (
     Page,
     RunExecutionEvent,
     RunId,
+    StoredExecutionEvent,
 )
 from studio_storage.async_store import BoundedAsyncJobStore as _BoundedAsyncJobStore
 from studio_storage.fenced_sqlite import SqliteJobStore as _SqliteJobStore
@@ -215,7 +217,7 @@ class InMemoryJobStore(_InMemoryJobStore):
                 (attempt for attempt in self._attempts.values() if attempt.run_id == run_id),
                 key=lambda item: item.ordinal,
             )
-            rows: list[tuple[int, object]] = []
+            rows: list[tuple[int, StoredExecutionEvent]] = []
             for attempt in attempts:
                 if attempt.ordinal < after_ordinal:
                     continue
@@ -330,7 +332,7 @@ class SqliteJobStore(_SqliteJobStore):
         items = tuple(
             RunExecutionEvent(
                 sequence=next_sequence + index,
-                attempt_id=row["attempt_id"],
+                attempt_id=AttemptId(row["attempt_id"]),
                 attempt_sequence=int(row["sequence"]),
                 kind=row["event_type"],
                 message=row["message"],
