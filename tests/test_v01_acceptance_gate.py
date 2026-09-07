@@ -7,7 +7,9 @@ import pytest
 from tools.v01_acceptance_gate import (
     EXPECTED_STEP_NAMES,
     AcceptanceGateError,
+    _parse_allowed_steps,
     evaluate_junit,
+    require_exact_allowed_skips,
     require_strict_success,
 )
 
@@ -40,6 +42,7 @@ def test_strict_gate_accepts_exactly_all_fifteen_passing_steps(tmp_path: Path) -
     assert counts.xfailed == 0
     assert counts.missing == 0
     assert counts.unexpected == 0
+    assert counts.skipped_steps == ()
 
 
 def test_strict_gate_rejects_one_skipped_required_step(tmp_path: Path) -> None:
@@ -52,8 +55,56 @@ def test_strict_gate_rejects_one_skipped_required_step(tmp_path: Path) -> None:
     assert counts.passed == 14
     assert counts.live == 14
     assert counts.skipped == 1
+    assert counts.skipped_steps == (EXPECTED_STEP_NAMES[6],)
     with pytest.raises(AcceptanceGateError, match="incomplete"):
         require_strict_success(counts)
+
+
+def test_exact_skip_allowance_accepts_only_current_named_skips(tmp_path: Path) -> None:
+    cases = [_case(name) for name in EXPECTED_STEP_NAMES]
+    for index in (0, 4, 9):
+        cases[index] = _case(EXPECTED_STEP_NAMES[index], '<skipped message="not live"/>')
+    counts = evaluate_junit(_write_report(tmp_path / "allowed.xml", cases))
+
+    allowed = _parse_allowed_steps("01,05,10")
+
+    require_exact_allowed_skips(counts, allowed)
+    assert counts.skipped_steps == allowed
+
+
+def test_exact_skip_allowance_rejects_new_unlisted_skip(tmp_path: Path) -> None:
+    cases = [_case(name) for name in EXPECTED_STEP_NAMES]
+    for index in (0, 4):
+        cases[index] = _case(EXPECTED_STEP_NAMES[index], '<skipped message="not live"/>')
+    counts = evaluate_junit(_write_report(tmp_path / "new-skip.xml", cases))
+
+    with pytest.raises(AcceptanceGateError, match="new skips"):
+        require_exact_allowed_skips(counts, _parse_allowed_steps("01"))
+
+
+def test_exact_skip_allowance_rejects_stale_allowance_after_step_turns_live(tmp_path: Path) -> None:
+    cases = [_case(name) for name in EXPECTED_STEP_NAMES]
+    cases[0] = _case(EXPECTED_STEP_NAMES[0], '<skipped message="not live"/>')
+    counts = evaluate_junit(_write_report(tmp_path / "stale.xml", cases))
+
+    with pytest.raises(AcceptanceGateError, match="stale allowances"):
+        require_exact_allowed_skips(counts, _parse_allowed_steps("01,05"))
+
+
+def test_exact_skip_allowance_rejects_failures_even_when_skip_set_matches(tmp_path: Path) -> None:
+    cases = [_case(name) for name in EXPECTED_STEP_NAMES]
+    cases[0] = _case(EXPECTED_STEP_NAMES[0], '<skipped message="not live"/>')
+    cases[1] = _case(EXPECTED_STEP_NAMES[1], '<failure message="broken"/>')
+    counts = evaluate_junit(_write_report(tmp_path / "failed.xml", cases))
+
+    with pytest.raises(AcceptanceGateError, match="non-skip failures"):
+        require_exact_allowed_skips(counts, _parse_allowed_steps("01"))
+
+
+def test_allowed_step_parser_rejects_invalid_duplicate_and_out_of_range_values() -> None:
+    for value in ("x", "01,01", "00", "16"):
+        with pytest.raises(AcceptanceGateError):
+            _parse_allowed_steps(value)
 
 
 def test_strict_gate_rejects_missing_and_renamed_steps(tmp_path: Path) -> None:

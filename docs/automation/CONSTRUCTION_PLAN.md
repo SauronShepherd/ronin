@@ -4,7 +4,7 @@ _Last synchronized: 2026-09-07. Scope authority: `docs/product/V01_SCOPE.md`. Ta
 
 The v0.1 plan remains eight weeks, but execution is ahead of the original calendar in the durable-execution spine. Planning therefore uses capability order rather than waiting for nominal week boundaries. Each autonomous run still selects at most one coherent slice, revalidates against current `main`, and preserves all release gates.
 
-**Release-acceptance invariant.** Ordinary PR/main CI may run the frozen journey as explicitly named non-blocking progress telemetry while capabilities are still landing. A release/tag publication gate is different: it must verify the exact fifteen frozen required step names and fail closed if any step is skipped, xfailed, failed, errored, deselected/missing, renamed/unexpected, duplicated, or otherwise not executed. Machine-readable live/passed/skipped/xfail/missing counts are evidence; a normal pytest exit code alone is not release acceptance evidence.
+**Release-acceptance invariant.** Ordinary PR/main CI may run the frozen journey as explicitly named non-blocking telemetry while capabilities are still landing. The Docker-capable qualification is the authoritative execution context for the real worker crash/reclaim/resume steps. Release/tag publication must consume exact-SHA evidence from that capable qualification rather than re-run the journey in an environment where required steps are structurally skipped. Docker qualification may carry only an exact named skip allowance matching the current skipped-step set; the allowance must shrink as capabilities become live. Final release qualification remains strict: all fifteen frozen required step names must execute and pass with zero skips, xfails, failures, errors, missing, unexpected, renamed or duplicated outcomes.
 
 ## Current position on 2026-09-07
 
@@ -23,9 +23,9 @@ The repository now has the durable local execution spine required to move throug
 - real OS-process crash qualification: after three real-Docker cells are durably checkpointed, a separate worker process is killed non-gracefully, the production 30-second lease is allowed to expire, and a replacement process reclaims the same Run, reuses exactly the three valid checkpoints and executes only the remaining two cells;
 - #125 bounded-contention qualification at final server and worker call sites: authenticated HTTP POST/GET meet their published p95 budgets under bounded SQLite contention, while `LocalWorkerRuntime` proves durable lease renewal and reclaim/resume continue through real SQLite and local-artifact contention at the unchanged 30-second lease / 10-second heartbeat settings.
 
-The process-crash evidence advances #57 but does not complete it. The frozen fifteen-step journey still depends on the remaining HTTP/SDK, CLI/operator, portable evidence, Compose and supported cancellation surfaces; normal progress telemetry must not be represented as release acceptance.
+The process-crash evidence advances #57 but does not complete it. The frozen fifteen-step journey still depends on the remaining HTTP/SDK, CLI/operator, portable evidence, Compose and supported cancellation surfaces.
 
-HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous execution stays serial: they are not opened in parallel merely because they are technically independent.
+A release-path review at `78d483c` exposed a structural acceptance split: Docker Qualification can execute steps 6-9 but historically used an unconditional progress-only gate, while prerelease strict acceptance re-ran the journey without the Docker qualification context and therefore saw those required steps skipped. The acceptance-truth wiring is now the first release-critical prerequisite: one exact-SHA Docker-capable evidence source, a ratcheting exact skip allowance during development, and unchanged strict 15/15 publication semantics.
 
 ## Phase A — completed foundation
 
@@ -45,25 +45,41 @@ HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous exe
 
 **Cut line.** Sunday 27 September remains the planning checkpoint. A prerelease may document whole-run replay as a limitation only if a future regression reopens this capability; final v0.1 remains governed by the frozen acceptance contract unless product scope is explicitly revised.
 
+## Phase C0 — storage contracts before public list/events
+
+**Objective.** Make the storage/API boundary unambiguous before remaining public endpoints freeze broken pagination or event-coordinate behavior.
+
+**Pull requests.** Preserve canonical storage event identity as `(attempt_id, sequence)` while exposing a dense Run-global projection ordered by `(attempt.ordinal, sequence)` with bounded reads and explicit `since`/`next_since`. Replace `list_jobs` UUID ordering plus OFFSET with stable newest-first keyset pagination over `(created_at DESC, job_id DESC)` and fail-closed cursor parsing. Keep equivalent adapter behavior where the `JobStore` contract requires it.
+
+**Exit criteria.** Events across replacement Attempts have one stable Run-global coordinate system at the service/API boundary; polling never requires an unbounded historical materialization; list pagination remains stable under concurrent inserts; malformed cursors become normalized boundary errors rather than 500s.
+
 ## Phase C — bounded HTTP control plane and SDK contract
 
 **Objective.** Make durable jobs remotely controllable through one bounded authenticated API whose executable OpenAPI contract matches `pyronin`.
 
-**Pull requests.** Continue #54 with the frozen `/v1/jobs` submit/status/list/cancel/events/evidence surface over `DurableExecutionService`; add bearer-token authorization; define/verify dense Run-global event numbering across attempts; add OpenAPI golden/route coverage tests; align `pyronin` schemas/errors/retry behavior. The existing submit/status routes and their contention p95 budgets are already qualified; do not reimplement them.
+**Pull requests.** After C0, continue #54 with the frozen `/v1/jobs` submit/status/list/cancel/events surface over `DurableExecutionService`; add bearer-token authorization; add OpenAPI golden/route coverage tests; align `pyronin` schemas/errors/retry behavior. The existing submit/status routes and their contention p95 budgets are already qualified; do not reimplement them. Defer the public evidence representation until #53 freezes portable evidence identity.
 
 **Framework decision.** Framework choice is an implementation detail, not a domain decision. A standard-library HTTP server is acceptable if it satisfies the same route/auth/OpenAPI/SDK/error/qualification contract; a pinned FastAPI/Pydantic stack is also acceptable if dependency-lock, typing, architecture and image costs remain justified. In either case, framework/model types stay outside canonical domain packages.
 
-**Exit criteria.** Acceptance steps for submit/status/idempotency/logs/evidence/cancel/SDK are live against the real server; every documented route is exercised by tests; bounded request latency and secure token transport defaults are qualified; the API never calls synchronous durable storage directly from an event-loop thread.
+**Exit criteria.** Acceptance steps for submit/status/idempotency/events/cancel/SDK are live against the real server as their supported operator paths land; every documented route is exercised by tests; bounded request latency and secure token transport defaults are qualified; the API never calls synchronous durable storage directly from an event-loop thread. Evidence remains blocked until #53.
 
 **Cut line.** Sunday 4 October: cut optional pagination breadth first. Do not silently delete frozen acceptance behavior without an explicit product-scope decision.
 
-## Phase D — CLI and local Git revision capture
+## Phase D0 — HTTP-independent CLI foundation
 
-**Objective.** Expose the supported local workflow through `ronin` and bind execution to a reproducible local checkout revision.
+**Objective.** Provide the first supported `ronin` entry point using already-landed local capabilities without waiting for the entire HTTP block.
 
-**Pull requests.** Complete Git revision/dirty identity qualification, including executable-bit correctness; implement `studio_cli:main`; add `serve`, `worker`, `validate`, `plan`, `submit`, `status`, `logs`, `evidence`, `cancel`, `doctor`; enable the console entry point only after the symbol and commands are tested.
+**Pull requests.** Implement and test `studio_cli:main`, enable the console entry point, and land `doctor`, `validate`, and `plan`. `validate` consumes existing project/notebook/runtime validation; `plan` consumes existing dependency levels; `doctor` reports the bounded local environment checks required by the frozen journey.
 
-**Exit criteria.** Acceptance steps 2–4 and CLI portions of the job journey are live; Git qualification covers detached HEAD, ref movement, dirty digest, executable-bit changes, path safety and credential exclusion.
+**Exit criteria.** Frozen acceptance steps 2, 3 and 4 are live through the supported CLI path with no HTTP/store/Docker dependency introduced merely to activate them.
+
+## Phase D1 — network/operator CLI and local Git revision capture
+
+**Objective.** Expose the supported job workflow through `ronin` and bind execution to a reproducible local checkout revision.
+
+**Pull requests.** Complete Git revision/dirty identity qualification, including executable-bit correctness; add `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, and `cancel` after their backing contracts exist. The evidence command lands only after #53 and the evidence API representation are stable.
+
+**Exit criteria.** CLI portions of the job journey are live; Git qualification covers detached HEAD, ref movement, dirty digest, executable-bit changes, path safety and credential exclusion.
 
 **Cut line.** Sunday 11 October: a prerelease may reduce CLI breadth, but final v0.1 remains governed by `V01_SCOPE.md` unless scope is explicitly revised.
 
@@ -79,24 +95,24 @@ HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous exe
 
 ## Phase F — incremental acceptance activation
 
-**Objective.** Turn skips live as soon as their dependencies exist instead of waiting for one large end-stage change.
+**Objective.** Turn skips live as soon as their dependencies exist instead of waiting for one large end-stage change, while making regression-to-skip fail closed in Docker Qualification.
 
 **Activation order.**
 
-1. Compose health after Phase E.
-2. `doctor`, `validate`, `plan` after Phase D.
-3. submit/status/idempotency/SDK after Phase C.
-4. logs/evidence after run-global event ordering and portable evidence references are real.
-5. execute/crash/reclaim/resume once the Phase-B worker capabilities are wired through the supported journey.
+1. `doctor`, `validate`, `plan` after D0.
+2. Compose health after Phase E.
+3. submit/status/idempotency/SDK after the supported Phase C/D1 path.
+4. logs/evidence after Run-global event ordering and #53 portable evidence references are real.
+5. execute/crash/reclaim/resume through the supported product journey while preserving the already-qualified Phase-B worker semantics.
 6. cancel cleanup once worker cancellation/container cleanup are exercised through the supported operator path.
 
-**Exit criteria.** The progress workflow reports increasing live counts without redefining step names. The strict release gate ultimately reports all fifteen required steps live and passed with zero skipped/xfail/failed/error/missing/unexpected outcomes.
+**Exit criteria.** Every activation removes that step from the exact Docker skip allowance in the same change. A newly skipped previously-live step or a stale allowance fails qualification. The strict release gate ultimately reports all fifteen required steps live and passed with zero skipped/xfail/failed/error/missing/unexpected outcomes.
 
 ## Phase G — non-functional and release qualification
 
 **Objective.** Qualify the exact implementation against the product budgets and trust requirements rather than inferring readiness from unit tests.
 
-**Pull requests.** #125 contention qualification is complete. Continue qualifying the remaining product budgets as their supported surfaces land: compose health, RSS, full `make check`, security/secret/vulnerability/license qualification, deterministic demo/evidence output and targeted recovery cases.
+**Pull requests.** #125 contention qualification is complete. Continue qualifying remaining product budgets as supported surfaces land: compose health, RSS, full `make check`, security/secret/vulnerability/license qualification, deterministic demo/evidence output and targeted recovery cases. Release-gating tooling itself remains release-critical code and must be brought under the required coverage perimeter under #102.
 
 **Exit criteria.** All product budgets in `V01_SCOPE.md` are evidenced on exact SHAs; no known secret or vulnerability ships; no release gate is weakened to achieve green.
 
@@ -104,9 +120,9 @@ HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous exe
 
 **Objective.** Stabilize only: documentation, clean-room verification, compatibility checks, release notes and immutable publication.
 
-**Pull requests.** Fix release-blocking defects only; finalize quickstart/limitations/security docs; verify Python 3.11/3.12 and supported Docker path; synchronize package/version metadata; ensure the tested image is the image published; enable required `main`/tag protections or record the governing exception; tag and publish only after strict acceptance and every other release gate is green.
+**Pull requests.** Fix release-blocking defects only; finalize quickstart/limitations/security docs; verify Python 3.11/3.12 and supported Docker path; synchronize package/version metadata; ensure tested image identity is immutable before qualification; close release-gate coverage and license/NOTICE debt; enable required `main`/tag protections or record the governing exception; tag and publish only after strict acceptance and every other release gate is green.
 
-**Exit criteria.** Clean hash-locked `make check`; all fifteen required acceptance steps execute and pass; demo regenerates deterministically; release artifacts have immutable provenance; zero Builder-owned PRs remain open at tagging time; no P0/P1 release blocker remains.
+**Exit criteria.** Clean hash-locked `make check`; exact-SHA Docker-capable evidence proves all fifteen required acceptance steps execute and pass; acceptance allowance is empty; demo regenerates deterministically; release artifacts have immutable provenance; zero Builder-owned PRs remain open at tagging time; no P0/P1 release blocker remains.
 
 **Cut line.** No feature substitution. Defer optional surfaces rather than weakening trust, reproducibility, durability, acceptance or security gates.
 
@@ -114,14 +130,17 @@ HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous exe
 
 The current ordering is:
 
-1. #54 HTTP/OpenAPI/SDK;
-2. CLI/operator surface plus remaining Git qualification;
-3. production image/Compose;
-4. #53 portable evidence representation before the external API hardens it;
-5. incremental completion of the frozen fifteen-step acceptance journey, including the already-proven crash/reclaim semantics through the supported product path;
-6. full non-functional/security/release qualification and publication.
+1. acceptance truth wiring: exact-SHA Docker-capable evidence + exact skip ratchet + unchanged strict release gate;
+2. C0 storage contracts for Run-global events and stable keyset job pagination;
+3. D0 local CLI (`doctor`, `validate`, `plan`, entry point);
+4. #54 list/cancel/events + OpenAPI/SDK contract after C0;
+5. #53 portable evidence identity before `/evidence` ships;
+6. #54 evidence completion plus D1 network/operator CLI;
+7. production image/Compose;
+8. incremental completion of the frozen fifteen-step journey with the Docker allowance shrinking to empty;
+9. remaining non-functional/security/release blockers and immutable publication.
 
-#125 is complete and is no longer an eligible critical-path slice unless its acceptance criteria change or a regression reopens it. This ordering supersedes stale handoff bodies that still describe already-landed storage, fencing, worker-loop, process-crash or contention prerequisites as missing. It does not authorize parallel Builder PRs: each autonomous run must finish/reconcile its own prior work before selecting the next slice.
+#125 is complete and is no longer an eligible critical-path slice unless its acceptance criteria change or a regression reopens it. This ordering supersedes the prior #54-first sequence because acceptance truth is a release-structural prerequisite, C0 must land before public list/events contracts freeze storage defects, and D0 does not depend on HTTP. It does not authorize parallel Builder PRs: each autonomous run must finish/reconcile its own prior work before selecting the next slice.
 
 ## Pre-decided calendar checkpoints
 
