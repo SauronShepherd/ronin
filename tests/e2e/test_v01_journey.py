@@ -9,16 +9,17 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sqlite3
 import subprocess
 import sys
 import time
 from pathlib import Path
 
 import pytest
-from studio_orchestrator import AttemptId, Instant, Job, JobId, JobState, LeaseToken, Run, RunId, RunState
-from studio_runners import AsyncioCommandRunner, CommandOutcome, ContainerExecutionLimits
+from studio_orchestrator import Instant, Job, JobId, JobState, Run, RunId, RunState
+from studio_runners import ContainerExecutionLimits
 from studio_storage import SqliteJobStore
-from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
+from studio_worker import LocalWorkerRuntimeConfig, WorkerPaths
 
 pytestmark = pytest.mark.e2e
 
@@ -115,7 +116,11 @@ asyncio.run(main())
 
 
 def _docker_qualification_ready() -> bool:
-    return os.environ.get("RONIN_REAL_DOCKER_QUALIFICATION") == "1" and _IMAGE is not None and _DOCKER is not None
+    return (
+        os.environ.get("RONIN_REAL_DOCKER_QUALIFICATION") == "1"
+        and _IMAGE is not None
+        and _DOCKER is not None
+    )
 
 
 def _seed(config: LocalWorkerRuntimeConfig) -> None:
@@ -155,7 +160,12 @@ def _wait_for_path(path: Path, process: subprocess.Popen[str], timeout: float) -
     raise AssertionError(f"timed out waiting for worker marker: {path}")
 
 
-def _process_args(mode: str, config: LocalWorkerRuntimeConfig, marker: Path, outcome: Path) -> list[str]:
+def _process_args(
+    mode: str,
+    config: LocalWorkerRuntimeConfig,
+    marker: Path,
+    outcome: Path,
+) -> list[str]:
     assert _IMAGE is not None
     assert _DOCKER is not None
     return [
@@ -170,6 +180,16 @@ def _process_args(mode: str, config: LocalWorkerRuntimeConfig, marker: Path, out
         str(marker),
         str(outcome),
     ]
+
+
+def _attempt_rows(database_path: Path) -> list[sqlite3.Row]:
+    with sqlite3.connect(database_path) as connection:
+        connection.row_factory = sqlite3.Row
+        return list(
+            connection.execute(
+                "SELECT attempt_id, state, lease_expires_at FROM attempts ORDER BY ordinal"
+            ).fetchall()
+        )
 
 
 @pytest.fixture(scope="module")
@@ -208,7 +228,12 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
 
         first.kill()
         assert first.wait(timeout=5.0) != 0
+        orphaned_attempts = _attempt_rows(config.database_path)
+        assert len(orphaned_attempts) == 1
+        assert orphaned_attempts[0]["state"] == "running"
+        assert orphaned_attempts[0]["lease_expires_at"] is not None
 
+        # Production acceptance deliberately keeps the real 30-second lease contract.
         time.sleep(31.0)
 
         second = subprocess.run(  # noqa: S603
@@ -226,6 +251,7 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
         job = final_store.get_job(JobId("job-v01-acceptance"))
         return {
             "before_crash": before_crash,
+            "orphaned_attempts": orphaned_attempts,
             "outcome": outcome,
             "final_results": final_results,
             "events": events,
@@ -257,14 +283,18 @@ def test_step_04_plan_prints_order_and_levels() -> None: ...
 def test_step_05_submit_returns_queued_job() -> None: ...
 
 
-def test_step_06_worker_claims_and_executes_first_cells(worker_restart_journey: dict[str, object]) -> None:
+def test_step_06_worker_claims_and_executes_first_cells(
+    worker_restart_journey: dict[str, object],
+) -> None:
     before_crash = worker_restart_journey["before_crash"]
     assert len(before_crash) == 3
 
 
 def test_step_07_kill_worker_orphans_lease(worker_restart_journey: dict[str, object]) -> None:
-    outcome = worker_restart_journey["outcome"]
-    assert outcome["reclaimed"] == ["run-v01-acceptance"]
+    orphaned_attempts = worker_restart_journey["orphaned_attempts"]
+    assert len(orphaned_attempts) == 1
+    assert orphaned_attempts[0]["state"] == "running"
+    assert orphaned_attempts[0]["lease_expires_at"] is not None
 
 
 def test_step_08_restart_waits_for_lease_expiry(worker_restart_journey: dict[str, object]) -> None:
@@ -273,7 +303,9 @@ def test_step_08_restart_waits_for_lease_expiry(worker_restart_journey: dict[str
     assert outcome["reclaimed"] == ["run-v01-acceptance"]
 
 
-def test_step_09_reclaimed_attempt_resumes_at_cell_four(worker_restart_journey: dict[str, object]) -> None:
+def test_step_09_reclaimed_attempt_resumes_at_cell_four(
+    worker_restart_journey: dict[str, object],
+) -> None:
     before_crash = worker_restart_journey["before_crash"]
     outcome = worker_restart_journey["outcome"]
     final_results = worker_restart_journey["final_results"]
