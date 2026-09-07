@@ -37,19 +37,22 @@ def test_cli_operator_surface_reuses_real_http_contract_and_terminal_idempotency
     monkeypatch.setenv("RONIN_TOKEN", _TOKEN)
 
     try:
-        assert main(
-            [
-                "submit",
-                "examples/demo",
-                "-t",
-                "notebooks/etl.ronin.json",
-                "--idempotency-key",
-                "cli-k1",
-                "--param",
-                "limit=7",
-                "--json",
-            ]
-        ) == 0
+        assert (
+            main(
+                [
+                    "submit",
+                    "examples/demo",
+                    "-t",
+                    "notebooks/etl.ronin.json",
+                    "--idempotency-key",
+                    "cli-k1",
+                    "--param",
+                    "limit=7",
+                    "--json",
+                ]
+            )
+            == 0
+        )
         submitted = json.loads(capsys.readouterr().out)
         assert submitted["state"] == "queued"
         job_id = submitted["id"]
@@ -69,8 +72,20 @@ def test_cli_operator_surface_reuses_real_http_contract_and_terminal_idempotency
         store.append_events(
             first_attempt,
             (
-                StoredExecutionEvent(first_attempt, 0, "cell.succeeded", "cell-1", Instant("2099-01-01T00:00:00.100000Z")),
-                StoredExecutionEvent(first_attempt, 1, "cell.succeeded", "cell-2", Instant("2099-01-01T00:00:00.200000Z")),
+                StoredExecutionEvent(
+                    first_attempt,
+                    0,
+                    "cell.succeeded",
+                    "cell-1",
+                    Instant("2099-01-01T00:00:00.100000Z"),
+                ),
+                StoredExecutionEvent(
+                    first_attempt,
+                    1,
+                    "cell.succeeded",
+                    "cell-2",
+                    Instant("2099-01-01T00:00:00.200000Z"),
+                ),
             ),
             owner="worker-cli-1",
             lease_token=first_lease,
@@ -91,8 +106,20 @@ def test_cli_operator_surface_reuses_real_http_contract_and_terminal_idempotency
         store.append_events(
             second_attempt,
             (
-                StoredExecutionEvent(second_attempt, 0, "cell.succeeded", "cell-3", Instant("2099-01-01T00:00:03.100000Z")),
-                StoredExecutionEvent(second_attempt, 1, "worker.attempt.succeeded", "terminal", Instant("2099-01-01T00:00:03.200000Z")),
+                StoredExecutionEvent(
+                    second_attempt,
+                    0,
+                    "cell.succeeded",
+                    "cell-3",
+                    Instant("2099-01-01T00:00:03.100000Z"),
+                ),
+                StoredExecutionEvent(
+                    second_attempt,
+                    1,
+                    "worker.attempt.succeeded",
+                    "terminal",
+                    Instant("2099-01-01T00:00:03.200000Z"),
+                ),
             ),
             owner="worker-cli-2",
             lease_token=second_lease,
@@ -126,24 +153,30 @@ def test_cli_operator_surface_reuses_real_http_contract_and_terminal_idempotency
         page = json.loads(capsys.readouterr().out)
         assert [job["id"] for job in page["items"]] == [job_id]
 
-        assert main(
-            [
-                "submit",
-                "examples/demo",
-                "-t",
-                "notebooks/etl.ronin.json",
-                "--idempotency-key",
-                "cli-k1",
-                "--param",
-                "limit=7",
-                "--json",
-            ]
-        ) == 0
+        assert (
+            main(
+                [
+                    "submit",
+                    "examples/demo",
+                    "-t",
+                    "notebooks/etl.ronin.json",
+                    "--idempotency-key",
+                    "cli-k1",
+                    "--param",
+                    "limit=7",
+                    "--json",
+                ]
+            )
+            == 0
+        )
         replay = json.loads(capsys.readouterr().out)
         assert replay["id"] == job_id
         assert replay["state"] == "succeeded"
         assert store.get_run_id_for_job(JobId(job_id)) == run_id
-        assert len(store.list_jobs(project_id="examples/demo", state=None, limit=10, cursor=None).items) == 1
+        assert (
+            len(store.list_jobs(project_id="examples/demo", state=None, limit=10, cursor=None).items)
+            == 1
+        )
 
         sdk = Ronin(
             transport=HTTPTransport(
