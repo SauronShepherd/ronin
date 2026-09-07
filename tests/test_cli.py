@@ -78,7 +78,7 @@ def test_validate_rejects_invalid_notebook_dependencies(tmp_path: Path, capsys) 
         encoding="utf-8",
     )
 
-    assert main(["validate", project]) == 2
+    assert main(["validate", str(project)]) == 2
     output = capsys.readouterr()
     assert output.out == ""
     assert "invalid notebook dependencies" in output.err
