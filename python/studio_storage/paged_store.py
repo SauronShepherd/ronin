@@ -20,13 +20,26 @@ from studio_storage.async_store import BoundedAsyncJobStore as _BoundedAsyncJobS
 from studio_storage.fenced_sqlite import SqliteJobStore as _SqliteJobStore
 from studio_storage.memory import InMemoryJobStore as _InMemoryJobStore
 from studio_storage.pagination import (
+    decode_cursor,
     decode_event_cursor,
     decode_job_cursor,
+    encode_cursor,
     encode_event_cursor,
     encode_job_cursor,
     initial_event_cursor,
     validate_limit,
 )
+
+# Private compatibility aliases keep existing contract tests stable while cursor
+# semantics live in one dedicated module instead of this adapter wrapper.
+_encode_cursor = encode_cursor
+_decode_cursor = decode_cursor
+_encode_job_cursor = encode_job_cursor
+_decode_job_cursor = decode_job_cursor
+_encode_event_cursor = encode_event_cursor
+_decode_event_cursor = decode_event_cursor
+_initial_event_cursor = initial_event_cursor
+_validate_limit = validate_limit
 
 
 class InMemoryJobStore(_InMemoryJobStore):
