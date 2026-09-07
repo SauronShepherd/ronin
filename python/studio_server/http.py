@@ -22,7 +22,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import uuid4
 
 from studio_execution import DurableExecutionService
-from studio_orchestrator import Instant, Job, JobId, JobState, Page, Run, RunId, RunState
+from studio_orchestrator import EventPage, Instant, Job, JobId, JobState, Page, Run, RunId, RunState
 from studio_storage import IdempotencyConflict, StorageBackpressureError
 
 _MAX_REQUEST_BYTES = 1024 * 1024
@@ -34,6 +34,7 @@ SUPPORTED_ROUTES = frozenset(
         ("POST", "/v1/jobs"),
         ("GET", "/v1/jobs"),
         ("GET", "/v1/jobs/{job_id}"),
+        ("GET", "/v1/jobs/{job_id}/events"),
         ("POST", "/v1/jobs/{job_id}/cancel"),
     }
 )
@@ -80,9 +81,25 @@ def _page_payload(page: Page) -> dict[str, object]:
     }
 
 
-def _single_query_values(query: str) -> dict[str, str]:
+def _event_page_payload(page: EventPage) -> dict[str, object]:
+    return {
+        "items": [
+            {
+                "sequence": event.sequence,
+                "attempt_id": str(event.attempt_id),
+                "attempt_sequence": event.attempt_sequence,
+                "kind": event.kind,
+                "message": event.message,
+                "occurred_at": str(event.occurred_at),
+            }
+            for event in page.items
+        ],
+        "next_since": page.next_since,
+    }
+
+
+def _single_query_values(query: str, *, allowed: frozenset[str]) -> dict[str, str]:
     parsed = parse_qs(query, keep_blank_values=True, strict_parsing=False)
-    allowed = {"project", "state", "limit", "cursor"}
     unknown = set(parsed) - allowed
     if unknown:
         raise ValueError(f"unknown query parameter: {sorted(unknown)[0]}")
@@ -92,6 +109,26 @@ def _single_query_values(query: str) -> dict[str, str]:
             raise ValueError(f"query parameter {key} must appear at most once")
         values[key] = candidates[0]
     return values
+
+
+def _bounded_limit(value: str | None, *, default: int) -> int:
+    if value is None:
+        return default
+    try:
+        limit = int(value)
+    except ValueError as exc:
+        raise ValueError("limit must be an integer") from exc
+    if not 1 <= limit <= _MAX_LIST_LIMIT:
+        raise ValueError(f"limit must be between 1 and {_MAX_LIST_LIMIT}")
+    return limit
+
+
+def _opaque_cursor(value: str | None, *, name: str) -> str | None:
+    if value is None:
+        return None
+    if not value or value != value.strip() or len(value.encode("utf-8")) > _MAX_CURSOR_BYTES:
+        raise ValueError(f"{name} must be non-empty, trimmed, and within the byte limit")
+    return value
 
 
 class _ServiceLoop:
@@ -213,32 +250,37 @@ class DurableHTTPApplication:
                 job_state = JobState(state)
             except ValueError as exc:
                 raise ValueError("state is invalid") from exc
-        page_limit = _DEFAULT_LIST_LIMIT
-        if limit is not None:
-            try:
-                page_limit = int(limit)
-            except ValueError as exc:
-                raise ValueError("limit must be an integer") from exc
-            if not 1 <= page_limit <= _MAX_LIST_LIMIT:
-                raise ValueError(f"limit must be between 1 and {_MAX_LIST_LIMIT}")
-        if cursor is not None and (
-            not cursor
-            or cursor != cursor.strip()
-            or len(cursor.encode("utf-8")) > _MAX_CURSOR_BYTES
-        ):
-            raise ValueError("cursor must be non-empty, trimmed, and within the byte limit")
         page = cast(
             Page,
             self._loop.call(
                 self._service.list_jobs(
                     project_id=project,
                     state=job_state,
-                    limit=page_limit,
-                    cursor=cursor,
+                    limit=_bounded_limit(limit, default=_DEFAULT_LIST_LIMIT),
+                    cursor=_opaque_cursor(cursor, name="cursor"),
                 )
             ),
         )
         return _page_payload(page)
+
+    def events(
+        self,
+        job_id: str,
+        *,
+        since: str | None,
+        limit: str | None,
+    ) -> dict[str, object] | None:
+        page = cast(
+            EventPage | None,
+            self._loop.call(
+                self._service.events(
+                    JobId(job_id),
+                    since=_opaque_cursor(since, name="since"),
+                    limit=_bounded_limit(limit, default=_DEFAULT_LIST_LIMIT),
+                )
+            ),
+        )
+        return None if page is None else _event_page_payload(page)
 
     def cancel(self, job_id: str) -> dict[str, object]:
         job = cast(Job, self._loop.call(self._service.cancel(JobId(job_id), now=_now())))
@@ -386,7 +428,10 @@ class _Handler(BaseHTTPRequestHandler):
         path = split.path
         if path == "/v1/jobs":
             try:
-                query = _single_query_values(split.query)
+                query = _single_query_values(
+                    split.query,
+                    allowed=frozenset({"project", "state", "limit", "cursor"}),
+                )
                 page_payload = self._ronin_server().application.list_jobs(
                     project=query.get("project"),
                     state=query.get("state"),
@@ -405,6 +450,40 @@ class _Handler(BaseHTTPRequestHandler):
             return
 
         prefix = "/v1/jobs/"
+        events_suffix = "/events"
+        if path.startswith(prefix) and path.endswith(events_suffix):
+            encoded_job_id = path[len(prefix) : -len(events_suffix)]
+            if not encoded_job_id or "/" in encoded_job_id:
+                self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
+                return
+            try:
+                query = _single_query_values(
+                    split.query,
+                    allowed=frozenset({"since", "limit"}),
+                )
+                job_id = unquote(encoded_job_id, errors="strict")
+                event_payload = self._ronin_server().application.events(
+                    job_id,
+                    since=query.get("since"),
+                    limit=query.get("limit"),
+                )
+            except StorageBackpressureError:
+                self._error(
+                    HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
+                )
+                return
+            except UnicodeError:
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_job_id", "job id is invalid")
+                return
+            except ValueError as exc:
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
+                return
+            if event_payload is None:
+                self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
+                return
+            self._write_json(HTTPStatus.OK, event_payload)
+            return
+
         if not path.startswith(prefix) or path == prefix:
             self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
             return
