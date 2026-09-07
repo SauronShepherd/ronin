@@ -225,7 +225,9 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
                     lease_token=LeaseToken("lease-contention-live"),
                 )
             )
-            assert slow_store is not None
+            async with asyncio.timeout(2.0):
+                while slow_store is None:
+                    await asyncio.sleep(0.01)
             assert await asyncio.to_thread(slow_store.started.wait, 2.0)
             first_heartbeat, first_expiry = _lease_state(config.database_path, attempt_id)
             second_heartbeat, second_expiry = await _wait_for_durable_heartbeat(
