@@ -12,8 +12,10 @@ from studio_orchestrator import (
     Instant,
     Job,
     JobId,
+    JobState,
     JobStore,
     LeaseToken,
+    Page,
     Run,
     RunId,
     StoredCellResult,
@@ -76,6 +78,23 @@ class DurableExecutionService:
         """Read current durable job status without blocking the event loop."""
 
         return await self._store.get_job(job_id)
+
+    async def list_jobs(
+        self,
+        *,
+        project_id: str | None,
+        state: JobState | None,
+        limit: int,
+        cursor: str | None,
+    ) -> Page:
+        """Read one stable bounded job page through the storage-neutral contract."""
+
+        return await self._store.list_jobs(
+            project_id=project_id,
+            state=state,
+            limit=limit,
+            cursor=cursor,
+        )
 
     async def cancel(self, job_id: JobId, *, now: Instant) -> Job:
         """Request cancellation through the same bounded store boundary."""
