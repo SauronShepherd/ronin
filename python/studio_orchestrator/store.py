@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
+from studio_kernel import ExecutionEvidenceReference
 from studio_orchestrator.instants import Instant
 from studio_orchestrator.lifecycle import (
     AttemptId,
@@ -89,6 +90,8 @@ class StoredCellResult:
 
 @dataclass(frozen=True, slots=True)
 class StoredEvidenceRef:
+    """Run/cell ownership wrapped around one portable evidence reference."""
+
     run_id: RunId
     cell_id: str | None
     role: str
@@ -97,6 +100,78 @@ class StoredEvidenceRef:
     media_type: str | None
     size_bytes: int | None
     storage_ref: str | None
+
+    def __post_init__(self) -> None:
+        if not self.role or self.role != self.role.strip() or "\n" in self.role or "\r" in self.role:
+            raise ValueError("evidence role must be non-empty, trimmed, and single-line")
+        if self.digest_algorithm != "sha256":
+            raise ValueError("unsupported evidence digest algorithm")
+        if len(self.digest) != 64 or any(ch not in "0123456789abcdef" for ch in self.digest):
+            raise ValueError("evidence digest must be lowercase SHA-256 hex")
+        if self.size_bytes is not None and self.size_bytes < 0:
+            raise ValueError("evidence size must be non-negative")
+        if self.media_type is not None and (
+            not self.media_type
+            or self.media_type != self.media_type.strip()
+            or "\n" in self.media_type
+            or "\r" in self.media_type
+        ):
+            raise ValueError("evidence media type must be non-empty, trimmed, and single-line")
+        if self.storage_ref is not None and (
+            not self.storage_ref
+            or self.storage_ref != self.storage_ref.strip()
+            or "\n" in self.storage_ref
+            or "\r" in self.storage_ref
+        ):
+            raise ValueError("evidence storage reference must be non-empty, trimmed, and single-line")
+
+    @property
+    def portable_identity(self) -> tuple[str, str, str, str | None, int | None]:
+        """Return identity independent of the physical storage locator."""
+
+        return (self.role, self.digest_algorithm, self.digest, self.media_type, self.size_bytes)
+
+    @classmethod
+    def from_execution_reference(
+        cls,
+        *,
+        run_id: RunId,
+        cell_id: str | None,
+        reference: ExecutionEvidenceReference,
+    ) -> StoredEvidenceRef:
+        """Losslessly wrap a portable kernel evidence reference for durable storage."""
+
+        if reference.portable_identity is None:
+            raise ValueError("durable evidence requires portable content identity")
+        assert reference.digest_algorithm is not None
+        assert reference.digest is not None
+        assert reference.size_bytes is not None
+        return cls(
+            run_id=run_id,
+            cell_id=cell_id,
+            role=reference.kind,
+            digest_algorithm=reference.digest_algorithm,
+            digest=reference.digest,
+            media_type=reference.media_type,
+            size_bytes=reference.size_bytes,
+            storage_ref=reference.ref,
+        )
+
+    def to_execution_reference(self) -> ExecutionEvidenceReference:
+        """Map durable execution evidence back to the portable kernel representation."""
+
+        if self.role not in {"log", "metric", "trace", "lineage", "output", "resource", "cost"}:
+            raise ValueError("stored role is not a kernel execution evidence kind")
+        if self.size_bytes is None or self.storage_ref is None:
+            raise ValueError("stored evidence is unavailable as a portable execution reference")
+        return ExecutionEvidenceReference(
+            self.role,  # type: ignore[arg-type]
+            self.storage_ref,
+            self.digest_algorithm,
+            self.digest,
+            self.media_type,
+            self.size_bytes,
+        )
 
 
 class JobStore(Protocol):
