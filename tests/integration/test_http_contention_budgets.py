@@ -7,7 +7,7 @@ from threading import Event, Thread
 
 from pyronin import HTTPTransport, Ronin
 from studio_execution import DurableExecutionService
-from studio_orchestrator import Instant, JobId
+from studio_orchestrator import Instant, Job, JobId
 from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
 
@@ -25,7 +25,7 @@ class _OneBlockedStatusSqliteStore(SqliteJobStore):
         self.block_started = Event()
         self.release_block = Event()
 
-    def get_job(self, job_id: JobId):  # type: ignore[no-untyped-def]
+    def get_job(self, job_id: JobId) -> Job | None:
         if job_id == JobId("contention-blocker"):
             self.block_started.set()
             if not self.release_block.wait(timeout=5.0):
