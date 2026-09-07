@@ -11,6 +11,7 @@ from studio_orchestrator import (
     JobState,
     LeaseToken,
     Run,
+    RunExecutionEvent,
     RunId,
     RunState,
     StoredExecutionEvent,
@@ -214,3 +215,24 @@ def test_event_cursor_is_fail_closed_bounded_and_bound_to_run(store) -> None:
         store.read_event_page(RunId("run-other"), since=initial.next_since, limit=1)
     with pytest.raises(ValueError, match="limit"):
         store.read_event_page(RunId("run-job-events"), since=None, limit=101)
+
+
+def test_run_execution_event_rejects_negative_coordinates() -> None:
+    with pytest.raises(ValueError, match="run event sequence"):
+        RunExecutionEvent(
+            sequence=-1,
+            attempt_id=AttemptId("attempt-1"),
+            attempt_sequence=0,
+            kind="attempt.started",
+            message="",
+            occurred_at=NOW,
+        )
+    with pytest.raises(ValueError, match="attempt event sequence"):
+        RunExecutionEvent(
+            sequence=0,
+            attempt_id=AttemptId("attempt-1"),
+            attempt_sequence=-1,
+            kind="attempt.started",
+            message="",
+            occurred_at=NOW,
+        )
