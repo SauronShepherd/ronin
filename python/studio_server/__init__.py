@@ -1,7 +1,7 @@
-"""HTTP control-plane surface over the durable execution domain."""
+"""HTTP control-plane adapter over the shared durable execution application service."""
 
 from __future__ import annotations
 
-from studio_server.durable_execution import DurableExecutionService, WorkerPollResult
+from studio_execution import DurableExecutionService, WorkerPollResult
 
 __all__ = ("DurableExecutionService", "WorkerPollResult")
