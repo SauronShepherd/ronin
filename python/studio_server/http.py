@@ -387,7 +387,7 @@ class _Handler(BaseHTTPRequestHandler):
         if path == "/v1/jobs":
             try:
                 query = _single_query_values(split.query)
-                payload = self._ronin_server().application.list_jobs(
+                page_payload = self._ronin_server().application.list_jobs(
                     project=query.get("project"),
                     state=query.get("state"),
                     limit=query.get("limit"),
@@ -401,7 +401,7 @@ class _Handler(BaseHTTPRequestHandler):
             except ValueError as exc:
                 self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
                 return
-            self._write_json(HTTPStatus.OK, payload)
+            self._write_json(HTTPStatus.OK, page_payload)
             return
 
         prefix = "/v1/jobs/"
@@ -414,17 +414,17 @@ class _Handler(BaseHTTPRequestHandler):
             return
         try:
             job_id = unquote(encoded_job_id, errors="strict")
-            payload = self._ronin_server().application.status(job_id)
+            job_payload = self._ronin_server().application.status(job_id)
         except StorageBackpressureError:
             self._error(HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy")
             return
         except (UnicodeError, ValueError):
             self._error(HTTPStatus.BAD_REQUEST, "invalid_job_id", "job id is invalid")
             return
-        if payload is None:
+        if job_payload is None:
             self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
             return
-        self._write_json(HTTPStatus.OK, payload)
+        self._write_json(HTTPStatus.OK, job_payload)
 
 
 __all__ = (
