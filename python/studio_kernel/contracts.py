@@ -122,14 +122,70 @@ class NotebookExecutionRequest:
 
 @dataclass(frozen=True, order=True, slots=True)
 class ExecutionEvidenceReference:
+    """Execution evidence locator with optional portable content identity.
+
+    ``ref`` is a physical locator and is deliberately excluded from ``portable_identity``.
+    Durable execution paths require the portable fields so moving identical content does
+    not change its logical identity. Legacy opaque references remain constructible while
+    non-durable integrations migrate, but partial portable metadata is rejected.
+    """
+
     kind: EvidenceKind
     ref: str
+    digest_algorithm: str | None = None
+    digest: str | None = None
+    media_type: str | None = None
+    size_bytes: int | None = None
 
     def __post_init__(self) -> None:
         if self.kind not in {"log", "metric", "trace", "lineage", "output", "resource", "cost"}:
             raise ValueError("unsupported execution evidence kind")
         _require_text(self.ref, "execution evidence reference")
         object.__setattr__(self, "ref", redact_sensitive_text(self.ref))
+
+        portable_values = (self.digest_algorithm, self.digest, self.size_bytes)
+        has_portable = any(value is not None for value in portable_values)
+        if has_portable and any(value is None for value in portable_values):
+            raise ValueError("portable evidence identity requires algorithm, digest, and size")
+        if has_portable:
+            digest_algorithm = self.digest_algorithm
+            digest = self.digest
+            size_bytes = self.size_bytes
+            if digest_algorithm is None or digest is None or size_bytes is None:
+                raise ValueError("portable evidence identity requires algorithm, digest, and size")
+            if digest_algorithm != "sha256":
+                raise ValueError("unsupported evidence digest algorithm")
+            if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+                raise ValueError("evidence digest must be lowercase SHA-256 hex")
+            if size_bytes < 0:
+                raise ValueError("evidence size must be non-negative")
+        if self.media_type is not None:
+            _require_text(self.media_type, "evidence media type")
+
+    @property
+    def portable_identity(self) -> tuple[str, str, str, str | None, int] | None:
+        """Return location-independent content identity when the reference is portable."""
+
+        if self.digest_algorithm is None or self.digest is None or self.size_bytes is None:
+            return None
+        return (self.kind, self.digest_algorithm, self.digest, self.media_type, self.size_bytes)
+
+    def portable_payload(self) -> dict[str, object]:
+        """Return the fail-closed v1 portable representation used by durable boundaries."""
+
+        identity = self.portable_identity
+        if identity is None:
+            raise ValueError("evidence reference does not have portable content identity")
+        return {
+            "version": 1,
+            "role": self.kind,
+            "digest_algorithm": self.digest_algorithm,
+            "digest": self.digest,
+            "media_type": self.media_type,
+            "size_bytes": self.size_bytes,
+            "locator": self.ref,
+            "availability": "available",
+        }
 
 
 @dataclass(frozen=True, slots=True)

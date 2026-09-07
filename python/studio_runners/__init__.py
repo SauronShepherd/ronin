@@ -8,7 +8,6 @@ from .container import (
     ContainerExecutorConfig,
     DockerContainerKernelExecutor,
     ExecutionEvidenceStore,
-    LocalExecutionEvidenceStore,
 )
 from .discovery import (
     RuntimeDiscoveryAdapter,
@@ -17,6 +16,9 @@ from .discovery import (
     RuntimeDiscoveryResult,
     discover_runtime_profiles,
 )
+from .evidence import PortableLocalExecutionEvidenceStore
+
+LocalExecutionEvidenceStore = PortableLocalExecutionEvidenceStore
 
 __all__ = (
     "AsyncioCommandRunner",
@@ -27,6 +29,7 @@ __all__ = (
     "DockerContainerKernelExecutor",
     "ExecutionEvidenceStore",
     "LocalExecutionEvidenceStore",
+    "PortableLocalExecutionEvidenceStore",
     "RuntimeDiscoveryAdapter",
     "RuntimeDiscoveryIssue",
     "RuntimeDiscoveryReport",

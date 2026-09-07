@@ -6,6 +6,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
+from studio_kernel import ExecutionEvidenceReference
+
 from studio_orchestrator.instants import Instant
 from studio_orchestrator.lifecycle import (
     AttemptId,
@@ -89,6 +91,8 @@ class StoredCellResult:
 
 @dataclass(frozen=True, slots=True)
 class StoredEvidenceRef:
+    """Run/cell ownership wrapped around a storage-neutral content reference."""
+
     run_id: RunId
     cell_id: str | None
     role: str
@@ -97,6 +101,54 @@ class StoredEvidenceRef:
     media_type: str | None
     size_bytes: int | None
     storage_ref: str | None
+
+    @property
+    def portable_identity(self) -> tuple[str, str, str, str | None, int | None]:
+        """Return logical content identity independent of the physical locator."""
+
+        return (self.role, self.digest_algorithm, self.digest, self.media_type, self.size_bytes)
+
+    @classmethod
+    def from_execution_reference(
+        cls,
+        *,
+        run_id: RunId,
+        cell_id: str | None,
+        reference: ExecutionEvidenceReference,
+    ) -> StoredEvidenceRef:
+        """Losslessly wrap a portable kernel evidence reference for durable storage."""
+
+        digest_algorithm = reference.digest_algorithm
+        digest = reference.digest
+        size_bytes = reference.size_bytes
+        if digest_algorithm is None or digest is None or size_bytes is None:
+            raise ValueError("durable evidence requires portable content identity")
+        return cls(
+            run_id=run_id,
+            cell_id=cell_id,
+            role=reference.kind,
+            digest_algorithm=digest_algorithm,
+            digest=digest,
+            media_type=reference.media_type,
+            size_bytes=size_bytes,
+            storage_ref=reference.ref,
+        )
+
+    def to_execution_reference(self) -> ExecutionEvidenceReference:
+        """Map durable execution evidence back to the portable kernel representation."""
+
+        if self.role not in {"log", "metric", "trace", "lineage", "output", "resource", "cost"}:
+            raise ValueError("stored role is not a kernel execution evidence kind")
+        if self.size_bytes is None or self.storage_ref is None:
+            raise ValueError("stored evidence is unavailable as a portable execution reference")
+        return ExecutionEvidenceReference(
+            self.role,  # type: ignore[arg-type]
+            self.storage_ref,
+            self.digest_algorithm,
+            self.digest,
+            self.media_type,
+            self.size_bytes,
+        )
 
 
 class JobStore(Protocol):
