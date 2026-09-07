@@ -157,13 +157,7 @@ def test_local_execution_and_artifact_adapters_share_content_identity(tmp_path: 
     assert reference.ref.startswith("local-evidence://")
     assert artifact.storage_ref.startswith("artifact://sha256/")
 
-    artifact_path = (
-        tmp_path
-        / "artifacts"
-        / "sha256"
-        / artifact.digest[:2]
-        / artifact.digest
-    )
+    artifact_path = tmp_path / "artifacts" / "sha256" / artifact.digest[:2] / artifact.digest
     artifact_path.write_bytes(b"corrupt")
     assert artifact_store.verify(artifact) is False
     with pytest.raises(ArtifactIntegrityError, match="digest verification"):
