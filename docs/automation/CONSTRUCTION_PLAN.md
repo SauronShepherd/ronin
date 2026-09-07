@@ -14,7 +14,7 @@ The repository now has the durable local execution spine and local CLI foundatio
 - in-memory and SQLite `JobStore` adapters with shared conformance/fencing tests;
 - immutable per-cell resume identity and explicit artifact verification;
 - bounded async JobStore and artifact-store composition;
-- `DurableExecutionService` for submit/status/cancel plus worker reclaim/claim/heartbeat and fenced worker writes;
+- `DurableExecutionService` for submit/status/list/events/cancel plus worker reclaim/claim/heartbeat and fenced worker writes;
 - safe local project/runtime preparation with exact immutable execution-image identity;
 - sequential per-cell checkpoint-before-next execution with cancellation polling, heartbeat fail-closed behavior and verified resume;
 - `LocalWorkerRuntime` composition over SQLite, local durable stores and the real Docker executor;
@@ -24,9 +24,10 @@ The repository now has the durable local execution spine and local CLI foundatio
 - #125 bounded-contention qualification at final server and worker call sites;
 - release acceptance truth unified around exact-SHA Docker-capable JUnit/provenance plus an exact skip ratchet;
 - C0 storage pagination contracts: stable newest-first keyset job pagination, defensive opaque cursors, bounded Run-event keyset reads, and dense Run-global event projection across replacement Attempts without changing canonical `(attempt_id, sequence)` storage identity;
+- C1/C2 authenticated HTTP + OpenAPI + SDK coverage for stable job listing, durable cancellation and bounded Run-global job events with attempt provenance;
 - D0 supported local CLI with `doctor`, `validate`, and `plan`, activating frozen steps 2-4.
 
-The process-crash evidence advances #57 but does not complete it. The frozen fifteen-step journey still depends on the remaining HTTP/SDK, network/operator CLI, portable evidence, Compose and supported cancellation surfaces. Current acceptance is seven live steps (2, 3, 4, 6, 7, 8, 9) and eight explicitly skipped steps (1, 5, 10, 11, 12, 13, 14, 15).
+The process-crash evidence advances #57 but does not complete it. The frozen fifteen-step journey still depends on portable evidence, remaining HTTP/SDK compatibility work, network/operator CLI, Compose and supported cancellation cleanup. Current acceptance is seven live steps (2, 3, 4, 6, 7, 8, 9) and eight explicitly skipped steps (1, 5, 10, 11, 12, 13, 14, 15).
 
 ## Phase A — completed foundation
 
@@ -56,11 +57,11 @@ Do not select C0 again unless a regression or changed contract reopens it.
 
 **Objective.** Make durable jobs remotely controllable through one bounded authenticated API whose executable OpenAPI contract matches `pyronin`.
 
-**Status. In progress under #54.** Submit/status are already qualified. The current C1 increment adds stable C0-backed job listing and durable cancellation through `DurableExecutionService`, aligns the version-controlled OpenAPI contract and `pyronin` pagination, and qualifies those paths against real HTTP + SQLite. Public events remain the next #54 increment. Public evidence remains deferred until #53 freezes portable evidence identity.
+**Status. In progress under #54.** Submit/status were already qualified. C1 added stable C0-backed job listing and durable cancellation. C2 exposes the existing C0 Run-global event pages through a neutral durable Job -> Run lookup, authenticated `GET /v1/jobs/{job_id}/events`, OpenAPI `JobEventPage`, and bounded `pyronin` polling. Event payloads retain dense Run-global sequence plus Attempt provenance, and cross-Run cursors fail closed. Public evidence remains deferred until #53 freezes portable evidence identity. #52 remains open before authorization semantics are expanded or frozen; C2 does not introduce new scope semantics.
 
 **Framework decision.** Framework choice is an implementation detail, not a domain decision. Framework/model types stay outside canonical domain packages.
 
-**Exit criteria.** Acceptance steps for submit/status/idempotency/events/cancel/SDK become live against the real supported server/operator path; every documented route is exercised; bounded request latency and secure token transport defaults are qualified; API composition does not execute blocking durable storage on an event-loop thread. Evidence remains blocked until #53.
+**Exit criteria.** Acceptance steps for submit/status/idempotency/events/cancel/SDK become live against the real supported server/operator path; every documented route is exercised; bounded request latency and secure token transport defaults are qualified; API composition does not execute blocking durable storage on an event-loop thread. Evidence remains blocked until #53, and #54 remains open for evidence completion plus explicit compatibility/evolution policy.
 
 ## Phase D0 — HTTP-independent CLI foundation
 
@@ -115,11 +116,11 @@ Do not select C0 again unless a regression or changed contract reopens it.
 
 ## Current critical path
 
-Acceptance truth wiring, C0 storage contracts and D0 local CLI are complete and are no longer selectable unless regression reopens them. After the current C1 list/cancel increment, the ordering is:
+Acceptance truth wiring, C0 storage contracts, D0 local CLI, and the C1/C2 list/cancel/events HTTP increments are complete in this construction sequence and are no longer selectable unless regression reopens them. The ordering is now:
 
-1. #54 Run-global events + continued executable OpenAPI/SDK contract over the completed C0 event semantics, considering #52 before freezing authorization semantics;
-2. #53 portable evidence identity before `/evidence` ships;
-3. #54 evidence completion plus D1 network/operator CLI;
+1. #53 portable evidence identity before `/evidence` ships;
+2. #54 evidence completion plus remaining executable OpenAPI/SDK compatibility/evolution rules, with #52 reconciled before authorization semantics are expanded or frozen;
+3. D1 network/operator CLI and remaining local Git revision qualification;
 4. production image/Compose;
 5. incremental completion of the frozen fifteen-step journey with the Docker allowance shrinking to empty;
 6. remaining non-functional/security/release blockers and immutable publication.
