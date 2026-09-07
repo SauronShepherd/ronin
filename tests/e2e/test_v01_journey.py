@@ -281,9 +281,12 @@ def test_step_01_compose_reaches_healthy_within_60s() -> None: ...
 
 
 def test_step_02_doctor_reports_all_checks_passing() -> None:
-    result = _ronin("doctor")
+    result = _ronin("doctor", "--require=core")
     assert result.returncode == 0, result.stderr
-    assert "doctor: all checks passed" in result.stdout
+    assert "python>=3.11: ok" in result.stdout
+    assert "git: ok" in result.stdout
+    assert "docker:" in result.stdout
+    assert "doctor: required core checks passed" in result.stdout
 
 
 def test_step_03_validate_accepts_demo_project() -> None:
