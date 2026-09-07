@@ -17,7 +17,12 @@ from studio_orchestrator import (
     RunState,
 )
 from studio_server import DurableExecutionService
-from studio_storage import ArtifactRef, BoundedAsyncArtifactStore, LocalArtifactStore, SqliteJobStore
+from studio_storage import (
+    ArtifactRef,
+    BoundedAsyncArtifactStore,
+    LocalArtifactStore,
+    SqliteJobStore,
+)
 
 NOW = Instant("2026-09-07T05:00:00.000000Z")
 HEARTBEAT_NOW = Instant("2026-09-07T05:00:10.000000Z")
