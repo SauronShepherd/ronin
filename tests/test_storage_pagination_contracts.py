@@ -186,7 +186,11 @@ def test_run_event_page_is_dense_across_attempts_and_pollable(store) -> None:
 
     store.append_events(
         second.attempt_id,
-        (StoredExecutionEvent(second.attempt_id, 2, "cell.succeeded", "three", SECOND_ATTEMPT_WRITE),),
+        (
+            StoredExecutionEvent(
+                second.attempt_id, 2, "cell.succeeded", "three", SECOND_ATTEMPT_WRITE
+            ),
+        ),
         owner="worker-2",
         lease_token=second.lease_token,
         now=Instant(SECOND_ATTEMPT_WRITE),
