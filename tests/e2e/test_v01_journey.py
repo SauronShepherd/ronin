@@ -282,8 +282,20 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
         store.append_events(
             first_attempt,
             (
-                StoredExecutionEvent(first_attempt, 0, "cell.succeeded", "cell-1", Instant("2099-01-01T00:00:00.100000Z")),
-                StoredExecutionEvent(first_attempt, 1, "cell.succeeded", "cell-2", Instant("2099-01-01T00:00:00.200000Z")),
+                StoredExecutionEvent(
+                    first_attempt,
+                    0,
+                    "cell.succeeded",
+                    "cell-1",
+                    Instant("2099-01-01T00:00:00.100000Z"),
+                ),
+                StoredExecutionEvent(
+                    first_attempt,
+                    1,
+                    "cell.succeeded",
+                    "cell-2",
+                    Instant("2099-01-01T00:00:00.200000Z"),
+                ),
             ),
             owner="worker-v01-cli-1",
             lease_token=first_lease,
@@ -304,8 +316,20 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
         store.append_events(
             second_attempt,
             (
-                StoredExecutionEvent(second_attempt, 0, "cell.succeeded", "cell-3", Instant("2099-01-01T00:00:03.100000Z")),
-                StoredExecutionEvent(second_attempt, 1, "worker.attempt.succeeded", "terminal", Instant("2099-01-01T00:00:03.200000Z")),
+                StoredExecutionEvent(
+                    second_attempt,
+                    0,
+                    "cell.succeeded",
+                    "cell-3",
+                    Instant("2099-01-01T00:00:03.100000Z"),
+                ),
+                StoredExecutionEvent(
+                    second_attempt,
+                    1,
+                    "worker.attempt.succeeded",
+                    "terminal",
+                    Instant("2099-01-01T00:00:03.200000Z"),
+                ),
             ),
             owner="worker-v01-cli-2",
             lease_token=second_lease,
