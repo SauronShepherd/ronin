@@ -222,7 +222,9 @@ class DurableHTTPApplication:
             if not 1 <= page_limit <= _MAX_LIST_LIMIT:
                 raise ValueError(f"limit must be between 1 and {_MAX_LIST_LIMIT}")
         if cursor is not None and (
-            not cursor or cursor != cursor.strip() or len(cursor.encode("utf-8")) > _MAX_CURSOR_BYTES
+            not cursor
+            or cursor != cursor.strip()
+            or len(cursor.encode("utf-8")) > _MAX_CURSOR_BYTES
         ):
             raise ValueError("cursor must be non-empty, trimmed, and within the byte limit")
         page = cast(
@@ -327,7 +329,9 @@ class _Handler(BaseHTTPRequestHandler):
         path = split.path
         if path == "/v1/jobs":
             if split.query:
-                self._error(HTTPStatus.BAD_REQUEST, "invalid_request", "submit does not accept query")
+                self._error(
+                    HTTPStatus.BAD_REQUEST, "invalid_request", "submit does not accept query"
+                )
                 return
             try:
                 status, payload = self._ronin_server().application.submit(
@@ -342,7 +346,9 @@ class _Handler(BaseHTTPRequestHandler):
                 )
                 return
             except StorageBackpressureError:
-                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy")
+                self._error(
+                    HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
+                )
                 return
             except ValueError as exc:
                 self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
@@ -388,7 +394,9 @@ class _Handler(BaseHTTPRequestHandler):
                     cursor=query.get("cursor"),
                 )
             except StorageBackpressureError:
-                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy")
+                self._error(
+                    HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
+                )
                 return
             except ValueError as exc:
                 self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
