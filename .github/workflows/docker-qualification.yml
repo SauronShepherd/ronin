@@ -10,6 +10,7 @@ on:
       - "python/studio_server/**"
       - "python/studio_storage/**"
       - "examples/demo/**"
+      - "tests/e2e/**"
       - "tests/integration/test_docker_container_executor_real.py"
       - "tests/integration/test_worker_runtime_real.py"
       - "requirements-dev.lock"
@@ -62,6 +63,14 @@ jobs:
           python -m pytest -o addopts= -q \
             tests/integration/test_docker_container_executor_real.py \
             tests/integration/test_worker_runtime_real.py
+      - name: Run frozen acceptance journey with real Docker
+        env:
+          RONIN_REAL_DOCKER_QUALIFICATION: "1"
+        run: |
+          python -m pytest tests/e2e -m e2e -v --junitxml=/tmp/v01-acceptance-docker.xml
+          python -m tools.v01_acceptance_gate /tmp/v01-acceptance-docker.xml \
+            --progress-only \
+            --evidence-json=artifacts/docker-qualification/v01-acceptance-progress.json
       - name: Print qualification evidence
         if: always()
         run: |
