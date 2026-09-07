@@ -27,7 +27,13 @@ def _parser() -> argparse.ArgumentParser:
         description="Ronin local-first execution tooling",
     )
     commands = parser.add_subparsers(dest="command", required=True)
-    commands.add_parser("doctor", help="check local prerequisites")
+    doctor = commands.add_parser("doctor", help="check local prerequisites")
+    doctor.add_argument(
+        "--require",
+        choices=("core", "all"),
+        default="all",
+        help="required check set: core excludes Docker; all is the default",
+    )
 
     validate = commands.add_parser("validate", help="validate a local Ronin project")
     validate.add_argument("project", type=Path)
@@ -108,7 +114,7 @@ def _resolve_target(project_dir: Path, target: str) -> Path:
     return candidate
 
 
-def _doctor() -> int:
+def _doctor(require: str) -> int:
     git_path = shutil.which("git")
     docker_path = shutil.which("docker")
     checks = (
@@ -116,17 +122,21 @@ def _doctor() -> int:
             "python>=3.11",
             sys.hexversion >= 0x030B0000,
             f"{sys.version_info.major}.{sys.version_info.minor}",
+            True,
         ),
-        ("git", git_path is not None, git_path or "not found"),
-        ("docker", docker_path is not None, docker_path or "not found"),
+        ("git", git_path is not None, git_path or "not found", True),
+        ("docker", docker_path is not None, docker_path or "not found", require == "all"),
     )
     failed = False
-    for name, ok, detail in checks:
+    for name, ok, detail, required in checks:
         print(f"{name}: {'ok' if ok else 'fail'} ({detail})")
-        failed = failed or not ok
+        failed = failed or (required and not ok)
     if failed:
-        raise CliError("doctor checks failed")
-    print("doctor: all checks passed")
+        raise CliError(f"doctor required {require} checks failed")
+    if require == "all":
+        print("doctor: all checks passed")
+    else:
+        print("doctor: required core checks passed")
     return 0
 
 
@@ -170,7 +180,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     command = cast(str, namespace.command)
     try:
         if command == "doctor":
-            return _doctor()
+            return _doctor(cast(str, namespace.require))
         if command == "validate":
             return _validate(cast(Path, namespace.project))
         if command == "plan":

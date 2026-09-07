@@ -29,7 +29,34 @@ def test_doctor_fails_closed_when_required_tool_is_missing(monkeypatch, capsys) 
     output = capsys.readouterr()
     assert "git: fail (not found)" in output.out
     assert "docker: ok (/usr/bin/docker)" in output.out
-    assert output.err == "error: doctor checks failed\n"
+    assert output.err == "error: doctor required all checks failed\n"
+
+
+def test_doctor_core_succeeds_without_docker_but_reports_verdict(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        "studio_cli.shutil.which",
+        lambda name: None if name == "docker" else f"/usr/bin/{name}",
+    )
+
+    assert main(["doctor", "--require=core"]) == 0
+    output = capsys.readouterr()
+    assert output.err == ""
+    assert "python>=3.11: ok" in output.out
+    assert "git: ok (/usr/bin/git)" in output.out
+    assert "docker: fail (not found)" in output.out
+    assert "doctor: required core checks passed" in output.out
+
+
+def test_doctor_all_still_requires_docker(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        "studio_cli.shutil.which",
+        lambda name: None if name == "docker" else f"/usr/bin/{name}",
+    )
+
+    assert main(["doctor", "--require=all"]) == 2
+    output = capsys.readouterr()
+    assert "docker: fail (not found)" in output.out
+    assert output.err == "error: doctor required all checks failed\n"
 
 
 def test_validate_and_plan_reuse_canonical_demo_contracts(capsys) -> None:
