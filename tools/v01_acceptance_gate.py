@@ -120,9 +120,7 @@ def evaluate_junit(report_path: Path) -> AcceptanceCounts:
 
     missing = len(expected - outcomes.keys())
     passed = sum(outcome == "passed" for outcome in outcomes.values())
-    skipped_steps = tuple(
-        name for name in EXPECTED_STEP_NAMES if outcomes.get(name) == "skipped"
-    )
+    skipped_steps = tuple(name for name in EXPECTED_STEP_NAMES if outcomes.get(name) == "skipped")
     xfailed = sum(outcome == "xfailed" for outcome in outcomes.values())
     failed = sum(outcome == "failed" for outcome in outcomes.values())
     errors = sum(outcome == "errors" for outcome in outcomes.values())
@@ -156,9 +154,7 @@ def _parse_allowed_steps(value: str) -> tuple[str, ...]:
             raise AcceptanceGateError(f"invalid allowed step {token!r}")
         number = int(token)
         if number < 1 or number > len(EXPECTED_STEP_NAMES):
-            raise AcceptanceGateError(
-                f"allowed step {number:02d} is outside the frozen journey"
-            )
+            raise AcceptanceGateError(f"allowed step {number:02d} is outside the frozen journey")
         if number in numbers:
             raise AcceptanceGateError(f"allowed step {number:02d} is duplicated")
         numbers.append(number)
@@ -227,9 +223,7 @@ def main() -> int:
             _write_evidence(args.evidence_json, counts)
         if args.progress_only:
             if args.allow_skipped is not None or args.allow_skipped_reason is not None:
-                raise AcceptanceGateError(
-                    "--progress-only cannot be combined with skip allowances"
-                )
+                raise AcceptanceGateError("--progress-only cannot be combined with skip allowances")
         elif args.allow_skipped is None:
             if args.allow_skipped_reason is not None:
                 raise AcceptanceGateError("--allow-skipped-reason requires --allow-skipped")
