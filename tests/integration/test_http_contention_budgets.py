@@ -99,8 +99,7 @@ def test_real_http_submit_status_meet_p95_budgets_under_bounded_contention(
         post_p95_ms = _p95_ms(post_samples)
         get_p95_ms = _p95_ms(get_samples)
         assert post_p95_ms < _POST_P95_BUDGET_MS, (
-            f"POST /v1/jobs p95 {post_p95_ms:.3f} ms exceeds "
-            f"{_POST_P95_BUDGET_MS:.0f} ms budget"
+            f"POST /v1/jobs p95 {post_p95_ms:.3f} ms exceeds {_POST_P95_BUDGET_MS:.0f} ms budget"
         )
         assert get_p95_ms < _GET_P95_BUDGET_MS, (
             f"GET /v1/jobs/{{id}} p95 {get_p95_ms:.3f} ms exceeds "
