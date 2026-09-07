@@ -66,7 +66,19 @@ def test_submit_status_cancel_events_and_wait(monkeypatch: pytest.MonkeyPatch) -
         [
             {"id": "job/a", "state": "queued"},
             {"id": "job/a", "state": "running"},
-            [{"sequence": 0, "kind": "job.started", "message": "running"}],
+            {
+                "items": [
+                    {
+                        "sequence": 0,
+                        "attempt_id": "attempt-1",
+                        "attempt_sequence": 0,
+                        "kind": "job.started",
+                        "message": "running",
+                        "occurred_at": "2026-09-07T11:00:00.000000Z",
+                    }
+                ],
+                "next_since": "next-events",
+            },
             {"id": "job/a", "state": "cancelling"},
             {"id": "job/a", "state": "running"},
             {"id": "job/a", "state": "succeeded"},
@@ -76,7 +88,11 @@ def test_submit_status_cancel_events_and_wait(monkeypatch: pytest.MonkeyPatch) -
     job = client.submit(project="demo", target="etl", idempotency_key="once")
     assert job.id == "job/a"
     assert job.status() is JobState.RUNNING
-    assert job.events()[0].kind == "job.started"
+    events = job.events(limit=25)
+    assert events.items[0].kind == "job.started"
+    assert events.items[0].attempt_id == "attempt-1"
+    assert events.next_since == "next-events"
+    assert transport.calls[2][4] == {"limit": "25"}
     assert job.cancel().state is JobState.CANCELLING
     monkeypatch.setattr("pyronin.time.sleep", lambda _: None)
     assert job.wait(poll_interval=0.01).state is JobState.SUCCEEDED
@@ -140,6 +156,10 @@ def test_list_jobs_and_validation() -> None:
         client.list_jobs(limit=0)
     with pytest.raises(ValueError):
         client.list_jobs(cursor=" ")
+    with pytest.raises(ValueError):
+        client.get_events("job", limit=0)
+    with pytest.raises(ValueError):
+        client.get_events("job", since=" ")
 
 
 @pytest.mark.parametrize(
@@ -168,3 +188,30 @@ def test_invalid_job_payloads_fail_closed(payload: dict[str, object]) -> None:
 def test_invalid_job_page_payloads_fail_closed(payload: object) -> None:
     with pytest.raises(ProtocolError):
         Ronin(transport=FakeTransport([payload])).list_jobs()
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        [],
+        {"items": [], "next_since": "cursor", "extra": True},
+        {"items": {}, "next_since": "cursor"},
+        {"items": [], "next_since": ""},
+        {
+            "items": [
+                {
+                    "sequence": 0,
+                    "attempt_id": "attempt-1",
+                    "attempt_sequence": -1,
+                    "kind": "started",
+                    "message": "x",
+                    "occurred_at": "2026-09-07T11:00:00.000000Z",
+                }
+            ],
+            "next_since": "cursor",
+        },
+    ],
+)
+def test_invalid_event_page_payloads_fail_closed(payload: object) -> None:
+    with pytest.raises(ProtocolError):
+        Ronin(transport=FakeTransport([payload])).get_events("job")

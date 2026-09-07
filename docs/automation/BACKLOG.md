@@ -34,9 +34,9 @@ Do not select acceptance-truth wiring, C0, D0, or #125 again unless a regression
 
 Select one coherent slice at a time in this order:
 
-1. **#54 — remaining HTTP/OpenAPI/SDK contract.** Continue the frozen `/v1/jobs` surface over `DurableExecutionService` using the completed C0 semantics. The current C1 increment adds stable list/cancel plus executable OpenAPI/SDK coverage. The next #54 increment is Run-global events, with #52 considered before authorization semantics are frozen. Keep framework/model types at the boundary and preserve the vendor-neutral domain.
-2. **#53 — portable evidence references before `/evidence`.** Unify kernel/storage/API evidence identity before the public evidence endpoint hardens that representation.
-3. **#54 evidence completion + D1 operator surface.** Expose evidence only after #53, finish SDK drift/error/retry alignment, then implement `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, and `cancel` over supported product paths, including remaining Git revision/dirty identity qualification.
+1. **#53 — portable evidence references before `/evidence`.** The C1/C2 #54 increments now expose stable list/cancel and bounded Run-global events over the completed C0 semantics, including attempt provenance and executable OpenAPI/SDK coverage. Unify kernel/storage/API evidence identity before the public evidence endpoint hardens that representation.
+2. **#54 evidence completion + remaining compatibility contract.** After #53, expose evidence, finish SDK drift/error/retry and additive/evolution rules, and keep #52 explicit before authorization semantics are expanded or frozen. Keep framework/model types at the boundary and preserve the vendor-neutral domain.
+3. **D1 operator surface.** Implement `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, and `cancel` over supported product paths once their backing contracts are real, including remaining Git revision/dirty identity qualification.
 4. **Production image + Compose.** Promote qualified probe assumptions into the real image/topology, including non-root execution, Docker socket GID handling, read-only workspace identity, durable data volume, health dependency, sibling-container execution and explicit `restart: "no"` for crash-acceptance workers.
 5. **#57 — complete the frozen fifteen-step v0.1 journey.** Activate acceptance steps incrementally as capabilities land; keep #57 open until the entire frozen journey executes and passes in the authoritative qualification context.
 6. **Release blockers and publication.** Close remaining trust/process blockers, empty the acceptance skip allowance, require strict 15/15 exact-SHA evidence, enable required release protections, bump versions consistently, tag, publish immutable artifacts, and smoke published artifacts by digest/version.
@@ -63,7 +63,7 @@ The Docker-host assumptions must be proved on GitHub-hosted Linux runners: suppl
 ### Contract corrections carried into implementation
 
 - Storage event identity is `(attempt_id, sequence)`; the service/API projection exposes dense Run-global sequence ordered by `(attempt.ordinal, sequence)`.
-- Event polling is bounded and keyset-based with opaque Run-bound `since`/`next_since` cursors.
+- Event polling is bounded and keyset-based with opaque Run-bound `since`/`next_since` cursors; public Job event reads resolve the durable Run through the storage-neutral JobStore contract rather than deriving IDs or keeping process-local mappings.
 - Job listing is stable newest-first keyset pagination over `(created_at DESC, job_id DESC)`; public pagination must not regress to UUID ordering or OFFSET.
 - Cancelling an unclaimed pending Run terminalizes Job and Run transactionally without waiting for a worker.
 - Replaying an idempotency key is a pure read after creation, including failed/cancelled Jobs; a new Run requires a new key.
