@@ -1,14 +1,14 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-06. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-07. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 The v0.1 plan remains eight weeks, but execution is ahead of the original calendar in the durable-execution spine. Planning therefore uses capability order rather than waiting for nominal week boundaries. Each autonomous run still selects at most one coherent slice, revalidates against current `main`, and preserves all release gates.
 
 **Release-acceptance invariant.** Ordinary PR/main CI may run the frozen journey as explicitly named non-blocking progress telemetry while capabilities are still landing. A release/tag publication gate is different: it must verify the exact fifteen frozen required step names and fail closed if any step is skipped, xfailed, failed, errored, deselected/missing, renamed/unexpected, duplicated, or otherwise not executed. Machine-readable live/passed/skipped/xfail/missing counts are evidence; a normal pytest exit code alone is not release acceptance evidence.
 
-## Current position on 2026-09-06
+## Current position on 2026-09-07
 
-The repository now has the durable local execution spine required to move into control-plane qualification:
+The repository now has the durable local execution spine required to move through control-plane qualification:
 
 - pure Job -> Run -> Attempt lifecycle and canonical `Instant` semantics;
 - in-memory and SQLite `JobStore` adapters with shared conformance/fencing tests;
@@ -20,9 +20,10 @@ The repository now has the durable local execution spine required to move into c
 - `LocalWorkerRuntime` composition over SQLite, local durable stores and the real Docker executor;
 - a deterministic canonical demo that succeeds across clean per-cell containers through the real Docker command path;
 - a continuous worker lifecycle with unique poll identities, signal-aware graceful shutdown and Attempt-limit continuity;
-- real OS-process crash qualification: after three real-Docker cells are durably checkpointed, a separate worker process is killed non-gracefully, the production 30-second lease is allowed to expire, and a replacement process reclaims the same Run, reuses exactly the three valid checkpoints and executes only the remaining two cells.
+- real OS-process crash qualification: after three real-Docker cells are durably checkpointed, a separate worker process is killed non-gracefully, the production 30-second lease is allowed to expire, and a replacement process reclaims the same Run, reuses exactly the three valid checkpoints and executes only the remaining two cells;
+- #125 bounded-contention qualification at final server and worker call sites: authenticated HTTP POST/GET meet their published p95 budgets under bounded SQLite contention, while `LocalWorkerRuntime` proves durable lease renewal and reclaim/resume continue through real SQLite and local-artifact contention at the unchanged 30-second lease / 10-second heartbeat settings.
 
-The process-crash evidence advances #57 but does not complete it. The frozen fifteen-step journey still depends on the HTTP/SDK, CLI/operator, portable evidence, Compose and supported cancellation surfaces; normal progress telemetry must not be represented as release acceptance.
+The process-crash evidence advances #57 but does not complete it. The frozen fifteen-step journey still depends on the remaining HTTP/SDK, CLI/operator, portable evidence, Compose and supported cancellation surfaces; normal progress telemetry must not be represented as release acceptance.
 
 HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous execution stays serial: they are not opened in parallel merely because they are technically independent.
 
@@ -36,7 +37,7 @@ HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous exe
 
 **Objective.** Execute one durable local Run through worker claim, heartbeat, fenced per-cell persistence, lease expiry, replacement Attempt and record-level resume.
 
-**Status.** The core execution seam is implemented and qualified through a real OS-process death plus real Docker execution. Worker-originated durable writes are fenced; successful cells checkpoint before the next cell; corrupt/missing artifacts are not reused; cancellation and lease loss fail closed; the canonical demo is clean-container safe; graceful daemon shutdown and abrupt process death have separate qualification paths; abrupt-death qualification preserves the production 30-second lease TTL.
+**Status.** The core execution seam is implemented and qualified through a real OS-process death plus real Docker execution. Worker-originated durable writes are fenced; successful cells checkpoint before the next cell; corrupt/missing artifacts are not reused; cancellation and lease loss fail closed; the canonical demo is clean-container safe; graceful daemon shutdown and abrupt process death have separate qualification paths; abrupt-death qualification preserves the production 30-second lease TTL. Bounded-contention qualification now also proves the production worker runtime keeps renewing durable leases while selected SQLite/artifact operations occupy bounded workers and that replacement resume remains live while artifact verification is contended.
 
 **Remaining Phase-B/product-journey work.** Wire these proven capabilities through the supported operator journey as the surrounding surfaces land, and keep #57 open until the frozen acceptance sequence itself executes end-to-end. The dedicated Docker qualification already proves executor cancellation/timeout cleanup leaves no residual execution container, but the product-level cancel step still requires the supported control-plane/operator path.
 
@@ -48,7 +49,7 @@ HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous exe
 
 **Objective.** Make durable jobs remotely controllable through one bounded authenticated API whose executable OpenAPI contract matches `pyronin`.
 
-**Pull requests.** First complete #125 at the now-concrete runtime call sites, then add the frozen `/v1/jobs` submit/status/list/cancel/events/evidence surface over `DurableExecutionService`; add bearer-token authorization; define/verify dense Run-global event numbering across attempts; add OpenAPI golden/route coverage tests; align `pyronin` schemas/errors/retry behavior.
+**Pull requests.** Continue #54 with the frozen `/v1/jobs` submit/status/list/cancel/events/evidence surface over `DurableExecutionService`; add bearer-token authorization; define/verify dense Run-global event numbering across attempts; add OpenAPI golden/route coverage tests; align `pyronin` schemas/errors/retry behavior. The existing submit/status routes and their contention p95 budgets are already qualified; do not reimplement them.
 
 **Framework decision.** Framework choice is an implementation detail, not a domain decision. A standard-library HTTP server is acceptable if it satisfies the same route/auth/OpenAPI/SDK/error/qualification contract; a pinned FastAPI/Pydantic stack is also acceptable if dependency-lock, typing, architecture and image costs remain justified. In either case, framework/model types stay outside canonical domain packages.
 
@@ -95,7 +96,7 @@ HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous exe
 
 **Objective.** Qualify the exact implementation against the product budgets and trust requirements rather than inferring readiness from unit tests.
 
-**Pull requests.** Complete #125 with real runtime call-site contention tests; qualify p95 HTTP and storage budgets, lease/heartbeat/reclaim behavior, compose health, RSS and full `make check`; run security/secret/vulnerability/license qualification; verify deterministic demo/evidence output and targeted recovery cases.
+**Pull requests.** #125 contention qualification is complete. Continue qualifying the remaining product budgets as their supported surfaces land: compose health, RSS, full `make check`, security/secret/vulnerability/license qualification, deterministic demo/evidence output and targeted recovery cases.
 
 **Exit criteria.** All product budgets in `V01_SCOPE.md` are evidenced on exact SHAs; no known secret or vulnerability ships; no release gate is weakened to achieve green.
 
@@ -113,15 +114,14 @@ HTTP, CLI and packaging remain adjacent integration surfaces, but autonomous exe
 
 The current ordering is:
 
-1. #125 real-runtime bounded-contention qualification at the final server/worker/artifact call sites;
-2. #54 HTTP/OpenAPI/SDK;
-3. CLI/operator surface plus remaining Git qualification;
-4. production image/Compose;
-5. #53 portable evidence representation before the external API hardens it;
-6. incremental completion of the frozen fifteen-step acceptance journey, including the already-proven crash/reclaim semantics through the supported product path;
-7. full non-functional/security/release qualification and publication.
+1. #54 HTTP/OpenAPI/SDK;
+2. CLI/operator surface plus remaining Git qualification;
+3. production image/Compose;
+4. #53 portable evidence representation before the external API hardens it;
+5. incremental completion of the frozen fifteen-step acceptance journey, including the already-proven crash/reclaim semantics through the supported product path;
+6. full non-functional/security/release qualification and publication.
 
-This ordering supersedes stale handoff bodies that still describe already-landed storage, fencing, worker-loop or process-crash prerequisites as missing. It does not authorize parallel Builder PRs: each autonomous run must finish/reconcile its own prior work before selecting the next slice.
+#125 is complete and is no longer an eligible critical-path slice unless its acceptance criteria change or a regression reopens it. This ordering supersedes stale handoff bodies that still describe already-landed storage, fencing, worker-loop, process-crash or contention prerequisites as missing. It does not authorize parallel Builder PRs: each autonomous run must finish/reconcile its own prior work before selecting the next slice.
 
 ## Pre-decided calendar checkpoints
 
