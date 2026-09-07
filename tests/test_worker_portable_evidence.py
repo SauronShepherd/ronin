@@ -200,7 +200,10 @@ def test_runner_evidence_is_first_class_durable_and_location_independent(tmp_pat
             assert by_role["log"].storage_ref == "local-evidence://attempt/cell/log.json"
 
             result = (await service.worker_read_cell_results(RunId("run-portable-evidence")))[0]
-            assert '"digest":"1111111111111111111111111111111111111111111111111111111111111111"' in result.result_json
+            assert (
+                '"digest":"1111111111111111111111111111111111111111111111111111111111111111"'
+                in result.result_json
+            )
             assert '"availability":"available"' in result.result_json
             assert '"locator":"local-evidence://attempt/cell/log.json"' in result.result_json
 
