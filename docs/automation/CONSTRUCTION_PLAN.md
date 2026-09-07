@@ -8,7 +8,7 @@ The v0.1 plan remains eight weeks, but execution is ahead of the original calend
 
 ## Current position on 2026-09-07
 
-The repository now has the durable local execution spine required to move through control-plane qualification:
+The repository now has the durable local execution spine and local CLI foundation required to move through control-plane qualification:
 
 - pure Job -> Run -> Attempt lifecycle and canonical `Instant` semantics;
 - in-memory and SQLite `JobStore` adapters with shared conformance/fencing tests;
@@ -23,9 +23,10 @@ The repository now has the durable local execution spine required to move throug
 - real OS-process crash qualification: after three real-Docker cells are durably checkpointed, a separate worker process is killed non-gracefully, the production 30-second lease expires, and a replacement process reclaims the same Run, reuses exactly the three valid checkpoints and executes only the remaining two cells;
 - #125 bounded-contention qualification at final server and worker call sites;
 - release acceptance truth unified around exact-SHA Docker-capable JUnit/provenance plus an exact skip ratchet;
-- C0 storage pagination contracts: stable newest-first keyset job pagination, defensive opaque cursors, bounded Run-event keyset reads, and dense Run-global event projection across replacement Attempts without changing canonical `(attempt_id, sequence)` storage identity.
+- C0 storage pagination contracts: stable newest-first keyset job pagination, defensive opaque cursors, bounded Run-event keyset reads, and dense Run-global event projection across replacement Attempts without changing canonical `(attempt_id, sequence)` storage identity;
+- D0 supported local CLI with `doctor`, `validate`, and `plan`, activating frozen steps 2-4.
 
-The process-crash evidence advances #57 but does not complete it. The frozen fifteen-step journey still depends on the remaining HTTP/SDK, CLI/operator, portable evidence, Compose and supported cancellation surfaces. Current acceptance remains four live steps (6-9) and eleven explicitly skipped steps.
+The process-crash evidence advances #57 but does not complete it. The frozen fifteen-step journey still depends on the remaining HTTP/SDK, network/operator CLI, portable evidence, Compose and supported cancellation surfaces. Current acceptance is seven live steps (2, 3, 4, 6, 7, 8, 9) and eight explicitly skipped steps (1, 5, 10, 11, 12, 13, 14, 15).
 
 ## Phase A — completed foundation
 
@@ -47,7 +48,7 @@ The process-crash evidence advances #57 but does not complete it. The frozen fif
 
 **Status. Complete in this construction sequence.** The storage-neutral port now exposes bounded Run-event pages. Canonical durable event identity remains `(attempt_id, sequence)`, while the public/service-ready projection assigns dense Run-global sequence numbers in `(attempt.ordinal, sequence)` order. `since`/`next_since` is an opaque versioned keyset cursor bound to the Run; malformed, oversized, schema-drifted and cross-Run cursors fail closed. Job listing now uses newest-first keyset pagination over `(created_at DESC, job_id DESC)`, with opaque cursors bound to the active project/state filters. SQLite queries no longer use OFFSET for these public-facing pagination contracts, and in-memory/SQLite adapters share conformance tests for inserts between pages, timestamp ties, replacement Attempts, empty polling and resumed polling. The bounded async store facade exposes the same event-page operation.
 
-**Exit criteria.** Satisfied by the C0 qualification: replacement-Attempt events have one stable Run-global coordinate system at the service boundary; polling is bounded and does not materialize prior history; list pagination remains stable under concurrent newer inserts; cursor parsing is fail closed. Public HTTP routes are deliberately still absent and remain Phase C work.
+**Exit criteria.** Satisfied by the C0 qualification: replacement-Attempt events have one stable Run-global coordinate system at the service boundary; polling is bounded and does not materialize prior history; list pagination remains stable under concurrent newer inserts; cursor parsing is fail closed.
 
 Do not select C0 again unless a regression or changed contract reopens it.
 
@@ -55,7 +56,7 @@ Do not select C0 again unless a regression or changed contract reopens it.
 
 **Objective.** Make durable jobs remotely controllable through one bounded authenticated API whose executable OpenAPI contract matches `pyronin`.
 
-**Pull requests.** Continue #54 with the frozen `/v1/jobs` submit/status/list/cancel/events surface over `DurableExecutionService`; add bearer-token authorization; add OpenAPI golden/route coverage tests; align `pyronin` schemas/errors/retry behavior. Existing submit/status routes and contention p95 budgets are already qualified. C0 is now available as the storage contract for list/events. Defer the public evidence representation until #53 freezes portable evidence identity.
+**Status. In progress under #54.** Submit/status are already qualified. The current C1 increment adds stable C0-backed job listing and durable cancellation through `DurableExecutionService`, aligns the version-controlled OpenAPI contract and `pyronin` pagination, and qualifies those paths against real HTTP + SQLite. Public events remain the next #54 increment. Public evidence remains deferred until #53 freezes portable evidence identity.
 
 **Framework decision.** Framework choice is an implementation detail, not a domain decision. Framework/model types stay outside canonical domain packages.
 
@@ -65,9 +66,9 @@ Do not select C0 again unless a regression or changed contract reopens it.
 
 **Objective.** Provide the first supported `ronin` entry point using already-landed local capabilities without waiting for the entire HTTP block.
 
-**Status. Current next slice.** Implement and test `studio_cli:main`, enable the console entry point, and land `doctor`, `validate`, and `plan`. `validate` consumes existing project/notebook/runtime validation; `plan` consumes existing dependency levels; `doctor` reports the bounded local environment checks required by the frozen journey.
+**Status. Complete on current `main`.** The console entry point and HTTP-independent `doctor`, `validate`, and `plan` commands reuse existing project/notebook/dependency contracts and are qualified through the supported CLI path.
 
-**Exit criteria.** Frozen acceptance steps 2, 3 and 4 are live through the supported CLI path with no HTTP/store/Docker dependency introduced merely to activate them.
+**Exit criteria. Satisfied.** Frozen acceptance steps 2, 3 and 4 are live without introducing HTTP/store/Docker dependencies merely to activate them.
 
 ## Phase D1 — network/operator CLI and local Git revision capture
 
@@ -91,7 +92,7 @@ Do not select C0 again unless a regression or changed contract reopens it.
 
 **Activation order.**
 
-1. `doctor`, `validate`, `plan` after D0.
+1. `doctor`, `validate`, `plan` after D0 — complete.
 2. Compose health after Phase E.
 3. submit/status/idempotency/SDK after the supported Phase C/D1 path.
 4. logs/evidence after Run-global event ordering and #53 portable evidence references are real.
@@ -114,15 +115,14 @@ Do not select C0 again unless a regression or changed contract reopens it.
 
 ## Current critical path
 
-Acceptance truth wiring and C0 storage contracts are complete and are no longer selectable unless regression reopens them. The current ordering is:
+Acceptance truth wiring, C0 storage contracts and D0 local CLI are complete and are no longer selectable unless regression reopens them. After the current C1 list/cancel increment, the ordering is:
 
-1. D0 local CLI (`doctor`, `validate`, `plan`, console entry point);
-2. #54 list/cancel/events + executable OpenAPI/SDK contract using the completed C0 pagination/event semantics;
-3. #53 portable evidence identity before `/evidence` ships;
-4. #54 evidence completion plus D1 network/operator CLI;
-5. production image/Compose;
-6. incremental completion of the frozen fifteen-step journey with the Docker allowance shrinking to empty;
-7. remaining non-functional/security/release blockers and immutable publication.
+1. #54 Run-global events + continued executable OpenAPI/SDK contract over the completed C0 event semantics, considering #52 before freezing authorization semantics;
+2. #53 portable evidence identity before `/evidence` ships;
+3. #54 evidence completion plus D1 network/operator CLI;
+4. production image/Compose;
+5. incremental completion of the frozen fifteen-step journey with the Docker allowance shrinking to empty;
+6. remaining non-functional/security/release blockers and immutable publication.
 
 #125 is complete and is no longer an eligible critical-path slice unless its acceptance criteria change or a regression reopens it. This ordering does not authorize parallel Builder PRs: each autonomous run must finish/reconcile its own prior work before selecting the next slice.
 
@@ -138,7 +138,3 @@ Acceptance truth wiring and C0 storage contracts are complete and are no longer 
 | Mon 19 Oct: anything behind | Consume buffer and cut optional chaos breadth first. |
 
 **Never cut without an explicit product-scope revision:** the final fifteen-step v0.1 acceptance journey, a green `make check`, durability/trust invariants, or shipping with known secrets/vulnerabilities.
-
-## Post-v0.1 horizon, not scheduled
-
-E3-E10 remain frozen until v0.1 ships: data engineering, streaming/reliability, catalog/governance/BI, data science/MLOps, GenAI/RAG, agents, enterprise operations and ecosystem/maturity work are not eligible autonomous slices before the v0.1 release.

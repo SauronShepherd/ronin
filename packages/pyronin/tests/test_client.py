@@ -110,10 +110,24 @@ def test_unsafe_submission_without_idempotency_is_not_retried() -> None:
 
 
 def test_list_jobs_and_validation() -> None:
-    transport = FakeTransport([[{"id": "job-1", "state": "failed", "failure_code": "x"}]])
+    transport = FakeTransport(
+        [
+            {
+                "items": [{"id": "job-1", "state": "failed", "failure_code": "x"}],
+                "next_cursor": "next-1",
+            }
+        ]
+    )
     client = Ronin(transport=transport)
-    assert client.list_jobs(project="demo", state=JobState.FAILED)[0].failure_code == "x"
-    assert transport.calls[0][4] == {"project": "demo", "state": "failed"}
+    page = client.list_jobs(project="demo", state=JobState.FAILED, limit=25, cursor="cursor-0")
+    assert page.items[0].failure_code == "x"
+    assert page.next_cursor == "next-1"
+    assert transport.calls[0][4] == {
+        "limit": "25",
+        "project": "demo",
+        "state": "failed",
+        "cursor": "cursor-0",
+    }
     with pytest.raises(ValueError):
         Ronin()
     with pytest.raises(ValueError):
@@ -122,6 +136,10 @@ def test_list_jobs_and_validation() -> None:
         client.submit(project="", target="x")
     with pytest.raises(ValueError):
         client.list_jobs(project="")
+    with pytest.raises(ValueError):
+        client.list_jobs(limit=0)
+    with pytest.raises(ValueError):
+        client.list_jobs(cursor=" ")
 
 
 @pytest.mark.parametrize(
@@ -136,3 +154,17 @@ def test_list_jobs_and_validation() -> None:
 def test_invalid_job_payloads_fail_closed(payload: dict[str, object]) -> None:
     with pytest.raises(ProtocolError):
         Ronin(transport=FakeTransport([payload])).get_job("job")
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        [],
+        {"items": [], "next_cursor": None, "extra": True},
+        {"items": {}, "next_cursor": None},
+        {"items": [], "next_cursor": ""},
+    ],
+)
+def test_invalid_job_page_payloads_fail_closed(payload: object) -> None:
+    with pytest.raises(ProtocolError):
+        Ronin(transport=FakeTransport([payload])).list_jobs()

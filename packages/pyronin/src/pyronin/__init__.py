@@ -66,6 +66,12 @@ class Job:
 
 
 @dataclass(frozen=True, slots=True)
+class JobPage:
+    items: tuple[Job, ...]
+    next_cursor: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class JobEvent:
     sequence: int
     kind: str
@@ -307,18 +313,23 @@ class Ronin:
         *,
         project: str | None = None,
         state: JobState | None = None,
-    ) -> list[Job]:
-        query: dict[str, str] = {}
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> JobPage:
+        query: dict[str, str] = {"limit": str(limit)}
         if project is not None:
             if not project.strip():
                 raise ValueError("project must be non-empty when supplied")
             query["project"] = project
         if state is not None:
             query["state"] = state.value
-        payload = self._transport.request("GET", "/v1/jobs", query=query or None)
-        if not isinstance(payload, list):
-            raise ProtocolError("Expected a list of jobs")
-        return [_parse_job(item) for item in payload]
+        if not 1 <= limit <= 100:
+            raise ValueError("limit must be between 1 and 100")
+        if cursor is not None:
+            if not cursor or cursor != cursor.strip():
+                raise ValueError("cursor must be non-empty and trimmed when supplied")
+            query["cursor"] = cursor
+        return _parse_job_page(self._transport.request("GET", "/v1/jobs", query=query))
 
     def _cancel_job(self, job_id: str) -> Job:
         return _parse_job(
@@ -386,6 +397,20 @@ def _parse_job(payload: object) -> Job:
     return Job(job_id, job_state, failure_code)
 
 
+def _parse_job_page(payload: object) -> JobPage:
+    if not isinstance(payload, dict):
+        raise ProtocolError("Expected a job page object")
+    if set(payload) != {"items", "next_cursor"}:
+        raise ProtocolError("Job page must contain exactly items and next_cursor")
+    items = payload["items"]
+    next_cursor = payload["next_cursor"]
+    if not isinstance(items, list):
+        raise ProtocolError("Job page items must be a list")
+    if next_cursor is not None and (not isinstance(next_cursor, str) or not next_cursor):
+        raise ProtocolError("next_cursor must be a non-empty string when present")
+    return JobPage(tuple(_parse_job(item) for item in items), next_cursor)
+
+
 def _parse_event(payload: object) -> JobEvent:
     if not isinstance(payload, dict):
         raise ProtocolError("Expected a job event object")
@@ -410,6 +435,7 @@ __all__ = [
     "Job",
     "JobEvent",
     "JobHandle",
+    "JobPage",
     "JobState",
     "ProtocolError",
     "Ronin",

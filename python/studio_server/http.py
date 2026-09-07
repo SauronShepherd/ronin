@@ -18,15 +18,25 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Event, Thread
 from typing import Any, cast
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import uuid4
 
 from studio_execution import DurableExecutionService
-from studio_orchestrator import Instant, Job, JobId, JobState, Run, RunId, RunState
+from studio_orchestrator import Instant, Job, JobId, JobState, Page, Run, RunId, RunState
 from studio_storage import IdempotencyConflict, StorageBackpressureError
 
 _MAX_REQUEST_BYTES = 1024 * 1024
-SUPPORTED_ROUTES = frozenset({("POST", "/v1/jobs"), ("GET", "/v1/jobs/{job_id}")})
+_MAX_CURSOR_BYTES = 4096
+_MAX_LIST_LIMIT = 100
+_DEFAULT_LIST_LIMIT = 50
+SUPPORTED_ROUTES = frozenset(
+    {
+        ("POST", "/v1/jobs"),
+        ("GET", "/v1/jobs"),
+        ("GET", "/v1/jobs/{job_id}"),
+        ("POST", "/v1/jobs/{job_id}/cancel"),
+    }
+)
 
 
 def _now() -> Instant:
@@ -63,6 +73,27 @@ def _job_payload(job: Job) -> dict[str, object]:
     }
 
 
+def _page_payload(page: Page) -> dict[str, object]:
+    return {
+        "items": [_job_payload(job) for job in page.items],
+        "next_cursor": page.next_cursor,
+    }
+
+
+def _single_query_values(query: str) -> dict[str, str]:
+    parsed = parse_qs(query, keep_blank_values=True, strict_parsing=False)
+    allowed = {"project", "state", "limit", "cursor"}
+    unknown = set(parsed) - allowed
+    if unknown:
+        raise ValueError(f"unknown query parameter: {sorted(unknown)[0]}")
+    values: dict[str, str] = {}
+    for key, candidates in parsed.items():
+        if len(candidates) != 1:
+            raise ValueError(f"query parameter {key} must appear at most once")
+        values[key] = candidates[0]
+    return values
+
+
 class _ServiceLoop:
     """Own one asyncio loop for the bounded async service across HTTP threads."""
 
@@ -93,7 +124,7 @@ class _ServiceLoop:
 
 
 class DurableHTTPApplication:
-    """Transport mapping for the first frozen v0.1 submit/status endpoints."""
+    """Transport mapping for the implemented frozen v0.1 job-control endpoints."""
 
     def __init__(self, service: DurableExecutionService) -> None:
         self._service = service
@@ -163,6 +194,55 @@ class DurableHTTPApplication:
     def status(self, job_id: str) -> dict[str, object] | None:
         job = cast(Job | None, self._loop.call(self._service.status(JobId(job_id))))
         return None if job is None else _job_payload(job)
+
+    def list_jobs(
+        self,
+        *,
+        project: str | None,
+        state: str | None,
+        limit: str | None,
+        cursor: str | None,
+    ) -> dict[str, object]:
+        if project is not None and (
+            not project or project != project.strip() or len(project) > 256
+        ):
+            raise ValueError("project must be non-empty, trimmed, and at most 256 characters")
+        job_state = None
+        if state is not None:
+            try:
+                job_state = JobState(state)
+            except ValueError as exc:
+                raise ValueError("state is invalid") from exc
+        page_limit = _DEFAULT_LIST_LIMIT
+        if limit is not None:
+            try:
+                page_limit = int(limit)
+            except ValueError as exc:
+                raise ValueError("limit must be an integer") from exc
+            if not 1 <= page_limit <= _MAX_LIST_LIMIT:
+                raise ValueError(f"limit must be between 1 and {_MAX_LIST_LIMIT}")
+        if cursor is not None and (
+            not cursor
+            or cursor != cursor.strip()
+            or len(cursor.encode("utf-8")) > _MAX_CURSOR_BYTES
+        ):
+            raise ValueError("cursor must be non-empty, trimmed, and within the byte limit")
+        page = cast(
+            Page,
+            self._loop.call(
+                self._service.list_jobs(
+                    project_id=project,
+                    state=job_state,
+                    limit=page_limit,
+                    cursor=cursor,
+                )
+            ),
+        )
+        return _page_payload(page)
+
+    def cancel(self, job_id: str) -> dict[str, object]:
+        job = cast(Job, self._loop.call(self._service.cancel(JobId(job_id), now=_now())))
+        return _job_payload(job)
 
 
 class RoninHTTPServer(ThreadingHTTPServer):
@@ -245,54 +325,106 @@ class _Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         if not self._require_auth():
             return
-        if urlsplit(self.path).path != "/v1/jobs":
-            self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
+        split = urlsplit(self.path)
+        path = split.path
+        if path == "/v1/jobs":
+            if split.query:
+                self._error(
+                    HTTPStatus.BAD_REQUEST, "invalid_request", "submit does not accept query"
+                )
+                return
+            try:
+                status, payload = self._ronin_server().application.submit(
+                    self._read_json(),
+                    idempotency_key=self.headers.get("Idempotency-Key"),
+                )
+            except IdempotencyConflict:
+                self._error(
+                    HTTPStatus.CONFLICT,
+                    "idempotency_conflict",
+                    "idempotency key already exists for a different request",
+                )
+                return
+            except StorageBackpressureError:
+                self._error(
+                    HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
+                )
+                return
+            except ValueError as exc:
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
+                return
+            self._write_json(status, payload)
             return
-        try:
-            status, payload = self._ronin_server().application.submit(
-                self._read_json(),
-                idempotency_key=self.headers.get("Idempotency-Key"),
-            )
-        except IdempotencyConflict:
-            self._error(
-                HTTPStatus.CONFLICT,
-                "idempotency_conflict",
-                "idempotency key already exists for a different request",
-            )
-            return
-        except StorageBackpressureError:
-            self._error(HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy")
-            return
-        except ValueError as exc:
-            self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
-            return
-        self._write_json(status, payload)
 
-    def do_GET(self) -> None:  # noqa: N802
-        if not self._require_auth():
-            return
-        path = urlsplit(self.path).path
         prefix = "/v1/jobs/"
-        if not path.startswith(prefix) or path == prefix:
+        suffix = "/cancel"
+        if not path.startswith(prefix) or not path.endswith(suffix):
             self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
             return
-        encoded_job_id = path[len(prefix) :]
-        if "/" in encoded_job_id:
+        encoded_job_id = path[len(prefix) : -len(suffix)]
+        if not encoded_job_id or "/" in encoded_job_id or split.query:
             self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
             return
         try:
             job_id = unquote(encoded_job_id, errors="strict")
-            payload = self._ronin_server().application.status(job_id)
+            payload = self._ronin_server().application.cancel(job_id)
+        except KeyError:
+            self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
+            return
         except StorageBackpressureError:
             self._error(HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy")
             return
         except (UnicodeError, ValueError):
             self._error(HTTPStatus.BAD_REQUEST, "invalid_job_id", "job id is invalid")
             return
-        if payload is None:
+        self._write_json(HTTPStatus.OK, payload)
+
+    def do_GET(self) -> None:  # noqa: N802
+        if not self._require_auth():
+            return
+        split = urlsplit(self.path)
+        path = split.path
+        if path == "/v1/jobs":
+            try:
+                query = _single_query_values(split.query)
+                page_payload = self._ronin_server().application.list_jobs(
+                    project=query.get("project"),
+                    state=query.get("state"),
+                    limit=query.get("limit"),
+                    cursor=query.get("cursor"),
+                )
+            except StorageBackpressureError:
+                self._error(
+                    HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
+                )
+                return
+            except ValueError as exc:
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
+                return
+            self._write_json(HTTPStatus.OK, page_payload)
+            return
+
+        prefix = "/v1/jobs/"
+        if not path.startswith(prefix) or path == prefix:
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
+            return
+        encoded_job_id = path[len(prefix) :]
+        if "/" in encoded_job_id or split.query:
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
+            return
+        try:
+            job_id = unquote(encoded_job_id, errors="strict")
+            job_payload = self._ronin_server().application.status(job_id)
+        except StorageBackpressureError:
+            self._error(HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy")
+            return
+        except (UnicodeError, ValueError):
+            self._error(HTTPStatus.BAD_REQUEST, "invalid_job_id", "job id is invalid")
+            return
+        if job_payload is None:
             self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
             return
-        self._write_json(HTTPStatus.OK, payload)
+        self._write_json(HTTPStatus.OK, job_payload)
 
 
 __all__ = (
