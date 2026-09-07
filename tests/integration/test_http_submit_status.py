@@ -100,7 +100,7 @@ def test_real_http_sqlite_and_pyronin_submit_status_idempotency(tmp_path: Path) 
                 payload={
                     "project": "examples/demo",
                     "target": "notebooks/etl",
-                    "unexpected": true,
+                    "unexpected": True,
                 },
             )
         assert unknown_field.value.status_code == 400
