@@ -103,6 +103,7 @@ def _resolve_target(project_dir: Path, target: str) -> Path:
 
 def _doctor() -> int:
     git_path = shutil.which("git")
+    docker_path = shutil.which("docker")
     checks = (
         (
             "python>=3.11",
@@ -110,6 +111,7 @@ def _doctor() -> int:
             f"{sys.version_info.major}.{sys.version_info.minor}",
         ),
         ("git", git_path is not None, git_path or "not found"),
+        ("docker", docker_path is not None, docker_path or "not found"),
     )
     failed = False
     for name, ok, detail in checks:
