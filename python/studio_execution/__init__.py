@@ -9,6 +9,7 @@ from studio_orchestrator import (
     AttemptId,
     AttemptState,
     ClaimedRun,
+    EventPage,
     Instant,
     Job,
     JobId,
@@ -95,6 +96,20 @@ class DurableExecutionService:
             limit=limit,
             cursor=cursor,
         )
+
+    async def events(
+        self,
+        job_id: JobId,
+        *,
+        since: str | None,
+        limit: int,
+    ) -> EventPage | None:
+        """Read one bounded Run-global event page for a durable job."""
+
+        run_id = await self._store.get_run_id_for_job(job_id)
+        if run_id is None:
+            return None
+        return await self._store.read_event_page(run_id, since=since, limit=limit)
 
     async def cancel(self, job_id: JobId, *, now: Instant) -> Job:
         """Request cancellation through the same bounded store boundary."""
