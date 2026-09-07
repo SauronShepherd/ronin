@@ -198,6 +198,7 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
         _seed(config)
         slow_store: _SlowStatusSqliteStore | None = None
         slow_artifacts: _SlowPutArtifactStore | None = None
+        artifacts_created = asyncio.Event()
 
         def make_store(path: Path, *, migration_now: Instant) -> _SlowStatusSqliteStore:
             nonlocal slow_store
@@ -207,6 +208,7 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
         def make_artifacts(root: Path) -> _SlowPutArtifactStore:
             nonlocal slow_artifacts
             slow_artifacts = _SlowPutArtifactStore(root)
+            artifacts_created.set()
             return slow_artifacts
 
         monkeypatch.setattr(worker_runtime_module, "SqliteJobStore", make_store)
@@ -219,15 +221,13 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
             command_runner=_Runner(),
             engine_path="docker",
         ) as runtime:
+            assert slow_store is not None
             task = asyncio.create_task(
                 runtime.run_once(
                     attempt_id=attempt_id,
                     lease_token=LeaseToken("lease-contention-live"),
                 )
             )
-            async with asyncio.timeout(2.0):
-                while slow_store is None:
-                    await asyncio.sleep(0.01)
             assert await asyncio.to_thread(slow_store.started.wait, 2.0)
             first_heartbeat, first_expiry = _lease_state(config.database_path, attempt_id)
             second_heartbeat, second_expiry = await _wait_for_durable_heartbeat(
@@ -238,9 +238,8 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
             )
             slow_store.release.set()
 
-            async with asyncio.timeout(2.0):
-                while slow_artifacts is None:
-                    await asyncio.sleep(0.01)
+            await asyncio.wait_for(artifacts_created.wait(), timeout=2.0)
+            assert slow_artifacts is not None
             assert await asyncio.to_thread(slow_artifacts.started.wait, 2.0)
             await _wait_for_durable_heartbeat(
                 config.database_path,
@@ -289,10 +288,12 @@ def test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verif
         assert len(stored.read_cell_results(RunId("run-contention"))) == 1
 
         slow_artifacts: _SlowVerifyArtifactStore | None = None
+        artifacts_created = asyncio.Event()
 
         def make_artifacts(root: Path) -> _SlowVerifyArtifactStore:
             nonlocal slow_artifacts
             slow_artifacts = _SlowVerifyArtifactStore(root)
+            artifacts_created.set()
             return slow_artifacts
 
         monkeypatch.setattr(worker_runtime_module, "LocalArtifactStore", make_artifacts)
@@ -309,9 +310,8 @@ def test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verif
                     lease_token=LeaseToken("lease-contention-replacement"),
                 )
             )
-            async with asyncio.timeout(2.0):
-                while slow_artifacts is None:
-                    await asyncio.sleep(0.01)
+            await asyncio.wait_for(artifacts_created.wait(), timeout=2.0)
+            assert slow_artifacts is not None
             assert await asyncio.to_thread(slow_artifacts.started.wait, 2.0)
             first_heartbeat, first_expiry = _lease_state(config.database_path, attempt_id)
             await _wait_for_durable_heartbeat(
