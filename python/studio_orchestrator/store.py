@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from studio_kernel import ExecutionEvidenceReference
+
 from studio_orchestrator.instants import Instant
 from studio_orchestrator.lifecycle import (
     AttemptId,
@@ -117,19 +118,19 @@ class StoredEvidenceRef:
     ) -> StoredEvidenceRef:
         """Losslessly wrap a portable kernel evidence reference for durable storage."""
 
-        if reference.portable_identity is None:
+        digest_algorithm = reference.digest_algorithm
+        digest = reference.digest
+        size_bytes = reference.size_bytes
+        if digest_algorithm is None or digest is None or size_bytes is None:
             raise ValueError("durable evidence requires portable content identity")
-        assert reference.digest_algorithm is not None
-        assert reference.digest is not None
-        assert reference.size_bytes is not None
         return cls(
             run_id=run_id,
             cell_id=cell_id,
             role=reference.kind,
-            digest_algorithm=reference.digest_algorithm,
-            digest=reference.digest,
+            digest_algorithm=digest_algorithm,
+            digest=digest,
             media_type=reference.media_type,
-            size_bytes=reference.size_bytes,
+            size_bytes=size_bytes,
             storage_ref=reference.ref,
         )
 
