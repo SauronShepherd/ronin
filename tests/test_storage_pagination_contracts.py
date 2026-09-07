@@ -132,7 +132,9 @@ def test_cursor_decoders_reject_oversize_non_object_and_schema_drift() -> None:
     with pytest.raises(ValueError, match="invalid cursor"):
         paged_store._decode_cursor("x" * 1025)
     with pytest.raises(ValueError, match="invalid cursor"):
-        paged_store._decode_cursor(paged_store._encode_cursor({"payload": [1, 2]}).replace("eyJ", "WzE"))
+        paged_store._decode_cursor(
+            paged_store._encode_cursor({"payload": [1, 2]}).replace("eyJ", "WzE")
+        )
 
     wrong_job_version = paged_store._encode_cursor(
         {
