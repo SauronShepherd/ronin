@@ -10,8 +10,7 @@ def _coverage(files: dict[str, float]) -> dict[str, object]:
     return {
         "meta": {"version": "7.16.0"},
         "files": {
-            path: {"summary": {"percent_covered": percent}}
-            for path, percent in files.items()
+            path: {"summary": {"percent_covered": percent}} for path, percent in files.items()
         },
     }
 
@@ -98,7 +97,9 @@ def test_invalid_thresholds_percentages_and_shapes_fail_closed(tmp_path: Path) -
 
 def test_load_coverage_requires_files_object(tmp_path: Path) -> None:
     valid = tmp_path / "valid.json"
-    valid.write_text(json.dumps(_coverage({"python/studio_storage/module.py": 90.0})), encoding="utf-8")
+    valid.write_text(
+        json.dumps(_coverage({"python/studio_storage/module.py": 90.0})), encoding="utf-8"
+    )
     assert "files" in load_coverage(valid)
 
     for content in ("[]", '{"files": []}'):
