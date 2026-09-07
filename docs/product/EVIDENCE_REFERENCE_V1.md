@@ -39,11 +39,12 @@ A dirty Git revision may optionally link to a redacted patch artifact in additio
 
 The local Docker worker composition uses a portable wrapper around the existing file-fsynced execution evidence store. It preserves the local `local-evidence://` locator but computes SHA-256, media type, and exact byte size over the persisted canonical JSON. The content-addressed artifact store independently uses SHA-256 and verifies bytes on read. Conformance fixtures require identical canonical bytes written through these two local storage paths to retain the same digest and size even though their locators differ, and corrupted artifact bytes fail verification.
 
+Durable worker checkpoints now persist each runner-produced portable evidence reference as a first-class `StoredEvidenceRef`, correlated to the canonical Run and cell, before the cell checkpoint advances. The stored cell-result JSON carries the same portable payload instead of reducing evidence to `kind` plus a physical locator. Opaque legacy runner evidence fails closed at the durable worker boundary and is not checkpointed.
+
 Legacy opaque `ExecutionEvidenceReference(kind, ref)` values remain constructible during alpha migration for non-durable integrations, but `StoredEvidenceRef.from_execution_reference()` rejects them. Durable/public evidence must carry portable content identity before `/evidence` is exposed.
 
 ## Remaining #53 work before public `/evidence`
 
-- Persist runner-produced log/resource references as first-class durable `JobStore` evidence rather than only preserving their locators inside the cell-result payload.
 - Carry explicit missing/tombstoned/unavailable representation through durable persistence and the public API shape.
 - Decide and implement the safe optional dirty-patch artifact link when Git evidence is promoted through D1; do not store raw dirty content without redaction/secret qualification.
 - Bind the future OpenAPI/SDK evidence representation directly to this contract and add real server/SDK conformance before closing #53/#54.
