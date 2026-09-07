@@ -5,9 +5,19 @@ import time
 from pathlib import Path
 from threading import Event
 
-from studio_orchestrator import AttemptId, Instant, Job, JobId, JobState, LeaseToken, Run, RunId, RunState
+from studio_orchestrator import (
+    AttemptId,
+    Instant,
+    Job,
+    JobId,
+    JobState,
+    LeaseToken,
+    Run,
+    RunId,
+    RunState,
+)
 from studio_server import DurableExecutionService
-from studio_storage import BoundedAsyncArtifactStore, LocalArtifactStore, SqliteJobStore
+from studio_storage import ArtifactRef, BoundedAsyncArtifactStore, LocalArtifactStore, SqliteJobStore
 
 NOW = Instant("2026-09-07T05:00:00.000000Z")
 HEARTBEAT_NOW = Instant("2026-09-07T05:00:10.000000Z")
@@ -58,7 +68,13 @@ class _SlowArtifactStore(LocalArtifactStore):
         self.put_started = Event()
         self.release_put = Event()
 
-    def put_bytes(self, *, role: str, data: bytes, media_type: str | None = None):  # type: ignore[no-untyped-def]
+    def put_bytes(
+        self,
+        *,
+        role: str,
+        data: bytes,
+        media_type: str | None = None,
+    ) -> ArtifactRef:
         if role == "slow":
             self.put_started.set()
             if not self.release_put.wait(timeout=5.0):
