@@ -165,9 +165,7 @@ def _request_is_retry_safe(method: str, headers: Mapping[str, str]) -> bool:
 
 def _validate_cursor(value: str | None, *, name: str) -> None:
     if value is not None and (
-        not value
-        or value != value.strip()
-        or len(value.encode("utf-8")) > _MAX_CURSOR_BYTES
+        not value or value != value.strip() or len(value.encode("utf-8")) > _MAX_CURSOR_BYTES
     ):
         raise ValueError(f"{name} must be non-empty, trimmed, and within the byte limit")
 
