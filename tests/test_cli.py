@@ -15,15 +15,20 @@ def test_doctor_reports_required_local_tools(monkeypatch, capsys) -> None:
     assert output.err == ""
     assert "python>=3.11: ok" in output.out
     assert "git: ok (/usr/bin/git)" in output.out
+    assert "docker: ok (/usr/bin/docker)" in output.out
     assert "doctor: all checks passed" in output.out
 
 
-def test_doctor_fails_closed_when_git_is_missing(monkeypatch, capsys) -> None:
-    monkeypatch.setattr("studio_cli.shutil.which", lambda _name: None)
+def test_doctor_fails_closed_when_required_tool_is_missing(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        "studio_cli.shutil.which",
+        lambda name: None if name == "git" else f"/usr/bin/{name}",
+    )
 
     assert main(["doctor"]) == 2
     output = capsys.readouterr()
     assert "git: fail (not found)" in output.out
+    assert "docker: ok (/usr/bin/docker)" in output.out
     assert output.err == "error: doctor checks failed\n"
 
 
