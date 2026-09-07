@@ -1,5 +1,5 @@
 .PHONY: check format lint typecheck architecture gates-negative test \
-	coverage-t1 coverage-t2 coverage-t3 mutation
+	coverage-t1 coverage-t2 coverage-t3 coverage-storage-files mutation
 
 CODE_PATHS := python tests tools packages docker
 
@@ -22,7 +22,7 @@ gates-negative:
 
 test:
 	python -m pytest --cov --cov-branch --cov-report=
-	$(MAKE) coverage-t1 coverage-t2 coverage-t3
+	$(MAKE) coverage-t1 coverage-t2 coverage-t3 coverage-storage-files
 
 coverage-t1:
 	coverage report --fail-under=100 \
@@ -35,6 +35,12 @@ coverage-t2:
 coverage-t3:
 	coverage report --fail-under=75 \
 		--include="*/studio_execution/*,*/studio_server/*,*/studio_cli/*,*/pyronin/*"
+
+coverage-storage-files:
+	coverage json --include="*/studio_storage/*" -o coverage-storage.json
+	python -m tools.coverage_file_gate coverage-storage.json python/studio_storage \
+		--threshold=80 --baseline=sqlite.py=58.91891891891892
+	@rm -f coverage-storage.json
 
 mutation:
 	@rm -rf mutants
