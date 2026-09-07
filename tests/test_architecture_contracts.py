@@ -18,7 +18,7 @@ def test_current_project_respects_architecture_contracts() -> None:
     assert inspect_roots([Path("python")]) == []
 
 
-def test_matrix_contains_exactly_the_ten_v01_packages() -> None:
+def test_matrix_contains_exactly_the_v01_packages() -> None:
     assert set(PROJECT_DEPENDENCIES) == {
         "studio_core",
         "studio_notebook",
@@ -27,6 +27,7 @@ def test_matrix_contains_exactly_the_ten_v01_packages() -> None:
         "studio_orchestrator",
         "studio_storage",
         "studio_vcs",
+        "studio_execution",
         "studio_server",
         "studio_worker",
         "studio_cli",
@@ -130,6 +131,30 @@ def test_gate_rejects_forbidden_project_dependency() -> None:
         violations = inspect_file(path)
 
     assert [violation.rule for violation in violations] == ["DEP001"]
+
+
+def test_gate_rejects_worker_importing_server() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        path = _fixture(
+            directory,
+            "studio_worker",
+            "from studio_server import DurableExecutionService\n",
+        )
+        violations = inspect_file(path)
+
+    assert [violation.rule for violation in violations] == ["DEP001"]
+
+
+def test_gate_allows_worker_importing_shared_execution_service() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        path = _fixture(
+            directory,
+            "studio_worker",
+            "from studio_execution import DurableExecutionService\n",
+        )
+        violations = inspect_file(path)
+
+    assert violations == []
 
 
 def test_gate_allows_declared_project_dependency() -> None:
