@@ -7,6 +7,21 @@
   "security": [{"bearerAuth": []}],
   "paths": {
     "/v1/jobs": {
+      "get": {
+        "operationId": "listJobs",
+        "parameters": [
+          {"name": "project", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 256}},
+          {"name": "state", "in": "query", "schema": {"type": "string", "enum": ["queued", "running", "cancelling", "cancelled", "succeeded", "failed"]}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}},
+          {"name": "cursor", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 4096}}
+        ],
+        "responses": {
+          "200": {"description": "Stable newest-first job page", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/JobPage"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      },
       "post": {
         "operationId": "submitJob",
         "parameters": [
@@ -54,6 +69,26 @@
           "503": {"$ref": "#/components/responses/Error"}
         }
       }
+    },
+    "/v1/jobs/{job_id}/cancel": {
+      "post": {
+        "operationId": "cancelJob",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "minLength": 1, "maxLength": 256}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Cancellation requested or terminal job returned", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Job"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "404": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
     }
   },
   "components": {
@@ -82,6 +117,15 @@
             "enum": ["queued", "running", "cancelling", "cancelled", "succeeded", "failed"]
           },
           "failure_code": {"type": ["string", "null"]}
+        }
+      },
+      "JobPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "next_cursor"],
+        "properties": {
+          "items": {"type": "array", "items": {"$ref": "#/components/schemas/Job"}},
+          "next_cursor": {"type": ["string", "null"]}
         }
       },
       "Error": {
