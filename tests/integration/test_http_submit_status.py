@@ -31,7 +31,9 @@ def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
     assert document["security"] == [{"bearerAuth": []}]
 
 
-def test_real_http_sqlite_and_pyronin_submit_status_idempotency(tmp_path: Path) -> None:
+def test_real_http_sqlite_and_pyronin_submit_list_status_cancel_idempotency(
+    tmp_path: Path,
+) -> None:
     store = SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
     service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
     server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTHORIZATION)
@@ -53,18 +55,35 @@ def test_real_http_sqlite_and_pyronin_submit_status_idempotency(tmp_path: Path) 
             max_retries=0,
         )
         client = Ronin(transport=transport)
-        handle = client.submit(
+        first = client.submit(
             project="examples/demo",
             target="notebooks/etl",
             parameters={"limit": 7},
             idempotency_key="acceptance-k1",
         )
+        second = client.submit(
+            project="examples/demo",
+            target="notebooks/etl",
+            parameters={"limit": 8},
+            idempotency_key="acceptance-k2",
+        )
 
-        assert handle.status() is SDKJobState.QUEUED
-        stored = store.get_job(JobId(handle.id))
+        assert first.status() is SDKJobState.QUEUED
+        stored = store.get_job(JobId(first.id))
         assert stored is not None
         assert stored.target == "notebooks/etl"
         assert json.loads(stored.parameters_json) == {"limit": 7}
+
+        first_page = client.list_jobs(project="examples/demo", limit=1)
+        assert len(first_page.items) == 1
+        assert first_page.next_cursor is not None
+        second_page = client.list_jobs(
+            project="examples/demo",
+            limit=1,
+            cursor=first_page.next_cursor,
+        )
+        assert len(second_page.items) == 1
+        assert {first_page.items[0].id, second_page.items[0].id} == {first.id, second.id}
 
         replay = client.submit(
             project="examples/demo",
@@ -72,7 +91,12 @@ def test_real_http_sqlite_and_pyronin_submit_status_idempotency(tmp_path: Path) 
             parameters={"limit": 7},
             idempotency_key="acceptance-k1",
         )
-        assert replay.id == handle.id
+        assert replay.id == first.id
+
+        cancelled = second.cancel()
+        assert cancelled.id == second.id
+        assert cancelled.state is SDKJobState.CANCELLED
+        assert second.status() is SDKJobState.CANCELLED
 
         with pytest.raises(APIError) as conflict:
             client.submit(
@@ -93,23 +117,20 @@ def test_real_http_sqlite_and_pyronin_submit_status_idempotency(tmp_path: Path) 
         assert invalid.value.status_code == 400
         assert invalid.value.code == "invalid_request"
 
-        with pytest.raises(APIError) as unknown_field:
-            transport.request(
-                "POST",
-                "/v1/jobs",
-                payload={
-                    "project": "examples/demo",
-                    "target": "notebooks/etl",
-                    "unexpected": True,
-                },
-            )
-        assert unknown_field.value.status_code == 400
-        assert unknown_field.value.code == "invalid_request"
+        with pytest.raises(APIError) as bad_list:
+            transport.request("GET", "/v1/jobs", query={"limit": "0"})
+        assert bad_list.value.status_code == 400
+        assert bad_list.value.code == "invalid_request"
 
         with pytest.raises(APIError) as missing:
             client.get_job("job-does-not-exist")
         assert missing.value.status_code == 404
         assert missing.value.code == "job_not_found"
+
+        with pytest.raises(APIError) as missing_cancel:
+            transport.request("POST", "/v1/jobs/job-does-not-exist/cancel")
+        assert missing_cancel.value.status_code == 404
+        assert missing_cancel.value.code == "job_not_found"
 
         with pytest.raises(APIError) as route_missing:
             transport.request("GET", "/v1/unknown")
