@@ -90,7 +90,7 @@ class StoredCellResult:
 
 @dataclass(frozen=True, slots=True)
 class StoredEvidenceRef:
-    """Run/cell ownership wrapped around one portable evidence reference."""
+    """Run/cell ownership wrapped around a storage-neutral content reference."""
 
     run_id: RunId
     cell_id: str | None
@@ -101,33 +101,9 @@ class StoredEvidenceRef:
     size_bytes: int | None
     storage_ref: str | None
 
-    def __post_init__(self) -> None:
-        if not self.role or self.role != self.role.strip() or "\n" in self.role or "\r" in self.role:
-            raise ValueError("evidence role must be non-empty, trimmed, and single-line")
-        if self.digest_algorithm != "sha256":
-            raise ValueError("unsupported evidence digest algorithm")
-        if len(self.digest) != 64 or any(ch not in "0123456789abcdef" for ch in self.digest):
-            raise ValueError("evidence digest must be lowercase SHA-256 hex")
-        if self.size_bytes is not None and self.size_bytes < 0:
-            raise ValueError("evidence size must be non-negative")
-        if self.media_type is not None and (
-            not self.media_type
-            or self.media_type != self.media_type.strip()
-            or "\n" in self.media_type
-            or "\r" in self.media_type
-        ):
-            raise ValueError("evidence media type must be non-empty, trimmed, and single-line")
-        if self.storage_ref is not None and (
-            not self.storage_ref
-            or self.storage_ref != self.storage_ref.strip()
-            or "\n" in self.storage_ref
-            or "\r" in self.storage_ref
-        ):
-            raise ValueError("evidence storage reference must be non-empty, trimmed, and single-line")
-
     @property
     def portable_identity(self) -> tuple[str, str, str, str | None, int | None]:
-        """Return identity independent of the physical storage locator."""
+        """Return logical content identity independent of the physical locator."""
 
         return (self.role, self.digest_algorithm, self.digest, self.media_type, self.size_bytes)
 
