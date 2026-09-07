@@ -47,6 +47,33 @@ class StoredExecutionEvent:
 
 
 @dataclass(frozen=True, slots=True)
+class RunExecutionEvent:
+    """Run-global projection of one attempt-local durable event."""
+
+    sequence: int
+    attempt_id: AttemptId
+    attempt_sequence: int
+    kind: str
+    message: str
+    occurred_at: Instant
+
+    def __post_init__(self) -> None:
+        if self.sequence < 0:
+            raise ValueError("run event sequence must be non-negative")
+        if self.attempt_sequence < 0:
+            raise ValueError("attempt event sequence must be non-negative")
+        object.__setattr__(self, "occurred_at", Instant(self.occurred_at))
+
+
+@dataclass(frozen=True, slots=True)
+class EventPage:
+    """Bounded Run-global event page with an opaque polling cursor."""
+
+    items: tuple[RunExecutionEvent, ...]
+    next_since: str
+
+
+@dataclass(frozen=True, slots=True)
 class StoredCellResult:
     run_id: RunId
     cell_id: str
@@ -118,6 +145,14 @@ class JobStore(Protocol):
         now: Instant,
     ) -> None: ...
 
+    def read_event_page(
+        self,
+        run_id: RunId,
+        *,
+        since: str | None,
+        limit: int,
+    ) -> EventPage: ...
+
     def read_events(
         self,
         run_id: RunId,
@@ -165,8 +200,10 @@ class JobStore(Protocol):
 
 __all__ = [
     "ClaimedRun",
+    "EventPage",
     "JobStore",
     "Page",
+    "RunExecutionEvent",
     "StoredCellResult",
     "StoredEvidenceRef",
     "StoredExecutionEvent",

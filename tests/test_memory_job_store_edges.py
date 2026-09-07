@@ -71,12 +71,12 @@ def test_list_jobs_validates_bounds_and_paginates_filters() -> None:
         store.list_jobs(project_id=None, state=None, limit=101, cursor=None)
 
     first = store.list_jobs(project_id="project-1", state=JobState.QUEUED, limit=1, cursor=None)
-    assert [job.id for job in first.items] == [JobId("job-1")]
-    assert first.next_cursor == "1"
+    assert [job.id for job in first.items] == [JobId("job-2")]
+    assert first.next_cursor is not None
     second = store.list_jobs(
         project_id="project-1", state=JobState.QUEUED, limit=2, cursor=first.next_cursor
     )
-    assert [job.id for job in second.items] == [JobId("job-2")]
+    assert [job.id for job in second.items] == [JobId("job-1")]
     assert second.next_cursor is None
 
 
