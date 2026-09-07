@@ -73,7 +73,10 @@ def test_validate_rejects_invalid_notebook_dependencies(tmp_path: Path, capsys) 
         Path("examples/demo/notebooks/etl.ronin.json").read_text(encoding="utf-8")
     )
     source_notebook["cells"][1]["dependencies"] = ["missing-cell"]
-    (notebooks / "broken.ronin.json").write_text(json.dumps(source_notebook), encoding="utf-8")
+    (notebooks / "broken.ronin.json").write_text(
+        json.dumps(source_notebook),
+        encoding="utf-8",
+    )
 
     assert main(["validate", project]) == 2
     output = capsys.readouterr()
