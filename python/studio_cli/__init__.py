@@ -114,7 +114,7 @@ def _doctor() -> int:
     checks = (
         (
             "python>=3.11",
-            sys.version_info >= (3, 11),
+            sys.hexversion >= 0x030B0000,
             f"{sys.version_info.major}.{sys.version_info.minor}",
         ),
         ("git", git_path is not None, git_path or "not found"),
