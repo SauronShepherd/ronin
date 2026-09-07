@@ -10,7 +10,11 @@ from pathlib import Path
 from typing import cast
 
 from studio_core import ProjectManifest
-from studio_notebook import NotebookDependencyAnalysis, NotebookDocument, analyze_notebook_dependencies
+from studio_notebook import (
+    NotebookDependencyAnalysis,
+    NotebookDocument,
+    analyze_notebook_dependencies,
+)
 
 
 class CliError(RuntimeError):
@@ -18,7 +22,10 @@ class CliError(RuntimeError):
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="ronin", description="Ronin local-first execution tooling")
+    parser = argparse.ArgumentParser(
+        prog="ronin",
+        description="Ronin local-first execution tooling",
+    )
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor", help="check local prerequisites")
 
