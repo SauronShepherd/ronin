@@ -147,14 +147,17 @@ class ExecutionEvidenceReference:
         has_portable = any(value is not None for value in portable_values)
         if has_portable and any(value is None for value in portable_values):
             raise ValueError("portable evidence identity requires algorithm, digest, and size")
-        if self.digest_algorithm is not None:
-            if self.digest_algorithm != "sha256":
+        if has_portable:
+            digest_algorithm = self.digest_algorithm
+            digest = self.digest
+            size_bytes = self.size_bytes
+            if digest_algorithm is None or digest is None or size_bytes is None:
+                raise ValueError("portable evidence identity requires algorithm, digest, and size")
+            if digest_algorithm != "sha256":
                 raise ValueError("unsupported evidence digest algorithm")
-            assert self.digest is not None
-            if len(self.digest) != 64 or any(ch not in "0123456789abcdef" for ch in self.digest):
+            if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
                 raise ValueError("evidence digest must be lowercase SHA-256 hex")
-            assert self.size_bytes is not None
-            if self.size_bytes < 0:
+            if size_bytes < 0:
                 raise ValueError("evidence size must be non-negative")
         if self.media_type is not None:
             _require_text(self.media_type, "evidence media type")
