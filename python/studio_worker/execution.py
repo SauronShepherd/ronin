@@ -9,6 +9,7 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
+from studio_execution import DurableExecutionService
 from studio_kernel import (
     CancellationToken,
     CellExecutionResult,
@@ -28,7 +29,6 @@ from studio_orchestrator import (
     StoredExecutionEvent,
     can_resume_cell,
 )
-from studio_server import DurableExecutionService
 from studio_storage import ArtifactRef, BoundedAsyncArtifactStore, LocalArtifactStore
 
 

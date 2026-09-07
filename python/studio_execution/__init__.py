@@ -1,4 +1,4 @@
-"""Async durable-execution composition for server and worker control paths."""
+"""HTTP-neutral durable execution application service shared by server and worker."""
 
 from __future__ import annotations
 
@@ -35,9 +35,9 @@ class DurableExecutionService:
     """Keep asyncio control paths behind one bounded durable-store boundary.
 
     The service deliberately contains no HTTP, Docker, SQLite, cloud, engine or
-    provider semantics. It is the process-composition surface used by the future
-    HTTP server and worker loop so those call sites cannot accidentally invoke the
-    synchronous ``JobStore`` directly on an event-loop thread.
+    provider semantics. It is the shared application-composition surface used by
+    server and worker adapters so neither can accidentally invoke the synchronous
+    ``JobStore`` directly on an event-loop thread.
     """
 
     def __init__(

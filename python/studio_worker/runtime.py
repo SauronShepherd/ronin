@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from studio_core import RuntimeCapability, RuntimeCatalog, RuntimeProfile
+from studio_execution import DurableExecutionService, WorkerPollResult
 from studio_kernel import (
     ExecutionAttemptId,
     NotebookExecutionRequest,
@@ -36,7 +37,6 @@ from studio_runners import (
     DockerContainerKernelExecutor,
     LocalExecutionEvidenceStore,
 )
-from studio_server import DurableExecutionService, WorkerPollResult
 from studio_storage import LocalArtifactStore, SqliteJobStore
 
 from .execution import DurableWorkerExecution, WorkerExecutionOutcome, utc_now

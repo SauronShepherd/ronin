@@ -34,7 +34,7 @@ coverage-t2:
 
 coverage-t3:
 	coverage report --fail-under=75 \
-		--include="*/studio_server/*,*/studio_cli/*,*/pyronin/*"
+		--include="*/studio_execution/*,*/studio_server/*,*/studio_cli/*,*/pyronin/*"
 
 mutation:
 	@rm -rf mutants

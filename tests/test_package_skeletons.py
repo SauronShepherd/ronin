@@ -12,7 +12,9 @@ PACKAGES = (
     "studio_orchestrator",
     "studio_storage",
     "studio_vcs",
+    "studio_execution",
     "studio_server",
+    "studio_worker",
     "studio_cli",
 )
 
