@@ -104,6 +104,8 @@ class JobStore(Protocol):
 
     def get_job(self, job_id: JobId) -> Job | None: ...
 
+    def get_run_id_for_job(self, job_id: JobId) -> RunId | None: ...
+
     def list_jobs(
         self,
         *,
