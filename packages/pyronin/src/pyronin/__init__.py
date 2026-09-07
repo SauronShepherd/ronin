@@ -16,6 +16,7 @@ from urllib.request import HTTPRedirectHandler, OpenerDirector, Request, build_o
 __version__ = "0.1.0a2"
 
 _DEFAULT_MAX_RESPONSE_BYTES = 1024 * 1024
+_MAX_CURSOR_BYTES = 4096
 _RETRYABLE_STATUS_CODES = frozenset({429, 502, 503, 504})
 _RETRYABLE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
@@ -74,8 +75,17 @@ class JobPage:
 @dataclass(frozen=True, slots=True)
 class JobEvent:
     sequence: int
+    attempt_id: str
+    attempt_sequence: int
     kind: str
     message: str
+    occurred_at: str
+
+
+@dataclass(frozen=True, slots=True)
+class JobEventPage:
+    items: tuple[JobEvent, ...]
+    next_since: str
 
 
 class Transport(Protocol):
@@ -151,6 +161,15 @@ def _request_is_retry_safe(method: str, headers: Mapping[str, str]) -> bool:
     if upper == "POST":
         return any(key.casefold() == "idempotency-key" for key in headers)
     return False
+
+
+def _validate_cursor(value: str | None, *, name: str) -> None:
+    if value is not None and (
+        not value
+        or value != value.strip()
+        or len(value.encode("utf-8")) > _MAX_CURSOR_BYTES
+    ):
+        raise ValueError(f"{name} must be non-empty, trimmed, and within the byte limit")
 
 
 @dataclass(frozen=True, slots=True)
@@ -325,25 +344,36 @@ class Ronin:
             query["state"] = state.value
         if not 1 <= limit <= 100:
             raise ValueError("limit must be between 1 and 100")
+        _validate_cursor(cursor, name="cursor")
         if cursor is not None:
-            if not cursor or cursor != cursor.strip():
-                raise ValueError("cursor must be non-empty and trimmed when supplied")
             query["cursor"] = cursor
         return _parse_job_page(self._transport.request("GET", "/v1/jobs", query=query))
+
+    def get_events(
+        self,
+        job_id: str,
+        *,
+        since: str | None = None,
+        limit: int = 50,
+    ) -> JobEventPage:
+        if not 1 <= limit <= 100:
+            raise ValueError("limit must be between 1 and 100")
+        _validate_cursor(since, name="since")
+        query = {"limit": str(limit)}
+        if since is not None:
+            query["since"] = since
+        return _parse_event_page(
+            self._transport.request(
+                "GET",
+                f"/v1/jobs/{quote(job_id, safe='')}/events",
+                query=query,
+            )
+        )
 
     def _cancel_job(self, job_id: str) -> Job:
         return _parse_job(
             self._transport.request("POST", f"/v1/jobs/{quote(job_id, safe='')}/cancel")
         )
-
-    def _events(self, job_id: str) -> list[JobEvent]:
-        payload = self._transport.request(
-            "GET",
-            f"/v1/jobs/{quote(job_id, safe='')}/events",
-        )
-        if not isinstance(payload, list):
-            raise ProtocolError("Expected a list of job events")
-        return [_parse_event(item) for item in payload]
 
 
 @dataclass(frozen=True, slots=True)
@@ -371,8 +401,8 @@ class JobHandle:
     def cancel(self) -> Job:
         return self.client._cancel_job(self.id)
 
-    def events(self) -> list[JobEvent]:
-        return self.client._events(self.id)
+    def events(self, *, since: str | None = None, limit: int = 50) -> JobEventPage:
+        return self.client.get_events(self.id, since=since, limit=limit)
 
 
 def _parse_job(payload: object) -> Job:
@@ -414,19 +444,46 @@ def _parse_job_page(payload: object) -> JobPage:
 def _parse_event(payload: object) -> JobEvent:
     if not isinstance(payload, dict):
         raise ProtocolError("Expected a job event object")
-    try:
-        sequence = payload["sequence"]
-        kind = payload["kind"]
-        message = payload["message"]
-    except KeyError as exc:
-        raise ProtocolError(f"Job event payload missing {exc.args[0]!r}") from exc
-    if not isinstance(sequence, int) or sequence < 0:
+    expected = {"sequence", "attempt_id", "attempt_sequence", "kind", "message", "occurred_at"}
+    if set(payload) != expected:
+        raise ProtocolError("Job event fields do not match the event contract")
+    sequence = payload["sequence"]
+    attempt_id = payload["attempt_id"]
+    attempt_sequence = payload["attempt_sequence"]
+    kind = payload["kind"]
+    message = payload["message"]
+    occurred_at = payload["occurred_at"]
+    if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 0:
         raise ProtocolError("Job event sequence must be a non-negative integer")
+    if not isinstance(attempt_id, str) or not attempt_id:
+        raise ProtocolError("Job event attempt_id must be a non-empty string")
+    if (
+        not isinstance(attempt_sequence, int)
+        or isinstance(attempt_sequence, bool)
+        or attempt_sequence < 0
+    ):
+        raise ProtocolError("Job event attempt_sequence must be a non-negative integer")
     if not isinstance(kind, str) or not kind:
         raise ProtocolError("Job event kind must be a non-empty string")
     if not isinstance(message, str):
         raise ProtocolError("Job event message must be a string")
-    return JobEvent(sequence, kind, message)
+    if not isinstance(occurred_at, str) or not occurred_at:
+        raise ProtocolError("Job event occurred_at must be a non-empty string")
+    return JobEvent(sequence, attempt_id, attempt_sequence, kind, message, occurred_at)
+
+
+def _parse_event_page(payload: object) -> JobEventPage:
+    if not isinstance(payload, dict):
+        raise ProtocolError("Expected a job event page object")
+    if set(payload) != {"items", "next_since"}:
+        raise ProtocolError("Job event page must contain exactly items and next_since")
+    items = payload["items"]
+    next_since = payload["next_since"]
+    if not isinstance(items, list):
+        raise ProtocolError("Job event page items must be a list")
+    if not isinstance(next_since, str) or not next_since:
+        raise ProtocolError("next_since must be a non-empty string")
+    return JobEventPage(tuple(_parse_event(item) for item in items), next_since)
 
 
 __all__ = [
@@ -434,6 +491,7 @@ __all__ = [
     "HTTPTransport",
     "Job",
     "JobEvent",
+    "JobEventPage",
     "JobHandle",
     "JobPage",
     "JobState",
