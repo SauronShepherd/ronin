@@ -59,12 +59,24 @@ def _plus_seconds(value: Instant, seconds: int) -> Instant:
     return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
+def _portable_evidence_payloads(result: CellExecutionResult) -> list[dict[str, object]]:
+    payloads: list[dict[str, object]] = []
+    for reference in result.evidence:
+        try:
+            payloads.append(reference.portable_payload())
+        except ValueError as exc:
+            raise WorkerExecutionError(
+                "durable worker requires portable execution evidence"
+            ) from exc
+    return payloads
+
+
 def _result_json(result: CellExecutionResult) -> str:
     payload = {
         "cell_id": str(result.cell_id),
         "state": result.state,
         "failure_code": result.failure_code,
-        "evidence": [{"kind": ref.kind, "ref": ref.ref} for ref in result.evidence],
+        "evidence": _portable_evidence_payloads(result),
         "version": 1,
     }
     return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
@@ -156,6 +168,33 @@ class DurableWorkerExecution:
         )
         return can_resume_cell(identity, record, artifacts_verified=verified)
 
+    async def _checkpoint_runner_evidence(
+        self,
+        claim: ClaimedRun,
+        identity: CellExecutionIdentity,
+        result: CellExecutionResult,
+        *,
+        now: Instant,
+    ) -> None:
+        for reference in result.evidence:
+            try:
+                stored = StoredEvidenceRef.from_execution_reference(
+                    run_id=claim.run.id,
+                    cell_id=identity.cell_id,
+                    reference=reference,
+                )
+            except ValueError as exc:
+                raise WorkerExecutionError(
+                    "durable worker requires portable execution evidence"
+                ) from exc
+            await self.service.worker_put_evidence(
+                claim.attempt_id,
+                stored,
+                owner=self.owner,
+                lease_token=claim.lease_token,
+                now=now,
+            )
+
     async def _checkpoint(
         self,
         artifacts: BoundedAsyncArtifactStore,
@@ -170,6 +209,7 @@ class DurableWorkerExecution:
             media_type="application/vnd.ronin.cell-result+json",
         )
         now = self.now()
+        await self._checkpoint_runner_evidence(claim, identity, result, now=now)
         await self.service.worker_put_evidence(
             claim.attempt_id,
             StoredEvidenceRef(
