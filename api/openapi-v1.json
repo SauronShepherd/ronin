@@ -1,0 +1,111 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Ronin Control Plane API",
+    "version": "0.1.0-alpha"
+  },
+  "security": [{"bearerAuth": []}],
+  "paths": {
+    "/v1/jobs": {
+      "post": {
+        "operationId": "submitJob",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {"type": "string", "minLength": 1, "maxLength": 256}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/SubmitJobRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Idempotent replay", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Job"}}}},
+          "201": {"description": "Created", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Job"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "409": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/jobs/{job_id}": {
+      "get": {
+        "operationId": "getJob",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "minLength": 1, "maxLength": 256}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Current durable job status", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Job"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "404": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {"type": "http", "scheme": "bearer"}
+    },
+    "schemas": {
+      "SubmitJobRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["project", "target"],
+        "properties": {
+          "project": {"type": "string", "minLength": 1, "maxLength": 256},
+          "target": {"type": "string", "minLength": 1, "maxLength": 256},
+          "parameters": {"type": "object", "additionalProperties": true, "default": {}}
+        }
+      },
+      "Job": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "state", "failure_code"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "state": {
+            "type": "string",
+            "enum": ["queued", "running", "cancelling", "cancelled", "succeeded", "failed"]
+          },
+          "failure_code": {"type": ["string", "null"]}
+        }
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message"],
+            "properties": {
+              "code": {"type": "string", "minLength": 1},
+              "message": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Normalized error envelope",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+      }
+    }
+  }
+}
