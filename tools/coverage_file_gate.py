@@ -83,9 +83,13 @@ def validate_package_files(
         if percent + 1e-9 < required:
             failures.append(f"{relative}: {percent:.2f}% < required {required:.2f}%")
 
-    unknown_baselines = sorted(set(baselines) - {path.relative_to(source_root).as_posix() for path in expected})
+    unknown_baselines = sorted(
+        set(baselines) - {path.relative_to(source_root).as_posix() for path in expected}
+    )
     if unknown_baselines:
-        raise ValueError("coverage baselines reference missing files: " + ", ".join(unknown_baselines))
+        raise ValueError(
+            "coverage baselines reference missing files: " + ", ".join(unknown_baselines)
+        )
     if failures:
         raise ValueError("per-file coverage gate failed: " + "; ".join(failures))
     return measured
