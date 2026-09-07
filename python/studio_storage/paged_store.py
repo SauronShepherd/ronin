@@ -1,12 +1,8 @@
-"""Stable keyset pagination for durable jobs and Run-global events."""
+"""Stable keyset pagination adapters for durable jobs and Run-global events."""
 
 from __future__ import annotations
 
-import base64
-import binascii
-import json
 from functools import partial
-from typing import Any
 
 from studio_orchestrator import (
     AttemptId,
@@ -23,142 +19,27 @@ from studio_orchestrator import (
 from studio_storage.async_store import BoundedAsyncJobStore as _BoundedAsyncJobStore
 from studio_storage.fenced_sqlite import SqliteJobStore as _SqliteJobStore
 from studio_storage.memory import InMemoryJobStore as _InMemoryJobStore
+from studio_storage.pagination import (
+    decode_cursor,
+    decode_event_cursor,
+    decode_job_cursor,
+    encode_cursor,
+    encode_event_cursor,
+    encode_job_cursor,
+    initial_event_cursor,
+    validate_limit,
+)
 
-_CURSOR_VERSION = 1
-_MAX_CURSOR_BYTES = 1024
-
-
-def _encode_cursor(payload: dict[str, object]) -> str:
-    raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
-
-
-def _decode_cursor(cursor: str) -> dict[str, Any]:
-    if not cursor or len(cursor.encode("utf-8")) > _MAX_CURSOR_BYTES:
-        raise ValueError("invalid cursor")
-    try:
-        padding = "=" * (-len(cursor) % 4)
-        raw = base64.b64decode(cursor + padding, altchars=b"-_", validate=True)
-        decoded = json.loads(raw.decode("utf-8"))
-    except (ValueError, UnicodeDecodeError, json.JSONDecodeError, binascii.Error) as exc:
-        raise ValueError("invalid cursor") from exc
-    if not isinstance(decoded, dict):
-        raise ValueError("invalid cursor")
-    return decoded
-
-
-def _job_state_value(state: JobState | None) -> str | None:
-    return None if state is None else state.value
-
-
-def _encode_job_cursor(
-    *,
-    created_at: Instant,
-    job_id: JobId,
-    project_id: str | None,
-    state: JobState | None,
-) -> str:
-    return _encode_cursor(
-        {
-            "v": _CURSOR_VERSION,
-            "kind": "jobs",
-            "created_at": str(created_at),
-            "job_id": str(job_id),
-            "project_id": project_id,
-            "state": _job_state_value(state),
-        }
-    )
-
-
-def _decode_job_cursor(
-    cursor: str,
-    *,
-    project_id: str | None,
-    state: JobState | None,
-) -> tuple[Instant, JobId]:
-    payload = _decode_cursor(cursor)
-    expected_keys = {"v", "kind", "created_at", "job_id", "project_id", "state"}
-    if set(payload) != expected_keys or payload.get("v") != _CURSOR_VERSION:
-        raise ValueError("invalid job cursor")
-    if payload.get("kind") != "jobs":
-        raise ValueError("invalid job cursor")
-    if payload.get("project_id") != project_id or payload.get("state") != _job_state_value(state):
-        raise ValueError("job cursor does not match filters")
-    created_at = payload.get("created_at")
-    job_id = payload.get("job_id")
-    if not isinstance(created_at, str) or not isinstance(job_id, str) or not job_id:
-        raise ValueError("invalid job cursor")
-    try:
-        return Instant(created_at), JobId(job_id)
-    except ValueError as exc:
-        raise ValueError("invalid job cursor") from exc
-
-
-def _encode_event_cursor(
-    *,
-    run_id: RunId,
-    next_sequence: int,
-    attempt_ordinal: int,
-    attempt_sequence: int,
-) -> str:
-    return _encode_cursor(
-        {
-            "v": _CURSOR_VERSION,
-            "kind": "run-events",
-            "run_id": str(run_id),
-            "next_sequence": next_sequence,
-            "attempt_ordinal": attempt_ordinal,
-            "attempt_sequence": attempt_sequence,
-        }
-    )
-
-
-def _initial_event_cursor(run_id: RunId) -> str:
-    return _encode_event_cursor(
-        run_id=run_id,
-        next_sequence=0,
-        attempt_ordinal=0,
-        attempt_sequence=-1,
-    )
-
-
-def _decode_event_cursor(cursor: str, *, run_id: RunId) -> tuple[int, int, int]:
-    payload = _decode_cursor(cursor)
-    expected_keys = {
-        "v",
-        "kind",
-        "run_id",
-        "next_sequence",
-        "attempt_ordinal",
-        "attempt_sequence",
-    }
-    if set(payload) != expected_keys or payload.get("v") != _CURSOR_VERSION:
-        raise ValueError("invalid event cursor")
-    if payload.get("kind") != "run-events" or payload.get("run_id") != str(run_id):
-        raise ValueError("event cursor does not match run")
-    next_sequence = payload.get("next_sequence")
-    attempt_ordinal = payload.get("attempt_ordinal")
-    attempt_sequence = payload.get("attempt_sequence")
-    if (
-        not isinstance(next_sequence, int)
-        or isinstance(next_sequence, bool)
-        or next_sequence < 0
-        or not isinstance(attempt_ordinal, int)
-        or isinstance(attempt_ordinal, bool)
-        or attempt_ordinal < 0
-        or not isinstance(attempt_sequence, int)
-        or isinstance(attempt_sequence, bool)
-        or attempt_sequence < -1
-        or (attempt_ordinal == 0 and attempt_sequence != -1)
-        or (attempt_ordinal > 0 and attempt_sequence < 0)
-    ):
-        raise ValueError("invalid event cursor")
-    return next_sequence, attempt_ordinal, attempt_sequence
-
-
-def _validate_limit(limit: int) -> None:
-    if limit < 1 or limit > 100:
-        raise ValueError("limit must be between 1 and 100")
+# Private compatibility aliases keep existing contract tests stable while cursor
+# semantics live in one dedicated module instead of this adapter wrapper.
+_encode_cursor = encode_cursor
+_decode_cursor = decode_cursor
+_encode_job_cursor = encode_job_cursor
+_decode_job_cursor = decode_job_cursor
+_encode_event_cursor = encode_event_cursor
+_decode_event_cursor = decode_event_cursor
+_initial_event_cursor = initial_event_cursor
+_validate_limit = validate_limit
 
 
 class InMemoryJobStore(_InMemoryJobStore):
@@ -179,10 +60,10 @@ class InMemoryJobStore(_InMemoryJobStore):
         limit: int,
         cursor: str | None,
     ) -> Page:
-        _validate_limit(limit)
+        validate_limit(limit)
         after: tuple[Instant, str] | None = None
         if cursor is not None:
-            created_at, job_id = _decode_job_cursor(
+            created_at, job_id = decode_job_cursor(
                 cursor,
                 project_id=project_id,
                 state=state,
@@ -202,7 +83,7 @@ class InMemoryJobStore(_InMemoryJobStore):
             next_cursor = None
             if len(rows) > limit:
                 last = items[-1]
-                next_cursor = _encode_job_cursor(
+                next_cursor = encode_job_cursor(
                     created_at=last.created_at,
                     job_id=last.id,
                     project_id=project_id,
@@ -217,9 +98,9 @@ class InMemoryJobStore(_InMemoryJobStore):
         since: str | None,
         limit: int,
     ) -> EventPage:
-        _validate_limit(limit)
-        cursor = _initial_event_cursor(run_id) if since is None else since
-        next_sequence, after_ordinal, after_sequence = _decode_event_cursor(cursor, run_id=run_id)
+        validate_limit(limit)
+        cursor = initial_event_cursor(run_id) if since is None else since
+        next_sequence, after_ordinal, after_sequence = decode_event_cursor(cursor, run_id=run_id)
         with self._lock:
             attempts = sorted(
                 (attempt for attempt in self._attempts.values() if attempt.run_id == run_id),
@@ -252,7 +133,7 @@ class InMemoryJobStore(_InMemoryJobStore):
         if not selected:
             return EventPage(items, cursor)
         last_ordinal, last_event = selected[-1]
-        next_since = _encode_event_cursor(
+        next_since = encode_event_cursor(
             run_id=run_id,
             next_sequence=next_sequence + len(selected),
             attempt_ordinal=last_ordinal,
@@ -283,7 +164,7 @@ class SqliteJobStore(_SqliteJobStore):
         limit: int,
         cursor: str | None,
     ) -> Page:
-        _validate_limit(limit)
+        validate_limit(limit)
         clauses: list[str] = []
         values: list[object] = []
         if project_id is not None:
@@ -293,7 +174,7 @@ class SqliteJobStore(_SqliteJobStore):
             clauses.append("state=?")
             values.append(state.value)
         if cursor is not None:
-            created_at, job_id = _decode_job_cursor(
+            created_at, job_id = decode_job_cursor(
                 cursor,
                 project_id=project_id,
                 state=state,
@@ -315,7 +196,7 @@ class SqliteJobStore(_SqliteJobStore):
             next_cursor = None
             if len(rows) > limit:
                 last = jobs[-1]
-                next_cursor = _encode_job_cursor(
+                next_cursor = encode_job_cursor(
                     created_at=last.created_at,
                     job_id=last.id,
                     project_id=project_id,
@@ -332,9 +213,9 @@ class SqliteJobStore(_SqliteJobStore):
         since: str | None,
         limit: int,
     ) -> EventPage:
-        _validate_limit(limit)
-        cursor = _initial_event_cursor(run_id) if since is None else since
-        next_sequence, after_ordinal, after_sequence = _decode_event_cursor(cursor, run_id=run_id)
+        validate_limit(limit)
+        cursor = initial_event_cursor(run_id) if since is None else since
+        next_sequence, after_ordinal, after_sequence = decode_event_cursor(cursor, run_id=run_id)
         connection = self._connect()
         try:
             rows = connection.execute(
@@ -362,7 +243,7 @@ class SqliteJobStore(_SqliteJobStore):
         if not selected:
             return EventPage(items, cursor)
         last = selected[-1]
-        next_since = _encode_event_cursor(
+        next_since = encode_event_cursor(
             run_id=run_id,
             next_sequence=next_sequence + len(selected),
             attempt_ordinal=int(last["ordinal"]),
