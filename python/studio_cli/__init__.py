@@ -16,7 +16,11 @@ from typing import cast
 
 from studio_core import ProjectManifest
 from studio_execution import DurableExecutionService
-from studio_notebook import NotebookDependencyAnalysis, NotebookDocument, analyze_notebook_dependencies
+from studio_notebook import (
+    NotebookDependencyAnalysis,
+    NotebookDocument,
+    analyze_notebook_dependencies,
+)
 from studio_orchestrator import Instant
 from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
@@ -30,7 +34,9 @@ class CliError(RuntimeError):
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="ronin", description="Ronin local-first execution tooling")
+    parser = argparse.ArgumentParser(
+        prog="ronin", description="Ronin local-first execution tooling"
+    )
     commands = parser.add_subparsers(dest="command", required=True)
     doctor = commands.add_parser("doctor", help="check local prerequisites")
     doctor.add_argument("--require", choices=("core", "all"), default="all")
@@ -108,7 +114,9 @@ def _load_notebook(path: Path) -> NotebookDocument:
         raise CliError(f"invalid notebook {path}: {exc}") from exc
 
 
-def _require_valid_dependencies(document: NotebookDocument, *, path: Path) -> NotebookDependencyAnalysis:
+def _require_valid_dependencies(
+    document: NotebookDocument, *, path: Path
+) -> NotebookDependencyAnalysis:
     analysis = analyze_notebook_dependencies(document.notebook)
     if analysis.violations:
         detail = "; ".join(violation.message for violation in analysis.violations)
@@ -146,7 +154,12 @@ def _doctor(require: str) -> int:
     git_path = shutil.which("git")
     docker_path = shutil.which("docker")
     checks = (
-        ("python>=3.11", sys.hexversion >= 0x030B0000, f"{sys.version_info.major}.{sys.version_info.minor}", True),
+        (
+            "python>=3.11",
+            sys.hexversion >= 0x030B0000,
+            f"{sys.version_info.major}.{sys.version_info.minor}",
+            True,
+        ),
         ("git", git_path is not None, git_path or "not found", True),
         ("docker", docker_path is not None, docker_path or "not found", require == "all"),
     )
@@ -156,7 +169,9 @@ def _doctor(require: str) -> int:
         failed = failed or (required and not ok)
     if failed:
         raise CliError(f"doctor required {require} checks failed")
-    print("doctor: all checks passed" if require == "all" else "doctor: required core checks passed")
+    print(
+        "doctor: all checks passed" if require == "all" else "doctor: required core checks passed"
+    )
     return 0
 
 
@@ -178,7 +193,10 @@ def _plan(project: Path, target: str) -> int:
     target_path = _resolve_target(project_dir, target)
     document = _load_notebook(target_path)
     analysis = _require_valid_dependencies(document, path=target_path)
-    references = {cell.id: identity.reference for cell, identity in zip(document.notebook.cells, document.cell_identities, strict=True)}
+    references = {
+        cell.id: identity.reference
+        for cell, identity in zip(document.notebook.cells, document.cell_identities, strict=True)
+    }
     print(f"target: {target_path.relative_to(project_dir)}")
     print("execution order:")
     for position, cell_id in enumerate(analysis.execution_order, start=1):
@@ -198,7 +216,9 @@ def _env(name: str, default: str | None = None) -> str:
 
 def _token() -> str:
     token_file = os.environ.get("RONIN_TOKEN_FILE")
-    value = _read_text(Path(token_file), "token file").strip() if token_file else _env("RONIN_TOKEN")
+    value = (
+        _read_text(Path(token_file), "token file").strip() if token_file else _env("RONIN_TOKEN")
+    )
     if not value or value != value.strip() or "\n" in value or "\r" in value:
         raise CliError("Ronin token must be non-empty, trimmed, and single-line")
     return value
@@ -213,7 +233,9 @@ def _parse_params(values: Sequence[str]) -> dict[str, object]:
     for value in values:
         key, separator, raw = value.partition("=")
         if not separator or not key or key != key.strip() or key in result:
-            raise CliError("--param values must be unique KEY=VALUE pairs with non-empty trimmed keys")
+            raise CliError(
+                "--param values must be unique KEY=VALUE pairs with non-empty trimmed keys"
+            )
         try:
             parsed: object = json.loads(raw)
         except json.JSONDecodeError:
@@ -264,7 +286,9 @@ def _logs(namespace: argparse.Namespace) -> int:
             if cast(bool, namespace.json):
                 print(json.dumps(event, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
             else:
-                print(f"{event['sequence']}\t{event['attempt_id']}:{event['attempt_sequence']}\t{event['kind']}\t{event['message']}")
+                print(
+                    f"{event['sequence']}\t{event['attempt_id']}:{event['attempt_sequence']}\t{event['kind']}\t{event['message']}"
+                )
         since = cast(str, page["next_since"])
         if not cast(bool, namespace.follow):
             return 0
