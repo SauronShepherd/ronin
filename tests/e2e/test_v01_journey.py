@@ -25,6 +25,7 @@ pytestmark = pytest.mark.e2e
 
 _IMAGE = os.environ.get("RONIN_DOCKER_QUALIFICATION_IMAGE")
 _DOCKER = shutil.which("docker")
+_RONIN = shutil.which("ronin")
 _NOW = Instant("2026-09-06T20:00:00.000000Z")
 _PROCESS_PROBE = r"""
 from __future__ import annotations
@@ -120,6 +121,18 @@ def _docker_qualification_ready() -> bool:
         os.environ.get("RONIN_REAL_DOCKER_QUALIFICATION") == "1"
         and _IMAGE is not None
         and _DOCKER is not None
+    )
+
+
+def _ronin(*args: str) -> subprocess.CompletedProcess[str]:
+    assert _RONIN is not None, "installed ronin console entry point is required"
+    return subprocess.run(  # noqa: S603
+        (_RONIN, *args),
+        cwd=Path.cwd(),
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=15.0,
     )
 
 
@@ -267,16 +280,32 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
 def test_step_01_compose_reaches_healthy_within_60s() -> None: ...
 
 
-@pytest.mark.skip(reason="W5: ronin doctor does not exist yet")
-def test_step_02_doctor_reports_all_checks_passing() -> None: ...
+def test_step_02_doctor_reports_all_checks_passing() -> None:
+    result = _ronin("doctor")
+    assert result.returncode == 0, result.stderr
+    assert "doctor: all checks passed" in result.stdout
 
 
-@pytest.mark.skip(reason="W5: ronin validate does not exist yet")
-def test_step_03_validate_accepts_demo_project() -> None: ...
+def test_step_03_validate_accepts_demo_project() -> None:
+    result = _ronin("validate", "examples/demo")
+    assert result.returncode == 0, result.stderr
+    assert "validate: ok" in result.stdout
+    assert "notebooks: 1" in result.stdout
 
 
-@pytest.mark.skip(reason="W5: ronin plan does not exist yet")
-def test_step_04_plan_prints_order_and_levels() -> None: ...
+def test_step_04_plan_prints_order_and_levels() -> None:
+    result = _ronin("plan", "examples/demo", "-t", "notebooks/etl")
+    assert result.returncode == 0, result.stderr
+    assert "execution order:" in result.stdout
+    assert "1. extract-customers" in result.stdout
+    assert "2. extract-orders" in result.stdout
+    assert "3. join-and-aggregate" in result.stdout
+    assert "4. quality-check" in result.stdout
+    assert "5. publish" in result.stdout
+    assert "0: extract-customers, extract-orders" in result.stdout
+    assert "1: join-and-aggregate" in result.stdout
+    assert "2: quality-check" in result.stdout
+    assert "3: publish" in result.stdout
 
 
 @pytest.mark.skip(reason="W4: POST /v1/jobs does not exist yet")
