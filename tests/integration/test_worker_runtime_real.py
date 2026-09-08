@@ -226,17 +226,18 @@ def test_real_docker_worker_executes_clean_container_demo(tmp_path: Path) -> Non
 
         assert outcome.execution is not None
         assert outcome.execution.state.value == "succeeded"
-        assert len(outcome.execution.executed_cell_ids) == 5
+        assert len(outcome.execution.executed_cell_ids) == 6
         assert outcome.execution.reused_cell_ids == ()
 
         store = SqliteJobStore(config.database_path, migration_now=_NOW)
         job = store.get_job(JobId("job-real-demo"))
         assert job is not None
         assert job.state is JobState.SUCCEEDED
-        assert len(store.read_cell_results(RunId("run-real-demo"))) == 5
+        assert len(store.read_cell_results(RunId("run-real-demo"))) == 6
 
         outputs = _log_outputs(config.execution_evidence_root)
-        assert len(outputs) == 5
+        assert len(outputs) == 6
+        assert any("Ronin v0.1 demo" in output for output in outputs)
         assert any("extracted 100 customers" in output for output in outputs)
         assert any("extracted 500 orders" in output for output in outputs)
         assert any("quality checks passed" in output for output in outputs)
@@ -303,14 +304,14 @@ def test_real_process_sigkill_reclaims_same_run_and_reuses_three_cells(tmp_path:
         assert outcome["attempt_id"] == "attempt-process-replacement"
         assert outcome["state"] == "succeeded"
         assert len(outcome["reused"]) == 3
-        assert len(outcome["executed"]) == 2
+        assert len(outcome["executed"]) == 3
         assert set(outcome["reused"]) == {result.cell_id for result in before_crash}
 
         final_store = SqliteJobStore(config.database_path, migration_now=_NOW)
         job = final_store.get_job(JobId("job-process-crash"))
         assert job is not None
         assert job.state is JobState.SUCCEEDED
-        assert len(final_store.read_cell_results(RunId("run-process-crash"))) == 5
+        assert len(final_store.read_cell_results(RunId("run-process-crash"))) == 6
         events = final_store.read_events(RunId("run-process-crash"), since=0)
         assert sum(event.kind == "worker.attempt.succeeded" for event in events) == 1
     finally:
