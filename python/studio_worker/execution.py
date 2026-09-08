@@ -84,7 +84,12 @@ def _result_json(result: CellExecutionResult) -> str:
 
 
 def _artifact_ref(ref: StoredEvidenceRef) -> ArtifactRef | None:
-    if ref.digest_algorithm != "sha256" or ref.size_bytes is None or ref.storage_ref is None:
+    if (
+        ref.digest_algorithm != "sha256"
+        or ref.digest is None
+        or ref.size_bytes is None
+        or ref.storage_ref is None
+    ):
         return None
     return ArtifactRef(
         role=ref.role,
