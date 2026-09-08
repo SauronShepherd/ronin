@@ -244,14 +244,14 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
     tmp_path = tmp_path_factory.mktemp("v01-operator")
     store = SqliteJobStore(tmp_path / "ronin.db", migration_now=_NOW)
     service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
-    token = "v01-operator-token"
-    server = RoninHTTPServer(("127.0.0.1", 0), service, token=token)
+    auth_value = "v01-operator-auth"
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=auth_value)
     thread = Thread(target=server.serve_forever, name="v01-operator-http", daemon=True)
     thread.start()
     old_url = os.environ.get("RONIN_URL")
-    old_token = os.environ.get("RONIN_TOKEN")
+    old_auth_value = os.environ.get("RONIN_TOKEN")
     os.environ["RONIN_URL"] = f"http://127.0.0.1:{server.server_port}"
-    os.environ["RONIN_TOKEN"] = token
+    os.environ["RONIN_TOKEN"] = auth_value
     try:
         submitted = _cli_json(
             "submit",
@@ -359,7 +359,7 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
         )
         transport = HTTPTransport(
             f"http://127.0.0.1:{server.server_port}",
-            token=token,
+            token=auth_value,
             allow_insecure_localhost=True,
             max_retries=0,
         )
@@ -389,10 +389,10 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
             os.environ.pop("RONIN_URL", None)
         else:
             os.environ["RONIN_URL"] = old_url
-        if old_token is None:
+        if old_auth_value is None:
             os.environ.pop("RONIN_TOKEN", None)
         else:
-            os.environ["RONIN_TOKEN"] = old_token
+            os.environ["RONIN_TOKEN"] = old_auth_value
         server.shutdown()
         server.server_close()
         thread.join(timeout=5.0)
