@@ -15,6 +15,7 @@ from studio_kernel import (
     RepositoryRevision,
     SessionPolicy,
 )
+from studio_notebook import NotebookDocument
 from studio_orchestrator import (
     AttemptId,
     AttemptState,
@@ -79,12 +80,14 @@ def _run() -> Run:
     )
 
 
-def _prepared(attempt_id: AttemptId) -> tuple[NotebookExecutionRequest, tuple[CellExecutionIdentity, ...]]:
+def _prepared(
+    attempt_id: AttemptId,
+) -> tuple[NotebookExecutionRequest, tuple[CellExecutionIdentity, ...]]:
     project_dir = Path("examples/demo")
     manifest = ProjectManifest.from_json(
         (project_dir / ".ronin" / "project.json").read_text(encoding="utf-8")
     )
-    document = __import__("studio_notebook", fromlist=["NotebookDocument"]).NotebookDocument.from_json(
+    document = NotebookDocument.from_json(
         (project_dir / "notebooks" / "etl.ronin.json").read_text(encoding="utf-8")
     )
     loaded = LoadedProject(
@@ -122,7 +125,8 @@ class _EventControlledExecutor:
         self.started.set()
         await self.release.wait()
         self.cancellation_seen = cancellation.is_cancelled
-        return CellExecutionResult(cell.cell_id, "cancelled" if self.cancellation_seen else "succeeded")
+        state = "cancelled" if self.cancellation_seen else "succeeded"
+        return CellExecutionResult(cell.cell_id, state)
 
 
 class _ObservedCancellationService(DurableExecutionService):
@@ -130,7 +134,7 @@ class _ObservedCancellationService(DurableExecutionService):
         super().__init__(store)
         self._observed = observed
 
-    async def status(self, job_id: JobId):
+    async def status(self, job_id: JobId) -> Job | None:
         job = await super().status(job_id)
         if job is not None and job.state in {JobState.CANCELLING, JobState.CANCELLED}:
             self._observed.set()
