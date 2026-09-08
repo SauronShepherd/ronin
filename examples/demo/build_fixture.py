@@ -26,9 +26,9 @@ _TOTALS = (
 CELLS: tuple[tuple[str, str, str | None, str, tuple[str, ...]], ...] = (
     (
         "intro",
-        "markdown",
-        None,
-        "# Demo ETL\n\nSix-cell demo notebook used by the Ronin v0.1 acceptance journey.",
+        "code",
+        "python",
+        "print('Ronin v0.1 demo')",
         (),
     ),
     (
