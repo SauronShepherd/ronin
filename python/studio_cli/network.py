@@ -134,9 +134,7 @@ class ControlPlaneClient:
         query = {"limit": str(limit)}
         if since is not None:
             query["since"] = since
-        payload = self.request(
-            "GET", f"/v1/jobs/{quote(job_id, safe='')}/events", query=query
-        )
+        payload = self.request("GET", f"/v1/jobs/{quote(job_id, safe='')}/events", query=query)
         if not isinstance(payload, dict) or set(payload) != {"items", "next_since"}:
             raise ControlPlaneError("Ronin events response violated the protocol")
         items = payload["items"]
