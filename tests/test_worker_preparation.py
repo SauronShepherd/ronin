@@ -100,7 +100,7 @@ def test_load_project_rejects_empty_and_escaping_target(
         load_project(paths, _job(target="../../pyproject.toml"))
 
 
-def test_local_runtime_resolves_demo_and_builds_five_python_requests(
+def test_local_runtime_resolves_demo_and_builds_six_python_requests(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     loaded = _load_demo(monkeypatch)
@@ -108,7 +108,7 @@ def test_local_runtime_resolves_demo_and_builds_five_python_requests(
     request = build_request(loaded, runtime, AttemptId("attempt-1"))
     assert runtime.resolved_profile.ref == RuntimeProfileRef("docker", "python-3.11-slim")
     assert len(runtime_snapshot_digest(runtime)) == 64
-    assert len(request.cells) == 5
+    assert len(request.cells) == 6
     assert all(cell.language == "python" for cell in request.cells)
 
 
@@ -135,11 +135,14 @@ def test_identity_chain_invalidates_all_downstream_dependents(
     request = build_request(loaded, runtime, AttemptId("attempt-1"))
     original = execution_identities(request, run_id=RunId("run-1"), loaded=loaded, job=_job())
 
-    changed_first = replace(
-        request.cells[0],
-        authored_source=request.cells[0].authored_source + "\nprint('changed')",
+    changed_customers = replace(
+        request.cells[1],
+        authored_source=request.cells[1].authored_source + "\nprint('changed')",
     )
-    changed_request = replace(request, cells=(changed_first, *request.cells[1:]))
+    changed_request = replace(
+        request,
+        cells=(request.cells[0], changed_customers, *request.cells[2:]),
+    )
     changed = execution_identities(
         changed_request,
         run_id=RunId("run-1"),
@@ -147,12 +150,13 @@ def test_identity_chain_invalidates_all_downstream_dependents(
         job=_job(),
     )
 
-    assert original[0].digest != changed[0].digest
-    assert original[1].digest == changed[1].digest
-    assert tuple(item.digest for item in original[2:]) != tuple(item.digest for item in changed[2:])
-    assert changed[2].upstream_result_digests[0] == changed[0].digest
-    assert changed[3].upstream_result_digests == (changed[2].digest,)
+    assert original[0].digest == changed[0].digest
+    assert original[1].digest != changed[1].digest
+    assert original[2].digest == changed[2].digest
+    assert tuple(item.digest for item in original[3:]) != tuple(item.digest for item in changed[3:])
+    assert changed[3].upstream_result_digests == (changed[1].digest, changed[2].digest)
     assert changed[4].upstream_result_digests == (changed[3].digest,)
+    assert changed[5].upstream_result_digests == (changed[4].digest,)
 
 
 def test_identity_changes_for_dirty_revision_and_not_json_key_order(

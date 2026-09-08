@@ -12,7 +12,7 @@ from studio_kernel import (
     KernelDirective,
 )
 from studio_notebook import CellId
-from studio_orchestrator import RunId, StoredEvidenceRef
+from studio_orchestrator import EvidenceAvailability, RunId, StoredEvidenceRef
 from studio_runners import LocalExecutionEvidenceStore
 from studio_storage import ArtifactIntegrityError, LocalArtifactStore
 
@@ -118,16 +118,18 @@ def test_durable_evidence_mapping_is_lossless_and_rejects_unavailable_refs() -> 
             1,
             "artifact://sha256/" + "c" * 64,
         ).to_execution_reference()
-    with pytest.raises(ValueError, match="unavailable"):
+    with pytest.raises(ValueError, match="not currently available"):
         StoredEvidenceRef(
             stored.run_id,
             "cell-1",
             "log",
-            "sha256",
-            "c" * 64,
-            "application/json",
             None,
             None,
+            None,
+            None,
+            None,
+            availability=EvidenceAvailability.UNAVAILABLE,
+            unavailable_reason="execution evidence was not retained",
         ).to_execution_reference()
 
 

@@ -252,7 +252,7 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
 
         assert outcome.execution is not None
         assert outcome.execution.state.value == "succeeded"
-        assert len(outcome.execution.executed_cell_ids) == 5
+        assert len(outcome.execution.executed_cell_ids) == 6
 
     asyncio.run(scenario())
 
@@ -328,6 +328,6 @@ def test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verif
         assert outcome.execution is not None
         assert outcome.execution.state.value == "succeeded"
         assert len(outcome.execution.reused_cell_ids) == 1
-        assert len(outcome.execution.executed_cell_ids) == 4
+        assert len(outcome.execution.executed_cell_ids) == 5
 
     asyncio.run(scenario())
