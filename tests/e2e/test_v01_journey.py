@@ -6,6 +6,7 @@ capability lands. All fifteen must pass before v0.1 is tagged.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import shutil
@@ -52,6 +53,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+from contextlib import suppress
 from pathlib import Path
 
 from studio_kernel import CancellationSignal
@@ -88,6 +90,64 @@ class GateBeforeFourthDockerRun:
         )
 
 
+class LongFirstDockerRun:
+    def __init__(self, marker: Path) -> None:
+        self._inner = AsyncioCommandRunner()
+        self._marker = marker
+        self._calls = 0
+
+    async def _mark_running(self, docker: str, name: str) -> None:
+        while True:
+            probe = await asyncio.create_subprocess_exec(
+                docker,
+                "ps",
+                "--filter",
+                f"name=^{name}$",
+                "--format",
+                "{{.Names}}",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            stdout, _ = await probe.communicate()
+            if probe.returncode == 0 and name in stdout.decode().splitlines():
+                self._marker.write_text(name + "\n", encoding="utf-8")
+                return
+            await asyncio.sleep(0.05)
+
+    async def run(
+        self,
+        args: tuple[str, ...],
+        *,
+        input_text: str,
+        cancellation: CancellationSignal,
+        timeout_seconds: float,
+        cancellation_args: tuple[str, ...],
+    ) -> CommandOutcome:
+        self._calls += 1
+        if self._calls != 1:
+            return await self._inner.run(
+                args,
+                input_text=input_text,
+                cancellation=cancellation,
+                timeout_seconds=timeout_seconds,
+                cancellation_args=cancellation_args,
+            )
+        name = cancellation_args[-1]
+        monitor = asyncio.create_task(self._mark_running(cancellation_args[0], name))
+        try:
+            return await self._inner.run(
+                args,
+                input_text="import time\ntime.sleep(120)\n",
+                cancellation=cancellation,
+                timeout_seconds=timeout_seconds,
+                cancellation_args=cancellation_args,
+            )
+        finally:
+            monitor.cancel()
+            with suppress(asyncio.CancelledError):
+                await monitor
+
+
 async def main() -> None:
     mode, workspace, data_dir, image, docker, marker, outcome_path = sys.argv[1:]
     config = LocalWorkerRuntimeConfig(
@@ -98,11 +158,16 @@ async def main() -> None:
             cpus="0.5",
             memory="128m",
             pids=32,
-            timeout_seconds=10.0,
+            timeout_seconds=300.0 if mode == "cancel" else 10.0,
         ),
         heartbeat_interval_seconds=10.0,
     )
-    runner = GateBeforeFourthDockerRun(Path(marker)) if mode == "crash" else None
+    if mode == "crash":
+        runner = GateBeforeFourthDockerRun(Path(marker))
+    elif mode == "cancel":
+        runner = LongFirstDockerRun(Path(marker))
+    else:
+        runner = None
     async with LocalWorkerRuntime(
         config,
         migration_now=Instant("2026-09-06T20:00:00.000000Z"),
@@ -113,7 +178,7 @@ async def main() -> None:
             attempt_id=AttemptId(f"attempt-process-{mode}"),
             lease_token=LeaseToken(f"lease-process-{mode}"),
         )
-    if mode == "replacement":
+    if mode in {"replacement", "cancel"}:
         assert result.execution is not None
         Path(outcome_path).write_text(
             json.dumps(
@@ -170,13 +235,19 @@ def _cli_json_lines(*args: str) -> list[object]:
     return [json.loads(line) for line in output.getvalue().splitlines() if line]
 
 
-def _seed(config: LocalWorkerRuntimeConfig) -> None:
+def _seed(
+    config: LocalWorkerRuntimeConfig,
+    *,
+    job_id: str = "job-v01-acceptance",
+    run_id: str = "run-v01-acceptance",
+    key: str = "v01-acceptance-key",
+) -> None:
     store = SqliteJobStore(config.database_path, migration_now=_NOW)
     store.create_job(
         Job(
-            id=JobId("job-v01-acceptance"),
+            id=JobId(job_id),
             project_id="examples/demo",
-            idempotency_key="v01-acceptance-key",
+            idempotency_key=key,
             request_digest="b" * 64,
             state=JobState.QUEUED,
             created_at=_NOW,
@@ -185,8 +256,8 @@ def _seed(config: LocalWorkerRuntimeConfig) -> None:
             parameters_json='{"mode":"qualification"}',
         ),
         Run(
-            id=RunId("run-v01-acceptance"),
-            job_id=JobId("job-v01-acceptance"),
+            id=RunId(run_id),
+            job_id=JobId(job_id),
             ordinal=1,
             state=RunState.PENDING,
             not_before=_NOW,
@@ -469,6 +540,103 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
             first.wait(timeout=5.0)
 
 
+@pytest.fixture(scope="module")
+def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
+    if not _docker_qualification_ready():
+        pytest.skip(
+            "live cancellation acceptance requires the dedicated real-Docker qualification job"
+        )
+
+    tmp_path = tmp_path_factory.mktemp("v01-worker-cancel")
+    marker = tmp_path / "container-running.marker"
+    outcome_path = tmp_path / "cancel-outcome.json"
+    config = LocalWorkerRuntimeConfig(
+        paths=WorkerPaths(Path.cwd(), tmp_path / "cancel-data"),
+        owner="parent-cancel-server",
+        image=_IMAGE,
+        limits=ContainerExecutionLimits(
+            cpus="0.5",
+            memory="128m",
+            pids=32,
+            timeout_seconds=300.0,
+        ),
+        heartbeat_interval_seconds=10.0,
+    )
+    _seed(
+        config,
+        job_id="job-v01-cancel",
+        run_id="run-v01-cancel",
+        key="v01-cancel-key",
+    )
+
+    store = SqliteJobStore(config.database_path, migration_now=_NOW)
+    service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
+    auth_value = "v01-cancel-auth"
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=auth_value)
+    thread = Thread(target=server.serve_forever, name="v01-cancel-http", daemon=True)
+    thread.start()
+    old_url = os.environ.get("RONIN_URL")
+    old_auth_value = os.environ.get("RONIN_TOKEN")
+    os.environ["RONIN_URL"] = f"http://127.0.0.1:{server.server_port}"
+    os.environ["RONIN_TOKEN"] = auth_value
+    process = subprocess.Popen(  # noqa: S603
+        _process_args("cancel", config, marker, outcome_path),
+        cwd=Path.cwd(),
+        text=True,
+    )
+    try:
+        _wait_for_path(marker, process, timeout=20.0)
+        container_name = marker.read_text(encoding="utf-8").strip()
+        assert container_name.startswith("ronin-")
+        started = time.monotonic()
+        cancelled = _cli_json("cancel", "job-v01-cancel", "--json")
+        assert isinstance(cancelled, dict)
+        assert cancelled["state"] == "cancelling"
+        assert process.wait(timeout=10.0) == 0
+        elapsed = time.monotonic() - started
+        outcome = json.loads(outcome_path.read_text(encoding="utf-8"))
+        final_store = SqliteJobStore(config.database_path, migration_now=_NOW)
+        job = final_store.get_job(JobId("job-v01-cancel"))
+        docker_ps = subprocess.run(  # noqa: S603
+            (
+                _DOCKER,
+                "ps",
+                "--filter",
+                f"name=^{container_name}$",
+                "--format",
+                "{{.Names}}",
+            ),
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=5.0,
+        )
+        return {
+            "outcome": outcome,
+            "job": job,
+            "container_name": container_name,
+            "docker_ps": docker_ps,
+            "elapsed": elapsed,
+        }
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=5.0)
+        if old_url is None:
+            os.environ.pop("RONIN_URL", None)
+        else:
+            os.environ["RONIN_URL"] = old_url
+        if old_auth_value is None:
+            os.environ.pop("RONIN_TOKEN", None)
+        else:
+            os.environ["RONIN_TOKEN"] = old_auth_value
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5.0)
+        assert not thread.is_alive()
+        asyncio.run(service.aclose())
+
+
 @pytest.mark.skip(reason="W6: compose file does not exist yet")
 def test_step_01_compose_reaches_healthy_within_60s() -> None: ...
 
@@ -583,8 +751,16 @@ def test_step_13_replayed_idempotency_key_returns_same_job(
     assert operator_journey["job_count"] == 1
 
 
-@pytest.mark.skip(reason="W5: cancellation container cleanup is not qualified yet")
-def test_step_14_cancel_removes_container() -> None: ...
+def test_step_14_cancel_removes_container(worker_cancel_journey: dict[str, object]) -> None:
+    outcome = worker_cancel_journey["outcome"]
+    job = worker_cancel_journey["job"]
+    docker_ps = worker_cancel_journey["docker_ps"]
+    assert outcome["state"] == "cancelled"
+    assert job is not None
+    assert job.state is JobState.CANCELLED
+    assert docker_ps.returncode == 0
+    assert docker_ps.stdout.strip() == ""
+    assert worker_cancel_journey["elapsed"] < 10.0
 
 
 def test_step_15_sdk_round_trip_matches_cli(operator_journey: dict[str, object]) -> None:
