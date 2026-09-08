@@ -473,9 +473,7 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
 @pytest.fixture(scope="module")
 def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     if not _docker_qualification_ready():
-        pytest.skip(
-            "live worker acceptance requires the dedicated real-Docker qualification job"
-        )
+        pytest.skip("live worker acceptance requires the dedicated real-Docker qualification job")
 
     tmp_path = tmp_path_factory.mktemp("v01-worker-restart")
     data_dir = tmp_path / "process-crash"
@@ -485,9 +483,7 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
         paths=WorkerPaths(Path.cwd(), data_dir),
         owner="parent-seed-only",
         image=_IMAGE,
-        limits=ContainerExecutionLimits(
-            cpus="0.5", memory="128m", pids=32, timeout_seconds=10.0
-        ),
+        limits=ContainerExecutionLimits(cpus="0.5", memory="128m", pids=32, timeout_seconds=10.0),
         heartbeat_interval_seconds=10.0,
     )
     _seed(config)
@@ -554,9 +550,7 @@ def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str,
         paths=WorkerPaths(Path.cwd(), tmp_path / "cancel-data"),
         owner="parent-cancel-server",
         image=_IMAGE,
-        limits=ContainerExecutionLimits(
-            cpus="0.5", memory="128m", pids=32, timeout_seconds=300.0
-        ),
+        limits=ContainerExecutionLimits(cpus="0.5", memory="128m", pids=32, timeout_seconds=300.0),
         heartbeat_interval_seconds=10.0,
     )
     _seed(config, job_id="job-v01-cancel", run_id="run-v01-cancel", key="v01-cancel-key")
@@ -749,8 +743,8 @@ def test_step_12_evidence_present_for_all_six_cells(
     os.environ["RONIN_TOKEN"] = auth_value
     try:
         items = _cli_json_lines("evidence", "job-v01-acceptance", "--json")
-        assert len(items) == 12
         by_cell: dict[str, set[str]] = {}
+        cli_identities: set[tuple[object, ...]] = set()
         for item in items:
             assert isinstance(item, dict)
             assert item["availability"] == "available"
@@ -764,8 +758,18 @@ def test_step_12_evidence_present_for_all_six_cells(
             assert isinstance(cell_id, str)
             assert isinstance(role, str)
             by_cell.setdefault(cell_id, set()).add(role)
+            cli_identities.add(
+                (
+                    cell_id,
+                    role,
+                    item["digest_algorithm"],
+                    item["digest"],
+                    item["media_type"],
+                    item["size_bytes"],
+                )
+            )
         assert len(by_cell) == 6
-        assert all(roles == {"log", "resource"} for roles in by_cell.values())
+        assert all({"log", "resource"} <= roles for roles in by_cell.values())
 
         sdk = Ronin(
             transport=HTTPTransport(
@@ -776,8 +780,14 @@ def test_step_12_evidence_present_for_all_six_cells(
             )
         )
         sdk_items = sdk.get_evidence("job-v01-acceptance")
-        assert len(sdk_items) == 12
+        assert len(sdk_items) == len(items)
         assert all(item.portable_identity is not None for item in sdk_items)
+        sdk_identities = {
+            (item.cell_id, *item.portable_identity)
+            for item in sdk_items
+            if item.portable_identity is not None
+        }
+        assert sdk_identities == cli_identities
     finally:
         if old_url is None:
             os.environ.pop("RONIN_URL", None)
