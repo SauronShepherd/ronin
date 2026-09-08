@@ -158,7 +158,12 @@ def _doctor(require: str) -> int:
     git_path = shutil.which("git")
     docker_path = shutil.which("docker")
     checks = (
-        ("python>=3.11", sys.hexversion >= 0x030B0000, f"{sys.version_info.major}.{sys.version_info.minor}", True),
+        (
+            "python>=3.11",
+            sys.hexversion >= 0x030B0000,
+            f"{sys.version_info.major}.{sys.version_info.minor}",
+            True,
+        ),
         ("git", git_path is not None, git_path or "not found", True),
         ("docker", docker_path is not None, docker_path or "not found", require == "all"),
     )
@@ -168,7 +173,9 @@ def _doctor(require: str) -> int:
         failed = failed or (required and not ok)
     if failed:
         raise CliError(f"doctor required {require} checks failed")
-    print("doctor: all checks passed" if require == "all" else "doctor: required core checks passed")
+    print(
+        "doctor: all checks passed" if require == "all" else "doctor: required core checks passed"
+    )
     return 0
 
 
@@ -213,7 +220,9 @@ def _env(name: str, default: str | None = None) -> str:
 
 def _token() -> str:
     token_file = os.environ.get("RONIN_TOKEN_FILE")
-    value = _read_text(Path(token_file), "token file").strip() if token_file else _env("RONIN_TOKEN")
+    value = (
+        _read_text(Path(token_file), "token file").strip() if token_file else _env("RONIN_TOKEN")
+    )
     if not value or value != value.strip() or "\n" in value or "\r" in value:
         raise CliError("Ronin token must be non-empty, trimmed, and single-line")
     return value
@@ -228,7 +237,9 @@ def _parse_params(values: Sequence[str]) -> dict[str, object]:
     for value in values:
         key, separator, raw = value.partition("=")
         if not separator or not key or key != key.strip() or key in result:
-            raise CliError("--param values must be unique KEY=VALUE pairs with non-empty trimmed keys")
+            raise CliError(
+                "--param values must be unique KEY=VALUE pairs with non-empty trimmed keys"
+            )
         try:
             parsed: object = json.loads(raw)
         except json.JSONDecodeError:
