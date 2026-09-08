@@ -353,20 +353,8 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
         store.append_events(
             first_attempt,
             (
-                StoredExecutionEvent(
-                    first_attempt,
-                    0,
-                    "cell.succeeded",
-                    "cell-1",
-                    Instant("2099-01-01T00:00:00.100000Z"),
-                ),
-                StoredExecutionEvent(
-                    first_attempt,
-                    1,
-                    "cell.succeeded",
-                    "cell-2",
-                    Instant("2099-01-01T00:00:00.200000Z"),
-                ),
+                StoredExecutionEvent(first_attempt, 0, "cell.succeeded", "cell-1", Instant("2099-01-01T00:00:00.100000Z")),
+                StoredExecutionEvent(first_attempt, 1, "cell.succeeded", "cell-2", Instant("2099-01-01T00:00:00.200000Z")),
             ),
             owner="worker-v01-cli-1",
             lease_token=first_lease,
@@ -387,20 +375,8 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
         store.append_events(
             second_attempt,
             (
-                StoredExecutionEvent(
-                    second_attempt,
-                    0,
-                    "cell.succeeded",
-                    "cell-3",
-                    Instant("2099-01-01T00:00:03.100000Z"),
-                ),
-                StoredExecutionEvent(
-                    second_attempt,
-                    1,
-                    "worker.attempt.succeeded",
-                    "terminal",
-                    Instant("2099-01-01T00:00:03.200000Z"),
-                ),
+                StoredExecutionEvent(second_attempt, 0, "cell.succeeded", "cell-3", Instant("2099-01-01T00:00:03.100000Z")),
+                StoredExecutionEvent(second_attempt, 1, "worker.attempt.succeeded", "terminal", Instant("2099-01-01T00:00:03.200000Z")),
             ),
             owner="worker-v01-cli-2",
             lease_token=second_lease,
@@ -483,12 +459,7 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
         paths=WorkerPaths(Path.cwd(), data_dir),
         owner="parent-seed-only",
         image=_IMAGE,
-        limits=ContainerExecutionLimits(
-            cpus="0.5",
-            memory="128m",
-            pids=32,
-            timeout_seconds=10.0,
-        ),
+        limits=ContainerExecutionLimits(cpus="0.5", memory="128m", pids=32, timeout_seconds=10.0),
         heartbeat_interval_seconds=10.0,
     )
     _seed(config)
@@ -533,6 +504,7 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
             "final_results": final_results,
             "events": events,
             "job": job,
+            "database_path": config.database_path,
         }
     finally:
         if first.poll() is None:
@@ -543,9 +515,7 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
 @pytest.fixture(scope="module")
 def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     if not _docker_qualification_ready():
-        pytest.skip(
-            "live cancellation acceptance requires the dedicated real-Docker qualification job"
-        )
+        pytest.skip("live cancellation acceptance requires the dedicated real-Docker qualification job")
 
     tmp_path = tmp_path_factory.mktemp("v01-worker-cancel")
     marker = tmp_path / "container-running.marker"
@@ -554,20 +524,10 @@ def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str,
         paths=WorkerPaths(Path.cwd(), tmp_path / "cancel-data"),
         owner="parent-cancel-server",
         image=_IMAGE,
-        limits=ContainerExecutionLimits(
-            cpus="0.5",
-            memory="128m",
-            pids=32,
-            timeout_seconds=300.0,
-        ),
+        limits=ContainerExecutionLimits(cpus="0.5", memory="128m", pids=32, timeout_seconds=300.0),
         heartbeat_interval_seconds=10.0,
     )
-    _seed(
-        config,
-        job_id="job-v01-cancel",
-        run_id="run-v01-cancel",
-        key="v01-cancel-key",
-    )
+    _seed(config, job_id="job-v01-cancel", run_id="run-v01-cancel", key="v01-cancel-key")
 
     store = SqliteJobStore(config.database_path, migration_now=_NOW)
     service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
@@ -580,9 +540,7 @@ def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str,
     os.environ["RONIN_URL"] = f"http://127.0.0.1:{server.server_port}"
     os.environ["RONIN_TOKEN"] = auth_value
     process = subprocess.Popen(  # noqa: S603
-        _process_args("cancel", config, marker, outcome_path),
-        cwd=Path.cwd(),
-        text=True,
+        _process_args("cancel", config, marker, outcome_path), cwd=Path.cwd(), text=True
     )
     try:
         _wait_for_path(marker, process, timeout=20.0)
@@ -598,14 +556,7 @@ def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str,
         final_store = SqliteJobStore(config.database_path, migration_now=_NOW)
         job = final_store.get_job(JobId("job-v01-cancel"))
         docker_ps = subprocess.run(  # noqa: S603
-            (
-                _DOCKER,
-                "ps",
-                "--filter",
-                f"name=^{container_name}$",
-                "--format",
-                "{{.Names}}",
-            ),
+            (_DOCKER, "ps", "--filter", f"name=^{container_name}$", "--format", "{{.Names}}"),
             text=True,
             capture_output=True,
             check=False,
@@ -661,12 +612,13 @@ def test_step_04_plan_prints_order_and_levels() -> None:
     result = _ronin("plan", "examples/demo", "-t", "notebooks/etl")
     assert result.returncode == 0, result.stderr
     assert "execution order:" in result.stdout
-    assert "1. extract-customers" in result.stdout
-    assert "2. extract-orders" in result.stdout
-    assert "3. join-and-aggregate" in result.stdout
-    assert "4. quality-check" in result.stdout
-    assert "5. publish" in result.stdout
-    assert "0: extract-customers, extract-orders" in result.stdout
+    assert "1. intro" in result.stdout
+    assert "2. extract-customers" in result.stdout
+    assert "3. extract-orders" in result.stdout
+    assert "4. join-and-aggregate" in result.stdout
+    assert "5. quality-check" in result.stdout
+    assert "6. publish" in result.stdout
+    assert "0: intro, extract-customers, extract-orders" in result.stdout
     assert "1: join-and-aggregate" in result.stdout
     assert "2: quality-check" in result.stdout
     assert "3: publish" in result.stdout
@@ -678,9 +630,7 @@ def test_step_05_submit_returns_queued_job(operator_journey: dict[str, object]) 
     assert submitted["state"] == "queued"
 
 
-def test_step_06_worker_claims_and_executes_first_cells(
-    worker_restart_journey: dict[str, object],
-) -> None:
+def test_step_06_worker_claims_and_executes_first_cells(worker_restart_journey: dict[str, object]) -> None:
     before_crash = worker_restart_journey["before_crash"]
     assert len(before_crash) == 3
 
@@ -698,9 +648,7 @@ def test_step_08_restart_waits_for_lease_expiry(worker_restart_journey: dict[str
     assert outcome["reclaimed"] == ["run-v01-acceptance"]
 
 
-def test_step_09_reclaimed_attempt_resumes_at_cell_four(
-    worker_restart_journey: dict[str, object],
-) -> None:
+def test_step_09_reclaimed_attempt_resumes_at_cell_four(worker_restart_journey: dict[str, object]) -> None:
     before_crash = worker_restart_journey["before_crash"]
     outcome = worker_restart_journey["outcome"]
     final_results = worker_restart_journey["final_results"]
@@ -709,9 +657,9 @@ def test_step_09_reclaimed_attempt_resumes_at_cell_four(
 
     assert outcome["state"] == "succeeded"
     assert len(outcome["reused"]) == 3
-    assert len(outcome["executed"]) == 2
+    assert len(outcome["executed"]) == 3
     assert set(outcome["reused"]) == {result.cell_id for result in before_crash}
-    assert len(final_results) == 5
+    assert len(final_results) == 6
     assert job is not None
     assert job.state is JobState.SUCCEEDED
     assert sum(event.kind == "worker.attempt.succeeded" for event in events) == 1
@@ -723,9 +671,7 @@ def test_step_10_job_reaches_succeeded(operator_journey: dict[str, object]) -> N
     assert status["state"] == "succeeded"
 
 
-def test_step_11_events_contiguous_across_attempts_with_terminal(
-    operator_journey: dict[str, object],
-) -> None:
+def test_step_11_events_contiguous_across_attempts_with_terminal(operator_journey: dict[str, object]) -> None:
     logs = operator_journey["logs"]
     assert [event["sequence"] for event in logs] == [0, 1, 2, 3]
     assert [event["attempt_id"] for event in logs] == [
@@ -737,13 +683,66 @@ def test_step_11_events_contiguous_across_attempts_with_terminal(
     assert logs[-1]["kind"] == "worker.attempt.succeeded"
 
 
-@pytest.mark.skip(reason="W4: evidence endpoint does not exist yet")
-def test_step_12_evidence_present_for_all_six_cells() -> None: ...
+def test_step_12_evidence_present_for_all_six_cells(worker_restart_journey: dict[str, object]) -> None:
+    database_path = worker_restart_journey["database_path"]
+    assert isinstance(database_path, Path)
+    store = SqliteJobStore(database_path, migration_now=_NOW)
+    service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
+    auth_value = "v01-evidence-auth"
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=auth_value)
+    thread = Thread(target=server.serve_forever, name="v01-evidence-http", daemon=True)
+    thread.start()
+    old_url = os.environ.get("RONIN_URL")
+    old_auth_value = os.environ.get("RONIN_TOKEN")
+    os.environ["RONIN_URL"] = f"http://127.0.0.1:{server.server_port}"
+    os.environ["RONIN_TOKEN"] = auth_value
+    try:
+        items = _cli_json_lines("evidence", "job-v01-acceptance", "--json")
+        assert len(items) == 12
+        by_cell: dict[str, set[str]] = {}
+        for item in items:
+            assert isinstance(item, dict)
+            assert item["availability"] == "available"
+            assert item["digest_algorithm"] == "sha256"
+            assert isinstance(item["digest"], str) and len(item["digest"]) == 64
+            assert isinstance(item["size_bytes"], int) and item["size_bytes"] >= 0
+            assert "storage_ref" not in item
+            assert "locator" not in item
+            cell_id = item["cell_id"]
+            role = item["role"]
+            assert isinstance(cell_id, str)
+            assert isinstance(role, str)
+            by_cell.setdefault(cell_id, set()).add(role)
+        assert len(by_cell) == 6
+        assert all(roles == {"log", "resource"} for roles in by_cell.values())
+
+        sdk = Ronin(
+            transport=HTTPTransport(
+                f"http://127.0.0.1:{server.server_port}",
+                token=auth_value,
+                allow_insecure_localhost=True,
+                max_retries=0,
+            )
+        )
+        sdk_items = sdk.get_evidence("job-v01-acceptance")
+        assert len(sdk_items) == 12
+        assert all(item.portable_identity is not None for item in sdk_items)
+    finally:
+        if old_url is None:
+            os.environ.pop("RONIN_URL", None)
+        else:
+            os.environ["RONIN_URL"] = old_url
+        if old_auth_value is None:
+            os.environ.pop("RONIN_TOKEN", None)
+        else:
+            os.environ["RONIN_TOKEN"] = old_auth_value
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5.0)
+        assert not thread.is_alive()
 
 
-def test_step_13_replayed_idempotency_key_returns_same_job(
-    operator_journey: dict[str, object],
-) -> None:
+def test_step_13_replayed_idempotency_key_returns_same_job(operator_journey: dict[str, object]) -> None:
     replay = operator_journey["replay"]
     assert replay["id"] == operator_journey["job_id"]
     assert replay["state"] == "succeeded"
