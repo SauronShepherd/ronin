@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -179,3 +180,128 @@ def test_missing_and_tombstoned_preserve_logical_identity() -> None:
         )
         with pytest.raises(ValueError, match="not currently available"):
             ref.to_execution_reference()
+
+
+def test_stored_evidence_validation_rejects_malformed_metadata() -> None:
+    run_id = RunId("run-validation")
+
+    with pytest.raises(ValueError, match="role must be non-empty and trimmed"):
+        StoredEvidenceRef(
+            run_id,
+            "cell",
+            " log ",
+            "sha256",
+            "a" * 64,
+            None,
+            1,
+            "local-evidence://log",
+        )
+
+    with pytest.raises(ValueError, match="unsupported evidence availability"):
+        StoredEvidenceRef(
+            run_id,
+            "cell",
+            "log",
+            "sha256",
+            "a" * 64,
+            None,
+            1,
+            "local-evidence://log",
+            cast(EvidenceAvailability, "unknown"),
+        )
+
+    for reason in (None, "", " padded "):
+        with pytest.raises(ValueError, match="non-empty trimmed reason"):
+            StoredEvidenceRef(
+                run_id,
+                "cell",
+                "log",
+                None,
+                None,
+                None,
+                None,
+                None,
+                EvidenceAvailability.UNAVAILABLE,
+                reason,
+            )
+
+    with pytest.raises(ValueError, match="require content identity"):
+        StoredEvidenceRef(
+            run_id,
+            "cell",
+            "log",
+            None,
+            None,
+            None,
+            None,
+            None,
+            EvidenceAvailability.AVAILABLE,
+        )
+
+    with pytest.raises(ValueError, match="unsupported evidence digest algorithm"):
+        StoredEvidenceRef(
+            run_id,
+            "cell",
+            "log",
+            "md5",
+            "a" * 64,
+            None,
+            1,
+            "local-evidence://log",
+        )
+
+    for digest in ("A" * 64, "g" * 64, "a" * 63):
+        with pytest.raises(ValueError, match="lowercase SHA-256 hex"):
+            StoredEvidenceRef(
+                run_id,
+                "cell",
+                "log",
+                "sha256",
+                digest,
+                None,
+                1,
+                "local-evidence://log",
+            )
+
+    with pytest.raises(ValueError, match="size must be non-negative"):
+        StoredEvidenceRef(
+            run_id,
+            "cell",
+            "log",
+            "sha256",
+            "a" * 64,
+            None,
+            -1,
+            "local-evidence://log",
+        )
+
+    with pytest.raises(ValueError, match="only unavailable evidence"):
+        StoredEvidenceRef(
+            run_id,
+            "cell",
+            "log",
+            "sha256",
+            "a" * 64,
+            None,
+            1,
+            "local-evidence://log",
+            EvidenceAvailability.AVAILABLE,
+            "unexpected_reason",
+        )
+
+
+def test_available_evidence_without_locator_is_not_kernel_portable() -> None:
+    ref = StoredEvidenceRef(
+        RunId("run-no-locator"),
+        "cell",
+        "log",
+        "sha256",
+        "a" * 64,
+        "application/json",
+        1,
+        None,
+        EvidenceAvailability.AVAILABLE,
+    )
+    assert ref.portable_identity is not None
+    with pytest.raises(ValueError, match="unavailable as a portable execution reference"):
+        ref.to_execution_reference()
