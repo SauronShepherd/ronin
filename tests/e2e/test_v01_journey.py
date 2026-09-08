@@ -353,8 +353,20 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
         store.append_events(
             first_attempt,
             (
-                StoredExecutionEvent(first_attempt, 0, "cell.succeeded", "cell-1", Instant("2099-01-01T00:00:00.100000Z")),
-                StoredExecutionEvent(first_attempt, 1, "cell.succeeded", "cell-2", Instant("2099-01-01T00:00:00.200000Z")),
+                StoredExecutionEvent(
+                    first_attempt,
+                    0,
+                    "cell.succeeded",
+                    "cell-1",
+                    Instant("2099-01-01T00:00:00.100000Z"),
+                ),
+                StoredExecutionEvent(
+                    first_attempt,
+                    1,
+                    "cell.succeeded",
+                    "cell-2",
+                    Instant("2099-01-01T00:00:00.200000Z"),
+                ),
             ),
             owner="worker-v01-cli-1",
             lease_token=first_lease,
@@ -375,8 +387,20 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
         store.append_events(
             second_attempt,
             (
-                StoredExecutionEvent(second_attempt, 0, "cell.succeeded", "cell-3", Instant("2099-01-01T00:00:03.100000Z")),
-                StoredExecutionEvent(second_attempt, 1, "worker.attempt.succeeded", "terminal", Instant("2099-01-01T00:00:03.200000Z")),
+                StoredExecutionEvent(
+                    second_attempt,
+                    0,
+                    "cell.succeeded",
+                    "cell-3",
+                    Instant("2099-01-01T00:00:03.100000Z"),
+                ),
+                StoredExecutionEvent(
+                    second_attempt,
+                    1,
+                    "worker.attempt.succeeded",
+                    "terminal",
+                    Instant("2099-01-01T00:00:03.200000Z"),
+                ),
             ),
             owner="worker-v01-cli-2",
             lease_token=second_lease,
@@ -449,7 +473,9 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
 @pytest.fixture(scope="module")
 def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     if not _docker_qualification_ready():
-        pytest.skip("live worker acceptance requires the dedicated real-Docker qualification job")
+        pytest.skip(
+            "live worker acceptance requires the dedicated real-Docker qualification job"
+        )
 
     tmp_path = tmp_path_factory.mktemp("v01-worker-restart")
     data_dir = tmp_path / "process-crash"
@@ -459,7 +485,9 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
         paths=WorkerPaths(Path.cwd(), data_dir),
         owner="parent-seed-only",
         image=_IMAGE,
-        limits=ContainerExecutionLimits(cpus="0.5", memory="128m", pids=32, timeout_seconds=10.0),
+        limits=ContainerExecutionLimits(
+            cpus="0.5", memory="128m", pids=32, timeout_seconds=10.0
+        ),
         heartbeat_interval_seconds=10.0,
     )
     _seed(config)
@@ -515,7 +543,9 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
 @pytest.fixture(scope="module")
 def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     if not _docker_qualification_ready():
-        pytest.skip("live cancellation acceptance requires the dedicated real-Docker qualification job")
+        pytest.skip(
+            "live cancellation acceptance requires the dedicated real-Docker qualification job"
+        )
 
     tmp_path = tmp_path_factory.mktemp("v01-worker-cancel")
     marker = tmp_path / "container-running.marker"
@@ -524,7 +554,9 @@ def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str,
         paths=WorkerPaths(Path.cwd(), tmp_path / "cancel-data"),
         owner="parent-cancel-server",
         image=_IMAGE,
-        limits=ContainerExecutionLimits(cpus="0.5", memory="128m", pids=32, timeout_seconds=300.0),
+        limits=ContainerExecutionLimits(
+            cpus="0.5", memory="128m", pids=32, timeout_seconds=300.0
+        ),
         heartbeat_interval_seconds=10.0,
     )
     _seed(config, job_id="job-v01-cancel", run_id="run-v01-cancel", key="v01-cancel-key")
@@ -556,7 +588,14 @@ def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str,
         final_store = SqliteJobStore(config.database_path, migration_now=_NOW)
         job = final_store.get_job(JobId("job-v01-cancel"))
         docker_ps = subprocess.run(  # noqa: S603
-            (_DOCKER, "ps", "--filter", f"name=^{container_name}$", "--format", "{{.Names}}"),
+            (
+                _DOCKER,
+                "ps",
+                "--filter",
+                f"name=^{container_name}$",
+                "--format",
+                "{{.Names}}",
+            ),
             text=True,
             capture_output=True,
             check=False,
@@ -630,25 +669,33 @@ def test_step_05_submit_returns_queued_job(operator_journey: dict[str, object]) 
     assert submitted["state"] == "queued"
 
 
-def test_step_06_worker_claims_and_executes_first_cells(worker_restart_journey: dict[str, object]) -> None:
+def test_step_06_worker_claims_and_executes_first_cells(
+    worker_restart_journey: dict[str, object],
+) -> None:
     before_crash = worker_restart_journey["before_crash"]
     assert len(before_crash) == 3
 
 
-def test_step_07_kill_worker_orphans_lease(worker_restart_journey: dict[str, object]) -> None:
+def test_step_07_kill_worker_orphans_lease(
+    worker_restart_journey: dict[str, object],
+) -> None:
     orphaned_attempts = worker_restart_journey["orphaned_attempts"]
     assert len(orphaned_attempts) == 1
     assert orphaned_attempts[0]["state"] == "running"
     assert orphaned_attempts[0]["lease_expires_at"] is not None
 
 
-def test_step_08_restart_waits_for_lease_expiry(worker_restart_journey: dict[str, object]) -> None:
+def test_step_08_restart_waits_for_lease_expiry(
+    worker_restart_journey: dict[str, object],
+) -> None:
     outcome = worker_restart_journey["outcome"]
     assert outcome["attempt_id"] == "attempt-process-replacement"
     assert outcome["reclaimed"] == ["run-v01-acceptance"]
 
 
-def test_step_09_reclaimed_attempt_resumes_at_cell_four(worker_restart_journey: dict[str, object]) -> None:
+def test_step_09_reclaimed_attempt_resumes_at_cell_four(
+    worker_restart_journey: dict[str, object],
+) -> None:
     before_crash = worker_restart_journey["before_crash"]
     outcome = worker_restart_journey["outcome"]
     final_results = worker_restart_journey["final_results"]
@@ -671,7 +718,9 @@ def test_step_10_job_reaches_succeeded(operator_journey: dict[str, object]) -> N
     assert status["state"] == "succeeded"
 
 
-def test_step_11_events_contiguous_across_attempts_with_terminal(operator_journey: dict[str, object]) -> None:
+def test_step_11_events_contiguous_across_attempts_with_terminal(
+    operator_journey: dict[str, object],
+) -> None:
     logs = operator_journey["logs"]
     assert [event["sequence"] for event in logs] == [0, 1, 2, 3]
     assert [event["attempt_id"] for event in logs] == [
@@ -683,7 +732,9 @@ def test_step_11_events_contiguous_across_attempts_with_terminal(operator_journe
     assert logs[-1]["kind"] == "worker.attempt.succeeded"
 
 
-def test_step_12_evidence_present_for_all_six_cells(worker_restart_journey: dict[str, object]) -> None:
+def test_step_12_evidence_present_for_all_six_cells(
+    worker_restart_journey: dict[str, object],
+) -> None:
     database_path = worker_restart_journey["database_path"]
     assert isinstance(database_path, Path)
     store = SqliteJobStore(database_path, migration_now=_NOW)
@@ -742,7 +793,9 @@ def test_step_12_evidence_present_for_all_six_cells(worker_restart_journey: dict
         assert not thread.is_alive()
 
 
-def test_step_13_replayed_idempotency_key_returns_same_job(operator_journey: dict[str, object]) -> None:
+def test_step_13_replayed_idempotency_key_returns_same_job(
+    operator_journey: dict[str, object],
+) -> None:
     replay = operator_journey["replay"]
     assert replay["id"] == operator_journey["job_id"]
     assert replay["state"] == "succeeded"
