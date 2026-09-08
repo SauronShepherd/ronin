@@ -27,8 +27,8 @@ def test_demo_dag_shape_is_stable() -> None:
     )
     analysis = analyze_notebook_dependencies(document.notebook)
     assert analysis.is_valid
-    assert [len(level) for level in analysis.levels] == [2, 1, 1, 1]
-    assert len(analysis.execution_order) == 5
+    assert [len(level) for level in analysis.levels] == [3, 1, 1, 1]
+    assert len(analysis.execution_order) == 6
 
 
 def test_demo_cell_identity_vectors_are_stable() -> None:
