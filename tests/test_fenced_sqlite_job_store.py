@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -222,3 +223,46 @@ def test_request_cancel_still_delegates_atomically(tmp_path: Path) -> None:
     store.create_job(job, run)
     cancelled = store.request_cancel(job.id, now=LATER)
     assert cancelled.state is JobState.CANCELLED
+
+
+@pytest.mark.parametrize(
+    ("has_availability", "has_reason"),
+    [(False, False), (True, False), (False, True), (True, True)],
+)
+def test_evidence_schema_upgrade_handles_every_alpha_column_variant(
+    tmp_path: Path,
+    has_availability: bool,
+    has_reason: bool,
+) -> None:
+    path = tmp_path / "ronin.db"
+    SqliteJobStore(path, migration_now=NOW)
+    connection = sqlite3.connect(path)
+    try:
+        connection.execute("DROP TABLE evidence_refs")
+        optional_columns = ""
+        if has_availability:
+            optional_columns += ",availability TEXT NOT NULL DEFAULT 'available'"
+        if has_reason:
+            optional_columns += ",unavailable_reason TEXT"
+        connection.execute(
+            "CREATE TABLE evidence_refs ("
+            "evidence_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "run_id TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,"
+            "cell_id TEXT,role TEXT NOT NULL,digest_algorithm TEXT NOT NULL,digest TEXT NOT NULL,"
+            "media_type TEXT,size_bytes INTEGER,storage_ref TEXT"
+            f"{optional_columns})"
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    SqliteJobStore(path, migration_now=NOW)
+    connection = sqlite3.connect(path)
+    try:
+        info = {row[1]: row for row in connection.execute("PRAGMA table_info(evidence_refs)")}
+    finally:
+        connection.close()
+    assert "availability" in info
+    assert "unavailable_reason" in info
+    assert info["digest_algorithm"][3] == 0
+    assert info["digest"][3] == 0
