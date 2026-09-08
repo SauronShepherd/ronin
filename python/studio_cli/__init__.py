@@ -26,7 +26,7 @@ from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
-from .network import ControlPlaneClient, ControlPlaneError, TERMINAL_STATES
+from .network import TERMINAL_STATES, ControlPlaneClient, ControlPlaneError
 
 
 class CliError(RuntimeError):
