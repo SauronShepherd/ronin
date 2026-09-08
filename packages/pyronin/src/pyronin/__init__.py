@@ -282,7 +282,11 @@ class HTTPTransport:
                         exc.code,
                         "error response exceeded configured byte limit",
                     ) from limit_error
-                if retry_safe and exc.code in _RETRYABLE_STATUS_CODES and attempt < self.max_retries:
+                if (
+                    retry_safe
+                    and exc.code in _RETRYABLE_STATUS_CODES
+                    and attempt < self.max_retries
+                ):
                     self._sleep_before_retry(attempt)
                     continue
                 raise APIError(exc.code, "request failed", _api_error_code(error_body)) from exc
@@ -379,15 +383,11 @@ class Ronin:
         if since is not None:
             query["since"] = since
         return _parse_event_page(
-            self._transport.request(
-                "GET", f"/v1/jobs/{quote(job_id, safe='')}/events", query=query
-            )
+            self._transport.request("GET", f"/v1/jobs/{quote(job_id, safe='')}/events", query=query)
         )
 
     def get_evidence(self, job_id: str) -> tuple[EvidenceReference, ...]:
-        payload = self._transport.request(
-            "GET", f"/v1/jobs/{quote(job_id, safe='')}/evidence"
-        )
+        payload = self._transport.request("GET", f"/v1/jobs/{quote(job_id, safe='')}/evidence")
         if not isinstance(payload, dict) or set(payload) != {"items"}:
             raise ProtocolError("Evidence response must contain exactly items")
         items = payload["items"]
@@ -485,7 +485,11 @@ def _parse_event(payload: object) -> JobEvent:
         raise ProtocolError("Job event sequence must be a non-negative integer")
     if not isinstance(attempt_id, str) or not attempt_id:
         raise ProtocolError("Job event attempt_id must be a non-empty string")
-    if not isinstance(attempt_sequence, int) or isinstance(attempt_sequence, bool) or attempt_sequence < 0:
+    if (
+        not isinstance(attempt_sequence, int)
+        or isinstance(attempt_sequence, bool)
+        or attempt_sequence < 0
+    ):
         raise ProtocolError("Job event attempt_sequence must be a non-negative integer")
     if not isinstance(kind, str) or not kind:
         raise ProtocolError("Job event kind must be a non-empty string")
@@ -514,8 +518,15 @@ def _parse_evidence(payload: object) -> EvidenceReference:
     if not isinstance(payload, dict):
         raise ProtocolError("Expected an evidence object")
     expected = {
-        "version", "cell_id", "role", "digest_algorithm", "digest", "media_type",
-        "size_bytes", "availability", "reason",
+        "version",
+        "cell_id",
+        "role",
+        "digest_algorithm",
+        "digest",
+        "media_type",
+        "size_bytes",
+        "availability",
+        "reason",
     }
     if set(payload) != expected:
         raise ProtocolError("Evidence fields do not match the v1 contract")
@@ -550,8 +561,10 @@ def _parse_evidence(payload: object) -> EvidenceReference:
     else:
         if not isinstance(digest_algorithm, str) or digest_algorithm != "sha256":
             raise ProtocolError("Evidence digest_algorithm must be sha256")
-        if not isinstance(digest, str) or len(digest) != 64 or any(
-            ch not in "0123456789abcdef" for ch in digest
+        if (
+            not isinstance(digest, str)
+            or len(digest) != 64
+            or any(ch not in "0123456789abcdef" for ch in digest)
         ):
             raise ProtocolError("Evidence digest must be lowercase SHA-256 hex")
         if not isinstance(size_bytes, int) or isinstance(size_bytes, bool) or size_bytes < 0:
