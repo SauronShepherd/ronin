@@ -13,11 +13,30 @@ import sqlite3
 import subprocess
 import sys
 import time
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
+from threading import Thread
 
 import pytest
-from studio_orchestrator import Instant, Job, JobId, JobState, Run, RunId, RunState
+from pyronin import HTTPTransport, Ronin
+from studio_cli import main as cli_main
+from studio_execution import DurableExecutionService
+from studio_orchestrator import (
+    AttemptId,
+    AttemptState,
+    Instant,
+    Job,
+    JobId,
+    JobState,
+    LeaseToken,
+    Run,
+    RunId,
+    RunState,
+    StoredExecutionEvent,
+)
 from studio_runners import ContainerExecutionLimits
+from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
 from studio_worker import LocalWorkerRuntimeConfig, WorkerPaths
 
@@ -136,6 +155,21 @@ def _ronin(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def _cli_json(*args: str) -> object:
+    output = StringIO()
+    with redirect_stdout(output):
+        assert cli_main(list(args)) == 0
+    text = output.getvalue().strip()
+    return json.loads(text)
+
+
+def _cli_json_lines(*args: str) -> list[object]:
+    output = StringIO()
+    with redirect_stdout(output):
+        assert cli_main(list(args)) == 0
+    return [json.loads(line) for line in output.getvalue().splitlines() if line]
+
+
 def _seed(config: LocalWorkerRuntimeConfig) -> None:
     store = SqliteJobStore(config.database_path, migration_now=_NOW)
     store.create_job(
@@ -206,6 +240,166 @@ def _attempt_rows(database_path: Path) -> list[sqlite3.Row]:
 
 
 @pytest.fixture(scope="module")
+def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
+    tmp_path = tmp_path_factory.mktemp("v01-operator")
+    store = SqliteJobStore(tmp_path / "ronin.db", migration_now=_NOW)
+    service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
+    auth_value = "v01-operator-auth"
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=auth_value)
+    thread = Thread(target=server.serve_forever, name="v01-operator-http", daemon=True)
+    thread.start()
+    old_url = os.environ.get("RONIN_URL")
+    old_auth_value = os.environ.get("RONIN_TOKEN")
+    os.environ["RONIN_URL"] = f"http://127.0.0.1:{server.server_port}"
+    os.environ["RONIN_TOKEN"] = auth_value
+    try:
+        submitted = _cli_json(
+            "submit",
+            "examples/demo",
+            "-t",
+            "notebooks/etl.ronin.json",
+            "--idempotency-key",
+            "v01-cli-k1",
+            "--param",
+            "limit=7",
+            "--json",
+        )
+        assert isinstance(submitted, dict)
+        job_id = str(submitted["id"])
+        run_id = store.get_run_id_for_job(JobId(job_id))
+        assert run_id is not None
+
+        first_attempt = AttemptId("attempt-v01-cli-1")
+        first_lease = LeaseToken("lease-v01-cli-1")
+        claimed = store.claim_next_run(
+            owner="worker-v01-cli-1",
+            lease_token=first_lease,
+            attempt_id=first_attempt,
+            lease_seconds=1,
+            now=Instant("2099-01-01T00:00:00.000000Z"),
+        )
+        assert claimed is not None
+        store.append_events(
+            first_attempt,
+            (
+                StoredExecutionEvent(
+                    first_attempt,
+                    0,
+                    "cell.succeeded",
+                    "cell-1",
+                    Instant("2099-01-01T00:00:00.100000Z"),
+                ),
+                StoredExecutionEvent(
+                    first_attempt,
+                    1,
+                    "cell.succeeded",
+                    "cell-2",
+                    Instant("2099-01-01T00:00:00.200000Z"),
+                ),
+            ),
+            owner="worker-v01-cli-1",
+            lease_token=first_lease,
+            now=Instant("2099-01-01T00:00:00.500000Z"),
+        )
+        assert store.reclaim_expired(now=Instant("2099-01-01T00:00:02.000000Z")) == (run_id,)
+
+        second_attempt = AttemptId("attempt-v01-cli-2")
+        second_lease = LeaseToken("lease-v01-cli-2")
+        claimed = store.claim_next_run(
+            owner="worker-v01-cli-2",
+            lease_token=second_lease,
+            attempt_id=second_attempt,
+            lease_seconds=30,
+            now=Instant("2099-01-01T00:00:03.000000Z"),
+        )
+        assert claimed is not None
+        store.append_events(
+            second_attempt,
+            (
+                StoredExecutionEvent(
+                    second_attempt,
+                    0,
+                    "cell.succeeded",
+                    "cell-3",
+                    Instant("2099-01-01T00:00:03.100000Z"),
+                ),
+                StoredExecutionEvent(
+                    second_attempt,
+                    1,
+                    "worker.attempt.succeeded",
+                    "terminal",
+                    Instant("2099-01-01T00:00:03.200000Z"),
+                ),
+            ),
+            owner="worker-v01-cli-2",
+            lease_token=second_lease,
+            now=Instant("2099-01-01T00:00:03.500000Z"),
+        )
+        store.complete_attempt(
+            second_attempt,
+            state=AttemptState.SUCCEEDED,
+            failure_code=None,
+            owner="worker-v01-cli-2",
+            lease_token=second_lease,
+            now=Instant("2099-01-01T00:00:04.000000Z"),
+        )
+
+        status = _cli_json("status", job_id, "--json")
+        logs = _cli_json_lines("logs", job_id, "--json")
+        replay = _cli_json(
+            "submit",
+            "examples/demo",
+            "-t",
+            "notebooks/etl.ronin.json",
+            "--idempotency-key",
+            "v01-cli-k1",
+            "--param",
+            "limit=7",
+            "--json",
+        )
+        transport = HTTPTransport(
+            f"http://127.0.0.1:{server.server_port}",
+            token=auth_value,
+            allow_insecure_localhost=True,
+            max_retries=0,
+        )
+        sdk = Ronin(transport=transport)
+        sdk_result = sdk.submit(
+            project="examples/demo",
+            target="notebooks/etl.ronin.json",
+            parameters={"limit": 7},
+            idempotency_key="v01-cli-k1",
+        ).wait(poll_interval=0.01, timeout=1.0)
+        page = store.list_jobs(project_id="examples/demo", state=None, limit=10, cursor=None)
+        yield {
+            "submitted": submitted,
+            "job_id": job_id,
+            "run_id": run_id,
+            "status": status,
+            "logs": logs,
+            "replay": replay,
+            "sdk_result": sdk_result,
+            "job_count": len(page.items),
+            "run_id_after": store.get_run_id_for_job(JobId(job_id)),
+            "first_attempt": first_attempt,
+            "second_attempt": second_attempt,
+        }
+    finally:
+        if old_url is None:
+            os.environ.pop("RONIN_URL", None)
+        else:
+            os.environ["RONIN_URL"] = old_url
+        if old_auth_value is None:
+            os.environ.pop("RONIN_TOKEN", None)
+        else:
+            os.environ["RONIN_TOKEN"] = old_auth_value
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5.0)
+        assert not thread.is_alive()
+
+
+@pytest.fixture(scope="module")
 def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     if not _docker_qualification_ready():
         pytest.skip("live worker acceptance requires the dedicated real-Docker qualification job")
@@ -246,7 +440,6 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
         assert orphaned_attempts[0]["state"] == "running"
         assert orphaned_attempts[0]["lease_expires_at"] is not None
 
-        # Production acceptance deliberately keeps the real 30-second lease contract.
         time.sleep(31.0)
 
         second = subprocess.run(  # noqa: S603
@@ -311,8 +504,10 @@ def test_step_04_plan_prints_order_and_levels() -> None:
     assert "3: publish" in result.stdout
 
 
-@pytest.mark.skip(reason="W4: POST /v1/jobs does not exist yet")
-def test_step_05_submit_returns_queued_job() -> None: ...
+def test_step_05_submit_returns_queued_job(operator_journey: dict[str, object]) -> None:
+    submitted = operator_journey["submitted"]
+    assert submitted["id"] == operator_journey["job_id"]
+    assert submitted["state"] == "queued"
 
 
 def test_step_06_worker_claims_and_executes_first_cells(
@@ -354,28 +549,49 @@ def test_step_09_reclaimed_attempt_resumes_at_cell_four(
     assert sum(event.kind == "worker.attempt.succeeded" for event in events) == 1
 
 
-@pytest.mark.skip(reason="W4: GET /v1/jobs/{id} does not exist yet")
-def test_step_10_job_reaches_succeeded() -> None: ...
+def test_step_10_job_reaches_succeeded(operator_journey: dict[str, object]) -> None:
+    status = operator_journey["status"]
+    assert status["id"] == operator_journey["job_id"]
+    assert status["state"] == "succeeded"
 
 
-@pytest.mark.skip(reason="W4: events endpoint does not exist yet")
-def test_step_11_events_contiguous_across_attempts_with_terminal() -> None: ...
+def test_step_11_events_contiguous_across_attempts_with_terminal(
+    operator_journey: dict[str, object],
+) -> None:
+    logs = operator_journey["logs"]
+    assert [event["sequence"] for event in logs] == [0, 1, 2, 3]
+    assert [event["attempt_id"] for event in logs] == [
+        str(operator_journey["first_attempt"]),
+        str(operator_journey["first_attempt"]),
+        str(operator_journey["second_attempt"]),
+        str(operator_journey["second_attempt"]),
+    ]
+    assert logs[-1]["kind"] == "worker.attempt.succeeded"
 
 
 @pytest.mark.skip(reason="W4: evidence endpoint does not exist yet")
 def test_step_12_evidence_present_for_all_six_cells() -> None: ...
 
 
-@pytest.mark.skip(reason="W4: idempotency does not exist yet")
-def test_step_13_replayed_idempotency_key_returns_same_job() -> None: ...
+def test_step_13_replayed_idempotency_key_returns_same_job(
+    operator_journey: dict[str, object],
+) -> None:
+    replay = operator_journey["replay"]
+    assert replay["id"] == operator_journey["job_id"]
+    assert replay["state"] == "succeeded"
+    assert operator_journey["run_id_after"] == operator_journey["run_id"]
+    assert operator_journey["job_count"] == 1
 
 
-@pytest.mark.skip(reason="W4: cancel does not exist yet")
+@pytest.mark.skip(reason="W5: cancellation container cleanup is not qualified yet")
 def test_step_14_cancel_removes_container() -> None: ...
 
 
-@pytest.mark.skip(reason="W4: SDK contract alignment not done yet")
-def test_step_15_sdk_round_trip_matches_cli() -> None: ...
+def test_step_15_sdk_round_trip_matches_cli(operator_journey: dict[str, object]) -> None:
+    sdk_result = operator_journey["sdk_result"]
+    status = operator_journey["status"]
+    assert sdk_result.id == operator_journey["job_id"]
+    assert sdk_result.state.value == status["state"]
 
 
 def test_journey_progress_is_reported(record_property) -> None:
