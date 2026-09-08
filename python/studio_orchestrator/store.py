@@ -144,7 +144,11 @@ class StoredEvidenceRef:
             raise ValueError("unsupported evidence digest algorithm")
         digest = self.digest
         size_bytes = self.size_bytes
-        if digest is None or len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+        if (
+            digest is None
+            or len(digest) != 64
+            or any(ch not in "0123456789abcdef" for ch in digest)
+        ):
             raise ValueError("evidence digest must be lowercase SHA-256 hex")
         if size_bytes is None or size_bytes < 0:
             raise ValueError("evidence size must be non-negative")
