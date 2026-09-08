@@ -106,6 +106,7 @@ class DurableWorkerExecution:
     owner: str
     lease_seconds: int = 30
     heartbeat_interval_seconds: float = 5.0
+    cancellation_poll_interval_seconds: float = 1.0
     now: Callable[[], Instant] = utc_now
     artifact_max_workers: int = 2
     artifact_max_in_flight: int = 4
@@ -118,6 +119,8 @@ class DurableWorkerExecution:
             raise ValueError("lease_seconds must be at least 2")
         if not 0 < self.heartbeat_interval_seconds < self.lease_seconds:
             raise ValueError("heartbeat interval must be positive and shorter than the lease")
+        if self.cancellation_poll_interval_seconds <= 0:
+            raise ValueError("cancellation poll interval must be positive")
         if self.artifact_max_workers < 1:
             raise ValueError("artifact_max_workers must be at least 1")
         if self.artifact_max_in_flight < self.artifact_max_workers:
@@ -263,6 +266,28 @@ class DurableWorkerExecution:
                 lease_lost.set()
                 return
 
+    async def _watch_cancellation(
+        self,
+        claim: ClaimedRun,
+        cancellation: CancellationToken,
+        cancellation_requested: asyncio.Event,
+    ) -> None:
+        try:
+            while True:
+                job = await self.service.status(claim.job.id)
+                if job is None:
+                    raise WorkerExecutionError("claimed job disappeared from durable store")
+                if job.state in {JobState.CANCELLING, JobState.CANCELLED}:
+                    cancellation.cancel()
+                    cancellation_requested.set()
+                    return
+                await asyncio.sleep(self.cancellation_poll_interval_seconds)
+        except asyncio.CancelledError:
+            raise
+        except BaseException:
+            cancellation.cancel()
+            raise
+
     async def _complete(
         self,
         claim: ClaimedRun,
@@ -297,7 +322,11 @@ class DurableWorkerExecution:
 
         cancellation = CancellationToken()
         lease_lost = asyncio.Event()
+        cancellation_requested = asyncio.Event()
         heartbeat = asyncio.create_task(self._heartbeat(claim, cancellation, lease_lost))
+        cancellation_watch = asyncio.create_task(
+            self._watch_cancellation(claim, cancellation, cancellation_requested)
+        )
         executed: list[str] = []
         reused: list[str] = []
         try:
@@ -316,12 +345,15 @@ class DurableWorkerExecution:
                 for cell, identity in zip(request.cells, identities, strict=True):
                     if lease_lost.is_set():
                         raise WorkerLeaseLost("attempt lease lost during execution")
+                    if cancellation_watch.done():
+                        cancellation_watch.result()
 
                     job = await self.service.status(claim.job.id)
                     if job is None:
                         raise WorkerExecutionError("claimed job disappeared from durable store")
                     if job.state in {JobState.CANCELLING, JobState.CANCELLED}:
                         cancellation.cancel()
+                        cancellation_requested.set()
                         await self._append_event(claim, "worker.attempt.cancelled")
                         await self._complete(claim, AttemptState.CANCELLED, None)
                         return WorkerExecutionOutcome(
@@ -360,6 +392,8 @@ class DurableWorkerExecution:
                         raise WorkerExecutionError("kernel executor changed cell identity")
                     if lease_lost.is_set():
                         raise WorkerLeaseLost("attempt lease lost during cell execution")
+                    if cancellation_watch.done():
+                        cancellation_watch.result()
 
                     await self._checkpoint(artifacts, claim, identity, result)
                     executed.append(identity.cell_id)
@@ -378,6 +412,15 @@ class DurableWorkerExecution:
                             failure_code,
                         )
                     if result.state == "cancelled":
+                        await self._append_event(claim, "worker.attempt.cancelled")
+                        await self._complete(claim, AttemptState.CANCELLED, None)
+                        return WorkerExecutionOutcome(
+                            AttemptState.CANCELLED,
+                            tuple(executed),
+                            tuple(reused),
+                        )
+                    if cancellation_requested.is_set():
+                        await self._append_event(claim, "worker.attempt.cancelled")
                         await self._complete(claim, AttemptState.CANCELLED, None)
                         return WorkerExecutionOutcome(
                             AttemptState.CANCELLED,
@@ -387,6 +430,16 @@ class DurableWorkerExecution:
 
                 if lease_lost.is_set():
                     raise WorkerLeaseLost("attempt lease lost before completion")
+                if cancellation_watch.done():
+                    cancellation_watch.result()
+                if cancellation_requested.is_set():
+                    await self._append_event(claim, "worker.attempt.cancelled")
+                    await self._complete(claim, AttemptState.CANCELLED, None)
+                    return WorkerExecutionOutcome(
+                        AttemptState.CANCELLED,
+                        tuple(executed),
+                        tuple(reused),
+                    )
                 await self._append_event(claim, "worker.attempt.succeeded")
                 await self._complete(claim, AttemptState.SUCCEEDED, None)
                 return WorkerExecutionOutcome(
@@ -396,8 +449,11 @@ class DurableWorkerExecution:
                 )
         finally:
             heartbeat.cancel()
+            cancellation_watch.cancel()
             with suppress(asyncio.CancelledError):
                 await heartbeat
+            with suppress(asyncio.CancelledError):
+                await cancellation_watch
 
 
 __all__ = (
