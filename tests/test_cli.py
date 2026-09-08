@@ -68,12 +68,13 @@ def test_validate_and_plan_reuse_canonical_demo_contracts(capsys) -> None:
     assert main(["plan", "examples/demo", "-t", "notebooks/etl"]) == 0
     plan_output = capsys.readouterr()
     assert "target: notebooks/etl.ronin.json" in plan_output.out
-    assert "1. extract-customers" in plan_output.out
-    assert "2. extract-orders" in plan_output.out
-    assert "3. join-and-aggregate" in plan_output.out
-    assert "4. quality-check" in plan_output.out
-    assert "5. publish" in plan_output.out
-    assert "0: extract-customers, extract-orders" in plan_output.out
+    assert "1. intro" in plan_output.out
+    assert "2. extract-customers" in plan_output.out
+    assert "3. extract-orders" in plan_output.out
+    assert "4. join-and-aggregate" in plan_output.out
+    assert "5. quality-check" in plan_output.out
+    assert "6. publish" in plan_output.out
+    assert "0: intro, extract-customers, extract-orders" in plan_output.out
     assert "1: join-and-aggregate" in plan_output.out
     assert "2: quality-check" in plan_output.out
     assert "3: publish" in plan_output.out
