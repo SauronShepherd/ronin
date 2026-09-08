@@ -53,13 +53,16 @@ def test_http_and_sdk_expose_portable_evidence_without_storage_locator(tmp_path:
     )
     attempt_id = AttemptId("attempt-http-evidence")
     lease_token = LeaseToken("lease-http-evidence")
-    assert store.claim_next_run(
-        owner="worker",
-        lease_token=lease_token,
-        attempt_id=attempt_id,
-        lease_seconds=30,
-        now=_NOW,
-    ) is not None
+    assert (
+        store.claim_next_run(
+            owner="worker",
+            lease_token=lease_token,
+            attempt_id=attempt_id,
+            lease_seconds=30,
+            now=_NOW,
+        )
+        is not None
+    )
     for ref in (
         StoredEvidenceRef(
             run_id,
