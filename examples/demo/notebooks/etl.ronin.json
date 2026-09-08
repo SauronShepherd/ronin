@@ -8,9 +8,9 @@
         "namespace": "examples/demo/notebooks/etl.ronin.json",
         "reference": "intro"
       },
-      "kind": "markdown",
-      "language": null,
-      "source": "# Demo ETL\n\nSix-cell demo notebook used by the Ronin v0.1 acceptance journey."
+      "kind": "code",
+      "language": "python",
+      "source": "print('Ronin v0.1 demo')"
     },
     {
       "dependencies": [],
