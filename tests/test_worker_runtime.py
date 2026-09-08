@@ -146,16 +146,16 @@ def test_run_once_executes_claim_through_sqlite_and_container_boundary(tmp_path:
         assert outcome.attempt_id == AttemptId("attempt-runtime-1")
         assert outcome.execution is not None
         assert outcome.execution.state.value == "succeeded"
-        assert len(outcome.execution.executed_cell_ids) == 5
+        assert len(outcome.execution.executed_cell_ids) == 6
         assert outcome.execution.reused_cell_ids == ()
-        assert runner.calls == 5
+        assert runner.calls == 6
         assert all(args[:3] == ("docker", "rm", "-f") for args in runner.cancellation_args)
 
         store = SqliteJobStore(config.database_path, migration_now=START)
         job = store.get_job(JobId("job-runtime"))
         assert job is not None
         assert job.state is JobState.SUCCEEDED
-        assert len(store.read_cell_results(RunId("run-runtime"))) == 5
+        assert len(store.read_cell_results(RunId("run-runtime"))) == 6
 
     asyncio.run(scenario())
 
@@ -207,14 +207,17 @@ def test_restart_reclaims_same_run_and_reuses_persisted_cells(tmp_path: Path) ->
         assert outcome.attempt_id == AttemptId("attempt-runtime-2")
         assert outcome.execution is not None
         assert len(outcome.execution.reused_cell_ids) == 3
-        assert len(outcome.execution.executed_cell_ids) == 2
-        assert second_runner.calls == 2
+        assert len(outcome.execution.executed_cell_ids) == 3
+        assert set(outcome.execution.reused_cell_ids) == {
+            result.cell_id for result in persisted_before_crash
+        }
+        assert second_runner.calls == 3
 
         final_store = SqliteJobStore(config.database_path, migration_now=AFTER_EXPIRY)
         final_job = final_store.get_job(JobId("job-runtime"))
         assert final_job is not None
         assert final_job.state is JobState.SUCCEEDED
-        assert len(final_store.read_cell_results(RunId("run-runtime"))) == 5
+        assert len(final_store.read_cell_results(RunId("run-runtime"))) == 6
 
     asyncio.run(scenario())
 
