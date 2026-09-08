@@ -174,7 +174,9 @@ def test_cli_operator_surface_reuses_real_http_contract_and_terminal_idempotency
         assert replay["state"] == "succeeded"
         assert store.get_run_id_for_job(JobId(job_id)) == run_id
         assert (
-            len(store.list_jobs(project_id="examples/demo", state=None, limit=10, cursor=None).items)
+            len(
+                store.list_jobs(project_id="examples/demo", state=None, limit=10, cursor=None).items
+            )
             == 1
         )
 
