@@ -51,13 +51,16 @@ def _claimed_store(tmp_path: Path) -> tuple[SqliteJobStore, RunId, AttemptId, Le
     )
     attempt_id = AttemptId("attempt-evidence-states")
     lease_token = LeaseToken("lease-evidence-states")
-    assert store.claim_next_run(
-        owner="worker",
-        lease_token=lease_token,
-        attempt_id=attempt_id,
-        lease_seconds=30,
-        now=_NOW,
-    ) is not None
+    assert (
+        store.claim_next_run(
+            owner="worker",
+            lease_token=lease_token,
+            attempt_id=attempt_id,
+            lease_seconds=30,
+            now=_NOW,
+        )
+        is not None
+    )
     return store, run_id, attempt_id, lease_token
 
 
