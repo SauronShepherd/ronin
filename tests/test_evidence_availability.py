@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-
 from studio_orchestrator import (
     AttemptId,
     EvidenceAvailability,
