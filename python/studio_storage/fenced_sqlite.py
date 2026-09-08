@@ -58,8 +58,38 @@ class SqliteJobStore:
                 return
             has_availability = "availability" in info
             has_reason = "unavailable_reason" in info
-            availability_expr = "availability" if has_availability else "'available'"
-            reason_expr = "unavailable_reason" if has_reason else "NULL"
+            if has_availability and has_reason:
+                copy_sql = (
+                    "INSERT INTO evidence_refs_v3("
+                    "run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,storage_ref,"
+                    "availability,unavailable_reason) "
+                    "SELECT run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,"
+                    "storage_ref,availability,unavailable_reason FROM evidence_refs"
+                )
+            elif has_availability:
+                copy_sql = (
+                    "INSERT INTO evidence_refs_v3("
+                    "run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,storage_ref,"
+                    "availability,unavailable_reason) "
+                    "SELECT run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,"
+                    "storage_ref,availability,NULL FROM evidence_refs"
+                )
+            elif has_reason:
+                copy_sql = (
+                    "INSERT INTO evidence_refs_v3("
+                    "run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,storage_ref,"
+                    "availability,unavailable_reason) "
+                    "SELECT run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,"
+                    "storage_ref,'available',unavailable_reason FROM evidence_refs"
+                )
+            else:
+                copy_sql = (
+                    "INSERT INTO evidence_refs_v3("
+                    "run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,storage_ref,"
+                    "availability,unavailable_reason) "
+                    "SELECT run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,"
+                    "storage_ref,'available',NULL FROM evidence_refs"
+                )
             connection.execute("BEGIN IMMEDIATE")
             connection.execute(
                 "CREATE TABLE evidence_refs_v3 ("
@@ -69,13 +99,7 @@ class SqliteJobStore:
                 "media_type TEXT,size_bytes INTEGER,storage_ref TEXT,"
                 "availability TEXT NOT NULL,unavailable_reason TEXT)"
             )
-            connection.execute(
-                "INSERT INTO evidence_refs_v3("
-                "run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,storage_ref,"
-                "availability,unavailable_reason) "
-                "SELECT run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,"
-                f"storage_ref,{availability_expr},{reason_expr} FROM evidence_refs"
-            )
+            connection.execute(copy_sql)
             connection.execute("DROP TABLE evidence_refs")
             connection.execute("ALTER TABLE evidence_refs_v3 RENAME TO evidence_refs")
             connection.execute(
