@@ -111,6 +111,14 @@ class DurableExecutionService:
             return None
         return await self._store.read_event_page(run_id, since=since, limit=limit)
 
+    async def evidence(self, job_id: JobId) -> tuple[StoredEvidenceRef, ...] | None:
+        """Read portable durable evidence for the latest Run of a durable job."""
+
+        run_id = await self._store.get_run_id_for_job(job_id)
+        if run_id is None:
+            return None
+        return await self._store.read_evidence(run_id)
+
     async def cancel(self, job_id: JobId, *, now: Instant) -> Job:
         """Request cancellation through the same bounded store boundary."""
 
