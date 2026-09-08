@@ -96,13 +96,14 @@ def test_http_and_sdk_expose_portable_evidence_without_storage_locator(tmp_path:
         )
 
     service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
-    server = RoninHTTPServer(("127.0.0.1", 0), service, token="evidence-token")
+    auth_value = "evidence-token"
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=auth_value)
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
         transport = HTTPTransport(
             f"http://127.0.0.1:{server.server_port}",
-            token="evidence-token",
+            token=auth_value,
             allow_insecure_localhost=True,
             max_retries=0,
         )
