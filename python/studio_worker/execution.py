@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -110,6 +110,10 @@ class DurableWorkerExecution:
     now: Callable[[], Instant] = utc_now
     artifact_max_workers: int = 2
     artifact_max_in_flight: int = 4
+    _cancellation_wait: Callable[[float], Awaitable[None]] = field(
+        default=asyncio.sleep,
+        repr=False,
+    )
     _sequence: int = field(default=0, init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -281,7 +285,7 @@ class DurableWorkerExecution:
                     cancellation.cancel()
                     cancellation_requested.set()
                     return
-                await asyncio.sleep(self.cancellation_poll_interval_seconds)
+                await self._cancellation_wait(self.cancellation_poll_interval_seconds)
         except asyncio.CancelledError:
             raise
         except BaseException:
