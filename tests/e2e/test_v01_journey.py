@@ -543,7 +543,9 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
 @pytest.fixture(scope="module")
 def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     if not _docker_qualification_ready():
-        pytest.skip("live cancellation acceptance requires the dedicated real-Docker qualification job")
+        pytest.skip(
+            "live cancellation acceptance requires the dedicated real-Docker qualification job"
+        )
 
     tmp_path = tmp_path_factory.mktemp("v01-worker-cancel")
     marker = tmp_path / "container-running.marker"
