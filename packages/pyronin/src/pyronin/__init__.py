@@ -59,6 +59,13 @@ class JobState(StrEnum):
         return self in {self.CANCELLED, self.SUCCEEDED, self.FAILED}
 
 
+class EvidenceAvailability(StrEnum):
+    AVAILABLE = "available"
+    MISSING = "missing"
+    TOMBSTONED = "tombstoned"
+    UNAVAILABLE = "unavailable"
+
+
 @dataclass(frozen=True, slots=True)
 class Job:
     id: str
@@ -86,6 +93,25 @@ class JobEvent:
 class JobEventPage:
     items: tuple[JobEvent, ...]
     next_since: str
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceReference:
+    version: int
+    cell_id: str | None
+    role: str
+    digest_algorithm: str | None
+    digest: str | None
+    media_type: str | None
+    size_bytes: int | None
+    availability: EvidenceAvailability
+    reason: str | None = None
+
+    @property
+    def portable_identity(self) -> tuple[str, str, str, str | None, int] | None:
+        if self.digest_algorithm is None or self.digest is None or self.size_bytes is None:
+            return None
+        return (self.role, self.digest_algorithm, self.digest, self.media_type, self.size_bytes)
 
 
 class Transport(Protocol):
@@ -256,11 +282,7 @@ class HTTPTransport:
                         exc.code,
                         "error response exceeded configured byte limit",
                     ) from limit_error
-                if (
-                    retry_safe
-                    and exc.code in _RETRYABLE_STATUS_CODES
-                    and attempt < self.max_retries
-                ):
+                if retry_safe and exc.code in _RETRYABLE_STATUS_CODES and attempt < self.max_retries:
                     self._sleep_before_retry(attempt)
                     continue
                 raise APIError(exc.code, "request failed", _api_error_code(error_body)) from exc
@@ -312,11 +334,7 @@ class Ronin:
         payload = self._transport.request(
             "POST",
             "/v1/jobs",
-            payload={
-                "project": project,
-                "target": target,
-                "parameters": dict(parameters or {}),
-            },
+            payload={"project": project, "target": target, "parameters": dict(parameters or {})},
             headers=headers,
         )
         job = _parse_job(payload)
@@ -362,11 +380,20 @@ class Ronin:
             query["since"] = since
         return _parse_event_page(
             self._transport.request(
-                "GET",
-                f"/v1/jobs/{quote(job_id, safe='')}/events",
-                query=query,
+                "GET", f"/v1/jobs/{quote(job_id, safe='')}/events", query=query
             )
         )
+
+    def get_evidence(self, job_id: str) -> tuple[EvidenceReference, ...]:
+        payload = self._transport.request(
+            "GET", f"/v1/jobs/{quote(job_id, safe='')}/evidence"
+        )
+        if not isinstance(payload, dict) or set(payload) != {"items"}:
+            raise ProtocolError("Evidence response must contain exactly items")
+        items = payload["items"]
+        if not isinstance(items, list):
+            raise ProtocolError("Evidence response items must be a list")
+        return tuple(_parse_evidence(item) for item in items)
 
     def _cancel_job(self, job_id: str) -> Job:
         return _parse_job(
@@ -401,6 +428,9 @@ class JobHandle:
 
     def events(self, *, since: str | None = None, limit: int = 50) -> JobEventPage:
         return self.client.get_events(self.id, since=since, limit=limit)
+
+    def evidence(self) -> tuple[EvidenceReference, ...]:
+        return self.client.get_evidence(self.id)
 
 
 def _parse_job(payload: object) -> Job:
@@ -455,11 +485,7 @@ def _parse_event(payload: object) -> JobEvent:
         raise ProtocolError("Job event sequence must be a non-negative integer")
     if not isinstance(attempt_id, str) or not attempt_id:
         raise ProtocolError("Job event attempt_id must be a non-empty string")
-    if (
-        not isinstance(attempt_sequence, int)
-        or isinstance(attempt_sequence, bool)
-        or attempt_sequence < 0
-    ):
+    if not isinstance(attempt_sequence, int) or isinstance(attempt_sequence, bool) or attempt_sequence < 0:
         raise ProtocolError("Job event attempt_sequence must be a non-negative integer")
     if not isinstance(kind, str) or not kind:
         raise ProtocolError("Job event kind must be a non-empty string")
@@ -484,8 +510,63 @@ def _parse_event_page(payload: object) -> JobEventPage:
     return JobEventPage(tuple(_parse_event(item) for item in items), next_since)
 
 
+def _parse_evidence(payload: object) -> EvidenceReference:
+    if not isinstance(payload, dict):
+        raise ProtocolError("Expected an evidence object")
+    expected = {
+        "version", "cell_id", "role", "digest_algorithm", "digest", "media_type",
+        "size_bytes", "availability", "reason",
+    }
+    if set(payload) != expected:
+        raise ProtocolError("Evidence fields do not match the v1 contract")
+    if payload["version"] != 1:
+        raise ProtocolError("Unsupported evidence version")
+    cell_id = payload["cell_id"]
+    role = payload["role"]
+    digest_algorithm = payload["digest_algorithm"]
+    digest = payload["digest"]
+    media_type = payload["media_type"]
+    size_bytes = payload["size_bytes"]
+    availability_raw = payload["availability"]
+    reason = payload["reason"]
+    if cell_id is not None and (not isinstance(cell_id, str) or not cell_id):
+        raise ProtocolError("Evidence cell_id must be a non-empty string when present")
+    if not isinstance(role, str) or not role:
+        raise ProtocolError("Evidence role must be a non-empty string")
+    if not isinstance(availability_raw, str):
+        raise ProtocolError("Evidence availability must be a string")
+    try:
+        availability = EvidenceAvailability(availability_raw)
+    except ValueError as exc:
+        raise ProtocolError("Unknown evidence availability") from exc
+    if media_type is not None and not isinstance(media_type, str):
+        raise ProtocolError("Evidence media_type must be a string when present")
+    if reason is not None and not isinstance(reason, str):
+        raise ProtocolError("Evidence reason must be a string when present")
+    identity = (digest_algorithm, digest, size_bytes)
+    if availability is EvidenceAvailability.UNAVAILABLE:
+        if any(value is not None for value in identity) or reason is None or not reason:
+            raise ProtocolError("Unavailable evidence must omit identity and carry a reason")
+    else:
+        if not isinstance(digest_algorithm, str) or digest_algorithm != "sha256":
+            raise ProtocolError("Evidence digest_algorithm must be sha256")
+        if not isinstance(digest, str) or len(digest) != 64 or any(
+            ch not in "0123456789abcdef" for ch in digest
+        ):
+            raise ProtocolError("Evidence digest must be lowercase SHA-256 hex")
+        if not isinstance(size_bytes, int) or isinstance(size_bytes, bool) or size_bytes < 0:
+            raise ProtocolError("Evidence size_bytes must be a non-negative integer")
+        if reason is not None:
+            raise ProtocolError("Only unavailable evidence may carry a reason")
+    return EvidenceReference(
+        1, cell_id, role, digest_algorithm, digest, media_type, size_bytes, availability, reason
+    )
+
+
 __all__ = [
     "APIError",
+    "EvidenceAvailability",
+    "EvidenceReference",
     "HTTPTransport",
     "Job",
     "JobEvent",
