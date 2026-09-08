@@ -1,9 +1,4 @@
-"""Minimal v0.1 HTTP adapter over the shared durable execution service.
-
-This module owns transport concerns only. Canonical lifecycle and storage semantics
-remain in ``studio_orchestrator`` / ``studio_execution``; the HTTP boundary maps
-JSON requests to those existing contracts without introducing framework models.
-"""
+"""Minimal v0.1 HTTP adapter over the shared durable execution service."""
 
 from __future__ import annotations
 
@@ -22,7 +17,18 @@ from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import uuid4
 
 from studio_execution import DurableExecutionService
-from studio_orchestrator import EventPage, Instant, Job, JobId, JobState, Page, Run, RunId, RunState
+from studio_orchestrator import (
+    EventPage,
+    Instant,
+    Job,
+    JobId,
+    JobState,
+    Page,
+    Run,
+    RunId,
+    RunState,
+    StoredEvidenceRef,
+)
 from studio_storage import IdempotencyConflict, StorageBackpressureError
 
 _MAX_REQUEST_BYTES = 1024 * 1024
@@ -35,6 +41,7 @@ SUPPORTED_ROUTES = frozenset(
         ("GET", "/v1/jobs"),
         ("GET", "/v1/jobs/{job_id}"),
         ("GET", "/v1/jobs/{job_id}/events"),
+        ("GET", "/v1/jobs/{job_id}/evidence"),
         ("POST", "/v1/jobs/{job_id}/cancel"),
     }
 )
@@ -67,18 +74,11 @@ def _request_identity(
 
 
 def _job_payload(job: Job) -> dict[str, object]:
-    return {
-        "id": str(job.id),
-        "state": job.state.value,
-        "failure_code": job.failure_code,
-    }
+    return {"id": str(job.id), "state": job.state.value, "failure_code": job.failure_code}
 
 
 def _page_payload(page: Page) -> dict[str, object]:
-    return {
-        "items": [_job_payload(job) for job in page.items],
-        "next_cursor": page.next_cursor,
-    }
+    return {"items": [_job_payload(job) for job in page.items], "next_cursor": page.next_cursor}
 
 
 def _event_page_payload(page: EventPage) -> dict[str, object]:
@@ -96,6 +96,10 @@ def _event_page_payload(page: EventPage) -> dict[str, object]:
         ],
         "next_since": page.next_since,
     }
+
+
+def _evidence_payload(refs: tuple[StoredEvidenceRef, ...]) -> dict[str, object]:
+    return {"items": [ref.public_payload() for ref in refs]}
 
 
 def _single_query_values(query: str, *, allowed: frozenset[str]) -> dict[str, str]:
@@ -132,8 +136,6 @@ def _opaque_cursor(value: str | None, *, name: str) -> str | None:
 
 
 class _ServiceLoop:
-    """Own one asyncio loop for the bounded async service across HTTP threads."""
-
     def __init__(self, service: DurableExecutionService) -> None:
         self._service = service
         self._loop = asyncio.new_event_loop()
@@ -161,8 +163,6 @@ class _ServiceLoop:
 
 
 class DurableHTTPApplication:
-    """Transport mapping for the implemented frozen v0.1 job-control endpoints."""
-
     def __init__(self, service: DurableExecutionService) -> None:
         self._service = service
         self._loop = _ServiceLoop(service)
@@ -197,7 +197,6 @@ class DurableHTTPApplication:
             raise ValueError(
                 "Idempotency-Key must be non-empty, trimmed, and at most 256 characters"
             )
-
         parameters_dict = cast(dict[str, object], parameters)
         parameters_json, request_digest = _request_identity(project, target, parameters_dict)
         now = _now()
@@ -282,14 +281,19 @@ class DurableHTTPApplication:
         )
         return None if page is None else _event_page_payload(page)
 
+    def evidence(self, job_id: str) -> dict[str, object] | None:
+        refs = cast(
+            tuple[StoredEvidenceRef, ...] | None,
+            self._loop.call(self._service.evidence(JobId(job_id))),
+        )
+        return None if refs is None else _evidence_payload(refs)
+
     def cancel(self, job_id: str) -> dict[str, object]:
         job = cast(Job, self._loop.call(self._service.cancel(JobId(job_id), now=_now())))
         return _job_payload(job)
 
 
 class RoninHTTPServer(ThreadingHTTPServer):
-    """Standard-library HTTP server that owns one shared service-loop bridge."""
-
     daemon_threads = True
 
     def __init__(
@@ -377,8 +381,7 @@ class _Handler(BaseHTTPRequestHandler):
                 return
             try:
                 status, payload = self._ronin_server().application.submit(
-                    self._read_json(),
-                    idempotency_key=self.headers.get("Idempotency-Key"),
+                    self._read_json(), idempotency_key=self.headers.get("Idempotency-Key")
                 )
             except IdempotencyConflict:
                 self._error(
@@ -457,15 +460,10 @@ class _Handler(BaseHTTPRequestHandler):
                 self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
                 return
             try:
-                query = _single_query_values(
-                    split.query,
-                    allowed=frozenset({"since", "limit"}),
-                )
+                query = _single_query_values(split.query, allowed=frozenset({"since", "limit"}))
                 job_id = unquote(encoded_job_id, errors="strict")
                 event_payload = self._ronin_server().application.events(
-                    job_id,
-                    since=query.get("since"),
-                    limit=query.get("limit"),
+                    job_id, since=query.get("since"), limit=query.get("limit")
                 )
             except StorageBackpressureError:
                 self._error(
@@ -482,6 +480,29 @@ class _Handler(BaseHTTPRequestHandler):
                 self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
                 return
             self._write_json(HTTPStatus.OK, event_payload)
+            return
+
+        evidence_suffix = "/evidence"
+        if path.startswith(prefix) and path.endswith(evidence_suffix):
+            encoded_job_id = path[len(prefix) : -len(evidence_suffix)]
+            if not encoded_job_id or "/" in encoded_job_id or split.query:
+                self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
+                return
+            try:
+                job_id = unquote(encoded_job_id, errors="strict")
+                evidence_payload = self._ronin_server().application.evidence(job_id)
+            except StorageBackpressureError:
+                self._error(
+                    HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
+                )
+                return
+            except (UnicodeError, ValueError):
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_job_id", "job id is invalid")
+                return
+            if evidence_payload is None:
+                self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
+                return
+            self._write_json(HTTPStatus.OK, evidence_payload)
             return
 
         if not path.startswith(prefix) or path == prefix:
@@ -506,8 +527,4 @@ class _Handler(BaseHTTPRequestHandler):
         self._write_json(HTTPStatus.OK, job_payload)
 
 
-__all__ = (
-    "DurableHTTPApplication",
-    "RoninHTTPServer",
-    "SUPPORTED_ROUTES",
-)
+__all__ = ("DurableHTTPApplication", "RoninHTTPServer", "SUPPORTED_ROUTES")
