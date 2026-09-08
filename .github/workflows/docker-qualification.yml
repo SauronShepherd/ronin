@@ -74,8 +74,8 @@ jobs:
           report=artifacts/docker-qualification/v01-acceptance.xml
           python -m pytest tests/e2e -m e2e -v --junitxml="$report"
           python -m tools.v01_acceptance_gate "$report" \
-            --allow-skipped=01,12,14 \
-            --allow-skipped-reason="compose, public evidence, and cancel cleanup remain intentionally pending" \
+            --allow-skipped=01,12 \
+            --allow-skipped-reason="compose and public evidence remain intentionally pending" \
             --evidence-json=artifacts/docker-qualification/v01-acceptance-progress.json
           printf '{"head_sha":"%s","run_id":"%s","run_attempt":"%s","event":"%s"}\n' \
             "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_EVENT_NAME" \
