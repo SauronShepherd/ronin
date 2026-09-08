@@ -41,19 +41,52 @@ class SqliteJobStore:
         return open_database(self._path)
 
     def _ensure_evidence_availability_schema(self) -> None:
-        """Add alpha evidence-state columns idempotently without changing content identity."""
+        """Upgrade the alpha evidence table so unavailable records need no fake identity."""
 
         connection = self._connect()
         try:
-            columns = {
-                row["name"] for row in connection.execute("PRAGMA table_info(evidence_refs)").fetchall()
+            info = {
+                row["name"]: row
+                for row in connection.execute("PRAGMA table_info(evidence_refs)").fetchall()
             }
-            if "availability" not in columns:
-                connection.execute(
-                    "ALTER TABLE evidence_refs ADD COLUMN availability TEXT NOT NULL DEFAULT 'available'"
-                )
-            if "unavailable_reason" not in columns:
-                connection.execute("ALTER TABLE evidence_refs ADD COLUMN unavailable_reason TEXT")
+            if (
+                "availability" in info
+                and "unavailable_reason" in info
+                and int(info["digest_algorithm"]["notnull"]) == 0
+                and int(info["digest"]["notnull"]) == 0
+            ):
+                return
+            has_availability = "availability" in info
+            has_reason = "unavailable_reason" in info
+            availability_expr = "availability" if has_availability else "'available'"
+            reason_expr = "unavailable_reason" if has_reason else "NULL"
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute(
+                "CREATE TABLE evidence_refs_v3 ("
+                "evidence_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "run_id TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,"
+                "cell_id TEXT,role TEXT NOT NULL,digest_algorithm TEXT,digest TEXT,"
+                "media_type TEXT,size_bytes INTEGER,storage_ref TEXT,"
+                "availability TEXT NOT NULL,unavailable_reason TEXT)"
+            )
+            connection.execute(
+                "INSERT INTO evidence_refs_v3("
+                "run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,storage_ref,"
+                "availability,unavailable_reason) "
+                "SELECT run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,"
+                f"storage_ref,{availability_expr},{reason_expr} FROM evidence_refs"
+            )
+            connection.execute("DROP TABLE evidence_refs")
+            connection.execute("ALTER TABLE evidence_refs_v3 RENAME TO evidence_refs")
+            connection.execute(
+                "CREATE UNIQUE INDEX idx_evidence_refs_identity ON evidence_refs("
+                "run_id,role,digest_algorithm,digest) WHERE digest IS NOT NULL"
+            )
+            connection.execute("COMMIT")
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
         finally:
             connection.close()
 
@@ -253,42 +286,23 @@ class SqliteJobStore:
             )
             if ref.run_id.value != attempt["run_id"]:
                 raise ValueError("evidence run does not match attempt")
-            if ref.availability is EvidenceAvailability.UNAVAILABLE:
-                connection.execute(
-                    "INSERT INTO evidence_refs(run_id,cell_id,role,digest_algorithm,digest,media_type,"
-                    "size_bytes,storage_ref,availability,unavailable_reason) "
-                    "VALUES (?,?,?,?,?,?,?,?,?,?)",
-                    (
-                        str(ref.run_id),
-                        ref.cell_id,
-                        ref.role,
-                        "sha256",
-                        "0" * 64,
-                        ref.media_type,
-                        None,
-                        None,
-                        ref.availability.value,
-                        ref.unavailable_reason,
-                    ),
-                )
-            else:
-                connection.execute(
-                    "INSERT OR REPLACE INTO evidence_refs(run_id,cell_id,role,digest_algorithm,digest,"
-                    "media_type,size_bytes,storage_ref,availability,unavailable_reason) "
-                    "VALUES (?,?,?,?,?,?,?,?,?,?)",
-                    (
-                        str(ref.run_id),
-                        ref.cell_id,
-                        ref.role,
-                        ref.digest_algorithm,
-                        ref.digest,
-                        ref.media_type,
-                        ref.size_bytes,
-                        ref.storage_ref,
-                        ref.availability.value,
-                        ref.unavailable_reason,
-                    ),
-                )
+            connection.execute(
+                "INSERT OR REPLACE INTO evidence_refs("
+                "run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,storage_ref,"
+                "availability,unavailable_reason) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (
+                    str(ref.run_id),
+                    ref.cell_id,
+                    ref.role,
+                    ref.digest_algorithm,
+                    ref.digest,
+                    ref.media_type,
+                    ref.size_bytes,
+                    ref.storage_ref,
+                    ref.availability.value,
+                    ref.unavailable_reason,
+                ),
+            )
             connection.execute("COMMIT")
         except Exception:
             if connection.in_transaction:
@@ -305,25 +319,21 @@ class SqliteJobStore:
                 "ORDER BY cell_id,role,availability,digest",
                 (str(run_id),),
             ).fetchall()
-            refs: list[StoredEvidenceRef] = []
-            for row in rows:
-                availability = EvidenceAvailability(row["availability"])
-                unavailable = availability is EvidenceAvailability.UNAVAILABLE
-                refs.append(
-                    StoredEvidenceRef(
-                        run_id=RunId(row["run_id"]),
-                        cell_id=row["cell_id"],
-                        role=row["role"],
-                        digest_algorithm=None if unavailable else row["digest_algorithm"],
-                        digest=None if unavailable else row["digest"],
-                        media_type=row["media_type"],
-                        size_bytes=None if unavailable else row["size_bytes"],
-                        storage_ref=None if unavailable else row["storage_ref"],
-                        availability=availability,
-                        unavailable_reason=row["unavailable_reason"],
-                    )
+            return tuple(
+                StoredEvidenceRef(
+                    run_id=RunId(row["run_id"]),
+                    cell_id=row["cell_id"],
+                    role=row["role"],
+                    digest_algorithm=row["digest_algorithm"],
+                    digest=row["digest"],
+                    media_type=row["media_type"],
+                    size_bytes=row["size_bytes"],
+                    storage_ref=row["storage_ref"],
+                    availability=EvidenceAvailability(row["availability"]),
+                    unavailable_reason=row["unavailable_reason"],
                 )
-            return tuple(refs)
+                for row in rows
+            )
         finally:
             connection.close()
 
