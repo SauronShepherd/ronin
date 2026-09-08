@@ -266,3 +266,52 @@ def test_evidence_schema_upgrade_handles_every_alpha_column_variant(
     assert "unavailable_reason" in info
     assert info["digest_algorithm"][3] == 0
     assert info["digest"][3] == 0
+
+
+def test_evidence_schema_upgrade_rolls_back_if_identity_index_would_be_invalid(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "ronin.db"
+    SqliteJobStore(path, migration_now=NOW)
+    connection = sqlite3.connect(path)
+    try:
+        connection.execute("DROP TABLE evidence_refs")
+        connection.execute(
+            "CREATE TABLE evidence_refs ("
+            "evidence_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "run_id TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,"
+            "cell_id TEXT,role TEXT NOT NULL,digest_algorithm TEXT NOT NULL,digest TEXT NOT NULL,"
+            "media_type TEXT,size_bytes INTEGER,storage_ref TEXT)"
+        )
+        duplicate = (
+            "run-duplicate",
+            "cell-1",
+            "log",
+            "sha256",
+            "d" * 64,
+            "application/json",
+            1,
+            "artifact://duplicate",
+        )
+        connection.executemany(
+            "INSERT INTO evidence_refs("
+            "run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,storage_ref) "
+            "VALUES (?,?,?,?,?,?,?,?)",
+            (duplicate, duplicate),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    with pytest.raises(sqlite3.IntegrityError, match="UNIQUE constraint failed"):
+        SqliteJobStore(path, migration_now=NOW)
+
+    connection = sqlite3.connect(path)
+    try:
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(evidence_refs)")}
+        count = connection.execute("SELECT COUNT(*) FROM evidence_refs").fetchone()
+    finally:
+        connection.close()
+    assert "availability" not in columns
+    assert count is not None
+    assert count[0] == 2
