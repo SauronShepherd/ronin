@@ -749,8 +749,10 @@ def test_step_12_evidence_present_for_all_six_cells(
             assert isinstance(item, dict)
             assert item["availability"] == "available"
             assert item["digest_algorithm"] == "sha256"
-            assert isinstance(item["digest"], str) and len(item["digest"]) == 64
-            assert isinstance(item["size_bytes"], int) and item["size_bytes"] >= 0
+            assert isinstance(item["digest"], str)
+            assert len(item["digest"]) == 64
+            assert isinstance(item["size_bytes"], int)
+            assert item["size_bytes"] >= 0
             assert "storage_ref" not in item
             assert "locator" not in item
             cell_id = item["cell_id"]
