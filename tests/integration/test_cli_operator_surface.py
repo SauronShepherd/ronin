@@ -19,7 +19,7 @@ from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
 
 _NOW = Instant("2099-01-01T00:00:00.000000Z")
-_TOKEN = "cli-integration-token"
+_AUTH_VALUE = "cli-integration-auth"
 
 
 def test_cli_operator_surface_reuses_real_http_contract_and_terminal_idempotency(
@@ -29,12 +29,12 @@ def test_cli_operator_surface_reuses_real_http_contract_and_terminal_idempotency
 ) -> None:
     store = SqliteJobStore(tmp_path / "ronin.db", migration_now=_NOW)
     service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
-    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_TOKEN)
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTH_VALUE)
     thread = Thread(target=server.serve_forever, name="ronin-cli-http", daemon=True)
     thread.start()
     base_url = f"http://127.0.0.1:{server.server_port}"
     monkeypatch.setenv("RONIN_URL", base_url)
-    monkeypatch.setenv("RONIN_TOKEN", _TOKEN)
+    monkeypatch.setenv("RONIN_TOKEN", _AUTH_VALUE)
 
     try:
         assert (
@@ -183,7 +183,7 @@ def test_cli_operator_surface_reuses_real_http_contract_and_terminal_idempotency
         sdk = Ronin(
             transport=HTTPTransport(
                 base_url,
-                token=_TOKEN,
+                token=_AUTH_VALUE,
                 allow_insecure_localhost=True,
                 max_retries=0,
             )
@@ -210,11 +210,11 @@ def test_cancel_command_exposes_backend_state_without_claiming_container_cleanup
 ) -> None:
     store = SqliteJobStore(tmp_path / "ronin.db", migration_now=_NOW)
     service = DurableExecutionService(store)
-    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_TOKEN)
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTH_VALUE)
     thread = Thread(target=server.serve_forever, name="ronin-cli-cancel", daemon=True)
     thread.start()
     monkeypatch.setenv("RONIN_URL", f"http://127.0.0.1:{server.server_port}")
-    monkeypatch.setenv("RONIN_TOKEN", _TOKEN)
+    monkeypatch.setenv("RONIN_TOKEN", _AUTH_VALUE)
     try:
         assert main(["submit", "examples/demo", "-t", "notebooks/etl", "--json"]) == 0
         job_id = json.loads(capsys.readouterr().out)["id"]
