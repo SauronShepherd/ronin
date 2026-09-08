@@ -66,6 +66,10 @@ def _parser() -> argparse.ArgumentParser:
     logs.add_argument("--follow", action="store_true")
     logs.add_argument("--json", action="store_true")
 
+    evidence = commands.add_parser("evidence", help="show portable per-cell evidence")
+    evidence.add_argument("job_id")
+    evidence.add_argument("--json", action="store_true")
+
     jobs = commands.add_parser("jobs", help="list jobs newest first")
     jobs.add_argument("--project")
     jobs.add_argument(
@@ -154,12 +158,7 @@ def _doctor(require: str) -> int:
     git_path = shutil.which("git")
     docker_path = shutil.which("docker")
     checks = (
-        (
-            "python>=3.11",
-            sys.hexversion >= 0x030B0000,
-            f"{sys.version_info.major}.{sys.version_info.minor}",
-            True,
-        ),
+        ("python>=3.11", sys.hexversion >= 0x030B0000, f"{sys.version_info.major}.{sys.version_info.minor}", True),
         ("git", git_path is not None, git_path or "not found", True),
         ("docker", docker_path is not None, docker_path or "not found", require == "all"),
     )
@@ -169,9 +168,7 @@ def _doctor(require: str) -> int:
         failed = failed or (required and not ok)
     if failed:
         raise CliError(f"doctor required {require} checks failed")
-    print(
-        "doctor: all checks passed" if require == "all" else "doctor: required core checks passed"
-    )
+    print("doctor: all checks passed" if require == "all" else "doctor: required core checks passed")
     return 0
 
 
@@ -216,9 +213,7 @@ def _env(name: str, default: str | None = None) -> str:
 
 def _token() -> str:
     token_file = os.environ.get("RONIN_TOKEN_FILE")
-    value = (
-        _read_text(Path(token_file), "token file").strip() if token_file else _env("RONIN_TOKEN")
-    )
+    value = _read_text(Path(token_file), "token file").strip() if token_file else _env("RONIN_TOKEN")
     if not value or value != value.strip() or "\n" in value or "\r" in value:
         raise CliError("Ronin token must be non-empty, trimmed, and single-line")
     return value
@@ -233,9 +228,7 @@ def _parse_params(values: Sequence[str]) -> dict[str, object]:
     for value in values:
         key, separator, raw = value.partition("=")
         if not separator or not key or key != key.strip() or key in result:
-            raise CliError(
-                "--param values must be unique KEY=VALUE pairs with non-empty trimmed keys"
-            )
+            raise CliError("--param values must be unique KEY=VALUE pairs with non-empty trimmed keys")
         try:
             parsed: object = json.loads(raw)
         except json.JSONDecodeError:
@@ -287,7 +280,8 @@ def _logs(namespace: argparse.Namespace) -> int:
                 print(json.dumps(event, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
             else:
                 print(
-                    f"{event['sequence']}\t{event['attempt_id']}:{event['attempt_sequence']}\t{event['kind']}\t{event['message']}"
+                    f"{event['sequence']}\t{event['attempt_id']}:{event['attempt_sequence']}\t"
+                    f"{event['kind']}\t{event['message']}"
                 )
         since = cast(str, page["next_since"])
         if not cast(bool, namespace.follow):
@@ -295,6 +289,19 @@ def _logs(namespace: argparse.Namespace) -> int:
         if client.status(job_id)["state"] in TERMINAL_STATES and not items:
             return 0
         time.sleep(0.2)
+
+
+def _evidence(namespace: argparse.Namespace) -> int:
+    items = _client().evidence(cast(str, namespace.job_id))
+    for item in items:
+        if cast(bool, namespace.json):
+            print(json.dumps(item, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
+        else:
+            print(
+                f"{item['cell_id']}\t{item['role']}\t{item['availability']}\t"
+                f"{item['digest_algorithm'] or '-'}:{item['digest'] or '-'}"
+            )
+    return 0
 
 
 def _jobs(namespace: argparse.Namespace) -> int:
@@ -386,6 +393,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _status(namespace)
         if command == "logs":
             return _logs(namespace)
+        if command == "evidence":
+            return _evidence(namespace)
         if command == "jobs":
             return _jobs(namespace)
         if command == "cancel":
