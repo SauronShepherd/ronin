@@ -14,6 +14,7 @@ from studio_kernel import (
 from studio_notebook import CellId
 from studio_orchestrator import EvidenceAvailability, RunId, StoredEvidenceRef
 from studio_runners import LocalExecutionEvidenceStore
+from studio_runners.evidence import _OpaqueLocalExecutionEvidenceStore
 from studio_storage import ArtifactIntegrityError, LocalArtifactStore
 
 
@@ -164,3 +165,32 @@ def test_local_execution_and_artifact_adapters_share_content_identity(tmp_path: 
     assert artifact_store.verify(artifact) is False
     with pytest.raises(ArtifactIntegrityError, match="digest verification"):
         artifact_store.get_bytes(artifact)
+
+
+def test_portable_local_store_rejects_unexpected_backend_locator(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def persist_with_wrong_locator(
+        self: _OpaqueLocalExecutionEvidenceStore,
+        kind: str,
+        attempt_id: ExecutionAttemptId,
+        cell: CellExecutionRequest,
+        payload: dict[str, object],
+    ) -> ExecutionEvidenceReference:
+        del self, attempt_id, cell, payload
+        return ExecutionEvidenceReference(kind, "artifact://unexpected")
+
+    monkeypatch.setattr(
+        _OpaqueLocalExecutionEvidenceStore,
+        "persist_json",
+        persist_with_wrong_locator,
+    )
+    store = LocalExecutionEvidenceStore(tmp_path / "execution")
+    with pytest.raises(ValueError, match="unsupported locator"):
+        store.persist_json(
+            "log",
+            ExecutionAttemptId("attempt-1"),
+            _cell(),
+            {"message": "hello"},
+        )
