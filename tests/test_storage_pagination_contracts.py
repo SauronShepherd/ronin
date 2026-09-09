@@ -18,10 +18,18 @@ from studio_orchestrator import (
     StoredExecutionEvent,
 )
 from studio_storage import BoundedAsyncJobStore, InMemoryJobStore, SqliteJobStore, paged_store
+from studio_storage.fenced_sqlite import SqliteJobStore as CanonicalSqliteJobStore
 
 NOW = "2026-09-07T09:00:00.000000Z"
 AFTER_EXPIRY = "2026-09-07T09:00:31.000000Z"
 SECOND_ATTEMPT_WRITE = "2026-09-07T09:00:32.000000Z"
+
+
+def test_exported_sqlite_store_owns_service_read_contracts() -> None:
+    assert SqliteJobStore is CanonicalSqliteJobStore
+    assert not hasattr(paged_store, "SqliteJobStore")
+    assert "list_jobs" in SqliteJobStore.__dict__
+    assert "read_event_page" in SqliteJobStore.__dict__
 
 
 def _job(job_id: str, created_at: str, *, project_id: str = "project-1") -> Job:
