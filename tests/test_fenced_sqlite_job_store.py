@@ -272,7 +272,27 @@ def test_evidence_schema_upgrade_rolls_back_if_identity_index_would_be_invalid(
     tmp_path: Path,
 ) -> None:
     path = tmp_path / "ronin.db"
-    SqliteJobStore(path, migration_now=NOW)
+    store = SqliteJobStore(path, migration_now=NOW)
+    job = Job(
+        id=JobId("job-duplicate"),
+        project_id="project-1",
+        idempotency_key="key-duplicate",
+        request_digest="e" * 64,
+        state=JobState.QUEUED,
+        created_at=NOW,
+        updated_at=NOW,
+    )
+    run = Run(
+        id=RunId("run-duplicate"),
+        job_id=job.id,
+        ordinal=1,
+        state=RunState.PENDING,
+        not_before=NOW,
+        created_at=NOW,
+        updated_at=NOW,
+    )
+    store.create_job(job, run)
+
     connection = sqlite3.connect(path)
     try:
         connection.execute("DROP TABLE evidence_refs")
