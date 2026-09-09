@@ -1,4 +1,4 @@
-"""Stable keyset pagination adapters for durable jobs and Run-global events."""
+"""Stable keyset pagination adapters for in-memory and bounded async storage."""
 
 from __future__ import annotations
 
@@ -17,7 +17,6 @@ from studio_orchestrator import (
 )
 
 from studio_storage.async_store import BoundedAsyncJobStore as _BoundedAsyncJobStore
-from studio_storage.fenced_sqlite import SqliteJobStore as _SqliteJobStore
 from studio_storage.memory import InMemoryJobStore as _InMemoryJobStore
 from studio_storage.pagination import (
     decode_cursor,
@@ -142,116 +141,6 @@ class InMemoryJobStore(_InMemoryJobStore):
         return EventPage(items, next_since)
 
 
-class SqliteJobStore(_SqliteJobStore):
-    """SQLite adapter with stable newest-first and Run-event keyset paging."""
-
-    def get_run_id_for_job(self, job_id: JobId) -> RunId | None:
-        connection = self._connect()
-        try:
-            row = connection.execute(
-                "SELECT run_id FROM runs WHERE job_id=? ORDER BY ordinal DESC LIMIT 1",
-                (str(job_id),),
-            ).fetchone()
-            return None if row is None else RunId(row["run_id"])
-        finally:
-            connection.close()
-
-    def list_jobs(
-        self,
-        *,
-        project_id: str | None,
-        state: JobState | None,
-        limit: int,
-        cursor: str | None,
-    ) -> Page:
-        validate_limit(limit)
-        clauses: list[str] = []
-        values: list[object] = []
-        if project_id is not None:
-            clauses.append("project_id=?")
-            values.append(project_id)
-        if state is not None:
-            clauses.append("state=?")
-            values.append(state.value)
-        if cursor is not None:
-            created_at, job_id = decode_job_cursor(
-                cursor,
-                project_id=project_id,
-                state=state,
-            )
-            clauses.append("(created_at < ? OR (created_at = ? AND job_id < ?))")
-            values.extend((created_at, created_at, str(job_id)))
-        where = " WHERE " + " AND ".join(clauses) if clauses else ""
-        connection = self._connect()
-        try:
-            rows = connection.execute(
-                f"SELECT * FROM jobs{where} "  # noqa: S608
-                "ORDER BY created_at DESC,job_id DESC LIMIT ?",
-                (*values, limit + 1),
-            ).fetchall()
-            items = tuple(self._inner.get_job(JobId(row["job_id"])) for row in rows[:limit])
-            if any(item is None for item in items):
-                raise AssertionError("listed job disappeared")
-            jobs = tuple(item for item in items if item is not None)
-            next_cursor = None
-            if len(rows) > limit:
-                last = jobs[-1]
-                next_cursor = encode_job_cursor(
-                    created_at=last.created_at,
-                    job_id=last.id,
-                    project_id=project_id,
-                    state=state,
-                )
-            return Page(jobs, next_cursor)
-        finally:
-            connection.close()
-
-    def read_event_page(
-        self,
-        run_id: RunId,
-        *,
-        since: str | None,
-        limit: int,
-    ) -> EventPage:
-        validate_limit(limit)
-        cursor = initial_event_cursor(run_id) if since is None else since
-        next_sequence, after_ordinal, after_sequence = decode_event_cursor(cursor, run_id=run_id)
-        connection = self._connect()
-        try:
-            rows = connection.execute(
-                "SELECT a.ordinal,e.attempt_id,e.sequence,e.event_type,e.message,e.occurred_at "
-                "FROM attempt_events e JOIN attempts a ON a.attempt_id=e.attempt_id "
-                "WHERE a.run_id=? AND "
-                "(a.ordinal > ? OR (a.ordinal = ? AND e.sequence > ?)) "
-                "ORDER BY a.ordinal,e.sequence LIMIT ?",
-                (str(run_id), after_ordinal, after_ordinal, after_sequence, limit + 1),
-            ).fetchall()
-        finally:
-            connection.close()
-        selected = rows[:limit]
-        items = tuple(
-            RunExecutionEvent(
-                sequence=next_sequence + index,
-                attempt_id=AttemptId(row["attempt_id"]),
-                attempt_sequence=int(row["sequence"]),
-                kind=row["event_type"],
-                message=row["message"],
-                occurred_at=row["occurred_at"],
-            )
-            for index, row in enumerate(selected)
-        )
-        if not selected:
-            return EventPage(items, cursor)
-        last = selected[-1]
-        next_since = encode_event_cursor(
-            run_id=run_id,
-            next_sequence=next_sequence + len(selected),
-            attempt_ordinal=int(last["ordinal"]),
-            attempt_sequence=int(last["sequence"]),
-        )
-        return EventPage(items, next_since)
-
-
 class BoundedAsyncJobStore(_BoundedAsyncJobStore):
     """Bounded async facade extended with C0 service-read contracts."""
 
@@ -270,4 +159,4 @@ class BoundedAsyncJobStore(_BoundedAsyncJobStore):
         )
 
 
-__all__ = ("BoundedAsyncJobStore", "InMemoryJobStore", "SqliteJobStore")
+__all__ = ("BoundedAsyncJobStore", "InMemoryJobStore")
