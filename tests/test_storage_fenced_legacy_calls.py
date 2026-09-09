@@ -52,12 +52,9 @@ def _store(tmp_path: Path) -> tuple[SqliteJobStore, AttemptId]:
     return store, attempt_id
 
 
-def test_legacy_unfenced_sqlite_write_shapes_fail_closed(tmp_path: Path) -> None:
-    store, attempt_id = _store(tmp_path)
-    run_id = RunId("run-legacy-fence")
-    event = StoredExecutionEvent(attempt_id, 0, "cell.succeeded", "", NOW)
-    result = StoredCellResult(
-        run_id,
+def _result() -> StoredCellResult:
+    return StoredCellResult(
+        RunId("run-legacy-fence"),
         "cell-1",
         "b" * 64,
         "c" * 64,
@@ -65,8 +62,11 @@ def test_legacy_unfenced_sqlite_write_shapes_fail_closed(tmp_path: Path) -> None
         "{}",
         NOW,
     )
-    evidence = StoredEvidenceRef(
-        run_id,
+
+
+def _evidence() -> StoredEvidenceRef:
+    return StoredEvidenceRef(
+        RunId("run-legacy-fence"),
         "cell-1",
         "log",
         "sha256",
@@ -76,13 +76,48 @@ def test_legacy_unfenced_sqlite_write_shapes_fail_closed(tmp_path: Path) -> None
         "artifact://sha256/" + "d" * 64,
     )
 
+
+def test_legacy_unfenced_sqlite_write_shapes_fail_closed(tmp_path: Path) -> None:
+    store, attempt_id = _store(tmp_path)
+    run_id = RunId("run-legacy-fence")
+    event = StoredExecutionEvent(attempt_id, 0, "cell.succeeded", "", NOW)
+
     with pytest.raises(ValueError, match="active lease"):
         store.append_events(attempt_id, (event,))
     with pytest.raises(ValueError, match="active lease"):
-        store.put_cell_result(result)
+        store.put_cell_result(_result())
     with pytest.raises(ValueError, match="active lease"):
-        store.put_evidence(evidence)
+        store.put_evidence(_evidence())
+    with pytest.raises(ValueError, match="active lease"):
+        store.put_cell_result(result=_result())
+    with pytest.raises(ValueError, match="active lease"):
+        store.put_evidence(ref=_evidence())
 
     assert store.read_events(run_id, since=0) == ()
     assert store.read_cell_results(run_id) == ()
     assert store.read_evidence(run_id) == ()
+
+
+def test_fenced_sqlite_writes_accept_keyword_contract_shape(tmp_path: Path) -> None:
+    store, attempt_id = _store(tmp_path)
+    result = _result()
+    evidence = _evidence()
+    lease = LeaseToken("lease-1")
+
+    store.put_cell_result(
+        attempt_id=attempt_id,
+        result=result,
+        owner="worker-1",
+        lease_token=lease,
+        now=NOW,
+    )
+    store.put_evidence(
+        attempt_id=attempt_id,
+        ref=evidence,
+        owner="worker-1",
+        lease_token=lease,
+        now=NOW,
+    )
+
+    assert store.read_cell_results(RunId("run-legacy-fence")) == (result,)
+    assert store.read_evidence(RunId("run-legacy-fence")) == (evidence,)
