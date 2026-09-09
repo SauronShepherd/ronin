@@ -95,14 +95,16 @@ class SqliteJobStore(_BaseSqliteJobStore):
     @staticmethod
     def _require_write_lease(
         *,
-        owner: str | None,
-        lease_token: LeaseToken | None,
-        now: Instant | str | None,
+        owner: object,
+        lease_token: object,
+        now: object,
     ) -> tuple[str, LeaseToken, Instant]:
         """Reject the obsolete unfenced base-call shape before any mutation."""
 
-        if owner is None or lease_token is None or now is None:
+        if not isinstance(owner, str) or not isinstance(lease_token, LeaseToken) or now is None:
             raise ValueError("worker write requires active lease")
+        if not isinstance(now, (str, Instant)):
+            raise TypeError("now must be an Instant or canonical string")
         return owner, lease_token, Instant(now)
 
     def get_run_id_for_job(self, job_id: JobId) -> RunId | None:
@@ -292,23 +294,31 @@ class SqliteJobStore(_BaseSqliteJobStore):
         now: Instant | str,
     ) -> None: ...
 
-    def put_cell_result(
-        self,
-        attempt_id: AttemptId | StoredCellResult | None = None,
-        result: StoredCellResult | None = None,
-        *,
-        owner: str | None = None,
-        lease_token: LeaseToken | None = None,
-        now: Instant | str | None = None,
-    ) -> None:
-        if attempt_id is None:
-            if result is not None:
+    def put_cell_result(self, *args: object, **kwargs: object) -> None:
+        owner = kwargs.pop("owner", None)
+        lease_token = kwargs.pop("lease_token", None)
+        now = kwargs.pop("now", None)
+        keyword_attempt = kwargs.pop("attempt_id", None)
+        keyword_result = kwargs.pop("result", None)
+        if kwargs:
+            raise TypeError("unexpected put_cell_result arguments")
+
+        if len(args) == 1 and keyword_attempt is None and keyword_result is None:
+            if isinstance(args[0], StoredCellResult):
                 raise ValueError("worker write requires active lease")
-            raise ValueError("cell result is required")
-        if isinstance(attempt_id, StoredCellResult):
+            raise TypeError("invalid put_cell_result arguments")
+        if not args and keyword_attempt is None and isinstance(keyword_result, StoredCellResult):
             raise ValueError("worker write requires active lease")
-        if result is None:
-            raise ValueError("cell result is required")
+
+        if len(args) == 2 and keyword_attempt is None and keyword_result is None:
+            attempt_id, result = args
+        elif not args and keyword_attempt is not None and keyword_result is not None:
+            attempt_id, result = keyword_attempt, keyword_result
+        else:
+            raise TypeError("invalid put_cell_result arguments")
+        if not isinstance(attempt_id, AttemptId) or not isinstance(result, StoredCellResult):
+            raise TypeError("invalid put_cell_result arguments")
+
         owner, lease_token, current = self._require_write_lease(
             owner=owner,
             lease_token=lease_token,
@@ -364,23 +374,31 @@ class SqliteJobStore(_BaseSqliteJobStore):
         now: Instant | str,
     ) -> None: ...
 
-    def put_evidence(
-        self,
-        attempt_id: AttemptId | StoredEvidenceRef | None = None,
-        ref: StoredEvidenceRef | None = None,
-        *,
-        owner: str | None = None,
-        lease_token: LeaseToken | None = None,
-        now: Instant | str | None = None,
-    ) -> None:
-        if attempt_id is None:
-            if ref is not None:
+    def put_evidence(self, *args: object, **kwargs: object) -> None:
+        owner = kwargs.pop("owner", None)
+        lease_token = kwargs.pop("lease_token", None)
+        now = kwargs.pop("now", None)
+        keyword_attempt = kwargs.pop("attempt_id", None)
+        keyword_ref = kwargs.pop("ref", None)
+        if kwargs:
+            raise TypeError("unexpected put_evidence arguments")
+
+        if len(args) == 1 and keyword_attempt is None and keyword_ref is None:
+            if isinstance(args[0], StoredEvidenceRef):
                 raise ValueError("worker write requires active lease")
-            raise ValueError("evidence reference is required")
-        if isinstance(attempt_id, StoredEvidenceRef):
+            raise TypeError("invalid put_evidence arguments")
+        if not args and keyword_attempt is None and isinstance(keyword_ref, StoredEvidenceRef):
             raise ValueError("worker write requires active lease")
-        if ref is None:
-            raise ValueError("evidence reference is required")
+
+        if len(args) == 2 and keyword_attempt is None and keyword_ref is None:
+            attempt_id, ref = args
+        elif not args and keyword_attempt is not None and keyword_ref is not None:
+            attempt_id, ref = keyword_attempt, keyword_ref
+        else:
+            raise TypeError("invalid put_evidence arguments")
+        if not isinstance(attempt_id, AttemptId) or not isinstance(ref, StoredEvidenceRef):
+            raise TypeError("invalid put_evidence arguments")
+
         owner, lease_token, current = self._require_write_lease(
             owner=owner,
             lease_token=lease_token,
