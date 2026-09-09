@@ -5,7 +5,6 @@ from __future__ import annotations
 from functools import partial
 
 from studio_orchestrator import (
-    AttemptId,
     EventPage,
     Instant,
     JobId,
