@@ -294,13 +294,17 @@ class SqliteJobStore(_BaseSqliteJobStore):
 
     def put_cell_result(
         self,
-        attempt_id: AttemptId | StoredCellResult,
+        attempt_id: AttemptId | StoredCellResult | None = None,
         result: StoredCellResult | None = None,
         *,
         owner: str | None = None,
         lease_token: LeaseToken | None = None,
         now: Instant | str | None = None,
     ) -> None:
+        if attempt_id is None:
+            if result is not None:
+                raise ValueError("worker write requires active lease")
+            raise ValueError("cell result is required")
         if isinstance(attempt_id, StoredCellResult):
             raise ValueError("worker write requires active lease")
         if result is None:
@@ -362,13 +366,17 @@ class SqliteJobStore(_BaseSqliteJobStore):
 
     def put_evidence(
         self,
-        attempt_id: AttemptId | StoredEvidenceRef,
+        attempt_id: AttemptId | StoredEvidenceRef | None = None,
         ref: StoredEvidenceRef | None = None,
         *,
         owner: str | None = None,
         lease_token: LeaseToken | None = None,
         now: Instant | str | None = None,
     ) -> None:
+        if attempt_id is None:
+            if ref is not None:
+                raise ValueError("worker write requires active lease")
+            raise ValueError("evidence reference is required")
         if isinstance(attempt_id, StoredEvidenceRef):
             raise ValueError("worker write requires active lease")
         if ref is None:
