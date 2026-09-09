@@ -5,6 +5,8 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Sequence
 from pathlib import Path
+from threading import RLock
+from typing import cast
 
 from studio_orchestrator import (
     AttemptId,
@@ -28,12 +30,55 @@ from studio_storage.sqlite import SqliteJobStore as _BaseSqliteJobStore
 from studio_storage.sqlite import open_database
 
 
+class _BorrowedConnection:
+    """Serialize one complete JobStore operation on a reusable connection."""
+
+    def __init__(self, connection: sqlite3.Connection, lock: RLock) -> None:
+        self._connection = connection
+        self._lock = lock
+        self._closed = False
+        self._lock.acquire()
+
+    def __getattr__(self, name: str) -> object:
+        return getattr(self._connection, name)
+
+    def close(self) -> None:
+        if not self._closed:
+            self._closed = True
+            self._lock.release()
+
+
+class _ReusableBaseSqliteJobStore(_BaseSqliteJobStore):
+    """Base store that amortizes SQLite open/configuration across operations."""
+
+    def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
+        super().__init__(path, migration_now=migration_now)
+        self._connection_lock = RLock()
+        self._connection = sqlite3.connect(
+            path,
+            isolation_level=None,
+            timeout=5.0,
+            check_same_thread=False,
+        )
+        self._connection.row_factory = sqlite3.Row
+        self._connection.execute("PRAGMA foreign_keys=ON")
+        self._connection.execute("PRAGMA journal_mode=WAL")
+        self._connection.execute("PRAGMA synchronous=FULL")
+        self._connection.execute("PRAGMA busy_timeout=5000")
+
+    def _connect(self) -> sqlite3.Connection:
+        return cast(
+            sqlite3.Connection,
+            _BorrowedConnection(self._connection, self._connection_lock),
+        )
+
+
 class SqliteJobStore:
     """SQLite JobStore with active-lease fencing for worker-originated mutations."""
 
     def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
         self._path = path
-        self._inner = _BaseSqliteJobStore(path, migration_now=migration_now)
+        self._inner = _ReusableBaseSqliteJobStore(path, migration_now=migration_now)
 
     def _connect(self) -> sqlite3.Connection:
         return open_database(self._path)
