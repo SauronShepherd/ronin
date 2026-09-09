@@ -57,7 +57,7 @@ class _ReusableBaseSqliteJobStore(_BaseSqliteJobStore):
         )
         if connection is None:
             connection = super()._connect()
-            setattr(self._connections, "connection", connection)
+            self._connections.connection = connection
         return cast(sqlite3.Connection, _BorrowedConnection(connection))
 
 
