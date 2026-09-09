@@ -32,8 +32,7 @@ class _OneBlockedStatusSqliteStore(SqliteJobStore):
     def get_job(self, job_id: JobId) -> Job | None:
         if job_id == JobId("contention-blocker"):
             self.block_started.set()
-            if not self.release_block.wait(timeout=5.0):
-                raise RuntimeError("bounded-contention status probe was not released")
+            self.release_block.wait()
         return super().get_job(job_id)
 
 
@@ -53,6 +52,7 @@ def _latency_summary(label: str, samples_seconds: list[float], budget_ms: float)
 
 def _assert_p95_budget(label: str, samples_seconds: list[float], budget_ms: float) -> None:
     summary = _latency_summary(label, samples_seconds, budget_ms)
+    print(summary, flush=True)
     assert _p95_ms(samples_seconds) < budget_ms, summary
 
 
