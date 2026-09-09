@@ -116,6 +116,8 @@ jobs:
   verification:
     name: verification
     runs-on: ubuntu-24.04
+    env:
+      VERIFY_VENV: ${{ runner.temp }}/ronin-verify-venv
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -127,14 +129,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m venv .venv-verify
-          source .venv-verify/bin/activate
+          rm -rf "$VERIFY_VENV"
+          case "$(realpath -m "$VERIFY_VENV")/" in
+            "$(realpath "$GITHUB_WORKSPACE")/"*)
+              echo "verification environment must be outside the Git workspace" >&2
+              exit 1
+              ;;
+          esac
+          python -m venv "$VERIFY_VENV"
+          source "$VERIFY_VENV/bin/activate"
           python -m pip install --require-hashes -r requirements-dev.lock
           python -m pip install -e . --no-deps
       - name: Prove installed packages import in the clean environment
         shell: bash
         run: |
-          source .venv-verify/bin/activate
+          source "$VERIFY_VENV/bin/activate"
           python - <<'PY'
           import studio_cli
           import studio_core
@@ -150,20 +159,32 @@ jobs:
       - name: Run acceptance scaffold without release claim
         shell: bash
         run: |
-          source .venv-verify/bin/activate
+          source "$VERIFY_VENV/bin/activate"
           python -m pytest tests/e2e -m e2e -v --junitxml=/tmp/v01-verification.xml
           python -m tools.v01_acceptance_gate /tmp/v01-verification.xml --progress-only
       - name: Prove demo regeneration is byte-identical
         shell: bash
         run: |
-          source .venv-verify/bin/activate
+          source "$VERIFY_VENV/bin/activate"
           python examples/demo/build_fixture.py
           git diff --exit-code examples/demo/
+      - name: Prove verifier artifacts are outside captured workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e "$GITHUB_WORKSPACE/.venv-verify"
+          test -z "$(git ls-files --others --exclude-standard -- .venv-verify)"
+          case "$(realpath "$VERIFY_VENV")/" in
+            "$(realpath "$GITHUB_WORKSPACE")/"*)
+              echo "verification environment contaminated Git workspace" >&2
+              exit 1
+              ;;
+          esac
       - name: Run full clean make check on nightly/manual qualification
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
-          source .venv-verify/bin/activate
+          source "$VERIFY_VENV/bin/activate"
           time make check
 
   mutation:
