@@ -33,7 +33,7 @@ from studio_storage.pagination import (
     initial_event_cursor,
     validate_limit,
 )
-from studio_storage.sqlite import SqliteJobStore as _BaseSqliteJobStore
+from studio_storage.sqlite import _SqliteLifecycleStore
 
 
 class _BorrowedConnection:
@@ -49,14 +49,12 @@ class _BorrowedConnection:
         return None
 
 
-class SqliteJobStore(_BaseSqliteJobStore):
-    """Supported SQLite JobStore with paging, reuse and active-lease fencing.
+class SqliteJobStore(_SqliteLifecycleStore):
+    """Supported SQLite JobStore with all worker writes and service paging.
 
-    The public adapter owns the final service-read SQL and worker mutation
-    semantics directly. The older paged wrapper and reusable intermediate
-    layer are intentionally absent so there is one supported adapter boundary
-    above the migration/lifecycle base while the remaining base collapse is
-    completed separately.
+    The internal lifecycle helper owns only shared migration/lifecycle reads and
+    claims. Worker-originated mutations and service paging live exclusively on
+    this supported adapter.
     """
 
     def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
