@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Sequence
 from pathlib import Path
-from threading import RLock
+from threading import local
 from typing import cast
 
 from studio_orchestrator import (
@@ -31,46 +31,34 @@ from studio_storage.sqlite import open_database
 
 
 class _BorrowedConnection:
-    """Serialize one complete JobStore operation on a reusable connection."""
+    """Keep a thread-local SQLite connection open across store operations."""
 
-    def __init__(self, connection: sqlite3.Connection, lock: RLock) -> None:
+    def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
-        self._lock = lock
-        self._closed = False
-        self._lock.acquire()
 
     def __getattr__(self, name: str) -> object:
         return getattr(self._connection, name)
 
     def close(self) -> None:
-        if not self._closed:
-            self._closed = True
-            self._lock.release()
+        return None
 
 
 class _ReusableBaseSqliteJobStore(_BaseSqliteJobStore):
-    """Base store that amortizes SQLite open/configuration across operations."""
+    """Base store that amortizes SQLite open/configuration per worker thread."""
 
     def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
         super().__init__(path, migration_now=migration_now)
-        self._connection_lock = RLock()
-        self._connection = sqlite3.connect(
-            path,
-            isolation_level=None,
-            timeout=5.0,
-            check_same_thread=False,
-        )
-        self._connection.row_factory = sqlite3.Row
-        self._connection.execute("PRAGMA foreign_keys=ON")
-        self._connection.execute("PRAGMA journal_mode=WAL")
-        self._connection.execute("PRAGMA synchronous=FULL")
-        self._connection.execute("PRAGMA busy_timeout=5000")
+        self._connections = local()
 
     def _connect(self) -> sqlite3.Connection:
-        return cast(
-            sqlite3.Connection,
-            _BorrowedConnection(self._connection, self._connection_lock),
+        connection = cast(
+            sqlite3.Connection | None,
+            getattr(self._connections, "connection", None),
         )
+        if connection is None:
+            connection = super()._connect()
+            setattr(self._connections, "connection", connection)
+        return cast(sqlite3.Connection, _BorrowedConnection(connection))
 
 
 class SqliteJobStore:
