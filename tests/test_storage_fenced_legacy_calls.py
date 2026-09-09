@@ -135,7 +135,9 @@ def test_fenced_compatibility_argument_validation_is_fail_closed(tmp_path: Path)
     with pytest.raises(TypeError, match="invalid put_cell_result"):
         store.put_cell_result(attempt_id, result, result=result)
     with pytest.raises(TypeError, match="invalid put_cell_result"):
-        store.put_cell_result(attempt_id, object(), owner="worker-1", lease_token=LeaseToken("lease-1"), now=NOW)
+        store.put_cell_result(
+            attempt_id, object(), owner="worker-1", lease_token=LeaseToken("lease-1"), now=NOW
+        )
 
     with pytest.raises(TypeError, match="unexpected put_evidence"):
         store.put_evidence(evidence, unexpected=True)
@@ -144,7 +146,9 @@ def test_fenced_compatibility_argument_validation_is_fail_closed(tmp_path: Path)
     with pytest.raises(TypeError, match="invalid put_evidence"):
         store.put_evidence(attempt_id, evidence, ref=evidence)
     with pytest.raises(TypeError, match="invalid put_evidence"):
-        store.put_evidence(attempt_id, object(), owner="worker-1", lease_token=LeaseToken("lease-1"), now=NOW)
+        store.put_evidence(
+            attempt_id, object(), owner="worker-1", lease_token=LeaseToken("lease-1"), now=NOW
+        )
 
     with pytest.raises(ValueError, match="active lease"):
         store.put_cell_result(attempt_id, result, owner="worker-1", lease_token=None, now=NOW)
