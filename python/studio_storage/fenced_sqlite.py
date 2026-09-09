@@ -5,6 +5,8 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Sequence
 from pathlib import Path
+from threading import local
+from typing import cast
 
 from studio_orchestrator import (
     AttemptId,
@@ -28,12 +30,43 @@ from studio_storage.sqlite import SqliteJobStore as _BaseSqliteJobStore
 from studio_storage.sqlite import open_database
 
 
+class _BorrowedConnection:
+    """Keep a thread-local SQLite connection open across store operations."""
+
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
+
+    def __getattr__(self, name: str) -> object:
+        return getattr(self._connection, name)
+
+    def close(self) -> None:
+        return None
+
+
+class _ReusableBaseSqliteJobStore(_BaseSqliteJobStore):
+    """Base store that amortizes SQLite open/configuration per worker thread."""
+
+    def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
+        super().__init__(path, migration_now=migration_now)
+        self._connections = local()
+
+    def _connect(self) -> sqlite3.Connection:
+        connection = cast(
+            sqlite3.Connection | None,
+            getattr(self._connections, "connection", None),
+        )
+        if connection is None:
+            connection = super()._connect()
+            self._connections.connection = connection
+        return cast(sqlite3.Connection, _BorrowedConnection(connection))
+
+
 class SqliteJobStore:
     """SQLite JobStore with active-lease fencing for worker-originated mutations."""
 
     def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
         self._path = path
-        self._inner = _BaseSqliteJobStore(path, migration_now=migration_now)
+        self._inner = _ReusableBaseSqliteJobStore(path, migration_now=migration_now)
 
     def _connect(self) -> sqlite3.Connection:
         return open_database(self._path)
