@@ -6,7 +6,7 @@ import sqlite3
 from collections.abc import Sequence
 from pathlib import Path
 from threading import local
-from typing import cast
+from typing import cast, overload
 
 from studio_orchestrator import (
     AttemptId,
@@ -53,7 +53,7 @@ class SqliteJobStore(_BaseSqliteJobStore):
     """Supported SQLite JobStore with paging, reuse and active-lease fencing.
 
     The public adapter owns the final service-read SQL and worker mutation
-    semantics directly.  The older paged wrapper and reusable intermediate
+    semantics directly. The older paged wrapper and reusable intermediate
     layer are intentionally absent so there is one supported adapter boundary
     above the migration/lifecycle base while the remaining base collapse is
     completed separately.
@@ -91,6 +91,19 @@ class SqliteJobStore(_BaseSqliteJobStore):
         if row is None:
             raise ValueError("attempt lease ownership lost")
         return row
+
+    @staticmethod
+    def _require_write_lease(
+        *,
+        owner: str | None,
+        lease_token: LeaseToken | None,
+        now: Instant | str | None,
+    ) -> tuple[str, LeaseToken, Instant]:
+        """Reject the obsolete unfenced base-call shape before any mutation."""
+
+        if owner is None or lease_token is None or now is None:
+            raise ValueError("worker write requires active lease")
+        return owner, lease_token, Instant(now)
 
     def get_run_id_for_job(self, job_id: JobId) -> RunId | None:
         connection = self._connect()
@@ -198,6 +211,14 @@ class SqliteJobStore(_BaseSqliteJobStore):
         )
         return EventPage(items, next_since)
 
+    @overload
+    def append_events(
+        self,
+        attempt_id: AttemptId,
+        events: Sequence[StoredExecutionEvent],
+    ) -> None: ...
+
+    @overload
     def append_events(
         self,
         attempt_id: AttemptId,
@@ -206,8 +227,22 @@ class SqliteJobStore(_BaseSqliteJobStore):
         owner: str,
         lease_token: LeaseToken,
         now: Instant | str,
+    ) -> None: ...
+
+    def append_events(
+        self,
+        attempt_id: AttemptId,
+        events: Sequence[StoredExecutionEvent],
+        *,
+        owner: str | None = None,
+        lease_token: LeaseToken | None = None,
+        now: Instant | str | None = None,
     ) -> None:
-        current = Instant(now)
+        owner, lease_token, current = self._require_write_lease(
+            owner=owner,
+            lease_token=lease_token,
+            now=now,
+        )
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
@@ -243,6 +278,10 @@ class SqliteJobStore(_BaseSqliteJobStore):
         finally:
             connection.close()
 
+    @overload
+    def put_cell_result(self, result: StoredCellResult) -> None: ...
+
+    @overload
     def put_cell_result(
         self,
         attempt_id: AttemptId,
@@ -251,8 +290,26 @@ class SqliteJobStore(_BaseSqliteJobStore):
         owner: str,
         lease_token: LeaseToken,
         now: Instant | str,
+    ) -> None: ...
+
+    def put_cell_result(
+        self,
+        attempt_id: AttemptId | StoredCellResult,
+        result: StoredCellResult | None = None,
+        *,
+        owner: str | None = None,
+        lease_token: LeaseToken | None = None,
+        now: Instant | str | None = None,
     ) -> None:
-        current = Instant(now)
+        if isinstance(attempt_id, StoredCellResult):
+            raise ValueError("worker write requires active lease")
+        if result is None:
+            raise ValueError("cell result is required")
+        owner, lease_token, current = self._require_write_lease(
+            owner=owner,
+            lease_token=lease_token,
+            now=now,
+        )
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
@@ -289,6 +346,10 @@ class SqliteJobStore(_BaseSqliteJobStore):
         finally:
             connection.close()
 
+    @overload
+    def put_evidence(self, ref: StoredEvidenceRef) -> None: ...
+
+    @overload
     def put_evidence(
         self,
         attempt_id: AttemptId,
@@ -297,8 +358,26 @@ class SqliteJobStore(_BaseSqliteJobStore):
         owner: str,
         lease_token: LeaseToken,
         now: Instant | str,
+    ) -> None: ...
+
+    def put_evidence(
+        self,
+        attempt_id: AttemptId | StoredEvidenceRef,
+        ref: StoredEvidenceRef | None = None,
+        *,
+        owner: str | None = None,
+        lease_token: LeaseToken | None = None,
+        now: Instant | str | None = None,
     ) -> None:
-        current = Instant(now)
+        if isinstance(attempt_id, StoredEvidenceRef):
+            raise ValueError("worker write requires active lease")
+        if ref is None:
+            raise ValueError("evidence reference is required")
+        owner, lease_token, current = self._require_write_lease(
+            owner=owner,
+            lease_token=lease_token,
+            now=now,
+        )
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
