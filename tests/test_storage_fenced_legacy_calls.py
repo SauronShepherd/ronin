@@ -121,3 +121,32 @@ def test_fenced_sqlite_writes_accept_keyword_contract_shape(tmp_path: Path) -> N
 
     assert store.read_cell_results(RunId("run-legacy-fence")) == (result,)
     assert store.read_evidence(RunId("run-legacy-fence")) == (evidence,)
+
+
+def test_fenced_compatibility_argument_validation_is_fail_closed(tmp_path: Path) -> None:
+    store, attempt_id = _store(tmp_path)
+    result = _result()
+    evidence = _evidence()
+
+    with pytest.raises(TypeError, match="unexpected put_cell_result"):
+        store.put_cell_result(result, unexpected=True)
+    with pytest.raises(TypeError, match="invalid put_cell_result"):
+        store.put_cell_result("not-a-result")
+    with pytest.raises(TypeError, match="invalid put_cell_result"):
+        store.put_cell_result(attempt_id, result, result=result)
+    with pytest.raises(TypeError, match="invalid put_cell_result"):
+        store.put_cell_result(attempt_id, object(), owner="worker-1", lease_token=LeaseToken("lease-1"), now=NOW)
+
+    with pytest.raises(TypeError, match="unexpected put_evidence"):
+        store.put_evidence(evidence, unexpected=True)
+    with pytest.raises(TypeError, match="invalid put_evidence"):
+        store.put_evidence("not-evidence")
+    with pytest.raises(TypeError, match="invalid put_evidence"):
+        store.put_evidence(attempt_id, evidence, ref=evidence)
+    with pytest.raises(TypeError, match="invalid put_evidence"):
+        store.put_evidence(attempt_id, object(), owner="worker-1", lease_token=LeaseToken("lease-1"), now=NOW)
+
+    with pytest.raises(ValueError, match="active lease"):
+        store.put_cell_result(attempt_id, result, owner="worker-1", lease_token=None, now=NOW)
+    with pytest.raises(ValueError, match="active lease"):
+        store.put_evidence(attempt_id, evidence, owner="worker-1", lease_token=None, now=NOW)
