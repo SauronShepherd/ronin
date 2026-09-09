@@ -1,4 +1,4 @@
-"""Lease-fenced SQLite adapter for worker-originated durable mutations."""
+"""Canonical lease-fenced SQLite adapter for durable job storage."""
 
 from __future__ import annotations
 
@@ -11,14 +11,13 @@ from typing import cast
 from studio_orchestrator import (
     AttemptId,
     AttemptState,
-    ClaimedRun,
+    EventPage,
     Instant,
-    Job,
     JobId,
     JobState,
     LeaseToken,
     Page,
-    Run,
+    RunExecutionEvent,
     RunId,
     RunState,
     StoredCellResult,
@@ -26,8 +25,15 @@ from studio_orchestrator import (
     StoredExecutionEvent,
 )
 
+from studio_storage.pagination import (
+    decode_event_cursor,
+    decode_job_cursor,
+    encode_event_cursor,
+    encode_job_cursor,
+    initial_event_cursor,
+    validate_limit,
+)
 from studio_storage.sqlite import SqliteJobStore as _BaseSqliteJobStore
-from studio_storage.sqlite import open_database
 
 
 class _BorrowedConnection:
@@ -43,8 +49,15 @@ class _BorrowedConnection:
         return None
 
 
-class _ReusableBaseSqliteJobStore(_BaseSqliteJobStore):
-    """Base store that amortizes SQLite open/configuration per worker thread."""
+class SqliteJobStore(_BaseSqliteJobStore):
+    """Supported SQLite JobStore with paging, reuse and active-lease fencing.
+
+    The public adapter owns the final service-read SQL and worker mutation
+    semantics directly.  The older paged wrapper and reusable intermediate
+    layer are intentionally absent so there is one supported adapter boundary
+    above the migration/lifecycle base while the remaining base collapse is
+    completed separately.
+    """
 
     def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
         super().__init__(path, migration_now=migration_now)
@@ -59,17 +72,6 @@ class _ReusableBaseSqliteJobStore(_BaseSqliteJobStore):
             connection = super()._connect()
             self._connections.connection = connection
         return cast(sqlite3.Connection, _BorrowedConnection(connection))
-
-
-class SqliteJobStore:
-    """SQLite JobStore with active-lease fencing for worker-originated mutations."""
-
-    def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
-        self._path = path
-        self._inner = _ReusableBaseSqliteJobStore(path, migration_now=migration_now)
-
-    def _connect(self) -> sqlite3.Connection:
-        return open_database(self._path)
 
     @staticmethod
     def _active_attempt_row(
@@ -90,11 +92,16 @@ class SqliteJobStore:
             raise ValueError("attempt lease ownership lost")
         return row
 
-    def create_job(self, job: Job, run: Run) -> Job:
-        return self._inner.create_job(job, run)
-
-    def get_job(self, job_id: JobId) -> Job | None:
-        return self._inner.get_job(job_id)
+    def get_run_id_for_job(self, job_id: JobId) -> RunId | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT run_id FROM runs WHERE job_id=? ORDER BY ordinal DESC LIMIT 1",
+                (str(job_id),),
+            ).fetchone()
+            return None if row is None else RunId(row["run_id"])
+        finally:
+            connection.close()
 
     def list_jobs(
         self,
@@ -104,49 +111,92 @@ class SqliteJobStore:
         limit: int,
         cursor: str | None,
     ) -> Page:
-        return self._inner.list_jobs(
-            project_id=project_id,
-            state=state,
-            limit=limit,
-            cursor=cursor,
-        )
+        validate_limit(limit)
+        clauses: list[str] = []
+        values: list[object] = []
+        if project_id is not None:
+            clauses.append("project_id=?")
+            values.append(project_id)
+        if state is not None:
+            clauses.append("state=?")
+            values.append(state.value)
+        if cursor is not None:
+            created_at, job_id = decode_job_cursor(
+                cursor,
+                project_id=project_id,
+                state=state,
+            )
+            clauses.append("(created_at < ? OR (created_at = ? AND job_id < ?))")
+            values.extend((created_at, created_at, str(job_id)))
+        where = " WHERE " + " AND ".join(clauses) if clauses else ""
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                f"SELECT * FROM jobs{where} "  # noqa: S608
+                "ORDER BY created_at DESC,job_id DESC LIMIT ?",
+                (*values, limit + 1),
+            ).fetchall()
+            jobs = tuple(self.get_job(JobId(row["job_id"])) for row in rows[:limit])
+            if any(job is None for job in jobs):
+                raise AssertionError("listed job disappeared")
+            items = tuple(job for job in jobs if job is not None)
+            next_cursor = None
+            if len(rows) > limit:
+                last = items[-1]
+                next_cursor = encode_job_cursor(
+                    created_at=last.created_at,
+                    job_id=last.id,
+                    project_id=project_id,
+                    state=state,
+                )
+            return Page(items, next_cursor)
+        finally:
+            connection.close()
 
-    def request_cancel(self, job_id: JobId, *, now: Instant | str) -> Job:
-        return self._inner.request_cancel(job_id, now=now)
-
-    def claim_next_run(
+    def read_event_page(
         self,
+        run_id: RunId,
         *,
-        owner: str,
-        lease_token: LeaseToken,
-        attempt_id: AttemptId,
-        lease_seconds: int,
-        now: Instant | str,
-    ) -> ClaimedRun | None:
-        return self._inner.claim_next_run(
-            owner=owner,
-            lease_token=lease_token,
-            attempt_id=attempt_id,
-            lease_seconds=lease_seconds,
-            now=now,
+        since: str | None,
+        limit: int,
+    ) -> EventPage:
+        validate_limit(limit)
+        cursor = initial_event_cursor(run_id) if since is None else since
+        next_sequence, after_ordinal, after_sequence = decode_event_cursor(cursor, run_id=run_id)
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT a.ordinal,e.attempt_id,e.sequence,e.event_type,e.message,e.occurred_at "
+                "FROM attempt_events e JOIN attempts a ON a.attempt_id=e.attempt_id "
+                "WHERE a.run_id=? AND "
+                "(a.ordinal > ? OR (a.ordinal = ? AND e.sequence > ?)) "
+                "ORDER BY a.ordinal,e.sequence LIMIT ?",
+                (str(run_id), after_ordinal, after_ordinal, after_sequence, limit + 1),
+            ).fetchall()
+        finally:
+            connection.close()
+        selected = rows[:limit]
+        items = tuple(
+            RunExecutionEvent(
+                sequence=next_sequence + index,
+                attempt_id=AttemptId(row["attempt_id"]),
+                attempt_sequence=int(row["sequence"]),
+                kind=row["event_type"],
+                message=row["message"],
+                occurred_at=row["occurred_at"],
+            )
+            for index, row in enumerate(selected)
         )
-
-    def heartbeat(
-        self,
-        attempt_id: AttemptId,
-        *,
-        owner: str,
-        lease_token: LeaseToken,
-        expires_at: Instant | str,
-        now: Instant | str,
-    ) -> bool:
-        return self._inner.heartbeat(
-            attempt_id,
-            owner=owner,
-            lease_token=lease_token,
-            expires_at=expires_at,
-            now=now,
+        if not selected:
+            return EventPage(items, cursor)
+        last = selected[-1]
+        next_since = encode_event_cursor(
+            run_id=run_id,
+            next_sequence=next_sequence + len(selected),
+            attempt_ordinal=int(last["ordinal"]),
+            attempt_sequence=int(last["sequence"]),
         )
+        return EventPage(items, next_since)
 
     def append_events(
         self,
@@ -192,9 +242,6 @@ class SqliteJobStore:
             raise
         finally:
             connection.close()
-
-    def read_events(self, run_id: RunId, *, since: int) -> tuple[StoredExecutionEvent, ...]:
-        return self._inner.read_events(run_id, since=since)
 
     def put_cell_result(
         self,
@@ -242,9 +289,6 @@ class SqliteJobStore:
         finally:
             connection.close()
 
-    def read_cell_results(self, run_id: RunId) -> tuple[StoredCellResult, ...]:
-        return self._inner.read_cell_results(run_id)
-
     def put_evidence(
         self,
         attempt_id: AttemptId,
@@ -288,9 +332,6 @@ class SqliteJobStore:
             raise
         finally:
             connection.close()
-
-    def read_evidence(self, run_id: RunId) -> tuple[StoredEvidenceRef, ...]:
-        return self._inner.read_evidence(run_id)
 
     def complete_attempt(
         self,
@@ -364,9 +405,6 @@ class SqliteJobStore:
             raise
         finally:
             connection.close()
-
-    def reclaim_expired(self, *, now: Instant | str) -> tuple[RunId, ...]:
-        return self._inner.reclaim_expired(now=now)
 
 
 __all__ = ("SqliteJobStore",)
