@@ -16,6 +16,7 @@ from typing import Any, cast
 from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import uuid4
 
+from studio_core import Action, GrantSet, Requirement, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_orchestrator import (
     EventPage,
@@ -135,6 +136,17 @@ def _opaque_cursor(value: str | None, *, name: str) -> str | None:
     return value
 
 
+def _submit_project(payload: object) -> str:
+    if not isinstance(payload, dict):
+        raise ValueError("request body must be a JSON object")
+    project = payload.get("project")
+    if not isinstance(project, str) or not project.strip() or project != project.strip():
+        raise ValueError("project must be a non-empty trimmed string")
+    if len(project) > 256:
+        raise ValueError("project must be at most 256 characters")
+    return project
+
+
 class _ServiceLoop:
     def __init__(self, service: DurableExecutionService) -> None:
         self._service = service
@@ -170,6 +182,9 @@ class DurableHTTPApplication:
     def close(self) -> None:
         self._loop.close()
 
+    def get_job(self, job_id: str) -> Job | None:
+        return cast(Job | None, self._loop.call(self._service.status(JobId(job_id))))
+
     def submit(
         self,
         payload: object,
@@ -180,11 +195,9 @@ class DurableHTTPApplication:
             raise ValueError("request body must be a JSON object")
         if set(payload) - {"project", "target", "parameters"}:
             raise ValueError("request body contains unknown fields")
-        project = payload.get("project")
+        project = _submit_project(payload)
         target = payload.get("target")
         parameters = payload.get("parameters", {})
-        if not isinstance(project, str) or not project.strip() or project != project.strip():
-            raise ValueError("project must be a non-empty trimmed string")
         if not isinstance(target, str) or not target.strip() or target != target.strip():
             raise ValueError("target must be a non-empty trimmed string")
         if not isinstance(parameters, dict) or not all(isinstance(key, str) for key in parameters):
@@ -228,7 +241,7 @@ class DurableHTTPApplication:
         return status, _job_payload(stored)
 
     def status(self, job_id: str) -> dict[str, object] | None:
-        job = cast(Job | None, self._loop.call(self._service.status(JobId(job_id))))
+        job = self.get_job(job_id)
         return None if job is None else _job_payload(job)
 
     def list_jobs(
@@ -238,7 +251,7 @@ class DurableHTTPApplication:
         state: str | None,
         limit: str | None,
         cursor: str | None,
-    ) -> dict[str, object]:
+    ) -> Page:
         if project is not None and (
             not project or project != project.strip() or len(project) > 256
         ):
@@ -249,7 +262,7 @@ class DurableHTTPApplication:
                 job_state = JobState(state)
             except ValueError as exc:
                 raise ValueError("state is invalid") from exc
-        page = cast(
+        return cast(
             Page,
             self._loop.call(
                 self._service.list_jobs(
@@ -260,7 +273,6 @@ class DurableHTTPApplication:
                 )
             ),
         )
-        return _page_payload(page)
 
     def events(
         self,
@@ -294,6 +306,8 @@ class DurableHTTPApplication:
 
 
 class RoninHTTPServer(ThreadingHTTPServer):
+    """Supported HTTP server with one bearer credential and typed project grants."""
+
     daemon_threads = True
 
     def __init__(
@@ -302,16 +316,24 @@ class RoninHTTPServer(ThreadingHTTPServer):
         service: DurableExecutionService,
         *,
         token: str,
+        grants: GrantSet,
     ) -> None:
         if not token or token != token.strip() or "\n" in token or "\r" in token:
             raise ValueError("token must be non-empty, trimmed, and single-line")
+        if not grants.grants:
+            raise ValueError("bearer token requires at least one typed authorization grant")
         self.application = DurableHTTPApplication(service)
         self._token = token
+        self._grants = grants
         try:
             super().__init__(server_address, _Handler)
         except BaseException:
             self.application.close()
             raise
+
+    @property
+    def effective_grants(self) -> GrantSet:
+        return self._grants
 
     def authorized(self, authorization: str | None) -> bool:
         prefix = "Bearer "
@@ -320,6 +342,10 @@ class RoninHTTPServer(ThreadingHTTPServer):
             and authorization.startswith(prefix)
             and hmac.compare_digest(authorization[len(prefix) :], self._token)
         )
+
+    def permits_project(self, action: Action, project_id: str) -> bool:
+        requirement = Requirement(action, ResourceScope("project", project_id))
+        return self._grants.permits(requirement).allowed
 
     def server_close(self) -> None:
         try:
@@ -352,6 +378,18 @@ class _Handler(BaseHTTPRequestHandler):
         self._error(HTTPStatus.UNAUTHORIZED, "unauthorized", "valid bearer authorization required")
         return False
 
+    def _require_project(self, action: Action, project_id: str) -> bool:
+        if self._ronin_server().permits_project(action, project_id):
+            return True
+        self._error(HTTPStatus.FORBIDDEN, "forbidden", "required authorization scope is not granted")
+        return False
+
+    def _require_visible_job(self, action: Action, job: Job | None) -> Job | None:
+        if job is not None and self._ronin_server().permits_project(action, job.project_id):
+            return job
+        self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
+        return None
+
     def _read_json(self) -> object:
         length_header = self.headers.get("Content-Length")
         if length_header is None:
@@ -380,8 +418,14 @@ class _Handler(BaseHTTPRequestHandler):
                 )
                 return
             try:
-                status, payload = self._ronin_server().application.submit(
-                    self._read_json(), idempotency_key=self.headers.get("Idempotency-Key")
+                payload = self._read_json()
+                project = _submit_project(payload)
+                if not self._require_project("submit", project):
+                    return
+                if not self._require_project("execute", project):
+                    return
+                status, response_payload = self._ronin_server().application.submit(
+                    payload, idempotency_key=self.headers.get("Idempotency-Key")
                 )
             except IdempotencyConflict:
                 self._error(
@@ -398,7 +442,7 @@ class _Handler(BaseHTTPRequestHandler):
             except ValueError as exc:
                 self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
                 return
-            self._write_json(status, payload)
+            self._write_json(status, response_payload)
             return
 
         prefix = "/v1/jobs/"
@@ -412,6 +456,9 @@ class _Handler(BaseHTTPRequestHandler):
             return
         try:
             job_id = unquote(encoded_job_id, errors="strict")
+            job = self._ronin_server().application.get_job(job_id)
+            if self._require_visible_job("cancel", job) is None:
+                return
             payload = self._ronin_server().application.cancel(job_id)
         except KeyError:
             self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
@@ -435,12 +482,24 @@ class _Handler(BaseHTTPRequestHandler):
                     split.query,
                     allowed=frozenset({"project", "state", "limit", "cursor"}),
                 )
-                page_payload = self._ronin_server().application.list_jobs(
-                    project=query.get("project"),
+                project = query.get("project")
+                if project is not None and not self._require_project("list", project):
+                    return
+                page = self._ronin_server().application.list_jobs(
+                    project=project,
                     state=query.get("state"),
                     limit=query.get("limit"),
                     cursor=query.get("cursor"),
                 )
+                visible = Page(
+                    tuple(
+                        job
+                        for job in page.items
+                        if self._ronin_server().permits_project("list", job.project_id)
+                    ),
+                    page.next_cursor,
+                )
+                page_payload = _page_payload(visible)
             except StorageBackpressureError:
                 self._error(
                     HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
@@ -462,6 +521,9 @@ class _Handler(BaseHTTPRequestHandler):
             try:
                 query = _single_query_values(split.query, allowed=frozenset({"since", "limit"}))
                 job_id = unquote(encoded_job_id, errors="strict")
+                job = self._ronin_server().application.get_job(job_id)
+                if self._require_visible_job("events", job) is None:
+                    return
                 event_payload = self._ronin_server().application.events(
                     job_id, since=query.get("since"), limit=query.get("limit")
                 )
@@ -490,6 +552,9 @@ class _Handler(BaseHTTPRequestHandler):
                 return
             try:
                 job_id = unquote(encoded_job_id, errors="strict")
+                job = self._ronin_server().application.get_job(job_id)
+                if self._require_visible_job("evidence:read", job) is None:
+                    return
                 evidence_payload = self._ronin_server().application.evidence(job_id)
             except StorageBackpressureError:
                 self._error(
@@ -514,17 +579,17 @@ class _Handler(BaseHTTPRequestHandler):
             return
         try:
             job_id = unquote(encoded_job_id, errors="strict")
-            job_payload = self._ronin_server().application.status(job_id)
+            job = self._ronin_server().application.get_job(job_id)
         except StorageBackpressureError:
             self._error(HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy")
             return
         except (UnicodeError, ValueError):
             self._error(HTTPStatus.BAD_REQUEST, "invalid_job_id", "job id is invalid")
             return
-        if job_payload is None:
-            self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
+        visible_job = self._require_visible_job("read", job)
+        if visible_job is None:
             return
-        self._write_json(HTTPStatus.OK, job_payload)
+        self._write_json(HTTPStatus.OK, _job_payload(visible_job))
 
 
 __all__ = ("DurableHTTPApplication", "RoninHTTPServer", "SUPPORTED_ROUTES")
