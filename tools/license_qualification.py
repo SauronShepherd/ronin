@@ -152,6 +152,7 @@ def qualify(
     graph: dict[str, str],
     *,
     expected_lock_sha256: str,
+    expected_direct: set[str],
 ) -> None:
     """Fail unless inventory exactly matches the lock and every package is reviewed."""
     if not isinstance(inventory, dict) or inventory.get("schema_version") != 1:
@@ -169,6 +170,7 @@ def qualify(
             raise LicenseQualificationError("inventory entry must be an object")
         name = entry.get("package")
         version = entry.get("version")
+        is_direct = entry.get("direct")
         source = entry.get("source")
         declared = entry.get("declared_license")
         files = entry.get("license_files")
@@ -178,6 +180,12 @@ def qualify(
         if canonical in seen:
             raise LicenseQualificationError(f"duplicate inventory package: {canonical}")
         seen[canonical] = version
+        if not isinstance(is_direct, bool):
+            raise LicenseQualificationError(f"direct classification must be boolean: {canonical}=={version}")
+        if is_direct != (canonical in expected_direct):
+            raise LicenseQualificationError(
+                f"direct classification does not match project metadata: {canonical}=={version}"
+            )
         if not isinstance(source, str) or not source.strip():
             raise LicenseQualificationError(f"missing distribution source: {canonical}=={version}")
         if not isinstance(declared, str) or not declared.strip():
@@ -245,6 +253,7 @@ def main() -> int:
         _load_json(root / args.policy),
         graph,
         expected_lock_sha256=lock_sha256(lock_path),
+        expected_direct=direct_requirements(root),
     )
     print(f"license qualification: ok ({len(graph)} locked distributions)")
     return 0
