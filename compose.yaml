@@ -1,0 +1,56 @@
+name: ronin
+
+x-ronin-environment: &ronin-environment
+  RONIN_DB: /var/lib/ronin/ronin.sqlite3
+  RONIN_TOKEN: ${RONIN_TOKEN:-development-token}
+  RONIN_TOKEN_SCOPES: ${RONIN_TOKEN_SCOPES:-{"version":1,"grants":[{"version":1,"actions":["read","list","events","submit","execute","cancel","evidence:read"],"resource":{"kind":"project","identifier":"demo"},"constraints":{}}]}}
+
+services:
+  server:
+    image: ${RONIN_IMAGE_REF:-ronin:local}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: ["ronin", "serve"]
+    user: "0:0"
+    environment:
+      <<: *ronin-environment
+      RONIN_DATA_DIR: /var/lib/ronin
+      RONIN_HOST: 0.0.0.0
+      RONIN_PORT: "8080"
+    volumes:
+      - ronin-data:/var/lib/ronin
+    ports:
+      - "127.0.0.1:${RONIN_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "python", "/usr/local/lib/ronin/healthcheck.py"]
+      interval: 2s
+      timeout: 3s
+      retries: 25
+      start_period: 2s
+    restart: unless-stopped
+
+  worker:
+    image: ${RONIN_IMAGE_REF:-ronin:local}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: ["ronin", "worker"]
+    user: "0:0"
+    environment:
+      <<: *ronin-environment
+      RONIN_DATA_DIR: /var/lib/ronin
+      RONIN_WORKSPACE: /workspace
+      RONIN_WORKER_OWNER: compose-worker
+      RONIN_IMAGE_REF: ${RONIN_IMAGE_REF:-ronin:local}
+    volumes:
+      - ronin-data:/var/lib/ronin
+      - .:/workspace:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  ronin-data:
