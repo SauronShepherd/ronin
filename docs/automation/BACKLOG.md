@@ -2,7 +2,7 @@
 
 This backlog is deliberately narrow for v0.1. Selection must be revalidated against current `main`, open Builder work, canonical automation handoffs, and the scope authority in `docs/product/V01_SCOPE.md`.
 
-_Last synchronized: 2026-09-10 for the #161 scoped HTTP authorization implementation under code-only validation mode._
+_Last synchronized: 2026-09-10 for the production image + supported Compose implementation under code-only validation mode._
 
 **Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, validation mode, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled.
 
@@ -18,33 +18,35 @@ Evidence-only handoffs #166/#167/#163 remain open/deferred and do not block impl
 
 The last automated qualification before CI was disabled remains **13/15 live**, with exact historical gaps `01` (production image + supported Compose topology) and `12` (public portable evidence retrieval). Code-only work does not alter that qualified baseline automatically.
 
-Supported code now contains the durable local execution spine, authenticated and project-scoped HTTP job control, OpenAPI 3.1, `pyronin`, operator CLI, typed scoped grants (#52), public portable evidence (#53), strict-alpha API/SDK compatibility (#54), and route-level typed grant enforcement (#161). Step 12 is functionally present but **not yet re-qualified** under the disabled-test policy.
+Supported code now contains the durable local execution spine, authenticated and project-scoped HTTP job control, OpenAPI 3.1, `pyronin`, operator CLI, typed scoped grants (#52), public portable evidence (#53), strict-alpha API/SDK compatibility (#54), route-level typed grant enforcement (#161), and the production image + supported Compose topology required by frozen step 01.
 
-B1 / #48 is complete. #52, #53, #54, and #161 are functionally complete in code-only mode. Automated drift/conformance qualification remains deferred. PR #159 remains closed without merge and is only historical reuse evidence.
+B1 / #48 is complete. #52, #53, #54, and #161 are functionally complete in code-only mode. Step 01 and step 12 capabilities are now functionally present but **not yet re-qualified** under the disabled-test policy. PR #159 remains closed without merge and is only historical reuse evidence.
 
-## #161 scoped HTTP authorization implementation
+## Production image + Compose implementation
 
-The current slice applies the existing #52 grant model without redesigning it:
+The supported local container path now provides:
 
-- the canonical `RoninHTTPServer` requires a non-empty `GrantSet`; the former token-only internal constructor path is removed;
-- project-scoped route requirements are `list`, `read`, `events`, `evidence:read`, `cancel`, and both `submit` + `execute` for submission;
-- direct Job-ID operations resolve the Job's `project_id` before authorization and return the same `404 job_not_found` result for absent and cross-project Jobs;
-- explicit list project filters fail closed when unauthorized; unfiltered pages contain only Jobs visible to the bearer grant while preserving the storage cursor;
-- authorization is checked before cancellation/submission side effects;
-- OpenAPI publishes the route requirements using `x-ronin-required-project-actions` and keeps HTTP status authoritative;
-- CLI and `pyronin` continue to send only the bearer credential and cannot widen authority with client-selected scopes.
+- one digest-pinned Python base and one Ronin image used by server, worker, CLI helper, and sibling cell execution;
+- the installed `ronin` CLI/server/worker package rather than the historical bootstrap-only HTTP probe;
+- a named durable `/var/lib/ronin` volume shared by server and worker for SQLite/artifacts/evidence;
+- server health gating without adding a new public `/v1` endpoint;
+- host HTTP exposure only on `127.0.0.1` by default;
+- Docker socket authority only on the worker service;
+- worker resolution of the local image tag to an immutable `sha256:` image ID before execution;
+- a read-only checkout mount with Git safe-directory scoped to `/workspace`, never `*`;
+- UID/GID `65532:65532` product execution after a bounded root entrypoint prepares volume/socket permissions;
+- explicit worker `restart: "no"` and server `depends_on: service_healthy` semantics;
+- a bundled `cli` profile with no Docker socket and a documented zero-to-demo path.
 
-No automated authorization tests or CI qualification were executed under the current maintainer policy.
+No automated Compose/runtime qualification was executed under current maintainer policy.
 
 ## Current critical path
 
 Select one coherent slice at a time.
 
-1. **Production image + Compose — acceptance step 01 implementation.** Preserve durable SQLite, server health dependency, bounded Docker authority, sibling-container execution, non-root operation where practical, and explicit crash-worker `restart: "no"`.
-2. **#57 — frozen journey completion in code.** Keep open until all fifteen capabilities are implemented; automated 15/15 release qualification remains separately deferred while CI/tests are disabled.
-3. **Release blockers/publication.** Address #58, #95, #63, #45 and other release-critical work before immutable publication.
-
-Security/correctness slices such as #162 and #123 remain important and may be selected when they do not displace an earlier dependency-critical implementation slice.
+1. **#57 — frozen journey completion in code/reconciliation.** Reconcile the stale handoff now that typed grants, public evidence, compatibility, scoped HTTP authorization, and Compose are functionally present. Keep the automated 15/15 proof explicitly deferred while tests/CI remain disabled.
+2. **Release blockers/publication.** Address #58, #95, #63, #45 and other release-critical work before immutable publication.
+3. **Security/correctness follow-ups.** #162 remote bearer transport confidentiality and #123 untracked executable-bit identity remain high-priority bounded implementation work.
 
 ## D1 operator status
 

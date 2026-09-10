@@ -20,9 +20,11 @@ See [`docs/product/PROJECTS_AND_EXECUTION.md`](docs/product/PROJECTS_AND_EXECUTI
 
 ## Current status
 
-Ronin now has a durable local execution spine over SQLite, real-Docker worker execution with crash/reclaim/resume qualification, an authenticated HTTP control plane, OpenAPI 3.1, the `pyronin` SDK, and supported operator CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `jobs`, and `cancel`.
+Ronin now has a durable local execution spine over SQLite, real-Docker worker execution with crash/reclaim/resume semantics, an authenticated project-scoped HTTP control plane, OpenAPI 3.1, the `pyronin` SDK, typed least-privilege grants, public portable evidence retrieval, and supported operator CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, `jobs`, and `cancel`.
 
-The frozen v0.1 journey is currently **13/15 live** in the authoritative Docker qualification context. The two intentionally incomplete steps are production image/Compose startup (`01`) and public portable evidence retrieval (`12`). Typed least-privilege bearer scopes and the public evidence contract are still unfinished, so Ronin is not yet release-ready and should not be described as 15/15 complete.
+A production image and supported Docker Compose topology are implemented in code. See [`docs/product/COMPOSE_QUICKSTART_V01.md`](docs/product/COMPOSE_QUICKSTART_V01.md) for the local startup and demo path.
+
+The last automated frozen v0.1 qualification remains **13/15**. Historical gaps were production image/Compose startup (`01`) and public portable evidence retrieval (`12`); both capabilities are now present in code, but automated tests and GitHub Actions are intentionally disabled by maintainer policy, so Ronin must not yet be described as newly qualified 15/15 or release-ready.
 
 The broader Data + AI capabilities described above remain targets unless their concrete implementation is present in the repository. In particular, v0.1 does not claim broad ingestion, SQL/lakehouse, streaming, MLOps, GenAI/agents, enterprise RBAC, Postgres/multi-node HA or Kubernetes product deployment.
 
@@ -34,13 +36,14 @@ make check
 make mutation
 ```
 
-`make check` runs formatting/linting, strict type checking, the architecture gate and tests. Coverage is tiered across product packages, with the strictest core tiers at 100% line/branch and additional storage per-file gates. `make mutation` is a separate, more expensive mutation-quality gate; current mutation qualification is intentionally narrower than the full product surface.
+These are the repository's historical automated development checks. Under the current maintainer policy the Autonomous Builder does not execute automated tests or CI; the commands remain documented for future/manual use when that policy changes. Coverage targets and other quality constraints remain part of the implementation contract.
 
 ## Layout
 
 - `python/` — product Python packages.
 - `tests/` — executable quality and architecture contracts.
 - `tools/` — repository quality gates.
+- `docker/` and `compose.yaml` — production local container topology.
 - `docs/product/` — product and domain contracts.
 - `docs/automation/` — durable progress, backlog and decision log for incremental autonomous work.
 
