@@ -2,7 +2,9 @@
 
 This backlog is deliberately narrow for v0.1. Selection must be revalidated against current `main`, open Builder work, canonical automation handoffs, and the scope authority in `docs/product/V01_SCOPE.md`.
 
-_Last synchronized: 2026-09-10 against `33f1d57134c6356af43ae6d5eb5bc8fd17ad5813`._
+_Last synchronized: 2026-09-10 from product/state baseline `33f1d57134c6356af43ae6d5eb5bc8fd17ad5813`; the planning correction was published as `a12789dd8aa883a096057ef7267257609de43852`._
+
+**Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled. Exact-main qualification after a planning publication is evidence for that synchronization; it does not replace the underlying product/acceptance authority.
 
 ## Current v0.1 truth
 
@@ -15,7 +17,7 @@ Docker Qualification is the authoritative capable environment for frozen accepta
 
 The exact Docker Qualification allowance is therefore `01,12`, and the allowance remains a ratchet: newly skipped live steps and stale allowances both fail qualification. Strict release remains unchanged at 15/15 with an empty allowance.
 
-The current exact-main push qualification on `33f1d57134c6356af43ae6d5eb5bc8fd17ad5813` is green for CI run `34431357861`, Security qualification `34431357908`, Docker Qualification `34431358031`, and Release qualification `34431357884`.
+The planning synchronization publication `a12789dd8aa883a096057ef7267257609de43852` is exact-main green for CI run `34437517162`, Security qualification `34437517194`, Docker Qualification `34437517131`, and Release qualification `34437517122`.
 
 ## Completed foundation carried into v0.1
 
@@ -41,18 +43,19 @@ PR #159 (`feat: expose portable durable evidence`) is **closed without merge**. 
 
 PR #170 landed the nightly-verifier structural fix by moving verifier state outside `GITHUB_WORKSPACE`. That repair is present on main, but fresh scheduled/manual full-clean evidence is still required before #166/#167/#163 can be considered satisfied.
 
+B1 / #48 canonical planning synchronization is complete in implementation: PR #174 merged as `a12789dd8aa883a096057ef7267257609de43852`, and all four mandatory push workflows for that exact main SHA are green. This follow-up removes #48 from the selectable critical path and records the synchronization rule required to prevent recurrence.
+
 ## Current critical path
 
-Select one coherent slice at a time. Do not start product work while this canonical planning state is known to be stale.
+Select one coherent slice at a time.
 
-1. **#48 — canonical planning synchronization.** Keep this backlog, `CONSTRUCTION_PLAN.md`, and public status wording aligned to current main before selecting new product work. This item is complete only after the synchronized change is merged and exact-main qualification is green.
-2. **#166/#167/#163 — scheduled/manual full-clean proof.** Obtain a post-#170 workflow-dispatch or scheduled CI run that executes the full `make check` path. Push-green is not equivalent evidence. Do not change production code merely to manufacture this proof.
-3. **#52 — typed scoped grants.** Define the versioned vendor-neutral grant/requirement contract and deterministic deny-by-default matching before externally relied-on authorization behavior expands. Do not introduce OIDC, enterprise RBAC, OPA or provider IAM into the canonical model.
-4. **#53 — public portable evidence + acceptance step 12.** Expose storage-neutral evidence through the supported HTTP/OpenAPI/CLI/SDK boundary, keep physical locators private, add real SQLite/HTTP conformance, activate step 12, and shrink the Docker allowance from `01,12` to `01` in the same coherent change.
-5. **#54 — remaining API/SDK compatibility rules.** Finish error/evolution/drift conformance after the #52/#53 semantics settle.
-6. **Production image + Compose — acceptance step 01.** Promote the qualified Docker assumptions into the supported product topology: production image, durable SQLite volume, server health dependency, sibling-container execution, Docker authority only where required, non-root operation where practical, and explicit crash-worker `restart: "no"`.
-7. **#57 — strict frozen journey completion.** Keep open until all fifteen required steps execute and pass in authoritative qualification with no skip/xfail/failure/error/missing/unexpected outcome.
-8. **Release blockers and publication.** Close exact dependency/license/NOTICE policy (#58), installed-wheel clean qualification (#95), required repository/ref protection (#63), security-reporting policy after the human channel decision (#45), and other release-critical work before immutable publication.
+1. **#166/#167/#163 — scheduled/manual full-clean proof.** Obtain a post-#170 workflow-dispatch or scheduled CI run that executes the full `make check` path. Push-green is not equivalent evidence. Do not change production code merely to manufacture this proof.
+2. **#52 — typed scoped grants.** Define the versioned vendor-neutral grant/requirement contract and deterministic deny-by-default matching before externally relied-on authorization behavior expands. Do not introduce OIDC, enterprise RBAC, OPA or provider IAM into the canonical model.
+3. **#53 — public portable evidence + acceptance step 12.** Expose storage-neutral evidence through the supported HTTP/OpenAPI/CLI/SDK boundary, keep physical locators private, add real SQLite/HTTP conformance, activate step 12, and shrink the Docker allowance from `01,12` to `01` in the same coherent change.
+4. **#54 — remaining API/SDK compatibility rules.** Finish error/evolution/drift conformance after the #52/#53 semantics settle.
+5. **Production image + Compose — acceptance step 01.** Promote the qualified Docker assumptions into the supported product topology: production image, durable SQLite volume, server health dependency, sibling-container execution, Docker authority only where required, non-root operation where practical, and explicit crash-worker `restart: "no"`.
+6. **#57 — strict frozen journey completion.** Keep open until all fifteen required steps execute and pass in authoritative qualification with no skip/xfail/failure/error/missing/unexpected outcome.
+7. **Release blockers and publication.** Close exact dependency/license/NOTICE policy (#58), installed-wheel clean qualification (#95), required repository/ref protection (#63), security-reporting policy after the human channel decision (#45), and other release-critical work before immutable publication.
 
 Security quick wins such as #162, #123, #95 and #60 remain important, but they do not outrank an unresolved earlier critical-path blocker unless current main/CI evidence changes the ordering.
 
