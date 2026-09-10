@@ -7,7 +7,6 @@ import importlib.metadata as metadata
 import json
 import re
 import tomllib
-from dataclasses import dataclass
 from pathlib import Path
 
 _LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \\]+)")
@@ -69,6 +68,16 @@ def _declared_license(dist: metadata.Distribution) -> str | None:
     return " | ".join(classifiers) or None
 
 
+def _source(dist: metadata.Distribution) -> str | None:
+    project_urls = dist.metadata.get_all("Project-URL", [])
+    for value in project_urls:
+        label, separator, url = value.partition(",")
+        if separator and label.strip().casefold() in {"source", "repository", "homepage"}:
+            return url.strip() or None
+    home_page = dist.metadata.get("Home-page")
+    return home_page.strip() if home_page and home_page.strip() else None
+
+
 def _license_files(dist: metadata.Distribution) -> list[str]:
     result: list[str] = []
     for file in dist.files or ():
@@ -98,6 +107,7 @@ def generate_inventory(root: Path) -> dict[str, object]:
                 "package": name,
                 "version": version,
                 "direct": name in direct,
+                "source": _source(dist),
                 "declared_license": _declared_license(dist),
                 "license_files": _license_files(dist),
             }
@@ -109,6 +119,8 @@ def qualify(inventory: object, policy: object, graph: dict[str, str]) -> None:
     """Fail unless inventory exactly matches the lock and every package is reviewed."""
     if not isinstance(inventory, dict) or inventory.get("schema_version") != 1:
         raise LicenseQualificationError("inventory schema_version must be 1")
+    if inventory.get("lock_file") != "requirements-dev.lock":
+        raise LicenseQualificationError("inventory lock_file must be requirements-dev.lock")
     packages = inventory.get("packages")
     if not isinstance(packages, list):
         raise LicenseQualificationError("inventory packages must be a list")
@@ -118,6 +130,7 @@ def qualify(inventory: object, policy: object, graph: dict[str, str]) -> None:
             raise LicenseQualificationError("inventory entry must be an object")
         name = entry.get("package")
         version = entry.get("version")
+        source = entry.get("source")
         declared = entry.get("declared_license")
         files = entry.get("license_files")
         if not isinstance(name, str) or not isinstance(version, str):
@@ -126,6 +139,8 @@ def qualify(inventory: object, policy: object, graph: dict[str, str]) -> None:
         if canonical in seen:
             raise LicenseQualificationError(f"duplicate inventory package: {canonical}")
         seen[canonical] = version
+        if not isinstance(source, str) or not source.strip():
+            raise LicenseQualificationError(f"missing distribution source: {canonical}=={version}")
         if not isinstance(declared, str) or not declared.strip():
             raise LicenseQualificationError(f"missing declared license: {canonical}=={version}")
         if not isinstance(files, list) or not all(isinstance(item, str) for item in files):
@@ -139,15 +154,20 @@ def qualify(inventory: object, policy: object, graph: dict[str, str]) -> None:
     notice_decision = policy.get("project_notice")
     if not isinstance(reviews, dict):
         raise LicenseQualificationError("policy reviews must be an object")
-    for name, version in graph.items():
-        key = f"{name}=={version}"
-        review = reviews.get(key)
+    expected_review_keys = {f"{name}=={version}" for name, version in graph.items()}
+    if set(reviews) != expected_review_keys:
+        raise LicenseQualificationError("policy review keys must exactly match the locked graph")
+    for key in sorted(expected_review_keys):
+        review = reviews[key]
         if not isinstance(review, dict) or review.get("decision") not in {"allow", "deny"}:
             raise LicenseQualificationError(f"missing reviewed license decision: {key}")
         if review.get("decision") != "allow":
             raise LicenseQualificationError(f"dependency license is not approved: {key}")
         if review.get("notice_required") not in {True, False}:
             raise LicenseQualificationError(f"notice_required must be reviewed: {key}")
+        rationale = review.get("rationale")
+        if not isinstance(rationale, str) or not rationale.strip():
+            raise LicenseQualificationError(f"review rationale is required: {key}")
     if notice_decision not in {"required", "not_required"}:
         raise LicenseQualificationError("project NOTICE decision is unresolved")
 
@@ -169,7 +189,10 @@ def main() -> int:
     root = args.root.resolve()
     if args.write_inventory is not None:
         payload = generate_inventory(root)
-        args.write_inventory.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        args.write_inventory.parent.mkdir(parents=True, exist_ok=True)
+        args.write_inventory.write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
         return 0
     graph = locked_graph(root / "requirements-dev.lock")
     qualify(_load_json(root / args.inventory), _load_json(root / args.policy), graph)
