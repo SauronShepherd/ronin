@@ -3,7 +3,7 @@ name: ronin
 x-ronin-environment: &ronin-environment
   RONIN_DB: /var/lib/ronin/ronin.sqlite3
   RONIN_TOKEN: ${RONIN_TOKEN:-development-token}
-  RONIN_TOKEN_SCOPES: ${RONIN_TOKEN_SCOPES:-{"version":1,"grants":[{"version":1,"actions":["read","list","events","submit","execute","cancel","evidence:read"],"resource":{"kind":"project","identifier":"demo"},"constraints":{}}]}}
+  RONIN_TOKEN_SCOPES: '{"version":1,"grants":[{"version":1,"actions":["read","list","events","submit","execute","cancel","evidence:read"],"resource":{"kind":"project","identifier":"examples/demo"},"constraints":{}}]}'
 
 services:
   server:
@@ -47,6 +47,20 @@ services:
       - ronin-data:/var/lib/ronin
       - .:/workspace:ro
       - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: "no"
+
+  cli:
+    image: ${RONIN_IMAGE_REF:-ronin:local}
+    profiles: ["tools"]
+    command: ["ronin", "--help"]
+    environment:
+      <<: *ronin-environment
+      RONIN_URL: http://server:8080
+    volumes:
+      - .:/workspace:ro
     depends_on:
       server:
         condition: service_healthy
