@@ -46,7 +46,7 @@ HTTP/server types remain adapters, never canonical lifecycle/storage models. No 
 
 **Functionally complete in code under current policy.** D1 includes installed `ronin evidence` and secure-default authenticated transport. #123 now corrects `ronin/git-dirty-v1` so untracked regular-file identity includes normalized Git-style executable mode in addition to path, byte length and SHA-256(content).
 
-On POSIX, any executable bit maps to `100755`; otherwise the regular file maps to `100644`. On non-POSIX platforms, untracked regular files normalize to `100644` rather than inferring executable semantics from extensions or platform-specific associations. Tracked mode changes remain represented by Git's own binary diff.
+On POSIX, the owner executable bit (`S_IXUSR`) maps to `100755`; otherwise the regular file maps to `100644`, matching Git's regular-file mode distinction. On non-POSIX platforms, untracked regular files normalize to `100644` rather than inferring executable semantics from extensions or platform-specific associations. Tracked mode changes remain represented by Git's own binary diff.
 
 VCS capture remains fail closed for unresolved/path-escaping inputs, symlinks, special files and unreadable untracked files. Deterministic ordering and raw-content privacy are preserved. Automated real-Git regression proof remains deferred while tests are disabled.
 
