@@ -15,7 +15,7 @@ A resource scope contains:
 - `kind`: one of `project`, `job`, `run`, `evidence`, `*`;
 - `identifier`: an exact resource identifier, `null` as the explicit wildcard for one concrete kind, or `null` with `kind: "*"` for the global resource wildcard.
 
-A grant never infers hierarchy between resource kinds. In particular, `project:X` does not implicitly authorize a `job`, `run`, or `evidence` resource. A future boundary that knows a parent/child relation must resolve that relation explicitly before constructing the requirement it checks.
+A grant never infers hierarchy between resource kinds. In particular, `project:X` does not implicitly authorize a `job`, `run`, or `evidence` resource. A boundary that knows a parent/child relation must resolve that relation explicitly before constructing the requirement it checks.
 
 ### Actions
 
@@ -101,6 +101,27 @@ ronin:v1:evidence%3Aread:evidence:*
 
 `requirement_to_bearer_scope()` and `parse_bearer_scope()` are the canonical mapping functions. `parse_legacy_permission()` is the alpha migration parser for old string-based permission fields when those strings adopt this explicit format.
 
+## HTTP enforcement
+
+The supported HTTP server requires both a static bearer token and a non-empty `GrantSet`. There is one canonical `RoninHTTPServer` implementation; `studio_server.scoped_http` is only a compatibility import and cannot instantiate a token-only server.
+
+The HTTP boundary knows every Job's `project_id`, so it resolves the Job first and then checks a project-scoped requirement without teaching the canonical grant model any implicit resource hierarchy. Route requirements are:
+
+| Operation | Required project action |
+| --- | --- |
+| `GET /v1/jobs` | `list` |
+| `POST /v1/jobs` | both `submit` and `execute` |
+| `GET /v1/jobs/{job_id}` | `read` |
+| `GET /v1/jobs/{job_id}/events` | `events` |
+| `GET /v1/jobs/{job_id}/evidence` | `evidence:read` |
+| `POST /v1/jobs/{job_id}/cancel` | `cancel` |
+
+For an explicit list `project` filter, lack of `list` authority returns the normalized `403 forbidden` response. An unfiltered list returns only Jobs whose project is permitted and preserves the storage cursor without exposing hidden Job payloads. A caller-supplied project filter never widens authority.
+
+Direct Job-ID routes deliberately collapse both "missing Job" and "existing Job outside the bearer grant" into `404 job_not_found`. This prevents a credential from using status, events, evidence, or cancel as a cross-project existence oracle. Authorization is checked before cancellation or other route side effects.
+
+OpenAPI records the route action requirements with the `x-ronin-required-project-actions` extension. CLI and `pyronin` continue to send only the bearer credential; they do not send client-selected scopes or grants, and they treat authorization failures through the existing status-authoritative normalized API error contract.
+
 ## Alpha migration
 
 `KernelDirective.required_permissions` remains available for existing adapters. New adapters should use `required_grants` containing typed `Requirement` objects. A single directive cannot mix the legacy and typed representations.
@@ -109,6 +130,6 @@ ronin:v1:evidence%3Aread:evidence:*
 
 ## Scope boundary
 
-This v1 contract deliberately does not implement route-level HTTP authorization. The HTTP server only validates and carries the effective grant set alongside the authenticated token. Issue #161 owns applying the model to submit/list/status/events/cancel with project visibility and direct job-ID checks.
-
 Provider IAM names, cloud resource identifiers, OIDC, enterprise RBAC, OPA, multi-user policy administration, and remote policy services remain outside the v0.1 canonical model.
+
+HTTP authorization is intentionally bound only to the existing v0.1 project/job-control routes. It does not introduce roles, token introspection, per-request grant headers, or a new authorization service.
