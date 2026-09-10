@@ -1,6 +1,6 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-10 for the #161 scoped HTTP authorization implementation under code-only validation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-10 for the production image + supported Compose implementation under code-only validation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
 
@@ -14,9 +14,9 @@ The last automated baseline remains **13/15**, with historical gaps `01` and `12
 
 ## Current position
 
-The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha public compatibility, and project-scoped HTTP authorization.
+The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha public compatibility, project-scoped HTTP authorization, and the supported production image/Compose topology for frozen step 01.
 
-#52, #53, #54, and #161 are functionally complete under code-only validation. Automated drift/conformance and authorization qualification remain deferred, so the authoritative acceptance baseline remains 13/15.
+#52, #53, #54, and #161 are functionally complete under code-only validation. Automated drift/conformance, authorization and Compose qualification remain deferred, so the authoritative acceptance baseline remains 13/15.
 
 ## Phase A — foundation
 
@@ -45,15 +45,27 @@ HTTP/server types remain adapters, never canonical lifecycle/storage models. No 
 
 ## Phase E — production image, Compose and zero-to-demo
 
-**Next critical implementation slice.** Frozen step 01 remains the remaining direct product implementation gap after public evidence and scoped authorization.
+**Functionally complete in code; automated qualification deferred.**
 
-The topology must preserve one production OCI image, durable local SQLite volume, server health dependency, bounded Docker authority, sibling-container worker execution only where required, non-root operation where practical, crash-worker `restart: "no"`, <60 s health target and <10 min zero-to-demo target.
+The repository now contains one production Ronin image and supported `compose.yaml` topology with:
+
+- durable local SQLite/artifact/evidence storage on one named volume;
+- explicit server health dependency without a new public `/v1` route;
+- HTTP published only on host loopback by default;
+- Docker socket authority only on the worker;
+- immutable local image-ID resolution before worker cell execution;
+- read-only checkout access with narrowly scoped Git safe-directory configuration;
+- product processes dropped to UID/GID `65532:65532` after bounded permission setup;
+- crash-path worker `restart: "no"`;
+- a no-Docker-authority CLI helper profile and documented quickstart.
+
+The <60 s healthy and <10 min zero-to-demo budgets remain implementation targets, not newly measured evidence while tests/CI are disabled.
 
 ## Phase F — acceptance completion
 
 **Last automated baseline: 13/15.** Historical gaps remain `01` and `12` until qualification is restored.
 
-Code contains the step-12 public evidence capability, the #54 compatibility contract, and #161 scoped authorization. Do not call the project qualified 14/15 or 15/15 while tests are disabled. After Compose is implemented, do not call the project qualified 15/15 until automated verification is explicitly restored and executed. Preserve all thirteen previously qualified semantics throughout.
+Code contains both step-01 Compose and step-12 public evidence capabilities plus the #54 compatibility and #161 scoped-authorization contracts. Do not call the project qualified 14/15 or 15/15 while tests are disabled. #57 should now be reconciled as a code-complete frozen journey with proof/release criteria still deferred, not treated as evidence that automated 15/15 has occurred.
 
 ## Phase G — security, non-functional and release work
 
@@ -71,11 +83,9 @@ Existing implementation constraints remain: POST p95 <100 ms; GET p95 <30 ms; SQ
 
 One coherent Builder slice at a time:
 
-1. **Production image + Compose**, implementing frozen step 01.
-2. **#57 code-complete frozen journey**, without claiming automated 15/15 while tests remain off.
-3. **Release blockers/publication preparation** — #58/#95/#63/#45 and related work.
-
-Security/correctness #162 and #123 remain high-priority bounded slices and can be selected when they do not displace the dependency-critical order.
+1. **#57 frozen-journey reconciliation**, marking the journey code-complete while preserving explicit deferred automated 15/15 proof.
+2. **Release blockers/publication preparation** — #58/#95/#63/#45 and related work.
+3. **Security/correctness follow-ups** — #162 and #123 remain high-priority bounded implementation slices.
 
 ## Architecture and scope guardrails
 
