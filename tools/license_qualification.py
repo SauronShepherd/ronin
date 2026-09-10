@@ -45,7 +45,7 @@ def locked_graph(path: Path) -> dict[str, str]:
 
 
 def direct_requirements(root: Path) -> set[str]:
-    """Return direct root dev/build and pyronin build dependency names."""
+    """Return direct root/pyronin dependencies covered by release qualification."""
     direct: set[str] = set()
     for path in (root / "pyproject.toml", root / "packages/pyronin/pyproject.toml"):
         with path.open("rb") as handle:
@@ -57,6 +57,14 @@ def direct_requirements(root: Path) -> set[str]:
         for requirement in data.get("project", {}).get("dependencies", []):
             direct.add(_canonical_name(re.split(r"[<>=!~ ;\[]", requirement, maxsplit=1)[0]))
     return direct
+
+
+def _require_direct_coverage(graph: dict[str, str], direct: set[str]) -> None:
+    missing = sorted(direct - set(graph))
+    if missing:
+        raise LicenseQualificationError(
+            "direct project dependencies missing from requirements-dev.lock: " + ", ".join(missing)
+        )
 
 
 def _declared_license(dist: metadata.Distribution) -> str | None:
@@ -118,6 +126,7 @@ def generate_inventory(root: Path) -> dict[str, object]:
     lock_path = root / "requirements-dev.lock"
     graph = locked_graph(lock_path)
     direct = direct_requirements(root)
+    _require_direct_coverage(graph, direct)
     installed = _locked_distributions(graph)
     entries: list[dict[str, object]] = []
     for name, version in sorted(graph.items()):
@@ -161,6 +170,7 @@ def qualify(
         raise LicenseQualificationError("inventory lock_file must be requirements-dev.lock")
     if inventory.get("lock_sha256") != expected_lock_sha256:
         raise LicenseQualificationError("inventory lock_sha256 does not match requirements-dev.lock")
+    _require_direct_coverage(graph, expected_direct)
     packages = inventory.get("packages")
     if not isinstance(packages, list):
         raise LicenseQualificationError("inventory packages must be a list")
