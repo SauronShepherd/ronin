@@ -279,6 +279,27 @@ def _validate_license_files(value: object, key: str) -> list[dict[str, str]]:
     return result
 
 
+def _require_declared_license_file_evidence(
+    declared_paths: tuple[str, ...],
+    license_files: list[dict[str, str]],
+    key: str,
+) -> None:
+    installed_paths = [item["path"] for item in license_files]
+    missing = [
+        declared
+        for declared in declared_paths
+        if not any(
+            _matches_declared_license_file(installed_path, declared)
+            for installed_path in installed_paths
+        )
+    ]
+    if missing:
+        raise LicenseQualificationError(
+            f"declared License-File evidence missing from inventory: {key}: "
+            + ", ".join(missing)
+        )
+
+
 def _locked_distributions(graph: dict[str, str]) -> dict[str, metadata.Distribution]:
     installed: dict[str, metadata.Distribution] = {}
     for dist in metadata.distributions():
@@ -386,8 +407,9 @@ def qualify(
             raise LicenseQualificationError(f"missing distribution source: {key}")
         if not isinstance(declared, str) or not declared.strip():
             raise LicenseQualificationError(f"missing declared license: {key}")
-        _validate_declared_license_files(declared_files, key)
-        _validate_license_files(files, key)
+        declared_paths = _validate_declared_license_files(declared_files, key)
+        installed_license_files = _validate_license_files(files, key)
+        _require_declared_license_file_evidence(declared_paths, installed_license_files, key)
         if not isinstance(evidence_sha256, str) or _SHA256.fullmatch(evidence_sha256) is None:
             raise LicenseQualificationError(f"invalid package evidence_sha256: {key}")
         if package_evidence_sha256(entry) != evidence_sha256:
