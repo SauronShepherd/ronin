@@ -253,6 +253,22 @@ def _validate_declared_license_files(value: object, key: str) -> tuple[str, ...]
     return normalized
 
 
+def _normalize_installed_license_file_path(value: str) -> str:
+    stripped = value.strip()
+    path = PurePosixPath(stripped)
+    normalized = path.as_posix()
+    if (
+        not stripped
+        or "\\" in stripped
+        or path.is_absolute()
+        or ".." in path.parts
+        or normalized in {"", "."}
+        or normalized != stripped
+    ):
+        raise LicenseQualificationError(f"invalid installed legal-file path: {value!r}")
+    return normalized
+
+
 def _validate_license_files(value: object, key: str) -> list[dict[str, str]]:
     if not isinstance(value, list):
         raise LicenseQualificationError(f"invalid license_files: {key}")
@@ -263,17 +279,20 @@ def _validate_license_files(value: object, key: str) -> list[dict[str, str]]:
             raise LicenseQualificationError(f"invalid license_files: {key}")
         path = item.get("path")
         digest = item.get("sha256")
+        if not isinstance(path, str):
+            raise LicenseQualificationError(f"invalid license_files: {key}")
+        try:
+            normalized_path = _normalize_installed_license_file_path(path)
+        except LicenseQualificationError as exc:
+            raise LicenseQualificationError(f"invalid license_files: {key}") from exc
         if (
-            not isinstance(path, str)
-            or not path.strip()
-            or "\\" in path
-            or not isinstance(digest, str)
+            not isinstance(digest, str)
             or _SHA256.fullmatch(digest) is None
-            or path in seen
+            or normalized_path in seen
         ):
             raise LicenseQualificationError(f"invalid license_files: {key}")
-        seen.add(path)
-        result.append({"path": path, "sha256": digest})
+        seen.add(normalized_path)
+        result.append({"path": normalized_path, "sha256": digest})
     if result != sorted(result, key=lambda item: item["path"]):
         raise LicenseQualificationError(f"license_files must be sorted by path: {key}")
     return result
