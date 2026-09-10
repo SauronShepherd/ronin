@@ -1,6 +1,6 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-10 after disabling GitHub Actions and switching autonomous work to code-only validation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-10 for the #52 typed scoped grants implementation under code-only validation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
 
@@ -51,11 +51,13 @@ PR #159 remains closed without merge; it is not landed behavior and does not blo
 
 ## Phase C — bounded HTTP control plane and SDK contract
 
-**Status: substantially implemented.** Remaining ordered implementation work:
+**Status: substantially implemented.** #52 typed scoped grants is implemented in this slice as a pure `studio_core` contract with deterministic deny-by-default matching, explicit resource/action vocabulary, bounded constraints, canonical bearer-scope mapping, alpha legacy-permission migration, kernel pre-effect enforcement evidence, and token-associated `RONIN_TOKEN_SCOPES` parsing at the HTTP edge. Route-level authorization remains #161 rather than being mixed into #52.
 
-1. **#52 typed scoped grants** before authorization behavior expands or hardens accidental semantics;
-2. **#53 public portable evidence** across HTTP/OpenAPI/CLI/SDK, with storage locators kept private;
-3. **#54 compatibility/evolution completion** after #52/#53 semantics settle.
+Remaining ordered implementation work:
+
+1. **#53 public portable evidence** across HTTP/OpenAPI/CLI/SDK, with storage locators kept private;
+2. **#54 compatibility/evolution completion** after the public evidence representation settles;
+3. **#161 scoped HTTP authorization** consuming the canonical #52 grant model for route/project/job visibility.
 
 HTTP/server implementation types must never become canonical domain/storage contracts. Do not introduce a worker -> server dependency inversion.
 
@@ -116,9 +118,9 @@ Existing implementation constraints remain unchanged: POST p95 <100 ms, GET p95 
 
 One coherent Builder slice at a time:
 
-1. **#52 typed scoped grants** — versioned, language-neutral, vendor-neutral, deterministic deny-by-default grant/requirement model and migration path; no OIDC/RBAC/OPA/provider IAM in core.
-2. **#53 public portable evidence** — bounded authenticated HTTP/OpenAPI/CLI/SDK representation with locator privacy and durable availability semantics.
-3. **#54 compatibility/evolution completion** — normalize errors and compatibility policy after #52/#53 settle.
+1. **#53 public portable evidence** — bounded authenticated HTTP/OpenAPI/CLI/SDK representation with locator privacy and durable availability semantics.
+2. **#54 compatibility/evolution completion** — normalize errors and compatibility policy after #53 settles.
+3. **#161 scoped HTTP authorization** — enforce read/list/events/submit/cancel using #52 grants without redefining authorization semantics in HTTP types.
 4. **Production image + Compose** — implement frozen step 01 topology.
 5. **#57 code-complete frozen journey** — keep open until all fifteen capabilities exist in supported code paths; qualification remains a separate deferred concern while CI/tests are off.
 6. **Release blockers/publication preparation** — #58/#95/#63/#45 and other release-critical items.
@@ -131,6 +133,7 @@ Deferred evidence track while code-only mode is active:
 
 - Canonical domain remains capability-driven and vendor-neutral.
 - Static bearer auth remains the v0.1 mechanism; typed scopes are required, enterprise auth is not.
+- The v1 grant schema is owned by `studio_core`; server/worker/provider adapters consume it rather than creating incompatible scope models.
 - Do not add OIDC, enterprise RBAC, OPA, FastAPI, Pydantic, SQLAlchemy, Postgres, Kubernetes product deployment, brokers, OpenTelemetry or OpenLineage unless scope explicitly changes.
 - No generic weakening of security, durability, performance, architecture, or acceptance semantics merely because tests are disabled.
 

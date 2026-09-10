@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, Protocol, TypeAlias
 
-from studio_core import ResolvedRuntimeSnapshot
+from studio_core import Requirement, ResolvedRuntimeSnapshot
 from studio_notebook import CellId, NotebookCell, NotebookDocument, analyze_notebook_dependencies
 
 from .redaction import redact_sensitive_text
@@ -62,12 +62,18 @@ class KernelDirectiveField:
 
 @dataclass(frozen=True, slots=True)
 class KernelDirective:
-    """Adapter-owned normalized instruction separate from authored notebook intent."""
+    """Adapter-owned normalized instruction separate from authored notebook intent.
+
+    ``required_permissions`` remains as the alpha compatibility path. New adapters should
+    emit typed ``required_grants`` requirements. A directive may use only one representation
+    so execution cannot silently disagree about which authorization contract is authoritative.
+    """
 
     adapter_id: str
     kind: str
     fields: tuple[KernelDirectiveField, ...] = ()
     required_permissions: tuple[str, ...] = ()
+    required_grants: tuple[Requirement, ...] = ()
 
     def __post_init__(self) -> None:
         _require_text(self.adapter_id, "kernel adapter id")
@@ -80,8 +86,16 @@ class KernelDirective:
             raise ValueError("kernel directive permissions must be unique")
         for permission in permissions:
             _require_text(permission, "kernel directive permission")
+        requirements = tuple(sorted(self.required_grants, key=lambda item: item.canonical_key))
+        if len(set(requirements)) != len(requirements):
+            raise ValueError("kernel directive grant requirements must be unique")
+        if permissions and requirements:
+            raise ValueError(
+                "kernel directive must not mix legacy permissions with typed grant requirements"
+            )
         object.__setattr__(self, "fields", fields)
         object.__setattr__(self, "required_permissions", permissions)
+        object.__setattr__(self, "required_grants", requirements)
 
 
 @dataclass(frozen=True, slots=True)

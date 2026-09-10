@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal, Protocol, TypeAlias, cast, runtime_checkable
 
+from studio_core import AuthorizationEvidence, Grant, GrantSet, requirement_to_bearer_scope
 from studio_notebook import CellId
 
 from .contracts import CellExecutionRequest, CellExecutionResult, NotebookExecutionRequest
@@ -99,7 +100,12 @@ class ExecutorIsolation:
 
 @dataclass(frozen=True, slots=True)
 class SessionPolicy:
-    """Minimum controls required before an executor may run notebook code."""
+    """Minimum controls required before an executor may run notebook code.
+
+    Legacy string permissions remain supported for alpha compatibility. New typed requirements
+    are evaluated only against ``granted_grants`` and are deny-by-default; the two models are
+    never implicitly widened into one another.
+    """
 
     granted_permissions: tuple[str, ...] = ()
     allowed_isolation_modes: tuple[IsolationMode, ...] = ("container", "kubernetes")
@@ -107,6 +113,7 @@ class SessionPolicy:
     require_network_isolation: bool = True
     require_filesystem_isolation: bool = True
     minimum_isolation_qualification: IsolationQualification = "tested"
+    granted_grants: tuple[Grant, ...] = ()
 
     def __post_init__(self) -> None:
         permissions = tuple(sorted(self.granted_permissions))
@@ -123,16 +130,42 @@ class SessionPolicy:
             raise ValueError("unsupported allowed isolation mode")
         if self.minimum_isolation_qualification not in _QUALIFICATION_RANK:
             raise ValueError("unsupported minimum isolation qualification")
+        grants = GrantSet(self.granted_grants).grants
         object.__setattr__(self, "granted_permissions", permissions)
         object.__setattr__(self, "allowed_isolation_modes", modes)
+        object.__setattr__(self, "granted_grants", grants)
+
+    def authorization_evidence(self, cell: CellExecutionRequest) -> tuple[AuthorizationEvidence, ...]:
+        if not cell.directive.required_grants:
+            return ()
+        grant_set = GrantSet(self.granted_grants)
+        return tuple(
+            AuthorizationEvidence("kernel.session", requirement, grant_set.permits(requirement))
+            for requirement in cell.directive.required_grants
+        )
 
     def missing_permissions(self, cell: CellExecutionRequest) -> tuple[str, ...]:
+        if cell.directive.required_grants:
+            return tuple(
+                requirement_to_bearer_scope(evidence.requirement)
+                for evidence in self.authorization_evidence(cell)
+                if not evidence.decision.allowed
+            )
         granted = set(self.granted_permissions)
         return tuple(
             permission
             for permission in cell.directive.required_permissions
             if permission not in granted
         )
+
+    def authorization_message(self, cell: CellExecutionRequest) -> str:
+        evidence = self.authorization_evidence(cell)
+        if not evidence:
+            return ""
+        payload = {
+            "authorization": [item.to_payload() for item in evidence],
+        }
+        return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
     def validate_isolation(self, isolation: ExecutorIsolation) -> None:
         if isolation.mode not in self.allowed_isolation_modes:
@@ -376,7 +409,11 @@ class KernelExecutionSession:
                 )
                 await self._emit("session.failed")
                 return tuple(results)
-            await self._emit("cell.started", cell_id=cell.cell_id)
+            await self._emit(
+                "cell.started",
+                cell_id=cell.cell_id,
+                message=self.policy.authorization_message(cell),
+            )
             failure_detail = ""
             try:
                 result = await self.executor.execute(cell, self.cancellation)

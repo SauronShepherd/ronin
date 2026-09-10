@@ -21,6 +21,7 @@ from typing import Any, cast
 from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import uuid4
 
+from studio_core import GrantSet
 from studio_execution import DurableExecutionService
 from studio_orchestrator import EventPage, Instant, Job, JobId, JobState, Page, Run, RunId, RunState
 from studio_storage import IdempotencyConflict, StorageBackpressureError
@@ -288,7 +289,12 @@ class DurableHTTPApplication:
 
 
 class RoninHTTPServer(ThreadingHTTPServer):
-    """Standard-library HTTP server that owns one shared service-loop bridge."""
+    """Standard-library HTTP server with one bearer credential and typed effective grants.
+
+    Route-level enforcement intentionally remains outside this #52 slice. The server binds
+    validated grants to the authenticated token so #161 can consume the canonical model
+    without redefining authorization semantics in the HTTP layer.
+    """
 
     daemon_threads = True
 
@@ -298,16 +304,25 @@ class RoninHTTPServer(ThreadingHTTPServer):
         service: DurableExecutionService,
         *,
         token: str,
+        grants: GrantSet,
     ) -> None:
         if not token or token != token.strip() or "\n" in token or "\r" in token:
             raise ValueError("token must be non-empty, trimmed, and single-line")
+        if not grants.grants:
+            raise ValueError("bearer token requires at least one typed authorization grant")
         self.application = DurableHTTPApplication(service)
         self._token = token
+        self._grants = grants
         try:
             super().__init__(server_address, _Handler)
         except BaseException:
             self.application.close()
             raise
+
+    @property
+    def effective_grants(self) -> GrantSet:
+        """Return normalized grants associated with the configured bearer token."""
+        return self._grants
 
     def authorized(self, authorization: str | None) -> bool:
         prefix = "Bearer "
