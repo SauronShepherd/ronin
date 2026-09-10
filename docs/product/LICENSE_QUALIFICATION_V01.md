@@ -18,7 +18,7 @@ The inventory generator must run in an environment installed from that exact loc
 - an `evidence_sha256` over the canonical package/version/direct/source/license/declared-license-file/installed-legal-file evidence record;
 - the complete `requirements-dev.lock` SHA-256 binding the inventory to one exact lock revision.
 
-Explicit `License-File` metadata is authoritative legal-file evidence and is not reduced to a filename heuristic. A declared license-file path may use a non-conventional basename; the generator still captures its installed bytes. If an installed distribution declares `License-File` but the corresponding installed legal file cannot be found, generation fails closed rather than silently omitting the declared evidence. Conventional filename discovery remains a compatibility fallback for older metadata that does not expose `License-File`.
+Explicit `License-File` metadata is authoritative legal-file evidence and is not reduced to a filename heuristic. A declared license-file path may use a non-conventional basename; the generator still captures its installed bytes. If an installed distribution declares `License-File` but the corresponding installed legal file cannot be found, generation fails closed rather than silently omitting the declared evidence. Qualification independently revalidates the committed inventory and also fails if any persisted `declared_license_files` entry lacks a matching persisted installed legal-file path; recomputing the package digest and review policy cannot bypass that structural invariant. Conventional filename discovery remains a compatibility fallback for older metadata that does not expose `License-File`.
 
 The direct-dependency set is part of the qualification boundary. Every root or `pyronin` `[project]` dependency represented by this release qualification surface, including the root `dev` extra used to generate `requirements-dev.lock`, must also be present in the lock; otherwise inventory generation and qualification fail closed. The `direct` classification is not merely informational: qualification recomputes those direct dependency names from the same project metadata and rejects any inventory whose boolean classification differs.
 
@@ -42,7 +42,7 @@ A release review must separately commit `third_party/license-policy-v1.json`. Th
 - `attribution_required: true|false`;
 - a non-empty review rationale grounded in the inspected upstream evidence.
 
-Unknown, missing, duplicate, unreviewed, denied, graph-drifted, unsupported-lock-syntax, direct-dependency-omitted, direct/transitive-misclassified, or evidence-mismatched dependencies fail qualification. Missing source or declared-license metadata also fails qualification instead of being guessed from package name or ecosystem reputation.
+Unknown, missing, duplicate, unreviewed, denied, graph-drifted, unsupported-lock-syntax, direct-dependency-omitted, direct/transitive-misclassified, declared-license-file-without-installed-evidence, or evidence-mismatched dependencies fail qualification. Missing source or declared-license metadata also fails qualification instead of being guessed from package name or ecosystem reputation.
 
 The evidence binding is intentionally stronger than `package==version`. Reinstalling the same package/version from a different allowed artifact can expose different distribution metadata or legal files. If source metadata, declared license metadata, declared `License-File` paths, installed legal-file paths, or installed legal-file bytes change, the package `evidence_sha256` changes and the previous review becomes stale. The package must be reviewed again before qualification can pass. This prevents an approval of one observed artifact/evidence set from silently authorizing materially different license evidence for the same version.
 
@@ -54,7 +54,7 @@ Qualification command:
 python tools/license_qualification.py
 ```
 
-The command succeeds only when the committed inventory has the exact current lock SHA-256, every active requirement is an exact structurally valid hash-qualified dependency block, the inventory exactly matches the parsed locked graph, the lock covers every direct project dependency represented by that graph, direct/transitive classifications agree with project metadata, declared license-file evidence is structurally valid, each package evidence digest is internally valid, and every exact dependency has a review bound to that exact evidence digest with complete license/notice/attribution decisions plus the project-level NOTICE rationale.
+The command succeeds only when the committed inventory has the exact current lock SHA-256, every active requirement is an exact structurally valid hash-qualified dependency block, the inventory exactly matches the parsed locked graph, the lock covers every direct project dependency represented by that graph, direct/transitive classifications agree with project metadata, declared license-file evidence is structurally valid and backed by a matching installed legal-file path, each package evidence digest is internally valid, and every exact dependency has a review bound to that exact evidence digest with complete license/notice/attribution decisions plus the project-level NOTICE rationale.
 
 ## Review requirements
 
