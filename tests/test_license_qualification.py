@@ -23,11 +23,17 @@ def _inventory(packages: list[dict[str, object]], *, lock_sha256: str = _LOCK_SH
     }
 
 
-def _entry(name: str, version: str, license_name: str = "MIT") -> dict[str, object]:
+def _entry(
+    name: str,
+    version: str,
+    license_name: str = "MIT",
+    *,
+    direct: bool = True,
+) -> dict[str, object]:
     return {
         "package": name,
         "version": version,
-        "direct": True,
+        "direct": direct,
         "source": f"https://example.invalid/{name}",
         "declared_license": license_name,
         "license_files": [f"{name}-{version}.dist-info/licenses/LICENSE"],
@@ -51,8 +57,20 @@ def _policy(*keys: str, project_notice: str = "not_required") -> dict[str, objec
     }
 
 
-def _qualify(inventory: object, policy: object, graph: dict[str, str]) -> None:
-    qualify(inventory, policy, graph, expected_lock_sha256=_LOCK_SHA)
+def _qualify(
+    inventory: object,
+    policy: object,
+    graph: dict[str, str],
+    *,
+    expected_direct: set[str] | None = None,
+) -> None:
+    qualify(
+        inventory,
+        policy,
+        graph,
+        expected_lock_sha256=_LOCK_SHA,
+        expected_direct=set(graph) if expected_direct is None else expected_direct,
+    )
 
 
 def test_locked_graph_reads_exact_versions_and_normalizes_names(tmp_path: Path) -> None:
@@ -111,6 +129,27 @@ def test_qualify_requires_exact_lock_file_identity() -> None:
     inventory = _inventory([_entry("alpha", "1.0")], lock_sha256="f" * 64)
 
     with pytest.raises(LicenseQualificationError, match="lock_sha256"):
+        _qualify(inventory, _policy("alpha==1.0"), graph)
+
+
+def test_qualify_rejects_wrong_direct_classification() -> None:
+    graph = {"alpha": "1.0", "beta": "2.0"}
+    inventory = _inventory([_entry("alpha", "1.0"), _entry("beta", "2.0", direct=True)])
+
+    with pytest.raises(LicenseQualificationError, match="direct classification"):
+        _qualify(
+            inventory,
+            _policy("alpha==1.0", "beta==2.0"),
+            graph,
+            expected_direct={"alpha"},
+        )
+
+
+def test_qualify_requires_boolean_direct_classification() -> None:
+    graph = {"alpha": "1.0"}
+    inventory = _inventory([{**_entry("alpha", "1.0"), "direct": "yes"}])
+
+    with pytest.raises(LicenseQualificationError, match="direct classification must be boolean"):
         _qualify(inventory, _policy("alpha==1.0"), graph)
 
 
