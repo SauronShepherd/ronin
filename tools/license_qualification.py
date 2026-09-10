@@ -12,7 +12,16 @@ from pathlib import Path
 
 _LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \t\\]+)$")
 _LOCKED_HASH = re.compile(r"^--hash=sha256:[0-9a-f]{64}$")
+_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _LICENSE_FILE_NAMES = ("license", "copying", "notice", "authors", "copyright")
+_PACKAGE_EVIDENCE_FIELDS = (
+    "package",
+    "version",
+    "direct",
+    "source",
+    "declared_license",
+    "license_files",
+)
 
 
 class LicenseQualificationError(ValueError):
@@ -26,6 +35,18 @@ def _canonical_name(value: str) -> str:
 def lock_sha256(path: Path) -> str:
     """Return the SHA-256 identity of the complete committed lock file."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def package_evidence_sha256(entry: dict[str, object]) -> str:
+    """Bind one review to the exact installed metadata and legal-file evidence."""
+    payload = {field: entry[field] for field in _PACKAGE_EVIDENCE_FIELDS}
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def locked_graph(path: Path) -> dict[str, str]:
@@ -147,14 +168,49 @@ def _source(dist: metadata.Distribution) -> str | None:
     return home_page.strip() if home_page and home_page.strip() else None
 
 
-def _license_files(dist: metadata.Distribution) -> list[str]:
-    result: list[str] = []
+def _license_files(dist: metadata.Distribution) -> list[dict[str, str]]:
+    result: list[dict[str, str]] = []
+    seen: set[str] = set()
     for file in dist.files or ():
         path = str(file)
         name = Path(path).name.casefold()
-        if any(name.startswith(prefix) for prefix in _LICENSE_FILE_NAMES):
-            result.append(path)
-    return sorted(set(result))
+        if not any(name.startswith(prefix) for prefix in _LICENSE_FILE_NAMES):
+            continue
+        if path in seen:
+            continue
+        seen.add(path)
+        located = Path(dist.locate_file(file))
+        try:
+            digest = hashlib.sha256(located.read_bytes()).hexdigest()
+        except OSError as exc:
+            raise LicenseQualificationError(f"cannot read license evidence file: {path}") from exc
+        result.append({"path": path, "sha256": digest})
+    return sorted(result, key=lambda item: item["path"])
+
+
+def _validate_license_files(value: object, key: str) -> list[dict[str, str]]:
+    if not isinstance(value, list):
+        raise LicenseQualificationError(f"invalid license_files: {key}")
+    result: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for item in value:
+        if not isinstance(item, dict) or set(item) != {"path", "sha256"}:
+            raise LicenseQualificationError(f"invalid license_files: {key}")
+        path = item.get("path")
+        digest = item.get("sha256")
+        if (
+            not isinstance(path, str)
+            or not path.strip()
+            or not isinstance(digest, str)
+            or _SHA256.fullmatch(digest) is None
+            or path in seen
+        ):
+            raise LicenseQualificationError(f"invalid license_files: {key}")
+        seen.add(path)
+        result.append({"path": path, "sha256": digest})
+    if result != sorted(result, key=lambda item: item["path"]):
+        raise LicenseQualificationError(f"license_files must be sorted by path: {key}")
+    return result
 
 
 def _locked_distributions(graph: dict[str, str]) -> dict[str, metadata.Distribution]:
@@ -188,16 +244,16 @@ def generate_inventory(root: Path) -> dict[str, object]:
             raise LicenseQualificationError(
                 f"installed version differs from lock: {name} expected {version}, got {dist.version}"
             )
-        entries.append(
-            {
-                "package": name,
-                "version": version,
-                "direct": name in direct,
-                "source": _source(dist),
-                "declared_license": _declared_license(dist),
-                "license_files": _license_files(dist),
-            }
-        )
+        entry: dict[str, object] = {
+            "package": name,
+            "version": version,
+            "direct": name in direct,
+            "source": _source(dist),
+            "declared_license": _declared_license(dist),
+            "license_files": _license_files(dist),
+        }
+        entry["evidence_sha256"] = package_evidence_sha256(entry)
+        entries.append(entry)
     return {
         "schema_version": 1,
         "lock_file": "requirements-dev.lock",
@@ -226,6 +282,7 @@ def qualify(
     if not isinstance(packages, list):
         raise LicenseQualificationError("inventory packages must be a list")
     seen: dict[str, str] = {}
+    evidence_by_key: dict[str, str] = {}
     for entry in packages:
         if not isinstance(entry, dict):
             raise LicenseQualificationError("inventory entry must be an object")
@@ -235,24 +292,37 @@ def qualify(
         source = entry.get("source")
         declared = entry.get("declared_license")
         files = entry.get("license_files")
-        if not isinstance(name, str) or not isinstance(version, str):
-            raise LicenseQualificationError("inventory package/version must be strings")
+        evidence_sha256 = entry.get("evidence_sha256")
+        if (
+            not isinstance(name, str)
+            or not name.strip()
+            or not isinstance(version, str)
+            or not version.strip()
+        ):
+            raise LicenseQualificationError("inventory package/version must be non-empty strings")
         canonical = _canonical_name(name)
+        key = f"{canonical}=={version}"
+        if name != canonical:
+            raise LicenseQualificationError(f"inventory package must be normalized: {key}")
         if canonical in seen:
             raise LicenseQualificationError(f"duplicate inventory package: {canonical}")
         seen[canonical] = version
         if not isinstance(is_direct, bool):
-            raise LicenseQualificationError(f"direct classification must be boolean: {canonical}=={version}")
+            raise LicenseQualificationError(f"direct classification must be boolean: {key}")
         if is_direct != (canonical in expected_direct):
             raise LicenseQualificationError(
-                f"direct classification does not match project metadata: {canonical}=={version}"
+                f"direct classification does not match project metadata: {key}"
             )
         if not isinstance(source, str) or not source.strip():
-            raise LicenseQualificationError(f"missing distribution source: {canonical}=={version}")
+            raise LicenseQualificationError(f"missing distribution source: {key}")
         if not isinstance(declared, str) or not declared.strip():
-            raise LicenseQualificationError(f"missing declared license: {canonical}=={version}")
-        if not isinstance(files, list) or not all(isinstance(item, str) for item in files):
-            raise LicenseQualificationError(f"invalid license_files: {canonical}=={version}")
+            raise LicenseQualificationError(f"missing declared license: {key}")
+        _validate_license_files(files, key)
+        if not isinstance(evidence_sha256, str) or _SHA256.fullmatch(evidence_sha256) is None:
+            raise LicenseQualificationError(f"invalid package evidence_sha256: {key}")
+        if package_evidence_sha256(entry) != evidence_sha256:
+            raise LicenseQualificationError(f"package evidence_sha256 does not match inventory: {key}")
+        evidence_by_key[key] = evidence_sha256
     if seen != graph:
         raise LicenseQualificationError("inventory does not exactly match the locked dependency graph")
 
@@ -270,6 +340,8 @@ def qualify(
         review = reviews[key]
         if not isinstance(review, dict) or review.get("decision") not in {"allow", "deny"}:
             raise LicenseQualificationError(f"missing reviewed license decision: {key}")
+        if review.get("evidence_sha256") != evidence_by_key[key]:
+            raise LicenseQualificationError(f"review evidence is stale or mismatched: {key}")
         if review.get("decision") != "allow":
             raise LicenseQualificationError(f"dependency license is not approved: {key}")
         if review.get("notice_required") not in {True, False}:
