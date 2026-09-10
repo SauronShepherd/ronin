@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import stat
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -57,6 +59,13 @@ def _repository_root(path: Path) -> Path:
     return root
 
 
+def _normalized_untracked_mode(metadata: os.stat_result) -> bytes:
+    """Encode only the Git-relevant executable distinction for an untracked regular file."""
+    if os.name == "posix" and metadata.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
+        return b"100755"
+    return b"100644"
+
+
 def _untracked_digest_input(root: Path) -> bytes:
     names = [
         value.decode("utf-8", errors="surrogateescape")
@@ -70,15 +79,22 @@ def _untracked_digest_input(root: Path) -> bytes:
         try:
             resolved = candidate.resolve(strict=True)
             resolved.relative_to(root)
+            metadata = candidate.lstat()
         except (OSError, ValueError) as exc:
             raise GitCaptureError("untracked path escapes or cannot be resolved") from exc
-        if candidate.is_symlink() or not candidate.is_file():
+        if not stat.S_ISREG(metadata.st_mode):
             raise GitCaptureError("untracked special files cannot be captured")
-        data = candidate.read_bytes()
+        try:
+            data = candidate.read_bytes()
+        except OSError as exc:
+            raise GitCaptureError("untracked file cannot be read") from exc
         normalized = relative.as_posix().encode("utf-8", errors="surrogateescape")
+        mode = _normalized_untracked_mode(metadata)
         chunks.extend(
             (
                 normalized,
+                b"\0",
+                mode,
                 b"\0",
                 str(len(data)).encode("ascii"),
                 b"\0",
