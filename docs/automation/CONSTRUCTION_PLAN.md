@@ -1,12 +1,14 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-10 against `33f1d57134c6356af43ae6d5eb5bc8fd17ad5813`. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-10 from product/state baseline `33f1d57134c6356af43ae6d5eb5bc8fd17ad5813`; the planning correction was published as `a12789dd8aa883a096057ef7267257609de43852`. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent slice, revalidates against current `main`, open Builder work, handoffs and exact-SHA qualification, and preserves all release gates.
 
+**Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` are one canonical planning pair. Whenever acceptance truth, completed capabilities, or the critical path changes materially, both files must be updated from the same observed repository state in one coherent planning slice. If they disagree, autonomous product selection stops until the drift is reconciled.
+
 **Release-acceptance invariant.** Docker Qualification is the authoritative capable context for the frozen journey. Current acceptance is **13/15 live** with exactly `01` (production image/Compose) and `12` (public evidence) intentionally skipped. Docker Qualification enforces this exact named allowance and stale/new skips fail closed. Final release remains strict: all fifteen required step names must execute and pass with zero skips, xfails, failures, errors, missing, unexpected, renamed or duplicated outcomes.
 
-**Current exact-main evidence.** On `33f1d57134c6356af43ae6d5eb5bc8fd17ad5813`, CI run `34431357861`, Security qualification `34431357908`, Docker Qualification `34431358031`, and Release qualification `34431357884` are green for the push event. This does not replace the still-missing scheduled/manual full-clean proof required by #166/#167/#163.
+**Current exact-main evidence.** Planning publication `a12789dd8aa883a096057ef7267257609de43852` is green for CI run `34437517162`, Security qualification `34437517194`, Docker Qualification `34437517131`, and Release qualification `34437517122`. This does not replace the still-missing scheduled/manual full-clean proof required by #166/#167/#163.
 
 ## Current position on 2026-09-10
 
@@ -30,6 +32,8 @@ The old statement that only seven frozen steps are live is obsolete. The only tw
 PR #159 (`feat: expose portable durable evidence`) closed without merge. It is not landed behavior and is not an active blocker. A fresh #53 slice may proceed once earlier critical-path planning/qualification requirements are satisfied.
 
 PR #170 structurally repaired nightly verifier self-contamination by moving verifier state outside `GITHUB_WORKSPACE`. The code repair is landed; authoritative scheduled/manual full-clean validation remains pending and must not be inferred from push-green.
+
+B1 / #48 canonical planning synchronization is complete in implementation: PR #174 merged as `a12789dd8aa883a096057ef7267257609de43852` and all four mandatory push workflows for that exact main SHA are green. This follow-up removes #48 from the selectable critical path and records the explicit synchronization rule required by its acceptance criteria.
 
 ## Phase A — completed foundation
 
@@ -114,14 +118,13 @@ Publication must qualify the exact wheel outside the checkout and must reference
 
 One coherent Builder slice at a time:
 
-1. **#48 canonical planning synchronization** — merge the current truth before product work.
-2. **#166/#167/#163 scheduled/manual full-clean proof** — obtain same-mode evidence for the repaired verifier/contention path; if red, that failure becomes the next blocker.
-3. **#52 typed scoped grants** — versioned, language-neutral, vendor-neutral, deny-by-default model and migration path; no OIDC/RBAC/OPA/provider IAM in core.
-4. **#53 public portable evidence + step 12** — bounded authenticated HTTP/OpenAPI/CLI/SDK representation, physical locator privacy, real SQLite/HTTP conformance, allowance -> `01`.
-5. **#54 compatibility/evolution completion** — complete error/additive/unknown/drift policy after #52/#53 contracts settle.
-6. **Production image + Compose + step 01** — supported topology and allowance -> empty.
-7. **#57 strict 15/15 completion** — keep open until authoritative Docker/release evidence proves the full frozen journey.
-8. **Release blockers/publication** — #58/#95/#63/#45 and remaining release-critical items, then immutable tag/artifacts and published smoke.
+1. **#166/#167/#163 scheduled/manual full-clean proof** — obtain same-mode evidence for the repaired verifier/contention path; if red, that failure becomes the next blocker.
+2. **#52 typed scoped grants** — versioned, language-neutral, vendor-neutral, deny-by-default model and migration path; no OIDC/RBAC/OPA/provider IAM in core.
+3. **#53 public portable evidence + step 12** — bounded authenticated HTTP/OpenAPI/CLI/SDK representation, physical locator privacy, real SQLite/HTTP conformance, allowance -> `01`.
+4. **#54 compatibility/evolution completion** — complete error/additive/unknown/drift policy after #52/#53 contracts settle.
+5. **Production image + Compose + step 01** — supported topology and allowance -> empty.
+6. **#57 strict 15/15 completion** — keep open until authoritative Docker/release evidence proves the full frozen journey.
+7. **Release blockers/publication** — #58/#95/#63/#45 and remaining release-critical items, then immutable tag/artifacts and published smoke.
 
 Security/process quick wins may be taken only when they do not displace an earlier unresolved critical-path blocker or create parallel implementation PRs.
 
