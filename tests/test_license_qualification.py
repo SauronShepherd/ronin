@@ -132,6 +132,19 @@ def test_qualify_requires_exact_lock_file_identity() -> None:
         _qualify(inventory, _policy("alpha==1.0"), graph)
 
 
+def test_qualify_rejects_direct_dependency_missing_from_lock() -> None:
+    graph = {"alpha": "1.0"}
+    inventory = _inventory([_entry("alpha", "1.0")])
+
+    with pytest.raises(LicenseQualificationError, match="direct project dependencies missing"):
+        _qualify(
+            inventory,
+            _policy("alpha==1.0"),
+            graph,
+            expected_direct={"alpha", "beta"},
+        )
+
+
 def test_qualify_rejects_wrong_direct_classification() -> None:
     graph = {"alpha": "1.0", "beta": "2.0"}
     inventory = _inventory([_entry("alpha", "1.0"), _entry("beta", "2.0", direct=True)])
