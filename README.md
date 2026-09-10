@@ -20,7 +20,11 @@ See [`docs/product/PROJECTS_AND_EXECUTION.md`](docs/product/PROJECTS_AND_EXECUTI
 
 ## Current status
 
-The repository is in **E1 — Core IR/domain foundations**. Pure immutable graph primitives, executable architecture boundaries, portable notebook/runtime contracts and strict quality gates exist; the broader product capabilities above are targets and are not yet claimed as implemented.
+Ronin now has a durable local execution spine over SQLite, real-Docker worker execution with crash/reclaim/resume qualification, an authenticated HTTP control plane, OpenAPI 3.1, the `pyronin` SDK, and supported operator CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `jobs`, and `cancel`.
+
+The frozen v0.1 journey is currently **13/15 live** in the authoritative Docker qualification context. The two intentionally incomplete steps are production image/Compose startup (`01`) and public portable evidence retrieval (`12`). Typed least-privilege bearer scopes and the public evidence contract are still unfinished, so Ronin is not yet release-ready and should not be described as 15/15 complete.
+
+The broader Data + AI capabilities described above remain targets unless their concrete implementation is present in the repository. In particular, v0.1 does not claim broad ingestion, SQL/lakehouse, streaming, MLOps, GenAI/agents, enterprise RBAC, Postgres/multi-node HA or Kubernetes product deployment.
 
 ## Development
 
@@ -30,7 +34,7 @@ make check
 make mutation
 ```
 
-`make check` runs formatting/linting, strict type checking, the architecture gate and tests. Configured product packages have a mandatory 100% line/branch coverage gate with zero exclusions. `make mutation` is the separate, more expensive mutation-quality gate for `studio_core`; it requires at least 90% killed mutants and rejects incomplete or invalid mutation evidence.
+`make check` runs formatting/linting, strict type checking, the architecture gate and tests. Coverage is tiered across product packages, with the strictest core tiers at 100% line/branch and additional storage per-file gates. `make mutation` is a separate, more expensive mutation-quality gate; current mutation qualification is intentionally narrower than the full product surface.
 
 ## Layout
 
