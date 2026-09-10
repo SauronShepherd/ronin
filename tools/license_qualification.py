@@ -10,8 +10,8 @@ import re
 import tomllib
 from pathlib import Path
 
-_LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \\]+)(?: \\)?$")
-_LOCKED_HASH = re.compile(r"^--hash=sha256:[0-9a-f]{64}(?: \\)?$")
+_LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \t\\]+)$")
+_LOCKED_HASH = re.compile(r"^--hash=sha256:[0-9a-f]{64}$")
 _LICENSE_FILE_NAMES = ("license", "copying", "notice", "authors", "copyright")
 
 
@@ -38,19 +38,38 @@ def locked_graph(path: Path) -> dict[str, str]:
     ):
         stripped = raw_line.strip()
         if not stripped or stripped.startswith("#"):
+            if current_name is not None:
+                raise LicenseQualificationError(
+                    f"continued locked requirement interrupted at line {line_number}: "
+                    f"{current_name}"
+                )
             continue
+
         if raw_line[:1].isspace():
-            if current_name is None or _LOCKED_HASH.fullmatch(stripped) is None:
+            if current_name is None:
+                raise LicenseQualificationError(
+                    f"unsupported active lock syntax at line {line_number}"
+                )
+            continued = stripped.endswith(" \\")
+            hash_text = stripped[:-2] if continued else stripped
+            if _LOCKED_HASH.fullmatch(hash_text) is None:
                 raise LicenseQualificationError(
                     f"unsupported active lock syntax at line {line_number}"
                 )
             current_hashes += 1
+            if not continued:
+                current_name = None
+                current_hashes = 0
             continue
 
-        if current_name is not None and current_hashes == 0:
-            raise LicenseQualificationError(f"locked requirement has no sha256 hash: {current_name}")
+        if current_name is not None:
+            raise LicenseQualificationError(
+                f"unterminated hash continuation before line {line_number}: {current_name}"
+            )
 
-        match = _LOCKED_REQUIREMENT.fullmatch(raw_line)
+        continued = raw_line.endswith(" \\")
+        requirement_text = raw_line[:-2] if continued else raw_line
+        match = _LOCKED_REQUIREMENT.fullmatch(requirement_text)
         if match is None:
             raise LicenseQualificationError(f"unsupported active lock syntax at line {line_number}")
         name = _canonical_name(match.group(1))
@@ -59,12 +78,20 @@ def locked_graph(path: Path) -> dict[str, str]:
             if result[name] != version:
                 raise LicenseQualificationError(f"lock contains conflicting versions for {name}")
             raise LicenseQualificationError(f"lock contains duplicate requirement for {name}")
+        if not continued:
+            raise LicenseQualificationError(f"locked requirement has no sha256 hash: {name}")
         result[name] = version
         current_name = name
         current_hashes = 0
 
-    if current_name is not None and current_hashes == 0:
-        raise LicenseQualificationError(f"locked requirement has no sha256 hash: {current_name}")
+    if current_name is not None:
+        if current_hashes == 0:
+            raise LicenseQualificationError(
+                f"locked requirement has no sha256 hash: {current_name}"
+            )
+        raise LicenseQualificationError(
+            f"unterminated hash continuation at end of lock: {current_name}"
+        )
     if not result:
         raise LicenseQualificationError("lock contains no exact requirements")
     return result
