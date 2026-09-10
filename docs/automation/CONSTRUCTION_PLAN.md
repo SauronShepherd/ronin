@@ -1,6 +1,6 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-10 for the #53 public portable evidence implementation under code-only validation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-10 for the #54 API/SDK compatibility implementation under code-only validation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
 
@@ -14,9 +14,9 @@ The last automated baseline remains **13/15**, with historical gaps `01` and `12
 
 ## Current position
 
-The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, and typed scoped grants.
+The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, and a strict-alpha public compatibility contract.
 
-#52 is complete. #53 is now functionally implemented in supported code paths: durable four-state evidence, authenticated public HTTP retrieval, OpenAPI representation, installed CLI evidence command, and SDK evidence objects/methods. Physical storage locators remain private. Automated step-12 qualification is still deferred, so the authoritative acceptance baseline remains 13/15.
+#52 and #53 are complete. #54 is now functionally complete under code-only validation: `docs/product/API_COMPATIBILITY_V1.md` defines alpha/beta/stable evolution rules, CLI and SDK parsers enforce the same closed alpha shapes/cursor/Instant semantics, and OpenAPI records the matching constraints. Automated drift/conformance execution remains deferred, so the authoritative acceptance baseline remains 13/15.
 
 ## Phase A — foundation
 
@@ -28,17 +28,17 @@ The MVP durable local execution spine is implemented: Job -> Run -> Attempt life
 
 ## Phase C — HTTP/API/SDK contract
 
-**Status: public v0.1 capability set materially complete; compatibility hardening remains.**
+**Status: public v0.1 capability and compatibility set functionally complete; scoped route authorization remains.**
 
 Completed:
 
 - #52 provider-neutral typed scoped grants, bearer-scope mapping and kernel pre-effect authorization decisions;
-- #53 durable/public portable evidence with `available`, `missing`, `tombstoned`, `unavailable`, locator privacy, authenticated HTTP, OpenAPI, CLI and `pyronin` surfaces.
+- #53 durable/public portable evidence with `available`, `missing`, `tombstoned`, `unavailable`, locator privacy, authenticated HTTP, OpenAPI, CLI and `pyronin` surfaces;
+- #54 strict-alpha API/SDK compatibility: closed response objects and semantic enums, open error-code vocabulary inside a normalized closed envelope, opaque bounded cursors, canonical Instant validation, and documented alpha/beta/stable evolution rules.
 
 Remaining ordered work:
 
-1. **#54 compatibility/evolution completion** — normalize public errors, additive-field/enum/cursor evolution and fail-closed server/OpenAPI/SDK drift semantics;
-2. **#161 scoped HTTP authorization** — enforce operation/project/job visibility using the existing #52 grant model, including the new evidence route.
+1. **#161 scoped HTTP authorization** — enforce operation/project/job visibility using the existing #52 grant model, including the evidence route.
 
 HTTP/server types remain adapters, never canonical lifecycle/storage models. No worker -> server dependency inversion is allowed.
 
@@ -56,11 +56,11 @@ The topology must preserve one production OCI image, durable local SQLite volume
 
 **Last automated baseline: 13/15.** Historical gaps remain `01` and `12` until qualification is restored.
 
-Code now contains the step-12 public evidence capability. Do not call that qualified 14/15 while tests are disabled. After Compose is implemented, do not call the project qualified 15/15 until automated verification is explicitly restored and executed. Preserve all thirteen previously qualified semantics throughout.
+Code contains the step-12 public evidence capability and the #54 compatibility contract. Do not call the project qualified 14/15 or 15/15 while tests are disabled. After Compose is implemented, do not call the project qualified 15/15 until automated verification is explicitly restored and executed. Preserve all thirteen previously qualified semantics throughout.
 
 ## Phase G — security, non-functional and release work
 
-Open work includes #162 remote bearer HTTPS-by-default, #123 untracked executable-bit identity, #95 installed-wheel qualification logic, #60 immutable Docker bootstrap identity, #58 exact license/NOTICE policy, #102 release-tool coverage configuration, #63 repository/ref protection, and #45 security reporting after the private-channel decision.
+Open work includes #161 scoped HTTP route authorization, #162 remote bearer HTTPS-by-default, #123 untracked executable-bit identity, #95 installed-wheel qualification logic, #60 immutable Docker bootstrap identity, #58 exact license/NOTICE policy, #102 release-tool coverage configuration, #63 repository/ref protection, and #45 security reporting after the private-channel decision.
 
 Evidence-only #166/#167/#163 remain deferred while CI/tests are disabled.
 
@@ -74,17 +74,16 @@ Existing implementation constraints remain: POST p95 <100 ms; GET p95 <30 ms; SQ
 
 One coherent Builder slice at a time:
 
-1. **#54 compatibility/evolution completion**.
-2. **#161 scoped HTTP authorization**, including evidence access.
-3. **Production image + Compose**, implementing frozen step 01.
-4. **#57 code-complete frozen journey**, without claiming automated 15/15 while tests remain off.
-5. **Release blockers/publication preparation** — #58/#95/#63/#45 and related work.
+1. **#161 scoped HTTP authorization**, including evidence access.
+2. **Production image + Compose**, implementing frozen step 01.
+3. **#57 code-complete frozen journey**, without claiming automated 15/15 while tests remain off.
+4. **Release blockers/publication preparation** — #58/#95/#63/#45 and related work.
 
 Security/correctness #162 and #123 remain high-priority bounded slices and can be selected when they do not displace the dependency-critical order.
 
 ## Architecture and scope guardrails
 
-Canonical contracts stay capability-driven and vendor-neutral. Static bearer auth remains the v0.1 mechanism; typed scopes are required, enterprise auth is not. Evidence identity is storage-neutral and public payloads exclude backend locators. Do not add OIDC, enterprise RBAC, OPA, FastAPI, Pydantic, SQLAlchemy, Postgres, Kubernetes product deployment, brokers, OpenTelemetry or OpenLineage unless scope explicitly changes.
+Canonical contracts stay capability-driven and vendor-neutral. Static bearer auth remains the v0.1 mechanism; typed scopes are required, enterprise auth is not. Evidence identity is storage-neutral and public payloads exclude backend locators. Public `/v1` compatibility follows `docs/product/API_COMPATIBILITY_V1.md`. Do not add OIDC, enterprise RBAC, OPA, FastAPI, Pydantic, SQLAlchemy, Postgres, Kubernetes product deployment, brokers, OpenTelemetry or OpenLineage unless scope explicitly changes.
 
 ## Frozen until v0.1 ships
 

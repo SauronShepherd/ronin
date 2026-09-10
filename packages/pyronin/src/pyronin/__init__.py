@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import re
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -19,6 +20,24 @@ _DEFAULT_MAX_RESPONSE_BYTES = 1024 * 1024
 _MAX_CURSOR_BYTES = 4096
 _RETRYABLE_STATUS_CODES = frozenset({429, 502, 503, 504})
 _RETRYABLE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+_INSTANT_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$")
+_JOB_FIELDS = frozenset({"id", "state", "failure_code"})
+_EVENT_FIELDS = frozenset(
+    {"sequence", "attempt_id", "attempt_sequence", "kind", "message", "occurred_at"}
+)
+_EVIDENCE_FIELDS = frozenset(
+    {
+        "version",
+        "cell_id",
+        "role",
+        "digest_algorithm",
+        "digest",
+        "media_type",
+        "size_bytes",
+        "availability",
+        "reason",
+    }
+)
 
 
 class RoninError(Exception):
@@ -162,22 +181,27 @@ def _read_bounded(stream: _Readable, max_bytes: int) -> bytes:
     return body
 
 
-def _api_error_code(body: bytes) -> str | None:
+def _api_error(body: bytes) -> tuple[str | None, str]:
     try:
         payload = json.loads(body)
     except (json.JSONDecodeError, UnicodeDecodeError):
-        return None
-    if not isinstance(payload, dict):
-        return None
-    code = payload.get("code")
-    if isinstance(code, str) and code and len(code) <= 128:
-        return code
+        return None, "request failed with a non-Ronin error response"
+    if not isinstance(payload, dict) or set(payload) != {"error"}:
+        return None, "request failed with a non-Ronin error response"
     error = payload.get("error")
-    if isinstance(error, dict):
-        nested = error.get("code")
-        if isinstance(nested, str) and nested and len(nested) <= 128:
-            return nested
-    return None
+    if not isinstance(error, dict) or set(error) != {"code", "message"}:
+        return None, "request failed with a non-Ronin error response"
+    code = error.get("code")
+    message = error.get("message")
+    if (
+        not isinstance(code, str)
+        or not code
+        or len(code) > 128
+        or not isinstance(message, str)
+        or not message
+    ):
+        return None, "request failed with a non-Ronin error response"
+    return code, message
 
 
 def _request_is_retry_safe(method: str, headers: Mapping[str, str]) -> bool:
@@ -194,6 +218,19 @@ def _validate_cursor(value: str | None, *, name: str) -> None:
         not value or value != value.strip() or len(value.encode("utf-8")) > _MAX_CURSOR_BYTES
     ):
         raise ValueError(f"{name} must be non-empty, trimmed, and within the byte limit")
+
+
+def _parse_cursor(value: object, *, name: str, nullable: bool) -> str | None:
+    if value is None and nullable:
+        return None
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or len(value.encode("utf-8")) > _MAX_CURSOR_BYTES
+    ):
+        raise ProtocolError(f"{name} must be a bounded non-empty string")
+    return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -289,7 +326,8 @@ class HTTPTransport:
                 ):
                     self._sleep_before_retry(attempt)
                     continue
-                raise APIError(exc.code, "request failed", _api_error_code(error_body)) from exc
+                code, message = _api_error(error_body)
+                raise APIError(exc.code, message, code) from exc
             except URLError as exc:
                 if retry_safe and attempt < self.max_retries:
                     self._sleep_before_retry(attempt)
@@ -299,7 +337,7 @@ class HTTPTransport:
                 return None
             try:
                 return json.loads(body)
-            except json.JSONDecodeError as exc:
+            except (json.JSONDecodeError, UnicodeDecodeError) as exc:
                 raise TransportError("Ronin endpoint returned invalid JSON") from exc
         raise AssertionError("unreachable retry loop")
 
@@ -434,47 +472,42 @@ class JobHandle:
 
 
 def _parse_job(payload: object) -> Job:
-    if not isinstance(payload, dict):
-        raise ProtocolError("Expected a job object")
-    try:
-        job_id = payload["id"]
-        state = payload["state"]
-    except KeyError as exc:
-        raise ProtocolError(f"Job payload missing {exc.args[0]!r}") from exc
-    if not isinstance(job_id, str) or not job_id:
-        raise ProtocolError("Job id must be a non-empty string")
+    if not isinstance(payload, dict) or set(payload) != _JOB_FIELDS:
+        raise ProtocolError("Job fields do not match the v1 contract")
+    job_id = payload["id"]
+    state = payload["state"]
+    if (
+        not isinstance(job_id, str)
+        or not job_id
+        or job_id != job_id.strip()
+        or len(job_id) > 256
+    ):
+        raise ProtocolError("Job id must be a bounded non-empty string")
     if not isinstance(state, str):
         raise ProtocolError("Job state must be a string")
     try:
         job_state = JobState(state)
     except ValueError as exc:
         raise ProtocolError(f"Unknown job state {state!r}") from exc
-    failure_code = payload.get("failure_code")
+    failure_code = payload["failure_code"]
     if failure_code is not None and not isinstance(failure_code, str):
         raise ProtocolError("failure_code must be a string when present")
     return Job(job_id, job_state, failure_code)
 
 
 def _parse_job_page(payload: object) -> JobPage:
-    if not isinstance(payload, dict):
-        raise ProtocolError("Expected a job page object")
-    if set(payload) != {"items", "next_cursor"}:
+    if not isinstance(payload, dict) or set(payload) != {"items", "next_cursor"}:
         raise ProtocolError("Job page must contain exactly items and next_cursor")
     items = payload["items"]
-    next_cursor = payload["next_cursor"]
     if not isinstance(items, list):
         raise ProtocolError("Job page items must be a list")
-    if next_cursor is not None and (not isinstance(next_cursor, str) or not next_cursor):
-        raise ProtocolError("next_cursor must be a non-empty string when present")
+    next_cursor = _parse_cursor(payload["next_cursor"], name="next_cursor", nullable=True)
     return JobPage(tuple(_parse_job(item) for item in items), next_cursor)
 
 
 def _parse_event(payload: object) -> JobEvent:
-    if not isinstance(payload, dict):
-        raise ProtocolError("Expected a job event object")
-    expected = {"sequence", "attempt_id", "attempt_sequence", "kind", "message", "occurred_at"}
-    if set(payload) != expected:
-        raise ProtocolError("Job event fields do not match the event contract")
+    if not isinstance(payload, dict) or set(payload) != _EVENT_FIELDS:
+        raise ProtocolError("Job event fields do not match the v1 contract")
     sequence = payload["sequence"]
     attempt_id = payload["attempt_id"]
     attempt_sequence = payload["attempt_sequence"]
@@ -483,8 +516,8 @@ def _parse_event(payload: object) -> JobEvent:
     occurred_at = payload["occurred_at"]
     if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 0:
         raise ProtocolError("Job event sequence must be a non-negative integer")
-    if not isinstance(attempt_id, str) or not attempt_id:
-        raise ProtocolError("Job event attempt_id must be a non-empty string")
+    if not isinstance(attempt_id, str) or not attempt_id or len(attempt_id) > 256:
+        raise ProtocolError("Job event attempt_id must be a bounded non-empty string")
     if (
         not isinstance(attempt_sequence, int)
         or isinstance(attempt_sequence, bool)
@@ -495,40 +528,25 @@ def _parse_event(payload: object) -> JobEvent:
         raise ProtocolError("Job event kind must be a non-empty string")
     if not isinstance(message, str):
         raise ProtocolError("Job event message must be a string")
-    if not isinstance(occurred_at, str) or not occurred_at:
-        raise ProtocolError("Job event occurred_at must be a non-empty string")
+    if not isinstance(occurred_at, str) or _INSTANT_RE.fullmatch(occurred_at) is None:
+        raise ProtocolError("Job event occurred_at must be a canonical Instant")
     return JobEvent(sequence, attempt_id, attempt_sequence, kind, message, occurred_at)
 
 
 def _parse_event_page(payload: object) -> JobEventPage:
-    if not isinstance(payload, dict):
-        raise ProtocolError("Expected a job event page object")
-    if set(payload) != {"items", "next_since"}:
+    if not isinstance(payload, dict) or set(payload) != {"items", "next_since"}:
         raise ProtocolError("Job event page must contain exactly items and next_since")
     items = payload["items"]
-    next_since = payload["next_since"]
     if not isinstance(items, list):
         raise ProtocolError("Job event page items must be a list")
-    if not isinstance(next_since, str) or not next_since:
-        raise ProtocolError("next_since must be a non-empty string")
+    next_since = _parse_cursor(payload["next_since"], name="next_since", nullable=False)
+    if next_since is None:
+        raise ProtocolError("next_since must be present")
     return JobEventPage(tuple(_parse_event(item) for item in items), next_since)
 
 
 def _parse_evidence(payload: object) -> EvidenceReference:
-    if not isinstance(payload, dict):
-        raise ProtocolError("Expected an evidence object")
-    expected = {
-        "version",
-        "cell_id",
-        "role",
-        "digest_algorithm",
-        "digest",
-        "media_type",
-        "size_bytes",
-        "availability",
-        "reason",
-    }
-    if set(payload) != expected:
+    if not isinstance(payload, dict) or set(payload) != _EVIDENCE_FIELDS:
         raise ProtocolError("Evidence fields do not match the v1 contract")
     if payload["version"] != 1:
         raise ProtocolError("Unsupported evidence version")

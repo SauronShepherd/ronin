@@ -3,14 +3,69 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import Request, urlopen
 
+_MAX_RESPONSE_BYTES = 1024 * 1024
+_MAX_ERROR_BYTES = 64 * 1024
+_MAX_CURSOR_BYTES = 4096
+_INSTANT_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$")
+_JOB_FIELDS = frozenset({"id", "state", "failure_code"})
+_EVENT_FIELDS = frozenset(
+    {"sequence", "attempt_id", "attempt_sequence", "kind", "message", "occurred_at"}
+)
+_EVIDENCE_FIELDS = frozenset(
+    {
+        "version",
+        "cell_id",
+        "role",
+        "digest_algorithm",
+        "digest",
+        "media_type",
+        "size_bytes",
+        "availability",
+        "reason",
+    }
+)
+
 
 class ControlPlaneError(RuntimeError):
     """Expected control-plane transport or protocol failure."""
+
+
+def _protocol_cursor(value: object, *, name: str, nullable: bool) -> str | None:
+    if value is None and nullable:
+        return None
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or len(value.encode("utf-8")) > _MAX_CURSOR_BYTES
+    ):
+        raise ControlPlaneError(f"Ronin {name} violated the protocol")
+    return value
+
+
+def _error_code(payload: object) -> str | None:
+    if not isinstance(payload, dict) or set(payload) != {"error"}:
+        return None
+    error = payload.get("error")
+    if not isinstance(error, dict) or set(error) != {"code", "message"}:
+        return None
+    code = error.get("code")
+    message = error.get("message")
+    if (
+        not isinstance(code, str)
+        or not code
+        or len(code) > 128
+        or not isinstance(message, str)
+        or not message
+    ):
+        return None
+    return code
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,23 +111,22 @@ class ControlPlaneClient:
         request = Request(url, data=body, headers=headers, method=method)  # noqa: S310
         try:
             with urlopen(request, timeout=self.timeout) as response:  # noqa: S310
-                data = response.read(1024 * 1024 + 1)
+                data = response.read(_MAX_RESPONSE_BYTES + 1)
         except HTTPError as exc:
             try:
-                error_body = exc.read(64 * 1024)
-                parsed = json.loads(error_body) if error_body else None
+                error_body = exc.read(_MAX_ERROR_BYTES + 1)
+                if len(error_body) > _MAX_ERROR_BYTES:
+                    parsed_error = None
+                else:
+                    parsed_error = json.loads(error_body) if error_body else None
             except (OSError, json.JSONDecodeError, UnicodeDecodeError):
-                parsed = None
-            code = None
-            if isinstance(parsed, dict):
-                error = parsed.get("error")
-                if isinstance(error, dict) and isinstance(error.get("code"), str):
-                    code = error["code"]
+                parsed_error = None
+            code = _error_code(parsed_error)
             suffix = f" [{code}]" if code else ""
             raise ControlPlaneError(f"Ronin API error {exc.code}{suffix}") from exc
         except URLError as exc:
             raise ControlPlaneError("Ronin endpoint unavailable") from exc
-        if len(data) > 1024 * 1024:
+        if len(data) > _MAX_RESPONSE_BYTES:
             raise ControlPlaneError("Ronin response exceeded configured byte limit")
         if not data:
             return None
@@ -122,7 +176,8 @@ class ControlPlaneClient:
         items = payload["items"]
         if not isinstance(items, list):
             raise ControlPlaneError("Ronin jobs response items must be a list")
-        return {"items": [_job(item) for item in items], "next_cursor": payload["next_cursor"]}
+        next_cursor = _protocol_cursor(payload["next_cursor"], name="next_cursor", nullable=True)
+        return {"items": [_job(item) for item in items], "next_cursor": next_cursor}
 
     def events(
         self,
@@ -140,7 +195,8 @@ class ControlPlaneClient:
         items = payload["items"]
         if not isinstance(items, list):
             raise ControlPlaneError("Ronin events response items must be a list")
-        return {"items": [_event(item) for item in items], "next_since": payload["next_since"]}
+        next_since = _protocol_cursor(payload["next_since"], name="next_since", nullable=False)
+        return {"items": [_event(item) for item in items], "next_since": next_since}
 
     def evidence(self, job_id: str) -> tuple[dict[str, object], ...]:
         payload = self.request("GET", f"/v1/jobs/{quote(job_id, safe='')}/evidence")
@@ -156,13 +212,13 @@ class ControlPlaneClient:
 
 
 def _job(payload: object) -> dict[str, object]:
-    if not isinstance(payload, dict):
-        raise ControlPlaneError("Ronin job response must be an object")
+    if not isinstance(payload, dict) or set(payload) != _JOB_FIELDS:
+        raise ControlPlaneError("Ronin job response fields violated the protocol")
     job_id = payload.get("id")
     state = payload.get("state")
     failure_code = payload.get("failure_code")
-    if not isinstance(job_id, str) or not job_id:
-        raise ControlPlaneError("Ronin job id must be a non-empty string")
+    if not isinstance(job_id, str) or not job_id or job_id != job_id.strip() or len(job_id) > 256:
+        raise ControlPlaneError("Ronin job id must be a bounded non-empty string")
     if state not in {"queued", "running", "cancelling", "cancelled", "succeeded", "failed"}:
         raise ControlPlaneError("Ronin job state is invalid")
     if failure_code is not None and not isinstance(failure_code, str):
@@ -171,45 +227,67 @@ def _job(payload: object) -> dict[str, object]:
 
 
 def _event(payload: object) -> dict[str, object]:
-    if not isinstance(payload, dict):
-        raise ControlPlaneError("Ronin event response item must be an object")
-    required = {
-        "sequence": int,
-        "attempt_id": str,
-        "attempt_sequence": int,
-        "kind": str,
-        "message": str,
-        "occurred_at": str,
-    }
-    for key, expected in required.items():
-        if not isinstance(payload.get(key), expected):
-            raise ControlPlaneError(f"Ronin event field {key} is invalid")
-    return {key: payload[key] for key in required}
+    if not isinstance(payload, dict) or set(payload) != _EVENT_FIELDS:
+        raise ControlPlaneError("Ronin event response fields violated the protocol")
+    sequence = payload["sequence"]
+    attempt_id = payload["attempt_id"]
+    attempt_sequence = payload["attempt_sequence"]
+    kind = payload["kind"]
+    message = payload["message"]
+    occurred_at = payload["occurred_at"]
+    if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 0:
+        raise ControlPlaneError("Ronin event sequence is invalid")
+    if not isinstance(attempt_id, str) or not attempt_id or len(attempt_id) > 256:
+        raise ControlPlaneError("Ronin event attempt_id is invalid")
+    if not isinstance(attempt_sequence, int) or isinstance(attempt_sequence, bool) or attempt_sequence < 0:
+        raise ControlPlaneError("Ronin event attempt_sequence is invalid")
+    if not isinstance(kind, str) or not kind:
+        raise ControlPlaneError("Ronin event kind is invalid")
+    if not isinstance(message, str):
+        raise ControlPlaneError("Ronin event message is invalid")
+    if not isinstance(occurred_at, str) or _INSTANT_RE.fullmatch(occurred_at) is None:
+        raise ControlPlaneError("Ronin event occurred_at is not a canonical Instant")
+    return {key: payload[key] for key in _EVENT_FIELDS}
 
 
 def _evidence(payload: object) -> dict[str, object]:
-    if not isinstance(payload, dict):
-        raise ControlPlaneError("Ronin evidence response item must be an object")
-    expected = {
-        "version",
-        "cell_id",
-        "role",
-        "digest_algorithm",
-        "digest",
-        "media_type",
-        "size_bytes",
-        "availability",
-        "reason",
-    }
-    if set(payload) != expected or payload.get("version") != 1:
+    if not isinstance(payload, dict) or set(payload) != _EVIDENCE_FIELDS or payload.get("version") != 1:
         raise ControlPlaneError("Ronin evidence fields violated the v1 protocol")
-    if payload.get("availability") not in {"available", "missing", "tombstoned", "unavailable"}:
+    availability = payload.get("availability")
+    if availability not in {"available", "missing", "tombstoned", "unavailable"}:
         raise ControlPlaneError("Ronin evidence availability is invalid")
-    if not isinstance(payload.get("role"), str) or not payload["role"]:
+    role = payload.get("role")
+    cell_id = payload.get("cell_id")
+    digest_algorithm = payload.get("digest_algorithm")
+    digest = payload.get("digest")
+    media_type = payload.get("media_type")
+    size_bytes = payload.get("size_bytes")
+    reason = payload.get("reason")
+    if not isinstance(role, str) or not role:
         raise ControlPlaneError("Ronin evidence role is invalid")
-    if payload["cell_id"] is not None and not isinstance(payload["cell_id"], str):
+    if cell_id is not None and (not isinstance(cell_id, str) or not cell_id):
         raise ControlPlaneError("Ronin evidence cell_id is invalid")
-    return {key: payload[key] for key in expected}
+    if media_type is not None and not isinstance(media_type, str):
+        raise ControlPlaneError("Ronin evidence media_type is invalid")
+    if availability == "unavailable":
+        if any(value is not None for value in (digest_algorithm, digest, size_bytes)):
+            raise ControlPlaneError("Unavailable evidence must omit content identity")
+        if not isinstance(reason, str) or not reason:
+            raise ControlPlaneError("Unavailable evidence must carry a reason")
+    else:
+        if digest_algorithm != "sha256":
+            raise ControlPlaneError("Ronin evidence digest_algorithm is invalid")
+        if (
+            not isinstance(digest, str)
+            or len(digest) != 64
+            or any(ch not in "0123456789abcdef" for ch in digest)
+        ):
+            raise ControlPlaneError("Ronin evidence digest is invalid")
+        if not isinstance(size_bytes, int) or isinstance(size_bytes, bool) or size_bytes < 0:
+            raise ControlPlaneError("Ronin evidence size_bytes is invalid")
+        if reason is not None:
+            raise ControlPlaneError("Only unavailable evidence may carry a reason")
+    return {key: payload[key] for key in _EVIDENCE_FIELDS}
 
 
 TERMINAL_STATES = frozenset({"cancelled", "succeeded", "failed"})

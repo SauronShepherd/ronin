@@ -2,7 +2,7 @@
 
 This backlog is deliberately narrow for v0.1. Selection must be revalidated against current `main`, open Builder work, canonical automation handoffs, and the scope authority in `docs/product/V01_SCOPE.md`.
 
-_Last synchronized: 2026-09-10 for the #53 public portable evidence implementation under code-only validation mode._
+_Last synchronized: 2026-09-10 for the #54 API/SDK compatibility implementation under code-only validation mode._
 
 **Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, validation mode, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled.
 
@@ -18,37 +18,34 @@ Evidence-only handoffs #166/#167/#163 remain open/deferred and do not block impl
 
 The last automated qualification before CI was disabled remains **13/15 live**, with exact historical gaps `01` (production image + supported Compose topology) and `12` (public portable evidence retrieval). Code-only work does not alter that qualified baseline automatically.
 
-Supported code now contains the durable local execution spine, authenticated HTTP job control, OpenAPI 3.1, `pyronin`, operator CLI, typed scoped grants (#52), and the public portable evidence capability (#53). The step-12 implementation is therefore functionally present but **not yet re-qualified** under the disabled-test policy.
+Supported code now contains the durable local execution spine, authenticated HTTP job control, OpenAPI 3.1, `pyronin`, operator CLI, typed scoped grants (#52), public portable evidence (#53), and a documented strict-alpha API/SDK compatibility contract (#54). Step 12 is functionally present but **not yet re-qualified** under the disabled-test policy.
 
-B1 / #48 is complete. #52 is complete. PR #159 remains closed without merge and is only historical reuse evidence.
+B1 / #48 is complete. #52 and #53 are complete. #54 is functionally complete in code-only mode; automated drift/conformance qualification remains deferred. PR #159 remains closed without merge and is only historical reuse evidence.
 
-## #53 public portable evidence implementation
+## #54 API/SDK compatibility implementation
 
-The current slice makes portable evidence a supported public capability while retaining storage-neutral identity:
+The current slice freezes the alpha compatibility policy without adding public endpoints:
 
-- durable `available`, `missing`, `tombstoned`, and `unavailable` states with no fabricated identity;
-- SQLite schema v3 migration that preserves existing rows and permits truly unavailable evidence without a fake digest;
-- worker lease fencing retained for evidence writes;
-- physical `storage_ref` remains private and absent from public payloads;
-- public service method resolves job -> latest Run through `BoundedAsyncJobStore` rather than the worker-only read path;
-- authenticated `GET /v1/jobs/{job_id}/evidence` is present in the HTTP route set and OpenAPI;
-- installed `ronin evidence JOB_ID` uses the existing bounded client transport;
-- `pyronin` exposes typed evidence availability/reference objects plus `Ronin.get_evidence()` and `JobHandle.evidence()`;
-- dirty-worktree patch content remains explicitly deferred; the existing dirty digest identity is unchanged.
+- `docs/product/API_COMPATIBILITY_V1.md` defines alpha/beta/stable evolution rules;
+- alpha response objects and semantic enums are closed and fail closed on drift;
+- error-code values remain open inside one fixed `{error:{code,message}}` envelope, with HTTP status authoritative;
+- CLI and `pyronin` now apply consistent closed-object parsing, bounded cursor handling, canonical `Instant` validation, and strict error-envelope interpretation;
+- OpenAPI records the strict-alpha stage, cursor byte bounds, canonical ID bounds, and normalized open error-code vocabulary;
+- evidence v1 remains storage-neutral and rejects unknown availability/version semantics;
+- no framework or transport type becomes a canonical execution/storage contract.
 
-The canonical representation is `docs/product/EVIDENCE_REFERENCE_V1.md`. Automated step-12 activation/qualification is intentionally deferred until tests are restored; do not report qualified 14/15 yet.
+Automated server/OpenAPI/CLI/SDK drift qualification is intentionally not executed while tests/CI are disabled; do not claim runtime conformance evidence for this slice.
 
 ## Current critical path
 
 Select one coherent slice at a time.
 
-1. **#54 — remaining API/SDK compatibility rules.** Normalize error/evolution/drift behavior now that #52/#53 public semantics exist.
-2. **#161 — enforce scoped HTTP authorization.** Consume #52 typed grants across read/list/events/evidence/submit/cancel with project visibility and direct job-ID checks; do not redesign the grant model.
-3. **Production image + Compose — acceptance step 01 implementation.** Preserve durable SQLite, server health dependency, bounded Docker authority, sibling-container execution, non-root operation where practical, and explicit crash-worker `restart: "no"`.
-4. **#57 — frozen journey completion in code.** Keep open until all fifteen capabilities are implemented; automated 15/15 release qualification remains separately deferred while CI/tests are disabled.
-5. **Release blockers/publication.** Address #58, #95, #63, #45 and other release-critical work before immutable publication.
+1. **#161 — enforce scoped HTTP authorization.** Consume #52 typed grants across read/list/events/evidence/submit/cancel with project visibility and direct job-ID checks; do not redesign the grant model.
+2. **Production image + Compose — acceptance step 01 implementation.** Preserve durable SQLite, server health dependency, bounded Docker authority, sibling-container execution, non-root operation where practical, and explicit crash-worker `restart: "no"`.
+3. **#57 — frozen journey completion in code.** Keep open until all fifteen capabilities are implemented; automated 15/15 release qualification remains separately deferred while CI/tests are disabled.
+4. **Release blockers/publication.** Address #58, #95, #63, #45 and other release-critical work before immutable publication.
 
-Security/correctness slices such as #162, #123, #95 and #60 remain important and may be selected when they do not displace an earlier dependency-critical implementation slice.
+Security/correctness slices such as #162 and #123 remain important and may be selected when they do not displace an earlier dependency-critical implementation slice.
 
 ## D1 operator status
 
@@ -60,7 +57,7 @@ Every remaining worker/runtime slice must preserve checkpoint-before-next-cell p
 
 ## Public-boundary and architecture invariants
 
-Canonical contracts remain capability-driven and vendor-neutral. Do not introduce worker -> server dependency inversion. Physical evidence/storage locators are not canonical public identity. Static bearer auth remains the v0.1 mechanism; typed least-privilege scopes are required. No OIDC, enterprise RBAC, OPA, FastAPI, Pydantic, SQLAlchemy, Postgres, Kubernetes product deployment, brokers, OpenTelemetry, or OpenLineage unless scope is explicitly revised.
+Canonical contracts remain capability-driven and vendor-neutral. Do not introduce worker -> server dependency inversion. Physical evidence/storage locators are not canonical public identity. Static bearer auth remains the v0.1 mechanism; typed least-privilege scopes are required. Public `/v1` compatibility follows `docs/product/API_COMPATIBILITY_V1.md`. No OIDC, enterprise RBAC, OPA, FastAPI, Pydantic, SQLAlchemy, Postgres, Kubernetes product deployment, brokers, OpenTelemetry, or OpenLineage unless scope is explicitly revised.
 
 ## Quality and release invariants
 
