@@ -84,6 +84,16 @@ def test_locked_graph_reads_exact_versions_and_normalizes_names(tmp_path: Path) 
     assert locked_graph(lock) == {"foo-bar": "1.2.3", "other-pkg": "4.5.6"}
 
 
+def test_locked_graph_reads_multiple_hash_continuations(tmp_path: Path) -> None:
+    lock = tmp_path / "requirements-dev.lock"
+    lock.write_text(
+        f"demo==1.0.0 \\\n    --hash=sha256:{_HASH} \\\n    --hash=sha256:{'b' * 64}\n",
+        encoding="utf-8",
+    )
+
+    assert locked_graph(lock) == {"demo": "1.0.0"}
+
+
 def test_locked_graph_fails_closed_on_conflicting_versions(tmp_path: Path) -> None:
     lock = tmp_path / "requirements-dev.lock"
     lock.write_text(
@@ -100,6 +110,28 @@ def test_locked_graph_rejects_requirement_without_hash(tmp_path: Path) -> None:
     lock.write_text("demo==1.0.0\n", encoding="utf-8")
 
     with pytest.raises(LicenseQualificationError, match="no sha256 hash"):
+        locked_graph(lock)
+
+
+def test_locked_graph_rejects_hash_not_joined_to_requirement(tmp_path: Path) -> None:
+    lock = tmp_path / "requirements-dev.lock"
+    lock.write_text(
+        f"demo==1.0.0\n    --hash=sha256:{_HASH}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(LicenseQualificationError, match="no sha256 hash"):
+        locked_graph(lock)
+
+
+def test_locked_graph_rejects_unterminated_hash_continuation(tmp_path: Path) -> None:
+    lock = tmp_path / "requirements-dev.lock"
+    lock.write_text(
+        f"demo==1.0.0 \\\n    --hash=sha256:{_HASH} \\\nother==2.0.0 \\\n    --hash=sha256:{_HASH}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(LicenseQualificationError, match="unterminated hash continuation"):
         locked_graph(lock)
 
 
