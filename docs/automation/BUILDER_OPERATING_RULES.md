@@ -1,14 +1,20 @@
 # Ronin Autonomous Builder operating rules
 
-## Qualification is exact-head only
+## Current validation mode
 
-A Builder candidate is qualified only by workflow/check runs whose `head_sha` equals the exact pull-request head being considered for merge.
+GitHub Actions CI is intentionally disabled to avoid consuming GitHub Actions credits. The active workflow directory is empty; the previous workflow definitions are retained under `.github/workflows-disabled/` for possible future restoration.
 
-- Runs for superseded commits are informational and never block or satisfy qualification.
-- A cancelled run for the exact head is re-dispatched once; the Builder does not wait on a superseded run.
-- If the exact head has not reached a terminal qualification state within 45 minutes, re-dispatch once. If the re-dispatched exact-head qualification still cannot reach a trustworthy terminal state, stop the slice, leave the PR unmerged, and record the blocker.
-- Never infer green from a different SHA, a branch-level aggregate, or a stale pull-request check.
-- After merge, qualify the exact published `main` SHA again.
+Until the maintainer explicitly changes this policy:
+
+- do not wait for, trigger, rerun, or require GitHub Actions;
+- do not run automated tests as part of autonomous implementation cycles;
+- do not make test execution or CI evidence a merge prerequisite;
+- validate changes by static code inspection, contract tracing, import/dependency review, schema/API consistency review, and targeted code-level reasoning only;
+- preserve existing security, durability, performance, architecture, coverage, and acceptance requirements in the implementation even though they are not being executed as automated gates;
+- never describe unexecuted tests or disabled CI as green;
+- record material uncertainty explicitly when static inspection cannot prove runtime behavior.
+
+Historical CI evidence remains useful background evidence for already-published SHAs, but it is not required for new implementation work while this mode is active.
 
 ## Slice ownership
 
@@ -27,8 +33,14 @@ At most one open Builder PR may claim a domain. A slice touching multiple domain
 
 ## Slice selection priority
 
-Use `docs/automation/SLICE_PRIORITY.md`. In particular, release-trust defects outrank feature throughput, but after trust is sound the v0.1 dependency critical path outranks unrelated same-priority hardening.
+Use `docs/automation/SLICE_PRIORITY.md` together with the current canonical `BACKLOG.md` and `CONSTRUCTION_PLAN.md`. Under code-only validation mode, CI-evidence-only handoffs do not block implementation; keep them open/deferred until automated qualification is explicitly re-enabled.
+
+The v0.1 dependency critical path outranks unrelated hardening. Do not expand into frozen E3-E10 scope while v0.1 contract gaps remain.
+
+## Pre-merge code review
+
+Before merging Builder work, reread current `main`, inspect the complete diff against that `main`, verify that no conflicting Builder PR owns the same domain, and perform static code-level checks appropriate to the slice. Merge only if the code review finds no known correctness, architecture, security, or contract blocker.
 
 ## Pre-PR benefit check
 
-For a change presented as an optimization or throughput improvement, state in the PR description whether the expected benefit materializes end to end or whether an adjacent unchanged line neutralizes it. Cite a measurement or bounded complexity proof. Do not claim a performance win from a local primitive change whose caller still retains the original hot-path cost.
+For a change presented as an optimization or throughput improvement, state whether the expected benefit materializes end to end or whether an adjacent unchanged line neutralizes it. Use code-path/complexity reasoning or already-available measurements; do not claim a measured performance win unless such evidence actually exists.
