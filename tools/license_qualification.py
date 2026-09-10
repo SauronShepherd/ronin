@@ -98,13 +98,11 @@ def locked_graph(path: Path) -> dict[str, str]:
 
 
 def direct_requirements(root: Path) -> set[str]:
-    """Return direct root/pyronin dependencies covered by release qualification."""
+    """Return direct dependencies represented by the resolved qualification graph."""
     direct: set[str] = set()
     for path in (root / "pyproject.toml", root / "packages/pyronin/pyproject.toml"):
         with path.open("rb") as handle:
             data = tomllib.load(handle)
-        for requirement in data.get("build-system", {}).get("requires", []):
-            direct.add(_canonical_name(re.split(r"[<>=!~ ;\[]", requirement, maxsplit=1)[0]))
         for requirement in data.get("project", {}).get("optional-dependencies", {}).get("dev", []):
             direct.add(_canonical_name(re.split(r"[<>=!~ ;\[]", requirement, maxsplit=1)[0]))
         for requirement in data.get("project", {}).get("dependencies", []):
