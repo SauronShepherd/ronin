@@ -1,50 +1,59 @@
 # Ronin portable evidence reference v1
 
-Status: **alpha contract for v0.1 construction**. This document defines the storage-neutral identity that must be consumed by durable execution and the future `/evidence` representation before that public endpoint ships.
+Status: **alpha public contract for v0.1 construction**.
 
-## Schema
+## Public representation
 
-A portable available evidence reference has these fields:
+Authenticated `GET /v1/jobs/{job_id}/evidence`, `ronin evidence JOB_ID`, and `pyronin` expose the same storage-neutral v1 fields:
 
-- `version`: integer `1`.
-- `role`: stable logical role. Kernel execution roles are `log`, `metric`, `trace`, `lineage`, `output`, `resource`, and `cost`; durable internal artifacts may use additional documented roles such as `cell-result`.
-- `digest_algorithm`: `sha256` in v1.
-- `digest`: 64 lowercase hexadecimal SHA-256 characters.
-- `media_type`: media type when known, otherwise `null`.
-- `size_bytes`: non-negative byte length when content is available and verified.
-- `locator`: optional physical storage locator. A locator is not part of logical content identity and may change when content moves.
-- `availability`: `available`, `missing`, `tombstoned`, or `unavailable`.
+- `version`: integer `1`;
+- `cell_id`: canonical cell identity when evidence belongs to one cell, otherwise `null`;
+- `role`: stable logical role;
+- `availability`: `available`, `missing`, `tombstoned`, or `unavailable`;
+- `digest_algorithm`: `sha256` when trustworthy identity exists, otherwise `null` only for `unavailable`;
+- `digest`: lowercase SHA-256 when trustworthy identity exists, otherwise `null` only for `unavailable`;
+- `media_type`: media type when known, otherwise `null`;
+- `size_bytes`: non-negative verified byte length when trustworthy identity exists, otherwise `null` only for `unavailable`;
+- `reason`: bounded normalized reason only for `unavailable`, otherwise `null`.
 
-Logical identity is `(role, digest_algorithm, digest, media_type, size_bytes)`. `locator` and backend-specific metadata are excluded. Identical bytes with the same logical role and media type therefore retain the same identity across storage backends.
+Physical `storage_ref` / locator data is deliberately absent from the public representation. Backend paths, buckets, URIs and provider handles are never canonical evidence identity.
 
-For `available`, digest and size are required and consumers must verify bytes before trusting or reusing content. A digest mismatch fails closed. `missing` means the referenced content was expected but cannot currently be resolved. `tombstoned` means retention policy intentionally removed the physical content while preserving its recorded logical identity. `unavailable` means no trustworthy content identity or locator was produced; implementations must carry an explicit reason at their boundary and must not fabricate zero size, a fake digest, or a provider locator.
+## Logical identity and availability
 
-## Serialization and extensions
+Logical content identity is `(role, digest_algorithm, digest, media_type, size_bytes)`. Availability and physical location are state around that identity, not part of it.
 
-Canonical v1 wire serialization is UTF-8 JSON with object member names from this schema. Producers must emit `version: 1`; consumers must reject unsupported major versions. Unknown top-level fields are reserved for additive alpha evolution and may be ignored only when they do not alter the meaning of required v1 fields. Unknown values for `availability`, `digest_algorithm`, or a required kernel `role` fail closed. Duplicate JSON member names must be rejected by any future canonical parser before mapping to this contract.
+`available` requires trustworthy content identity and a private physical locator at the storage adapter. Consumers must verify bytes against the digest before reuse. `missing` means identity is known but the expected content cannot currently be resolved. `tombstoned` means retention intentionally removed physical content while preserving its recorded identity. Both `missing` and `tombstoned` therefore retain digest and size but carry no locator.
 
-The current Python domain object exposes the same required fields through `ExecutionEvidenceReference.portable_payload()`. Durable storage wraps the same logical values in `StoredEvidenceRef`; Run/cell ownership is context, not part of artifact content identity.
+`unavailable` means no trustworthy identity was produced. It must omit digest algorithm, digest, size and locator and must carry an explicit bounded reason. Ronin never fabricates zero size, placeholder digests or provider locators to represent absence.
 
-## Storage and retention
+## Durable storage
 
-Physical storage schemes such as `artifact://`, local filesystem paths, S3 URIs, OCI references, or another backend belong to adapters. Canonical identity never requires a provider name, bucket, registry, engine, telemetry vendor, or cloud IAM identifier.
+SQLite schema version 3 migrates the former digest-keyed evidence table to an evidence-record key that can represent records without a digest. Existing schema-2 evidence migrates losslessly as `available`. Closed availability values and identity/state consistency are enforced both by the domain object and SQLite CHECK constraints.
 
-Moving verified content between stores may replace only the locator. Deleting content under an intentional retention policy changes availability to `tombstoned`; an unexpected resolution failure is `missing`. Neither state is reusable execution evidence until bytes are available and digest-verified again.
+The in-memory and SQLite adapters consume the same `StoredEvidenceRef` contract. Worker writes remain lease-fenced. Both adapters enforce a hard v0.1 maximum of 100 evidence references per Run. Non-available records cannot be converted back into executable `ExecutionEvidenceReference` values, so they cannot become reusable execution evidence accidentally.
+
+## Serialization and evolution
+
+Canonical v1 wire serialization is UTF-8 JSON. Producers emit `version: 1`; consumers reject unsupported versions and unknown availability values. The current alpha clients intentionally validate the complete field set while #54 owns the broader additive-field/evolution policy.
+
+Kernel roles are `log`, `metric`, `trace`, `lineage`, `output`, `resource`, and `cost`; durable internal artifacts may use additional documented roles such as `cell-result`. Provider-specific resource syntax or storage metadata does not enter this contract.
+
+## Public path and bounds
+
+The public route resolves `job_id` to the latest logical Run and reads through `DurableExecutionService` and `BoundedAsyncJobStore`; it does not call the synchronous store directly from the HTTP thread. Authentication and normalized 400/401/404/503 behavior follow the existing job-control surface.
+
+Evidence retrieval is a single v0.1 collection rather than a separately paginated resource. The durable adapters reject a 101st reference rather than truncating output, and transport clients retain the existing 1 MiB response bound. A future contract that needs larger collections must introduce explicit keyset pagination rather than silently widening or truncating this boundary.
+
+## CLI and SDK
+
+`ronin evidence JOB_ID` prints one line per reference; `--json` emits each public v1 object without adding storage metadata. The official Python SDK exposes `EvidenceReference`, `EvidenceAvailability`, `Ronin.get_evidence(job_id)`, and `JobHandle.evidence()` using the same field and availability semantics.
 
 ## Dirty Git patch evidence
 
-A dirty Git revision may optionally link to a redacted patch artifact in addition to the existing dirty digest. If emitted, the patch uses this same content identity contract, a documented patch media type, and a safe adapter locator. Patch bytes must pass the existing secret/redaction policy before persistence. The Git dirty digest remains the execution identity; the optional patch artifact is explanatory evidence and must not introduce credentials, ignored secret files, path escapes, or a backend-specific identifier into canonical VCS identity.
+A dirty Git revision may optionally link to a redacted patch artifact in addition to the existing dirty digest. That artifact is **deferred for v0.1** rather than required by this public evidence slice. The existing dirty-state digest remains canonical execution identity; no raw dirty patch content is persisted merely to satisfy this contract.
 
-## Current v0.1 implementation boundary
+If a patch artifact is introduced later, it must use this content identity contract, pass secret/redaction policy, and never expose credentials, ignored secret files, path escapes, or backend-specific identity.
 
-The local Docker worker composition uses a portable wrapper around the existing file-fsynced execution evidence store. It preserves the local `local-evidence://` locator but computes SHA-256, media type, and exact byte size over the persisted canonical JSON. The content-addressed artifact store independently uses SHA-256 and verifies bytes on read. Conformance fixtures require identical canonical bytes written through these two local storage paths to retain the same digest and size even though their locators differ, and corrupted artifact bytes fail verification.
+## Qualification status
 
-Durable worker checkpoints now persist each runner-produced portable evidence reference as a first-class `StoredEvidenceRef`, correlated to the canonical Run and cell, before the cell checkpoint advances. The stored cell-result JSON carries the same portable payload instead of reducing evidence to `kind` plus a physical locator. Opaque legacy runner evidence fails closed at the durable worker boundary and is not checkpointed.
-
-Legacy opaque `ExecutionEvidenceReference(kind, ref)` values remain constructible during alpha migration for non-durable integrations, but `StoredEvidenceRef.from_execution_reference()` rejects them. Durable/public evidence must carry portable content identity before `/evidence` is exposed.
-
-## Remaining #53 work before public `/evidence`
-
-- Carry explicit missing/tombstoned/unavailable representation through durable persistence and the public API shape.
-- Decide and implement the safe optional dirty-patch artifact link when Git evidence is promoted through D1; do not store raw dirty content without redaction/secret qualification.
-- Bind the future OpenAPI/SDK evidence representation directly to this contract and add real server/SDK conformance before closing #53/#54.
+This implementation makes the frozen step-12 capability present in supported code paths, but the repository is currently in maintainer-directed code-only mode. GitHub Actions and automated tests are disabled, so the last automated acceptance baseline remains **13/15** with gaps `01` and `12`. Do not describe step 12 as automatically qualified until automated validation is explicitly restored and executed.

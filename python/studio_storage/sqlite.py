@@ -11,6 +11,7 @@ from studio_orchestrator import (
     AttemptLimitExceeded,
     AttemptState,
     ClaimedRun,
+    EvidenceAvailability,
     Instant,
     Job,
     JobId,
@@ -26,10 +27,11 @@ from studio_orchestrator import (
 
 from studio_storage.memory import IdempotencyConflict
 
-_SCHEMA_VERSION = 2
+_SCHEMA_VERSION = 3
 _MIGRATIONS = {
     1: "001_initial.sql",
     2: "002_job_execution_spec.sql",
+    3: "003_evidence_availability.sql",
 }
 
 
@@ -116,12 +118,7 @@ def _run(row: sqlite3.Row) -> Run:
 
 
 class _SqliteLifecycleStore:
-    """Internal migration/lifecycle helper for the canonical fenced adapter.
-
-    This helper deliberately does not implement worker-originated mutations or
-    service pagination. Those semantics belong only to the supported
-    ``studio_storage.SqliteJobStore`` adapter.
-    """
+    """Internal migration/lifecycle helper for the canonical fenced adapter."""
 
     def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
         self._path = path
@@ -429,7 +426,9 @@ class _SqliteLifecycleStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT * FROM evidence_refs WHERE run_id=? ORDER BY role,digest", (str(run_id),)
+                "SELECT * FROM evidence_refs WHERE run_id=? "
+                "ORDER BY cell_id,role,availability,digest",
+                (str(run_id),),
             ).fetchall()
             return tuple(
                 StoredEvidenceRef(
@@ -441,6 +440,8 @@ class _SqliteLifecycleStore:
                     media_type=row["media_type"],
                     size_bytes=row["size_bytes"],
                     storage_ref=row["storage_ref"],
+                    availability=EvidenceAvailability(row["availability"]),
+                    unavailable_reason=row["unavailable_reason"],
                 )
                 for row in rows
             )

@@ -46,10 +46,7 @@ class ControlPlaneClient:
         url = self.base_url.rstrip("/") + path
         if query:
             url += "?" + urlencode(query)
-        headers = {
-            "Accept": "application/json",
-            "Authorization": f"Bearer {self.token}",
-        }
+        headers = {"Accept": "application/json", "Authorization": f"Bearer {self.token}"}
         body = None
         if payload is not None:
             headers["Content-Type"] = "application/json"
@@ -137,17 +134,22 @@ class ControlPlaneClient:
         query = {"limit": str(limit)}
         if since is not None:
             query["since"] = since
-        payload = self.request(
-            "GET",
-            f"/v1/jobs/{quote(job_id, safe='')}/events",
-            query=query,
-        )
+        payload = self.request("GET", f"/v1/jobs/{quote(job_id, safe='')}/events", query=query)
         if not isinstance(payload, dict) or set(payload) != {"items", "next_since"}:
             raise ControlPlaneError("Ronin events response violated the protocol")
         items = payload["items"]
         if not isinstance(items, list):
             raise ControlPlaneError("Ronin events response items must be a list")
         return {"items": [_event(item) for item in items], "next_since": payload["next_since"]}
+
+    def evidence(self, job_id: str) -> tuple[dict[str, object], ...]:
+        payload = self.request("GET", f"/v1/jobs/{quote(job_id, safe='')}/evidence")
+        if not isinstance(payload, dict) or set(payload) != {"items"}:
+            raise ControlPlaneError("Ronin evidence response violated the protocol")
+        items = payload["items"]
+        if not isinstance(items, list):
+            raise ControlPlaneError("Ronin evidence response items must be a list")
+        return tuple(_evidence(item) for item in items)
 
     def cancel(self, job_id: str) -> dict[str, object]:
         return _job(self.request("POST", f"/v1/jobs/{quote(job_id, safe='')}/cancel"))
@@ -183,6 +185,31 @@ def _event(payload: object) -> dict[str, object]:
         if not isinstance(payload.get(key), expected):
             raise ControlPlaneError(f"Ronin event field {key} is invalid")
     return {key: payload[key] for key in required}
+
+
+def _evidence(payload: object) -> dict[str, object]:
+    if not isinstance(payload, dict):
+        raise ControlPlaneError("Ronin evidence response item must be an object")
+    expected = {
+        "version",
+        "cell_id",
+        "role",
+        "digest_algorithm",
+        "digest",
+        "media_type",
+        "size_bytes",
+        "availability",
+        "reason",
+    }
+    if set(payload) != expected or payload.get("version") != 1:
+        raise ControlPlaneError("Ronin evidence fields violated the v1 protocol")
+    if payload.get("availability") not in {"available", "missing", "tombstoned", "unavailable"}:
+        raise ControlPlaneError("Ronin evidence availability is invalid")
+    if not isinstance(payload.get("role"), str) or not payload["role"]:
+        raise ControlPlaneError("Ronin evidence role is invalid")
+    if payload["cell_id"] is not None and not isinstance(payload["cell_id"], str):
+        raise ControlPlaneError("Ronin evidence cell_id is invalid")
+    return {key: payload[key] for key in expected}
 
 
 TERMINAL_STATES = frozenset({"cancelled", "succeeded", "failed"})

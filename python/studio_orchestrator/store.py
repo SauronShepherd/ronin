@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Protocol
 
 from studio_kernel import ExecutionEvidenceReference
@@ -89,23 +90,74 @@ class StoredCellResult:
         object.__setattr__(self, "updated_at", Instant(self.updated_at))
 
 
+class EvidenceAvailability(StrEnum):
+    AVAILABLE = "available"
+    MISSING = "missing"
+    TOMBSTONED = "tombstoned"
+    UNAVAILABLE = "unavailable"
+
+
 @dataclass(frozen=True, slots=True)
 class StoredEvidenceRef:
-    """Run/cell ownership wrapped around a storage-neutral content reference."""
+    """Run/cell ownership wrapped around storage-neutral evidence identity."""
 
     run_id: RunId
     cell_id: str | None
     role: str
-    digest_algorithm: str
-    digest: str
+    digest_algorithm: str | None
+    digest: str | None
     media_type: str | None
     size_bytes: int | None
     storage_ref: str | None
+    availability: EvidenceAvailability = EvidenceAvailability.AVAILABLE
+    unavailable_reason: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.role or self.role != self.role.strip() or "\n" in self.role or "\r" in self.role:
+            raise ValueError("evidence role must be non-empty, trimmed, and single-line")
+        availability = EvidenceAvailability(self.availability)
+        object.__setattr__(self, "availability", availability)
+        identity = (self.digest_algorithm, self.digest, self.size_bytes)
+        if availability is EvidenceAvailability.UNAVAILABLE:
+            if any(value is not None for value in identity) or self.storage_ref is not None:
+                raise ValueError("unavailable evidence cannot carry content identity or locator")
+            if (
+                self.unavailable_reason is None
+                or not self.unavailable_reason
+                or self.unavailable_reason != self.unavailable_reason.strip()
+                or "\n" in self.unavailable_reason
+                or "\r" in self.unavailable_reason
+                or len(self.unavailable_reason) > 256
+            ):
+                raise ValueError("unavailable evidence requires a bounded trimmed reason")
+            return
+        if any(value is None for value in identity):
+            raise ValueError("available, missing, and tombstoned evidence require content identity")
+        if self.digest_algorithm != "sha256":
+            raise ValueError("unsupported evidence digest algorithm")
+        digest = self.digest
+        size_bytes = self.size_bytes
+        if (
+            digest is None
+            or len(digest) != 64
+            or any(ch not in "0123456789abcdef" for ch in digest)
+        ):
+            raise ValueError("evidence digest must be lowercase SHA-256 hex")
+        if size_bytes is None or size_bytes < 0:
+            raise ValueError("evidence size must be non-negative")
+        if self.unavailable_reason is not None:
+            raise ValueError("only unavailable evidence may carry an unavailable reason")
+        if availability is not EvidenceAvailability.AVAILABLE and self.storage_ref is not None:
+            raise ValueError("non-available evidence must not carry a physical locator")
+        if availability is EvidenceAvailability.AVAILABLE and self.storage_ref is None:
+            raise ValueError("available evidence requires a physical locator")
 
     @property
-    def portable_identity(self) -> tuple[str, str, str, str | None, int | None]:
-        """Return logical content identity independent of the physical locator."""
+    def portable_identity(self) -> tuple[str, str, str, str | None, int] | None:
+        """Return logical content identity independent of physical location/state."""
 
+        if self.digest_algorithm is None or self.digest is None or self.size_bytes is None:
+            return None
         return (self.role, self.digest_algorithm, self.digest, self.media_type, self.size_bytes)
 
     @classmethod
@@ -116,7 +168,7 @@ class StoredEvidenceRef:
         cell_id: str | None,
         reference: ExecutionEvidenceReference,
     ) -> StoredEvidenceRef:
-        """Losslessly wrap a portable kernel evidence reference for durable storage."""
+        """Losslessly wrap an available portable kernel evidence reference."""
 
         digest_algorithm = reference.digest_algorithm
         digest = reference.digest
@@ -132,14 +184,37 @@ class StoredEvidenceRef:
             media_type=reference.media_type,
             size_bytes=size_bytes,
             storage_ref=reference.ref,
+            availability=EvidenceAvailability.AVAILABLE,
         )
 
-    def to_execution_reference(self) -> ExecutionEvidenceReference:
-        """Map durable execution evidence back to the portable kernel representation."""
+    def public_payload(self) -> dict[str, object]:
+        """Return v1 public evidence without backend-private locator metadata."""
 
+        return {
+            "version": 1,
+            "cell_id": self.cell_id,
+            "role": self.role,
+            "availability": self.availability.value,
+            "digest_algorithm": self.digest_algorithm,
+            "digest": self.digest,
+            "media_type": self.media_type,
+            "size_bytes": self.size_bytes,
+            "reason": self.unavailable_reason,
+        }
+
+    def to_execution_reference(self) -> ExecutionEvidenceReference:
+        """Map available durable evidence back to the portable kernel representation."""
+
+        if self.availability is not EvidenceAvailability.AVAILABLE:
+            raise ValueError("stored evidence is not currently available")
         if self.role not in {"log", "metric", "trace", "lineage", "output", "resource", "cost"}:
             raise ValueError("stored role is not a kernel execution evidence kind")
-        if self.size_bytes is None or self.storage_ref is None:
+        if (
+            self.digest_algorithm is None
+            or self.digest is None
+            or self.size_bytes is None
+            or self.storage_ref is None
+        ):
             raise ValueError("stored evidence is unavailable as a portable execution reference")
         return ExecutionEvidenceReference(
             self.role,  # type: ignore[arg-type]
@@ -255,6 +330,7 @@ class JobStore(Protocol):
 __all__ = [
     "ClaimedRun",
     "EventPage",
+    "EvidenceAvailability",
     "JobStore",
     "Page",
     "RunExecutionEvent",
