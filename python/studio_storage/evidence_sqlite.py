@@ -6,6 +6,8 @@ from studio_orchestrator import AttemptId, StoredEvidenceRef
 
 from studio_storage.fenced_sqlite import SqliteJobStore as _FencedSqliteJobStore
 
+MAX_EVIDENCE_REFS_PER_RUN = 100
+
 
 class SqliteJobStore(_FencedSqliteJobStore):
     """Persist v1 evidence availability while preserving worker lease fencing."""
@@ -69,6 +71,14 @@ class SqliteJobStore(_FencedSqliteJobStore):
                     ref.unavailable_reason,
                 ),
             )
+            count_row = connection.execute(
+                "SELECT COUNT(*) AS count FROM evidence_refs WHERE run_id=?",
+                (str(ref.run_id),),
+            ).fetchone()
+            if count_row is None or int(count_row["count"]) > MAX_EVIDENCE_REFS_PER_RUN:
+                raise ValueError(
+                    f"run evidence must contain at most {MAX_EVIDENCE_REFS_PER_RUN} references"
+                )
             connection.execute("COMMIT")
         except Exception:
             if connection.in_transaction:
@@ -78,4 +88,4 @@ class SqliteJobStore(_FencedSqliteJobStore):
             connection.close()
 
 
-__all__ = ("SqliteJobStore",)
+__all__ = ("MAX_EVIDENCE_REFS_PER_RUN", "SqliteJobStore")
