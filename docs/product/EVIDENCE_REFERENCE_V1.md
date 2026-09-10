@@ -30,7 +30,7 @@ Logical content identity is `(role, digest_algorithm, digest, media_type, size_b
 
 SQLite schema version 3 migrates the former digest-keyed evidence table to an evidence-record key that can represent records without a digest. Existing schema-2 evidence migrates losslessly as `available`. Closed availability values and identity/state consistency are enforced both by the domain object and SQLite CHECK constraints.
 
-The in-memory and SQLite adapters consume the same `StoredEvidenceRef` contract. Worker writes remain lease-fenced. Non-available records cannot be converted back into executable `ExecutionEvidenceReference` values, so they cannot become reusable execution evidence accidentally.
+The in-memory and SQLite adapters consume the same `StoredEvidenceRef` contract. Worker writes remain lease-fenced. Both adapters enforce a hard v0.1 maximum of 100 evidence references per Run. Non-available records cannot be converted back into executable `ExecutionEvidenceReference` values, so they cannot become reusable execution evidence accidentally.
 
 ## Serialization and evolution
 
@@ -42,7 +42,7 @@ Kernel roles are `log`, `metric`, `trace`, `lineage`, `output`, `resource`, and 
 
 The public route resolves `job_id` to the latest logical Run and reads through `DurableExecutionService` and `BoundedAsyncJobStore`; it does not call the synchronous store directly from the HTTP thread. Authentication and normalized 400/401/404/503 behavior follow the existing job-control surface.
 
-Evidence retrieval is a single v0.1 collection rather than a separately paginated resource. Transport clients retain the existing 1 MiB response bound. This is intentionally narrow for the frozen local six-cell journey; a future contract that permits materially larger evidence collections must introduce explicit keyset pagination rather than silently truncating results.
+Evidence retrieval is a single v0.1 collection rather than a separately paginated resource. The durable adapters reject a 101st reference rather than truncating output, and transport clients retain the existing 1 MiB response bound. A future contract that needs larger collections must introduce explicit keyset pagination rather than silently widening or truncating this boundary.
 
 ## CLI and SDK
 
