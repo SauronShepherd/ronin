@@ -10,7 +10,8 @@ import re
 import tomllib
 from pathlib import Path
 
-_LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \\]+)")
+_LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \\]+)(?: \\)?$")
+_LOCKED_HASH = re.compile(r"^--hash=sha256:[0-9a-f]{64}(?: \\)?$")
 _LICENSE_FILE_NAMES = ("license", "copying", "notice", "authors", "copyright")
 
 
@@ -28,17 +29,42 @@ def lock_sha256(path: Path) -> str:
 
 
 def locked_graph(path: Path) -> dict[str, str]:
-    """Return the exact canonical package->version graph from a pip-compile lock."""
+    """Return the exact canonical package->version graph from a hash-locked file."""
     result: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        match = _LOCKED_REQUIREMENT.match(raw_line)
-        if match is None:
+    current_name: str | None = None
+    current_hashes = 0
+    for line_number, raw_line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#"):
             continue
+        if raw_line[:1].isspace():
+            if current_name is None or _LOCKED_HASH.fullmatch(stripped) is None:
+                raise LicenseQualificationError(
+                    f"unsupported active lock syntax at line {line_number}"
+                )
+            current_hashes += 1
+            continue
+
+        if current_name is not None and current_hashes == 0:
+            raise LicenseQualificationError(f"locked requirement has no sha256 hash: {current_name}")
+
+        match = _LOCKED_REQUIREMENT.fullmatch(raw_line)
+        if match is None:
+            raise LicenseQualificationError(f"unsupported active lock syntax at line {line_number}")
         name = _canonical_name(match.group(1))
         version = match.group(2)
-        previous = result.setdefault(name, version)
-        if previous != version:
-            raise LicenseQualificationError(f"lock contains conflicting versions for {name}")
+        if name in result:
+            if result[name] != version:
+                raise LicenseQualificationError(f"lock contains conflicting versions for {name}")
+            raise LicenseQualificationError(f"lock contains duplicate requirement for {name}")
+        result[name] = version
+        current_name = name
+        current_hashes = 0
+
+    if current_name is not None and current_hashes == 0:
+        raise LicenseQualificationError(f"locked requirement has no sha256 hash: {current_name}")
     if not result:
         raise LicenseQualificationError("lock contains no exact requirements")
     return result
