@@ -1,9 +1,8 @@
-"""Transactional SQLite JobStore for the v0.1 single-node control plane."""
+"""SQLite migration and lifecycle primitives for the v0.1 single-node control plane."""
 
 from __future__ import annotations
 
 import sqlite3
-from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -17,7 +16,6 @@ from studio_orchestrator import (
     JobId,
     JobState,
     LeaseToken,
-    Page,
     Run,
     RunId,
     RunState,
@@ -117,7 +115,14 @@ def _run(row: sqlite3.Row) -> Run:
     )
 
 
-class SqliteJobStore:
+class _SqliteLifecycleStore:
+    """Internal migration/lifecycle helper for the canonical fenced adapter.
+
+    This helper deliberately does not implement worker-originated mutations or
+    service pagination. Those semantics belong only to the supported
+    ``studio_storage.SqliteJobStore`` adapter.
+    """
+
     def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
         self._path = path
         connection = open_database(path)
@@ -191,38 +196,6 @@ class SqliteJobStore:
         try:
             row = connection.execute("SELECT * FROM jobs WHERE job_id=?", (str(job_id),)).fetchone()
             return None if row is None else _job(row)
-        finally:
-            connection.close()
-
-    def list_jobs(
-        self,
-        *,
-        project_id: str | None,
-        state: JobState | None,
-        limit: int,
-        cursor: str | None,
-    ) -> Page:
-        if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
-        offset = int(cursor) if cursor is not None else 0
-        clauses: list[str] = []
-        values: list[object] = []
-        if project_id is not None:
-            clauses.append("project_id=?")
-            values.append(project_id)
-        if state is not None:
-            clauses.append("state=?")
-            values.append(state.value)
-        where = " WHERE " + " AND ".join(clauses) if clauses else ""
-        connection = self._connect()
-        try:
-            rows = connection.execute(
-                f"SELECT * FROM jobs{where} ORDER BY job_id LIMIT ? OFFSET ?",  # noqa: S608
-                (*values, limit + 1, offset),
-            ).fetchall()
-            items = tuple(_job(row) for row in rows[:limit])
-            next_cursor = str(offset + limit) if len(rows) > limit else None
-            return Page(items, next_cursor)
         finally:
             connection.close()
 
@@ -407,40 +380,6 @@ class SqliteJobStore:
         finally:
             connection.close()
 
-    def append_events(
-        self,
-        attempt_id: AttemptId,
-        events: Sequence[StoredExecutionEvent],
-    ) -> None:
-        connection = self._connect()
-        try:
-            connection.execute("BEGIN IMMEDIATE")
-            row = connection.execute(
-                "SELECT COALESCE(MAX(sequence),-1)+1 AS next_sequence FROM attempt_events "
-                "WHERE attempt_id=?",
-                (str(attempt_id),),
-            ).fetchone()
-            if row is None:
-                raise AssertionError("event sequence query returned no row")
-            expected = int(row["next_sequence"])
-            for event in events:
-                if event.attempt_id != attempt_id or event.sequence != expected:
-                    raise ValueError("event sequence must be contiguous within attempt")
-                connection.execute(
-                    "INSERT INTO attempt_events("
-                    "attempt_id,sequence,event_type,message,occurred_at) "
-                    "VALUES (?,?,?,?,?)",
-                    (str(attempt_id), event.sequence, event.kind, event.message, event.occurred_at),
-                )
-                expected += 1
-            connection.execute("COMMIT")
-        except Exception:
-            if connection.in_transaction:
-                connection.execute("ROLLBACK")
-            raise
-        finally:
-            connection.close()
-
     def read_events(self, run_id: RunId, *, since: int) -> tuple[StoredExecutionEvent, ...]:
         if since < 0:
             raise ValueError("since must be non-negative")
@@ -461,28 +400,6 @@ class SqliteJobStore:
                     occurred_at=row["occurred_at"],
                 )
                 for row in rows
-            )
-        finally:
-            connection.close()
-
-    def put_cell_result(self, result: StoredCellResult) -> None:
-        connection = self._connect()
-        try:
-            connection.execute(
-                "INSERT INTO cell_results(run_id,cell_id,source_digest,execution_identity_digest,"
-                "state,result_json,updated_at) VALUES (?,?,?,?,?,?,?) "
-                "ON CONFLICT(run_id,cell_id) DO UPDATE SET source_digest=excluded.source_digest,"
-                "execution_identity_digest=excluded.execution_identity_digest,state=excluded.state,"
-                "result_json=excluded.result_json,updated_at=excluded.updated_at",
-                (
-                    str(result.run_id),
-                    result.cell_id,
-                    result.source_digest,
-                    result.execution_identity_digest,
-                    result.state,
-                    result.result_json,
-                    result.updated_at,
-                ),
             )
         finally:
             connection.close()
@@ -508,26 +425,6 @@ class SqliteJobStore:
         finally:
             connection.close()
 
-    def put_evidence(self, ref: StoredEvidenceRef) -> None:
-        connection = self._connect()
-        try:
-            connection.execute(
-                "INSERT OR REPLACE INTO evidence_refs(run_id,cell_id,role,digest_algorithm,digest,"
-                "media_type,size_bytes,storage_ref) VALUES (?,?,?,?,?,?,?,?)",
-                (
-                    str(ref.run_id),
-                    ref.cell_id,
-                    ref.role,
-                    ref.digest_algorithm,
-                    ref.digest,
-                    ref.media_type,
-                    ref.size_bytes,
-                    ref.storage_ref,
-                ),
-            )
-        finally:
-            connection.close()
-
     def read_evidence(self, run_id: RunId) -> tuple[StoredEvidenceRef, ...]:
         connection = self._connect()
         try:
@@ -547,89 +444,6 @@ class SqliteJobStore:
                 )
                 for row in rows
             )
-        finally:
-            connection.close()
-
-    def complete_attempt(
-        self,
-        attempt_id: AttemptId,
-        *,
-        state: AttemptState,
-        failure_code: str | None,
-        owner: str,
-        lease_token: LeaseToken,
-        now: Instant | str,
-    ) -> None:
-        if not state.terminal:
-            raise ValueError("attempt completion state must be terminal")
-        now = Instant(now)
-        connection = self._connect()
-        try:
-            connection.execute("BEGIN IMMEDIATE")
-            row = connection.execute(
-                "SELECT a.*,r.job_id FROM attempts a JOIN runs r ON r.run_id=a.run_id "
-                "WHERE a.attempt_id=?",
-                (str(attempt_id),),
-            ).fetchone()
-            if row is None:
-                raise KeyError(str(attempt_id))
-            if (
-                row["lease_owner"] != owner
-                or row["lease_token"] != str(lease_token)
-                or row["state"] not in {AttemptState.LEASED.value, AttemptState.RUNNING.value}
-            ):
-                raise ValueError("attempt lease ownership lost")
-            connection.execute(
-                "UPDATE attempts SET state=?,failure_code=?,lease_owner=NULL,lease_token=NULL,"
-                "lease_expires_at=NULL,updated_at=?,row_version=row_version+1 WHERE attempt_id=?",
-                (state.value, failure_code, now, str(attempt_id)),
-            )
-            run_id = row["run_id"]
-            job_id = row["job_id"]
-            if state is AttemptState.ABANDONED:
-                connection.execute(
-                    "UPDATE runs SET state='pending',not_before=?,updated_at=?,"
-                    "row_version=row_version+1 WHERE run_id=?",
-                    (now, now, run_id),
-                )
-            elif state is AttemptState.SUCCEEDED:
-                connection.execute(
-                    "UPDATE runs SET state='succeeded',updated_at=?,row_version=row_version+1 "
-                    "WHERE run_id=?",
-                    (now, run_id),
-                )
-                connection.execute(
-                    "UPDATE jobs SET state='succeeded',failure_code=NULL,updated_at=?,"
-                    "row_version=row_version+1 WHERE job_id=?",
-                    (now, job_id),
-                )
-            elif state is AttemptState.CANCELLED:
-                connection.execute(
-                    "UPDATE runs SET state='cancelled',updated_at=?,row_version=row_version+1 "
-                    "WHERE run_id=?",
-                    (now, run_id),
-                )
-                connection.execute(
-                    "UPDATE jobs SET state='cancelled',updated_at=?,row_version=row_version+1 "
-                    "WHERE job_id=?",
-                    (now, job_id),
-                )
-            else:
-                connection.execute(
-                    "UPDATE runs SET state='failed',updated_at=?,row_version=row_version+1 "
-                    "WHERE run_id=?",
-                    (now, run_id),
-                )
-                connection.execute(
-                    "UPDATE jobs SET state='failed',failure_code=?,updated_at=?,"
-                    "row_version=row_version+1 WHERE job_id=?",
-                    (failure_code, now, job_id),
-                )
-            connection.execute("COMMIT")
-        except Exception:
-            if connection.in_transaction:
-                connection.execute("ROLLBACK")
-            raise
         finally:
             connection.close()
 
@@ -667,4 +481,4 @@ class SqliteJobStore:
             connection.close()
 
 
-__all__ = ("SqliteJobStore", "migrate", "open_database", "schema_version")
+__all__ = ("migrate", "open_database", "schema_version")
