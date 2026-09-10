@@ -11,7 +11,7 @@ license = { text = "Apache-2.0" }
 readme = "README.md"
 
 [project.scripts]
-ronin = "studio_cli:main"
+ronin = "studio_cli.entrypoint:main"
 
 [project.optional-dependencies]
 dev = [
