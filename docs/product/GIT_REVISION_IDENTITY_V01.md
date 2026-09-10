@@ -20,7 +20,7 @@ The content digest, not the raw bytes, enters the untracked record. Existing ign
 
 ## Executable-mode normalization
 
-On POSIX platforms, any user/group/other executable bit maps the untracked file to `100755`; a regular file with no executable bit maps to `100644`. Permission details that do not change Git executable semantics are intentionally normalized away.
+On POSIX platforms, Ronin follows Git's regular-file executable distinction: an untracked file with the owner executable bit (`S_IXUSR`) maps to `100755`; otherwise it maps to `100644`. Group/other permission detail is intentionally normalized away because it is not represented by Git's regular-file index mode.
 
 On non-POSIX platforms where the POSIX executable distinction is not reliably available through the local filesystem contract, untracked regular files normalize to `100644`. This keeps identity deterministic rather than inferring execution semantics from extensions, shell associations, or platform-specific heuristics.
 
