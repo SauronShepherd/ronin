@@ -1,6 +1,6 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-10 for the production image + supported Compose implementation under code-only validation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-10 after #57 frozen-journey reconciliation under code-only validation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
 
@@ -17,6 +17,8 @@ The last automated baseline remains **13/15**, with historical gaps `01` and `12
 The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha public compatibility, project-scoped HTTP authorization, and the supported production image/Compose topology for frozen step 01.
 
 #52, #53, #54, and #161 are functionally complete under code-only validation. Automated drift/conformance, authorization and Compose qualification remain deferred, so the authoritative acceptance baseline remains 13/15.
+
+#57 has been reconciled as the frozen-journey umbrella: product code for all historical missing surfaces is present, but the issue remains open/BLOCKED until strict automated qualification can prove the full journey on an exact SHA. It must not be used to justify duplicate feature implementation while the current no-tests/no-CI policy remains active.
 
 ## Phase A — foundation
 
@@ -65,13 +67,15 @@ The <60 s healthy and <10 min zero-to-demo budgets remain implementation targets
 
 **Last automated baseline: 13/15.** Historical gaps remain `01` and `12` until qualification is restored.
 
-Code contains both step-01 Compose and step-12 public evidence capabilities plus the #54 compatibility and #161 scoped-authorization contracts. Do not call the project qualified 14/15 or 15/15 while tests are disabled. #57 should now be reconciled as a code-complete frozen journey with proof/release criteria still deferred, not treated as evidence that automated 15/15 has occurred.
+Code contains both step-01 Compose and step-12 public evidence capabilities plus the #54 compatibility and #161 scoped-authorization contracts. `tests/e2e/test_v01_journey.py` still carries stale historical skip markers for 01/12; under maintainer policy those tests are not being edited or executed in code-only slices. Do not call the project qualified 14/15 or 15/15 while automated qualification is disabled.
+
+#57 is therefore a blocked qualification gate, not the next implementation slice.
 
 ## Phase G — security, non-functional and release work
 
-Open work includes #162 remote bearer HTTPS-by-default, #123 untracked executable-bit identity, #95 installed-wheel qualification logic, #60 immutable Docker bootstrap identity, #58 exact license/NOTICE policy, #102 release-tool coverage configuration, #63 repository/ref protection, and #45 security reporting after the private-channel decision.
+The next bounded implementation slice is **#162 remote bearer transport confidentiality**. Authenticated clients must reject remote plaintext HTTP by default, loopback HTTP must remain supported, and `ronin serve` must require an explicit insecure-development override before plaintext non-loopback binding. The built-in server must not claim TLS support; supported secure remote access relies on an external TLS terminator/reverse proxy. The existing Compose topology must remain usable by explicitly opting its private bridge bind into the local-container insecure mode while retaining host loopback publication.
 
-Evidence-only #166/#167/#163 remain deferred while CI/tests are disabled.
+After #162, prioritize **#123 untracked executable-bit identity**. Then proceed through actionable release preparation such as #58/#95/#73 under code-only policy. #63 remains blocked on repository administration/release timing; #45 remains blocked on the maintainer selecting and verifying a private reporting channel. Evidence-only #166/#167/#163 remain deferred while CI/tests are disabled.
 
 Existing implementation constraints remain: POST p95 <100 ms; GET p95 <30 ms; SQLite WAL + `synchronous=FULL`; fencing; fail-closed VCS capture; T1 100%, T2 90%, T3 75%, every `studio_storage` file >=80% when coverage execution is restored.
 
@@ -83,13 +87,16 @@ Existing implementation constraints remain: POST p95 <100 ms; GET p95 <30 ms; SQ
 
 One coherent Builder slice at a time:
 
-1. **#57 frozen-journey reconciliation**, marking the journey code-complete while preserving explicit deferred automated 15/15 proof.
-2. **Release blockers/publication preparation** — #58/#95/#63/#45 and related work.
-3. **Security/correctness follow-ups** — #162 and #123 remain high-priority bounded implementation slices.
+1. **#162 remote bearer transport confidentiality** — secure defaults for authenticated HTTP and explicit non-loopback plaintext opt-in, preserving Compose local operation.
+2. **#123 untracked executable-bit identity** — close the remaining known local Git dirty-identity correctness gap.
+3. **Release blockers/publication preparation** — actionable portions of #58/#95/#73 and related release work; do not select human/admin/evidence-only blockers as implementation slices.
+4. **#57 frozen-journey qualification** — revisit only after the maintainer explicitly restores automated tests/qualification; then remove stale acceptance skips and obtain strict exact-SHA 15/15 evidence without weakening the frozen contract.
 
 ## Architecture and scope guardrails
 
 Canonical contracts stay capability-driven and vendor-neutral. Static bearer auth remains the v0.1 mechanism; typed scopes are required, enterprise auth is not. Evidence identity is storage-neutral and public payloads exclude backend locators. Public `/v1` compatibility follows `docs/product/API_COMPATIBILITY_V1.md`. Do not add OIDC, enterprise RBAC, OPA, FastAPI, Pydantic, SQLAlchemy, Postgres, Kubernetes product deployment, brokers, OpenTelemetry or OpenLineage unless scope explicitly changes.
+
+The built-in HTTP server remains a local/plaintext implementation boundary. Remote authenticated use is HTTPS-by-default through an external TLS terminator; no server framework or TLS stack becomes canonical merely to satisfy transport policy.
 
 ## Frozen until v0.1 ships
 

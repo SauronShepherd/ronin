@@ -2,7 +2,7 @@
 
 This backlog is deliberately narrow for v0.1. Selection must be revalidated against current `main`, open Builder work, canonical automation handoffs, and the scope authority in `docs/product/V01_SCOPE.md`.
 
-_Last synchronized: 2026-09-10 for the production image + supported Compose implementation under code-only validation mode._
+_Last synchronized: 2026-09-10 after #57 frozen-journey reconciliation under code-only validation mode._
 
 **Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, validation mode, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled.
 
@@ -20,7 +20,9 @@ The last automated qualification before CI was disabled remains **13/15 live**, 
 
 Supported code now contains the durable local execution spine, authenticated and project-scoped HTTP job control, OpenAPI 3.1, `pyronin`, operator CLI, typed scoped grants (#52), public portable evidence (#53), strict-alpha API/SDK compatibility (#54), route-level typed grant enforcement (#161), and the production image + supported Compose topology required by frozen step 01.
 
-B1 / #48 is complete. #52, #53, #54, and #161 are functionally complete in code-only mode. Step 01 and step 12 capabilities are now functionally present but **not yet re-qualified** under the disabled-test policy. PR #159 remains closed without merge and is only historical reuse evidence.
+B1 / #48 is complete. #52, #53, #54, and #161 are functionally complete in code-only mode. Step 01 and step 12 capabilities are functionally present but **not yet re-qualified** under the disabled-test policy. PR #159 remains closed without merge and is only historical reuse evidence.
+
+#57 has now been reconciled to this state: the frozen v0.1 journey is **functionally complete in product code**, but the umbrella remains open/BLOCKED as a qualification gate. The acceptance harness still carries stale step-01/step-12 skip markers, and no 15/15 claim is permitted until automated qualification is explicitly restored and executed.
 
 ## Production image + Compose implementation
 
@@ -44,9 +46,10 @@ No automated Compose/runtime qualification was executed under current maintainer
 
 Select one coherent slice at a time.
 
-1. **#57 — frozen journey completion in code/reconciliation.** Reconcile the stale handoff now that typed grants, public evidence, compatibility, scoped HTTP authorization, and Compose are functionally present. Keep the automated 15/15 proof explicitly deferred while tests/CI remain disabled.
-2. **Release blockers/publication.** Address #58, #95, #63, #45 and other release-critical work before immutable publication.
-3. **Security/correctness follow-ups.** #162 remote bearer transport confidentiality and #123 untracked executable-bit identity remain high-priority bounded implementation work.
+1. **#162 — remote bearer transport confidentiality.** Enforce HTTPS-by-default for authenticated non-loopback clients and require an explicit insecure-development override before the built-in plaintext server binds non-loopback, while preserving the supported loopback-host Compose topology.
+2. **#123 — untracked executable-bit Git identity.** Include executable-mode identity for untracked files without weakening fail-closed VCS capture.
+3. **Release blockers/publication preparation.** Address actionable code/documentation portions of #58/#95/#73 and related release work under code-only policy; keep #63 blocked on repository administration/release timing and #45 blocked on the maintainer's private-reporting-channel decision.
+4. **#57 qualification gate.** Do not select for implementation while tests/CI are disabled. Revisit only when the maintainer explicitly restores automated verification.
 
 ## D1 operator status
 
@@ -59,6 +62,8 @@ Every remaining worker/runtime slice must preserve checkpoint-before-next-cell p
 ## Public-boundary and architecture invariants
 
 Canonical contracts remain capability-driven and vendor-neutral. Do not introduce worker -> server dependency inversion. Physical evidence/storage locators are not canonical public identity. Static bearer auth remains the v0.1 mechanism; typed least-privilege scopes are required. Public `/v1` compatibility follows `docs/product/API_COMPATIBILITY_V1.md`. No OIDC, enterprise RBAC, OPA, FastAPI, Pydantic, SQLAlchemy, Postgres, Kubernetes product deployment, brokers, OpenTelemetry, or OpenLineage unless scope is explicitly revised.
+
+For transport, the built-in server remains plaintext HTTP only. Supported secure remote use must rely on HTTPS at the client-facing boundary through an external TLS terminator/reverse proxy; loopback HTTP remains the local-development path. The Compose topology may use plaintext HTTP on its private bridge only when the host-facing exposure remains loopback-bound and the server's non-loopback bind is explicitly opted into as an insecure local-container development condition.
 
 ## Quality and release invariants
 
