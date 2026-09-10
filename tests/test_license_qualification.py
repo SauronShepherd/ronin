@@ -38,15 +38,17 @@ def _entry(
     *,
     direct: bool = True,
 ) -> dict[str, object]:
+    declared_path = "LICENSE.custom"
     return {
         "package": name,
         "version": version,
         "direct": direct,
         "source": f"https://example.invalid/{name}",
         "declared_license": license_name,
+        "declared_license_files": [declared_path],
         "license_files": [
             {
-                "path": f"{name}-{version}.dist-info/licenses/LICENSE",
+                "path": f"{name}-{version}.dist-info/licenses/{declared_path}",
                 "sha256": _HASH,
             }
         ],
@@ -286,6 +288,34 @@ def test_qualify_rejects_stale_review_when_installed_evidence_changes() -> None:
 
     with pytest.raises(LicenseQualificationError, match="review evidence is stale or mismatched"):
         _qualify(changed, policy, graph)
+
+
+def test_qualify_rejects_stale_review_when_declared_license_file_changes() -> None:
+    graph = {"alpha": "1.0"}
+    original = _inventory([_entry("alpha", "1.0")])
+    policy = _policy(original, "alpha==1.0")
+    changed_entry = _entry("alpha", "1.0")
+    changed_entry["declared_license_files"] = ["THIRD_PARTY_TERMS.txt"]
+    changed_entry["license_files"] = [
+        {
+            "path": "alpha-1.0.dist-info/licenses/THIRD_PARTY_TERMS.txt",
+            "sha256": _HASH,
+        }
+    ]
+    changed = _inventory([changed_entry])
+
+    with pytest.raises(LicenseQualificationError, match="review evidence is stale or mismatched"):
+        _qualify(changed, policy, graph)
+
+
+def test_qualify_rejects_invalid_declared_license_file_path() -> None:
+    graph = {"alpha": "1.0"}
+    entry = _entry("alpha", "1.0")
+    entry["declared_license_files"] = ["../LICENSE"]
+    inventory = _inventory([entry])
+
+    with pytest.raises(LicenseQualificationError, match="invalid declared_license_files"):
+        _qualify(inventory, _policy(inventory, "alpha==1.0"), graph)
 
 
 def test_qualify_rejects_tampered_license_file_digest() -> None:
