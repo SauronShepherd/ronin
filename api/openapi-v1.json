@@ -2,8 +2,10 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ronin Control Plane API",
-    "version": "0.1.0-alpha"
+    "version": "0.1.0-alpha",
+    "description": "Strict alpha /v1 contract. Response objects and semantic enums are closed; error-code values are open within the normalized error envelope. See docs/product/API_COMPATIBILITY_V1.md."
   },
+  "x-ronin-compatibility-stage": "alpha-strict",
   "security": [{"bearerAuth": []}],
   "paths": {
     "/v1/jobs": {
@@ -13,7 +15,7 @@
           {"name": "project", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 256}},
           {"name": "state", "in": "query", "schema": {"type": "string", "enum": ["queued", "running", "cancelling", "cancelled", "succeeded", "failed"]}},
           {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}},
-          {"name": "cursor", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 4096}}
+          {"name": "cursor", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 4096, "x-maxBytes": 4096}}
         ],
         "responses": {
           "200": {"description": "Stable newest-first job page", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/JobPage"}}}},
@@ -54,7 +56,7 @@
         "operationId": "getJobEvents",
         "parameters": [
           {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}},
-          {"name": "since", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 4096}},
+          {"name": "since", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 4096, "x-maxBytes": 4096}},
           {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}}
         ],
         "responses": {
@@ -107,7 +109,7 @@
       "Job": {
         "type": "object", "additionalProperties": false, "required": ["id", "state", "failure_code"],
         "properties": {
-          "id": {"type": "string", "minLength": 1},
+          "id": {"type": "string", "minLength": 1, "maxLength": 256},
           "state": {"type": "string", "enum": ["queued", "running", "cancelling", "cancelled", "succeeded", "failed"]},
           "failure_code": {"type": ["string", "null"]}
         }
@@ -116,7 +118,7 @@
         "type": "object", "additionalProperties": false, "required": ["items", "next_cursor"],
         "properties": {
           "items": {"type": "array", "items": {"$ref": "#/components/schemas/Job"}},
-          "next_cursor": {"type": ["string", "null"]}
+          "next_cursor": {"type": ["string", "null"], "maxLength": 4096, "x-maxBytes": 4096}
         }
       },
       "Instant": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{6}Z$"},
@@ -125,7 +127,7 @@
         "required": ["sequence", "attempt_id", "attempt_sequence", "kind", "message", "occurred_at"],
         "properties": {
           "sequence": {"type": "integer", "minimum": 0},
-          "attempt_id": {"type": "string", "minLength": 1},
+          "attempt_id": {"type": "string", "minLength": 1, "maxLength": 256},
           "attempt_sequence": {"type": "integer", "minimum": 0},
           "kind": {"type": "string", "minLength": 1},
           "message": {"type": "string"},
@@ -136,7 +138,7 @@
         "type": "object", "additionalProperties": false, "required": ["items", "next_since"],
         "properties": {
           "items": {"type": "array", "items": {"$ref": "#/components/schemas/JobEvent"}},
-          "next_since": {"type": "string", "minLength": 1}
+          "next_since": {"type": "string", "minLength": 1, "maxLength": 4096, "x-maxBytes": 4096}
         }
       },
       "EvidenceAvailability": {"type": "string", "enum": ["available", "missing", "tombstoned", "unavailable"]},
@@ -161,7 +163,15 @@
       },
       "Error": {
         "type": "object", "additionalProperties": false, "required": ["error"],
-        "properties": {"error": {"type": "object", "additionalProperties": false, "required": ["code", "message"], "properties": {"code": {"type": "string", "minLength": 1}, "message": {"type": "string"}}}}
+        "properties": {
+          "error": {
+            "type": "object", "additionalProperties": false, "required": ["code", "message"],
+            "properties": {
+              "code": {"type": "string", "minLength": 1, "maxLength": 128, "description": "Open error-code vocabulary; HTTP status remains authoritative."},
+              "message": {"type": "string", "minLength": 1}
+            }
+          }
+        }
       }
     },
     "responses": {"Error": {"description": "Normalized error envelope", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}}
