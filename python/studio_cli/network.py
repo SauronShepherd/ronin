@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from urllib.error import HTTPError, URLError
@@ -13,6 +14,7 @@ from urllib.request import HTTPRedirectHandler, OpenerDirector, Request, build_o
 _MAX_RESPONSE_BYTES = 1024 * 1024
 _MAX_ERROR_BYTES = 64 * 1024
 _MAX_CURSOR_BYTES = 4096
+_INSECURE_REMOTE_HTTP_ENV = "RONIN_INSECURE_ALLOW_REMOTE_HTTP"
 _INSTANT_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$")
 _JOB_FIELDS = frozenset({"id", "state", "failure_code"})
 _EVENT_FIELDS = frozenset(
@@ -65,6 +67,15 @@ def is_loopback_host(hostname: str | None) -> bool:
         return False
 
 
+def _insecure_remote_http_enabled() -> bool:
+    value = os.environ.get(_INSECURE_REMOTE_HTTP_ENV)
+    if value is None or value == "0":
+        return False
+    if value == "1":
+        return True
+    raise ValueError(f"{_INSECURE_REMOTE_HTTP_ENV} must be 0 or 1 when set")
+
+
 def _protocol_cursor(value: object, *, name: str, nullable: bool) -> str | None:
     if value is None and nullable:
         return None
@@ -102,7 +113,7 @@ class ControlPlaneClient:
     base_url: str
     token: str
     timeout: float = 30.0
-    allow_insecure_remote_http: bool = False
+    allow_insecure_remote_http: bool = field(default_factory=_insecure_remote_http_enabled)
     _opener: OpenerDirector = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
