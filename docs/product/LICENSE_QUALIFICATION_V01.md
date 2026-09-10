@@ -6,7 +6,7 @@ Ronin v0.1 release qualification must tie third-party license evidence to the ex
 
 `requirements-dev.lock` is the committed exact, hash-locked root development graph. Root and `pyronin` build backends are exact-pinned in their `pyproject.toml` files. `tools/license_qualification.py` treats the lock as authoritative and records both its exact package/version graph and SHA-256 of the complete lock-file bytes.
 
-The lock parser is intentionally fail closed. It accepts only exact `name==version` requirement records with one or more SHA-256 hash continuations, plus comments and blank lines. Any other active syntax (for example a range, direct URL, VCS requirement, editable requirement, malformed hash line, or unrecognized active continuation) fails qualification instead of being silently omitted from the inventory.
+The lock parser is intentionally fail closed. It accepts only exact `name==version` requirement records that end in a line continuation and are followed immediately by one or more indented SHA-256 hash continuations; the final hash line closes the requirement block. Comments and blank lines are allowed only between complete requirement blocks. Any other active syntax, detached hash line, interrupted/unterminated continuation, range, direct URL, VCS/editable requirement, malformed hash line, or unrecognized active continuation fails qualification instead of being silently omitted from the inventory.
 
 The inventory generator must run in an environment installed from that exact lock. It refuses missing distributions and version drift. The generated inventory records, for each locked distribution:
 
@@ -45,7 +45,7 @@ Qualification command:
 python tools/license_qualification.py
 ```
 
-The command succeeds only when the committed inventory has the exact current lock SHA-256, every active lock entry is an exact hash-qualified dependency, the inventory exactly matches the parsed locked graph, the lock covers every direct dependency in the qualification surface, direct/transitive classifications agree with project metadata, and every exact dependency has complete reviewed license/notice/attribution decisions plus the project-level NOTICE rationale.
+The command succeeds only when the committed inventory has the exact current lock SHA-256, every active requirement is an exact structurally valid hash-qualified dependency block, the inventory exactly matches the parsed locked graph, the lock covers every direct dependency in the qualification surface, direct/transitive classifications agree with project metadata, and every exact dependency has complete reviewed license/notice/attribution decisions plus the project-level NOTICE rationale.
 
 ## Review requirements
 
