@@ -1,141 +1,142 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-07. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-10 against `33f1d57134c6356af43ae6d5eb5bc8fd17ad5813`. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
-The v0.1 plan remains eight weeks, but execution is ahead of the original calendar in the durable-execution spine. Planning therefore uses capability order rather than waiting for nominal week boundaries. Each autonomous run still selects at most one coherent slice, revalidates against current `main`, and preserves all release gates.
+Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent slice, revalidates against current `main`, open Builder work, handoffs and exact-SHA qualification, and preserves all release gates.
 
-**Release-acceptance invariant.** Ordinary PR/main CI may run the frozen journey as explicitly named non-blocking telemetry while capabilities are still landing. The Docker-capable qualification is the authoritative execution context for the real worker crash/reclaim/resume steps. Release/tag publication consumes exact-SHA evidence from that capable qualification rather than re-running the journey in an environment where required steps are structurally skipped. Docker qualification may carry only an exact named skip allowance matching the current skipped-step set; the allowance must shrink as capabilities become live. Final release qualification remains strict: all fifteen frozen required step names must execute and pass with zero skips, xfails, failures, errors, missing, unexpected, renamed or duplicated outcomes.
+**Release-acceptance invariant.** Docker Qualification is the authoritative capable context for the frozen journey. Current acceptance is **13/15 live** with exactly `01` (production image/Compose) and `12` (public evidence) intentionally skipped. Docker Qualification enforces this exact named allowance and stale/new skips fail closed. Final release remains strict: all fifteen required step names must execute and pass with zero skips, xfails, failures, errors, missing, unexpected, renamed or duplicated outcomes.
 
-## Current position on 2026-09-07
+**Current exact-main evidence.** On `33f1d57134c6356af43ae6d5eb5bc8fd17ad5813`, CI run `34431357861`, Security qualification `34431357908`, Docker Qualification `34431358031`, and Release qualification `34431357884` are green for the push event. This does not replace the still-missing scheduled/manual full-clean proof required by #166/#167/#163.
 
-The repository now has the durable local execution spine and local CLI foundation required to move through control-plane qualification:
+## Current position on 2026-09-10
 
-- pure Job -> Run -> Attempt lifecycle and canonical `Instant` semantics;
-- in-memory and SQLite `JobStore` adapters with shared conformance/fencing tests;
-- immutable per-cell resume identity and explicit artifact verification;
-- bounded async JobStore and artifact-store composition;
-- `DurableExecutionService` for submit/status/list/events/cancel plus worker reclaim/claim/heartbeat and fenced worker writes;
-- safe local project/runtime preparation with exact immutable execution-image identity;
-- sequential per-cell checkpoint-before-next execution with cancellation polling, heartbeat fail-closed behavior and verified resume;
-- `LocalWorkerRuntime` composition over SQLite, local durable stores and the real Docker executor;
-- a deterministic canonical demo that succeeds across clean per-cell containers through the real Docker command path;
-- a continuous worker lifecycle with unique poll identities, signal-aware graceful shutdown and Attempt-limit continuity;
-- real OS-process crash qualification: after three real-Docker cells are durably checkpointed, a separate worker process is killed non-gracefully, the production 30-second lease expires, and a replacement process reclaims the same Run, reuses exactly the three valid checkpoints and executes only the remaining two cells;
-- #125 bounded-contention qualification at final server and worker call sites;
-- release acceptance truth unified around exact-SHA Docker-capable JUnit/provenance plus an exact skip ratchet;
-- C0 storage pagination contracts: stable newest-first keyset job pagination, defensive opaque cursors, bounded Run-event keyset reads, and dense Run-global event projection across replacement Attempts without changing canonical `(attempt_id, sequence)` storage identity;
-- C1/C2 authenticated HTTP + OpenAPI + SDK coverage for stable job listing, durable cancellation and bounded Run-global job events with attempt provenance;
-- D0 supported local CLI with `doctor`, `validate`, and `plan`, activating frozen steps 2-4.
+The MVP-critical durable local execution and operator spine is substantially implemented:
 
-The process-crash evidence advances #57 but does not complete it. The frozen fifteen-step journey still depends on portable evidence, remaining HTTP/SDK compatibility work, network/operator CLI, Compose and supported cancellation cleanup. Current acceptance is seven live steps (2, 3, 4, 6, 7, 8, 9) and eight explicitly skipped steps (1, 5, 10, 11, 12, 13, 14, 15).
+- pure Job -> Run -> Attempt lifecycle and storage-neutral contracts;
+- in-memory and SQLite `JobStore` adapters with conformance/fencing qualification;
+- bounded async store/artifact composition;
+- immutable per-cell execution/resume identity and explicit artifact verification;
+- sequential checkpoint-before-next-cell execution;
+- real-Docker worker execution, process crash, production-TTL reclaim and replacement Attempt resume with exact valid-cell reuse;
+- fail-closed lease fencing, heartbeat ownership and cancellation behavior;
+- authenticated HTTP submit/list/status/events/cancel with bounded keyset pagination and Run-global event projection;
+- version-controlled OpenAPI 3.1 and `pyronin` support for the implemented public job-control boundary;
+- supported CLI `doctor`, `validate`, `plan`, `serve`, `worker`, `submit`, `status`, `logs`, `jobs`, and `cancel`;
+- prompt in-flight cancellation and container cleanup;
+- SQLite public-adapter collapse/internal lifecycle helper cleanup and retirement of the transitional SQLite coverage baseline.
+
+The old statement that only seven frozen steps are live is obsolete. The only two frozen acceptance gaps on current main are step `01` and step `12`.
+
+PR #159 (`feat: expose portable durable evidence`) closed without merge. It is not landed behavior and is not an active blocker. A fresh #53 slice may proceed once earlier critical-path planning/qualification requirements are satisfied.
+
+PR #170 structurally repaired nightly verifier self-contamination by moving verifier state outside `GITHUB_WORKSPACE`. The code repair is landed; authoritative scheduled/manual full-clean validation remains pending and must not be inferred from push-green.
 
 ## Phase A — completed foundation
 
-**Objective.** Establish deterministic core/project/runtime/operator/diagnostic/notebook/kernel contracts, quality/architecture gates, durable lifecycle semantics and storage adapters.
-
-**Status.** Complete on current `main` for the MVP-critical foundation. Historical details remain in `docs/automation/PROGRESS.md` and dated qualification supplements.
+**Status. Complete.** Deterministic core/project/runtime/notebook/kernel contracts, architecture/quality gates, durable lifecycle, storage adapters, execution evidence and local Docker execution foundations are present. Do not reselect this work absent regression.
 
 ## Phase B — durable worker execution and resume
 
-**Objective.** Execute one durable local Run through worker claim, heartbeat, fenced per-cell persistence, lease expiry, replacement Attempt and record-level resume.
+**Status. Complete for the current MVP execution spine.** Real OS-process crash + real Docker qualification proves same-Run replacement Attempt recovery with exact valid-cell reuse and execution of only the remaining cells. Resume validity depends on immutable identity plus artifact verification; a successful rerun alone is not accepted as proof. Attempt provenance remains part of the durable evidence model.
 
-**Status.** Core execution is implemented and qualified through real OS-process death plus real Docker execution. Worker-originated writes are fenced; successful cells checkpoint before the next cell; corrupt/missing artifacts are not reused; cancellation and lease loss fail closed; graceful daemon shutdown and abrupt process death have separate qualification paths; abrupt-death qualification preserves the production 30-second lease TTL. Bounded-contention qualification proves the production worker runtime keeps renewing durable leases while selected SQLite/artifact operations occupy bounded workers and that replacement resume remains live while artifact verification is contended.
-
-**Remaining Phase-B/product-journey work.** Wire these proven capabilities through the supported operator journey as surrounding surfaces land, and keep #57 open until the frozen acceptance sequence itself executes end-to-end.
-
-## Phase C0 — storage contracts before public list/events
-
-**Objective.** Make the storage/API boundary unambiguous before remaining public endpoints freeze broken pagination or event-coordinate behavior.
-
-**Status. Complete in this construction sequence.** The storage-neutral port now exposes bounded Run-event pages. Canonical durable event identity remains `(attempt_id, sequence)`, while the public/service-ready projection assigns dense Run-global sequence numbers in `(attempt.ordinal, sequence)` order. `since`/`next_since` is an opaque versioned keyset cursor bound to the Run; malformed, oversized, schema-drifted and cross-Run cursors fail closed. Job listing now uses newest-first keyset pagination over `(created_at DESC, job_id DESC)`, with opaque cursors bound to the active project/state filters. SQLite queries no longer use OFFSET for these public-facing pagination contracts, and in-memory/SQLite adapters share conformance tests for inserts between pages, timestamp ties, replacement Attempts, empty polling and resumed polling. The bounded async store facade exposes the same event-page operation.
-
-**Exit criteria.** Satisfied by the C0 qualification: replacement-Attempt events have one stable Run-global coordinate system at the service boundary; polling is bounded and does not materialize prior history; list pagination remains stable under concurrent newer inserts; cursor parsing is fail closed.
-
-Do not select C0 again unless a regression or changed contract reopens it.
+**Invariant.** Prefer durable-state assertions over fragile wall-clock assertions wherever state can prove the property.
 
 ## Phase C — bounded HTTP control plane and SDK contract
 
-**Objective.** Make durable jobs remotely controllable through one bounded authenticated API whose executable OpenAPI contract matches `pyronin`.
+**Status. Substantially implemented, with two contract slices still important.** Existing public routes cover submit/list/status/events/cancel over the durable execution service, and OpenAPI/SDK coverage exists for them. Public evidence does not yet exist. Typed least-privilege scope semantics also remain missing.
 
-**Status. In progress under #54.** Submit/status were already qualified. C1 added stable C0-backed job listing and durable cancellation. C2 exposes the existing C0 Run-global event pages through a neutral durable Job -> Run lookup, authenticated `GET /v1/jobs/{job_id}/events`, OpenAPI `JobEventPage`, and bounded `pyronin` polling. Event payloads retain dense Run-global sequence plus Attempt provenance, and cross-Run cursors fail closed. Public evidence remains deferred until #53 freezes portable evidence identity. #52 remains open before authorization semantics are expanded or frozen; C2 does not introduce new scope semantics.
+Remaining ordered work:
 
-**Framework decision.** Framework choice is an implementation detail, not a domain decision. Framework/model types stay outside canonical domain packages.
+1. #52 typed scoped grants before authorization behavior expands/fossilizes;
+2. #53 bounded public portable evidence across HTTP/OpenAPI/CLI/SDK, activating frozen step 12;
+3. #54 remaining error/evolution/drift compatibility rules after #52/#53 settle.
 
-**Exit criteria.** Acceptance steps for submit/status/idempotency/events/cancel/SDK become live against the real supported server/operator path; every documented route is exercised; bounded request latency and secure token transport defaults are qualified; API composition does not execute blocking durable storage on an event-loop thread. Evidence remains blocked until #53, and #54 remains open for evidence completion plus explicit compatibility/evolution policy.
+HTTP/server implementation types must never become canonical domain/storage contracts. Do not introduce a worker -> server dependency inversion.
 
-## Phase D0 — HTTP-independent CLI foundation
+## Phase D — operator CLI and Git revision identity
 
-**Objective.** Provide the first supported `ronin` entry point using already-landed local capabilities without waiting for the entire HTTP block.
+**Status. D1 is complete except `ronin evidence`.** `serve`, `worker`, `submit`, `status`, `logs`, `jobs`, and `cancel` are on main. The `evidence` subcommand remains intentionally coupled to #53 because its backing public evidence contract is absent.
 
-**Status. Complete on current `main`.** The console entry point and HTTP-independent `doctor`, `validate`, and `plan` commands reuse existing project/notebook/dependency contracts and are qualified through the supported CLI path.
-
-**Exit criteria. Satisfied.** Frozen acceptance steps 2, 3 and 4 are live without introducing HTTP/store/Docker dependencies merely to activate them.
-
-## Phase D1 — network/operator CLI and local Git revision capture
-
-**Objective.** Expose the supported job workflow through `ronin` and bind execution to a reproducible local checkout revision.
-
-**Pull requests.** Complete Git revision/dirty identity qualification, including executable-bit correctness; add `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, and `cancel` after their backing contracts exist. The evidence command lands only after #53 and the evidence API representation are stable.
-
-**Exit criteria.** CLI portions of the job journey are live; Git qualification covers detached HEAD, ref movement, dirty digest, executable-bit changes, path safety and credential exclusion.
+Git revision capture is present. #123 remains a separate bounded correctness item: executable-vs-non-executable mode of untracked files must affect dirty identity while preserving fail-closed path/symlink/special-file handling.
 
 ## Phase E — production image, Compose and zero-to-demo quickstart
 
-**Objective.** Deliver one reproducible OCI image and a documented local startup path that reaches the demo journey from zero.
+**Status. Not yet implemented; frozen step 01 remains skipped.**
 
-**Pull requests.** Promote proven probe-image assumptions into the production Dockerfile; build/install Ronin and `pyronin`; run non-root; preserve Docker socket GID handling and read-only workspace identity; add durable data volume, server health dependency, worker topology, immutable base-image identity, clean-room install smoke and quickstart.
+The supported product topology must preserve the already-qualified boundaries:
 
-**Exit criteria.** `docker compose up -d` is healthy under the product budget; quickstart completes on a clean host; image runs server and worker without privileged web/control-plane Docker access; crash-acceptance worker uses explicit `restart: "no"`.
+- one production OCI image containing the installed product;
+- durable local SQLite data volume;
+- server health dependency;
+- server/control-plane does not receive unnecessary Docker authority;
+- worker can launch sibling execution containers with explicit Docker socket GID handling where required;
+- read-only workspace identity and identical absolute workspace path assumptions remain explicit;
+- non-root operation where practical;
+- crash-acceptance worker uses explicit `restart: "no"`;
+- health is reached within the v0.1 <60 s budget;
+- zero-to-demo quickstart stays under ten minutes on a clean supported host.
 
-## Phase F — incremental acceptance activation
+## Phase F — acceptance completion
 
-**Objective.** Turn skips live as soon as dependencies exist while making regression-to-skip fail closed in Docker Qualification.
+**Status. 13/15 live.** Exact intentional skips are `01,12`.
 
-**Activation order.**
+Activation rule:
 
-1. `doctor`, `validate`, `plan` after D0 — complete.
-2. Compose health after Phase E.
-3. submit/status/idempotency/SDK after the supported Phase C/D1 path.
-4. logs/evidence after Run-global event ordering and #53 portable evidence references are real.
-5. execute/crash/reclaim/resume through the supported product journey while preserving already-qualified Phase-B semantics.
-6. cancel cleanup once cancellation/container cleanup are exercised through the supported operator path.
+- #53 activates step 12 and shrinks Docker Qualification allowance from `01,12` to `01` in the same coherent change;
+- production image/Compose activates step 01 and shrinks the allowance from `01` to empty;
+- all thirteen already-live steps must remain live throughout. Any regression-to-skip fails qualification.
 
-**Exit criteria.** Every activation removes that step from the exact Docker skip allowance in the same change. A newly skipped previously-live step or stale allowance fails qualification. Strict release ultimately reports all fifteen required steps live and passed.
+Strict release remains the final authority: all fifteen steps execute and pass with zero skips/xfails/failures/errors/missing/unexpected outcomes.
 
 ## Phase G — non-functional and release qualification
 
-**Objective.** Qualify the exact implementation against product budgets and trust requirements rather than inferring readiness from unit tests.
+**Current open release/trust work includes:**
 
-**Status.** #125 contention qualification is complete. Continue qualifying remaining product budgets as supported surfaces land: compose health, RSS, full `make check`, security/secret/vulnerability/license qualification, deterministic demo/evidence output and targeted recovery cases. Release-gating tooling remains release-critical and must meet #102 coverage expectations.
+- #166/#167/#163: scheduled/manual full-clean proof after #170/#168; do not close from push-green;
+- #162: secure default for bearer transport over remote HTTP;
+- #123: untracked executable-bit identity correctness;
+- #95: qualify installed `pyronin` wheel outside the checkout;
+- #60: pin Docker qualification bootstrap image by immutable digest;
+- #58: exact transitive license inventory + fail-closed policy + evidence-based NOTICE decision;
+- #102: measure release-gating tools under coverage;
+- #63: enforce `main`/release-ref protection before v0.1.0 and no later than the recorded gate date;
+- #45: security reporting/advisory policy after a human chooses/verifies the private reporting channel.
+
+Quality budgets and durability constraints are not negotiable: POST p95 <100 ms, GET p95 <30 ms, WAL + `synchronous=FULL`, fencing, fail-closed VCS capture, T1 100%, T2 90%, T3 75%, and every `studio_storage` file >=80%.
 
 ## Phase H — release candidate and v0.1.0
 
-**Objective.** Stabilize only: documentation, clean-room verification, compatibility checks, release notes and immutable publication.
+**Status. Not started.** Tag/publish only after strict 15/15 acceptance, exact-main post-merge qualification, clean installed-artifact tests, immutable image identity, license/security/process blockers, version synchronization and required ref protections are satisfied.
 
-**Status. Not started.** Tag/publish only after strict 15/15 acceptance, remaining P0/P1 release blockers, immutable image/package provenance, version synchronization and required process protections are resolved.
+Publication must qualify the exact wheel outside the checkout and must reference Docker images by immutable digest. Do not publish from a source-tree-only test path.
 
 ## Current critical path
 
-Acceptance truth wiring, C0 storage contracts, D0 local CLI, and the C1/C2 list/cancel/events HTTP increments are complete in this construction sequence and are no longer selectable unless regression reopens them. The ordering is now:
+One coherent Builder slice at a time:
 
-1. #53 portable evidence identity before `/evidence` ships;
-2. #54 evidence completion plus remaining executable OpenAPI/SDK compatibility/evolution rules, with #52 reconciled before authorization semantics are expanded or frozen;
-3. D1 network/operator CLI and remaining local Git revision qualification;
-4. production image/Compose;
-5. incremental completion of the frozen fifteen-step journey with the Docker allowance shrinking to empty;
-6. remaining non-functional/security/release blockers and immutable publication.
+1. **#48 canonical planning synchronization** — merge the current truth before product work.
+2. **#166/#167/#163 scheduled/manual full-clean proof** — obtain same-mode evidence for the repaired verifier/contention path; if red, that failure becomes the next blocker.
+3. **#52 typed scoped grants** — versioned, language-neutral, vendor-neutral, deny-by-default model and migration path; no OIDC/RBAC/OPA/provider IAM in core.
+4. **#53 public portable evidence + step 12** — bounded authenticated HTTP/OpenAPI/CLI/SDK representation, physical locator privacy, real SQLite/HTTP conformance, allowance -> `01`.
+5. **#54 compatibility/evolution completion** — complete error/additive/unknown/drift policy after #52/#53 contracts settle.
+6. **Production image + Compose + step 01** — supported topology and allowance -> empty.
+7. **#57 strict 15/15 completion** — keep open until authoritative Docker/release evidence proves the full frozen journey.
+8. **Release blockers/publication** — #58/#95/#63/#45 and remaining release-critical items, then immutable tag/artifacts and published smoke.
 
-#125 is complete and is no longer an eligible critical-path slice unless its acceptance criteria change or a regression reopens it. This ordering does not authorize parallel Builder PRs: each autonomous run must finish/reconcile its own prior work before selecting the next slice.
+Security/process quick wins may be taken only when they do not displace an earlier unresolved critical-path blocker or create parallel implementation PRs.
 
-## Pre-decided calendar checkpoints
+## Architecture and scope guardrails
 
-| Trigger | Planning response |
-|---|---|
-| Fri 18 Sep: `JobStore` contract regresses | Freeze retries at one Run and fix storage before adding surfaces. |
-| Sun 27 Sep: local end-to-end does not resume | Prerelease may document whole-run replay; final v0.1 scope remains unchanged unless explicitly revised. |
-| Sun 4 Oct: HTTP not green | Cut optional pagination breadth before required job-control behavior. |
-| Sun 11 Oct: CLI not green | Cut optional CLI breadth in prerelease before weakening core server/worker behavior. |
-| Fri 16 Oct: packaging not green | Use `docker run` for prerelease if necessary; do not misrepresent final v0.1 acceptance. |
-| Mon 19 Oct: anything behind | Consume buffer and cut optional chaos breadth first. |
+- Canonical domain remains capability-driven and vendor-neutral; engines, clouds, catalogs, formats, model providers, runtimes and execution stay behind adapters/SPIs/protocols.
+- Static bearer auth remains the v0.1 mechanism; typed scopes are required, enterprise auth is not.
+- Do not add OIDC, enterprise RBAC, OPA, FastAPI, Pydantic, SQLAlchemy, Postgres, Kubernetes product deployment, brokers, OpenTelemetry or OpenLineage unless `V01_SCOPE.md`/current planning explicitly changes with evidence.
+- No generic skip allowances. Allowed skips are exact by step/reason and stale allowances fail.
+- Do not weaken security, coverage, durability, qualification or performance budgets to get green.
 
-**Never cut without an explicit product-scope revision:** the final fifteen-step v0.1 acceptance journey, a green `make check`, durability/trust invariants, or shipping with known secrets/vulnerabilities.
+## Frozen until v0.1 ships
+
+Ingestion/CDC breadth, SQL/lakehouse breadth, streaming, catalog/semantic BI, MLOps, GenAI/RAG, agents, Postgres/multi-node/HA, Kubernetes product scale, enterprise authorization and broad vendor integrations remain out of scope until the v0.1 freeze is explicitly lifted.
+
+## Operational invariant
+
+Before merge, require exact-head PR CI for the actual PR SHA and reread main. After merge, verify the mandatory workflows for the exact resulting main SHA. If a required safe operation cannot complete because CI or permissions are unavailable, record the exact blocker and next step; never invent green evidence or force the merge.
