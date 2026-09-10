@@ -1,6 +1,6 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-10 after #162 secure bearer-transport implementation under code-only validation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-10 after #123 untracked executable-mode identity implementation under code-only validation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
 
@@ -14,9 +14,9 @@ The last automated baseline remains **13/15**, with historical gaps `01` and `12
 
 ## Current position
 
-The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha public compatibility, project-scoped HTTP authorization, production image/Compose, and secure-default bearer transport.
+The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha public compatibility, project-scoped HTTP authorization, production image/Compose, secure-default bearer transport, and corrected untracked executable-mode Git dirty identity.
 
-#52, #53, #54, #161, and #162 are functionally complete under code-only validation. Automated drift/conformance, authorization, transport, and Compose qualification remain deferred, so the authoritative acceptance baseline remains 13/15.
+#52, #53, #54, #161, #162, and #123 are functionally complete under code-only validation. Automated drift/conformance, authorization, transport, VCS-regression and Compose qualification remain deferred, so the authoritative acceptance baseline remains 13/15.
 
 #57 remains the frozen-journey umbrella and qualification gate: product code for all historical missing surfaces is present, but strict automated qualification has not proven the full journey on an exact SHA.
 
@@ -44,7 +44,11 @@ HTTP/server types remain adapters, never canonical lifecycle/storage models. No 
 
 ## Phase D — operator CLI and Git identity
 
-**D1 functionally complete in code**, including installed `ronin evidence` and secure-default authenticated transport. #123 remains the next correctness slice for executable-bit identity of untracked files.
+**Functionally complete in code under current policy.** D1 includes installed `ronin evidence` and secure-default authenticated transport. #123 now corrects `ronin/git-dirty-v1` so untracked regular-file identity includes normalized Git-style executable mode in addition to path, byte length and SHA-256(content).
+
+On POSIX, the owner executable bit (`S_IXUSR`) maps to `100755`; otherwise the regular file maps to `100644`, matching Git's regular-file mode distinction. On non-POSIX platforms, untracked regular files normalize to `100644` rather than inferring executable semantics from extensions or platform-specific associations. Tracked mode changes remain represented by Git's own binary diff.
+
+VCS capture remains fail closed for unresolved/path-escaping inputs, symlinks, special files and unreadable untracked files. Deterministic ordering and raw-content privacy are preserved. Automated real-Git regression proof remains deferred while tests are disabled.
 
 ## Phase E — production image, Compose and zero-to-demo
 
@@ -60,15 +64,15 @@ The <60 s healthy and <10 min zero-to-demo budgets remain implementation targets
 
 **Last automated baseline: 13/15.** Historical gaps remain `01` and `12` until qualification is restored.
 
-Code contains both step-01 Compose and step-12 public evidence capabilities plus the #54 compatibility, #161 scoped-authorization, and #162 secure-transport contracts. `tests/e2e/test_v01_journey.py` still carries stale historical skip markers for 01/12; under maintainer policy those tests are not being edited or executed in code-only slices. Do not call the project qualified 14/15 or 15/15 while automated qualification is disabled.
+Code contains both step-01 Compose and step-12 public evidence capabilities plus the #54 compatibility, #161 scoped-authorization, #162 secure-transport, and #123 Git-identity corrections. `tests/e2e/test_v01_journey.py` still carries stale historical skip markers for 01/12; under maintainer policy those tests are not being edited or executed in code-only slices. Do not call the project qualified 14/15 or 15/15 while automated qualification is disabled.
 
 #57 is therefore a blocked qualification gate, not an implementation slice.
 
 ## Phase G — security, non-functional and release work
 
-The next bounded implementation slice is **#123 untracked executable-bit identity**. Local Git dirty identity must distinguish an untracked file's executable-vs-non-executable mode while preserving deterministic ordering, content privacy and fail-closed path/symlink/special-file containment.
+The next bounded implementation slice is **#58 exact transitive license/NOTICE policy**. Add a regenerable direct+transitive dependency/license inventory tied to the resolved dependency graph, plus a fail-closed maintainer-review policy for unknown/unreviewed/potentially incompatible license changes. Do not bundle dependency upgrades or add ASF-style NOTICE boilerplate without evidence.
 
-After #123, proceed through actionable release preparation such as #58 exact license/NOTICE policy, #95 exact installed-`pyronin` artifact qualification logic, and #73 human-operable release/change communication under code-only policy. #63 remains blocked on repository administration/release timing; #45 remains blocked on the maintainer selecting and verifying a private reporting channel. Evidence-only #166/#167/#163 remain deferred while CI/tests are disabled.
+After #58, prioritize **#95 installed `pyronin` artifact qualification logic** where code-only work can prepare exact-artifact/outside-checkout mechanics without claiming runtime proof. Then address **#73 human-operable release/change communication**. #63 remains blocked on repository administration/release timing; #45 remains blocked on the maintainer selecting and verifying a private reporting channel. Test/CI-centric #47/#60/#102/#163/#166/#167 remain deferred while CI/tests are disabled.
 
 Existing implementation constraints remain: POST p95 <100 ms; GET p95 <30 ms; SQLite WAL + `synchronous=FULL`; fencing; fail-closed VCS capture; T1 100%, T2 90%, T3 75%, every `studio_storage` file >=80% when coverage execution is restored.
 
@@ -80,9 +84,10 @@ Existing implementation constraints remain: POST p95 <100 ms; GET p95 <30 ms; SQ
 
 One coherent Builder slice at a time:
 
-1. **#123 untracked executable-bit identity** — close the remaining known local Git dirty-identity correctness gap.
-2. **Release blockers/publication preparation** — actionable portions of #58/#95/#73 and related release work; do not select human/admin/evidence-only blockers as implementation slices.
-3. **#57 frozen-journey qualification** — revisit only after the maintainer explicitly restores automated tests/qualification; then remove stale acceptance skips and obtain strict exact-SHA 15/15 evidence without weakening the frozen contract.
+1. **#58 exact transitive license/NOTICE policy** — resolved-graph inventory, fail-closed review policy and evidence-based NOTICE decision without dependency upgrades.
+2. **#95 installed `pyronin` artifact qualification logic** — prepare exact candidate/outside-checkout qualification mechanics; defer runtime test evidence under current policy.
+3. **#73 human-operable release/change communication** — truthful release runbook and user-facing alpha change communication coordinated with release blockers.
+4. **#57 frozen-journey qualification** — revisit only after the maintainer explicitly restores automated tests/qualification; then remove stale acceptance skips and obtain strict exact-SHA 15/15 evidence without weakening the frozen contract.
 
 ## Architecture and scope guardrails
 
