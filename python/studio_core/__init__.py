@@ -9,6 +9,25 @@ from .diagnostics import (
     builtin_diagnostic_catalog,
 )
 from .execution_snapshots import ResolvedRuntimeSnapshot, snapshot_runtime_resolution
+from .grants import (
+    ACTIONS,
+    GRANT_SCHEMA_VERSION,
+    MAX_CONSTRAINTS,
+    MAX_GRANTS,
+    RESOURCE_KINDS,
+    Action,
+    AuthorizationEvidence,
+    Decision,
+    DecisionReason,
+    Grant,
+    GrantSet,
+    Requirement,
+    ResourceKind,
+    ResourceScope,
+    parse_bearer_scope,
+    parse_legacy_permission,
+    requirement_to_bearer_scope,
+)
 from .ids import InstanceAnchor, NodeId, allocate_instance_keys
 from .ir import (
     Edge,
@@ -56,7 +75,16 @@ from .runtime_profiles import (
 )
 
 __all__ = (
+    "ACTIONS",
+    "GRANT_SCHEMA_VERSION",
+    "MAX_CONSTRAINTS",
+    "MAX_GRANTS",
+    "RESOURCE_KINDS",
+    "Action",
+    "AuthorizationEvidence",
     "CapabilityRequirement",
+    "Decision",
+    "DecisionReason",
     "DiagnosticCatalog",
     "DiagnosticFact",
     "DiagnosticFinding",
@@ -66,6 +94,8 @@ __all__ = (
     "ExecutionProfile",
     "FrozenList",
     "FrozenMap",
+    "Grant",
+    "GrantSet",
     "InstanceAnchor",
     "Node",
     "NodeId",
@@ -88,8 +118,11 @@ __all__ = (
     "ProjectManifest",
     "RepositoryBinding",
     "RepositorySyncPolicy",
+    "Requirement",
     "RequirementCheck",
     "ResolvedRuntimeSnapshot",
+    "ResourceKind",
+    "ResourceScope",
     "RuntimeCapability",
     "RuntimeCatalog",
     "RuntimeProfile",
@@ -101,6 +134,9 @@ __all__ = (
     "builtin_operator_catalog",
     "freeze_value",
     "operator_parameter_value",
+    "parse_bearer_scope",
+    "parse_legacy_permission",
+    "requirement_to_bearer_scope",
     "resolve_runtime",
     "snapshot_runtime_resolution",
     "thaw_value",
