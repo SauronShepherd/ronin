@@ -11,9 +11,16 @@ from tools.license_qualification import (
     qualify,
 )
 
+_LOCK_SHA = "0" * 64
 
-def _inventory(packages: list[dict[str, object]]) -> dict[str, object]:
-    return {"schema_version": 1, "lock_file": "requirements-dev.lock", "packages": packages}
+
+def _inventory(packages: list[dict[str, object]], *, lock_sha256: str = _LOCK_SHA) -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "lock_file": "requirements-dev.lock",
+        "lock_sha256": lock_sha256,
+        "packages": packages,
+    }
 
 
 def _entry(name: str, version: str, license_name: str = "MIT") -> dict[str, object]:
@@ -31,11 +38,21 @@ def _policy(*keys: str, project_notice: str = "not_required") -> dict[str, objec
     return {
         "schema_version": 1,
         "project_notice": project_notice,
+        "project_notice_rationale": "reviewed fixture obligations",
         "reviews": {
-            key: {"decision": "allow", "notice_required": False, "rationale": "reviewed fixture"}
+            key: {
+                "decision": "allow",
+                "notice_required": False,
+                "attribution_required": False,
+                "rationale": "reviewed fixture",
+            }
             for key in keys
         },
     }
+
+
+def _qualify(inventory: object, policy: object, graph: dict[str, str]) -> None:
+    qualify(inventory, policy, graph, expected_lock_sha256=_LOCK_SHA)
 
 
 def test_locked_graph_reads_exact_versions_and_normalizes_names(tmp_path: Path) -> None:
@@ -61,7 +78,7 @@ def test_qualify_accepts_exact_reviewed_locked_graph() -> None:
     inventory = _inventory([_entry("alpha", "1.0"), _entry("beta", "2.0", "Apache-2.0")])
     policy = _policy("alpha==1.0", "beta==2.0")
 
-    qualify(inventory, policy, graph)
+    _qualify(inventory, policy, graph)
 
 
 @pytest.mark.parametrize(
@@ -86,7 +103,15 @@ def test_qualify_fails_closed_on_incomplete_or_ambiguous_inventory(
     graph = {"alpha": "1.0", "beta": "2.0"}
 
     with pytest.raises(LicenseQualificationError, match=message):
-        qualify(inventory, _policy("alpha==1.0", "beta==2.0"), graph)
+        _qualify(inventory, _policy("alpha==1.0", "beta==2.0"), graph)
+
+
+def test_qualify_requires_exact_lock_file_identity() -> None:
+    graph = {"alpha": "1.0"}
+    inventory = _inventory([_entry("alpha", "1.0")], lock_sha256="f" * 64)
+
+    with pytest.raises(LicenseQualificationError, match="lock_sha256"):
+        _qualify(inventory, _policy("alpha==1.0"), graph)
 
 
 def test_qualify_requires_exact_policy_key_set() -> None:
@@ -94,7 +119,7 @@ def test_qualify_requires_exact_policy_key_set() -> None:
     inventory = _inventory([_entry("alpha", "1.0"), _entry("beta", "2.0")])
 
     with pytest.raises(LicenseQualificationError, match="exactly match"):
-        qualify(inventory, _policy("alpha==1.0"), graph)
+        _qualify(inventory, _policy("alpha==1.0"), graph)
 
 
 def test_qualify_rejects_denied_dependency() -> None:
@@ -106,11 +131,26 @@ def test_qualify_rejects_denied_dependency() -> None:
     reviews["alpha==1.0"] = {
         "decision": "deny",
         "notice_required": False,
+        "attribution_required": False,
         "rationale": "fixture",
     }
 
     with pytest.raises(LicenseQualificationError, match="not approved"):
-        qualify(inventory, policy, graph)
+        _qualify(inventory, policy, graph)
+
+
+def test_qualify_requires_attribution_decision() -> None:
+    graph = {"alpha": "1.0"}
+    inventory = _inventory([_entry("alpha", "1.0")])
+    policy = _policy("alpha==1.0")
+    reviews = policy["reviews"]
+    assert isinstance(reviews, dict)
+    review = reviews["alpha==1.0"]
+    assert isinstance(review, dict)
+    review.pop("attribution_required")
+
+    with pytest.raises(LicenseQualificationError, match="attribution_required"):
+        _qualify(inventory, policy, graph)
 
 
 def test_qualify_requires_review_rationale() -> None:
@@ -122,11 +162,12 @@ def test_qualify_requires_review_rationale() -> None:
     reviews["alpha==1.0"] = {
         "decision": "allow",
         "notice_required": False,
+        "attribution_required": False,
         "rationale": "",
     }
 
     with pytest.raises(LicenseQualificationError, match="rationale is required"):
-        qualify(inventory, policy, graph)
+        _qualify(inventory, policy, graph)
 
 
 def test_qualify_requires_explicit_notice_decision() -> None:
@@ -134,7 +175,17 @@ def test_qualify_requires_explicit_notice_decision() -> None:
     inventory = _inventory([_entry("alpha", "1.0")])
 
     with pytest.raises(LicenseQualificationError, match="NOTICE decision is unresolved"):
-        qualify(inventory, _policy("alpha==1.0", project_notice="unknown"), graph)
+        _qualify(inventory, _policy("alpha==1.0", project_notice="unknown"), graph)
+
+
+def test_qualify_requires_project_notice_rationale() -> None:
+    graph = {"alpha": "1.0"}
+    inventory = _inventory([_entry("alpha", "1.0")])
+    policy = _policy("alpha==1.0")
+    policy["project_notice_rationale"] = ""
+
+    with pytest.raises(LicenseQualificationError, match="NOTICE rationale"):
+        _qualify(inventory, policy, graph)
 
 
 def test_policy_and_inventory_are_machine_readable_json_fixtures(tmp_path: Path) -> None:
@@ -145,7 +196,7 @@ def test_policy_and_inventory_are_machine_readable_json_fixtures(tmp_path: Path)
     inventory_path.write_text(json.dumps(inventory), encoding="utf-8")
     policy_path.write_text(json.dumps(policy), encoding="utf-8")
 
-    qualify(
+    _qualify(
         json.loads(inventory_path.read_text(encoding="utf-8")),
         json.loads(policy_path.read_text(encoding="utf-8")),
         {"alpha": "1.0"},
