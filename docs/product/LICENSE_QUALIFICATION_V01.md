@@ -6,6 +6,8 @@ Ronin v0.1 release qualification must tie third-party license evidence to the ex
 
 `requirements-dev.lock` is the committed exact, hash-locked root development graph. Root and `pyronin` build backends are exact-pinned in their `pyproject.toml` files. `tools/license_qualification.py` treats the lock as authoritative and records both its exact package/version graph and SHA-256 of the complete lock-file bytes.
 
+The lock parser is intentionally fail closed. It accepts only exact `name==version` requirement records with one or more SHA-256 hash continuations, plus comments and blank lines. Any other active syntax (for example a range, direct URL, VCS requirement, editable requirement, malformed hash line, or unrecognized active continuation) fails qualification instead of being silently omitted from the inventory.
+
 The inventory generator must run in an environment installed from that exact lock. It refuses missing distributions and version drift. The generated inventory records, for each locked distribution:
 
 - normalized package name and exact version;
@@ -33,7 +35,7 @@ A release review must separately commit `third_party/license-policy-v1.json`. Th
 - `attribution_required: true|false`;
 - a non-empty review rationale grounded in the inspected upstream evidence.
 
-Unknown, missing, duplicate, unreviewed, denied, graph-drifted, direct-dependency-omitted, or direct/transitive-misclassified dependencies fail qualification. Missing source or declared-license metadata also fails qualification instead of being guessed from package name or ecosystem reputation.
+Unknown, missing, duplicate, unreviewed, denied, graph-drifted, unsupported-lock-syntax, direct-dependency-omitted, or direct/transitive-misclassified dependencies fail qualification. Missing source or declared-license metadata also fails qualification instead of being guessed from package name or ecosystem reputation.
 
 The policy must additionally contain an explicit project-level `project_notice` decision (`required` or `not_required`) and a non-empty `project_notice_rationale`. This is the repository-backed conclusion about whether Ronin itself must ship a project `NOTICE` file for the reviewed resolved graph. Do not add Apache Software Foundation-style NOTICE boilerplate merely because Ronin uses Apache-2.0; the conclusion must come from obligations actually present in the reviewed graph and distributed artifacts.
 
@@ -43,7 +45,7 @@ Qualification command:
 python tools/license_qualification.py
 ```
 
-The command succeeds only when the committed inventory has the exact current lock SHA-256, exactly matches the parsed locked graph, the lock covers every direct dependency in the qualification surface, direct/transitive classifications agree with project metadata, and every exact dependency has complete reviewed license/notice/attribution decisions plus the project-level NOTICE rationale.
+The command succeeds only when the committed inventory has the exact current lock SHA-256, every active lock entry is an exact hash-qualified dependency, the inventory exactly matches the parsed locked graph, the lock covers every direct dependency in the qualification surface, direct/transitive classifications agree with project metadata, and every exact dependency has complete reviewed license/notice/attribution decisions plus the project-level NOTICE rationale.
 
 ## Review requirements
 
