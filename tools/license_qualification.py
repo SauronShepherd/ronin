@@ -8,7 +8,7 @@ import importlib.metadata as metadata
 import json
 import re
 import tomllib
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 _LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \t\\]+)$")
 _LOCKED_HASH = re.compile(r"^--hash=sha256:[0-9a-f]{64}$")
@@ -20,6 +20,7 @@ _PACKAGE_EVIDENCE_FIELDS = (
     "direct",
     "source",
     "declared_license",
+    "declared_license_files",
     "license_files",
 )
 
@@ -168,14 +169,61 @@ def _source(dist: metadata.Distribution) -> str | None:
     return home_page.strip() if home_page and home_page.strip() else None
 
 
-def _license_files(dist: metadata.Distribution) -> list[dict[str, str]]:
+def _normalize_declared_license_file(value: str) -> str:
+    stripped = value.strip()
+    path = PurePosixPath(stripped)
+    normalized = path.as_posix()
+    if (
+        not stripped
+        or "\\" in stripped
+        or path.is_absolute()
+        or ".." in path.parts
+        or normalized in {"", "."}
+        or normalized != stripped
+    ):
+        raise LicenseQualificationError(f"invalid License-File metadata path: {value!r}")
+    return normalized
+
+
+def _declared_license_file_paths(dist: metadata.Distribution) -> tuple[str, ...]:
+    result = {
+        _normalize_declared_license_file(value)
+        for value in (dist.metadata.get_all("License-File") or [])
+    }
+    return tuple(sorted(result))
+
+
+def _matches_declared_license_file(installed_path: str, declared_path: str) -> bool:
+    if installed_path == declared_path:
+        return True
+    marker = ".dist-info/"
+    marker_index = installed_path.casefold().find(marker)
+    if marker_index < 0:
+        return False
+    tail = installed_path[marker_index + len(marker) :]
+    return tail == declared_path or tail == f"licenses/{declared_path}"
+
+
+def _license_files(
+    dist: metadata.Distribution,
+    declared_paths: tuple[str, ...],
+) -> list[dict[str, str]]:
     result: list[dict[str, str]] = []
     seen: set[str] = set()
+    matched_declared: set[str] = set()
     for file in dist.files or ():
-        path = str(file)
-        name = Path(path).name.casefold()
-        if not any(name.startswith(prefix) for prefix in _LICENSE_FILE_NAMES):
+        path = str(file).replace("\\", "/")
+        name = PurePosixPath(path).name.casefold()
+        declared_matches = {
+            declared
+            for declared in declared_paths
+            if _matches_declared_license_file(path, declared)
+        }
+        is_pep639_license_path = ".dist-info/licenses/" in path.casefold()
+        is_legacy_license_name = any(name.startswith(prefix) for prefix in _LICENSE_FILE_NAMES)
+        if not (declared_matches or is_pep639_license_path or is_legacy_license_name):
             continue
+        matched_declared.update(declared_matches)
         if path in seen:
             continue
         seen.add(path)
@@ -185,7 +233,24 @@ def _license_files(dist: metadata.Distribution) -> list[dict[str, str]]:
         except OSError as exc:
             raise LicenseQualificationError(f"cannot read license evidence file: {path}") from exc
         result.append({"path": path, "sha256": digest})
+    missing_declared = sorted(set(declared_paths) - matched_declared)
+    if missing_declared:
+        raise LicenseQualificationError(
+            "declared License-File metadata is not installed: " + ", ".join(missing_declared)
+        )
     return sorted(result, key=lambda item: item["path"])
+
+
+def _validate_declared_license_files(value: object, key: str) -> tuple[str, ...]:
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise LicenseQualificationError(f"invalid declared_license_files: {key}")
+    try:
+        normalized = tuple(_normalize_declared_license_file(item) for item in value)
+    except LicenseQualificationError as exc:
+        raise LicenseQualificationError(f"invalid declared_license_files: {key}") from exc
+    if normalized != tuple(sorted(set(normalized))):
+        raise LicenseQualificationError(f"declared_license_files must be sorted and unique: {key}")
+    return normalized
 
 
 def _validate_license_files(value: object, key: str) -> list[dict[str, str]]:
@@ -201,6 +266,7 @@ def _validate_license_files(value: object, key: str) -> list[dict[str, str]]:
         if (
             not isinstance(path, str)
             or not path.strip()
+            or "\\" in path
             or not isinstance(digest, str)
             or _SHA256.fullmatch(digest) is None
             or path in seen
@@ -244,13 +310,15 @@ def generate_inventory(root: Path) -> dict[str, object]:
             raise LicenseQualificationError(
                 f"installed version differs from lock: {name} expected {version}, got {dist.version}"
             )
+        declared_license_files = _declared_license_file_paths(dist)
         entry: dict[str, object] = {
             "package": name,
             "version": version,
             "direct": name in direct,
             "source": _source(dist),
             "declared_license": _declared_license(dist),
-            "license_files": _license_files(dist),
+            "declared_license_files": list(declared_license_files),
+            "license_files": _license_files(dist, declared_license_files),
         }
         entry["evidence_sha256"] = package_evidence_sha256(entry)
         entries.append(entry)
@@ -291,6 +359,7 @@ def qualify(
         is_direct = entry.get("direct")
         source = entry.get("source")
         declared = entry.get("declared_license")
+        declared_files = entry.get("declared_license_files")
         files = entry.get("license_files")
         evidence_sha256 = entry.get("evidence_sha256")
         if (
@@ -317,6 +386,7 @@ def qualify(
             raise LicenseQualificationError(f"missing distribution source: {key}")
         if not isinstance(declared, str) or not declared.strip():
             raise LicenseQualificationError(f"missing declared license: {key}")
+        _validate_declared_license_files(declared_files, key)
         _validate_license_files(files, key)
         if not isinstance(evidence_sha256, str) or _SHA256.fullmatch(evidence_sha256) is None:
             raise LicenseQualificationError(f"invalid package evidence_sha256: {key}")
