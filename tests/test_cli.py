@@ -79,6 +79,24 @@ def test_validate_and_plan_reuse_canonical_demo_contracts(capsys) -> None:
     assert "3: publish" in plan_output.out
 
 
+def test_help_exposes_evidence_as_first_class_command(capsys) -> None:
+    with pytest.raises(SystemExit) as raised:
+        main(["--help"])
+    assert raised.value.code == 0
+    output = capsys.readouterr()
+    assert "evidence" in output.out
+
+
+def test_evidence_help_comes_from_canonical_parser(capsys) -> None:
+    with pytest.raises(SystemExit) as raised:
+        main(["evidence", "--help"])
+    assert raised.value.code == 0
+    output = capsys.readouterr()
+    assert "usage: ronin evidence" in output.out
+    assert "job_id" in output.out
+    assert "--json" in output.out
+
+
 @pytest.mark.parametrize("target", ["../outside", "/outside", " missing "])
 def test_plan_rejects_unsafe_or_malformed_targets(target: str, capsys) -> None:
     assert main(["plan", "examples/demo", "-t", target]) == 2
