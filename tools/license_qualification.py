@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.metadata as metadata
 import json
 import re
@@ -10,7 +11,7 @@ import tomllib
 from pathlib import Path
 
 _LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \\]+)")
-_LICENSE_FILE_NAMES = ("license", "copying", "notice", "authors")
+_LICENSE_FILE_NAMES = ("license", "copying", "notice", "authors", "copyright")
 
 
 class LicenseQualificationError(ValueError):
@@ -19,6 +20,11 @@ class LicenseQualificationError(ValueError):
 
 def _canonical_name(value: str) -> str:
     return re.sub(r"[-_.]+", "-", value).lower()
+
+
+def lock_sha256(path: Path) -> str:
+    """Return the SHA-256 identity of the complete committed lock file."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def locked_graph(path: Path) -> dict[str, str]:
@@ -62,17 +68,21 @@ def _declared_license(dist: metadata.Distribution) -> str | None:
         return value.strip()
     classifiers = [
         item.removeprefix("License :: ").strip()
-        for item in dist.metadata.get_all("Classifier", [])
+        for item in (dist.metadata.get_all("Classifier") or [])
         if item.startswith("License :: ")
     ]
     return " | ".join(classifiers) or None
 
 
 def _source(dist: metadata.Distribution) -> str | None:
-    project_urls = dist.metadata.get_all("Project-URL", [])
-    for value in project_urls:
+    for value in dist.metadata.get_all("Project-URL") or []:
         label, separator, url = value.partition(",")
-        if separator and label.strip().casefold() in {"source", "repository", "homepage"}:
+        if separator and label.strip().casefold() in {
+            "source",
+            "source code",
+            "repository",
+            "homepage",
+        }:
             return url.strip() or None
     home_page = dist.metadata.get("Home-page")
     return home_page.strip() if home_page and home_page.strip() else None
@@ -88,11 +98,27 @@ def _license_files(dist: metadata.Distribution) -> list[str]:
     return sorted(set(result))
 
 
+def _locked_distributions(graph: dict[str, str]) -> dict[str, metadata.Distribution]:
+    installed: dict[str, metadata.Distribution] = {}
+    for dist in metadata.distributions():
+        raw_name = dist.metadata.get("Name")
+        if not raw_name or not raw_name.strip():
+            continue
+        name = _canonical_name(raw_name)
+        if name not in graph:
+            continue
+        if name in installed:
+            raise LicenseQualificationError(f"multiple installed distributions found for {name}")
+        installed[name] = dist
+    return installed
+
+
 def generate_inventory(root: Path) -> dict[str, object]:
     """Generate metadata evidence for exactly the committed locked graph."""
-    graph = locked_graph(root / "requirements-dev.lock")
+    lock_path = root / "requirements-dev.lock"
+    graph = locked_graph(lock_path)
     direct = direct_requirements(root)
-    installed = {_canonical_name(dist.metadata["Name"]): dist for dist in metadata.distributions()}
+    installed = _locked_distributions(graph)
     entries: list[dict[str, object]] = []
     for name, version in sorted(graph.items()):
         dist = installed.get(name)
@@ -112,15 +138,28 @@ def generate_inventory(root: Path) -> dict[str, object]:
                 "license_files": _license_files(dist),
             }
         )
-    return {"schema_version": 1, "lock_file": "requirements-dev.lock", "packages": entries}
+    return {
+        "schema_version": 1,
+        "lock_file": "requirements-dev.lock",
+        "lock_sha256": lock_sha256(lock_path),
+        "packages": entries,
+    }
 
 
-def qualify(inventory: object, policy: object, graph: dict[str, str]) -> None:
+def qualify(
+    inventory: object,
+    policy: object,
+    graph: dict[str, str],
+    *,
+    expected_lock_sha256: str,
+) -> None:
     """Fail unless inventory exactly matches the lock and every package is reviewed."""
     if not isinstance(inventory, dict) or inventory.get("schema_version") != 1:
         raise LicenseQualificationError("inventory schema_version must be 1")
     if inventory.get("lock_file") != "requirements-dev.lock":
         raise LicenseQualificationError("inventory lock_file must be requirements-dev.lock")
+    if inventory.get("lock_sha256") != expected_lock_sha256:
+        raise LicenseQualificationError("inventory lock_sha256 does not match requirements-dev.lock")
     packages = inventory.get("packages")
     if not isinstance(packages, list):
         raise LicenseQualificationError("inventory packages must be a list")
@@ -152,6 +191,7 @@ def qualify(inventory: object, policy: object, graph: dict[str, str]) -> None:
         raise LicenseQualificationError("policy schema_version must be 1")
     reviews = policy.get("reviews")
     notice_decision = policy.get("project_notice")
+    notice_rationale = policy.get("project_notice_rationale")
     if not isinstance(reviews, dict):
         raise LicenseQualificationError("policy reviews must be an object")
     expected_review_keys = {f"{name}=={version}" for name, version in graph.items()}
@@ -165,11 +205,15 @@ def qualify(inventory: object, policy: object, graph: dict[str, str]) -> None:
             raise LicenseQualificationError(f"dependency license is not approved: {key}")
         if review.get("notice_required") not in {True, False}:
             raise LicenseQualificationError(f"notice_required must be reviewed: {key}")
+        if review.get("attribution_required") not in {True, False}:
+            raise LicenseQualificationError(f"attribution_required must be reviewed: {key}")
         rationale = review.get("rationale")
         if not isinstance(rationale, str) or not rationale.strip():
             raise LicenseQualificationError(f"review rationale is required: {key}")
     if notice_decision not in {"required", "not_required"}:
         raise LicenseQualificationError("project NOTICE decision is unresolved")
+    if not isinstance(notice_rationale, str) or not notice_rationale.strip():
+        raise LicenseQualificationError("project NOTICE rationale is required")
 
 
 def _load_json(path: Path) -> object:
@@ -194,8 +238,14 @@ def main() -> int:
             json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
         return 0
-    graph = locked_graph(root / "requirements-dev.lock")
-    qualify(_load_json(root / args.inventory), _load_json(root / args.policy), graph)
+    lock_path = root / "requirements-dev.lock"
+    graph = locked_graph(lock_path)
+    qualify(
+        _load_json(root / args.inventory),
+        _load_json(root / args.policy),
+        graph,
+        expected_lock_sha256=lock_sha256(lock_path),
+    )
     print(f"license qualification: ok ({len(graph)} locked distributions)")
     return 0
 
