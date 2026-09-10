@@ -9,10 +9,12 @@ Ronin v0.1 release qualification must tie third-party license evidence to the ex
 The inventory generator must run in an environment installed from that exact lock. It refuses missing distributions and version drift. The generated inventory records, for each locked distribution:
 
 - normalized package name and exact version;
-- whether the package is directly declared by the root/SDK project metadata;
+- whether the package is directly declared by root/SDK project metadata;
 - the installed distribution's declared license metadata;
 - installed license/copying/notice/authors/copyright file paths exposed by package metadata;
 - the complete `requirements-dev.lock` SHA-256 binding the evidence to one exact lock revision.
+
+The `direct` classification is not merely informational. Qualification recomputes the direct dependency names from the root and `pyronin` project metadata and rejects any inventory whose boolean classification differs. Direct declarations that are intentionally outside the resolved lock do not create phantom inventory rows; only locked packages are inventoried.
 
 Generation command after installing the exact lock:
 
@@ -31,7 +33,7 @@ A release review must separately commit `third_party/license-policy-v1.json`. Th
 - `attribution_required: true|false`;
 - a non-empty review rationale grounded in the inspected upstream evidence.
 
-Unknown, missing, duplicate, unreviewed, denied, or graph-drifted dependencies fail qualification. Missing source or declared-license metadata also fails qualification instead of being guessed from package name or ecosystem reputation.
+Unknown, missing, duplicate, unreviewed, denied, graph-drifted, or direct/transitive-misclassified dependencies fail qualification. Missing source or declared-license metadata also fails qualification instead of being guessed from package name or ecosystem reputation.
 
 The policy must additionally contain an explicit project-level `project_notice` decision (`required` or `not_required`) and a non-empty `project_notice_rationale`. This is the repository-backed conclusion about whether Ronin itself must ship a project `NOTICE` file for the reviewed resolved graph. Do not add Apache Software Foundation-style NOTICE boilerplate merely because Ronin uses Apache-2.0; the conclusion must come from obligations actually present in the reviewed graph and distributed artifacts.
 
@@ -41,7 +43,7 @@ Qualification command:
 python tools/license_qualification.py
 ```
 
-The command succeeds only when the committed inventory has the exact current lock SHA-256, exactly matches the parsed locked graph, and every exact dependency has complete reviewed license/notice/attribution decisions plus the project-level NOTICE rationale.
+The command succeeds only when the committed inventory has the exact current lock SHA-256, exactly matches the parsed locked graph, correctly classifies direct versus transitive dependencies from project metadata, and every exact dependency has complete reviewed license/notice/attribution decisions plus the project-level NOTICE rationale.
 
 ## Review requirements
 
@@ -49,7 +51,7 @@ A maintainer reviewing a generated inventory must inspect the referenced install
 
 `notice_required` and `attribution_required` are separate review decisions. When either is true, the release process must preserve the required upstream text in the distributed artifact or companion material before #58 can be considered complete. The validator deliberately does not invent or auto-copy legal text from ambiguous metadata.
 
-If the lock file changes for any reason, even without changing its parsed package/version set, the recorded lock SHA-256 changes and qualification fails until inventory evidence is regenerated. If a dependency version changes, its exact policy key changes and the review also fails until the new version is assessed.
+If the lock file changes for any reason, even without changing its parsed package/version set, the recorded lock SHA-256 changes and qualification fails until inventory evidence is regenerated. If a dependency version changes, its exact policy key changes and the review also fails until the new version is assessed. If project metadata changes which locked packages are direct, qualification fails until the inventory is regenerated.
 
 ## Current validation mode
 
