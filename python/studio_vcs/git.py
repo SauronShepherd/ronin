@@ -60,8 +60,8 @@ def _repository_root(path: Path) -> Path:
 
 
 def _normalized_untracked_mode(metadata: os.stat_result) -> bytes:
-    """Encode only the Git-relevant executable distinction for an untracked regular file."""
-    if os.name == "posix" and metadata.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
+    """Encode the same owner-executable distinction Git stores for regular files."""
+    if os.name == "posix" and metadata.st_mode & stat.S_IXUSR:
         return b"100755"
     return b"100644"
 
