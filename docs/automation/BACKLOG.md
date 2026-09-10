@@ -2,7 +2,7 @@
 
 This backlog is deliberately narrow for v0.1. Selection must be revalidated against current `main`, open Builder work, canonical automation handoffs, and the scope authority in `docs/product/V01_SCOPE.md`.
 
-_Last synchronized: 2026-09-10 for the #54 API/SDK compatibility implementation under code-only validation mode._
+_Last synchronized: 2026-09-10 for the #161 scoped HTTP authorization implementation under code-only validation mode._
 
 **Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, validation mode, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled.
 
@@ -18,32 +18,31 @@ Evidence-only handoffs #166/#167/#163 remain open/deferred and do not block impl
 
 The last automated qualification before CI was disabled remains **13/15 live**, with exact historical gaps `01` (production image + supported Compose topology) and `12` (public portable evidence retrieval). Code-only work does not alter that qualified baseline automatically.
 
-Supported code now contains the durable local execution spine, authenticated HTTP job control, OpenAPI 3.1, `pyronin`, operator CLI, typed scoped grants (#52), public portable evidence (#53), and a documented strict-alpha API/SDK compatibility contract (#54). Step 12 is functionally present but **not yet re-qualified** under the disabled-test policy.
+Supported code now contains the durable local execution spine, authenticated and project-scoped HTTP job control, OpenAPI 3.1, `pyronin`, operator CLI, typed scoped grants (#52), public portable evidence (#53), strict-alpha API/SDK compatibility (#54), and route-level typed grant enforcement (#161). Step 12 is functionally present but **not yet re-qualified** under the disabled-test policy.
 
-B1 / #48 is complete. #52 and #53 are complete. #54 is functionally complete in code-only mode; automated drift/conformance qualification remains deferred. PR #159 remains closed without merge and is only historical reuse evidence.
+B1 / #48 is complete. #52, #53, #54, and #161 are functionally complete in code-only mode. Automated drift/conformance qualification remains deferred. PR #159 remains closed without merge and is only historical reuse evidence.
 
-## #54 API/SDK compatibility implementation
+## #161 scoped HTTP authorization implementation
 
-The current slice freezes the alpha compatibility policy without adding public endpoints:
+The current slice applies the existing #52 grant model without redesigning it:
 
-- `docs/product/API_COMPATIBILITY_V1.md` defines alpha/beta/stable evolution rules;
-- alpha response objects and semantic enums are closed and fail closed on drift;
-- error-code values remain open inside one fixed `{error:{code,message}}` envelope, with HTTP status authoritative;
-- CLI and `pyronin` now apply consistent closed-object parsing, bounded cursor handling, canonical `Instant` validation, and strict error-envelope interpretation;
-- OpenAPI records the strict-alpha stage, cursor byte bounds, canonical ID bounds, and normalized open error-code vocabulary;
-- evidence v1 remains storage-neutral and rejects unknown availability/version semantics;
-- no framework or transport type becomes a canonical execution/storage contract.
+- the canonical `RoninHTTPServer` requires a non-empty `GrantSet`; the former token-only internal constructor path is removed;
+- project-scoped route requirements are `list`, `read`, `events`, `evidence:read`, `cancel`, and both `submit` + `execute` for submission;
+- direct Job-ID operations resolve the Job's `project_id` before authorization and return the same `404 job_not_found` result for absent and cross-project Jobs;
+- explicit list project filters fail closed when unauthorized; unfiltered pages contain only Jobs visible to the bearer grant while preserving the storage cursor;
+- authorization is checked before cancellation/submission side effects;
+- OpenAPI publishes the route requirements using `x-ronin-required-project-actions` and keeps HTTP status authoritative;
+- CLI and `pyronin` continue to send only the bearer credential and cannot widen authority with client-selected scopes.
 
-Automated server/OpenAPI/CLI/SDK drift qualification is intentionally not executed while tests/CI are disabled; do not claim runtime conformance evidence for this slice.
+No automated authorization tests or CI qualification were executed under the current maintainer policy.
 
 ## Current critical path
 
 Select one coherent slice at a time.
 
-1. **#161 — enforce scoped HTTP authorization.** Consume #52 typed grants across read/list/events/evidence/submit/cancel with project visibility and direct job-ID checks; do not redesign the grant model.
-2. **Production image + Compose — acceptance step 01 implementation.** Preserve durable SQLite, server health dependency, bounded Docker authority, sibling-container execution, non-root operation where practical, and explicit crash-worker `restart: "no"`.
-3. **#57 — frozen journey completion in code.** Keep open until all fifteen capabilities are implemented; automated 15/15 release qualification remains separately deferred while CI/tests are disabled.
-4. **Release blockers/publication.** Address #58, #95, #63, #45 and other release-critical work before immutable publication.
+1. **Production image + Compose — acceptance step 01 implementation.** Preserve durable SQLite, server health dependency, bounded Docker authority, sibling-container execution, non-root operation where practical, and explicit crash-worker `restart: "no"`.
+2. **#57 — frozen journey completion in code.** Keep open until all fifteen capabilities are implemented; automated 15/15 release qualification remains separately deferred while CI/tests are disabled.
+3. **Release blockers/publication.** Address #58, #95, #63, #45 and other release-critical work before immutable publication.
 
 Security/correctness slices such as #162 and #123 remain important and may be selected when they do not displace an earlier dependency-critical implementation slice.
 
