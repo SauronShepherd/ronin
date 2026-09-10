@@ -4,19 +4,21 @@ Ronin v0.1 release qualification must tie third-party license evidence to the ex
 
 ## Source of dependency identity
 
-`requirements-dev.lock` is the committed exact, hash-locked root development graph. Root and `pyronin` build backends are exact-pinned in their `pyproject.toml` files. `tools/license_qualification.py` treats the lock as authoritative and records both its exact package/version graph and SHA-256 of the complete lock-file bytes.
+`requirements-dev.lock` is the committed exact, hash-locked root development graph. Root and `pyronin` build backends are exact-pinned separately in their `pyproject.toml` files. `tools/license_qualification.py` treats the lock as authoritative for the resolved runtime/development dependency inventory and records both its exact package/version graph and SHA-256 of the complete lock-file bytes.
 
 The lock parser is intentionally fail closed. It accepts only exact `name==version` requirement records that end in a line continuation and are followed immediately by one or more indented SHA-256 hash continuations; the final hash line closes the requirement block. Comments and blank lines are allowed only between complete requirement blocks. Any other active syntax, detached hash line, interrupted/unterminated continuation, range, direct URL, VCS/editable requirement, malformed hash line, or unrecognized active continuation fails qualification instead of being silently omitted from the inventory.
 
 The inventory generator must run in an environment installed from that exact lock. It refuses missing distributions and version drift. The generated inventory records, for each locked distribution:
 
 - normalized package name and exact version;
-- whether the package is directly declared by root/SDK project metadata;
+- whether the package is directly declared by root/SDK project dependency metadata represented by this lock;
 - the installed distribution's declared license metadata;
 - installed license/copying/notice/authors/copyright file paths exposed by package metadata;
 - the complete `requirements-dev.lock` SHA-256 binding the evidence to one exact lock revision.
 
-The direct-dependency set is part of the qualification boundary. Every dependency declared by the root or `pyronin` project metadata for this release qualification surface must also be present in `requirements-dev.lock`; otherwise inventory generation and qualification fail closed. The `direct` classification is not merely informational: qualification recomputes direct dependency names from the same project metadata and rejects any inventory whose boolean classification differs.
+The direct-dependency set is part of the qualification boundary. Every root or `pyronin` `[project]` dependency represented by this release qualification surface, including the root `dev` extra used to generate `requirements-dev.lock`, must also be present in the lock; otherwise inventory generation and qualification fail closed. The `direct` classification is not merely informational: qualification recomputes those direct dependency names from the same project metadata and rejects any inventory whose boolean classification differs.
+
+PEP 517 `build-system.requires` is a separate exact-pinned build-tool surface and is not classified as a direct dependency of `requirements-dev.lock`, because the current lock is generated from `pyproject.toml --extra dev` and does not resolve the isolated build environment. Build-tool licensing/security evidence therefore remains an explicit release-tool exception/surface to reconcile before #58 is complete; this validator does not pretend the runtime/development lock contains those packages.
 
 Generation command after installing the exact lock:
 
@@ -45,7 +47,7 @@ Qualification command:
 python tools/license_qualification.py
 ```
 
-The command succeeds only when the committed inventory has the exact current lock SHA-256, every active requirement is an exact structurally valid hash-qualified dependency block, the inventory exactly matches the parsed locked graph, the lock covers every direct dependency in the qualification surface, direct/transitive classifications agree with project metadata, and every exact dependency has complete reviewed license/notice/attribution decisions plus the project-level NOTICE rationale.
+The command succeeds only when the committed inventory has the exact current lock SHA-256, every active requirement is an exact structurally valid hash-qualified dependency block, the inventory exactly matches the parsed locked graph, the lock covers every direct project dependency represented by that graph, direct/transitive classifications agree with project metadata, and every exact dependency has complete reviewed license/notice/attribution decisions plus the project-level NOTICE rationale.
 
 ## Review requirements
 
@@ -53,8 +55,8 @@ A maintainer reviewing a generated inventory must inspect the referenced install
 
 `notice_required` and `attribution_required` are separate review decisions. When either is true, the release process must preserve the required upstream text in the distributed artifact or companion material before #58 can be considered complete. The validator deliberately does not invent or auto-copy legal text from ambiguous metadata.
 
-If the lock file changes for any reason, even without changing its parsed package/version set, the recorded lock SHA-256 changes and qualification fails until inventory evidence is regenerated. If a dependency version changes, its exact policy key changes and the review also fails until the new version is assessed. If project metadata changes the direct dependency surface, qualification fails until the lock and inventory are reconciled.
+If the lock file changes for any reason, even without changing its parsed package/version set, the recorded lock SHA-256 changes and qualification fails until inventory evidence is regenerated. If a dependency version changes, its exact policy key changes and the review also fails until the new version is assessed. If project dependency metadata changes the direct dependency surface represented by the lock, qualification fails until the lock and inventory are reconciled.
 
 ## Current validation mode
 
-Automated tests and GitHub Actions are currently disabled by maintainer policy. The generator, validator, and adversarial unit tests are implemented in the repository, but this slice does not claim that an inventory was generated from an executed locked environment, that license decisions were completed, or that CI passed. #58 remains open until those evidence and review criteria are genuinely satisfied.
+Automated tests and GitHub Actions are currently disabled by maintainer policy. The generator, validator, and adversarial unit tests are implemented in the repository, but this slice does not claim that an inventory was generated from an executed locked environment, that license decisions were completed, or that CI passed. #58 remains open until those evidence and review criteria are genuinely satisfied, including reconciliation of build-tool and security-audit surfaces with the resolved dependency evidence.
