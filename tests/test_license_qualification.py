@@ -12,6 +12,7 @@ from tools.license_qualification import (
 )
 
 _LOCK_SHA = "0" * 64
+_HASH = "a" * 64
 
 
 def _inventory(packages: list[dict[str, object]], *, lock_sha256: str = _LOCK_SHA) -> dict[str, object]:
@@ -76,7 +77,7 @@ def _qualify(
 def test_locked_graph_reads_exact_versions_and_normalizes_names(tmp_path: Path) -> None:
     lock = tmp_path / "requirements-dev.lock"
     lock.write_text(
-        "Foo_Bar==1.2.3 \\\n    --hash=sha256:abc\nother.pkg==4.5.6 \\\n    --hash=sha256:def\n",
+        f"Foo_Bar==1.2.3 \\\n    --hash=sha256:{_HASH}\nother.pkg==4.5.6 \\\n    --hash=sha256:{_HASH}\n",
         encoding="utf-8",
     )
 
@@ -85,9 +86,31 @@ def test_locked_graph_reads_exact_versions_and_normalizes_names(tmp_path: Path) 
 
 def test_locked_graph_fails_closed_on_conflicting_versions(tmp_path: Path) -> None:
     lock = tmp_path / "requirements-dev.lock"
-    lock.write_text("demo==1.0.0\ndemo==2.0.0\n", encoding="utf-8")
+    lock.write_text(
+        f"demo==1.0.0 \\\n    --hash=sha256:{_HASH}\ndemo==2.0.0 \\\n    --hash=sha256:{_HASH}\n",
+        encoding="utf-8",
+    )
 
     with pytest.raises(LicenseQualificationError, match="conflicting versions"):
+        locked_graph(lock)
+
+
+def test_locked_graph_rejects_requirement_without_hash(tmp_path: Path) -> None:
+    lock = tmp_path / "requirements-dev.lock"
+    lock.write_text("demo==1.0.0\n", encoding="utf-8")
+
+    with pytest.raises(LicenseQualificationError, match="no sha256 hash"):
+        locked_graph(lock)
+
+
+def test_locked_graph_rejects_unsupported_active_dependency_syntax(tmp_path: Path) -> None:
+    lock = tmp_path / "requirements-dev.lock"
+    lock.write_text(
+        f"demo>=1.0 \\\n    --hash=sha256:{_HASH}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(LicenseQualificationError, match="unsupported active lock syntax"):
         locked_graph(lock)
 
 
