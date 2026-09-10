@@ -66,6 +66,10 @@ def _parser() -> argparse.ArgumentParser:
     logs.add_argument("--follow", action="store_true")
     logs.add_argument("--json", action="store_true")
 
+    evidence = commands.add_parser("evidence", help="show portable job evidence")
+    evidence.add_argument("job_id")
+    evidence.add_argument("--json", action="store_true")
+
     jobs = commands.add_parser("jobs", help="list jobs newest first")
     jobs.add_argument("--project")
     jobs.add_argument(
@@ -308,6 +312,22 @@ def _logs(namespace: argparse.Namespace) -> int:
         time.sleep(0.2)
 
 
+def _evidence(namespace: argparse.Namespace) -> int:
+    items = _client().evidence(cast(str, namespace.job_id))
+    for item in items:
+        if cast(bool, namespace.json):
+            print(json.dumps(item, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
+            continue
+        digest = item["digest"]
+        digest_text = "-" if digest is None else str(digest)[:12]
+        size = item["size_bytes"]
+        print(
+            f"{item['cell_id']}\t{item['role']}\t{item['availability']}\t"
+            f"{digest_text}\t{size if size is not None else '-'}"
+        )
+    return 0
+
+
 def _jobs(namespace: argparse.Namespace) -> int:
     page = _client().jobs(
         project=cast(str | None, namespace.project),
@@ -402,6 +422,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _status(namespace)
         if command == "logs":
             return _logs(namespace)
+        if command == "evidence":
+            return _evidence(namespace)
         if command == "jobs":
             return _jobs(namespace)
         if command == "cancel":
