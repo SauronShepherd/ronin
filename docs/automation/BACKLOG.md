@@ -2,112 +2,116 @@
 
 This backlog is deliberately narrow for v0.1. Selection must be revalidated against current `main`, open Builder work, canonical automation handoffs, and the scope authority in `docs/product/V01_SCOPE.md`.
 
-_Last synchronized: 2026-09-10 from product/state baseline `33f1d57134c6356af43ae6d5eb5bc8fd17ad5813`; the planning correction was published as `a12789dd8aa883a096057ef7267257609de43852`._
+_Last synchronized: 2026-09-10 after disabling GitHub Actions and switching the Builder to code-only validation mode._
 
-**Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled. Exact-main qualification after a planning publication is evidence for that synchronization; it does not replace the underlying product/acceptance authority.
+**Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, validation mode, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled.
+
+## Current validation mode
+
+GitHub Actions are intentionally disabled to avoid consuming Actions credits. Previous workflow definitions are retained under `.github/workflows-disabled/` only as historical/restart material.
+
+Until the maintainer explicitly changes this policy, autonomous Builder work:
+
+- does not wait for, trigger, rerun, or require CI;
+- does not execute automated tests;
+- validates by static code inspection, contract/dependency tracing, schema/API consistency review, and code-level reasoning;
+- does not claim green CI or passing tests for new changes;
+- preserves the existing security, durability, performance, architecture, coverage, and acceptance requirements in implementation even though automated qualification is paused.
+
+Evidence-only handoffs that require scheduled/manual GitHub Actions remain open/deferred and do not block implementation while this mode is active.
 
 ## Current v0.1 truth
 
 Ronin already has the durable local execution spine, real-Docker worker execution/recovery, authenticated HTTP control-plane paths, OpenAPI 3.1, the `pyronin` SDK, and the supported operator CLI commands `serve`, `worker`, `submit`, `status`, `logs`, `jobs`, and `cancel`.
 
-Docker Qualification is the authoritative capable environment for frozen acceptance. Current frozen acceptance is **13/15 live** with exactly two intentional skips:
+The last automated qualification before CI was disabled established **13/15 live** frozen acceptance with exactly two intentional gaps:
 
 - `01` — production image + supported Compose topology is not implemented yet;
 - `12` — public portable evidence retrieval is not implemented yet.
 
-The exact Docker Qualification allowance is therefore `01,12`, and the allowance remains a ratchet: newly skipped live steps and stale allowances both fail qualification. Strict release remains unchanged at 15/15 with an empty allowance.
+That historical result remains the last automated acceptance baseline. Do not treat later code-only changes as automatically qualified.
 
-The planning synchronization publication `a12789dd8aa883a096057ef7267257609de43852` is exact-main green for CI run `34437517162`, Security qualification `34437517194`, Docker Qualification `34437517131`, and Release qualification `34437517122`.
+B1 / #48 canonical planning synchronization is complete and no longer selectable.
 
 ## Completed foundation carried into v0.1
 
-Do not reselect already-landed foundation, durable lifecycle, C0 pagination/event semantics, or bounded-composition work unless a regression or changed contract reopens it.
+Do not reselect already-landed foundation, durable lifecycle, pagination/event semantics, bounded composition, operator CLI, cancellation, or SQLite-collapse work unless static inspection finds a real regression or changed contract.
 
 Completed capabilities include:
 
 - pure Job -> Run -> Attempt lifecycle and storage-neutral `JobStore` contracts;
-- in-memory and SQLite adapters with shared conformance/fencing qualification;
+- in-memory and SQLite adapters with fencing semantics;
 - bounded async store/artifact composition;
 - per-cell immutable resume identity and artifact verification;
 - sequential checkpoint-before-next-cell execution;
 - production-lease crash/reclaim/replacement Attempt behavior with exact cell reuse;
-- fail-closed lease fencing, heartbeat ownership and cancellation semantics;
-- real-Docker local worker execution and container cleanup qualification;
+- fail-closed lease ownership/cancellation semantics;
+- real-Docker local worker execution path;
 - authenticated submit/list/status/events/cancel HTTP paths with bounded keyset pagination;
-- OpenAPI 3.1 and `pyronin` coverage for the implemented public job-control surface;
-- HTTP-independent CLI `doctor`, `validate`, `plan` plus network/operator commands `serve`, `worker`, `submit`, `status`, `logs`, `jobs`, and `cancel`;
+- OpenAPI 3.1 and `pyronin` support for the implemented public job-control surface;
+- CLI `doctor`, `validate`, `plan`, `serve`, `worker`, `submit`, `status`, `logs`, `jobs`, and `cancel`;
 - prompt in-flight cancellation/container cleanup;
-- the SQLite public-adapter collapse, internal lifecycle helper, and retirement of the transitional SQLite per-file coverage baseline.
+- SQLite public-adapter collapse/internal lifecycle helper cleanup.
 
-PR #159 (`feat: expose portable durable evidence`) is **closed without merge**. It is not current behavior, is not an active dependency, and must not block a fresh #53 implementation.
-
-PR #170 landed the nightly-verifier structural fix by moving verifier state outside `GITHUB_WORKSPACE`. That repair is present on main, but fresh scheduled/manual full-clean evidence is still required before #166/#167/#163 can be considered satisfied.
-
-B1 / #48 canonical planning synchronization is complete in implementation: PR #174 merged as `a12789dd8aa883a096057ef7267257609de43852`, and all four mandatory push workflows for that exact main SHA are green. This follow-up removes #48 from the selectable critical path and records the synchronization rule required to prevent recurrence.
+PR #159 remains closed without merge. It is not landed behavior and must not block a fresh #53 implementation.
 
 ## Current critical path
 
 Select one coherent slice at a time.
 
-1. **#166/#167/#163 — scheduled/manual full-clean proof.** Obtain a post-#170 workflow-dispatch or scheduled CI run that executes the full `make check` path. Push-green is not equivalent evidence. Do not change production code merely to manufacture this proof.
-2. **#52 — typed scoped grants.** Define the versioned vendor-neutral grant/requirement contract and deterministic deny-by-default matching before externally relied-on authorization behavior expands. Do not introduce OIDC, enterprise RBAC, OPA or provider IAM into the canonical model.
-3. **#53 — public portable evidence + acceptance step 12.** Expose storage-neutral evidence through the supported HTTP/OpenAPI/CLI/SDK boundary, keep physical locators private, add real SQLite/HTTP conformance, activate step 12, and shrink the Docker allowance from `01,12` to `01` in the same coherent change.
-4. **#54 — remaining API/SDK compatibility rules.** Finish error/evolution/drift conformance after the #52/#53 semantics settle.
-5. **Production image + Compose — acceptance step 01.** Promote the qualified Docker assumptions into the supported product topology: production image, durable SQLite volume, server health dependency, sibling-container execution, Docker authority only where required, non-root operation where practical, and explicit crash-worker `restart: "no"`.
-6. **#57 — strict frozen journey completion.** Keep open until all fifteen required steps execute and pass in authoritative qualification with no skip/xfail/failure/error/missing/unexpected outcome.
-7. **Release blockers and publication.** Close exact dependency/license/NOTICE policy (#58), installed-wheel clean qualification (#95), required repository/ref protection (#63), security-reporting policy after the human channel decision (#45), and other release-critical work before immutable publication.
+1. **#52 — typed scoped grants.** Define the versioned vendor-neutral grant/requirement contract and deterministic deny-by-default matching before externally relied-on authorization behavior expands. Do not introduce OIDC, enterprise RBAC, OPA or provider IAM into the canonical model.
+2. **#53 — public portable evidence + acceptance step 12 implementation.** Expose storage-neutral evidence through the supported HTTP/OpenAPI/CLI/SDK boundary and keep physical locators private. Under code-only mode, implement the contract completely but do not claim step 12 automatically qualified until automated validation is restored.
+3. **#54 — remaining API/SDK compatibility rules.** Finish error/evolution/drift compatibility after #52/#53 semantics settle.
+4. **Production image + Compose — acceptance step 01 implementation.** Build the supported topology while preserving durable SQLite, server health dependency, bounded Docker authority, sibling-container execution, non-root operation where practical, and explicit crash-worker `restart: "no"`.
+5. **#57 — frozen journey completion in code.** Keep open until all fifteen required capabilities are implemented. Automated 15/15 release qualification remains separately deferred while CI/tests are disabled.
+6. **Release blockers/publication.** Address implementation/policy blockers such as #58, #95, #63, #45 and related release work before any immutable publication.
 
-Security quick wins such as #162, #123, #95 and #60 remain important, but they do not outrank an unresolved earlier critical-path blocker unless current main/CI evidence changes the ordering.
+Deferred while code-only mode is active:
+
+- **#166/#167/#163** — scheduled/manual full-clean evidence. These remain valid evidence handoffs but are not implementation blockers while GitHub Actions/tests are intentionally disabled.
+
+Security/correctness slices such as #162, #123, #95 and #60 remain important and may be selected when they do not displace an earlier dependency-critical implementation slice.
 
 ## D1 operator status
 
-D1 is no longer a general network/operator CLI implementation block. `serve`, `worker`, `submit`, `status`, `logs`, `jobs`, and `cancel` are already landed. The only missing v0.1 operator subcommand in this family is `ronin evidence`, which belongs with #53 because its backing public evidence contract does not exist yet.
-
-Local Git revision capture is also implemented, but #123 remains open for executable-bit correctness in untracked dirty identity. Treat that as a bounded correctness slice, not a reason to reimplement D1.
+D1 is complete except `ronin evidence`. `serve`, `worker`, `submit`, `status`, `logs`, `jobs`, and `cancel` are already landed. `ronin evidence` belongs with #53 because its backing public evidence contract does not exist yet.
 
 ## Worker execution invariants
 
-Every remaining worker/runtime slice must preserve all of these:
+Every remaining worker/runtime slice must preserve:
 
-- Persist successful cell result/evidence before the next cell starts; end-of-run batching is not resume-safe.
-- Every worker-originated durable write is fenced by the active Attempt lease.
-- Heartbeat ownership loss is fail closed: cancel active execution and do not complete the Attempt.
-- Cancellation must not wait for all remaining cells and in-flight container cleanup must remain qualified.
-- Resume requires immutable cell identity plus verified artifact availability/digest.
-- Replacement Attempts reuse the same logical Run and must not replay valid completed cells.
-- Resume evidence must prove exact reused-cell identity and provenance by `attempt_id`; a simple successful rerun is insufficient.
-- Blocking durable-store and artifact operations remain behind bounded async facades.
-- Process-crash qualification preserves the production lease TTL rather than shortening it for CI.
-- Prefer durable-state assertions over fragile wall-clock assertions when the required property can be proven from state.
+- persist successful cell result/evidence before the next cell starts;
+- fence every worker-originated durable write by the active Attempt lease;
+- fail closed on heartbeat ownership loss;
+- cancellation must not wait for all remaining cells;
+- resume requires immutable cell identity plus verified artifact availability/digest;
+- replacement Attempts reuse the same logical Run and must not replay valid completed cells;
+- resume evidence must retain exact reused-cell identity and `attempt_id` provenance;
+- blocking store/artifact operations remain behind bounded async facades;
+- production lease TTL semantics are not weakened for convenience.
 
 ## Public-boundary and architecture invariants
 
-- Domain contracts remain capability-driven and vendor-neutral; engines, clouds, catalogs, formats, model providers, runtimes and execution stay behind adapters/SPIs/protocols.
-- Do not introduce a worker -> server dependency inversion; HTTP/server types remain boundary concerns, not canonical domain/storage models.
+- Canonical contracts remain capability-driven and vendor-neutral.
+- Do not introduce worker -> server dependency inversion.
 - Physical evidence/storage locators are not canonical public identity.
-- Static bearer authentication remains the v0.1 auth mechanism; typed least-privilege scopes are required, but OIDC and enterprise multi-user RBAC remain out of scope.
-- No generic skip allowances: any allowed skip must be exact by step and reason and qualification must fail on any new or stale skip.
+- Static bearer auth remains the v0.1 mechanism; typed least-privilege scopes are required.
+- No OIDC, enterprise RBAC, OPA, FastAPI, Pydantic, SQLAlchemy, Postgres, Kubernetes product deployment, brokers, OpenTelemetry, or OpenLineage unless scope is explicitly revised.
 
 ## Quality and release invariants
 
-Do not weaken gates to make CI green.
+These requirements remain implementation constraints even while automated enforcement is paused:
 
-- POST p95 <100 ms and GET p95 <30 ms remain unchanged.
-- SQLite WAL + `synchronous=FULL` durability and fencing are non-negotiable.
-- VCS capture remains fail closed.
-- T1 (`studio_core`, `studio_notebook`, `studio_orchestrator`) = 100% line and branch coverage.
-- T2 = 90%.
-- T3 = 75%.
-- Every `studio_storage` file = 80% minimum.
-- Publication must qualify the exact `pyronin` wheel outside the checkout and must use immutable Docker image identity/digests.
-- Merge requires exact-head PR CI evidence; release claims require exact-main post-merge evidence.
+- POST p95 <100 ms and GET p95 <30 ms;
+- SQLite WAL + `synchronous=FULL`;
+- fencing and fail-closed VCS capture;
+- T1 100%, T2 90%, T3 75%, every `studio_storage` file >=80% when test/coverage execution is eventually restored;
+- publication must qualify exact installed artifacts and immutable Docker digests before release.
 
 ## Frozen until v0.1 ships
 
-The following remain out of scope unless `docs/product/V01_SCOPE.md` is explicitly revised: ingestion/CDC breadth, SQL/lakehouse breadth, streaming, catalog/semantic BI, MLOps, GenAI/RAG, agents, Postgres/multi-node/HA, Kubernetes product deployment, enterprise RBAC, OPA, brokers, OpenTelemetry, OpenLineage, and broad vendor-adapter expansion.
-
-Do not introduce FastAPI, Pydantic, SQLAlchemy or other framework choices into canonical contracts merely to accelerate the v0.1 boundary work.
+Ingestion/CDC breadth, SQL/lakehouse breadth, streaming, catalog/semantic BI, MLOps, GenAI/RAG, agents, Postgres/multi-node/HA, Kubernetes product scale, enterprise authorization and broad vendor integrations remain out of scope until the v0.1 freeze is explicitly lifted.
 
 ## Operational invariant
 
-After every publication to `main`, inspect mandatory GitHub Actions for the exact published SHA. If an increment cannot safely be made green, do not force the merge or weaken the gate; record the exact blocker and next safe step instead.
+While code-only validation mode is active, implementation may merge after static review of the complete diff against current `main`. Do not run or wait for GitHub Actions/tests, and do not claim runtime/qualification evidence that was not actually produced.
