@@ -18,6 +18,7 @@ services:
       RONIN_DATA_DIR: /var/lib/ronin
       RONIN_HOST: 0.0.0.0
       RONIN_PORT: "8080"
+      RONIN_INSECURE_ALLOW_REMOTE_HTTP: "1"
     volumes:
       - ronin-data:/var/lib/ronin
     ports:
@@ -59,6 +60,7 @@ services:
     environment:
       <<: *ronin-environment
       RONIN_URL: http://server:8080
+      RONIN_INSECURE_ALLOW_REMOTE_HTTP: "1"
     volumes:
       - .:/workspace:ro
     depends_on:

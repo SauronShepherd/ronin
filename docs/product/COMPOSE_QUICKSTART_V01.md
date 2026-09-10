@@ -59,6 +59,10 @@ The bundled static bearer token is development-only. Its server-side grant is de
 - The image runs product processes as UID/GID `65532:65532`. Server/worker containers start their entrypoint as root only long enough to prepare volume/socket permissions and then drop privileges with `gosu`.
 - The worker resolves `RONIN_IMAGE_REF` through the Docker daemon to an immutable local `sha256:` image ID before constructing the execution runtime. Cell containers remain read-only, networkless, capability-dropped and resource-limited by the existing runner contract.
 - Git safe-directory handling is scoped to the mounted `/workspace`; the image does not configure `safe.directory=*`.
+- The built-in server is plaintext HTTP only. Compose explicitly sets `RONIN_INSECURE_ALLOW_REMOTE_HTTP=1` for the server and bundled CLI because they communicate over the private Compose bridge using `http://server:8080`.
+- That insecure-development opt-in does not make remote plaintext access supported. The host port remains bound only to `127.0.0.1`; do not change it to a public interface without placing an external HTTPS/TLS terminator at the client-facing boundary.
+
+See [`HTTP_TRANSPORT_V01.md`](HTTP_TRANSPORT_V01.md) for the complete transport-security contract.
 
 ## Stop and clean up
 

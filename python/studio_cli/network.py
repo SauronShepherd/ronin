@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+import ipaddress
 import json
+import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode, urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, OpenerDirector, Request, build_opener
 
 _MAX_RESPONSE_BYTES = 1024 * 1024
 _MAX_ERROR_BYTES = 64 * 1024
 _MAX_CURSOR_BYTES = 4096
+_INSECURE_REMOTE_HTTP_ENV = "RONIN_INSECURE_ALLOW_REMOTE_HTTP"
 _INSTANT_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$")
 _JOB_FIELDS = frozenset({"id", "state", "failure_code"})
 _EVENT_FIELDS = frozenset(
@@ -34,6 +37,43 @@ _EVIDENCE_FIELDS = frozenset(
 
 class ControlPlaneError(RuntimeError):
     """Expected control-plane transport or protocol failure."""
+
+
+class _RejectRedirects(HTTPRedirectHandler):
+    """Keep an authenticated request on its already-validated origin."""
+
+    def redirect_request(
+        self,
+        req: Request,
+        fp: object,
+        code: int,
+        msg: str,
+        headers: object,
+        newurl: str,
+    ) -> None:
+        del req, fp, code, msg, headers, newurl
+        return None
+
+
+def is_loopback_host(hostname: str | None) -> bool:
+    """Return whether a literal URL/server host is an explicit loopback target."""
+    if hostname is None:
+        return False
+    if hostname.casefold() == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(hostname).is_loopback
+    except ValueError:
+        return False
+
+
+def _insecure_remote_http_enabled() -> bool:
+    value = os.environ.get(_INSECURE_REMOTE_HTTP_ENV)
+    if value is None or value == "0":
+        return False
+    if value == "1":
+        return True
+    raise ValueError(f"{_INSECURE_REMOTE_HTTP_ENV} must be 0 or 1 when set")
 
 
 def _protocol_cursor(value: object, *, name: str, nullable: bool) -> str | None:
@@ -73,6 +113,8 @@ class ControlPlaneClient:
     base_url: str
     token: str
     timeout: float = 30.0
+    allow_insecure_remote_http: bool = field(default_factory=_insecure_remote_http_enabled)
+    _opener: OpenerDirector = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         parsed = urlsplit(self.base_url)
@@ -86,6 +128,17 @@ class ControlPlaneClient:
             raise ValueError("Ronin token must be non-empty and trimmed")
         if self.timeout <= 0:
             raise ValueError("timeout must be positive")
+        if (
+            parsed.scheme == "http"
+            and not is_loopback_host(parsed.hostname)
+            and not self.allow_insecure_remote_http
+        ):
+            raise ValueError(
+                "RONIN_URL requires HTTPS for authenticated non-loopback endpoints; "
+                "set RONIN_INSECURE_ALLOW_REMOTE_HTTP=1 only for explicit "
+                "local-development networks"
+            )
+        object.__setattr__(self, "_opener", build_opener(_RejectRedirects()))
 
     def request(
         self,
@@ -110,7 +163,7 @@ class ControlPlaneClient:
             headers["Idempotency-Key"] = idempotency_key
         request = Request(url, data=body, headers=headers, method=method)  # noqa: S310
         try:
-            with urlopen(request, timeout=self.timeout) as response:  # noqa: S310
+            with self._opener.open(request, timeout=self.timeout) as response:  # noqa: S310
                 data = response.read(_MAX_RESPONSE_BYTES + 1)
         except HTTPError as exc:
             try:
@@ -292,4 +345,4 @@ def _evidence(payload: object) -> dict[str, object]:
 
 TERMINAL_STATES = frozenset({"cancelled", "succeeded", "failed"})
 
-__all__ = ("ControlPlaneClient", "ControlPlaneError", "TERMINAL_STATES")
+__all__ = ("ControlPlaneClient", "ControlPlaneError", "TERMINAL_STATES", "is_loopback_host")
