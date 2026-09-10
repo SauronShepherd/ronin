@@ -2,7 +2,7 @@
 
 This backlog is deliberately narrow for v0.1. Selection must be revalidated against current `main`, open Builder work, canonical automation handoffs, and the scope authority in `docs/product/V01_SCOPE.md`.
 
-_Last synchronized: 2026-09-10 after disabling GitHub Actions and switching the Builder to code-only validation mode._
+_Last synchronized: 2026-09-10 for the #52 typed scoped grants implementation under code-only validation mode._
 
 **Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, validation mode, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled.
 
@@ -55,13 +55,30 @@ Completed capabilities include:
 
 PR #159 remains closed without merge. It is not landed behavior and must not block a fresh #53 implementation.
 
+## #52 typed scoped grants
+
+The current Builder slice implements the canonical v1 typed grant contract in `studio_core`:
+
+- closed action vocabulary and explicit resource scopes;
+- immutable versioned `Grant`, `Requirement`, `Decision`, `GrantSet`, and `AuthorizationEvidence` models;
+- bounded constraints with deny-by-default handling for unsupported semantics;
+- deterministic matching independent of input order, with ambiguity denied;
+- no inferred project/job/run/evidence hierarchy;
+- canonical bearer-scope encoding/parsing plus alpha migration from explicit legacy permission strings;
+- `KernelDirective.required_grants` alongside the legacy string path, with mixed representations rejected;
+- typed kernel authorization evaluated before executor side effects and successful decisions persisted as non-secret durable event evidence;
+- `ronin serve` now requires a non-empty canonical `RONIN_TOKEN_SCOPES` grant set associated with the existing static bearer token;
+- HTTP route-level enforcement remains intentionally deferred to #161.
+
+Architecture and representation details are recorded in `docs/product/ADR-V01-011-TYPED-GRANTS.md` and `docs/product/AUTHORIZATION_GRANTS_V1.md`.
+
 ## Current critical path
 
 Select one coherent slice at a time.
 
-1. **#52 — typed scoped grants.** Define the versioned vendor-neutral grant/requirement contract and deterministic deny-by-default matching before externally relied-on authorization behavior expands. Do not introduce OIDC, enterprise RBAC, OPA or provider IAM into the canonical model.
-2. **#53 — public portable evidence + acceptance step 12 implementation.** Expose storage-neutral evidence through the supported HTTP/OpenAPI/CLI/SDK boundary and keep physical locators private. Under code-only mode, implement the contract completely but do not claim step 12 automatically qualified until automated validation is restored.
-3. **#54 — remaining API/SDK compatibility rules.** Finish error/evolution/drift compatibility after #52/#53 semantics settle.
+1. **#53 — public portable evidence + acceptance step 12 implementation.** Expose storage-neutral evidence through the supported HTTP/OpenAPI/CLI/SDK boundary and keep physical locators private. Under code-only mode, implement the contract completely but do not claim step 12 automatically qualified until automated validation is restored.
+2. **#54 — remaining API/SDK compatibility rules.** Finish error/evolution/drift compatibility after #52/#53 semantics settle.
+3. **#161 — enforce scoped HTTP authorization.** Consume the now-canonical #52 typed grants across read/list/events/submit/cancel with project visibility and direct job-ID checks; do not redesign the grant model in the HTTP layer.
 4. **Production image + Compose — acceptance step 01 implementation.** Build the supported topology while preserving durable SQLite, server health dependency, bounded Docker authority, sibling-container execution, non-root operation where practical, and explicit crash-worker `restart: "no"`.
 5. **#57 — frozen journey completion in code.** Keep open until all fifteen required capabilities are implemented. Automated 15/15 release qualification remains separately deferred while CI/tests are disabled.
 6. **Release blockers/publication.** Address implementation/policy blockers such as #58, #95, #63, #45 and related release work before any immutable publication.
