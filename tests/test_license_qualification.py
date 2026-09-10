@@ -21,6 +21,7 @@ def _entry(name: str, version: str, license_name: str = "MIT") -> dict[str, obje
         "package": name,
         "version": version,
         "direct": True,
+        "source": f"https://example.invalid/{name}",
         "declared_license": license_name,
         "license_files": [f"{name}-{version}.dist-info/licenses/LICENSE"],
     }
@@ -69,15 +70,12 @@ def test_qualify_accepts_exact_reviewed_locked_graph() -> None:
         (_inventory([_entry("alpha", "1.0")]), "does not exactly match"),
         (_inventory([_entry("alpha", "1.0"), _entry("alpha", "1.0")]), "duplicate"),
         (
-            _inventory(
-                [
-                    {
-                        **_entry("alpha", "1.0"),
-                        "declared_license": None,
-                    }
-                ]
-            ),
+            _inventory([{**_entry("alpha", "1.0"), "declared_license": None}]),
             "missing declared license",
+        ),
+        (
+            _inventory([{**_entry("alpha", "1.0"), "source": None}]),
+            "missing distribution source",
         ),
     ],
 )
@@ -91,11 +89,11 @@ def test_qualify_fails_closed_on_incomplete_or_ambiguous_inventory(
         qualify(inventory, _policy("alpha==1.0", "beta==2.0"), graph)
 
 
-def test_qualify_requires_explicit_review_for_every_locked_distribution() -> None:
+def test_qualify_requires_exact_policy_key_set() -> None:
     graph = {"alpha": "1.0", "beta": "2.0"}
     inventory = _inventory([_entry("alpha", "1.0"), _entry("beta", "2.0")])
 
-    with pytest.raises(LicenseQualificationError, match="missing reviewed license decision: beta==2.0"):
+    with pytest.raises(LicenseQualificationError, match="exactly match"):
         qualify(inventory, _policy("alpha==1.0"), graph)
 
 
@@ -112,6 +110,22 @@ def test_qualify_rejects_denied_dependency() -> None:
     }
 
     with pytest.raises(LicenseQualificationError, match="not approved"):
+        qualify(inventory, policy, graph)
+
+
+def test_qualify_requires_review_rationale() -> None:
+    graph = {"alpha": "1.0"}
+    inventory = _inventory([_entry("alpha", "1.0")])
+    policy = _policy("alpha==1.0")
+    reviews = policy["reviews"]
+    assert isinstance(reviews, dict)
+    reviews["alpha==1.0"] = {
+        "decision": "allow",
+        "notice_required": False,
+        "rationale": "",
+    }
+
+    with pytest.raises(LicenseQualificationError, match="rationale is required"):
         qualify(inventory, policy, graph)
 
 
