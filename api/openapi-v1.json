@@ -3,14 +3,16 @@
   "info": {
     "title": "Ronin Control Plane API",
     "version": "0.1.0-alpha",
-    "description": "Strict alpha /v1 contract. Response objects and semantic enums are closed; error-code values are open within the normalized error envelope. See docs/product/API_COMPATIBILITY_V1.md."
+    "description": "Strict alpha /v1 contract. Response objects and semantic enums are closed; error-code values are open within the normalized error envelope. Static bearer credentials are bound server-side to typed project grants. See docs/product/API_COMPATIBILITY_V1.md and docs/product/AUTHORIZATION_GRANTS_V1.md."
   },
   "x-ronin-compatibility-stage": "alpha-strict",
+  "x-ronin-authorization-model": "typed-project-grants-v1",
   "security": [{"bearerAuth": []}],
   "paths": {
     "/v1/jobs": {
       "get": {
         "operationId": "listJobs",
+        "x-ronin-required-project-actions": ["list"],
         "parameters": [
           {"name": "project", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 256}},
           {"name": "state", "in": "query", "schema": {"type": "string", "enum": ["queued", "running", "cancelling", "cancelled", "succeeded", "failed"]}},
@@ -18,14 +20,16 @@
           {"name": "cursor", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 4096, "x-maxBytes": 4096}}
         ],
         "responses": {
-          "200": {"description": "Stable newest-first job page", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/JobPage"}}}},
+          "200": {"description": "Stable newest-first page containing only jobs visible to the bearer grant", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/JobPage"}}}},
           "400": {"$ref": "#/components/responses/Error"},
           "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
           "503": {"$ref": "#/components/responses/Error"}
         }
       },
       "post": {
         "operationId": "submitJob",
+        "x-ronin-required-project-actions": ["submit", "execute"],
         "parameters": [{"name": "Idempotency-Key", "in": "header", "required": false, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
         "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SubmitJobRequest"}}}},
         "responses": {
@@ -33,6 +37,7 @@
           "201": {"description": "Created", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Job"}}}},
           "400": {"$ref": "#/components/responses/Error"},
           "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
           "409": {"$ref": "#/components/responses/Error"},
           "503": {"$ref": "#/components/responses/Error"}
         }
@@ -41,6 +46,7 @@
     "/v1/jobs/{job_id}": {
       "get": {
         "operationId": "getJob",
+        "x-ronin-required-project-actions": ["read"],
         "parameters": [{"name": "job_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
         "responses": {
           "200": {"description": "Current durable job status", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Job"}}}},
@@ -54,6 +60,7 @@
     "/v1/jobs/{job_id}/events": {
       "get": {
         "operationId": "getJobEvents",
+        "x-ronin-required-project-actions": ["events"],
         "parameters": [
           {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}},
           {"name": "since", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 4096, "x-maxBytes": 4096}},
@@ -71,6 +78,7 @@
     "/v1/jobs/{job_id}/evidence": {
       "get": {
         "operationId": "getJobEvidence",
+        "x-ronin-required-project-actions": ["evidence:read"],
         "parameters": [{"name": "job_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
         "responses": {
           "200": {"description": "Portable durable evidence references", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/JobEvidence"}}}},
@@ -84,6 +92,7 @@
     "/v1/jobs/{job_id}/cancel": {
       "post": {
         "operationId": "cancelJob",
+        "x-ronin-required-project-actions": ["cancel"],
         "parameters": [{"name": "job_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
         "responses": {
           "200": {"description": "Cancellation requested or terminal job returned", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Job"}}}},
@@ -96,7 +105,13 @@
     }
   },
   "components": {
-    "securitySchemes": {"bearerAuth": {"type": "http", "scheme": "bearer"}},
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Static v0.1 bearer credential. The server binds the credential to a typed GrantSet; operation requirements are documented by x-ronin-required-project-actions. Direct job routes return 404 when the job is outside the credential's project authority."
+      }
+    },
     "schemas": {
       "SubmitJobRequest": {
         "type": "object", "additionalProperties": false, "required": ["project", "target"],
