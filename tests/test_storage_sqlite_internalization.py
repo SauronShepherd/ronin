@@ -1,3 +1,5 @@
+import studio_storage
+import studio_storage.paged_store as paged_store
 from studio_storage.fenced_sqlite import SqliteJobStore
 from studio_storage.sqlite import _SqliteLifecycleStore
 
@@ -22,3 +24,9 @@ def test_supported_sqlite_adapter_owns_worker_mutations_and_service_paging() -> 
         "complete_attempt",
     ):
         assert method in SqliteJobStore.__dict__
+
+
+def test_supported_sqlite_adapter_has_single_public_export() -> None:
+    assert studio_storage.SqliteJobStore is SqliteJobStore
+    assert "SqliteJobStore" not in paged_store.__dict__
+    assert "SqliteJobStore" not in paged_store.__all__
