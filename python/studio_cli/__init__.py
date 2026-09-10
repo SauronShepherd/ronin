@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from studio_core import ProjectManifest
+from studio_core import GrantSet, ProjectManifest
 from studio_execution import DurableExecutionService
 from studio_notebook import (
     NotebookDependencyAnalysis,
@@ -224,6 +224,17 @@ def _token() -> str:
     return value
 
 
+def _token_grants() -> GrantSet:
+    """Load the canonical v1 grant set associated with the static bearer token."""
+    try:
+        grants = GrantSet.from_json(_env("RONIN_TOKEN_SCOPES"))
+    except ValueError as exc:
+        raise CliError(f"invalid RONIN_TOKEN_SCOPES: {exc}") from exc
+    if not grants.grants:
+        raise CliError("RONIN_TOKEN_SCOPES must contain at least one typed grant")
+    return grants
+
+
 def _client() -> ControlPlaneClient:
     return ControlPlaneClient(_env("RONIN_URL", "http://127.0.0.1:8080"), _token())
 
@@ -338,7 +349,12 @@ def _serve() -> int:
     database = _database()
     database.parent.mkdir(parents=True, exist_ok=True)
     service = DurableExecutionService(SqliteJobStore(database, migration_now=_now()))
-    server = RoninHTTPServer((_env("RONIN_HOST", "127.0.0.1"), port), service, token=_token())
+    server = RoninHTTPServer(
+        (_env("RONIN_HOST", "127.0.0.1"), port),
+        service,
+        token=_token(),
+        grants=_token_grants(),
+    )
     try:
         server.serve_forever()
     finally:
