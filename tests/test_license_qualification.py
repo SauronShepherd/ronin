@@ -7,6 +7,7 @@ import pytest
 
 from tools.license_qualification import (
     LicenseQualificationError,
+    direct_requirements,
     locked_graph,
     qualify,
 )
@@ -144,6 +145,41 @@ def test_locked_graph_rejects_unsupported_active_dependency_syntax(tmp_path: Pat
 
     with pytest.raises(LicenseQualificationError, match="unsupported active lock syntax"):
         locked_graph(lock)
+
+
+def test_direct_requirements_excludes_build_backend_not_present_in_resolved_lock(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "packages/pyronin").mkdir(parents=True)
+    (tmp_path / "pyproject.toml").write_text(
+        """[build-system]
+requires = [\"setuptools==84.0.0\"]
+build-backend = \"setuptools.build_meta\"
+
+[project]
+name = \"root\"
+version = \"0.0.0\"
+dependencies = [\"runtime>=1,<2\"]
+
+[project.optional-dependencies]
+dev = [\"pytest>=9,<10\"]
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "packages/pyronin/pyproject.toml").write_text(
+        """[build-system]
+requires = [\"setuptools==84.0.0\"]
+build-backend = \"setuptools.build_meta\"
+
+[project]
+name = \"pyronin\"
+version = \"0.1.0\"
+dependencies = [\"http-client>=1,<2\"]
+""",
+        encoding="utf-8",
+    )
+
+    assert direct_requirements(tmp_path) == {"http-client", "pytest", "runtime"}
 
 
 def test_qualify_accepts_exact_reviewed_locked_graph() -> None:
