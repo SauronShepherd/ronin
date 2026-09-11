@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import dataclass
 
+from studio_core.canonical_json import encode as encode_canonical_json
 from studio_orchestrator.lifecycle import RunId
 
 
@@ -54,14 +54,7 @@ class CellExecutionIdentity:
             "upstream_result_digests": list(self.upstream_result_digests),
             "version": 1,
         }
-        encoded = json.dumps(
-            payload,
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-            allow_nan=False,
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return hashlib.sha256(encode_canonical_json(payload)).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)
