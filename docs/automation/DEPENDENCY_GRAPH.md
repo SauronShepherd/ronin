@@ -1,14 +1,10 @@
 # v0.1 dependency graph
 
-_Current snapshot: `11f0ef1a3974c8d124060895c9a1eb1aba241839` (2026-09-11). Scope authority: `docs/product/V01_SCOPE.md`._
+_Current snapshot basis: `3e69c2a084260126f7eb87cbfbbe4bedcd77df2e` (2026-09-11), with the storage evidence-layer collapse represented by this change. Scope authority: `docs/product/V01_SCOPE.md`._
 
 ```text
-storage evidence-layer collapse
-  -> #56 remaining canonical identity boundaries
+#56 remaining canonical identity boundaries
   -> #22 residual architecture reconciliation
-
-#56
-  -> #22 canonicalization residuals
 
 #58 exact resolved license evidence
   -> #95 artifact/license binding evidence
@@ -36,6 +32,7 @@ storage evidence-layer collapse
 
 ## Reconciled items
 
+- **Storage evidence-layer collapse is code-complete in this change.** The exported concrete SQLite adapter is again `fenced_sqlite.SqliteJobStore`; the exported concrete in-memory adapter is `paged_store.InMemoryJobStore`. Schema-v3 evidence persistence and the shared max-100 Run bound live in those canonical paths, while `evidence_sqlite.py` and `evidence_memory.py` are compatibility re-exports only.
 - **#99 is no longer an implementation dependency.** Immutable Job/Run/Attempt lifecycle types, lease/retry semantics and the storage-neutral `JobStore` Protocol already exist in `studio_orchestrator` and are consumed by current storage/worker code.
 - **#95 implementation mechanics already exist** in `tools/artifact_qualification.py`; remaining work is exact candidate execution/publication evidence and binding to #58 license evidence.
 - **#115 production implementation exists** for cgroup v1/v2 observed CPU/memory; remaining work is real-Docker/overhead evidence.
@@ -44,8 +41,8 @@ storage evidence-layer collapse
 
 ## Current selection order
 
-1. Restore the #164 single-public-adapter invariant after the schema-v3 evidence extension introduced `evidence_sqlite.SqliteJobStore` and `evidence_memory.InMemoryJobStore` concrete outer layers.
-2. Finish #56 identity-bearing JSON call sites and complete boundary goldens.
+1. Finish #56 identity-bearing JSON call sites and complete boundary goldens.
+2. Reconcile #22 residual architecture defects without reopening already-completed durable/auth/evidence work.
 3. Complete the deterministic build-system/release-tool surface for #58; exact inventory/policy/NOTICE conclusions require real evidence and human review.
 4. Publish the already-decided governance/contributor/docs/release surface (#72/#70/#71/#73), with #45 gated on a verified private reporting route.
 5. Record the #50 runtime capability/ambiguity decision before any future multi-runtime expansion.
