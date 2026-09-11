@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
+
+from studio_core.canonical_json import decode as decode_canonical_json
+from studio_core.canonical_json import encode as encode_canonical_json
 
 from .dependencies import CellId, CellKind, Notebook, NotebookCell
 from .identity import CellIdentityAnchor, CellIdentityBoundary, allocate_cell_ids
@@ -45,7 +47,7 @@ class NotebookDocument:
         }
 
     def to_json(self) -> str:
-        return json.dumps(self.to_data(), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return encode_canonical_json(self.to_data()).decode("utf-8")
 
     @classmethod
     def from_data(cls, value: Mapping[str, object]) -> NotebookDocument:
@@ -62,7 +64,7 @@ class NotebookDocument:
 
     @classmethod
     def from_json(cls, payload: str) -> NotebookDocument:
-        return cls.from_data(_require_mapping(json.loads(payload), "notebook document"))
+        return cls.from_data(_require_mapping(decode_canonical_json(payload), "notebook document"))
 
 
 def _cell_to_data(cell: NotebookCell, identity: CellIdentityAnchor) -> dict[str, object]:
