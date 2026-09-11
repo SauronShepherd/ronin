@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import http.client
 import http.server
 import importlib.util
 import sqlite3
 from pathlib import Path
 from threading import Thread
 
+from studio_server.scoped_http import _ReadinessHandler
 from studio_storage import sqlite_ready
 
 
@@ -53,6 +55,37 @@ def test_sqlite_readiness_requires_current_schema_and_operational_jobs_table(tmp
     finally:
         connection.close()
     assert not sqlite_ready(database)
+
+
+class _ReadinessTestServer(http.server.HTTPServer):
+    def __init__(self, *, ready: bool) -> None:
+        self._ready = ready
+        super().__init__(("127.0.0.1", 0), _ReadinessHandler)
+
+    def ready(self) -> bool:
+        return self._ready
+
+
+def test_healthz_is_unauthenticated_and_returns_only_readiness_state() -> None:
+    for ready, expected_status, expected_body in (
+        (True, 200, b'{"status":"ready"}'),
+        (False, 503, b'{"status":"not_ready"}'),
+    ):
+        server = _ReadinessTestServer(ready=ready)
+        thread = Thread(target=server.handle_request, daemon=True)
+        thread.start()
+        connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=2.0)
+        try:
+            connection.request("GET", "/healthz")
+            response = connection.getresponse()
+            body = response.read()
+            assert response.status == expected_status
+            assert response.getheader("Content-Type") == "application/json"
+            assert body == expected_body
+        finally:
+            connection.close()
+            thread.join(timeout=2)
+            server.server_close()
 
 
 def _healthcheck_module() -> object:
