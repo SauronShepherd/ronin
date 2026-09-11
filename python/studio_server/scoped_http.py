@@ -8,6 +8,7 @@ from studio_core import GrantSet
 from studio_execution import DurableExecutionService
 from studio_server.http import RoninHTTPServer as _RoninHTTPServer
 from studio_server.transport_policy import (
+    BindPolicy,
     allows_plaintext_non_loopback,
     is_loopback_host,
     parse_bind_policy,
@@ -16,7 +17,7 @@ from studio_server.transport_policy import (
 _BIND_POLICY_ENV = "RONIN_BIND_POLICY"
 
 
-def _bind_policy_from_env() -> str:
+def _bind_policy_from_env() -> BindPolicy:
     return parse_bind_policy(os.environ.get(_BIND_POLICY_ENV))
 
 
@@ -32,7 +33,7 @@ class RoninHTTPServer(_RoninHTTPServer):
         grants: GrantSet,
     ) -> None:
         host, _port = server_address
-        policy = parse_bind_policy(_bind_policy_from_env())
+        policy = _bind_policy_from_env()
         if not is_loopback_host(host) and not allows_plaintext_non_loopback(policy):
             raise ValueError(
                 "Ronin's built-in server is plaintext HTTP; non-loopback binding requires "
