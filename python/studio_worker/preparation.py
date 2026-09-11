@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,6 +16,8 @@ from studio_core import (
     resolve_runtime,
     snapshot_runtime_resolution,
 )
+from studio_core.canonical_json import decode as decode_canonical_json
+from studio_core.canonical_json import encode as encode_canonical_json
 from studio_kernel import (
     CellExecutionRequest,
     ExecutionAttemptId,
@@ -145,14 +146,7 @@ def build_request(
 
 
 def _canonical_digest(value: object) -> str:
-    encoded = json.dumps(
-        value,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    return hashlib.sha256(encode_canonical_json(value)).hexdigest()
 
 
 def _profile_ref(ref: RuntimeProfileRef | None) -> object:
@@ -207,7 +201,11 @@ def _repository_digest(revision: RepositoryRevision) -> str:
 
 
 def _parameter_digest(parameters_json: str) -> str:
-    return _canonical_digest(json.loads(parameters_json))
+    try:
+        parameters = decode_canonical_json(parameters_json)
+    except (TypeError, ValueError) as exc:
+        raise WorkerPreparationError("job parameters_json must be canonical-boundary JSON") from exc
+    return _canonical_digest(parameters)
 
 
 def identity_for(
