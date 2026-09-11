@@ -128,7 +128,12 @@ print(checksum + payload[0])
 
 def _cell(cell_id: str, source: str) -> CellExecutionRequest:
     return CellExecutionRequest(
-        CellId(cell_id), source, source, "python", (), KernelDirective("docker-qualification", "source.execute")
+        CellId(cell_id),
+        source,
+        source,
+        "python",
+        (),
+        KernelDirective("docker-qualification", "source.execute"),
     )
 
 
@@ -186,7 +191,15 @@ def _assert_effective_limits(probe: dict[str, object]) -> str:
 
 async def _docker_ps_names(container_name: str) -> tuple[str, ...]:
     outcome = await AsyncioCommandRunner(max_output_bytes=64 * 1024).run(
-        (_DOCKER, "ps", "-a", "--filter", f"name={container_name}", "--format", "{{.Names}}"),
+        (
+            _DOCKER,
+            "ps",
+            "-a",
+            "--filter",
+            f"name={container_name}",
+            "--format",
+            "{{.Names}}",
+        ),
         input_text="",
         cancellation=CancellationToken(),
         timeout_seconds=10.0,
@@ -233,7 +246,11 @@ async def _exercise_timeout_cleanup() -> tuple[str, str | None, tuple[str, ...],
 
 def test_real_docker_memory_swap_capped() -> None:
     limits = ContainerExecutionLimits(
-        cpus="0.5", memory="128m", pids=32, nofile=1024, timeout_seconds=10.0
+        cpus="0.5",
+        memory="128m",
+        pids=32,
+        nofile=1024,
+        timeout_seconds=10.0,
     )
     executor = _executor("docker-real-resource-limits", limits)
     result = asyncio.run(
@@ -242,8 +259,10 @@ def test_real_docker_memory_swap_capped() -> None:
     assert result.state == "succeeded"
     log_reference = next(reference for reference in result.evidence if reference.kind == "log")
     probe = cast(
-        dict[str, object], json.loads(cast(str, _read_evidence(log_reference.ref)["output"]))
+        dict[str, object],
+        json.loads(cast(str, _read_evidence(log_reference.ref)["output"])),
     )
+
     memory_swap_max = probe["memory_swap_max"]
     if isinstance(memory_swap_max, str):
         assert int(memory_swap_max) == 0
@@ -253,6 +272,7 @@ def test_real_docker_memory_swap_capped() -> None:
         assert isinstance(memory_limit_v1, str)
         assert isinstance(memory_memsw_limit_v1, str)
         assert int(memory_memsw_limit_v1) == int(memory_limit_v1)
+
     assert probe["nofile_soft"] == 1024
     assert probe["nofile_hard"] == 1024
 
@@ -262,48 +282,91 @@ def test_real_docker_records_observed_cpu_and_memory() -> None:
     executor = _executor("docker-real-observed-resource", limits)
     result = asyncio.run(
         executor.execute(
-            _cell("observed-resource-cell", _RESOURCE_WORKLOAD_SOURCE), CancellationToken()
+            _cell("observed-resource-cell", _RESOURCE_WORKLOAD_SOURCE),
+            CancellationToken(),
         )
     )
     assert result.state == "succeeded"
     observed = _resource_observation(result)
     assert observed["availability"] == "available"
     assert observed["measurement_source"] in {"cgroup_v1", "cgroup_v2"}
-    assert isinstance(observed["cpu_seconds"], float) and observed["cpu_seconds"] > 0
-    assert isinstance(observed["memory_peak_bytes"], int)
-    assert observed["memory_peak_bytes"] >= 16 * 1024 * 1024
+    cpu_seconds = observed["cpu_seconds"]
+    memory_peak_bytes = observed["memory_peak_bytes"]
+    assert isinstance(cpu_seconds, float)
+    assert cpu_seconds > 0
+    assert isinstance(memory_peak_bytes, int)
+    assert memory_peak_bytes >= 16 * 1024 * 1024
     assert observed["unavailable_reason"] is None
 
 
 def test_real_docker_isolation_limits_usage_and_cleanup() -> None:
     _EVIDENCE_ROOT.mkdir(parents=True, exist_ok=True)
+    assert _IMAGE.startswith("sha256:")
+    assert len(_IMAGE) == 71
+
     limits = ContainerExecutionLimits(cpus="0.5", memory="128m", pids=32, timeout_seconds=10.0)
     executor = _executor("docker-real-probe", limits)
     result = asyncio.run(executor.execute(_cell("probe-cell", _PROBE_SOURCE), CancellationToken()))
+
     assert result.state == "succeeded"
+    assert result.failure_code is None
+    assert {reference.kind for reference in result.evidence} == {"log", "resource"}
     log_reference = next(reference for reference in result.evidence if reference.kind == "log")
-    resource_reference = next(reference for reference in result.evidence if reference.kind == "resource")
-    probe = cast(dict[str, object], json.loads(cast(str, _read_evidence(log_reference.ref)["output"])))
+    resource_reference = next(
+        reference for reference in result.evidence if reference.kind == "resource"
+    )
+    log_payload = _read_evidence(log_reference.ref)
     resource_payload = _read_evidence(resource_reference.ref)
+    probe = cast(dict[str, object], json.loads(cast(str, log_payload["output"])))
+
     assert probe["uid"] == 65532
     assert probe["gid"] == 65532
     assert probe["interfaces"] == ["lo"]
+    root_mount_options = probe["root_mount_options"]
+    assert isinstance(root_mount_options, list)
+    assert "ro" in root_mount_options
+    assert probe["tmp_write"] == "ok"
     assert probe["cap_eff"] == "0000000000000000"
     assert probe["no_new_privs"] == "1"
     cgroup_version = _assert_effective_limits(probe)
-    observed = cast(dict[str, object], resource_payload["observed"])
+
+    memory_current = probe["memory_current_bytes"]
+    cpu_usage = probe["cpu_usage_usec"]
+    assert isinstance(memory_current, str)
+    assert isinstance(cpu_usage, str)
+    assert int(memory_current) > 0
+    assert int(cpu_usage) >= 0
+
     assert resource_payload["measurement_scope"] == "observed_cgroup_usage_and_enforced_limits"
     assert resource_payload["limits"] == {
-        "cpus": "0.5", "memory": "128m", "memory_swap": "128m", "nofile": 1024, "pids": 32
+        "cpus": "0.5",
+        "memory": "128m",
+        "memory_swap": "128m",
+        "nofile": 1024,
+        "pids": 32,
     }
     assert resource_payload["instrumentation"] == {
-        "measurement_supervisor_pids": 1, "effective_container_pids_limit": 32
+        "measurement_supervisor_pids": 1,
+        "effective_container_pids_limit": 32,
     }
     assert resource_payload["execution_identity"] == {
-        "attempt_id": "docker-real-probe", "cell_id": "probe-cell", "runtime_image": _IMAGE
+        "attempt_id": "docker-real-probe",
+        "cell_id": "probe-cell",
+        "runtime_image": _IMAGE,
     }
+    observed = cast(dict[str, object], resource_payload["observed"])
     assert observed["availability"] == "available"
     assert observed["measurement_source"] == cgroup_version.replace("-", "_")
+    assert observed["units"] == {
+        "cpu_seconds": "seconds",
+        "memory_peak_bytes": "bytes",
+    }
+    observed_cpu = observed["cpu_seconds"]
+    observed_peak = observed["memory_peak_bytes"]
+    assert isinstance(observed_cpu, float)
+    assert observed_cpu >= 0
+    assert isinstance(observed_peak, int)
+    assert observed_peak >= int(memory_current)
 
     cancelled_state, cancellation_names, cancelled_observed = asyncio.run(
         _exercise_cancellation_cleanup()
@@ -313,16 +376,40 @@ def test_real_docker_isolation_limits_usage_and_cleanup() -> None:
     )
     assert cancelled_state == "cancelled"
     assert cancellation_names == ()
-    assert cancelled_observed["unavailable_reason"] == "execution_cancelled_before_final_measurement"
+    assert cancelled_observed["availability"] == "unavailable"
+    assert (
+        cancelled_observed["unavailable_reason"]
+        == "execution_cancelled_before_final_measurement"
+    )
     assert timeout_state == "failed"
     assert timeout_failure == "kernel.container.timeout"
     assert timeout_names == ()
-    assert timeout_observed["unavailable_reason"] == "execution_timed_out_before_final_measurement"
+    assert timeout_observed["availability"] == "unavailable"
+    assert (
+        timeout_observed["unavailable_reason"]
+        == "execution_timed_out_before_final_measurement"
+    )
 
     summary = {
         "schema": "ronin.docker-qualification/v1",
         "executed_image_id": _IMAGE,
         "bootstrap_repository_digest": _REPO_DIGEST,
+        "isolation": {
+            "uid": probe["uid"],
+            "gid": probe["gid"],
+            "interfaces": probe["interfaces"],
+            "root_mount_options": root_mount_options,
+            "cap_eff": probe["cap_eff"],
+            "no_new_privs": probe["no_new_privs"],
+        },
+        "effective_limits": {
+            "cgroup_version": cgroup_version,
+            "cpus": "0.5",
+            "memory_bytes": 128 * 1024 * 1024,
+            "memory_swap": "disabled",
+            "nofile": 1024,
+            "pids": 32,
+        },
         "observed_usage": observed,
         "cleanup": {
             "cancellation_state": cancelled_state,
@@ -333,8 +420,11 @@ def test_real_docker_isolation_limits_usage_and_cleanup() -> None:
             "timeout_containers_remaining": list(timeout_names),
             "timeout_observation": timeout_observed,
         },
-        "cost_evidence": "not_emitted; physical quantities only",
+        "cost_evidence": (
+            "not_emitted; local resource usage is measured but currency cost is unknown"
+        ),
     }
     (_EVIDENCE_ROOT / "qualification-summary.json").write_text(
-        json.dumps(summary, sort_keys=True, indent=2) + "\n", encoding="utf-8"
+        json.dumps(summary, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
     )
