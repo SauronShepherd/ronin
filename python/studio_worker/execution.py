@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
+from studio_core.canonical_json import encode as encode_canonical_json
 from studio_execution import DurableExecutionService
 from studio_kernel import (
     CancellationToken,
@@ -80,7 +80,7 @@ def _result_json(result: CellExecutionResult) -> str:
         "evidence": _portable_evidence_payloads(result),
         "version": 1,
     }
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return encode_canonical_json(payload).decode("utf-8")
 
 
 def _artifact_ref(ref: StoredEvidenceRef) -> ArtifactRef | None:
