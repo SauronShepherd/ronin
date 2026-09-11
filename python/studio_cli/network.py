@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import ipaddress
 import json
 import os
 import re
@@ -11,10 +10,17 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, OpenerDirector, Request, build_opener
 
+from studio_server.transport_policy import (
+    BindPolicy,
+    allows_plaintext_non_loopback,
+    is_loopback_host,
+    parse_bind_policy,
+)
+
 _MAX_RESPONSE_BYTES = 1024 * 1024
 _MAX_ERROR_BYTES = 64 * 1024
 _MAX_CURSOR_BYTES = 4096
-_INSECURE_REMOTE_HTTP_ENV = "RONIN_INSECURE_ALLOW_REMOTE_HTTP"
+_BIND_POLICY_ENV = "RONIN_BIND_POLICY"
 _INSTANT_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$")
 _JOB_FIELDS = frozenset({"id", "state", "failure_code"})
 _EVENT_FIELDS = frozenset(
@@ -55,25 +61,8 @@ class _RejectRedirects(HTTPRedirectHandler):
         return None
 
 
-def is_loopback_host(hostname: str | None) -> bool:
-    """Return whether a literal URL/server host is an explicit loopback target."""
-    if hostname is None:
-        return False
-    if hostname.casefold() == "localhost":
-        return True
-    try:
-        return ipaddress.ip_address(hostname).is_loopback
-    except ValueError:
-        return False
-
-
-def _insecure_remote_http_enabled() -> bool:
-    value = os.environ.get(_INSECURE_REMOTE_HTTP_ENV)
-    if value is None or value == "0":
-        return False
-    if value == "1":
-        return True
-    raise ValueError(f"{_INSECURE_REMOTE_HTTP_ENV} must be 0 or 1 when set")
+def _bind_policy_from_env() -> BindPolicy:
+    return parse_bind_policy(os.environ.get(_BIND_POLICY_ENV))
 
 
 def _protocol_cursor(value: object, *, name: str, nullable: bool) -> str | None:
@@ -113,11 +102,12 @@ class ControlPlaneClient:
     base_url: str
     token: str
     timeout: float = 30.0
-    allow_insecure_remote_http: bool = field(default_factory=_insecure_remote_http_enabled)
+    bind_policy: BindPolicy = field(default_factory=_bind_policy_from_env)
     _opener: OpenerDirector = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         parsed = urlsplit(self.base_url)
+        policy = parse_bind_policy(self.bind_policy)
         if parsed.scheme not in {"http", "https"} or parsed.hostname is None:
             raise ValueError("RONIN_URL must be an absolute http(s) URL")
         if parsed.username is not None or parsed.password is not None:
@@ -131,13 +121,15 @@ class ControlPlaneClient:
         if (
             parsed.scheme == "http"
             and not is_loopback_host(parsed.hostname)
-            and not self.allow_insecure_remote_http
+            and not allows_plaintext_non_loopback(policy)
         ):
             raise ValueError(
                 "RONIN_URL requires HTTPS for authenticated non-loopback endpoints; "
-                "set RONIN_INSECURE_ALLOW_REMOTE_HTTP=1 only for explicit "
-                "local-development networks"
+                "RONIN_BIND_POLICY=container-internal is reserved for the supported private "
+                "Compose bridge, while RONIN_BIND_POLICY=insecure-plaintext-network is the "
+                "explicit trusted-development-network escape hatch"
             )
+        object.__setattr__(self, "bind_policy", policy)
         object.__setattr__(self, "_opener", build_opener(_RejectRedirects()))
 
     def request(
