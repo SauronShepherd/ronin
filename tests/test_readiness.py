@@ -6,6 +6,7 @@ import importlib.util
 import sqlite3
 from pathlib import Path
 from threading import Thread
+from types import ModuleType
 
 from studio_server.scoped_http import _ReadinessHandler
 from studio_storage import sqlite_ready
@@ -88,7 +89,7 @@ def test_healthz_is_unauthenticated_and_returns_only_readiness_state() -> None:
             server.server_close()
 
 
-def _healthcheck_module() -> object:
+def _healthcheck_module() -> ModuleType:
     path = Path("docker/healthcheck.py")
     spec = importlib.util.spec_from_file_location("ronin_container_healthcheck", path)
     assert spec is not None and spec.loader is not None
@@ -97,7 +98,11 @@ def _healthcheck_module() -> object:
     return module
 
 
-def _serve_once(status: int, body: bytes, content_type: str = "application/json") -> tuple[http.server.HTTPServer, Thread]:
+def _serve_once(
+    status: int,
+    body: bytes,
+    content_type: str = "application/json",
+) -> tuple[http.server.HTTPServer, Thread]:
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self, _format: str, *args: object) -> None:
             del args
