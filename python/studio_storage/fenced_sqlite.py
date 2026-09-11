@@ -25,6 +25,7 @@ from studio_orchestrator import (
     StoredExecutionEvent,
 )
 
+from studio_storage.limits import MAX_EVIDENCE_REFS_PER_RUN
 from studio_storage.pagination import (
     decode_event_cursor,
     decode_job_cursor,
@@ -415,8 +416,9 @@ class SqliteJobStore(_SqliteLifecycleStore):
             if ref.run_id.value != attempt["run_id"]:
                 raise ValueError("evidence run does not match attempt")
             connection.execute(
-                "INSERT OR REPLACE INTO evidence_refs(run_id,cell_id,role,digest_algorithm,digest,"
-                "media_type,size_bytes,storage_ref) VALUES (?,?,?,?,?,?,?,?)",
+                "INSERT OR REPLACE INTO evidence_refs("
+                "run_id,cell_id,role,digest_algorithm,digest,media_type,size_bytes,storage_ref,"
+                "availability,unavailable_reason) VALUES (?,?,?,?,?,?,?,?,?,?)",
                 (
                     str(ref.run_id),
                     ref.cell_id,
@@ -426,8 +428,18 @@ class SqliteJobStore(_SqliteLifecycleStore):
                     ref.media_type,
                     ref.size_bytes,
                     ref.storage_ref,
+                    ref.availability.value,
+                    ref.unavailable_reason,
                 ),
             )
+            count_row = connection.execute(
+                "SELECT COUNT(*) AS count FROM evidence_refs WHERE run_id=?",
+                (str(ref.run_id),),
+            ).fetchone()
+            if count_row is None or int(count_row["count"]) > MAX_EVIDENCE_REFS_PER_RUN:
+                raise ValueError(
+                    f"run evidence must contain at most {MAX_EVIDENCE_REFS_PER_RUN} references"
+                )
             connection.execute("COMMIT")
         except Exception:
             if connection.in_transaction:
