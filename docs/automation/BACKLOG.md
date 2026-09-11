@@ -2,7 +2,7 @@
 
 This backlog is deliberately narrow for v0.1. Selection must be revalidated against current `main`, open Builder work, canonical automation handoffs, and the scope authority in `docs/product/V01_SCOPE.md`.
 
-_Last synchronized: 2026-09-11 at `11f0ef1a3974c8d124060895c9a1eb1aba241839` after canonical IR JSON (#195) and the combined issue/build-plan reconciliation._
+_Last synchronized: 2026-09-11 from base `3e69c2a084260126f7eb87cbfbbe4bedcd77df2e` with the storage evidence-layer collapse in this change._
 
 **Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, validation mode, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled.
 
@@ -12,7 +12,7 @@ GitHub Actions are intentionally disabled to avoid consuming Actions credits. Pr
 
 Until the maintainer explicitly changes this policy, autonomous Builder work does not wait for, trigger, rerun, or require CI; does not execute automated tests; validates through static code inspection, dependency/contract tracing, schema/API consistency review, and code-level reasoning; and does not claim green CI or passing tests for new changes. Existing security, durability, performance, architecture, coverage, and acceptance requirements remain implementation constraints.
 
-The complementary 2026-09-11 audit reported six failing tests, lint/format drift and a storage-layer regression from its own local execution. Those observations are useful diagnostic evidence, but they do not change the repository's current code-only operating policy or create permission to run tests/CI. The storage-layer finding is independently confirmed in source and is therefore promoted into the implementation critical path.
+The complementary 2026-09-11 audit reported six failing tests, lint/format drift and a storage-layer regression from its own local execution. Those observations remain diagnostic evidence, but they do not change the repository's current code-only operating policy or create permission to run tests/CI. The storage-layer finding was independently confirmed in source and is resolved by the current collapse slice.
 
 Evidence-only handoffs #166/#167/#163 remain open/deferred and do not block implementation while this mode is active. Test/CI-centric #47/#60/#102 likewise remain deferred under this policy.
 
@@ -26,11 +26,21 @@ Canonical JSON v1 has landed through #190/#193/#194/#195 for the shared codec, i
 
 #57 remains open/BLOCKED as a qualification gate. The acceptance harness still carries stale historical step-01/step-12 skip markers, and no 15/15 claim is permitted until automated qualification is explicitly restored and executed.
 
-## Confirmed storage regression after public evidence work
+## Storage evidence adapter architecture
 
-The current exported `studio_storage.SqliteJobStore` is `evidence_sqlite.SqliteJobStore`, a concrete subclass of `fenced_sqlite.SqliteJobStore`. `evidence_sqlite` overrides `put_evidence` with a `*args/**kwargs` implementation to add schema-v3 availability fields and the per-Run evidence bound. The in-memory path similarly adds `evidence_memory.InMemoryJobStore` over `paged_store.InMemoryJobStore`.
+The schema-v3 public-evidence extension had reintroduced concrete `evidence_sqlite.SqliteJobStore` and `evidence_memory.InMemoryJobStore` subclasses after #164 established a single-public-adapter invariant.
 
-This reintroduces a concrete adapter layer after #164 had established the single-public-adapter invariant. Existing regression tests explicitly expect `studio_storage.SqliteJobStore is fenced_sqlite.SqliteJobStore`, so the correct implementation direction is to fold schema-v3 bounded evidence behavior into the canonical adapters, preserve lease fencing/pagination/WAL/`synchronous=FULL`, and turn compatibility modules into re-exports or remove them when safe. Do not relax the guard tests to accept the new layering.
+The current collapse restores that invariant:
+
+- `studio_storage.SqliteJobStore` is exported directly from `fenced_sqlite.SqliteJobStore`;
+- schema-v3 evidence availability/unavailable fields and the per-Run bound live in that canonical fenced SQLite adapter;
+- `evidence_sqlite.py` is a compatibility re-export rather than another concrete class;
+- `studio_storage.InMemoryJobStore` is exported directly from `paged_store.InMemoryJobStore`;
+- the same per-Run evidence bound lives in the canonical paged in-memory adapter;
+- `evidence_memory.py` is a compatibility re-export;
+- the shared bound is defined in storage-neutral `studio_storage.limits`.
+
+This preserves lease fencing, `BEGIN IMMEDIATE`, thread-local SQLite connection reuse, keyset paging, schema-v3 availability semantics, WAL/`synchronous=FULL` through the existing lifecycle store, and the max-100 evidence-ref contract without relaxing the existing regression guards.
 
 ## Production image + Compose implementation
 
@@ -44,14 +54,14 @@ No automated Compose/runtime qualification is claimed under current policy.
 
 Select one coherent slice at a time.
 
-1. **Storage evidence-layer collapse — regression from the #164 invariant.** Fold schema-v3 evidence availability/bounds into canonical `fenced_sqlite.SqliteJobStore` and `paged_store.InMemoryJobStore` (or their internal bases where structurally cleaner), restore a single public concrete adapter per backend, and preserve fencing/pagination/durability. Do not edit regression tests to accept extra concrete layers.
-2. **#56 — finish canonical JSON identity boundaries.** Migrate kernel/session, HTTP request/idempotency input, durable `parameters_json`, grants and remaining core serializers; add complete boundary goldens while preserving valid v1 bytes.
+1. **#56 — finish canonical JSON identity boundaries.** Migrate kernel/session, HTTP request/idempotency input, durable `parameters_json`, grants and remaining core serializers; add complete boundary goldens while preserving valid v1 bytes.
+2. **#22 — residual architecture reconciliation.** After #56, handle duplicate exact edges, operator-aware target-port cardinality and concrete secret-bearing producers without reopening already-completed durable/auth/evidence work.
 3. **#58 — exact transitive license/NOTICE evidence.** Tooling exists; remaining deterministic code work is explicit build-system/release-tool exception modeling. Exact inventory/policy/NOTICE conclusions require a real resolved environment and human review; never fabricate them.
 4. **#70/#72/#71/#73 — contributor/governance/docs/release surface.** Governance decision is already recorded; publish truthful contributor-facing policy, docs index, troubleshooting, first-run and release/change communication. #45 security policy remains blocked on a verified private reporting channel.
 5. **#50 — runtime capability namespace/ambiguity decision.** Decision record first; do not add a second v0.1 runtime.
 6. **#57 — qualification gate.** Revisit only if the maintainer explicitly restores automated verification.
 
-#95 artifact-qualification mechanics and #115 observed-resource implementation are substantially complete in code and remain open for real evidence. #63 remains a release-time repository-administration gate. #59 and #62 remain post-v0.1. #99 is obsolete because the Job/Run/Attempt domain and `JobStore` Protocol already exist.
+#95 artifact-qualification mechanics and #115 observed-resource implementation are substantially complete in code and remain open for real evidence. #63 remains a release-time repository-administration gate. #59 and #62 remain post-v0.1. #99 is closed because the Job/Run/Attempt domain and `JobStore` Protocol already exist.
 
 ## Worker execution invariants
 
