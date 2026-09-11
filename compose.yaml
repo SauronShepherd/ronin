@@ -2,7 +2,7 @@ name: ronin
 
 x-ronin-environment: &ronin-environment
   RONIN_DB: /var/lib/ronin/ronin.sqlite3
-  RONIN_TOKEN: ${RONIN_TOKEN:-development-token}
+  RONIN_TOKEN: ${RONIN_TOKEN:?set RONIN_TOKEN before starting Ronin}
   RONIN_TOKEN_SCOPES: '{"version":1,"grants":[{"version":1,"actions":["read","list","events","submit","execute","cancel","evidence:read"],"resource":{"kind":"project","identifier":"examples/demo"},"constraints":{}}]}'
 
 services:
@@ -18,7 +18,7 @@ services:
       RONIN_DATA_DIR: /var/lib/ronin
       RONIN_HOST: 0.0.0.0
       RONIN_PORT: "8080"
-      RONIN_INSECURE_ALLOW_REMOTE_HTTP: "1"
+      RONIN_BIND_POLICY: container-internal
     volumes:
       - ronin-data:/var/lib/ronin
     ports:
@@ -60,7 +60,7 @@ services:
     environment:
       <<: *ronin-environment
       RONIN_URL: http://server:8080
-      RONIN_INSECURE_ALLOW_REMOTE_HTTP: "1"
+      RONIN_BIND_POLICY: container-internal
     volumes:
       - .:/workspace:ro
     depends_on:
