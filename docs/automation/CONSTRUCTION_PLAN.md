@@ -1,6 +1,6 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-11 at `11f0ef1a3974c8d124060895c9a1eb1aba241839` after canonical IR JSON (#195) and the combined issue/build-plan reconciliation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-11 from base `3e69c2a084260126f7eb87cbfbbe4bedcd77df2e` with the storage evidence-layer collapse in this change. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
 
@@ -10,7 +10,7 @@ Ronin remains capability-ordered rather than calendar-ordered. Each autonomous r
 
 GitHub Actions and automated tests are intentionally disabled by maintainer policy. Previous workflow definitions remain under `.github/workflows-disabled/`. Autonomous work performs static code inspection, dependency/contract tracing, schema/API consistency review, and code-level reasoning only. Security, durability, performance, architecture, coverage, and acceptance requirements remain implementation constraints, but no new CI/test/acceptance evidence may be claimed.
 
-A complementary local audit dated 2026-09-11 reported six failing tests, format/lint drift, low indirect coverage in `grants.py`, stale acceptance skips, orphaned qualification tooling and a concrete storage-layer regression. Those execution-derived observations remain useful diagnostic evidence, but this plan does not adopt that audit's CI/test phases as current requirements because the maintainer has explicitly kept Ronin in code-only mode. The storage regression is independently confirmed by current source and is promoted to the implementation critical path.
+A complementary local audit dated 2026-09-11 reported six failing tests, format/lint drift, low indirect coverage in `grants.py`, stale acceptance skips, orphaned qualification tooling and a concrete storage-layer regression. Those execution-derived observations remain useful diagnostic evidence, but this plan does not adopt that audit's CI/test phases as current requirements because the maintainer has explicitly kept Ronin in code-only mode. The storage regression was independently confirmed in source and is resolved by the current collapse slice.
 
 The last authoritative automated acceptance baseline remains **13/15**, with historical gaps `01` and `12`. Product code for both capabilities exists; code-only implementation does not automatically change the qualified result.
 
@@ -22,7 +22,7 @@ Canonical JSON work has advanced through #190/#193/#194/#195: shared codec, inde
 
 #95 is no longer a missing implementation tool: `tools/artifact_qualification.py` provides the code mechanics for build-once, external install and artifact identity. Real artifact qualification/publish evidence remains outstanding. #115 likewise has production cgroup observation code; real-Docker/overhead evidence remains outstanding.
 
-#99 is obsolete as an implementation item: the immutable Job/Run/Attempt lifecycle, lease/retry rules and storage-neutral `JobStore` Protocol are already present in `studio_orchestrator` and consumed by storage/worker code.
+#99 is closed: the immutable Job/Run/Attempt lifecycle, lease/retry rules and storage-neutral `JobStore` Protocol are already present in `studio_orchestrator` and consumed by storage/worker code.
 
 ## Phase A — foundation
 
@@ -52,37 +52,38 @@ The <60 s healthy and <10 min zero-to-demo budgets remain implementation targets
 
 ## Phase F — architecture/canonical hardening
 
-### F1 — collapse the evidence adapter regression
+### F1 — storage evidence adapter collapse
 
-Current source has reintroduced concrete evidence subclasses after #164 established a single-public-adapter invariant:
+**Code-complete in this change under static review; automated regression proof deferred.**
+
+The schema-v3 evidence extension had reintroduced concrete subclasses outside the canonical storage adapters. The current implementation restores the #164 architecture invariant:
 
 ```text
 SQLite:
   _SqliteLifecycleStore
-    -> fenced_sqlite.SqliteJobStore
-      -> evidence_sqlite.SqliteJobStore   # currently exported
+    -> fenced_sqlite.SqliteJobStore  # exported concrete adapter
 
 Memory:
   memory.InMemoryJobStore
-    -> paged_store.InMemoryJobStore
-      -> evidence_memory.InMemoryJobStore # currently exported
+    -> paged_store.InMemoryJobStore  # exported concrete adapter
 ```
 
-The correct slice is to:
+Details:
 
-1. fold schema-v3 evidence availability/unavailable fields and the `MAX_EVIDENCE_REFS_PER_RUN=100` bound into the canonical supported adapters;
-2. preserve `BEGIN IMMEDIATE`, lease fencing, thread-local SQLite connection reuse, WAL/`synchronous=FULL`, keyset paging, dense Run-global events and public evidence privacy;
-3. restore explicit/overloaded typed worker-write contracts on the exported SQLite class instead of letting an outer `*args/**kwargs` subclass erase the useful type surface;
-4. make `studio_storage.SqliteJobStore is fenced_sqlite.SqliteJobStore` true again;
-5. retain compatibility modules only as re-exports if needed; they must not define another concrete adapter class;
-6. apply the same principle to the public in-memory adapter;
-7. do not relax the existing regression guards to accept the layered state.
+1. schema-v3 `availability` and `unavailable_reason` persistence now lives in `fenced_sqlite.SqliteJobStore`;
+2. the per-Run bound `MAX_EVIDENCE_REFS_PER_RUN=100` is shared from `studio_storage.limits`;
+3. SQLite checks the bound inside the same `BEGIN IMMEDIATE` transaction and rolls back the attempted write on overflow;
+4. the exported SQLite class retains the existing fail-closed legacy-call overload/normalization surface and active lease fencing;
+5. `evidence_sqlite.py` is only a compatibility re-export;
+6. the canonical paged in-memory adapter owns the same evidence bound;
+7. `evidence_memory.py` is only a compatibility re-export;
+8. `studio_storage.__init__` exports the canonical classes directly.
 
-This is the next implementation slice because it is a current-source regression of a previously closed architecture invariant.
+Existing lifecycle storage still owns migration/read primitives, WAL and `synchronous=FULL`; paging and thread-local SQLite connection reuse remain unchanged. No test was edited to accept the previously layered state.
 
 ### F2 — finish #56 canonical JSON
 
-After storage is structurally stable:
+This is now the next code-critical phase:
 
 1. `studio_kernel/session.py`: canonicalize authorization/event bytes and duplicate/nonfinite ledger parsing;
 2. `studio_server/http.py`: canonicalize `_request_identity` and reject duplicate/nonfinite request JSON before identity construction; keep `_write_json` as presentation JSON;
@@ -92,6 +93,10 @@ After storage is structurally stable:
 6. audit remaining direct `json.dumps/json.loads` call sites and classify identity vs presentation/cursor/tooling;
 7. extend canonical goldens for project, notebook, IR, cell execution, HTTP request identity, kernel events and grants;
 8. preserve valid v1 bytes, including the documented finite-float and `-0.0` compatibility boundary.
+
+### F3 — #22 residual architecture reconciliation
+
+After #56, reconcile only remaining current-source defects: duplicate exact edges, operator-aware target-port cardinality and concrete secret-bearing producer surfaces. Do not reopen already-landed durable/auth/evidence/transport work.
 
 ## Phase G — security, supply-chain and release implementation
 
@@ -107,7 +112,7 @@ Implementation mechanics already exist. Do not reimplement them. The remaining r
 
 ### Human/project surface
 
-After the two code-critical items above, prioritize:
+After the code-critical items above, prioritize:
 
 - #72 + #70: contributor-facing governance, CONTRIBUTING, Code of Conduct and templates;
 - #71: docs landing, canonical first-run and troubleshooting;
@@ -149,8 +154,8 @@ Their requirements remain preserved for any future verification phase; no thresh
 
 One coherent Builder slice at a time:
 
-1. **Storage evidence-layer collapse** — restore the #164 single-public-adapter invariant while preserving schema-v3 evidence behavior.
-2. **#56 canonical JSON completion** — kernel/session -> HTTP request/idempotency -> durable parameters/grants -> remaining core serializers/goldens.
+1. **#56 canonical JSON completion** — kernel/session -> HTTP request/idempotency -> durable parameters/grants -> remaining core serializers/goldens.
+2. **#22 residual architecture reconciliation** — duplicate exact edges, operator-aware target-port cardinality and concrete secret-bearing producers.
 3. **#58 deterministic license/build-tool surface** — then exact inventory/legal review only where real evidence exists.
 4. **#70/#72/#71/#73 public contributor/docs/release surface**, with #45 gated on a verified private reporting route.
 5. **#50 decision record**, followed by compatible pure-core work only if justified.
