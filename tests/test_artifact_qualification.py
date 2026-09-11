@@ -51,6 +51,30 @@ def test_origin_must_be_site_packages_and_outside_checkout(tmp_path: Path) -> No
         module.assert_installed_origin(alien, checkout=checkout, site_packages=site)
 
 
+def test_qualification_record_is_machine_path_independent(tmp_path: Path) -> None:
+    candidate = {"schema": "ronin.python-artifact-candidate/v1", "package": "pyronin"}
+    results: list[dict[str, object]] = []
+    for root_name in ("runner-a", "different-host-root"):
+        site = tmp_path / root_name / "site-packages"
+        module_path = site / "pyronin" / "__init__.py"
+        module_path.parent.mkdir(parents=True)
+        module_path.write_text("__version__='0.1.0a2'\n")
+        results.append(
+            module._record_qualification(
+                candidate,
+                imported_module=module_path.resolve(),
+                site_packages=site,
+            )
+        )
+    assert results[0] == results[1]
+    assert results[0]["qualification"] == {
+        "contract_tests": "passed",
+        "import_origin": "isolated-site-packages",
+        "module_path": "pyronin/__init__.py",
+    }
+    assert str(tmp_path) not in module._canonical_json(results[0])
+
+
 def test_license_binding_uses_artifact_digest_not_installed_metadata(tmp_path: Path) -> None:
     artifact = tmp_path / "dep.whl"
     artifact.write_bytes(b"candidate")
