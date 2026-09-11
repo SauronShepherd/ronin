@@ -28,6 +28,14 @@ By default, the supported server may bind only to loopback (`127.0.0.1`, `::1`, 
 
 The bundled local Compose topology sets `RONIN_BIND_POLICY=container-internal` because the server must bind `0.0.0.0` inside its container so sibling services can reach it. For other trusted development networks, `RONIN_BIND_POLICY=insecure-plaintext-network` is the explicit acknowledgement. Neither mode makes public remote plaintext access supported.
 
+## Readiness endpoint boundary
+
+Ronin exposes `GET /healthz` only as an operational readiness endpoint for the local container topology. It is deliberately outside `/v1`, is not listed in `SUPPORTED_ROUTES`, and is not part of the versioned OpenAPI compatibility contract.
+
+The endpoint requires no bearer token so a container runtime can probe readiness without copying credentials into the probe. Its response is deliberately closed and non-diagnostic: `200 {"status":"ready"}` only when the supported storage readiness check succeeds, otherwise `503 {"status":"not_ready"}`. It does not expose schema numbers, paths, credentials, job state, exception text, or other internal details.
+
+For the supported SQLite composition, readiness means the current schema migration is fully applied and a bounded read-only store query succeeds. A listening TCP port alone is not readiness.
+
 ## Remote access
 
 For authenticated access from another host or an untrusted network, terminate TLS in a dedicated reverse proxy or other external TLS terminator and expose Ronin to clients through `https://`.
