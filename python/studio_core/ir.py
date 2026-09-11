@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import heapq
-import json
 import math
 from bisect import bisect_left
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Literal, TypeAlias, cast
 
+from .canonical_json import decode as decode_canonical_json
+from .canonical_json import encode as encode_canonical_json
 from .ids import NodeId
 
 Scalar: TypeAlias = None | bool | int | float | str
@@ -263,7 +264,7 @@ class Pipeline:
 
     @classmethod
     def from_json(cls, payload: str) -> Pipeline:
-        data = json.loads(payload)
+        data = decode_canonical_json(payload)
         return cls.from_data(_require_mapping(data, "pipeline"))
 
 
@@ -314,13 +315,7 @@ def _port_by_name(ports: tuple[Port, ...], name: str) -> Port:
 
 
 def _canonical_json(value: object) -> str:
-    return json.dumps(
-        value,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    )
+    return encode_canonical_json(value).decode("utf-8")
 
 
 def _node_semantic_payload(
