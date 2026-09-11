@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.canonical-json-goldens/v1",
+  "vectors": [
+    {
+      "name": "unicode-order-nested",
+      "source_json": "{\"z\":null,\"unicode\":\"café\",\"nested\":{\"b\":false,\"a\":[true,2]},\"big\":9007199254740993}",
+      "canonical_utf8": "{\"big\":9007199254740993,\"nested\":{\"a\":[true,2],\"b\":false},\"unicode\":\"café\",\"z\":null}",
+      "sha256": "8dbeb6b9cbba0156d8eaa97f24b8f0f80441c9ac99d875628c71b56df3e75f85"
+    },
+    {
+      "name": "legacy-negative-zero",
+      "source_json": "{\"value\":-0.0}",
+      "canonical_utf8": "{\"value\":-0.0}",
+      "sha256": "e997b3b5e52b95a4d7dc0eb1944332460f46e968a7174a6554435d2545de5a52"
+    },
+    {
+      "name": "resume-identity",
+      "source_json": "{\"version\":1,\"upstream_result_digests\":[\"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\"],\"source_digest\":\"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\",\"runtime_digest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"run_id\":\"run-1\",\"repository_digest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"parameter_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"cell_id\":\"cell-1\"}",
+      "canonical_utf8": "{\"cell_id\":\"cell-1\",\"parameter_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"repository_digest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"run_id\":\"run-1\",\"runtime_digest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"source_digest\":\"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\",\"upstream_result_digests\":[\"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\"],\"version\":1}",
+      "sha256": "fc7d3391e678570e8e98554c96d6eb44968c508a5b470ba503adcf014168cb80"
+    }
+  ],
+  "rejections": [
+    {"name": "duplicate-member", "source_json": "{\"a\":1,\"a\":2}"},
+    {"name": "nan", "source_json": "{\"x\":NaN}"},
+    {"name": "positive-infinity", "source_json": "{\"x\":Infinity}"},
+    {"name": "negative-infinity", "source_json": "{\"x\":-Infinity}"},
+    {"name": "overflow-to-infinity", "source_json": "{\"x\":1e9999}"}
+  ]
+}
