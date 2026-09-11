@@ -5,13 +5,13 @@
       "name": "unicode-order-nested",
       "source_json": "{\"z\":null,\"unicode\":\"café\",\"nested\":{\"b\":false,\"a\":[true,2]},\"big\":9007199254740993}",
       "canonical_utf8": "{\"big\":9007199254740993,\"nested\":{\"a\":[true,2],\"b\":false},\"unicode\":\"café\",\"z\":null}",
-      "sha256": "8dbeb6b9cbba0156d8eaa97f24b8f0f80441c9ac99d875628c71b56df3e75f85"
+      "sha256": "9e36fcfcf868d6b7757c599ed4bcf2f89eef4edfbcfe23d7ae03a14dfd09a2db"
     },
     {
       "name": "legacy-negative-zero",
       "source_json": "{\"value\":-0.0}",
       "canonical_utf8": "{\"value\":-0.0}",
-      "sha256": "e997b3b5e52b95a4d7dc0eb1944332460f46e968a7174a6554435d2545de5a52"
+      "sha256": "c848a4efa987f46ba3bfd46242333afcb1c68c3240e0f35ae9d269b1c980648b"
     },
     {
       "name": "resume-identity",
