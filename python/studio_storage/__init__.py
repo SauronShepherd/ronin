@@ -9,6 +9,7 @@ from studio_storage.evidence_memory import InMemoryJobStore
 from studio_storage.evidence_sqlite import SqliteJobStore
 from studio_storage.memory import IdempotencyConflict
 from studio_storage.paged_store import BoundedAsyncJobStore
+from studio_storage.readiness import sqlite_ready
 from studio_storage.sqlite import migrate, open_database, schema_version
 
 __all__ = (
@@ -24,4 +25,5 @@ __all__ = (
     "migrate",
     "open_database",
     "schema_version",
+    "sqlite_ready",
 )
