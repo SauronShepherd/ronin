@@ -5,17 +5,21 @@ from __future__ import annotations
 from functools import partial
 
 from studio_orchestrator import (
+    AttemptId,
     EventPage,
     Instant,
     JobId,
     JobState,
+    LeaseToken,
     Page,
     RunExecutionEvent,
     RunId,
+    StoredEvidenceRef,
     StoredExecutionEvent,
 )
 
 from studio_storage.async_store import BoundedAsyncJobStore as _BoundedAsyncJobStore
+from studio_storage.limits import MAX_EVIDENCE_REFS_PER_RUN
 from studio_storage.memory import InMemoryJobStore as _InMemoryJobStore
 from studio_storage.pagination import (
     decode_cursor,
@@ -41,7 +45,7 @@ _validate_limit = validate_limit
 
 
 class InMemoryJobStore(_InMemoryJobStore):
-    """Reference adapter with stable newest-first and Run-event keyset paging."""
+    """Reference adapter with stable paging and bounded evidence storage."""
 
     def get_run_id_for_job(self, job_id: JobId) -> RunId | None:
         with self._lock:
@@ -138,6 +142,31 @@ class InMemoryJobStore(_InMemoryJobStore):
             attempt_sequence=last_event.sequence,
         )
         return EventPage(items, next_since)
+
+    def put_evidence(
+        self,
+        attempt_id: AttemptId,
+        ref: StoredEvidenceRef,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant | str,
+    ) -> None:
+        with self._lock:
+            attempt = self._active_attempt_for_write(
+                attempt_id,
+                owner=owner,
+                lease_token=lease_token,
+                now=now,
+            )
+            if ref.run_id != attempt.run_id:
+                raise ValueError("evidence run does not match attempt")
+            target = self._evidence.setdefault(ref.run_id, [])
+            if len(target) >= MAX_EVIDENCE_REFS_PER_RUN:
+                raise ValueError(
+                    f"run evidence must contain at most {MAX_EVIDENCE_REFS_PER_RUN} references"
+                )
+            target.append(ref)
 
 
 class BoundedAsyncJobStore(_BoundedAsyncJobStore):
