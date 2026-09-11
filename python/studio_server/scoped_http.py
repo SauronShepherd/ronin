@@ -2,36 +2,26 @@
 
 from __future__ import annotations
 
-import ipaddress
 import os
 
 from studio_core import GrantSet
 from studio_execution import DurableExecutionService
 from studio_server.http import RoninHTTPServer as _RoninHTTPServer
+from studio_server.transport_policy import (
+    allows_plaintext_non_loopback,
+    is_loopback_host,
+    parse_bind_policy,
+)
 
-_INSECURE_REMOTE_HTTP_ENV = "RONIN_INSECURE_ALLOW_REMOTE_HTTP"
-
-
-def _is_loopback_host(hostname: str) -> bool:
-    if hostname.casefold() == "localhost":
-        return True
-    try:
-        return ipaddress.ip_address(hostname).is_loopback
-    except ValueError:
-        return False
+_BIND_POLICY_ENV = "RONIN_BIND_POLICY"
 
 
-def _insecure_remote_http_enabled() -> bool:
-    value = os.environ.get(_INSECURE_REMOTE_HTTP_ENV)
-    if value is None or value == "0":
-        return False
-    if value == "1":
-        return True
-    raise ValueError(f"{_INSECURE_REMOTE_HTTP_ENV} must be 0 or 1 when set")
+def _bind_policy_from_env() -> str:
+    return parse_bind_policy(os.environ.get(_BIND_POLICY_ENV))
 
 
 class RoninHTTPServer(_RoninHTTPServer):
-    """Supported plaintext server with fail-closed non-loopback binding."""
+    """Supported plaintext server with explicit fail-closed binding policy."""
 
     def __init__(
         self,
@@ -42,11 +32,13 @@ class RoninHTTPServer(_RoninHTTPServer):
         grants: GrantSet,
     ) -> None:
         host, _port = server_address
-        if not _is_loopback_host(host) and not _insecure_remote_http_enabled():
+        policy = parse_bind_policy(_bind_policy_from_env())
+        if not is_loopback_host(host) and not allows_plaintext_non_loopback(policy):
             raise ValueError(
                 "Ronin's built-in server is plaintext HTTP; non-loopback binding requires "
-                "RONIN_INSECURE_ALLOW_REMOTE_HTTP=1 for an explicit local-development "
-                "network. Use an external TLS terminator for remote access."
+                "RONIN_BIND_POLICY=container-internal for the supported private Compose "
+                "bridge, or RONIN_BIND_POLICY=insecure-plaintext-network for an explicit "
+                "trusted development network. Use an external TLS terminator for remote access."
             )
         super().__init__(server_address, service, token=token, grants=grants)
 
