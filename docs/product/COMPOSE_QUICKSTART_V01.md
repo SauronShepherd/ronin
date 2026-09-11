@@ -30,7 +30,9 @@ Inspect readiness with:
 docker compose ps
 ```
 
-The server should become `healthy`. The v0.1 budget is under 60 seconds; this code path has not been re-qualified by the frozen acceptance journey since GitHub Actions were disabled.
+The healthcheck calls the non-versioned, unauthenticated `GET /healthz` operational endpoint. A TCP listener alone is not enough: the server reports ready only when the existing SQLite database is at the current schema version and answers a bounded read. The endpoint returns no schema number, path, credential, job state, or exception text.
+
+Compose retains a 2-second health interval, 3-second outer timeout, 25 retries, and 2-second start period. The probe itself uses a 2-second HTTP timeout. This preserves the existing startup gating configuration while making each successful readiness decision materially stronger; the frozen v0.1 requirement remains healthy in under 60 seconds and still requires real Compose timing qualification before it can be claimed.
 
 ## Use the bundled CLI
 
