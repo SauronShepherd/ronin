@@ -43,13 +43,6 @@ from .ir import (
     freeze_value,
     thaw_value,
 )
-from .network_policy import (
-    BIND_POLICIES,
-    BindPolicy,
-    allows_plaintext_non_loopback,
-    is_loopback_host,
-    parse_bind_policy,
-)
 from .operators import (
     OperatorCatalog,
     OperatorContract,
@@ -83,14 +76,12 @@ from .runtime_profiles import (
 
 __all__ = (
     "ACTIONS",
-    "BIND_POLICIES",
     "GRANT_SCHEMA_VERSION",
     "MAX_CONSTRAINTS",
     "MAX_GRANTS",
     "RESOURCE_KINDS",
     "Action",
     "AuthorizationEvidence",
-    "BindPolicy",
     "CapabilityRequirement",
     "Decision",
     "DecisionReason",
@@ -139,14 +130,11 @@ __all__ = (
     "RuntimeResolution",
     "SchemaRef",
     "allocate_instance_keys",
-    "allows_plaintext_non_loopback",
     "builtin_diagnostic_catalog",
     "builtin_operator_catalog",
     "freeze_value",
-    "is_loopback_host",
     "operator_parameter_value",
     "parse_bearer_scope",
-    "parse_bind_policy",
     "parse_legacy_permission",
     "requirement_to_bearer_scope",
     "resolve_runtime",
