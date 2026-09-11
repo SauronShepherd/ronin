@@ -24,9 +24,9 @@ Ronin now has a durable local execution spine over SQLite, real-Docker worker ex
 
 A production image and supported Docker Compose topology are implemented in code. See [`docs/product/COMPOSE_QUICKSTART_V01.md`](docs/product/COMPOSE_QUICKSTART_V01.md) for the local startup and demo path.
 
-Authenticated HTTP now fails closed against accidental remote plaintext transport: CLI clients require HTTPS for non-loopback endpoints by default, and `ronin serve` requires an explicit insecure-development opt-in before binding plaintext HTTP to a non-loopback interface. The built-in server does not provide TLS; supported remote use terminates HTTPS externally. See [`docs/product/HTTP_TRANSPORT_V01.md`](docs/product/HTTP_TRANSPORT_V01.md).
+Authenticated HTTP fails closed against accidental remote plaintext transport. The default `RONIN_BIND_POLICY=loopback` permits plaintext only on explicit loopback targets; the bundled local Compose topology declares `container-internal` for its private bridge, and other plaintext development networks require the explicit `insecure-plaintext-network` policy. Compose also requires an operator-supplied `RONIN_TOKEN` instead of shipping a known default credential. The built-in server does not provide TLS; supported remote use terminates HTTPS externally. See [`docs/product/HTTP_TRANSPORT_V01.md`](docs/product/HTTP_TRANSPORT_V01.md).
 
-The last automated frozen v0.1 qualification remains **13/15**. Historical gaps were production image/Compose startup (`01`) and public portable evidence retrieval (`12`); both capabilities are now present in code, but automated tests and GitHub Actions are intentionally disabled by maintainer policy, so Ronin must not yet be described as newly qualified 15/15 or release-ready.
+The last automated frozen v0.1 qualification remains **13/15**. Historical gaps were production image/Compose startup (`01`) and public portable evidence retrieval (`12`); both capabilities are now present in code, but GitHub Actions are intentionally disabled by maintainer policy, so Ronin must not yet be described as newly qualified 15/15 or release-ready.
 
 The broader Data + AI capabilities described above remain targets unless their concrete implementation is present in the repository. In particular, v0.1 does not claim broad ingestion, SQL/lakehouse, streaming, MLOps, GenAI/agents, enterprise RBAC, Postgres/multi-node HA or Kubernetes product deployment.
 
@@ -38,7 +38,7 @@ make check
 make mutation
 ```
 
-These are the repository's historical automated development checks. Under the current maintainer policy the Autonomous Builder does not execute automated tests or CI; the commands remain documented for future/manual use when that policy changes. Coverage targets and other quality constraints remain part of the implementation contract.
+GitHub Actions are currently disabled. The Autonomous Builder may run targeted local tests from exact connector-reconstructed source when the required dependencies are already available; those results are reported as local evidence only and do not replace full acceptance/CI qualification. Coverage targets and other quality constraints remain part of the implementation contract.
 
 ## Layout
 
