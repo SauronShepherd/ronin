@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
 
+from .canonical_json import decode as decode_canonical_json
+from .canonical_json import encode as encode_canonical_json
 from .projects import (
     CapabilityRequirement,
     ExecutionProfile,
@@ -66,7 +67,7 @@ class ProjectManifest:
         }
 
     def to_json(self) -> str:
-        return json.dumps(self.to_data(), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return encode_canonical_json(self.to_data()).decode("utf-8")
 
     @classmethod
     def from_data(cls, value: Mapping[str, object]) -> ProjectManifest:
@@ -93,7 +94,7 @@ class ProjectManifest:
 
     @classmethod
     def from_json(cls, payload: str) -> ProjectManifest:
-        return cls.from_data(_require_mapping(json.loads(payload), "manifest"))
+        return cls.from_data(_require_mapping(decode_canonical_json(payload), "manifest"))
 
 
 def _repository_to_data(repository: RepositoryBinding) -> dict[str, object]:
