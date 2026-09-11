@@ -1,6 +1,6 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-10 after #123 untracked executable-mode identity implementation under code-only validation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-11 at `11f0ef1a3974c8d124060895c9a1eb1aba241839` after canonical IR JSON (#195) and the combined issue/build-plan reconciliation. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
 
@@ -10,15 +10,19 @@ Ronin remains capability-ordered rather than calendar-ordered. Each autonomous r
 
 GitHub Actions and automated tests are intentionally disabled by maintainer policy. Previous workflow definitions remain under `.github/workflows-disabled/`. Autonomous work performs static code inspection, dependency/contract tracing, schema/API consistency review, and code-level reasoning only. Security, durability, performance, architecture, coverage, and acceptance requirements remain implementation constraints, but no new CI/test/acceptance evidence may be claimed.
 
-The last automated baseline remains **13/15**, with historical gaps `01` and `12`. Code-only implementation does not automatically change that qualified result.
+A complementary local audit dated 2026-09-11 reported six failing tests, format/lint drift, low indirect coverage in `grants.py`, stale acceptance skips, orphaned qualification tooling and a concrete storage-layer regression. Those execution-derived observations remain useful diagnostic evidence, but this plan does not adopt that audit's CI/test phases as current requirements because the maintainer has explicitly kept Ronin in code-only mode. The storage regression is independently confirmed by current source and is promoted to the implementation critical path.
+
+The last authoritative automated acceptance baseline remains **13/15**, with historical gaps `01` and `12`. Product code for both capabilities exists; code-only implementation does not automatically change the qualified result.
 
 ## Current position
 
-The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha public compatibility, project-scoped HTTP authorization, production image/Compose, secure-default bearer transport, and corrected untracked executable-mode Git dirty identity.
+The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha public compatibility, project-scoped HTTP authorization, production image/Compose, explicit bearer transport/bind policy, real readiness, corrected Git dirty identity, observed cgroup CPU/memory evidence, exact-artifact qualification tooling and the canonical JSON v1 foundation.
 
-#52, #53, #54, #161, #162, and #123 are functionally complete under code-only validation. Automated drift/conformance, authorization, transport, VCS-regression and Compose qualification remain deferred, so the authoritative acceptance baseline remains 13/15.
+Canonical JSON work has advanced through #190/#193/#194/#195: shared codec, independent Go checker, resume identity, worker identity, project manifest, notebook and IR all use the common boundary. Remaining #56 work is concentrated in kernel/session, HTTP request/idempotency parsing/identity, durable parameter parsing, grants and remaining core serializers plus complete boundary goldens.
 
-#57 remains the frozen-journey umbrella and qualification gate: product code for all historical missing surfaces is present, but strict automated qualification has not proven the full journey on an exact SHA.
+#95 is no longer a missing implementation tool: `tools/artifact_qualification.py` provides the code mechanics for build-once, external install and artifact identity. Real artifact qualification/publish evidence remains outstanding. #115 likewise has production cgroup observation code; real-Docker/overhead evidence remains outstanding.
+
+#99 is obsolete as an implementation item: the immutable Job/Run/Attempt lifecycle, lease/retry rules and storage-neutral `JobStore` Protocol are already present in `studio_orchestrator` and consumed by storage/worker code.
 
 ## Phase A — foundation
 
@@ -30,25 +34,11 @@ The MVP durable local execution spine is implemented: Job -> Run -> Attempt life
 
 ## Phase C — HTTP/API/SDK contract
 
-**Status: functionally complete in code; automated qualification deferred.**
-
-Completed:
-
-- #52 provider-neutral typed scoped grants, bearer-scope mapping and kernel pre-effect authorization decisions;
-- #53 durable/public portable evidence with `available`, `missing`, `tombstoned`, `unavailable`, locator privacy, authenticated HTTP, OpenAPI, CLI and `pyronin` surfaces;
-- #54 strict-alpha API/SDK compatibility: closed response objects and semantic enums, open error-code vocabulary inside a normalized closed envelope, opaque bounded cursors, canonical Instant validation, and documented alpha/beta/stable evolution rules;
-- #161 project-scoped HTTP authorization using the #52 grant model, including list filtering, direct Job-ID visibility checks, evidence authorization, pre-effect submit/cancel checks, and removal of the token-only server-constructor bypass;
-- #162 secure-default bearer transport: CLI HTTPS-by-default for authenticated non-loopback endpoints, loopback HTTP support, redirect rejection, fail-closed plaintext non-loopback server binding, explicit local-development override, Compose-preserving private-bridge opt-in, and documented external TLS termination.
-
-HTTP/server types remain adapters, never canonical lifecycle/storage models. No worker -> server dependency inversion is allowed. The built-in server remains plaintext HTTP only and does not claim TLS support.
+**Functionally complete in code; automated qualification deferred.** Authenticated job control, typed project/action grants, evidence, pagination/cursors, OpenAPI, `pyronin`, compatibility rules and secure bearer transport are implemented.
 
 ## Phase D — operator CLI and Git identity
 
-**Functionally complete in code under current policy.** D1 includes installed `ronin evidence` and secure-default authenticated transport. #123 now corrects `ronin/git-dirty-v1` so untracked regular-file identity includes normalized Git-style executable mode in addition to path, byte length and SHA-256(content).
-
-On POSIX, the owner executable bit (`S_IXUSR`) maps to `100755`; otherwise the regular file maps to `100644`, matching Git's regular-file mode distinction. On non-POSIX platforms, untracked regular files normalize to `100644` rather than inferring executable semantics from extensions or platform-specific associations. Tracked mode changes remain represented by Git's own binary diff.
-
-VCS capture remains fail closed for unresolved/path-escaping inputs, symlinks, special files and unreadable untracked files. Deterministic ordering and raw-content privacy are preserved. Automated real-Git regression proof remains deferred while tests are disabled.
+**Functionally complete in code under current policy.** Installed command routing and Git identity hardening are present; automated regression proof remains deferred.
 
 ## Phase E — production image, Compose and zero-to-demo
 
@@ -56,44 +46,121 @@ VCS capture remains fail closed for unresolved/path-escaping inputs, symlinks, s
 
 The repository contains one production Ronin image and supported `compose.yaml` topology with durable local SQLite/artifact/evidence storage, explicit server health dependency, host loopback publication, worker-only Docker socket authority, immutable local image-ID resolution, read-only checkout access, narrowly scoped Git safe-directory configuration, non-root product execution, crash-path worker `restart: "no"`, and a no-Docker-authority CLI helper.
 
-Because server and CLI communicate over the private Compose bridge, those two services explicitly set `RONIN_INSECURE_ALLOW_REMOTE_HTTP=1`. This does not broaden host exposure: the published server port remains loopback-only. Remote supported access requires HTTPS termination outside the built-in Ronin server.
+Compose uses `RONIN_BIND_POLICY=container-internal` for private bridge communication. This is an explicit topology declaration, not encryption and not a generic remote-HTTP permission. The host-facing port remains loopback-only; supported remote authenticated access terminates HTTPS externally.
 
 The <60 s healthy and <10 min zero-to-demo budgets remain implementation targets, not newly measured evidence while tests/CI are disabled.
 
-## Phase F — acceptance completion
+## Phase F — architecture/canonical hardening
 
-**Last automated baseline: 13/15.** Historical gaps remain `01` and `12` until qualification is restored.
+### F1 — collapse the evidence adapter regression
 
-Code contains both step-01 Compose and step-12 public evidence capabilities plus the #54 compatibility, #161 scoped-authorization, #162 secure-transport, and #123 Git-identity corrections. `tests/e2e/test_v01_journey.py` still carries stale historical skip markers for 01/12; under maintainer policy those tests are not being edited or executed in code-only slices. Do not call the project qualified 14/15 or 15/15 while automated qualification is disabled.
+Current source has reintroduced concrete evidence subclasses after #164 established a single-public-adapter invariant:
 
-#57 is therefore a blocked qualification gate, not an implementation slice.
+```text
+SQLite:
+  _SqliteLifecycleStore
+    -> fenced_sqlite.SqliteJobStore
+      -> evidence_sqlite.SqliteJobStore   # currently exported
 
-## Phase G — security, non-functional and release work
+Memory:
+  memory.InMemoryJobStore
+    -> paged_store.InMemoryJobStore
+      -> evidence_memory.InMemoryJobStore # currently exported
+```
 
-The next bounded implementation slice is **#58 exact transitive license/NOTICE policy**. Add a regenerable direct+transitive dependency/license inventory tied to the resolved dependency graph, plus a fail-closed maintainer-review policy for unknown/unreviewed/potentially incompatible license changes. Do not bundle dependency upgrades or add ASF-style NOTICE boilerplate without evidence.
+The correct slice is to:
 
-After #58, prioritize **#95 installed `pyronin` artifact qualification logic** where code-only work can prepare exact-artifact/outside-checkout mechanics without claiming runtime proof. Then address **#73 human-operable release/change communication**. #63 remains blocked on repository administration/release timing; #45 remains blocked on the maintainer selecting and verifying a private reporting channel. Test/CI-centric #47/#60/#102/#163/#166/#167 remain deferred while CI/tests are disabled.
+1. fold schema-v3 evidence availability/unavailable fields and the `MAX_EVIDENCE_REFS_PER_RUN=100` bound into the canonical supported adapters;
+2. preserve `BEGIN IMMEDIATE`, lease fencing, thread-local SQLite connection reuse, WAL/`synchronous=FULL`, keyset paging, dense Run-global events and public evidence privacy;
+3. restore explicit/overloaded typed worker-write contracts on the exported SQLite class instead of letting an outer `*args/**kwargs` subclass erase the useful type surface;
+4. make `studio_storage.SqliteJobStore is fenced_sqlite.SqliteJobStore` true again;
+5. retain compatibility modules only as re-exports if needed; they must not define another concrete adapter class;
+6. apply the same principle to the public in-memory adapter;
+7. do not relax the existing regression guards to accept the layered state.
 
-Existing implementation constraints remain: POST p95 <100 ms; GET p95 <30 ms; SQLite WAL + `synchronous=FULL`; fencing; fail-closed VCS capture; T1 100%, T2 90%, T3 75%, every `studio_storage` file >=80% when coverage execution is restored.
+This is the next implementation slice because it is a current-source regression of a previously closed architecture invariant.
 
-## Phase H — release candidate and v0.1.0
+### F2 — finish #56 canonical JSON
 
-**Not started.** Feature implementation alone is not release qualification. Automated acceptance, exact installed-artifact checks, immutable image identity, security/license/process blockers, version synchronization and ref protection must be satisfied before publication.
+After storage is structurally stable:
+
+1. `studio_kernel/session.py`: canonicalize authorization/event bytes and duplicate/nonfinite ledger parsing;
+2. `studio_server/http.py`: canonicalize `_request_identity` and reject duplicate/nonfinite request JSON before identity construction; keep `_write_json` as presentation JSON;
+3. `studio_orchestrator/lifecycle.py`: canonical decoder for `Job.parameters_json` validation;
+4. `studio_core/grants.py`: route Requirement/GrantSet/AuthorizationEvidence JSON through shared codec;
+5. `studio_core/operators.py` and `diagnostics.py`: route canonical catalog serializers through shared codec;
+6. audit remaining direct `json.dumps/json.loads` call sites and classify identity vs presentation/cursor/tooling;
+7. extend canonical goldens for project, notebook, IR, cell execution, HTTP request identity, kernel events and grants;
+8. preserve valid v1 bytes, including the documented finite-float and `-0.0` compatibility boundary.
+
+## Phase G — security, supply-chain and release implementation
+
+### #58 exact transitive license/NOTICE
+
+The fail-closed tooling exists. Remaining honest implementation work before real evidence is available is to make the PEP 517 `build-system.requires` and release-only tool surfaces explicit rather than pretending they belong to `requirements-dev.lock`.
+
+Exact `third_party/licenses-v1.json`, per-package `license-policy-v1.json`, NOTICE/attribution conclusions and approval rationales require a real exact environment plus human/legal review. Do not fabricate them.
+
+### #95 exact artifact identity
+
+Implementation mechanics already exist. Do not reimplement them. The remaining release claim requires execution against a real candidate and binding that artifact identity to #58 evidence.
+
+### Human/project surface
+
+After the two code-critical items above, prioritize:
+
+- #72 + #70: contributor-facing governance, CONTRIBUTING, Code of Conduct and templates;
+- #71: docs landing, canonical first-run and troubleshooting;
+- #73: release runbook and change communication;
+- #45: SECURITY only after the maintainer selects and verifies a real private reporting channel.
+
+## Phase H — decisions and release gates
+
+#50 requires a written architecture decision before implementation: capability namespaces/value families, explicit ambiguity semantics, unknown-version behavior, selection evidence and dispatch-time binding. Do not add a second v0.1 runtime merely to satisfy it.
+
+#63 remains a release-time repository-administration gate: protect `main` and semantic release refs before `v0.1.0`, no later than 2026-11-01.
+
+#57 remains a qualification gate, not a feature slice. If and only if the maintainer explicitly restores automated verification, remove stale step-01/step-12 skips and obtain strict exact-SHA 15/15 evidence without weakening the frozen contract.
+
+## Deferred verification/evidence track
+
+While code-only mode is active, do not select these as implementation blockers:
+
+- #47 mutation expansion;
+- #60 Docker qualification bootstrap pin plus its runtime proof;
+- #69 retained benchmark evidence;
+- #102 release-tool coverage;
+- #163 scheduled full qualification;
+- #166 verifier same-mode evidence;
+- #167 HTTP contention same-mode evidence;
+- #115 real-Docker collection-overhead proof;
+- #95 real candidate qualification/publish proof;
+- #57 strict 15/15.
+
+Their requirements remain preserved for any future verification phase; no thresholds or acceptance semantics may be weakened simply because enforcement is paused.
+
+## Post-v0.1
+
+#59 open-table/data-platform work remains frozen until v0.1 ships and the E3 freeze is explicitly lifted.
+
+#62 language-neutral runner protocol is post-v0.1 and should be treated as already directionally decided by ADR-V01-009: define a versioned language-neutral process boundary before any remote/non-Python runner. It does not justify current runner breadth.
 
 ## Current critical path
 
 One coherent Builder slice at a time:
 
-1. **#58 exact transitive license/NOTICE policy** — resolved-graph inventory, fail-closed review policy and evidence-based NOTICE decision without dependency upgrades.
-2. **#95 installed `pyronin` artifact qualification logic** — prepare exact candidate/outside-checkout qualification mechanics; defer runtime test evidence under current policy.
-3. **#73 human-operable release/change communication** — truthful release runbook and user-facing alpha change communication coordinated with release blockers.
-4. **#57 frozen-journey qualification** — revisit only after the maintainer explicitly restores automated tests/qualification; then remove stale acceptance skips and obtain strict exact-SHA 15/15 evidence without weakening the frozen contract.
+1. **Storage evidence-layer collapse** — restore the #164 single-public-adapter invariant while preserving schema-v3 evidence behavior.
+2. **#56 canonical JSON completion** — kernel/session -> HTTP request/idempotency -> durable parameters/grants -> remaining core serializers/goldens.
+3. **#58 deterministic license/build-tool surface** — then exact inventory/legal review only where real evidence exists.
+4. **#70/#72/#71/#73 public contributor/docs/release surface**, with #45 gated on a verified private reporting route.
+5. **#50 decision record**, followed by compatible pure-core work only if justified.
+6. **#57 qualification** only after an explicit policy change restoring verification.
 
 ## Architecture and scope guardrails
 
 Canonical contracts stay capability-driven and vendor-neutral. Static bearer auth remains the v0.1 mechanism; typed scopes are required, enterprise auth is not. Evidence identity is storage-neutral and public payloads exclude backend locators. Public `/v1` compatibility follows `docs/product/API_COMPATIBILITY_V1.md`. Do not add OIDC, enterprise RBAC, OPA, FastAPI, Pydantic, SQLAlchemy, Postgres, Kubernetes product deployment, brokers, OpenTelemetry or OpenLineage unless scope explicitly changes.
 
-Authenticated non-loopback clients require HTTPS by default. The built-in HTTP server remains plaintext and may bind non-loopback only with the explicit insecure-development override. Supported remote use terminates TLS externally and keeps Ronin's backend listener on loopback or a trusted private network.
+Existing implementation constraints remain: POST p95 <100 ms; GET p95 <30 ms; SQLite WAL + `synchronous=FULL`; fencing; fail-closed VCS capture; T1 100%, T2 90%, T3 75%, every `studio_storage` file >=80% when coverage execution is restored.
 
 ## Frozen until v0.1 ships
 
