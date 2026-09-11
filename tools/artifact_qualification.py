@@ -113,6 +113,29 @@ def assert_installed_origin(
     return resolved_module
 
 
+def _record_qualification(
+    record: dict[str, object],
+    *,
+    imported_module: Path,
+    site_packages: Path,
+) -> dict[str, object]:
+    """Attach machine-independent qualification facts to candidate identity evidence."""
+    resolved_site = site_packages.resolve(strict=True)
+    try:
+        relative_module = imported_module.relative_to(resolved_site)
+    except ValueError as exc:
+        raise ArtifactQualificationError(
+            "qualified import is outside isolated site-packages"
+        ) from exc
+    result = dict(record)
+    result["qualification"] = {
+        "contract_tests": "passed",
+        "import_origin": "isolated-site-packages",
+        "module_path": relative_module.as_posix(),
+    }
+    return result
+
+
 def bind_license_evidence(
     *,
     package: str,
@@ -239,10 +262,11 @@ def qualify_pyronin(checkout: Path, work_root: Path) -> dict[str, object]:
         raise ArtifactQualificationError(
             f"installed pyronin contract tests failed with exit code {test_run.returncode}"
         )
-    record["installed_module"] = str(imported)
-    record["site_packages"] = str(target)
-    record["contract_tests"] = "passed"
-    return record
+    return _record_qualification(
+        record,
+        imported_module=imported,
+        site_packages=target,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
