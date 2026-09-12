@@ -1,4 +1,4 @@
-"""Fail-closed inventory of exact build-system and release-only dependency surfaces."""
+"""Fail-closed inventory of exact build-system and qualification dependency surfaces."""
 
 from __future__ import annotations
 
@@ -68,15 +68,15 @@ def build_system_requirements(root: Path) -> dict[str, str]:
     return dict(sorted(combined.items()))
 
 
-def release_tool_requirements(root: Path) -> dict[str, str]:
-    """Return exact release-only tools from the committed v1 surface manifest."""
-    path = root / "third_party/release-tools-v1.txt"
+def qualification_tool_requirements(root: Path) -> dict[str, str]:
+    """Return exact release/security tools from the committed v1 surface manifest."""
+    path = root / "third_party/qualification-tools-v1.txt"
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
     except OSError as exc:
-        raise DependencySurfaceError("cannot read third_party/release-tools-v1.txt") from exc
+        raise DependencySurfaceError("cannot read third_party/qualification-tools-v1.txt") from exc
     active = [line.strip() for line in lines if line.strip() and not line.lstrip().startswith("#")]
-    return _exact_requirements(active, surface="release-tools-v1")
+    return _exact_requirements(active, surface="qualification-tools-v1")
 
 
 def dependency_surfaces(root: Path) -> dict[str, object]:
@@ -84,7 +84,7 @@ def dependency_surfaces(root: Path) -> dict[str, object]:
     return {
         "schema_version": 1,
         "build_system": build_system_requirements(root),
-        "release_tools": release_tool_requirements(root),
+        "qualification_tools": qualification_tool_requirements(root),
     }
 
 
