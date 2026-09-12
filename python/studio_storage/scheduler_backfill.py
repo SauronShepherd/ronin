@@ -59,6 +59,11 @@ class BackfillRun:
     backfill_id: BackfillId
     logical_time: Instant
     workflow_run_id: WorkflowRunId
+    state: str = "created"
+
+    def __post_init__(self) -> None:
+        if self.state not in {"reserved", "created"}:
+            raise ValueError("backfill run state must be reserved or created")
 
 
 def _minute_aligned(value: Instant) -> bool:
@@ -118,6 +123,16 @@ def _request_from_row(row: sqlite3.Row) -> BackfillRequest:
         ScheduleId(row["schedule_id"]),
         Instant(row["start_at"]),
         Instant(row["end_at"]),
+        row["state"],
+    )
+
+
+def _run_from_row(workspace_id: WorkspaceId, row: sqlite3.Row) -> BackfillRun:
+    return BackfillRun(
+        workspace_id,
+        BackfillId(row["backfill_id"]),
+        Instant(row["logical_time"]),
+        WorkflowRunId(row["workflow_run_id"]),
         row["state"],
     )
 
@@ -254,6 +269,76 @@ class SchedulerBackfillStore(SchedulerEventStore):
         finally:
             connection.close()
 
+    def _reserve_backfill_run(
+        self,
+        workspace_id: WorkspaceId,
+        backfill_id: BackfillId,
+        logical: Instant,
+        *,
+        now: Instant,
+    ) -> tuple[BackfillRun, ScheduleId]:
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            request_row = connection.execute(
+                "SELECT * FROM scheduler_backfills WHERE workspace_id=? AND backfill_id=?",
+                (str(workspace_id), str(backfill_id)),
+            ).fetchone()
+            if request_row is None:
+                raise KeyError(str(backfill_id))
+            request = _request_from_row(request_row)
+            if request.state in {"completed", "cancelled"}:
+                raise BackfillConflict(f"cannot reserve run for {request.state} backfill")
+            if not request.start_at <= logical <= request.end_at:
+                raise ValueError("backfill logical_time is outside requested range")
+            schedule = connection.execute(
+                "SELECT 1 FROM schedules WHERE workspace_id=? AND schedule_id=?",
+                (str(workspace_id), str(request.schedule_id)),
+            ).fetchone()
+            if schedule is None:
+                raise BackfillConflict("backfill schedule no longer exists")
+            run_id = _backfill_run_id(workspace_id, backfill_id, logical)
+            existing = connection.execute(
+                "SELECT * FROM scheduler_backfill_runs "
+                "WHERE workspace_id=? AND backfill_id=? AND logical_time=?",
+                (str(workspace_id), str(backfill_id), logical),
+            ).fetchone()
+            if existing is None:
+                connection.execute(
+                    "INSERT INTO scheduler_backfill_runs("
+                    "workspace_id,backfill_id,logical_time,workflow_run_id,state,created_at,updated_at) "
+                    "VALUES (?,?,?,?,'reserved',?,?)",
+                    (
+                        str(workspace_id),
+                        str(backfill_id),
+                        logical,
+                        str(run_id),
+                        now,
+                        now,
+                    ),
+                )
+                reserved = BackfillRun(workspace_id, backfill_id, logical, run_id, "reserved")
+            else:
+                reserved = _run_from_row(workspace_id, existing)
+                if reserved.workflow_run_id != run_id:
+                    raise BackfillConflict(
+                        "backfill logical time maps to conflicting workflow run"
+                    )
+            if request.state == "pending":
+                connection.execute(
+                    "UPDATE scheduler_backfills SET state='running',updated_at=?,"
+                    "row_version=row_version+1 WHERE workspace_id=? AND backfill_id=?",
+                    (now, str(workspace_id), str(backfill_id)),
+                )
+            connection.execute("COMMIT")
+            return reserved, request.schedule_id
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
     def create_backfill_run(
         self,
         workspace_id: WorkspaceId,
@@ -263,63 +348,54 @@ class SchedulerBackfillStore(SchedulerEventStore):
         now: Instant | str,
     ) -> BackfillRun:
         logical = Instant(logical_time)
+        current = Instant(now)
         if not _minute_aligned(logical):
             raise ValueError("backfill logical_time must be aligned to a UTC minute")
-        request = self.get_backfill(workspace_id, backfill_id)
-        if request is None:
-            raise KeyError(str(backfill_id))
-        if request.state in {"completed", "cancelled"}:
-            raise BackfillConflict(f"cannot create run for {request.state} backfill")
-        if not request.start_at <= logical <= request.end_at:
-            raise ValueError("backfill logical_time is outside requested range")
-        schedule = self.get_schedule(workspace_id, request.schedule_id)
+        reserved, schedule_id = self._reserve_backfill_run(
+            workspace_id,
+            backfill_id,
+            logical,
+            now=current,
+        )
+        schedule = self.get_schedule(workspace_id, schedule_id)
         if schedule is None:
             raise BackfillConflict("backfill schedule no longer exists")
         trigger = Trigger(
             "backfill",
             f"backfill:{backfill_id}:{logical}",
-            source_ref=f"schedule:{request.schedule_id}",
+            source_ref=f"schedule:{schedule_id}",
         )
         run = self.create_run(
             workspace_id,
-            _backfill_run_id(workspace_id, backfill_id, logical),
+            reserved.workflow_run_id,
             schedule.workflow_id,
             trigger,
-            now=now,
+            now=current,
         )
+        if run.id != reserved.workflow_run_id:
+            raise BackfillConflict("backfill workflow run identity changed after reservation")
+
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
-            current_row = connection.execute(
-                "SELECT state FROM scheduler_backfills WHERE workspace_id=? AND backfill_id=?",
-                (str(workspace_id), str(backfill_id)),
-            ).fetchone()
-            if current_row is None:
-                raise KeyError(str(backfill_id))
-            if current_row["state"] == "cancelled":
-                raise BackfillConflict("backfill was cancelled before run commit")
-            existing = connection.execute(
-                "SELECT workflow_run_id FROM scheduler_backfill_runs "
+            row = connection.execute(
+                "SELECT * FROM scheduler_backfill_runs "
                 "WHERE workspace_id=? AND backfill_id=? AND logical_time=?",
                 (str(workspace_id), str(backfill_id), logical),
             ).fetchone()
-            if existing is None:
+            if row is None:
+                raise AssertionError("reserved backfill run disappeared")
+            existing = _run_from_row(workspace_id, row)
+            if existing.workflow_run_id != run.id:
+                raise BackfillConflict("reserved backfill run changed identity")
+            if existing.state == "reserved":
                 connection.execute(
-                    "INSERT INTO scheduler_backfill_runs("
-                    "workspace_id,backfill_id,logical_time,workflow_run_id,created_at) "
-                    "VALUES (?,?,?,?,?)",
-                    (str(workspace_id), str(backfill_id), logical, str(run.id), Instant(now)),
-                )
-            elif existing["workflow_run_id"] != str(run.id):
-                raise BackfillConflict("backfill logical time maps to conflicting workflow run")
-            if current_row["state"] == "pending":
-                connection.execute(
-                    "UPDATE scheduler_backfills SET state='running',updated_at=?,"
-                    "row_version=row_version+1 WHERE workspace_id=? AND backfill_id=?",
-                    (Instant(now), str(workspace_id), str(backfill_id)),
+                    "UPDATE scheduler_backfill_runs SET state='created',updated_at=? "
+                    "WHERE workspace_id=? AND backfill_id=? AND logical_time=?",
+                    (current, str(workspace_id), str(backfill_id), logical),
                 )
             connection.execute("COMMIT")
-            return BackfillRun(workspace_id, backfill_id, logical, run.id)
+            return BackfillRun(workspace_id, backfill_id, logical, run.id, "created")
         except Exception:
             if connection.in_transaction:
                 connection.execute("ROLLBACK")
@@ -347,6 +423,13 @@ class SchedulerBackfillStore(SchedulerEventStore):
             request = _request_from_row(row)
             if request.state == "cancelled":
                 raise BackfillConflict("cancelled backfill cannot be completed")
+            reserved = connection.execute(
+                "SELECT COUNT(*) AS count FROM scheduler_backfill_runs "
+                "WHERE workspace_id=? AND backfill_id=? AND state='reserved'",
+                (str(workspace_id), str(backfill_id)),
+            ).fetchone()
+            if reserved is None or int(reserved["count"]) != 0:
+                raise BackfillConflict("backfill still has reserved runs awaiting creation")
             if request.state != "completed":
                 connection.execute(
                     "UPDATE scheduler_backfills SET state='completed',updated_at=?,"
@@ -371,19 +454,11 @@ class SchedulerBackfillStore(SchedulerEventStore):
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT logical_time,workflow_run_id FROM scheduler_backfill_runs "
+                "SELECT * FROM scheduler_backfill_runs "
                 "WHERE workspace_id=? AND backfill_id=? ORDER BY logical_time",
                 (str(workspace_id), str(backfill_id)),
             ).fetchall()
-            return tuple(
-                BackfillRun(
-                    workspace_id,
-                    backfill_id,
-                    Instant(row["logical_time"]),
-                    WorkflowRunId(row["workflow_run_id"]),
-                )
-                for row in rows
-            )
+            return tuple(_run_from_row(workspace_id, row) for row in rows)
         finally:
             connection.close()
 
@@ -394,6 +469,7 @@ __all__ = (
     "BackfillRequest",
     "BackfillRun",
     "SchedulerBackfillStore",
+    "WorkspaceId",
     "migrate_scheduler_backfill",
     "scheduler_backfill_schema_version",
 )
