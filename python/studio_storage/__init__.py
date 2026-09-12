@@ -21,6 +21,12 @@ from studio_storage.connections import (
 )
 from studio_storage.fenced_sqlite import SqliteJobStore
 from studio_storage.memory import IdempotencyConflict
+from studio_storage.ontology import (
+    OntologyConflict,
+    SqliteOntologyStore,
+    migrate_ontology,
+    ontology_schema_version,
+)
 from studio_storage.paged_store import BoundedAsyncJobStore, InMemoryJobStore
 from studio_storage.quality import (
     DataContractConflict,
@@ -63,11 +69,13 @@ __all__ = (
     "IdempotencyConflict",
     "InMemoryJobStore",
     "LocalArtifactStore",
+    "OntologyConflict",
     "ProjectRegistrationConflict",
     "QualityRunConflict",
     "SqliteCatalogStore",
     "SqliteConnectionStore",
     "SqliteJobStore",
+    "SqliteOntologyStore",
     "SqliteQualityStore",
     "SqliteSchedulerStore",
     "SqliteWorkspaceStore",
@@ -82,9 +90,11 @@ __all__ = (
     "migrate",
     "migrate_catalog",
     "migrate_connections",
+    "migrate_ontology",
     "migrate_quality",
     "migrate_scheduler",
     "migrate_workspaces",
+    "ontology_schema_version",
     "open_database",
     "quality_schema_version",
     "scheduler_schema_version",
