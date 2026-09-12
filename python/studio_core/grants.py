@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-import json
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal, TypeAlias, cast
 from urllib.parse import quote, unquote
+
+from .canonical_json import decode as decode_canonical_json
+from .canonical_json import encode as encode_canonical_json
 
 ResourceKind: TypeAlias = Literal["project", "job", "run", "evidence", "*"]
 Action: TypeAlias = Literal[
@@ -153,7 +155,7 @@ class Requirement:
         }
 
     def to_json(self) -> str:
-        return json.dumps(self.to_payload(), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return encode_canonical_json(self.to_payload()).decode("utf-8")
 
     @classmethod
     def from_payload(cls, payload: object) -> Requirement:
@@ -281,7 +283,7 @@ class AuthorizationEvidence:
         }
 
     def to_json(self) -> str:
-        return json.dumps(self.to_payload(), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return encode_canonical_json(self.to_payload()).decode("utf-8")
 
 
 def _resource_covers(grant: ResourceScope, requirement: ResourceScope) -> bool:
@@ -341,7 +343,7 @@ class GrantSet:
         return {"version": self.version, "grants": [grant.to_payload() for grant in self.grants]}
 
     def to_json(self) -> str:
-        return json.dumps(self.to_payload(), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return encode_canonical_json(self.to_payload()).decode("utf-8")
 
     @classmethod
     def from_payload(cls, payload: object) -> GrantSet:
@@ -358,8 +360,8 @@ class GrantSet:
     @classmethod
     def from_json(cls, value: str) -> GrantSet:
         try:
-            payload = json.loads(value)
-        except json.JSONDecodeError as exc:
+            payload = decode_canonical_json(value)
+        except ValueError as exc:
             raise ValueError("authorization grant set must be valid JSON") from exc
         return cls.from_payload(payload)
 
