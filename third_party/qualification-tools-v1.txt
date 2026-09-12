@@ -1,0 +1,6 @@
+# Exact Python tools retained by release/security qualification definitions.
+# This surface is intentionally separate from requirements-dev.lock because
+# qualification may require tool versions different from the developer environment.
+build==1.6.0
+pip-audit==2.10.1
+pytest==8.4.2
