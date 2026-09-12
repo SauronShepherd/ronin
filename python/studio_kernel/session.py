@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import threading
 from dataclasses import dataclass, field
@@ -11,6 +10,8 @@ from pathlib import Path
 from typing import Literal, Protocol, TypeAlias, cast, runtime_checkable
 
 from studio_core import AuthorizationEvidence, Grant, GrantSet, requirement_to_bearer_scope
+from studio_core.canonical_json import decode as decode_canonical_json
+from studio_core.canonical_json import encode as encode_canonical_json
 from studio_notebook import CellId
 
 from .contracts import CellExecutionRequest, CellExecutionResult, NotebookExecutionRequest
@@ -165,7 +166,7 @@ class SessionPolicy:
         payload = {
             "authorization": [item.to_payload() for item in evidence],
         }
-        return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return encode_canonical_json(payload).decode("utf-8")
 
     def validate_isolation(self, isolation: ExecutorIsolation) -> None:
         if isolation.mode not in self.allowed_isolation_modes:
@@ -236,7 +237,7 @@ class ExecutionEvent:
             "cell_id": str(self.cell_id) if self.cell_id is not None else None,
             "message": self.message,
         }
-        return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return encode_canonical_json(payload).decode("utf-8")
 
 
 class ExecutionEventSink(Protocol):
@@ -250,8 +251,8 @@ class AsyncExecutionEventSink(Protocol):
 
 def _decode_ledger_identity(line: str) -> tuple[ExecutionAttemptId, int]:
     try:
-        payload = json.loads(line)
-    except json.JSONDecodeError as exc:
+        payload = decode_canonical_json(line)
+    except ValueError as exc:
         raise ValueError("existing event ledger contains invalid JSON") from exc
     if not isinstance(payload, dict) or set(payload) != _EVENT_LEDGER_KEYS:
         raise ValueError("existing event ledger has invalid event shape")

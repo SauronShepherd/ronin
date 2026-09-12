@@ -2,7 +2,7 @@
 
 This backlog is deliberately narrow for v0.1. Selection must be revalidated against current `main`, open Builder work, canonical automation handoffs, and the scope authority in `docs/product/V01_SCOPE.md`.
 
-_Last synchronized: 2026-09-11 from base `3e69c2a084260126f7eb87cbfbbe4bedcd77df2e` with the storage evidence-layer collapse in this change._
+_Last synchronized: 2026-09-11 from base `218aa4bc9e419bf18e435796b9858b1cf1900eae` with the kernel/session canonical JSON boundary in this change._
 
 **Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, validation mode, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled.
 
@@ -12,7 +12,7 @@ GitHub Actions are intentionally disabled to avoid consuming Actions credits. Pr
 
 Until the maintainer explicitly changes this policy, autonomous Builder work does not wait for, trigger, rerun, or require CI; does not execute automated tests; validates through static code inspection, dependency/contract tracing, schema/API consistency review, and code-level reasoning; and does not claim green CI or passing tests for new changes. Existing security, durability, performance, architecture, coverage, and acceptance requirements remain implementation constraints.
 
-The complementary 2026-09-11 audit reported six failing tests, lint/format drift and a storage-layer regression from its own local execution. Those observations remain diagnostic evidence, but they do not change the repository's current code-only operating policy or create permission to run tests/CI. The storage-layer finding was independently confirmed in source and is resolved by the current collapse slice.
+The complementary 2026-09-11 audit reported six failing tests, lint/format drift and a storage-layer regression from its own local execution. Those observations remain diagnostic evidence, but they do not change the repository's current code-only operating policy or create permission to run tests/CI. The storage-layer finding was independently confirmed in source and is resolved by #197.
 
 Evidence-only handoffs #166/#167/#163 remain open/deferred and do not block implementation while this mode is active. Test/CI-centric #47/#60/#102 likewise remain deferred under this policy.
 
@@ -22,15 +22,13 @@ The last automated qualification before CI was disabled remains **13/15 live**, 
 
 Supported code contains the durable local execution spine, authenticated and project-scoped HTTP job control, OpenAPI 3.1, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha API/SDK compatibility, route-level typed grant enforcement, production image + Compose, explicit bearer transport/bind policy, real readiness, corrected Git dirty identity, artifact qualification tooling, observed cgroup CPU/memory evidence, and the shared canonical JSON v1 boundary.
 
-Canonical JSON v1 has landed through #190/#193/#194/#195 for the shared codec, independent Go checker, resume identity, worker identity, project manifests, notebooks and IR. #56 remains open because kernel/session, public HTTP request/idempotency identity, durable parameter parsing, grants and remaining core identity serializers still require migration and boundary goldens.
+Canonical JSON v1 has landed through #190/#193/#194/#195 plus the current kernel/session slice: shared codec, independent Go checker, resume identity, worker identity, project manifests, notebooks, IR, kernel authorization evidence/event bytes, and fail-closed kernel ledger parsing all use the common boundary. #56 remains open because public HTTP request/idempotency identity, durable parameter parsing, grants, remaining core identity serializers and boundary goldens still require migration/completion.
 
 #57 remains open/BLOCKED as a qualification gate. The acceptance harness still carries stale historical step-01/step-12 skip markers, and no 15/15 claim is permitted until automated qualification is explicitly restored and executed.
 
 ## Storage evidence adapter architecture
 
-The schema-v3 public-evidence extension had reintroduced concrete `evidence_sqlite.SqliteJobStore` and `evidence_memory.InMemoryJobStore` subclasses after #164 established a single-public-adapter invariant.
-
-The current collapse restores that invariant:
+PR #197 restored the #164 single-public-adapter invariant:
 
 - `studio_storage.SqliteJobStore` is exported directly from `fenced_sqlite.SqliteJobStore`;
 - schema-v3 evidence availability/unavailable fields and the per-Run bound live in that canonical fenced SQLite adapter;
@@ -40,7 +38,7 @@ The current collapse restores that invariant:
 - `evidence_memory.py` is a compatibility re-export;
 - the shared bound is defined in storage-neutral `studio_storage.limits`.
 
-This preserves lease fencing, `BEGIN IMMEDIATE`, thread-local SQLite connection reuse, keyset paging, schema-v3 availability semantics, WAL/`synchronous=FULL` through the existing lifecycle store, and the max-100 evidence-ref contract without relaxing the existing regression guards.
+This preserves lease fencing, `BEGIN IMMEDIATE`, thread-local SQLite connection reuse, keyset paging, schema-v3 availability semantics, WAL/`synchronous=FULL` through the existing lifecycle store, and the max-100 evidence-ref contract.
 
 ## Production image + Compose implementation
 
@@ -54,12 +52,13 @@ No automated Compose/runtime qualification is claimed under current policy.
 
 Select one coherent slice at a time.
 
-1. **#56 — finish canonical JSON identity boundaries.** Migrate kernel/session, HTTP request/idempotency input, durable `parameters_json`, grants and remaining core serializers; add complete boundary goldens while preserving valid v1 bytes.
-2. **#22 — residual architecture reconciliation.** After #56, handle duplicate exact edges, operator-aware target-port cardinality and concrete secret-bearing producers without reopening already-completed durable/auth/evidence work.
-3. **#58 — exact transitive license/NOTICE evidence.** Tooling exists; remaining deterministic code work is explicit build-system/release-tool exception modeling. Exact inventory/policy/NOTICE conclusions require a real resolved environment and human review; never fabricate them.
-4. **#70/#72/#71/#73 — contributor/governance/docs/release surface.** Governance decision is already recorded; publish truthful contributor-facing policy, docs index, troubleshooting, first-run and release/change communication. #45 security policy remains blocked on a verified private reporting channel.
-5. **#50 — runtime capability namespace/ambiguity decision.** Decision record first; do not add a second v0.1 runtime.
-6. **#57 — qualification gate.** Revisit only if the maintainer explicitly restores automated verification.
+1. **#56 — HTTP request/idempotency canonical JSON.** Route request identity bytes through the shared canonical encoder and parse inbound request JSON through the canonical decoder so duplicate/non-finite values fail closed. Keep response presentation JSON out of this migration.
+2. **#56 — durable parameters + grants + remaining serializers/goldens.** Canonicalize `Job.parameters_json` parsing, grants, operator/diagnostic catalogs, then audit remaining direct JSON call sites and complete boundary goldens.
+3. **#22 — residual architecture reconciliation.** After #56, handle duplicate exact edges, operator-aware target-port cardinality and concrete secret-bearing producers without reopening already-completed durable/auth/evidence work.
+4. **#58 — exact transitive license/NOTICE evidence.** Tooling exists; remaining deterministic code work is explicit build-system/release-tool exception modeling. Exact inventory/policy/NOTICE conclusions require a real resolved environment and human review; never fabricate them.
+5. **#70/#72/#71/#73 — contributor/governance/docs/release surface.** Governance decision is already recorded; publish truthful contributor-facing policy, docs index, troubleshooting, first-run and release/change communication. #45 security policy remains blocked on a verified private reporting channel.
+6. **#50 — runtime capability namespace/ambiguity decision.** Decision record first; do not add a second v0.1 runtime.
+7. **#57 — qualification gate.** Revisit only if the maintainer explicitly restores automated verification.
 
 #95 artifact-qualification mechanics and #115 observed-resource implementation are substantially complete in code and remain open for real evidence. #63 remains a release-time repository-administration gate. #59 and #62 remain post-v0.1. #99 is closed because the Job/Run/Attempt domain and `JobStore` Protocol already exist.
 
