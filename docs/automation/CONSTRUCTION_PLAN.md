@@ -1,6 +1,6 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-12 from base `1734e172d3e9d3cc4b87f7587a5a1e2cb1e9172e` after SIM102 planning sync #231. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-12 from base `10d534ceed348ac5e23bfd9d1262cf0ac0388b77` after source-hygiene PR #237. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
 
@@ -74,13 +74,15 @@ The <60 s healthy and <10 min zero-to-demo budgets remain implementation targets
 
 ### F4 — source hygiene (I0)
 
-**Targeted historical lint findings complete; global proof still unavailable.**
+**Targeted historical lint findings complete; global proof still incomplete.**
 
 Landed source-hygiene corrections include dead reexport removal; `UP022`, `RET501`, `PTH201`, `S104`, both `S603`, both `PT011`, `PT018`, `PT006`, the reproduced `SIM102`; and the reproduced `E501` findings across production, tooling and the mechanically permitted test files.
 
-The historical `SIM102` was reproduced in `tools/license_qualification.py::locked_graph` and fixed by #229 by flattening the blank/comment continuation guard while preserving parser behavior. All 38 historical Ruff lint findings from the 2026-09-12 audit now have traceable resolutions.
+The historical `SIM102` was reproduced in `tools/license_qualification.py::locked_graph` and fixed by #229 by flattening the blank/comment continuation guard while preserving parser behavior. All four historical `I001` findings were then reproduced with pinned Ruff 0.16.6 and fixed by #234/#235. The post-audit `tools/dependency_surfaces.py` findings (two `E501`, one `PTH201`) were likewise reproduced with pinned Ruff 0.16.6 and fixed by #236. With #234/#235, all 38 historical Ruff lint findings from the 2026-09-12 audit have traceable resolutions.
 
-The active execution environment cannot obtain a current checkout from GitHub and does not have the pinned Ruff 0.16.6 binary locally available, so a full current `ruff check python tests tools packages docker` and `ruff format --check python tests tools packages docker` have not been demonstrated. The historical audit reported 15 files needing formatter changes but did not preserve their filenames. Do not claim I0 globally clean until equivalent exact evidence exists.
+PR #237 normalized the two current blobs that exact blob inspection confirmed were missing a final newline: `python/studio_core/project_manifest.py` and `python/studio_notebook/serialization.py`. Its patch changed only `No newline at end of file` to a final newline.
+
+Pinned Ruff 0.16.6 is now locally available and its downloaded release artifact passed its bundled SHA-256 verification. Exact local Ruff runs have reproduced and cleared the historical `I001` findings and the post-audit dependency-surface findings, and have been run against several SHA-verified current files. A full current `ruff check python tests tools packages docker` and `ruff format --check python tests tools packages docker` still have **not** been demonstrated because the active environment cannot materialize a complete current checkout from GitHub. The historical audit reported 15 files needing formatter changes but did not preserve their filenames; a later provisional no-EOF-newline list was revalidated blob-by-blob and was not a valid substitute for those formatter filenames. Do not claim I0 globally clean until equivalent whole-tree evidence exists.
 
 ## Phase G — security, supply-chain and release implementation
 
@@ -120,7 +122,7 @@ This includes #47, #57, #60 where its value is workflow qualification, #63 admin
 
 One coherent Builder slice at a time:
 
-1. **I0 source hygiene:** obtain executable current-tree evidence using pinned Ruff 0.16.6; fix only reproduced findings and do not claim global clean status without that evidence.
+1. **I0 source hygiene:** continue exact Ruff 0.16.6 coverage of the current tree using SHA-verified blobs; fix only reproduced findings and do not claim global clean status without equivalent whole-tree evidence.
 2. **Planning consistency:** keep `BACKLOG.md` and this construction plan synchronized with observed `main`.
 3. **#58 / #95 exact evidence:** proceed only with a real exact environment and required human/legal decisions; source implementation is already present.
 4. **#70 / #45 reporting channels:** proceed only after real owned routes are available.
