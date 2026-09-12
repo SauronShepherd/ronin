@@ -1,5 +1,0 @@
-# Exact release-only Python tool surface retained by publish-prerelease.yml.
-# This is intentionally separate from requirements-dev.lock: release qualification
-# may require a different tool version from the developer environment.
-build==1.6.0
-pytest==8.4.2
