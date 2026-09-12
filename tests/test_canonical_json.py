@@ -5,9 +5,7 @@ import json
 from pathlib import Path
 
 import pytest
-
 from studio_core.canonical_json import decode, encode
-
 
 GOLDEN = Path(__file__).parent / "golden" / "canonical_json_v1.json"
 
