@@ -6,10 +6,7 @@ import asyncio
 from dataclasses import dataclass
 
 from studio_orchestrator import Instant, LeaseToken
-from studio_storage.scheduler_controller import (
-    SchedulerControllerStore,
-    WorkflowDeploymentConflict,
-)
+from studio_storage.scheduler_controller import SchedulerControllerStore, WorkspaceId
 from studio_storage.scheduler_execution import TaskExecutionIntent
 from studio_storage.scheduler_fencing import TaskAttemptId
 
@@ -40,7 +37,7 @@ class SchedulerController:
     async def claim_and_publish(
         self,
         *,
-        workspace_id: object,
+        workspace_id: WorkspaceId,
         owner: str,
         lease_token: LeaseToken,
         attempt_id: TaskAttemptId,
@@ -53,10 +50,6 @@ class SchedulerController:
         deterministic tests and future leader protocols can own allocation.
         """
 
-        from studio_storage import WorkspaceId
-
-        if not isinstance(workspace_id, WorkspaceId):
-            raise TypeError("workspace_id must be a WorkspaceId")
         claim = await asyncio.to_thread(
             self._store.claim_next_task,
             owner=owner,
@@ -88,7 +81,7 @@ class SchedulerController:
             return None
 
         deployment = await asyncio.to_thread(
-            self._store.get_workflow_deployment,
+            self._store.get_runnable_workflow_deployment,
             workspace_id,
             workflow_run.workflow_id,
         )
@@ -112,7 +105,7 @@ class SchedulerController:
                 str(deployment.project_id),
                 now=now,
             )
-        except Exception:
+        except ValueError:
             # Unsupported/invalid task definitions are deterministic definition
             # failures. Persist the scheduler failure instead of leaking a live
             # claim until lease expiry.
@@ -168,7 +161,7 @@ class SchedulerController:
     async def cycle(
         self,
         *,
-        workspace_id: object,
+        workspace_id: WorkspaceId,
         owner: str,
         lease_token: LeaseToken,
         attempt_id: TaskAttemptId,
