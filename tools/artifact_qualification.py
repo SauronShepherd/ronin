@@ -178,7 +178,7 @@ def bind_license_evidence(
 
 
 def _run(argv: list[str], *, cwd: Path | None = None) -> None:
-    completed = subprocess.run(argv, cwd=cwd, check=False)
+    completed = subprocess.run(argv, cwd=cwd, check=False)  # noqa: S603  # controlled argv
     if completed.returncode != 0:
         raise ArtifactQualificationError(
             f"command failed with exit code {completed.returncode}: {argv!r}"
@@ -242,7 +242,7 @@ def qualify_pyronin(checkout: Path, work_root: Path) -> dict[str, object]:
     shutil.copytree(checkout / "packages" / "pyronin" / "tests", tests_root)
     pytest_config = work_root / "pytest.ini"
     pytest_config.write_text("[pytest]\n", encoding="utf-8")
-    test_run = subprocess.run(
+    test_run = subprocess.run(  # noqa: S603  # trusted interpreter and fixed pytest argv
         [
             sys.executable,
             "-m",
