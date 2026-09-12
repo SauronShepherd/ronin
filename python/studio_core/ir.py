@@ -272,6 +272,8 @@ def _validate_pipeline(nodes: tuple[Node, ...], edges: tuple[Edge, ...]) -> None
     by_id = {node.id: node for node in nodes}
     if len(by_id) != len(nodes):
         raise ValueError("duplicate node id")
+    if len(edges) != len(set(edges)):
+        raise ValueError("duplicate edge")
 
     incoming: dict[NodeId, int] = {node.id: 0 for node in nodes}
     outgoing: dict[NodeId, list[NodeId]] = {node.id: [] for node in nodes}
