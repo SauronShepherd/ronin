@@ -1,6 +1,6 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-11 from base `218aa4bc9e419bf18e435796b9858b1cf1900eae` with the kernel/session canonical JSON boundary in this change. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-12 from base `0ab5f116ecda79a9590dff4244f6b6c55443b82d` after the current source-hygiene implementation slices. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
 
@@ -18,7 +18,13 @@ The last authoritative automated acceptance baseline remains **13/15**, with his
 
 The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha public compatibility, project-scoped HTTP authorization, production image/Compose, explicit bearer transport/bind policy, real readiness, corrected Git dirty identity, observed cgroup CPU/memory evidence, exact-artifact qualification tooling and the canonical JSON v1 foundation.
 
-Canonical JSON work has advanced through #190/#193/#194/#195 plus the current kernel/session boundary: shared codec, independent Go checker, resume identity, worker identity, project manifest, notebook, IR, kernel authorization evidence/event bytes and fail-closed kernel ledger parsing all use the common boundary. Remaining #56 work is concentrated in HTTP request/idempotency parsing/identity, durable parameter parsing, grants, remaining core serializers and complete boundary goldens.
+Canonical JSON v1 implementation for the MVP is source-complete. HTTP request/idempotency parsing and identity, durable job parameters, grants, operator/diagnostic catalogs, kernel/session evidence, the canonical boundary registry/goldens and the checker target all use the shared boundary. #56 is closed; valid v1 bytes remain frozen compatibility input.
+
+Graph hardening for #200 is implemented: exact duplicate edges and operator-aware target-port cardinality fail closed with stable `RONIN-OP-008..010` diagnostics. The #22 residual audit has not produced another concrete secret-bearing source that justifies speculative hardening.
+
+The deterministic #58 source surface is implemented, including fail-closed build-system/release-tool dependency modeling. Exact inventory, legal review, NOTICE/attribution decisions and candidate evidence remain dependent on a real exact environment plus human review.
+
+The public contributor/docs/release implementation is substantially complete: CONTRIBUTING, docs landing/first-run/troubleshooting, issue/PR templates, release runbook and changelog have landed; #71, #72 and #73 are closed. #70 retains only human/project remainder where a real reporting route or genuinely suitable starter work exists.
 
 #95 is no longer a missing implementation tool: `tools/artifact_qualification.py` provides the code mechanics for build-once, external install and artifact identity. Real artifact qualification/publish evidence remains outstanding. #115 likewise has production cgroup observation code; real-Docker/overhead evidence remains outstanding.
 
@@ -54,54 +60,44 @@ The <60 s healthy and <10 min zero-to-demo budgets remain implementation targets
 
 ### F1 — storage evidence adapter collapse
 
-**Complete in code via #197; automated regression proof deferred.**
+**Complete in code.**
 
-The schema-v3 evidence extension had reintroduced concrete subclasses outside the canonical storage adapters. #197 restored the #164 architecture invariant and preserved lease fencing, paging, schema-v3 availability semantics, WAL/`synchronous=FULL`, thread-local connection reuse and the max-100 evidence-ref bound.
+PR #197 restored the #164 single-public-adapter invariant. Later source-hygiene work removed the dead `evidence_sqlite.py` and `evidence_memory.py` compatibility reexports after confirming no consumers. The canonical fenced SQLite and paged in-memory adapters remain the only public storage implementations, preserving lease fencing, paging, schema-v3 availability semantics, WAL/`synchronous=FULL`, thread-local connection reuse and the max-100 evidence-ref bound.
 
-### F2 — finish #56 canonical JSON
+### F2 — #56 canonical JSON
 
-#### F2a — kernel/session
+**Source-complete; automated qualification deferred.**
 
-**Code-complete in this change under static review; automated qualification deferred.**
+- HTTP request bodies parse through the canonical decoder, rejecting duplicate members and non-finite values before identity construction.
+- HTTP request/idempotency identity bytes use the shared canonical encoder; response `_write_json` remains presentation JSON by design.
+- `Job.parameters_json` validation uses the canonical decoder.
+- grants and authorization evidence use canonical JSON serialization.
+- operator and diagnostic catalog serializers use the shared boundary.
+- kernel authorization/event evidence and durable ledger parsing use the same codec.
+- the canonical registry, complete boundary goldens and checker target are present.
+- valid v1 payload bytes, including the documented finite-float and `-0.0` compatibility boundary, remain unchanged.
 
-- `SessionPolicy.authorization_message()` now encodes via `studio_core.canonical_json.encode`;
-- `ExecutionEvent.to_json()` now encodes through the same shared boundary;
-- `_decode_ledger_identity()` now parses through `studio_core.canonical_json.decode`, rejecting duplicate object members and non-finite numbers fail-closed;
-- the existing external ledger error contract remains `existing event ledger contains invalid JSON` for canonical parse failures;
-- event shape/semantic validation, redaction, contiguous sequence checks, single-attempt isolation, newline append, flush and `fsync` remain unchanged;
-- valid v1 payload bytes remain compatible because the shared codec preserves sorted keys, compact separators and UTF-8/non-ASCII output.
+#56 is closed. Do not reopen it for cosmetic JSON unification.
 
-#### F2b — HTTP request/idempotency
+### F3 — graph/cardinality and #22 residual reconciliation
 
-**Next code-critical slice.**
+**Source-complete for reproduced defects.**
 
-- route `_request_identity` bytes through the shared canonical encoder;
-- parse inbound request JSON through the canonical decoder to reject duplicate/non-finite members before identity construction;
-- preserve normalized invalid-request behavior;
-- keep `_write_json` as presentation JSON rather than migrating it for aesthetics.
+Exact duplicate graph edges are rejected and operator-aware target-port cardinality is validated with stable `RONIN-OP-008..010` diagnostics. The residual #22 audit found no additional concrete secret-producing surface that warrants speculative hardening. Future changes require new source evidence, not umbrella-driven filler.
 
-#### F2c — durable parameters/grants/remaining serializers
+### F4 — source hygiene
 
-After HTTP:
+The individually reproduced I0 lint findings have source fixes or have been revalidated as current no-ops: E501, I001, S603, S104, PT011, PT018, PT006, UP022, SIM102, RET501 and PTH201. Dead storage compatibility reexports are removed.
 
-1. `studio_orchestrator/lifecycle.py`: canonical decoder for `Job.parameters_json` validation;
-2. `studio_core/grants.py`: route Requirement/GrantSet/AuthorizationEvidence JSON through shared codec;
-3. `studio_core/operators.py` and `diagnostics.py`: route canonical catalog serializers through shared codec;
-4. audit remaining direct `json.dumps/json.loads` call sites and classify identity vs presentation/cursor/tooling;
-5. extend canonical goldens for project, notebook, IR, cell execution, HTTP request identity, kernel events and grants;
-6. preserve valid v1 bytes, including the documented finite-float and `-0.0` compatibility boundary.
-
-### F3 — #22 residual architecture reconciliation
-
-After #56, reconcile only remaining current-source defects: duplicate exact edges, operator-aware target-port cardinality and concrete secret-bearing producer surfaces. Do not reopen already-landed durable/auth/evidence/transport work.
+The global I0 DoD is **not yet demonstrated**. The original audit reported 15 files requiring `ruff format`, but did not enumerate them. The current execution environment cannot obtain a GitHub checkout, so neither `ruff format --check` nor repository-wide `ruff check` has been executed against current `main`. Do not manufacture formatter edits or claim a clean global pass without executable current-tree evidence.
 
 ## Phase G — security, supply-chain and release implementation
 
 ### #58 exact transitive license/NOTICE
 
-The fail-closed tooling exists. Remaining honest implementation work before real evidence is available is to make the PEP 517 `build-system.requires` and release-only tool surfaces explicit rather than pretending they belong to `requirements-dev.lock`.
+**Deterministic source mechanics complete; evidence/human review outstanding.**
 
-Exact `third_party/licenses-v1.json`, per-package `license-policy-v1.json`, NOTICE/attribution conclusions and approval rationales require a real exact environment plus human/legal review. Do not fabricate them.
+The implementation models the resolved dependency graph plus explicit PEP 517 build-system and release-tool surfaces fail closed. Exact `third_party/licenses-v1.json`, package review policy, NOTICE/attribution conclusions and approval rationales require a real exact environment plus human/legal review. Do not fabricate them.
 
 ### #95 exact artifact identity
 
@@ -109,12 +105,10 @@ Implementation mechanics already exist. Do not reimplement them. The remaining r
 
 ### Human/project surface
 
-After the code-critical items above, prioritize:
+The contributor/docs/release code and content surfaces have landed. Remaining legitimate work is human/project dependent:
 
-- #72 + #70: contributor-facing governance, CONTRIBUTING, Code of Conduct and templates;
-- #71: docs landing, canonical first-run and troubleshooting;
-- #73: release runbook and change communication;
-- #45: SECURITY only after the maintainer selects and verifies a real private reporting channel.
+- #70: use only a real owned conduct-reporting route; add starter issues only when genuinely suitable work exists;
+- #45: publish `SECURITY.md` only after the maintainer selects and verifies a real private reporting channel.
 
 ## Phase H — decisions and release gates
 
@@ -149,15 +143,17 @@ Their requirements remain preserved for any future verification phase; no thresh
 
 ## Current critical path
 
-One coherent Builder slice at a time:
+One coherent Builder slice at a time, with no filler work:
 
-1. **#56 HTTP request/idempotency canonical JSON**;
-2. **#56 durable parameters/grants/remaining serializers + boundary goldens**;
-3. **#22 residual architecture reconciliation**;
-4. **#58 deterministic license/build-tool surface** — then exact inventory/legal review only where real evidence exists;
-5. **#70/#72/#71/#73 public contributor/docs/release surface**, with #45 gated on a verified private reporting route;
-6. **#50 decision record**, followed by compatible pure-core work only if justified;
-7. **#57 qualification** only after an explicit policy change restoring verification.
+1. **I0 repository-wide Ruff proof** only when an executable current checkout is available; address only real residual findings.
+2. **#58/#95 exact evidence** in a real exact environment with human/legal review.
+3. **#70 human/project remainder** only where a verified reporting route or genuinely suitable starter task exists.
+4. **#45 private reporting-channel decision** before `SECURITY.md`.
+5. **#50 architecture decision**, followed by compatible pure-core work only if the recorded ADR requires it.
+6. **#57 qualification** only after an explicit policy change restoring verification.
+7. **Repository administration** such as branch/ref protection and physical cleanup where connector/admin capabilities are required.
+
+No further #56, #200, contributor-docs, release-docs or deterministic #58 source expansion should be selected merely because historical planning text once listed it.
 
 ## Architecture and scope guardrails
 
