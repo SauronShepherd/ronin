@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from tools.license_qualification import (
     LicenseQualificationError,
     package_evidence_sha256,
