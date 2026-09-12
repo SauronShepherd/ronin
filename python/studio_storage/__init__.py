@@ -5,6 +5,15 @@ from __future__ import annotations
 from studio_storage.artifacts import ArtifactIntegrityError, ArtifactRef, LocalArtifactStore
 from studio_storage.async_artifacts import BoundedAsyncArtifactStore
 from studio_storage.async_store import StorageBackpressureError
+from studio_storage.bundle import (
+    BUNDLE_MANIFEST_PATH,
+    BundleFile,
+    BundleIntegrityError,
+    BundleReadLimits,
+    extract_bundle,
+    verify_bundle,
+    write_bundle,
+)
 from studio_storage.catalog import (
     CatalogAssetNotFound,
     CatalogConflict,
@@ -58,8 +67,12 @@ from studio_storage.workspaces import (
 __all__ = (
     "ArtifactIntegrityError",
     "ArtifactRef",
+    "BUNDLE_MANIFEST_PATH",
     "BoundedAsyncArtifactStore",
     "BoundedAsyncJobStore",
+    "BundleFile",
+    "BundleIntegrityError",
+    "BundleReadLimits",
     "CatalogAssetNotFound",
     "CatalogConflict",
     "ConnectionConflict",
@@ -87,6 +100,7 @@ __all__ = (
     "WorkspaceNotFound",
     "catalog_schema_version",
     "connection_schema_version",
+    "extract_bundle",
     "migrate",
     "migrate_catalog",
     "migrate_connections",
@@ -100,5 +114,7 @@ __all__ = (
     "scheduler_schema_version",
     "schema_version",
     "sqlite_ready",
+    "verify_bundle",
     "workspace_schema_version",
+    "write_bundle",
 )
