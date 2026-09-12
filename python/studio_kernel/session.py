@@ -136,7 +136,10 @@ class SessionPolicy:
         object.__setattr__(self, "allowed_isolation_modes", modes)
         object.__setattr__(self, "granted_grants", grants)
 
-    def authorization_evidence(self, cell: CellExecutionRequest) -> tuple[AuthorizationEvidence, ...]:
+    def authorization_evidence(
+        self,
+        cell: CellExecutionRequest,
+    ) -> tuple[AuthorizationEvidence, ...]:
         if not cell.directive.required_grants:
             return ()
         grant_set = GrantSet(self.granted_grants)
