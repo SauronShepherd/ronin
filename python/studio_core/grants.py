@@ -77,7 +77,9 @@ def _constraint_items(
 ) -> tuple[tuple[str, str], ...]:
     items = tuple(value.items()) if isinstance(value, Mapping) else tuple(value)
     if len(items) > MAX_CONSTRAINTS:
-        raise ValueError(f"authorization constraints must contain at most {MAX_CONSTRAINTS} entries")
+        raise ValueError(
+            f"authorization constraints must contain at most {MAX_CONSTRAINTS} entries"
+        )
     normalized: list[tuple[str, str]] = []
     seen: set[str] = set()
     for key, constraint_value in items:
@@ -125,7 +127,9 @@ class ResourceScope:
             raise ValueError("authorization resource must contain exactly kind and identifier")
         kind = payload["kind"]
         identifier = payload["identifier"]
-        if not isinstance(kind, str) or (identifier is not None and not isinstance(identifier, str)):
+        if not isinstance(kind, str) or (
+            identifier is not None and not isinstance(identifier, str)
+        ):
             raise ValueError("authorization resource has invalid field types")
         return cls(_require_resource_kind(kind), cast(str | None, identifier))
 
@@ -256,7 +260,9 @@ class Decision:
         return {
             "allowed": self.allowed,
             "reason": self.reason,
-            "matched_grant": None if self.matched_grant is None else self.matched_grant.to_payload(),
+            "matched_grant": (
+                None if self.matched_grant is None else self.matched_grant.to_payload()
+            ),
         }
 
 
@@ -323,7 +329,10 @@ class GrantSet:
         candidates = tuple(
             grant
             for grant in self.grants
-            if requirement.action in grant.actions and _resource_covers(grant.resource, requirement.resource)
+            if (
+                requirement.action in grant.actions
+                and _resource_covers(grant.resource, requirement.resource)
+            )
         )
         supported = tuple(grant for grant in candidates if not grant.constraints)
         if not supported:
