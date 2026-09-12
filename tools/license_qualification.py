@@ -477,7 +477,7 @@ def _load_json(path: Path) -> object:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", type=Path, default=Path("."))
+    parser.add_argument("--root", type=Path, default=Path())
     parser.add_argument("--write-inventory", type=Path)
     parser.add_argument("--inventory", type=Path, default=Path("third_party/licenses-v1.json"))
     parser.add_argument("--policy", type=Path, default=Path("third_party/license-policy-v1.json"))
