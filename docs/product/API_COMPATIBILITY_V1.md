@@ -85,6 +85,8 @@ Before stable v1, incompatible removals/renames/type changes or required-request
 
 `POST /v1/jobs` accepts only `project`, `target`, and optional `parameters`; unknown request fields are rejected. `parameters` is intentionally extensible JSON object data and is not interpreted as protocol field expansion.
 
+The request body is parsed through the shared `ronin/canonical-json/v1` decoder before authorization-sensitive request handling and before idempotency identity is computed. Duplicate object members and non-finite JSON numbers are therefore rejected with `400 invalid_request` instead of being interpreted with implementation-specific last-wins or non-standard numeric semantics. This is an alpha validation tightening: payloads containing duplicate members or non-finite numbers that older code may have accepted are no longer valid. Canonical bytes and request digests for valid v1 inputs are unchanged.
+
 Known query parameter sets are closed per route. Limits remain `1..100`. Public `job_id` values are bounded by the canonical lifecycle ID contract. The server must not silently discard unknown query or request fields.
 
 ## OpenAPI / CLI / SDK synchronization
