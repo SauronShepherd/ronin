@@ -19,6 +19,7 @@ from studio_core.environments import (
     EnvironmentId,
     ProjectEnvironmentBindings,
 )
+from studio_storage import EnvironmentStore
 from studio_storage.environments import EnvironmentConflict, SqliteEnvironmentStore
 from studio_storage.workspaces import SqliteWorkspaceStore
 
@@ -77,6 +78,7 @@ def test_sqlite_environment_store_requires_registered_project_and_active_environ
     workspace_store.register_project(workspace_id, _manifest(), now=NOW)
 
     store = SqliteEnvironmentStore(database, migration_now=NOW)
+    assert isinstance(store, EnvironmentStore)
     environment = EnvironmentDefinition(EnvironmentId("prod"), "Production")
     store.put_environment(workspace_id, environment, now=NOW)
     bindings = ProjectEnvironmentBindings(
