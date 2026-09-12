@@ -34,7 +34,16 @@ def test_loopback_host_recognizes_only_explicit_loopback_targets(host: str) -> N
     assert is_loopback_host(host)
 
 
-@pytest.mark.parametrize("host", [None, "server", "0.0.0.0", "192.168.1.10", "example.test"])
+@pytest.mark.parametrize(
+    "host",
+    [
+        None,
+        "server",
+        "0.0.0.0",  # noqa: S104  # deliberate non-loopback sentinel
+        "192.168.1.10",
+        "example.test",
+    ],
+)
 def test_loopback_host_rejects_non_loopback_targets(host: str | None) -> None:
     assert not is_loopback_host(host)
 
