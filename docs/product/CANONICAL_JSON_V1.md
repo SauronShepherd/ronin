@@ -16,7 +16,7 @@ This is a compatibility constraint, not a claim that Python's full finite-float 
 
 ## Parsing boundary
 
-`studio_core.canonical_json.decode` rejects duplicate object members and non-finite numbers before a payload is admitted to a canonical identity boundary. The public `POST /v1/jobs` request body now uses this parser before request/idempotency identity is computed, so duplicate members and non-finite values fail closed at the HTTP boundary as well. Authorization grant-set JSON uses the same parser before typed grant construction. Presentation JSON and opaque storage cursors are intentionally outside this contract.
+`studio_core.canonical_json.decode` rejects duplicate object members and non-finite numbers before a payload is admitted to a canonical identity boundary. The public `POST /v1/jobs` request body uses this parser before request/idempotency identity is computed, durable `Job.parameters_json` is validated through it, and authorization grant-set JSON uses it before typed grant construction. CLI `--param KEY=VALUE` preserves the alpha convenience that non-JSON values are strings, but syntactically valid JSON values must pass this canonical decoder. Presentation JSON and opaque storage cursors are intentionally outside this contract.
 
 ## Published vectors and independent checker
 
@@ -26,7 +26,7 @@ This is a compatibility constraint, not a claim that Python's full finite-float 
 
 ## Current identity and durable contract boundaries
 
-The shared codec is the required boundary for identity-bearing or durable canonical JSON. Current covered surfaces include project manifests, notebook documents, IR, worker identity inputs, resume/cell execution identity, kernel/session events, public HTTP request/idempotency identity, typed authorization requirements/grant sets/enforcement evidence, and operator/diagnostic catalogs. JSON used only for presentation, release tooling output, or opaque cursor encoding remains intentionally outside the canonical identity contract.
+The shared codec is the required boundary for identity-bearing or durable canonical JSON. Current covered surfaces include project manifests, notebook documents, IR, durable job parameters, worker identity inputs, resume/cell execution identity, kernel/session events, public HTTP request/idempotency identity, CLI parameter JSON, typed authorization requirements/grant sets/enforcement evidence, and operator/diagnostic catalogs. JSON used only for presentation, release tooling output, or opaque cursor encoding remains intentionally outside the canonical identity contract.
 
 ## Versioning rule
 
