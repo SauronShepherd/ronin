@@ -54,6 +54,14 @@ from studio_storage.scheduler import (
     migrate_scheduler,
     scheduler_schema_version,
 )
+from studio_storage.secrets import (
+    CompositeSecretResolver,
+    EnvironmentSecretResolver,
+    MountedFileSecretResolver,
+    SecretMaterial,
+    SecretResolutionError,
+    SecretResolver,
+)
 from studio_storage.sqlite import migrate, open_database, schema_version
 from studio_storage.workspaces import (
     ProjectRegistrationConflict,
@@ -75,16 +83,22 @@ __all__ = (
     "BundleReadLimits",
     "CatalogAssetNotFound",
     "CatalogConflict",
+    "CompositeSecretResolver",
     "ConnectionConflict",
     "ConnectionNotFound",
     "DataContractConflict",
     "DataContractNotFound",
+    "EnvironmentSecretResolver",
     "IdempotencyConflict",
     "InMemoryJobStore",
     "LocalArtifactStore",
+    "MountedFileSecretResolver",
     "OntologyConflict",
     "ProjectRegistrationConflict",
     "QualityRunConflict",
+    "SecretMaterial",
+    "SecretResolutionError",
+    "SecretResolver",
     "SqliteCatalogStore",
     "SqliteConnectionStore",
     "SqliteJobStore",
