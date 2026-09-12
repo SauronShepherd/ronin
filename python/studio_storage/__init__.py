@@ -44,7 +44,13 @@ from studio_storage.ontology import (
     ontology_schema_version,
 )
 from studio_storage.paged_store import BoundedAsyncJobStore, InMemoryJobStore
-from studio_storage.ports import ArtifactStore, CatalogStore, ConnectionStore, WorkspaceStore
+from studio_storage.ports import (
+    ArtifactStore,
+    CatalogStore,
+    ConnectionStore,
+    EnvironmentStore,
+    WorkspaceStore,
+)
 from studio_storage.quality import (
     DataContractConflict,
     DataContractNotFound,
@@ -102,6 +108,7 @@ __all__ = (
     "EnvironmentConflict",
     "EnvironmentNotFound",
     "EnvironmentSecretResolver",
+    "EnvironmentStore",
     "IdempotencyConflict",
     "InMemoryJobStore",
     "LocalArtifactStore",
