@@ -16,13 +16,17 @@ This is a compatibility constraint, not a claim that Python's full finite-float 
 
 ## Parsing boundary
 
-`studio_core.canonical_json.decode` rejects duplicate object members and non-finite numbers before a payload is admitted to a canonical identity boundary. Existing parsers should migrate to this helper where their input participates in identity. Presentation JSON and opaque storage cursors are intentionally outside this contract.
+`studio_core.canonical_json.decode` rejects duplicate object members and non-finite numbers before a payload is admitted to a canonical identity boundary. The public `POST /v1/jobs` request body now uses this parser before request/idempotency identity is computed, so duplicate members and non-finite values fail closed at the HTTP boundary as well. Presentation JSON and opaque storage cursors are intentionally outside this contract.
 
 ## Published vectors and independent checker
 
-`tests/golden/canonical_json_v1.json` publishes exact canonical UTF-8 text and SHA-256 digests for ordering, Unicode, nesting, booleans/null, a large integer, legacy `-0.0`, and the persisted cell-resume identity shape. It also publishes required rejection inputs for duplicate members and non-finite numbers.
+`tests/golden/canonical_json_v1.json` publishes exact canonical UTF-8 text and SHA-256 digests for ordering, Unicode, nesting, booleans/null, a large integer, legacy `-0.0`, persisted cell-resume identity, and the public HTTP request/idempotency identity shape. It also publishes required rejection inputs for duplicate members and non-finite numbers.
 
-`tools/canonical_json_check.go` is a standard-library-only independent checker. It parses the vectors without Python, rejects duplicate members, preserves numeric lexemes with Go `json.Number`, recomputes canonical bytes and SHA-256 digests, and verifies all published vectors. The checker deliberately validates the published v1 byte contract; it does not claim an independent general algorithm for normalizing arbitrary finite IEEE-754 values beyond those exact lexical vectors.
+`tools/canonical_json_check.go` is a standard-library-only independent checker. It parses every published vector without Python, rejects duplicate members, preserves numeric lexemes with Go `json.Number`, recomputes canonical bytes and SHA-256 digests, and verifies the complete published vector set. The checker deliberately validates the published v1 byte contract; it does not claim an independent general algorithm for normalizing arbitrary finite IEEE-754 values beyond those exact lexical vectors.
+
+## Current identity boundaries
+
+The shared codec is the required boundary for identity-bearing or durable canonical JSON. Current covered surfaces include project manifests, notebook documents, IR, worker identity inputs, resume/cell execution identity, kernel/session events, and public HTTP request/idempotency identity. JSON used only for presentation and opaque cursor encoding remains intentionally outside the canonical identity contract.
 
 ## Versioning rule
 

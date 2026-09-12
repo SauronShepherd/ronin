@@ -18,6 +18,12 @@
       "source_json": "{\"version\":1,\"upstream_result_digests\":[\"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\"],\"source_digest\":\"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\",\"runtime_digest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"run_id\":\"run-1\",\"repository_digest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"parameter_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"cell_id\":\"cell-1\"}",
       "canonical_utf8": "{\"cell_id\":\"cell-1\",\"parameter_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"repository_digest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"run_id\":\"run-1\",\"runtime_digest\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"source_digest\":\"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\",\"upstream_result_digests\":[\"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\"],\"version\":1}",
       "sha256": "fc7d3391e678570e8e98554c96d6eb44968c508a5b470ba503adcf014168cb80"
+    },
+    {
+      "name": "http-request-identity",
+      "source_json": "{\"target\":\"notebook\",\"project\":\"demo\",\"parameters\":{\"nested\":{\"b\":false,\"a\":[\"café\",-0.0]},\"big\":9007199254740993,\"alpha\":1}}",
+      "canonical_utf8": "{\"parameters\":{\"alpha\":1,\"big\":9007199254740993,\"nested\":{\"a\":[\"café\",-0.0],\"b\":false}},\"project\":\"demo\",\"target\":\"notebook\"}",
+      "sha256": "1016b695b2cdd39c54b396d6ba0bc626e4e39c79a76b26a27f04f598bb5614a1"
     }
   ],
   "rejections": [
