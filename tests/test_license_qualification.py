@@ -17,7 +17,11 @@ _LOCK_SHA = "0" * 64
 _HASH = "a" * 64
 
 
-def _inventory(packages: list[dict[str, object]], *, lock_sha256: str = _LOCK_SHA) -> dict[str, object]:
+def _inventory(
+    packages: list[dict[str, object]],
+    *,
+    lock_sha256: str = _LOCK_SHA,
+) -> dict[str, object]:
     enriched: list[dict[str, object]] = []
     for package in packages:
         entry = dict(package)
@@ -55,7 +59,11 @@ def _entry(
     }
 
 
-def _policy(inventory: dict[str, object], *keys: str, project_notice: str = "not_required") -> dict[str, object]:
+def _policy(
+    inventory: dict[str, object],
+    *keys: str,
+    project_notice: str = "not_required",
+) -> dict[str, object]:
     packages = inventory["packages"]
     assert isinstance(packages, list)
     evidence = {
@@ -103,7 +111,10 @@ def test_locked_graph_reads_exact_versions_and_normalizes_names(tmp_path: Path) 
         encoding="utf-8",
     )
 
-    assert locked_graph(lock) == {"foo-bar": "1.2.3", "other-pkg": "4.5.6"}
+    assert locked_graph(lock) == {
+        "foo-bar": "1.2.3",
+        "other-pkg": "4.5.6",
+    }
 
 
 def test_locked_graph_reads_multiple_hash_continuations(tmp_path: Path) -> None:
@@ -153,7 +164,10 @@ def test_locked_graph_rejects_unterminated_hash_continuation(tmp_path: Path) -> 
         encoding="utf-8",
     )
 
-    with pytest.raises(LicenseQualificationError, match="unterminated hash continuation"):
+    with pytest.raises(
+        LicenseQualificationError,
+        match="unterminated hash continuation",
+    ):
         locked_graph(lock)
 
 
@@ -212,7 +226,7 @@ def test_qualify_accepts_exact_reviewed_locked_graph() -> None:
 
 
 @pytest.mark.parametrize(
-    "inventory, message",
+    ("inventory", "message"),
     [
         (_inventory([_entry("alpha", "1.0")]), "does not exactly match"),
         (_inventory([_entry("alpha", "1.0"), _entry("alpha", "1.0")]), "duplicate"),
