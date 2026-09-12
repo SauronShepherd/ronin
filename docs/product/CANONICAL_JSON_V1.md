@@ -20,7 +20,7 @@ This is a compatibility constraint, not a claim that Python's full finite-float 
 
 ## Published vectors and independent checker
 
-`tests/golden/canonical_json_v1.json` publishes exact canonical UTF-8 text and SHA-256 digests for ordering, Unicode, nesting, booleans/null, a large integer, legacy `-0.0`, persisted cell-resume identity, and the public HTTP request/idempotency identity shape. It also publishes required rejection inputs for duplicate members and non-finite numbers.
+`tests/golden/canonical_json_v1.json` publishes exact canonical UTF-8 text and SHA-256 digests for generic ordering/Unicode/nesting, legacy `-0.0`, persisted cell-resume identity, public HTTP request identity, project manifests, notebook documents, IR pipelines, kernel execution events, and typed grant sets. It also publishes required rejection inputs for duplicate members and non-finite numbers.
 
 `tools/canonical_json_check.go` is a standard-library-only independent checker. It parses every published vector without Python, rejects duplicate members, preserves numeric lexemes with Go `json.Number`, recomputes canonical bytes and SHA-256 digests, and verifies the complete published vector set. The checker deliberately validates the published v1 byte contract; it does not claim an independent general algorithm for normalizing arbitrary finite IEEE-754 values beyond those exact lexical vectors.
 
