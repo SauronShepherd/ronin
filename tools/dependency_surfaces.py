@@ -29,14 +29,16 @@ def _exact_requirements(values: object, *, surface: str) -> dict[str, str]:
         match = _EXACT_REQUIREMENT.fullmatch(value)
         if match is None:
             raise DependencySurfaceError(
-                f"{surface} must use exact name==version pins without URLs, markers, extras, or ranges: {value!r}"
+                f"{surface} must use exact name==version pins without URLs, markers, extras, "
+                f"or ranges: {value!r}"
             )
         name = _canonical_name(match.group(1))
         version = match.group(2)
         if name in result:
             if result[name] != version:
                 raise DependencySurfaceError(
-                    f"{surface} contains conflicting versions for {name}: {result[name]} vs {version}"
+                    f"{surface} contains conflicting versions for {name}: "
+                    f"{result[name]} vs {version}"
                 )
             raise DependencySurfaceError(f"{surface} contains duplicate requirement for {name}")
         result[name] = version
@@ -90,7 +92,7 @@ def dependency_surfaces(root: Path) -> dict[str, object]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", type=Path, default=Path("."))
+    parser.add_argument("--root", type=Path, default=Path())
     args = parser.parse_args()
     payload = dependency_surfaces(args.root.resolve())
     print(json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
