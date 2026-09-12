@@ -24,6 +24,36 @@
       "source_json": "{\"target\":\"notebook\",\"project\":\"demo\",\"parameters\":{\"nested\":{\"b\":false,\"a\":[\"café\",-0.0]},\"big\":9007199254740993,\"alpha\":1}}",
       "canonical_utf8": "{\"parameters\":{\"alpha\":1,\"big\":9007199254740993,\"nested\":{\"a\":[\"café\",-0.0],\"b\":false}},\"project\":\"demo\",\"target\":\"notebook\"}",
       "sha256": "1016b695b2cdd39c54b396d6ba0bc626e4e39c79a76b26a27f04f598bb5614a1"
+    },
+    {
+      "name": "project-manifest",
+      "source_json": "{\"schema\":\"ronin.project/v1\",\"project\":{\"id\":\"demo\",\"name\":\"Ronin demo project\",\"repositories\":[{\"adapter_id\":\"git\",\"alias\":\"demo\",\"default_ref\":\"main\",\"role\":\"primary\",\"subdirectory\":\"examples/demo\",\"sync_policy\":\"manual\",\"uri\":\"https://github.com/SauronShepherd/ronin\"}],\"execution\":{\"requirements\":[{\"constraint\":null,\"level\":\"required\",\"name\":\"container\"},{\"constraint\":\">=3.11\",\"level\":\"required\",\"name\":\"python\"}],\"resolution\":\"compatible\",\"runtime\":{\"adapter_id\":\"docker\",\"profile_id\":\"python-3.11-slim\"}}}}",
+      "canonical_utf8": "{\"project\":{\"execution\":{\"requirements\":[{\"constraint\":null,\"level\":\"required\",\"name\":\"container\"},{\"constraint\":\">=3.11\",\"level\":\"required\",\"name\":\"python\"}],\"resolution\":\"compatible\",\"runtime\":{\"adapter_id\":\"docker\",\"profile_id\":\"python-3.11-slim\"}},\"id\":\"demo\",\"name\":\"Ronin demo project\",\"repositories\":[{\"adapter_id\":\"git\",\"alias\":\"demo\",\"default_ref\":\"main\",\"role\":\"primary\",\"subdirectory\":\"examples/demo\",\"sync_policy\":\"manual\",\"uri\":\"https://github.com/SauronShepherd/ronin\"}]},\"schema\":\"ronin.project/v1\"}",
+      "sha256": "8743d9800a46832ebcfa4830d1c1377c16b4df2af780eb359cc1d8c739a3d99e"
+    },
+    {
+      "name": "notebook-document",
+      "source_json": "{\"schema\":\"ronin.notebook/v1\",\"cells\":[{\"dependencies\":[],\"id\":\"aacc1d52a1fbc20634d366de68a7ad855931e5d39762f05f6697121c6baf66fd\",\"identity\":{\"boundary\":\"import\",\"namespace\":\"examples/demo/notebooks/etl.ronin.json\",\"reference\":\"intro\"},\"kind\":\"markdown\",\"language\":null,\"source\":\"# Demo ETL\"}]}",
+      "canonical_utf8": "{\"cells\":[{\"dependencies\":[],\"id\":\"aacc1d52a1fbc20634d366de68a7ad855931e5d39762f05f6697121c6baf66fd\",\"identity\":{\"boundary\":\"import\",\"namespace\":\"examples/demo/notebooks/etl.ronin.json\",\"reference\":\"intro\"},\"kind\":\"markdown\",\"language\":null,\"source\":\"# Demo ETL\"}],\"schema\":\"ronin.notebook/v1\"}",
+      "sha256": "fec8decc201b54b22bf3530d3da8f9a836ae99168904c3f0c8ecea23a8c9fe3d"
+    },
+    {
+      "name": "ir-empty-pipeline",
+      "source_json": "{\"config\":{\"name\":\"main\"},\"edges\":[],\"nodes\":[]}",
+      "canonical_utf8": "{\"config\":{\"name\":\"main\"},\"edges\":[],\"nodes\":[]}",
+      "sha256": "547694faa57be421a803a9a0b5ac418a76c13ed34d4be62ae9a070e9294c148a"
+    },
+    {
+      "name": "kernel-execution-event",
+      "source_json": "{\"attempt_id\":\"attempt-1\",\"sequence\":1,\"kind\":\"cell.started\",\"cell_id\":\"cell-1\",\"message\":\"starting\"}",
+      "canonical_utf8": "{\"attempt_id\":\"attempt-1\",\"cell_id\":\"cell-1\",\"kind\":\"cell.started\",\"message\":\"starting\",\"sequence\":1}",
+      "sha256": "b346ecf7ba24296f9e2b725c8b4246e9b9d258a7dcd736d7ed5891a8ed1c9521"
+    },
+    {
+      "name": "grant-set",
+      "source_json": "{\"version\":1,\"grants\":[{\"version\":1,\"actions\":[\"execute\",\"submit\"],\"resource\":{\"kind\":\"project\",\"identifier\":\"demo\"},\"constraints\":{}}]}",
+      "canonical_utf8": "{\"grants\":[{\"actions\":[\"execute\",\"submit\"],\"constraints\":{},\"resource\":{\"identifier\":\"demo\",\"kind\":\"project\"},\"version\":1}],\"version\":1}",
+      "sha256": "318f68122d63f613789e0e7b0e70917d320c0996605a22a8f16c45cd04b8174a"
     }
   ],
   "rejections": [
