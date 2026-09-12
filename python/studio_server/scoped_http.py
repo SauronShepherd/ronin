@@ -9,6 +9,8 @@ from typing import cast
 
 from studio_core import GrantSet
 from studio_execution import DurableExecutionService
+from studio_storage import sqlite_ready
+
 from studio_server.http import RoninHTTPServer as _RoninHTTPServer
 from studio_server.http import _Handler
 from studio_server.transport_policy import (
@@ -17,7 +19,6 @@ from studio_server.transport_policy import (
     is_loopback_host,
     parse_bind_policy,
 )
-from studio_storage import sqlite_ready
 
 _BIND_POLICY_ENV = "RONIN_BIND_POLICY"
 
