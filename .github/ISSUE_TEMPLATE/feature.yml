@@ -1,0 +1,44 @@
+name: Feature or design proposal
+description: Propose a scoped product, architecture, compatibility, or developer-experience change
+title: "[Proposal] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Substantial architecture or product changes require public discussion before implementation. Keep proposals within the current project scope; post-v0.1 breadth stays frozen until explicitly opened.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the user or contributor problem without prescribing a solution first.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Proposed scope
+      description: Describe the smallest coherent change and explicit non-goals.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and identity impact
+      description: Cover HTTP/OpenAPI/CLI/SDK, durable state, canonical bytes, migration, or evidence impact where relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Explain simpler options and why they are insufficient.
+    validations:
+      required: false
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and acceptance criteria
+      description: State how completion can be demonstrated without inventing new work or weakening existing gates.
+    validations:
+      required: true
