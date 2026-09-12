@@ -2,69 +2,89 @@
 
 This backlog is deliberately narrow for v0.1. Selection must be revalidated against current `main`, open Builder work, canonical automation handoffs, and the scope authority in `docs/product/V01_SCOPE.md`.
 
-_Last synchronized: 2026-09-11 from base `218aa4bc9e419bf18e435796b9858b1cf1900eae` with the kernel/session canonical JSON boundary in this change._
+_Last synchronized: 2026-09-12 from base `22d60e6b43ad084762d0651f638056102fd50fcb` after the source-hygiene fixes through PR #227._
 
 **Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, validation mode, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled.
 
 ## Current validation mode
 
-GitHub Actions are intentionally disabled to avoid consuming Actions credits. Previous workflow definitions remain under `.github/workflows-disabled/` only as historical/restart material.
+GitHub Actions remain intentionally disabled. Previous workflow definitions stay under `.github/workflows-disabled/` as historical/restart material only.
 
 Until the maintainer explicitly changes this policy, autonomous Builder work does not wait for, trigger, rerun, or require CI; does not execute automated tests; validates through static code inspection, dependency/contract tracing, schema/API consistency review, and code-level reasoning; and does not claim green CI or passing tests for new changes. Existing security, durability, performance, architecture, coverage, and acceptance requirements remain implementation constraints.
 
-The complementary 2026-09-11 audit reported six failing tests, lint/format drift and a storage-layer regression from its own local execution. Those observations remain diagnostic evidence, but they do not change the repository's current code-only operating policy or create permission to run tests/CI. The storage-layer finding was independently confirmed in source and is resolved by #197.
-
-Evidence-only handoffs #166/#167/#163 remain open/deferred and do not block implementation while this mode is active. Test/CI-centric #47/#60/#102 likewise remain deferred under this policy.
+The last automated qualification before CI was disabled remains **13/15 live**. Product code for the historical step-01 and step-12 capability gaps now exists, but code-only work does not alter the qualified baseline.
 
 ## Current v0.1 truth
 
-The last automated qualification before CI was disabled remains **13/15 live**, with historical gaps `01` (production image + supported Compose topology) and `12` (public portable evidence retrieval). Both capabilities are now implemented in product code, but code-only work does not alter that qualified baseline automatically.
+The durable local execution spine, authenticated/project-scoped HTTP API, OpenAPI 3.1 contract, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha API compatibility, production image/Compose path, bearer transport/bind policy, readiness, Git identity handling, cgroup observation and artifact-qualification mechanics are implemented.
 
-Supported code contains the durable local execution spine, authenticated and project-scoped HTTP job control, OpenAPI 3.1, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha API/SDK compatibility, route-level typed grant enforcement, production image + Compose, explicit bearer transport/bind policy, real readiness, corrected Git dirty identity, artifact qualification tooling, observed cgroup CPU/memory evidence, and the shared canonical JSON v1 boundary.
+Canonical JSON v1 implementation is complete in scope. #56 is closed and the shared canonical boundary now covers HTTP request/idempotency identity, durable job parameters, grants/authorization evidence, operator and diagnostic catalogs, project manifests, notebooks, IR, kernel authorization/event bytes and the published boundary goldens. Valid v1 identity bytes remain unchanged.
 
-Canonical JSON v1 has landed through #190/#193/#194/#195 plus the current kernel/session slice: shared codec, independent Go checker, resume identity, worker identity, project manifests, notebooks, IR, kernel authorization evidence/event bytes, and fail-closed kernel ledger parsing all use the common boundary. #56 remains open because public HTTP request/idempotency identity, durable parameter parsing, grants, remaining core identity serializers and boundary goldens still require migration/completion.
+#200 duplicate-edge and target-port-cardinality implementation is complete with stable `RONIN-OP-008` through `RONIN-OP-010` diagnostics.
 
-#57 remains open/BLOCKED as a qualification gate. The acceptance harness still carries stale historical step-01/step-12 skip markers, and no 15/15 claim is permitted until automated qualification is explicitly restored and executed.
+#22 has no remaining concrete secret-producing source gap identified by current inspection. Existing repository URI credential rejection, grant constraint secret rejection, reproducibility guards and operational redaction remain the supported controls. Do not invent speculative hardening work.
 
-## Storage evidence adapter architecture
+The dead compatibility modules `studio_storage/evidence_sqlite.py` and `studio_storage/evidence_memory.py` were removed by #211 after repository-wide consumer checks found no imports.
 
-PR #197 restored the #164 single-public-adapter invariant:
+## Current source-hygiene status
 
-- `studio_storage.SqliteJobStore` is exported directly from `fenced_sqlite.SqliteJobStore`;
-- schema-v3 evidence availability/unavailable fields and the per-Run bound live in that canonical fenced SQLite adapter;
-- `evidence_sqlite.py` is a compatibility re-export rather than another concrete class;
-- `studio_storage.InMemoryJobStore` is exported directly from `paged_store.InMemoryJobStore`;
-- the same per-Run evidence bound lives in the canonical paged in-memory adapter;
-- `evidence_memory.py` is a compatibility re-export;
-- the shared bound is defined in storage-neutral `studio_storage.limits`.
+I0 is the only remaining implementation area with unresolved proof.
 
-This preserves lease fencing, `BEGIN IMMEDIATE`, thread-local SQLite connection reuse, keyset paging, schema-v3 availability semantics, WAL/`synchronous=FULL` through the existing lifecycle store, and the max-100 evidence-ref contract.
+Completed source-hygiene work includes:
 
-## Production image + Compose implementation
+- dead storage compatibility reexports removed;
+- `UP022`, `RET501`, `PTH201`, `S104`, both `S603`, both `PT011`, `PT018` and `PT006` historical findings addressed without broad suppressions;
+- the known historical/current `E501` findings in `studio_cli/network.py`, `studio_orchestrator/store.py`, `studio_kernel/session.py`, `studio_server/http.py`, `studio_core/grants.py`, `tools/license_qualification.py`, `tests/test_readiness.py` and `tests/test_license_qualification.py` mechanically reflowed;
+- `tests/test_transport_policy.py` imports were already sorted when rechecked.
 
-The supported local container path provides one digest-pinned Ronin image, durable `/var/lib/ronin` storage, server health gating, host loopback publication, worker-only Docker socket authority, immutable local image-ID resolution, read-only checkout access, narrowly scoped Git safe-directory handling, non-root product execution, worker `restart: "no"`, and a bundled CLI helper.
+A global current `ruff check python tests tools packages docker` and `ruff format --check python tests tools packages docker` have **not** been demonstrated in the active execution environment because a current checkout cannot be obtained there. Do not infer a clean global result from the targeted fixes.
 
-The supported Compose topology uses the explicit `RONIN_BIND_POLICY=container-internal` declaration for private bridge communication. This declaration is not encryption and is not a generic remote-HTTP permission; the host-facing port remains bound to `127.0.0.1`. Supported remote authenticated access terminates HTTPS externally.
+The historical `SIM102` location is not currently evidenced. Repository text only records an older `SIM102` that had already been corrected. Do not change nested conditions by guesswork; resolve only if an exact current diagnostic can be reproduced.
 
-No automated Compose/runtime qualification is claimed under current policy.
+## License/release implementation and evidence
+
+#58 deterministic source implementation is present: build-system and release/qualification dependency surfaces are modeled by `tools/dependency_surfaces.py`, and license qualification fails closed on unsupported/unpinned/conflicting dependency forms.
+
+Exact package inventory, license-policy decisions, NOTICE/attribution conclusions and release-candidate evidence still require a real exact environment plus human/legal review. They must not be fabricated.
+
+#95 artifact-qualification mechanics are implemented, but exact candidate execution/publish evidence remains a real-environment task rather than a source-code gap.
+
+## Contributor, governance and release surfaces
+
+PR #204 landed CONTRIBUTING, docs landing material, release runbook, changelog and issue/PR templates; #71, #72 and #73 are closed.
+
+#70 remains human-blocked only where it requires a real owned Code-of-Conduct reporting route or genuinely suitable starter tasks. Do not publish a fake reporting address or manufacture `good first issue` work.
+
+#45 remains blocked until the maintainer selects and verifies a real private vulnerability-reporting channel. Do not add `SECURITY.md` before that route exists.
+
+## Decisions and administration
+
+#50 remains `NEEDS_DECISION`. Capability namespace/value families, ambiguity semantics, unknown-version behavior, selection evidence and dispatch-time binding require a current architecture decision before implementation. Do not add a second v0.1 runtime to create work.
+
+#63 and physical deletion/protection of merged branches/tags are repository-administration work. The current connector does not provide safe branch-ref deletion; record that limitation rather than inventing cleanup evidence.
 
 ## Current critical path
 
-Select one coherent slice at a time.
+Select one coherent slice at a time:
 
-1. **#56 — HTTP request/idempotency canonical JSON.** Route request identity bytes through the shared canonical encoder and parse inbound request JSON through the canonical decoder so duplicate/non-finite values fail closed. Keep response presentation JSON out of this migration.
-2. **#56 — durable parameters + grants + remaining serializers/goldens.** Canonicalize `Job.parameters_json` parsing, grants, operator/diagnostic catalogs, then audit remaining direct JSON call sites and complete boundary goldens.
-3. **#22 — residual architecture reconciliation.** After #56, handle duplicate exact edges, operator-aware target-port cardinality and concrete secret-bearing producers without reopening already-completed durable/auth/evidence work.
-4. **#58 — exact transitive license/NOTICE evidence.** Tooling exists; remaining deterministic code work is explicit build-system/release-tool exception modeling. Exact inventory/policy/NOTICE conclusions require a real resolved environment and human review; never fabricate them.
-5. **#70/#72/#71/#73 — contributor/governance/docs/release surface.** Governance decision is already recorded; publish truthful contributor-facing policy, docs index, troubleshooting, first-run and release/change communication. #45 security policy remains blocked on a verified private reporting channel.
-6. **#50 — runtime capability namespace/ambiguity decision.** Decision record first; do not add a second v0.1 runtime.
-7. **#57 — qualification gate.** Revisit only if the maintainer explicitly restores automated verification.
+1. **I0 source hygiene:** reproduce any remaining current Ruff/format diagnostic exactly and fix only that finding; do not claim global clean status without executable evidence.
+2. **Planning consistency:** keep this file and `CONSTRUCTION_PLAN.md` synchronized with observed `main`.
+3. **#58 / #95 exact evidence:** proceed only with a real exact environment and required human/legal decisions; source implementation is already present.
+4. **#70 / #45 governance channels:** proceed only after real owned reporting routes exist.
+5. **#50 architecture decision:** implementation only after a current ADR/decision exists.
+6. **#57 qualification:** revisit only if the maintainer explicitly restores automated verification.
 
-#95 artifact-qualification mechanics and #115 observed-resource implementation are substantially complete in code and remain open for real evidence. #63 remains a release-time repository-administration gate. #59 and #62 remain post-v0.1. #99 is closed because the Job/Run/Attempt domain and `JobStore` Protocol already exist.
+No additional product feature slice is justified merely to keep Builder active.
+
+## Deferred / out-of-scope under the current build plan
+
+The following do not block in-scope implementation completion: tests, coverage, mutation, skipped acceptance cases, benchmarks, CI/workflows/GitHub Actions, provenance/secret scanning as CI gates, release evidence that requires an unavailable exact environment, and repository-reference administration.
+
+This includes #47, #57, #60 where its value is only workflow qualification, #63 admin, #95 candidate execution/publish evidence, #102, #115 real-Docker proof, #123 regression tests, #163/#166/#167, #199, #201, #202, and release/provenance workflow items #43/#44/#94/#96. #59 and #62 remain post-v0.1.
 
 ## Worker execution invariants
 
-Every remaining worker/runtime slice must preserve checkpoint-before-next-cell persistence, lease fencing, fail-closed heartbeat ownership, prompt cancellation, immutable resume identity plus verified artifact availability/digest, same-Run replacement Attempts, exact reused-cell and `attempt_id` provenance, bounded async store/artifact facades, and production lease TTL semantics.
+Every remaining worker/runtime change must preserve checkpoint-before-next-cell persistence, lease fencing, fail-closed heartbeat ownership, prompt cancellation, immutable resume identity plus verified artifact availability/digest, same-Run replacement Attempts, exact reused-cell and `attempt_id` provenance, bounded async store/artifact facades, and production lease TTL semantics.
 
 ## Public-boundary and architecture invariants
 
