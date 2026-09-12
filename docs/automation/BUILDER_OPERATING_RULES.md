@@ -41,6 +41,10 @@ The v0.1 dependency critical path outranks unrelated hardening. Do not expand in
 
 Before merging Builder work, reread current `main`, inspect the complete diff against that `main`, verify that no conflicting Builder PR owns the same domain, and perform static code-level checks appropriate to the slice. Merge only if the code review finds no known correctness, architecture, security, or contract blocker.
 
+## Post-merge branch hygiene
+
+Deleting the merged source branch is part of the Builder Definition of Done whenever that branch has no unmerged work remaining. If the active GitHub integration cannot delete refs, record the branch as an explicit repository-administration cleanup item rather than silently treating the merge as fully hygienic.
+
 ## Pre-PR benefit check
 
 For a change presented as an optimization or throughput improvement, state whether the expected benefit materializes end to end or whether an adjacent unchanged line neutralizes it. Use code-path/complexity reasoning or already-available measurements; do not claim a measured performance win unless such evidence actually exists.
