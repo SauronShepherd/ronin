@@ -1,5 +1,18 @@
 """Pure, provider-neutral domain primitives for Ronin."""
 
+from .catalog import (
+    ASSET_KINDS,
+    AssetId,
+    AssetKind,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
+    CatalogAsset,
+    ColumnMapping,
+    LineageEdge,
+    LineageMode,
+    LineageOperation,
+)
 from .connections import (
     AssetHandle,
     CheckpointStrategy,
@@ -91,15 +104,23 @@ from .workspaces import Workspace, WorkspaceId, WorkspaceState
 
 __all__ = (
     "ACTIONS",
+    "ASSET_KINDS",
     "GRANT_SCHEMA_VERSION",
     "MAX_CONSTRAINTS",
     "MAX_GRANTS",
     "RESOURCE_KINDS",
     "Action",
     "AssetHandle",
+    "AssetId",
+    "AssetKind",
+    "AssetRef",
+    "AssetRevision",
+    "AssetVersion",
     "AuthorizationEvidence",
     "CapabilityRequirement",
+    "CatalogAsset",
     "CheckpointStrategy",
+    "ColumnMapping",
     "ConnectionDefinition",
     "ConnectionId",
     "ConnectorCapabilities",
@@ -120,6 +141,9 @@ __all__ = (
     "Grant",
     "GrantSet",
     "InstanceAnchor",
+    "LineageEdge",
+    "LineageMode",
+    "LineageOperation",
     "Node",
     "NodeId",
     "OperatorCatalog",
