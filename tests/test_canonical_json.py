@@ -50,7 +50,7 @@ def test_decode_rejects_duplicate_and_nonfinite_numbers() -> None:
         '{"x":1e9999}',
     )
     for payload in invalid:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="canonical JSON"):
             decode(payload)
 
 
@@ -63,5 +63,5 @@ def test_published_golden_vectors() -> None:
         assert actual == expected
         assert hashlib.sha256(actual).hexdigest() == vector["sha256"]
     for rejection in fixture["rejections"]:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="canonical JSON"):
             decode(rejection["source_json"])
