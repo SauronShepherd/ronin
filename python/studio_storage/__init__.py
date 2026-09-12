@@ -22,6 +22,14 @@ from studio_storage.connections import (
 from studio_storage.fenced_sqlite import SqliteJobStore
 from studio_storage.memory import IdempotencyConflict
 from studio_storage.paged_store import BoundedAsyncJobStore, InMemoryJobStore
+from studio_storage.quality import (
+    DataContractConflict,
+    DataContractNotFound,
+    QualityRunConflict,
+    SqliteQualityStore,
+    migrate_quality,
+    quality_schema_version,
+)
 from studio_storage.readiness import sqlite_ready
 from studio_storage.sqlite import migrate, open_database, schema_version
 from studio_storage.workspaces import (
@@ -42,13 +50,17 @@ __all__ = (
     "CatalogConflict",
     "ConnectionConflict",
     "ConnectionNotFound",
+    "DataContractConflict",
+    "DataContractNotFound",
     "IdempotencyConflict",
     "InMemoryJobStore",
     "LocalArtifactStore",
     "ProjectRegistrationConflict",
+    "QualityRunConflict",
     "SqliteCatalogStore",
     "SqliteConnectionStore",
     "SqliteJobStore",
+    "SqliteQualityStore",
     "SqliteWorkspaceStore",
     "StorageBackpressureError",
     "WorkspaceConflict",
@@ -58,8 +70,10 @@ __all__ = (
     "migrate",
     "migrate_catalog",
     "migrate_connections",
+    "migrate_quality",
     "migrate_workspaces",
     "open_database",
+    "quality_schema_version",
     "schema_version",
     "sqlite_ready",
     "workspace_schema_version",
