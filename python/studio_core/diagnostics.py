@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import json
 from bisect import bisect_left
 from dataclasses import dataclass
 from typing import Literal, TypeAlias
+
+from .canonical_json import encode as encode_canonical_json
 
 DiagnosticSeverity: TypeAlias = Literal["info", "warning", "error"]
 DiagnosticField: TypeAlias = Literal["category", "code", "message", "source"]
@@ -184,7 +185,7 @@ class DiagnosticCatalog:
         return {"rules": [rule.to_data() for rule in self.rules]}
 
     def to_json(self) -> str:
-        return json.dumps(self.to_data(), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return encode_canonical_json(self.to_data()).decode("utf-8")
 
 
 def builtin_diagnostic_catalog() -> DiagnosticCatalog:
