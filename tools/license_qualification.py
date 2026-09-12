@@ -345,10 +345,13 @@ def generate_inventory(root: Path) -> dict[str, object]:
     for name, version in sorted(graph.items()):
         dist = installed.get(name)
         if dist is None:
-            raise LicenseQualificationError(f"locked distribution is not installed: {name}=={version}")
+            raise LicenseQualificationError(
+                f"locked distribution is not installed: {name}=={version}"
+            )
         if dist.version != version:
             raise LicenseQualificationError(
-                f"installed version differs from lock: {name} expected {version}, got {dist.version}"
+                f"installed version differs from lock: {name} expected {version}, "
+                f"got {dist.version}"
             )
         declared_license_files = _declared_license_file_paths(dist)
         entry: dict[str, object] = {
@@ -384,7 +387,9 @@ def qualify(
     if inventory.get("lock_file") != "requirements-dev.lock":
         raise LicenseQualificationError("inventory lock_file must be requirements-dev.lock")
     if inventory.get("lock_sha256") != expected_lock_sha256:
-        raise LicenseQualificationError("inventory lock_sha256 does not match requirements-dev.lock")
+        raise LicenseQualificationError(
+            "inventory lock_sha256 does not match requirements-dev.lock"
+        )
     _require_direct_coverage(graph, expected_direct)
     packages = inventory.get("packages")
     if not isinstance(packages, list):
@@ -432,10 +437,14 @@ def qualify(
         if not isinstance(evidence_sha256, str) or _SHA256.fullmatch(evidence_sha256) is None:
             raise LicenseQualificationError(f"invalid package evidence_sha256: {key}")
         if package_evidence_sha256(entry) != evidence_sha256:
-            raise LicenseQualificationError(f"package evidence_sha256 does not match inventory: {key}")
+            raise LicenseQualificationError(
+                f"package evidence_sha256 does not match inventory: {key}"
+            )
         evidence_by_key[key] = evidence_sha256
     if seen != graph:
-        raise LicenseQualificationError("inventory does not exactly match the locked dependency graph")
+        raise LicenseQualificationError(
+            "inventory does not exactly match the locked dependency graph"
+        )
 
     if not isinstance(policy, dict) or policy.get("schema_version") != 1:
         raise LicenseQualificationError("policy schema_version must be 1")
