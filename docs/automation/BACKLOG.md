@@ -2,7 +2,7 @@
 
 This backlog is deliberately narrow for v0.1. Selection must be revalidated against current `main`, open Builder work, canonical automation handoffs, and the scope authority in `docs/product/V01_SCOPE.md`.
 
-_Last synchronized: 2026-09-12 from base `22d60e6b43ad084762d0651f638056102fd50fcb` after the source-hygiene fixes through PR #227._
+_Last synchronized: 2026-09-12 from base `ce830f966164d884f8b830a60be83b305f32b6e9` after planning sync #228 and the reproduced SIM102 fix #229._
 
 **Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` must be updated together from the same observed repository state whenever acceptance truth, completed capabilities, validation mode, or the critical path changes materially. If the two files disagree, autonomous product selection stops until the drift is reconciled.
 
@@ -33,13 +33,13 @@ I0 is the only remaining implementation area with unresolved proof.
 Completed source-hygiene work includes:
 
 - dead storage compatibility reexports removed;
-- `UP022`, `RET501`, `PTH201`, `S104`, both `S603`, both `PT011`, `PT018` and `PT006` historical findings addressed without broad suppressions;
+- `UP022`, `RET501`, `PTH201`, `S104`, both `S603`, both `PT011`, `PT018`, `PT006` and the reproduced `SIM102` finding addressed without broad suppressions;
 - the known historical/current `E501` findings in `studio_cli/network.py`, `studio_orchestrator/store.py`, `studio_kernel/session.py`, `studio_server/http.py`, `studio_core/grants.py`, `tools/license_qualification.py`, `tests/test_readiness.py` and `tests/test_license_qualification.py` mechanically reflowed;
 - `tests/test_transport_policy.py` imports were already sorted when rechecked.
 
 A global current `ruff check python tests tools packages docker` and `ruff format --check python tests tools packages docker` have **not** been demonstrated in the active execution environment because a current checkout cannot be obtained there. Do not infer a clean global result from the targeted fixes.
 
-The historical `SIM102` location is not currently evidenced. Repository text only records an older `SIM102` that had already been corrected. Do not change nested conditions by guesswork; resolve only if an exact current diagnostic can be reproduced.
+The historical `SIM102` was reproduced in `tools/license_qualification.py::locked_graph` and fixed by #229 by flattening the blank/comment continuation guard without changing parser behavior.
 
 ## License/release implementation and evidence
 
