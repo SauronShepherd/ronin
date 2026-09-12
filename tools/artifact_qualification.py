@@ -186,7 +186,7 @@ def _run(argv: list[str], *, cwd: Path | None = None) -> None:
 
 
 def qualify_pyronin(checkout: Path, work_root: Path) -> dict[str, object]:
-    """Build once, install the exact wheel outside the checkout, and return identity evidence."""
+    """Build once, install the exact wheel outside checkout, and return identity evidence."""
     checkout = checkout.resolve(strict=True)
     work_root = work_root.resolve(strict=True)
     if work_root == checkout or work_root.is_relative_to(checkout):
