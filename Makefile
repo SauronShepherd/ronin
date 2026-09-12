@@ -1,6 +1,6 @@
 .PHONY: check format lint typecheck architecture gates-negative test \
 	coverage-t1 coverage-t2 coverage-t3 coverage-storage-files mutation \
-	canonical-json-check
+	canonical-json-check dependency-surfaces-check
 
 CODE_PATHS := python tests tools packages docker
 
@@ -24,6 +24,9 @@ gates-negative:
 canonical-json-check:
 	@command -v go >/dev/null 2>&1 || { echo "go toolchain required for canonical JSON cross-language check"; exit 1; }
 	go run tools/canonical_json_check.go tests/golden/canonical_json_v1.json
+
+dependency-surfaces-check:
+	python -m tools.dependency_surfaces
 
 test:
 	python -m pytest --cov --cov-branch --cov-report=
