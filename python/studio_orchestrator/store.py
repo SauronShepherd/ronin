@@ -113,7 +113,12 @@ class StoredEvidenceRef:
     unavailable_reason: str | None = None
 
     def __post_init__(self) -> None:
-        if not self.role or self.role != self.role.strip() or "\n" in self.role or "\r" in self.role:
+        if (
+            not self.role
+            or self.role != self.role.strip()
+            or "\n" in self.role
+            or "\r" in self.role
+        ):
             raise ValueError("evidence role must be non-empty, trimmed, and single-line")
         availability = EvidenceAvailability(self.availability)
         object.__setattr__(self, "availability", availability)
