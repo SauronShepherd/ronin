@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from studio_orchestrator import Instant
 from studio_storage.scheduler_schedule import (
+    Schedule,
     ScheduleFire,
     SchedulerScheduleStore,
     WorkspaceId,
@@ -43,7 +44,7 @@ class SchedulerScheduleService:
         if max_fires < 1:
             raise ValueError("max_fires must be positive")
         schedules = await asyncio.to_thread(self._store.list_schedules, workspace_id)
-        evaluation: list[tuple[object, tuple[Instant, ...], tuple[Instant, ...]]] = []
+        evaluation: list[tuple[Schedule, tuple[Instant, ...], tuple[Instant, ...]]] = []
         total_fires = 0
         for schedule in schedules:
             cursor = await asyncio.to_thread(
@@ -70,8 +71,7 @@ class SchedulerScheduleService:
             )
 
         fires: list[ScheduleFire] = []
-        for schedule_obj, minutes, due in evaluation:
-            schedule = schedule_obj
+        for schedule, minutes, due in evaluation:
             for logical_time in due:
                 fire = await asyncio.to_thread(
                     self._store.fire_schedule,
@@ -92,7 +92,12 @@ class SchedulerScheduleService:
                     now=now,
                 )
         return ScheduleTickResult(
-            tuple(sorted(fires, key=lambda fire: (str(fire.scheduled_for), str(fire.schedule_id)))),
+            tuple(
+                sorted(
+                    fires,
+                    key=lambda fire: (str(fire.scheduled_for), str(fire.schedule_id)),
+                )
+            ),
             len(schedules),
         )
 
