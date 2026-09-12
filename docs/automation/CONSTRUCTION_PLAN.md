@@ -1,6 +1,6 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-12 from base `22d60e6b43ad084762d0651f638056102fd50fcb` after source-hygiene work through PR #227. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-12 from base `ce830f966164d884f8b830a60be83b305f32b6e9` after source-hygiene work through PR #229. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
 
@@ -74,13 +74,13 @@ The <60 s healthy and <10 min zero-to-demo budgets remain implementation targets
 
 ### F4 — source hygiene (I0)
 
-**Targeted historical findings substantially complete; global proof still unavailable.**
+**Targeted historical lint findings complete; global proof still unavailable.**
 
-Landed source-hygiene corrections include dead reexport removal; `UP022`, `RET501`, `PTH201`, `S104`, both `S603`, both `PT011`, `PT018`, `PT006`; and the reproduced `E501` findings across production, tooling and the mechanically permitted test files.
+Landed source-hygiene corrections include dead reexport removal; `UP022`, `SIM102`, `RET501`, `PTH201`, `S104`, both `S603`, both `PT011`, `PT018`, `PT006`; and the reproduced `E501` findings across production, tooling and the mechanically permitted test files.
 
-The historical `SIM102` location is not currently evidenced. Repository history mentions an older `SIM102` already fixed before the present build-plan baseline. Do not collapse nested conditions without an exact current Ruff diagnostic.
+PR #229 identifies the historical `SIM102` exactly in `tools/license_qualification.py::locked_graph`: the nested blank/comment handling was flattened while preserving the same fail-closed interruption error and skip behavior. All 38 historical Ruff lint findings from the 2026-09-12 audit now have traceable resolutions.
 
-The active execution environment cannot obtain a current checkout from GitHub, so a full current `ruff check python tests tools packages docker` and `ruff format --check python tests tools packages docker` have not been demonstrated. Do not claim I0 globally clean until equivalent exact evidence exists.
+The active execution environment cannot obtain a current checkout from GitHub and does not have the pinned Ruff 0.16.6 binary locally available, so a full current `ruff check python tests tools packages docker` and `ruff format --check python tests tools packages docker` have not been demonstrated. The historical audit reported 15 files needing formatter changes but did not preserve their filenames. Do not claim I0 globally clean until equivalent exact evidence exists.
 
 ## Phase G — security, supply-chain and release implementation
 
@@ -120,7 +120,7 @@ This includes #47, #57, #60 where its value is workflow qualification, #63 admin
 
 One coherent Builder slice at a time:
 
-1. **I0 source hygiene:** reproduce any remaining current Ruff/format finding exactly; fix only reproduced source-hygiene defects and do not claim global clean status without executable evidence.
+1. **I0 source hygiene:** obtain executable current-tree evidence using pinned Ruff 0.16.6; fix only reproduced findings and do not claim global clean status without that evidence.
 2. **Planning consistency:** keep `BACKLOG.md` and this construction plan synchronized with observed `main`.
 3. **#58 / #95 exact evidence:** proceed only with a real exact environment and required human/legal decisions; source implementation is already present.
 4. **#70 / #45 reporting channels:** proceed only after real owned routes are available.
