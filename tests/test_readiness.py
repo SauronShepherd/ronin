@@ -27,7 +27,9 @@ def _ready_database(path: Path) -> None:
         connection.close()
 
 
-def test_sqlite_readiness_requires_current_schema_and_operational_jobs_table(tmp_path: Path) -> None:
+def test_sqlite_readiness_requires_current_schema_and_operational_jobs_table(
+    tmp_path: Path,
+) -> None:
     database = tmp_path / "ronin.sqlite3"
     assert not sqlite_ready(database)
 
