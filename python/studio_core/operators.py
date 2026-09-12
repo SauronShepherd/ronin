@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import json
 from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
+from .canonical_json import encode as encode_canonical_json
 from .ir import (
     FrozenList,
     FrozenMap,
@@ -185,7 +185,7 @@ class OperatorCatalog:
         return {"operators": [operator.to_data() for operator in self.operators]}
 
     def to_json(self) -> str:
-        return json.dumps(self.to_data(), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return encode_canonical_json(self.to_data()).decode("utf-8")
 
 
 @dataclass(frozen=True, order=True, slots=True)
