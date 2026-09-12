@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, replace
 from enum import StrEnum
 
+from studio_core.canonical_json import decode as decode_canonical_json
 from studio_orchestrator.instants import Instant
 
 
@@ -251,9 +251,9 @@ class Job:
         if self.target:
             _require_text("target", self.target)
         try:
-            parameters = json.loads(self.parameters_json)
-        except json.JSONDecodeError as exc:
-            raise ValueError("parameters_json must be valid JSON") from exc
+            parameters = decode_canonical_json(self.parameters_json)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("parameters_json must be valid canonical JSON") from exc
         if not isinstance(parameters, dict):
             raise ValueError("parameters_json must encode a JSON object")
 
