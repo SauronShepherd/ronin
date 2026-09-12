@@ -14,6 +14,7 @@ from studio_orchestrator import (
     JobState,
     LeaseToken,
     Run,
+    RunId,
     RunState,
 )
 
@@ -139,7 +140,7 @@ def _intent_from_row(row: sqlite3.Row) -> TaskExecutionIntent:
         parameters_json=row["parameters_json"],
     )
     run = Run(
-        id=__import__("studio_orchestrator").RunId(row["run_id"]),
+        id=RunId(row["run_id"]),
         job_id=job.id,
         ordinal=1,
         state=RunState.PENDING,
