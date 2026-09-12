@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from studio_core import WorkflowId, WorkspaceId
+from studio_core import EnvironmentDefinition, WorkflowId, WorkspaceId
 from studio_core.scheduler_deployment import WorkflowDeploymentBinding
 from studio_orchestrator import Instant
 
@@ -139,8 +139,6 @@ class SchedulerControllerStore(SchedulerExecutionLinkStore):
                 ).fetchone()
                 if environment is None:
                     raise WorkflowDeploymentConflict("environment does not exist in workspace")
-                from studio_core import EnvironmentDefinition
-
                 definition = EnvironmentDefinition.from_json(environment["definition_json"])
                 if definition.disabled:
                     raise EnvironmentConflict("cannot deploy workflow to a disabled environment")
@@ -206,11 +204,44 @@ class SchedulerControllerStore(SchedulerExecutionLinkStore):
         finally:
             connection.close()
 
+    def get_runnable_workflow_deployment(
+        self,
+        workspace_id: WorkspaceId,
+        workflow_id: WorkflowId,
+    ) -> WorkflowDeploymentBinding | None:
+        """Return a deployment only while its project/environment remain runnable."""
+
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT d.binding_json,e.definition_json AS environment_json "
+                "FROM workflow_deployments d "
+                "LEFT JOIN environments e ON e.workspace_id=d.workspace_id "
+                "AND e.environment_id=d.environment_id "
+                "JOIN workspace_projects p ON p.workspace_id=d.workspace_id "
+                "AND p.project_id=d.project_id "
+                "WHERE d.workspace_id=? AND d.workflow_id=?",
+                (str(workspace_id), str(workflow_id)),
+            ).fetchone()
+            if row is None:
+                return None
+            binding = WorkflowDeploymentBinding.from_json(row["binding_json"])
+            if binding.environment_id is not None:
+                if row["environment_json"] is None:
+                    return None
+                environment = EnvironmentDefinition.from_json(row["environment_json"])
+                if environment.disabled:
+                    return None
+            return binding
+        finally:
+            connection.close()
+
 
 __all__ = (
     "SchedulerControllerStore",
     "WorkflowDeploymentConflict",
     "WorkflowDeploymentNotFound",
+    "WorkspaceId",
     "migrate_scheduler_controller",
     "scheduler_controller_schema_version",
 )
