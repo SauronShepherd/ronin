@@ -4,51 +4,104 @@
 
 # Ronin
 
-## What v0.1 is and is not
+**The lordless Data + AI OS platform.**
 
-The frozen v0.1 scope, explicit non-goals, fifteen-step acceptance journey, and non-functional budgets are defined in [`docs/product/V01_SCOPE.md`](docs/product/V01_SCOPE.md).
+Ronin is being built as a professional, free, open-source and self-hostable **Data + AI platform** designed around portability rather than a mandatory proprietary control plane.
 
-Ronin is being built as a professional, free, open-source and self-hostable **Data + AI platform**. The target spans data integration, engineering, SQL, lakehouse, streaming, governance/lineage/ontology, BI/semantic models, data science, ML/MLOps, GenAI/RAG/agents, security, observability and FinOps in one coherent product.
+## Public release contract
 
-Ronin is local-first and vendor-neutral: it should be useful on a laptop, reproducible in Docker/Compose and scalable on Kubernetes, while supporting commercial and open runtimes through replaceable adapters rather than a mandatory proprietary control plane.
+The existing `0.1.0a*` work is an **engineering alpha and execution foundation**, not the product-completeness gate for Ronin's first public release.
+
+Ronin Public v1 will not be declared complete until the platform has end-to-end supported paths for data integration, lakehouse/SQL, scheduling/orchestration, catalog/lineage/ontology/knowledge graph, data quality, AI/ML/MLOps, GenAI/RAG/agents, semantic models/dashboards, streaming, observability/alerts/FinOps, multi-user security, deployment and vendor migration.
+
+The normative contracts are:
+
+- [`docs/product/PUBLIC_V1_SCOPE.md`](docs/product/PUBLIC_V1_SCOPE.md) — mandatory product capability families and release gate;
+- [`docs/product/PLATFORM_PORTABILITY_V1.md`](docs/product/PLATFORM_PORTABILITY_V1.md) — import/export and migration contract for Microsoft Fabric, Databricks, Palantir Foundry/AIP and Dataiku DSS;
+- [`docs/product/PUBLIC_V1_ROADMAP.md`](docs/product/PUBLIC_V1_ROADMAP.md) — implementation waves from the current foundation to Public v1;
+- [`docs/product/BRAND_V1.md`](docs/product/BRAND_V1.md) — Ronin Brown visual identity.
+
+The original [`docs/product/V01_SCOPE.md`](docs/product/V01_SCOPE.md) remains the contract for the historical/local execution-foundation milestone. It no longer defines the completeness bar for the first complete Ronin product release.
+
+## Product direction
+
+Public v1 is intended to let a team migrate a representative project away from **Microsoft Fabric, Databricks, Palantir Foundry/AIP or Dataiku DSS**, operate the supported portable subset in Ronin without a mandatory dependency on the source vendor, and export it through documented canonical/adaptor formats.
+
+Ronin does not promise fictional byte-for-byte compatibility with every proprietary feature. Migration behavior is classified explicitly as `exact`, `translated`, `partial`, `passthrough`, `unsupported` or `manual_decision`; objects may not be silently dropped or semantically weakened.
+
+The target platform includes:
+
+- workspaces, projects, repositories, environments and secrets;
+- data connections, ingestion, lakehouse assets and SQL;
+- notebooks, code and a Data Engineering Studio;
+- DAG planning/scheduling with retries, backfills, triggers and durable history;
+- persistent catalog, lineage, ontology and knowledge graph;
+- data quality and data contracts;
+- AI/ML Lab, experiment tracking, model registry, evaluation and serving;
+- GenAI/RAG/agent development and evaluation;
+- graph intelligence and provider-neutral graph execution;
+- semantic models, metrics and dashboards;
+- streaming and event-triggered workflows;
+- Monitoring & Alerts plus Cost Control / FinOps;
+- CLI, HTTP API, Python SDK and a web Studio over the same backend contracts.
+
+## Brand
+
+Ronin's dominant brand color is **brown**, with gold/amber accents and charcoal/ivory neutrals derived from the logo. Red, green and blue are reserved for semantic/status use rather than the application identity. See [`docs/product/BRAND_V1.md`](docs/product/BRAND_V1.md).
+
+## Current foundation
+
+The current source tree already provides reusable platform primitives:
+
+- durable `Job -> Run -> Attempt` execution over SQLite;
+- crash/reclaim/resume semantics;
+- authenticated project-scoped HTTP control plane;
+- OpenAPI 3.1 and `pyronin`;
+- typed least-privilege grants;
+- public portable execution evidence;
+- CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, `jobs` and `cancel`;
+- local Git revision identity;
+- real-Docker worker execution;
+- production local image/Compose topology;
+- canonical identity-bearing JSON and artifact/license qualification tooling.
+
+These are retained as the execution/control-plane substrate. They are **not** sufficient by themselves to claim the complete Data + AI OS.
 
 ## Projects and runtimes
 
-Ronin is multi-project. Each project selects a primary Git repository (with optional supporting repositories) and an execution profile. Execution can point to adapter-discovered profiles such as Microsoft Fabric Runtimes or Databricks Runtime/LTS profiles, local Spark, Spark Connect, Kubernetes or future engines, while the canonical core models compatibility as provider-neutral capabilities rather than vendor-specific branches.
+Ronin is multi-project. Each project selects a primary Git repository, optional supporting repositories and an execution profile. The platform architecture is vendor-neutral: execution profiles and adapters may target local runtimes, Spark-compatible runtimes, container/Kubernetes execution or vendor services while canonical project semantics remain provider-neutral.
 
-See [`docs/product/PROJECTS_AND_EXECUTION.md`](docs/product/PROJECTS_AND_EXECUTION.md) for the project/repository/runtime contract.
+See [`docs/product/PROJECTS_AND_EXECUTION.md`](docs/product/PROJECTS_AND_EXECUTION.md) for the existing project/repository/runtime contract. Public v1 expands this into workspace, migration, data, scheduler and platform-level contracts.
 
-## Current status
+## Current qualification status
 
-Ronin now has a durable local execution spine over SQLite, real-Docker worker execution with crash/reclaim/resume semantics, an authenticated project-scoped HTTP control plane, OpenAPI 3.1, the `pyronin` SDK, typed least-privilege grants, public portable evidence retrieval, and supported operator CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, `jobs`, and `cancel`.
+GitHub Actions and automated tests are currently disabled by maintainer policy. Historical automated evidence predates later source changes, so Ronin must not be described as newly qualified or release-ready from current `main`.
 
-A production image and supported Docker Compose topology are implemented in code. See [`docs/product/COMPOSE_QUICKSTART_V01.md`](docs/product/COMPOSE_QUICKSTART_V01.md) for the local startup and demo path.
-
-Authenticated HTTP fails closed against accidental remote plaintext transport. The default `RONIN_BIND_POLICY=loopback` permits plaintext only on explicit loopback targets; the bundled local Compose topology declares `container-internal` for its private bridge, and other plaintext development networks require the explicit `insecure-plaintext-network` policy. Compose also requires an operator-supplied `RONIN_TOKEN` instead of shipping a known default credential. The built-in server does not provide TLS; supported remote use terminates HTTPS externally. See [`docs/product/HTTP_TRANSPORT_V01.md`](docs/product/HTTP_TRANSPORT_V01.md).
-
-The last automated frozen v0.1 qualification remains **13/15**. Historical gaps were production image/Compose startup (`01`) and public portable evidence retrieval (`12`); both capabilities are now present in code, but GitHub Actions are intentionally disabled by maintainer policy, so Ronin must not yet be described as newly qualified 15/15 or release-ready.
-
-The broader Data + AI capabilities described above remain targets unless their concrete implementation is present in the repository. In particular, v0.1 does not claim broad ingestion, SQL/lakehouse, streaming, MLOps, GenAI/agents, enterprise RBAC, Postgres/multi-node HA or Kubernetes product deployment.
+The Public v1 gate is intentionally much broader than the earlier 15-step local execution journey. A missing mandatory capability family means Public v1 is incomplete regardless of how mature the foundation is.
 
 ## Documentation
 
-Start at [`docs/README.md`](docs/README.md) for the documentation map separating what works in current source, the last automated qualification, alpha/unstable contracts, and planned or blocked work.
+Start at [`docs/README.md`](docs/README.md).
 
-Key public contracts include:
+Key current and future contracts include:
 
-- [`docs/product/COMPOSE_QUICKSTART_V01.md`](docs/product/COMPOSE_QUICKSTART_V01.md) — supported local operator journey;
-- [`api/openapi-v1.json`](api/openapi-v1.json) and [`docs/product/API_COMPATIBILITY_V1.md`](docs/product/API_COMPATIBILITY_V1.md) — HTTP/OpenAPI compatibility;
+- [`docs/product/PUBLIC_V1_SCOPE.md`](docs/product/PUBLIC_V1_SCOPE.md) — complete public product gate;
+- [`docs/product/PLATFORM_PORTABILITY_V1.md`](docs/product/PLATFORM_PORTABILITY_V1.md) — vendor migration and canonical bundle rules;
+- [`docs/product/PUBLIC_V1_ROADMAP.md`](docs/product/PUBLIC_V1_ROADMAP.md) — implementation order;
+- [`docs/product/BRAND_V1.md`](docs/product/BRAND_V1.md) — visual identity;
+- [`docs/product/COMPOSE_QUICKSTART_V01.md`](docs/product/COMPOSE_QUICKSTART_V01.md) — current local foundation journey;
+- [`api/openapi-v1.json`](api/openapi-v1.json) and [`docs/product/API_COMPATIBILITY_V1.md`](docs/product/API_COMPATIBILITY_V1.md) — current HTTP/OpenAPI compatibility;
 - [`docs/product/CANONICAL_JSON_V1.md`](docs/product/CANONICAL_JSON_V1.md) — identity-bearing JSON;
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — contributor setup, public proposal process, architecture expectations, and governance boundary;
-- [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md) and [`CHANGELOG.md`](CHANGELOG.md) — release operation and user-visible change communication.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — contributor setup and architecture expectations;
+- [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md) and [`CHANGELOG.md`](CHANGELOG.md) — release operations and user-visible change communication.
 
-`SECURITY.md` is intentionally not published yet because the project has not selected and verified a private vulnerability-reporting channel. Issue #45 owns that human decision; Ronin must not invent an address or claim a private reporting feature is active.
+`SECURITY.md` is intentionally not published yet because the project has not selected and verified a private vulnerability-reporting channel. A verified private channel is a mandatory Public v1 release requirement; Ronin must not invent one.
 
 ## Governance and contribution
 
-Ronin is currently a **single-maintainer project with an autonomous build pipeline**. The Autonomous Builder implements accepted work; it does not create human governance authority, replace external contributor authorship, or substitute for public consensus-seeking.
+Ronin is currently a single-maintainer project with an autonomous build pipeline. The Autonomous Builder implements accepted work; it does not create human governance authority, replace external contributor authorship or fabricate security/legal decisions.
 
-Substantial architecture/product changes require prior public GitHub issue discussion. Bounded fixes and already-accepted implementation work may proceed through ordinary pull requests. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the contribution-based path to greater review/triage responsibility and the rules for recording material private or synchronous decisions back into the public repository record.
+Substantial architecture/product changes require an explicit public record. The Public v1 contracts above are now the target for future implementation work.
 
 ## Development
 
@@ -61,15 +114,15 @@ python -m pip install --require-hashes -r requirements-dev.lock
 python -m pip install -e . --no-deps
 ```
 
-Repository validation commands and the current code-only policy are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). GitHub Actions and automated tests are currently disabled by maintainer policy. Any local/static evidence must be reported exactly and does not replace full acceptance/CI qualification.
+Repository validation commands and the current code-only policy are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). GitHub Actions and automated tests are currently disabled by maintainer policy. Any local/static evidence must be reported exactly and does not replace full release qualification.
 
 ## Layout
 
-- `python/` — product Python packages.
-- `tests/` — executable quality and architecture contracts.
-- `tools/` — repository quality gates.
-- `docker/` and `compose.yaml` — production local container topology.
-- `docs/product/` — product and domain contracts.
+- `python/` — current platform/runtime Python packages;
+- `tests/` — executable quality and architecture contracts;
+- `tools/` — repository quality gates;
+- `docker/` and `compose.yaml` — local reference container topology;
+- `docs/product/` — product and domain contracts;
 - `docs/automation/` — durable progress, backlog and decision log for incremental autonomous work.
 
-Ronin reuses mature implementation ideas and code from the author's `sdp-studio` and `ronin-old` repositories where that accelerates the target architecture without reviving historical defects or vendor coupling.
+Ronin reuses mature implementation ideas and code from the author's earlier projects where that accelerates the target architecture without reviving historical defects or vendor coupling.
