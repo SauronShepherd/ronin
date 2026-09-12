@@ -6,7 +6,6 @@ import zipfile
 from pathlib import Path
 
 import pytest
-
 from tools import artifact_qualification as module
 
 
@@ -103,17 +102,19 @@ def test_license_binding_uses_artifact_digest_not_installed_metadata(tmp_path: P
 def test_license_binding_fails_closed_on_missing_or_bad_evidence() -> None:
     with pytest.raises(module.ArtifactQualificationError, match="found 0"):
         module.bind_license_evidence(
-            package="x", version="1", artifact_sha256="b" * 64,
+            package="x",
+            version="1",
+            artifact_sha256="b" * 64,
             inventory={"schema_version": 1, "packages": []},
         )
     with pytest.raises(module.ArtifactQualificationError, match="invalid evidence"):
         module.bind_license_evidence(
-            package="x", version="1", artifact_sha256="b" * 64,
+            package="x",
+            version="1",
+            artifact_sha256="b" * 64,
             inventory={
                 "schema_version": 1,
-                "packages": [
-                    {"package": "x", "version": "1", "evidence_sha256": "bad"}
-                ],
+                "packages": [{"package": "x", "version": "1", "evidence_sha256": "bad"}],
             },
         )
 
