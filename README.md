@@ -30,15 +30,38 @@ The last automated frozen v0.1 qualification remains **13/15**. Historical gaps 
 
 The broader Data + AI capabilities described above remain targets unless their concrete implementation is present in the repository. In particular, v0.1 does not claim broad ingestion, SQL/lakehouse, streaming, MLOps, GenAI/agents, enterprise RBAC, Postgres/multi-node HA or Kubernetes product deployment.
 
+## Documentation
+
+Start at [`docs/README.md`](docs/README.md) for the documentation map separating what works in current source, the last automated qualification, alpha/unstable contracts, and planned or blocked work.
+
+Key public contracts include:
+
+- [`docs/product/COMPOSE_QUICKSTART_V01.md`](docs/product/COMPOSE_QUICKSTART_V01.md) — supported local operator journey;
+- [`api/openapi-v1.json`](api/openapi-v1.json) and [`docs/product/API_COMPATIBILITY_V1.md`](docs/product/API_COMPATIBILITY_V1.md) — HTTP/OpenAPI compatibility;
+- [`docs/product/CANONICAL_JSON_V1.md`](docs/product/CANONICAL_JSON_V1.md) — identity-bearing JSON;
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — contributor setup, public proposal process, architecture expectations, and governance boundary;
+- [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md) and [`CHANGELOG.md`](CHANGELOG.md) — release operation and user-visible change communication.
+
+`SECURITY.md` is intentionally not published yet because the project has not selected and verified a private vulnerability-reporting channel. Issue #45 owns that human decision; Ronin must not invent an address or claim a private reporting feature is active.
+
+## Governance and contribution
+
+Ronin is currently a **single-maintainer project with an autonomous build pipeline**. The Autonomous Builder implements accepted work; it does not create human governance authority, replace external contributor authorship, or substitute for public consensus-seeking.
+
+Substantial architecture/product changes require prior public GitHub issue discussion. Bounded fixes and already-accepted implementation work may proceed through ordinary pull requests. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the contribution-based path to greater review/triage responsibility and the rules for recording material private or synchronous decisions back into the public repository record.
+
 ## Development
 
+Create an isolated environment and install the exact locked dependency set:
+
 ```bash
-python -m pip install -e '.[dev]'
-make check
-make mutation
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install --require-hashes -r requirements-dev.lock
+python -m pip install -e . --no-deps
 ```
 
-GitHub Actions are currently disabled. The Autonomous Builder may run targeted local tests from exact connector-reconstructed source when the required dependencies are already available; those results are reported as local evidence only and do not replace full acceptance/CI qualification. Coverage targets and other quality constraints remain part of the implementation contract.
+Repository validation commands and the current code-only policy are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). GitHub Actions and automated tests are currently disabled by maintainer policy. Any local/static evidence must be reported exactly and does not replace full acceptance/CI qualification.
 
 ## Layout
 

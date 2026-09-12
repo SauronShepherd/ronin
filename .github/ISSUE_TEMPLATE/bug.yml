@@ -1,0 +1,51 @@
+name: Bug report
+description: Report a reproducible defect in current Ronin behavior
+title: "[Bug] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not report undisclosed security vulnerabilities in a public issue. Ronin's private security-reporting route is still pending issue #45.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide the smallest reproducible steps, inputs, and commands you can.
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Ronin revision or version
+      description: Exact Git SHA, tag, or package version if known.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Python, OS, Docker/runtime, SQLite, and other relevant environment details.
+    validations:
+      required: false
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Logs, error envelopes, digests, or other non-secret evidence. Remove credentials and sensitive data.
+    validations:
+      required: false
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility or identity impact
+      description: Note whether the defect affects public API/CLI/SDK behavior, durable state, canonical identity, or evidence.
+    validations:
+      required: false
