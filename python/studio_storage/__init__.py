@@ -37,6 +37,7 @@ from studio_storage.ontology import (
     ontology_schema_version,
 )
 from studio_storage.paged_store import BoundedAsyncJobStore, InMemoryJobStore
+from studio_storage.ports import ArtifactStore, CatalogStore, ConnectionStore, WorkspaceStore
 from studio_storage.quality import (
     DataContractConflict,
     DataContractNotFound,
@@ -75,6 +76,7 @@ from studio_storage.workspaces import (
 __all__ = (
     "ArtifactIntegrityError",
     "ArtifactRef",
+    "ArtifactStore",
     "BUNDLE_MANIFEST_PATH",
     "BoundedAsyncArtifactStore",
     "BoundedAsyncJobStore",
@@ -83,9 +85,11 @@ __all__ = (
     "BundleReadLimits",
     "CatalogAssetNotFound",
     "CatalogConflict",
+    "CatalogStore",
     "CompositeSecretResolver",
     "ConnectionConflict",
     "ConnectionNotFound",
+    "ConnectionStore",
     "DataContractConflict",
     "DataContractNotFound",
     "EnvironmentSecretResolver",
@@ -112,6 +116,7 @@ __all__ = (
     "WorkflowRunConflict",
     "WorkspaceConflict",
     "WorkspaceNotFound",
+    "WorkspaceStore",
     "catalog_schema_version",
     "connection_schema_version",
     "extract_bundle",
