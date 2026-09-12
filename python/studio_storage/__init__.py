@@ -10,6 +10,14 @@ from studio_storage.memory import IdempotencyConflict
 from studio_storage.paged_store import BoundedAsyncJobStore, InMemoryJobStore
 from studio_storage.readiness import sqlite_ready
 from studio_storage.sqlite import migrate, open_database, schema_version
+from studio_storage.workspaces import (
+    ProjectRegistrationConflict,
+    SqliteWorkspaceStore,
+    WorkspaceConflict,
+    WorkspaceNotFound,
+    migrate_workspaces,
+    workspace_schema_version,
+)
 
 __all__ = (
     "ArtifactIntegrityError",
@@ -19,10 +27,16 @@ __all__ = (
     "IdempotencyConflict",
     "InMemoryJobStore",
     "LocalArtifactStore",
+    "ProjectRegistrationConflict",
     "SqliteJobStore",
+    "SqliteWorkspaceStore",
     "StorageBackpressureError",
+    "WorkspaceConflict",
+    "WorkspaceNotFound",
     "migrate",
+    "migrate_workspaces",
     "open_database",
     "schema_version",
     "sqlite_ready",
+    "workspace_schema_version",
 )
