@@ -74,6 +74,7 @@ from .runtime_profiles import (
     RuntimeResolution,
     resolve_runtime,
 )
+from .workspaces import Workspace, WorkspaceId, WorkspaceState
 
 __all__ = (
     "ACTIONS",
@@ -130,6 +131,9 @@ __all__ = (
     "RuntimeProfileRef",
     "RuntimeResolution",
     "SchemaRef",
+    "Workspace",
+    "WorkspaceId",
+    "WorkspaceState",
     "allocate_instance_keys",
     "builtin_diagnostic_catalog",
     "builtin_operator_catalog",
