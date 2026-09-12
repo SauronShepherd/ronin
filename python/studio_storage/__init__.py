@@ -28,6 +28,13 @@ from studio_storage.connections import (
     connection_schema_version,
     migrate_connections,
 )
+from studio_storage.environments import (
+    EnvironmentConflict,
+    EnvironmentNotFound,
+    SqliteEnvironmentStore,
+    environment_schema_version,
+    migrate_environments,
+)
 from studio_storage.fenced_sqlite import SqliteJobStore
 from studio_storage.memory import IdempotencyConflict
 from studio_storage.ontology import (
@@ -92,6 +99,8 @@ __all__ = (
     "ConnectionStore",
     "DataContractConflict",
     "DataContractNotFound",
+    "EnvironmentConflict",
+    "EnvironmentNotFound",
     "EnvironmentSecretResolver",
     "IdempotencyConflict",
     "InMemoryJobStore",
@@ -105,6 +114,7 @@ __all__ = (
     "SecretResolver",
     "SqliteCatalogStore",
     "SqliteConnectionStore",
+    "SqliteEnvironmentStore",
     "SqliteJobStore",
     "SqliteOntologyStore",
     "SqliteQualityStore",
@@ -119,10 +129,12 @@ __all__ = (
     "WorkspaceStore",
     "catalog_schema_version",
     "connection_schema_version",
+    "environment_schema_version",
     "extract_bundle",
     "migrate",
     "migrate_catalog",
     "migrate_connections",
+    "migrate_environments",
     "migrate_ontology",
     "migrate_quality",
     "migrate_scheduler",
