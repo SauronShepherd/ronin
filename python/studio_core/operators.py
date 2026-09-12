@@ -7,7 +7,17 @@ from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
-from .ir import FrozenList, FrozenMap, FrozenValue, Node, OperatorRef, Port, PortKind, thaw_value
+from .ir import (
+    FrozenList,
+    FrozenMap,
+    FrozenValue,
+    Node,
+    OperatorRef,
+    Pipeline,
+    Port,
+    PortKind,
+    thaw_value,
+)
 
 ParameterKind: TypeAlias = Literal[
     "any",
@@ -248,6 +258,55 @@ def validate_operator_node(node: Node, catalog: OperatorCatalog) -> tuple[Operat
                 )
             )
     return tuple(sorted(violations))
+
+
+def validate_operator_pipeline(
+    pipeline: Pipeline, catalog: OperatorCatalog
+) -> tuple[OperatorViolation, ...]:
+    """Validate node contracts plus provider-neutral target-input connectivity semantics."""
+    violations: list[OperatorViolation] = []
+    incoming: dict[tuple[object, str], int] = {}
+    for edge in pipeline.edges:
+        key = (edge.target, edge.target_port)
+        incoming[key] = incoming.get(key, 0) + 1
+
+    for node in pipeline.nodes:
+        violations.extend(validate_operator_node(node, catalog))
+        contract = catalog.get(node.operator)
+        if contract is None:
+            continue
+        declared_inputs = {port.name: port for port in contract.inputs}
+        for edge in pipeline.edges:
+            if edge.target != node.id:
+                continue
+            if edge.target_port not in declared_inputs:
+                violations.append(
+                    OperatorViolation(
+                        "RONIN-OP-010",
+                        f"pipeline edge targets an undeclared operator input: {edge.target_port}",
+                        f"nodes.{node.id.value}.inputs.{edge.target_port}",
+                    )
+                )
+        for port in contract.inputs:
+            count = incoming.get((node.id, port.name), 0)
+            path = f"nodes.{node.id.value}.inputs.{port.name}"
+            if not port.optional and count == 0:
+                violations.append(
+                    OperatorViolation(
+                        "RONIN-OP-009",
+                        f"required operator input is not connected: {port.name}",
+                        path,
+                    )
+                )
+            if port.cardinality == "one" and count > 1:
+                violations.append(
+                    OperatorViolation(
+                        "RONIN-OP-008",
+                        f"operator input accepts at most one incoming edge: {port.name}",
+                        path,
+                    )
+                )
+    return tuple(sorted(set(violations)))
 
 
 def builtin_operator_catalog() -> OperatorCatalog:

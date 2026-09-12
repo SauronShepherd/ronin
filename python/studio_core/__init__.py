@@ -52,6 +52,7 @@ from .operators import (
     builtin_operator_catalog,
     operator_parameter_value,
     validate_operator_node,
+    validate_operator_pipeline,
 )
 from .project_manifest import PROJECT_MANIFEST_PATH, PROJECT_MANIFEST_SCHEMA, ProjectManifest
 from .projects import (
@@ -141,4 +142,5 @@ __all__ = (
     "snapshot_runtime_resolution",
     "thaw_value",
     "validate_operator_node",
+    "validate_operator_pipeline",
 )
