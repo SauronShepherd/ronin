@@ -1,6 +1,6 @@
 # Ronin v0.1 construction plan
 
-_Last synchronized: 2026-09-11 from base `218aa4bc9e419bf18e435796b9858b1cf1900eae` with the kernel/session canonical JSON boundary in this change. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
+_Last synchronized: 2026-09-12 from base `22d60e6b43ad084762d0651f638056102fd50fcb` after source-hygiene work through PR #227. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
 
 Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
 
@@ -8,21 +8,21 @@ Ronin remains capability-ordered rather than calendar-ordered. Each autonomous r
 
 ## Current validation mode
 
-GitHub Actions and automated tests are intentionally disabled by maintainer policy. Previous workflow definitions remain under `.github/workflows-disabled/`. Autonomous work performs static code inspection, dependency/contract tracing, schema/API consistency review, and code-level reasoning only. Security, durability, performance, architecture, coverage, and acceptance requirements remain implementation constraints, but no new CI/test/acceptance evidence may be claimed.
+GitHub Actions and automated tests remain intentionally disabled by maintainer policy. Previous workflow definitions remain under `.github/workflows-disabled/`. Autonomous work performs static code inspection, dependency/contract tracing, schema/API consistency review, and code-level reasoning only. Security, durability, performance, architecture, coverage, and acceptance requirements remain implementation constraints, but no new CI/test/acceptance evidence may be claimed.
 
-A complementary local audit dated 2026-09-11 reported six failing tests, format/lint drift, low indirect coverage in `grants.py`, stale acceptance skips, orphaned qualification tooling and a concrete storage-layer regression. Those execution-derived observations remain useful diagnostic evidence, but this plan does not adopt that audit's CI/test phases as current requirements because the maintainer has explicitly kept Ronin in code-only mode. The storage regression was independently confirmed in source and resolved by #197.
-
-The last authoritative automated acceptance baseline remains **13/15**, with historical gaps `01` and `12`. Product code for both capabilities exists; code-only implementation does not automatically change the qualified result.
+The last authoritative automated acceptance baseline remains **13/15**, with historical gaps `01` and `12`. Product code for both capabilities now exists; code-only implementation does not automatically change the qualified result.
 
 ## Current position
 
-The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha public compatibility, project-scoped HTTP authorization, production image/Compose, explicit bearer transport/bind policy, real readiness, corrected Git dirty identity, observed cgroup CPU/memory evidence, exact-artifact qualification tooling and the canonical JSON v1 foundation.
+The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha public compatibility, project-scoped HTTP authorization, production image/Compose, explicit bearer transport/bind policy, readiness, Git dirty identity, observed cgroup CPU/memory evidence and artifact-qualification mechanics.
 
-Canonical JSON work has advanced through #190/#193/#194/#195 plus the current kernel/session boundary: shared codec, independent Go checker, resume identity, worker identity, project manifest, notebook, IR, kernel authorization evidence/event bytes and fail-closed kernel ledger parsing all use the common boundary. Remaining #56 work is concentrated in HTTP request/idempotency parsing/identity, durable parameter parsing, grants, remaining core serializers and complete boundary goldens.
+Canonical JSON v1 implementation is complete in scope. #56 is closed. The shared canonical codec now covers HTTP request/idempotency identity, durable `Job.parameters_json`, grants and authorization evidence, operator/diagnostic catalogs, project manifests, notebooks, IR and kernel event/authorization payloads. Boundary goldens are published and valid v1 identity bytes remain unchanged.
 
-#95 is no longer a missing implementation tool: `tools/artifact_qualification.py` provides the code mechanics for build-once, external install and artifact identity. Real artifact qualification/publish evidence remains outstanding. #115 likewise has production cgroup observation code; real-Docker/overhead evidence remains outstanding.
+#200 duplicate-edge and target-port-cardinality implementation is complete with stable `RONIN-OP-008` through `RONIN-OP-010` diagnostics.
 
-#99 is closed: the immutable Job/Run/Attempt lifecycle, lease/retry rules and storage-neutral `JobStore` Protocol are already present in `studio_orchestrator` and consumed by storage/worker code.
+#22 has no remaining concrete secret-producing source gap identified by current inspection. Do not reopen secret hardening without a specific current producer surface.
+
+The old storage compatibility reexports `evidence_sqlite.py` and `evidence_memory.py` were removed by #211 after current-tree consumer checks found no callers.
 
 ## Phase A — foundation
 
@@ -34,11 +34,11 @@ Canonical JSON work has advanced through #190/#193/#194/#195 plus the current ke
 
 ## Phase C — HTTP/API/SDK contract
 
-**Functionally complete in code; automated qualification deferred.** Authenticated job control, typed project/action grants, evidence, pagination/cursors, OpenAPI, `pyronin`, compatibility rules and secure bearer transport are implemented.
+**Functionally complete in code; automated qualification deferred.** Authenticated job control, typed project/action grants, canonical request identity, evidence, pagination/cursors, OpenAPI, `pyronin`, compatibility rules and secure bearer transport are implemented.
 
 ## Phase D — operator CLI and Git identity
 
-**Functionally complete in code under current policy.** Installed command routing and Git identity hardening are present; automated regression proof remains deferred.
+**Functionally complete in code under current policy.** Installed command routing, canonical parameter handling and Git identity hardening are present; automated regression proof remains deferred.
 
 ## Phase E — production image, Compose and zero-to-demo
 
@@ -46,118 +46,88 @@ Canonical JSON work has advanced through #190/#193/#194/#195 plus the current ke
 
 The repository contains one production Ronin image and supported `compose.yaml` topology with durable local SQLite/artifact/evidence storage, explicit server health dependency, host loopback publication, worker-only Docker socket authority, immutable local image-ID resolution, read-only checkout access, narrowly scoped Git safe-directory configuration, non-root product execution, crash-path worker `restart: "no"`, and a no-Docker-authority CLI helper.
 
-Compose uses `RONIN_BIND_POLICY=container-internal` for private bridge communication. This is an explicit topology declaration, not encryption and not a generic remote-HTTP permission. The host-facing port remains loopback-only; supported remote authenticated access terminates HTTPS externally.
+Compose uses `RONIN_BIND_POLICY=container-internal` for private bridge communication. This is an explicit topology declaration, not encryption and not a generic remote-HTTP permission. Supported remote authenticated access terminates HTTPS externally.
 
 The <60 s healthy and <10 min zero-to-demo budgets remain implementation targets, not newly measured evidence while tests/CI are disabled.
 
-## Phase F — architecture/canonical hardening
+## Phase F — architecture and canonical hardening
 
 ### F1 — storage evidence adapter collapse
 
-**Complete in code via #197; automated regression proof deferred.**
+**Complete in code.** #197 restored the canonical storage adapter invariant and #211 then removed the now-unused compatibility reexport modules. Lease fencing, paging, schema-v3 availability semantics, WAL/`synchronous=FULL`, thread-local connection reuse and the max-100 evidence-ref bound remain unchanged.
 
-The schema-v3 evidence extension had reintroduced concrete subclasses outside the canonical storage adapters. #197 restored the #164 architecture invariant and preserved lease fencing, paging, schema-v3 availability semantics, WAL/`synchronous=FULL`, thread-local connection reuse and the max-100 evidence-ref bound.
+### F2 — #56 canonical JSON
 
-### F2 — finish #56 canonical JSON
+**Complete in scope.**
 
-#### F2a — kernel/session
+- HTTP inbound JSON uses the canonical decoder and request/idempotency identity uses canonical bytes;
+- `Job.parameters_json` validation uses the canonical boundary;
+- Requirement, GrantSet and AuthorizationEvidence canonical serialization use the shared codec;
+- operator and diagnostic catalog serializers use the shared codec;
+- project, notebook, IR, kernel event, grant-set and HTTP identity boundary goldens are present;
+- response/presentation JSON remains presentation JSON rather than being migrated for aesthetics;
+- valid v1 bytes, including the documented finite-float and `-0.0` compatibility boundary, remain preserved.
 
-**Code-complete in this change under static review; automated qualification deferred.**
+### F3 — #22 / #200 residual architecture reconciliation
 
-- `SessionPolicy.authorization_message()` now encodes via `studio_core.canonical_json.encode`;
-- `ExecutionEvent.to_json()` now encodes through the same shared boundary;
-- `_decode_ledger_identity()` now parses through `studio_core.canonical_json.decode`, rejecting duplicate object members and non-finite numbers fail-closed;
-- the existing external ledger error contract remains `existing event ledger contains invalid JSON` for canonical parse failures;
-- event shape/semantic validation, redaction, contiguous sequence checks, single-attempt isolation, newline append, flush and `fsync` remain unchanged;
-- valid v1 payload bytes remain compatible because the shared codec preserves sorted keys, compact separators and UTF-8/non-ASCII output.
+**Complete for identified source defects.** Exact duplicate edges and operator-aware target-port cardinality are enforced. Current secret-bearing producer inspection has not identified an additional concrete source gap.
 
-#### F2b — HTTP request/idempotency
+### F4 — source hygiene (I0)
 
-**Next code-critical slice.**
+**Targeted historical findings substantially complete; global proof still unavailable.**
 
-- route `_request_identity` bytes through the shared canonical encoder;
-- parse inbound request JSON through the canonical decoder to reject duplicate/non-finite members before identity construction;
-- preserve normalized invalid-request behavior;
-- keep `_write_json` as presentation JSON rather than migrating it for aesthetics.
+Landed source-hygiene corrections include dead reexport removal; `UP022`, `RET501`, `PTH201`, `S104`, both `S603`, both `PT011`, `PT018`, `PT006`; and the reproduced `E501` findings across production, tooling and the mechanically permitted test files.
 
-#### F2c — durable parameters/grants/remaining serializers
+The historical `SIM102` location is not currently evidenced. Repository history mentions an older `SIM102` already fixed before the present build-plan baseline. Do not collapse nested conditions without an exact current Ruff diagnostic.
 
-After HTTP:
-
-1. `studio_orchestrator/lifecycle.py`: canonical decoder for `Job.parameters_json` validation;
-2. `studio_core/grants.py`: route Requirement/GrantSet/AuthorizationEvidence JSON through shared codec;
-3. `studio_core/operators.py` and `diagnostics.py`: route canonical catalog serializers through shared codec;
-4. audit remaining direct `json.dumps/json.loads` call sites and classify identity vs presentation/cursor/tooling;
-5. extend canonical goldens for project, notebook, IR, cell execution, HTTP request identity, kernel events and grants;
-6. preserve valid v1 bytes, including the documented finite-float and `-0.0` compatibility boundary.
-
-### F3 — #22 residual architecture reconciliation
-
-After #56, reconcile only remaining current-source defects: duplicate exact edges, operator-aware target-port cardinality and concrete secret-bearing producer surfaces. Do not reopen already-landed durable/auth/evidence/transport work.
+The active execution environment cannot obtain a current checkout from GitHub, so a full current `ruff check python tests tools packages docker` and `ruff format --check python tests tools packages docker` have not been demonstrated. Do not claim I0 globally clean until equivalent exact evidence exists.
 
 ## Phase G — security, supply-chain and release implementation
 
 ### #58 exact transitive license/NOTICE
 
-The fail-closed tooling exists. Remaining honest implementation work before real evidence is available is to make the PEP 517 `build-system.requires` and release-only tool surfaces explicit rather than pretending they belong to `requirements-dev.lock`.
+Deterministic source implementation is present. `tools/dependency_surfaces.py` models build-system and release/qualification tool dependencies, and license qualification fails closed on unsupported/unpinned/conflicting dependency forms.
 
-Exact `third_party/licenses-v1.json`, per-package `license-policy-v1.json`, NOTICE/attribution conclusions and approval rationales require a real exact environment plus human/legal review. Do not fabricate them.
+Exact `third_party/licenses-v1.json`, per-package policy decisions, NOTICE/attribution conclusions and approval rationales require a real exact environment plus human/legal review. Do not fabricate them.
 
 ### #95 exact artifact identity
 
-Implementation mechanics already exist. Do not reimplement them. The remaining release claim requires execution against a real candidate and binding that artifact identity to #58 evidence.
+Implementation mechanics already exist. The remaining release claim requires execution against a real candidate and binding that exact artifact identity to #58 evidence.
 
-### Human/project surface
+### Contributor and governance surface
 
-After the code-critical items above, prioritize:
+PR #204 landed CONTRIBUTING, docs landing, changelog, release runbook and issue/PR templates. #71, #72 and #73 are closed.
 
-- #72 + #70: contributor-facing governance, CONTRIBUTING, Code of Conduct and templates;
-- #71: docs landing, canonical first-run and troubleshooting;
-- #73: release runbook and change communication;
-- #45: SECURITY only after the maintainer selects and verifies a real private reporting channel.
+#70 remains human-blocked only where a real owned Code-of-Conduct reporting route or genuinely suitable starter tasks are required. Do not invent either.
+
+#45 remains blocked until the maintainer selects and verifies a real private vulnerability-reporting channel. Do not add `SECURITY.md` before that route exists.
 
 ## Phase H — decisions and release gates
 
-#50 requires a written architecture decision before implementation: capability namespaces/value families, explicit ambiguity semantics, unknown-version behavior, selection evidence and dispatch-time binding. Do not add a second v0.1 runtime merely to satisfy it.
+#50 remains `NEEDS_DECISION`. Capability namespaces/value families, ambiguity semantics, unknown-version behavior, selection evidence and dispatch-time binding require a current architecture decision before implementation. Do not add a second v0.1 runtime merely to create implementation work.
 
-#63 remains a release-time repository-administration gate: protect `main` and semantic release refs before `v0.1.0`, no later than 2026-11-01.
+#63 remains repository-administration work: branch/tag protection and physical merged-ref cleanup are not source implementation. The active connector does not expose safe branch-ref deletion; record that limitation rather than claiming cleanup.
 
-#57 remains a qualification gate, not a feature slice. If and only if the maintainer explicitly restores automated verification, remove stale step-01/step-12 skips and obtain strict exact-SHA 15/15 evidence without weakening the frozen contract.
+#57 remains a qualification gate, not a feature slice. Revisit strict 15/15 only if the maintainer explicitly restores automated verification.
 
 ## Deferred verification/evidence track
 
-While code-only mode is active, do not select these as implementation blockers:
+While code-only mode is active, do not select these as implementation blockers: tests, coverage, mutation, stale acceptance skips, benchmarks, CI/workflows/GitHub Actions, provenance/secret scanning as CI, repository-reference administration, or candidate/legal evidence that requires an unavailable exact environment.
 
-- #47 mutation expansion;
-- #60 Docker qualification bootstrap pin plus its runtime proof;
-- #69 retained benchmark evidence;
-- #102 release-tool coverage;
-- #163 scheduled full qualification;
-- #166 verifier same-mode evidence;
-- #167 HTTP contention same-mode evidence;
-- #115 real-Docker collection-overhead proof;
-- #95 real candidate qualification/publish proof;
-- #57 strict 15/15.
-
-Their requirements remain preserved for any future verification phase; no thresholds or acceptance semantics may be weakened simply because enforcement is paused.
-
-## Post-v0.1
-
-#59 open-table/data-platform work remains frozen until v0.1 ships and the E3 freeze is explicitly lifted.
-
-#62 language-neutral runner protocol is post-v0.1 and should be treated as already directionally decided by ADR-V01-009: define a versioned language-neutral process boundary before any remote/non-Python runner. It does not justify current runner breadth.
+This includes #47, #57, #60 where its value is workflow qualification, #63 admin, #95 candidate execution/publishing evidence, #102, #115 real-Docker proof, #123 regression tests, #163/#166/#167, #199, #201, #202, and release/provenance workflow items #43/#44/#94/#96. #59 and #62 remain post-v0.1.
 
 ## Current critical path
 
 One coherent Builder slice at a time:
 
-1. **#56 HTTP request/idempotency canonical JSON**;
-2. **#56 durable parameters/grants/remaining serializers + boundary goldens**;
-3. **#22 residual architecture reconciliation**;
-4. **#58 deterministic license/build-tool surface** — then exact inventory/legal review only where real evidence exists;
-5. **#70/#72/#71/#73 public contributor/docs/release surface**, with #45 gated on a verified private reporting route;
-6. **#50 decision record**, followed by compatible pure-core work only if justified;
-7. **#57 qualification** only after an explicit policy change restoring verification.
+1. **I0 source hygiene:** reproduce any remaining current Ruff/format finding exactly; fix only reproduced source-hygiene defects and do not claim global clean status without executable evidence.
+2. **Planning consistency:** keep `BACKLOG.md` and this construction plan synchronized with observed `main`.
+3. **#58 / #95 exact evidence:** proceed only with a real exact environment and required human/legal decisions; source implementation is already present.
+4. **#70 / #45 reporting channels:** proceed only after real owned routes are available.
+5. **#50 architecture decision:** implement only after a current ADR/decision exists.
+6. **#57 qualification:** revisit only after an explicit policy change restoring verification.
+
+If current repository truth shows no additional in-scope source implementation beyond I0 diagnostics that cannot be reproduced, the remaining work is evidence, tests/CI, administration or human decision work; do not manufacture another product slice.
 
 ## Architecture and scope guardrails
 
