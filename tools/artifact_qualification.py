@@ -42,9 +42,7 @@ def _canonical_json(payload: object) -> str:
 
 def _single_artifact(outdir: Path, suffix: str) -> Path:
     matches = sorted(
-        path
-        for path in outdir.iterdir()
-        if path.is_file() and path.name.endswith(suffix)
+        path for path in outdir.iterdir() if path.is_file() and path.name.endswith(suffix)
     )
     if len(matches) != 1:
         raise ArtifactQualificationError(
@@ -158,9 +156,13 @@ def bind_license_evidence(
             raise ArtifactQualificationError("license inventory entry must be an object")
         raw_package = entry.get("package")
         raw_version = entry.get("version")
-        if isinstance(raw_package, str) and isinstance(raw_version, str):
-            if _canonical_name(raw_package) == canonical_package and raw_version == version:
-                matches.append(entry)
+        if (
+            isinstance(raw_package, str)
+            and isinstance(raw_version, str)
+            and _canonical_name(raw_package) == canonical_package
+            and raw_version == version
+        ):
+            matches.append(entry)
     if len(matches) != 1:
         raise ArtifactQualificationError(
             "expected one license inventory entry for "
@@ -219,10 +221,7 @@ def qualify_pyronin(checkout: Path, work_root: Path) -> dict[str, object]:
         [
             sys.executable,
             "-c",
-            (
-                "import pathlib,pyronin; "
-                "print(pathlib.Path(pyronin.__file__).resolve())"
-            ),
+            ("import pathlib,pyronin; print(pathlib.Path(pyronin.__file__).resolve())"),
         ],
         cwd=work_root,
         env={**os.environ, "PYTHONPATH": str(target)},
