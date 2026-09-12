@@ -373,7 +373,11 @@ class _Handler(BaseHTTPRequestHandler):
     def _require_project(self, action: Action, project_id: str) -> bool:
         if self._ronin_server().permits_project(action, project_id):
             return True
-        self._error(HTTPStatus.FORBIDDEN, "forbidden", "required authorization scope is not granted")
+        self._error(
+            HTTPStatus.FORBIDDEN,
+            "forbidden",
+            "required authorization scope is not granted",
+        )
         return False
 
     def _require_visible_job(self, action: Action, job: Job | None) -> Job | None:
