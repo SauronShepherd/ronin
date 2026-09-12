@@ -17,6 +17,8 @@ from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import uuid4
 
 from studio_core import Action, GrantSet, Requirement, ResourceScope
+from studio_core.canonical_json import decode as decode_canonical_json
+from studio_core.canonical_json import encode as encode_canonical_json
 from studio_execution import DurableExecutionService
 from studio_orchestrator import (
     EventPage,
@@ -57,21 +59,11 @@ def _request_identity(
     target: str,
     parameters: dict[str, object],
 ) -> tuple[str, str]:
-    parameters_json = json.dumps(
-        parameters,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
+    parameters_bytes = encode_canonical_json(parameters)
+    request_bytes = encode_canonical_json(
+        {"parameters": parameters, "project": project, "target": target}
     )
-    request_json = json.dumps(
-        {"parameters": parameters, "project": project, "target": target},
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    )
-    return parameters_json, hashlib.sha256(request_json.encode("utf-8")).hexdigest()
+    return parameters_bytes.decode("utf-8"), hashlib.sha256(request_bytes).hexdigest()
 
 
 def _job_payload(job: Job) -> dict[str, object]:
@@ -402,9 +394,9 @@ class _Handler(BaseHTTPRequestHandler):
             raise ValueError("request body exceeds configured byte limit")
         body = self.rfile.read(length)
         try:
-            return json.loads(body)
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-            raise ValueError("request body must be valid UTF-8 JSON") from exc
+            return decode_canonical_json(body)
+        except (UnicodeDecodeError, ValueError) as exc:
+            raise ValueError("request body must be valid canonical UTF-8 JSON") from exc
 
     def do_POST(self) -> None:  # noqa: N802
         if not self._require_auth():
