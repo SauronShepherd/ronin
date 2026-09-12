@@ -31,6 +31,14 @@ from studio_storage.quality import (
     quality_schema_version,
 )
 from studio_storage.readiness import sqlite_ready
+from studio_storage.scheduler import (
+    SqliteSchedulerStore,
+    WorkflowConflict,
+    WorkflowNotFound,
+    WorkflowRunConflict,
+    migrate_scheduler,
+    scheduler_schema_version,
+)
 from studio_storage.sqlite import migrate, open_database, schema_version
 from studio_storage.workspaces import (
     ProjectRegistrationConflict,
@@ -61,8 +69,12 @@ __all__ = (
     "SqliteConnectionStore",
     "SqliteJobStore",
     "SqliteQualityStore",
+    "SqliteSchedulerStore",
     "SqliteWorkspaceStore",
     "StorageBackpressureError",
+    "WorkflowConflict",
+    "WorkflowNotFound",
+    "WorkflowRunConflict",
     "WorkspaceConflict",
     "WorkspaceNotFound",
     "catalog_schema_version",
@@ -71,9 +83,11 @@ __all__ = (
     "migrate_catalog",
     "migrate_connections",
     "migrate_quality",
+    "migrate_scheduler",
     "migrate_workspaces",
     "open_database",
     "quality_schema_version",
+    "scheduler_schema_version",
     "schema_version",
     "sqlite_ready",
     "workspace_schema_version",
