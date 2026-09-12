@@ -58,7 +58,6 @@ class _RejectRedirects(HTTPRedirectHandler):
         newurl: str,
     ) -> None:
         del req, fp, code, msg, headers, newurl
-        return None
 
 
 def _bind_policy_from_env() -> BindPolicy:
@@ -284,7 +283,11 @@ def _event(payload: object) -> dict[str, object]:
         raise ControlPlaneError("Ronin event sequence is invalid")
     if not isinstance(attempt_id, str) or not attempt_id or len(attempt_id) > 256:
         raise ControlPlaneError("Ronin event attempt_id is invalid")
-    if not isinstance(attempt_sequence, int) or isinstance(attempt_sequence, bool) or attempt_sequence < 0:
+    if (
+        not isinstance(attempt_sequence, int)
+        or isinstance(attempt_sequence, bool)
+        or attempt_sequence < 0
+    ):
         raise ControlPlaneError("Ronin event attempt_sequence is invalid")
     if not isinstance(kind, str) or not kind:
         raise ControlPlaneError("Ronin event kind is invalid")
@@ -296,7 +299,11 @@ def _event(payload: object) -> dict[str, object]:
 
 
 def _evidence(payload: object) -> dict[str, object]:
-    if not isinstance(payload, dict) or set(payload) != _EVIDENCE_FIELDS or payload.get("version") != 1:
+    if (
+        not isinstance(payload, dict)
+        or set(payload) != _EVIDENCE_FIELDS
+        or payload.get("version") != 1
+    ):
         raise ControlPlaneError("Ronin evidence fields violated the v1 protocol")
     availability = payload.get("availability")
     if availability not in {"available", "missing", "tombstoned", "unavailable"}:
