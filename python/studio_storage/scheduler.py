@@ -5,21 +5,24 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 from pathlib import Path
+from typing import cast
 
-from studio_core.canonical_json import encode as encode_canonical_json
-from studio_orchestrator import Instant
-from studio_scheduler import (
+from studio_core import (
+    NodeId,
     Schedule,
     ScheduleId,
     TaskRun,
     TaskRunId,
+    TaskRunState,
     Trigger,
     WorkflowDefinition,
     WorkflowId,
     WorkflowRun,
     WorkflowRunId,
+    WorkspaceId,
 )
-from studio_core import WorkspaceId
+from studio_core.canonical_json import encode as encode_canonical_json
+from studio_orchestrator import Instant
 
 from .sqlite import open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
@@ -34,10 +37,6 @@ class WorkflowConflict(RuntimeError):
 
 class WorkflowNotFound(KeyError):
     """Raised when a workflow definition does not exist."""
-
-
-class ScheduleConflict(RuntimeError):
-    """Raised when schedule identity is reused with conflicting content."""
 
 
 class WorkflowRunConflict(RuntimeError):
@@ -349,8 +348,8 @@ class SqliteSchedulerStore:
                 TaskRun(
                     id=TaskRunId(row["task_run_id"]),
                     workflow_run_id=WorkflowRunId(row["workflow_run_id"]),
-                    node_id=__import__("studio_core").NodeId(row["node_id"]),
-                    state=row["state"],
+                    node_id=NodeId(row["node_id"]),
+                    state=cast(TaskRunState, row["state"]),
                     attempt_count=int(row["attempt_count"]),
                 )
                 for row in rows
