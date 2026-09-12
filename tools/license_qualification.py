@@ -59,12 +59,12 @@ def locked_graph(path: Path) -> dict[str, str]:
         path.read_text(encoding="utf-8").splitlines(), start=1
     ):
         stripped = raw_line.strip()
+        if (not stripped or stripped.startswith("#")) and current_name is not None:
+            raise LicenseQualificationError(
+                f"continued locked requirement interrupted at line {line_number}: "
+                f"{current_name}"
+            )
         if not stripped or stripped.startswith("#"):
-            if current_name is not None:
-                raise LicenseQualificationError(
-                    f"continued locked requirement interrupted at line {line_number}: "
-                    f"{current_name}"
-                )
             continue
 
         if raw_line[:1].isspace():
