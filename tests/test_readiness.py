@@ -94,7 +94,8 @@ def test_healthz_is_unauthenticated_and_returns_only_readiness_state() -> None:
 def _healthcheck_module() -> ModuleType:
     path = Path("docker/healthcheck.py")
     spec = importlib.util.spec_from_file_location("ronin_container_healthcheck", path)
-    assert spec is not None and spec.loader is not None
+    assert spec is not None
+    assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
