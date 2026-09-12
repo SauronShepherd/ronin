@@ -227,8 +227,7 @@ def qualify_pyronin(checkout: Path, work_root: Path) -> dict[str, object]:
         cwd=work_root,
         env={**os.environ, "PYTHONPATH": str(target)},
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         check=False,
     )
     if probe.returncode != 0:
