@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import cast
 
 from studio_core import GrantSet, ProjectManifest
+from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import DurableExecutionService
 from studio_notebook import (
     NotebookDependencyAnalysis,
@@ -252,9 +253,14 @@ def _parse_params(values: Sequence[str]) -> dict[str, object]:
                 "--param values must be unique KEY=VALUE pairs with non-empty trimmed keys"
             )
         try:
-            parsed: object = json.loads(raw)
+            json.loads(raw)
         except json.JSONDecodeError:
-            parsed = raw
+            parsed: object = raw
+        else:
+            try:
+                parsed = decode_canonical_json(raw)
+            except (TypeError, ValueError) as exc:
+                raise CliError("--param JSON values must use canonical finite JSON") from exc
         result[key] = parsed
     return result
 
