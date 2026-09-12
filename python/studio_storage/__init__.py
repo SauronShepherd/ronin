@@ -5,6 +5,13 @@ from __future__ import annotations
 from studio_storage.artifacts import ArtifactIntegrityError, ArtifactRef, LocalArtifactStore
 from studio_storage.async_artifacts import BoundedAsyncArtifactStore
 from studio_storage.async_store import StorageBackpressureError
+from studio_storage.catalog import (
+    CatalogAssetNotFound,
+    CatalogConflict,
+    SqliteCatalogStore,
+    catalog_schema_version,
+    migrate_catalog,
+)
 from studio_storage.connections import (
     ConnectionConflict,
     ConnectionNotFound,
@@ -31,20 +38,25 @@ __all__ = (
     "ArtifactRef",
     "BoundedAsyncArtifactStore",
     "BoundedAsyncJobStore",
+    "CatalogAssetNotFound",
+    "CatalogConflict",
     "ConnectionConflict",
     "ConnectionNotFound",
     "IdempotencyConflict",
     "InMemoryJobStore",
     "LocalArtifactStore",
     "ProjectRegistrationConflict",
+    "SqliteCatalogStore",
     "SqliteConnectionStore",
     "SqliteJobStore",
     "SqliteWorkspaceStore",
     "StorageBackpressureError",
     "WorkspaceConflict",
     "WorkspaceNotFound",
+    "catalog_schema_version",
     "connection_schema_version",
     "migrate",
+    "migrate_catalog",
     "migrate_connections",
     "migrate_workspaces",
     "open_database",
