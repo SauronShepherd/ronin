@@ -28,6 +28,13 @@ from studio_storage.connections import (
     connection_schema_version,
     migrate_connections,
 )
+from studio_storage.environments import (
+    EnvironmentConflict,
+    EnvironmentNotFound,
+    SqliteEnvironmentStore,
+    environment_schema_version,
+    migrate_environments,
+)
 from studio_storage.fenced_sqlite import SqliteJobStore
 from studio_storage.memory import IdempotencyConflict
 from studio_storage.ontology import (
@@ -37,7 +44,13 @@ from studio_storage.ontology import (
     ontology_schema_version,
 )
 from studio_storage.paged_store import BoundedAsyncJobStore, InMemoryJobStore
-from studio_storage.ports import ArtifactStore, CatalogStore, ConnectionStore, WorkspaceStore
+from studio_storage.ports import (
+    ArtifactStore,
+    CatalogStore,
+    ConnectionStore,
+    EnvironmentStore,
+    WorkspaceStore,
+)
 from studio_storage.quality import (
     DataContractConflict,
     DataContractNotFound,
@@ -92,7 +105,10 @@ __all__ = (
     "ConnectionStore",
     "DataContractConflict",
     "DataContractNotFound",
+    "EnvironmentConflict",
+    "EnvironmentNotFound",
     "EnvironmentSecretResolver",
+    "EnvironmentStore",
     "IdempotencyConflict",
     "InMemoryJobStore",
     "LocalArtifactStore",
@@ -105,6 +121,7 @@ __all__ = (
     "SecretResolver",
     "SqliteCatalogStore",
     "SqliteConnectionStore",
+    "SqliteEnvironmentStore",
     "SqliteJobStore",
     "SqliteOntologyStore",
     "SqliteQualityStore",
@@ -119,10 +136,12 @@ __all__ = (
     "WorkspaceStore",
     "catalog_schema_version",
     "connection_schema_version",
+    "environment_schema_version",
     "extract_bundle",
     "migrate",
     "migrate_catalog",
     "migrate_connections",
+    "migrate_environments",
     "migrate_ontology",
     "migrate_quality",
     "migrate_scheduler",

@@ -22,6 +22,11 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
+from studio_core.environments import (
+    EnvironmentDefinition,
+    EnvironmentId,
+    ProjectEnvironmentBindings,
+)
 from studio_orchestrator import Instant
 from studio_storage.artifacts import ArtifactRef
 
@@ -80,6 +85,42 @@ class WorkspaceStore(Protocol):
     def list_projects(self, workspace_id: WorkspaceId) -> tuple[ProjectManifest, ...]: ...
 
     def unregister_project(self, workspace_id: WorkspaceId, project_id: ProjectId) -> bool: ...
+
+
+@runtime_checkable
+class EnvironmentStore(Protocol):
+    """Durable environment and project-binding boundary."""
+
+    def put_environment(
+        self,
+        workspace_id: WorkspaceId,
+        environment: EnvironmentDefinition,
+        *,
+        now: Instant | str,
+    ) -> EnvironmentDefinition: ...
+
+    def get_environment(
+        self,
+        workspace_id: WorkspaceId,
+        environment_id: EnvironmentId,
+    ) -> EnvironmentDefinition | None: ...
+
+    def list_environments(self, workspace_id: WorkspaceId) -> tuple[EnvironmentDefinition, ...]: ...
+
+    def put_project_bindings(
+        self,
+        workspace_id: WorkspaceId,
+        bindings: ProjectEnvironmentBindings,
+        *,
+        now: Instant | str,
+    ) -> ProjectEnvironmentBindings: ...
+
+    def get_project_bindings(
+        self,
+        workspace_id: WorkspaceId,
+        project_id: ProjectId,
+        environment_id: EnvironmentId,
+    ) -> ProjectEnvironmentBindings | None: ...
 
 
 @runtime_checkable
@@ -164,5 +205,6 @@ __all__ = (
     "ArtifactStore",
     "CatalogStore",
     "ConnectionStore",
+    "EnvironmentStore",
     "WorkspaceStore",
 )

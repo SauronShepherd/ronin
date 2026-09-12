@@ -34,6 +34,13 @@ from .diagnostics import (
     DiagnosticRule,
     builtin_diagnostic_catalog,
 )
+from .environments import (
+    DeploymentBinding,
+    EnvironmentDefinition,
+    EnvironmentId,
+    EnvironmentState,
+    ProjectEnvironmentBindings,
+)
 from .execution_snapshots import ResolvedRuntimeSnapshot, snapshot_runtime_resolution
 from .grants import (
     ACTIONS,
@@ -169,6 +176,7 @@ __all__ = (
     "DataContract",
     "Decision",
     "DecisionReason",
+    "DeploymentBinding",
     "DiagnosticCatalog",
     "DiagnosticFact",
     "DiagnosticFinding",
@@ -176,6 +184,9 @@ __all__ = (
     "DiagnosticRule",
     "DiscoveredAsset",
     "Edge",
+    "EnvironmentDefinition",
+    "EnvironmentId",
+    "EnvironmentState",
     "ExecutionProfile",
     "FieldSchema",
     "FrozenList",
@@ -209,6 +220,7 @@ __all__ = (
     "ProfileEvaluation",
     "Project",
     "ProjectCollection",
+    "ProjectEnvironmentBindings",
     "ProjectId",
     "ProjectManifest",
     "PropertyDefinition",
