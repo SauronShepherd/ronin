@@ -10,8 +10,9 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 from typing import Protocol, cast, runtime_checkable
 from urllib.parse import parse_qs, urlsplit
+from uuid import uuid4
 
-from studio_core import ProjectId, WorkspaceId
+from studio_core import Action, ProjectId, WorkspaceId
 from studio_core.audit import AuditEvent
 from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant, Job
@@ -62,7 +63,7 @@ def _readiness_database_from_env() -> Path:
     return Path(os.environ.get("RONIN_DB", ".ronin/ronin.sqlite3")).expanduser().resolve()
 
 
-def _permission_for_action(action: str) -> Permission:
+def _permission_for_action(action: Action) -> Permission:
     if action in {"submit", "execute"}:
         return "job.submit"
     if action == "cancel":
@@ -74,6 +75,7 @@ def _permission_for_action(action: str) -> Permission:
 
 class _OidcHandler(_Handler):
     _actor: Actor | None = None
+    _request_id: str | None = None
     _decision_cache: dict[tuple[Permission, str], PolicyDecision]
 
     def _oidc_server(self) -> OidcRoninHTTPServer:
@@ -108,7 +110,7 @@ class _OidcHandler(_Handler):
         self._error(HTTPStatus.NOT_FOUND, "project_not_found", "project does not exist in this workspace")
         return False
 
-    def _authorize_project(self, action: str, project_id: str) -> PolicyDecision | None:
+    def _authorize_project(self, action: Action, project_id: str) -> PolicyDecision | None:
         if self._actor is None:
             self._error(HTTPStatus.UNAUTHORIZED, "unauthorized", "valid OIDC bearer authorization required")
             return None
@@ -124,7 +126,7 @@ class _OidcHandler(_Handler):
                 self._actor,
                 permission,
                 resource_ref=f"project:{project_id}",
-                request_id=self.headers.get("X-Request-ID"),
+                request_id=self._request_id,
             )
         except AuthorizationAuditError:
             self._error(
@@ -136,7 +138,7 @@ class _OidcHandler(_Handler):
         self._decision_cache[key] = decision
         return decision
 
-    def _require_project(self, action: str, project_id: str) -> bool:
+    def _require_project(self, action: Action, project_id: str) -> bool:
         decision = self._authorize_project(action, project_id)
         if decision is None:
             return False
@@ -145,7 +147,7 @@ class _OidcHandler(_Handler):
         self._error(HTTPStatus.FORBIDDEN, "forbidden", "required workspace permission is not granted")
         return False
 
-    def _require_visible_job(self, action: str, job: Job | None) -> Job | None:
+    def _require_visible_job(self, action: Action, job: Job | None) -> Job | None:
         if job is None:
             self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
             return None
@@ -161,12 +163,14 @@ class _OidcHandler(_Handler):
         if actor is None:
             return
         self._actor = actor
+        self._request_id = f"req-{uuid4().hex}"
         self._decision_cache = {}
         try:
             with actor_context(actor):
                 method()
         finally:
             self._actor = None
+            self._request_id = None
             self._decision_cache = {}
 
     def _authenticated_get(self) -> None:
