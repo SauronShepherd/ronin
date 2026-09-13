@@ -10,6 +10,7 @@ from studio_storage.scheduler_cancellation import execution_intent_dispatch_allo
 from studio_storage.scheduler_controller import SchedulerControllerStore, WorkspaceId
 from studio_storage.scheduler_execution import TaskExecutionIntent
 from studio_storage.scheduler_fencing import TaskAttemptId
+from studio_storage.scheduler_timeout import timeout_requested
 
 from .scheduler_bridge import plan_scheduler_execution
 from .scheduler_dispatch import (
@@ -17,6 +18,7 @@ from .scheduler_dispatch import (
     dispatch_execution_intent,
     reconcile_execution_intent,
 )
+from .scheduler_timeout import enforce_task_timeouts
 
 
 @dataclass(frozen=True, slots=True)
@@ -141,6 +143,13 @@ class SchedulerController:
         intents = await asyncio.to_thread(self._store.list_execution_intents, limit=limit)
         dispatched = 0
         for intent in intents:
+            if await asyncio.to_thread(
+                timeout_requested,
+                self._store,
+                intent.workspace_id,
+                intent.task_attempt_id,
+            ):
+                continue
             allowed = await asyncio.to_thread(
                 execution_intent_dispatch_allowed,
                 self._store,
@@ -151,12 +160,18 @@ class SchedulerController:
             await dispatch_execution_intent(intent, self._service)
             dispatched += 1
             if now is not None:
+                timed_out = await asyncio.to_thread(
+                    timeout_requested,
+                    self._store,
+                    intent.workspace_id,
+                    intent.task_attempt_id,
+                )
                 still_allowed = await asyncio.to_thread(
                     execution_intent_dispatch_allowed,
                     self._store,
                     intent,
                 )
-                if not still_allowed:
+                if timed_out or not still_allowed:
                     await self._service.cancel(intent.job.id, now=Instant(now))
         return dispatched
 
@@ -169,6 +184,13 @@ class SchedulerController:
         intents = await asyncio.to_thread(self._store.list_execution_intents, limit=limit)
         reconciled = 0
         for intent in intents:
+            if await asyncio.to_thread(
+                timeout_requested,
+                self._store,
+                intent.workspace_id,
+                intent.task_attempt_id,
+            ):
+                continue
             if await reconcile_execution_intent(
                 intent,
                 self._service,
@@ -189,8 +211,14 @@ class SchedulerController:
         now: Instant | str,
         outbox_limit: int = 100,
     ) -> SchedulerControllerCycle:
-        """Run one bounded publish/dispatch/reconcile iteration."""
+        """Run one bounded timeout/publish/dispatch/reconcile iteration."""
 
+        await enforce_task_timeouts(
+            self._store,
+            self._service,
+            now=now,
+            limit=outbox_limit,
+        )
         published = await self.claim_and_publish(
             workspace_id=workspace_id,
             owner=owner,
