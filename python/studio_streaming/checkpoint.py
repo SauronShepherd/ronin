@@ -104,7 +104,7 @@ class SqliteStreamCheckpointStore:
                 if row[0] != expected.digest:
                     connection.rollback()
                     return False
-                connection.execute(
+                cursor = connection.execute(
                     "UPDATE stream_checkpoints SET checkpoint_json=?,checkpoint_digest=?,"
                     "row_version=row_version+1 WHERE stream_id=? AND checkpoint_digest=?",
                     (
@@ -114,7 +114,7 @@ class SqliteStreamCheckpointStore:
                         expected.digest,
                     ),
                 )
-                if connection.total_changes != 1:
+                if cursor.rowcount != 1:
                     connection.rollback()
                     return False
             connection.commit()
