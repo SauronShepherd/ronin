@@ -1,6 +1,6 @@
 # Ronin Public v1 autonomous build backlog
 
-_Last synchronized: 2026-09-13 from main `20469d99aeede1cec5ef8869b0a35173c6c2e5eb` after PR #283. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
+_Last synchronized: 2026-09-13 from main `7455b3faa52b93a7e8edfa4d2b87b0fb1f74b26e` after PR #285. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
 
 This backlog is the active implementation-selection surface for Public v1. The previous narrow v0.1 backlog is preserved verbatim at `docs/automation/history/V01_BACKLOG.md` and is historical evidence only.
 
@@ -31,20 +31,19 @@ This backlog is the active implementation-selection surface for Public v1. The p
 
 Landed native Bundle foundations:
 
-- project semantic inventory/export with runtime binding requests (#278);
-- verified project import planning and collision detection (#279);
-- explicit runtime remapping plus provider-neutral atomic project/environment-binding commit (#280);
+- project semantic inventory/export, verified planning, runtime remapping and atomic project/environment-binding commit (#278–#280);
 - connection semantic inventory/export/import with exact secret-reference remapping and no secret material (#282);
-- deterministic topological, read-only multi-object staging for supported project+connection objects, including cycle/unknown-kind rejection (#283).
+- deterministic topological staging for supported project+connection objects with cycle/unknown-kind rejection (#283);
+- provider-neutral atomic multi-object commit contract and one-transaction SQLite reference adapter for resolved connections, projects and project/environment bindings (#285).
 
 Next portability work:
 
-- add a provider-neutral atomic multi-object commit port and SQLite reference transaction spanning supported connection creation, project registration and project environment bindings;
-- resolve all runtime/secret requests explicitly before that transaction and recheck target conflicts inside it;
-- preserve inventory dependency order as staging order without inventing semantic relationships absent from canonical payloads;
-- extend inventory/import support to catalog/workflow/quality/ontology/ML/GenAI and later data/semantic assets only when their target contracts can round-trip honestly;
-- certify Ronin-native lossless Bundle round-trip before vendor profiles;
-- do not invent project/connection ID remapping policy without an explicit portable identity decision.
+- extend the same fail-closed inventory/planning/commit model to catalog assets/revisions/lineage, whose canonical identities and SQLite store already exist;
+- preserve catalog dependencies through semantic inventory rather than inventing physical relationships;
+- add PostgreSQL implementation of the multi-object commit port only after the PostgreSQL metadata backend exists;
+- extend to workflow/quality/ontology/ML/GenAI and later data/semantic assets only when target contracts can round-trip honestly;
+- certify Ronin-native lossless Bundle round-trip only when exact-head qualification is authorized and executed;
+- do not invent project/connection/catalog ID remapping policy without an explicit portable identity decision.
 
 ## Data plane
 
