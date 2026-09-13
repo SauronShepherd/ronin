@@ -24,6 +24,9 @@ open-tables = [
   "deltalake>=0.20,<2",
   "pyiceberg[sql-sqlite]>=0.8,<1",
 ]
+ml = [
+  "scikit-learn>=1.5,<2",
+]
 dev = [
   "hypothesis>=6.138,<7",
   "mutmut==3.7.0",
@@ -62,6 +65,7 @@ packages = [
   "studio_connectors",
   "studio_core",
   "studio_lakehouse",
+  "studio_ml",
   "studio_notebook",
   "studio_runners",
   "studio_kernel",
@@ -89,6 +93,7 @@ source = [
   "studio_connectors",
   "studio_core",
   "studio_lakehouse",
+  "studio_ml",
   "studio_notebook",
   "studio_kernel",
   "studio_runners",
