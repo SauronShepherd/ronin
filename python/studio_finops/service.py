@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import Protocol, runtime_checkable
 
 from studio_core import WorkspaceId
+from studio_orchestrator import Instant
 
 from .contracts import BudgetEvaluation, BudgetPolicy, CostRecord, RateCard, UsageRecord
 
@@ -18,7 +19,13 @@ class RateCardNotFound(KeyError):
 class FinOpsStore(Protocol):
     def record_usage(self, usage: UsageRecord) -> UsageRecord: ...
 
-    def resolve_rate(self, resource_type: str, unit: str, *, at: object) -> RateCard | None: ...
+    def resolve_rate(
+        self,
+        resource_type: str,
+        unit: str,
+        *,
+        at: Instant | str,
+    ) -> RateCard | None: ...
 
     def record_cost(self, cost: CostRecord) -> CostRecord: ...
 
@@ -26,8 +33,8 @@ class FinOpsStore(Protocol):
         self,
         workspace_id: WorkspaceId,
         *,
-        period_start: object,
-        period_end: object,
+        period_start: Instant | str,
+        period_end: Instant | str,
     ) -> tuple[CostRecord, ...]: ...
 
 
@@ -56,7 +63,10 @@ def price_usage(store: FinOpsStore, usage: UsageRecord) -> CostRecord:
     return store.record_cost(cost)
 
 
-def _labels_match(required: tuple[tuple[str, str], ...], actual: tuple[tuple[str, str], ...]) -> bool:
+def _labels_match(
+    required: tuple[tuple[str, str], ...],
+    actual: tuple[tuple[str, str], ...],
+) -> bool:
     actual_map = dict(actual)
     return all(actual_map.get(key) == value for key, value in required)
 
