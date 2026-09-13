@@ -14,6 +14,7 @@ from studio_core import (
     ConnectorDescriptor,
     DiscoveredAsset,
     FieldSchema,
+    SecretRef,
     SourceCheckpoint,
 )
 from studio_storage.secrets import SecretResolver
@@ -39,7 +40,7 @@ def _options(connection: ConnectionDefinition) -> dict[str, str]:
     return dict(connection.options)
 
 
-def _secret_refs(connection: ConnectionDefinition) -> dict[str, object]:
+def _secret_refs(connection: ConnectionDefinition) -> dict[str, SecretRef]:
     return dict(connection.secret_refs)
 
 
@@ -142,7 +143,7 @@ class HttpJsonConnector:
         refs = _secret_refs(connection)
         bearer = refs.get("bearer_token")
         if bearer is not None:
-            material = secrets.resolve(bearer)  # type: ignore[arg-type]
+            material = secrets.resolve(bearer)
             headers["Authorization"] = f"Bearer {material.reveal_text()}"
 
         httpx = _httpx()
