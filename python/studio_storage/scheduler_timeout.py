@@ -21,7 +21,9 @@ class TaskTimeoutRequest:
 
 
 def _add_seconds(value: Instant | str, seconds: int) -> Instant:
-    parsed = datetime.strptime(str(Instant(value)), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
+    parsed = datetime.strptime(
+        str(Instant(value)), "%Y-%m-%dT%H:%M:%S.%fZ"
+    ).replace(tzinfo=UTC)
     return Instant(
         (parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     )
