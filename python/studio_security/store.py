@@ -43,13 +43,29 @@ class SqliteIdentityStore:
                 );
                 CREATE TABLE IF NOT EXISTS security_role_bindings (
                     workspace_id TEXT NOT NULL,
-                    subject_kind TEXT NOT NULL,
+                    subject_kind TEXT NOT NULL CHECK(subject_kind IN ('principal','group')),
                     subject_id TEXT NOT NULL,
-                    role TEXT NOT NULL,
+                    role TEXT NOT NULL CHECK(role IN ('admin','operator','editor','viewer')),
                     PRIMARY KEY(workspace_id, subject_kind, subject_id, role)
                 );
                 CREATE INDEX IF NOT EXISTS security_role_subject_idx
                     ON security_role_bindings(subject_kind, subject_id, workspace_id);
+
+                CREATE TRIGGER IF NOT EXISTS security_role_bindings_validate_insert
+                BEFORE INSERT ON security_role_bindings
+                WHEN NEW.subject_kind NOT IN ('principal','group')
+                  OR NEW.role NOT IN ('admin','operator','editor','viewer')
+                BEGIN
+                    SELECT RAISE(ABORT, 'invalid security role binding');
+                END;
+
+                CREATE TRIGGER IF NOT EXISTS security_role_bindings_validate_update
+                BEFORE UPDATE OF subject_kind, role ON security_role_bindings
+                WHEN NEW.subject_kind NOT IN ('principal','group')
+                  OR NEW.role NOT IN ('admin','operator','editor','viewer')
+                BEGIN
+                    SELECT RAISE(ABORT, 'invalid security role binding');
+                END;
                 """
             )
             connection.commit()
@@ -246,7 +262,7 @@ class SqliteIdentityStore:
         principal_id: PrincipalId,
         groups: tuple[GroupId, ...],
     ) -> tuple[str, ...]:
-        subjects = [("principal", principal_id.value), *(('group', group.value) for group in groups)]
+        subjects = [("principal", principal_id.value), *(("group", group.value) for group in groups)]
         connection = self._connect()
         try:
             roles: set[str] = set()
