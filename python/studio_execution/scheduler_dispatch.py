@@ -18,6 +18,8 @@ class DurableJobService(Protocol):
 
     async def status(self, job_id: JobId) -> Job | None: ...
 
+    async def cancel(self, job_id: JobId, *, now: Instant) -> Job: ...
+
 
 async def dispatch_execution_intent(
     intent: TaskExecutionIntent,
