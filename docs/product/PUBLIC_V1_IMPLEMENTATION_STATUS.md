@@ -2,7 +2,7 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
-**Observed source head:** `69ee645e7b6fe90bf218a6a019595d382424fcf8` (2026-09-13).  
+**Observed source head:** `93a384fc66dfa1af20794907c2cffdcc6cb4fbf7` (2026-09-13).  
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
@@ -25,7 +25,7 @@ This document records implementation state only. It does not claim test executio
 | Connectors/ingestion | partial | connection/discovery/checkpoint contracts and governed local CSV/JSONL path; remote connector matrix remains |
 | Lakehouse/SQL | missing | no supported Parquet/Iceberg/Delta + SQL engine path |
 | Data Engineering Studio | partial | notebook/pipeline execution foundations exist; authoring APIs and Web Studio remain |
-| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron firing, durable event inbox/delivery and durable cancellation propagation exist; backfill, pools, timeout enforcement, leadership and broad operator execution remain |
+| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron, durable event inbox/delivery, cancellation propagation, timeout enforcement and snapshot-safe bounded backfill generation exist; shared pools, branching/notifications, leadership/daemon HA, group backfill cancellation, public scheduler APIs/UI and broad operator execution remain |
 | Catalog/lineage | partial | governed assets/revisions and declared/observed lineage exist; search/glossary/classification/interoperability remain |
 | Ontology/KG | partial | object/property/link/action schema and persistence exist; instance resolution/query/materialization/actions remain |
 | Graph intelligence/RQL | missing | no supported parser/planner/runtime/provider path |
@@ -47,9 +47,9 @@ This document records implementation state only. It does not claim test executio
 
 ## Public v1 source work merged in the current construction sequence
 
-PRs **#242–#265** moved Public v1 from planning into source implementation. The later slices include deterministic verified Bundle IO (#255), deployment-local secret resolution (#256), provider-neutral metadata store ports (#257), environments/deployment bindings (#258), deterministic scheduler task→Job identity/linking (#259), the durable scheduler execution outbox/reconciliation path (#260), deployment-aware scheduler controller (#262), durable timezone-aware cron firing (#263), durable scheduler event inbox/delivery (#264), and durable scheduler cancellation propagation (#265).
+PRs **#242–#268** moved Public v1 from planning into source implementation. The later scheduler slices now include deterministic task→Job identity/linking (#259), durable execution outbox/reconciliation (#260), deployment-aware controller (#262), timezone-aware cron firing (#263), durable event inbox/delivery (#264), durable cancellation propagation (#265), timeout enforcement (#267), and snapshot-safe bounded backfill generation (#268). PR #266 also made Public v1 the active construction authority while preserving the historical v0.1 planning files verbatim.
 
-These merges do **not** imply that their parent capability families are complete. In particular, the scheduler still lacks backfill, resource pools, timeout enforcement, leader fencing and a broad task adapter matrix; Bundle support still lacks complete project inventory/import binding resolution; storage ports do not constitute a PostgreSQL backend.
+These merges do **not** imply that their parent capability families are complete. In particular, the scheduler still lacks shared resource pools/concurrency accounting, branching/skipped semantics, durable notifications, leader fencing/continuous HA daemon behavior, public scheduler APIs/UI and a broad task adapter matrix; backfill cancellation does not yet cancel already-created workflow runs as a group. Bundle support still lacks complete project inventory/import binding resolution; storage ports do not constitute a PostgreSQL backend.
 
 ## Invariants that remain mandatory
 
@@ -75,7 +75,7 @@ These merges do **not** imply that their parent capability families are complete
 ## Updated critical path
 
 1. Keep this ledger and the active construction plan synchronized with repository truth.
-2. Finish scheduler semantics already supported by current contracts: timeout enforcement, pools, backfill, broader operator adapters, branching/notifications and leader fencing.
+2. Finish scheduler shared pools/concurrency accounting, broader operator adapters, branching/notifications, group backfill cancellation and leader fencing/continuous daemon behavior.
 3. Complete native Ronin Bundle project inventory/import transaction and binding resolution.
 4. Complete store ports for remaining domains; then implement PostgreSQL adapters and an S3-compatible artifact store without changing logical references.
 5. Implement the first open data path: Arrow/Parquet + reference open table profile + reference SQL engine, with catalog/lineage/quality hooks.
@@ -88,4 +88,4 @@ These merges do **not** imply that their parent capability families are complete
 
 ## Historical v0.1 planning documents
 
-The earlier v0.1 construction plan and backlog are preserved verbatim under `docs/automation/history/`. They remain useful evidence for the execution foundation and historical qualification baseline, but they are not current feature-selection authority. Active `docs/automation/CONSTRUCTION_PLAN.md` and `BACKLOG.md` now derive scope from `PUBLIC_V1_SCOPE.md` rather than the superseded v0.1 feature freeze.
+The earlier v0.1 construction plan and backlog are preserved verbatim under `docs/automation/history/`. They remain useful evidence for the execution foundation and historical qualification baseline, but they are not current feature-selection authority. Active `docs/automation/CONSTRUCTION_PLAN.md` and `BACKLOG.md` derive scope from `PUBLIC_V1_SCOPE.md` rather than the superseded v0.1 feature freeze.

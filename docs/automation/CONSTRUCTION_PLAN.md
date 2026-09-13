@@ -1,6 +1,6 @@
 # Ronin Public v1 construction plan
 
-_Last synchronized: 2026-09-13 from main `69ee645e7b6fe90bf218a6a019595d382424fcf8` after PR #265. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`. Portability authority: `docs/product/PLATFORM_PORTABILITY_V1.md`._
+_Last synchronized: 2026-09-13 from main `93a384fc66dfa1af20794907c2cffdcc6cb4fbf7` after PR #268. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`. Portability authority: `docs/product/PLATFORM_PORTABILITY_V1.md`._
 
 Ronin Public v1 is **incomplete** until every mandatory capability family has an end-to-end supported path. This document is the active autonomous construction plan. The prior v0.1 plan is preserved verbatim at `docs/automation/history/V01_CONSTRUCTION_PLAN.md` and remains historical evidence only; its feature-freeze language does not override Public v1 scope.
 
@@ -25,7 +25,7 @@ GitHub Actions and automated qualification remain disabled by maintainer policy.
 
 ## Current source position
 
-Implemented foundations include durable Job/Run/Attempt execution; SQLite durability; leases, heartbeat, fencing, reclaim/resume and cancellation; content-addressed evidence/artifacts; canonical JSON/identity; workspace/project/environment foundations; typed grants; deployment-local secret resolution; deterministic Ronin Bundle archive IO; initial provider-neutral metadata ports; persistent catalog/lineage primitives; quality/ontology/audit/ML/GenAI domain persistence; local/Compose operation; and a scheduler with dependency-aware fenced attempts, deterministic task-to-Job identity, durable execution outbox, deployment-aware controller, timezone-aware cron, durable event inbox and cancellation propagation.
+Implemented foundations include durable Job/Run/Attempt execution; SQLite durability; leases, heartbeat, fencing, reclaim/resume and cancellation; content-addressed evidence/artifacts; canonical JSON/identity; workspace/project/environment foundations; typed grants; deployment-local secret resolution; deterministic Ronin Bundle archive IO; initial provider-neutral metadata ports; persistent catalog/lineage primitives; quality/ontology/audit/ML/GenAI domain persistence; local/Compose operation; and a scheduler with dependency-aware fenced attempts, deterministic task-to-Job identity, durable execution outbox, deployment-aware controller, timezone-aware cron, durable event inbox, cancellation propagation, timeout enforcement and snapshot-safe bounded backfill generation.
 
 Public-v1 capability state is maintained in `docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md` and `docs/product/public-v1-status.json`. Those ledgers are implementation-status records, not release qualification.
 
@@ -33,7 +33,7 @@ Public-v1 capability state is maintained in `docs/product/PUBLIC_V1_IMPLEMENTATI
 
 Autonomous construction remains capability-ordered and should select one coherent slice at a time.
 
-1. **Scheduler completion:** timeout enforcement, resource pools/concurrency accounting, backfill, broader task adapters, branching/skipped semantics, notifications, continuous daemon behavior and leader fencing/HA.
+1. **Scheduler completion:** shared resource pools/concurrency accounting, broader task adapters, branching/skipped semantics, notifications, backfill group cancellation/API/UI, continuous daemon behavior and leader fencing/HA.
 2. **Ronin Bundle semantic portability:** complete project inventory, binding-resolution planning and atomic staged import; certify Ronin-native round-trip before vendor adapters.
 3. **Persistence boundaries:** finish provider-neutral store ports for scheduler, quality, ontology, audit, ML, GenAI, semantic, streaming, alerts/FinOps and identity.
 4. **Open data plane:** Apache Arrow/Parquet, reference open table lifecycle (Iceberg), documented Delta interoperability and provider-neutral SQL engine with a lightweight reference adapter.
@@ -51,6 +51,16 @@ Autonomous construction remains capability-ordered and should select one coheren
 16. **Server deployment:** PostgreSQL adapters, S3-compatible artifacts, server Compose profile, Kubernetes/Helm, scheduler HA and backup/restore.
 17. **Migration profiles:** Fabric, Databricks, Dataiku DSS and Palantir Foundry/AIP only against executable Ronin target capabilities; every fixture must import, execute its supported subset and Bundle-round-trip.
 18. **Release qualification:** only after maintainer authorization, run exact-candidate journeys/security/license/SBOM/provenance and configure branch/release protection.
+
+## Scheduler semantics already landed
+
+- **Cron:** timezone-aware durable firing with deterministic logical-minute identities and restart catch-up.
+- **Events:** durable exact-match event inbox/delivery with deterministic WorkflowRun identity.
+- **Cancellation (#265):** scheduler intent first, stale-attempt fencing, unpublished-intent retirement, linked Job cancellation and terminal reconciliation.
+- **Timeouts (#267):** timeout decision from frozen WorkflowRun policy, durable marker before Job cancellation and retry/failure through the existing scheduler policy.
+- **Backfill (#268):** immutable schedule/workflow snapshots, independent cursor, bounded cron scanning, transactional active-run capacity and restart-safe logical-fire recovery.
+
+These are scheduler foundations, not a claim that P5 is complete. Shared pools, branching/notifications, leader HA, group backfill cancellation, public scheduler API/UI and broad task execution adapters remain.
 
 ## Blocked and human-decision work
 
