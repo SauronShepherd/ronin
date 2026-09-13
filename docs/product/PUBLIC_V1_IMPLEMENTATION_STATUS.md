@@ -2,7 +2,7 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
-**Observed source head:** `46accf1f45a2863902bcfc9c3a5f2c2c76eb8bcd` (2026-09-12).  
+**Observed source head:** `69ee645e7b6fe90bf218a6a019595d382424fcf8` (2026-09-13).  
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
@@ -25,7 +25,7 @@ This document records implementation state only. It does not claim test executio
 | Connectors/ingestion | partial | connection/discovery/checkpoint contracts and governed local CSV/JSONL path; remote connector matrix remains |
 | Lakehouse/SQL | missing | no supported Parquet/Iceberg/Delta + SQL engine path |
 | Data Engineering Studio | partial | notebook/pipeline execution foundations exist; authoring APIs and Web Studio remain |
-| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron firing and durable event inbox/delivery exist; backfill, pools, cancellation propagation, timeout enforcement, leadership and broad operator execution remain |
+| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron firing, durable event inbox/delivery and durable cancellation propagation exist; backfill, pools, timeout enforcement, leadership and broad operator execution remain |
 | Catalog/lineage | partial | governed assets/revisions and declared/observed lineage exist; search/glossary/classification/interoperability remain |
 | Ontology/KG | partial | object/property/link/action schema and persistence exist; instance resolution/query/materialization/actions remain |
 | Graph intelligence/RQL | missing | no supported parser/planner/runtime/provider path |
@@ -47,9 +47,9 @@ This document records implementation state only. It does not claim test executio
 
 ## Public v1 source work merged in the current construction sequence
 
-PRs **#242–#264** moved Public v1 from planning into source implementation. The later slices include deterministic verified Bundle IO (#255), deployment-local secret resolution (#256), provider-neutral metadata store ports (#257), environments/deployment bindings (#258), deterministic scheduler task→Job identity/linking (#259), the durable scheduler execution outbox/reconciliation path (#260), deployment-aware scheduler controller (#262), durable timezone-aware cron firing (#263), and the durable scheduler event inbox/delivery path (#264).
+PRs **#242–#265** moved Public v1 from planning into source implementation. The later slices include deterministic verified Bundle IO (#255), deployment-local secret resolution (#256), provider-neutral metadata store ports (#257), environments/deployment bindings (#258), deterministic scheduler task→Job identity/linking (#259), the durable scheduler execution outbox/reconciliation path (#260), deployment-aware scheduler controller (#262), durable timezone-aware cron firing (#263), durable scheduler event inbox/delivery (#264), and durable scheduler cancellation propagation (#265).
 
-These merges do **not** imply that their parent capability families are complete. In particular, the scheduler still lacks backfill, resource pools, cancellation propagation, timeout enforcement, leader fencing and a broad task adapter matrix; Bundle support still lacks complete project inventory/import binding resolution; storage ports do not constitute a PostgreSQL backend.
+These merges do **not** imply that their parent capability families are complete. In particular, the scheduler still lacks backfill, resource pools, timeout enforcement, leader fencing and a broad task adapter matrix; Bundle support still lacks complete project inventory/import binding resolution; storage ports do not constitute a PostgreSQL backend.
 
 ## Invariants that remain mandatory
 
@@ -75,7 +75,7 @@ These merges do **not** imply that their parent capability families are complete
 ## Updated critical path
 
 1. Keep this ledger and the active construction plan synchronized with repository truth.
-2. Finish scheduler semantics already supported by current contracts: cancellation propagation, timeout enforcement, pools, backfill, broader operator adapters and leader fencing.
+2. Finish scheduler semantics already supported by current contracts: timeout enforcement, pools, backfill, broader operator adapters, branching/notifications and leader fencing.
 3. Complete native Ronin Bundle project inventory/import transaction and binding resolution.
 4. Complete store ports for remaining domains; then implement PostgreSQL adapters and an S3-compatible artifact store without changing logical references.
 5. Implement the first open data path: Arrow/Parquet + reference open table profile + reference SQL engine, with catalog/lineage/quality hooks.
@@ -88,4 +88,4 @@ These merges do **not** imply that their parent capability families are complete
 
 ## Historical v0.1 planning documents
 
-Earlier v0.1 construction/acceptance documents remain valuable evidence for the execution foundation and historical qualification baseline. They are **not** authority to freeze capability families that `PUBLIC_V1_SCOPE.md` now makes mandatory. Where an old issue or document still says ingestion/lakehouse/ML/GenAI/etc. must wait for v0.1 solely because of the former freeze, treat that statement as historical planning context and reconcile it before using it as current implementation authority.
+The earlier v0.1 construction plan and backlog are preserved verbatim under `docs/automation/history/`. They remain useful evidence for the execution foundation and historical qualification baseline, but they are not current feature-selection authority. Active `docs/automation/CONSTRUCTION_PLAN.md` and `BACKLOG.md` now derive scope from `PUBLIC_V1_SCOPE.md` rather than the superseded v0.1 feature freeze.
