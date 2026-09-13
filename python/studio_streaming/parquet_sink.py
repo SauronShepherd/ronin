@@ -6,7 +6,7 @@ import hashlib
 from collections.abc import Mapping
 from pathlib import Path
 
-from studio_lakehouse import inspect_parquet, write_parquet_rows
+from studio_lakehouse import read_parquet_rows, write_parquet_rows
 
 from .contracts import StreamBatch, StreamSinkCommit
 
@@ -36,31 +36,40 @@ class ParquetMicroBatchSink:
         rows: tuple[Mapping[str, object], ...],
     ) -> StreamSinkCommit:
         path = self._path(stream_id, batch)
-        if path.exists():
-            existing = inspect_parquet(path)
-            if existing.rows != len(rows):
+        expected_rows = tuple(dict(row) for row in rows)
+        empty_marker = path.with_suffix(".empty")
+
+        if expected_rows:
+            if empty_marker.exists():
                 raise RuntimeError(
-                    "existing stream batch output has a conflicting row count"
+                    "existing stream batch output is an empty marker for a non-empty replay"
                 )
-        else:
-            if rows:
-                write_parquet_rows(path, rows)
+            if path.exists():
+                existing_rows = read_parquet_rows(path)
+                if existing_rows != expected_rows:
+                    raise RuntimeError(
+                        "existing stream batch output conflicts with replayed row content"
+                    )
             else:
-                # A non-empty source batch may legitimately filter to zero rows. Persist
-                # an explicit marker so retries remain idempotent without fabricating a
-                # Parquet schema for an empty dataset.
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.with_suffix(".empty").write_text(
-                    batch.checkpoint.digest,
-                    encoding="utf-8",
+                write_parquet_rows(path, expected_rows)
+        else:
+            if path.exists():
+                raise RuntimeError(
+                    "existing stream batch output is non-empty for an empty replay"
                 )
-        marker = path if rows else path.with_suffix(".empty")
+            if empty_marker.exists():
+                if empty_marker.read_text(encoding="utf-8") != batch.checkpoint.digest:
+                    raise RuntimeError("existing empty stream batch marker conflicts with checkpoint")
+            else:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                empty_marker.write_text(batch.checkpoint.digest, encoding="utf-8")
+
+        marker = path if expected_rows else empty_marker
         if not marker.exists():
             raise RuntimeError("stream sink output was not committed")
-        commit_id = f"parquet-batch:{batch.checkpoint.digest}"
         return StreamSinkCommit(
-            commit_id,
-            len(rows),
+            f"parquet-batch:{batch.checkpoint.digest}",
+            len(expected_rows),
             batch.checkpoint.digest,
         )
 
