@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 from studio_orchestrator import Instant
@@ -13,6 +14,8 @@ from studio_storage.scheduler_events import (
     WorkspaceId,
 )
 
+AuthorityCheck = Callable[[Instant | str], Awaitable[None]]
+
 
 @dataclass(frozen=True, slots=True)
 class EventDeliveryResult:
@@ -22,8 +25,18 @@ class EventDeliveryResult:
 class SchedulerEventService:
     """Ingest events and convert frozen pending deliveries into WorkflowRuns."""
 
-    def __init__(self, store: SchedulerEventStore) -> None:
+    def __init__(
+        self,
+        store: SchedulerEventStore,
+        *,
+        authority_check: AuthorityCheck | None = None,
+    ) -> None:
         self._store = store
+        self._authority_check = authority_check
+
+    async def _check_authority(self, now: Instant | str) -> None:
+        if self._authority_check is not None:
+            await self._authority_check(now)
 
     async def ingest(self, event: SchedulerEventRecord) -> tuple[EventDelivery, ...]:
         return await asyncio.to_thread(self._store.ingest_event, event)
@@ -42,6 +55,7 @@ class SchedulerEventService:
         )
         delivered: list[EventDelivery] = []
         for delivery in pending:
+            await self._check_authority(now)
             delivered.append(
                 await asyncio.to_thread(
                     self._store.deliver_event,
@@ -52,4 +66,4 @@ class SchedulerEventService:
         return EventDeliveryResult(tuple(delivered))
 
 
-__all__ = ("EventDeliveryResult", "SchedulerEventService")
+__all__ = ("AuthorityCheck", "EventDeliveryResult", "SchedulerEventService")

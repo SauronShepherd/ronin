@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 from studio_orchestrator import Instant
@@ -14,6 +15,8 @@ from studio_storage.scheduler_schedule import (
 )
 
 from .scheduler_cron import evaluated_minutes, schedule_matches
+
+AuthorityCheck = Callable[[Instant | str], Awaitable[None]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,8 +32,18 @@ class ScheduleFireLimitExceeded(RuntimeError):
 class SchedulerScheduleService:
     """Evaluate current/missed cron minutes with durable cursors and fire identity."""
 
-    def __init__(self, store: SchedulerScheduleStore) -> None:
+    def __init__(
+        self,
+        store: SchedulerScheduleStore,
+        *,
+        authority_check: AuthorityCheck | None = None,
+    ) -> None:
         self._store = store
+        self._authority_check = authority_check
+
+    async def _check_authority(self, now: Instant | str) -> None:
+        if self._authority_check is not None:
+            await self._authority_check(now)
 
     async def tick(
         self,
@@ -73,6 +86,7 @@ class SchedulerScheduleService:
         fires: list[ScheduleFire] = []
         for schedule, minutes, due in evaluation:
             for logical_time in due:
+                await self._check_authority(now)
                 fire = await asyncio.to_thread(
                     self._store.fire_schedule,
                     workspace_id,
@@ -84,6 +98,7 @@ class SchedulerScheduleService:
             # Advance only after every due fire in this evaluated interval has
             # been durably recorded. Crash-before-cursor retry is idempotent.
             if minutes:
+                await self._check_authority(now)
                 await asyncio.to_thread(
                     self._store.advance_schedule_cursor,
                     workspace_id,
@@ -103,6 +118,7 @@ class SchedulerScheduleService:
 
 
 __all__ = (
+    "AuthorityCheck",
     "ScheduleFireLimitExceeded",
     "ScheduleTickResult",
     "SchedulerScheduleService",

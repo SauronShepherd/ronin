@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -15,6 +16,8 @@ from studio_storage.scheduler_backfill_runtime import (
 )
 
 from .scheduler_cron import evaluated_minutes, schedule_matches
+
+AuthorityCheck = Callable[[Instant | str], Awaitable[None]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,8 +51,18 @@ def _bounded_through(cursor: Instant, end_at: Instant, max_scan_minutes: int) ->
 class SchedulerBackfillService:
     """Generate bounded historical schedule fires without touching cron cursors."""
 
-    def __init__(self, store: SchedulerBackfillRuntimeStore) -> None:
+    def __init__(
+        self,
+        store: SchedulerBackfillRuntimeStore,
+        *,
+        authority_check: AuthorityCheck | None = None,
+    ) -> None:
         self._store = store
+        self._authority_check = authority_check
+
+    async def _check_authority(self, now: Instant | str) -> None:
+        if self._authority_check is not None:
+            await self._authority_check(now)
 
     async def tick(
         self,
@@ -82,6 +95,7 @@ class SchedulerBackfillService:
             return BackfillTickResult((), active, True)
         if plan.generation_complete:
             if active == 0:
+                await self._check_authority(now)
                 await asyncio.to_thread(
                     self._store.complete_backfill,
                     workspace_id,
@@ -113,6 +127,7 @@ class SchedulerBackfillService:
                 existing = existing_runs.get(minute)
                 if existing is not None:
                     if existing.state == "reserved":
+                        await self._check_authority(now)
                         recovered = await asyncio.to_thread(
                             self._store.create_snapshot_backfill_run,
                             workspace_id,
@@ -126,6 +141,7 @@ class SchedulerBackfillService:
                 if available == 0:
                     break
                 try:
+                    await self._check_authority(now)
                     run = await asyncio.to_thread(
                         self._store.create_snapshot_backfill_run,
                         workspace_id,
@@ -143,6 +159,7 @@ class SchedulerBackfillService:
         generation_complete = False
         if processed is not None:
             generation_complete = processed == plan.request.end_at
+            await self._check_authority(now)
             plan = await asyncio.to_thread(
                 self._store.advance_backfill_cursor,
                 workspace_id,
@@ -157,6 +174,7 @@ class SchedulerBackfillService:
             backfill_id,
         )
         if generation_complete and active == 0:
+            await self._check_authority(now)
             await asyncio.to_thread(
                 self._store.complete_backfill,
                 workspace_id,
@@ -166,4 +184,4 @@ class SchedulerBackfillService:
         return BackfillTickResult(tuple(created), active, plan.generation_complete)
 
 
-__all__ = ("BackfillTickResult", "SchedulerBackfillService")
+__all__ = ("AuthorityCheck", "BackfillTickResult", "SchedulerBackfillService")
