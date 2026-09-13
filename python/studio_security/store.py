@@ -244,20 +244,30 @@ class SqliteIdentityStore:
         self,
         workspace_id: WorkspaceId,
         principal_id: PrincipalId,
-        groups: tuple[GroupId, ...],
     ) -> tuple[str, ...]:
-        subjects = [("principal", principal_id.value), *(('group', group.value) for group in groups)]
         connection = self._connect()
         try:
-            roles: set[str] = set()
-            for kind, subject_id in subjects:
-                rows = connection.execute(
-                    "SELECT role FROM security_role_bindings WHERE workspace_id=? "
-                    "AND subject_kind=? AND subject_id=?",
-                    (workspace_id.value, kind, subject_id),
-                ).fetchall()
-                roles.update(str(row[0]) for row in rows)
-            return tuple(sorted(roles))
+            rows = connection.execute(
+                """
+                SELECT role
+                FROM security_role_bindings
+                WHERE workspace_id=? AND subject_kind='principal' AND subject_id=?
+                UNION
+                SELECT rb.role
+                FROM security_role_bindings AS rb
+                JOIN security_group_members AS gm
+                  ON rb.subject_kind='group' AND rb.subject_id=gm.group_id
+                WHERE rb.workspace_id=? AND gm.principal_id=?
+                ORDER BY role
+                """,
+                (
+                    workspace_id.value,
+                    principal_id.value,
+                    workspace_id.value,
+                    principal_id.value,
+                ),
+            ).fetchall()
+            return tuple(str(row[0]) for row in rows)
         finally:
             connection.close()
 
