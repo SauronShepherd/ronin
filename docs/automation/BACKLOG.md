@@ -1,6 +1,6 @@
 # Ronin Public v1 autonomous build backlog
 
-_Last synchronized: 2026-09-13 from main `f94c5b2f249d593aae4d8d30f79ad7c71026c037` after PR #276. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
+_Last synchronized: 2026-09-13 from main `f16a2129d1d07efae0bd778884f50f4bbf62f590` after PR #280. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
 
 This backlog is the active implementation-selection surface for Public v1. The previous narrow v0.1 backlog is preserved verbatim at `docs/automation/history/V01_BACKLOG.md` and is historical evidence only.
 
@@ -40,9 +40,19 @@ Landed scheduler foundations to preserve:
 
 ## Portability
 
-- Complete Ronin Bundle semantic inventory/export.
-- Add import planning, deterministic identity mapping, collision detection, staged mutation, binding resolution and atomic commit.
-- Certify Ronin-native Bundle round-trip before vendor profiles.
+Landed native project Bundle foundations:
+
+- deterministic semantic inventory/export for `ProjectManifest` with digest-derived payload paths and runtime binding requests (#278);
+- fully verified bounded import planning with create/no-op/collision classification and fail-closed unsupported inventory handling (#279);
+- exact binding resolution plus provider-neutral atomic commit semantics, with SQLite project+environment-binding transaction as the reference adapter (#280).
+
+Next portability work:
+
+- extend semantic inventory/export/import to connection definitions while keeping secret material absent and representing deployment remaps explicitly;
+- extend inventory/import transaction support to catalog/workflow/quality/ontology/ML/GenAI and later data/semantic assets only when their canonical contracts are executable enough to round-trip honestly;
+- add deterministic multi-object dependency ordering/staging once more than one semantic object type participates in one import transaction;
+- certify Ronin-native lossless Bundle round-trip before vendor profiles;
+- do not add project-ID remapping/collision override behavior until a portable identity policy is explicitly defined rather than guessed.
 
 ## Data plane
 

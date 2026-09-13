@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-13T08:40:06+02:00",
-  "observed_main_sha": "f94c5b2f249d593aae4d8d30f79ad7c71026c037",
+  "observed_at": "2026-09-13T09:26:00+02:00",
+  "observed_main_sha": "f16a2129d1d07efae0bd778884f50f4bbf62f590",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "status_vocabulary": [
@@ -102,7 +102,7 @@
     {
       "id": "ronin-bundle",
       "status": "partial",
-      "summary": "Canonical manifest/migration semantics plus deterministic verified archive IO exist; complete project/asset inventory building and binding-resolution import workflow remain incomplete."
+      "summary": "Canonical manifest/migration semantics, deterministic verified archive IO, native project semantic inventory/export, bounded verified import planning, explicit runtime binding resolution, create/no-op/collision classification and atomic project plus environment-binding commit exist; broader asset inventory/import, native round-trip certification and public surfaces remain incomplete."
     },
     {
       "id": "migration-microsoft-fabric",
@@ -187,12 +187,16 @@
     273,
     274,
     275,
-    276
+    276,
+    277,
+    278,
+    279,
+    280
   ],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
     "Complete scheduler broad task adapters, branching/notifications, public scheduler APIs/UI, process/deployment wiring and PostgreSQL HA semantics/qualification.",
-    "Complete semantic Ronin Bundle inventory, binding resolution and transactional import.",
+    "Extend native Ronin Bundle semantic inventory/import beyond ProjectManifest to connections and other executable canonical assets while preserving explicit binding requests and atomic staged commit; certify Ronin-native lossless round-trip before vendor profiles.",
     "Finish storage ports for remaining domains, then add PostgreSQL adapters and an S3-compatible artifact store.",
     "Implement Arrow/Parquet, a reference open lakehouse table profile and a reference SQL engine before broad vendor migration adapters.",
     "Complete remote connectors and safe incremental checkpoint execution.",
