@@ -4,18 +4,33 @@ from pathlib import Path
 
 import pytest
 
-from studio_core import ConnectionDefinition, ConnectionId, SecretRef, Workspace, WorkspaceId
+from studio_core import (
+    ConnectionDefinition,
+    ConnectionId,
+    SecretRef,
+    Workspace,
+    WorkspaceId,
+)
+from studio_core.bundle_inventory import (
+    BUNDLE_INVENTORY_PATH,
+    BundleInventory,
+    BundleInventoryObject,
+)
 from studio_core.environments import DeploymentBinding
+from studio_core.portability import BindingRequest
 from studio_execution.bundle_connection import (
+    CONNECTION_BUNDLE_MEDIA_TYPE,
+    INVENTORY_MEDIA_TYPE,
     ConnectionBundleBindingError,
     ConnectionBundleImportConflict,
+    UnsupportedConnectionBundle,
     build_connection_bundle_inventory,
     commit_connection_bundle_import,
     export_connection_bundle,
     plan_connection_bundle_import,
 )
 from studio_orchestrator import Instant
-from studio_storage.bundle import verify_bundle
+from studio_storage.bundle import BundleFile, verify_bundle, write_bundle
 from studio_storage.connections import ConnectionConflict, SqliteConnectionStore
 from studio_storage.workspaces import SqliteWorkspaceStore
 
@@ -94,7 +109,9 @@ def test_connection_bundle_export_is_deterministic_and_requests_secret_remap(
     assert verify_bundle(first) == first_manifest
 
 
-def test_connection_bundle_import_remaps_secret_and_retries_as_exact_noop(tmp_path: Path) -> None:
+def test_connection_bundle_import_remaps_secret_and_retries_as_exact_noop(
+    tmp_path: Path,
+) -> None:
     bundle = _export(tmp_path)
     workspaces, connections = _stores(tmp_path / "target.sqlite3")
 
@@ -182,6 +199,74 @@ def test_connection_bundle_import_requires_exact_secret_resolutions(tmp_path: Pa
             now=_NOW,
         )
     assert connections.get_connection(_WS, _CONNECTION) is None
+
+
+def test_connection_bundle_rejects_secret_requests_that_do_not_match_payload(
+    tmp_path: Path,
+) -> None:
+    definition = _definition()
+    object_path = "objects/connection/connection.json"
+    inventory = BundleInventory(
+        (
+            BundleInventoryObject(
+                "connection",
+                f"connection:{_CONNECTION}",
+                object_path,
+                binding_requests=(
+                    BindingRequest("secret", "secret://source/different", required=True),
+                ),
+            ),
+        )
+    )
+    bundle = tmp_path / "tampered-semantics.roninbundle"
+    write_bundle(
+        bundle,
+        (
+            BundleFile(
+                BUNDLE_INVENTORY_PATH,
+                INVENTORY_MEDIA_TYPE,
+                inventory.to_json().encode("utf-8"),
+            ),
+            BundleFile(
+                object_path,
+                CONNECTION_BUNDLE_MEDIA_TYPE,
+                definition.to_json().encode("utf-8"),
+            ),
+        ),
+    )
+    workspaces, connections = _stores(tmp_path / "target.sqlite3")
+
+    with pytest.raises(UnsupportedConnectionBundle, match="binding requests"):
+        plan_connection_bundle_import(bundle, workspaces, connections, _WS)
+    assert connections.get_connection(_WS, _CONNECTION) is None
+
+
+def test_connection_without_secret_refs_imports_without_fabricated_binding(
+    tmp_path: Path,
+) -> None:
+    source_workspaces, source_connections = _stores(tmp_path / "source.sqlite3")
+    assert source_workspaces.get_workspace(_WS) is not None
+    definition = ConnectionDefinition(
+        id=_CONNECTION,
+        name="Public endpoint",
+        connector_id="http",
+        options=(("base_url", "https://api.example.test"),),
+    )
+    source_connections.create_connection(_WS, definition, now=_NOW)
+    bundle = tmp_path / "public.roninbundle"
+    export_connection_bundle(source_connections, _WS, _CONNECTION, bundle)
+
+    target_workspaces, target_connections = _stores(tmp_path / "target.sqlite3")
+    outcome = commit_connection_bundle_import(
+        bundle,
+        target_workspaces,
+        target_connections,
+        _WS,
+        now=_NOW,
+    )
+    assert outcome.plan.unresolved_bindings == ()
+    assert outcome.resolved_connection == definition
+    assert target_connections.get_connection(_WS, _CONNECTION) == definition
 
 
 def test_existing_connection_rejects_different_secret_remap_at_atomic_create(
