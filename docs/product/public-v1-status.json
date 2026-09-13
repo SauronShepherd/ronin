@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-13T07:20:00+02:00",
-  "observed_main_sha": "46accf1f45a2863902bcfc9c3a5f2c2c76eb8bcd",
+  "observed_at": "2026-09-13T07:38:00+02:00",
+  "observed_main_sha": "69ee645e7b6fe90bf218a6a019595d382424fcf8",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "status_vocabulary": [
@@ -42,7 +42,7 @@
     {
       "id": "p5-durable-dag-scheduler",
       "status": "partial",
-      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron firing and durable event inbox/delivery exist; backfill, pools, cancellation propagation, timeout enforcement, leadership and broad operator execution remain incomplete."
+      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron firing, durable event inbox/delivery and durable cancellation propagation exist; backfill, pools, timeout enforcement, leadership and broad operator execution remain incomplete."
     },
     {
       "id": "p6-catalog-lineage",
@@ -175,11 +175,12 @@
     261,
     262,
     263,
-    264
+    264,
+    265
   ],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
-    "Complete scheduler cancellation, timeout, pools, backfill, broader task adapters and leader fencing.",
+    "Complete scheduler timeout enforcement, pools, backfill, broader task adapters, branching/notifications and leader fencing.",
     "Complete semantic Ronin Bundle inventory, binding resolution and transactional import.",
     "Finish storage ports for remaining domains, then add PostgreSQL adapters and an S3-compatible artifact store.",
     "Implement Arrow/Parquet, a reference open lakehouse table profile and a reference SQL engine before broad vendor migration adapters.",
