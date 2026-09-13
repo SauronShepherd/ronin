@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Protocol
 
 from studio_core import WorkflowRunId, WorkspaceId
 from studio_orchestrator import Instant, JobId
@@ -10,7 +11,7 @@ from studio_storage.scheduler_cancellation import request_workflow_cancellation
 from studio_storage.scheduler_execution import SchedulerExecutionLinkStore
 
 
-class CancellableJobService:
+class CancellableJobService(Protocol):
     """Minimal structural protocol implemented by DurableExecutionService."""
 
     async def cancel(self, job_id: JobId, *, now: Instant): ...
