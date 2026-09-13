@@ -6,10 +6,10 @@ import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+from studio_core import WorkspaceId
 from studio_orchestrator import Instant
 from studio_storage.scheduler_backfill import BackfillId, BackfillRun
 from studio_storage.scheduler_backfill_runtime import SchedulerBackfillRuntimeStore
-from studio_storage.workspaces import WorkspaceId
 
 from .scheduler_cron import evaluated_minutes, schedule_matches
 
@@ -22,7 +22,9 @@ class BackfillTickResult:
 
 
 def _instant_datetime(value: Instant | str) -> datetime:
-    return datetime.strptime(str(Instant(value)), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
+    return datetime.strptime(
+        str(Instant(value)), "%Y-%m-%dT%H:%M:%S.%fZ"
+    ).replace(tzinfo=UTC)
 
 
 def _minute_instant(value: datetime) -> Instant:
@@ -92,11 +94,32 @@ class SchedulerBackfillService:
             through=through,
             max_scan_minutes=max_scan_minutes,
         )
+        existing_runs = {
+            run.logical_time: run
+            for run in await asyncio.to_thread(
+                self._store.list_backfill_runs,
+                workspace_id,
+                backfill_id,
+            )
+        }
         available = min(max_new_runs, max(plan.max_concurrency - active, 0))
         created: list[BackfillRun] = []
         processed: Instant | None = None
         for minute in minutes:
             if schedule_matches(plan.schedule_snapshot, minute):
+                existing = existing_runs.get(minute)
+                if existing is not None:
+                    if existing.state == "reserved":
+                        recovered = await asyncio.to_thread(
+                            self._store.create_snapshot_backfill_run,
+                            workspace_id,
+                            backfill_id,
+                            logical_time=minute,
+                            now=now,
+                        )
+                        existing_runs[minute] = recovered
+                    processed = minute
+                    continue
                 if available == 0:
                     break
                 run = await asyncio.to_thread(
@@ -106,6 +129,7 @@ class SchedulerBackfillService:
                     logical_time=minute,
                     now=now,
                 )
+                existing_runs[minute] = run
                 created.append(run)
                 available -= 1
             processed = minute
