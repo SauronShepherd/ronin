@@ -9,7 +9,13 @@ from .canonical_json import encode as encode_canonical_json
 
 
 def _require_pool_name(value: str) -> str:
-    if not value or value != value.strip() or "\n" in value or "\r" in value or "\x00" in value:
+    if (
+        not value
+        or value != value.strip()
+        or "\n" in value
+        or "\r" in value
+        or "\x00" in value
+    ):
         raise ValueError("resource pool name must be non-empty, trimmed, and single-line")
     if len(value) > 256:
         raise ValueError("resource pool name must be at most 256 characters")
