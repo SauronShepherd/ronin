@@ -67,10 +67,12 @@ mypy_path = "python:packages/pyronin/src"
 packages = [
   "studio_connectors",
   "studio_core",
+  "studio_finops",
   "studio_genai",
   "studio_lakehouse",
   "studio_ml",
   "studio_notebook",
+  "studio_observability",
   "studio_runners",
   "studio_kernel",
   "studio_orchestrator",
@@ -97,10 +99,12 @@ branch = true
 source = [
   "studio_connectors",
   "studio_core",
+  "studio_finops",
   "studio_genai",
   "studio_lakehouse",
   "studio_ml",
   "studio_notebook",
+  "studio_observability",
   "studio_kernel",
   "studio_runners",
   "studio_orchestrator",
@@ -130,8 +134,8 @@ pytest_add_cli_args_test_selection = [
   "tests/test_diagnostics.py",
   "tests/test_instance_keys.py",
   "tests/test_operators.py",
-  "tests/test_project_manifest.py",
   "tests/test_projects.py",
+  "tests/test_project_manifest.py",
   "tests/test_runtime_profiles.py",
 ]
 mutate_only_covered_lines = true
