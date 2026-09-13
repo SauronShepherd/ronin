@@ -14,8 +14,16 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
-from studio_core.bundle_inventory import BUNDLE_INVENTORY_PATH, BundleInventory, BundleInventoryObject
-from studio_execution.bundle_import import UnsupportedBundleInventory, plan_project_bundle_import
+from studio_core.bundle_inventory import (
+    BUNDLE_INVENTORY_PATH,
+    BundleInventory,
+    BundleInventoryObject,
+)
+from studio_execution.bundle_import import (
+    BundleImportTargetError,
+    UnsupportedBundleInventory,
+    plan_project_bundle_import,
+)
 from studio_execution.bundle_inventory import (
     INVENTORY_MEDIA_TYPE,
     PROJECT_BUNDLE_MEDIA_TYPE,
@@ -102,6 +110,18 @@ def test_import_plan_reports_same_id_different_content_as_collision(tmp_path: Pa
     assert plan.disposition == "collision"
     assert plan.collision_reason == "project id already exists with different portable content"
     assert target.get_project(_WS, _PROJECT) == conflicting
+
+
+def test_import_plan_rejects_missing_or_archived_target_workspace(tmp_path: Path) -> None:
+    bundle, _manifest_value = _export(tmp_path)
+    missing = SqliteWorkspaceStore(tmp_path / "missing.sqlite3", migration_now=_NOW)
+    with pytest.raises(BundleImportTargetError, match="does not exist"):
+        plan_project_bundle_import(bundle, missing, _WS)
+
+    archived = _store(tmp_path / "archived.sqlite3")
+    archived.update_workspace(Workspace(_WS, "Workspace", state="archived"), now=_NOW)
+    with pytest.raises(BundleImportTargetError, match="archived"):
+        plan_project_bundle_import(bundle, archived, _WS)
 
 
 def test_import_plan_rejects_inventory_identity_mismatch(tmp_path: Path) -> None:
