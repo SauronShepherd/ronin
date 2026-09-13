@@ -251,9 +251,9 @@ class SchedulerDaemon:
                 now=self._clock(),
             )
         except SchedulerLeadershipLost:
-            pass
-        finally:
             self._lease = None
+            return
+        self._lease = None
 
 
 __all__ = (
