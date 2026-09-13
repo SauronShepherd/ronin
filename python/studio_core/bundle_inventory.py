@@ -46,7 +46,9 @@ class BundleInventoryObject:
         _require_text(self.kind, "bundle inventory object kind")
         _require_text(self.logical_ref, "bundle inventory logical_ref")
         object.__setattr__(self, "path", _require_safe_path(self.path))
-        dependencies = tuple(sorted(_require_text(item, "bundle dependency") for item in self.dependencies))
+        dependencies = tuple(
+            sorted(_require_text(item, "bundle dependency") for item in self.dependencies)
+        )
         if len(dependencies) != len(set(dependencies)):
             raise ValueError("bundle inventory dependencies must be unique")
         bindings = tuple(sorted(self.binding_requests))
@@ -110,12 +112,15 @@ class BundleInventory:
             raise ValueError("unsupported Ronin Bundle inventory schema")
         objects = tuple(sorted(self.objects, key=lambda item: item.key))
         keys = [item.key for item in objects]
+        refs = [item.logical_ref for item in objects]
         paths = [item.path for item in objects]
         if len(keys) != len(set(keys)):
             raise ValueError("bundle inventory object identities must be unique")
+        if len(refs) != len(set(refs)):
+            raise ValueError("bundle inventory logical refs must be globally unique")
         if len(paths) != len(set(paths)):
             raise ValueError("bundle inventory object paths must be unique")
-        known_refs = {item.logical_ref for item in objects}
+        known_refs = set(refs)
         for item in objects:
             unknown = set(item.dependencies) - known_refs
             if unknown:
