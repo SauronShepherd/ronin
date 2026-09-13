@@ -1,4 +1,4 @@
-"""Leader-fenced bounded scheduler controller execution."""
+"""Leader-fenced bounded scheduler execution helpers."""
 
 from __future__ import annotations
 
@@ -12,6 +12,21 @@ from studio_storage.scheduler_leadership import SchedulerLeaderLease, SchedulerL
 from .scheduler_controller import SchedulerController, SchedulerControllerCycle
 from .scheduler_dispatch import DurableJobService
 from .scheduler_timeout import enforce_task_timeouts
+
+
+class SchedulerLeadershipGuard:
+    """Reusable async authority check for scheduler service entrypoints."""
+
+    def __init__(self, store: SchedulerLeadershipStore, lease: SchedulerLeaderLease) -> None:
+        self._store = store
+        self._lease = lease
+
+    async def check(self, now: Instant | str) -> None:
+        await asyncio.to_thread(
+            self._store.assert_scheduler_leadership,
+            self._lease,
+            now=now,
+        )
 
 
 class LeaderFencedSchedulerController(SchedulerController):
@@ -71,4 +86,4 @@ class LeaderFencedSchedulerController(SchedulerController):
         return SchedulerControllerCycle(published, dispatched, reconciled)
 
 
-__all__ = ("LeaderFencedSchedulerController",)
+__all__ = ("LeaderFencedSchedulerController", "SchedulerLeadershipGuard")
