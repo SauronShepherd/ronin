@@ -1,146 +1,67 @@
-# Ronin v0.1 construction plan
-
-_Last synchronized: 2026-09-12 from base `10d534ceed348ac5e23bfd9d1262cf0ac0388b77` after source-hygiene PR #237. Scope authority: `docs/product/V01_SCOPE.md`. Target release: 2026-11-01._
-
-Ronin remains capability-ordered rather than calendar-ordered. Each autonomous run selects at most one coherent implementation slice and revalidates against current `main`, open Builder work, canonical handoffs, and frozen v0.1 scope.
-
-**Planning synchronization rule.** `BACKLOG.md` and `CONSTRUCTION_PLAN.md` are one canonical planning pair. Whenever acceptance truth, completed capabilities, validation mode, or the critical path changes materially, both files must be updated from the same observed repository state.
-
-## Current validation mode
-
-GitHub Actions and automated tests remain intentionally disabled by maintainer policy. Previous workflow definitions remain under `.github/workflows-disabled/`. Autonomous work performs static code inspection, dependency/contract tracing, schema/API consistency review, and code-level reasoning only. Security, durability, performance, architecture, coverage, and acceptance requirements remain implementation constraints, but no new CI/test/acceptance evidence may be claimed.
-
-The last authoritative automated acceptance baseline remains **13/15**, with historical gaps `01` and `12`. Product code for both capabilities now exists; code-only implementation does not automatically change the qualified result.
-
-## Current position
-
-The MVP durable local execution spine is implemented: Job -> Run -> Attempt lifecycle, SQLite/in-memory storage, bounded async composition, immutable resume identity, Docker worker execution/recovery, fencing/cancellation, authenticated HTTP job control, OpenAPI, `pyronin`, operator CLI, typed scoped grants, public portable evidence, strict-alpha public compatibility, project-scoped HTTP authorization, production image/Compose, explicit bearer transport/bind policy, readiness, Git dirty identity, observed cgroup CPU/memory evidence and artifact-qualification mechanics.
-
-Canonical JSON v1 implementation is complete in scope. #56 is closed. The shared canonical codec now covers HTTP request/idempotency identity, durable `Job.parameters_json`, grants and authorization evidence, operator/diagnostic catalogs, project manifests, notebooks, IR and kernel event/authorization payloads. Boundary goldens are published and valid v1 identity bytes remain unchanged.
-
-#200 duplicate-edge and target-port-cardinality implementation is complete with stable `RONIN-OP-008` through `RONIN-OP-010` diagnostics.
-
-#22 has no remaining concrete secret-producing source gap identified by current inspection. Do not reopen secret hardening without a specific current producer surface.
-
-The old storage compatibility reexports `evidence_sqlite.py` and `evidence_memory.py` were removed by #211 after current-tree consumer checks found no callers.
-
-## Phase A — foundation
-
-**Complete.** Deterministic domain/runtime/notebook/kernel contracts and architecture boundaries are present.
-
-## Phase B — durable worker execution and resume
-
-**Complete for the MVP spine.** Replacement Attempts remain in the same logical Run and preserve exact cell-reuse plus `attempt_id` provenance.
-
-## Phase C — HTTP/API/SDK contract
-
-**Functionally complete in code; automated qualification deferred.** Authenticated job control, typed project/action grants, canonical request identity, evidence, pagination/cursors, OpenAPI, `pyronin`, compatibility rules and secure bearer transport are implemented.
-
-## Phase D — operator CLI and Git identity
-
-**Functionally complete in code under current policy.** Installed command routing, canonical parameter handling and Git identity hardening are present; automated regression proof remains deferred.
-
-## Phase E — production image, Compose and zero-to-demo
-
-**Functionally complete in code; automated qualification deferred.**
-
-The repository contains one production Ronin image and supported `compose.yaml` topology with durable local SQLite/artifact/evidence storage, explicit server health dependency, host loopback publication, worker-only Docker socket authority, immutable local image-ID resolution, read-only checkout access, narrowly scoped Git safe-directory configuration, non-root product execution, crash-path worker `restart: "no"`, and a no-Docker-authority CLI helper.
-
-Compose uses `RONIN_BIND_POLICY=container-internal` for private bridge communication. This is an explicit topology declaration, not encryption and not a generic remote-HTTP permission. Supported remote authenticated access terminates HTTPS externally.
-
-The <60 s healthy and <10 min zero-to-demo budgets remain implementation targets, not newly measured evidence while tests/CI are disabled.
-
-## Phase F — architecture and canonical hardening
-
-### F1 — storage evidence adapter collapse
-
-**Complete in code.** #197 restored the canonical storage adapter invariant and #211 then removed the now-unused compatibility reexport modules. Lease fencing, paging, schema-v3 availability semantics, WAL/`synchronous=FULL`, thread-local connection reuse and the max-100 evidence-ref bound remain unchanged.
-
-### F2 — #56 canonical JSON
-
-**Complete in scope.**
-
-- HTTP inbound JSON uses the canonical decoder and request/idempotency identity uses canonical bytes;
-- `Job.parameters_json` validation uses the canonical boundary;
-- Requirement, GrantSet and AuthorizationEvidence canonical serialization use the shared codec;
-- operator and diagnostic catalog serializers use the shared codec;
-- project, notebook, IR, kernel event, grant-set and HTTP identity boundary goldens are present;
-- response/presentation JSON remains presentation JSON rather than being migrated for aesthetics;
-- valid v1 bytes, including the documented finite-float and `-0.0` compatibility boundary, remain preserved.
-
-### F3 — #22 / #200 residual architecture reconciliation
-
-**Complete for identified source defects.** Exact duplicate edges and operator-aware target-port cardinality are enforced. Current secret-bearing producer inspection has not identified an additional concrete source gap.
-
-### F4 — source hygiene (I0)
-
-**Targeted historical lint findings complete; global proof still incomplete.**
-
-Landed source-hygiene corrections include dead reexport removal; `UP022`, `RET501`, `PTH201`, `S104`, both `S603`, both `PT011`, `PT018`, `PT006`, the reproduced `SIM102`; and the reproduced `E501` findings across production, tooling and the mechanically permitted test files.
-
-The historical `SIM102` was reproduced in `tools/license_qualification.py::locked_graph` and fixed by #229 by flattening the blank/comment continuation guard while preserving parser behavior. All four historical `I001` findings were then reproduced with pinned Ruff 0.16.6 and fixed by #234/#235. The post-audit `tools/dependency_surfaces.py` findings (two `E501`, one `PTH201`) were likewise reproduced with pinned Ruff 0.16.6 and fixed by #236. With #234/#235, all 38 historical Ruff lint findings from the 2026-09-12 audit have traceable resolutions.
-
-PR #237 normalized the two current blobs that exact blob inspection confirmed were missing a final newline: `python/studio_core/project_manifest.py` and `python/studio_notebook/serialization.py`. Its patch changed only `No newline at end of file` to a final newline.
-
-Pinned Ruff 0.16.6 is now locally available and its downloaded release artifact passed its bundled SHA-256 verification. Exact local Ruff runs have reproduced and cleared the historical `I001` findings and the post-audit dependency-surface findings, and have been run against several SHA-verified current files. A full current `ruff check python tests tools packages docker` and `ruff format --check python tests tools packages docker` still have **not** been demonstrated because the active environment cannot materialize a complete current checkout from GitHub. The historical audit reported 15 files needing formatter changes but did not preserve their filenames; a later provisional no-EOF-newline list was revalidated blob-by-blob and was not a valid substitute for those formatter filenames. Do not claim I0 globally clean until equivalent whole-tree evidence exists.
-
-## Phase G — security, supply-chain and release implementation
-
-### #58 exact transitive license/NOTICE
-
-Deterministic source implementation is present. `tools/dependency_surfaces.py` models build-system and release/qualification tool dependencies, and license qualification fails closed on unsupported/unpinned/conflicting dependency forms.
-
-Exact `third_party/licenses-v1.json`, per-package policy decisions, NOTICE/attribution conclusions and approval rationales require a real exact environment plus human/legal review. Do not fabricate them.
-
-### #95 exact artifact identity
-
-Implementation mechanics already exist. The remaining release claim requires execution against a real candidate and binding that exact artifact identity to #58 evidence.
-
-### Contributor and governance surface
-
-PR #204 landed CONTRIBUTING, docs landing, changelog, release runbook and issue/PR templates. #71, #72 and #73 are closed.
-
-#70 remains human-blocked only where a real owned Code-of-Conduct reporting route or genuinely suitable starter tasks are required. Do not invent either.
-
-#45 remains blocked until the maintainer selects and verifies a real private vulnerability-reporting channel. Do not add `SECURITY.md` before that route exists.
-
-## Phase H — decisions and release gates
-
-#50 remains `NEEDS_DECISION`. Capability namespaces/value families, ambiguity semantics, unknown-version behavior, selection evidence and dispatch-time binding require a current architecture decision before implementation. Do not add a second v0.1 runtime merely to create implementation work.
-
-#63 remains repository-administration work: branch/tag protection and physical merged-ref cleanup are not source implementation. The active connector does not expose safe branch-ref deletion; record that limitation rather than claiming cleanup.
-
-#57 remains a qualification gate, not a feature slice. Revisit strict 15/15 only if the maintainer explicitly restores automated verification.
-
-## Deferred verification/evidence track
-
-While code-only mode is active, do not select these as implementation blockers: tests, coverage, mutation, stale acceptance skips, benchmarks, CI/workflows/GitHub Actions, provenance/secret scanning as CI, repository-reference administration, or candidate/legal evidence that requires an unavailable exact environment.
-
-This includes #47, #57, #60 where its value is workflow qualification, #63 admin, #95 candidate execution/publishing evidence, #102, #115 real-Docker proof, #123 regression tests, #163/#166/#167, #199, #201, #202, and release/provenance workflow items #43/#44/#94/#96. #59 and #62 remain post-v0.1.
-
-## Current critical path
-
-One coherent Builder slice at a time:
-
-1. **I0 source hygiene:** continue exact Ruff 0.16.6 coverage of the current tree using SHA-verified blobs; fix only reproduced findings and do not claim global clean status without equivalent whole-tree evidence.
-2. **Planning consistency:** keep `BACKLOG.md` and this construction plan synchronized with observed `main`.
-3. **#58 / #95 exact evidence:** proceed only with a real exact environment and required human/legal decisions; source implementation is already present.
-4. **#70 / #45 reporting channels:** proceed only after real owned routes are available.
-5. **#50 architecture decision:** implement only after a current ADR/decision exists.
-6. **#57 qualification:** revisit only after an explicit policy change restoring verification.
-
-If current repository truth shows no additional in-scope source implementation beyond I0 diagnostics that cannot be reproduced, the remaining work is evidence, tests/CI, administration or human decision work; do not manufacture another product slice.
-
-## Architecture and scope guardrails
-
-Canonical contracts stay capability-driven and vendor-neutral. Static bearer auth remains the v0.1 mechanism; typed scopes are required, enterprise auth is not. Evidence identity is storage-neutral and public payloads exclude backend locators. Public `/v1` compatibility follows `docs/product/API_COMPATIBILITY_V1.md`. Do not add OIDC, enterprise RBAC, OPA, FastAPI, Pydantic, SQLAlchemy, Postgres, Kubernetes product deployment, brokers, OpenTelemetry or OpenLineage unless scope explicitly changes.
-
-Existing implementation constraints remain: POST p95 <100 ms; GET p95 <30 ms; SQLite WAL + `synchronous=FULL`; fencing; fail-closed VCS capture; T1 100%, T2 90%, T3 75%, every `studio_storage` file >=80% when coverage execution is restored.
-
-## Frozen until v0.1 ships
-
-Ingestion/CDC breadth, SQL/lakehouse breadth, streaming, catalog/semantic BI, MLOps, GenAI/RAG, agents, Postgres/multi-node/HA, Kubernetes product scale, enterprise authorization and broad vendor integrations remain out of scope until the v0.1 freeze is explicitly lifted.
-
-## Operational invariant
-
-While code-only validation mode is active, merge decisions are based on current-main freshness plus complete static diff/code review. Do not use GitHub Actions or automated tests, and do not claim runtime qualification that was not executed.
+# Ronin Public v1 construction plan
+
+_Last synchronized: 2026-09-13 from main `69ee645e7b6fe90bf218a6a019595d382424fcf8` after PR #265. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`. Portability authority: `docs/product/PLATFORM_PORTABILITY_V1.md`._
+
+Ronin Public v1 is **incomplete** until every mandatory capability family has an end-to-end supported path. This document is the active autonomous construction plan. The prior v0.1 plan is preserved verbatim at `docs/automation/history/V01_CONSTRUCTION_PLAN.md` and remains historical evidence only; its feature-freeze language does not override Public v1 scope.
+
+## Validation mode
+
+GitHub Actions and automated qualification remain disabled by maintainer policy. Source work may proceed through repository inspection, contract tracing, static review and code-level reasoning, but no new test/CI/release evidence may be claimed unless it is actually executed after authorization. Historical v0.1 evidence remains historical and must not be presented as exact-current-head qualification.
+
+## Mandatory invariants
+
+1. Canonical logical identity never derives from storage URLs, database surrogate keys, worker IDs, cloud/vendor IDs, credentials or other deployment-local locators.
+2. Durable intent is persisted before authoritative side effects.
+3. Stale workers/controllers are fenced wherever lease loss could otherwise permit an authoritative write.
+4. Checkpoints advance only after governed output commit and required lineage/catalog persistence.
+5. Scheduler logical retry remains separate from Job crash-replacement Attempts.
+6. Portable state stores secret references only; secret material resolves at authorized execution/deployment boundaries.
+7. Typed grants remain the authorization language; future OIDC identities map into those grants.
+8. Artifacts/evidence remain storage-neutral and content-addressed.
+9. Executable workload families integrate audit, observability and lineage.
+10. Web Studio is an API client, not a second semantic implementation.
+11. Migration reports classify every source object explicitly as exact, translated, partial, passthrough, unsupported or manual-decision.
+12. No implementation presence is release evidence by itself.
+
+## Current source position
+
+Implemented foundations include durable Job/Run/Attempt execution; SQLite durability; leases, heartbeat, fencing, reclaim/resume and cancellation; content-addressed evidence/artifacts; canonical JSON/identity; workspace/project/environment foundations; typed grants; deployment-local secret resolution; deterministic Ronin Bundle archive IO; initial provider-neutral metadata ports; persistent catalog/lineage primitives; quality/ontology/audit/ML/GenAI domain persistence; local/Compose operation; and a scheduler with dependency-aware fenced attempts, deterministic task-to-Job identity, durable execution outbox, deployment-aware controller, timezone-aware cron, durable event inbox and cancellation propagation.
+
+Public-v1 capability state is maintained in `docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md` and `docs/product/public-v1-status.json`. Those ledgers are implementation-status records, not release qualification.
+
+## Active critical path
+
+Autonomous construction remains capability-ordered and should select one coherent slice at a time.
+
+1. **Scheduler completion:** timeout enforcement, resource pools/concurrency accounting, backfill, broader task adapters, branching/skipped semantics, notifications, continuous daemon behavior and leader fencing/HA.
+2. **Ronin Bundle semantic portability:** complete project inventory, binding-resolution planning and atomic staged import; certify Ronin-native round-trip before vendor adapters.
+3. **Persistence boundaries:** finish provider-neutral store ports for scheduler, quality, ontology, audit, ML, GenAI, semantic, streaming, alerts/FinOps and identity.
+4. **Open data plane:** Apache Arrow/Parquet, reference open table lifecycle (Iceberg), documented Delta interoperability and provider-neutral SQL engine with a lightweight reference adapter.
+5. **Connector matrix:** PostgreSQL, JDBC, S3-compatible, Azure-compatible and HTTP/REST plus restart-safe incremental checkpointing.
+6. **Quality/catalog integration:** execute contracts; add search, glossary, ownership, classification and OpenLineage interoperability.
+7. **Public APIs + Web Studio:** expose supported workspace/data/scheduler/catalog surfaces and begin the generated-client Studio rather than waiting until the end.
+8. **Data Engineering Studio:** notebook, SQL and pipeline CRUD/versioning plus scheduler-backed authoring/execution journeys.
+9. **Ontology/KG + graph:** interfaces, object instances, governed actions, freeze RQL v1 grammar/AST and implement a native reference graph executor.
+10. **Semantic analytics:** semantic model compiler, reusable metrics and portable dashboards.
+11. **ML/MLOps:** features, training, tracking, MLflow interoperability, evaluation, batch inference and serving.
+12. **GenAI:** provider execution, embeddings/vector indexes, retrieval/RAG, evaluation, bounded agents/tools and cost/token tracing.
+13. **Streaming:** restart-safe sources/processors/windows/sinks/checkpoints, connected to the existing scheduler event inbox.
+14. **Operations:** OpenTelemetry-compatible telemetry, durable alerts/notifications and factual FinOps attribution/budgets/policies.
+15. **Multi-user security:** OIDC users/groups/service identities mapped into typed grants, classification-aware governance and complete audit instrumentation.
+16. **Server deployment:** PostgreSQL adapters, S3-compatible artifacts, server Compose profile, Kubernetes/Helm, scheduler HA and backup/restore.
+17. **Migration profiles:** Fabric, Databricks, Dataiku DSS and Palantir Foundry/AIP only against executable Ronin target capabilities; every fixture must import, execute its supported subset and Bundle-round-trip.
+18. **Release qualification:** only after maintainer authorization, run exact-candidate journeys/security/license/SBOM/provenance and configure branch/release protection.
+
+## Blocked and human-decision work
+
+- #199 and dependent automated qualification/release evidence: blocked until maintainer authorization.
+- #45 vulnerability reporting route: human/security decision; do not invent a contact channel.
+- #50 runtime capability namespace/value/ambiguity semantics: architecture decision before broad multi-runtime dispatch.
+- #62 language-neutral runner protocol: architecture decision before supported non-Python/remote agents.
+- License/NOTICE/attribution conclusions and release approval: human/legal review.
+- #63 branch/ref protection: repository administration after meaningful required checks exist.
+- Vendor credentials: user/environment supplied only; never fabricate or commit them.
+
+## Public v1 release rule
+
+A capability is not complete because a dataclass, store, UI mock or importer inventory exists. Executable capabilities require a real reference runtime; public capabilities require documented API/CLI/SDK/Studio paths as applicable; migrations require exhaustive object classification plus executable translated fixtures; release evidence must come from the exact candidate. If any mandatory family or reference journey lacks an end-to-end supported path, Ronin Public v1 remains incomplete.
