@@ -6,13 +6,14 @@ import os
 from http import HTTPStatus
 from pathlib import Path
 from typing import cast
+from urllib.parse import urlsplit
 
 from studio_core import GrantSet
 from studio_execution import DurableExecutionService
 from studio_storage import sqlite_ready
 
 from studio_server.http import RoninHTTPServer as _RoninHTTPServer
-from studio_server.http import _Handler
+from studio_server.http import _Handler, _single_query_values
 from studio_server.transport_policy import (
     BindPolicy,
     allows_plaintext_non_loopback,
@@ -32,18 +33,40 @@ def _readiness_database_from_env() -> Path:
 
 
 class _ReadinessHandler(_Handler):
-    """Add one non-versioned operational readiness route around the v1 handler."""
+    """Add readiness and public-list authorization around the v1 handler."""
 
     def do_GET(self) -> None:  # noqa: N802
-        if self.path != "/healthz":
-            super().do_GET()
+        if self.path == "/healthz":
+            server = cast(RoninHTTPServer, self.server)
+            ready = server.ready()
+            self._write_json(
+                HTTPStatus.OK if ready else HTTPStatus.SERVICE_UNAVAILABLE,
+                {"status": "ready" if ready else "not_ready"},
+            )
             return
-        server = cast(RoninHTTPServer, self.server)
-        ready = server.ready()
-        self._write_json(
-            HTTPStatus.OK if ready else HTTPStatus.SERVICE_UNAVAILABLE,
-            {"status": "ready" if ready else "not_ready"},
-        )
+
+        split = urlsplit(self.path)
+        if split.path == "/v1/jobs":
+            try:
+                query = _single_query_values(
+                    split.query,
+                    allowed=frozenset({"project", "state", "limit", "cursor"}),
+                )
+            except ValueError:
+                # Preserve the canonical handler's existing validation/error contract.
+                super().do_GET()
+                return
+            if query.get("project") is None:
+                server = cast(RoninHTTPServer, self.server)
+                if not server.permits_unfiltered_project_list():
+                    self._error(
+                        HTTPStatus.FORBIDDEN,
+                        "forbidden",
+                        "project filter is required for scoped list authorization",
+                    )
+                    return
+
+        super().do_GET()
 
 
 class RoninHTTPServer(_RoninHTTPServer):
@@ -69,6 +92,23 @@ class RoninHTTPServer(_RoninHTTPServer):
         self._readiness_database = _readiness_database_from_env()
         super().__init__(server_address, service, token=token, grants=grants)
         self.RequestHandlerClass = _ReadinessHandler
+
+    def permits_unfiltered_project_list(self) -> bool:
+        """Return whether every project is safely listable before choosing a storage page."""
+        supported = tuple(
+            grant
+            for grant in self.effective_grants.grants
+            if "list" in grant.actions and not grant.constraints
+        )
+        project_wildcards = tuple(
+            grant
+            for grant in supported
+            if grant.resource.kind == "project" and grant.resource.identifier is None
+        )
+        if project_wildcards:
+            return len(project_wildcards) == 1
+        global_wildcards = tuple(grant for grant in supported if grant.resource.kind == "*")
+        return len(global_wildcards) == 1
 
     def ready(self) -> bool:
         """Return readiness without exposing storage details through HTTP."""
