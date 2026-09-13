@@ -8,7 +8,7 @@ from typing import Literal, TypeAlias
 
 from studio_core import ProjectId, ProjectManifest, WorkspaceId
 from studio_core.bundle_inventory import BUNDLE_INVENTORY_PATH, BundleInventory
-from studio_core.portability import BindingRequest
+from studio_core.portability import BindingRequest, RoninBundleManifest
 from studio_storage.bundle import BundleIntegrityError, BundleReadLimits
 from studio_storage.bundle_payload import read_bundle_payload
 from studio_storage.ports import WorkspaceStore
@@ -16,6 +16,7 @@ from studio_storage.ports import WorkspaceStore
 from .bundle_inventory import INVENTORY_MEDIA_TYPE, PROJECT_BUNDLE_MEDIA_TYPE
 
 ImportDisposition: TypeAlias = Literal["create", "noop", "collision"]
+_IMPORT_DISPOSITIONS = frozenset({"create", "noop", "collision"})
 
 
 class UnsupportedBundleInventory(ValueError):
@@ -33,6 +34,8 @@ class ProjectBundleImportPlan:
     collision_reason: str | None = None
 
     def __post_init__(self) -> None:
+        if self.disposition not in _IMPORT_DISPOSITIONS:
+            raise ValueError("unsupported project Bundle import disposition")
         bindings = tuple(sorted(self.unresolved_bindings))
         object.__setattr__(self, "unresolved_bindings", bindings)
         if self.disposition == "collision":
@@ -50,7 +53,7 @@ class ProjectBundleImportPlan:
         return any(request.required for request in self.unresolved_bindings)
 
 
-def _manifest_entry_digest(manifest, path: str) -> str:
+def _manifest_entry_digest(manifest: RoninBundleManifest, path: str) -> str:
     for entry in manifest.entries:
         if entry.path == path:
             return entry.digest
