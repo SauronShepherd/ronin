@@ -1,6 +1,6 @@
 # Ronin Public v1 autonomous build backlog
 
-_Last synchronized: 2026-09-13 from main `f16a2129d1d07efae0bd778884f50f4bbf62f590` after PR #280. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
+_Last synchronized: 2026-09-13 from main `20469d99aeede1cec5ef8869b0a35173c6c2e5eb` after PR #283. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
 
 This backlog is the active implementation-selection surface for Public v1. The previous narrow v0.1 backlog is preserved verbatim at `docs/automation/history/V01_BACKLOG.md` and is historical evidence only.
 
@@ -27,32 +27,24 @@ This backlog is the active implementation-selection surface for Public v1. The p
 - Production process/signal/deployment wiring for the continuous daemon.
 - PostgreSQL multi-node leader/pool/claim semantics and HA qualification once the PostgreSQL metadata backend exists.
 
-Landed scheduler foundations to preserve:
-
-- cancellation propagation (#265): scheduler state first, stale-attempt fencing, unpublished-intent retirement, linked Job cancellation and terminal reconciliation;
-- timeout enforcement (#267): durable timeout intent before Job cancellation, timeout as scheduler failure/retry cause, user cancellation precedence;
-- snapshot-safe backfill (#268): frozen schedule/workflow definitions, independent cursor, bounded cron scan, transactional active-run cap and restart-safe fire recovery;
-- shared resource pools (#270): workspace-local pool capacity with atomic claim-time enforcement and fail-closed undefined pools;
-- leader fencing (#271): deployment-local durable lease with opaque token and monotonic generation;
-- guarded services (#273): leader checks immediately before cron/event/backfill mutations;
-- daemon orchestration (#274/#275): leader acquisition/renewal, guarded work cycles, continuous loop, contention retry and clean shutdown;
-- group backfill cancellation (#276): parent-first cancellation followed by existing child WorkflowRun/Job cancellation.
-
 ## Portability
 
-Landed native project Bundle foundations:
+Landed native Bundle foundations:
 
-- deterministic semantic inventory/export for `ProjectManifest` with digest-derived payload paths and runtime binding requests (#278);
-- fully verified bounded import planning with create/no-op/collision classification and fail-closed unsupported inventory handling (#279);
-- exact binding resolution plus provider-neutral atomic commit semantics, with SQLite project+environment-binding transaction as the reference adapter (#280).
+- project semantic inventory/export with runtime binding requests (#278);
+- verified project import planning and collision detection (#279);
+- explicit runtime remapping plus provider-neutral atomic project/environment-binding commit (#280);
+- connection semantic inventory/export/import with exact secret-reference remapping and no secret material (#282);
+- deterministic topological, read-only multi-object staging for supported project+connection objects, including cycle/unknown-kind rejection (#283).
 
 Next portability work:
 
-- extend semantic inventory/export/import to connection definitions while keeping secret material absent and representing deployment remaps explicitly;
-- extend inventory/import transaction support to catalog/workflow/quality/ontology/ML/GenAI and later data/semantic assets only when their canonical contracts are executable enough to round-trip honestly;
-- add deterministic multi-object dependency ordering/staging once more than one semantic object type participates in one import transaction;
+- add a provider-neutral atomic multi-object commit port and SQLite reference transaction spanning supported connection creation, project registration and project environment bindings;
+- resolve all runtime/secret requests explicitly before that transaction and recheck target conflicts inside it;
+- preserve inventory dependency order as staging order without inventing semantic relationships absent from canonical payloads;
+- extend inventory/import support to catalog/workflow/quality/ontology/ML/GenAI and later data/semantic assets only when their target contracts can round-trip honestly;
 - certify Ronin-native lossless Bundle round-trip before vendor profiles;
-- do not add project-ID remapping/collision override behavior until a portable identity policy is explicitly defined rather than guessed.
+- do not invent project/connection ID remapping policy without an explicit portable identity decision.
 
 ## Data plane
 
