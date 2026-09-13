@@ -89,6 +89,21 @@ def _claim(store: SchedulerExecutionLinkStore, workspace_id: WorkspaceId):
     return claim
 
 
+def _publish_intent(store, workspace_id, run):
+    claim = _claim(store, workspace_id)
+    plan = plan_scheduler_execution(claim, run, "project-1", now=NOW)
+    intent = store.put_execution_intent(
+        workspace_id,
+        claim.attempt_id,
+        job=plan.job,
+        run=plan.run,
+        owner=claim.lease_owner,
+        lease_token=claim.lease_token,
+        now=NOW,
+    )
+    return claim, intent
+
+
 def test_pending_workflow_cancellation_terminalizes_without_job(tmp_path: Path) -> None:
     store, workspace_id, run = _setup(tmp_path)
 
@@ -121,19 +136,37 @@ def test_cancellation_fences_claimed_task_before_execution_intent(tmp_path: Path
         )
 
 
+def test_published_but_unsubmitted_job_is_retired_without_dispatch(tmp_path: Path) -> None:
+    store, workspace_id, run = _setup(tmp_path)
+    claim, intent = _publish_intent(store, workspace_id, run)
+
+    async def scenario() -> None:
+        service = DurableExecutionService(InMemoryJobStore())
+        try:
+            assert await cancel_workflow_run(
+                store,
+                service,
+                workspace_id,
+                run.id,
+                now=Instant(LATER),
+            ) == 0
+            assert await service.status(intent.job.id) is None
+        finally:
+            await service.aclose()
+
+    asyncio.run(scenario())
+
+    assert store.get_execution_intent(workspace_id, claim.attempt_id) is None
+    stored_run = store.get_run(workspace_id, run.id)
+    assert stored_run is not None
+    assert stored_run.state == "cancelled"
+    task_runs = store.list_task_runs(workspace_id, run.id)
+    assert task_runs[0].state == "cancelled"
+
+
 def test_linked_job_cancellation_reconciles_workflow_terminal_state(tmp_path: Path) -> None:
     store, workspace_id, run = _setup(tmp_path)
-    claim = _claim(store, workspace_id)
-    plan = plan_scheduler_execution(claim, run, "project-1", now=NOW)
-    intent = store.put_execution_intent(
-        workspace_id,
-        claim.attempt_id,
-        job=plan.job,
-        run=plan.run,
-        owner=claim.lease_owner,
-        lease_token=claim.lease_token,
-        now=NOW,
-    )
+    _claim_record, intent = _publish_intent(store, workspace_id, run)
 
     async def scenario() -> None:
         service = DurableExecutionService(InMemoryJobStore())
