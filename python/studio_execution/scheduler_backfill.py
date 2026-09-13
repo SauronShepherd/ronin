@@ -9,7 +9,10 @@ from datetime import UTC, datetime, timedelta
 from studio_core import WorkspaceId
 from studio_orchestrator import Instant
 from studio_storage.scheduler_backfill import BackfillId, BackfillRun
-from studio_storage.scheduler_backfill_runtime import SchedulerBackfillRuntimeStore
+from studio_storage.scheduler_backfill_runtime import (
+    BackfillCapacityExhausted,
+    SchedulerBackfillRuntimeStore,
+)
 
 from .scheduler_cron import evaluated_minutes, schedule_matches
 
@@ -122,13 +125,16 @@ class SchedulerBackfillService:
                     continue
                 if available == 0:
                     break
-                run = await asyncio.to_thread(
-                    self._store.create_snapshot_backfill_run,
-                    workspace_id,
-                    backfill_id,
-                    logical_time=minute,
-                    now=now,
-                )
+                try:
+                    run = await asyncio.to_thread(
+                        self._store.create_snapshot_backfill_run,
+                        workspace_id,
+                        backfill_id,
+                        logical_time=minute,
+                        now=now,
+                    )
+                except BackfillCapacityExhausted:
+                    break
                 existing_runs[minute] = run
                 created.append(run)
                 available -= 1
