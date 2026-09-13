@@ -211,14 +211,13 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
         *,
         now: Instant | str,
     ) -> int:
-        current = Instant(now)
+        Instant(now)
         connection = self._connect()
         try:
             row = connection.execute(
                 "SELECT COUNT(*) AS count FROM task_attempts "
-                "WHERE workspace_id=? AND pool_name=? AND state='running' "
-                "AND lease_expires_at>?",
-                (str(workspace_id), pool_name, current),
+                "WHERE workspace_id=? AND pool_name=? AND state='running'",
+                (str(workspace_id), pool_name),
             ).fetchone()
             if row is None:
                 raise AssertionError("resource pool usage query returned no row")
@@ -488,9 +487,8 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                         continue
                     active_pool = connection.execute(
                         "SELECT COUNT(*) AS count FROM task_attempts "
-                        "WHERE workspace_id=? AND pool_name=? AND state='running' "
-                        "AND lease_expires_at>?",
-                        (str(task_workspace), pool_name, current),
+                        "WHERE workspace_id=? AND pool_name=? AND state='running'",
+                        (str(task_workspace), pool_name),
                     ).fetchone()
                     if active_pool is None:
                         raise AssertionError("resource pool claim query returned no row")
