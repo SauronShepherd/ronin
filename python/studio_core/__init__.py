@@ -146,6 +146,7 @@ from .scheduler import (
     WorkflowRunId,
     WorkflowRunState,
 )
+from .scheduler_resources import ResourcePoolDefinition
 from .workspaces import Workspace, WorkspaceId, WorkspaceState
 
 __all__ = (
@@ -238,6 +239,7 @@ __all__ = (
     "RequirementCheck",
     "ResolvedRuntimeSnapshot",
     "ResourceKind",
+    "ResourcePoolDefinition",
     "ResourceScope",
     "RetryPolicy",
     "RuntimeCapability",

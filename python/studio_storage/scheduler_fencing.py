@@ -8,13 +8,17 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from studio_core import NodeId, TaskRunId, WorkflowRun, WorkflowRunId, WorkspaceId
+from studio_core.scheduler_resources import ResourcePoolDefinition
 from studio_orchestrator import Instant, LeaseToken
 
 from .scheduler import SqliteSchedulerStore, migrate_scheduler
 from .sqlite import open_database
 
-_FENCING_SCHEMA_VERSION = 1
-_FENCING_MIGRATIONS = {1: "scheduler_002_fencing.sql"}
+_FENCING_SCHEMA_VERSION = 2
+_FENCING_MIGRATIONS = {
+    1: "scheduler_002_fencing.sql",
+    2: "scheduler_003_pools.sql",
+}
 
 
 @dataclass(frozen=True, order=True, slots=True)
@@ -40,6 +44,7 @@ class ClaimedTask:
     lease_owner: str
     lease_token: LeaseToken
     lease_expires_at: Instant
+    pool_name: str | None = None
 
 
 def _add_seconds(value: Instant | str, seconds: int) -> Instant:
@@ -111,6 +116,109 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
         connection = open_database(path)
         try:
             migrate_scheduler_fencing(connection, now=migration_now)
+        finally:
+            connection.close()
+
+    def put_resource_pool(
+        self,
+        workspace_id: WorkspaceId,
+        definition: ResourcePoolDefinition,
+        *,
+        now: Instant | str,
+    ) -> ResourcePoolDefinition:
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
+            existing = connection.execute(
+                "SELECT capacity FROM scheduler_resource_pools "
+                "WHERE workspace_id=? AND pool_name=?",
+                (str(workspace_id), definition.name),
+            ).fetchone()
+            if existing is None:
+                connection.execute(
+                    "INSERT INTO scheduler_resource_pools("
+                    "workspace_id,pool_name,capacity,created_at,updated_at) VALUES (?,?,?,?,?)",
+                    (
+                        str(workspace_id),
+                        definition.name,
+                        definition.capacity,
+                        current,
+                        current,
+                    ),
+                )
+            elif int(existing["capacity"]) != definition.capacity:
+                connection.execute(
+                    "UPDATE scheduler_resource_pools SET capacity=?,updated_at=?,"
+                    "row_version=row_version+1 WHERE workspace_id=? AND pool_name=?",
+                    (
+                        definition.capacity,
+                        current,
+                        str(workspace_id),
+                        definition.name,
+                    ),
+                )
+            connection.execute("COMMIT")
+            return definition
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
+    def get_resource_pool(
+        self,
+        workspace_id: WorkspaceId,
+        pool_name: str,
+    ) -> ResourcePoolDefinition | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT pool_name,capacity FROM scheduler_resource_pools "
+                "WHERE workspace_id=? AND pool_name=?",
+                (str(workspace_id), pool_name),
+            ).fetchone()
+            if row is None:
+                return None
+            return ResourcePoolDefinition(row["pool_name"], int(row["capacity"]))
+        finally:
+            connection.close()
+
+    def list_resource_pools(
+        self,
+        workspace_id: WorkspaceId,
+    ) -> tuple[ResourcePoolDefinition, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT pool_name,capacity FROM scheduler_resource_pools "
+                "WHERE workspace_id=? ORDER BY pool_name",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(
+                ResourcePoolDefinition(row["pool_name"], int(row["capacity"]))
+                for row in rows
+            )
+        finally:
+            connection.close()
+
+    def resource_pool_usage(
+        self,
+        workspace_id: WorkspaceId,
+        pool_name: str,
+    ) -> int:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT COUNT(*) AS count FROM task_attempts "
+                "WHERE workspace_id=? AND pool_name=? AND state='running'",
+                (str(workspace_id), pool_name),
+            ).fetchone()
+            if row is None:
+                raise AssertionError("resource pool usage query returned no row")
+            return int(row["count"])
         finally:
             connection.close()
 
@@ -365,6 +473,24 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                     if int(active["count"]) >= max_concurrency:
                         continue
                 policy = self._task_policy(run, node_id)
+                pool_name = policy.pool
+                if pool_name is not None:
+                    pool = connection.execute(
+                        "SELECT capacity FROM scheduler_resource_pools "
+                        "WHERE workspace_id=? AND pool_name=?",
+                        (str(task_workspace), pool_name),
+                    ).fetchone()
+                    if pool is None:
+                        continue
+                    active_pool = connection.execute(
+                        "SELECT COUNT(*) AS count FROM task_attempts "
+                        "WHERE workspace_id=? AND pool_name=? AND state='running'",
+                        (str(task_workspace), pool_name),
+                    ).fetchone()
+                    if active_pool is None:
+                        raise AssertionError("resource pool claim query returned no row")
+                    if int(active_pool["count"]) >= int(pool["capacity"]):
+                        continue
                 ordinal = int(task["attempt_count"]) + 1
                 if ordinal > policy.retry.max_attempts:
                     connection.execute(
@@ -382,9 +508,10 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                     continue
                 expiry = _add_seconds(current, lease_seconds)
                 connection.execute(
-                    "INSERT INTO task_attempts(workspace_id,task_attempt_id,task_run_id,ordinal,"
-                    "state,lease_owner,lease_token,lease_expires_at,heartbeat_at,failure_code,"
-                    "created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                    "INSERT INTO task_attempts("
+                    "workspace_id,task_attempt_id,task_run_id,ordinal,state,lease_owner,"
+                    "lease_token,lease_expires_at,heartbeat_at,failure_code,created_at,"
+                    "updated_at,pool_name) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (
                         str(task_workspace),
                         str(attempt_id),
@@ -398,6 +525,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                         None,
                         current,
                         current,
+                        pool_name,
                     ),
                 )
                 connection.execute(
@@ -430,6 +558,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                     lease_owner=owner,
                     lease_token=lease_token,
                     lease_expires_at=expiry,
+                    pool_name=pool_name,
                 )
             connection.execute("COMMIT")
             return None
@@ -567,3 +696,12 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
             raise
         finally:
             connection.close()
+
+
+__all__ = (
+    "ClaimedTask",
+    "FencedSqliteSchedulerStore",
+    "TaskAttemptId",
+    "migrate_scheduler_fencing",
+    "scheduler_fencing_schema_version",
+)
