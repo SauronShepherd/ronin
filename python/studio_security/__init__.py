@@ -27,6 +27,7 @@ from .oidc import (
     OidcPrincipalStore,
     OidcTokenValidator,
 )
+from .oidc_discovery import HttpsOidcJwksProvider, OidcDiscoveryError
 from .rbac import RbacAuthorizer, RbacStore
 from .store import IdentityConflict, SqliteIdentityStore
 
@@ -34,12 +35,14 @@ __all__ = (
     "Actor",
     "Group",
     "GroupId",
+    "HttpsOidcJwksProvider",
     "IdentityConflict",
     "JwksProvider",
     "OidcAuthenticationError",
     "OidcClaims",
     "OidcConfig",
     "OidcDependencyError",
+    "OidcDiscoveryError",
     "OidcPrincipalStore",
     "OidcTokenValidator",
     "PERMISSIONS",
