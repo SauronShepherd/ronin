@@ -12,6 +12,10 @@ from studio_orchestrator import Instant
 from .ports import WorkspaceStore
 
 
+class ProjectBundleImportConflict(RuntimeError):
+    """Raised when target state conflicts with an atomic native import commit."""
+
+
 @dataclass(frozen=True, slots=True)
 class ProjectBundleImportCommit:
     project_created: bool
@@ -32,4 +36,8 @@ class ProjectBundleImportStore(WorkspaceStore, Protocol):
     ) -> ProjectBundleImportCommit: ...
 
 
-__all__ = ("ProjectBundleImportCommit", "ProjectBundleImportStore")
+__all__ = (
+    "ProjectBundleImportCommit",
+    "ProjectBundleImportConflict",
+    "ProjectBundleImportStore",
+)
