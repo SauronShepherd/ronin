@@ -11,6 +11,7 @@ from studio_core import (
     Project,
     ProjectId,
     ProjectManifest,
+    RepositoryBinding,
     RuntimeProfileRef,
     SecretRef,
     Workspace,
@@ -40,12 +41,19 @@ _CONNECTION = ConnectionId("warehouse-1")
 _SECRET = SecretRef("secret://source/warehouse-password")
 
 
-def _project() -> ProjectManifest:
+def _project(name: str = "Project") -> ProjectManifest:
     return ProjectManifest.from_project(
         Project(
             _PROJECT,
-            "Project",
-            execution=ExecutionProfile(runtime=RuntimeProfileRef("python", "3.11")),
+            name,
+            (
+                RepositoryBinding(
+                    "code",
+                    "https://git.example.test/team/repo.git",
+                    role="primary",
+                ),
+            ),
+            ExecutionProfile(runtime=RuntimeProfileRef("python", "3.11")),
         )
     )
 
@@ -157,11 +165,7 @@ def test_multi_object_plan_reports_kind_specific_collisions(tmp_path: Path) -> N
         ),
         now=_NOW,
     )
-    workspaces.register_project(
-        _WS,
-        ProjectManifest.from_project(Project(_PROJECT, "Different project")),
-        now=_NOW,
-    )
+    workspaces.register_project(_WS, _project("Different project"), now=_NOW)
 
     plan = plan_multi_object_bundle_import(bundle, workspaces, connections, _WS)
 
