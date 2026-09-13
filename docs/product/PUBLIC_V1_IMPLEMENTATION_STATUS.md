@@ -2,7 +2,7 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
-**Observed source head:** `f16a2129d1d07efae0bd778884f50f4bbf62f590` (2026-09-13).  
+**Observed source head:** `20469d99aeede1cec5ef8869b0a35173c6c2e5eb` (2026-09-13).  
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
@@ -37,7 +37,7 @@ This document records implementation state only. It does not claim test executio
 | Observability/alerts/FinOps | partial | execution evidence and container resource observation exist; unified telemetry/alerts/costs/budgets remain |
 | Multi-user security/audit | partial | typed grants, bearer auth, transport policy, secret resolver and append-only audit foundation exist; OIDC/users/groups/service identities/role administration/full instrumentation remain |
 | Local/Compose/Kubernetes | partial | local and Compose foundation exist; Kubernetes/Helm and production metadata/object-store profile remain |
-| Ronin Bundle | partial | canonical manifest/migration semantics, deterministic verified archive IO, semantic inventory for native projects, bounded verified import planning, explicit runtime binding resolution, create/no-op/collision classification and atomic project+environment-binding commit exist; broader asset inventory/import, native round-trip certification and public surfaces remain |
+| Ronin Bundle | partial | deterministic verified archive IO, semantic inventory, native project round-trip with runtime remapping/atomic commit, native connection round-trip with explicit secret-reference remapping, and deterministic dependency-ordered read-only staging for supported project+connection objects exist; atomic multi-object commit, broader assets, certification and public surfaces remain |
 | Fabric migration | missing | no certified adapter |
 | Databricks migration | missing | no certified adapter |
 | Palantir Foundry/AIP migration | missing | no certified adapter |
@@ -47,9 +47,9 @@ This document records implementation state only. It does not claim test executio
 
 ## Public v1 source work merged in the current construction sequence
 
-PRs **#242–#280** moved Public v1 from planning into source implementation. Later scheduler slices include deterministic task→Job identity/linking (#259), durable execution outbox/reconciliation (#260), deployment-aware controller (#262), timezone-aware cron firing (#263), durable event inbox/delivery (#264), cancellation propagation (#265), timeout enforcement (#267), snapshot-safe bounded backfill (#268), shared resource pools (#270), durable scheduler leader fencing (#271), leader guarding across cron/event/backfill services (#273), bounded leader-owning daemon orchestration (#274), continuous daemon loop/shutdown semantics (#275), and parent-first group backfill cancellation (#276). Native Bundle portability then added project semantic inventory/export (#278), bounded verified import planning with create/no-op/collision classification (#279), and explicit runtime remapping plus one-transaction project/environment-binding commit (#280). PR #266 made Public v1 the active construction authority while preserving the historical v0.1 planning files verbatim.
+PRs **#242–#283** moved Public v1 from planning into source implementation. Scheduler slices include deterministic task→Job identity/linking (#259), durable execution outbox/reconciliation (#260), deployment-aware controller (#262), timezone-aware cron (#263), durable event delivery (#264), cancellation (#265), timeout enforcement (#267), snapshot-safe backfill (#268), shared pools (#270), leader fencing (#271/#273), bounded/continuous daemon orchestration (#274/#275), and group backfill cancellation (#276). Native Bundle portability added project semantic inventory/export (#278), verified project import planning (#279), explicit runtime remapping plus atomic project/environment-binding commit (#280), native connection round-trip with explicit secret-reference remapping (#282), and deterministic dependency-ordered read-only staging across supported project+connection objects (#283). PR #266 made Public v1 the active construction authority while preserving the historical v0.1 planning files verbatim.
 
-These merges do **not** imply that their parent capability families are complete. The scheduler still lacks broad task adapters, branching/skipped semantics, durable notifications, public scheduler APIs/UI, production process/signal/deployment wiring and PostgreSQL multi-node HA qualification. Service-level leader checks occur immediately before cron/event/backfill mutations but are not one transaction with every underlying write; deterministic identities/idempotency remain the race backstop. Bundle support is currently lossless only for the narrow native project-manifest path represented in source; connections, catalog/workflow/quality/ontology/ML/GenAI and later data/semantic assets are not yet covered by the same inventory/import transaction. Storage ports do not constitute a PostgreSQL backend.
+These merges do **not** imply that their parent capability families are complete. The scheduler still lacks broad task adapters, branching/skipped semantics, durable notifications, public scheduler APIs/UI, production process/signal/deployment wiring and PostgreSQL multi-node HA qualification. Bundle staging across project+connection objects is read-only; there is not yet one atomic transaction spanning all supported object kinds. Catalog/workflow/quality/ontology/ML/GenAI and later data/semantic assets remain outside the native Bundle semantic path. Storage ports do not constitute a PostgreSQL backend.
 
 ## Invariants that remain mandatory
 
@@ -76,7 +76,7 @@ These merges do **not** imply that their parent capability families are complete
 
 1. Keep this ledger and the active construction plan synchronized with repository truth.
 2. Finish scheduler broad task adapters, branching/notifications, public scheduler APIs/UI, process/deployment wiring and PostgreSQL HA semantics/qualification.
-3. Extend native Ronin Bundle semantic inventory/import beyond `ProjectManifest` to connections and other executable canonical assets, preserving explicit binding requests and atomic staged commit; certify Ronin-native lossless round-trip before vendor profiles.
+3. Add atomic multi-object Bundle commit for the supported project+connection staging path with explicit runtime/secret binding resolution and conflict rechecks; then extend the same inventory/import model to other executable canonical assets and certify native lossless round-trip.
 4. Complete store ports for remaining domains; then implement PostgreSQL adapters and an S3-compatible artifact store without changing logical references.
 5. Implement the first open data path: Arrow/Parquet + reference open table profile + reference SQL engine, with catalog/lineage/quality hooks.
 6. Complete remote connectors and safe incremental checkpoint execution.

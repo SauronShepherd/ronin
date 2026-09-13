@@ -1,6 +1,6 @@
 # Ronin Public v1 construction plan
 
-_Last synchronized: 2026-09-13 from main `f16a2129d1d07efae0bd778884f50f4bbf62f590` after PR #280. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`. Portability authority: `docs/product/PLATFORM_PORTABILITY_V1.md`._
+_Last synchronized: 2026-09-13 from main `20469d99aeede1cec5ef8869b0a35173c6c2e5eb` after PR #283. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`. Portability authority: `docs/product/PLATFORM_PORTABILITY_V1.md`._
 
 Ronin Public v1 is **incomplete** until every mandatory capability family has an end-to-end supported path. This document is the active autonomous construction plan. The prior v0.1 plan is preserved verbatim at `docs/automation/history/V01_CONSTRUCTION_PLAN.md` and remains historical evidence only; its feature-freeze language does not override Public v1 scope.
 
@@ -25,21 +25,19 @@ GitHub Actions and automated qualification remain disabled by maintainer policy.
 
 ## Current source position
 
-Implemented foundations include durable Job/Run/Attempt execution; SQLite durability; leases, heartbeat, fencing, reclaim/resume and cancellation; content-addressed evidence/artifacts; canonical JSON/identity; workspace/project/environment foundations; typed grants; deployment-local secret resolution; deterministic Ronin Bundle archive IO; native project Bundle semantic inventory/export, verified bounded import planning, explicit runtime remapping and provider-neutral atomic project/environment-binding import commit with SQLite as the reference adapter; initial provider-neutral metadata ports; persistent catalog/lineage primitives; quality/ontology/audit/ML/GenAI domain persistence; local/Compose operation; and a scheduler with dependency-aware fenced attempts, deterministic task-to-Job identity, durable execution outbox, deployment-aware controller, timezone-aware cron, durable event inbox, cancellation propagation, timeout enforcement, snapshot-safe bounded backfill generation, shared resource pools, durable generation-fenced leader authority, guarded cron/event/backfill/controller services, continuous leader-owning daemon orchestration and group backfill cancellation.
+Implemented foundations include durable Job/Run/Attempt execution; SQLite durability; leases, heartbeat, fencing, reclaim/resume and cancellation; content-addressed evidence/artifacts; canonical JSON/identity; workspace/project/environment foundations; typed grants; deployment-local secret resolution; deterministic Ronin Bundle archive IO; native project Bundle semantic inventory/export, verified import planning, runtime remapping and atomic project/environment-binding import; native connection Bundle round-trip with explicit secret-reference remapping; read-only dependency-ordered staging across supported project+connection objects; initial provider-neutral metadata ports; persistent catalog/lineage primitives; quality/ontology/audit/ML/GenAI domain persistence; local/Compose operation; and an advanced durable scheduler foundation.
 
 Public-v1 capability state is maintained in `docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md` and `docs/product/public-v1-status.json`. Those ledgers are implementation-status records, not release qualification.
 
 ## Active critical path
 
-Autonomous construction remains capability-ordered and should select one coherent slice at a time.
-
-1. **Scheduler remaining work:** add broad task adapters only as their target runtimes become executable; settle branching/skipped semantics if required; integrate durable failure notifications with the alert subsystem; expose public scheduler administration/run/backfill APIs and Studio surfaces; add production process/signal/deployment wiring; qualify PostgreSQL multi-node scheduler HA only after the PostgreSQL backend exists.
-2. **Ronin Bundle semantic portability:** extend the native semantic inventory/import path beyond `ProjectManifest`, beginning with connection definitions under the normative no-secret-material/remapping rules; add multi-object dependency staging only when multiple supported semantic types participate; certify Ronin-native lossless round-trip before vendor adapters.
+1. **Scheduler remaining work:** broad task adapters as target runtimes become executable; branching/skipped semantics if required; alert-backed durable notifications; public scheduler APIs/Studio; process/deployment wiring; PostgreSQL HA qualification after the PostgreSQL backend exists.
+2. **Ronin Bundle semantic portability:** atomically commit the supported multi-object project+connection staged plan with explicit runtime/secret resolutions and commit-time conflict rechecks; then extend the same fail-closed inventory/import model to other executable canonical assets and certify native lossless round-trip.
 3. **Persistence boundaries:** finish provider-neutral store ports for scheduler, quality, ontology, audit, ML, GenAI, semantic, streaming, alerts/FinOps and identity.
 4. **Open data plane:** Apache Arrow/Parquet, reference open table lifecycle (Iceberg), documented Delta interoperability and provider-neutral SQL engine with a lightweight reference adapter.
 5. **Connector matrix:** PostgreSQL, JDBC, S3-compatible, Azure-compatible and HTTP/REST plus restart-safe incremental checkpointing.
 6. **Quality/catalog integration:** execute contracts; add search, glossary, ownership, classification and OpenLineage interoperability.
-7. **Public APIs + Web Studio:** expose supported workspace/data/scheduler/catalog surfaces and begin the generated-client Studio rather than waiting until the end.
+7. **Public APIs + Web Studio:** expose supported workspace/data/scheduler/catalog surfaces and begin the generated-client Studio.
 8. **Data Engineering Studio:** notebook, SQL and pipeline CRUD/versioning plus scheduler-backed authoring/execution journeys.
 9. **Ontology/KG + graph:** interfaces, object instances, governed actions, freeze RQL v1 grammar/AST and implement a native reference graph executor.
 10. **Semantic analytics:** semantic model compiler, reusable metrics and portable dashboards.
@@ -54,26 +52,17 @@ Autonomous construction remains capability-ordered and should select one coheren
 
 ## Scheduler semantics already landed
 
-- **Cron:** timezone-aware durable firing with deterministic logical-minute identities and restart catch-up.
-- **Events:** durable exact-match event inbox/delivery with deterministic WorkflowRun identity.
-- **Cancellation (#265):** scheduler intent first, stale-attempt fencing, unpublished-intent retirement, linked Job cancellation and terminal reconciliation.
-- **Timeouts (#267):** timeout decision from frozen WorkflowRun policy, durable marker before Job cancellation and retry/failure through the existing scheduler policy.
-- **Backfill (#268):** immutable schedule/workflow snapshots, independent cursor, bounded cron scanning, transactional active-run capacity and restart-safe logical-fire recovery.
-- **Resource pools (#270):** workspace-local named capacity enforced atomically in the fenced task-claim transaction; undefined pools fail closed and execution-linked running attempts retain capacity.
-- **Leader fencing (#271/#273):** deployment-local durable scheduler leader lease with opaque token/monotonic generation plus guarded controller, cron, event and backfill mutation entrypoints.
-- **Daemon (#274/#275):** leader acquisition/renewal, bounded guarded cycles, continuous loop, contention retry and clean release/shutdown behavior.
-- **Backfill cancellation (#276):** parent state commits first, then created child WorkflowRuns reuse the existing durable scheduler/Job cancellation path.
-
-These are scheduler foundations, not a claim that P5 is complete. Broad runtime adapters, branching/notifications, public scheduler API/UI, process/deployment wiring and PostgreSQL HA qualification remain.
+- cancellation (#265), timeouts (#267), snapshot-safe backfill (#268), shared pools (#270), leader fencing (#271/#273), daemon orchestration (#274/#275), and group backfill cancellation (#276) form the durable scheduler foundation.
+- These do not complete P5; broad adapters, branching/notifications, public surfaces, deployment wiring and PostgreSQL HA qualification remain.
 
 ## Ronin Bundle semantics already landed
 
-- **Archive integrity:** deterministic canonical manifest/archive IO with safe paths, bounded reads and full payload digest verification.
-- **Project semantic inventory (#278):** globally unique logical refs, dependency validation, digest-derived object paths, portable `ProjectManifest`, and explicit runtime binding requests without repository auth material.
-- **Project import planning (#279):** full archive verification before interpretation, bounded semantic reads, exact project identity validation, target workspace checks, fail-closed unsupported kinds and create/no-op/collision classification without mutation.
-- **Project import commit (#280):** exact binding-request resolution, provider-neutral atomic commit contract, SQLite one-transaction project plus environment-binding persistence, rollback on target failures, and conflict recheck at commit time.
+- **Archive integrity:** deterministic canonical manifest/archive IO, safe paths, bounded reads and full payload digest verification.
+- **Project path (#278–#280):** semantic inventory/export, fully verified read-only planning, explicit runtime remapping, and provider-neutral atomic project/environment-binding commit with SQLite as reference adapter.
+- **Connection path (#282):** semantic inventory/export/import using portable connection metadata and `secret://` references, exact explicit secret remaps, and final create/exact-noop conflict semantics.
+- **Multi-object staging (#283):** deterministic topological ordering over declared dependencies, kind-specific validation/classification for project+connection, aggregate unresolved bindings, cycle rejection and unknown-kind rejection without mutation.
 
-These establish one narrow native project round-trip path. They do not yet cover connection/catalog/workflow/quality/ontology/ML/GenAI or later data/semantic objects, and they are not migration certification evidence.
+The multi-object path is still planning-only; one atomic transaction spanning all supported staged mutations has not landed. Catalog/workflow/quality/ontology/ML/GenAI and later data/semantic objects remain outside the native Bundle path. These are implementation foundations, not migration certification evidence.
 
 ## Blocked and human-decision work
 
