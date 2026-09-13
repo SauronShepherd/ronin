@@ -171,7 +171,6 @@ def finalize_timed_out_attempt(
     request: TaskTimeoutRequest,
     *,
     now: Instant | str,
-    retire_unsubmitted_intent: bool = False,
 ) -> bool:
     """Finish one durable timeout as retry/failure, or cancellation if user-cancelled."""
 
@@ -209,62 +208,54 @@ def finalize_timed_out_attempt(
             WorkflowRunId(task["workflow_run_id"]),
         )
 
-        if task["state"] in {"succeeded", "failed", "cancelled"}:
-            connection.execute(
-                "DELETE FROM task_timeout_requests WHERE workspace_id=? AND task_attempt_id=?",
-                (str(request.workspace_id), str(request.task_attempt_id)),
-            )
-            connection.execute("COMMIT")
-            return True
-
-        if workflow.state == "cancelling":
-            connection.execute(
-                "UPDATE task_attempts SET state='cancelled',failure_code=NULL,updated_at=? "
-                "WHERE workspace_id=? AND task_attempt_id=?",
-                (current, str(request.workspace_id), str(request.task_attempt_id)),
-            )
-            connection.execute(
-                "UPDATE task_runs SET state='cancelled',next_eligible_at=NULL,updated_at=?,"
-                "row_version=row_version+1 WHERE workspace_id=? AND task_run_id=?",
-                (current, str(request.workspace_id), task["task_run_id"]),
-            )
-            remaining = connection.execute(
-                "SELECT COUNT(*) AS count FROM task_runs WHERE workspace_id=? "
-                "AND workflow_run_id=? AND state NOT IN ('succeeded','failed','cancelled')",
-                (str(request.workspace_id), str(workflow.id)),
-            ).fetchone()
-            if remaining is None:
-                raise AssertionError("workflow cancellation query returned no row")
-            if int(remaining["count"]) == 0:
-                store._write_workflow_state(
+        if task["state"] not in {"succeeded", "failed", "cancelled"}:
+            if workflow.state == "cancelling":
+                connection.execute(
+                    "UPDATE task_attempts SET state='cancelled',failure_code=NULL,updated_at=? "
+                    "WHERE workspace_id=? AND task_attempt_id=?",
+                    (current, str(request.workspace_id), str(request.task_attempt_id)),
+                )
+                connection.execute(
+                    "UPDATE task_runs SET state='cancelled',next_eligible_at=NULL,updated_at=?,"
+                    "row_version=row_version+1 WHERE workspace_id=? AND task_run_id=?",
+                    (current, str(request.workspace_id), task["task_run_id"]),
+                )
+                remaining = connection.execute(
+                    "SELECT COUNT(*) AS count FROM task_runs WHERE workspace_id=? "
+                    "AND workflow_run_id=? AND state NOT IN ('succeeded','failed','cancelled')",
+                    (str(request.workspace_id), str(workflow.id)),
+                ).fetchone()
+                if remaining is None:
+                    raise AssertionError("workflow cancellation query returned no row")
+                if int(remaining["count"]) == 0:
+                    store._write_workflow_state(
+                        connection,
+                        request.workspace_id,
+                        workflow,
+                        state="cancelled",
+                        now=current,
+                    )
+            else:
+                connection.execute(
+                    "UPDATE task_attempts SET state='failed',failure_code='timeout',updated_at=? "
+                    "WHERE workspace_id=? AND task_attempt_id=?",
+                    (current, str(request.workspace_id), str(request.task_attempt_id)),
+                )
+                store._mark_failure_or_retry(
                     connection,
                     request.workspace_id,
                     workflow,
-                    state="cancelled",
+                    task_run_id=TaskRunId(task["task_run_id"]),
+                    node_id=NodeId(task["node_id"]),
+                    attempt_ordinal=int(attempt["ordinal"]),
                     now=current,
                 )
-        else:
-            connection.execute(
-                "UPDATE task_attempts SET state='failed',failure_code='timeout',updated_at=? "
-                "WHERE workspace_id=? AND task_attempt_id=?",
-                (current, str(request.workspace_id), str(request.task_attempt_id)),
-            )
-            store._mark_failure_or_retry(
-                connection,
-                request.workspace_id,
-                workflow,
-                task_run_id=TaskRunId(task["task_run_id"]),
-                node_id=NodeId(task["node_id"]),
-                attempt_ordinal=int(attempt["ordinal"]),
-                now=current,
-            )
 
-        if retire_unsubmitted_intent:
-            connection.execute(
-                "DELETE FROM task_execution_intents "
-                "WHERE workspace_id=? AND task_attempt_id=?",
-                (str(request.workspace_id), str(request.task_attempt_id)),
-            )
+        connection.execute(
+            "DELETE FROM task_execution_intents "
+            "WHERE workspace_id=? AND task_attempt_id=?",
+            (str(request.workspace_id), str(request.task_attempt_id)),
+        )
         connection.execute(
             "DELETE FROM task_timeout_requests WHERE workspace_id=? AND task_attempt_id=?",
             (str(request.workspace_id), str(request.task_attempt_id)),
