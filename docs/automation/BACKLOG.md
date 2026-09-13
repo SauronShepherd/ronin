@@ -1,6 +1,6 @@
 # Ronin Public v1 autonomous build backlog
 
-_Last synchronized: 2026-09-13 from main `93a384fc66dfa1af20794907c2cffdcc6cb4fbf7` after PR #268. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
+_Last synchronized: 2026-09-13 from main `9345912c056393163a5305e32ab59baf1ba457cb` after PR #271. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
 
 This backlog is the active implementation-selection surface for Public v1. The previous narrow v0.1 backlog is preserved verbatim at `docs/automation/history/V01_BACKLOG.md` and is historical evidence only.
 
@@ -20,18 +20,20 @@ This backlog is the active implementation-selection surface for Public v1. The p
 
 ## P5 — scheduler next
 
-- Durable shared resource pools and workspace/project/workflow concurrency accounting, enforced atomically in task claim.
+- Continuous scheduler daemon with automatic leader acquisition/heartbeat/release and leader checks around cron, event, backfill and controller work.
 - Broader task execution adapters: SQL, connector sync, quality, code, ML, GenAI, graph/RQL, semantic refresh and notifications.
 - Explicit branching/skipped semantics if required by the final scheduler contract.
 - Durable failure notifications.
 - Backfill group cancellation for already-created workflow runs plus public backfill API/UI surfaces.
-- Continuous scheduler daemon and database-backed leader fencing/HA.
+- Public scheduler administration/run APIs and Web Studio surfaces.
 
 Landed scheduler foundations to preserve:
 
 - cancellation propagation (#265): scheduler state first, stale-attempt fencing, unpublished-intent retirement, linked Job cancellation and terminal reconciliation;
 - timeout enforcement (#267): durable timeout intent before Job cancellation, timeout as scheduler failure/retry cause, user cancellation precedence;
-- snapshot-safe backfill (#268): frozen schedule/workflow definitions, independent cursor, bounded cron scan, transactional active-run cap and restart-safe fire recovery.
+- snapshot-safe backfill (#268): frozen schedule/workflow definitions, independent cursor, bounded cron scan, transactional active-run cap and restart-safe fire recovery;
+- shared resource pools (#270): workspace-local pool capacity with atomic claim-time enforcement and fail-closed undefined pools;
+- leader fencing (#271): deployment-local durable lease with opaque token, monotonic generation and a leader-fenced bounded controller path.
 
 ## Portability
 

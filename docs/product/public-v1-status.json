@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-13T07:55:00+02:00",
-  "observed_main_sha": "93a384fc66dfa1af20794907c2cffdcc6cb4fbf7",
+  "observed_at": "2026-09-13T08:29:48+02:00",
+  "observed_main_sha": "9345912c056393163a5305e32ab59baf1ba457cb",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "status_vocabulary": [
@@ -42,7 +42,7 @@
     {
       "id": "p5-durable-dag-scheduler",
       "status": "partial",
-      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation propagation, timeout enforcement and snapshot-safe bounded backfill generation exist; shared pools, branching/notifications, leadership/daemon HA, group backfill cancellation, public scheduler APIs/UI and broad operator execution remain incomplete."
+      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation propagation, timeout enforcement, snapshot-safe bounded backfill generation, shared resource pools and durable leader lease/controller fencing exist; branching/notifications, continuous daemon renewal/full-service leader wrapping, group backfill cancellation, public scheduler APIs/UI and broad operator execution remain incomplete."
     },
     {
       "id": "p6-catalog-lineage",
@@ -179,11 +179,14 @@
     265,
     266,
     267,
-    268
+    268,
+    269,
+    270,
+    271
   ],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
-    "Complete scheduler shared pools/concurrency accounting, broader task adapters, branching/notifications, group backfill cancellation and leader fencing/continuous daemon behavior.",
+    "Complete scheduler broader task adapters, branching/notifications, group backfill cancellation and a continuous leader-renewing daemon that fences cron/event/backfill/controller entrypoints.",
     "Complete semantic Ronin Bundle inventory, binding resolution and transactional import.",
     "Finish storage ports for remaining domains, then add PostgreSQL adapters and an S3-compatible artifact store.",
     "Implement Arrow/Parquet, a reference open lakehouse table profile and a reference SQL engine before broad vendor migration adapters.",
