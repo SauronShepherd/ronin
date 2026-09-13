@@ -2,7 +2,7 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
-**Observed source head:** `7455b3faa52b93a7e8edfa4d2b87b0fb1f74b26e` (2026-09-13).  
+**Observed source head:** `b7e861f11a1399553fba0292f2b86760cc04d747` (2026-09-13).  
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
@@ -26,7 +26,7 @@ This document records implementation state only. It does not claim test executio
 | Lakehouse/SQL | missing | no supported Parquet/Iceberg/Delta + SQL engine path |
 | Data Engineering Studio | partial | notebook/pipeline execution foundations exist; authoring APIs and Web Studio remain |
 | Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded cron/event/backfill/controller services, bounded and continuous daemon orchestration, and group backfill cancellation exist; branching/notifications, broad operator execution, public scheduler APIs/UI, process/signal/deployment wiring and PostgreSQL multi-node HA qualification remain |
-| Catalog/lineage | partial | governed assets/revisions and declared/observed lineage exist; search/glossary/classification/interoperability remain |
+| Catalog/lineage | partial | governed assets/revisions and declared/observed lineage persistence plus explicit selected-subgraph Bundle export/planning/atomic import exist; search/glossary/classification/OpenLineage/complete asset integration remain |
 | Ontology/KG | partial | object/property/link/action schema and persistence exist; instance resolution/query/materialization/actions remain |
 | Graph intelligence/RQL | missing | no supported parser/planner/runtime/provider path |
 | Data quality/contracts | partial | definitions/results/persistence exist; execution/gating/alerts remain |
@@ -37,7 +37,7 @@ This document records implementation state only. It does not claim test executio
 | Observability/alerts/FinOps | partial | execution evidence and container resource observation exist; unified telemetry/alerts/costs/budgets remain |
 | Multi-user security/audit | partial | typed grants, bearer auth, transport policy, secret resolver and append-only audit foundation exist; OIDC/users/groups/service identities/role administration/full instrumentation remain |
 | Local/Compose/Kubernetes | partial | local and Compose foundation exist; Kubernetes/Helm and production metadata/object-store profile remain |
-| Ronin Bundle | partial | deterministic verified archive IO, semantic inventory, native project and connection round-trips with explicit runtime/secret remapping, deterministic dependency-ordered staging, and provider-neutral atomic multi-object commit with a one-transaction SQLite reference adapter exist for supported project+connection objects; broader assets, PostgreSQL adapter, certification and public surfaces remain |
+| Ronin Bundle | partial | deterministic verified archive IO, semantic inventory, native project/connection round-trips with explicit runtime/secret remapping, atomic multi-object project+connection commit, and explicit catalog asset/revision/lineage selected-subgraph export/planning/atomic commit exist; workflow/quality/ontology/ML/GenAI/data/semantic assets, PostgreSQL adapters, certification and public surfaces remain |
 | Fabric migration | missing | no certified adapter |
 | Databricks migration | missing | no certified adapter |
 | Palantir Foundry/AIP migration | missing | no certified adapter |
@@ -47,9 +47,9 @@ This document records implementation state only. It does not claim test executio
 
 ## Public v1 source work merged in the current construction sequence
 
-PRs **#242–#285** moved Public v1 from planning into source implementation. Scheduler foundations include deterministic task→Job identity/linking (#259), execution outbox/reconciliation (#260), deployment-aware controller (#262), cron/events (#263/#264), cancellation/timeouts (#265/#267), snapshot-safe backfill (#268), pools (#270), leader fencing (#271/#273), daemon orchestration (#274/#275), and group backfill cancellation (#276). Native Bundle portability added project semantic inventory/export (#278), project import planning (#279), runtime remapping plus atomic project/environment-binding commit (#280), connection round-trip with explicit secret-reference remapping (#282), deterministic dependency-ordered multi-object staging (#283), and one-transaction atomic commit across supported project+connection objects (#285). PR #266 made Public v1 the active construction authority while preserving the historical v0.1 planning files verbatim.
+PRs **#242–#288** moved Public v1 from planning into source implementation. Scheduler foundations include deterministic task→Job identity/linking (#259), execution outbox/reconciliation (#260), deployment-aware controller (#262), cron/events (#263/#264), cancellation/timeouts (#265/#267), snapshot-safe backfill (#268), pools (#270), leader fencing (#271/#273), daemon orchestration (#274/#275), and group backfill cancellation (#276). Native Bundle portability added project semantic inventory/export (#278), project import planning (#279), runtime remapping plus atomic project/environment-binding commit (#280), connection round-trip with explicit secret-reference remapping (#282), deterministic dependency-ordered multi-object staging (#283), atomic project+connection commit (#285), explicit selected catalog subgraph export/planning (#287), and atomic catalog asset/revision/lineage commit (#288). PR #266 made Public v1 the active construction authority while preserving the historical v0.1 planning files verbatim.
 
-These merges do **not** imply that their parent capability families are complete. The scheduler still lacks broad task adapters, branching/skipped semantics, durable notifications, public scheduler APIs/UI, production process/signal/deployment wiring and PostgreSQL multi-node HA qualification. The native Bundle path is atomic only for the currently supported project+connection metadata objects; catalog/workflow/quality/ontology/ML/GenAI and later data/semantic assets remain outside it, and the multi-object commit port has no PostgreSQL implementation yet. Storage ports do not constitute a PostgreSQL backend.
+These merges do **not** imply that their parent capability families are complete. The scheduler still lacks broad task adapters, branching/skipped semantics, durable notifications, public scheduler APIs/UI, production process/signal/deployment wiring and PostgreSQL multi-node HA qualification. Bundle support now covers project, connection, and an explicitly selected catalog subgraph, but workflow/quality/ontology/ML/GenAI and later data/semantic assets remain outside it. Catalog export intentionally does not invent whole-catalog revision discovery because the current catalog port does not expose it. PostgreSQL does not yet implement the Bundle atomic commit ports. Storage ports do not constitute a PostgreSQL backend.
 
 ## Invariants that remain mandatory
 
@@ -76,7 +76,7 @@ These merges do **not** imply that their parent capability families are complete
 
 1. Keep this ledger and the active construction plan synchronized with repository truth.
 2. Finish scheduler broad task adapters, branching/notifications, public scheduler APIs/UI, process/deployment wiring and PostgreSQL HA semantics/qualification.
-3. Extend native Bundle inventory/import/atomic commit from project+connection metadata to the next executable canonical asset families, beginning with catalog/lineage where identity and durable stores already exist; certify native lossless round-trip only when qualification can actually run.
+3. Extend native Bundle support to the next executable canonical metadata family, preferring workflow/pipeline persistence if its canonical snapshot/store contracts preserve identity without deployment locators; then quality/ontology/ML/GenAI as their contracts permit.
 4. Complete store ports for remaining domains; then implement PostgreSQL adapters and an S3-compatible artifact store without changing logical references.
 5. Implement the first open data path: Arrow/Parquet + reference open table profile + reference SQL engine, with catalog/lineage/quality hooks.
 6. Complete remote connectors and safe incremental checkpoint execution.
