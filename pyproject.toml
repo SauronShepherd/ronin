@@ -20,6 +20,10 @@ data-plane = [
   "psycopg[binary]>=3.2,<4",
   "pyarrow>=15,<24",
 ]
+open-tables = [
+  "deltalake>=0.20,<2",
+  "pyiceberg[sql-sqlite]>=0.8,<1",
+]
 dev = [
   "hypothesis>=6.138,<7",
   "mutmut==3.7.0",
