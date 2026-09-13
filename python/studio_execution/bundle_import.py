@@ -19,6 +19,10 @@ ImportDisposition: TypeAlias = Literal["create", "noop", "collision"]
 _IMPORT_DISPOSITIONS = frozenset({"create", "noop", "collision"})
 
 
+class BundleImportTargetError(ValueError):
+    """Raised when the requested target workspace cannot accept an import."""
+
+
 class UnsupportedBundleInventory(ValueError):
     """Raised when this native importer cannot interpret every semantic object."""
 
@@ -60,6 +64,14 @@ def _manifest_entry_digest(manifest: RoninBundleManifest, path: str) -> str:
     raise BundleIntegrityError("semantic inventory references a payload absent from manifest")
 
 
+def _require_active_target_workspace(store: WorkspaceStore, workspace_id: WorkspaceId) -> None:
+    workspace = store.get_workspace(workspace_id)
+    if workspace is None:
+        raise BundleImportTargetError("target workspace does not exist")
+    if workspace.archived:
+        raise BundleImportTargetError("target workspace is archived")
+
+
 def plan_project_bundle_import(
     bundle_path: Path,
     store: WorkspaceStore,
@@ -71,6 +83,7 @@ def plan_project_bundle_import(
 ) -> ProjectBundleImportPlan:
     """Verify and classify one native project bundle without mutating target state."""
 
+    _require_active_target_workspace(store, workspace_id)
     inventory_payload = read_bundle_payload(
         bundle_path,
         BUNDLE_INVENTORY_PATH,
@@ -137,6 +150,7 @@ def plan_project_bundle_import(
 
 
 __all__ = (
+    "BundleImportTargetError",
     "ImportDisposition",
     "ProjectBundleImportPlan",
     "UnsupportedBundleInventory",
