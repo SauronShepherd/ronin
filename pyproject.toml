@@ -27,6 +27,9 @@ open-tables = [
 ml = [
   "scikit-learn>=1.5,<2",
 ]
+streaming = [
+  "confluent-kafka>=2,<4",
+]
 dev = [
   "hypothesis>=6.138,<7",
   "mutmut==3.7.0",
@@ -75,6 +78,7 @@ packages = [
   "studio_semantic",
   "studio_sql",
   "studio_storage",
+  "studio_streaming",
   "studio_vcs",
   "studio_execution",
   "studio_server",
@@ -104,6 +108,7 @@ source = [
   "studio_semantic",
   "studio_sql",
   "studio_storage",
+  "studio_streaming",
   "studio_vcs",
   "studio_execution",
   "studio_server",
