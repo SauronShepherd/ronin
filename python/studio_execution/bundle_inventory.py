@@ -6,7 +6,7 @@ import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
-from studio_core import ProjectId, WorkspaceId
+from studio_core import ProjectId, ProjectManifest, WorkspaceId
 from studio_core.bundle_inventory import (
     BUNDLE_INVENTORY_PATH,
     BundleInventory,
@@ -26,9 +26,11 @@ class ProjectBundleInventory:
     files: tuple[BundleFile, ...]
 
     def __post_init__(self) -> None:
-        paths = {item.path for item in self.files}
+        paths = tuple(item.path for item in self.files)
+        if len(paths) != len(set(paths)):
+            raise ValueError("project bundle file paths must be unique")
         expected = {BUNDLE_INVENTORY_PATH, *(item.path for item in self.inventory.objects)}
-        if paths != expected:
+        if set(paths) != expected:
             raise ValueError("project bundle files must exactly match semantic inventory paths")
 
 
@@ -41,7 +43,7 @@ def _project_payload_path(logical_ref: str) -> str:
     return f"objects/project/{digest}.json"
 
 
-def _runtime_binding_request(manifest) -> tuple[BindingRequest, ...]:
+def _runtime_binding_request(manifest: ProjectManifest) -> tuple[BindingRequest, ...]:
     runtime = manifest.project.execution.runtime
     if runtime is None:
         return ()
