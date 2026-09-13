@@ -7,6 +7,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import ThreadingHTTPServer
+from pathlib import Path
 from typing import Protocol, cast, runtime_checkable
 from urllib.parse import parse_qs, urlsplit
 
@@ -19,6 +20,7 @@ from studio_security import (
     OidcAuthenticationError,
     OidcPrincipalStore,
     OidcTokenValidator,
+    Permission,
     PolicyDecision,
     PolicyRequirement,
     RbacAuthorizer,
@@ -56,11 +58,11 @@ def _now() -> Instant:
     return Instant(datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
-def _readiness_database_from_env() -> str:
-    return os.path.abspath(os.path.expanduser(os.environ.get("RONIN_DB", ".ronin/ronin.sqlite3")))
+def _readiness_database_from_env() -> Path:
+    return Path(os.environ.get("RONIN_DB", ".ronin/ronin.sqlite3")).expanduser().resolve()
 
 
-def _permission_for_action(action: str) -> str:
+def _permission_for_action(action: str) -> Permission:
     if action in {"submit", "execute"}:
         return "job.submit"
     if action == "cancel":
@@ -72,7 +74,7 @@ def _permission_for_action(action: str) -> str:
 
 class _OidcHandler(_Handler):
     _actor: Actor | None = None
-    _decision_cache: dict[tuple[str, str], PolicyDecision]
+    _decision_cache: dict[tuple[Permission, str], PolicyDecision]
 
     def _oidc_server(self) -> OidcRoninHTTPServer:
         return cast(OidcRoninHTTPServer, self.server)
@@ -167,6 +169,19 @@ class _OidcHandler(_Handler):
             self._actor = None
             self._decision_cache = {}
 
+    def _authenticated_get(self) -> None:
+        split = urlsplit(self.path)
+        if split.path == "/v1/jobs":
+            parsed = parse_qs(split.query, keep_blank_values=True, strict_parsing=False)
+            if "project" not in parsed:
+                self._error(
+                    HTTPStatus.BAD_REQUEST,
+                    "project_required",
+                    "OIDC job listing requires an explicit project filter",
+                )
+                return
+        super().do_GET()
+
     def do_POST(self) -> None:  # noqa: N802
         self._dispatch_authenticated(super().do_POST)
 
@@ -178,17 +193,7 @@ class _OidcHandler(_Handler):
                 {"status": "ready" if ready else "not_ready"},
             )
             return
-        split = urlsplit(self.path)
-        if split.path == "/v1/jobs":
-            parsed = parse_qs(split.query, keep_blank_values=True, strict_parsing=False)
-            if "project" not in parsed:
-                self._error(
-                    HTTPStatus.BAD_REQUEST,
-                    "project_required",
-                    "OIDC job listing requires an explicit project filter",
-                )
-                return
-        self._dispatch_authenticated(super().do_GET)
+        self._dispatch_authenticated(self._authenticated_get)
 
 
 class OidcRoninHTTPServer(ThreadingHTTPServer):
@@ -244,16 +249,12 @@ class OidcRoninHTTPServer(ThreadingHTTPServer):
     def authorize(
         self,
         actor: Actor,
-        permission: str,
+        permission: Permission,
         *,
         resource_ref: str,
         request_id: str | None,
     ) -> PolicyDecision:
-        requirement = PolicyRequirement(
-            self._workspace_id,
-            cast(object, permission),  # Permission is runtime-validated by PolicyRequirement.
-            resource_ref,
-        )
+        requirement = PolicyRequirement(self._workspace_id, permission, resource_ref)
         decision = self._authorizer.authorize(actor, requirement)
         event = authorization_audit_event(
             actor,
@@ -269,7 +270,7 @@ class OidcRoninHTTPServer(ThreadingHTTPServer):
         return decision
 
     def ready(self) -> bool:
-        return sqlite_ready(cast(object, self._readiness_database))
+        return sqlite_ready(self._readiness_database)
 
     def server_close(self) -> None:
         try:
