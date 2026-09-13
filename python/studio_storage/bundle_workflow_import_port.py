@@ -25,10 +25,27 @@ class WorkflowBundleImportCommit:
 class SchedulerDefinitionStore(Protocol):
     """Portable workflow/schedule definition boundary without runtime scheduler state."""
 
-    def get_workflow(self, workspace_id: WorkspaceId, workflow_id: WorkflowId) -> WorkflowDefinition | None: ...
-    def list_workflows(self, workspace_id: WorkspaceId) -> tuple[WorkflowDefinition, ...]: ...
-    def get_schedule(self, workspace_id: WorkspaceId, schedule_id: ScheduleId) -> Schedule | None: ...
-    def list_schedules(self, workspace_id: WorkspaceId) -> tuple[Schedule, ...]: ...
+    def get_workflow(
+        self,
+        workspace_id: WorkspaceId,
+        workflow_id: WorkflowId,
+    ) -> WorkflowDefinition | None: ...
+
+    def list_workflows(
+        self,
+        workspace_id: WorkspaceId,
+    ) -> tuple[WorkflowDefinition, ...]: ...
+
+    def get_schedule(
+        self,
+        workspace_id: WorkspaceId,
+        schedule_id: ScheduleId,
+    ) -> Schedule | None: ...
+
+    def list_schedules(
+        self,
+        workspace_id: WorkspaceId,
+    ) -> tuple[Schedule, ...]: ...
 
 
 @runtime_checkable
