@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-12T23:04:55+02:00",
-  "observed_main_sha": "0d84f80c7d3aae8f1d52f4c097ed56393c6c0c95",
+  "observed_at": "2026-09-13T07:20:00+02:00",
+  "observed_main_sha": "46accf1f45a2863902bcfc9c3a5f2c2c76eb8bcd",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "status_vocabulary": [
@@ -42,7 +42,7 @@
     {
       "id": "p5-durable-dag-scheduler",
       "status": "partial",
-      "summary": "Durable workflow snapshots, schedules/triggers, task runs, lease-fenced attempts, retries, dependency readiness, deterministic execution planning, durable execution outbox and terminal Job reconciliation exist. Cron loop, event loop, backfill, pools, cancellation, timeouts, leadership and full operator execution matrix remain incomplete."
+      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron firing and durable event inbox/delivery exist; backfill, pools, cancellation propagation, timeout enforcement, leadership and broad operator execution remain incomplete."
     },
     {
       "id": "p6-catalog-lineage",
@@ -171,15 +171,20 @@
     257,
     258,
     259,
-    260
+    260,
+    261,
+    262,
+    263,
+    264
   ],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
-    "Complete scheduler controller loops: durable schedule firing, event triggers, backfills, pools, cancellation, timeout and leadership.",
-    "Complete scheduler notebook execution path around the execution outbox and add explicit operator discovery/registration.",
-    "Finish storage ports for scheduler, quality, ontology, audit, ML and GenAI, then add PostgreSQL adapters.",
-    "Implement the first open lakehouse/SQL path before broad vendor migration adapters.",
-    "Expand Public v1 API and start the Web Studio against documented APIs.",
+    "Complete scheduler cancellation, timeout, pools, backfill, broader task adapters and leader fencing.",
+    "Complete semantic Ronin Bundle inventory, binding resolution and transactional import.",
+    "Finish storage ports for remaining domains, then add PostgreSQL adapters and an S3-compatible artifact store.",
+    "Implement Arrow/Parquet, a reference open lakehouse table profile and a reference SQL engine before broad vendor migration adapters.",
+    "Complete remote connectors and safe incremental checkpoint execution.",
+    "Expand Public v1 API and start Web Studio against documented/generated APIs.",
     "Implement remaining quality, ontology/KG/RQL, ML, GenAI, semantic, streaming, observability/alerts/FinOps and security runtime paths.",
     "Implement Kubernetes and four certified migration profiles only after their canonical target capabilities execute end to end.",
     "Restore exact-head CI/release qualification only with maintainer authorization and do not claim release readiness before it exists."

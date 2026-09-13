@@ -2,7 +2,7 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
-**Observed source head:** `0d84f80c7d3aae8f1d52f4c097ed56393c6c0c95` (2026-09-12).  
+**Observed source head:** `46accf1f45a2863902bcfc9c3a5f2c2c76eb8bcd` (2026-09-12).  
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
@@ -25,7 +25,7 @@ This document records implementation state only. It does not claim test executio
 | Connectors/ingestion | partial | connection/discovery/checkpoint contracts and governed local CSV/JSONL path; remote connector matrix remains |
 | Lakehouse/SQL | missing | no supported Parquet/Iceberg/Delta + SQL engine path |
 | Data Engineering Studio | partial | notebook/pipeline execution foundations exist; authoring APIs and Web Studio remain |
-| Durable DAG scheduler | partial | durable snapshots, task runs, fenced task attempts/retries/dependencies, deterministic Job planning, execution outbox and terminal reconciliation exist; scheduler loops/backfill/pools/cancel/timeouts/leadership remain |
+| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron firing and durable event inbox/delivery exist; backfill, pools, cancellation propagation, timeout enforcement, leadership and broad operator execution remain |
 | Catalog/lineage | partial | governed assets/revisions and declared/observed lineage exist; search/glossary/classification/interoperability remain |
 | Ontology/KG | partial | object/property/link/action schema and persistence exist; instance resolution/query/materialization/actions remain |
 | Graph intelligence/RQL | missing | no supported parser/planner/runtime/provider path |
@@ -33,9 +33,9 @@ This document records implementation state only. It does not claim test executio
 | AI/ML/MLOps | partial | experiment/run/model/evaluation provenance exists; training/features/interop/inference/serving remain |
 | GenAI/RAG/agents | partial | provider/prompt/vector/RAG/tool/agent contracts/persistence exist; runtime/evals/tool execution/cost remain |
 | Semantic models/dashboards | missing | no supported compiler/metrics/dashboard runtime |
-| Streaming/real-time | missing | no supported processor/checkpoint/window/table-sink/event path |
+| Streaming/real-time | missing | no supported processor/checkpoint/window/table-sink path |
 | Observability/alerts/FinOps | partial | execution evidence and container resource observation exist; unified telemetry/alerts/costs/budgets remain |
-| Multi-user security/audit | partial | typed grants, bearer auth, transport policy, secret resolver and append-only audit foundation exist; OIDC/RBAC administration/full instrumentation remain |
+| Multi-user security/audit | partial | typed grants, bearer auth, transport policy, secret resolver and append-only audit foundation exist; OIDC/users/groups/service identities/role administration/full instrumentation remain |
 | Local/Compose/Kubernetes | partial | local and Compose foundation exist; Kubernetes/Helm and production metadata/object-store profile remain |
 | Ronin Bundle | partial | canonical manifest/migration semantics and deterministic verified archive IO exist; complete inventory/import binding workflow remains |
 | Fabric migration | missing | no certified adapter |
@@ -47,9 +47,9 @@ This document records implementation state only. It does not claim test executio
 
 ## Public v1 source work merged in the current construction sequence
 
-PRs **#242–#260** moved Public v1 from planning into source implementation. The later slices include deterministic verified Bundle IO (#255), deployment-local secret resolution (#256), provider-neutral metadata store ports (#257), environments/deployment bindings (#258), deterministic scheduler task→Job identity/linking (#259), and the durable scheduler execution outbox/reconciliation path (#260).
+PRs **#242–#264** moved Public v1 from planning into source implementation. The later slices include deterministic verified Bundle IO (#255), deployment-local secret resolution (#256), provider-neutral metadata store ports (#257), environments/deployment bindings (#258), deterministic scheduler task→Job identity/linking (#259), the durable scheduler execution outbox/reconciliation path (#260), deployment-aware scheduler controller (#262), durable timezone-aware cron firing (#263), and the durable scheduler event inbox/delivery path (#264).
 
-These merges do **not** imply that their parent capability families are complete. In particular, the scheduler still lacks the durable schedule/event/backfill service loops, cancellation/timeout propagation, pools, leadership and broad task adapter matrix; Bundle support still lacks complete project inventory/import binding resolution; storage ports do not constitute a PostgreSQL backend.
+These merges do **not** imply that their parent capability families are complete. In particular, the scheduler still lacks backfill, resource pools, cancellation propagation, timeout enforcement, leader fencing and a broad task adapter matrix; Bundle support still lacks complete project inventory/import binding resolution; storage ports do not constitute a PostgreSQL backend.
 
 ## Invariants that remain mandatory
 
@@ -74,16 +74,17 @@ These merges do **not** imply that their parent capability families are complete
 
 ## Updated critical path
 
-1. Keep this ledger and active construction plan synchronized with repository truth.
-2. Finish scheduler execution/controller semantics: operator registration, schedule firing, event inbox, backfills, pools, cancellation, timeout and leader fencing.
-3. Complete store ports for remaining domains; implement PostgreSQL adapters and an S3-compatible artifact store without changing logical references.
-4. Implement the first open data path: Parquet + chosen open table profile + reference SQL engine, with catalog/lineage/quality hooks.
-5. Complete remote connectors and safe incremental checkpoint execution.
-6. Expand the Public v1 API and begin Web Studio against generated/documented clients.
-7. Complete quality runtime, ontology/KG actions/query, RQL, ML, GenAI, semantic/dashboard, streaming, observability/alerts/FinOps and multi-user identity.
-8. Add Kubernetes/Helm after the server metadata/object-store/identity profile is real.
-9. Build the four vendor migration profiles only against executable canonical target capabilities and certify them with exhaustive migration reports.
-10. Restore and run exact-candidate qualification only when authorized; Public v1 remains incomplete until every mandatory family has its supported end-to-end path.
+1. Keep this ledger and the active construction plan synchronized with repository truth.
+2. Finish scheduler semantics already supported by current contracts: cancellation propagation, timeout enforcement, pools, backfill, broader operator adapters and leader fencing.
+3. Complete native Ronin Bundle project inventory/import transaction and binding resolution.
+4. Complete store ports for remaining domains; then implement PostgreSQL adapters and an S3-compatible artifact store without changing logical references.
+5. Implement the first open data path: Arrow/Parquet + reference open table profile + reference SQL engine, with catalog/lineage/quality hooks.
+6. Complete remote connectors and safe incremental checkpoint execution.
+7. Expand the Public v1 API and begin Web Studio against documented/generated clients.
+8. Complete quality runtime, ontology/KG actions/query, RQL, ML, GenAI, semantic/dashboard, streaming, observability/alerts/FinOps and multi-user identity.
+9. Add Kubernetes/Helm after the server metadata/object-store/identity profile is real.
+10. Build the four vendor migration profiles only against executable canonical target capabilities and certify them with exhaustive migration reports.
+11. Restore and run exact-candidate qualification only when authorized; Public v1 remains incomplete until every mandatory family has its supported end-to-end path.
 
 ## Historical v0.1 planning documents
 
