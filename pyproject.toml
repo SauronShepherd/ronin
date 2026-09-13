@@ -64,6 +64,7 @@ mypy_path = "python:packages/pyronin/src"
 packages = [
   "studio_connectors",
   "studio_core",
+  "studio_genai",
   "studio_lakehouse",
   "studio_ml",
   "studio_notebook",
@@ -92,6 +93,7 @@ branch = true
 source = [
   "studio_connectors",
   "studio_core",
+  "studio_genai",
   "studio_lakehouse",
   "studio_ml",
   "studio_notebook",
