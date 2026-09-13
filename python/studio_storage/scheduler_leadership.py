@@ -33,8 +33,8 @@ class SchedulerLeaderLease:
             raise ValueError("scheduler leader owner must be non-empty and trimmed")
         if self.generation < 1:
             raise ValueError("scheduler leader generation must be positive")
-        if self.lease_expires_at <= self.acquired_at:
-            raise ValueError("scheduler leader lease must expire after acquisition")
+        if self.lease_expires_at < self.acquired_at:
+            raise ValueError("scheduler leader lease must not expire before acquisition")
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:

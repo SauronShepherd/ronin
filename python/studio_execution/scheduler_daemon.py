@@ -1,9 +1,9 @@
-"""Leader-owning bounded scheduler daemon orchestration."""
+"""Leader-owning scheduler daemon orchestration."""
 
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 from studio_core import WorkspaceId
@@ -30,6 +30,9 @@ Clock = Callable[[], Instant]
 LeaderTokenFactory = Callable[[], LeaseToken]
 TaskAttemptFactory = Callable[[], TaskAttemptId]
 TaskLeaseTokenFactory = Callable[[], LeaseToken]
+WorkProvider = Callable[[], "SchedulerDaemonWork"]
+StopRequested = Callable[[], bool]
+AsyncSleep = Callable[[float], Awaitable[None]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,8 +59,14 @@ class SchedulerDaemonCycle:
     controller_cycles: tuple[SchedulerControllerCycle, ...] = ()
 
 
+@dataclass(frozen=True, slots=True)
+class SchedulerDaemonLoopResult:
+    cycles: int
+    leader_cycles: int
+
+
 class SchedulerDaemon:
-    """Acquire/renew scheduler leadership and run one bounded guarded work cycle."""
+    """Acquire/renew scheduler leadership and run guarded scheduler work."""
 
     def __init__(
         self,
@@ -201,25 +210,63 @@ class SchedulerDaemon:
             tuple(controller_cycles),
         )
 
+    async def run_forever(
+        self,
+        *,
+        work_provider: WorkProvider,
+        stop_requested: StopRequested,
+        interval_seconds: float = 1.0,
+        sleep: AsyncSleep = asyncio.sleep,
+    ) -> SchedulerDaemonLoopResult:
+        """Run guarded cycles until stop is requested, then release leadership."""
+
+        if interval_seconds <= 0:
+            raise ValueError("scheduler daemon interval_seconds must be positive")
+        cycles = 0
+        leader_cycles = 0
+        try:
+            while not stop_requested():
+                try:
+                    result = await self.run_once(work_provider())
+                except SchedulerLeadershipLost:
+                    self._lease = None
+                    result = SchedulerDaemonCycle(False, None)
+                cycles += 1
+                if result.is_leader:
+                    leader_cycles += 1
+                if not stop_requested():
+                    await sleep(interval_seconds)
+        finally:
+            await self.release()
+        return SchedulerDaemonLoopResult(cycles, leader_cycles)
+
     async def release(self) -> None:
         if self._lease is None:
             return
         lease = self._lease
-        await asyncio.to_thread(
-            self._leadership_store.release_scheduler_leadership,
-            lease,
-            now=self._clock(),
-        )
+        try:
+            await asyncio.to_thread(
+                self._leadership_store.release_scheduler_leadership,
+                lease,
+                now=self._clock(),
+            )
+        except SchedulerLeadershipLost:
+            self._lease = None
+            return
         self._lease = None
 
 
 __all__ = (
+    "AsyncSleep",
     "BackfillTarget",
     "Clock",
     "LeaderTokenFactory",
     "SchedulerDaemon",
     "SchedulerDaemonCycle",
+    "SchedulerDaemonLoopResult",
     "SchedulerDaemonWork",
+    "StopRequested",
     "TaskAttemptFactory",
     "TaskLeaseTokenFactory",
+    "WorkProvider",
 )
