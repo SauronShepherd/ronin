@@ -125,6 +125,7 @@ def plan_project_bundle_import(
         )
 
     existing = store.get_project(workspace_id, project.project.id)
+    collision_reason: str | None
     if existing is None:
         disposition: ImportDisposition = "create"
         collision_reason = None
