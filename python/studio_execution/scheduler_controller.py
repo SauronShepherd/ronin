@@ -6,6 +6,7 @@ import asyncio
 from dataclasses import dataclass
 
 from studio_orchestrator import Instant, LeaseToken
+from studio_storage.scheduler_cancellation import execution_intent_dispatch_allowed
 from studio_storage.scheduler_controller import SchedulerControllerStore, WorkspaceId
 from studio_storage.scheduler_execution import TaskExecutionIntent
 from studio_storage.scheduler_fencing import TaskAttemptId
@@ -106,9 +107,6 @@ class SchedulerController:
                 now=now,
             )
         except ValueError:
-            # Unsupported/invalid task definitions are deterministic definition
-            # failures. Persist the scheduler failure instead of leaking a live
-            # claim until lease expiry.
             await asyncio.to_thread(
                 self._store.complete_task,
                 workspace_id,
@@ -132,12 +130,34 @@ class SchedulerController:
             now=now,
         )
 
-    async def dispatch_pending(self, *, limit: int = 100) -> int:
+    async def dispatch_pending(
+        self,
+        *,
+        now: Instant | str | None = None,
+        limit: int = 100,
+    ) -> int:
+        """Dispatch only execution intents that still have scheduler authority."""
+
         intents = await asyncio.to_thread(self._store.list_execution_intents, limit=limit)
         dispatched = 0
         for intent in intents:
+            allowed = await asyncio.to_thread(
+                execution_intent_dispatch_allowed,
+                self._store,
+                intent,
+            )
+            if not allowed:
+                continue
             await dispatch_execution_intent(intent, self._service)
             dispatched += 1
+            if now is not None:
+                still_allowed = await asyncio.to_thread(
+                    execution_intent_dispatch_allowed,
+                    self._store,
+                    intent,
+                )
+                if not still_allowed:
+                    await self._service.cancel(intent.job.id, now=Instant(now))
         return dispatched
 
     async def reconcile_pending(
@@ -179,7 +199,7 @@ class SchedulerController:
             lease_seconds=lease_seconds,
             now=now,
         )
-        dispatched = await self.dispatch_pending(limit=outbox_limit)
+        dispatched = await self.dispatch_pending(now=now, limit=outbox_limit)
         reconciled = await self.reconcile_pending(now=now, limit=outbox_limit)
         return SchedulerControllerCycle(published, dispatched, reconciled)
 
