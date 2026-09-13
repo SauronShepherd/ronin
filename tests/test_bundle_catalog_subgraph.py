@@ -20,8 +20,6 @@ from studio_core.bundle_inventory import (
     BundleInventoryObject,
 )
 from studio_execution.bundle_catalog import (
-    CATALOG_ASSET_MEDIA_TYPE,
-    CATALOG_REVISION_MEDIA_TYPE,
     INVENTORY_MEDIA_TYPE,
     CatalogBundleTargetError,
     UnsupportedCatalogBundle,
@@ -38,21 +36,21 @@ _NOW = Instant("2026-09-13T10:10:00.000000Z")
 _WS = WorkspaceId("workspace-1")
 _SOURCE = AssetId("asset/source")
 _DERIVED = AssetId("asset/derived")
-_SOURCE_REF = AssetRef(_SOURCE, AssetVersion(1))
-_DERIVED_REF = AssetRef(_DERIVED, AssetVersion(1))
+_SOURCE_REF = AssetRef(_SOURCE, AssetVersion("1"))
+_DERIVED_REF = AssetRef(_DERIVED, AssetVersion("1"))
 
 
 def _assets() -> tuple[CatalogAsset, CatalogAsset]:
     return (
-        CatalogAsset(_SOURCE, "Source", "table", ("raw",)),
-        CatalogAsset(_DERIVED, "Derived", "table", ("curated",)),
+        CatalogAsset(_SOURCE, "table", "Source", tags=("raw",)),
+        CatalogAsset(_DERIVED, "table", "Derived", tags=("curated",)),
     )
 
 
 def _revisions() -> tuple[AssetRevision, AssetRevision]:
     return (
-        AssetRevision(_SOURCE_REF, properties=(("owner", "data"),)),
-        AssetRevision(_DERIVED_REF, properties=(("owner", "analytics"),)),
+        AssetRevision(_SOURCE_REF, metadata=(("owner", "data"),)),
+        AssetRevision(_DERIVED_REF, metadata=(("owner", "analytics"),)),
     )
 
 
@@ -60,7 +58,8 @@ def _lineage() -> LineageEdge:
     return LineageEdge(
         _SOURCE_REF,
         _DERIVED_REF,
-        kind="transform",
+        operation="transform",
+        mode="observed",
         execution_ref="job:example",
     )
 
@@ -175,7 +174,7 @@ def test_catalog_plan_reports_asset_collision(tmp_path: Path) -> None:
     workspaces, catalog = _stores(tmp_path / "target.sqlite3")
     catalog.create_asset(
         _WS,
-        CatalogAsset(_SOURCE, "Different source", "table", ("raw",)),
+        CatalogAsset(_SOURCE, "table", "Different source", tags=("raw",)),
         now=_NOW,
     )
 
@@ -204,66 +203,65 @@ def test_catalog_selection_excludes_lineage_when_endpoint_is_not_selected(
 def test_catalog_plan_rejects_revision_dependency_that_does_not_match_payload(
     tmp_path: Path,
 ) -> None:
-    source, derived = _assets()
-    source_revision, _derived_revision = _revisions()
-    source_asset_ref = "catalog-asset:source"
-    derived_asset_ref = "catalog-asset:derived"
-    revision_ref = "catalog-revision:source"
-    source_path = "objects/catalog/asset/source.json"
-    derived_path = "objects/catalog/asset/derived.json"
-    revision_path = "objects/catalog/revision/source.json"
-    inventory = BundleInventory(
-        (
-            BundleInventoryObject("catalog_asset", source_asset_ref, source_path),
-            BundleInventoryObject("catalog_asset", derived_asset_ref, derived_path),
-            BundleInventoryObject(
-                "catalog_revision",
-                revision_ref,
-                revision_path,
-                dependencies=(derived_asset_ref,),
-            ),
+    _workspaces, source_catalog = _stores(tmp_path / "source.sqlite3")
+    _populate(source_catalog)
+    built = build_catalog_bundle_inventory(
+        source_catalog,
+        _WS,
+        (_SOURCE_REF, _DERIVED_REF),
+    )
+    assets = [item for item in built.inventory.objects if item.kind == "catalog_asset"]
+    revisions = [
+        item for item in built.inventory.objects if item.kind == "catalog_revision"
+    ]
+    source_revision = next(
+        item
+        for item in revisions
+        if AssetRevision.from_json(
+            next(file.data for file in built.files if file.path == item.path).decode("utf-8")
+        ).ref
+        == _SOURCE_REF
+    )
+    wrong_asset_ref = next(
+        item.logical_ref
+        for item in assets
+        if item.logical_ref != source_revision.dependencies[0]
+    )
+    tampered_objects = tuple(
+        BundleInventoryObject(
+            item.kind,
+            item.logical_ref,
+            item.path,
+            dependencies=(wrong_asset_ref,) if item is source_revision else item.dependencies,
+            binding_requests=item.binding_requests,
         )
+        for item in built.inventory.objects
     )
+    inventory = BundleInventory(tampered_objects)
     bundle = tmp_path / "tampered.roninbundle"
-    write_bundle(
-        bundle,
-        (
-            BundleFile(
-                BUNDLE_INVENTORY_PATH,
-                INVENTORY_MEDIA_TYPE,
-                inventory.to_json().encode("utf-8"),
-            ),
-            BundleFile(
-                source_path,
-                CATALOG_ASSET_MEDIA_TYPE,
-                source.to_json().encode("utf-8"),
-            ),
-            BundleFile(
-                derived_path,
-                CATALOG_ASSET_MEDIA_TYPE,
-                derived.to_json().encode("utf-8"),
-            ),
-            BundleFile(
-                revision_path,
-                CATALOG_REVISION_MEDIA_TYPE,
-                source_revision.to_json().encode("utf-8"),
-            ),
-        ),
+    files = tuple(
+        BundleFile(
+            file.path,
+            file.media_type,
+            inventory.to_json().encode("utf-8")
+            if file.path == BUNDLE_INVENTORY_PATH
+            else file.data,
+        )
+        for file in built.files
     )
+    write_bundle(bundle, files)
     workspaces, catalog = _stores(tmp_path / "target.sqlite3")
 
-    with pytest.raises(UnsupportedCatalogBundle, match="logical identity|dependency"):
+    with pytest.raises(UnsupportedCatalogBundle, match="dependency"):
         plan_catalog_bundle_import(bundle, workspaces, catalog, _WS)
     assert catalog.list_assets(_WS) == ()
 
 
 def test_catalog_plan_rejects_missing_or_archived_target_workspace(tmp_path: Path) -> None:
     bundle = _export(tmp_path)
-    missing_catalog = SqliteCatalogStore(tmp_path / "missing.sqlite3", migration_now=_NOW)
-    missing_workspaces = SqliteWorkspaceStore(
-        tmp_path / "missing.sqlite3",
-        migration_now=_NOW,
-    )
+    missing_path = tmp_path / "missing.sqlite3"
+    missing_catalog = SqliteCatalogStore(missing_path, migration_now=_NOW)
+    missing_workspaces = SqliteWorkspaceStore(missing_path, migration_now=_NOW)
     with pytest.raises(CatalogBundleTargetError, match="does not exist"):
         plan_catalog_bundle_import(bundle, missing_workspaces, missing_catalog, _WS)
 
