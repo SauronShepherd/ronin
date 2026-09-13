@@ -145,6 +145,7 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
             connection.execute(
                 "INSERT INTO scheduler_backfill_plans("
                 "workspace_id,backfill_id,schedule_json,workflow_json,cursor_at,"
@@ -250,6 +251,7 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
             connection.execute(
                 "UPDATE scheduler_backfill_plans SET cursor_at=?,generation_complete=?,"
                 "updated_at=? WHERE workspace_id=? AND backfill_id=?",
@@ -286,8 +288,9 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
             row = connection.execute(
-                "SELECT b.*,p.max_concurrency FROM scheduler_backfills b "
+                "SELECT b.*,p.max_concurrency,p.schedule_json FROM scheduler_backfills b "
                 "JOIN scheduler_backfill_plans p ON p.workspace_id=b.workspace_id "
                 "AND p.backfill_id=b.backfill_id "
                 "WHERE b.workspace_id=? AND b.backfill_id=?",
@@ -297,13 +300,7 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
                 raise KeyError(str(backfill_id))
             request = BackfillRequest(
                 BackfillId(row["backfill_id"]),
-                schedule_id=Schedule.from_json(
-                    connection.execute(
-                        "SELECT schedule_json FROM scheduler_backfill_plans "
-                        "WHERE workspace_id=? AND backfill_id=?",
-                        (str(workspace_id), str(backfill_id)),
-                    ).fetchone()["schedule_json"]
-                ).id,
+                schedule_id=Schedule.from_json(row["schedule_json"]).id,
                 start_at=Instant(row["start_at"]),
                 end_at=Instant(row["end_at"]),
                 state=row["state"],
@@ -405,6 +402,7 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
             existing = connection.execute(
                 "SELECT run_json FROM workflow_runs WHERE workspace_id=? AND workflow_run_id=?",
                 (str(workspace_id), str(run.id)),
