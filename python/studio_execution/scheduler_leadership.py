@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
+from studio_core import WorkspaceId
 from studio_orchestrator import Instant, LeaseToken
 from studio_storage.scheduler_fencing import TaskAttemptId
 from studio_storage.scheduler_leadership import SchedulerLeaderLease, SchedulerLeadershipStore
@@ -36,7 +37,7 @@ class LeaderFencedSchedulerController(SchedulerController):
         self,
         lease: SchedulerLeaderLease,
         *,
-        workspace_id,
+        workspace_id: WorkspaceId,
         owner: str,
         lease_token: LeaseToken,
         attempt_id: TaskAttemptId,
