@@ -10,7 +10,7 @@ CREATE TABLE scheduler_backfills (
     row_version INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (workspace_id, backfill_id),
     FOREIGN KEY (workspace_id, schedule_id)
-        REFERENCES schedules(workspace_id, schedule_id) ON DELETE CASCADE
+        REFERENCES schedules(workspace_id, schedule_id)
 ) WITHOUT ROWID;
 
 CREATE TABLE scheduler_backfill_runs (
