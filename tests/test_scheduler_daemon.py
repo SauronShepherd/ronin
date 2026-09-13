@@ -39,7 +39,14 @@ class MutableClock:
         return self.value
 
 
-def _stores(tmp_path: Path):
+def _stores(
+    tmp_path: Path,
+) -> tuple[
+    SchedulerLeadershipStore,
+    SchedulerScheduleStore,
+    SchedulerEventStore,
+    SchedulerBackfillRuntimeStore,
+]:
     path = tmp_path / "ronin.sqlite3"
     workspaces = SqliteWorkspaceStore(path, migration_now=_T0)
     workspaces.create_workspace(Workspace(_WS, "Workspace"), now=_T0)
@@ -164,3 +171,77 @@ def test_daemon_schedule_work_runs_under_durable_leadership(tmp_path: Path) -> N
             await service.aclose()
 
     asyncio.run(scenario())
+
+
+def test_daemon_loop_renews_leadership_and_releases_on_shutdown(tmp_path: Path) -> None:
+    leadership, schedules, events, backfills = _stores(tmp_path)
+    clock = MutableClock(_T0)
+    work_calls = 0
+
+    def work_provider() -> SchedulerDaemonWork:
+        nonlocal work_calls
+        work_calls += 1
+        return SchedulerDaemonWork()
+
+    def stop_requested() -> bool:
+        return work_calls >= 2
+
+    async def sleep(_seconds: float) -> None:
+        clock.value = _T10
+
+    async def scenario() -> None:
+        service = DurableExecutionService(InMemoryJobStore())
+        try:
+            daemon = _daemon(
+                leadership_store=leadership,
+                schedule_store=schedules,
+                event_store=events,
+                backfill_store=backfills,
+                service=service,
+                owner="scheduler-a",
+                clock=clock,
+                token="leader-a",
+            )
+            result = await daemon.run_forever(
+                work_provider=work_provider,
+                stop_requested=stop_requested,
+                interval_seconds=1.0,
+                sleep=sleep,
+            )
+            assert result.cycles == 2
+            assert result.leader_cycles == 2
+            assert daemon.lease is None
+            durable = leadership.get_scheduler_leader()
+            assert durable is not None
+            assert durable.generation == 1
+            assert durable.lease_expires_at == _T10
+        finally:
+            await service.aclose()
+
+    asyncio.run(scenario())
+
+
+def test_immediate_release_remains_readable_and_next_acquire_increments_generation(
+    tmp_path: Path,
+) -> None:
+    leadership, _schedules, _events, _backfills = _stores(tmp_path)
+    first = leadership.acquire_scheduler_leadership(
+        owner="scheduler-a",
+        lease_token=LeaseToken("leader-a"),
+        lease_seconds=30,
+        now=_T0,
+    )
+    assert first is not None
+    leadership.release_scheduler_leadership(first, now=_T0)
+    released = leadership.get_scheduler_leader()
+    assert released is not None
+    assert released.lease_expires_at == released.acquired_at == _T0
+
+    second = leadership.acquire_scheduler_leadership(
+        owner="scheduler-b",
+        lease_token=LeaseToken("leader-b"),
+        lease_seconds=30,
+        now=_T0,
+    )
+    assert second is not None
+    assert second.generation == 2
