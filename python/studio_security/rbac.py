@@ -26,7 +26,6 @@ class RbacStore(Protocol):
         self,
         workspace_id: WorkspaceId,
         principal_id: PrincipalId,
-        groups: tuple[GroupId, ...],
     ) -> tuple[str, ...]: ...
 
 
@@ -42,7 +41,6 @@ class RbacAuthorizer:
         roles_raw = self._store.roles_for_actor(
             requirement.workspace_id,
             actor.principal.id,
-            actor.groups,
         )
         roles: list[WorkspaceRole] = []
         for value in roles_raw:
