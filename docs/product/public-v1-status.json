@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-13T08:29:48+02:00",
-  "observed_main_sha": "9345912c056393163a5305e32ab59baf1ba457cb",
+  "observed_at": "2026-09-13T08:40:06+02:00",
+  "observed_main_sha": "f94c5b2f249d593aae4d8d30f79ad7c71026c037",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "status_vocabulary": [
@@ -42,7 +42,7 @@
     {
       "id": "p5-durable-dag-scheduler",
       "status": "partial",
-      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation propagation, timeout enforcement, snapshot-safe bounded backfill generation, shared resource pools and durable leader lease/controller fencing exist; branching/notifications, continuous daemon renewal/full-service leader wrapping, group backfill cancellation, public scheduler APIs/UI and broad operator execution remain incomplete."
+      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration and group backfill cancellation exist; branching/notifications, broad operator execution, public scheduler APIs/UI, process/deployment wiring and PostgreSQL multi-node HA qualification remain incomplete."
     },
     {
       "id": "p6-catalog-lineage",
@@ -182,11 +182,16 @@
     268,
     269,
     270,
-    271
+    271,
+    272,
+    273,
+    274,
+    275,
+    276
   ],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
-    "Complete scheduler broader task adapters, branching/notifications, group backfill cancellation and a continuous leader-renewing daemon that fences cron/event/backfill/controller entrypoints.",
+    "Complete scheduler broad task adapters, branching/notifications, public scheduler APIs/UI, process/deployment wiring and PostgreSQL HA semantics/qualification.",
     "Complete semantic Ronin Bundle inventory, binding resolution and transactional import.",
     "Finish storage ports for remaining domains, then add PostgreSQL adapters and an S3-compatible artifact store.",
     "Implement Arrow/Parquet, a reference open lakehouse table profile and a reference SQL engine before broad vendor migration adapters.",

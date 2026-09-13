@@ -2,7 +2,7 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
-**Observed source head:** `9345912c056393163a5305e32ab59baf1ba457cb` (2026-09-13).  
+**Observed source head:** `f94c5b2f249d593aae4d8d30f79ad7c71026c037` (2026-09-13).  
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
@@ -25,7 +25,7 @@ This document records implementation state only. It does not claim test executio
 | Connectors/ingestion | partial | connection/discovery/checkpoint contracts and governed local CSV/JSONL path; remote connector matrix remains |
 | Lakehouse/SQL | missing | no supported Parquet/Iceberg/Delta + SQL engine path |
 | Data Engineering Studio | partial | notebook/pipeline execution foundations exist; authoring APIs and Web Studio remain |
-| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron, durable event inbox/delivery, cancellation propagation, timeout enforcement, snapshot-safe bounded backfill generation, shared resource pools and durable leader lease/controller fencing exist; branching/notifications, continuous daemon renewal/full-service leader wrapping, group backfill cancellation, public scheduler APIs/UI and broad operator execution remain |
+| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded cron/event/backfill/controller services, bounded and continuous daemon orchestration, and group backfill cancellation exist; branching/notifications, broad operator execution, public scheduler APIs/UI, process/signal/deployment wiring and PostgreSQL multi-node HA qualification remain |
 | Catalog/lineage | partial | governed assets/revisions and declared/observed lineage exist; search/glossary/classification/interoperability remain |
 | Ontology/KG | partial | object/property/link/action schema and persistence exist; instance resolution/query/materialization/actions remain |
 | Graph intelligence/RQL | missing | no supported parser/planner/runtime/provider path |
@@ -47,9 +47,9 @@ This document records implementation state only. It does not claim test executio
 
 ## Public v1 source work merged in the current construction sequence
 
-PRs **#242–#271** moved Public v1 from planning into source implementation. The later scheduler slices now include deterministic task→Job identity/linking (#259), durable execution outbox/reconciliation (#260), deployment-aware controller (#262), timezone-aware cron firing (#263), durable event inbox/delivery (#264), durable cancellation propagation (#265), timeout enforcement (#267), snapshot-safe bounded backfill generation (#268), shared resource pools (#270), and durable scheduler leader fencing/controller guard (#271). PR #266 also made Public v1 the active construction authority while preserving the historical v0.1 planning files verbatim.
+PRs **#242–#276** moved Public v1 from planning into source implementation. Later scheduler slices include deterministic task→Job identity/linking (#259), durable execution outbox/reconciliation (#260), deployment-aware controller (#262), timezone-aware cron firing (#263), durable event inbox/delivery (#264), cancellation propagation (#265), timeout enforcement (#267), snapshot-safe bounded backfill (#268), shared resource pools (#270), durable scheduler leader fencing (#271), leader guarding across cron/event/backfill services (#273), bounded leader-owning daemon orchestration (#274), continuous daemon loop/shutdown semantics (#275), and parent-first group backfill cancellation (#276). PR #266 made Public v1 the active construction authority while preserving the historical v0.1 planning files verbatim.
 
-These merges do **not** imply that their parent capability families are complete. In particular, the scheduler still lacks branching/skipped semantics, durable notifications, a continuous leader-renewing daemon with leader checks across cron/event/backfill entrypoints, public scheduler APIs/UI and a broad task adapter matrix; backfill cancellation does not yet cancel already-created workflow runs as a group. Bundle support still lacks complete project inventory/import binding resolution; storage ports do not constitute a PostgreSQL backend.
+These merges do **not** imply that their parent capability families are complete. The scheduler still lacks broad task adapters, branching/skipped semantics, durable notifications, public scheduler APIs/UI, production process/signal/deployment wiring and PostgreSQL multi-node HA qualification. Service-level leader checks occur immediately before cron/event/backfill mutations but are not one transaction with every underlying write; deterministic identities/idempotency remain the race backstop. Bundle support still lacks complete project inventory/import binding resolution; storage ports do not constitute a PostgreSQL backend.
 
 ## Invariants that remain mandatory
 
@@ -75,7 +75,7 @@ These merges do **not** imply that their parent capability families are complete
 ## Updated critical path
 
 1. Keep this ledger and the active construction plan synchronized with repository truth.
-2. Finish scheduler broader operator adapters, branching/notifications, group backfill cancellation and a continuous leader-renewing daemon that fences cron/event/backfill/controller entrypoints.
+2. Finish scheduler broad task adapters, branching/notifications, public scheduler APIs/UI, process/deployment wiring and PostgreSQL HA semantics/qualification.
 3. Complete native Ronin Bundle project inventory/import transaction and binding resolution.
 4. Complete store ports for remaining domains; then implement PostgreSQL adapters and an S3-compatible artifact store without changing logical references.
 5. Implement the first open data path: Arrow/Parquet + reference open table profile + reference SQL engine, with catalog/lineage/quality hooks.

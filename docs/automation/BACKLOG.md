@@ -1,6 +1,6 @@
 # Ronin Public v1 autonomous build backlog
 
-_Last synchronized: 2026-09-13 from main `9345912c056393163a5305e32ab59baf1ba457cb` after PR #271. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
+_Last synchronized: 2026-09-13 from main `f94c5b2f249d593aae4d8d30f79ad7c71026c037` after PR #276. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
 
 This backlog is the active implementation-selection surface for Public v1. The previous narrow v0.1 backlog is preserved verbatim at `docs/automation/history/V01_BACKLOG.md` and is historical evidence only.
 
@@ -20,12 +20,12 @@ This backlog is the active implementation-selection surface for Public v1. The p
 
 ## P5 — scheduler next
 
-- Continuous scheduler daemon with automatic leader acquisition/heartbeat/release and leader checks around cron, event, backfill and controller work.
-- Broader task execution adapters: SQL, connector sync, quality, code, ML, GenAI, graph/RQL, semantic refresh and notifications.
+- Broader task execution adapters as their canonical target runtimes become executable: SQL, connector sync, quality, code, ML, GenAI, graph/RQL, semantic refresh and notifications.
 - Explicit branching/skipped semantics if required by the final scheduler contract.
-- Durable failure notifications.
-- Backfill group cancellation for already-created workflow runs plus public backfill API/UI surfaces.
-- Public scheduler administration/run APIs and Web Studio surfaces.
+- Durable failure notifications integrated with the later alert/notification subsystem rather than inventing a parallel channel.
+- Public scheduler administration/run/backfill APIs and Web Studio surfaces.
+- Production process/signal/deployment wiring for the continuous daemon.
+- PostgreSQL multi-node leader/pool/claim semantics and HA qualification once the PostgreSQL metadata backend exists.
 
 Landed scheduler foundations to preserve:
 
@@ -33,7 +33,10 @@ Landed scheduler foundations to preserve:
 - timeout enforcement (#267): durable timeout intent before Job cancellation, timeout as scheduler failure/retry cause, user cancellation precedence;
 - snapshot-safe backfill (#268): frozen schedule/workflow definitions, independent cursor, bounded cron scan, transactional active-run cap and restart-safe fire recovery;
 - shared resource pools (#270): workspace-local pool capacity with atomic claim-time enforcement and fail-closed undefined pools;
-- leader fencing (#271): deployment-local durable lease with opaque token, monotonic generation and a leader-fenced bounded controller path.
+- leader fencing (#271): deployment-local durable lease with opaque token and monotonic generation;
+- guarded services (#273): leader checks immediately before cron/event/backfill mutations;
+- daemon orchestration (#274/#275): leader acquisition/renewal, guarded work cycles, continuous loop, contention retry and clean shutdown;
+- group backfill cancellation (#276): parent-first cancellation followed by existing child WorkflowRun/Job cancellation.
 
 ## Portability
 
