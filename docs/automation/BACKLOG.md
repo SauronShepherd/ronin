@@ -1,6 +1,6 @@
 # Ronin Public v1 autonomous build backlog
 
-_Last synchronized: 2026-09-13 from main `7455b3faa52b93a7e8edfa4d2b87b0fb1f74b26e` after PR #285. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
+_Last synchronized: 2026-09-13 from main `b7e861f11a1399553fba0292f2b86760cc04d747` after PR #288. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
 
 This backlog is the active implementation-selection surface for Public v1. The previous narrow v0.1 backlog is preserved verbatim at `docs/automation/history/V01_BACKLOG.md` and is historical evidence only.
 
@@ -33,17 +33,18 @@ Landed native Bundle foundations:
 
 - project semantic inventory/export, verified planning, runtime remapping and atomic project/environment-binding commit (#278–#280);
 - connection semantic inventory/export/import with exact secret-reference remapping and no secret material (#282);
-- deterministic topological staging for supported project+connection objects with cycle/unknown-kind rejection (#283);
-- provider-neutral atomic multi-object commit contract and one-transaction SQLite reference adapter for resolved connections, projects and project/environment bindings (#285).
+- deterministic topological staging plus provider-neutral one-transaction project+connection commit (#283/#285);
+- explicit catalog revision-subgraph export/planning for assets, revisions and internal lineage (#287);
+- provider-neutral atomic catalog commit plus SQLite one-transaction asset/revision/lineage adapter (#288).
 
 Next portability work:
 
-- extend the same fail-closed inventory/planning/commit model to catalog assets/revisions/lineage, whose canonical identities and SQLite store already exist;
-- preserve catalog dependencies through semantic inventory rather than inventing physical relationships;
-- add PostgreSQL implementation of the multi-object commit port only after the PostgreSQL metadata backend exists;
-- extend to workflow/quality/ontology/ML/GenAI and later data/semantic assets only when target contracts can round-trip honestly;
+- inspect workflow/pipeline snapshot and persistence contracts; add Bundle coverage only if canonical identity remains independent of deployment locators and scheduler runtime state;
+- otherwise move to the next metadata family whose canonical JSON/store semantics are complete enough for honest round-trip, such as quality/ontology/ML/GenAI metadata;
+- keep catalog export explicit by selected `AssetRef` until a provider-neutral complete revision-discovery contract actually exists;
+- add PostgreSQL implementations of Bundle commit ports only after the PostgreSQL metadata backend exists;
 - certify Ronin-native lossless Bundle round-trip only when exact-head qualification is authorized and executed;
-- do not invent project/connection/catalog ID remapping policy without an explicit portable identity decision.
+- do not invent ID remapping policies without explicit portable identity decisions.
 
 ## Data plane
 
