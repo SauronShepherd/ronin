@@ -208,10 +208,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
         self,
         workspace_id: WorkspaceId,
         pool_name: str,
-        *,
-        now: Instant | str,
     ) -> int:
-        Instant(now)
         connection = self._connect()
         try:
             row = connection.execute(
