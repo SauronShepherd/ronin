@@ -241,6 +241,44 @@ def test_connection_bundle_rejects_secret_requests_that_do_not_match_payload(
     assert connections.get_connection(_WS, _CONNECTION) is None
 
 
+def test_connection_bundle_rejects_unsupported_semantic_dependencies(tmp_path: Path) -> None:
+    definition = _definition()
+    logical_ref = f"connection:{_CONNECTION}"
+    object_path = "objects/connection/connection.json"
+    inventory = BundleInventory(
+        (
+            BundleInventoryObject(
+                "connection",
+                logical_ref,
+                object_path,
+                dependencies=(logical_ref,),
+                binding_requests=(BindingRequest("secret", str(_SOURCE_SECRET)),),
+            ),
+        )
+    )
+    bundle = tmp_path / "dependency.roninbundle"
+    write_bundle(
+        bundle,
+        (
+            BundleFile(
+                BUNDLE_INVENTORY_PATH,
+                INVENTORY_MEDIA_TYPE,
+                inventory.to_json().encode("utf-8"),
+            ),
+            BundleFile(
+                object_path,
+                CONNECTION_BUNDLE_MEDIA_TYPE,
+                definition.to_json().encode("utf-8"),
+            ),
+        ),
+    )
+    workspaces, connections = _stores(tmp_path / "target.sqlite3")
+
+    with pytest.raises(UnsupportedConnectionBundle, match="dependencies"):
+        plan_connection_bundle_import(bundle, workspaces, connections, _WS)
+    assert connections.get_connection(_WS, _CONNECTION) is None
+
+
 def test_connection_without_secret_refs_imports_without_fabricated_binding(
     tmp_path: Path,
 ) -> None:
