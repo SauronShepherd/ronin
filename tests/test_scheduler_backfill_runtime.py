@@ -95,12 +95,16 @@ def test_backfill_generation_respects_active_run_cap_and_independent_cursor(
     blocked = asyncio.run(service.tick(_WS, BackfillId("backfill-1"), now=_T0))
     assert blocked.fires == ()
     assert blocked.active_runs == 1
-    assert store.get_backfill_plan(_WS, BackfillId("backfill-1")).cursor_at == _T0  # type: ignore[union-attr]
+    plan = store.get_backfill_plan(_WS, BackfillId("backfill-1"))
+    assert plan is not None
+    assert plan.cursor_at == _T0
 
     _complete_one(store, 1, _T0)
     second = asyncio.run(service.tick(_WS, BackfillId("backfill-1"), now=_T1))
     assert [run.logical_time for run in second.fires] == [_T1]
-    assert store.get_backfill_plan(_WS, BackfillId("backfill-1")).cursor_at == _T1  # type: ignore[union-attr]
+    plan = store.get_backfill_plan(_WS, BackfillId("backfill-1"))
+    assert plan is not None
+    assert plan.cursor_at == _T1
 
     _complete_one(store, 2, _T1)
     third = asyncio.run(service.tick(_WS, BackfillId("backfill-1"), now=_T2))
@@ -116,6 +120,29 @@ def test_backfill_generation_respects_active_run_cap_and_independent_cursor(
     assert request is not None
     assert request.state == "completed"
     assert store.get_schedule_cursor(_WS, ScheduleId("schedule-1")) is None
+
+
+def test_backfill_tick_recovers_created_fire_before_advancing_cursor(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    created = store.create_snapshot_backfill_run(
+        _WS,
+        BackfillId("backfill-1"),
+        logical_time=_T0,
+        now=_T0,
+    )
+    assert created.logical_time == _T0
+    plan = store.get_backfill_plan(_WS, BackfillId("backfill-1"))
+    assert plan is not None
+    assert plan.cursor_at is None
+
+    result = asyncio.run(
+        SchedulerBackfillService(store).tick(_WS, BackfillId("backfill-1"), now=_T0)
+    )
+    assert result.fires == ()
+    assert result.active_runs == 1
+    plan = store.get_backfill_plan(_WS, BackfillId("backfill-1"))
+    assert plan is not None
+    assert plan.cursor_at == _T0
 
 
 def test_backfill_runs_use_workflow_snapshot_from_plan_creation(tmp_path: Path) -> None:
