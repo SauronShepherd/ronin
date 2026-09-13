@@ -13,14 +13,14 @@ class KafkaDependencyError(RuntimeError):
     """Raised when the optional confluent-kafka runtime is unavailable."""
 
 
-def _kafka() -> tuple[Any, Any, int]:
+def _kafka() -> tuple[Any, Any, int, int]:
     try:
-        from confluent_kafka import Consumer, KafkaError, TopicPartition
+        from confluent_kafka import Consumer, KafkaError, OFFSET_BEGINNING, TopicPartition
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise KafkaDependencyError(
             "Kafka streaming support requires the optional Ronin streaming dependencies"
         ) from exc
-    return Consumer, TopicPartition, KafkaError._PARTITION_EOF
+    return Consumer, TopicPartition, KafkaError._PARTITION_EOF, OFFSET_BEGINNING
 
 
 def _text(value: str, name: str) -> str:
@@ -80,7 +80,7 @@ class KafkaJsonSource:
             raise ValueError("Kafka poll limit must be between 1 and 100000")
         if timeout_seconds < 0 or timeout_seconds > 300:
             raise ValueError("Kafka poll timeout_seconds must be in [0, 300]")
-        Consumer, TopicPartition, partition_eof = _kafka()
+        Consumer, TopicPartition, partition_eof, offset_beginning = _kafka()
         config: dict[str, object] = {
             "bootstrap.servers": self._bootstrap_servers,
             "group.id": self._group_id,
@@ -95,7 +95,7 @@ class KafkaJsonSource:
             assignments = []
             for partition in self._partitions:
                 previous = checkpoint.offset_for(partition)
-                offset = -2 if previous is None else previous + 1  # OFFSET_BEGINNING == -2
+                offset = offset_beginning if previous is None else previous + 1
                 assignments.append(TopicPartition(self._topic, partition, offset))
             consumer.assign(assignments)
             messages = consumer.consume(num_messages=limit, timeout=timeout_seconds)
@@ -129,18 +129,12 @@ class KafkaJsonSource:
                     key = str(key_raw)
                 timestamp_type, timestamp_value = message.timestamp()
                 del timestamp_type
-                timestamp_ms = None if timestamp_value is None or timestamp_value < 0 else int(timestamp_value)
+                timestamp_ms = (
+                    None if timestamp_value is None or timestamp_value < 0 else int(timestamp_value)
+                )
                 partition = int(message.partition())
                 offset = int(message.offset())
-                records.append(
-                    StreamRecord(
-                        partition,
-                        offset,
-                        timestamp_ms,
-                        key,
-                        value,
-                    )
-                )
+                records.append(StreamRecord(partition, offset, timestamp_ms, key, value))
                 latest[partition] = max(latest.get(partition, -1), offset)
             if not records:
                 return StreamBatch((), checkpoint)
