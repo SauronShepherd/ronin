@@ -27,6 +27,17 @@ class SqliteWorkflowBundleImportStore(SqliteWorkspaceStore, SqliteSchedulerStore
         finally:
             connection.close()
 
+    def list_schedules(self, workspace_id: WorkspaceId) -> tuple[Schedule, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT schedule_json FROM schedules WHERE workspace_id=? ORDER BY schedule_id",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(Schedule.from_json(row["schedule_json"]) for row in rows)
+        finally:
+            connection.close()
+
     def commit_workflow_import(
         self,
         workspace_id: WorkspaceId,
