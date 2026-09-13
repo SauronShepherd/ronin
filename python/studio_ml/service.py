@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping, Sequence
 from typing import Protocol, runtime_checkable
 
@@ -17,7 +18,6 @@ from studio_core.ml import (
     RegisteredModelVersion,
 )
 from studio_orchestrator import Instant
-from studio_storage.artifacts import ArtifactRef
 from studio_storage.ports import ArtifactStore
 
 from .runtime import TrainingSpec, predict_tabular, train_tabular
@@ -53,7 +53,10 @@ class MLModelNotFound(KeyError):
     """Raised when inference references a model version absent from registry."""
 
 
-def _input_signature(rows: Sequence[Mapping[str, object]], features: tuple[str, ...]) -> tuple[tuple[str, str], ...]:
+def _input_signature(
+    rows: Sequence[Mapping[str, object]],
+    features: tuple[str, ...],
+) -> tuple[tuple[str, str], ...]:
     if not rows:
         raise ValueError("ML signature inference requires at least one row")
     first = rows[0]
@@ -136,31 +139,33 @@ def train_register_tabular(
 
 def predict_registered_tabular(
     registry: MLRegistryStore,
-    artifacts: ArtifactStore,
     workspace_id: WorkspaceId,
     model_id: ModelId,
     model_version: ModelVersion,
+    artifact_bytes: bytes,
     rows: Sequence[Mapping[str, object]],
 ) -> tuple[object, ...]:
-    """Load a registered content-addressed model artifact and run bounded local inference."""
+    """Verify bytes against registry metadata, then run trusted local inference.
+
+    Artifact retrieval is deliberately kept outside this function because the current
+    registered-model contract stores a content digest/ref but not the full ArtifactRef
+    metadata required by every ArtifactStore implementation.
+    """
 
     model = registry.get_model(workspace_id, model_id, model_version)
     if model is None:
         raise MLModelNotFound(f"{model_id}@{model_version}")
     if model.framework != "sklearn":
         raise ValueError(f"unsupported local inference framework: {model.framework}")
-    artifact = ArtifactRef(
-        role="model",
-        digest_algorithm="sha256",
-        digest=model.artifact_digest,
-        media_type="application/vnd.ronin.sklearn-tabular+pickle",
-        size_bytes=0,
-        storage_ref=model.artifact_ref,
-    )
-    # ArtifactStore implementations validate integrity; size is not part of registry metadata yet.
-    data = artifacts.get_bytes(artifact)
+    digest = hashlib.sha256(artifact_bytes).hexdigest()
+    if digest != model.artifact_digest:
+        raise ValueError("model artifact digest does not match registered model")
     expected_features = tuple(name for name, _ in model.signature.inputs)
-    return predict_tabular(data, rows, expected_features=expected_features)
+    return predict_tabular(
+        artifact_bytes,
+        rows,
+        expected_features=expected_features,
+    )
 
 
 __all__ = (
