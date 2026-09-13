@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
 from studio_core import ProjectManifest, WorkspaceId
 from studio_core.environments import EnvironmentDefinition, ProjectEnvironmentBindings
 from studio_orchestrator import Instant
 
+from .bundle_import_port import ProjectBundleImportCommit
 from .environments import migrate_environments
 from .sqlite import open_database
 from .workspaces import SqliteWorkspaceStore, migrate_workspaces
@@ -16,12 +16,6 @@ from .workspaces import SqliteWorkspaceStore, migrate_workspaces
 
 class ProjectBundleImportConflict(RuntimeError):
     """Raised when target state changed or conflicts with a planned native import."""
-
-
-@dataclass(frozen=True, slots=True)
-class ProjectBundleImportCommit:
-    project_created: bool
-    bindings_created: bool
 
 
 class SqliteProjectBundleImportStore(SqliteWorkspaceStore):
@@ -136,8 +130,4 @@ class SqliteProjectBundleImportStore(SqliteWorkspaceStore):
             connection.close()
 
 
-__all__ = (
-    "ProjectBundleImportCommit",
-    "ProjectBundleImportConflict",
-    "SqliteProjectBundleImportStore",
-)
+__all__ = ("ProjectBundleImportConflict", "SqliteProjectBundleImportStore")
