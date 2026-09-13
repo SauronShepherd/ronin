@@ -8,9 +8,10 @@ content-addressed artifacts; this runtime never loads arbitrary external pickle 
 from __future__ import annotations
 
 import pickle
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from math import sqrt
+from math import ceil, sqrt
 from typing import Any, Literal, TypeAlias
 
 TaskKind: TypeAlias = Literal["classification", "regression"]
@@ -131,6 +132,37 @@ def _matrix(
     return features, targets
 
 
+def _validate_split_feasibility(targets: Sequence[object], spec: TrainingSpec) -> None:
+    row_count = len(targets)
+    test_count = ceil(row_count * spec.test_fraction)
+    train_count = row_count - test_count
+
+    if spec.task == "regression":
+        if test_count < 2:
+            raise ValueError(
+                "regression evaluation requires at least two test rows for the mandatory R2 metric; "
+                "increase the dataset size or test_fraction"
+            )
+        return
+
+    class_counts = Counter(repr(value) for value in targets)
+    class_count = len(class_counts)
+    if min(class_counts.values()) < 2:
+        raise ValueError(
+            "classification stratification requires at least two rows in every target class"
+        )
+    if train_count < class_count:
+        raise ValueError(
+            "classification training split must contain at least one row per target class; "
+            "increase the dataset size or reduce test_fraction"
+        )
+    if test_count < class_count:
+        raise ValueError(
+            "classification test split must contain at least one row per target class; "
+            "increase the dataset size or test_fraction"
+        )
+
+
 def train_tabular(
     rows: Sequence[Mapping[str, object]],
     spec: TrainingSpec,
@@ -139,6 +171,7 @@ def train_tabular(
 
     sk = _sklearn()
     x, y = _matrix(rows, spec)
+    _validate_split_feasibility(y, spec)
     stratify = y if spec.task == "classification" else None
     x_train, x_test, y_train, y_test = sk["train_test_split"](
         x,
