@@ -27,6 +27,9 @@ open-tables = [
 ml = [
   "scikit-learn>=1.5,<2",
 ]
+security = [
+  "PyJWT[crypto]>=2.10,<3",
+]
 streaming = [
   "confluent-kafka>=2,<4",
 ]
@@ -77,6 +80,7 @@ packages = [
   "studio_kernel",
   "studio_orchestrator",
   "studio_quality",
+  "studio_security",
   "studio_semantic",
   "studio_sql",
   "studio_storage",
@@ -109,6 +113,7 @@ source = [
   "studio_runners",
   "studio_orchestrator",
   "studio_quality",
+  "studio_security",
   "studio_semantic",
   "studio_sql",
   "studio_storage",
