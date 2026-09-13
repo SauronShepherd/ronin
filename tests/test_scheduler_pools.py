@@ -100,7 +100,7 @@ def test_pool_capacity_is_reserved_with_task_claim_and_released_on_completion(
     )
     assert first is not None
     assert first.pool_name == "gpu"
-    assert store.resource_pool_usage(_WS, "gpu", now=_T10) == 1
+    assert store.resource_pool_usage(_WS, "gpu") == 1
 
     blocked = store.claim_next_task(
         owner="worker-2",
@@ -121,7 +121,7 @@ def test_pool_capacity_is_reserved_with_task_claim_and_released_on_completion(
         failure_code=None,
         now=_T10,
     )
-    assert store.resource_pool_usage(_WS, "gpu", now=_T10) == 0
+    assert store.resource_pool_usage(_WS, "gpu") == 0
 
     second = store.claim_next_task(
         owner="worker-2",
@@ -161,7 +161,7 @@ def test_expired_pool_slot_is_reclaimed_before_next_claim(tmp_path: Path) -> Non
     assert second is not None
     assert second.workflow_run_id == WorkflowRunId("run-2")
     assert second.pool_name == "gpu"
-    assert store.resource_pool_usage(_WS, "gpu", now=_T31) == 1
+    assert store.resource_pool_usage(_WS, "gpu") == 1
 
 
 def test_execution_linked_attempt_keeps_pool_slot_after_lease_timestamp(tmp_path: Path) -> None:
@@ -191,7 +191,7 @@ def test_execution_linked_attempt_keeps_pool_slot_after_lease_timestamp(tmp_path
         now=_T0,
     )
 
-    assert store.resource_pool_usage(_WS, "gpu", now=_T31) == 1
+    assert store.resource_pool_usage(_WS, "gpu") == 1
     assert (
         store.claim_next_task(
             owner="controller-2",
@@ -203,4 +203,4 @@ def test_execution_linked_attempt_keeps_pool_slot_after_lease_timestamp(tmp_path
         )
         is None
     )
-    assert store.resource_pool_usage(_WS, "gpu", now=_T31) == 1
+    assert store.resource_pool_usage(_WS, "gpu") == 1
