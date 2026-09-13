@@ -17,8 +17,11 @@ from .scheduler_execution import (
 from .sqlite import open_database
 from .workspaces import WorkspaceNotFound
 
-_CONTROLLER_SCHEMA_VERSION = 1
-_CONTROLLER_MIGRATIONS = {1: "scheduler_controller_001.sql"}
+_CONTROLLER_SCHEMA_VERSION = 2
+_CONTROLLER_MIGRATIONS = {
+    1: "scheduler_controller_001.sql",
+    2: "scheduler_controller_002_timeouts.sql",
+}
 
 
 class WorkflowDeploymentConflict(RuntimeError):
