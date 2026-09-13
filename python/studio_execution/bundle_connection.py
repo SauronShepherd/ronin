@@ -207,6 +207,10 @@ def plan_connection_bundle_import(
             "native connection importer requires exactly one supported connection object"
         )
     item = inventory.objects[0]
+    if item.dependencies:
+        raise UnsupportedConnectionBundle(
+            "native connection importer does not support semantic object dependencies"
+        )
 
     connection_payload = read_bundle_payload(
         bundle_path,
