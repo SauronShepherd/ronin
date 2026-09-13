@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 from typing import Protocol
 
-from studio_orchestrator import Instant, Job, JobId, Run
+from studio_orchestrator import Instant, Job, JobId, JobState, Run
+from studio_storage.scheduler_cancellation import reconcile_cancelled_execution
 from studio_storage.scheduler_execution import (
     SchedulerExecutionLinkStore,
     TaskExecutionIntent,
@@ -42,6 +43,15 @@ async def reconcile_execution_intent(
     job = await service.status(intent.job.id)
     if job is None:
         return False
+    if job.state is JobState.CANCELLED:
+        return await asyncio.to_thread(
+            reconcile_cancelled_execution,
+            scheduler,
+            intent.workspace_id,
+            intent.task_attempt_id,
+            job,
+            now=now,
+        )
     return await asyncio.to_thread(
         scheduler.reconcile_execution,
         intent.workspace_id,
