@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-12T23:04:55+02:00",
-  "observed_main_sha": "0d84f80c7d3aae8f1d52f4c097ed56393c6c0c95",
+  "observed_at": "2026-09-13T07:20:00+02:00",
+  "observed_main_sha": "46accf1f45a2863902bcfc9c3a5f2c2c76eb8bcd",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "status_vocabulary": [
@@ -14,172 +14,46 @@
   ],
   "release_rule": "Ronin Public v1 remains incomplete while any mandatory capability family lacks an end-to-end supported path.",
   "capabilities": [
-    {
-      "id": "execution-foundation",
-      "status": "implemented",
-      "summary": "Durable Job/Run/Attempt lifecycle, local/container execution, leases, heartbeat, fencing, reclaim, resume, cancellation, evidence and project-scoped HTTP/CLI/SDK foundation."
-    },
-    {
-      "id": "p1-workspace-project-source-control",
-      "status": "partial",
-      "summary": "Workspace/project persistence, project manifests, Git identity, environments and deployment bindings exist; Public v1 API/UI, complete source-control lifecycle and multi-user membership remain incomplete."
-    },
-    {
-      "id": "p2-connectors-ingestion",
-      "status": "partial",
-      "summary": "Provider-neutral connection/discovery/checkpoint contracts and governed local CSV/JSONL ingestion exist; PostgreSQL/JDBC/object-store/HTTP connector matrix and full incremental execution remain incomplete."
-    },
-    {
-      "id": "p3-lakehouse-sql",
-      "status": "missing",
-      "summary": "No supported Parquet/Iceberg/Delta table lifecycle and no supported SQL engine path yet."
-    },
-    {
-      "id": "p4-data-engineering-studio",
-      "status": "partial",
-      "summary": "Notebook execution and pipeline IR foundations exist; notebook/SQL/pipeline CRUD APIs and Web Studio authoring surfaces remain incomplete."
-    },
-    {
-      "id": "p5-durable-dag-scheduler",
-      "status": "partial",
-      "summary": "Durable workflow snapshots, schedules/triggers, task runs, lease-fenced attempts, retries, dependency readiness, deterministic execution planning, durable execution outbox and terminal Job reconciliation exist. Cron loop, event loop, backfill, pools, cancellation, timeouts, leadership and full operator execution matrix remain incomplete."
-    },
-    {
-      "id": "p6-catalog-lineage",
-      "status": "partial",
-      "summary": "Persistent governed asset/revision identity and declared/observed lineage exist; search/glossary/classification, richer traversal, OpenLineage interoperability and complete asset-family integration remain incomplete."
-    },
-    {
-      "id": "p6-ontology-knowledge-graph",
-      "status": "partial",
-      "summary": "Ontology object/property/link/action schemas and persistence exist; interfaces, object-instance resolution, KG querying/materialization and governed action execution remain incomplete."
-    },
-    {
-      "id": "graph-intelligence-rql",
-      "status": "missing",
-      "summary": "No current supported RQL parser/planner/execution/provider path."
-    },
-    {
-      "id": "p7-data-quality-contracts",
-      "status": "partial",
-      "summary": "Versioned contracts/rules/results and persistence exist; rule execution, scheduler gating, alerts and UI remain incomplete."
-    },
-    {
-      "id": "p8-ai-ml-mlops",
-      "status": "partial",
-      "summary": "Experiment/run/model/evaluation metadata and provenance persistence exist; training, features, MLflow interoperability, inference and serving remain incomplete."
-    },
-    {
-      "id": "p9-genai-rag-agents",
-      "status": "partial",
-      "summary": "Provider/prompt/vector/RAG/tool/agent contracts and persistence exist; provider execution, indexing, retrieval, evaluation, agent loop, tool execution and token/cost telemetry remain incomplete."
-    },
-    {
-      "id": "p10-semantic-models-dashboards",
-      "status": "missing",
-      "summary": "No supported semantic compiler/metrics service/dashboard runtime path."
-    },
-    {
-      "id": "p11-streaming-real-time",
-      "status": "missing",
-      "summary": "No supported stream processor, durable offset/window/table-sink path or event-trigger runtime."
-    },
-    {
-      "id": "p12-observability-alerts-finops",
-      "status": "partial",
-      "summary": "Execution evidence and observed container CPU/memory foundations exist; normalized telemetry, alert engine, notification adapters, cost records and budgets remain incomplete."
-    },
-    {
-      "id": "p13-multi-user-security-audit",
-      "status": "partial",
-      "summary": "Typed grants, bearer authorization, transport policy, secret-reference resolver and append-only audit foundations exist; OIDC, users/groups/service identities, role administration, automatic audit instrumentation and production secret backends remain incomplete."
-    },
-    {
-      "id": "p14-deployment-operations",
-      "status": "partial",
-      "summary": "Local/container/Compose foundation exists; provider-neutral store ports have begun. PostgreSQL metadata adapters, shared object storage, Kubernetes/Helm, scheduler HA and backup/restore remain incomplete."
-    },
-    {
-      "id": "ronin-bundle",
-      "status": "partial",
-      "summary": "Canonical manifest/migration semantics plus deterministic verified archive IO exist; complete project/asset inventory building and binding-resolution import workflow remain incomplete."
-    },
-    {
-      "id": "migration-microsoft-fabric",
-      "status": "missing",
-      "summary": "No certified discovery/import/export adapter."
-    },
-    {
-      "id": "migration-databricks",
-      "status": "missing",
-      "summary": "No certified discovery/import/export adapter."
-    },
-    {
-      "id": "migration-palantir-foundry-aip",
-      "status": "missing",
-      "summary": "No certified discovery/import/export adapter."
-    },
-    {
-      "id": "migration-dataiku-dss",
-      "status": "missing",
-      "summary": "No certified discovery/import/export adapter."
-    },
-    {
-      "id": "web-studio",
-      "status": "missing",
-      "summary": "No current web application tree or supported Public v1 Studio journeys."
-    },
-    {
-      "id": "public-v1-release-qualification",
-      "status": "blocked",
-      "summary": "GitHub Actions remain disabled, main is unprotected, current exact-head automated qualification is absent, and release/security/legal evidence still requires blocked or human-owned work."
-    }
+    {"id":"execution-foundation","status":"implemented","summary":"Durable Job/Run/Attempt lifecycle, local/container execution, leases, heartbeat, fencing, reclaim, resume, cancellation, evidence and project-scoped HTTP/CLI/SDK foundation."},
+    {"id":"p1-workspace-project-source-control","status":"partial","summary":"Workspace/project persistence, project manifests, Git identity, environments and deployment bindings exist; Public v1 API/UI, complete source-control lifecycle and multi-user membership remain incomplete."},
+    {"id":"p2-connectors-ingestion","status":"partial","summary":"Provider-neutral connection/discovery/checkpoint contracts and governed local CSV/JSONL ingestion exist; PostgreSQL/JDBC/object-store/HTTP connector matrix and full incremental execution remain incomplete."},
+    {"id":"p3-lakehouse-sql","status":"missing","summary":"No supported Parquet/Iceberg/Delta table lifecycle and no supported SQL engine path yet."},
+    {"id":"p4-data-engineering-studio","status":"partial","summary":"Notebook execution and pipeline IR foundations exist; notebook/SQL/pipeline CRUD APIs and Web Studio authoring surfaces remain incomplete."},
+    {"id":"p5-durable-dag-scheduler","status":"partial","summary":"Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron firing and durable event inbox/delivery exist; backfill, pools, cancellation propagation, timeout enforcement, leadership and broad operator execution remain incomplete."},
+    {"id":"p6-catalog-lineage","status":"partial","summary":"Persistent governed asset/revision identity and declared/observed lineage exist; search/glossary/classification, richer traversal, OpenLineage interoperability and complete asset-family integration remain incomplete."},
+    {"id":"p6-ontology-knowledge-graph","status":"partial","summary":"Ontology object/property/link/action schemas and persistence exist; interfaces, object-instance resolution, KG querying/materialization and governed action execution remain incomplete."},
+    {"id":"graph-intelligence-rql","status":"missing","summary":"No current supported RQL parser/planner/execution/provider path."},
+    {"id":"p7-data-quality-contracts","status":"partial","summary":"Versioned contracts/rules/results and persistence exist; rule execution, scheduler gating, alerts and UI remain incomplete."},
+    {"id":"p8-ai-ml-mlops","status":"partial","summary":"Experiment/run/model/evaluation metadata and provenance persistence exist; training, features, MLflow interoperability, inference and serving remain incomplete."},
+    {"id":"p9-genai-rag-agents","status":"partial","summary":"Provider/prompt/vector/RAG/tool/agent contracts and persistence exist; provider execution, indexing, retrieval, evaluation, agent loop, tool execution and token/cost telemetry remain incomplete."},
+    {"id":"p10-semantic-models-dashboards","status":"missing","summary":"No supported semantic compiler/metrics service/dashboard runtime path."},
+    {"id":"p11-streaming-real-time","status":"missing","summary":"No supported stream processor, durable offset/window/table-sink path or event-trigger runtime."},
+    {"id":"p12-observability-alerts-finops","status":"partial","summary":"Execution evidence and observed container CPU/memory foundations exist; normalized telemetry, alert engine, notification adapters, cost records and budgets remain incomplete."},
+    {"id":"p13-multi-user-security-audit","status":"partial","summary":"Typed grants, bearer authorization, transport policy, secret-reference resolver and append-only audit foundations exist; OIDC, users/groups/service identities, role administration, automatic audit instrumentation and production secret backends remain incomplete."},
+    {"id":"p14-deployment-operations","status":"partial","summary":"Local/container/Compose foundation exists; provider-neutral store ports have begun. PostgreSQL metadata adapters, shared object storage, Kubernetes/Helm, scheduler HA and backup/restore remain incomplete."},
+    {"id":"ronin-bundle","status":"partial","summary":"Canonical manifest/migration semantics plus deterministic verified archive IO exist; complete project/asset inventory building and binding-resolution import workflow remain incomplete."},
+    {"id":"migration-microsoft-fabric","status":"missing","summary":"No certified discovery/import/export adapter."},
+    {"id":"migration-databricks","status":"missing","summary":"No certified discovery/import/export adapter."},
+    {"id":"migration-palantir-foundry-aip","status":"missing","summary":"No certified discovery/import/export adapter."},
+    {"id":"migration-dataiku-dss","status":"missing","summary":"No certified discovery/import/export adapter."},
+    {"id":"web-studio","status":"missing","summary":"No current web application tree or supported Public v1 Studio journeys."},
+    {"id":"public-v1-release-qualification","status":"blocked","summary":"GitHub Actions remain disabled, main is unprotected, current exact-head automated qualification is absent, and release/security/legal evidence still requires blocked or human-owned work."}
   ],
   "human_decisions": [
-    {
-      "issue": 50,
-      "summary": "Runtime capability namespace, value semantics and ambiguity policy."
-    },
-    {
-      "issue": 62,
-      "summary": "Language-neutral runner protocol family and compatibility semantics."
-    },
-    {
-      "issue": 45,
-      "summary": "Select and verify a real private vulnerability-reporting route."
-    },
-    {
-      "summary": "License/NOTICE/attribution conclusions and release approval remain human review decisions."
-    }
+    {"issue":50,"summary":"Runtime capability namespace, value semantics and ambiguity policy."},
+    {"issue":62,"summary":"Language-neutral runner protocol family and compatibility semantics."},
+    {"issue":45,"summary":"Select and verify a real private vulnerability-reporting route."},
+    {"summary":"License/NOTICE/attribution conclusions and release approval remain human review decisions."}
   ],
-  "recent_public_v1_merges": [
-    242,
-    243,
-    244,
-    245,
-    246,
-    247,
-    248,
-    249,
-    250,
-    251,
-    252,
-    253,
-    254,
-    255,
-    256,
-    257,
-    258,
-    259,
-    260
-  ],
+  "recent_public_v1_merges": [242,243,244,245,246,247,248,249,250,251,252,253,254,255,256,257,258,259,260,261,262,263,264],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
-    "Complete scheduler controller loops: durable schedule firing, event triggers, backfills, pools, cancellation, timeout and leadership.",
-    "Complete scheduler notebook execution path around the execution outbox and add explicit operator discovery/registration.",
-    "Finish storage ports for scheduler, quality, ontology, audit, ML and GenAI, then add PostgreSQL adapters.",
-    "Implement the first open lakehouse/SQL path before broad vendor migration adapters.",
-    "Expand Public v1 API and start the Web Studio against documented APIs.",
+    "Complete scheduler cancellation, timeout, pools, backfill, broader task adapters and leader fencing.",
+    "Complete semantic Ronin Bundle inventory, binding resolution and transactional import.",
+    "Finish storage ports for remaining domains, then add PostgreSQL adapters and an S3-compatible artifact store.",
+    "Implement Arrow/Parquet, a reference open lakehouse table profile and a reference SQL engine before broad vendor migration adapters.",
+    "Complete remote connectors and safe incremental checkpoint execution.",
+    "Expand Public v1 API and start Web Studio against documented/generated APIs.",
     "Implement remaining quality, ontology/KG/RQL, ML, GenAI, semantic, streaming, observability/alerts/FinOps and security runtime paths.",
     "Implement Kubernetes and four certified migration profiles only after their canonical target capabilities execute end to end.",
     "Restore exact-head CI/release qualification only with maintainer authorization and do not claim release readiness before it exists."
