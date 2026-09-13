@@ -8,14 +8,10 @@ from studio_core import ProjectManifest, WorkspaceId
 from studio_core.environments import EnvironmentDefinition, ProjectEnvironmentBindings
 from studio_orchestrator import Instant
 
-from .bundle_import_port import ProjectBundleImportCommit
+from .bundle_import_port import ProjectBundleImportCommit, ProjectBundleImportConflict
 from .environments import migrate_environments
 from .sqlite import open_database
 from .workspaces import SqliteWorkspaceStore, migrate_workspaces
-
-
-class ProjectBundleImportConflict(RuntimeError):
-    """Raised when target state changed or conflicts with a planned native import."""
 
 
 class SqliteProjectBundleImportStore(SqliteWorkspaceStore):
@@ -130,4 +126,4 @@ class SqliteProjectBundleImportStore(SqliteWorkspaceStore):
             connection.close()
 
 
-__all__ = ("ProjectBundleImportConflict", "SqliteProjectBundleImportStore")
+__all__ = ("SqliteProjectBundleImportStore",)
