@@ -1,6 +1,6 @@
 # Ronin Public v1 construction plan
 
-_Last synchronized: 2026-09-13 from main `f94c5b2f249d593aae4d8d30f79ad7c71026c037` after PR #276. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`. Portability authority: `docs/product/PLATFORM_PORTABILITY_V1.md`._
+_Last synchronized: 2026-09-13 from main `f16a2129d1d07efae0bd778884f50f4bbf62f590` after PR #280. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`. Portability authority: `docs/product/PLATFORM_PORTABILITY_V1.md`._
 
 Ronin Public v1 is **incomplete** until every mandatory capability family has an end-to-end supported path. This document is the active autonomous construction plan. The prior v0.1 plan is preserved verbatim at `docs/automation/history/V01_CONSTRUCTION_PLAN.md` and remains historical evidence only; its feature-freeze language does not override Public v1 scope.
 
@@ -25,7 +25,7 @@ GitHub Actions and automated qualification remain disabled by maintainer policy.
 
 ## Current source position
 
-Implemented foundations include durable Job/Run/Attempt execution; SQLite durability; leases, heartbeat, fencing, reclaim/resume and cancellation; content-addressed evidence/artifacts; canonical JSON/identity; workspace/project/environment foundations; typed grants; deployment-local secret resolution; deterministic Ronin Bundle archive IO; initial provider-neutral metadata ports; persistent catalog/lineage primitives; quality/ontology/audit/ML/GenAI domain persistence; local/Compose operation; and a scheduler with dependency-aware fenced attempts, deterministic task-to-Job identity, durable execution outbox, deployment-aware controller, timezone-aware cron, durable event inbox, cancellation propagation, timeout enforcement, snapshot-safe bounded backfill generation, shared resource pools, durable generation-fenced leader authority, guarded cron/event/backfill/controller services, continuous leader-owning daemon orchestration and group backfill cancellation.
+Implemented foundations include durable Job/Run/Attempt execution; SQLite durability; leases, heartbeat, fencing, reclaim/resume and cancellation; content-addressed evidence/artifacts; canonical JSON/identity; workspace/project/environment foundations; typed grants; deployment-local secret resolution; deterministic Ronin Bundle archive IO; native project Bundle semantic inventory/export, verified bounded import planning, explicit runtime remapping and provider-neutral atomic project/environment-binding import commit with SQLite as the reference adapter; initial provider-neutral metadata ports; persistent catalog/lineage primitives; quality/ontology/audit/ML/GenAI domain persistence; local/Compose operation; and a scheduler with dependency-aware fenced attempts, deterministic task-to-Job identity, durable execution outbox, deployment-aware controller, timezone-aware cron, durable event inbox, cancellation propagation, timeout enforcement, snapshot-safe bounded backfill generation, shared resource pools, durable generation-fenced leader authority, guarded cron/event/backfill/controller services, continuous leader-owning daemon orchestration and group backfill cancellation.
 
 Public-v1 capability state is maintained in `docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md` and `docs/product/public-v1-status.json`. Those ledgers are implementation-status records, not release qualification.
 
@@ -34,7 +34,7 @@ Public-v1 capability state is maintained in `docs/product/PUBLIC_V1_IMPLEMENTATI
 Autonomous construction remains capability-ordered and should select one coherent slice at a time.
 
 1. **Scheduler remaining work:** add broad task adapters only as their target runtimes become executable; settle branching/skipped semantics if required; integrate durable failure notifications with the alert subsystem; expose public scheduler administration/run/backfill APIs and Studio surfaces; add production process/signal/deployment wiring; qualify PostgreSQL multi-node scheduler HA only after the PostgreSQL backend exists.
-2. **Ronin Bundle semantic portability:** complete project inventory, binding-resolution planning and atomic staged import; certify Ronin-native round-trip before vendor adapters.
+2. **Ronin Bundle semantic portability:** extend the native semantic inventory/import path beyond `ProjectManifest`, beginning with connection definitions under the normative no-secret-material/remapping rules; add multi-object dependency staging only when multiple supported semantic types participate; certify Ronin-native lossless round-trip before vendor adapters.
 3. **Persistence boundaries:** finish provider-neutral store ports for scheduler, quality, ontology, audit, ML, GenAI, semantic, streaming, alerts/FinOps and identity.
 4. **Open data plane:** Apache Arrow/Parquet, reference open table lifecycle (Iceberg), documented Delta interoperability and provider-neutral SQL engine with a lightweight reference adapter.
 5. **Connector matrix:** PostgreSQL, JDBC, S3-compatible, Azure-compatible and HTTP/REST plus restart-safe incremental checkpointing.
@@ -65,6 +65,15 @@ Autonomous construction remains capability-ordered and should select one coheren
 - **Backfill cancellation (#276):** parent state commits first, then created child WorkflowRuns reuse the existing durable scheduler/Job cancellation path.
 
 These are scheduler foundations, not a claim that P5 is complete. Broad runtime adapters, branching/notifications, public scheduler API/UI, process/deployment wiring and PostgreSQL HA qualification remain.
+
+## Ronin Bundle semantics already landed
+
+- **Archive integrity:** deterministic canonical manifest/archive IO with safe paths, bounded reads and full payload digest verification.
+- **Project semantic inventory (#278):** globally unique logical refs, dependency validation, digest-derived object paths, portable `ProjectManifest`, and explicit runtime binding requests without repository auth material.
+- **Project import planning (#279):** full archive verification before interpretation, bounded semantic reads, exact project identity validation, target workspace checks, fail-closed unsupported kinds and create/no-op/collision classification without mutation.
+- **Project import commit (#280):** exact binding-request resolution, provider-neutral atomic commit contract, SQLite one-transaction project plus environment-binding persistence, rollback on target failures, and conflict recheck at commit time.
+
+These establish one narrow native project round-trip path. They do not yet cover connection/catalog/workflow/quality/ontology/ML/GenAI or later data/semantic objects, and they are not migration certification evidence.
 
 ## Blocked and human-decision work
 
