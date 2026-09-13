@@ -1,4 +1,5 @@
 import json
+import sqlite3
 import time
 from pathlib import Path
 
@@ -62,6 +63,87 @@ def test_group_role_grants_workspace_permission(tmp_path: Path) -> None:
         PolicyRequirement(WorkspaceId("workspace"), "audit.read"),
     )
     assert not denied.allowed
+
+
+def test_sqlite_role_binding_constraints_reject_malformed_direct_writes(tmp_path: Path) -> None:
+    path = tmp_path / "security.sqlite"
+    store = SqliteIdentityStore(path)
+    principal = store.put_principal(_principal())
+    store.put_role_binding(
+        RoleBinding(WorkspaceId("workspace"), "principal", principal.id.value, "viewer")
+    )
+
+    connection = sqlite3.connect(path)
+    try:
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "INSERT INTO security_role_bindings(workspace_id,subject_kind,subject_id,role) "
+                "VALUES (?,?,?,?)",
+                ("workspace", "external", principal.id.value, "viewer"),
+            )
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "INSERT INTO security_role_bindings(workspace_id,subject_kind,subject_id,role) "
+                "VALUES (?,?,?,?)",
+                ("workspace", "principal", principal.id.value, "owner"),
+            )
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "UPDATE security_role_bindings SET role='owner' WHERE workspace_id='workspace'"
+            )
+    finally:
+        connection.close()
+
+
+def test_existing_role_binding_table_gains_validation_triggers(tmp_path: Path) -> None:
+    path = tmp_path / "security.sqlite"
+    connection = sqlite3.connect(path)
+    try:
+        connection.executescript(
+            """
+            CREATE TABLE security_principals (
+                principal_id TEXT PRIMARY KEY,
+                kind TEXT NOT NULL,
+                display_name TEXT NOT NULL,
+                issuer TEXT NOT NULL,
+                subject TEXT NOT NULL,
+                email TEXT,
+                active INTEGER NOT NULL,
+                UNIQUE(issuer, subject)
+            );
+            CREATE TABLE security_groups (
+                group_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL
+            );
+            CREATE TABLE security_group_members (
+                group_id TEXT NOT NULL REFERENCES security_groups(group_id) ON DELETE CASCADE,
+                principal_id TEXT NOT NULL REFERENCES security_principals(principal_id) ON DELETE CASCADE,
+                PRIMARY KEY(group_id, principal_id)
+            );
+            CREATE TABLE security_role_bindings (
+                workspace_id TEXT NOT NULL,
+                subject_kind TEXT NOT NULL,
+                subject_id TEXT NOT NULL,
+                role TEXT NOT NULL,
+                PRIMARY KEY(workspace_id, subject_kind, subject_id, role)
+            );
+            """
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    SqliteIdentityStore(path)
+
+    connection = sqlite3.connect(path)
+    try:
+        with pytest.raises(sqlite3.IntegrityError, match="invalid security role binding"):
+            connection.execute(
+                "INSERT INTO security_role_bindings(workspace_id,subject_kind,subject_id,role) "
+                "VALUES ('workspace','principal','alice','owner')"
+            )
+    finally:
+        connection.close()
 
 
 def test_actor_context_is_request_local() -> None:
