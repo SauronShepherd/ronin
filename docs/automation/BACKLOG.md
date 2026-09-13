@@ -1,6 +1,6 @@
 # Ronin Public v1 autonomous build backlog
 
-_Last synchronized: 2026-09-13 from main `69ee645e7b6fe90bf218a6a019595d382424fcf8` after PR #265. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
+_Last synchronized: 2026-09-13 from main `93a384fc66dfa1af20794907c2cffdcc6cb4fbf7` after PR #268. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`._
 
 This backlog is the active implementation-selection surface for Public v1. The previous narrow v0.1 backlog is preserved verbatim at `docs/automation/history/V01_BACKLOG.md` and is historical evidence only.
 
@@ -20,15 +20,18 @@ This backlog is the active implementation-selection surface for Public v1. The p
 
 ## P5 — scheduler next
 
-- Timeout enforcement using existing TaskPolicy timeout plus linked Job cancellation.
-- Durable resource pools and workspace/project/workflow concurrency accounting.
-- Deterministic backfill requests that do not mutate normal schedule cursors.
+- Durable shared resource pools and workspace/project/workflow concurrency accounting, enforced atomically in task claim.
 - Broader task execution adapters: SQL, connector sync, quality, code, ML, GenAI, graph/RQL, semantic refresh and notifications.
 - Explicit branching/skipped semantics if required by the final scheduler contract.
 - Durable failure notifications.
+- Backfill group cancellation for already-created workflow runs plus public backfill API/UI surfaces.
 - Continuous scheduler daemon and database-backed leader fencing/HA.
 
-Cancellation propagation landed in PR #265 and should be preserved as the reference cancellation boundary: scheduler state first, stale attempt fencing, unpublished intent retirement, existing Job cancellation and terminal reconciliation.
+Landed scheduler foundations to preserve:
+
+- cancellation propagation (#265): scheduler state first, stale-attempt fencing, unpublished-intent retirement, linked Job cancellation and terminal reconciliation;
+- timeout enforcement (#267): durable timeout intent before Job cancellation, timeout as scheduler failure/retry cause, user cancellation precedence;
+- snapshot-safe backfill (#268): frozen schedule/workflow definitions, independent cursor, bounded cron scan, transactional active-run cap and restart-safe fire recovery.
 
 ## Portability
 
