@@ -1,6 +1,6 @@
 # Ronin Public v1 construction plan
 
-_Last synchronized: 2026-09-13 from main `7455b3faa52b93a7e8edfa4d2b87b0fb1f74b26e` after PR #285. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`. Portability authority: `docs/product/PLATFORM_PORTABILITY_V1.md`._
+_Last synchronized: 2026-09-13 from main `b7e861f11a1399553fba0292f2b86760cc04d747` after PR #288. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`. Portability authority: `docs/product/PLATFORM_PORTABILITY_V1.md`._
 
 Ronin Public v1 is **incomplete** until every mandatory capability family has an end-to-end supported path. This document is the active autonomous construction plan. The prior v0.1 plan is preserved verbatim at `docs/automation/history/V01_CONSTRUCTION_PLAN.md` and remains historical evidence only; its feature-freeze language does not override Public v1 scope.
 
@@ -25,14 +25,14 @@ GitHub Actions and automated qualification remain disabled by maintainer policy.
 
 ## Current source position
 
-Implemented foundations include durable Job/Run/Attempt execution; SQLite durability; leases, heartbeat, fencing, reclaim/resume and cancellation; content-addressed evidence/artifacts; canonical JSON/identity; workspace/project/environment foundations; typed grants; deployment-local secret resolution; deterministic Ronin Bundle archive IO; native project and connection semantic round-trips with explicit runtime/secret remapping; deterministic dependency-ordered project+connection staging; provider-neutral atomic multi-object commit semantics with one-transaction SQLite reference implementation; initial provider-neutral metadata ports; persistent catalog/lineage primitives; quality/ontology/audit/ML/GenAI domain persistence; local/Compose operation; and an advanced durable scheduler foundation.
+Implemented foundations include durable Job/Run/Attempt execution; SQLite durability; leases, heartbeat, fencing, reclaim/resume and cancellation; content-addressed evidence/artifacts; canonical JSON/identity; workspace/project/environment foundations; typed grants; deployment-local secret resolution; deterministic Ronin Bundle archive IO; native project and connection semantic round-trips with explicit runtime/secret remapping; atomic project+connection multi-object commit; explicit selected catalog asset/revision/lineage subgraph export/planning and atomic commit; initial provider-neutral metadata ports; persistent catalog/lineage primitives; quality/ontology/audit/ML/GenAI domain persistence; local/Compose operation; and an advanced durable scheduler foundation.
 
 Public-v1 capability state is maintained in `docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md` and `docs/product/public-v1-status.json`. Those ledgers are implementation-status records, not release qualification.
 
 ## Active critical path
 
 1. **Scheduler remaining work:** broad task adapters as target runtimes become executable; branching/skipped semantics if required; alert-backed durable notifications; public scheduler APIs/Studio; process/deployment wiring; PostgreSQL HA qualification after the PostgreSQL backend exists.
-2. **Ronin Bundle semantic portability:** extend the proven project+connection inventory/planning/atomic-commit pattern to catalog assets/revisions/lineage, preserving canonical identity and explicit dependencies; then extend to other executable canonical families and certify native lossless round-trip only with real qualification evidence.
+2. **Ronin Bundle semantic portability:** inspect workflow/pipeline snapshot and persistence contracts next; if they preserve canonical portable intent independently of deployment/controller state, extend the same verified inventory/planning/atomic-commit model there. Otherwise select the next metadata family whose contracts can round-trip honestly. Certification waits for real exact-head qualification evidence.
 3. **Persistence boundaries:** finish provider-neutral store ports for scheduler, quality, ontology, audit, ML, GenAI, semantic, streaming, alerts/FinOps and identity.
 4. **Open data plane:** Apache Arrow/Parquet, reference open table lifecycle (Iceberg), documented Delta interoperability and provider-neutral SQL engine with a lightweight reference adapter.
 5. **Connector matrix:** PostgreSQL, JDBC, S3-compatible, Azure-compatible and HTTP/REST plus restart-safe incremental checkpointing.
@@ -60,10 +60,10 @@ Public-v1 capability state is maintained in `docs/product/PUBLIC_V1_IMPLEMENTATI
 - **Archive integrity:** deterministic canonical manifest/archive IO, safe paths, bounded reads and full payload digest verification.
 - **Project path (#278–#280):** semantic inventory/export, fully verified planning, explicit runtime remapping, provider-neutral atomic project/environment-binding commit.
 - **Connection path (#282):** semantic inventory/export/import using portable metadata and `secret://` references, exact secret remaps and conflict-safe create/noop semantics.
-- **Multi-object staging (#283):** deterministic topological ordering, kind-specific validation/classification, aggregate unresolved bindings, cycle rejection and unknown-kind rejection.
-- **Multi-object commit (#285):** exact aggregate binding resolution, explicit project target environments, provider-neutral commit port, and one SQLite transaction across resolved connections, projects and project/environment bindings with full rollback on late conflicts.
+- **Project+connection multi-object path (#283/#285):** deterministic topological staging, aggregate binding resolution, provider-neutral commit port and one SQLite transaction across resolved connections/projects/environment bindings.
+- **Catalog path (#287/#288):** caller-selected revision subgraph export containing exact assets/revisions and lineage only when both endpoints are selected; verified dependency-aware planning; provider-neutral atomic commit; one SQLite transaction across assets/revisions/lineage with full rollback on late conflicts.
 
-These cover only the currently supported project+connection metadata families. Catalog/workflow/quality/ontology/ML/GenAI and later data/semantic objects remain outside the native Bundle path. PostgreSQL has not implemented the multi-object commit port. No certification evidence is claimed while automated qualification remains disabled.
+These cover only currently implemented metadata families. Catalog export remains explicit rather than whole-catalog because the provider-neutral catalog port lacks complete revision discovery. Workflow/quality/ontology/ML/GenAI and later data/semantic objects remain outside the native Bundle path. PostgreSQL has not implemented the Bundle commit ports. No certification evidence is claimed while automated qualification remains disabled.
 
 ## Blocked and human-decision work
 
