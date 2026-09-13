@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -98,11 +99,12 @@ class SchedulerDaemon:
     def lease(self) -> SchedulerLeaderLease | None:
         return self._lease
 
-    def _acquire_or_renew(self) -> SchedulerLeaderLease | None:
+    async def _acquire_or_renew(self) -> SchedulerLeaderLease | None:
         now = self._clock()
         if self._lease is not None:
             try:
-                self._lease = self._leadership_store.heartbeat_scheduler_leadership(
+                self._lease = await asyncio.to_thread(
+                    self._leadership_store.heartbeat_scheduler_leadership,
                     self._lease,
                     lease_seconds=self._leader_lease_seconds,
                     now=now,
@@ -110,7 +112,8 @@ class SchedulerDaemon:
                 return self._lease
             except SchedulerLeadershipLost:
                 self._lease = None
-        self._lease = self._leadership_store.acquire_scheduler_leadership(
+        self._lease = await asyncio.to_thread(
+            self._leadership_store.acquire_scheduler_leadership,
             owner=self._owner,
             lease_token=self._leader_token_factory(),
             lease_seconds=self._leader_lease_seconds,
@@ -119,7 +122,7 @@ class SchedulerDaemon:
         return self._lease
 
     async def run_once(self, work: SchedulerDaemonWork) -> SchedulerDaemonCycle:
-        lease = self._acquire_or_renew()
+        lease = await self._acquire_or_renew()
         if lease is None:
             return SchedulerDaemonCycle(False, None)
 
@@ -183,7 +186,11 @@ class SchedulerDaemon:
             )
 
         final_now = self._clock()
-        durable = self._leadership_store.assert_scheduler_leadership(lease, now=final_now)
+        durable = await asyncio.to_thread(
+            self._leadership_store.assert_scheduler_leadership,
+            lease,
+            now=final_now,
+        )
         self._lease = durable
         return SchedulerDaemonCycle(
             True,
@@ -194,11 +201,15 @@ class SchedulerDaemon:
             tuple(controller_cycles),
         )
 
-    def release(self) -> None:
+    async def release(self) -> None:
         if self._lease is None:
             return
         lease = self._lease
-        self._leadership_store.release_scheduler_leadership(lease, now=self._clock())
+        await asyncio.to_thread(
+            self._leadership_store.release_scheduler_leadership,
+            lease,
+            now=self._clock(),
+        )
         self._lease = None
 
 
