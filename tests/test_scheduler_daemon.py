@@ -187,6 +187,7 @@ def test_daemon_loop_renews_leadership_and_releases_on_shutdown(tmp_path: Path) 
         return work_calls >= 2
 
     async def sleep(_seconds: float) -> None:
+        await asyncio.sleep(0)
         clock.value = _T10
 
     async def scenario() -> None:
