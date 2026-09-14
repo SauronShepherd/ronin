@@ -12,6 +12,7 @@ readme = "README.md"
 
 [project.scripts]
 ronin = "studio_cli.entrypoint:main"
+ronin-runner-broker = "studio_runner_broker.entrypoint:main"
 
 [project.optional-dependencies]
 data-plane = [
@@ -58,89 +59,3 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "S", "ASYNC", "C4", "PT", "RET", "ARG", "PTH"]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101"]
-"packages/**/tests/**/*.py" = ["S101", "PT011"]
-
-[tool.mypy]
-python_version = "3.11"
-strict = true
-mypy_path = "python:packages/pyronin/src"
-packages = [
-  "studio_connectors",
-  "studio_core",
-  "studio_finops",
-  "studio_genai",
-  "studio_lakehouse",
-  "studio_ml",
-  "studio_notebook",
-  "studio_observability",
-  "studio_runners",
-  "studio_kernel",
-  "studio_orchestrator",
-  "studio_quality",
-  "studio_security",
-  "studio_semantic",
-  "studio_sql",
-  "studio_storage",
-  "studio_streaming",
-  "studio_vcs",
-  "studio_execution",
-  "studio_server",
-  "studio_worker",
-  "studio_cli",
-]
-
-[tool.pytest.ini_options]
-testpaths = ["tests", "packages/pyronin/tests"]
-pythonpath = ["python", "packages/pyronin/src", "."]
-addopts = "-ra --strict-config --strict-markers"
-markers = ["e2e: full v0.1 acceptance journey; requires Docker and a built image"]
-
-[tool.coverage.run]
-branch = true
-source = [
-  "studio_connectors",
-  "studio_core",
-  "studio_finops",
-  "studio_genai",
-  "studio_lakehouse",
-  "studio_ml",
-  "studio_notebook",
-  "studio_observability",
-  "studio_kernel",
-  "studio_runners",
-  "studio_orchestrator",
-  "studio_quality",
-  "studio_security",
-  "studio_semantic",
-  "studio_sql",
-  "studio_storage",
-  "studio_streaming",
-  "studio_vcs",
-  "studio_execution",
-  "studio_server",
-  "studio_worker",
-  "studio_cli",
-  "pyronin",
-]
-
-[tool.coverage.report]
-show_missing = true
-
-[tool.mutmut]
-source_paths = ["src/studio_core"]
-pytest_add_cli_args = ["-o", "addopts="]
-pytest_add_cli_args_test_selection = [
-  "tests/test_contract_snapshots.py",
-  "tests/test_core_ir.py",
-  "tests/test_core_ir_invariant_edges.py",
-  "tests/test_diagnostics.py",
-  "tests/test_instance_keys.py",
-  "tests/test_operators.py",
-  "tests/test_projects.py",
-  "tests/test_project_manifest.py",
-  "tests/test_runtime_profiles.py",
-]
-mutate_only_covered_lines = true
