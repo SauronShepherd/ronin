@@ -21,6 +21,7 @@ from studio_kernel import (
     ExecutionEvidenceReference,
     ExecutorIsolation,
 )
+from studio_kernel.contracts import EvidenceKind, ExecutionState
 from studio_notebook import CellId
 
 _IMMUTABLE_IMAGE = re.compile(r"^(?:[^\s]+@)?sha256:[0-9a-f]{64}$")
@@ -211,7 +212,7 @@ class BrokerClient:
                 raise BrokerProtocolError("runner broker evidence item has invalid fields")
             evidence.append(
                 ExecutionEvidenceReference(
-                    cast(str, item["kind"]),
+                    cast(EvidenceKind, item["kind"]),
                     cast(str, item["ref"]),
                     cast(str | None, item["digest_algorithm"]),
                     cast(str | None, item["digest"]),
@@ -221,7 +222,7 @@ class BrokerClient:
             )
         return CellExecutionResult(
             CellId(cast(str, cell_id)),
-            cast(str, state),
+            cast(ExecutionState, state),
             cast(str | None, failure_code),
             tuple(evidence),
         )
