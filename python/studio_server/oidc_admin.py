@@ -161,6 +161,8 @@ class _OidcAdminHandler(_OidcHandler):
     def _put_principal(self, encoded_id: str) -> None:
         try:
             principal_id = PrincipalId(_segment(encoded_id, "principal id"))
+            if not self._require_admin(f"security:principal:{principal_id.value}"):
+                return
             payload = self._read_json()
             if not isinstance(payload, dict):
                 raise ValueError("request body must be a JSON object")
@@ -192,8 +194,6 @@ class _OidcAdminHandler(_OidcHandler):
                 cast(str | None, email),
                 active,
             )
-            if not self._require_admin(f"security:principal:{principal_id.value}"):
-                return
             existed = self._admin_server().admin_store.get_principal(principal_id) is not None
             stored = self._admin_server().admin_store.put_principal(principal)
         except IdentityConflict:
@@ -211,16 +211,15 @@ class _OidcAdminHandler(_OidcHandler):
     def _put_group(self, encoded_id: str) -> None:
         try:
             group_id = GroupId(_segment(encoded_id, "group id"))
+            if not self._require_admin(f"security:group:{group_id.value}"):
+                return
             payload = self._read_json()
             if not isinstance(payload, dict) or set(payload) != {"name"}:
                 raise ValueError("group body must contain exactly name")
             name = payload["name"]
             if not isinstance(name, str):
                 raise ValueError("group name must be a string")
-            group = Group(group_id, name)
-            if not self._require_admin(f"security:group:{group_id.value}"):
-                return
-            stored = self._admin_server().admin_store.put_group(group)
+            stored = self._admin_server().admin_store.put_group(Group(group_id, name))
         except ValueError as exc:
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
             return
@@ -230,11 +229,11 @@ class _OidcAdminHandler(_OidcHandler):
         try:
             group_id = GroupId(_segment(encoded_group, "group id"))
             principal_id = PrincipalId(_segment(encoded_principal, "principal id"))
-            if not self._empty_body_required():
-                return
             if not self._require_admin(
                 f"security:group:{group_id.value}:member:{principal_id.value}"
             ):
+                return
+            if not self._empty_body_required():
                 return
             if self._admin_server().admin_store.get_principal(principal_id) is None:
                 self._error(HTTPStatus.NOT_FOUND, "principal_not_found", "principal does not exist")
@@ -255,11 +254,11 @@ class _OidcAdminHandler(_OidcHandler):
         try:
             group_id = GroupId(_segment(encoded_group, "group id"))
             principal_id = PrincipalId(_segment(encoded_principal, "principal id"))
-            if not self._empty_body_required():
-                return
             if not self._require_admin(
                 f"security:group:{group_id.value}:member:{principal_id.value}"
             ):
+                return
+            if not self._empty_body_required():
                 return
             removed = self._admin_server().admin_store.remove_group_member(group_id, principal_id)
         except ValueError as exc:
@@ -284,11 +283,11 @@ class _OidcAdminHandler(_OidcHandler):
     def _put_binding(self, encoded_kind: str, encoded_subject: str, encoded_role: str) -> None:
         try:
             binding = self._binding(encoded_kind, encoded_subject, encoded_role)
-            if not self._empty_body_required():
-                return
             if not self._require_admin(
                 f"security:role-binding:{binding.subject_kind}:{binding.subject_id}:{binding.role}"
             ):
+                return
+            if not self._empty_body_required():
                 return
             stored = self._admin_server().admin_store.put_role_binding(binding)
         except KeyError:
@@ -306,11 +305,11 @@ class _OidcAdminHandler(_OidcHandler):
     def _delete_binding(self, encoded_kind: str, encoded_subject: str, encoded_role: str) -> None:
         try:
             binding = self._binding(encoded_kind, encoded_subject, encoded_role)
-            if not self._empty_body_required():
-                return
             if not self._require_admin(
                 f"security:role-binding:{binding.subject_kind}:{binding.subject_id}:{binding.role}"
             ):
+                return
+            if not self._empty_body_required():
                 return
             removed = self._admin_server().admin_store.delete_role_binding(binding)
         except ValueError as exc:
@@ -356,11 +355,36 @@ class _OidcAdminHandler(_OidcHandler):
             return
         self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
 
+    def _method_not_allowed(self) -> None:
+        self._error(
+            HTTPStatus.METHOD_NOT_ALLOWED,
+            "method_not_allowed",
+            "method is not supported for this admin route",
+        )
+
     def do_PUT(self) -> None:  # noqa: N802
         self._dispatch_authenticated(self._authenticated_put)
 
     def do_DELETE(self) -> None:  # noqa: N802
         self._dispatch_authenticated(self._authenticated_delete)
+
+    def do_PATCH(self) -> None:  # noqa: N802
+        if urlsplit(self.path).path.startswith(_ADMIN_PREFIX):
+            self._dispatch_authenticated(self._method_not_allowed)
+            return
+        self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
+
+    def do_POST(self) -> None:  # noqa: N802
+        if urlsplit(self.path).path.startswith(_ADMIN_PREFIX):
+            self._dispatch_authenticated(self._method_not_allowed)
+            return
+        super().do_POST()
+
+    def do_GET(self) -> None:  # noqa: N802
+        if urlsplit(self.path).path.startswith(_ADMIN_PREFIX):
+            self._dispatch_authenticated(self._method_not_allowed)
+            return
+        super().do_GET()
 
 
 class OidcAdminRoninHTTPServer(OidcRoninHTTPServer):
