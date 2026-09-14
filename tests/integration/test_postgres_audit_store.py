@@ -5,18 +5,18 @@ from uuid import uuid4
 
 import pytest
 
-_DSN = os.environ.get("RONIN_TEST_POSTGRES_DSN")
-if not _DSN:
-    pytest.skip("RONIN_TEST_POSTGRES_DSN is not configured", allow_module_level=True)
-
-psycopg = pytest.importorskip("psycopg")
-
 from studio_core import Workspace, WorkspaceId
 from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource
 from studio_orchestrator import Instant
 from studio_storage import PostgresAuditStore, PostgresMetadataStore
 from studio_storage.audit import AuditConflict
 from studio_storage.workspaces import WorkspaceNotFound
+
+_DSN = os.environ.get("RONIN_TEST_POSTGRES_DSN")
+if not _DSN:
+    pytest.skip("RONIN_TEST_POSTGRES_DSN is not configured", allow_module_level=True)
+
+psycopg = pytest.importorskip("psycopg")
 
 _NOW = Instant("2026-09-14T04:00:00.000000Z")
 
@@ -50,10 +50,7 @@ def test_postgres_audit_round_trip_idempotency_and_conflict() -> None:
     workspace = _workspace()
     metadata.create_workspace(workspace, now=_NOW)
     store = PostgresAuditStore(_DSN, application_name="ronin-audit-test")
-    event = _event(
-        f"audit-{uuid4().hex}",
-        "2026-09-14T04:00:01.000000Z",
-    )
+    event = _event(f"audit-{uuid4().hex}", "2026-09-14T04:00:01.000000Z")
 
     try:
         assert store.append(workspace.id, event) == event
