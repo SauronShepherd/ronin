@@ -10,7 +10,6 @@ from urllib.parse import unquote, urlsplit
 from studio_core import WorkspaceId
 from studio_execution import DurableExecutionService
 from studio_security import (
-    Actor,
     Group,
     GroupId,
     IdentityConflict,
@@ -86,7 +85,7 @@ def _group_payload(group: Group) -> dict[str, str]:
     return {"id": group.id.value, "name": group.name}
 
 
-def _binding_payload(binding: RoleBinding) -> dict[str, str]:
+def _binding_payload(binding: RoleBinding) -> dict[str, object]:
     return {
         "workspace_id": binding.workspace_id.value,
         "subject_kind": binding.subject_kind,
@@ -318,7 +317,7 @@ class _OidcAdminHandler(_OidcHandler):
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
             return
         payload = _binding_payload(binding)
-        payload["removed"] = str(removed).lower()
+        payload["removed"] = removed
         self._write_json(HTTPStatus.OK, payload)
 
     def _authenticated_put(self) -> None:
