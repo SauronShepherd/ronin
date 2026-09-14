@@ -31,25 +31,52 @@ services:
       start_period: 2s
     restart: unless-stopped
 
+  runner-broker:
+    image: ${RONIN_IMAGE_REF:-ronin:local}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: ["ronin-runner-broker"]
+    user: "0:0"
+    environment:
+      RONIN_DATA_DIR: /var/lib/ronin
+      RONIN_IMAGE_REF: ${RONIN_IMAGE_REF:-ronin:local}
+      RONIN_RUNNER_BROKER_HOST: 0.0.0.0
+      RONIN_RUNNER_BROKER_PORT: "8090"
+      RONIN_RUNNER_BROKER_TOKEN: ${RONIN_RUNNER_BROKER_TOKEN:?set RONIN_RUNNER_BROKER_TOKEN before starting Ronin}
+    volumes:
+      - ronin-data:/var/lib/ronin
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/healthz', timeout=2).read()"]
+      interval: 2s
+      timeout: 3s
+      retries: 25
+      start_period: 2s
+    restart: unless-stopped
+
   worker:
     image: ${RONIN_IMAGE_REF:-ronin:local}
     build:
       context: .
       dockerfile: docker/Dockerfile
-    command: ["ronin", "worker"]
+    command: ["ronin-broker-worker"]
     user: "0:0"
     environment:
       <<: *ronin-environment
       RONIN_DATA_DIR: /var/lib/ronin
       RONIN_WORKSPACE: /workspace
       RONIN_WORKER_OWNER: compose-worker
-      RONIN_IMAGE_REF: ${RONIN_IMAGE_REF:-ronin:local}
+      RONIN_RUNNER_BROKER_URL: http://runner-broker:8090
+      RONIN_RUNNER_BROKER_TOKEN: ${RONIN_RUNNER_BROKER_TOKEN:?set RONIN_RUNNER_BROKER_TOKEN before starting Ronin}
+      RONIN_RUNNER_BROKER_ALLOW_INSECURE: "true"
     volumes:
       - ronin-data:/var/lib/ronin
       - .:/workspace:ro
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       server:
+        condition: service_healthy
+      runner-broker:
         condition: service_healthy
     restart: "no"
 
