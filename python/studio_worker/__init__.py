@@ -1,5 +1,6 @@
 """Durable worker composition for local notebook execution."""
 
+from .broker_runtime import BrokerWorkerRuntime
 from .execution import (
     DurableWorkerExecution,
     WorkerExecutionError,
@@ -29,6 +30,7 @@ from .runtime import (
 
 __all__ = (
     "LOCAL_DOCKER_PROFILE",
+    "BrokerWorkerRuntime",
     "DurableWorkerExecution",
     "LoadedProject",
     "LocalWorkerPollOutcome",
