@@ -51,6 +51,7 @@ from studio_storage.ports import (
     EnvironmentStore,
     WorkspaceStore,
 )
+from studio_storage.postgres_audit import PostgresAuditStore
 from studio_storage.postgres_core import PostgresDependencyError, PostgresMetadataStore
 from studio_storage.quality import (
     DataContractConflict,
@@ -115,6 +116,7 @@ __all__ = (
     "LocalArtifactStore",
     "MountedFileSecretResolver",
     "OntologyConflict",
+    "PostgresAuditStore",
     "PostgresDependencyError",
     "PostgresMetadataStore",
     "ProjectRegistrationConflict",
