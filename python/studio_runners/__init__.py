@@ -1,5 +1,12 @@
 """Runtime adapter boundaries for provider-neutral execution discovery and execution."""
 
+from .broker import (
+    BrokerClient,
+    BrokerContainerKernelExecutor,
+    BrokerExecutorConfig,
+    BrokerProtocolError,
+    BrokerRequestError,
+)
 from .container import (
     AsyncioCommandRunner,
     CancellableCommandRunner,
@@ -22,6 +29,11 @@ LocalExecutionEvidenceStore = PortableLocalExecutionEvidenceStore
 
 __all__ = (
     "AsyncioCommandRunner",
+    "BrokerClient",
+    "BrokerContainerKernelExecutor",
+    "BrokerExecutorConfig",
+    "BrokerProtocolError",
+    "BrokerRequestError",
     "CancellableCommandRunner",
     "CommandOutcome",
     "ContainerExecutionLimits",
