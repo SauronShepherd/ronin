@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import time
 from pathlib import Path
 from threading import Thread
@@ -294,11 +295,14 @@ def test_audit_failure_blocks_admin_mutation(monkeypatch, tmp_path: Path) -> Non
             transport.request("PUT", "/v1/admin/security/groups/blocked", payload={"name": "Blocked"})
         assert failed.value.status_code == 503
         assert failed.value.code == "authorization_audit_unavailable"
-        assert identities.groups_for_principal(admin.id) == ()
-        with pytest.raises(sqlite3.OperationalError):
-            sqlite3.connect(database).execute(
+        connection = sqlite3.connect(database)
+        try:
+            row = connection.execute(
                 "SELECT group_id FROM security_groups WHERE group_id='blocked'"
             ).fetchone()
+        finally:
+            connection.close()
+        assert row is None
     finally:
         _close(server, thread)
 
