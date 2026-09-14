@@ -47,6 +47,16 @@ class _FakeBrokerServer(RunnerBrokerServer):
         return CellExecutionResult(cell.cell_id, "cancelled")
 
 
+class _PayloadClient(BrokerClient):
+    def __init__(self, config: BrokerExecutorConfig, payload: dict[str, object]) -> None:
+        super().__init__(config)
+        object.__setattr__(self, "_payload", payload)
+
+    def _request(self, method: str, path: str, payload: object | None = None) -> dict[str, object]:
+        del method, path, payload
+        return self._payload  # type: ignore[attr-defined]
+
+
 def _config(tmp_path: Path) -> RunnerBrokerConfig:
     return RunnerBrokerConfig(_TOKEN, _IMAGE, tmp_path / "evidence")
 
@@ -66,6 +76,15 @@ def _client_config(server: RunnerBrokerServer, *, image: str = _IMAGE) -> Broker
         allow_insecure_http=True,
         request_timeout_seconds=2.0,
         cancellation_poll_seconds=0.01,
+    )
+
+
+def _offline_client_config() -> BrokerExecutorConfig:
+    return BrokerExecutorConfig(
+        "http://runner-broker:8090",
+        _TOKEN,
+        _IMAGE,
+        allow_insecure_http=True,
     )
 
 
@@ -193,6 +212,32 @@ def test_execution_route_rejects_extra_request_fields_over_http(tmp_path: Path) 
         assert server.execute_count == 0
     finally:
         _close(server, thread)
+
+
+def test_client_rejects_invalid_execution_state() -> None:
+    payload = {
+        "version": 1,
+        "cell_id": "cell-1",
+        "state": "privileged",
+        "failure_code": None,
+        "evidence": [],
+    }
+    client = _PayloadClient(_offline_client_config(), payload)
+    with pytest.raises(BrokerProtocolError, match="execution state"):
+        client.execute("exec-" + "3" * 32, ExecutionAttemptId("attempt-1"), _cell())
+
+
+def test_client_rejects_malformed_execution_evidence() -> None:
+    payload = {
+        "version": 1,
+        "cell_id": "cell-1",
+        "state": "succeeded",
+        "failure_code": None,
+        "evidence": [{"kind": "log", "ref": "local://log", "docker_args": ["--privileged"]}],
+    }
+    client = _PayloadClient(_offline_client_config(), payload)
+    with pytest.raises(BrokerProtocolError, match="evidence item"):
+        client.execute("exec-" + "4" * 32, ExecutionAttemptId("attempt-1"), _cell())
 
 
 def test_broker_config_rejects_plaintext_without_explicit_opt_in() -> None:
