@@ -101,7 +101,7 @@ def train_register_tabular(
     artifact = artifacts.put_bytes(
         role="model",
         data=trained.artifact_bytes,
-        media_type="application/vnd.ronin.sklearn-tabular+pickle",
+        media_type="application/vnd.ronin.sklearn-tabular+json",
     )
     run = MLRunRecord(
         run_id,
@@ -145,7 +145,7 @@ def predict_registered_tabular(
     artifact_bytes: bytes,
     rows: Sequence[Mapping[str, object]],
 ) -> tuple[object, ...]:
-    """Verify bytes against registry metadata, then run trusted local inference.
+    """Verify registered digest provenance before canonical local inference.
 
     Artifact retrieval is deliberately kept outside this function because the current
     registered-model contract stores a content digest/ref but not the full ArtifactRef
