@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 
 from studio_kernel import ExecutionAttemptId
-from studio_orchestrator import AttemptState, CellExecutionIdentity, ClaimedRun
+from studio_orchestrator import AttemptState, ClaimedRun, Instant
 from studio_runners import BrokerContainerKernelExecutor, BrokerExecutorConfig
 from studio_storage import LocalArtifactStore
 
@@ -20,12 +20,13 @@ class BrokerWorkerRuntime(LocalWorkerRuntime):
         self,
         config: LocalWorkerRuntimeConfig,
         broker: BrokerExecutorConfig,
-        **kwargs: object,
+        *,
+        migration_now: Instant,
     ) -> None:
         if broker.expected_image != config.image:
             raise ValueError("broker runtime image must match worker runtime image")
         self._broker = broker
-        super().__init__(config, **kwargs)
+        super().__init__(config, migration_now=migration_now)
 
     async def _execute_claim(self, claim: ClaimedRun) -> WorkerExecutionOutcome:
         loop = asyncio.get_running_loop()
@@ -64,11 +65,7 @@ class BrokerWorkerRuntime(LocalWorkerRuntime):
             artifact_max_workers=self.config.artifact_max_workers,
             artifact_max_in_flight=self.config.artifact_max_in_flight,
         )
-        return await worker.run(
-            claim,
-            request,
-            tuple(identity for identity in identities if isinstance(identity, CellExecutionIdentity)),
-        )
+        return await worker.run(claim, request, identities)
 
 
 __all__ = ("BrokerWorkerRuntime",)
