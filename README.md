@@ -13,7 +13,7 @@ Ronin Public v1 will not be declared complete until the platform has end-to-end 
 The normative contracts are:
 
 - [`docs/product/PUBLIC_V1_SCOPE.md`](docs/product/PUBLIC_V1_SCOPE.md) — mandatory product capability families and release gate;
-- [`docs/product/PLATFORM_PORTABILITY_V1.md`](docs/product/PLATFORM_PORTABILITY_V1.md) — import/export and migration contract for Microsoft Fabric, Databricks, Palantir Foundry/AIP and Dataiku DSS;
+- [`docs/product/PLATFORM_PORTABILITY_V1.md`](docs/product/PLATFORM_PORTABILITY_V1.md) — optional import/export and interoperability contract for proprietary, non-open-source data platforms;
 - [`docs/product/PUBLIC_V1_ROADMAP.md`](docs/product/PUBLIC_V1_ROADMAP.md) — implementation waves from the current foundation to Public v1;
 - [`docs/product/BRAND_V1.md`](docs/product/BRAND_V1.md) — Ronin Brown visual identity.
 
@@ -21,7 +21,7 @@ The original [`docs/product/V01_SCOPE.md`](docs/product/V01_SCOPE.md) remains th
 
 ## Product direction
 
-Public v1 is intended to let a team simulate representative **Microsoft Fabric, Databricks, Palantir Foundry/AIP or Dataiku DSS** environments locally in Ronin, using provider-inspired capabilities without requiring those vendors or their control planes. The project is focused on local development, experimentation, learning and reproducible evaluation; migration and interoperability may be useful secondary outcomes, but they are not the product's primary purpose.
+Public v1 is intended to let a team simulate representative **proprietary, non-open-source data and AI platform** environments locally in Ronin, using provider-inspired capabilities without requiring external vendors or their control planes. The project is focused on local development, experimentation, learning and reproducible evaluation; migration and interoperability may be useful secondary outcomes, but they are not the product's primary purpose.
 
 > **Production-use warning:** Ronin is currently a local simulation and development platform. Production deployments and production workloads are not supported, are not covered by the current release guarantees, and are not part of the current roadmap. Anyone choosing to use Ronin in production does so at their own risk and responsibility.
 
