@@ -184,7 +184,11 @@ class OpenAICompatibleProvider:
             input_tokens,
             output_tokens,
         )
-        if self._record_usage is not None and result.input_tokens is not None and result.output_tokens is not None:
+        if (
+            self._record_usage is not None
+            and result.input_tokens is not None
+            and result.output_tokens is not None
+        ):
             self._record_usage(model.model_id, "chat", result.input_tokens, result.output_tokens)
         return result
 
@@ -215,7 +219,9 @@ class OpenAICompatibleProvider:
             if not isinstance(index, int) or isinstance(index, bool):
                 raise ValueError("embedding provider item index must be integer")
             raw = item["embedding"]
-            if not all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in raw):
+            if not all(
+                isinstance(value, (int, float)) and not isinstance(value, bool) for value in raw
+            ):
                 raise ValueError("embedding vector must contain only numeric values")
             ordered.append((index, tuple(float(value) for value in raw)))
         ordered.sort(key=lambda item: item[0])

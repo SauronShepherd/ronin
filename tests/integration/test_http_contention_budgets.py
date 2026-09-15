@@ -19,9 +19,7 @@ _AUTHORIZATION = "".join(("budget", "-qualification"))
 _GRANTS = GrantSet(
     (
         Grant(
-            frozenset(
-                {"read", "list", "events", "submit", "execute", "cancel", "evidence:read"}
-            ),
+            frozenset({"read", "list", "events", "submit", "execute", "cancel", "evidence:read"}),
             ResourceScope("*", None),
         ),
     )

@@ -143,8 +143,12 @@ def test_persisted_metrics_can_feed_prometheus_export(tmp_path: Path) -> None:
 def test_budget_gate_denies_only_explicit_hard_budget_action() -> None:
     from studio_finops import BudgetEvaluation
 
-    exceeded = BudgetEvaluation("b", Decimal("2"), Decimal("0"), Decimal("2"), Decimal("1"), True, "deny_new_work")
-    notify = BudgetEvaluation("b", Decimal("2"), Decimal("0"), Decimal("2"), Decimal("1"), True, "notify")
+    exceeded = BudgetEvaluation(
+        "b", Decimal("2"), Decimal("0"), Decimal("2"), Decimal("1"), True, "deny_new_work"
+    )
+    notify = BudgetEvaluation(
+        "b", Decimal("2"), Decimal("0"), Decimal("2"), Decimal("1"), True, "notify"
+    )
     assert not budget_gate(exceeded)
     assert budget_gate(notify)
 

@@ -65,7 +65,9 @@ def _connection() -> ConnectionDefinition:
     )
 
 
-def test_postgres_snapshot_checkpoint_suppresses_unchanged_rows(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_postgres_snapshot_checkpoint_suppresses_unchanged_rows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     database = _Database()
     monkeypatch.setattr(
         "studio_connectors.postgres._psycopg",

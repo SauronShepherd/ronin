@@ -67,7 +67,7 @@ def test_sql_reference_engine_bounds_materialized_results(tmp_path: Path) -> Non
 
 def test_sql_reference_engine_bounds_query_text() -> None:
     with DuckDbSqlEngine() as engine, pytest.raises(ValueError, match="SQL text exceeds"):
-            engine.execute("SELECT 1 -- " + "x" * (1024 * 1024))
+        engine.execute("SELECT 1 -- " + "x" * (1024 * 1024))
 
 
 def test_sql_reference_engine_rejects_mutating_or_multiple_statements() -> None:

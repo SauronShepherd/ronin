@@ -208,9 +208,7 @@ def test_execute_sql_parses_result_and_sends_bounded_request() -> None:
 )
 def test_invalid_sql_results_fail_closed(payload: object) -> None:
     with pytest.raises(ProtocolError):
-        Ronin(transport=FakeTransport([payload])).execute_sql(
-            project="demo", sql="SELECT 1"
-        )
+        Ronin(transport=FakeTransport([payload])).execute_sql(project="demo", sql="SELECT 1")
 
 
 @pytest.mark.parametrize(

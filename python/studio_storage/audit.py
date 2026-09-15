@@ -38,7 +38,9 @@ def migrate_audit(connection: sqlite3.Connection, *, now: Instant | str) -> None
     ).fetchone()
     current = 0 if row is None or row["version"] is None else int(row["version"])
     if current > _AUDIT_SCHEMA_VERSION:
-        raise RuntimeError(f"audit schema {current} is newer than supported {_AUDIT_SCHEMA_VERSION}")
+        raise RuntimeError(
+            f"audit schema {current} is newer than supported {_AUDIT_SCHEMA_VERSION}"
+        )
     migrations_dir = Path(__file__).with_name("migrations")
     for version in range(current + 1, _AUDIT_SCHEMA_VERSION + 1):
         script = migrations_dir.joinpath(_AUDIT_MIGRATIONS[version]).read_text(encoding="utf-8")
@@ -57,7 +59,9 @@ def migrate_audit(connection: sqlite3.Connection, *, now: Instant | str) -> None
 
 
 def audit_schema_version(connection: sqlite3.Connection) -> int:
-    row = connection.execute("SELECT MAX(version) AS version FROM audit_schema_migrations").fetchone()
+    row = connection.execute(
+        "SELECT MAX(version) AS version FROM audit_schema_migrations"
+    ).fetchone()
     return 0 if row is None or row["version"] is None else int(row["version"])
 
 

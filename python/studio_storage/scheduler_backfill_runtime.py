@@ -319,9 +319,7 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
             if existing is not None:
                 reserved = _run_from_row(workspace_id, existing)
                 if reserved.workflow_run_id != run_id:
-                    raise BackfillConflict(
-                        "backfill logical time maps to conflicting workflow run"
-                    )
+                    raise BackfillConflict("backfill logical time maps to conflicting workflow run")
                 connection.execute("COMMIT")
                 return reserved
 

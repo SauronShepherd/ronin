@@ -48,7 +48,9 @@ def migrate_connections(connection: sqlite3.Connection, *, now: Instant | str) -
         )
     migrations_dir = Path(__file__).with_name("migrations")
     for version in range(current + 1, _CONNECTION_SCHEMA_VERSION + 1):
-        script = migrations_dir.joinpath(_CONNECTION_MIGRATIONS[version]).read_text(encoding="utf-8")
+        script = migrations_dir.joinpath(_CONNECTION_MIGRATIONS[version]).read_text(
+            encoding="utf-8"
+        )
         connection.execute("BEGIN IMMEDIATE")
         try:
             _execute_script_in_transaction(connection, script)

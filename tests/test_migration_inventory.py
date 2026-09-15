@@ -26,4 +26,6 @@ def test_inventory_rejects_duplicates_and_malformed_documents() -> None:
             importer_version="test",
         )
     with pytest.raises(ValueError, match="objects array"):
-        inventory_json_document("{}", source_platform="fabric", source_version="1", importer_version="test")
+        inventory_json_document(
+            "{}", source_platform="fabric", source_version="1", importer_version="test"
+        )

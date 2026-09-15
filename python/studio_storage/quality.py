@@ -67,7 +67,9 @@ def migrate_quality(connection: sqlite3.Connection, *, now: Instant | str) -> No
 
 
 def quality_schema_version(connection: sqlite3.Connection) -> int:
-    row = connection.execute("SELECT MAX(version) AS version FROM quality_schema_migrations").fetchone()
+    row = connection.execute(
+        "SELECT MAX(version) AS version FROM quality_schema_migrations"
+    ).fetchone()
     return 0 if row is None or row["version"] is None else int(row["version"])
 
 

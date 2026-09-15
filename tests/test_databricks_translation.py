@@ -19,7 +19,9 @@ def test_databricks_dependencies_become_canonical_dag_edges() -> None:
         '{"job_id":"7","tasks":[{"task_key":"a","notebook_task":{"notebook_path":"/a"}},{"task_key":"b","depends_on":[{"task_key":"a"}],"notebook_task":{"notebook_path":"/b"}}]}',
     )
     assert len(result.workflow.pipeline.edges) == 1
-    assert next(item for item in result.report.objects if item.source_id == "b").status == "translated"
+    assert (
+        next(item for item in result.report.objects if item.source_id == "b").status == "translated"
+    )
 
 
 def test_databricks_schedule_is_preserved_as_canonical_schedule() -> None:

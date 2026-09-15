@@ -314,7 +314,13 @@ class Trigger:
         kind = payload["kind"]
         key = payload["key"]
         source_ref = payload["source_ref"]
-        if not isinstance(kind, str) or kind not in {"manual", "api", "schedule", "event", "backfill"}:
+        if not isinstance(kind, str) or kind not in {
+            "manual",
+            "api",
+            "schedule",
+            "event",
+            "backfill",
+        }:
             raise ValueError("unsupported trigger kind")
         if not isinstance(key, str) or (source_ref is not None and not isinstance(source_ref, str)):
             raise ValueError("trigger key/source_ref have invalid types")
@@ -332,7 +338,14 @@ class WorkflowRun:
     def __post_init__(self) -> None:
         if self.workflow_snapshot.id != self.workflow_id:
             raise ValueError("workflow run snapshot id must match workflow_id")
-        if self.state not in {"pending", "running", "succeeded", "failed", "cancelling", "cancelled"}:
+        if self.state not in {
+            "pending",
+            "running",
+            "succeeded",
+            "failed",
+            "cancelling",
+            "cancelled",
+        }:
             raise ValueError("unsupported workflow run state")
 
     def to_payload(self) -> dict[str, object]:
@@ -360,7 +373,11 @@ class WorkflowRun:
         identifier = payload["id"]
         workflow_id = payload["workflow_id"]
         state = payload["state"]
-        if not isinstance(identifier, str) or not isinstance(workflow_id, str) or not isinstance(state, str):
+        if (
+            not isinstance(identifier, str)
+            or not isinstance(workflow_id, str)
+            or not isinstance(state, str)
+        ):
             raise ValueError("workflow run identity/state fields must be strings")
         if state not in {"pending", "running", "succeeded", "failed", "cancelling", "cancelled"}:
             raise ValueError("unsupported workflow run state")

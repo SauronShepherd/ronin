@@ -21,8 +21,15 @@ class OzoneJsonConnector(S3JsonConnector):
         if not endpoint:
             raise ValueError("Apache Ozone connector requires endpoint_url")
         parsed = urlsplit(endpoint)
-        if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.query or parsed.fragment:
-            raise ValueError("Ozone endpoint_url must be an absolute HTTP(S) URL without query or fragment")
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.netloc
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise ValueError(
+                "Ozone endpoint_url must be an absolute HTTP(S) URL without query or fragment"
+            )
         return bucket, prefix
 
     def _client_for(self, connection: ConnectionDefinition) -> Any:

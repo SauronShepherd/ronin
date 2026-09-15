@@ -50,9 +50,7 @@ class ClaimedTask:
 def _add_seconds(value: Instant | str, seconds: int) -> Instant:
     base = Instant(value)
     parsed = datetime.strptime(str(base), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
-    return Instant(
-        (parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    )
+    return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
@@ -78,20 +76,16 @@ def migrate_scheduler_fencing(
     current = 0 if row is None or row["version"] is None else int(row["version"])
     if current > _FENCING_SCHEMA_VERSION:
         raise RuntimeError(
-            f"scheduler fencing schema {current} is newer than supported "
-            f"{_FENCING_SCHEMA_VERSION}"
+            f"scheduler fencing schema {current} is newer than supported {_FENCING_SCHEMA_VERSION}"
         )
     migrations_dir = Path(__file__).with_name("migrations")
     for version in range(current + 1, _FENCING_SCHEMA_VERSION + 1):
-        script = migrations_dir.joinpath(_FENCING_MIGRATIONS[version]).read_text(
-            encoding="utf-8"
-        )
+        script = migrations_dir.joinpath(_FENCING_MIGRATIONS[version]).read_text(encoding="utf-8")
         connection.execute("BEGIN IMMEDIATE")
         try:
             _execute_script_in_transaction(connection, script)
             connection.execute(
-                "INSERT INTO scheduler_fencing_schema_migrations(version,applied_at) "
-                "VALUES (?,?)",
+                "INSERT INTO scheduler_fencing_schema_migrations(version,applied_at) VALUES (?,?)",
                 (version, now),
             )
             connection.execute("COMMIT")
@@ -198,8 +192,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                 (str(workspace_id),),
             ).fetchall()
             return tuple(
-                ResourcePoolDefinition(row["pool_name"], int(row["capacity"]))
-                for row in rows
+                ResourcePoolDefinition(row["pool_name"], int(row["capacity"])) for row in rows
             )
         finally:
             connection.close()
@@ -442,9 +435,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                     placeholders = ",".join("?" for _ in predecessors)
                     predecessor_rows = connection.execute(  # noqa: S608
                         "SELECT node_id,state FROM task_runs WHERE workspace_id=? "  # noqa: S608
-                        "AND workflow_run_id=? AND node_id IN ("
-                        + placeholders
-                        + ")",
+                        "AND workflow_run_id=? AND node_id IN (" + placeholders + ")",
                         (
                             str(task_workspace),
                             str(run.id),

@@ -32,8 +32,18 @@ def lineage_event_payload(
         "eventTime": timestamp,
         "run": {"runId": run_id, "facets": {"ronin_lineage": {"mode": edge.mode}}},
         "job": {"namespace": namespace, "name": job_name or edge.operation},
-        "inputs": [{"namespace": namespace, "name": f"{edge.source.asset_id.value}@{edge.source.version.value}"}],
-        "outputs": [{"namespace": namespace, "name": f"{edge.target.asset_id.value}@{edge.target.version.value}"}],
+        "inputs": [
+            {
+                "namespace": namespace,
+                "name": f"{edge.source.asset_id.value}@{edge.source.version.value}",
+            }
+        ],
+        "outputs": [
+            {
+                "namespace": namespace,
+                "name": f"{edge.target.asset_id.value}@{edge.target.version.value}",
+            }
+        ],
         "producer": "ronin",
     }
     if edge.column_mappings:
@@ -41,8 +51,7 @@ def lineage_event_payload(
             "fields": {
                 mapping.target_field: {
                     "inputFields": [
-                        {"namespace": namespace, "name": field}
-                        for field in mapping.source_fields
+                        {"namespace": namespace, "name": field} for field in mapping.source_fields
                     ]
                 }
                 for mapping in edge.column_mappings

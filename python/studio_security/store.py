@@ -105,13 +105,22 @@ class SqliteIdentityStore:
                     (principal.id.value, *payload),
                 )
             elif tuple(row) != payload:
-                if row[2] != principal.issuer or row[3] != principal.subject or row[0] != principal.kind:
+                if (
+                    row[2] != principal.issuer
+                    or row[3] != principal.subject
+                    or row[0] != principal.kind
+                ):
                     raise IdentityConflict(
                         "principal id cannot be rebound to a different identity kind or subject"
                     )
                 connection.execute(
                     "UPDATE security_principals SET display_name=?,email=?,active=? WHERE principal_id=?",
-                    (principal.display_name, principal.email, 1 if principal.active else 0, principal.id.value),
+                    (
+                        principal.display_name,
+                        principal.email,
+                        1 if principal.active else 0,
+                        principal.id.value,
+                    ),
                 )
             connection.commit()
             return principal
@@ -246,7 +255,10 @@ class SqliteIdentityStore:
         principal_id: PrincipalId,
         groups: tuple[GroupId, ...],
     ) -> tuple[str, ...]:
-        subjects = [("principal", principal_id.value), *(('group', group.value) for group in groups)]
+        subjects = [
+            ("principal", principal_id.value),
+            *(("group", group.value) for group in groups),
+        ]
         connection = self._connect()
         try:
             roles: set[str] = set()

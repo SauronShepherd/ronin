@@ -51,7 +51,9 @@ def migrate_environments(connection: sqlite3.Connection, *, now: Instant | str) 
         )
     migrations_dir = Path(__file__).with_name("migrations")
     for version in range(current + 1, _ENVIRONMENT_SCHEMA_VERSION + 1):
-        script = migrations_dir.joinpath(_ENVIRONMENT_MIGRATIONS[version]).read_text(encoding="utf-8")
+        script = migrations_dir.joinpath(_ENVIRONMENT_MIGRATIONS[version]).read_text(
+            encoding="utf-8"
+        )
         connection.execute("BEGIN IMMEDIATE")
         try:
             _execute_script_in_transaction(connection, script)
@@ -256,7 +258,9 @@ class SqliteEnvironmentStore:
                 "WHERE workspace_id=? AND project_id=? AND environment_id=?",
                 (str(workspace_id), str(project_id), str(environment_id)),
             ).fetchone()
-            return None if row is None else ProjectEnvironmentBindings.from_json(row["bindings_json"])
+            return (
+                None if row is None else ProjectEnvironmentBindings.from_json(row["bindings_json"])
+            )
         finally:
             connection.close()
 

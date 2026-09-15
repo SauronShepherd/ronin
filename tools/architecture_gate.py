@@ -82,7 +82,12 @@ PROJECT_DEPENDENCIES.update(
     }
 )
 PROJECT_DEPENDENCIES["studio_execution"] = frozenset(
-    {*PROJECT_DEPENDENCIES["studio_execution"], "studio_core", "studio_lakehouse", "studio_streaming"}
+    {
+        *PROJECT_DEPENDENCIES["studio_execution"],
+        "studio_core",
+        "studio_lakehouse",
+        "studio_streaming",
+    }
 )
 PROJECT_DEPENDENCIES["studio_orchestrator"] = frozenset(
     {*PROJECT_DEPENDENCIES["studio_orchestrator"], "studio_kernel"}

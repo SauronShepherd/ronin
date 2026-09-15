@@ -54,12 +54,12 @@ class ParquetMicroBatchSink:
                 write_parquet_rows(path, expected_rows)
         else:
             if path.exists():
-                raise RuntimeError(
-                    "existing stream batch output is non-empty for an empty replay"
-                )
+                raise RuntimeError("existing stream batch output is non-empty for an empty replay")
             if empty_marker.exists():
                 if empty_marker.read_text(encoding="utf-8") != batch.checkpoint.digest:
-                    raise RuntimeError("existing empty stream batch marker conflicts with checkpoint")
+                    raise RuntimeError(
+                        "existing empty stream batch marker conflicts with checkpoint"
+                    )
             else:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 empty_marker.write_text(batch.checkpoint.digest, encoding="utf-8")

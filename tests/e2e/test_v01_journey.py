@@ -338,9 +338,7 @@ def operator_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str, obje
     store = SqliteJobStore(tmp_path / "ronin.db", migration_now=_NOW)
     service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
     auth_value = "v01-operator-auth"
-    server = RoninHTTPServer(
-        ("127.0.0.1", 0), service, token=auth_value, grants=_OPERATOR_GRANTS
-    )
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=auth_value, grants=_OPERATOR_GRANTS)
     thread = Thread(target=server.serve_forever, name="v01-operator-http", daemon=True)
     thread.start()
     old_url = os.environ.get("RONIN_URL")
@@ -621,9 +619,7 @@ def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str,
     store = SqliteJobStore(config.database_path, migration_now=_NOW)
     service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
     auth_value = "v01-cancel-auth"
-    server = RoninHTTPServer(
-        ("127.0.0.1", 0), service, token=auth_value, grants=_OPERATOR_GRANTS
-    )
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=auth_value, grants=_OPERATOR_GRANTS)
     thread = Thread(target=server.serve_forever, name="v01-cancel-http", daemon=True)
     thread.start()
     old_url = os.environ.get("RONIN_URL")

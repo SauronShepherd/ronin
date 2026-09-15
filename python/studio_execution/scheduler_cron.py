@@ -63,20 +63,14 @@ def _parse_field(
             pieces = base.split("-")
             if len(pieces) != 2:
                 raise CronSyntaxError(f"{field} contains an invalid range")
-            start = _parse_integer(
-                pieces[0], minimum=minimum, maximum=input_maximum, field=field
-            )
-            end = _parse_integer(
-                pieces[1], minimum=minimum, maximum=input_maximum, field=field
-            )
+            start = _parse_integer(pieces[0], minimum=minimum, maximum=input_maximum, field=field)
+            end = _parse_integer(pieces[1], minimum=minimum, maximum=input_maximum, field=field)
             if end < start:
                 raise CronSyntaxError(f"{field} ranges must be ascending")
         else:
             if separator:
                 raise CronSyntaxError(f"{field} steps require '*' or a range")
-            single = _parse_integer(
-                base, minimum=minimum, maximum=input_maximum, field=field
-            )
+            single = _parse_integer(base, minimum=minimum, maximum=input_maximum, field=field)
             start, end = single, single
         for candidate in range(start, end + 1, step):
             result.add(0 if sunday_seven and candidate == 7 else candidate)
@@ -186,8 +180,7 @@ def evaluated_minutes(
     gap_minutes = int((end_dt - start_dt).total_seconds() // 60)
     if gap_minutes > max_scan_minutes:
         raise RuntimeError(
-            f"schedule catch-up requires {gap_minutes} minutes, exceeding limit "
-            f"{max_scan_minutes}"
+            f"schedule catch-up requires {gap_minutes} minutes, exceeding limit {max_scan_minutes}"
         )
     return tuple(
         _minute_instant(start_dt + timedelta(minutes=offset))

@@ -8,9 +8,7 @@ from .artifacts import ArtifactRef
 from .ports import ArtifactStore
 
 
-def collect_unreferenced(
-    store: ArtifactStore, live_digests: Iterable[str]
-) -> tuple[str, ...]:
+def collect_unreferenced(store: ArtifactStore, live_digests: Iterable[str]) -> tuple[str, ...]:
     """Delete only stored digests absent from the caller-provided live set."""
 
     live = set(live_digests)

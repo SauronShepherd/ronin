@@ -90,7 +90,10 @@ class S3ArtifactStore:
         return ref
 
     def get_bytes(self, ref: ArtifactRef) -> bytes:
-        if ref.digest_algorithm != "sha256" or ref.storage_ref != f"s3://{self._bucket}/{self._key(ref.digest)}":
+        if (
+            ref.digest_algorithm != "sha256"
+            or ref.storage_ref != f"s3://{self._bucket}/{self._key(ref.digest)}"
+        ):
             raise ValueError("artifact storage_ref does not match S3 digest")
         response = self._client.get_object(Bucket=self._bucket, Key=self._key(ref.digest))
         data = response["Body"].read()

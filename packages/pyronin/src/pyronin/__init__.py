@@ -515,12 +515,7 @@ def _parse_job(payload: object) -> Job:
         raise ProtocolError("Job fields do not match the v1 contract")
     job_id = payload["id"]
     state = payload["state"]
-    if (
-        not isinstance(job_id, str)
-        or not job_id
-        or job_id != job_id.strip()
-        or len(job_id) > 256
-    ):
+    if not isinstance(job_id, str) or not job_id or job_id != job_id.strip() or len(job_id) > 256:
         raise ProtocolError("Job id must be a bounded non-empty string")
     if not isinstance(state, str):
         raise ProtocolError("Job state must be a string")

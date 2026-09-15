@@ -165,11 +165,7 @@ class LocalFileConnector:
         data = path.read_bytes()
         if len(data) != size:
             raise OSError("source file changed during bounded read")
-        media_type = (
-            "text/csv"
-            if path.suffix.lower() == ".csv"
-            else "application/x-ndjson"
-        )
+        media_type = "text/csv" if path.suffix.lower() == ".csv" else "application/x-ndjson"
         return path, data, media_type
 
     def discover(

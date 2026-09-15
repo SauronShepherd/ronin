@@ -51,9 +51,7 @@ def resolve_project_import_bindings(
         supplied[key] = resolution
 
     missing_required = [
-        request
-        for key, request in expected.items()
-        if request.required and key not in supplied
+        request for key, request in expected.items() if request.required and key not in supplied
     ]
     if missing_required:
         raise BundleBindingResolutionError("required Bundle bindings remain unresolved")

@@ -192,9 +192,7 @@ def run_rag(
         raise ValueError("embedding provider returned a different model identity")
     query_vector = query_result.vectors[0]
     matches = store.search(index_definition.id, query_vector, top_k=definition.top_k)
-    context = "\n\n".join(
-        f"[{match.chunk.chunk_id}] {match.chunk.text}" for match in matches
-    )
+    context = "\n\n".join(f"[{match.chunk.chunk_id}] {match.chunk.text}" for match in matches)
     rendered = _render_prompt(
         prompt,
         question=question,

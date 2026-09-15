@@ -21,7 +21,8 @@ def test_stream_scheduler_bridge_is_deterministic() -> None:
     result = ingest_stream_record(
         cast(SchedulerEventStore, inbox),
         StreamRecord(2, 7, 1_000, "key", {"value": 1}),
-        workspace_id=WorkspaceId("ws"), stream_id="events",
+        workspace_id=WorkspaceId("ws"),
+        stream_id="events",
         received_at=Instant("2026-09-15T00:00:00.000000Z"),
     )
     assert result == ()

@@ -55,14 +55,11 @@ def locked_graph(path: Path) -> dict[str, str]:
     result: dict[str, str] = {}
     current_name: str | None = None
     current_hashes = 0
-    for line_number, raw_line in enumerate(
-        path.read_text(encoding="utf-8").splitlines(), start=1
-    ):
+    for line_number, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         stripped = raw_line.strip()
         if (not stripped or stripped.startswith("#")) and current_name is not None:
             raise LicenseQualificationError(
-                f"continued locked requirement interrupted at line {line_number}: "
-                f"{current_name}"
+                f"continued locked requirement interrupted at line {line_number}: {current_name}"
             )
         if not stripped or stripped.startswith("#"):
             continue
@@ -314,8 +311,7 @@ def _require_declared_license_file_evidence(
     ]
     if missing:
         raise LicenseQualificationError(
-            f"declared License-File evidence missing from inventory: {key}: "
-            + ", ".join(missing)
+            f"declared License-File evidence missing from inventory: {key}: " + ", ".join(missing)
         )
 
 

@@ -45,13 +45,13 @@ def encode_job_cursor(
     state: JobState | None,
 ) -> str:
     payload: dict[str, object] = {
-            "v": _CURSOR_VERSION,
-            "kind": "jobs",
-            "created_at": str(created_at),
-            "job_id": str(job_id),
-            "project_id": project_id,
-            "state": _job_state_value(state),
-        }
+        "v": _CURSOR_VERSION,
+        "kind": "jobs",
+        "created_at": str(created_at),
+        "job_id": str(job_id),
+        "project_id": project_id,
+        "state": _job_state_value(state),
+    }
     if project_ids is not None:
         payload["project_ids"] = project_ids
     return encode_cursor(payload)

@@ -120,17 +120,24 @@ class SqliteTelemetryStore:
         try:
             rows = connection.execute(
                 "SELECT name,value,unit,kind,observed_at,attributes_json FROM telemetry_metrics "
-                "ORDER BY name, observed_at, metric_id LIMIT ?", (limit,)
+                "ORDER BY name, observed_at, metric_id LIMIT ?",
+                (limit,),
             ).fetchall()
             result: list[MetricPoint] = []
             for row in rows:
                 attrs_raw = json.loads(row[5])
                 if not isinstance(attrs_raw, dict):
                     raise ValueError("persisted metric attributes are invalid")
-                result.append(MetricPoint(
-                    str(row[0]), float(row[1]), str(row[2]), cast(MetricKind, str(row[3])), Instant(str(row[4])),
-                    tuple(sorted((str(key), str(value)) for key, value in attrs_raw.items())),
-                ))
+                result.append(
+                    MetricPoint(
+                        str(row[0]),
+                        float(row[1]),
+                        str(row[2]),
+                        cast(MetricKind, str(row[3])),
+                        Instant(str(row[4])),
+                        tuple(sorted((str(key), str(value)) for key, value in attrs_raw.items())),
+                    )
+                )
             return tuple(result)
         finally:
             connection.close()

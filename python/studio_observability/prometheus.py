@@ -22,10 +22,14 @@ def prometheus_text(points: Iterable[MetricPoint], *, max_points: int = 10_000) 
             name = "ronin_" + name
         labels = ""
         if point.attributes:
-            labels = "{" + ",".join(
-                f'{_NAME.sub("_", key)}="{value.replace(chr(92), chr(92)+chr(92)).replace(chr(34), chr(92)+chr(34))}"'
-                for key, value in point.attributes
-            ) + "}"
+            labels = (
+                "{"
+                + ",".join(
+                    f'{_NAME.sub("_", key)}="{value.replace(chr(92), chr(92) + chr(92)).replace(chr(34), chr(92) + chr(34))}"'
+                    for key, value in point.attributes
+                )
+                + "}"
+            )
         lines.append(f"{name}{labels} {point.value!r}")
     return "\n".join(lines) + ("\n" if lines else "")
 

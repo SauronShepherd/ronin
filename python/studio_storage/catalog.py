@@ -62,7 +62,9 @@ def migrate_catalog(connection: sqlite3.Connection, *, now: Instant | str) -> No
 
 
 def catalog_schema_version(connection: sqlite3.Connection) -> int:
-    row = connection.execute("SELECT MAX(version) AS version FROM catalog_schema_migrations").fetchone()
+    row = connection.execute(
+        "SELECT MAX(version) AS version FROM catalog_schema_migrations"
+    ).fetchone()
     return 0 if row is None or row["version"] is None else int(row["version"])
 
 
@@ -212,7 +214,9 @@ class SqliteCatalogStore:
                 if existing["revision_json"] == payload:
                     connection.execute("COMMIT")
                     return revision
-                raise CatalogConflict("asset version already exists with different revision metadata")
+                raise CatalogConflict(
+                    "asset version already exists with different revision metadata"
+                )
             connection.execute(
                 "INSERT INTO catalog_asset_revisions(workspace_id,asset_id,version,revision_json,created_at) "
                 "VALUES (?,?,?,?,?)",
@@ -260,7 +264,9 @@ class SqliteCatalogStore:
                     (str(workspace_id), str(ref.asset_id), str(ref.version)),
                 ).fetchone()
                 if revision is None:
-                    raise CatalogAssetNotFound(f"missing lineage revision: {ref.asset_id}@{ref.version}")
+                    raise CatalogAssetNotFound(
+                        f"missing lineage revision: {ref.asset_id}@{ref.version}"
+                    )
             existing = connection.execute(
                 "SELECT edge_json FROM lineage_edges WHERE workspace_id=? AND edge_digest=?",
                 (str(workspace_id), edge.digest),

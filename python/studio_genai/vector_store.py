@@ -105,7 +105,9 @@ class SqliteVectorStore:
                     row[0],
                     row[1],
                     tuple(float(value) for value in json.loads(row[2])),
-                    tuple(sorted((str(key), str(value)) for key, value in json.loads(row[3]).items())),
+                    tuple(
+                        sorted((str(key), str(value)) for key, value in json.loads(row[3]).items())
+                    ),
                 )
                 for row in rows
             )

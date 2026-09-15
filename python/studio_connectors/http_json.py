@@ -157,28 +157,29 @@ class HttpJsonConnector:
             raise ValueError("HTTP max_response_bytes must be an integer") from exc
         if max_response_bytes < 1 or max_response_bytes > 100 * 1024 * 1024:
             raise ValueError("HTTP max_response_bytes must be between 1 and 104857600")
-        with httpx.Client(follow_redirects=False, timeout=timeout_seconds) as client, client.stream(
-            "GET", url, headers=headers
-        ) as response:
-                response.raise_for_status()
-                content_length = response.headers.get("content-length")
-                if content_length is not None:
-                    try:
-                        declared_size = int(content_length)
-                    except ValueError as exc:
-                        raise ValueError("HTTP response content-length must be an integer") from exc
-                    if declared_size < 0:
-                        raise ValueError("HTTP response content-length must not be negative")
-                    if declared_size > max_response_bytes:
-                        raise ValueError("HTTP JSON response exceeds configured byte limit")
-                chunks: list[bytes] = []
-                size = 0
-                for chunk in response.iter_bytes():
-                    size += len(chunk)
-                    if size > max_response_bytes:
-                        raise ValueError("HTTP JSON response exceeds configured byte limit")
-                    chunks.append(chunk)
-                body = b"".join(chunks)
+        with (
+            httpx.Client(follow_redirects=False, timeout=timeout_seconds) as client,
+            client.stream("GET", url, headers=headers) as response,
+        ):
+            response.raise_for_status()
+            content_length = response.headers.get("content-length")
+            if content_length is not None:
+                try:
+                    declared_size = int(content_length)
+                except ValueError as exc:
+                    raise ValueError("HTTP response content-length must be an integer") from exc
+                if declared_size < 0:
+                    raise ValueError("HTTP response content-length must not be negative")
+                if declared_size > max_response_bytes:
+                    raise ValueError("HTTP JSON response exceeds configured byte limit")
+            chunks: list[bytes] = []
+            size = 0
+            for chunk in response.iter_bytes():
+                size += len(chunk)
+                if size > max_response_bytes:
+                    raise ValueError("HTTP JSON response exceeds configured byte limit")
+                chunks.append(chunk)
+            body = b"".join(chunks)
         try:
             payload = json.loads(body)
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:

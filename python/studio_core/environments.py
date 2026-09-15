@@ -74,8 +74,7 @@ class EnvironmentDefinition:
     def __post_init__(self) -> None:
         _require_text(self.name, "environment name")
         if self.description and (
-            self.description != self.description.strip()
-            or "\x00" in self.description
+            self.description != self.description.strip() or "\x00" in self.description
         ):
             raise ValueError("environment description must be trimmed and contain no NUL")
         if self.state not in _ALLOWED_STATES:

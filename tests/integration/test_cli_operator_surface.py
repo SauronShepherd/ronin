@@ -24,9 +24,7 @@ _AUTH_VALUE = "cli-integration-auth"
 _GRANTS = GrantSet(
     (
         Grant(
-            frozenset(
-                {"read", "list", "events", "submit", "execute", "cancel", "evidence:read"}
-            ),
+            frozenset({"read", "list", "events", "submit", "execute", "cancel", "evidence:read"}),
             ResourceScope("*", None),
         ),
     )

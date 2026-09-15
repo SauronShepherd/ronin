@@ -69,9 +69,7 @@ class RoninHTTPServer(_RoninHTTPServer):
                 "trusted development network. Use an external TLS terminator for remote access."
             )
         self._readiness_database = _readiness_database_from_env()
-        super().__init__(
-            server_address, service, token=token, grants=grants, sql_engine=sql_engine
-        )
+        super().__init__(server_address, service, token=token, grants=grants, sql_engine=sql_engine)
         self.RequestHandlerClass = _ReadinessHandler
 
     def ready(self) -> bool:

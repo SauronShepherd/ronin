@@ -197,7 +197,10 @@ class SchedulerExecutionLinkStore(FencedSqliteSchedulerStore):
                 (str(workspace_id), str(attempt_id)),
             ).fetchone()
             if existing is not None:
-                if existing["job_id"] != str(job_id) or existing["request_digest"] != request_digest:
+                if (
+                    existing["job_id"] != str(job_id)
+                    or existing["request_digest"] != request_digest
+                ):
                     raise TaskExecutionLinkConflict(
                         "task attempt is already bound to different execution identity"
                     )
@@ -267,8 +270,7 @@ class SchedulerExecutionLinkStore(FencedSqliteSchedulerStore):
                 )
 
             existing = connection.execute(
-                "SELECT * FROM task_execution_intents "
-                "WHERE workspace_id=? AND task_attempt_id=?",
+                "SELECT * FROM task_execution_intents WHERE workspace_id=? AND task_attempt_id=?",
                 (str(workspace_id), str(attempt_id)),
             ).fetchone()
             if existing is not None:
@@ -338,8 +340,7 @@ class SchedulerExecutionLinkStore(FencedSqliteSchedulerStore):
         connection = self._connect()
         try:
             row = connection.execute(
-                "SELECT * FROM task_execution_intents "
-                "WHERE workspace_id=? AND task_attempt_id=?",
+                "SELECT * FROM task_execution_intents WHERE workspace_id=? AND task_attempt_id=?",
                 (str(workspace_id), str(attempt_id)),
             ).fetchone()
             return None if row is None else _intent_from_row(row)
@@ -375,8 +376,7 @@ class SchedulerExecutionLinkStore(FencedSqliteSchedulerStore):
         reclaimed = 0
         for attempt in rows:
             intent = connection.execute(
-                "SELECT 1 FROM task_execution_intents "
-                "WHERE workspace_id=? AND task_attempt_id=?",
+                "SELECT 1 FROM task_execution_intents WHERE workspace_id=? AND task_attempt_id=?",
                 (attempt["workspace_id"], attempt["task_attempt_id"]),
             ).fetchone()
             if intent is not None:
@@ -431,8 +431,7 @@ class SchedulerExecutionLinkStore(FencedSqliteSchedulerStore):
         try:
             connection.execute("BEGIN IMMEDIATE")
             intent_row = connection.execute(
-                "SELECT * FROM task_execution_intents "
-                "WHERE workspace_id=? AND task_attempt_id=?",
+                "SELECT * FROM task_execution_intents WHERE workspace_id=? AND task_attempt_id=?",
                 (str(workspace_id), str(attempt_id)),
             ).fetchone()
             if intent_row is None:

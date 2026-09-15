@@ -50,13 +50,17 @@ class SqliteKnowledgeGraphStore:
         def ref(raw: object) -> KnowledgeObjectRef:
             if not isinstance(raw, dict) or set(raw) != {"object_type", "key"}:
                 raise ValueError("knowledge graph reference has invalid shape")
-            return KnowledgeObjectRef(str(raw["object_type"]), tuple(tuple(item) for item in raw["key"]))
+            return KnowledgeObjectRef(
+                str(raw["object_type"]), tuple(tuple(item) for item in raw["key"])
+            )
 
         objects = []
         for raw in value["objects"]:
             if not isinstance(raw, dict) or set(raw) != {"ref", "properties"}:
                 raise ValueError("knowledge graph object has invalid shape")
-            objects.append(KnowledgeObject(ref(raw["ref"]), tuple(tuple(item) for item in raw["properties"])))
+            objects.append(
+                KnowledgeObject(ref(raw["ref"]), tuple(tuple(item) for item in raw["properties"]))
+            )
         links = tuple((ref(pair[0]), ref(pair[1])) for pair in value["links"])
         return KnowledgeGraph(tuple(objects), links)
 
@@ -65,15 +69,24 @@ class SqliteKnowledgeGraphStore:
             raise ValueError("graph_id must be non-empty and trimmed")
         payload = self._payload(graph)
         with sqlite3.connect(self._path) as connection:
-            existing = connection.execute("SELECT graph_json FROM knowledge_graphs WHERE graph_id=?", (graph_id,)).fetchone()
+            existing = connection.execute(
+                "SELECT graph_json FROM knowledge_graphs WHERE graph_id=?", (graph_id,)
+            ).fetchone()
             if existing is not None and existing[0] != payload:
-                raise KnowledgeGraphConflict(f"graph already exists with different content: {graph_id}")
-            connection.execute("INSERT OR IGNORE INTO knowledge_graphs(graph_id,graph_json) VALUES (?,?)", (graph_id, payload))
+                raise KnowledgeGraphConflict(
+                    f"graph already exists with different content: {graph_id}"
+                )
+            connection.execute(
+                "INSERT OR IGNORE INTO knowledge_graphs(graph_id,graph_json) VALUES (?,?)",
+                (graph_id, payload),
+            )
         return graph
 
     def get(self, graph_id: str) -> KnowledgeGraph | None:
         with sqlite3.connect(self._path) as connection:
-            row = connection.execute("SELECT graph_json FROM knowledge_graphs WHERE graph_id=?", (graph_id,)).fetchone()
+            row = connection.execute(
+                "SELECT graph_json FROM knowledge_graphs WHERE graph_id=?", (graph_id,)
+            ).fetchone()
         return None if row is None else self._graph(str(row[0]))
 
 

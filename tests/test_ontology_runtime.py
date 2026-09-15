@@ -21,7 +21,10 @@ def _object_type() -> ObjectType:
         "Customer",
         AssetRef(AssetId("customers"), AssetVersion("1")),
         ("customer_id",),
-        (PropertyDefinition("customer_id", "string", "customer_id", True), PropertyDefinition("name", "string", "name")),
+        (
+            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("name", "string", "name"),
+        ),
     )
 
 
@@ -41,11 +44,18 @@ def test_materialize_rejects_duplicate_or_missing_keys() -> None:
 def test_resolve_link_type_joins_references_and_enforces_cardinality() -> None:
     source = materialize_object_type(_object_type(), ({"customer_id": 7, "name": "Ada"},))
     target_type = ObjectType(
-        "Order", AssetRef(AssetId("orders"), AssetVersion("1")), ("customer_id",),
-        (PropertyDefinition("customer_id", "string", "customer_id", True), PropertyDefinition("order_id", "string", "order_id", True)),
+        "Order",
+        AssetRef(AssetId("orders"), AssetVersion("1")),
+        ("customer_id",),
+        (
+            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("order_id", "string", "order_id", True),
+        ),
     )
     targets = materialize_object_type(target_type, ({"customer_id": 7, "order_id": "o1"},))
-    link = LinkType("customer_orders", "Customer", "Order", "one-to-many", ("customer_id",), ("customer_id",))
+    link = LinkType(
+        "customer_orders", "Customer", "Order", "one-to-many", ("customer_id",), ("customer_id",)
+    )
     assert len(resolve_link_type(link, source, targets)) == 1
     graph = KnowledgeGraph(source + targets, resolve_link_type(link, source, targets))
     assert graph.objects_of_type("Order") == targets

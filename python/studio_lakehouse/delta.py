@@ -48,10 +48,7 @@ def _rows_table(rows: tuple[Mapping[str, object], ...]) -> Any:
 
 
 def _field_state(schema: Any) -> tuple[OpenTableField, ...]:
-    return tuple(
-        OpenTableField(field.name, str(field.type), field.nullable)
-        for field in schema
-    )
+    return tuple(OpenTableField(field.name, str(field.type), field.nullable) for field in schema)
 
 
 class DeltaTableStore:

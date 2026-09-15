@@ -27,7 +27,10 @@ def test_studio_assets_are_allowlisted_and_served(tmp_path) -> None:
         SqliteJobStore(tmp_path / "ronin.db", migration_now=Instant("2026-09-06T20:00:00.000000Z"))
     )
     server = RoninHTTPServer(  # noqa: S106
-        ("127.0.0.1", 0), service, token="test-token", grants=_GRANTS  # noqa: S106
+        ("127.0.0.1", 0),
+        service,
+        token="test-token",
+        grants=_GRANTS,  # noqa: S106
     )
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -49,7 +52,7 @@ def test_studio_assets_are_allowlisted_and_served(tmp_path) -> None:
             assert "/cancel" in script
             assert 'classList.toggle("active"' in script
             assert "sessionStorage" in script
-            assert "localStorage.setItem(\"ronin.token\"" not in script
+            assert 'localStorage.setItem("ronin.token"' not in script
             request = urllib.request.Request(  # noqa: S310
                 f"{base_url}/studio/secret.txt",
                 headers={"Authorization": "Bearer test-token"},

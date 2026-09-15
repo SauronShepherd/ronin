@@ -25,7 +25,10 @@ class WindowedBatch:
 
 
 def window_records(
-    records: tuple[StreamRecord, ...], *, window_ms: int, allowed_lateness_ms: int = 0,
+    records: tuple[StreamRecord, ...],
+    *,
+    window_ms: int,
+    allowed_lateness_ms: int = 0,
     previous_watermark_ms: int | None = None,
 ) -> WindowedBatch:
     """Assign timestamped records to fixed windows and classify late records."""
@@ -34,7 +37,9 @@ def window_records(
     timestamped = tuple(record for record in records if record.timestamp_ms is not None)
     if not timestamped:
         return WindowedBatch((), previous_watermark_ms, ())
-    timestamps = tuple(record.timestamp_ms for record in timestamped if record.timestamp_ms is not None)
+    timestamps = tuple(
+        record.timestamp_ms for record in timestamped if record.timestamp_ms is not None
+    )
     maximum = max(timestamps)
     baseline = previous_watermark_ms if previous_watermark_ms is not None else 0
     watermark = max(maximum - allowed_lateness_ms, baseline)
@@ -53,7 +58,10 @@ def window_records(
             continue
         start = (timestamp // window_ms) * window_ms
         grouped.setdefault(EventTimeWindow(start, start + window_ms), []).append(record)
-    windows = tuple((key, tuple(sorted(value, key=lambda item: (item.partition, item.offset)))) for key, value in sorted(grouped.items()))
+    windows = tuple(
+        (key, tuple(sorted(value, key=lambda item: (item.partition, item.offset))))
+        for key, value in sorted(grouped.items())
+    )
     return WindowedBatch(windows, watermark, late)
 
 

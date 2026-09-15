@@ -378,17 +378,13 @@ def test_real_docker_isolation_limits_usage_and_cleanup() -> None:
     assert cancellation_names == ()
     assert cancelled_observed["availability"] == "unavailable"
     assert (
-        cancelled_observed["unavailable_reason"]
-        == "execution_cancelled_before_final_measurement"
+        cancelled_observed["unavailable_reason"] == "execution_cancelled_before_final_measurement"
     )
     assert timeout_state == "failed"
     assert timeout_failure == "kernel.container.timeout"
     assert timeout_names == ()
     assert timeout_observed["availability"] == "unavailable"
-    assert (
-        timeout_observed["unavailable_reason"]
-        == "execution_timed_out_before_final_measurement"
-    )
+    assert timeout_observed["unavailable_reason"] == "execution_timed_out_before_final_measurement"
 
     summary = {
         "schema": "ronin.docker-qualification/v1",

@@ -234,22 +234,41 @@ def evaluate_rule(
             values = _field_values(rule, rows)
             references = set(reference_values(rule))
             violations = sum(value is not None and value not in references for value in values)
-            observed: tuple[tuple[str, str], ...] = (("violation_count", str(violations)), ("reference_count", str(len(references))))
+            observed: tuple[tuple[str, str], ...] = (
+                ("violation_count", str(violations)),
+                ("reference_count", str(len(references))),
+            )
             if violations == 0:
                 return _passed(rule, observed)
-            return _failed(rule, observed, f"found {violations} value(s) missing from reference data")
+            return _failed(
+                rule, observed, f"found {violations} value(s) missing from reference data"
+            )
         if rule.kind == "custom_sql":
             if custom_sql is None:
                 return _error(rule, "custom_sql execution is not enabled in the built-in evaluator")
             passed = custom_sql(rule, rows)
-            custom_observed: tuple[tuple[str, str], ...] = (("predicate_passed", str(bool(passed)).lower()),)
-            return _passed(rule, custom_observed) if passed else _failed(rule, custom_observed, "custom SQL predicate failed")
+            custom_observed: tuple[tuple[str, str], ...] = (
+                ("predicate_passed", str(bool(passed)).lower()),
+            )
+            return (
+                _passed(rule, custom_observed)
+                if passed
+                else _failed(rule, custom_observed, "custom SQL predicate failed")
+            )
         if rule.kind == "custom_python":
             if custom_python is None:
-                return _error(rule, "custom_python execution is not enabled in the built-in evaluator")
+                return _error(
+                    rule, "custom_python execution is not enabled in the built-in evaluator"
+                )
             passed = custom_python(rule, rows)
-            python_observed: tuple[tuple[str, str], ...] = (("predicate_passed", str(bool(passed)).lower()),)
-            return _passed(rule, python_observed) if passed else _failed(rule, python_observed, "custom Python predicate failed")
+            python_observed: tuple[tuple[str, str], ...] = (
+                ("predicate_passed", str(bool(passed)).lower()),
+            )
+            return (
+                _passed(rule, python_observed)
+                if passed
+                else _failed(rule, python_observed, "custom Python predicate failed")
+            )
         return _error(rule, f"unsupported quality rule kind: {rule.kind}")
     except (TypeError, ValueError) as exc:
         return _error(rule, str(exc))
@@ -269,7 +288,15 @@ def evaluate_contract(
     """Evaluate all contract rules deterministically into one immutable QualityRun."""
 
     results = tuple(
-        evaluate_rule(rule, rows, contract=contract, now=now, reference_values=reference_values, custom_sql=custom_sql, custom_python=custom_python)
+        evaluate_rule(
+            rule,
+            rows,
+            contract=contract,
+            now=now,
+            reference_values=reference_values,
+            custom_sql=custom_sql,
+            custom_python=custom_python,
+        )
         for rule in contract.rules
     )
     return QualityRun(run_id, contract.asset, execution_ref, results)

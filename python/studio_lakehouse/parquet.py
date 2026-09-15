@@ -54,8 +54,7 @@ def _digest_file(path: Path) -> str:
 
 def _schema_fields(schema: Any) -> tuple[ParquetSchemaField, ...]:
     return tuple(
-        ParquetSchemaField(field.name, str(field.type), field.nullable)
-        for field in schema
+        ParquetSchemaField(field.name, str(field.type), field.nullable) for field in schema
     )
 
 

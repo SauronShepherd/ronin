@@ -59,11 +59,7 @@ def test_blocking_failure_is_reported() -> None:
     contract = DataContract(
         _REF,
         "exact",
-        (
-            QualityRule(
-                QualityRuleId("not-null"), "null", "id not null", blocking=True, field="id"
-            ),
-        ),
+        (QualityRule(QualityRuleId("not-null"), "null", "id not null", blocking=True, field="id"),),
     )
     run = evaluate_contract(
         contract,
@@ -103,9 +99,7 @@ def test_custom_execution_kinds_fail_explicitly_not_silently() -> None:
     contract = DataContract(
         _REF,
         "exact",
-        (
-            QualityRule(QualityRuleId("sql"), "custom_sql", "custom SQL"),
-        ),
+        (QualityRule(QualityRuleId("sql"), "custom_sql", "custom SQL"),),
     )
     run = evaluate_contract(contract, (), run_id=QualityRunId("quality-4"))
     assert run.status == "error"
@@ -126,14 +120,22 @@ def test_quality_history_is_exposed_through_service_boundary() -> None:
             return (run,)
 
     assert list_quality_runs(Store(), WorkspaceId("workspace-1"), _REF) == (run,)
+
+
 def test_referential_rule_uses_injected_reference_values() -> None:
     from studio_core import AssetId, AssetRef, AssetVersion, DataContract, QualityRule
     from studio_quality.evaluator import evaluate_rule
 
-    rule = QualityRule(QualityRuleId("fk"), "referential", "customer reference", blocking=True, field="customer_id")
+    rule = QualityRule(
+        QualityRuleId("fk"), "referential", "customer reference", blocking=True, field="customer_id"
+    )
     contract = DataContract(AssetRef(AssetId("orders"), AssetVersion("1")), "exact", rules=(rule,))
-    result = evaluate_rule(rule, [{"customer_id": "ok"}, {"customer_id": "bad"}],
-                           contract=contract, reference_values=lambda _rule: ("ok",))
+    result = evaluate_rule(
+        rule,
+        [{"customer_id": "ok"}, {"customer_id": "bad"}],
+        contract=contract,
+        reference_values=lambda _rule: ("ok",),
+    )
     assert result.status == "failed"
     assert result.observed == (("reference_count", "1"), ("violation_count", "1"))
 
@@ -144,8 +146,9 @@ def test_custom_sql_rule_uses_injected_sandboxed_predicate() -> None:
 
     rule = QualityRule(QualityRuleId("sql"), "custom_sql", "row predicate", field=None)
     contract = DataContract(_REF, "exact", rules=(rule,))
-    result = evaluate_rule(rule, [{"id": 1}], contract=contract,
-                           custom_sql=lambda _rule, rows: len(rows) == 1)
+    result = evaluate_rule(
+        rule, [{"id": 1}], contract=contract, custom_sql=lambda _rule, rows: len(rows) == 1
+    )
     assert result.status == "passed"
 
 
@@ -154,6 +157,7 @@ def test_custom_python_rule_uses_injected_sandboxed_predicate() -> None:
 
     rule = QualityRule(QualityRuleId("python"), "custom_python", "row predicate")
     contract = DataContract(_REF, "exact", rules=(rule,))
-    result = evaluate_rule(rule, [{"id": 1}], contract=contract,
-                           custom_python=lambda _rule, rows: rows[0]["id"] == 1)
+    result = evaluate_rule(
+        rule, [{"id": 1}], contract=contract, custom_python=lambda _rule, rows: rows[0]["id"] == 1
+    )
     assert result.status == "passed"

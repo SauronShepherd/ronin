@@ -379,9 +379,7 @@ class GrantSet:
     def requirements(self) -> tuple[Requirement, ...]:
         """Losslessly expand unconstrained bearer-token grants to requirements."""
         requirements = [
-            requirement
-            for grant in self.grants
-            for requirement in grant.requirements()
+            requirement for grant in self.grants for requirement in grant.requirements()
         ]
         return tuple(sorted(requirements, key=lambda item: item.canonical_key))
 
@@ -395,9 +393,7 @@ class GrantSet:
         matching = tuple(
             grant
             for grant in self.grants
-            if action in grant.actions
-            and grant.resource.kind == kind
-            and not grant.constraints
+            if action in grant.actions and grant.resource.kind == kind and not grant.constraints
         )
         if any(grant.resource.identifier is None for grant in matching):
             return None
@@ -414,8 +410,10 @@ class GrantSet:
 
 def requirement_to_bearer_scope(requirement: Requirement) -> str:
     """Encode one requirement as a stable v1 bearer-scope string."""
-    identifier = "*" if requirement.resource.identifier is None else quote(
-        requirement.resource.identifier, safe=""
+    identifier = (
+        "*"
+        if requirement.resource.identifier is None
+        else quote(requirement.resource.identifier, safe="")
     )
     return ":".join(
         (

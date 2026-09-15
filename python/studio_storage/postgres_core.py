@@ -219,7 +219,13 @@ class PostgresMetadataStore:
                 cursor.execute(
                     "INSERT INTO ronin_workspaces(workspace_id,name,description,archived_at,created_at,updated_at) "
                     "VALUES (%s,%s,%s,NULL,%s,%s)",
-                    (str(workspace.id), workspace.name, workspace.description, str(current), str(current)),
+                    (
+                        str(workspace.id),
+                        workspace.name,
+                        workspace.description,
+                        str(current),
+                        str(current),
+                    ),
                 )
             connection.commit()
             return workspace
@@ -260,7 +266,13 @@ class PostgresMetadataStore:
                 cursor.execute(
                     "UPDATE ronin_workspaces SET name=%s,description=%s,archived_at=%s,updated_at=%s,"
                     "row_version=row_version+1 WHERE workspace_id=%s",
-                    (workspace.name, workspace.description, archived_at, str(current), str(workspace.id)),
+                    (
+                        workspace.name,
+                        workspace.description,
+                        archived_at,
+                        str(current),
+                        str(workspace.id),
+                    ),
                 )
                 if cursor.rowcount != 1:
                     raise WorkspaceNotFound(str(workspace.id))
@@ -353,7 +365,9 @@ class PostgresMetadataStore:
                     "SELECT manifest_json FROM ronin_projects WHERE workspace_id=%s ORDER BY project_id",
                     (str(workspace_id),),
                 )
-                return tuple(ProjectManifest.from_json(row["manifest_json"]) for row in cursor.fetchall())
+                return tuple(
+                    ProjectManifest.from_json(row["manifest_json"]) for row in cursor.fetchall()
+                )
         finally:
             connection.close()
 
@@ -416,7 +430,9 @@ class PostgresMetadataStore:
                     (str(workspace_id), str(environment_id)),
                 )
                 row = cursor.fetchone()
-                return None if row is None else EnvironmentDefinition.from_json(row["definition_json"])
+                return (
+                    None if row is None else EnvironmentDefinition.from_json(row["definition_json"])
+                )
         finally:
             connection.close()
 
@@ -428,7 +444,10 @@ class PostgresMetadataStore:
                     "SELECT definition_json FROM ronin_environments WHERE workspace_id=%s ORDER BY environment_id",
                     (str(workspace_id),),
                 )
-                return tuple(EnvironmentDefinition.from_json(row["definition_json"]) for row in cursor.fetchall())
+                return tuple(
+                    EnvironmentDefinition.from_json(row["definition_json"])
+                    for row in cursor.fetchall()
+                )
         finally:
             connection.close()
 
@@ -467,8 +486,12 @@ class PostgresMetadataStore:
                     "bindings_json=EXCLUDED.bindings_json,updated_at=EXCLUDED.updated_at,"
                     "row_version=ronin_project_environment_bindings.row_version+1",
                     (
-                        str(workspace_id), str(bindings.project_id), str(bindings.environment_id),
-                        bindings.to_json(), str(current), str(current),
+                        str(workspace_id),
+                        str(bindings.project_id),
+                        str(bindings.environment_id),
+                        bindings.to_json(),
+                        str(current),
+                        str(current),
                     ),
                 )
             connection.commit()
@@ -494,7 +517,11 @@ class PostgresMetadataStore:
                     (str(workspace_id), str(project_id), str(environment_id)),
                 )
                 row = cursor.fetchone()
-                return None if row is None else ProjectEnvironmentBindings.from_json(row["bindings_json"])
+                return (
+                    None
+                    if row is None
+                    else ProjectEnvironmentBindings.from_json(row["bindings_json"])
+                )
         finally:
             connection.close()
 
@@ -565,7 +592,9 @@ class PostgresMetadataStore:
                     (str(workspace_id), str(connection_id)),
                 )
                 row = cursor.fetchone()
-                return None if row is None else ConnectionDefinition.from_json(row["definition_json"])
+                return (
+                    None if row is None else ConnectionDefinition.from_json(row["definition_json"])
+                )
         finally:
             connection.close()
 
@@ -577,7 +606,10 @@ class PostgresMetadataStore:
                     "SELECT definition_json FROM ronin_connections WHERE workspace_id=%s ORDER BY connection_id",
                     (str(workspace_id),),
                 )
-                return tuple(ConnectionDefinition.from_json(row["definition_json"]) for row in cursor.fetchall())
+                return tuple(
+                    ConnectionDefinition.from_json(row["definition_json"])
+                    for row in cursor.fetchall()
+                )
         finally:
             connection.close()
 
@@ -676,7 +708,9 @@ class PostgresMetadataStore:
                     "SELECT definition_json FROM ronin_catalog_assets WHERE workspace_id=%s ORDER BY asset_id",
                     (str(workspace_id),),
                 )
-                return tuple(CatalogAsset.from_json(row["definition_json"]) for row in cursor.fetchall())
+                return tuple(
+                    CatalogAsset.from_json(row["definition_json"]) for row in cursor.fetchall()
+                )
         finally:
             connection.close()
 
@@ -733,14 +767,19 @@ class PostgresMetadataStore:
                 )
                 row = cursor.fetchone()
                 if row is not None and row["revision_json"] != payload:
-                    raise CatalogConflict("asset revision identity already exists with different metadata")
+                    raise CatalogConflict(
+                        "asset revision identity already exists with different metadata"
+                    )
                 if row is None:
                     cursor.execute(
                         "INSERT INTO ronin_catalog_revisions(workspace_id,asset_id,version,revision_json,created_at) "
                         "VALUES (%s,%s,%s,%s,%s)",
                         (
-                            str(workspace_id), str(revision.ref.asset_id), str(revision.ref.version),
-                            payload, str(current),
+                            str(workspace_id),
+                            str(revision.ref.asset_id),
+                            str(revision.ref.version),
+                            payload,
+                            str(current),
                         ),
                     )
             connection.commit()
@@ -792,9 +831,14 @@ class PostgresMetadataStore:
                         "workspace_id,edge_digest,source_asset_id,source_version,target_asset_id,target_version,edge_json,created_at) "
                         "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                         (
-                            str(workspace_id), edge.digest, str(edge.source.asset_id),
-                            str(edge.source.version), str(edge.target.asset_id),
-                            str(edge.target.version), edge.to_json(), str(current),
+                            str(workspace_id),
+                            edge.digest,
+                            str(edge.source.asset_id),
+                            str(edge.source.version),
+                            str(edge.target.asset_id),
+                            str(edge.target.version),
+                            edge.to_json(),
+                            str(current),
                         ),
                     )
             connection.commit()

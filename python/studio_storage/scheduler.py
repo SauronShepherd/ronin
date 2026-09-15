@@ -278,7 +278,9 @@ class SqliteSchedulerStore:
                 if existing.trigger == trigger:
                     connection.execute("COMMIT")
                     return existing
-                raise WorkflowRunConflict("trigger key already exists with different trigger content")
+                raise WorkflowRunConflict(
+                    "trigger key already exists with different trigger content"
+                )
             existing_id = connection.execute(
                 "SELECT 1 FROM workflow_runs WHERE workspace_id=? AND workflow_run_id=?",
                 (str(workspace_id), str(run_id)),

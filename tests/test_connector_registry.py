@@ -1,6 +1,12 @@
 import pytest
 
-from studio_connectors import ConnectorRegistry, HttpJsonConnector, PostgresConnector, S3JsonConnector, builtin_connector_registry
+from studio_connectors import (
+    ConnectorRegistry,
+    HttpJsonConnector,
+    PostgresConnector,
+    S3JsonConnector,
+    builtin_connector_registry,
+)
 from studio_core import ConnectionDefinition, ConnectionId
 from studio_storage import EnvironmentSecretResolver
 

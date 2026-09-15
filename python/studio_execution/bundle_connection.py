@@ -273,7 +273,9 @@ def resolve_connection_secret_bindings(
         if key in supplied:
             raise ConnectionBundleBindingError("duplicate connection Bundle binding resolution")
         if key not in expected:
-            raise ConnectionBundleBindingError("connection Bundle binding resolution was not requested")
+            raise ConnectionBundleBindingError(
+                "connection Bundle binding resolution was not requested"
+            )
         supplied[key] = resolution
     if any(request.required and key not in supplied for key, request in expected.items()):
         raise ConnectionBundleBindingError("required connection Bundle bindings remain unresolved")

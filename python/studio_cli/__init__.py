@@ -93,7 +93,9 @@ def _parser() -> argparse.ArgumentParser:
     cancel.add_argument("--json", action="store_true")
     migrate = commands.add_parser("migrate", help="inspect a vendor project export")
     migrate_commands = migrate.add_subparsers(dest="migrate_command", required=True)
-    inventory = migrate_commands.add_parser("inventory", help="generate a canonical migration report")
+    inventory = migrate_commands.add_parser(
+        "inventory", help="generate a canonical migration report"
+    )
     inventory.add_argument("platform", choices=("databricks", "fabric", "dataiku", "foundry"))
     inventory.add_argument("source", type=Path)
     inventory.add_argument("--source-version", default="unknown")

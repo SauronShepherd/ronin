@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from studio_migration import discover_dataiku, discover_databricks, discover_fabric, discover_foundry
+from studio_migration import (
+    discover_dataiku,
+    discover_databricks,
+    discover_fabric,
+    discover_foundry,
+)
 import pytest
 
 

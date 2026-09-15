@@ -5,7 +5,12 @@ from studio_migration.inventory import (
     SourceObject,
     inventory_json_document,
 )
-from studio_migration.profiles import discover_dataiku, discover_databricks, discover_fabric, discover_foundry
+from studio_migration.profiles import (
+    discover_dataiku,
+    discover_databricks,
+    discover_fabric,
+    discover_foundry,
+)
 from studio_migration.databricks import DatabricksTranslation, translate_notebook_job
 from studio_migration.fabric import FabricTranslation, translate_notebook_items
 from studio_migration.dataiku import DataikuTranslation, translate_code_recipes

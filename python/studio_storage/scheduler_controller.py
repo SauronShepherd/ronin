@@ -201,9 +201,7 @@ class SchedulerControllerStore(SchedulerExecutionLinkStore):
                 "WHERE workspace_id=? AND workflow_id=?",
                 (str(workspace_id), str(workflow_id)),
             ).fetchone()
-            return None if row is None else WorkflowDeploymentBinding.from_json(
-                row["binding_json"]
-            )
+            return None if row is None else WorkflowDeploymentBinding.from_json(row["binding_json"])
         finally:
             connection.close()
 

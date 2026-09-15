@@ -51,8 +51,7 @@ def compile_metric_query(model: SemanticModel, query: MetricQuery) -> CompiledMe
         raise SemanticQueryError(f"unknown filter dimensions: {sorted(unknown_filters)}")
 
     select_parts = [
-        f"{_quote(dimensions[name].column)} AS {_quote(name)}"
-        for name in query.dimensions
+        f"{_quote(dimensions[name].column)} AS {_quote(name)}" for name in query.dimensions
     ]
     select_parts.extend(_measure_sql(measures[name]) for name in query.measures)
 

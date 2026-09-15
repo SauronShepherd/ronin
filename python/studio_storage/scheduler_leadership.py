@@ -45,9 +45,7 @@ def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) 
 
 def _add_seconds(value: Instant | str, seconds: int) -> Instant:
     parsed = datetime.strptime(str(Instant(value)), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
-    return Instant(
-        (parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    )
+    return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
 def migrate_scheduler_leadership(connection: sqlite3.Connection, *, now: Instant | str) -> None:

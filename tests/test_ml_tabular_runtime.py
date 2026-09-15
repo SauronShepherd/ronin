@@ -104,10 +104,16 @@ def test_champion_inference_loads_artifact_by_registered_reference(tmp_path: Pat
     registry = _Registry()
     artifacts = LocalArtifactStore(tmp_path / "artifacts")
     train_register_tabular(
-        registry, artifacts, WorkspaceId("workspace"), _classification_rows(),
+        registry,
+        artifacts,
+        WorkspaceId("workspace"),
+        _classification_rows(),
         dataset=AssetRef(AssetId("dataset"), AssetVersion("v1")),
-        experiment_id=ExperimentId("experiment"), run_id=MLRunId("run"),
-        model_id=ModelId("model"), model_version=ModelVersion("1"), source_revision="git:abc",
+        experiment_id=ExperimentId("experiment"),
+        run_id=MLRunId("run"),
+        model_id=ModelId("model"),
+        model_version=ModelVersion("1"),
+        source_revision="git:abc",
         execution_ref="job:1",
         spec=TrainingSpec("classification", "logistic_regression", ("x", "y"), "label", 0.25, 7),
         now="2026-09-13T10:00:00.000000Z",
@@ -115,7 +121,10 @@ def test_champion_inference_loads_artifact_by_registered_reference(tmp_path: Pat
     from studio_ml import predict_champion_tabular
 
     predicted = predict_champion_tabular(
-        registry, WorkspaceId("workspace"), ModelId("model"), ({"x": 12.0, "y": 0.0},),
+        registry,
+        WorkspaceId("workspace"),
+        ModelId("model"),
+        ({"x": 12.0, "y": 0.0},),
         load_artifact=lambda reference: (
             tmp_path
             / "artifacts"
@@ -154,6 +163,8 @@ def test_registered_inference_rejects_tampered_artifact(tmp_path: Path) -> None:
             b"tampered",
             ({"x": 12.0, "y": 0.0},),
         )
+
+
 def test_classification_split_rejects_insufficient_test_rows() -> None:
     with pytest.raises(ValueError, match="every target class"):
         train_tabular(

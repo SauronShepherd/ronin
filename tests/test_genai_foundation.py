@@ -4,7 +4,15 @@ from pathlib import Path
 
 import pytest
 
-from studio_core import AssetId, AssetRef, AssetRevision, AssetVersion, CatalogAsset, Workspace, WorkspaceId
+from studio_core import (
+    AssetId,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
+    CatalogAsset,
+    Workspace,
+    WorkspaceId,
+)
 from studio_core.connections import SecretRef
 from studio_core.genai import (
     AgentDefinition,
@@ -54,8 +62,12 @@ def test_provider_persists_only_secret_reference(tmp_path: Path) -> None:
 
 def test_prompt_version_is_immutable(tmp_path: Path) -> None:
     store = _store(tmp_path / "ronin.sqlite3")
-    first = PromptAsset(PromptId("prompt-1"), PromptVersion("1"), "Answer {question}", ("question",))
-    second = PromptAsset(PromptId("prompt-1"), PromptVersion("1"), "Changed {question}", ("question",))
+    first = PromptAsset(
+        PromptId("prompt-1"), PromptVersion("1"), "Answer {question}", ("question",)
+    )
+    second = PromptAsset(
+        PromptId("prompt-1"), PromptVersion("1"), "Changed {question}", ("question",)
+    )
     store.put_prompt(_WS, first, now=_NOW)
 
     with pytest.raises(GenAIConflict):

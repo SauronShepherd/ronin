@@ -147,7 +147,10 @@ def budget_notification(
         f"Budget exceeded: {evaluation.budget_id}",
         f"Budget total is {evaluation.total_cost} against a limit of {evaluation.limit}.",
         Instant(now),
-        (("budget_id", evaluation.budget_id), ("action", evaluation.recommended_action or "notify")),
+        (
+            ("budget_id", evaluation.budget_id),
+            ("action", evaluation.recommended_action or "notify"),
+        ),
     )
 
 

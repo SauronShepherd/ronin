@@ -28,15 +28,27 @@ def instrument_execution(
     try:
         result = action()
     except Exception as exc:
-        record_event(TelemetryEvent(
-            f"execution.{operation}.failed", "error", observed_at, str(exc), (("operation", operation),)
-        ))
+        record_event(
+            TelemetryEvent(
+                f"execution.{operation}.failed",
+                "error",
+                observed_at,
+                str(exc),
+                (("operation", operation),),
+            )
+        )
         raise
     elapsed_ms = min(int((monotonic() - started) * 1000), 86_400_000)
-    record_metric(MetricPoint(
-        f"execution.{operation}.duration_ms", float(elapsed_ms), "milliseconds", "gauge", observed_at,
-        (("operation", operation), ("status", "succeeded")),
-    ))
+    record_metric(
+        MetricPoint(
+            f"execution.{operation}.duration_ms",
+            float(elapsed_ms),
+            "milliseconds",
+            "gauge",
+            observed_at,
+            (("operation", operation), ("status", "succeeded")),
+        )
+    )
     return result
 
 

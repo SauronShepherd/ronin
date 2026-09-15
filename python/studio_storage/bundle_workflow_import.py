@@ -77,8 +77,7 @@ class SqliteWorkflowBundleImportStore(SqliteWorkspaceStore, SqliteSchedulerStore
             for workflow in sorted(workflows, key=lambda item: item.id.value):
                 payload = workflow.to_json()
                 existing = database.execute(
-                    "SELECT definition_json FROM workflows "
-                    "WHERE workspace_id=? AND workflow_id=?",
+                    "SELECT definition_json FROM workflows WHERE workspace_id=? AND workflow_id=?",
                     (str(workspace_id), str(workflow.id)),
                 ).fetchone()
                 if existing is None:
@@ -112,8 +111,7 @@ class SqliteWorkflowBundleImportStore(SqliteWorkspaceStore, SqliteSchedulerStore
                     )
                 payload = schedule.to_json()
                 existing = database.execute(
-                    "SELECT schedule_json FROM schedules "
-                    "WHERE workspace_id=? AND schedule_id=?",
+                    "SELECT schedule_json FROM schedules WHERE workspace_id=? AND schedule_id=?",
                     (str(workspace_id), str(schedule.id)),
                 ).fetchone()
                 if existing is None:

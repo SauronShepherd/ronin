@@ -363,11 +363,15 @@ class LocalWorkerRuntime:
                     await execution
                 except Exception:
                     if self.config.record_execution is not None:
-                        self.config.record_execution("worker.execute", monotonic() - started, "failed")
+                        self.config.record_execution(
+                            "worker.execute", monotonic() - started, "failed"
+                        )
                     raise
                 else:
                     if self.config.record_execution is not None:
-                        self.config.record_execution("worker.execute", monotonic() - started, "succeeded")
+                        self.config.record_execution(
+                            "worker.execute", monotonic() - started, "succeeded"
+                        )
             finally:
                 shutdown_wait.cancel()
                 with suppress(asyncio.CancelledError):

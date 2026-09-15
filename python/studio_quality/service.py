@@ -28,9 +28,7 @@ class QualityExecutionStore(Protocol):
         now: Instant | str,
     ) -> QualityRun: ...
 
-    def list_runs(
-        self, workspace_id: WorkspaceId, ref: AssetRef
-    ) -> tuple[QualityRun, ...]: ...
+    def list_runs(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[QualityRun, ...]: ...
 
 
 class QualityExecutionBlocked(RuntimeError):

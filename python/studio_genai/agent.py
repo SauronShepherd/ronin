@@ -111,8 +111,8 @@ def run_agent(
     allowed_tools = set(definition.tool_ids)
     system = (
         _render_agent_prompt(prompt, user_input)
-        + "\n\nReturn only JSON. Use {\"type\":\"tool\",\"tool_id\":\"...\",\"input\":{...}} "
-        + "to call a tool or {\"type\":\"final\",\"answer\":\"...\"} to finish."
+        + '\n\nReturn only JSON. Use {"type":"tool","tool_id":"...","input":{...}} '
+        + 'to call a tool or {"type":"final","answer":"..."} to finish.'
     )
     messages: list[ChatMessage] = [
         ChatMessage("system", system),

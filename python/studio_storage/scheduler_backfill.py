@@ -93,9 +93,7 @@ def migrate_scheduler_backfill(connection: sqlite3.Connection, *, now: Instant |
         )
     migrations_dir = Path(__file__).with_name("migrations")
     for version in range(current + 1, _BACKFILL_SCHEMA_VERSION + 1):
-        script = migrations_dir.joinpath(_BACKFILL_MIGRATIONS[version]).read_text(
-            encoding="utf-8"
-        )
+        script = migrations_dir.joinpath(_BACKFILL_MIGRATIONS[version]).read_text(encoding="utf-8")
         connection.execute("BEGIN IMMEDIATE")
         try:
             _execute_script_in_transaction(connection, script)
@@ -321,9 +319,7 @@ class SchedulerBackfillStore(SchedulerEventStore):
             else:
                 reserved = _run_from_row(workspace_id, existing)
                 if reserved.workflow_run_id != run_id:
-                    raise BackfillConflict(
-                        "backfill logical time maps to conflicting workflow run"
-                    )
+                    raise BackfillConflict("backfill logical time maps to conflicting workflow run")
             if request.state == "pending":
                 connection.execute(
                     "UPDATE scheduler_backfills SET state='running',updated_at=?,"

@@ -20,9 +20,7 @@ _AUTHORIZATION = "".join(("integration", "-credential"))
 _GRANTS = GrantSet(
     (
         Grant(
-            frozenset(
-                {"read", "list", "events", "submit", "execute", "cancel", "evidence:read"}
-            ),
+            frozenset({"read", "list", "events", "submit", "execute", "cancel", "evidence:read"}),
             ResourceScope("*", None),
         ),
     )

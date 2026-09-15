@@ -18,11 +18,16 @@ def backup_sqlite(source: Path, destination: Path) -> Path:
     if not source.is_file():
         raise FileNotFoundError(source)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    fd, temporary_name = tempfile.mkstemp(prefix=f".{destination.name}.", suffix=".tmp", dir=destination.parent)
+    fd, temporary_name = tempfile.mkstemp(
+        prefix=f".{destination.name}.", suffix=".tmp", dir=destination.parent
+    )
     os.close(fd)
     temporary = Path(temporary_name)
     try:
-        with closing(sqlite3.connect(source)) as source_db, closing(sqlite3.connect(temporary)) as target_db:
+        with (
+            closing(sqlite3.connect(source)) as source_db,
+            closing(sqlite3.connect(temporary)) as target_db,
+        ):
             with source_db, target_db:
                 source_db.backup(target_db)
                 if target_db.execute("PRAGMA integrity_check").fetchone() != ("ok",):

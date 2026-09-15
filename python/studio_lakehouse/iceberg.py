@@ -46,10 +46,7 @@ def _rows_table(rows: tuple[Mapping[str, object], ...]) -> Any:
 
 
 def _field_state(schema: Any) -> tuple[OpenTableField, ...]:
-    return tuple(
-        OpenTableField(field.name, str(field.type), field.nullable)
-        for field in schema
-    )
+    return tuple(OpenTableField(field.name, str(field.type), field.nullable) for field in schema)
 
 
 class IcebergTableStore:
@@ -103,9 +100,7 @@ class IcebergTableStore:
                         pass
                 self._catalog.create_table(table_identifier, schema=arrow.schema)
             else:
-                raise FileExistsError(
-                    f"Iceberg table already exists: {identifier.qualified_name}"
-                )
+                raise FileExistsError(f"Iceberg table already exists: {identifier.qualified_name}")
             table = self._catalog.load_table(table_identifier)
             table.append(arrow)
         elif mode == "append":

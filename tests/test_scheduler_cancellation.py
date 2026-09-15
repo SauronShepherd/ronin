@@ -143,13 +143,16 @@ def test_published_but_unsubmitted_job_is_retired_without_dispatch(tmp_path: Pat
     async def scenario() -> None:
         service = DurableExecutionService(InMemoryJobStore())
         try:
-            assert await cancel_workflow_run(
-                store,
-                service,
-                workspace_id,
-                run.id,
-                now=Instant(LATER),
-            ) == 0
+            assert (
+                await cancel_workflow_run(
+                    store,
+                    service,
+                    workspace_id,
+                    run.id,
+                    now=Instant(LATER),
+                )
+                == 0
+            )
             assert await service.status(intent.job.id) is None
         finally:
             await service.aclose()
@@ -172,13 +175,16 @@ def test_linked_job_cancellation_reconciles_workflow_terminal_state(tmp_path: Pa
         service = DurableExecutionService(InMemoryJobStore())
         try:
             await dispatch_execution_intent(intent, service)
-            assert await cancel_workflow_run(
-                store,
-                service,
-                workspace_id,
-                run.id,
-                now=Instant(LATER),
-            ) == 1
+            assert (
+                await cancel_workflow_run(
+                    store,
+                    service,
+                    workspace_id,
+                    run.id,
+                    now=Instant(LATER),
+                )
+                == 1
+            )
             cancelled = await service.status(intent.job.id)
             assert cancelled is not None
             assert cancelled.state is JobState.CANCELLED

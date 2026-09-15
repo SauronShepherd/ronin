@@ -404,9 +404,7 @@ class SchedulerEventStore(SchedulerScheduleStore):
             if row["state"] == "delivered":
                 existing = _delivery_from_row(row)
                 if existing.workflow_run_id != run.id:
-                    raise SchedulerEventConflict(
-                        "event delivery maps to conflicting workflow run"
-                    )
+                    raise SchedulerEventConflict("event delivery maps to conflicting workflow run")
                 connection.execute("COMMIT")
                 return existing
             connection.execute(

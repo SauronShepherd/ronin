@@ -70,6 +70,7 @@ def test_list_for_resource_is_scoped(tmp_path: Path) -> None:
     assert store.list_for_resource(
         WorkspaceId("ws-1"), resource_kind="workspace", resource_ref="ws-1"
     ) == (event,)
-    assert store.list_for_resource(
-        WorkspaceId("ws-1"), resource_kind="connection", resource_ref="c1"
-    ) == ()
+    assert (
+        store.list_for_resource(WorkspaceId("ws-1"), resource_kind="connection", resource_ref="c1")
+        == ()
+    )

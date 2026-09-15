@@ -1,4 +1,10 @@
-from studio_streaming import SqliteStreamTable, StreamBatch, StreamCheckpoint, StreamPosition, StreamRecord
+from studio_streaming import (
+    SqliteStreamTable,
+    StreamBatch,
+    StreamCheckpoint,
+    StreamPosition,
+    StreamRecord,
+)
 
 
 def test_stream_table_is_idempotent_and_bounded(tmp_path) -> None:
