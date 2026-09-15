@@ -118,7 +118,8 @@ class SqliteConnectionStore:
                     return definition
                 raise ConnectionConflict(f"connection id already exists: {definition.id}")
             connection.execute(
-                "INSERT INTO connections(workspace_id,connection_id,definition_json,created_at,updated_at) "
+                "INSERT INTO connections("
+                "workspace_id,connection_id,definition_json,created_at,updated_at) "
                 "VALUES (?,?,?,?,?)",
                 (str(workspace_id), str(definition.id), definition_json, now, now),
             )
@@ -176,7 +177,8 @@ class SqliteConnectionStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT definition_json FROM connections WHERE workspace_id=? ORDER BY connection_id",
+                "SELECT definition_json FROM connections "
+                "WHERE workspace_id=? ORDER BY connection_id",
                 (str(workspace_id),),
             ).fetchall()
             return tuple(ConnectionDefinition.from_json(row["definition_json"]) for row in rows)
