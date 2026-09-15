@@ -6,10 +6,11 @@ import hashlib
 import json
 import sqlite3
 from pathlib import Path
+from typing import cast
 
 from studio_orchestrator import Instant
 
-from .contracts import AlertInstance, AlertRule, MetricPoint, TelemetryEvent
+from .contracts import AlertInstance, AlertRule, MetricKind, MetricPoint, TelemetryEvent
 
 
 class SqliteTelemetryStore:
@@ -72,7 +73,7 @@ class SqliteTelemetryStore:
     def _metric_id(cls, point: MetricPoint) -> str:
         digest = hashlib.sha256(
             (
-                f"{point.name}\n{point.observed_at}\n{point.value!r}\n{point.unit}\n"
+                f"{point.name}\n{point.kind}\n{point.observed_at}\n{point.value!r}\n{point.unit}\n"
                 + cls._attributes_json(point.attributes)
             ).encode("utf-8")
         ).hexdigest()
@@ -108,6 +109,29 @@ class SqliteTelemetryStore:
             )
             connection.commit()
             return point
+        finally:
+            connection.close()
+
+    def list_metrics(self, *, limit: int = 10_000) -> tuple[MetricPoint, ...]:
+        """List persisted metrics in deterministic order with a hard bound."""
+        if limit < 1 or limit > 100_000:
+            raise ValueError("metric list limit must be between 1 and 100000")
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT name,value,unit,kind,observed_at,attributes_json FROM telemetry_metrics "
+                "ORDER BY name, observed_at, metric_id LIMIT ?", (limit,)
+            ).fetchall()
+            result: list[MetricPoint] = []
+            for row in rows:
+                attrs_raw = json.loads(row[5])
+                if not isinstance(attrs_raw, dict):
+                    raise ValueError("persisted metric attributes are invalid")
+                result.append(MetricPoint(
+                    str(row[0]), float(row[1]), str(row[2]), cast(MetricKind, str(row[3])), Instant(str(row[4])),
+                    tuple(sorted((str(key), str(value)) for key, value in attrs_raw.items())),
+                ))
+            return tuple(result)
         finally:
             connection.close()
 
@@ -196,7 +220,9 @@ class SqliteTelemetryStore:
     def list_alert_rules(self) -> tuple[AlertRule, ...]:
         connection = self._connect()
         try:
-            rows = connection.execute("SELECT rule_json FROM alert_rules ORDER BY rule_id").fetchall()
+            rows = connection.execute(
+                "SELECT rule_json FROM alert_rules ORDER BY rule_id"
+            ).fetchall()
             result: list[AlertRule] = []
             for (payload,) in rows:
                 value = json.loads(payload)

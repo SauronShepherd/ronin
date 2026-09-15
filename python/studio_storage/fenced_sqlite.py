@@ -121,6 +121,7 @@ class SqliteJobStore(_SqliteLifecycleStore):
         self,
         *,
         project_id: str | None,
+        project_ids: tuple[str, ...] | None = None,
         state: JobState | None,
         limit: int,
         cursor: str | None,
@@ -131,6 +132,12 @@ class SqliteJobStore(_SqliteLifecycleStore):
         if project_id is not None:
             clauses.append("project_id=?")
             values.append(project_id)
+        if project_ids is not None:
+            if not project_ids:
+                return Page((), None)
+            placeholders = ",".join("?" for _ in project_ids)
+            clauses.append(f"project_id IN ({placeholders})")
+            values.extend(project_ids)
         if state is not None:
             clauses.append("state=?")
             values.append(state.value)
@@ -138,6 +145,7 @@ class SqliteJobStore(_SqliteLifecycleStore):
             created_at, job_id = decode_job_cursor(
                 cursor,
                 project_id=project_id,
+                project_ids=project_ids,
                 state=state,
             )
             clauses.append("(created_at < ? OR (created_at = ? AND job_id < ?))")
@@ -161,6 +169,7 @@ class SqliteJobStore(_SqliteLifecycleStore):
                     created_at=last.created_at,
                     job_id=last.id,
                     project_id=project_id,
+                    project_ids=project_ids,
                     state=state,
                 )
             return Page(items, next_cursor)

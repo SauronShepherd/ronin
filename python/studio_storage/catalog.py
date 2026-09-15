@@ -167,6 +167,23 @@ class SqliteCatalogStore:
         finally:
             connection.close()
 
+    def search_assets(
+        self, workspace_id: WorkspaceId, query: str, *, limit: int = 100
+    ) -> tuple[CatalogAsset, ...]:
+        term = query.strip().casefold()
+        if not term:
+            raise ValueError("catalog search query must not be empty")
+        if limit < 1 or limit > 1_000:
+            raise ValueError("catalog search limit must be between 1 and 1000")
+        matches = []
+        for asset in self.list_assets(workspace_id):
+            haystack = " ".join(
+                (str(asset.id), asset.kind, asset.name, *asset.tags, *asset.classifications)
+            ).casefold()
+            if term in haystack:
+                matches.append(asset)
+        return tuple(matches[:limit])
+
     def put_revision(
         self, workspace_id: WorkspaceId, revision: AssetRevision, *, now: Instant | str
     ) -> AssetRevision:

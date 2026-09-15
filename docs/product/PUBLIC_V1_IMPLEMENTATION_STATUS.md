@@ -22,27 +22,27 @@ This document records implementation state only. It does not claim test executio
 | --- | --- | --- |
 | Durable execution foundation | implemented | Job/Run/Attempt, SQLite durability, leases/heartbeat/fencing/reclaim/resume, cancellation, evidence, local/container worker, HTTP/CLI/SDK foundation |
 | Workspace/project/source control | partial | workspace/project persistence, project manifest/Git identity, environment/deployment bindings; full Public v1 APIs/UI/membership remain |
-| Connectors/ingestion | partial | connection/discovery/checkpoint contracts and governed local CSV/JSONL path; remote connector matrix remains |
-| Lakehouse/SQL | missing | no supported Parquet/Iceberg/Delta + SQL engine path |
+| Connectors/ingestion | partial | connection/discovery/checkpoint contracts, governed local CSV/JSONL, bounded HTTP/PostgreSQL, S3-compatible including Apache Ozone, Azure Blob and JDBC profiles; production driver qualification and broader incremental coverage remain |
+| Lakehouse/SQL | partial | bounded Arrow/Parquet open-data and streaming publication paths exist; complete Iceberg/Delta lifecycle and public SQL service remain |
 | Data Engineering Studio | partial | notebook/pipeline execution foundations exist; authoring APIs and Web Studio remain |
-| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded cron/event/backfill/controller services, bounded and continuous daemon orchestration, and group backfill cancellation exist; branching/notifications, broad operator execution, public scheduler APIs/UI, process/signal/deployment wiring and PostgreSQL multi-node HA qualification remain |
-| Catalog/lineage | partial | governed assets/revisions and declared/observed lineage persistence plus explicit selected-subgraph Bundle export/planning/atomic import exist; search/glossary/classification/OpenLineage/complete asset integration remain |
-| Ontology/KG | partial | object/property/link/action schema and persistence exist; instance resolution/query/materialization/actions remain |
-| Graph intelligence/RQL | missing | no supported parser/planner/runtime/provider path |
-| Data quality/contracts | partial | definitions/results/persistence exist; execution/gating/alerts remain |
-| AI/ML/MLOps | partial | experiment/run/model/evaluation provenance exists; training/features/interop/inference/serving remain |
-| GenAI/RAG/agents | partial | provider/prompt/vector/RAG/tool/agent contracts/persistence exist; runtime/evals/tool execution/cost remain |
-| Semantic models/dashboards | missing | no supported compiler/metrics/dashboard runtime |
-| Streaming/real-time | missing | no supported processor/checkpoint/window/table-sink path |
-| Observability/alerts/FinOps | partial | execution evidence and container resource observation exist; unified telemetry/alerts/costs/budgets remain |
+| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded cron/event/backfill/controller services, bounded and continuous daemon orchestration, group backfill cancellation, and a bounded fail-closed conditional-branch contract with explicit skip decisions exist; durable branch-state integration, branching/skipped persistence, broad operator execution, durable notifications, public scheduler APIs/UI, process/signal/deployment wiring and PostgreSQL multi-node HA qualification remain |
+| Catalog/lineage | partial | governed assets/revisions, bounded search, declared/observed lineage, deterministic OpenLineage-style export, and selected-subgraph Bundle export/planning/atomic import exist; glossary/classification, transport certification and complete asset integration remain |
+| Ontology/KG | partial | object/property/link/action schema and persistence, instance materialization, link resolution, bounded graph queries and authorized actions exist; durable replay and public interfaces remain |
+| Graph intelligence/RQL | partial | bounded read-only RQL SELECT filtering over materialized KnowledgeGraph views exists; traversal, joins, planning, provider execution and public API exposure remain |
+| Data quality/contracts | partial | versioned definitions/results, all built-in checks, injected SQL/Python/referential checks, quality gates and scheduler release enforcement exist; alerts and UI remain |
+| AI/ML/MLOps | partial | experiment/run/model/evaluation provenance, deterministic tabular training, digest-verified inference and champion serving resolution exist; features, broader algorithms, MLflow and network serving remain |
+| GenAI/RAG/agents | partial | provider/prompt/vector/RAG/tool/agent contracts, OpenAI-compatible runtime, deterministic retrieval, bounded agents and telemetry callbacks exist; evaluation and production qualification remain |
+| Semantic models/dashboards | partial | safe semantic contracts, canonical persistence, parameterized metric compiler, SQL metric runtime and dashboard tile execution exist; joins, calculated metrics and public surfaces remain |
+| Streaming/real-time | partial | Kafka polling, durable CAS checkpoints, micro-batch processing, Parquet sinks, event-time windows, stream tables and scheduler integration exist; production qualification remains |
+| Observability/alerts/FinOps | partial | durable metrics/events, threshold alerts, webhook intents, Prometheus export, instrumentation, usage pricing, costs and budget gates exist; broader service adoption and production qualification remain |
 | Multi-user security/audit | partial | typed grants, bearer auth, transport policy, secret resolver and append-only audit foundation exist; OIDC/users/groups/service identities/role administration/full instrumentation remain |
-| Local/Compose/Kubernetes | partial | local and Compose foundation exist; Kubernetes/Helm and production metadata/object-store profile remain |
-| Ronin Bundle | partial | deterministic verified archive IO, semantic inventory, native project/connection round-trips with explicit runtime/secret remapping, atomic multi-object project+connection commit, and explicit catalog asset/revision/lineage selected-subgraph export/planning/atomic commit exist; workflow/quality/ontology/ML/GenAI/data/semantic assets, PostgreSQL adapters, certification and public surfaces remain |
-| Fabric migration | missing | no certified adapter |
-| Databricks migration | missing | no certified adapter |
-| Palantir Foundry/AIP migration | missing | no certified adapter |
-| Dataiku DSS migration | missing | no certified adapter |
-| Web Studio | missing | no current web application tree |
+| Local/Compose/Kubernetes | partial | local/Compose foundation, PostgreSQL metadata healthcheck, SQLite backup/restore, S3-compatible artifacts and constrained single-replica Helm chart exist; PostgreSQL JobStore parity, HA and production qualification remain |
+| Ronin Bundle | partial | deterministic verified archive IO, project/connection/catalog/workflow/schedule inventories, export, verified planning and atomic commits exist; quality/ontology/ML/GenAI/data/semantic assets, PostgreSQL adapters, certification and public surfaces remain |
+| Fabric migration | qualification pending | deterministic fixture discovery and fail-closed notebook-item translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
+| Databricks migration | qualification pending | deterministic fixture discovery and fail-closed notebook-job translation with dependency/schedule mapping and CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
+| Palantir Foundry/AIP migration | qualification pending | deterministic fixture discovery and fail-closed Python-function translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
+| Dataiku DSS migration | qualification pending | deterministic fixture discovery and fail-closed Python/SQL recipe translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
+| Web Studio | partial | authenticated static Studio shell supports job/evidence/event workflows and project-scoped read-only SQL; authoring editors, domain workflows and complete Public v1 journeys remain |
 | Public v1 release qualification | blocked | active Actions/current exact-head qualification absent; main remains unprotected |
 
 ## Public v1 source work merged in the current construction sequence

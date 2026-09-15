@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from collections.abc import Mapping
 from typing import Any
 from urllib.parse import quote, urlsplit
@@ -126,8 +127,8 @@ class HttpJsonConnector:
         limit: int = 10_000,
         checkpoint: SourceCheckpoint | None = None,
     ) -> ConnectorReadResult:
-        if checkpoint is not None:
-            raise ValueError("HTTP JSON connector does not yet support incremental checkpoints")
+        if checkpoint is not None and checkpoint.strategy != "snapshot":
+            raise ValueError("HTTP JSON connector only supports snapshot checkpoints")
         if limit < 1 or limit > 100_000:
             raise ValueError("HTTP read limit must be between 1 and 100000")
         if asset.connection_id != connection.id:
@@ -150,11 +151,38 @@ class HttpJsonConnector:
         timeout_seconds = float(options.get("timeout_seconds", "30"))
         if timeout_seconds <= 0 or timeout_seconds > 300:
             raise ValueError("HTTP timeout_seconds must be in (0, 300]")
-        with httpx.Client(follow_redirects=False, timeout=timeout_seconds) as client:
-            response = client.get(url, headers=headers)
-            response.raise_for_status()
-            body = response.content
-            payload = response.json()
+        try:
+            max_response_bytes = int(options.get("max_response_bytes", "10485760"))
+        except ValueError as exc:
+            raise ValueError("HTTP max_response_bytes must be an integer") from exc
+        if max_response_bytes < 1 or max_response_bytes > 100 * 1024 * 1024:
+            raise ValueError("HTTP max_response_bytes must be between 1 and 104857600")
+        with httpx.Client(follow_redirects=False, timeout=timeout_seconds) as client, client.stream(
+            "GET", url, headers=headers
+        ) as response:
+                response.raise_for_status()
+                content_length = response.headers.get("content-length")
+                if content_length is not None:
+                    try:
+                        declared_size = int(content_length)
+                    except ValueError as exc:
+                        raise ValueError("HTTP response content-length must be an integer") from exc
+                    if declared_size < 0:
+                        raise ValueError("HTTP response content-length must not be negative")
+                    if declared_size > max_response_bytes:
+                        raise ValueError("HTTP JSON response exceeds configured byte limit")
+                chunks: list[bytes] = []
+                size = 0
+                for chunk in response.iter_bytes():
+                    size += len(chunk)
+                    if size > max_response_bytes:
+                        raise ValueError("HTTP JSON response exceeds configured byte limit")
+                    chunks.append(chunk)
+                body = b"".join(chunks)
+        try:
+            payload = json.loads(body)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("HTTP response body must be valid JSON") from exc
 
         records_key = options.get("records_key")
         if records_key is not None:
@@ -170,6 +198,8 @@ class HttpJsonConnector:
         rows = tuple(dict(item) for item in payload)
         fields = _infer_fields(rows)
         checkpoint_value = hashlib.sha256(body).hexdigest()
+        if checkpoint is not None and checkpoint.value == checkpoint_value:
+            rows = ()
         return ConnectorReadResult(
             fields,
             rows,

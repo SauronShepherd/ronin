@@ -131,8 +131,8 @@ class PostgresConnector:
         limit: int = 10_000,
         checkpoint: SourceCheckpoint | None = None,
     ) -> ConnectorReadResult:
-        if checkpoint is not None:
-            raise ValueError("PostgreSQL connector incremental reads are not implemented yet")
+        if checkpoint is not None and checkpoint.strategy != "snapshot":
+            raise ValueError("PostgreSQL connector only supports snapshot checkpoints")
         if limit < 1 or limit > 100_000:
             raise ValueError("PostgreSQL read limit must be between 1 and 100000")
         if asset.connection_id != connection.id:
@@ -158,10 +158,10 @@ class PostgresConnector:
                     {field.name: value for field, value in zip(fields, values, strict=True)}
                     for values in cursor.fetchall()
                 )
-        checkpoint_payload = "|".join(
-            [asset.qualified_name, str(len(rows)), *(field.name for field in fields)]
-        )
-        checkpoint_value = hashlib.sha256(checkpoint_payload.encode("utf-8")).hexdigest()
+        checkpoint_payload = repr((asset.qualified_name, fields, rows)).encode("utf-8")
+        checkpoint_value = hashlib.sha256(checkpoint_payload).hexdigest()
+        if checkpoint is not None and checkpoint.value == checkpoint_value:
+            rows = ()
         return ConnectorReadResult(
             fields,
             rows,

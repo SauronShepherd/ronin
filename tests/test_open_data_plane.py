@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from studio_core import AssetId, Workspace, WorkspaceId
 from studio_execution.lakehouse import write_governed_parquet
 from studio_lakehouse import inspect_parquet, read_parquet_rows, write_parquet_rows
@@ -49,7 +48,7 @@ def test_duckdb_reference_engine_queries_registered_parquet(tmp_path: Path) -> N
     with DuckDbSqlEngine() as engine:
         engine.register_parquet("events", str(path))
         result = engine.execute(
-            "SELECT group, sum(value) AS total FROM events GROUP BY group ORDER BY group"
+            'SELECT "group", sum(value) AS total FROM events GROUP BY "group" ORDER BY "group"'
         )
 
     assert tuple(column.name for column in result.columns) == ("group", "total")
@@ -64,6 +63,19 @@ def test_sql_reference_engine_bounds_materialized_results(tmp_path: Path) -> Non
         engine.register_parquet("events", str(path))
         with pytest.raises(ValueError, match="max_rows"):
             engine.execute("SELECT * FROM events ORDER BY id", max_rows=1)
+
+
+def test_sql_reference_engine_bounds_query_text() -> None:
+    with DuckDbSqlEngine() as engine, pytest.raises(ValueError, match="SQL text exceeds"):
+            engine.execute("SELECT 1 -- " + "x" * (1024 * 1024))
+
+
+def test_sql_reference_engine_rejects_mutating_or_multiple_statements() -> None:
+    with DuckDbSqlEngine() as engine:
+        with pytest.raises(ValueError, match="read-only SELECT"):
+            engine.execute("CREATE TABLE unsafe (value INTEGER)")
+        with pytest.raises(ValueError, match="read-only SELECT"):
+            engine.execute("SELECT 1; SELECT 2")
 
 
 def test_governed_parquet_write_commits_content_addressed_catalog_revision(

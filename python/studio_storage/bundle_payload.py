@@ -21,6 +21,7 @@ from .bundle import (
 )
 
 _CHUNK_BYTES = 1024 * 1024
+_DEFAULT_BUNDLE_READ_LIMITS = BundleReadLimits()
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,7 +37,7 @@ def read_bundle_payload(
     entry_path: str,
     *,
     max_bytes: int = 8 * 1024 * 1024,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = _DEFAULT_BUNDLE_READ_LIMITS,
 ) -> VerifiedBundlePayload:
     """Verify the entire archive, then read one manifest-declared payload bounded in memory."""
 
@@ -54,9 +55,13 @@ def read_bundle_payload(
             entries = {entry.path: entry for entry in manifest.entries}
             entry = entries.get(requested)
             if entry is None:
-                raise BundleIntegrityError("requested bundle payload is not declared by the manifest")
+                raise BundleIntegrityError(
+                    "requested bundle payload is not declared by the manifest"
+                )
             if entry.size_bytes > max_bytes:
-                raise BundleIntegrityError("requested bundle payload exceeds the in-memory read limit")
+                raise BundleIntegrityError(
+                    "requested bundle payload exceeds the in-memory read limit"
+                )
 
             digest = hashlib.sha256()
             observed = 0

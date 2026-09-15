@@ -332,7 +332,9 @@ class AsyncioCommandRunner:
                 control_lines.append(line)
             else:
                 diagnostics.append(line)
-        control_output = b"".join(control_lines).decode("utf-8", errors="replace")
+        control_output = b"".join(control_lines).decode("utf-8", errors="replace").replace(
+            "\r\n", "\n"
+        )
         return raw_output + b"".join(diagnostics), control_output, False
 
     def _format_output(self, raw_output: bytes, truncated: bool) -> str:

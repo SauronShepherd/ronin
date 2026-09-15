@@ -9,7 +9,14 @@ from .contracts import (
     UsageProvenance,
     UsageRecord,
 )
-from .service import FinOpsStore, RateCardNotFound, evaluate_budget, price_usage
+from .service import (
+    FinOpsStore,
+    RateCardNotFound,
+    budget_gate,
+    budget_notification,
+    evaluate_budget,
+    price_usage,
+)
 from .store import FinOpsConflict, SqliteFinOpsStore
 
 __all__ = (
@@ -25,5 +32,7 @@ __all__ = (
     "UsageProvenance",
     "UsageRecord",
     "evaluate_budget",
+    "budget_notification",
+    "budget_gate",
     "price_usage",
 )

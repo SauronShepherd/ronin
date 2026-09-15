@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
@@ -95,6 +95,7 @@ def run_agent(
     user_input: str,
     *,
     allow_non_idempotent: bool = False,
+    record_tool: Callable[[ToolId, str], None] | None = None,
 ) -> AgentRunResult:
     """Run a strict bounded tool loop without granting undeclared tool authority."""
 
@@ -140,9 +141,16 @@ def run_agent(
             raise PermissionError(
                 f"non-idempotent tool requires explicit execution authorization: {tool_id}"
             )
-        output = runtime.invoke(payload)
+        try:
+            output = runtime.invoke(payload)
+        except Exception:
+            if record_tool is not None:
+                record_tool(tool_id, "failed")
+            raise
         if not isinstance(output, Mapping):
             raise TypeError("tool runtime must return a mapping")
+        if record_tool is not None:
+            record_tool(tool_id, "succeeded")
         steps.append(AgentStep(step_index, "tool", tool_id))
         messages.append(ChatMessage("assistant", result.content))
         messages.append(

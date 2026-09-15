@@ -59,7 +59,7 @@ The current source tree already provides reusable platform primitives:
 - OpenAPI 3.1 and `pyronin`;
 - typed least-privilege grants;
 - public portable execution evidence;
-- CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, `jobs` and `cancel`;
+- CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, `jobs`, `cancel`, and bounded migration inventory reports via `migrate inventory`;
 - local Git revision identity;
 - real-Docker worker execution;
 - production local image/Compose topology;
@@ -72,6 +72,16 @@ These are retained as the execution/control-plane substrate. They are **not** su
 Ronin is multi-project. Each project selects a primary Git repository, optional supporting repositories and an execution profile. The platform architecture is vendor-neutral: execution profiles and adapters may target local runtimes, Spark-compatible runtimes, container/Kubernetes execution or vendor services while canonical project semantics remain provider-neutral.
 
 See [`docs/product/PROJECTS_AND_EXECUTION.md`](docs/product/PROJECTS_AND_EXECUTION.md) for the existing project/repository/runtime contract. Public v1 expands this into workspace, migration, data, scheduler and platform-level contracts.
+
+### Migration inventory
+
+To produce a canonical, credential-free inventory report from a supported vendor export:
+
+```text
+ronin migrate inventory databricks export.json --source-version 15 --output migration-report.json
+```
+
+The command also accepts `fabric`, `dataiku`, and `foundry`. It inventories source objects and classifies unsupported semantics explicitly; it does not claim vendor execution translation or certification.
 
 ## Current qualification status
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from studio_storage.artifacts import ArtifactIntegrityError, ArtifactRef, LocalArtifactStore
+from studio_storage.backup import backup_sqlite, restore_sqlite
 from studio_storage.async_artifacts import BoundedAsyncArtifactStore
 from studio_storage.async_store import StorageBackpressureError
 from studio_storage.bundle import (
@@ -52,6 +53,7 @@ from studio_storage.ports import (
     WorkspaceStore,
 )
 from studio_storage.postgres_core import PostgresDependencyError, PostgresMetadataStore
+from studio_storage.ontology_graph import KnowledgeGraphConflict, SqliteKnowledgeGraphStore
 from studio_storage.quality import (
     DataContractConflict,
     DataContractNotFound,
@@ -61,6 +63,8 @@ from studio_storage.quality import (
     quality_schema_version,
 )
 from studio_storage.readiness import sqlite_ready
+from studio_storage.s3_artifacts import S3ArtifactStore, S3DependencyError
+from studio_storage.retention import collect_unreferenced
 from studio_storage.scheduler import (
     SqliteSchedulerStore,
     WorkflowConflict,
@@ -90,6 +94,7 @@ from studio_storage.workspaces import (
 __all__ = (
     "ArtifactIntegrityError",
     "ArtifactRef",
+    "backup_sqlite",
     "ArtifactStore",
     "BUNDLE_MANIFEST_PATH",
     "BoundedAsyncArtifactStore",
@@ -113,10 +118,16 @@ __all__ = (
     "IdempotencyConflict",
     "InMemoryJobStore",
     "LocalArtifactStore",
+    "restore_sqlite",
+    "S3ArtifactStore",
+    "S3DependencyError",
+    "collect_unreferenced",
     "MountedFileSecretResolver",
     "OntologyConflict",
     "PostgresDependencyError",
     "PostgresMetadataStore",
+    "KnowledgeGraphConflict",
+    "SqliteKnowledgeGraphStore",
     "ProjectRegistrationConflict",
     "QualityRunConflict",
     "SecretMaterial",

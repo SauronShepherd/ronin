@@ -12,7 +12,10 @@ from .contracts import (
     TelemetryEvent,
 )
 from .notifications import NotificationIntent, NotificationSink, alert_notification
+from .prometheus import prometheus_text
+from .instrumentation import instrument_execution
 from .store import SqliteTelemetryStore
+from .webhook import WebhookNotificationError, WebhookNotificationSink
 
 __all__ = (
     "AlertInstance",
@@ -28,6 +31,10 @@ __all__ = (
     "Severity",
     "SqliteTelemetryStore",
     "TelemetryEvent",
+    "WebhookNotificationError",
+    "WebhookNotificationSink",
+    "prometheus_text",
+    "instrument_execution",
     "alert_notification",
     "evaluate_alert",
 )

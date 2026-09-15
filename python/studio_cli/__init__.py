@@ -22,8 +22,15 @@ from studio_notebook import (
     NotebookDocument,
     analyze_notebook_dependencies,
 )
+from studio_migration import (
+    discover_dataiku,
+    discover_databricks,
+    discover_fabric,
+    discover_foundry,
+)
 from studio_orchestrator import Instant
 from studio_server import RoninHTTPServer
+from studio_sql import DuckDbDependencyError, DuckDbSqlEngine
 from studio_storage import SqliteJobStore
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
@@ -84,6 +91,13 @@ def _parser() -> argparse.ArgumentParser:
     cancel = commands.add_parser("cancel", help="request durable job cancellation")
     cancel.add_argument("job_id")
     cancel.add_argument("--json", action="store_true")
+    migrate = commands.add_parser("migrate", help="inspect a vendor project export")
+    migrate_commands = migrate.add_subparsers(dest="migrate_command", required=True)
+    inventory = migrate_commands.add_parser("inventory", help="generate a canonical migration report")
+    inventory.add_argument("platform", choices=("databricks", "fabric", "dataiku", "foundry"))
+    inventory.add_argument("source", type=Path)
+    inventory.add_argument("--source-version", default="unknown")
+    inventory.add_argument("--output", type=Path)
     return parser
 
 
@@ -202,7 +216,7 @@ def _plan(project: Path, target: str) -> int:
         cell.id: identity.reference
         for cell, identity in zip(document.notebook.cells, document.cell_identities, strict=True)
     }
-    print(f"target: {target_path.relative_to(project_dir)}")
+    print(f"target: {target_path.relative_to(project_dir).as_posix()}")
     print("execution order:")
     for position, cell_id in enumerate(analysis.execution_order, start=1):
         print(f"  {position}. {references[cell_id]}")
@@ -357,6 +371,29 @@ def _cancel(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _migration_inventory(namespace: argparse.Namespace) -> int:
+    source = namespace.source.resolve(strict=True)
+    if not source.is_file():
+        raise CliError(f"migration source is not a file: {source}")
+    if source.stat().st_size > 16 * 1024 * 1024:
+        raise CliError("migration source exceeds the 16 MiB CLI inspection limit")
+    document = _read_text(source, "migration source")
+    discover = {
+        "databricks": discover_databricks,
+        "fabric": discover_fabric,
+        "dataiku": discover_dataiku,
+        "foundry": discover_foundry,
+    }[namespace.platform]
+    report = discover(document, source_version=namespace.source_version)
+    output = report.to_json() + "\n"
+    if namespace.output is None:
+        print(output, end="")
+    else:
+        namespace.output.resolve().write_text(output, encoding="utf-8", newline="\n")
+        print(f"migration report written: {namespace.output.resolve()}")
+    return 0
+
+
 def _now() -> Instant:
     return Instant(datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
@@ -365,7 +402,33 @@ def _database() -> Path:
     return Path(_env("RONIN_DB", ".ronin/ronin.sqlite3")).expanduser().resolve()
 
 
+def _sql_engine_from_environment() -> DuckDbSqlEngine | None:
+    raw_root = os.environ.get("RONIN_SQL_PARQUET_ROOT")
+    if raw_root is None or not raw_root.strip():
+        return None
+    root = Path(raw_root).expanduser().resolve()
+    if not root.is_dir():
+        raise CliError("RONIN_SQL_PARQUET_ROOT must reference an existing directory")
+    try:
+        engine = DuckDbSqlEngine()
+    except DuckDbDependencyError as exc:
+        raise CliError(str(exc)) from exc
+    try:
+        for path in sorted(root.glob("*.parquet")):
+            engine.register_parquet(path.stem, str(path))
+    except Exception:
+        engine.close()
+        raise
+    return engine
+
+
 def _serve() -> int:
+    postgres_dsn = os.environ.get("RONIN_POSTGRES_DSN")
+    if postgres_dsn is not None:
+        raise CliError(
+            "RONIN_POSTGRES_DSN is not supported by the execution server yet; "
+            "refusing to fall back to SQLite until PostgreSQL JobStore parity is qualified"
+        )
     try:
         port = int(_env("RONIN_PORT", "8080"))
     except ValueError as exc:
@@ -375,16 +438,20 @@ def _serve() -> int:
     database = _database()
     database.parent.mkdir(parents=True, exist_ok=True)
     service = DurableExecutionService(SqliteJobStore(database, migration_now=_now()))
+    sql_engine = _sql_engine_from_environment()
     server = RoninHTTPServer(
         (_env("RONIN_HOST", "127.0.0.1"), port),
         service,
         token=_token(),
         grants=_token_grants(),
+        sql_engine=sql_engine,
     )
     try:
         server.serve_forever()
     finally:
         server.server_close()
+        if sql_engine is not None:
+            sql_engine.close()
     return 0
 
 
@@ -434,6 +501,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _jobs(namespace)
         if command == "cancel":
             return _cancel(namespace)
+        if command == "migrate":
+            if namespace.migrate_command == "inventory":
+                return _migration_inventory(namespace)
+            raise CliError(f"unsupported migrate command: {namespace.migrate_command}")
         raise CliError(f"unsupported command: {command}")
     except (CliError, ControlPlaneError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)

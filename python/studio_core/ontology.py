@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Literal, TypeAlias, cast
+from typing import Callable, Literal, TypeAlias, cast
 
 from .canonical_json import decode as decode_canonical_json
 from .canonical_json import encode as encode_canonical_json
@@ -305,7 +305,7 @@ class OntologyDefinition:
         refs = {item.backing_asset for item in self.object_types}
         refs.update(link.backing_asset for link in self.link_types if link.backing_asset is not None)
         refs.update(action.write_asset for action in self.actions if action.write_asset is not None)
-        return tuple(sorted(cast(set[AssetRef], refs)))
+        return tuple(sorted(refs))
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -366,3 +366,165 @@ class KnowledgeObjectRef:
         if not key or len(key) != len(set(k for k, _ in key)):
             raise ValueError("knowledge object key must be non-empty and unique")
         object.__setattr__(self, "key", key)
+
+
+@dataclass(frozen=True, slots=True)
+class KnowledgeObject:
+    """Materialized ontology object with a stable key and governed properties."""
+
+    ref: KnowledgeObjectRef
+    properties: tuple[tuple[str, object], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class KnowledgeGraph:
+    """Bounded query view over materialized objects and resolved link pairs."""
+
+    objects: tuple[KnowledgeObject, ...]
+    links: tuple[tuple[KnowledgeObjectRef, KnowledgeObjectRef], ...] = ()
+
+    def objects_of_type(self, object_type: str, *, limit: int = 100_000) -> tuple[KnowledgeObject, ...]:
+        if limit < 1 or limit > 1_000_000:
+            raise ValueError("knowledge graph query limit must be between 1 and 1000000")
+        return tuple(item for item in self.objects if item.ref.object_type == object_type)[:limit]
+
+    def neighbors(self, ref: KnowledgeObjectRef, *, limit: int = 100_000) -> tuple[KnowledgeObjectRef, ...]:
+        if limit < 1 or limit > 1_000_000:
+            raise ValueError("knowledge graph query limit must be between 1 and 1000000")
+        neighbors = [target if source == ref else source for source, target in self.links if source == ref or target == ref]
+        return tuple(sorted(neighbors))[:limit]
+
+
+@dataclass(frozen=True, slots=True)
+class ActionExecution:
+    """Result of one authorized ontology action dispatch."""
+
+    action: str
+    target: KnowledgeObjectRef
+    idempotency_key: str | None
+    output: Mapping[str, object]
+
+
+def execute_ontology_action(
+    action: ActionType,
+    target: KnowledgeObjectRef,
+    inputs: Mapping[str, object],
+    *,
+    authorize: Callable[[Requirement], bool],
+    write: Callable[[ActionType, KnowledgeObjectRef, Mapping[str, object]], Mapping[str, object]],
+    idempotency_key: str | None = None,
+    load_idempotent: Callable[[str], ActionExecution | None] | None = None,
+    record_idempotent: Callable[[ActionExecution], None] | None = None,
+) -> ActionExecution:
+    """Authorize and dispatch one action without granting implicit write access."""
+
+    if target.object_type != action.target_type:
+        raise ValueError("ontology action target type does not match action definition")
+    if set(inputs) != set(action.input_fields):
+        raise ValueError("ontology action inputs must exactly match declared input_fields")
+    if action.idempotent and (idempotency_key is None or not idempotency_key.strip()):
+        raise ValueError("idempotent ontology actions require an idempotency_key")
+    if idempotency_key is not None and load_idempotent is not None:
+        replay = load_idempotent(idempotency_key)
+        if replay is not None:
+            if replay.action != action.name or replay.target != target:
+                raise ValueError("idempotency key is bound to a different ontology action")
+            return replay
+    for requirement in action.requirements:
+        if not authorize(requirement):
+            raise PermissionError("ontology action authorization requirement was denied")
+    output = write(action, target, inputs)
+    if not isinstance(output, Mapping):
+        raise ValueError("ontology action write executor must return an object mapping")
+    execution = ActionExecution(action.name, target, idempotency_key, dict(output))
+    if idempotency_key is not None and record_idempotent is not None:
+        record_idempotent(execution)
+    return execution
+
+
+def materialize_object_type(
+    object_type: ObjectType,
+    rows: Sequence[Mapping[str, object]],
+    *,
+    max_objects: int = 100_000,
+) -> tuple[KnowledgeObject, ...]:
+    """Materialize bounded object instances from rows of an object's backing asset."""
+
+    if max_objects < 1 or max_objects > 1_000_000:
+        raise ValueError("ontology max_objects must be between 1 and 1000000")
+    result: list[KnowledgeObject] = []
+    seen: set[KnowledgeObjectRef] = set()
+    fields = tuple(object_type.properties)
+    for index, row in enumerate(rows):
+        if index >= max_objects:
+            raise ValueError("ontology object materialization exceeds configured limit")
+        missing = [item.source_field for item in fields if item.required and item.source_field not in row]
+        if missing:
+            raise ValueError(f"ontology row {index} is missing required fields: {missing}")
+        key_values = []
+        for key in object_type.key_fields:
+            if key not in row or row[key] is None:
+                raise ValueError(f"ontology row {index} has missing/null key field: {key}")
+            key_values.append((key, str(row[key])))
+        ref = KnowledgeObjectRef(object_type.name, tuple(key_values))
+        if ref in seen:
+            raise ValueError(f"ontology object key is duplicated: {ref}")
+        seen.add(ref)
+        result.append(
+            KnowledgeObject(
+                ref,
+                tuple((item.name, row.get(item.source_field)) for item in fields),
+            )
+        )
+    return tuple(result)
+
+
+def resolve_link_type(
+    link: LinkType,
+    source_objects: Sequence[KnowledgeObject],
+    target_objects: Sequence[KnowledgeObject],
+    *,
+    max_links: int = 1_000_000,
+) -> tuple[tuple[KnowledgeObjectRef, KnowledgeObjectRef], ...]:
+    """Resolve a declared link over materialized objects with bounded cardinality checks."""
+
+    if max_links < 1 or max_links > 10_000_000:
+        raise ValueError("ontology max_links must be between 1 and 10000000")
+    if any(item.ref.object_type != link.source_type for item in source_objects):
+        raise ValueError("link source objects do not match link source_type")
+    if any(item.ref.object_type != link.target_type for item in target_objects):
+        raise ValueError("link target objects do not match link target_type")
+    source_maps = [dict(item.properties) for item in source_objects]
+    target_maps = [dict(item.properties) for item in target_objects]
+    links: list[tuple[KnowledgeObjectRef, KnowledgeObjectRef]] = []
+    for source, source_values in zip(source_objects, source_maps, strict=True):
+        for target, target_values in zip(target_objects, target_maps, strict=True):
+            if all(source_values.get(left) == target_values.get(right) for left, right in zip(link.source_fields, link.target_fields, strict=True)):
+                links.append((source.ref, target.ref))
+                if len(links) > max_links:
+                    raise ValueError("ontology link resolution exceeds configured limit")
+    source_counts = {ref: sum(pair[0] == ref for pair in links) for ref, _ in links}
+    target_counts = {ref: sum(pair[1] == ref for pair in links) for _, ref in links}
+    if link.cardinality in {"one-to-one", "one-to-many"} and any(count > 1 for count in source_counts.values()):
+        raise ValueError("resolved links violate source-side cardinality")
+    if link.cardinality in {"one-to-one", "many-to-one"} and any(count > 1 for count in target_counts.values()):
+        raise ValueError("resolved links violate target-side cardinality")
+    return tuple(sorted(links, key=lambda pair: (pair[0], pair[1])))
+
+
+__all__ = (
+    "ActionType",
+    "KnowledgeObject",
+    "KnowledgeGraph",
+    "KnowledgeObjectRef",
+    "LinkCardinality",
+    "LinkType",
+    "ObjectType",
+    "OntologyDefinition",
+    "OntologyId",
+    "PropertyDefinition",
+    "materialize_object_type",
+    "ActionExecution",
+    "execute_ontology_action",
+    "resolve_link_type",
+)

@@ -98,7 +98,10 @@ def test_connector_rejects_symlink(tmp_path: Path) -> None:
     target = source_root / "target.csv"
     target.write_text("id\n1\n", encoding="utf-8")
     alias = source_root / "alias.csv"
-    alias.symlink_to(target)
+    try:
+        alias.symlink_to(target)
+    except OSError as exc:
+        pytest.skip(f"symlink creation is unavailable on this host: {exc}")
     connector = LocalFileConnector(source_root)
 
     with pytest.raises(ValueError, match="symlinks"):

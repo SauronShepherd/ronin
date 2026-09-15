@@ -16,7 +16,7 @@ def _validate(value: object) -> None:
         return
     if isinstance(value, float):
         if not math.isfinite(value):
-            raise ValueError("canonical JSON numbers must be finite")
+            raise ValueError("canonical JSON numbers must be finite: Out of range float values")
         return
     if isinstance(value, Mapping):
         for key, child in value.items():

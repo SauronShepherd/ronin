@@ -6,11 +6,13 @@ import asyncio
 import hashlib
 import hmac
 import json
+import sys
 from collections.abc import Coroutine
 from concurrent.futures import Future
 from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from threading import Event, Thread
 from typing import Any, cast
 from urllib.parse import parse_qs, unquote, urlsplit
@@ -32,12 +34,19 @@ from studio_orchestrator import (
     RunState,
     StoredEvidenceRef,
 )
+from studio_sql import SqlEngine
 from studio_storage import IdempotencyConflict, StorageBackpressureError
 
 _MAX_REQUEST_BYTES = 1024 * 1024
 _MAX_CURSOR_BYTES = 4096
 _MAX_LIST_LIMIT = 100
 _DEFAULT_LIST_LIMIT = 50
+_STUDIO_ASSETS = {
+    "/studio": "index.html",
+    "/studio/": "index.html",
+    "/studio/studio.js": "studio.js",
+    "/studio/studio.css": "studio.css",
+}
 SUPPORTED_ROUTES = frozenset(
     {
         ("POST", "/v1/jobs"),
@@ -46,6 +55,7 @@ SUPPORTED_ROUTES = frozenset(
         ("GET", "/v1/jobs/{job_id}/events"),
         ("GET", "/v1/jobs/{job_id}/evidence"),
         ("POST", "/v1/jobs/{job_id}/cancel"),
+        ("POST", "/v1/sql"),
     }
 )
 
@@ -167,8 +177,11 @@ class _ServiceLoop:
 
 
 class DurableHTTPApplication:
-    def __init__(self, service: DurableExecutionService) -> None:
+    def __init__(
+        self, service: DurableExecutionService, *, sql_engine: SqlEngine | None = None
+    ) -> None:
         self._service = service
+        self._sql_engine = sql_engine
         self._loop = _ServiceLoop(service)
 
     def close(self) -> None:
@@ -240,6 +253,7 @@ class DurableHTTPApplication:
         self,
         *,
         project: str | None,
+        project_ids: tuple[str, ...] | None = None,
         state: str | None,
         limit: str | None,
         cursor: str | None,
@@ -259,6 +273,7 @@ class DurableHTTPApplication:
             self._loop.call(
                 self._service.list_jobs(
                     project_id=project,
+                    project_ids=project_ids,
                     state=job_state,
                     limit=_bounded_limit(limit, default=_DEFAULT_LIST_LIMIT),
                     cursor=_opaque_cursor(cursor, name="cursor"),
@@ -296,6 +311,44 @@ class DurableHTTPApplication:
         job = cast(Job, self._loop.call(self._service.cancel(JobId(job_id), now=_now())))
         return _job_payload(job)
 
+    def sql(self, payload: object) -> dict[str, object]:
+        if self._sql_engine is None:
+            raise LookupError("SQL engine is not configured")
+        if not isinstance(payload, dict) or set(payload) - {
+            "project",
+            "sql",
+            "parameters",
+            "max_rows",
+        }:
+            raise ValueError("SQL request contains unknown fields")
+        sql = payload.get("sql")
+        parameters = payload.get("parameters", [])
+        max_rows = payload.get("max_rows", 10_000)
+        if not isinstance(sql, str) or not sql.strip() or sql != sql.strip():
+            raise ValueError("sql must be non-empty and trimmed")
+        if not isinstance(parameters, list):
+            raise ValueError("parameters must be a JSON array")
+        if not all(
+            isinstance(value, (bool, int, float, str)) or value is None for value in parameters
+        ):
+            raise ValueError("SQL parameters must be scalar JSON values")
+        if (
+            not isinstance(max_rows, int)
+            or isinstance(max_rows, bool)
+            or not 1 <= max_rows <= 10_000
+        ):
+            raise ValueError("max_rows must be between 1 and 10000")
+        try:
+            result = self._sql_engine.execute(sql, tuple(parameters), max_rows=max_rows)
+        except Exception as exc:
+            raise ValueError("SQL execution failed") from exc
+        return {
+            "columns": [
+                {"name": column.name, "type": column.type_name} for column in result.columns
+            ],
+            "rows": [list(row) for row in result.rows],
+        }
+
 
 class RoninHTTPServer(ThreadingHTTPServer):
     """Supported HTTP server with one bearer credential and typed project grants."""
@@ -309,12 +362,13 @@ class RoninHTTPServer(ThreadingHTTPServer):
         *,
         token: str,
         grants: GrantSet,
+        sql_engine: SqlEngine | None = None,
     ) -> None:
         if not token or token != token.strip() or "\n" in token or "\r" in token:
             raise ValueError("token must be non-empty, trimmed, and single-line")
         if not grants.grants:
             raise ValueError("bearer token requires at least one typed authorization grant")
-        self.application = DurableHTTPApplication(service)
+        self.application = DurableHTTPApplication(service, sql_engine=sql_engine)
         self._token = token
         self._grants = grants
         try:
@@ -360,6 +414,35 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def _serve_studio(self, path: str) -> bool:
+        asset = _STUDIO_ASSETS.get(path)
+        if asset is None:
+            return False
+        candidates = (
+            Path(__file__).resolve().parents[2] / "web" / asset,
+            Path("/usr/local/lib/ronin/web") / asset,
+            Path(sys.prefix) / "share" / "ronin" / "web" / asset,
+        )
+        source = next((candidate for candidate in candidates if candidate.is_file()), candidates[0])
+        try:
+            body = source.read_bytes()
+        except OSError:
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "Studio asset not found")
+            return True
+        media_type = (
+            "text/html"
+            if asset.endswith(".html")
+            else "text/javascript"
+            if asset.endswith(".js")
+            else "text/css"
+        )
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", f"{media_type}; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+        return True
 
     def _error(self, status: HTTPStatus, code: str, message: str) -> None:
         self._write_json(status, {"error": {"code": code, "message": message}})
@@ -407,6 +490,26 @@ class _Handler(BaseHTTPRequestHandler):
             return
         split = urlsplit(self.path)
         path = split.path
+        if path == "/v1/sql":
+            if split.query:
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_request", "SQL does not accept query")
+                return
+            try:
+                payload = self._read_json()
+                if not isinstance(payload, dict):
+                    raise ValueError("request body must be a JSON object")
+                project = _submit_project(payload)
+                if not self._require_project("read", project):
+                    return
+                response_payload = self._ronin_server().application.sql(payload)
+            except LookupError:
+                self._error(HTTPStatus.NOT_FOUND, "sql_unavailable", "SQL engine is not configured")
+                return
+            except ValueError as exc:
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
+                return
+            self._write_json(HTTPStatus.OK, response_payload)
+            return
         if path == "/v1/jobs":
             if split.query:
                 self._error(
@@ -468,6 +571,8 @@ class _Handler(BaseHTTPRequestHandler):
         self._write_json(HTTPStatus.OK, payload)
 
     def do_GET(self) -> None:  # noqa: N802
+        if self._serve_studio(urlsplit(self.path).path):
+            return
         if not self._require_auth():
             return
         split = urlsplit(self.path)
@@ -481,21 +586,19 @@ class _Handler(BaseHTTPRequestHandler):
                 project = query.get("project")
                 if project is not None and not self._require_project("list", project):
                     return
+                project_ids = None
+                if project is None:
+                    project_ids = self._ronin_server().effective_grants.exact_resource_ids(
+                        "list", kind="project"
+                    )
                 page = self._ronin_server().application.list_jobs(
                     project=project,
+                    project_ids=project_ids,
                     state=query.get("state"),
                     limit=query.get("limit"),
                     cursor=query.get("cursor"),
                 )
-                visible = Page(
-                    tuple(
-                        job
-                        for job in page.items
-                        if self._ronin_server().permits_project("list", job.project_id)
-                    ),
-                    page.next_cursor,
-                )
-                page_payload = _page_payload(visible)
+                page_payload = _page_payload(page)
             except StorageBackpressureError:
                 self._error(
                     HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"

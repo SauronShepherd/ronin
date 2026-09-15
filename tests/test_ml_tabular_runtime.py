@@ -1,10 +1,15 @@
 from pathlib import Path
 
 import pytest
-
 from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
 from studio_core.ml import ExperimentId, MLRunId, ModelId, ModelVersion
-from studio_ml import TrainingSpec, predict_registered_tabular, predict_tabular, train_register_tabular, train_tabular
+from studio_ml import (
+    TrainingSpec,
+    predict_registered_tabular,
+    predict_tabular,
+    train_register_tabular,
+    train_tabular,
+)
 from studio_storage import LocalArtifactStore
 
 pytest.importorskip("sklearn")
@@ -33,6 +38,12 @@ class _Registry:
             return self.model
         return None
 
+    def get_champion_model(self, workspace_id, model_id):
+        del workspace_id
+        if self.model is not None and self.model.model_id == model_id:
+            return self.model
+        return None
+
 
 def _classification_rows():
     return tuple(
@@ -49,6 +60,8 @@ def test_classification_training_and_prediction() -> None:
     assert dict(trained.metrics)["accuracy"] >= 0.0
     predicted = predict_tabular(trained.artifact_bytes, ({"x": 2.0, "y": 2.0},))
     assert len(predicted) == 1
+    with pytest.raises(ValueError, match="max_rows"):
+        predict_tabular(trained.artifact_bytes, ({"x": 2.0, "y": 2.0},), max_rows=0)
 
 
 def test_training_service_records_run_and_registered_digest(tmp_path: Path) -> None:
@@ -87,6 +100,33 @@ def test_training_service_records_run_and_registered_digest(tmp_path: Path) -> N
     assert len(predicted) == 1
 
 
+def test_champion_inference_loads_artifact_by_registered_reference(tmp_path: Path) -> None:
+    registry = _Registry()
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    train_register_tabular(
+        registry, artifacts, WorkspaceId("workspace"), _classification_rows(),
+        dataset=AssetRef(AssetId("dataset"), AssetVersion("v1")),
+        experiment_id=ExperimentId("experiment"), run_id=MLRunId("run"),
+        model_id=ModelId("model"), model_version=ModelVersion("1"), source_revision="git:abc",
+        execution_ref="job:1",
+        spec=TrainingSpec("classification", "logistic_regression", ("x", "y"), "label", 0.25, 7),
+        now="2026-09-13T10:00:00.000000Z",
+    )
+    from studio_ml import predict_champion_tabular
+
+    predicted = predict_champion_tabular(
+        registry, WorkspaceId("workspace"), ModelId("model"), ({"x": 12.0, "y": 0.0},),
+        load_artifact=lambda reference: (
+            tmp_path
+            / "artifacts"
+            / "sha256"
+            / reference.rsplit("/", 1)[-1][:2]
+            / reference.rsplit("/", 1)[-1]
+        ).read_bytes(),
+    )
+    assert len(predicted) == 1
+
+
 def test_registered_inference_rejects_tampered_artifact(tmp_path: Path) -> None:
     registry = _Registry()
     artifacts = LocalArtifactStore(tmp_path / "artifacts")
@@ -113,4 +153,15 @@ def test_registered_inference_rejects_tampered_artifact(tmp_path: Path) -> None:
             ModelVersion("1"),
             b"tampered",
             ({"x": 12.0, "y": 0.0},),
+        )
+def test_classification_split_rejects_insufficient_test_rows() -> None:
+    with pytest.raises(ValueError, match="every target class"):
+        train_tabular(
+            (
+                {"x": 1.0, "label": "a"},
+                {"x": 2.0, "label": "b"},
+                {"x": 3.0, "label": "c"},
+                {"x": 4.0, "label": "a"},
+            ),
+            TrainingSpec("classification", "logistic_regression", ("x",), "label", 0.2),
         )

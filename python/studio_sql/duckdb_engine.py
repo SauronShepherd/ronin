@@ -9,6 +9,8 @@ from typing import Any
 from .contracts import SqlColumn, SqlQueryResult
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_SELECT_START = re.compile(r"^SELECT\b", re.IGNORECASE)
+_MAX_SQL_BYTES = 1024 * 1024
 
 
 class DuckDbDependencyError(RuntimeError):
@@ -57,6 +59,10 @@ class DuckDbSqlEngine:
         self._require_open()
         if not sql or sql != sql.strip():
             raise ValueError("SQL text must be non-empty and trimmed")
+        if len(sql.encode("utf-8")) > _MAX_SQL_BYTES:
+            raise ValueError("SQL text exceeds the configured byte limit")
+        if ";" in sql or not _SELECT_START.match(sql):
+            raise ValueError("SQL engine accepts one read-only SELECT statement")
         if max_rows < 1:
             raise ValueError("max_rows must be positive")
 

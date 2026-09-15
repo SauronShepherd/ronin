@@ -76,6 +76,39 @@ class LocalArtifactStore:
             return False
         return len(data) == ref.size_bytes
 
+    def delete(self, ref: ArtifactRef) -> bool:
+        """Delete one validated content-addressed artifact if it exists."""
+
+        self._validate_ref(ref)
+        target = self._path_for_digest(ref.digest)
+        try:
+            target.unlink()
+        except FileNotFoundError:
+            return False
+        return True
+
+    def list_digests(self) -> tuple[str, ...]:
+        """List stored SHA-256 digests in deterministic order."""
+
+        root = self._root / "sha256"
+        if not root.is_dir():
+            return ()
+        return tuple(
+            sorted(
+                path.name
+                for prefix in root.iterdir()
+                if prefix.is_dir() and len(prefix.name) == 2
+                for path in prefix.iterdir()
+                if path.is_file()
+                and len(path.name) == 64
+                and all(char in "0123456789abcdef" for char in path.name)
+            )
+        )
+
+    def storage_ref_for_digest(self, digest: str) -> str:
+        self._path_for_digest(digest)
+        return f"artifact://sha256/{digest}"
+
     def _validate_ref(self, ref: ArtifactRef) -> None:
         if ref.digest_algorithm != "sha256":
             raise ValueError("unsupported artifact digest algorithm")

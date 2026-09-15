@@ -9,6 +9,20 @@
   "x-ronin-authorization-model": "typed-project-grants-v1",
   "security": [{"bearerAuth": []}],
   "paths": {
+    "/v1/sql": {
+      "post": {
+        "operationId": "executeSql",
+        "x-ronin-required-project-actions": ["read"],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SqlRequest"}}}},
+        "responses": {
+          "200": {"description": "Bounded read-only SQL result", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SqlResult"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
+          "404": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
     "/v1/jobs": {
       "get": {
         "operationId": "listJobs",
@@ -113,6 +127,22 @@
       }
     },
     "schemas": {
+      "SqlRequest": {
+        "type": "object", "additionalProperties": false, "required": ["project", "sql"],
+        "properties": {
+          "project": {"type": "string", "minLength": 1, "maxLength": 256},
+          "sql": {"type": "string", "minLength": 1, "maxLength": 1048576},
+          "parameters": {"type": "array", "items": {"type": ["boolean", "integer", "number", "string", "null"]}, "default": []},
+          "max_rows": {"type": "integer", "minimum": 1, "maximum": 10000, "default": 10000}
+        }
+      },
+      "SqlResult": {
+        "type": "object", "additionalProperties": false, "required": ["columns", "rows"],
+        "properties": {
+          "columns": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name", "type"], "properties": {"name": {"type": "string"}, "type": {"type": "string"}}}},
+          "rows": {"type": "array", "items": {"type": "array"}}
+        }
+      },
       "SubmitJobRequest": {
         "type": "object", "additionalProperties": false, "required": ["project", "target"],
         "properties": {

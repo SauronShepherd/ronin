@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import signal
 import uuid
+from time import monotonic
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
@@ -37,7 +39,7 @@ from studio_runners import (
     DockerContainerKernelExecutor,
     LocalExecutionEvidenceStore,
 )
-from studio_storage import LocalArtifactStore, SqliteJobStore
+from studio_storage import ArtifactStore, LocalArtifactStore, S3ArtifactStore, SqliteJobStore
 
 from .execution import DurableWorkerExecution, WorkerExecutionOutcome, utc_now
 from .preparation import (
@@ -67,6 +69,7 @@ class LocalWorkerRuntimeConfig:
     store_max_in_flight: int = 8
     artifact_max_workers: int = 2
     artifact_max_in_flight: int = 4
+    record_execution: Callable[[str, float, str], None] | None = None
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
@@ -117,6 +120,26 @@ def runtime_catalog_for_image(image: str) -> RuntimeCatalog:
     return RuntimeCatalog((profile,))
 
 
+def artifact_store_from_environment(config: LocalWorkerRuntimeConfig) -> ArtifactStore:
+    """Build the configured artifact backend without silently degrading storage."""
+
+    backend = os.environ.get("RONIN_ARTIFACT_BACKEND", "local").strip().casefold()
+    if backend == "local":
+        return LocalArtifactStore(config.artifact_root)
+    if backend != "s3":
+        raise ValueError("RONIN_ARTIFACT_BACKEND must be local or s3")
+    bucket = os.environ.get("RONIN_S3_BUCKET", "").strip()
+    if not bucket:
+        raise ValueError("RONIN_S3_BUCKET is required when RONIN_ARTIFACT_BACKEND=s3")
+    prefix = os.environ.get("RONIN_S3_PREFIX", "ronin/artifacts")
+    return S3ArtifactStore(
+        bucket,
+        prefix=prefix,
+        endpoint_url=os.environ.get("RONIN_S3_ENDPOINT_URL"),
+        region_name=os.environ.get("RONIN_S3_REGION"),
+    )
+
+
 class LocalWorkerRuntime:
     """Own one bounded durable worker process composition.
 
@@ -133,6 +156,7 @@ class LocalWorkerRuntime:
         policy: SessionPolicy | None = None,
         command_runner: CancellableCommandRunner | None = None,
         engine_path: str | None = None,
+        artifact_store: ArtifactStore | None = None,
         now: Callable[[], Instant] = utc_now,
     ) -> None:
         self.config = config
@@ -140,6 +164,7 @@ class LocalWorkerRuntime:
         self._policy = policy or SessionPolicy()
         self._runner = command_runner or AsyncioCommandRunner()
         self._engine_path = engine_path
+        self._artifact_store = artifact_store or artifact_store_from_environment(config)
         config.paths.data_dir.mkdir(parents=True, exist_ok=True)
         store = SqliteJobStore(config.database_path, migration_now=migration_now)
         self._service = DurableExecutionService(
@@ -239,7 +264,7 @@ class LocalWorkerRuntime:
         )
         worker = DurableWorkerExecution(
             self._service,
-            LocalArtifactStore(self.config.artifact_root),
+            self._artifact_store,
             executor,
             self._policy,
             self.config.owner,
@@ -286,7 +311,15 @@ class LocalWorkerRuntime:
         if claim is None:
             return LocalWorkerPollOutcome(polled.reclaimed_run_ids, None, None)
 
-        execution = await self._execute_claim(claim)
+        started = monotonic()
+        try:
+            execution = await self._execute_claim(claim)
+        except Exception:
+            if self.config.record_execution is not None:
+                self.config.record_execution("worker.execute", monotonic() - started, "failed")
+            raise
+        if self.config.record_execution is not None:
+            self.config.record_execution("worker.execute", monotonic() - started, "succeeded")
         return LocalWorkerPollOutcome(
             polled.reclaimed_run_ids,
             claim.attempt_id,
@@ -312,6 +345,7 @@ class LocalWorkerRuntime:
                 await self._wait_for_shutdown_or_poll(shutdown)
                 continue
 
+            started = monotonic()
             execution = asyncio.create_task(self._execute_claim(claim))
             shutdown_wait = asyncio.create_task(shutdown.wait())
             try:
@@ -325,7 +359,15 @@ class LocalWorkerRuntime:
                         await execution
                     await self._abandon_claim(claim)
                     return
-                await execution
+                try:
+                    await execution
+                except Exception:
+                    if self.config.record_execution is not None:
+                        self.config.record_execution("worker.execute", monotonic() - started, "failed")
+                    raise
+                else:
+                    if self.config.record_execution is not None:
+                        self.config.record_execution("worker.execute", monotonic() - started, "succeeded")
             finally:
                 shutdown_wait.cancel()
                 with suppress(asyncio.CancelledError):

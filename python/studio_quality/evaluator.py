@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections import Counter
-from collections.abc import Mapping, Sequence
-from datetime import datetime, timezone
+from collections.abc import Callable, Mapping, Sequence
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from typing import TypeAlias
 
@@ -75,7 +74,8 @@ def _evaluate_null(rule: QualityRule, rows: Sequence[Row]) -> QualityResult:
     nulls = sum(value is None for value in values)
     parameters = _parameters(rule)
     max_nulls = _parse_int(parameters, "max_nulls", 0)
-    assert max_nulls is not None
+    if max_nulls is None:
+        raise ValueError("quality parameter max_nulls must be an integer")
     observed = (("null_count", str(nulls)), ("row_count", str(len(rows))))
     if nulls <= max_nulls:
         return _passed(rule, observed)
@@ -87,8 +87,15 @@ def _evaluate_unique(rule: QualityRule, rows: Sequence[Row]) -> QualityResult:
     parameters = _parameters(rule)
     ignore_nulls = parameters.get("ignore_nulls", "true").casefold() == "true"
     normalized = [value for value in values if value is not None or not ignore_nulls]
-    counts = Counter(repr(value) for value in normalized)
-    duplicates = sum(count - 1 for count in counts.values() if count > 1)
+    distinct: list[tuple[object, int]] = []
+    for value in normalized:
+        for index, (existing, count) in enumerate(distinct):
+            if value == existing:
+                distinct[index] = (existing, count + 1)
+                break
+        else:
+            distinct.append((value, 1))
+    duplicates = sum(count - 1 for _, count in distinct if count > 1)
     observed = (("duplicate_count", str(duplicates)), ("row_count", str(len(rows))))
     if duplicates == 0:
         return _passed(rule, observed)
@@ -168,8 +175,8 @@ def _parse_timestamp(value: object) -> datetime:
     else:
         raise ValueError("freshness field must contain datetime or ISO-8601 string values")
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _evaluate_freshness(
@@ -201,10 +208,13 @@ def evaluate_rule(
     *,
     contract: DataContract,
     now: datetime | None = None,
+    reference_values: Callable[[QualityRule], Sequence[object]] | None = None,
+    custom_sql: Callable[[QualityRule, Sequence[Row]], bool] | None = None,
+    custom_python: Callable[[QualityRule, Sequence[Row]], bool] | None = None,
 ) -> QualityResult:
     """Evaluate one built-in rule; unsupported executable kinds report typed errors."""
 
-    current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    current = (now or datetime.now(UTC)).astimezone(UTC)
     try:
         if rule.kind == "null":
             return _evaluate_null(rule, rows)
@@ -219,11 +229,27 @@ def evaluate_rule(
         if rule.kind == "freshness":
             return _evaluate_freshness(rule, rows, now=current, contract=contract)
         if rule.kind == "referential":
-            return _error(rule, "referential rules require a reference-dataset resolver")
+            if reference_values is None:
+                return _error(rule, "referential rules require a reference-dataset resolver")
+            values = _field_values(rule, rows)
+            references = set(reference_values(rule))
+            violations = sum(value is not None and value not in references for value in values)
+            observed: tuple[tuple[str, str], ...] = (("violation_count", str(violations)), ("reference_count", str(len(references))))
+            if violations == 0:
+                return _passed(rule, observed)
+            return _failed(rule, observed, f"found {violations} value(s) missing from reference data")
         if rule.kind == "custom_sql":
-            return _error(rule, "custom_sql execution is not enabled in the built-in evaluator")
+            if custom_sql is None:
+                return _error(rule, "custom_sql execution is not enabled in the built-in evaluator")
+            passed = custom_sql(rule, rows)
+            custom_observed: tuple[tuple[str, str], ...] = (("predicate_passed", str(bool(passed)).lower()),)
+            return _passed(rule, custom_observed) if passed else _failed(rule, custom_observed, "custom SQL predicate failed")
         if rule.kind == "custom_python":
-            return _error(rule, "custom_python execution is not enabled in the built-in evaluator")
+            if custom_python is None:
+                return _error(rule, "custom_python execution is not enabled in the built-in evaluator")
+            passed = custom_python(rule, rows)
+            python_observed: tuple[tuple[str, str], ...] = (("predicate_passed", str(bool(passed)).lower()),)
+            return _passed(rule, python_observed) if passed else _failed(rule, python_observed, "custom Python predicate failed")
         return _error(rule, f"unsupported quality rule kind: {rule.kind}")
     except (TypeError, ValueError) as exc:
         return _error(rule, str(exc))
@@ -236,11 +262,14 @@ def evaluate_contract(
     run_id: QualityRunId,
     execution_ref: str | None = None,
     now: datetime | None = None,
+    reference_values: Callable[[QualityRule], Sequence[object]] | None = None,
+    custom_sql: Callable[[QualityRule, Sequence[Row]], bool] | None = None,
+    custom_python: Callable[[QualityRule, Sequence[Row]], bool] | None = None,
 ) -> QualityRun:
     """Evaluate all contract rules deterministically into one immutable QualityRun."""
 
     results = tuple(
-        evaluate_rule(rule, rows, contract=contract, now=now)
+        evaluate_rule(rule, rows, contract=contract, now=now, reference_values=reference_values, custom_sql=custom_sql, custom_python=custom_python)
         for rule in contract.rules
     )
     return QualityRun(run_id, contract.asset, execution_ref, results)

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 from collections.abc import Mapping
+from dataclasses import replace
 from pathlib import Path
 from typing import cast
 
@@ -14,9 +15,9 @@ from studio_core.ml import (
     EvaluationStatus,
     Experiment,
     ExperimentId,
+    MetricValue,
     MLRunId,
     MLRunRecord,
-    MetricValue,
     ModelEvaluation,
     ModelId,
     ModelSignature,
@@ -142,7 +143,7 @@ class SqliteMLStore:
             connection.close()
 
     def _connect(self) -> sqlite3.Connection:
-        return open_database(self._path)
+        return cast(sqlite3.Connection, open_database(self._path))
 
     def _require_active_workspace(self, connection: sqlite3.Connection, workspace_id: WorkspaceId) -> None:
         row = connection.execute("SELECT archived_at FROM workspaces WHERE workspace_id=?", (str(workspace_id),)).fetchone()
@@ -223,6 +224,120 @@ class SqliteMLStore:
             row=connection.execute("SELECT model_json FROM model_versions WHERE workspace_id=? AND model_id=? AND version=?",(str(workspace_id),str(model_id),str(version))).fetchone()
             return None if row is None else _model_from_json(row["model_json"])
         finally: connection.close()
+
+    def get_champion_model(
+        self, workspace_id: WorkspaceId, model_id: ModelId
+    ) -> RegisteredModelVersion | None:
+        """Resolve the promoted version for a model identity, if one exists."""
+
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT model_json FROM model_versions "
+                "WHERE workspace_id=? AND model_id=? AND stage='champion'",
+                (str(workspace_id), str(model_id)),
+            ).fetchone()
+            return None if row is None else _model_from_json(row["model_json"])
+        finally:
+            connection.close()
+
+    def list_models(
+        self, workspace_id: WorkspaceId, model_id: ModelId | None = None
+    ) -> tuple[RegisteredModelVersion, ...]:
+        """List registered versions deterministically within one workspace."""
+
+        connection = self._connect()
+        try:
+            if model_id is None:
+                rows = connection.execute(
+                    "SELECT model_json FROM model_versions WHERE workspace_id=? "
+                    "ORDER BY model_id, version",
+                    (str(workspace_id),),
+                ).fetchall()
+            else:
+                rows = connection.execute(
+                    "SELECT model_json FROM model_versions WHERE workspace_id=? "
+                    "AND model_id=? ORDER BY version",
+                    (str(workspace_id), str(model_id)),
+                ).fetchall()
+            return tuple(_model_from_json(row["model_json"]) for row in rows)
+        finally:
+            connection.close()
+
+    def promote_model(
+        self,
+        workspace_id: WorkspaceId,
+        model_id: ModelId,
+        version: ModelVersion,
+        *,
+        now: Instant | str,
+    ) -> RegisteredModelVersion:
+        """Atomically make one version the champion and archive its predecessor."""
+
+        now = Instant(now)
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
+            target_row = connection.execute(
+                "SELECT model_json FROM model_versions "
+                "WHERE workspace_id=? AND model_id=? AND version=?",
+                (str(workspace_id), str(model_id), str(version)),
+            ).fetchone()
+            if target_row is None:
+                raise KeyError(f"{model_id}@{version}")
+            target = _model_from_json(target_row["model_json"])
+            evaluations = connection.execute(
+                "SELECT evaluation_json FROM model_evaluations "
+                "WHERE workspace_id=? AND model_id=? AND version=?",
+                (str(workspace_id), str(model_id), str(version)),
+            ).fetchall()
+            if not any(
+                _evaluation_from_json(row["evaluation_json"]).status == "passed"
+                for row in evaluations
+            ):
+                raise MLConflict(f"model version has no passed evaluation: {model_id}@{version}")
+            promoted = replace(target, stage="champion")
+            rows = connection.execute(
+                "SELECT version, model_json FROM model_versions "
+                "WHERE workspace_id=? AND model_id=? AND stage='champion'",
+                (str(workspace_id), str(model_id)),
+            ).fetchall()
+            for row in rows:
+                current = _model_from_json(row["model_json"])
+                archived = replace(current, stage="archived")
+                connection.execute(
+                    "UPDATE model_versions SET stage=?, model_json=?, updated_at=? "
+                    "WHERE workspace_id=? AND model_id=? AND version=?",
+                    (
+                        archived.stage,
+                        archived.to_json(),
+                        now,
+                        str(workspace_id),
+                        str(model_id),
+                        str(current.version),
+                    ),
+                )
+            connection.execute(
+                "UPDATE model_versions SET stage=?, model_json=?, updated_at=? "
+                "WHERE workspace_id=? AND model_id=? AND version=?",
+                (
+                    promoted.stage,
+                    promoted.to_json(),
+                    now,
+                    str(workspace_id),
+                    str(model_id),
+                    str(version),
+                ),
+            )
+            connection.execute("COMMIT")
+            return promoted
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
 
     def record_evaluation(self, workspace_id: WorkspaceId, evaluation: ModelEvaluation, *, now: Instant | str) -> ModelEvaluation:
         now=Instant(now); payload=evaluation.to_json(); digest=hashlib.sha256(payload.encode("utf-8")).hexdigest(); connection=self._connect()

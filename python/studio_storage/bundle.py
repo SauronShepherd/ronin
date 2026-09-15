@@ -47,6 +47,9 @@ class BundleReadLimits:
                 raise ValueError(f"{name} must be positive")
 
 
+_DEFAULT_BUNDLE_READ_LIMITS = BundleReadLimits()
+
+
 @dataclass(frozen=True, slots=True)
 class BundleFile:
     """One caller-supplied portable file to place in a Ronin Bundle."""
@@ -211,7 +214,7 @@ def _verify_payloads(
             raise BundleIntegrityError("unsupported bundle digest algorithm")
         info = infos[entry.path]
         if info.file_size != entry.size_bytes:
-            raise BundleIntegrityError("bundle entry size does not match the manifest")
+            raise BundleIntegrityError("bundle entry size/digest does not match the manifest")
         if entry.size_bytes > limits.max_entry_bytes:
             raise BundleIntegrityError("bundle entry exceeds the configured size limit")
         total += entry.size_bytes
@@ -227,10 +230,12 @@ def _verify_payloads(
                     break
                 observed += len(chunk)
                 if observed > entry.size_bytes or observed > limits.max_entry_bytes:
-                    raise BundleIntegrityError("bundle entry expanded beyond its declared size")
+                    raise BundleIntegrityError(
+                        "bundle entry expanded beyond its declared size/digest"
+                    )
                 digest.update(chunk)
         if observed != entry.size_bytes:
-            raise BundleIntegrityError("bundle entry byte count does not match the manifest")
+            raise BundleIntegrityError("bundle entry byte count/digest does not match the manifest")
         if digest.hexdigest() != entry.digest:
             raise BundleIntegrityError("bundle entry digest verification failed")
 
@@ -238,7 +243,7 @@ def _verify_payloads(
 def verify_bundle(
     path: Path,
     *,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = _DEFAULT_BUNDLE_READ_LIMITS,
 ) -> RoninBundleManifest:
     """Verify archive structure plus every payload digest without extracting it."""
 
@@ -266,7 +271,7 @@ def extract_bundle(
     path: Path,
     target: Path,
     *,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = _DEFAULT_BUNDLE_READ_LIMITS,
 ) -> RoninBundleManifest:
     """Verify and atomically extract payload entries into a new target directory."""
 

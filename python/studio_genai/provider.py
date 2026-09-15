@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol, runtime_checkable
 from urllib.parse import urlsplit
@@ -93,7 +93,13 @@ class OpenAICompatibleProvider:
     Ronin metadata and credentials are resolved only at this execution boundary.
     """
 
-    def __init__(self, provider: ModelProvider, secrets: SecretResolver) -> None:
+    def __init__(
+        self,
+        provider: ModelProvider,
+        secrets: SecretResolver,
+        *,
+        record_usage: Callable[[str, str, int, int], None] | None = None,
+    ) -> None:
         if provider.adapter not in {"openai-compatible", "openai_compatible"}:
             raise ValueError("provider metadata does not target the OpenAI-compatible adapter")
         if provider.endpoint is None:
@@ -118,6 +124,7 @@ class OpenAICompatibleProvider:
         if timeout <= 0 or timeout > 600:
             raise ValueError("provider timeout_seconds must be in (0, 600]")
         self._timeout = timeout
+        self._record_usage = record_usage
 
     def _headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -171,12 +178,15 @@ class OpenAICompatibleProvider:
             if isinstance(completion_tokens, int) and not isinstance(completion_tokens, bool):
                 output_tokens = completion_tokens
         returned_model = body.get("model")
-        return ChatResult(
+        result = ChatResult(
             message["content"],
             returned_model if isinstance(returned_model, str) else model.model_id,
             input_tokens,
             output_tokens,
         )
+        if self._record_usage is not None and result.input_tokens is not None and result.output_tokens is not None:
+            self._record_usage(model.model_id, "chat", result.input_tokens, result.output_tokens)
+        return result
 
     def embed(self, model: GenAIModel, texts: Sequence[str]) -> EmbeddingResult:
         self._require_model(model, "embedding")

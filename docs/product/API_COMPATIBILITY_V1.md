@@ -27,6 +27,7 @@ The current response shapes are exactly those in `api/openapi-v1.json`:
 - `JobEventPage`: `items`, `next_since`;
 - `JobEvidence`: `items`;
 - `EvidenceReference`: `version`, `cell_id`, `role`, `digest_algorithm`, `digest`, `media_type`, `size_bytes`, `availability`, `reason`;
+- `SqlResult`: `columns`, `rows`, returned by the optional read-only SQL service;
 - `Error`: exactly one `error` object containing exactly `code` and `message`.
 
 `failure_code`, evidence availability, and evidence identity rules remain domain-specific contracts; this document only defines compatibility behavior around their wire representation.
@@ -85,6 +86,12 @@ Before stable v1, incompatible removals/renames/type changes or required-request
 
 `POST /v1/jobs` accepts only `project`, `target`, and optional `parameters`; unknown request fields are rejected. `parameters` is intentionally extensible JSON object data and is not interpreted as protocol field expansion.
 
+`POST /v1/sql` accepts `project`, `sql`, optional scalar `parameters`, and optional
+`max_rows` (`1..10000`). The request requires the project's `read` grant. The
+reference DuckDB service accepts one read-only `SELECT` statement, bounds SQL text
+to 1 MiB, and rejects mutating or multi-statement input. Deployments without a
+configured SQL engine return `404 sql_unavailable`.
+
 The request body is parsed through the shared `ronin/canonical-json/v1` decoder before authorization-sensitive request handling and before idempotency identity is computed. Duplicate object members and non-finite JSON numbers are therefore rejected with `400 invalid_request` instead of being interpreted with implementation-specific last-wins or non-standard numeric semantics. This is an alpha validation tightening: payloads containing duplicate members or non-finite numbers that older code may have accepted are no longer valid. Canonical bytes and request digests for valid v1 inputs are unchanged.
 
 Known query parameter sets are closed per route. Limits remain `1..100`. Public `job_id` values are bounded by the canonical lifecycle ID contract. The server must not silently discard unknown query or request fields.
@@ -97,4 +104,8 @@ While maintainer-directed code-only mode is active, these guarantees are validat
 
 ## Current v0.1 boundary
 
-The supported endpoint set remains frozen to submit/list/status/events/evidence/cancel. This compatibility slice does not add endpoints, framework dependencies, OIDC, enterprise RBAC, provider-specific identity, or new execution capabilities. Scoped HTTP authorization is separately owned by #161 and must consume the existing typed-grant model without redefining this wire compatibility policy.
+The supported endpoint set includes submit/list/status/events/evidence/cancel and
+the optional read-only SQL endpoint. This compatibility slice does not add
+framework dependencies, OIDC, enterprise RBAC, or provider-specific identity.
+Scoped HTTP authorization must consume the existing typed-grant model without
+redefining this wire compatibility policy.

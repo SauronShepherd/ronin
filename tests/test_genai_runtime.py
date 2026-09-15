@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from studio_core import AssetId, AssetRef, AssetVersion
 from studio_core.genai import (
     AgentDefinition,
@@ -27,7 +26,6 @@ from studio_genai import (
     run_agent,
     run_rag,
 )
-
 
 _PROVIDER = ProviderId("provider")
 _EMBED = GenAIModel(_PROVIDER, "embed", frozenset({"embedding"}))
@@ -128,6 +126,33 @@ def test_vector_index_and_rag_retrieve_relevant_context(tmp_path: Path) -> None:
     assert result.answer.content == "grounded answer"
     assert "alpha document" in result.rendered_prompt
     assert result.matches[0].chunk.metadata == (("source", "a"),)
+
+
+def test_vector_index_rejects_provider_model_identity_mismatch(tmp_path: Path) -> None:
+    index = VectorIndexDefinition(
+        VectorIndexId("docs"),
+        AssetRef(AssetId("dataset"), AssetVersion("v1")),
+        _PROVIDER,
+        "embed",
+        ("text",),
+        (),
+        chunk_size=100,
+        chunk_overlap=10,
+    )
+
+    class MismatchedProvider(_Provider):
+        def embed(self, model, texts):
+            result = super().embed(model, texts)
+            return EmbeddingResult(result.vectors, "different-model")
+
+    with pytest.raises(ValueError, match="different model identity"):
+        build_vector_index(
+            index,
+            ({"text": "alpha"},),
+            _EMBED,
+            MismatchedProvider(),
+            SqliteVectorStore(tmp_path / "vectors.sqlite"),
+        )
 
 
 def test_agent_calls_only_declared_tool_then_finishes() -> None:

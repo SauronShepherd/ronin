@@ -8,6 +8,8 @@ from studio_finops import (
     SqliteFinOpsStore,
     UsageRecord,
     evaluate_budget,
+    budget_gate,
+    budget_notification,
     price_usage,
 )
 from studio_observability import (
@@ -123,6 +125,28 @@ def test_finops_keeps_actual_and_estimated_cost_separate(tmp_path: Path) -> None
     assert evaluation.total_cost == Decimal("1.50")
     assert evaluation.exceeded
     assert evaluation.recommended_action == "notify"
+    intent = budget_notification(evaluation, now=_T2)
+    assert intent is not None
+    assert intent.kind == "budget"
+    assert intent.attributes == (("action", "notify"), ("budget_id", "daily"))
+    assert budget_gate(evaluation)
+
+
+def test_persisted_metrics_can_feed_prometheus_export(tmp_path: Path) -> None:
+    from studio_observability import prometheus_text
+
+    store = SqliteTelemetryStore(tmp_path / "telemetry.sqlite")
+    store.record_metric(MetricPoint("jobs.completed", 3.0, "count", "counter", _T0, ()))
+    assert prometheus_text(store.list_metrics()) == "jobs_completed 3.0\n"
+
+
+def test_budget_gate_denies_only_explicit_hard_budget_action() -> None:
+    from studio_finops import BudgetEvaluation
+
+    exceeded = BudgetEvaluation("b", Decimal("2"), Decimal("0"), Decimal("2"), Decimal("1"), True, "deny_new_work")
+    notify = BudgetEvaluation("b", Decimal("2"), Decimal("0"), Decimal("2"), Decimal("1"), True, "notify")
+    assert not budget_gate(exceeded)
+    assert budget_gate(notify)
 
 
 def test_rate_card_identity_is_immutable(tmp_path: Path) -> None:

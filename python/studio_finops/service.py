@@ -9,6 +9,7 @@ from studio_core import WorkspaceId
 from studio_orchestrator import Instant
 
 from .contracts import BudgetEvaluation, BudgetPolicy, CostRecord, RateCard, UsageRecord
+from studio_observability.notifications import NotificationIntent
 
 
 class RateCardNotFound(KeyError):
@@ -18,6 +19,14 @@ class RateCardNotFound(KeyError):
 @runtime_checkable
 class FinOpsStore(Protocol):
     def record_usage(self, usage: UsageRecord) -> UsageRecord: ...
+
+    def list_usage(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        period_start: Instant | str,
+        period_end: Instant | str,
+    ) -> tuple[UsageRecord, ...]: ...
 
     def resolve_rate(
         self,
@@ -84,6 +93,17 @@ def evaluate_budget(
         period_start=budget.period_start,
         period_end=budget.period_end,
     )
+    # Resolve labels from the durable ledger; caller-supplied usage metadata is
+    # not an authority for budget decisions.
+    del usage_by_id
+    usage_by_id = {
+        usage.id: usage
+        for usage in store.list_usage(
+            budget.workspace_id,
+            period_start=budget.period_start,
+            period_end=budget.period_end,
+        )
+    }
     actual = Decimal("0")
     estimated = Decimal("0")
     for cost in costs:
@@ -92,8 +112,6 @@ def evaluate_budget(
                 f"budget {budget.id} cannot aggregate cost in currency {cost.currency}"
             )
         if budget.labels:
-            if usage_by_id is None:
-                raise ValueError("label-scoped budget evaluation requires usage_by_id")
             usage = usage_by_id.get(cost.usage_id)
             if usage is None or not _labels_match(budget.labels, usage.labels):
                 continue
@@ -114,9 +132,35 @@ def evaluate_budget(
     )
 
 
+def budget_notification(
+    evaluation: BudgetEvaluation,
+    *,
+    now: Instant | str,
+) -> NotificationIntent | None:
+    """Create one idempotent notification intent when a budget is exceeded."""
+
+    if not evaluation.exceeded:
+        return None
+    return NotificationIntent(
+        f"budget:{evaluation.budget_id}:{evaluation.total_cost}",
+        "budget",
+        f"Budget exceeded: {evaluation.budget_id}",
+        f"Budget total is {evaluation.total_cost} against a limit of {evaluation.limit}.",
+        Instant(now),
+        (("budget_id", evaluation.budget_id), ("action", evaluation.recommended_action or "notify")),
+    )
+
+
+def budget_gate(evaluation: BudgetEvaluation) -> bool:
+    """Return whether a budget evaluation permits new work to be released."""
+    return not (evaluation.exceeded and evaluation.recommended_action == "deny_new_work")
+
+
 __all__ = (
     "FinOpsStore",
     "RateCardNotFound",
     "evaluate_budget",
+    "budget_notification",
+    "budget_gate",
     "price_usage",
 )

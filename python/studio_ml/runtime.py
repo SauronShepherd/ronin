@@ -10,7 +10,7 @@ from __future__ import annotations
 import pickle
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from math import sqrt
+from math import ceil, sqrt
 from typing import Any, Literal, TypeAlias
 
 TaskKind: TypeAlias = Literal["classification", "regression"]
@@ -23,9 +23,17 @@ class MLDependencyError(RuntimeError):
 
 def _sklearn() -> dict[str, Any]:
     try:
-        from sklearn.linear_model import LinearRegression, LogisticRegression
-        from sklearn.metrics import accuracy_score, mean_absolute_error, mean_squared_error, r2_score
-        from sklearn.model_selection import train_test_split
+        from sklearn.linear_model import (  # type: ignore[import-untyped]
+            LinearRegression,
+            LogisticRegression,
+        )
+        from sklearn.metrics import (  # type: ignore[import-untyped]
+            accuracy_score,
+            mean_absolute_error,
+            mean_squared_error,
+            r2_score,
+        )
+        from sklearn.model_selection import train_test_split  # type: ignore[import-untyped]
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise MLDependencyError(
             "tabular ML support requires the optional Ronin ml dependencies"
@@ -126,7 +134,11 @@ def _matrix(
             raise ValueError("regression target must be numeric")
         features.append(vector)
         targets.append(target)
-    if spec.task == "classification" and len({repr(value) for value in targets}) < 2:
+    distinct_targets: list[object] = []
+    for target in targets:
+        if not any(target == existing for existing in distinct_targets):
+            distinct_targets.append(target)
+    if spec.task == "classification" and len(distinct_targets) < 2:
         raise ValueError("classification training requires at least two target classes")
     return features, targets
 
@@ -139,6 +151,16 @@ def train_tabular(
 
     sk = _sklearn()
     x, y = _matrix(rows, spec)
+    test_rows = ceil(len(rows) * spec.test_fraction)
+    train_rows = len(rows) - test_rows
+    if test_rows < 1 or train_rows < 1:
+        raise ValueError("ML test_fraction must leave at least one train and test row")
+    if spec.task == "classification":
+        classes = set(y)
+        if test_rows < len(classes) or train_rows < len(classes):
+            raise ValueError(
+                "classification test_fraction must leave every target class in train and test"
+            )
     stratify = y if spec.task == "classification" else None
     x_train, x_test, y_train, y_test = sk["train_test_split"](
         x,
@@ -153,6 +175,7 @@ def train_tabular(
         model = sk["LinearRegression"]()
     model.fit(x_train, y_train)
     predicted = model.predict(x_test)
+    metrics: tuple[tuple[str, float], ...]
     if spec.task == "classification":
         metrics = (("accuracy", float(sk["accuracy_score"](y_test, predicted))),)
     else:
@@ -186,9 +209,14 @@ def predict_tabular(
     rows: Sequence[Mapping[str, object]],
     *,
     expected_features: tuple[str, ...] | None = None,
+    max_rows: int = 100_000,
 ) -> tuple[object, ...]:
     """Predict using a trusted Ronin-created artifact from the configured ArtifactStore."""
 
+    if max_rows < 1 or max_rows > 1_000_000:
+        raise ValueError("ML prediction max_rows must be between 1 and 1000000")
+    if len(rows) > max_rows:
+        raise ValueError("ML prediction input exceeds configured row limit")
     try:
         payload = pickle.loads(artifact_bytes)  # noqa: S301 - trusted internal artifact boundary
     except Exception as exc:

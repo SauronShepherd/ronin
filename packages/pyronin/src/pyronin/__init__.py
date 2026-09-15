@@ -38,6 +38,7 @@ _EVIDENCE_FIELDS = frozenset(
         "reason",
     }
 )
+_SQL_COLUMN_FIELDS = frozenset({"name", "type"})
 
 
 class RoninError(Exception):
@@ -133,6 +134,18 @@ class EvidenceReference:
         return (self.role, self.digest_algorithm, self.digest, self.media_type, self.size_bytes)
 
 
+@dataclass(frozen=True, slots=True)
+class SqlColumn:
+    name: str
+    type_name: str
+
+
+@dataclass(frozen=True, slots=True)
+class SqlResult:
+    columns: tuple[SqlColumn, ...]
+    rows: tuple[tuple[object, ...], ...]
+
+
 class Transport(Protocol):
     def request(
         self,
@@ -185,12 +198,12 @@ def _api_error(body: bytes) -> tuple[str | None, str]:
     try:
         payload = json.loads(body)
     except (json.JSONDecodeError, UnicodeDecodeError):
-        return None, "request failed with a non-Ronin error response"
+        return None, "request failed"
     if not isinstance(payload, dict) or set(payload) != {"error"}:
-        return None, "request failed with a non-Ronin error response"
+        return None, "request failed"
     error = payload.get("error")
     if not isinstance(error, dict) or set(error) != {"code", "message"}:
-        return None, "request failed with a non-Ronin error response"
+        return None, "request failed"
     code = error.get("code")
     message = error.get("message")
     if (
@@ -200,7 +213,7 @@ def _api_error(body: bytes) -> tuple[str | None, str]:
         or not isinstance(message, str)
         or not message
     ):
-        return None, "request failed with a non-Ronin error response"
+        return None, "request failed"
     return code, message
 
 
@@ -382,6 +395,32 @@ class Ronin:
         job = _parse_job(payload)
         return JobHandle(self, job.id)
 
+    def execute_sql(
+        self,
+        *,
+        project: str,
+        sql: str,
+        parameters: tuple[object, ...] = (),
+        max_rows: int = 10_000,
+    ) -> SqlResult:
+        if not project.strip():
+            raise ValueError("project must be non-empty")
+        if not sql or sql != sql.strip():
+            raise ValueError("sql must be non-empty and trimmed")
+        if not 1 <= max_rows <= 10_000:
+            raise ValueError("max_rows must be between 1 and 10000")
+        payload = self._transport.request(
+            "POST",
+            "/v1/sql",
+            payload={
+                "project": project,
+                "sql": sql,
+                "parameters": list(parameters),
+                "max_rows": max_rows,
+            },
+        )
+        return _parse_sql_result(payload)
+
     def get_job(self, job_id: str) -> Job:
         return _parse_job(self._transport.request("GET", f"/v1/jobs/{quote(job_id, safe='')}"))
 
@@ -493,6 +532,30 @@ def _parse_job(payload: object) -> Job:
     if failure_code is not None and not isinstance(failure_code, str):
         raise ProtocolError("failure_code must be a string when present")
     return Job(job_id, job_state, failure_code)
+
+
+def _parse_sql_result(payload: object) -> SqlResult:
+    if not isinstance(payload, dict) or set(payload) != {"columns", "rows"}:
+        raise ProtocolError("SQL result must contain exactly columns and rows")
+    columns = payload["columns"]
+    rows = payload["rows"]
+    if not isinstance(columns, list) or not isinstance(rows, list):
+        raise ProtocolError("SQL result columns and rows must be arrays")
+    parsed_columns: list[SqlColumn] = []
+    for column in columns:
+        if not isinstance(column, dict) or set(column) != _SQL_COLUMN_FIELDS:
+            raise ProtocolError("SQL result column has invalid shape")
+        name, type_name = column["name"], column["type"]
+        if not isinstance(name, str) or not name or not isinstance(type_name, str) or not type_name:
+            raise ProtocolError("SQL result column fields must be non-empty strings")
+        parsed_columns.append(SqlColumn(name, type_name))
+    width = len(parsed_columns)
+    parsed_rows: list[tuple[object, ...]] = []
+    for row in rows:
+        if not isinstance(row, list) or len(row) != width:
+            raise ProtocolError("SQL result row width does not match columns")
+        parsed_rows.append(tuple(row))
+    return SqlResult(tuple(parsed_columns), tuple(parsed_rows))
 
 
 def _parse_job_page(payload: object) -> JobPage:
@@ -607,6 +670,8 @@ __all__ = [
     "JobState",
     "ProtocolError",
     "Ronin",
+    "SqlColumn",
+    "SqlResult",
     "RoninError",
     "Transport",
     "TransportError",

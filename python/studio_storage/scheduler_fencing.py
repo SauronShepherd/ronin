@@ -419,11 +419,14 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                 clauses.append("t.workspace_id=?")
                 values.append(str(workspace_id))
             rows = connection.execute(
-                "SELECT t.* FROM task_runs t JOIN workflow_runs w "
+                "SELECT t.* FROM task_runs t JOIN workflow_runs w "  # noqa: S608
                 "ON w.workspace_id=t.workspace_id "
                 "AND w.workflow_run_id=t.workflow_run_id WHERE "
                 + " AND ".join(clauses)
-                + " ORDER BY t.created_at,t.task_run_id",
+                # Task ids are content-derived and therefore do not encode
+                # run creation order.  Select the oldest eligible workflow
+                # run first so admission remains deterministic across runs.
+                + " ORDER BY w.created_at,w.workflow_run_id,t.created_at,t.task_run_id",
                 tuple(values),
             ).fetchall()
             for task in rows:
@@ -437,8 +440,8 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                 predecessors = self._predecessor_ids(run, node_id)
                 if predecessors:
                     placeholders = ",".join("?" for _ in predecessors)
-                    predecessor_rows = connection.execute(
-                        "SELECT node_id,state FROM task_runs WHERE workspace_id=? "
+                    predecessor_rows = connection.execute(  # noqa: S608
+                        "SELECT node_id,state FROM task_runs WHERE workspace_id=? "  # noqa: S608
                         "AND workflow_run_id=? AND node_id IN ("
                         + placeholders
                         + ")",

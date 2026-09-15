@@ -3,7 +3,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from studio_core import WorkspaceId
 from studio_security import (
     Actor,
@@ -62,6 +61,24 @@ def test_group_role_grants_workspace_permission(tmp_path: Path) -> None:
         PolicyRequirement(WorkspaceId("workspace"), "audit.read"),
     )
     assert not denied.allowed
+
+
+def test_authorization_ignores_caller_supplied_group_claims(tmp_path: Path) -> None:
+    store = SqliteIdentityStore(tmp_path / "security.sqlite")
+    principal = store.put_principal(_principal())
+    group = store.put_group(Group(GroupId("admins"), "Administrators"))
+    store.put_role_binding(
+        RoleBinding(WorkspaceId("workspace"), "group", group.id.value, "admin")
+    )
+    forged_actor = Actor(principal, (group.id,))
+
+    decision = RbacAuthorizer(store).authorize(
+        forged_actor,
+        PolicyRequirement(WorkspaceId("workspace"), "audit.read"),
+    )
+
+    assert not decision.allowed
+    assert decision.reason == "no_workspace_role"
 
 
 def test_actor_context_is_request_local() -> None:

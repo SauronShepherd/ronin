@@ -20,6 +20,8 @@ from .processor import (
     StreamCheckpointConflict,
     StreamTransform,
 )
+from .windows import EventTimeWindow, WindowedBatch, window_records
+from .table import SqliteStreamTable
 
 __all__ = (
     "IdentityTransform",
@@ -39,4 +41,8 @@ __all__ = (
     "StreamSinkCommit",
     "StreamSource",
     "StreamTransform",
+    "EventTimeWindow",
+    "WindowedBatch",
+    "window_records",
+    "SqliteStreamTable",
 )

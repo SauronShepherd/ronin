@@ -9,6 +9,7 @@ from typing import cast
 
 from studio_core import GrantSet
 from studio_execution import DurableExecutionService
+from studio_sql import SqlEngine
 from studio_storage import sqlite_ready
 
 from studio_server.http import RoninHTTPServer as _RoninHTTPServer
@@ -56,6 +57,7 @@ class RoninHTTPServer(_RoninHTTPServer):
         *,
         token: str,
         grants: GrantSet,
+        sql_engine: SqlEngine | None = None,
     ) -> None:
         host, _port = server_address
         policy = _bind_policy_from_env()
@@ -67,7 +69,9 @@ class RoninHTTPServer(_RoninHTTPServer):
                 "trusted development network. Use an external TLS terminator for remote access."
             )
         self._readiness_database = _readiness_database_from_env()
-        super().__init__(server_address, service, token=token, grants=grants)
+        super().__init__(
+            server_address, service, token=token, grants=grants, sql_engine=sql_engine
+        )
         self.RequestHandlerClass = _ReadinessHandler
 
     def ready(self) -> bool:

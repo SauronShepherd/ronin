@@ -42,6 +42,8 @@ from .environments import (
     ProjectEnvironmentBindings,
 )
 from .execution_snapshots import ResolvedRuntimeSnapshot, snapshot_runtime_resolution
+from .openlineage import lineage_event_payload
+from .rql import RqlResult, execute_rql
 from .grants import (
     ACTIONS,
     GRANT_SCHEMA_VERSION,
@@ -77,7 +79,10 @@ from .ir import (
     thaw_value,
 )
 from .ontology import (
+    ActionExecution,
     ActionType,
+    KnowledgeObject,
+    KnowledgeGraph,
     KnowledgeObjectRef,
     LinkCardinality,
     LinkType,
@@ -85,6 +90,9 @@ from .ontology import (
     OntologyDefinition,
     OntologyId,
     PropertyDefinition,
+    materialize_object_type,
+    resolve_link_type,
+    execute_ontology_action,
 )
 from .operators import (
     OperatorCatalog,
@@ -195,10 +203,15 @@ __all__ = (
     "Grant",
     "GrantSet",
     "InstanceAnchor",
+    "KnowledgeGraph",
+    "KnowledgeObject",
     "KnowledgeObjectRef",
     "LineageEdge",
     "LineageMode",
     "LineageOperation",
+    "lineage_event_payload",
+    "RqlResult",
+    "execute_rql",
     "LinkCardinality",
     "LinkType",
     "Node",
@@ -277,6 +290,8 @@ __all__ = (
     "parse_legacy_permission",
     "requirement_to_bearer_scope",
     "resolve_runtime",
+    "resolve_link_type",
+    "materialize_object_type",
     "snapshot_runtime_resolution",
     "thaw_value",
     "validate_operator_node",
