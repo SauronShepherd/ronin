@@ -384,12 +384,15 @@ class SqliteGenAIStore:
             ).fetchone()
             if row is None:
                 connection.execute(
-                    "INSERT INTO vector_indexes(workspace_id,vector_index_id,definition_json,created_at,updated_at) VALUES (?,?,?,?,?)",
+                    "INSERT INTO vector_indexes("
+                    "workspace_id,vector_index_id,definition_json,created_at,updated_at) "
+                    "VALUES (?,?,?,?,?)",
                     (str(workspace_id), str(definition.id), payload, now, now),
                 )
             elif row["definition_json"] != payload:
                 connection.execute(
-                    "UPDATE vector_indexes SET definition_json=?,updated_at=?,row_version=row_version+1 WHERE workspace_id=? AND vector_index_id=?",
+                    "UPDATE vector_indexes SET definition_json=?,updated_at=?, "
+                    "row_version=row_version+1 WHERE workspace_id=? AND vector_index_id=?",
                     (payload, now, str(workspace_id), str(definition.id)),
                 )
             connection.execute("COMMIT")
@@ -407,7 +410,8 @@ class SqliteGenAIStore:
         connection = self._connect()
         try:
             row = connection.execute(
-                "SELECT definition_json FROM vector_indexes WHERE workspace_id=? AND vector_index_id=?",
+                "SELECT definition_json FROM vector_indexes "
+                "WHERE workspace_id=? AND vector_index_id=?",
                 (str(workspace_id), str(index_id)),
             ).fetchone()
             return None if row is None else _index_from_json(row["definition_json"])
@@ -429,12 +433,14 @@ class SqliteGenAIStore:
             ).fetchone()
             if row is None:
                 connection.execute(
-                    "INSERT INTO genai_tools(workspace_id,tool_id,definition_json,created_at,updated_at) VALUES (?,?,?,?,?)",
+                    "INSERT INTO genai_tools("
+                    "workspace_id,tool_id,definition_json,created_at,updated_at) VALUES (?,?,?,?,?)",
                     (str(workspace_id), str(tool.id), payload, now, now),
                 )
             elif row["definition_json"] != payload:
                 connection.execute(
-                    "UPDATE genai_tools SET definition_json=?,updated_at=?,row_version=row_version+1 WHERE workspace_id=? AND tool_id=?",
+                    "UPDATE genai_tools SET definition_json=?,updated_at=?, "
+                    "row_version=row_version+1 WHERE workspace_id=? AND tool_id=?",
                     (payload, now, str(workspace_id), str(tool.id)),
                 )
             connection.execute("COMMIT")
