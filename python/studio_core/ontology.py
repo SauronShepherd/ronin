@@ -228,7 +228,7 @@ class ActionType:
         if len(fields) != len(set(fields)):
             raise ValueError("ontology action input fields must be unique")
         requirements = tuple(sorted(self.requirements, key=lambda item: item.canonical_key))
-        if len(requirements) != len(set(item.canonical_key for item in requirements)):
+        if len(requirements) != len({item.canonical_key for item in requirements}):
             raise ValueError("ontology action requirements must be unique")
         object.__setattr__(self, "input_fields", fields)
         object.__setattr__(self, "requirements", requirements)
@@ -300,12 +300,12 @@ class OntologyDefinition:
             raise ValueError("ontology object type names must be unique")
         known = set(object_names)
         links = tuple(sorted(self.link_types, key=lambda item: item.name))
-        if len(links) != len(set(item.name for item in links)):
+        if len(links) != len({item.name for item in links}):
             raise ValueError("ontology link type names must be unique")
         if any(link.source_type not in known or link.target_type not in known for link in links):
             raise ValueError("ontology link references unknown object type")
         actions = tuple(sorted(self.actions, key=lambda item: item.name))
-        if len(actions) != len(set(item.name for item in actions)):
+        if len(actions) != len({item.name for item in actions}):
             raise ValueError("ontology action names must be unique")
         if any(action.target_type not in known for action in actions):
             raise ValueError("ontology action references unknown object type")
@@ -386,7 +386,7 @@ class KnowledgeObjectRef:
                 for k, v in self.key
             )
         )
-        if not key or len(key) != len(set(k for k, _ in key)):
+        if not key or len(key) != len({k for k, _ in key}):
             raise ValueError("knowledge object key must be non-empty and unique")
         object.__setattr__(self, "key", key)
 

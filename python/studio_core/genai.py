@@ -301,7 +301,7 @@ class ToolContract:
         if self.side_effect not in {"none", "idempotent", "non_idempotent"}:
             raise ValueError("unsupported tool side_effect")
         requirements = tuple(sorted(self.requirements, key=lambda item: item.canonical_key))
-        if len(requirements) != len(set(item.canonical_key for item in requirements)):
+        if len(requirements) != len({item.canonical_key for item in requirements}):
             raise ValueError("tool requirements must be unique")
         object.__setattr__(self, "requirements", requirements)
 

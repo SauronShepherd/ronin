@@ -153,7 +153,7 @@ class MLRunRecord:
         if not datasets:
             raise ValueError("ML run requires at least one governed dataset revision")
         metrics = tuple(sorted(self.metrics, key=lambda item: (item.name, item.step)))
-        if len(metrics) != len(set((item.name, item.step) for item in metrics)):
+        if len(metrics) != len({(item.name, item.step) for item in metrics}):
             raise ValueError("ML metric name/step pairs must be unique")
         artifacts = tuple(sorted(_text(value, "ML artifact ref") for value in self.artifact_refs))
         if len(artifacts) != len(set(artifacts)):

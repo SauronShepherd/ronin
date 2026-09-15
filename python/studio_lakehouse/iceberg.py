@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from contextlib import suppress
 from typing import Any
 
 from .tables import OpenTableField, OpenTableIdentifier, OpenTableState, TableWriteMode
@@ -94,10 +95,8 @@ class IcebergTableStore:
             except Exception:
                 for index in range(1, len(identifier.namespace) + 1):
                     namespace = identifier.namespace[:index]
-                    try:
+                    with suppress(Exception):
                         self._catalog.create_namespace(namespace)
-                    except Exception:
-                        pass
                 self._catalog.create_table(table_identifier, schema=arrow.schema)
             else:
                 raise FileExistsError(f"Iceberg table already exists: {identifier.qualified_name}")
