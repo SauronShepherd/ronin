@@ -108,7 +108,8 @@ class SqliteCatalogStore:
                     return asset
                 raise CatalogConflict(f"asset id already exists: {asset.id}")
             connection.execute(
-                "INSERT INTO catalog_assets(workspace_id,asset_id,definition_json,created_at,updated_at) "
+                "INSERT INTO catalog_assets("
+                "workspace_id,asset_id,definition_json,created_at,updated_at) "
                 "VALUES (?,?,?,?,?)",
                 (str(workspace_id), str(asset.id), payload, now, now),
             )
@@ -130,7 +131,8 @@ class SqliteCatalogStore:
             connection.execute("BEGIN IMMEDIATE")
             self._require_workspace(connection, workspace_id)
             cursor = connection.execute(
-                "UPDATE catalog_assets SET definition_json=?,updated_at=?,row_version=row_version+1 "
+                "UPDATE catalog_assets SET definition_json=?,updated_at=?, "
+                "row_version=row_version+1 "
                 "WHERE workspace_id=? AND asset_id=?",
                 (asset.to_json(), now, str(workspace_id), str(asset.id)),
             )
@@ -216,7 +218,8 @@ class SqliteCatalogStore:
                     "asset version already exists with different revision metadata"
                 )
             connection.execute(
-                "INSERT INTO catalog_asset_revisions(workspace_id,asset_id,version,revision_json,created_at) "
+                "INSERT INTO catalog_asset_revisions("
+                "workspace_id,asset_id,version,revision_json,created_at) "
                 "VALUES (?,?,?,?,?)",
                 (
                     str(workspace_id),
