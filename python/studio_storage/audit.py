@@ -97,7 +97,8 @@ class SqliteAuditStore:
                     return event
                 raise AuditConflict(f"audit event id already exists: {event.id}")
             connection.execute(
-                "INSERT INTO audit_events(workspace_id,audit_event_id,occurred_at,actor_kind,actor_ref,"
+                "INSERT INTO audit_events("
+                "workspace_id,audit_event_id,occurred_at,actor_kind,actor_ref,"
                 "action,resource_kind,resource_ref,outcome,request_id,digest,event_json) "
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
