@@ -434,7 +434,8 @@ class SqliteGenAIStore:
             if row is None:
                 connection.execute(
                     "INSERT INTO genai_tools("
-                    "workspace_id,tool_id,definition_json,created_at,updated_at) VALUES (?,?,?,?,?)",
+                    "workspace_id,tool_id,definition_json,created_at,updated_at) "
+                    "VALUES (?,?,?,?,?)",
                     (str(workspace_id), str(tool.id), payload, now, now),
                 )
             elif row["definition_json"] != payload:
@@ -482,7 +483,8 @@ class SqliteGenAIStore:
                 raise KeyError(str(agent.provider_id))
             if (
                 connection.execute(
-                    "SELECT 1 FROM prompt_versions WHERE workspace_id=? AND prompt_id=? AND version=?",
+                    "SELECT 1 FROM prompt_versions "
+                    "WHERE workspace_id=? AND prompt_id=? AND version=?",
                     (str(workspace_id), str(agent.prompt_id), str(agent.prompt_version)),
                 ).fetchone()
                 is None
@@ -503,12 +505,15 @@ class SqliteGenAIStore:
             ).fetchone()
             if row is None:
                 connection.execute(
-                    "INSERT INTO genai_agents(workspace_id,agent_id,definition_json,created_at,updated_at) VALUES (?,?,?,?,?)",
+                    "INSERT INTO genai_agents("
+                    "workspace_id,agent_id,definition_json,created_at,updated_at) "
+                    "VALUES (?,?,?,?,?)",
                     (str(workspace_id), str(agent.id), payload, now, now),
                 )
             elif row["definition_json"] != payload:
                 connection.execute(
-                    "UPDATE genai_agents SET definition_json=?,updated_at=?,row_version=row_version+1 WHERE workspace_id=? AND agent_id=?",
+                    "UPDATE genai_agents SET definition_json=?,updated_at=?, "
+                    "row_version=row_version+1 WHERE workspace_id=? AND agent_id=?",
                     (payload, now, str(workspace_id), str(agent.id)),
                 )
             connection.execute("COMMIT")
