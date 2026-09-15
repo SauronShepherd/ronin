@@ -128,7 +128,7 @@ def export_workflow_bundle(
 
 def plan_workflow_bundle_import(
     path: Path,
-    workspace_store: object | None = None,
+    workspace_store: object | None = None,  # noqa: ARG001 - retained for API compatibility
     scheduler_store: SchedulerDefinitionStore | None = None,
     workspace_id: WorkspaceId | None = None,
     *,
