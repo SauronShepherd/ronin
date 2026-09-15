@@ -96,8 +96,8 @@ def migration_status(connection: sqlite3.Connection) -> tuple[dict[str, int | st
         current = 0
         if exists:
             # Table names come exclusively from the immutable registry above.
-            row = connection.execute(  # noqa: S608
-                f"SELECT MAX(version) FROM {table}"
+            row = connection.execute(
+                f"SELECT MAX(version) FROM {table}"  # noqa: S608
             ).fetchone()
             current = int(row[0] or 0)
         supported = _SUPPORTED_VERSIONS[name]
