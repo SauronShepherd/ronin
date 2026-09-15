@@ -110,7 +110,8 @@ class SqliteWorkspaceStore:
                     return found
                 raise WorkspaceConflict(f"workspace id already exists: {workspace.id}")
             connection.execute(
-                "INSERT INTO workspaces(workspace_id,name,description,archived_at,created_at,updated_at) "
+                "INSERT INTO workspaces("
+                "workspace_id,name,description,archived_at,created_at,updated_at) "
                 "VALUES (?,?,?,?,?,?)",
                 (str(workspace.id), workspace.name, workspace.description, None, now, now),
             )
@@ -184,7 +185,8 @@ class SqliteWorkspaceStore:
             if workspace_row["archived_at"] is not None:
                 raise WorkspaceConflict("cannot register a project in an archived workspace")
             existing = connection.execute(
-                "SELECT manifest_json FROM workspace_projects WHERE workspace_id=? AND project_id=?",
+                "SELECT manifest_json FROM workspace_projects "
+                "WHERE workspace_id=? AND project_id=?",
                 (str(workspace_id), str(project_id)),
             ).fetchone()
             if existing is not None:
@@ -195,7 +197,8 @@ class SqliteWorkspaceStore:
                     f"project registration already exists with different intent: {project_id}"
                 )
             connection.execute(
-                "INSERT INTO workspace_projects(workspace_id,project_id,manifest_json,created_at,updated_at) "
+                "INSERT INTO workspace_projects("
+                "workspace_id,project_id,manifest_json,created_at,updated_at) "
                 "VALUES (?,?,?,?,?)",
                 (str(workspace_id), str(project_id), manifest_json, now, now),
             )
@@ -220,7 +223,8 @@ class SqliteWorkspaceStore:
         connection = self._connect()
         try:
             cursor = connection.execute(
-                "UPDATE workspace_projects SET manifest_json=?,updated_at=?,row_version=row_version+1 "
+                "UPDATE workspace_projects SET manifest_json=?,updated_at=?, "
+                "row_version=row_version+1 "
                 "WHERE workspace_id=? AND project_id=?",
                 (manifest.to_json(), now, str(workspace_id), str(project_id)),
             )
@@ -236,7 +240,8 @@ class SqliteWorkspaceStore:
         connection = self._connect()
         try:
             row = connection.execute(
-                "SELECT manifest_json FROM workspace_projects WHERE workspace_id=? AND project_id=?",
+                "SELECT manifest_json FROM workspace_projects "
+                "WHERE workspace_id=? AND project_id=?",
                 (str(workspace_id), str(project_id)),
             ).fetchone()
             return None if row is None else ProjectManifest.from_json(row["manifest_json"])
@@ -247,7 +252,8 @@ class SqliteWorkspaceStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT manifest_json FROM workspace_projects WHERE workspace_id=? ORDER BY project_id",
+                "SELECT manifest_json FROM workspace_projects "
+                "WHERE workspace_id=? ORDER BY project_id",
                 (str(workspace_id),),
             ).fetchall()
             return tuple(ProjectManifest.from_json(row["manifest_json"]) for row in rows)
