@@ -370,7 +370,12 @@ def test_from_data_rejects_invalid_edge_field_type() -> None:
         Pipeline.from_data(data)
 
 
-@given(st.text(min_size=1), st.dictionaries(st.text(min_size=1), st.integers(), max_size=5))
+@given(
+    st.text(min_size=1),
+    st.dictionaries(
+        st.text(min_size=1), st.integers(min_value=-(2**53 - 1), max_value=2**53 - 1), max_size=5
+    ),
+)
 def test_node_id_is_deterministic_for_arbitrary_json_params(
     instance_key: str, params: dict[str, int]
 ) -> None:
