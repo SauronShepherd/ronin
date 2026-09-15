@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/ronin-logo.webp" alt="Ronin logo" width="360">
+  <img src="docs/assets/logo_ronin.png" alt="Ronin logo — The lordless Data + AI platform" width="720">
 </p>
 
 # Ronin
