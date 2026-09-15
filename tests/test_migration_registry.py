@@ -1,8 +1,8 @@
 import pytest
 from studio_storage.migration_registry import (
+    STORAGE_MIGRATION_DOMAINS,
     MigrationDomain,
     MigrationRegistryError,
-    STORAGE_MIGRATION_DOMAINS,
     migration_order,
 )
 
