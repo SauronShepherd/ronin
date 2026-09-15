@@ -21,12 +21,14 @@ class SqliteSemanticStore:
         with sqlite3.connect(path) as connection:
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS semantic_models ("
-                "project_id TEXT NOT NULL, model_id TEXT NOT NULL, model_json TEXT NOT NULL, "
+                "project_id TEXT NOT NULL, model_id TEXT NOT NULL, "
+                "model_json TEXT NOT NULL, "
                 "PRIMARY KEY(project_id, model_id))"
             )
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS semantic_dashboards ("
-                "project_id TEXT NOT NULL, dashboard_id TEXT NOT NULL, dashboard_json TEXT NOT NULL, "
+                "project_id TEXT NOT NULL, dashboard_id TEXT NOT NULL, "
+                "dashboard_json TEXT NOT NULL, "
                 "PRIMARY KEY(project_id, dashboard_id))"
             )
 
@@ -43,7 +45,8 @@ class SqliteSemanticStore:
                     f"semantic model already exists with different content: {model.id}"
                 )
             connection.execute(
-                "INSERT OR IGNORE INTO semantic_models(project_id,model_id,model_json) VALUES (?,?,?)",
+                "INSERT OR IGNORE INTO semantic_models("
+                "project_id,model_id,model_json) VALUES (?,?,?)",
                 (project_id, model.id, payload),
             )
         return model
@@ -71,7 +74,8 @@ class SqliteSemanticStore:
         payload = dashboard.to_json()
         with sqlite3.connect(self._path) as connection:
             existing = connection.execute(
-                "SELECT dashboard_json FROM semantic_dashboards WHERE project_id=? AND dashboard_id=?",
+                "SELECT dashboard_json FROM semantic_dashboards "
+                "WHERE project_id=? AND dashboard_id=?",
                 (project_id, dashboard.id),
             ).fetchone()
             if existing is not None and existing[0] != payload:
@@ -79,7 +83,8 @@ class SqliteSemanticStore:
                     f"semantic dashboard already exists with different content: {dashboard.id}"
                 )
             connection.execute(
-                "INSERT OR IGNORE INTO semantic_dashboards(project_id,dashboard_id,dashboard_json) VALUES (?,?,?)",
+                "INSERT OR IGNORE INTO semantic_dashboards("
+                "project_id,dashboard_id,dashboard_json) VALUES (?,?,?)",
                 (project_id, dashboard.id, payload),
             )
         return dashboard
@@ -88,7 +93,8 @@ class SqliteSemanticStore:
         self._validate_project(project_id)
         with sqlite3.connect(self._path) as connection:
             row = connection.execute(
-                "SELECT dashboard_json FROM semantic_dashboards WHERE project_id=? AND dashboard_id=?",
+                "SELECT dashboard_json FROM semantic_dashboards "
+                "WHERE project_id=? AND dashboard_id=?",
                 (project_id, dashboard_id),
             ).fetchone()
         return None if row is None else DashboardDefinition.from_json(str(row[0]))
@@ -97,7 +103,8 @@ class SqliteSemanticStore:
         self._validate_project(project_id)
         with sqlite3.connect(self._path) as connection:
             rows = connection.execute(
-                "SELECT dashboard_json FROM semantic_dashboards WHERE project_id=? ORDER BY dashboard_id",
+                "SELECT dashboard_json FROM semantic_dashboards "
+                "WHERE project_id=? ORDER BY dashboard_id",
                 (project_id,),
             ).fetchall()
         return tuple(DashboardDefinition.from_json(str(row[0])) for row in rows)
