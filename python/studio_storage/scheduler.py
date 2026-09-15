@@ -137,7 +137,8 @@ class SqliteSchedulerStore:
             ).fetchone()
             if existing is None:
                 connection.execute(
-                    "INSERT INTO workflows(workspace_id,workflow_id,definition_json,created_at,updated_at) "
+                    "INSERT INTO workflows("
+                    "workspace_id,workflow_id,definition_json,created_at,updated_at) "
                     "VALUES (?,?,?,?,?)",
                     (str(workspace_id), str(workflow.id), payload, now, now),
                 )
@@ -286,7 +287,8 @@ class SqliteSchedulerStore:
             if existing_id is not None:
                 raise WorkflowRunConflict(f"workflow run id already exists: {run_id}")
             connection.execute(
-                "INSERT INTO workflow_runs(workspace_id,workflow_run_id,workflow_id,trigger_key,state,"
+                "INSERT INTO workflow_runs("
+                "workspace_id,workflow_run_id,workflow_id,trigger_key,state,"
                 "run_json,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
                 (
                     str(workspace_id),
@@ -341,7 +343,8 @@ class SqliteSchedulerStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT * FROM task_runs WHERE workspace_id=? AND workflow_run_id=? ORDER BY node_id",
+                "SELECT * FROM task_runs "
+                "WHERE workspace_id=? AND workflow_run_id=? ORDER BY node_id",
                 (str(workspace_id), str(run_id)),
             ).fetchall()
             return tuple(

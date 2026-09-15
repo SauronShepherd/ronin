@@ -100,7 +100,8 @@ class SqliteQualityStore:
         self, connection: sqlite3.Connection, workspace_id: WorkspaceId, ref: AssetRef
     ) -> None:
         row = connection.execute(
-            "SELECT 1 FROM catalog_asset_revisions WHERE workspace_id=? AND asset_id=? AND version=?",
+            "SELECT 1 FROM catalog_asset_revisions "
+            "WHERE workspace_id=? AND asset_id=? AND version=?",
             (str(workspace_id), str(ref.asset_id), str(ref.version)),
         ).fetchone()
         if row is None:
@@ -130,7 +131,8 @@ class SqliteQualityStore:
                     connection.execute("COMMIT")
                     return contract
                 connection.execute(
-                    "UPDATE data_contracts SET contract_json=?,updated_at=?,row_version=row_version+1 "
+                    "UPDATE data_contracts SET contract_json=?,updated_at=?, "
+                    "row_version=row_version+1 "
                     "WHERE workspace_id=? AND asset_id=? AND asset_version=?",
                     (
                         payload,
@@ -195,7 +197,8 @@ class SqliteQualityStore:
                     return run
                 raise QualityRunConflict(f"quality run id already exists: {run.id}")
             connection.execute(
-                "INSERT INTO quality_runs(workspace_id,quality_run_id,asset_id,asset_version,status,"
+                "INSERT INTO quality_runs("
+                "workspace_id,quality_run_id,asset_id,asset_version,status,"
                 "run_json,created_at) VALUES (?,?,?,?,?,?,?)",
                 (
                     str(workspace_id),
