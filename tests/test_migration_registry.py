@@ -5,6 +5,7 @@ from studio_storage.migration_registry import (
     STORAGE_MIGRATION_DOMAINS,
     MigrationDomain,
     MigrationRegistryError,
+    migrate_storage,
     migration_order,
     migration_status,
 )
@@ -51,3 +52,12 @@ def test_migration_status_is_read_only_and_reports_uninitialized_domains() -> No
     assert (
         connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall() == []
     )
+
+
+def test_migrate_storage_runs_registered_domains_in_order() -> None:
+    connection = sqlite3.connect(":memory:")
+
+    order = migrate_storage(connection, now="2099-01-01T00:00:00.000000Z")
+
+    assert order == migration_order(STORAGE_MIGRATION_DOMAINS)
+    assert all(row["state"] == "ready" for row in migration_status(connection))

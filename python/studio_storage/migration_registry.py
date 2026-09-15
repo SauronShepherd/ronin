@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 
 class MigrationRegistryError(ValueError):
@@ -112,10 +114,53 @@ def migration_status(connection: sqlite3.Connection) -> tuple[dict[str, int | st
     return tuple(status)
 
 
+MigrationRunner = Callable[[sqlite3.Connection, Any], None]
+
+
+def migrate_storage(connection: sqlite3.Connection, *, now: Any) -> tuple[str, ...]:
+    """Run all registered domain migrations in dependency order.
+
+    Domain runners remain the compatibility boundary for their existing schema tables.
+    """
+    from studio_storage.audit import migrate_audit
+    from studio_storage.catalog import migrate_catalog
+    from studio_storage.connections import migrate_connections
+    from studio_storage.environments import migrate_environments
+    from studio_storage.genai import migrate_genai
+    from studio_storage.ml import migrate_ml
+    from studio_storage.ontology import migrate_ontology
+    from studio_storage.quality import migrate_quality
+    from studio_storage.scheduler import migrate_scheduler
+    from studio_storage.workspaces import migrate_workspaces
+
+    runners: dict[str, MigrationRunner] = {
+        "workspaces": migrate_workspaces,
+        "environments": migrate_environments,
+        "connections": migrate_connections,
+        "catalog": migrate_catalog,
+        "ontology": migrate_ontology,
+        "quality": migrate_quality,
+        "scheduler": migrate_scheduler,
+        "audit": migrate_audit,
+        "genai": migrate_genai,
+        "ml": migrate_ml,
+    }
+    order = migration_order(STORAGE_MIGRATION_DOMAINS)
+    original_row_factory = connection.row_factory
+    connection.row_factory = sqlite3.Row
+    try:
+        for name in order:
+            runners[name](connection, now=now)
+    finally:
+        connection.row_factory = original_row_factory
+    return order
+
+
 __all__ = (
     "MigrationDomain",
     "MigrationRegistryError",
     "STORAGE_MIGRATION_DOMAINS",
     "migration_order",
     "migration_status",
+    "migrate_storage",
 )
