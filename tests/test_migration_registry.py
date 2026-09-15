@@ -61,3 +61,14 @@ def test_migrate_storage_runs_registered_domains_in_order() -> None:
 
     assert order == migration_order(STORAGE_MIGRATION_DOMAINS)
     assert all(row["state"] == "ready" for row in migration_status(connection))
+
+
+def test_migrate_storage_is_idempotent_for_an_existing_database() -> None:
+    connection = sqlite3.connect(":memory:")
+
+    first_order = migrate_storage(connection, now="2099-01-01T00:00:00.000000Z")
+    first_status = migration_status(connection)
+    second_order = migrate_storage(connection, now="2099-01-02T00:00:00.000000Z")
+
+    assert second_order == first_order
+    assert migration_status(connection) == first_status
