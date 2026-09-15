@@ -1,5 +1,4 @@
 import pytest
-
 from studio_storage.migration_registry import (
     MigrationDomain,
     MigrationRegistryError,
