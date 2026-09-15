@@ -106,13 +106,15 @@ class PostgresConnector:
         query += " ORDER BY table_schema, table_name, ordinal_position"
 
         grouped: dict[tuple[str, str], list[FieldSchema]] = {}
-        with psycopg.connect(**_connection_kwargs(connection, secrets)) as database:
-            with database.cursor() as cursor:
-                cursor.execute(query, params)
-                for schema, table, column, data_type, nullable in cursor.fetchall():
-                    grouped.setdefault((str(schema), str(table)), []).append(
-                        FieldSchema(str(column), str(data_type), str(nullable) == "YES")
-                    )
+        with (
+            psycopg.connect(**_connection_kwargs(connection, secrets)) as database,
+            database.cursor() as cursor,
+        ):
+            cursor.execute(query, params)
+            for schema, table, column, data_type, nullable in cursor.fetchall():
+                grouped.setdefault((str(schema), str(table)), []).append(
+                    FieldSchema(str(column), str(data_type), str(nullable) == "YES")
+                )
         return tuple(
             DiscoveredAsset(
                 AssetHandle(connection.id, (schema,), table),
@@ -146,18 +148,20 @@ class PostgresConnector:
             sql.Identifier(asset.namespace[0]),
             sql.Identifier(asset.name),
         )
-        with psycopg.connect(**_connection_kwargs(connection, secrets)) as database:
-            with database.cursor() as cursor:
-                cursor.execute(query, (limit,))
-                description = cursor.description or ()
-                fields = tuple(
-                    FieldSchema(str(column.name), _field_type(column.type_code), True)
-                    for column in description
-                )
-                rows = tuple(
-                    {field.name: value for field, value in zip(fields, values, strict=True)}
-                    for values in cursor.fetchall()
-                )
+        with (
+            psycopg.connect(**_connection_kwargs(connection, secrets)) as database,
+            database.cursor() as cursor,
+        ):
+            cursor.execute(query, (limit,))
+            description = cursor.description or ()
+            fields = tuple(
+                FieldSchema(str(column.name), _field_type(column.type_code), True)
+                for column in description
+            )
+            rows = tuple(
+                {field.name: value for field, value in zip(fields, values, strict=True)}
+                for values in cursor.fetchall()
+            )
         checkpoint_payload = repr((asset.qualified_name, fields, rows)).encode("utf-8")
         checkpoint_value = hashlib.sha256(checkpoint_payload).hexdigest()
         if checkpoint is not None and checkpoint.value == checkpoint_value:
