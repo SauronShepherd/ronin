@@ -196,7 +196,8 @@ class SqliteMLStore:
         self, connection: sqlite3.Connection, workspace_id: WorkspaceId, ref: AssetRef
     ) -> None:
         row = connection.execute(
-            "SELECT 1 FROM catalog_asset_revisions WHERE workspace_id=? AND asset_id=? AND version=?",
+            "SELECT 1 FROM catalog_asset_revisions "
+            "WHERE workspace_id=? AND asset_id=? AND version=?",
             (str(workspace_id), str(ref.asset_id), str(ref.version)),
         ).fetchone()
         if row is None:
@@ -212,17 +213,21 @@ class SqliteMLStore:
             connection.execute("BEGIN IMMEDIATE")
             self._require_active_workspace(connection, workspace_id)
             row = connection.execute(
-                "SELECT experiment_json FROM ml_experiments WHERE workspace_id=? AND experiment_id=?",
+                "SELECT experiment_json FROM ml_experiments "
+                "WHERE workspace_id=? AND experiment_id=?",
                 (str(workspace_id), str(experiment.id)),
             ).fetchone()
             if row is None:
                 connection.execute(
-                    "INSERT INTO ml_experiments(workspace_id,experiment_id,experiment_json,created_at,updated_at) VALUES (?,?,?,?,?)",
+                    "INSERT INTO ml_experiments("
+                    "workspace_id,experiment_id,experiment_json,created_at,updated_at) "
+                    "VALUES (?,?,?,?,?)",
                     (str(workspace_id), str(experiment.id), payload, now, now),
                 )
             elif row["experiment_json"] != payload:
                 connection.execute(
-                    "UPDATE ml_experiments SET experiment_json=?,updated_at=?,row_version=row_version+1 WHERE workspace_id=? AND experiment_id=?",
+                    "UPDATE ml_experiments SET experiment_json=?,updated_at=?, "
+                    "row_version=row_version+1 WHERE workspace_id=? AND experiment_id=?",
                     (payload, now, str(workspace_id), str(experiment.id)),
                 )
             connection.execute("COMMIT")
