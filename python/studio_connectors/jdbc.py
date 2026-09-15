@@ -69,7 +69,8 @@ class JdbcConnector:
         try:
             cursor = database.cursor()
             cursor.execute(
-                "SELECT table_name FROM information_schema.tables WHERE table_schema = ? ORDER BY table_name",
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema = ? ORDER BY table_name",
                 (schema,),
             )
             return tuple(
