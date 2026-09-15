@@ -17,7 +17,7 @@ from studio_core.scheduler_events import (
 from studio_orchestrator import Instant
 
 from .scheduler_schedule import SchedulerScheduleStore, migrate_scheduler_schedule
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 
 _EVENTS_SCHEMA_VERSION = 1
 _EVENTS_MIGRATIONS = {1: "scheduler_events_001.sql"}
@@ -83,9 +83,7 @@ class EventDelivery:
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler_events(connection: sqlite3.Connection, *, now: Instant | str) -> None:

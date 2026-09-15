@@ -9,7 +9,7 @@ from studio_core import AssetRef, DataContract, QualityRun, QualityRunId, Worksp
 from studio_orchestrator import Instant
 
 from .catalog import CatalogAssetNotFound, migrate_catalog
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound
 
 _QUALITY_SCHEMA_VERSION = 1
@@ -29,9 +29,7 @@ class QualityRunConflict(RuntimeError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_quality(connection: sqlite3.Connection, *, now: Instant | str) -> None:

@@ -24,7 +24,7 @@ from studio_core import (
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_orchestrator import Instant
 
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
 
 _SCHEDULER_SCHEMA_VERSION = 1
@@ -44,9 +44,7 @@ class WorkflowRunConflict(RuntimeError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler(connection: sqlite3.Connection, *, now: Instant | str) -> None:

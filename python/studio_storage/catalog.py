@@ -8,7 +8,7 @@ from pathlib import Path
 from studio_core import AssetId, AssetRef, AssetRevision, CatalogAsset, LineageEdge, WorkspaceId
 from studio_orchestrator import Instant
 
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
 
 _CATALOG_SCHEMA_VERSION = 1
@@ -24,9 +24,7 @@ class CatalogAssetNotFound(KeyError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_catalog(connection: sqlite3.Connection, *, now: Instant | str) -> None:

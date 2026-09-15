@@ -28,7 +28,7 @@ from studio_core.ml import (
 from studio_orchestrator import Instant
 
 from .catalog import CatalogAssetNotFound, migrate_catalog
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound
 
 _ML_SCHEMA_VERSION = 1
@@ -40,9 +40,7 @@ class MLConflict(RuntimeError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_ml(connection: sqlite3.Connection, *, now: Instant | str) -> None:

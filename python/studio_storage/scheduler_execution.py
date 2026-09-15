@@ -23,7 +23,7 @@ from .scheduler_fencing import (
     TaskAttemptId,
     migrate_scheduler_fencing,
 )
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 
 _EXECUTION_LINK_SCHEMA_VERSION = 2
 _EXECUTION_LINK_MIGRATIONS = {
@@ -78,9 +78,7 @@ class TaskExecutionIntent:
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler_execution(connection: sqlite3.Connection, *, now: Instant | str) -> None:

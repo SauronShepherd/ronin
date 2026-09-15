@@ -26,7 +26,7 @@ from .scheduler_backfill import (
     _run_from_row,
     migrate_scheduler_backfill,
 )
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 
 _BACKFILL_RUNTIME_SCHEMA_VERSION = 1
 _BACKFILL_RUNTIME_MIGRATIONS = {1: "scheduler_backfill_runtime_001.sql"}
@@ -47,9 +47,7 @@ class BackfillPlan:
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler_backfill_runtime(

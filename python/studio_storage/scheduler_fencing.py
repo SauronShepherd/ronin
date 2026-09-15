@@ -12,7 +12,7 @@ from studio_core.scheduler_resources import ResourcePoolDefinition
 from studio_orchestrator import Instant, LeaseToken
 
 from .scheduler import SqliteSchedulerStore, migrate_scheduler
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 
 _FENCING_SCHEMA_VERSION = 2
 _FENCING_MIGRATIONS = {
@@ -54,9 +54,7 @@ def _add_seconds(value: Instant | str, seconds: int) -> Instant:
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler_fencing(
