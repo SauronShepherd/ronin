@@ -10,6 +10,10 @@ from .contracts import MetricPoint
 _NAME = re.compile(r"[^a-zA-Z0-9_:]")
 
 
+def _escape_label(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
 def prometheus_text(points: Iterable[MetricPoint], *, max_points: int = 10_000) -> str:
     """Render bounded metrics deterministically as Prometheus exposition text."""
     selected = list(points)
@@ -25,7 +29,7 @@ def prometheus_text(points: Iterable[MetricPoint], *, max_points: int = 10_000) 
             labels = (
                 "{"
                 + ",".join(
-                    f'{_NAME.sub("_", key)}="{value.replace(chr(92), chr(92) + chr(92)).replace(chr(34), chr(92) + chr(34))}"'
+                    f'{_NAME.sub("_", key)}="{_escape_label(value)}"'
                     for key, value in point.attributes
                 )
                 + "}"
