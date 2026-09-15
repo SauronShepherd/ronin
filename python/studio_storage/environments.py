@@ -127,7 +127,8 @@ class SqliteEnvironmentStore:
                 )
             elif existing["definition_json"] != payload:
                 connection.execute(
-                    "UPDATE environments SET definition_json=?,updated_at=?,row_version=row_version+1 "
+                    "UPDATE environments SET definition_json=?,updated_at=?, "
+                    "row_version=row_version+1 "
                     "WHERE workspace_id=? AND environment_id=?",
                     (payload, now, str(workspace_id), str(environment.id)),
                 )
