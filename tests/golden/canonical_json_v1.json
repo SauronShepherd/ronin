@@ -2,6 +2,12 @@
   "schema": "ronin.canonical-json-goldens/v1",
   "vectors": [
     {
+      "name": "unicode-code-point-astral-before-bmp",
+      "source_json": "{\"😀\":\"astral\",\"\":\"bmp\"}",
+      "canonical_utf8": "{\"\":\"bmp\",\"😀\":\"astral\"}",
+      "sha256": "4874d36535a1b5dfdad7f2b3af83f87debd2f0795ae7d2d09447e17223c42dd0"
+    },
+    {
       "name": "unicode-order-nested",
       "source_json": "{\"z\":null,\"unicode\":\"café\",\"nested\":{\"b\":false,\"a\":[true,2]},\"big\":9007199254740991}",
       "canonical_utf8": "{\"big\":9007199254740991,\"nested\":{\"a\":[true,2],\"b\":false},\"unicode\":\"café\",\"z\":null}",
