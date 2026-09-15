@@ -2,6 +2,7 @@ import pytest
 from studio_storage.migration_registry import (
     MigrationDomain,
     MigrationRegistryError,
+    STORAGE_MIGRATION_DOMAINS,
     migration_order,
 )
 
@@ -26,3 +27,10 @@ def test_registry_rejects_duplicates_and_missing_dependencies() -> None:
 def test_registry_rejects_cycles() -> None:
     with pytest.raises(MigrationRegistryError, match="cycle"):
         migration_order((MigrationDomain("a", ("b",)), MigrationDomain("b", ("a",))))
+
+
+def test_storage_registry_has_a_valid_public_order() -> None:
+    order = migration_order(STORAGE_MIGRATION_DOMAINS)
+
+    assert order[0] == "workspaces"
+    assert set(order) == {domain.name for domain in STORAGE_MIGRATION_DOMAINS}
