@@ -312,7 +312,8 @@ class SqliteGenAIStore:
             connection.execute("BEGIN IMMEDIATE")
             self._require_active_workspace(connection, workspace_id)
             row = connection.execute(
-                "SELECT prompt_json FROM prompt_versions WHERE workspace_id=? AND prompt_id=? AND version=?",
+                "SELECT prompt_json FROM prompt_versions "
+                "WHERE workspace_id=? AND prompt_id=? AND version=?",
                 (str(workspace_id), str(prompt.id), str(prompt.version)),
             ).fetchone()
             if row is not None:
@@ -321,7 +322,8 @@ class SqliteGenAIStore:
                     return prompt
                 raise GenAIConflict(f"prompt version already exists: {prompt.id}@{prompt.version}")
             connection.execute(
-                "INSERT INTO prompt_versions(workspace_id,prompt_id,version,prompt_json,created_at) VALUES (?,?,?,?,?)",
+                "INSERT INTO prompt_versions("
+                "workspace_id,prompt_id,version,prompt_json,created_at) VALUES (?,?,?,?,?)",
                 (str(workspace_id), str(prompt.id), str(prompt.version), payload, now),
             )
             connection.execute("COMMIT")
@@ -339,7 +341,8 @@ class SqliteGenAIStore:
         connection = self._connect()
         try:
             row = connection.execute(
-                "SELECT prompt_json FROM prompt_versions WHERE workspace_id=? AND prompt_id=? AND version=?",
+                "SELECT prompt_json FROM prompt_versions "
+                "WHERE workspace_id=? AND prompt_id=? AND version=?",
                 (str(workspace_id), str(prompt_id), str(version)),
             ).fetchone()
             return None if row is None else PromptAsset.from_json(row["prompt_json"])
@@ -356,7 +359,8 @@ class SqliteGenAIStore:
             connection.execute("BEGIN IMMEDIATE")
             self._require_active_workspace(connection, workspace_id)
             source = connection.execute(
-                "SELECT 1 FROM catalog_asset_revisions WHERE workspace_id=? AND asset_id=? AND version=?",
+                "SELECT 1 FROM catalog_asset_revisions "
+                "WHERE workspace_id=? AND asset_id=? AND version=?",
                 (
                     str(workspace_id),
                     str(definition.source.asset_id),
@@ -374,7 +378,8 @@ class SqliteGenAIStore:
             if provider is None:
                 raise KeyError(str(definition.provider_id))
             row = connection.execute(
-                "SELECT definition_json FROM vector_indexes WHERE workspace_id=? AND vector_index_id=?",
+                "SELECT definition_json FROM vector_indexes "
+                "WHERE workspace_id=? AND vector_index_id=?",
                 (str(workspace_id), str(definition.id)),
             ).fetchone()
             if row is None:
