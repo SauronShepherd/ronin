@@ -297,7 +297,8 @@ class PostgresMetadataStore:
             with connection.cursor() as cursor:
                 self._require_active_workspace(cursor, workspace_id)
                 cursor.execute(
-                    "SELECT manifest_json FROM ronin_projects WHERE workspace_id=%s AND project_id=%s FOR UPDATE",
+                    "SELECT manifest_json FROM ronin_projects "
+                    "WHERE workspace_id=%s AND project_id=%s FOR UPDATE",
                     (str(workspace_id), str(project_id)),
                 )
                 row = cursor.fetchone()
@@ -309,7 +310,8 @@ class PostgresMetadataStore:
                         f"project registration already exists with different intent: {project_id}"
                     )
                 cursor.execute(
-                    "INSERT INTO ronin_projects(workspace_id,project_id,manifest_json,created_at,updated_at) "
+                    "INSERT INTO ronin_projects("
+                    "workspace_id,project_id,manifest_json,created_at,updated_at) "
                     "VALUES (%s,%s,%s,%s,%s)",
                     (str(workspace_id), str(project_id), payload, str(current), str(current)),
                 )
@@ -330,7 +332,8 @@ class PostgresMetadataStore:
             with connection.cursor() as cursor:
                 self._require_active_workspace(cursor, workspace_id)
                 cursor.execute(
-                    "UPDATE ronin_projects SET manifest_json=%s,updated_at=%s,row_version=row_version+1 "
+                    "UPDATE ronin_projects SET manifest_json=%s,updated_at=%s, "
+                    "row_version=row_version+1 "
                     "WHERE workspace_id=%s AND project_id=%s",
                     (manifest.to_json(), str(current), str(workspace_id), str(manifest.project.id)),
                 )
@@ -351,7 +354,8 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT manifest_json FROM ronin_projects WHERE workspace_id=%s AND project_id=%s",
+                    "SELECT manifest_json FROM ronin_projects "
+                    "WHERE workspace_id=%s AND project_id=%s",
                     (str(workspace_id), str(project_id)),
                 )
                 row = cursor.fetchone()
@@ -364,7 +368,8 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT manifest_json FROM ronin_projects WHERE workspace_id=%s ORDER BY project_id",
+                    "SELECT manifest_json FROM ronin_projects "
+                    "WHERE workspace_id=%s ORDER BY project_id",
                     (str(workspace_id),),
                 )
                 return tuple(
