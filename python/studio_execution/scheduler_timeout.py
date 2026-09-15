@@ -81,7 +81,7 @@ async def enforce_task_timeouts(
             now=current,
         ):
             finalized += 1
-        continue
+            continue
         if job.state is not JobState.CANCELLING:
             job = await service.cancel(request.job_id, now=current)
             cancellations += 1
