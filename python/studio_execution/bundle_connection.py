@@ -16,7 +16,13 @@ from studio_core.bundle_inventory import (
 from studio_core.environments import DeploymentBinding
 from studio_core.portability import BindingRequest, RoninBundleManifest
 from studio_orchestrator import Instant
-from studio_storage.bundle import BundleFile, BundleIntegrityError, BundleReadLimits, write_bundle
+from studio_storage.bundle import (
+    DEFAULT_BUNDLE_READ_LIMITS,
+    BundleFile,
+    BundleIntegrityError,
+    BundleReadLimits,
+    write_bundle,
+)
 from studio_storage.bundle_payload import read_bundle_payload
 from studio_storage.ports import ConnectionStore, WorkspaceStore
 
@@ -183,7 +189,7 @@ def plan_connection_bundle_import(
     connection_store: ConnectionStore,
     workspace_id: WorkspaceId,
     *,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = DEFAULT_BUNDLE_READ_LIMITS,
     max_inventory_bytes: int = 8 * 1024 * 1024,
     max_connection_bytes: int = 8 * 1024 * 1024,
 ) -> ConnectionBundleImportPlan:
@@ -304,7 +310,7 @@ def commit_connection_bundle_import(
     *,
     resolutions: tuple[DeploymentBinding, ...] = (),
     now: Instant | str,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = DEFAULT_BUNDLE_READ_LIMITS,
     max_inventory_bytes: int = 8 * 1024 * 1024,
     max_connection_bytes: int = 8 * 1024 * 1024,
 ) -> ConnectionBundleImportOutcome:

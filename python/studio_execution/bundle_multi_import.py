@@ -14,7 +14,7 @@ from studio_core.bundle_inventory import (
     BundleInventoryObject,
 )
 from studio_core.portability import BindingRequest, RoninBundleManifest
-from studio_storage.bundle import BundleIntegrityError, BundleReadLimits
+from studio_storage.bundle import DEFAULT_BUNDLE_READ_LIMITS, BundleIntegrityError, BundleReadLimits
 from studio_storage.bundle_payload import read_bundle_payload
 from studio_storage.ports import ConnectionStore, WorkspaceStore
 
@@ -227,7 +227,7 @@ def plan_multi_object_bundle_import(
     connection_store: ConnectionStore,
     workspace_id: WorkspaceId,
     *,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = DEFAULT_BUNDLE_READ_LIMITS,
     max_inventory_bytes: int = 8 * 1024 * 1024,
     max_object_bytes: int = 8 * 1024 * 1024,
 ) -> MultiObjectBundleImportPlan:

@@ -12,7 +12,7 @@ from studio_core.environments import (
     ProjectEnvironmentBindings,
 )
 from studio_orchestrator import Instant
-from studio_storage.bundle import BundleReadLimits
+from studio_storage.bundle import DEFAULT_BUNDLE_READ_LIMITS, BundleReadLimits
 from studio_storage.bundle_import_port import (
     ProjectBundleImportCommit,
     ProjectBundleImportConflict,
@@ -76,7 +76,7 @@ def commit_project_bundle_import(
     environment_id: EnvironmentId | None = None,
     resolutions: tuple[DeploymentBinding, ...] = (),
     now: Instant | str,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = DEFAULT_BUNDLE_READ_LIMITS,
     max_inventory_bytes: int = 8 * 1024 * 1024,
     max_project_bytes: int = 8 * 1024 * 1024,
 ) -> ProjectBundleImportOutcome:

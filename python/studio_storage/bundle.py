@@ -48,6 +48,7 @@ class BundleReadLimits:
 
 
 _DEFAULT_BUNDLE_READ_LIMITS = BundleReadLimits()
+DEFAULT_BUNDLE_READ_LIMITS = _DEFAULT_BUNDLE_READ_LIMITS
 
 
 @dataclass(frozen=True, slots=True)
@@ -316,6 +317,7 @@ __all__ = (
     "BundleFile",
     "BundleIntegrityError",
     "BundleReadLimits",
+    "DEFAULT_BUNDLE_READ_LIMITS",
     "extract_bundle",
     "verify_bundle",
     "write_bundle",

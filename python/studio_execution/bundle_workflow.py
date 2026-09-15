@@ -15,7 +15,13 @@ from studio_core.bundle_inventory import (
 )
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.portability import RoninBundleManifest
-from studio_storage.bundle import BundleFile, BundleIntegrityError, BundleReadLimits, write_bundle
+from studio_storage.bundle import (
+    DEFAULT_BUNDLE_READ_LIMITS,
+    BundleFile,
+    BundleIntegrityError,
+    BundleReadLimits,
+    write_bundle,
+)
 from studio_storage.bundle_payload import read_bundle_payload
 from studio_storage.bundle_workflow_import_port import SchedulerDefinitionStore
 
@@ -126,7 +132,7 @@ def plan_workflow_bundle_import(
     scheduler_store: SchedulerDefinitionStore | None = None,
     workspace_id: WorkspaceId | None = None,
     *,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = DEFAULT_BUNDLE_READ_LIMITS,
     max_inventory_bytes: int = 8 * 1024 * 1024,
     max_object_bytes: int = 8 * 1024 * 1024,
 ) -> WorkflowBundleImportPlan:
