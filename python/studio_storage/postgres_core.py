@@ -217,7 +217,8 @@ class PostgresMetadataStore:
                         return existing
                     raise WorkspaceConflict(f"workspace id already exists: {workspace.id}")
                 cursor.execute(
-                    "INSERT INTO ronin_workspaces(workspace_id,name,description,archived_at,created_at,updated_at) "
+                    "INSERT INTO ronin_workspaces("
+                    "workspace_id,name,description,archived_at,created_at,updated_at) "
                     "VALUES (%s,%s,%s,NULL,%s,%s)",
                     (
                         str(workspace.id),
@@ -264,7 +265,8 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "UPDATE ronin_workspaces SET name=%s,description=%s,archived_at=%s,updated_at=%s,"
+                    "UPDATE ronin_workspaces SET name=%s,description=%s,archived_at=%s,"
+                    "updated_at=%s,"
                     "row_version=row_version+1 WHERE workspace_id=%s",
                     (
                         workspace.name,
