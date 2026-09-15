@@ -15,7 +15,7 @@ class IcebergDependencyError(RuntimeError):
 
 def _pyiceberg_catalog() -> Any:
     try:
-        from pyiceberg.catalog import load_catalog
+        from pyiceberg.catalog import load_catalog  # type: ignore[import-not-found]
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise IcebergDependencyError(
             "Iceberg support requires the optional Ronin open-table dependencies"
@@ -25,7 +25,7 @@ def _pyiceberg_catalog() -> Any:
 
 def _pyarrow() -> Any:
     try:
-        import pyarrow as pa
+        import pyarrow as pa  # type: ignore[import-untyped]
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise IcebergDependencyError(
             "Iceberg support requires PyArrow from the optional data-plane dependencies"

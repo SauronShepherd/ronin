@@ -23,7 +23,7 @@ from .contracts import ConnectorReadResult
 
 def _boto3() -> Any:
     try:
-        import boto3
+        import boto3  # type: ignore[import-untyped]
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError("S3 JSON connector requires the optional boto3 dependency") from exc
     return boto3

@@ -47,7 +47,7 @@ class S3ArtifactStore:
     @staticmethod
     def _load_client(*, endpoint_url: str | None, region_name: str | None) -> Any:
         try:
-            import boto3  # type: ignore[import-not-found]
+            import boto3  # type: ignore[import-untyped]
         except ImportError as exc:  # pragma: no cover - optional dependency
             raise S3DependencyError("S3 artifact storage requires boto3") from exc
         kwargs: dict[str, str] = {}

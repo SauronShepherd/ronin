@@ -15,7 +15,7 @@ class DeltaDependencyError(RuntimeError):
 
 def _deltalake() -> Any:
     try:
-        import deltalake
+        import deltalake  # type: ignore[import-not-found]
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise DeltaDependencyError(
             "Delta support requires the optional Ronin open-table dependencies"
@@ -25,7 +25,7 @@ def _deltalake() -> Any:
 
 def _pyarrow() -> Any:
     try:
-        import pyarrow as pa
+        import pyarrow as pa  # type: ignore[import-untyped]
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise DeltaDependencyError(
             "Delta support requires PyArrow from the optional data-plane dependencies"

@@ -35,8 +35,8 @@ class ParquetFile:
 
 def _pyarrow() -> tuple[Any, Any]:
     try:
-        import pyarrow as pa
-        import pyarrow.parquet as pq
+        import pyarrow as pa  # type: ignore[import-untyped]
+        import pyarrow.parquet as pq  # type: ignore[import-untyped]
     except ImportError as exc:  # pragma: no cover - depends on optional installation
         raise ParquetDependencyError(
             "Parquet support requires the optional Ronin data-plane dependencies"
