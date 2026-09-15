@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from studio_core import WorkspaceId
-
 from studio_execution.bundle_workflow import (
     INVENTORY_MEDIA_TYPE,
     build_workflow_bundle_inventory,

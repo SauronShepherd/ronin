@@ -8,8 +8,9 @@ Durable task-state integration remains a scheduler concern.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping, TypeAlias
+from typing import TypeAlias
 
 Scalar: TypeAlias = None | bool | int | float | str
 Context: TypeAlias = Mapping[str, Scalar]

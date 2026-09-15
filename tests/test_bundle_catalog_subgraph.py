@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from studio_core import (
     AssetId,
     AssetRef,
@@ -20,7 +19,6 @@ from studio_core.bundle_inventory import (
     BundleInventoryObject,
 )
 from studio_execution.bundle_catalog import (
-    INVENTORY_MEDIA_TYPE,
     CatalogBundleTargetError,
     UnsupportedCatalogBundle,
     build_catalog_bundle_inventory,

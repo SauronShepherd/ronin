@@ -15,7 +15,7 @@ class KafkaDependencyError(RuntimeError):
 
 def _kafka() -> tuple[Any, Any, int, int]:
     try:
-        from confluent_kafka import Consumer, KafkaError, OFFSET_BEGINNING, TopicPartition
+        from confluent_kafka import OFFSET_BEGINNING, Consumer, KafkaError, TopicPartition
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise KafkaDependencyError(
             "Kafka streaming support requires the optional Ronin streaming dependencies"

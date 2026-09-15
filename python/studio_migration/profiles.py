@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, Sequence
+
 from studio_core.portability import MigrationReport
 
 from .inventory import inventory_json_document

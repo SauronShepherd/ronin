@@ -17,16 +17,16 @@ from typing import cast
 from studio_core import GrantSet, ProjectManifest
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import DurableExecutionService
+from studio_migration import (
+    discover_databricks,
+    discover_dataiku,
+    discover_fabric,
+    discover_foundry,
+)
 from studio_notebook import (
     NotebookDependencyAnalysis,
     NotebookDocument,
     analyze_notebook_dependencies,
-)
-from studio_migration import (
-    discover_dataiku,
-    discover_databricks,
-    discover_fabric,
-    discover_foundry,
 )
 from studio_orchestrator import Instant
 from studio_server import RoninHTTPServer

@@ -7,9 +7,9 @@ from studio_finops import (
     RateCard,
     SqliteFinOpsStore,
     UsageRecord,
-    evaluate_budget,
     budget_gate,
     budget_notification,
+    evaluate_budget,
     price_usage,
 )
 from studio_observability import (
@@ -20,7 +20,6 @@ from studio_observability import (
     evaluate_alert,
 )
 from studio_orchestrator import Instant
-
 
 _T0 = Instant("2026-09-13T10:00:00.000000Z")
 _T1 = Instant("2026-09-13T10:05:00.000000Z")

@@ -3,7 +3,7 @@ from typing import cast
 from studio_core import WorkspaceId
 from studio_execution.stream_scheduler import ingest_stream_record
 from studio_orchestrator import Instant
-from studio_storage.scheduler_events import EventDelivery, SchedulerEventStore
+from studio_storage.scheduler_events import SchedulerEventStore
 from studio_streaming import StreamRecord
 
 

@@ -26,13 +26,12 @@ def backup_sqlite(source: Path, destination: Path) -> Path:
     try:
         with (
             closing(sqlite3.connect(source)) as source_db,
-            closing(sqlite3.connect(temporary)) as target_db,
+            closing(sqlite3.connect(temporary)) as target_db,source_db, target_db
         ):
-            with source_db, target_db:
-                source_db.backup(target_db)
-                if target_db.execute("PRAGMA integrity_check").fetchone() != ("ok",):
-                    raise ValueError("SQLite backup failed integrity check")
-                target_db.commit()
+            source_db.backup(target_db)
+            if target_db.execute("PRAGMA integrity_check").fetchone() != ("ok",):
+                raise ValueError("SQLite backup failed integrity check")
+            target_db.commit()
         os.replace(temporary, destination)
         return destination
     finally:

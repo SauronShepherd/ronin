@@ -11,9 +11,9 @@ from .contracts import (
     Severity,
     TelemetryEvent,
 )
+from .instrumentation import instrument_execution
 from .notifications import NotificationIntent, NotificationSink, alert_notification
 from .prometheus import prometheus_text
-from .instrumentation import instrument_execution
 from .store import SqliteTelemetryStore
 from .webhook import WebhookNotificationError, WebhookNotificationSink
 

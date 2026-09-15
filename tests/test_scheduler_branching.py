@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_execution.branching import UnsupportedBranchExpression, evaluate_branch
 
 

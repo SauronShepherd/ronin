@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from studio_streaming import (
     MicroBatchProcessor,
     ParquetMicroBatchSink,

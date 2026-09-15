@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_core import (
     AssetId,
     AssetRef,
     AssetVersion,
-    KnowledgeObjectRef,
     KnowledgeGraph,
+    KnowledgeObjectRef,
+    LinkType,
     ObjectType,
     PropertyDefinition,
     materialize_object_type,
-    LinkType,
     resolve_link_type,
 )
 

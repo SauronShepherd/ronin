@@ -6,10 +6,10 @@ from decimal import Decimal
 from typing import Protocol, runtime_checkable
 
 from studio_core import WorkspaceId
+from studio_observability.notifications import NotificationIntent
 from studio_orchestrator import Instant
 
 from .contracts import BudgetEvaluation, BudgetPolicy, CostRecord, RateCard, UsageRecord
-from studio_observability.notifications import NotificationIntent
 
 
 class RateCardNotFound(KeyError):

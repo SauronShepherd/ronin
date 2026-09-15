@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import pytest
 from studio_migration import (
-    discover_dataiku,
     discover_databricks,
+    discover_dataiku,
     discover_fabric,
     discover_foundry,
 )
-import pytest
 
 
 def test_named_profiles_emit_distinct_canonical_platform_identity() -> None:

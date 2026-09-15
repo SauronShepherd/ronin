@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Callable, Literal, TypeAlias, cast
+from typing import Literal, TypeAlias, cast
 
 from .canonical_json import decode as decode_canonical_json
 from .canonical_json import encode as encode_canonical_json

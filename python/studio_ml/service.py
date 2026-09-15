@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Mapping, Sequence
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import Protocol, runtime_checkable
 
 from studio_core import AssetRef, WorkspaceId

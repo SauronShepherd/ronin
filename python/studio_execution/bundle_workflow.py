@@ -15,8 +15,7 @@ from studio_core.bundle_inventory import (
 )
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.portability import RoninBundleManifest
-from studio_storage.bundle import BundleFile, write_bundle
-from studio_storage.bundle import BundleIntegrityError, BundleReadLimits
+from studio_storage.bundle import BundleFile, BundleIntegrityError, BundleReadLimits, write_bundle
 from studio_storage.bundle_payload import read_bundle_payload
 from studio_storage.bundle_workflow_import_port import SchedulerDefinitionStore
 
@@ -36,7 +35,7 @@ class WorkflowBundleImportPlan:
     """Verified, non-mutating workflow definitions ready for atomic commit."""
 
     manifest_digest: str
-    objects: tuple["StagedWorkflowObject", ...]
+    objects: tuple[StagedWorkflowObject, ...]
 
     @property
     def has_collisions(self) -> bool:

@@ -6,12 +6,12 @@ import asyncio
 import os
 import signal
 import uuid
-from time import monotonic
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 from dataclasses import dataclass, field
 from pathlib import Path
+from time import monotonic
 
 from studio_core import RuntimeCapability, RuntimeCatalog, RuntimeProfile
 from studio_execution import DurableExecutionService, WorkerPollResult

@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 
 from studio_core import Trigger, WorkflowRunId, WorkspaceId

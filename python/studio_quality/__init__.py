@@ -6,8 +6,8 @@ from .service import (
     QualityExecutionBlocked,
     QualityExecutionStore,
     execute_quality,
-    quality_gate,
     list_quality_runs,
+    quality_gate,
 )
 
 __all__ = (

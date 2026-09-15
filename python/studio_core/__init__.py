@@ -42,8 +42,6 @@ from .environments import (
     ProjectEnvironmentBindings,
 )
 from .execution_snapshots import ResolvedRuntimeSnapshot, snapshot_runtime_resolution
-from .openlineage import lineage_event_payload
-from .rql import RqlResult, execute_rql
 from .grants import (
     ACTIONS,
     GRANT_SCHEMA_VERSION,
@@ -81,8 +79,8 @@ from .ir import (
 from .ontology import (
     ActionExecution,
     ActionType,
-    KnowledgeObject,
     KnowledgeGraph,
+    KnowledgeObject,
     KnowledgeObjectRef,
     LinkCardinality,
     LinkType,
@@ -90,10 +88,11 @@ from .ontology import (
     OntologyDefinition,
     OntologyId,
     PropertyDefinition,
+    execute_ontology_action,
     materialize_object_type,
     resolve_link_type,
-    execute_ontology_action,
 )
+from .openlineage import lineage_event_payload
 from .operators import (
     OperatorCatalog,
     OperatorContract,
@@ -129,6 +128,7 @@ from .quality import (
     QualityStatus,
     SchemaCompatibility,
 )
+from .rql import RqlResult, execute_rql
 from .runtime_profiles import (
     ProfileEvaluation,
     RequirementCheck,

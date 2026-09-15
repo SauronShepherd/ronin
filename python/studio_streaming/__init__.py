@@ -20,8 +20,8 @@ from .processor import (
     StreamCheckpointConflict,
     StreamTransform,
 )
-from .windows import EventTimeWindow, WindowedBatch, window_records
 from .table import SqliteStreamTable
+from .windows import EventTimeWindow, WindowedBatch, window_records
 
 __all__ = (
     "IdentityTransform",
