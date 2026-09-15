@@ -125,14 +125,15 @@ def run_agent(
         action = _parse_action(result.content)
         if action["type"] == "final":
             answer = action["answer"]
-            assert isinstance(answer, str)
+            if not isinstance(answer, str):
+                raise ValueError("final agent answer must be a string")
             steps.append(AgentStep(step_index, "final"))
             return AgentRunResult(answer, tuple(steps))
 
         raw_tool_id = action["tool_id"]
         payload = action["input"]
-        assert isinstance(raw_tool_id, str)
-        assert isinstance(payload, dict)
+        if not isinstance(raw_tool_id, str) or not isinstance(payload, dict):
+            raise ValueError("tool action must contain a string tool_id and object input")
         tool_id = ToolId(raw_tool_id)
         if tool_id not in allowed_tools:
             raise PermissionError(f"agent attempted undeclared tool: {tool_id}")

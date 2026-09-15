@@ -63,7 +63,7 @@ class WebhookNotificationSink:
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")
-        request = Request(
+        request = Request(  # noqa: S310 - URL scheme is restricted to HTTPS at construction
             self._url,
             data=body,
             headers={"Accept": "application/json", "Content-Type": "application/json"},

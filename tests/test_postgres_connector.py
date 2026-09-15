@@ -41,7 +41,7 @@ class _Database:
 
 class _Sql:
     class _Statement:
-        def format(self, *args: object) -> _Statement:
+        def format(self, *args: object) -> "_Statement":
             return self
 
     def SQL(self, value: str) -> _Statement:

@@ -112,12 +112,13 @@ class JdbcConnector:
             predicate = ""
             params: tuple[object, ...] = ()
             if checkpoint is not None and checkpoint.strategy == "watermark":
-                assert incremental_column is not None
+                if incremental_column is None:
+                    raise ValueError("JDBC watermark checkpoints require incremental_column")
                 predicate = f' WHERE "{incremental_column}" > ?'
                 params = (checkpoint.value,)
             ordering = f' ORDER BY "{incremental_column}"' if incremental_column else ""
             cursor.execute(
-                f'SELECT * FROM "{schema}"."{table}"{predicate}{ordering} LIMIT ?',
+                f'SELECT * FROM "{schema}"."{table}"{predicate}{ordering} LIMIT ?',  # noqa: S608 - identifiers are validated by _identifier and values are bound
                 (*params, limit),
             )
             description = cursor.description or ()

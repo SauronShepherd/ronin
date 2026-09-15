@@ -461,7 +461,8 @@ def plan_catalog_bundle_import(
                 workspace_id,
                 digest,
             )
-            assert isinstance(staged_item.payload, CatalogAsset)
+            if not isinstance(staged_item.payload, CatalogAsset):
+                raise BundleIntegrityError("staged catalog asset has an invalid payload")
             known_assets[staged_item.payload.id] = staged_item.logical_ref
         elif item.kind == "catalog_revision":
             if payload.file.media_type != CATALOG_REVISION_MEDIA_TYPE:
@@ -474,7 +475,8 @@ def plan_catalog_bundle_import(
                 digest,
                 known_assets,
             )
-            assert isinstance(staged_item.payload, AssetRevision)
+            if not isinstance(staged_item.payload, AssetRevision):
+                raise BundleIntegrityError("staged catalog revision has an invalid payload")
             known_revisions[staged_item.payload.ref] = staged_item.logical_ref
         elif item.kind == "catalog_lineage":
             if payload.file.media_type != CATALOG_LINEAGE_MEDIA_TYPE:
