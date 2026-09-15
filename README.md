@@ -21,9 +21,11 @@ The original [`docs/product/V01_SCOPE.md`](docs/product/V01_SCOPE.md) remains th
 
 ## Product direction
 
-Public v1 is intended to let a team migrate a representative project away from **Microsoft Fabric, Databricks, Palantir Foundry/AIP or Dataiku DSS**, operate the supported portable subset in Ronin without a mandatory dependency on the source vendor, and export it through documented canonical/adaptor formats.
+Public v1 is intended to let a team simulate representative **Microsoft Fabric, Databricks, Palantir Foundry/AIP or Dataiku DSS** environments locally in Ronin, using provider-inspired capabilities without requiring those vendors or their control planes. The project is focused on local development, experimentation, learning and reproducible evaluation; migration and interoperability may be useful secondary outcomes, but they are not the product's primary purpose.
 
-Ronin does not promise fictional byte-for-byte compatibility with every proprietary feature. Migration behavior is classified explicitly as `exact`, `translated`, `partial`, `passthrough`, `unsupported` or `manual_decision`; objects may not be silently dropped or semantically weakened.
+> **Production-use warning:** Ronin is currently a local simulation and development platform. Production deployments and production workloads are not supported, are not covered by the current release guarantees, and are not part of the current roadmap. Anyone choosing to use Ronin in production does so at their own risk and responsibility.
+
+Ronin does not promise fictional byte-for-byte compatibility with every proprietary feature. Any interoperability or simulation gap is classified explicitly as `exact`, `translated`, `partial`, `passthrough`, `unsupported` or `manual_decision`; capabilities may not be silently dropped or semantically weakened.
 
 The target platform includes:
 
