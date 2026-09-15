@@ -204,7 +204,8 @@ class SchedulerEventStore(SchedulerScheduleStore):
             if existing is None:
                 connection.execute(
                     "INSERT INTO event_triggers("
-                    "workspace_id,event_trigger_id,workflow_id,definition_json,created_at,updated_at) "
+                    "workspace_id,event_trigger_id,workflow_id,definition_json,"
+                    "created_at,updated_at) "
                     "VALUES (?,?,?,?,?,?)",
                     (
                         str(workspace_id),
@@ -305,7 +306,8 @@ class SchedulerEventStore(SchedulerScheduleStore):
                 connection.execute(
                     "INSERT INTO scheduler_event_deliveries("
                     "workspace_id,event_id,event_trigger_id,workflow_id,trigger_snapshot_json,"
-                    "workflow_run_id,state,created_at,updated_at) VALUES (?,?,?,?,?,NULL,'pending',?,?)",
+                    "workflow_run_id,state,created_at,updated_at) "
+                    "VALUES (?,?,?,?,?,NULL,'pending',?,?)",
                     (
                         str(event.workspace_id),
                         str(event.id),

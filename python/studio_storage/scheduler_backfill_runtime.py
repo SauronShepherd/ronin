@@ -336,7 +336,8 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
 
             connection.execute(
                 "INSERT INTO scheduler_backfill_runs("
-                "workspace_id,backfill_id,logical_time,workflow_run_id,state,created_at,updated_at) "
+                "workspace_id,backfill_id,logical_time,workflow_run_id,state,"
+                "created_at,updated_at) "
                 "VALUES (?,?,?,?,'reserved',?,?)",
                 (
                     str(workspace_id),
