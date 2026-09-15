@@ -36,7 +36,16 @@ STORAGE_MIGRATION_DOMAINS = (
 )
 
 _SCHEMA_TABLES = {
-    domain.name: f"{domain.name}_schema_migrations" for domain in STORAGE_MIGRATION_DOMAINS
+    "workspaces": "workspace_schema_migrations",
+    "environments": "environment_schema_migrations",
+    "connections": "connection_schema_migrations",
+    "catalog": "catalog_schema_migrations",
+    "ontology": "ontology_schema_migrations",
+    "quality": "quality_schema_migrations",
+    "scheduler": "scheduler_schema_migrations",
+    "audit": "audit_schema_migrations",
+    "genai": "genai_schema_migrations",
+    "ml": "ml_schema_migrations",
 }
 _SUPPORTED_VERSIONS = {
     "workspaces": 1,
