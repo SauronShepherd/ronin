@@ -117,7 +117,8 @@ def translate_notebook_job(
             "translated",
             (str(workflow.id),),
             (
-                "Job translated with notebook-task subset; schedules and unsupported tasks require review",
+                "Job translated with notebook-task subset; schedules and "
+                "unsupported tasks require review",
             ),
         )
     )
