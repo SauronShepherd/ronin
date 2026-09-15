@@ -96,6 +96,7 @@ packages = [
   "studio_streaming",
   "studio_vcs",
   "studio_execution",
+  "studio_migration",
   "studio_server",
   "studio_worker",
   "studio_cli",
@@ -132,6 +133,7 @@ source = [
   "studio_server",
   "studio_worker",
   "studio_cli",
+  "studio_migration",
   "pyronin",
 ]
 

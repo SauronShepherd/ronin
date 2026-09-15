@@ -410,6 +410,7 @@ class _Handler(BaseHTTPRequestHandler):
     def _write_json(self, status: HTTPStatus, payload: object) -> None:
         body = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         self.send_response(status)
+        self._send_security_headers(api=True)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
@@ -438,11 +439,20 @@ class _Handler(BaseHTTPRequestHandler):
             else "text/css"
         )
         self.send_response(HTTPStatus.OK)
+        self._send_security_headers(api=False)
         self.send_header("Content-Type", f"{media_type}; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
         return True
+
+    def _send_security_headers(self, *, api: bool) -> None:
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("X-Frame-Options", "DENY")
+        if api:
+            self.send_header("Cache-Control", "no-store")
 
     def _error(self, status: HTTPStatus, code: str, message: str) -> None:
         self._write_json(status, {"error": {"code": code, "message": message}})

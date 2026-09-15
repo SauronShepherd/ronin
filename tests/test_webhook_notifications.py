@@ -14,6 +14,10 @@ class _Response:
         self.status = status
         self.body = body
         self.request_body: bytes | None = None
+        self.closed = False
+
+    def close(self) -> None:
+        self.closed = True
 
     def read(self, limit: int) -> bytes:
         del limit
@@ -46,6 +50,7 @@ def test_webhook_sink_posts_bounded_json_and_returns_intent_id() -> None:
     assert seen["method"] == "POST"
     assert b'"id":"notification-1"' in seen["body"]
     assert seen["timeout"] == 10.0
+    assert response.closed
 
 
 def test_webhook_sink_rejects_insecure_urls_and_non_success() -> None:

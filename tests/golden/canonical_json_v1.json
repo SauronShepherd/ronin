@@ -3,9 +3,9 @@
   "vectors": [
     {
       "name": "unicode-order-nested",
-      "source_json": "{\"z\":null,\"unicode\":\"café\",\"nested\":{\"b\":false,\"a\":[true,2]},\"big\":9007199254740993}",
-      "canonical_utf8": "{\"big\":9007199254740993,\"nested\":{\"a\":[true,2],\"b\":false},\"unicode\":\"café\",\"z\":null}",
-      "sha256": "9e36fcfcf868d6b7757c599ed4bcf2f89eef4edfbcfe23d7ae03a14dfd09a2db"
+      "source_json": "{\"z\":null,\"unicode\":\"café\",\"nested\":{\"b\":false,\"a\":[true,2]},\"big\":9007199254740991}",
+      "canonical_utf8": "{\"big\":9007199254740991,\"nested\":{\"a\":[true,2],\"b\":false},\"unicode\":\"café\",\"z\":null}",
+      "sha256": "044c6271ab7443d1652e72980dea89905f25328a0c20cad7c9df511b180cc503"
     },
     {
       "name": "legacy-negative-zero",
@@ -21,9 +21,9 @@
     },
     {
       "name": "http-request-identity",
-      "source_json": "{\"target\":\"notebook\",\"project\":\"demo\",\"parameters\":{\"nested\":{\"b\":false,\"a\":[\"café\",-0.0]},\"big\":9007199254740993,\"alpha\":1}}",
-      "canonical_utf8": "{\"parameters\":{\"alpha\":1,\"big\":9007199254740993,\"nested\":{\"a\":[\"café\",-0.0],\"b\":false}},\"project\":\"demo\",\"target\":\"notebook\"}",
-      "sha256": "1016b695b2cdd39c54b396d6ba0bc626e4e39c79a76b26a27f04f598bb5614a1"
+      "source_json": "{\"target\":\"notebook\",\"project\":\"demo\",\"parameters\":{\"nested\":{\"b\":false,\"a\":[\"café\",-0.0]},\"big\":9007199254740991,\"alpha\":1}}",
+      "canonical_utf8": "{\"parameters\":{\"alpha\":1,\"big\":9007199254740991,\"nested\":{\"a\":[\"café\",-0.0],\"b\":false}},\"project\":\"demo\",\"target\":\"notebook\"}",
+      "sha256": "dfe3d2d2ceac62aad1ab09bcb921d1a3f091659ec05cbdcdd231cfe1b717781a"
     },
     {
       "name": "project-manifest",

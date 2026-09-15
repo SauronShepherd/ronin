@@ -4,16 +4,27 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from contextlib import closing
 from typing import Any, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, OpenerDirector, Request, build_opener
 
 from .notifications import NotificationIntent
 
 
 class WebhookNotificationError(RuntimeError):
     """Raised when a webhook notification cannot be delivered safely."""
+
+
+class _RejectRedirects(HTTPRedirectHandler):
+    def redirect_request(self, *_args: object, **_kwargs: object) -> None:
+        return None
+
+
+def _open_without_redirects(request: Request, timeout: float) -> object:
+    opener: OpenerDirector = build_opener(_RejectRedirects())
+    return opener.open(request, timeout=timeout)
 
 
 class WebhookNotificationSink:
@@ -37,7 +48,7 @@ class WebhookNotificationSink:
         self._url = url
         self._timeout = timeout_seconds
         self._max_response_bytes = max_response_bytes
-        self._transport = transport or (lambda request, timeout: urlopen(request, timeout=timeout))
+        self._transport = transport or _open_without_redirects
 
     def send(self, intent: NotificationIntent) -> str:
         body = json.dumps(
@@ -61,9 +72,10 @@ class WebhookNotificationSink:
         try:
             response = cast(Any, self._transport(request, self._timeout))
             status = int(getattr(response, "status", 200))
-            raw = response.read(self._max_response_bytes + 1)
-            if len(raw) > self._max_response_bytes:
-                raise WebhookNotificationError("webhook response exceeds configured byte limit")
+            with closing(response):
+                raw = response.read(self._max_response_bytes + 1)
+                if len(raw) > self._max_response_bytes:
+                    raise WebhookNotificationError("webhook response exceeds configured byte limit")
         except (HTTPError, URLError, OSError) as exc:
             raise WebhookNotificationError("webhook notification delivery failed") from exc
         if status < 200 or status >= 300:

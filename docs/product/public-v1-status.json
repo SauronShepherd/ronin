@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-09-15T00:00:00+02:00",
-  "observed_main_sha": "2f334c0f07ac023b0378bcdac6c6e5bc25150842",
+  "observed_main_sha": "829939c2fc5da2036388d571e5969ef7036ead45",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "status_vocabulary": ["implemented", "partial", "missing", "blocked", "human_decision", "qualification_pending"],
@@ -35,7 +35,6 @@
   "human_decisions": [
     {"issue":50,"summary":"Runtime capability namespace, value semantics and ambiguity policy."},
     {"issue":62,"summary":"Language-neutral runner protocol family and compatibility semantics."},
-    {"issue":45,"summary":"Select and verify a real private vulnerability-reporting route."},
     {"summary":"License/NOTICE/attribution conclusions and release approval remain human review decisions."}
   ],
   "recent_public_v1_merges": [242,243,244,245,246,247,248,249,250,251,252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287,288],

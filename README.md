@@ -105,7 +105,7 @@ Key current and future contracts include:
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — contributor setup and architecture expectations;
 - [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md) and [`CHANGELOG.md`](CHANGELOG.md) — release operations and user-visible change communication.
 
-`SECURITY.md` is intentionally not published yet because the project has not selected and verified a private vulnerability-reporting channel. A verified private channel is a mandatory Public v1 release requirement; Ronin must not invent one.
+See [`SECURITY.md`](SECURITY.md) for the private vulnerability-reporting route, supported versions, and security scope.
 
 ## Governance and contribution
 
