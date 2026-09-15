@@ -269,12 +269,15 @@ class SqliteGenAIStore:
             ).fetchone()
             if row is None:
                 connection.execute(
-                    "INSERT INTO genai_providers(workspace_id,provider_id,provider_json,created_at,updated_at) VALUES (?,?,?,?,?)",
+                    "INSERT INTO genai_providers("
+                    "workspace_id,provider_id,provider_json,created_at,updated_at) "
+                    "VALUES (?,?,?,?,?)",
                     (str(workspace_id), str(provider.id), payload, now, now),
                 )
             elif row["provider_json"] != payload:
                 connection.execute(
-                    "UPDATE genai_providers SET provider_json=?,updated_at=?,row_version=row_version+1 WHERE workspace_id=? AND provider_id=?",
+                    "UPDATE genai_providers SET provider_json=?,updated_at=?, "
+                    "row_version=row_version+1 WHERE workspace_id=? AND provider_id=?",
                     (payload, now, str(workspace_id), str(provider.id)),
                 )
             connection.execute("COMMIT")
