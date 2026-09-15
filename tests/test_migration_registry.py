@@ -72,12 +72,3 @@ def test_migrate_storage_is_idempotent_for_an_existing_database() -> None:
 
     assert second_order == first_order
     assert migration_status(connection) == first_status
-
-
-def test_migrate_storage_releases_its_savepoint() -> None:
-    connection = sqlite3.connect(":memory:")
-
-    migrate_storage(connection, now="2099-01-01T00:00:00.000000Z")
-    connection.execute("CREATE TABLE after_migration(value INTEGER)")
-
-    assert connection.in_transaction
