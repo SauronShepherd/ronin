@@ -411,7 +411,8 @@ class PostgresMetadataStore:
             with connection.cursor() as cursor:
                 self._require_active_workspace(cursor, workspace_id)
                 cursor.execute(
-                    "INSERT INTO ronin_environments(workspace_id,environment_id,definition_json,created_at,updated_at) "
+                    "INSERT INTO ronin_environments("
+                    "workspace_id,environment_id,definition_json,created_at,updated_at) "
                     "VALUES (%s,%s,%s,%s,%s) "
                     "ON CONFLICT(workspace_id,environment_id) DO UPDATE SET "
                     "definition_json=EXCLUDED.definition_json,updated_at=EXCLUDED.updated_at,"
@@ -433,7 +434,8 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT definition_json FROM ronin_environments WHERE workspace_id=%s AND environment_id=%s",
+                    "SELECT definition_json FROM ronin_environments "
+                    "WHERE workspace_id=%s AND environment_id=%s",
                     (str(workspace_id), str(environment_id)),
                 )
                 row = cursor.fetchone()
@@ -448,7 +450,8 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT definition_json FROM ronin_environments WHERE workspace_id=%s ORDER BY environment_id",
+                    "SELECT definition_json FROM ronin_environments "
+                    "WHERE workspace_id=%s ORDER BY environment_id",
                     (str(workspace_id),),
                 )
                 return tuple(
@@ -543,7 +546,8 @@ class PostgresMetadataStore:
             with connection.cursor() as cursor:
                 self._require_active_workspace(cursor, workspace_id)
                 cursor.execute(
-                    "SELECT definition_json FROM ronin_connections WHERE workspace_id=%s AND connection_id=%s FOR UPDATE",
+                    "SELECT definition_json FROM ronin_connections "
+                    "WHERE workspace_id=%s AND connection_id=%s FOR UPDATE",
                     (str(workspace_id), str(definition.id)),
                 )
                 row = cursor.fetchone()
@@ -553,7 +557,8 @@ class PostgresMetadataStore:
                         return definition
                     raise ConnectionConflict(f"connection id already exists: {definition.id}")
                 cursor.execute(
-                    "INSERT INTO ronin_connections(workspace_id,connection_id,definition_json,created_at,updated_at) "
+                    "INSERT INTO ronin_connections("
+                    "workspace_id,connection_id,definition_json,created_at,updated_at) "
                     "VALUES (%s,%s,%s,%s,%s)",
                     (str(workspace_id), str(definition.id), payload, str(current), str(current)),
                 )
@@ -574,7 +579,8 @@ class PostgresMetadataStore:
             with connection.cursor() as cursor:
                 self._require_active_workspace(cursor, workspace_id)
                 cursor.execute(
-                    "UPDATE ronin_connections SET definition_json=%s,updated_at=%s,row_version=row_version+1 "
+                    "UPDATE ronin_connections SET definition_json=%s,updated_at=%s, "
+                    "row_version=row_version+1 "
                     "WHERE workspace_id=%s AND connection_id=%s",
                     (definition.to_json(), str(current), str(workspace_id), str(definition.id)),
                 )
@@ -595,7 +601,8 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT definition_json FROM ronin_connections WHERE workspace_id=%s AND connection_id=%s",
+                    "SELECT definition_json FROM ronin_connections "
+                    "WHERE workspace_id=%s AND connection_id=%s",
                     (str(workspace_id), str(connection_id)),
                 )
                 row = cursor.fetchone()
@@ -610,7 +617,8 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT definition_json FROM ronin_connections WHERE workspace_id=%s ORDER BY connection_id",
+                    "SELECT definition_json FROM ronin_connections "
+                    "WHERE workspace_id=%s ORDER BY connection_id",
                     (str(workspace_id),),
                 )
                 return tuple(
