@@ -157,9 +157,15 @@ def migrate_storage(connection: sqlite3.Connection, *, now: Any) -> tuple[str, .
     order = migration_order(STORAGE_MIGRATION_DOMAINS)
     original_row_factory = connection.row_factory
     connection.row_factory = sqlite3.Row
+    connection.execute("SAVEPOINT ronin_storage_migrations")
     try:
         for name in order:
             runners[name](connection, now=now)
+        connection.execute("RELEASE SAVEPOINT ronin_storage_migrations")
+    except Exception:
+        connection.execute("ROLLBACK TO SAVEPOINT ronin_storage_migrations")
+        connection.execute("RELEASE SAVEPOINT ronin_storage_migrations")
+        raise
     finally:
         connection.row_factory = original_row_factory
     return order
