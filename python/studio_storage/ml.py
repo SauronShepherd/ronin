@@ -245,7 +245,8 @@ class SqliteMLStore:
         connection = self._connect()
         try:
             row = connection.execute(
-                "SELECT experiment_json FROM ml_experiments WHERE workspace_id=? AND experiment_id=?",
+                "SELECT experiment_json FROM ml_experiments "
+                "WHERE workspace_id=? AND experiment_id=?",
                 (str(workspace_id), str(experiment_id)),
             ).fetchone()
             return None if row is None else Experiment.from_json(row["experiment_json"])
@@ -279,7 +280,9 @@ class SqliteMLStore:
                     return run
                 raise MLConflict(f"ML run id already exists: {run.id}")
             connection.execute(
-                "INSERT INTO ml_runs(workspace_id,ml_run_id,experiment_id,run_json,created_at) VALUES (?,?,?,?,?)",
+                "INSERT INTO ml_runs("
+                "workspace_id,ml_run_id,experiment_id,run_json,created_at) "
+                "VALUES (?,?,?,?,?)",
                 (str(workspace_id), str(run.id), str(run.experiment_id), payload, now),
             )
             connection.execute("COMMIT")
@@ -318,7 +321,8 @@ class SqliteMLStore:
             if source is None:
                 raise KeyError(str(model.source_run_id))
             existing = connection.execute(
-                "SELECT model_json FROM model_versions WHERE workspace_id=? AND model_id=? AND version=?",
+                "SELECT model_json FROM model_versions "
+                "WHERE workspace_id=? AND model_id=? AND version=?",
                 (str(workspace_id), str(model.model_id), str(model.version)),
             ).fetchone()
             if existing is not None:
@@ -327,7 +331,9 @@ class SqliteMLStore:
                     return model
                 raise MLConflict(f"model version already exists: {model.model_id}@{model.version}")
             connection.execute(
-                "INSERT INTO model_versions(workspace_id,model_id,version,source_ml_run_id,stage,model_json,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
+                "INSERT INTO model_versions("
+                "workspace_id,model_id,version,source_ml_run_id,stage,model_json,"
+                "created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
                 (
                     str(workspace_id),
                     str(model.model_id),
@@ -354,7 +360,8 @@ class SqliteMLStore:
         connection = self._connect()
         try:
             row = connection.execute(
-                "SELECT model_json FROM model_versions WHERE workspace_id=? AND model_id=? AND version=?",
+                "SELECT model_json FROM model_versions "
+                "WHERE workspace_id=? AND model_id=? AND version=?",
                 (str(workspace_id), str(model_id), str(version)),
             ).fetchone()
             return None if row is None else _model_from_json(row["model_json"])
@@ -493,12 +500,15 @@ class SqliteMLStore:
             if model is None:
                 raise KeyError(f"{evaluation.model_id}@{evaluation.version}")
             existing = connection.execute(
-                "SELECT evaluation_json FROM model_evaluations WHERE workspace_id=? AND model_id=? AND version=? AND evaluation_digest=?",
+                "SELECT evaluation_json FROM model_evaluations "
+                "WHERE workspace_id=? AND model_id=? AND version=? AND evaluation_digest=?",
                 (str(workspace_id), str(evaluation.model_id), str(evaluation.version), digest),
             ).fetchone()
             if existing is None:
                 connection.execute(
-                    "INSERT INTO model_evaluations(workspace_id,model_id,version,evaluation_digest,evaluation_json,created_at) VALUES (?,?,?,?,?,?)",
+                    "INSERT INTO model_evaluations("
+                    "workspace_id,model_id,version,evaluation_digest,evaluation_json,created_at) "
+                    "VALUES (?,?,?,?,?,?)",
                     (
                         str(workspace_id),
                         str(evaluation.model_id),
@@ -523,7 +533,9 @@ class SqliteMLStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT evaluation_json FROM model_evaluations WHERE workspace_id=? AND model_id=? AND version=? ORDER BY evaluation_digest",
+                "SELECT evaluation_json FROM model_evaluations "
+                "WHERE workspace_id=? AND model_id=? AND version=? "
+                "ORDER BY evaluation_digest",
                 (str(workspace_id), str(model_id), str(version)),
             ).fetchall()
             return tuple(_evaluation_from_json(row["evaluation_json"]) for row in rows)
