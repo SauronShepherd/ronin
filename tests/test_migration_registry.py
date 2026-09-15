@@ -1,9 +1,12 @@
+import sqlite3
+
 import pytest
 from studio_storage.migration_registry import (
     STORAGE_MIGRATION_DOMAINS,
     MigrationDomain,
     MigrationRegistryError,
     migration_order,
+    migration_status,
 )
 
 
@@ -34,3 +37,17 @@ def test_storage_registry_has_a_valid_public_order() -> None:
 
     assert order[0] == "workspaces"
     assert set(order) == {domain.name for domain in STORAGE_MIGRATION_DOMAINS}
+
+
+def test_migration_status_is_read_only_and_reports_uninitialized_domains() -> None:
+    connection = sqlite3.connect(":memory:")
+
+    assert migration_status(connection)[0] == {
+        "domain": "workspaces",
+        "current": 0,
+        "supported": 1,
+        "state": "pending",
+    }
+    assert (
+        connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall() == []
+    )

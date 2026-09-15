@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 from dataclasses import dataclass
 
 
@@ -31,6 +32,22 @@ STORAGE_MIGRATION_DOMAINS = (
     MigrationDomain("genai", ("catalog",)),
     MigrationDomain("ml", ("catalog",)),
 )
+
+_SCHEMA_TABLES = {
+    domain.name: f"{domain.name}_schema_migrations" for domain in STORAGE_MIGRATION_DOMAINS
+}
+_SUPPORTED_VERSIONS = {
+    "workspaces": 1,
+    "environments": 1,
+    "connections": 1,
+    "catalog": 1,
+    "ontology": 1,
+    "quality": 1,
+    "scheduler": 1,
+    "audit": 1,
+    "genai": 1,
+    "ml": 1,
+}
 
 
 def migration_order(domains: tuple[MigrationDomain, ...]) -> tuple[str, ...]:
@@ -68,9 +85,37 @@ def migration_order(domains: tuple[MigrationDomain, ...]) -> tuple[str, ...]:
     return tuple(ordered)
 
 
+def migration_status(connection: sqlite3.Connection) -> tuple[dict[str, int | str], ...]:
+    """Return current and supported versions without changing *connection*."""
+    status: list[dict[str, int | str]] = []
+    for name in migration_order(STORAGE_MIGRATION_DOMAINS):
+        table = _SCHEMA_TABLES[name]
+        exists = connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)
+        ).fetchone()
+        current = 0
+        if exists:
+            # Table names come exclusively from the immutable registry above.
+            row = connection.execute(  # noqa: S608
+                f"SELECT MAX(version) FROM {table}"
+            ).fetchone()
+            current = int(row[0] or 0)
+        supported = _SUPPORTED_VERSIONS[name]
+        status.append(
+            {
+                "domain": name,
+                "current": current,
+                "supported": supported,
+                "state": "ready" if current == supported else "pending",
+            }
+        )
+    return tuple(status)
+
+
 __all__ = (
     "MigrationDomain",
     "MigrationRegistryError",
     "STORAGE_MIGRATION_DOMAINS",
     "migration_order",
+    "migration_status",
 )
