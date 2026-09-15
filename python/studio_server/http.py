@@ -450,7 +450,8 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header(
             "Content-Security-Policy",
-            "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'",
+            "default-src 'none'; script-src 'self'; style-src 'self'; "
+            "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'",
         )
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("X-Frame-Options", "DENY")
