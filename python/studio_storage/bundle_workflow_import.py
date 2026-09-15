@@ -96,7 +96,8 @@ class SqliteWorkflowBundleImportStore(SqliteWorkspaceStore, SqliteSchedulerStore
                     workflows_created += 1
                 elif existing["definition_json"] != payload:
                     raise WorkflowBundleImportConflict(
-                        f"workflow id already exists with different portable definition: {workflow.id}"
+                        f"workflow id already exists with different portable "
+                        f"definition: {workflow.id}"
                     )
 
             schedules_created = 0
@@ -131,7 +132,8 @@ class SqliteWorkflowBundleImportStore(SqliteWorkspaceStore, SqliteSchedulerStore
                     schedules_created += 1
                 elif existing["schedule_json"] != payload:
                     raise WorkflowBundleImportConflict(
-                        f"schedule id already exists with different portable definition: {schedule.id}"
+                        f"schedule id already exists with different portable "
+                        f"definition: {schedule.id}"
                     )
 
             database.execute("COMMIT")
