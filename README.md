@@ -1,10 +1,6 @@
 <p align="center">
-  <img src="docs/assets/logo_ronin.png" alt="Ronin logo — The lordless Data + AI platform" width="720">
+  <img src="docs/assets/logo_ronin.png" alt="Ronin — The lordless Data + AI OS platform." width="720">
 </p>
-
-# Ronin
-
-**The lordless Data + AI OS platform.**
 
 Ronin is being built as a professional, free, open-source and self-hostable **Data + AI platform** designed around portability rather than a mandatory proprietary control plane.
 
