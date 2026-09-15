@@ -15,7 +15,11 @@ class SqliteStreamTable:
         path.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(path) as connection:
             connection.execute(
-                "CREATE TABLE IF NOT EXISTS stream_table (stream_id TEXT NOT NULL, partition_id INTEGER NOT NULL, offset_value INTEGER NOT NULL, timestamp_ms INTEGER, key_value TEXT, value_json TEXT NOT NULL, PRIMARY KEY(stream_id, partition_id, offset_value))"
+                "CREATE TABLE IF NOT EXISTS stream_table ("
+                "stream_id TEXT NOT NULL, partition_id INTEGER NOT NULL, "
+                "offset_value INTEGER NOT NULL, timestamp_ms INTEGER, "
+                "key_value TEXT, value_json TEXT NOT NULL, "
+                "PRIMARY KEY(stream_id, partition_id, offset_value))"
             )
             connection.commit()
 
@@ -45,7 +49,9 @@ class SqliteStreamTable:
             raise ValueError("stream table read limit must be between 1 and 100000")
         with sqlite3.connect(self._path) as connection:
             rows = connection.execute(
-                "SELECT partition_id,offset_value,timestamp_ms,key_value,value_json FROM stream_table WHERE stream_id=? ORDER BY partition_id,offset_value LIMIT ?",
+                "SELECT partition_id,offset_value,timestamp_ms,key_value,value_json "
+                "FROM stream_table WHERE stream_id=? "
+                "ORDER BY partition_id,offset_value LIMIT ?",
                 (stream_id, limit),
             ).fetchall()
         return tuple(
