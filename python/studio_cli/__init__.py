@@ -7,6 +7,7 @@ import asyncio
 import json
 import os
 import shutil
+import sqlite3
 import sys
 import time
 from collections.abc import Sequence
@@ -32,6 +33,7 @@ from studio_orchestrator import Instant
 from studio_server import RoninHTTPServer
 from studio_sql import DuckDbDependencyError, DuckDbSqlEngine
 from studio_storage import SqliteJobStore
+from studio_storage.migration_registry import migration_status
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
 from .network import TERMINAL_STATES, ControlPlaneClient, ControlPlaneError
@@ -100,6 +102,11 @@ def _parser() -> argparse.ArgumentParser:
     inventory.add_argument("source", type=Path)
     inventory.add_argument("--source-version", default="unknown")
     inventory.add_argument("--output", type=Path)
+    migration_status_command = migrate_commands.add_parser(
+        "status", help="show local storage migration status"
+    )
+    migration_status_command.add_argument("--database", type=Path)
+    migration_status_command.add_argument("--json", action="store_true")
     return parser
 
 
@@ -396,6 +403,26 @@ def _migration_inventory(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _migration_status(namespace: argparse.Namespace) -> int:
+    database = (namespace.database or _database()).expanduser().resolve()
+    if not database.is_file():
+        raise CliError(f"database does not exist: {database}")
+    try:
+        connection = sqlite3.connect(f"file:{database}?mode=ro", uri=True)
+    except sqlite3.Error as exc:
+        raise CliError(f"unable to open database read-only: {database}") from exc
+    try:
+        rows = migration_status(connection)
+    finally:
+        connection.close()
+    if namespace.json:
+        print(json.dumps(rows, sort_keys=True, separators=(",", ":")))
+    else:
+        for row in rows:
+            print(f"{row['domain']}\t{row['current']}\t{row['supported']}\t{row['state']}")
+    return 0
+
+
 def _now() -> Instant:
     return Instant(datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
@@ -506,6 +533,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         if command == "migrate":
             if namespace.migrate_command == "inventory":
                 return _migration_inventory(namespace)
+            if namespace.migrate_command == "status":
+                return _migration_status(namespace)
             raise CliError(f"unsupported migrate command: {namespace.migrate_command}")
         raise CliError(f"unsupported command: {command}")
     except (CliError, ControlPlaneError, ValueError) as exc:
