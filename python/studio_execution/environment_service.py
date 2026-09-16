@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 from studio_core import ProjectId, WorkspaceId
+from studio_core.workspaces import Workspace
 from studio_core.environments import (
     EnvironmentDefinition,
     EnvironmentId,
@@ -35,7 +36,7 @@ class _EnvironmentContext:
         self._workspace_store = workspace_store
         self._environment_store = environment_store
 
-    def workspace(self, workspace_id: WorkspaceId, *, mutable: bool):
+    def workspace(self, workspace_id: WorkspaceId, *, mutable: bool) -> Workspace:
         workspace = self._workspace_store.get_workspace(workspace_id)
         if workspace is None:
             raise EnvironmentServiceNotFound(f"workspace not found: {workspace_id}")
