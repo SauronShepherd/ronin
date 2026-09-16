@@ -6,8 +6,17 @@ import sqlite3
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import cast
 
-from studio_core import NodeId, TaskRunId, WorkflowRun, WorkflowRunId, WorkspaceId
+from studio_core import (
+    NodeId,
+    TaskRunId,
+    TaskPolicy,
+    WorkflowRun,
+    WorkflowRunId,
+    WorkflowRunState,
+    WorkspaceId,
+)
 from studio_core.scheduler_resources import ResourcePoolDefinition
 from studio_orchestrator import Instant, LeaseToken
 
@@ -237,7 +246,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
         ).fetchone()
         if row is None:
             raise ValueError("task attempt lease ownership lost")
-        return row
+        return cast(sqlite3.Row, row)
 
     @staticmethod
     def _workflow_state(
@@ -259,7 +268,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
         workspace_id: WorkspaceId,
         run: WorkflowRun,
         *,
-        state: str,
+        state: WorkflowRunState,
         now: Instant,
     ) -> None:
         updated = replace(run, state=state)
@@ -286,7 +295,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
         )
 
     @staticmethod
-    def _task_policy(run: WorkflowRun, node_id: NodeId):
+    def _task_policy(run: WorkflowRun, node_id: NodeId) -> TaskPolicy:
         return run.workflow_snapshot.policy_for(node_id)
 
     def _mark_failure_or_retry(
