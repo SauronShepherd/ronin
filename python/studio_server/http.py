@@ -550,6 +550,9 @@ class _Handler(BaseHTTPRequestHandler):
                     "SQL engine dependency is unavailable",
                 )
                 return
+            except ServiceTimeoutError as exc:
+                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
+                return
             except ValueError as exc:
                 self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
                 return
@@ -577,6 +580,9 @@ class _Handler(BaseHTTPRequestHandler):
                     "idempotency_conflict",
                     "idempotency key already exists for a different request",
                 )
+                return
+            except ServiceTimeoutError as exc:
+                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
                 return
             except StorageBackpressureError:
                 self._error(
@@ -606,6 +612,9 @@ class _Handler(BaseHTTPRequestHandler):
             payload = self._ronin_server().application.cancel(job_id)
         except KeyError:
             self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
+            return
+        except ServiceTimeoutError as exc:
+            self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
             return
         except StorageBackpressureError:
             self._error(HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy")
@@ -647,6 +656,9 @@ class _Handler(BaseHTTPRequestHandler):
                     cursor=query.get("cursor"),
                 )
                 page_payload = _page_payload(page)
+            except ServiceTimeoutError as exc:
+                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
+                return
             except StorageBackpressureError:
                 self._error(
                     HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
@@ -674,6 +686,9 @@ class _Handler(BaseHTTPRequestHandler):
                 event_payload = self._ronin_server().application.events(
                     job_id, since=query.get("since"), limit=query.get("limit")
                 )
+            except ServiceTimeoutError as exc:
+                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
+                return
             except StorageBackpressureError:
                 self._error(
                     HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
@@ -703,6 +718,9 @@ class _Handler(BaseHTTPRequestHandler):
                 if self._require_visible_job("evidence:read", job) is None:
                     return
                 evidence_payload = self._ronin_server().application.evidence(job_id)
+            except ServiceTimeoutError as exc:
+                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
+                return
             except StorageBackpressureError:
                 self._error(
                     HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
@@ -727,6 +745,9 @@ class _Handler(BaseHTTPRequestHandler):
         try:
             job_id = unquote(encoded_job_id, errors="strict")
             job = self._ronin_server().application.get_job(job_id)
+        except ServiceTimeoutError as exc:
+            self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
+            return
         except StorageBackpressureError:
             self._error(HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy")
             return
