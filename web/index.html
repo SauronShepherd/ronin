@@ -33,7 +33,7 @@
             <select id="run-state" aria-label="State filter">
               <option value="">All states</option><option value="queued">Queued</option><option value="running">Running</option><option value="cancelling">Cancelling</option><option value="cancelled">Cancelled</option><option value="succeeded">Succeeded</option><option value="failed">Failed</option>
             </select>
-            <button type="submit">Apply filters</button>
+            <button type="submit">Apply filters</button><button id="clear-filters" type="button">Clear</button>
           </form>
           <p id="run-filter-summary" class="muted small" aria-live="polite"></p>
           <div id="runs" class="cards"><div class="empty">Connect to a Ronin API to load runs.</div></div>
