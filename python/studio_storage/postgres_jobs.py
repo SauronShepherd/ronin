@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from studio_orchestrator import Instant, Job, JobId, JobState, Page, Run
+from studio_orchestrator import Instant, Job, JobId, JobState, Page, Run, RunId
 
 from studio_storage.memory import IdempotencyConflict
 from studio_storage.pagination import decode_job_cursor, encode_job_cursor, validate_limit
@@ -117,6 +117,22 @@ class PostgresJobReadPort:
                 row = cursor.fetchone()
             connection.commit()
             return None if row is None else _job(row)
+        finally:
+            connection.close()
+
+    def get_run_id_for_job(self, job_id: JobId) -> RunId | None:
+        """Return the newest durable run id for a job, if it exists."""
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT run_id FROM ronin_runs WHERE job_id=%s "
+                    "ORDER BY ordinal DESC LIMIT 1",
+                    (str(job_id),),
+                )
+                row = cursor.fetchone()
+            connection.commit()
+            return None if row is None else RunId(str(row["run_id"]))
         finally:
             connection.close()
 
