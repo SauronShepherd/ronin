@@ -588,7 +588,7 @@ class _Handler(BaseHTTPRequestHandler):
                 )
                 return
             except RequestReadTimeoutError as exc:
-                self._error(HTTPStatus.REQUEST_TIMEOUT, "request_read_timeout", str(exc))
+                self._error(HTTPStatus.REQUEST_TIMEOUT, "request_timeout", str(exc))
                 return
             except ServiceTimeoutError as exc:
                 self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
@@ -622,7 +622,7 @@ class _Handler(BaseHTTPRequestHandler):
                 )
                 return
             except RequestReadTimeoutError as exc:
-                self._error(HTTPStatus.REQUEST_TIMEOUT, "request_read_timeout", str(exc))
+                self._error(HTTPStatus.REQUEST_TIMEOUT, "request_timeout", str(exc))
                 return
             except ServiceTimeoutError as exc:
                 self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))

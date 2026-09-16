@@ -12,6 +12,8 @@ from studio_server.control_plane import (
     WorkspaceProjectHTTPServer,
 )
 from studio_server.http import SUPPORTED_ROUTES, DurableHTTPApplication
+from studio_server.oidc_admin import OidcAdminRoninHTTPServer
+from studio_server.oidc_http import OidcRoninHTTPServer
 from studio_server.scoped_http import RoninHTTPServer
 
 __all__ = (
@@ -21,6 +23,8 @@ __all__ = (
     "ControlPlaneUnavailable",
     "DurableExecutionService",
     "DurableHTTPApplication",
+    "OidcAdminRoninHTTPServer",
+    "OidcRoninHTTPServer",
     "RoninHTTPServer",
     "SUPPORTED_ROUTES",
     "WorkerPollResult",

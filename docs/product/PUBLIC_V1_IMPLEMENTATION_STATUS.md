@@ -2,7 +2,7 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
-**Observed source head:** `fe2abdd7ad6e99bbf1f99115c293d6871c5ca488` (2026-09-16).
+**Observed source head:** `3612ef67b6d81c8d0e0bf3aab0bf8404594f3d96` (2026-09-16).
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
@@ -43,7 +43,7 @@ This document records implementation state only. It does not claim test executio
 | Palantir Foundry/AIP migration | qualification pending | deterministic fixture discovery and fail-closed Python-function translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
 | Dataiku DSS migration | qualification pending | deterministic fixture discovery and fail-closed Python/SQL recipe translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
 | Web Studio | partial | authenticated static Studio shell supports job/evidence/event workflows and project-scoped read-only SQL; authoring editors, domain workflows and complete Public v1 journeys remain |
-| Public v1 release qualification | blocked | exact-head CI, security, Docker and release-packaging workflows are active and have passed on the latest published construction candidate; Public v1 remains blocked by incomplete mandatory product capabilities, provider certification and repository/legal administration; main remains unprotected |
+| Public v1 release qualification | blocked | exact-head CI, security, Docker and release-packaging workflows are active and have passed on the latest published construction candidate; main is protected with required PR approval, strict checks and no force-push/deletion; Public v1 remains blocked by incomplete mandatory product capabilities, provider certification and legal/release decisions |
 
 ## Public v1 source work merged in the current construction sequence
 

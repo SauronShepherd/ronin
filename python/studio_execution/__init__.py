@@ -25,6 +25,13 @@ from studio_orchestrator import (
 )
 from studio_storage import BoundedAsyncJobStore
 
+from .environment_service import (
+    DeploymentBindingService,
+    EnvironmentService,
+    EnvironmentServiceConflict,
+    EnvironmentServiceError,
+    EnvironmentServiceNotFound,
+)
 from .workspace_service import (
     ProjectService,
     WorkspaceService,
@@ -271,4 +278,10 @@ __all__ = (
     "WorkspaceServiceConflict",
     "WorkspaceServiceError",
     "WorkspaceServiceNotFound",
+    "DeploymentBindingService",
+    "EnvironmentService",
+    "EnvironmentServiceConflict",
+    "EnvironmentServiceError",
+    "EnvironmentServiceNotFound",
+    "WorkerPollResult",
 )
