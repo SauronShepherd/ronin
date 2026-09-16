@@ -119,10 +119,18 @@ def read_parquet_rows(
         raise ValueError("Parquet read limit must be non-negative")
     _, pq = _pyarrow()
     resolved = path.resolve(strict=True)
-    table = pq.read_table(resolved, columns=list(columns) if columns else None)
-    if limit is not None:
-        table = table.slice(0, limit)
-    return tuple(dict(row) for row in table.to_pylist())
+    selected_columns = list(columns) if columns else None
+    if limit is None:
+        return tuple(dict(row) for row in pq.read_table(resolved, columns=selected_columns).to_pylist())
+    if limit == 0:
+        return ()
+    rows: list[dict[str, object]] = []
+    parquet_file = pq.ParquetFile(resolved)
+    for batch in parquet_file.iter_batches(batch_size=min(limit, 1024), columns=selected_columns):
+        rows.extend(dict(row) for row in batch.to_pylist())
+        if len(rows) >= limit:
+            break
+    return tuple(rows[:limit])
 
 
 __all__ = (
