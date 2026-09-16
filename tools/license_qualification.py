@@ -31,7 +31,7 @@ class LicenseQualificationError(ValueError):
 
 
 def _metadata_value(dist: metadata.Distribution, key: str) -> str | None:
-    return cast(str | None, getattr(dist.metadata, "get")(key))
+    return cast(str | None, dist.metadata.get(key))
 
 
 def _canonical_name(value: str) -> str:
