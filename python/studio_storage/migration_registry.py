@@ -123,7 +123,7 @@ def migration_status(connection: sqlite3.Connection) -> tuple[dict[str, int | st
     return tuple(status)
 
 
-MigrationRunner = Callable[[sqlite3.Connection, Any], None]
+MigrationRunner = Callable[..., None]
 
 
 def migrate_storage(connection: sqlite3.Connection, *, now: Any) -> tuple[str, ...]:
