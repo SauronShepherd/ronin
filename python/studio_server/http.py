@@ -42,6 +42,7 @@ _MAX_CURSOR_BYTES = 4096
 _MAX_LIST_LIMIT = 100
 _DEFAULT_LIST_LIMIT = 50
 _DEFAULT_SERVICE_TIMEOUT_SECONDS = 30.0
+_REQUEST_READ_TIMEOUT_SECONDS = 30.0
 _STUDIO_ASSETS = {
     "/studio": "index.html",
     "/studio/": "index.html",
@@ -63,6 +64,10 @@ SUPPORTED_ROUTES = frozenset(
 
 class ServiceTimeoutError(TimeoutError):
     """Raised when an application service call exceeds its HTTP budget."""
+
+
+class RequestReadTimeoutError(TimeoutError):
+    """Raised when a client exceeds the request-body read budget."""
 
 
 def _now() -> Instant:
@@ -425,6 +430,10 @@ class RoninHTTPServer(ThreadingHTTPServer):
 
 
 class _Handler(BaseHTTPRequestHandler):
+    def setup(self) -> None:
+        super().setup()
+        self.connection.settimeout(_REQUEST_READ_TIMEOUT_SECONDS)
+
     def log_message(self, _format: str, *args: object) -> None:
         del args
 
@@ -517,7 +526,10 @@ class _Handler(BaseHTTPRequestHandler):
             raise ValueError("Content-Length must be an integer") from exc
         if length < 0 or length > _MAX_REQUEST_BYTES:
             raise ValueError("request body exceeds configured byte limit")
-        body = self.rfile.read(length)
+        try:
+            body = self.rfile.read(length)
+        except TimeoutError as exc:
+            raise RequestReadTimeoutError("request body read timed out") from exc
         try:
             return decode_canonical_json(body)
         except (UnicodeDecodeError, ValueError) as exc:
@@ -550,6 +562,9 @@ class _Handler(BaseHTTPRequestHandler):
                     "SQL engine dependency is unavailable",
                 )
                 return
+            except RequestReadTimeoutError as exc:
+                self._error(HTTPStatus.REQUEST_TIMEOUT, "request_read_timeout", str(exc))
+                return
             except ServiceTimeoutError as exc:
                 self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
                 return
@@ -580,6 +595,9 @@ class _Handler(BaseHTTPRequestHandler):
                     "idempotency_conflict",
                     "idempotency key already exists for a different request",
                 )
+                return
+            except RequestReadTimeoutError as exc:
+                self._error(HTTPStatus.REQUEST_TIMEOUT, "request_read_timeout", str(exc))
                 return
             except ServiceTimeoutError as exc:
                 self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
