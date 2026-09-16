@@ -265,7 +265,7 @@ def test_healthz_is_available_without_bearer_authorization(tmp_path: Path, monke
     try:
         with urlopen(f"http://127.0.0.1:{server.server_port}/healthz") as response:
             assert response.status == 200
-            assert json.loads(response.read()) == {"status": "ok"}
+            assert json.loads(response.read()) == {"status": "ready"}
     finally:
         server.shutdown()
         server.server_close()
