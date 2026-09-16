@@ -118,7 +118,8 @@ class SqliteOntologyStore:
                     f"{ontology.id}@{ontology.version}"
                 )
             connection.execute(
-                "INSERT INTO ontologies(workspace_id,ontology_id,version,definition_json,created_at) "
+                "INSERT INTO ontologies("
+                "workspace_id,ontology_id,version,definition_json,created_at) "
                 "VALUES (?,?,?,?,?)",
                 (str(workspace_id), str(ontology.id), ontology.version, payload, now),
             )
