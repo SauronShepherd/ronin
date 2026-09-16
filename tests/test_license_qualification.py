@@ -127,6 +127,15 @@ def test_locked_graph_reads_multiple_hash_continuations(tmp_path: Path) -> None:
     assert locked_graph(lock) == {"demo": "1.0.0"}
 
 
+def test_locked_graph_accepts_pep508_environment_markers(tmp_path: Path) -> None:
+    lock = tmp_path / "requirements-dev.lock"
+    lock.write_text(
+        f'demo==1.0.0 ; python_version >= "3.13" \\\n+    --hash=sha256:{_HASH}\n',
+        encoding="utf-8",
+    )
+    assert locked_graph(lock) == {"demo": "1.0.0"}
+
+
 def test_locked_graph_fails_closed_on_conflicting_versions(tmp_path: Path) -> None:
     lock = tmp_path / "requirements-dev.lock"
     lock.write_text(

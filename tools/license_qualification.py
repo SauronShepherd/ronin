@@ -10,7 +10,7 @@ import re
 import tomllib
 from pathlib import Path, PurePosixPath
 
-_LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \t\\]+)$")
+_LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \t\\;]+)(?:[ \t]+;[ \t]+.+)?$")
 _LOCKED_HASH = re.compile(r"^--hash=sha256:[0-9a-f]{64}$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _LICENSE_FILE_NAMES = ("license", "copying", "notice", "authors", "copyright")
