@@ -18,7 +18,7 @@ from studio_core import (
 )
 from studio_storage.secrets import SecretResolver
 
-from .contracts import ConnectorReadResult
+from .contracts import ConnectorReadResult, DiscoveryPage
 
 
 def _azure() -> Any:
@@ -77,6 +77,44 @@ class AzureBlobJsonConnector:
                     DiscoveredAsset(AssetHandle(connection.id, parts[:-1], parts[-1]), "blob", ())
                 )
         return tuple(sorted(assets, key=lambda item: item.handle.qualified_name))
+
+    def discover_page(
+        self,
+        connection: ConnectionDefinition,
+        secrets: SecretResolver,
+        *,
+        cursor: str | None = None,
+        page_size: int = 1000,
+    ) -> DiscoveryPage[DiscoveredAsset]:
+        """Discover one bounded Azure page using the SDK's opaque continuation token."""
+        del secrets
+        if page_size < 1 or page_size > 10_000:
+            raise ValueError("Azure discovery page_size must be between 1 and 10000")
+        _, prefix = self._config(connection)
+        listing = self._container_client(connection).list_blobs(name_starts_with=prefix)
+        if not hasattr(listing, "by_page"):
+            raise RuntimeError("Azure Blob listing does not expose paginated iteration")
+        pages = listing.by_page(continuation_token=cursor, results_per_page=page_size)
+        iterator = iter(pages)
+        try:
+            page = tuple(next(iterator))
+        except StopIteration:
+            return DiscoveryPage((), None, False)
+        next_cursor = getattr(pages, "continuation_token", None)
+        assets = []
+        for blob in page:
+            name = str(blob.name)
+            if name.lower().endswith((".json", ".jsonl")):
+                parts = tuple(part for part in name.split("/") if part)
+                assets.append(
+                    DiscoveredAsset(AssetHandle(connection.id, parts[:-1], parts[-1]), "blob", ())
+                )
+        truncated = bool(next_cursor)
+        return DiscoveryPage(
+            tuple(sorted(assets, key=lambda item: item.handle.qualified_name)),
+            next_cursor if truncated else None,
+            truncated,
+        )
 
     def read(
         self,
