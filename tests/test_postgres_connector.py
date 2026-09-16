@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 from studio_connectors.postgres import PostgresConnector
 from studio_core import AssetHandle, ConnectionDefinition, ConnectionId, SecretRef, SourceCheckpoint
-from studio_storage import EnvironmentSecretResolver
+from studio_storage import EnvironmentSecretResolver, PostgresMetadataStore
 
 
 class _Cursor:
@@ -33,6 +33,29 @@ class _Database:
         return self.cursor_instance
 
     def __enter__(self) -> _Database:
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        return None
+
+
+class _ReadyDatabase:
+    def __init__(self, result: object = (1,)) -> None:
+        self.result = result
+
+    def cursor(self) -> _ReadyDatabase:
+        return self
+
+    def execute(self, _query: str) -> None:
+        return None
+
+    def fetchone(self) -> object:
+        return self.result
+
+    def close(self) -> None:
+        return None
+
+    def __enter__(self) -> _ReadyDatabase:
         return self
 
     def __exit__(self, *args: object) -> None:
@@ -93,3 +116,16 @@ def test_postgres_rejects_non_snapshot_checkpoint() -> None:
             EnvironmentSecretResolver({"PGUSER": "ronin", "PGPASSWORD": "secret"}),
             checkpoint=SourceCheckpoint("cursor", "x"),
         )
+
+
+def test_postgres_metadata_readiness_is_fail_closed(monkeypatch: pytest.MonkeyPatch) -> None:
+    store = PostgresMetadataStore.__new__(PostgresMetadataStore)
+    database = _ReadyDatabase()
+    monkeypatch.setattr(store, "_connect", lambda: database)
+    assert store.ready()
+
+    def unavailable() -> _ReadyDatabase:
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(store, "_connect", unavailable)
+    assert not store.ready()
