@@ -29,14 +29,14 @@ class MLDependencyError(RuntimeError):
 
 def _sklearn() -> dict[str, Any]:
     try:
-        from sklearn.linear_model import LinearRegression, LogisticRegression
-        from sklearn.metrics import (
+        from sklearn.linear_model import LinearRegression, LogisticRegression  # type: ignore[import-untyped]
+        from sklearn.metrics import (  # type: ignore[import-untyped]
             accuracy_score,
             mean_absolute_error,
             mean_squared_error,
             r2_score,
         )
-        from sklearn.model_selection import train_test_split
+        from sklearn.model_selection import train_test_split  # type: ignore[import-untyped]
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise MLDependencyError(
             "tabular ML support requires the optional Ronin ml dependencies"
@@ -217,7 +217,7 @@ def _model_parameters(model: object, spec: TrainingSpec) -> dict[str, object]:
     classes_raw = getattr(model, "classes_", None)
     if coefficients_raw is None or intercepts_raw is None or classes_raw is None:
         raise ValueError("trained logistic regression model is missing fitted parameters")
-    coefficients = [
+    coefficients: list[list[float]] = [
         [_finite_float(value, "logistic coefficient") for value in row]
         for row in coefficients_raw.tolist()
     ]
@@ -253,6 +253,7 @@ def train_tabular(
         model = sk["LinearRegression"]()
     model.fit(x_train, y_train)
     predicted = model.predict(x_test)
+    metrics: tuple[tuple[str, float], ...]
     if spec.task == "classification":
         metrics = (("accuracy", float(sk["accuracy_score"](y_test, predicted))),)
     else:
