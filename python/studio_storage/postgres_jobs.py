@@ -15,6 +15,7 @@ from studio_orchestrator import (
     AttemptLimitExceeded,
     AttemptState,
     ClaimedRun,
+    EvidenceAvailability,
     Instant,
     Job,
     JobId,
@@ -614,6 +615,40 @@ class PostgresJobReadPort:
                     state=str(row["state"]),
                     result_json=str(row["result_json"]),
                     updated_at=Instant(str(row["updated_at"])),
+                )
+                for row in rows
+            )
+        finally:
+            connection.close()
+
+    def read_evidence(self, run_id: RunId) -> tuple[StoredEvidenceRef, ...]:
+        """Read evidence references in the same stable order as SQLite."""
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM ronin_evidence_refs WHERE run_id=%s "
+                    "ORDER BY cell_id,role,availability,digest",
+                    (str(run_id),),
+                )
+                rows = cursor.fetchall()
+            connection.commit()
+            return tuple(
+                StoredEvidenceRef(
+                    run_id=RunId(str(row["run_id"])),
+                    cell_id=None if row["cell_id"] is None else str(row["cell_id"]),
+                    role=str(row["role"]),
+                    digest_algorithm=str(row["digest_algorithm"]),
+                    digest=str(row["digest"]),
+                    media_type=str(row["media_type"]),
+                    size_bytes=int(row["size_bytes"]),
+                    storage_ref=str(row["storage_ref"]),
+                    availability=EvidenceAvailability(str(row["availability"])),
+                    unavailable_reason=(
+                        None
+                        if row["unavailable_reason"] is None
+                        else str(row["unavailable_reason"])
+                    ),
                 )
                 for row in rows
             )
