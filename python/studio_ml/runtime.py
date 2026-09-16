@@ -8,6 +8,7 @@ content-addressed artifacts; this runtime never loads arbitrary external pickle 
 from __future__ import annotations
 
 import pickle
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from io import BytesIO
@@ -177,11 +178,27 @@ def train_tabular(
     train_rows = len(rows) - test_rows
     if test_rows < 1 or train_rows < 1:
         raise ValueError("ML test_fraction must leave at least one train and test row")
+    if spec.task == "regression" and test_rows < 2:
+        raise ValueError(
+            "regression evaluation requires at least two test rows for the mandatory R2 metric; "
+            "increase the dataset size or test_fraction"
+        )
     if spec.task == "classification":
-        classes = set(y)
-        if test_rows < len(classes) or train_rows < len(classes):
+        class_counts = Counter(repr(value) for value in y)
+        class_count = len(class_counts)
+        if min(class_counts.values()) < 2:
             raise ValueError(
-                "classification test_fraction must leave every target class in train and test"
+                "classification stratification requires at least two rows in every target class"
+            )
+        if test_rows < class_count:
+            raise ValueError(
+                "classification test split must contain at least one row per target class; "
+                "increase the dataset size or test_fraction"
+            )
+        if train_rows < class_count:
+            raise ValueError(
+                "classification training split must contain at least one row per target class; "
+                "increase the dataset size or reduce test_fraction"
             )
     stratify = y if spec.task == "classification" else None
     x_train, x_test, y_train, y_test = sk["train_test_split"](
