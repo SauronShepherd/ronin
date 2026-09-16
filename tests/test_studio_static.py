@@ -54,6 +54,8 @@ def test_studio_assets_are_allowlisted_and_served(tmp_path) -> None:
             assert "sessionStorage" in script
             assert "run-project" in script
             assert "run-state" in script
+            assert "run-filter-summary" in script
+            assert "all projects" in script
             assert "URLSearchParams" in script
             assert 'params.set("cursor"' in script
             assert 'localStorage.setItem("ronin.token"' not in script
