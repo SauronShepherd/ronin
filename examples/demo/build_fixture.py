@@ -66,11 +66,9 @@ CELLS: tuple[tuple[str, str, str | None, str, tuple[str, ...]], ...] = (
         "publish",
         "code",
         "python",
-        "import json\n"
-        + _CUSTOMERS
-        + _ORDERS
-        + _TOTALS
-        + "print(json.dumps({'dataset': 'revenue_by_region', 'rows': len(totals), 'totals': totals}, sort_keys=True))",
+        "import json\n" + _CUSTOMERS + _ORDERS + _TOTALS + "print(json.dumps({"
+        "'dataset': 'revenue_by_region', 'rows': len(totals), "
+        "'totals': totals}, sort_keys=True))",
         ("quality-check",),
     ),
 )

@@ -23,7 +23,7 @@ _IMMUTABLE_IMAGE = re.compile(r"^(?:[^\s]+@)?sha256:[0-9a-f]{64}$")
 class _RejectRedirects(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
         del req, fp, code, msg, headers, newurl
-        return None
+        return
 
 
 def _env(name: str, default: str | None = None) -> str:
