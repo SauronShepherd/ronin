@@ -1,4 +1,4 @@
-"""HTTP-neutral durable execution application service shared by server and worker."""
+"""HTTP-neutral durable execution and control-plane application services."""
 
 from __future__ import annotations
 
@@ -31,6 +31,13 @@ from .environment_service import (
     EnvironmentServiceConflict,
     EnvironmentServiceError,
     EnvironmentServiceNotFound,
+)
+from .workspace_service import (
+    ProjectService,
+    WorkspaceService,
+    WorkspaceServiceConflict,
+    WorkspaceServiceError,
+    WorkspaceServiceNotFound,
 )
 
 
@@ -264,8 +271,14 @@ class DurableExecutionService:
 
 
 __all__ = (
-    "DeploymentBindingService",
     "DurableExecutionService",
+    "ProjectService",
+    "WorkerPollResult",
+    "WorkspaceService",
+    "WorkspaceServiceConflict",
+    "WorkspaceServiceError",
+    "WorkspaceServiceNotFound",
+    "DeploymentBindingService",
     "EnvironmentService",
     "EnvironmentServiceConflict",
     "EnvironmentServiceError",
