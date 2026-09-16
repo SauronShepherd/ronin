@@ -58,9 +58,7 @@ class ConnectionService:
         self._workspace(workspace_id, mutable=False)
         definition = self._connections.get_connection(workspace_id, connection_id)
         if definition is None:
-            raise ConnectionServiceNotFound(
-                f"connection not found: {workspace_id}/{connection_id}"
-            )
+            raise ConnectionServiceNotFound(f"connection not found: {workspace_id}/{connection_id}")
         return definition
 
     def list(self, workspace_id: WorkspaceId) -> tuple[ConnectionDefinition, ...]:
@@ -77,9 +75,7 @@ class ConnectionService:
         self._workspace(workspace_id, mutable=True)
         existing = self._connections.get_connection(workspace_id, definition.id)
         if existing is None:
-            raise ConnectionServiceNotFound(
-                f"connection not found: {workspace_id}/{definition.id}"
-            )
+            raise ConnectionServiceNotFound(f"connection not found: {workspace_id}/{definition.id}")
         if existing == definition:
             return existing
         return self._connections.replace_connection(workspace_id, definition, now=now)
@@ -87,9 +83,7 @@ class ConnectionService:
     def delete(self, workspace_id: WorkspaceId, connection_id: ConnectionId) -> None:
         self._workspace(workspace_id, mutable=True)
         if self._connections.get_connection(workspace_id, connection_id) is None:
-            raise ConnectionServiceNotFound(
-                f"connection not found: {workspace_id}/{connection_id}"
-            )
+            raise ConnectionServiceNotFound(f"connection not found: {workspace_id}/{connection_id}")
         if not self._connections.delete_connection(workspace_id, connection_id):
             raise ConnectionServiceNotFound(
                 f"connection not found: {workspace_id}/{connection_id}"
