@@ -1,8 +1,8 @@
 """Initial PostgreSQL job/run persistence port.
 
-This module deliberately exposes only the operations implemented here. It is
-not wired as the production JobStore until the fenced attempt, event, result,
-evidence and reclaim operations are complete.
+This module exposes the PostgreSQL implementation of the durable JobStore
+contract. It is wired for local simulation through ``RONIN_POSTGRES_DSN``;
+real-backend and HA qualification remain separate release gates.
 """
 
 from __future__ import annotations

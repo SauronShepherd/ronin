@@ -97,12 +97,12 @@
     {
       "id": "p14-deployment-operations",
       "status": "partial",
-      "summary": "Local/container/Compose foundation, PostgreSQL metadata adapter with transactional migration and healthcheck, SQLite online backup/restore primitives, S3-compatible artifact adapter, and a constrained single-replica SQLite Helm reference chart exist. PostgreSQL JobStore parity, Kubernetes production qualification, scheduler HA and production backup qualification remain incomplete."
+      "summary": "Local/container/Compose foundation, PostgreSQL metadata adapter with transactional migration and healthcheck, wired PostgreSQL JobStore, SQLite online backup/restore primitives, S3-compatible artifact adapter, and a constrained single-replica SQLite Helm reference chart exist. Kubernetes production qualification, scheduler HA and production backup qualification remain incomplete."
     },
     {
       "id": "ronin-bundle",
       "status": "partial",
-      "summary": "Deterministic verified archive IO, semantic inventory, native project/connection round-trips with explicit runtime/secret remapping, atomic multi-object project+connection commit, and explicit catalog asset/revision/lineage selected-subgraph export/planning/atomic commit exist; workflow/quality/ontology/ML/GenAI/data/semantic assets, PostgreSQL JobStore parity, certification and public API surfaces remain incomplete."
+      "summary": "Deterministic verified archive IO, semantic inventory, native project/connection round-trips with explicit runtime/secret remapping, atomic multi-object project+connection commit, and explicit catalog asset/revision/lineage selected-subgraph export/planning/atomic commit exist; workflow/quality/ontology/ML/GenAI/data/semantic assets, PostgreSQL bundle adapters, certification and public API surfaces remain incomplete."
     },
     {
       "id": "migration-microsoft-fabric",

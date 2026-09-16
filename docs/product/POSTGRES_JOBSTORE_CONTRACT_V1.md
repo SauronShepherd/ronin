@@ -55,8 +55,9 @@ PostgreSQL adapter must not expose database surrogate keys as public identity.
 5. Run the shared JobStore conformance suite against PostgreSQL and SQLite.
 6. Add concurrent multi-worker qualification, rollback/failure-injection tests,
    backup/restore evidence and Docker Compose integration.
-7. Only then wire `RONIN_POSTGRES_DSN` to the server; it must continue to fail
-   closed rather than silently falling back to SQLite.
+7. The server wires `RONIN_POSTGRES_DSN` only after the adapter contract is
+   implemented; initialization fails closed rather than silently falling back
+   to SQLite.
 
 Until all seven steps pass, PostgreSQL remains a metadata adapter only and
 Public v1 release qualification must continue to report JobStore parity as
