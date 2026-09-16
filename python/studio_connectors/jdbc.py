@@ -101,10 +101,13 @@ class JdbcIncrementalCheckpointV2:
 
     def order_by(self) -> str:
         """Return deterministic watermark-plus-tie-breaker ordering."""
-        return ", ".join(f'"{column}"' for column in (
-            self.incremental_column,
-            *self.tie_breaker_columns,
-        ))
+        return ", ".join(
+            f'"{column}"'
+            for column in (
+                self.incremental_column,
+                *self.tie_breaker_columns,
+            )
+        )
 
 
 class JdbcConnector:

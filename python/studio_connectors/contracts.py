@@ -72,4 +72,18 @@ class Connector(Protocol):
     ) -> ConnectorReadResult: ...
 
 
-__all__ = ("Connector", "ConnectorReadResult", "DiscoveryPage")
+@runtime_checkable
+class PagedConnector(Protocol):
+    """Connector capability for bounded, cursor-based asset discovery."""
+
+    def discover_page(
+        self,
+        connection: ConnectionDefinition,
+        secrets: SecretResolver,
+        *,
+        cursor: str | None = None,
+        page_size: int = 1000,
+    ) -> DiscoveryPage[DiscoveredAsset]: ...
+
+
+__all__ = ("Connector", "ConnectorReadResult", "DiscoveryPage", "PagedConnector")

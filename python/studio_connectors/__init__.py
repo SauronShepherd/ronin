@@ -1,7 +1,7 @@
 """Executable connector adapters for Ronin Public v1."""
 
 from .azure_blob_json import AzureBlobJsonConnector
-from .contracts import Connector, ConnectorReadResult, DiscoveryPage
+from .contracts import Connector, ConnectorReadResult, DiscoveryPage, PagedConnector
 from .http_json import HttpJsonConnector
 from .jdbc import JdbcConnector, JdbcDependencyError, JdbcIncrementalCheckpointV2
 from .ozone import OzoneJsonConnector
@@ -13,6 +13,7 @@ __all__ = (
     "Connector",
     "ConnectorReadResult",
     "DiscoveryPage",
+    "PagedConnector",
     "AzureBlobJsonConnector",
     "ConnectorRegistry",
     "builtin_connector_registry",
