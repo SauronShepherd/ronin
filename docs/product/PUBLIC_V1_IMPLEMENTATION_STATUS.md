@@ -2,74 +2,54 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
-**Observed source head:** `2f334c0f07ac023b0378bcdac6c6e5bc25150842` (2026-09-13).  
-**Status observed:** 2026-09-14 05:55 Europe/Madrid.  
+**Observed source head:** `fe2abdd7ad6e99bbf1f99115c293d6871c5ca488` (2026-09-16).
 **Release status:** **INCOMPLETE**.
 
-This document records merged implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist. Open PRs are called out separately and are not counted as landed capability.
+This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
 
 ## Status vocabulary
 
-- **implemented** — the stated foundation/path exists in merged source and is not known here to require another feature to perform its narrow claimed role;
-- **partial** — meaningful merged source implementation exists, but the mandatory Public v1 family lacks an end-to-end supported path;
-- **missing** — no supported merged implementation path exists for the mandatory capability;
+- **implemented** — the stated foundation/path exists in source and is not known here to require another feature to perform its narrow claimed role;
+- **partial** — meaningful source implementation exists, but the mandatory Public v1 family lacks an end-to-end supported path;
+- **missing** — no supported implementation path exists for the mandatory capability;
 - **blocked** — work/evidence cannot be truthfully completed under a current external or maintainer-controlled prerequisite;
 - **human decision** — a maintainer/product/security/legal decision must be made rather than invented by implementation;
 - **qualification pending** — implementation exists but current exact-head execution/release evidence does not.
 
 ## Repository-grounded capability snapshot
 
-| Capability | Status | Current merged source truth |
+| Capability | Status | Current source truth |
 | --- | --- | --- |
 | Durable execution foundation | implemented | Job/Run/Attempt, SQLite durability, leases/heartbeat/fencing/reclaim/resume, cancellation, evidence, local/container worker, HTTP/CLI/SDK foundation |
-| Workspace/project/source control | partial | workspace/project persistence, project manifest/Git identity, environment/deployment bindings and PostgreSQL core metadata adapter exist; complete Public v1 APIs/UI/source-control lifecycle and membership administration remain |
-| Connectors/ingestion | partial | governed local CSV/JSONL foundations plus executable bounded HTTP JSON and PostgreSQL discovery/read connectors exist; incremental cursor/CDC, writes, JDBC/object-store breadth and public surfaces remain |
-| Lakehouse/SQL | partial | Parquet read/write/inspection, governed Parquet catalog integration, DuckDB reference SQL, and optional Delta Lake/Iceberg adapters exist; schema/partition evolution, maintenance, remote credential wiring, cross-engine interoperability and server APIs remain |
-| Data Engineering Studio | partial | notebook/pipeline execution foundations exist; authoring CRUD APIs, SQL/notebook/pipeline public surfaces and Web Studio remain |
-| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, task→Job planning, execution outbox/reconciliation, deployment-aware controller, cron/events, cancellation/timeouts, bounded backfill, pools, leader fencing and daemon orchestration exist; branching/notifications, broad operator execution, public scheduler APIs/UI, deployment wiring and PostgreSQL multi-node HA qualification remain |
-| Catalog/lineage | partial | governed assets/revisions and declared/observed lineage persistence plus selected-subgraph Bundle export/planning/atomic import exist; search/glossary/classification/OpenLineage and complete asset integration remain |
-| Ontology/KG | partial | object/property/link/action schema and persistence exist; instance resolution/query/materialization/actions remain |
-| Graph intelligence/RQL | missing | no supported parser/planner/runtime/provider path |
-| Data quality/contracts | partial | durable contracts/results plus built-in null/unique/range/domain/row-count/freshness evaluation and optional blocking gate exist; referential/custom execution, scheduler/alert integration and public surfaces remain |
-| AI/ML/MLOps | partial | experiment/run/model provenance plus executable deterministic tabular classification/regression training, metrics, content-addressed artifact registration, digest-checked local inference and evaluation foundations exist; features, distributed training, MLflow interoperability, promotion, batch jobs and serving remain; executable-pickle hardening is open work and not counted as landed |
-| GenAI/RAG/agents | partial | provider-neutral runtime contracts, bounded OpenAI-compatible HTTP execution, SQLite vector retrieval, RAG execution and bounded declared-tool agent loop exist; production vector backends, richer provider APIs, evaluation and distributed execution remain |
-| Semantic models/dashboards | partial | canonical semantic model/metric/dashboard contracts, safe SQL compilation, semantic query execution and dashboard tile execution exist; persistence/catalog registration, joins/time grains/advanced semantics and Web Studio rendering remain |
-| Streaming/real-time | partial | source/sink/checkpoint contracts, SQLite checkpoint CAS, sink-before-checkpoint micro-batch execution, replay-safe Parquet sink and optional Kafka JSON source exist; windows/watermarks/stateful aggregation, table/Kafka sinks, scheduler bridge and UI remain |
-| Observability/alerts/FinOps | partial | normalized metrics/events, SQLite telemetry, alert rule/state engine, notification intents, usage/rate-card/cost/budget policy evaluation and actual-vs-estimate provenance exist; OpenTelemetry exporters, notification adapters, forecasting/anomaly detection, enforcement and public surfaces remain |
-| Multi-user security/audit | partial | stable user/service principals, groups/memberships, workspace roles, deny-by-default RBAC, actor context, OIDC JWT validation and authorization→append-only-audit bridge exist in merged source; public HTTP/CLI adoption, admin provisioning, PostgreSQL identity/audit persistence, network discovery and broader instrumentation remain; RBAC hardening is open work and not counted as landed |
-| Local/Compose/Kubernetes | partial | local/container/Compose foundation and a PostgreSQL adapter for workspace/project/environment/connection/catalog metadata exist; shared job/scheduler/security stores, object storage, Kubernetes/Helm, backup/restore and HA qualification remain |
-| Ronin Bundle | partial | deterministic verified archive IO, native project/connection round-trips, atomic multi-object project+connection commit, selected catalog subgraph round-trip, and workflow+schedules portability exist; quality/ontology/ML/GenAI/data/semantic assets, PostgreSQL commit adapters, certification and public surfaces remain |
-| Fabric migration | missing | no certified adapter |
-| Databricks migration | missing | no certified adapter |
-| Palantir Foundry/AIP migration | missing | no certified adapter |
-| Dataiku DSS migration | missing | no certified adapter |
-| Web Studio | missing | no current web application tree |
-| Public v1 release qualification | blocked | active GitHub Actions/current exact-head qualification remain absent; main remains unprotected and human/security/legal gates remain |
+| Workspace/project/source control | partial | workspace/project persistence, project manifest/Git identity, environment/deployment bindings; full Public v1 APIs/UI/membership remain |
+| Connectors/ingestion | partial | connection/discovery/checkpoint contracts, governed local CSV/JSONL, bounded HTTP/PostgreSQL, S3-compatible including Apache Ozone, Azure Blob and JDBC profiles; production driver qualification and broader incremental coverage remain |
+| Lakehouse/SQL | partial | bounded Arrow/Parquet open-data and streaming publication paths exist; complete Iceberg/Delta lifecycle and public SQL service remain |
+| Data Engineering Studio | partial | notebook/pipeline execution foundations exist; authoring APIs and Web Studio remain |
+| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded cron/event/backfill/controller services, bounded and continuous daemon orchestration, group backfill cancellation, and a bounded fail-closed conditional-branch contract with explicit skip decisions exist; durable branch-state integration, branching/skipped persistence, broad operator execution, durable notifications, public scheduler APIs/UI, process/signal/deployment wiring and PostgreSQL multi-node HA qualification remain |
+| Catalog/lineage | partial | governed assets/revisions, bounded search, declared/observed lineage, deterministic OpenLineage-style export, and selected-subgraph Bundle export/planning/atomic import exist; glossary/classification, transport certification and complete asset integration remain |
+| Ontology/KG | partial | object/property/link/action schema and persistence, instance materialization, link resolution, bounded graph queries and authorized actions exist; durable replay and public interfaces remain |
+| Graph intelligence/RQL | partial | bounded read-only RQL SELECT filtering over materialized KnowledgeGraph views exists; traversal, joins, planning, provider execution and public API exposure remain |
+| Data quality/contracts | partial | versioned definitions/results, all built-in checks, injected SQL/Python/referential checks, quality gates and scheduler release enforcement exist; alerts and UI remain |
+| AI/ML/MLOps | partial | experiment/run/model/evaluation provenance, deterministic tabular training, digest-verified inference and champion serving resolution exist; features, broader algorithms, MLflow and network serving remain |
+| GenAI/RAG/agents | partial | provider/prompt/vector/RAG/tool/agent contracts, OpenAI-compatible runtime, deterministic retrieval, bounded agents and telemetry callbacks exist; evaluation and production qualification remain |
+| Semantic models/dashboards | partial | safe semantic contracts, canonical persistence, parameterized metric compiler, SQL metric runtime and dashboard tile execution exist; joins, calculated metrics and public surfaces remain |
+| Streaming/real-time | partial | Kafka polling, durable CAS checkpoints, micro-batch processing, Parquet sinks, event-time windows, stream tables and scheduler integration exist; production qualification remains |
+| Observability/alerts/FinOps | partial | durable metrics/events, threshold alerts, webhook intents, Prometheus export, instrumentation, usage pricing, costs and budget gates exist; broader service adoption and production qualification remain |
+| Multi-user security/audit | partial | typed grants, bearer auth, transport policy, secret resolver and append-only audit foundation exist; OIDC/users/groups/service identities/role administration/full instrumentation remain |
+| Local/Compose/Kubernetes | partial | local/Compose foundation, PostgreSQL metadata healthcheck, PostgreSQL JobStore adapter wired to the server, single-node real-PostgreSQL lifecycle qualification, SQLite backup/restore, S3-compatible artifacts and constrained single-replica Helm chart exist; PostgreSQL HA, multi-node and production qualification remain |
+| Ronin Bundle | partial | deterministic verified archive IO, project/connection/catalog/workflow/schedule inventories, export, verified planning and atomic commits exist; quality/ontology/ML/GenAI/data/semantic assets, PostgreSQL adapters, certification and public surfaces remain |
+| Fabric migration | qualification pending | deterministic fixture discovery and fail-closed notebook-item translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
+| Databricks migration | qualification pending | deterministic fixture discovery and fail-closed notebook-job translation with dependency/schedule mapping and CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
+| Palantir Foundry/AIP migration | qualification pending | deterministic fixture discovery and fail-closed Python-function translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
+| Dataiku DSS migration | qualification pending | deterministic fixture discovery and fail-closed Python/SQL recipe translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
+| Web Studio | partial | authenticated static Studio shell supports job/evidence/event workflows and project-scoped read-only SQL; authoring editors, domain workflows and complete Public v1 journeys remain |
+| Public v1 release qualification | blocked | exact-head CI, security, Docker and release-packaging workflows are active and have passed on the latest published construction candidate; Public v1 remains blocked by incomplete mandatory product capabilities, provider certification and repository/legal administration; main remains unprotected |
 
-## Public v1 source work merged after the previous status snapshot
+## Public v1 source work merged in the current construction sequence
 
-PRs **#290–#301** are merged into the observed main head and materially change the capability snapshot:
+PRs **#242–#288** moved Public v1 from planning into source implementation. Scheduler foundations include deterministic task→Job identity/linking (#259), execution outbox/reconciliation (#260), deployment-aware controller (#262), cron/events (#263/#264), cancellation/timeouts (#265/#267), snapshot-safe backfill (#268), pools (#270), leader fencing (#271/#273), daemon orchestration (#274/#275), and group backfill cancellation (#276). Native Bundle portability added project semantic inventory/export (#278), project import planning (#279), runtime remapping plus atomic project/environment-binding commit (#280), connection round-trip with explicit secret-reference remapping (#282), deterministic dependency-ordered multi-object staging (#283), atomic project+connection commit (#285), explicit selected catalog subgraph export/planning (#287), and atomic catalog asset/revision/lineage commit (#288). PR #266 made Public v1 the active construction authority while preserving the historical v0.1 planning files verbatim.
 
-- **#290** — workflow and schedule Bundle portability;
-- **#291** — Parquet plus DuckDB reference open data/SQL path;
-- **#292** — executable HTTP JSON and PostgreSQL connectors;
-- **#293** — Delta Lake and Apache Iceberg open-table adapters;
-- **#294** — PostgreSQL core metadata backend;
-- **#295** — executable built-in data-quality runtime and blocking gate;
-- **#296** — semantic metrics and dashboard query runtime;
-- **#297** — executable tabular ML training/inference;
-- **#298** — executable GenAI/RAG/agent runtime;
-- **#299** — durable micro-batch streaming runtime;
-- **#300** — observability, alert and FinOps runtime;
-- **#301** — multi-user principals/groups/OIDC/workspace RBAC and authorization-audit bridge.
-
-These merges make those families real source capabilities, but they do **not** complete their Public v1 end-to-end paths. Public APIs, Web Studio, broader persistence/server profiles, interoperability, migration certification and exact-head execution evidence remain incomplete.
-
-## Open hardening and follow-up work is not merged source truth
-
-A substantial hardening queue is open after the 2026-09-13 audit. It includes store-authoritative RBAC membership (#302/#303/#305), ML split feasibility (#306/#307/#309), authorization-aware Job pagination (#310/#317/#319), SQLite RBAC database integrity (#311/#312/#314), stale generated packaging metadata (#315/#316), HTTP request/service deadlines (#320/#321/#323), OIDC HTTP/CLI/admin/server-profile follow-ups (#324 onward), PostgreSQL identity/audit adapters, and removal of executable pickle model artifacts (#353/#354/#356).
-
-Those PRs are intentionally **not** reflected as landed capability in the table above until merged. Their source tests are likewise not current exact-head qualification evidence.
+These merges do **not** imply that their parent capability families are complete. The scheduler still lacks broad task adapters, branching/skipped semantics, durable notifications, public scheduler APIs/UI, production process/signal/deployment wiring and PostgreSQL multi-node HA qualification. Bundle support now covers project, connection, and an explicitly selected catalog subgraph, but workflow/quality/ontology/ML/GenAI and later data/semantic assets remain outside it. Catalog export intentionally does not invent whole-catalog revision discovery because the current catalog port does not expose it. PostgreSQL does not yet implement the Bundle atomic commit ports.
 
 ## Invariants that remain mandatory
 
@@ -89,21 +69,22 @@ Those PRs are intentionally **not** reflected as landed capability in the table 
 - **#62:** language-neutral runner protocol family and compatibility semantics.
 - **#45:** choose and verify a real private vulnerability reporting path before publishing a security policy that points to it.
 - **License/NOTICE/attribution:** tooling may inventory facts; maintainers/legal review own conclusions.
-- **#199 and dependent release issues:** automated qualification is currently disabled and must not be silently re-enabled or treated as executed evidence.
-- **#63:** repository/ref protection is an administrative release-gate action after required checks are restored.
+- **#199 and dependent release issues:** automated qualification is active; each claim must still identify the exact candidate SHA, and green automation does not replace product, provider, legal or administrative release evidence.
+- **#63:** repository/ref protection remains an administrative release-gate action even though the required checks are now restored.
 
 ## Updated critical path
 
-1. Keep this ledger and the construction plan synchronized with merged repository truth; never count open PRs as landed.
-2. Convert existing domain/runtime capabilities into application services and supported public APIs, beginning with workspace/project/security, scheduler and executable data/AI paths.
-3. Complete the multi-user server profile: store-authoritative RBAC, OIDC HTTP/CLI adoption, admin provisioning, shared PostgreSQL identity/audit persistence, broader audit instrumentation and production secret boundaries.
-4. Expand the Public v1 API and build Web Studio against documented/generated clients rather than private in-process calls.
-5. Finish connector incrementality/CDC, lakehouse lifecycle/interoperability, scheduler branching/notifications/operator breadth and PostgreSQL HA semantics.
-6. Extend native Bundle coverage to quality/ontology/ML/GenAI/data/semantic families and add PostgreSQL commit adapters plus certification evidence.
-7. Complete ontology/KG actions/query and RQL, then close advanced ML/GenAI/semantic/streaming/observability gaps already exposed by the first executable runtimes.
-8. Add an S3-compatible artifact/object-store profile and Kubernetes/Helm only after shared metadata/security/job/scheduler semantics are real.
-9. Build and certify the four vendor migration profiles only against executable canonical target capabilities, with exhaustive migration reports.
-10. Restore and run exact-candidate qualification only when authorized; Public v1 remains incomplete until every mandatory family has its supported end-to-end path and release evidence.
+1. Keep this ledger and the active construction plan synchronized with repository truth.
+2. Finish scheduler broad task adapters, branching/notifications, public scheduler APIs/UI, process/deployment wiring and PostgreSQL HA semantics/qualification.
+3. Extend native Bundle support to the next executable canonical metadata family, preferring workflow/pipeline persistence if its canonical snapshot/store contracts preserve identity without deployment locators; then quality/ontology/ML/GenAI as their contracts permit.
+4. Complete store ports for remaining domains; then implement PostgreSQL adapters and an S3-compatible artifact store without changing logical references.
+5. Implement the first open data path: Arrow/Parquet + reference open table profile + reference SQL engine, with catalog/lineage/quality hooks.
+6. Complete remote connectors and safe incremental checkpoint execution.
+7. Expand the Public v1 API and begin Web Studio against documented/generated clients.
+8. Complete quality runtime, ontology/KG actions/query, RQL, ML, GenAI, semantic/dashboard, streaming, observability/alerts/FinOps and multi-user identity.
+9. Add Kubernetes/Helm after the server metadata/object-store/identity profile is real.
+10. Build the four vendor migration profiles only against executable canonical target capabilities and certify them with exhaustive migration reports.
+11. Restore and run exact-candidate qualification only when authorized; Public v1 remains incomplete until every mandatory family has its supported end-to-end path.
 
 ## Historical v0.1 planning documents
 

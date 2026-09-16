@@ -12,7 +12,7 @@ from studio_core.canonical_json import encode as encode_canonical_json
 from studio_orchestrator import Instant
 
 from .scheduler_controller import SchedulerControllerStore, migrate_scheduler_controller
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 
 _SCHEDULE_SCHEMA_VERSION = 1
 _SCHEDULE_MIGRATIONS = {1: "scheduler_schedule_001.sql"}
@@ -31,9 +31,7 @@ class ScheduleFire:
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler_schedule(connection: sqlite3.Connection, *, now: Instant | str) -> None:
@@ -54,15 +52,12 @@ def migrate_scheduler_schedule(connection: sqlite3.Connection, *, now: Instant |
         )
     migrations_dir = Path(__file__).with_name("migrations")
     for version in range(current + 1, _SCHEDULE_SCHEMA_VERSION + 1):
-        script = migrations_dir.joinpath(_SCHEDULE_MIGRATIONS[version]).read_text(
-            encoding="utf-8"
-        )
+        script = migrations_dir.joinpath(_SCHEDULE_MIGRATIONS[version]).read_text(encoding="utf-8")
         connection.execute("BEGIN IMMEDIATE")
         try:
             _execute_script_in_transaction(connection, script)
             connection.execute(
-                "INSERT INTO scheduler_schedule_schema_migrations(version,applied_at) "
-                "VALUES (?,?)",
+                "INSERT INTO scheduler_schedule_schema_migrations(version,applied_at) VALUES (?,?)",
                 (version, now),
             )
             connection.execute("COMMIT")

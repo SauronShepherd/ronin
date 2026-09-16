@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from studio_core import (
     ExecutionProfile,
     Project,
@@ -127,9 +126,7 @@ def test_import_plan_rejects_missing_or_archived_target_workspace(tmp_path: Path
 def test_import_plan_rejects_inventory_identity_mismatch(tmp_path: Path) -> None:
     project = _manifest()
     object_path = "objects/project/project.json"
-    inventory = BundleInventory(
-        (BundleInventoryObject("project", "project:other", object_path),)
-    )
+    inventory = BundleInventory((BundleInventoryObject("project", "project:other", object_path),))
     bundle = tmp_path / "mismatch.roninbundle"
     write_bundle(
         bundle,

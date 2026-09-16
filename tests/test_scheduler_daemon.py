@@ -156,9 +156,7 @@ def test_daemon_schedule_work_runs_under_durable_leadership(tmp_path: Path) -> N
                 clock=clock,
                 token="leader-a",
             )
-            cycle = await daemon.run_once(
-                SchedulerDaemonWork(schedule_workspaces=(_WS,))
-            )
+            cycle = await daemon.run_once(SchedulerDaemonWork(schedule_workspaces=(_WS,)))
             assert cycle.is_leader
             assert cycle.leader_generation == 1
             assert cycle.schedule_fires == 1

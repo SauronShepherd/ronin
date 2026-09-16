@@ -32,7 +32,12 @@ def _decimal(value: Decimal | str, name: str, *, allow_zero: bool = True) -> Dec
 
 
 def _labels(values: tuple[tuple[str, str], ...]) -> tuple[tuple[str, str], ...]:
-    normalized = tuple(sorted((_text(key, "FinOps label key"), _text(value, "FinOps label value")) for key, value in values))
+    normalized = tuple(
+        sorted(
+            (_text(key, "FinOps label key"), _text(value, "FinOps label value"))
+            for key, value in values
+        )
+    )
     keys = [key for key, _ in normalized]
     if len(keys) != len(set(keys)):
         raise ValueError("FinOps label keys must be unique")

@@ -44,7 +44,7 @@ def test_sqlite_configuration_migration_and_reopen(tmp_path: Path) -> None:
     first = open_database(path)
     second = open_database(path)
     try:
-        assert schema_version(first) == 2
+        assert schema_version(first) == 3
         _assert_connection_pragmas(first)
         _assert_connection_pragmas(second)
     finally:
@@ -85,7 +85,7 @@ def test_v1_database_upgrades_with_backward_compatible_execution_defaults(tmp_pa
     assert restored.parameters_json == "{}"
     connection = open_database(path)
     try:
-        assert schema_version(connection) == 2
+        assert schema_version(connection) == 3
     finally:
         connection.close()
 

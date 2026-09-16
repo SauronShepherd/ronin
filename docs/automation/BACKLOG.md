@@ -51,7 +51,7 @@ Next portability work:
 - Arrow/Parquet interchange.
 - Reference open table lifecycle using Iceberg; documented Delta compatibility subset.
 - SQL engine protocol and local reference engine.
-- PostgreSQL, JDBC, S3-compatible, Azure-compatible and HTTP connectors.
+- PostgreSQL, JDBC, S3-compatible (including Apache Ozone S3 Gateway), Azure-compatible and HTTP connectors.
 - Fenced/CAS incremental checkpoints committed after governed output.
 
 ## Engineering and governance
