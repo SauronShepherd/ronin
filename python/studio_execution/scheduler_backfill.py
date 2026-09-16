@@ -28,9 +28,7 @@ class BackfillTickResult:
 
 
 def _instant_datetime(value: Instant | str) -> datetime:
-    return datetime.strptime(
-        str(Instant(value)), "%Y-%m-%dT%H:%M:%S.%fZ"
-    ).replace(tzinfo=UTC)
+    return datetime.strptime(str(Instant(value)), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
 
 
 def _minute_instant(value: datetime) -> Instant:
@@ -42,9 +40,7 @@ def _previous_minute(value: Instant | str) -> Instant:
 
 
 def _bounded_through(cursor: Instant, end_at: Instant, max_scan_minutes: int) -> Instant:
-    candidate = _minute_instant(
-        _instant_datetime(cursor) + timedelta(minutes=max_scan_minutes)
-    )
+    candidate = _minute_instant(_instant_datetime(cursor) + timedelta(minutes=max_scan_minutes))
     return end_at if end_at < candidate else candidate
 
 

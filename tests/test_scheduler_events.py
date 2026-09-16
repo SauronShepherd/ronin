@@ -4,7 +4,15 @@ import asyncio
 from pathlib import Path
 
 import pytest
-from studio_core import Node, OperatorRef, Pipeline, WorkflowDefinition, WorkflowId, Workspace, WorkspaceId
+from studio_core import (
+    Node,
+    OperatorRef,
+    Pipeline,
+    WorkflowDefinition,
+    WorkflowId,
+    Workspace,
+    WorkspaceId,
+)
 from studio_core.scheduler_events import (
     EventTriggerDefinition,
     EventTriggerId,

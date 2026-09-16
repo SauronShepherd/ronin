@@ -19,6 +19,7 @@ services:
       RONIN_HOST: 0.0.0.0
       RONIN_PORT: "8080"
       RONIN_BIND_POLICY: container-internal
+      RONIN_SQL_PARQUET_ROOT: ${RONIN_SQL_PARQUET_ROOT:-}
     volumes:
       - ronin-data:/var/lib/ronin
     ports:
@@ -70,6 +71,12 @@ services:
       RONIN_RUNNER_BROKER_URL: http://runner-broker:8090
       RONIN_RUNNER_BROKER_TOKEN: ${RONIN_RUNNER_BROKER_TOKEN:?set RONIN_RUNNER_BROKER_TOKEN before starting Ronin}
       RONIN_RUNNER_BROKER_ALLOW_INSECURE: "true"
+      RONIN_IMAGE_REF: ${RONIN_IMAGE_REF:-ronin:local}
+      RONIN_ARTIFACT_BACKEND: ${RONIN_ARTIFACT_BACKEND:-local}
+      RONIN_S3_BUCKET: ${RONIN_S3_BUCKET:-}
+      RONIN_S3_PREFIX: ${RONIN_S3_PREFIX:-ronin/artifacts}
+      RONIN_S3_ENDPOINT_URL: ${RONIN_S3_ENDPOINT_URL:-}
+      RONIN_S3_REGION: ${RONIN_S3_REGION:-}
     volumes:
       - ronin-data:/var/lib/ronin
       - .:/workspace:ro

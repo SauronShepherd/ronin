@@ -169,7 +169,9 @@ class Requirement:
         action = payload["action"]
         if not isinstance(version, int) or isinstance(version, bool) or not isinstance(action, str):
             raise ValueError("authorization requirement has invalid field types")
-        return cls(_require_action(action), ResourceScope.from_payload(payload["resource"]), version)
+        return cls(
+            _require_action(action), ResourceScope.from_payload(payload["resource"]), version
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -377,17 +379,41 @@ class GrantSet:
     def requirements(self) -> tuple[Requirement, ...]:
         """Losslessly expand unconstrained bearer-token grants to requirements."""
         requirements = [
-            requirement
-            for grant in self.grants
-            for requirement in grant.requirements()
+            requirement for grant in self.grants for requirement in grant.requirements()
         ]
         return tuple(sorted(requirements, key=lambda item: item.canonical_key))
+
+    def exact_resource_ids(self, action: Action, *, kind: str) -> tuple[str, ...] | None:
+        """Return exact resource IDs, or ``None`` when a wildcard is granted.
+
+        An empty tuple means there is no usable grant for the resource kind.
+        Constraints are excluded because they cannot safely describe a complete
+        visible-resource set for authorization-before-pagination.
+        """
+        matching = tuple(
+            grant
+            for grant in self.grants
+            if action in grant.actions and grant.resource.kind == kind and not grant.constraints
+        )
+        if any(grant.resource.identifier is None for grant in matching):
+            return None
+        return tuple(
+            sorted(
+                {
+                    grant.resource.identifier
+                    for grant in matching
+                    if grant.resource.identifier is not None
+                }
+            )
+        )
 
 
 def requirement_to_bearer_scope(requirement: Requirement) -> str:
     """Encode one requirement as a stable v1 bearer-scope string."""
-    identifier = "*" if requirement.resource.identifier is None else quote(
-        requirement.resource.identifier, safe=""
+    identifier = (
+        "*"
+        if requirement.resource.identifier is None
+        else quote(requirement.resource.identifier, safe="")
     )
     return ":".join(
         (

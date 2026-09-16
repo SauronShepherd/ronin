@@ -35,7 +35,7 @@ _RESOURCE_CONTROL_PREFIX = "RONIN_RESOURCE_V1\t"
 _RESOURCE_CONTROL_MAX_BYTES = 16 * 1024
 _RESOURCE_SCHEMA = "ronin.container-resource-observation/v1"
 _MEASUREMENT_SCOPE = "observed_cgroup_usage_and_enforced_limits"
-_RESOURCE_WRAPPER = r'''
+_RESOURCE_WRAPPER = r"""
 exec 3>&2
 exec 2>&1
 
@@ -91,7 +91,7 @@ else
 fi
 exec 3>&-
 exit "$returncode"
-'''.strip()
+""".strip()
 
 
 def _require_single_line(value: str, name: str) -> None:
@@ -261,9 +261,7 @@ class AsyncioCommandRunner:
         control_task: asyncio.Task[tuple[bytes, bool]] | None = None
         if capture_control:
             stderr = cast(asyncio.StreamReader, process.stderr)
-            control_task = asyncio.create_task(
-                self._collect_stream(stderr, self.max_control_bytes)
-            )
+            control_task = asyncio.create_task(self._collect_stream(stderr, self.max_control_bytes))
         wait_task = asyncio.create_task(process.wait())
         completed_normally = False
         try:
@@ -332,7 +330,9 @@ class AsyncioCommandRunner:
                 control_lines.append(line)
             else:
                 diagnostics.append(line)
-        control_output = b"".join(control_lines).decode("utf-8", errors="replace")
+        control_output = (
+            b"".join(control_lines).decode("utf-8", errors="replace").replace("\r\n", "\n")
+        )
         return raw_output + b"".join(diagnostics), control_output, False
 
     def _format_output(self, raw_output: bytes, truncated: bool) -> str:

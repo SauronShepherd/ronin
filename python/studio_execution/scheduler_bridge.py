@@ -13,8 +13,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import cast
 
+from studio_core import WorkflowRun
 from studio_orchestrator import Instant, Job, JobId, JobState, Run, RunId, RunState
-from studio_storage.scheduler import WorkflowRun
 from studio_storage.scheduler_fencing import ClaimedTask
 
 

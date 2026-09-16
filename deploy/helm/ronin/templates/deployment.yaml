@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ronin.fullname" . }}
+spec:
+  replicas: {{ .Values.server.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "ronin.name" . }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "ronin.name" . }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: server
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["ronin", "serve"]
+          env:
+            - name: RONIN_DB
+              value: /var/lib/ronin/ronin.sqlite3
+            - name: RONIN_DATA_DIR
+              value: /var/lib/ronin
+            - name: RONIN_HOST
+              value: 0.0.0.0
+            - name: RONIN_PORT
+              value: "8080"
+            - name: RONIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ronin.fullname" . }}
+                  key: token
+            - name: RONIN_TOKEN_SCOPES
+              value: {{ .Values.server.tokenScopes | quote }}
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/ronin
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "ronin.fullname" . }}-data

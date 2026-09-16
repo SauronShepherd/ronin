@@ -41,33 +41,42 @@ def encode_job_cursor(
     created_at: Instant,
     job_id: JobId,
     project_id: str | None,
+    project_ids: tuple[str, ...] | None = None,
     state: JobState | None,
 ) -> str:
-    return encode_cursor(
-        {
-            "v": _CURSOR_VERSION,
-            "kind": "jobs",
-            "created_at": str(created_at),
-            "job_id": str(job_id),
-            "project_id": project_id,
-            "state": _job_state_value(state),
-        }
-    )
+    payload: dict[str, object] = {
+        "v": _CURSOR_VERSION,
+        "kind": "jobs",
+        "created_at": str(created_at),
+        "job_id": str(job_id),
+        "project_id": project_id,
+        "state": _job_state_value(state),
+    }
+    if project_ids is not None:
+        payload["project_ids"] = project_ids
+    return encode_cursor(payload)
 
 
 def decode_job_cursor(
     cursor: str,
     *,
     project_id: str | None,
+    project_ids: tuple[str, ...] | None = None,
     state: JobState | None,
 ) -> tuple[Instant, JobId]:
     payload = decode_cursor(cursor)
     expected_keys = {"v", "kind", "created_at", "job_id", "project_id", "state"}
-    if set(payload) != expected_keys or payload.get("v") != _CURSOR_VERSION:
+    legacy_keys = expected_keys
+    scoped_keys = expected_keys | {"project_ids"}
+    if set(payload) not in (legacy_keys, scoped_keys) or payload.get("v") != _CURSOR_VERSION:
         raise ValueError("invalid job cursor")
     if payload.get("kind") != "jobs":
         raise ValueError("invalid job cursor")
     if payload.get("project_id") != project_id or payload.get("state") != _job_state_value(state):
+        raise ValueError("job cursor does not match filters")
+    if project_ids is not None and payload.get("project_ids") != project_ids:
+        raise ValueError("job cursor does not match filters")
+    if project_ids is None and "project_ids" in payload:
         raise ValueError("job cursor does not match filters")
     created_at = payload.get("created_at")
     job_id = payload.get("job_id")

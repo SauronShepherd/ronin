@@ -7,9 +7,10 @@ import asyncio
 import json
 import os
 import shutil
+import sqlite3
 import sys
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
@@ -17,14 +18,22 @@ from typing import cast
 from studio_core import GrantSet, ProjectManifest
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import DurableExecutionService
+from studio_migration import (
+    discover_databricks,
+    discover_dataiku,
+    discover_fabric,
+    discover_foundry,
+)
 from studio_notebook import (
     NotebookDependencyAnalysis,
     NotebookDocument,
     analyze_notebook_dependencies,
 )
-from studio_orchestrator import Instant
+from studio_orchestrator import Instant, JobStore
 from studio_server import RoninHTTPServer
-from studio_storage import SqliteJobStore
+from studio_sql import DuckDbDependencyError, DuckDbSqlEngine
+from studio_storage import PostgresJobReadPort, PostgresMetadataStore, SqliteJobStore
+from studio_storage.migration_registry import MigrationStatusError, migration_status
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
 from .network import TERMINAL_STATES, ControlPlaneClient, ControlPlaneError
@@ -84,6 +93,20 @@ def _parser() -> argparse.ArgumentParser:
     cancel = commands.add_parser("cancel", help="request durable job cancellation")
     cancel.add_argument("job_id")
     cancel.add_argument("--json", action="store_true")
+    migrate = commands.add_parser("migrate", help="inspect a vendor project export")
+    migrate_commands = migrate.add_subparsers(dest="migrate_command", required=True)
+    inventory = migrate_commands.add_parser(
+        "inventory", help="generate a canonical migration report"
+    )
+    inventory.add_argument("platform", choices=("databricks", "fabric", "dataiku", "foundry"))
+    inventory.add_argument("source", type=Path)
+    inventory.add_argument("--source-version", default="unknown")
+    inventory.add_argument("--output", type=Path)
+    migration_status_command = migrate_commands.add_parser(
+        "status", help="show local storage migration status"
+    )
+    migration_status_command.add_argument("--database", type=Path)
+    migration_status_command.add_argument("--json", action="store_true")
     return parser
 
 
@@ -202,7 +225,7 @@ def _plan(project: Path, target: str) -> int:
         cell.id: identity.reference
         for cell, identity in zip(document.notebook.cells, document.cell_identities, strict=True)
     }
-    print(f"target: {target_path.relative_to(project_dir)}")
+    print(f"target: {target_path.relative_to(project_dir).as_posix()}")
     print("execution order:")
     for position, cell_id in enumerate(analysis.execution_order, start=1):
         print(f"  {position}. {references[cell_id]}")
@@ -357,6 +380,49 @@ def _cancel(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _migration_inventory(namespace: argparse.Namespace) -> int:
+    source = namespace.source.resolve(strict=True)
+    if not source.is_file():
+        raise CliError(f"migration source is not a file: {source}")
+    if source.stat().st_size > 16 * 1024 * 1024:
+        raise CliError("migration source exceeds the 16 MiB CLI inspection limit")
+    document = _read_text(source, "migration source")
+    discover = {
+        "databricks": discover_databricks,
+        "fabric": discover_fabric,
+        "dataiku": discover_dataiku,
+        "foundry": discover_foundry,
+    }[namespace.platform]
+    report = discover(document, source_version=namespace.source_version)
+    output = report.to_json() + "\n"
+    if namespace.output is None:
+        print(output, end="")
+    else:
+        namespace.output.resolve().write_text(output, encoding="utf-8", newline="\n")
+        print(f"migration report written: {namespace.output.resolve()}")
+    return 0
+
+
+def _migration_status(namespace: argparse.Namespace) -> int:
+    database = (namespace.database or _database()).expanduser().resolve()
+    if not database.is_file():
+        raise CliError(f"database does not exist: {database}")
+    try:
+        connection = sqlite3.connect(f"file:{database}?mode=ro", uri=True)
+    except sqlite3.Error as exc:
+        raise CliError(f"unable to open database read-only: {database}") from exc
+    try:
+        rows = migration_status(connection)
+    finally:
+        connection.close()
+    if namespace.json:
+        print(json.dumps(rows, sort_keys=True, separators=(",", ":")))
+    else:
+        for row in rows:
+            print(f"{row['domain']}\t{row['current']}\t{row['supported']}\t{row['state']}")
+    return 0
+
+
 def _now() -> Instant:
     return Instant(datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
@@ -365,7 +431,29 @@ def _database() -> Path:
     return Path(_env("RONIN_DB", ".ronin/ronin.sqlite3")).expanduser().resolve()
 
 
+def _sql_engine_from_environment() -> DuckDbSqlEngine | None:
+    raw_root = os.environ.get("RONIN_SQL_PARQUET_ROOT")
+    if raw_root is None or not raw_root.strip():
+        return None
+    root = Path(raw_root).expanduser().resolve()
+    if not root.is_dir():
+        raise CliError("RONIN_SQL_PARQUET_ROOT must reference an existing directory")
+    try:
+        engine = DuckDbSqlEngine()
+    except DuckDbDependencyError as exc:
+        raise CliError(str(exc)) from exc
+    try:
+        for path in sorted(root.glob("*.parquet")):
+            engine.register_parquet(path.stem, str(path))
+    except Exception:
+        engine.close()
+        raise
+    return engine
+
+
 def _serve() -> int:
+    postgres_dsn = os.environ.get("RONIN_POSTGRES_DSN")
+    readiness_probe: Callable[[], bool] | None = None
     try:
         port = int(_env("RONIN_PORT", "8080"))
     except ValueError as exc:
@@ -374,18 +462,43 @@ def _serve() -> int:
         raise CliError("RONIN_PORT must be between 1 and 65535")
     database = _database()
     database.parent.mkdir(parents=True, exist_ok=True)
-    service = DurableExecutionService(SqliteJobStore(database, migration_now=_now()))
+    job_store: JobStore
+    if postgres_dsn is not None and not postgres_dsn.strip():
+        raise CliError("RONIN_POSTGRES_DSN must be non-empty and trimmed")
+    if postgres_dsn is not None:
+        try:
+            postgres_metadata = PostgresMetadataStore(postgres_dsn, application_name="ronin-server")
+            job_store = PostgresJobReadPort(postgres_dsn, application_name="ronin-server")
+
+            def readiness_probe() -> bool:
+                return _postgres_ready(postgres_metadata)
+
+        except Exception as exc:
+            raise CliError(f"PostgreSQL backend initialization failed: {exc}") from exc
+    else:
+        job_store = SqliteJobStore(database, migration_now=_now())
+    service = DurableExecutionService(job_store)
+    sql_engine = _sql_engine_from_environment()
     server = RoninHTTPServer(
         (_env("RONIN_HOST", "127.0.0.1"), port),
         service,
         token=_token(),
         grants=_token_grants(),
+        sql_engine=sql_engine,
+        readiness_probe=readiness_probe,
     )
     try:
         server.serve_forever()
     finally:
         server.server_close()
+        if sql_engine is not None:
+            sql_engine.close()
     return 0
+
+
+def _postgres_ready(metadata: PostgresMetadataStore) -> bool:
+    """Probe the configured PostgreSQL connection through the metadata adapter."""
+    return metadata.ready()
 
 
 def _worker() -> int:
@@ -434,8 +547,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _jobs(namespace)
         if command == "cancel":
             return _cancel(namespace)
+        if command == "migrate":
+            if namespace.migrate_command == "inventory":
+                return _migration_inventory(namespace)
+            if namespace.migrate_command == "status":
+                return _migration_status(namespace)
+            raise CliError(f"unsupported migrate command: {namespace.migrate_command}")
         raise CliError(f"unsupported command: {command}")
-    except (CliError, ControlPlaneError, ValueError) as exc:
+    except (CliError, ControlPlaneError, MigrationStatusError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     except KeyboardInterrupt:
