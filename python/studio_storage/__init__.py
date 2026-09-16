@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from studio_storage.artifacts import ArtifactIntegrityError, ArtifactRef, LocalArtifactStore
+from studio_storage.artifacts import (
+    ArtifactIntegrityError,
+    ArtifactPage,
+    ArtifactRef,
+    LocalArtifactStore,
+)
 from studio_storage.async_artifacts import BoundedAsyncArtifactStore
 from studio_storage.async_store import StorageBackpressureError
 from studio_storage.backup import backup_sqlite, restore_sqlite
@@ -99,6 +104,7 @@ from studio_storage.workspaces import (
 __all__ = (
     "ArtifactIntegrityError",
     "ArtifactRef",
+    "ArtifactPage",
     "backup_sqlite",
     "ArtifactStore",
     "BUNDLE_MANIFEST_PATH",

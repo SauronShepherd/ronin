@@ -23,6 +23,15 @@ class ArtifactIntegrityError(ValueError):
     """Raised when persisted artifact content no longer matches its digest."""
 
 
+@dataclass(frozen=True, slots=True)
+class ArtifactPage:
+    """Bounded artifact inventory page with an opaque local cursor."""
+
+    digests: tuple[str, ...]
+    next_cursor: str | None
+    truncated: bool
+
+
 class LocalArtifactStore:
     def __init__(self, root: Path) -> None:
         self._root = root
@@ -105,6 +114,24 @@ class LocalArtifactStore:
             )
         )
 
+    def list_digests_page(
+        self, *, cursor: str | None = None, page_size: int = 1000
+    ) -> ArtifactPage:
+        if page_size < 1 or page_size > 10_000:
+            raise ValueError("artifact discovery page_size must be between 1 and 10000")
+        offset = 0
+        if cursor is not None:
+            try:
+                offset = int(cursor)
+            except ValueError as exc:
+                raise ValueError("artifact discovery cursor is invalid") from exc
+            if offset < 0:
+                raise ValueError("artifact discovery cursor is invalid")
+        digests = self.list_digests()
+        page = digests[offset : offset + page_size]
+        truncated = offset + len(page) < len(digests)
+        return ArtifactPage(page, str(offset + len(page)) if truncated else None, truncated)
+
     def storage_ref_for_digest(self, digest: str) -> str:
         self._path_for_digest(digest)
         return f"artifact://sha256/{digest}"
@@ -123,4 +150,4 @@ class LocalArtifactStore:
         return self._root / "sha256" / digest[:2] / digest
 
 
-__all__ = ["ArtifactIntegrityError", "ArtifactRef", "LocalArtifactStore"]
+__all__ = ["ArtifactIntegrityError", "ArtifactPage", "ArtifactRef", "LocalArtifactStore"]

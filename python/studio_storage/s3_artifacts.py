@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
-from .artifacts import ArtifactIntegrityError, ArtifactRef
+from .artifacts import ArtifactIntegrityError, ArtifactPage, ArtifactRef
 
 
 class S3DependencyError(RuntimeError):
@@ -148,6 +148,35 @@ class S3ArtifactStore:
                 raise ArtifactIntegrityError("S3 listing returned an invalid continuation token")
             request["ContinuationToken"] = token
         return tuple(sorted(set(digests)))
+
+    def list_digests_page(
+        self, *, cursor: str | None = None, page_size: int = 1000
+    ) -> ArtifactPage:
+        if page_size < 1 or page_size > 1000:
+            raise ValueError("S3 artifact discovery page_size must be between 1 and 1000")
+        prefix = f"{self._prefix + '/' if self._prefix else ''}sha256/"
+        request: dict[str, object] = {
+            "Bucket": self._bucket,
+            "Prefix": prefix,
+            "MaxKeys": page_size,
+        }
+        if cursor is not None:
+            request["ContinuationToken"] = cursor
+        response = self._client.list_objects_v2(**request)
+        digests = tuple(
+            key.rsplit("/", 1)[-1]
+            for item in response.get("Contents", ())
+            if (key := str(item.get("Key", ""))).rsplit("/", 1)[-1].islower()
+            and len(key.rsplit("/", 1)[-1]) == 64
+            and all(char in "0123456789abcdef" for char in key.rsplit("/", 1)[-1])
+        )
+        truncated = bool(response.get("IsTruncated"))
+        next_cursor = response.get("NextContinuationToken")
+        if truncated and not isinstance(next_cursor, str):
+            raise ArtifactIntegrityError("S3 listing returned an invalid continuation token")
+        return ArtifactPage(
+            tuple(sorted(set(digests))), next_cursor if truncated else None, truncated
+        )
 
     def storage_ref_for_digest(self, digest: str) -> str:
         return f"s3://{self._bucket}/{self._key(digest)}"
