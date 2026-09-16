@@ -189,7 +189,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         try:
             actor = self._server().authenticator.authenticate(self.headers.get("Authorization"))
         except ControlPlaneUnavailable:
-            self._error(HTTPStatus.SERVICE_UNAVAILABLE, "authentication_unavailable", "authentication service unavailable")
+            self._error(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                "authentication_unavailable",
+                "authentication service unavailable",
+            )
             return None
         if actor is None:
             self._error(HTTPStatus.UNAUTHORIZED, "unauthorized", "valid authorization required")
@@ -211,13 +215,19 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 PolicyRequirement(workspace_id, permission, resource_ref),
             )
         except ControlPlaneUnavailable:
-            self._error(HTTPStatus.SERVICE_UNAVAILABLE, "authorization_unavailable", "authorization service unavailable")
+            self._error(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                "authorization_unavailable",
+                "authorization service unavailable",
+            )
             return None
         if decision.allowed:
             return True
         if hide_denial:
             return False
-        self._error(HTTPStatus.FORBIDDEN, "forbidden", "required workspace permission is not granted")
+        self._error(
+            HTTPStatus.FORBIDDEN, "forbidden", "required workspace permission is not granted"
+        )
         return False
 
     def _read_json(self) -> object:
@@ -254,7 +264,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         elif isinstance(exc, WorkspaceServiceConflict):
             self._error(HTTPStatus.CONFLICT, "conflict", str(exc))
         elif isinstance(exc, TimeoutError):
-            self._error(HTTPStatus.REQUEST_TIMEOUT, "request_timeout", "request body read timed out")
+            self._error(
+                HTTPStatus.REQUEST_TIMEOUT, "request_timeout", "request body read timed out"
+            )
         elif isinstance(exc, (TypeError, ValueError)):
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
         else:
@@ -270,7 +282,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 limit, offset = _list_query(query)
                 visible: list[object] = []
                 for workspace in self._server().workspace_service.list():
-                    permitted = self._authorize(actor, workspace.id, "workspace.read", hide_denial=True)
+                    permitted = self._authorize(
+                        actor, workspace.id, "workspace.read", hide_denial=True
+                    )
                     if permitted is None:
                         return
                     if permitted:
@@ -279,7 +293,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 selected, next_cursor = _page(visible, limit=limit, offset=offset)
                 self._write_json(
                     HTTPStatus.OK,
-                    {"items": [_workspace_payload(item) for item in selected], "next_cursor": next_cursor},
+                    {
+                        "items": [_workspace_payload(item) for item in selected],
+                        "next_cursor": next_cursor,
+                    },
                 )
                 return
             if len(segments) == 3 and segments[:2] == ("v1", "workspaces"):
@@ -288,9 +305,16 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                self._write_json(HTTPStatus.OK, _workspace_payload(self._server().workspace_service.get(workspace_id)))
+                self._write_json(
+                    HTTPStatus.OK,
+                    _workspace_payload(self._server().workspace_service.get(workspace_id)),
+                )
                 return
-            if len(segments) == 4 and segments[:2] == ("v1", "workspaces") and segments[3] == "projects":
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+            ):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "project.read"):
                     return
@@ -302,15 +326,26 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 selected, next_cursor = _page(list(manifests), limit=limit, offset=offset)
                 self._write_json(
                     HTTPStatus.OK,
-                    {"items": [_manifest_payload(cast(ProjectManifest, item)) for item in selected], "next_cursor": next_cursor},
+                    {
+                        "items": [
+                            _manifest_payload(cast(ProjectManifest, item)) for item in selected
+                        ],
+                        "next_cursor": next_cursor,
+                    },
                 )
                 return
-            if len(segments) == 5 and segments[:2] == ("v1", "workspaces") and segments[3] == "projects":
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+            ):
                 if query:
                     raise ValueError("project read does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
                 project_id = ProjectId(segments[4])
-                if not self._authorize(actor, workspace_id, "project.read", resource_ref=str(project_id)):
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=str(project_id)
+                ):
                     return
                 manifest = self._server().project_service.get(workspace_id, project_id)
                 self._write_json(HTTPStatus.OK, _manifest_payload(manifest))
@@ -333,7 +368,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 payload = self._read_json()
                 if not isinstance(payload, dict) or set(payload) != {"name", "description"}:
-                    raise ValueError("workspace update body must contain exactly name and description")
+                    raise ValueError(
+                        "workspace update body must contain exactly name and description"
+                    )
                 name = payload["name"]
                 description = payload["description"]
                 if not isinstance(name, str):
@@ -358,18 +395,29 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
-            if len(segments) == 4 and segments[:2] == ("v1", "workspaces") and segments[3] == "archive":
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "archive"
+            ):
                 if query:
                     raise ValueError("workspace archive does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.admin"):
                     return
-                if self.headers.get("Content-Length") not in {None, "0"} or self.headers.get("Transfer-Encoding") is not None:
+                if (
+                    self.headers.get("Content-Length") not in {None, "0"}
+                    or self.headers.get("Transfer-Encoding") is not None
+                ):
                     raise ValueError("workspace archive does not accept a request body")
                 workspace = self._server().workspace_service.archive(workspace_id, now=_now())
                 self._write_json(HTTPStatus.OK, _workspace_payload(workspace))
                 return
-            if len(segments) == 4 and segments[:2] == ("v1", "workspaces") and segments[3] == "projects":
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+            ):
                 if query:
                     raise ValueError("project registration does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
@@ -392,12 +440,18 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
-            if len(segments) == 5 and segments[:2] == ("v1", "workspaces") and segments[3] == "projects":
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+            ):
                 if query:
                     raise ValueError("project replacement does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
                 project_id = ProjectId(segments[4])
-                if not self._authorize(actor, workspace_id, "project.write", resource_ref=str(project_id)):
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=str(project_id)
+                ):
                     return
                 payload = self._read_json()
                 if not isinstance(payload, dict):
@@ -418,17 +472,28 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
-            if len(segments) == 5 and segments[:2] == ("v1", "workspaces") and segments[3] == "projects":
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+            ):
                 if query:
                     raise ValueError("project unregister does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
                 project_id = ProjectId(segments[4])
-                if not self._authorize(actor, workspace_id, "project.write", resource_ref=str(project_id)):
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=str(project_id)
+                ):
                     return
-                if self.headers.get("Content-Length") not in {None, "0"} or self.headers.get("Transfer-Encoding") is not None:
+                if (
+                    self.headers.get("Content-Length") not in {None, "0"}
+                    or self.headers.get("Transfer-Encoding") is not None
+                ):
                     raise ValueError("project unregister does not accept a request body")
                 self._server().project_service.unregister(workspace_id, project_id)
-                self._write_json(HTTPStatus.OK, {"unregistered": True, "project_id": str(project_id)})
+                self._write_json(
+                    HTTPStatus.OK, {"unregistered": True, "project_id": str(project_id)}
+                )
                 return
             self._method_or_not_found("DELETE", segments)
         except Exception as exc:
@@ -440,12 +505,24 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             known = True
         elif len(segments) == 3 and segments[:2] == ("v1", "workspaces"):
             known = True
-        elif len(segments) == 4 and segments[:2] == ("v1", "workspaces") and segments[3] in {"archive", "projects"}:
+        elif (
+            len(segments) == 4
+            and segments[:2] == ("v1", "workspaces")
+            and segments[3] in {"archive", "projects"}
+        ):
             known = True
-        elif len(segments) == 5 and segments[:2] == ("v1", "workspaces") and segments[3] == "projects":
+        elif (
+            len(segments) == 5
+            and segments[:2] == ("v1", "workspaces")
+            and segments[3] == "projects"
+        ):
             known = True
         if known:
-            self._error(HTTPStatus.METHOD_NOT_ALLOWED, "method_not_allowed", f"method {method} is not allowed for this route")
+            self._error(
+                HTTPStatus.METHOD_NOT_ALLOWED,
+                "method_not_allowed",
+                f"method {method} is not allowed for this route",
+            )
         else:
             self._error(HTTPStatus.NOT_FOUND, "not_found", "route does not exist")
 

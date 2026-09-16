@@ -113,8 +113,13 @@ class _Authorizer:
         self.requirements.append(requirement)
         if self.unavailable:
             raise ControlPlaneUnavailable("dependency unavailable")
-        allowed = self.allowed is None or (str(requirement.workspace_id), requirement.permission) in self.allowed
-        return PolicyDecision(allowed, "allowed" if allowed else "denied", ("admin",) if allowed else ())
+        allowed = (
+            self.allowed is None
+            or (str(requirement.workspace_id), requirement.permission) in self.allowed
+        )
+        return PolicyDecision(
+            allowed, "allowed" if allowed else "denied", ("admin",) if allowed else ()
+        )
 
 
 def _manifest(name: str = "Project") -> ProjectManifest:

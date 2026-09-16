@@ -31,6 +31,7 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_sql",
             "studio_vcs",
             "studio_execution",
+            "studio_security",
         }
     ),
     "studio_worker": frozenset(
