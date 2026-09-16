@@ -1,6 +1,7 @@
 """Multi-user identity, OIDC, RBAC and actor propagation for Ronin Public v1."""
 
 from .audit import audit_actor, authorization_audit_event
+from .authentication import PrincipalAuthenticator, authenticate_actor
 from .context import actor_context, current_actor, require_actor
 from .contracts import (
     PERMISSIONS,
@@ -35,6 +36,7 @@ from .store import IdentityConflict, SqliteIdentityStore
 
 __all__ = (
     "Actor",
+    "PrincipalAuthenticator",
     "FileJwksProvider",
     "Group",
     "GroupId",
@@ -67,6 +69,7 @@ __all__ = (
     "WorkspaceRole",
     "actor_context",
     "audit_actor",
+    "authenticate_actor",
     "authorization_audit_event",
     "current_actor",
     "require_actor",
