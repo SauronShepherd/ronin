@@ -18,7 +18,7 @@ from studio_core import (
 )
 from studio_storage.secrets import SecretResolver
 
-from .contracts import ConnectorReadResult
+from .contracts import ConnectorReadResult, DiscoveryPage
 
 
 def _boto3() -> Any:
@@ -89,6 +89,47 @@ class S3JsonConnector:
             if not token:
                 raise ValueError("S3 listing was truncated without a continuation token")
         return tuple(sorted(assets, key=lambda item: item.handle.qualified_name))
+
+    def discover_page(
+        self,
+        connection: ConnectionDefinition,
+        secrets: SecretResolver,
+        *,
+        cursor: str | None = None,
+        page_size: int = 1000,
+    ) -> DiscoveryPage[DiscoveredAsset]:
+        """Discover one bounded S3 page; ``cursor`` is opaque to callers."""
+        del secrets
+        if page_size < 1 or page_size > 10_000:
+            raise ValueError("S3 discovery page_size must be between 1 and 10000")
+        bucket, prefix = self._config(connection)
+        request: dict[str, object] = {"Bucket": bucket, "Prefix": prefix, "MaxKeys": page_size}
+        if cursor is not None:
+            request["ContinuationToken"] = cursor
+        page = self._client_for(connection).list_objects_v2(**request)
+        assets = tuple(
+            DiscoveredAsset(
+                AssetHandle(
+                    connection.id,
+                    tuple(part for part in str(item["Key"]).split("/") if part)[:-1],
+                    str(item["Key"]).split("/")[-1],
+                ),
+                "object",
+                (),
+            )
+            for item in page.get("Contents", ())
+            if str(item.get("Key", "")).lower().endswith((".json", ".jsonl"))
+            and not str(item.get("Key", "")).endswith("/")
+        )
+        truncated = bool(page.get("IsTruncated"))
+        next_cursor = page.get("NextContinuationToken")
+        if truncated and not isinstance(next_cursor, str):
+            raise ValueError("S3 listing was truncated without a continuation token")
+        return DiscoveryPage(
+            tuple(sorted(assets, key=lambda item: item.handle.qualified_name)),
+            next_cursor if truncated else None,
+            truncated,
+        )
 
     def read(
         self,
