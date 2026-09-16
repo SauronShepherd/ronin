@@ -56,6 +56,13 @@ class ArtifactStore(Protocol):
 
 
 @runtime_checkable
+class PagedArtifactStore(Protocol):
+    """Optional artifact-store capability for bounded inventory discovery."""
+
+    def list_digests_page(self, *, cursor: str | None = None, page_size: int = 1000) -> object: ...
+
+
+@runtime_checkable
 class WorkspaceStore(Protocol):
     """Durable workspace/project-registration boundary."""
 
