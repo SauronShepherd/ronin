@@ -9,7 +9,13 @@ from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.ml import ExperimentId, MLRunId, ModelId, ModelVersion
-from studio_ml import TrainingSpec, predict_registered_tabular, predict_tabular, train_register_tabular, train_tabular
+from studio_ml import (
+    TrainingSpec,
+    predict_registered_tabular,
+    predict_tabular,
+    train_register_tabular,
+    train_tabular,
+)
 from studio_storage.artifacts import ArtifactRef
 
 _PICKLE_TRIPWIRE = False
@@ -43,7 +49,11 @@ class _Registry:
 
     def get_model(self, workspace_id, model_id, version):
         del workspace_id
-        if self.model is not None and self.model.model_id == model_id and self.model.version == version:
+        if (
+            self.model is not None
+            and self.model.model_id == model_id
+            and self.model.version == version
+        ):
             return self.model
         return None
 

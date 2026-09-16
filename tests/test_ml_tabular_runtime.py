@@ -53,10 +53,7 @@ def _classification_rows():
 
 
 def _regression_rows(count: int):
-    return tuple(
-        {"x": float(index), "target": float(index * 2 + 1)}
-        for index in range(count)
-    )
+    return tuple({"x": float(index), "target": float(index * 2 + 1)} for index in range(count))
 
 
 def test_classification_training_and_prediction() -> None:
@@ -91,7 +88,9 @@ def test_binary_classification_rejects_test_partition_smaller_than_class_count(
         }
         for index in range(row_count)
     )
-    with pytest.raises(ValueError, match="test split must contain at least one row per target class"):
+    with pytest.raises(
+        ValueError, match="test split must contain at least one row per target class"
+    ):
         train_tabular(
             rows,
             TrainingSpec("classification", "logistic_regression", ("x",), "label", 0.2, 7),
@@ -113,7 +112,9 @@ def test_classification_rejects_singleton_minority_class() -> None:
 
 
 def test_classification_rejects_very_small_test_fraction() -> None:
-    with pytest.raises(ValueError, match="test split must contain at least one row per target class"):
+    with pytest.raises(
+        ValueError, match="test split must contain at least one row per target class"
+    ):
         train_tabular(
             _classification_rows(),
             TrainingSpec("classification", "logistic_regression", ("x", "y"), "label", 0.01, 7),
