@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Mapping
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 from studio_core import AssetRef, WorkspaceId
 from studio_core.canonical_json import decode as decode_canonical_json
@@ -158,8 +158,8 @@ def _index_from_json(payload: str) -> VectorIndexDefinition:
         AssetRef.from_payload(value["source"]),
         ProviderId(cast(str, provider_id)),
         cast(str, model_id),
-        tuple(text_fields),
-        tuple(metadata_fields),
+        tuple(cast(str, field) for field in text_fields),
+        tuple(cast(str, field) for field in metadata_fields),
         chunk_size,
         chunk_overlap,
     )
@@ -191,7 +191,7 @@ def _tool_from_json(payload: str) -> ToolContract:
         cast(str, value["input_schema_ref"]),
         cast(str, value["output_schema_ref"]),
         tuple(Requirement.from_payload(item) for item in requirements),
-        cast(object, value["side_effect"]),  # constructor validates literal value
+        cast("Literal['none', 'idempotent', 'non_idempotent']", value["side_effect"]),
     )
 
 
@@ -224,7 +224,7 @@ def _agent_from_json(payload: str) -> AgentDefinition:
         cast(str, value["model_id"]),
         PromptId(cast(str, value["prompt_id"])),
         PromptVersion(cast(str, value["prompt_version"])),
-        tuple(ToolId(v) for v in tool_ids),
+        tuple(ToolId(cast(str, v)) for v in tool_ids),
         max_steps,
     )
 

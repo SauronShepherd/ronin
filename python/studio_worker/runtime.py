@@ -392,7 +392,8 @@ class LocalWorkerRuntime:
                 return
             shutdown.set()
 
-        for sig in (signal.SIGTERM, signal.SIGINT):
+        signals: tuple[signal.Signals, signal.Signals] = (signal.SIGTERM, signal.SIGINT)
+        for sig in signals:
             try:
                 loop.add_signal_handler(sig, handle_signal)
             except (NotImplementedError, RuntimeError):
