@@ -361,7 +361,7 @@ class PostgresJobReadPort:
                 )
                 renewed = cursor.rowcount == 1
             connection.commit()
-            return renewed
+            return bool(renewed)
         except Exception:
             connection.rollback()
             raise
