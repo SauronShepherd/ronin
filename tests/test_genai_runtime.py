@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from studio_core import AssetId, AssetRef, AssetVersion
+from studio_core import AssetId, AssetRef, AssetVersion, Requirement, ResourceScope
 from studio_core.genai import (
     AgentDefinition,
     AgentId,
@@ -57,12 +57,15 @@ class _Provider:
 
 
 class _Tool:
-    def __init__(self, side_effect: str = "none") -> None:
+    def __init__(
+        self, side_effect: str = "none", requirements: tuple[Requirement, ...] = ()
+    ) -> None:
         self.contract = ToolContract(
             ToolId("lookup"),
             "Lookup",
             "schema://input",
             "schema://output",
+            requirements=requirements,
             side_effect=side_effect,
         )
         self.calls = []
@@ -218,4 +221,31 @@ def test_agent_blocks_non_idempotent_tool_without_explicit_authorization() -> No
             provider,
             ToolRegistry((_Tool("non_idempotent"),)),
             "do something",
+        )
+
+
+def test_agent_enforces_declared_tool_requirements() -> None:
+    prompt = PromptAsset(PromptId("agent-prompt"), PromptVersion("1"), "Handle {input}", ("input",))
+    definition = AgentDefinition(
+        AgentId("agent"),
+        "Agent",
+        _PROVIDER,
+        "chat",
+        prompt.id,
+        prompt.version,
+        (ToolId("lookup"),),
+        max_steps=1,
+    )
+    requirement = Requirement("read", ResourceScope("project", "demo"))
+    provider = _Provider(['{"type":"tool","tool_id":"lookup","input":{}}'])
+    tool = _Tool(requirements=(requirement,))
+    with pytest.raises(PermissionError, match="requirements"):
+        run_agent(
+            definition,
+            prompt,
+            _CHAT,
+            provider,
+            ToolRegistry((tool,)),
+            "read",
+            authorize_requirements=lambda _: False,
         )

@@ -7,6 +7,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
+from studio_core import Requirement
 from studio_core.genai import AgentDefinition, GenAIModel, PromptAsset, ToolContract, ToolId
 
 from .provider import ChatMessage, GenAIProviderRuntime
@@ -96,6 +97,7 @@ def run_agent(
     *,
     allow_non_idempotent: bool = False,
     record_tool: Callable[[ToolId, str], None] | None = None,
+    authorize_requirements: Callable[[tuple[Requirement, ...]], bool] | None = None,
 ) -> AgentRunResult:
     """Run a strict bounded tool loop without granting undeclared tool authority."""
 
@@ -138,6 +140,11 @@ def run_agent(
         if tool_id not in allowed_tools:
             raise PermissionError(f"agent attempted undeclared tool: {tool_id}")
         runtime = tools.require(tool_id)
+        requirements = runtime.contract.requirements
+        if requirements and (
+            authorize_requirements is None or not authorize_requirements(requirements)
+        ):
+            raise PermissionError(f"tool requirements are not authorized: {tool_id}")
         if runtime.contract.side_effect == "non_idempotent" and not allow_non_idempotent:
             raise PermissionError(
                 f"non-idempotent tool requires explicit execution authorization: {tool_id}"
