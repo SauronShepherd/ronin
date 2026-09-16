@@ -254,7 +254,8 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
         server.server_close()
 
 
-def test_healthz_is_available_without_bearer_authorization(tmp_path: Path) -> None:
+def test_healthz_is_available_without_bearer_authorization(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("RONIN_DB", str(tmp_path / "ronin.db"))
     service = DurableExecutionService(
         SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
     )
