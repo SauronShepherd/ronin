@@ -54,9 +54,7 @@ def test_jdbc_discovery_validates_and_applies_row_limit() -> None:
 
 def test_jdbc_discovery_page_is_bounded_and_returns_opaque_cursor() -> None:
     connector = JdbcConnector(connect=lambda *_args: _Db())
-    page = connector.discover_page(
-        _connection(), EnvironmentSecretResolver({}), page_size=1
-    )
+    page = connector.discover_page(_connection(), EnvironmentSecretResolver({}), page_size=1)
     assert len(page.items) == 1
     assert page.truncated is True
     assert page.next_cursor == "1"
