@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 from studio_core import (
@@ -25,6 +27,64 @@ _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 class JdbcDependencyError(RuntimeError):
     """Raised when no deployment-local JDBC bridge was supplied."""
+
+
+@dataclass(frozen=True, slots=True)
+class JdbcIncrementalCheckpointV2:
+    """Typed, deterministic JDBC cursor including a composite tie-breaker."""
+
+    source_asset_id: str
+    incremental_column: str
+    incremental_value: object
+    tie_breaker_columns: tuple[str, ...]
+    tie_breaker_values: tuple[object, ...]
+    schema_fingerprint: str
+    checkpoint_generation: int
+
+    def __post_init__(self) -> None:
+        if not self.source_asset_id or not self.incremental_column:
+            raise ValueError("JDBC checkpoint identity is required")
+        if len(self.tie_breaker_columns) != len(self.tie_breaker_values):
+            raise ValueError("JDBC checkpoint tie-breaker columns and values must match")
+        if self.checkpoint_generation < 0:
+            raise ValueError("JDBC checkpoint generation must be non-negative")
+
+    def encode(self) -> str:
+        return json.dumps(
+            {
+                "source_asset_id": self.source_asset_id,
+                "incremental_column": self.incremental_column,
+                "incremental_value": self.incremental_value,
+                "tie_breaker_columns": self.tie_breaker_columns,
+                "tie_breaker_values": self.tie_breaker_values,
+                "schema_fingerprint": self.schema_fingerprint,
+                "checkpoint_generation": self.checkpoint_generation,
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+
+    @classmethod
+    def decode(cls, value: str) -> JdbcIncrementalCheckpointV2:
+        try:
+            payload = json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise ValueError("invalid JDBC V2 checkpoint") from exc
+        if not isinstance(payload, dict):
+            raise ValueError("invalid JDBC V2 checkpoint")
+        try:
+            return cls(
+                str(payload["source_asset_id"]),
+                str(payload["incremental_column"]),
+                payload["incremental_value"],
+                tuple(payload["tie_breaker_columns"]),
+                tuple(payload["tie_breaker_values"]),
+                str(payload["schema_fingerprint"]),
+                int(payload["checkpoint_generation"]),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("invalid JDBC V2 checkpoint") from exc
 
 
 class JdbcConnector:
@@ -157,4 +217,4 @@ class JdbcConnector:
         return ConnectorReadResult(fields, rows, next_checkpoint)
 
 
-__all__ = ("JdbcConnector", "JdbcDependencyError")
+__all__ = ("JdbcConnector", "JdbcDependencyError", "JdbcIncrementalCheckpointV2")

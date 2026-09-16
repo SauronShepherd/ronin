@@ -3,7 +3,7 @@
 from .azure_blob_json import AzureBlobJsonConnector
 from .contracts import Connector, ConnectorReadResult
 from .http_json import HttpJsonConnector
-from .jdbc import JdbcConnector, JdbcDependencyError
+from .jdbc import JdbcConnector, JdbcDependencyError, JdbcIncrementalCheckpointV2
 from .ozone import OzoneJsonConnector
 from .postgres import PostgresConnector
 from .registry import ConnectorRegistry, builtin_connector_registry
@@ -18,6 +18,7 @@ __all__ = (
     "HttpJsonConnector",
     "JdbcConnector",
     "JdbcDependencyError",
+    "JdbcIncrementalCheckpointV2",
     "PostgresConnector",
     "S3JsonConnector",
     "OzoneJsonConnector",
