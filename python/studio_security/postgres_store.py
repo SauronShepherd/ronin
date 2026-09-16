@@ -251,7 +251,7 @@ class PostgresIdentityStore:
                     "WHERE group_id=%s AND principal_id=%s",
                     (group_id.value, principal_id.value),
                 )
-                removed = cursor.rowcount == 1
+                removed = bool(cursor.rowcount == 1)
             connection.commit()
             return removed
         except Exception:
@@ -323,7 +323,7 @@ class PostgresIdentityStore:
                         binding.role,
                     ),
                 )
-                removed = cursor.rowcount == 1
+                removed = bool(cursor.rowcount == 1)
             connection.commit()
             return removed
         except Exception:
