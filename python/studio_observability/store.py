@@ -175,7 +175,7 @@ class SqliteTelemetryStore:
         try:
             rows = connection.execute(
                 "SELECT value,unit,kind,observed_at,attributes_json FROM telemetry_metrics "
-                "WHERE name=? ORDER BY observed_at DESC, metric_id DESC",
+                "WHERE name=? ORDER BY observed_at DESC, metric_id DESC LIMIT 1",
                 (name,),
             ).fetchall()
             filters = dict(attribute_filters)
