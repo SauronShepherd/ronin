@@ -23,6 +23,26 @@ class ArtifactIntegrityError(ValueError):
     """Raised when persisted artifact content no longer matches its digest."""
 
 
+@dataclass(frozen=True, slots=True)
+class ArtifactPage:
+    """Bounded artifact inventory page with an opaque local cursor."""
+
+    digests: tuple[str, ...]
+    next_cursor: str | None
+    truncated: bool
+
+    def __post_init__(self) -> None:
+        if any(
+            len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest)
+            for digest in self.digests
+        ):
+            raise ValueError("artifact page contains an invalid SHA-256 digest")
+        if self.next_cursor is not None and not self.next_cursor:
+            raise ValueError("artifact page cursor must be non-empty when present")
+        if self.truncated != (self.next_cursor is not None):
+            raise ValueError("truncated artifact page must have exactly one cursor")
+
+
 class LocalArtifactStore:
     def __init__(self, root: Path) -> None:
         self._root = root
@@ -76,6 +96,57 @@ class LocalArtifactStore:
             return False
         return len(data) == ref.size_bytes
 
+    def delete(self, ref: ArtifactRef) -> bool:
+        """Delete one validated content-addressed artifact if it exists."""
+
+        self._validate_ref(ref)
+        target = self._path_for_digest(ref.digest)
+        try:
+            target.unlink()
+        except FileNotFoundError:
+            return False
+        return True
+
+    def list_digests(self) -> tuple[str, ...]:
+        """List stored SHA-256 digests in deterministic order."""
+
+        root = self._root / "sha256"
+        if not root.is_dir():
+            return ()
+        return tuple(
+            sorted(
+                path.name
+                for prefix in root.iterdir()
+                if prefix.is_dir() and len(prefix.name) == 2
+                for path in prefix.iterdir()
+                if path.is_file()
+                and len(path.name) == 64
+                and all(char in "0123456789abcdef" for char in path.name)
+            )
+        )
+
+    def list_digests_page(
+        self, *, cursor: str | None = None, page_size: int = 1000
+    ) -> ArtifactPage:
+        if page_size < 1 or page_size > 10_000:
+            raise ValueError("artifact discovery page_size must be between 1 and 10000")
+        offset = 0
+        if cursor is not None:
+            try:
+                offset = int(cursor)
+            except ValueError as exc:
+                raise ValueError("artifact discovery cursor is invalid") from exc
+            if offset < 0:
+                raise ValueError("artifact discovery cursor is invalid")
+        digests = self.list_digests()
+        page = digests[offset : offset + page_size]
+        truncated = offset + len(page) < len(digests)
+        return ArtifactPage(page, str(offset + len(page)) if truncated else None, truncated)
+
+    def storage_ref_for_digest(self, digest: str) -> str:
+        self._path_for_digest(digest)
+        return f"artifact://sha256/{digest}"
+
     def _validate_ref(self, ref: ArtifactRef) -> None:
         if ref.digest_algorithm != "sha256":
             raise ValueError("unsupported artifact digest algorithm")
@@ -90,4 +161,4 @@ class LocalArtifactStore:
         return self._root / "sha256" / digest[:2] / digest
 
 
-__all__ = ["ArtifactIntegrityError", "ArtifactRef", "LocalArtifactStore"]
+__all__ = ["ArtifactIntegrityError", "ArtifactPage", "ArtifactRef", "LocalArtifactStore"]

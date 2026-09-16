@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Protocol, runtime_checkable
 
 from studio_core import AssetRef, WorkspaceId
 from studio_core.ml import (
     ExperimentId,
+    MetricValue,
     MLRunId,
     MLRunRecord,
-    MetricValue,
+    ModelEvaluation,
     ModelId,
     ModelSignature,
     ModelVersion,
@@ -25,6 +26,14 @@ from .runtime import TrainingSpec, predict_tabular, train_tabular
 
 @runtime_checkable
 class MLRegistryStore(Protocol):
+    def record_evaluation(
+        self, workspace_id: WorkspaceId, evaluation: ModelEvaluation, *, now: Instant | str
+    ) -> ModelEvaluation: ...
+
+    def list_evaluations(
+        self, workspace_id: WorkspaceId, model_id: ModelId, version: ModelVersion
+    ) -> tuple[ModelEvaluation, ...]: ...
+
     def record_run(
         self,
         workspace_id: WorkspaceId,
@@ -48,9 +57,83 @@ class MLRegistryStore(Protocol):
         version: ModelVersion,
     ) -> RegisteredModelVersion | None: ...
 
+    def get_champion_model(
+        self, workspace_id: WorkspaceId, model_id: ModelId
+    ) -> RegisteredModelVersion | None: ...
+
+    def list_models(
+        self, workspace_id: WorkspaceId, model_id: ModelId | None = None
+    ) -> tuple[RegisteredModelVersion, ...]: ...
+
+    def promote_model(
+        self,
+        workspace_id: WorkspaceId,
+        model_id: ModelId,
+        version: ModelVersion,
+        *,
+        now: Instant | str,
+    ) -> RegisteredModelVersion: ...
+
 
 class MLModelNotFound(KeyError):
     """Raised when inference references a model version absent from registry."""
+
+
+def promote_registered_model(
+    registry: MLRegistryStore,
+    workspace_id: WorkspaceId,
+    model_id: ModelId,
+    model_version: ModelVersion,
+    *,
+    now: Instant | str,
+) -> RegisteredModelVersion:
+    """Promote a registered version using the registry's atomic stage transition."""
+
+    return registry.promote_model(workspace_id, model_id, model_version, now=now)
+
+
+def resolve_champion_model(
+    registry: MLRegistryStore, workspace_id: WorkspaceId, model_id: ModelId
+) -> RegisteredModelVersion:
+    """Resolve the promoted model or fail explicitly when none exists."""
+
+    model = registry.get_champion_model(workspace_id, model_id)
+    if model is None:
+        raise MLModelNotFound(f"{model_id}@champion")
+    return model
+
+
+def record_model_evaluation(
+    registry: MLRegistryStore,
+    workspace_id: WorkspaceId,
+    evaluation: ModelEvaluation,
+    *,
+    now: Instant | str,
+) -> ModelEvaluation:
+    """Persist immutable evaluation evidence for a registered model version."""
+
+    return registry.record_evaluation(workspace_id, evaluation, now=now)
+
+
+def list_model_evaluations(
+    registry: MLRegistryStore,
+    workspace_id: WorkspaceId,
+    model_id: ModelId,
+    model_version: ModelVersion,
+) -> tuple[ModelEvaluation, ...]:
+    """List evaluation evidence for one registered model version."""
+
+    return registry.list_evaluations(workspace_id, model_id, model_version)
+
+
+def list_registered_models(
+    registry: MLRegistryStore,
+    workspace_id: WorkspaceId,
+    model_id: ModelId | None = None,
+) -> tuple[RegisteredModelVersion, ...]:
+    """Return deterministic model-version metadata for catalog/deployment consumers."""
+
+    return registry.list_models(workspace_id, model_id)
 
 
 def _input_signature(
@@ -168,9 +251,37 @@ def predict_registered_tabular(
     )
 
 
+def predict_champion_tabular(
+    registry: MLRegistryStore,
+    workspace_id: WorkspaceId,
+    model_id: ModelId,
+    rows: Sequence[Mapping[str, object]],
+    *,
+    load_artifact: Callable[[str], bytes],
+) -> tuple[object, ...]:
+    """Resolve the champion, load its referenced artifact, and verify it before inference."""
+
+    model = resolve_champion_model(registry, workspace_id, model_id)
+    artifact_bytes = load_artifact(model.artifact_ref)
+    return predict_registered_tabular(
+        registry,
+        workspace_id,
+        model.model_id,
+        model.version,
+        artifact_bytes,
+        rows,
+    )
+
+
 __all__ = (
     "MLModelNotFound",
     "MLRegistryStore",
+    "promote_registered_model",
+    "resolve_champion_model",
+    "list_registered_models",
+    "record_model_evaluation",
+    "list_model_evaluations",
     "predict_registered_tabular",
+    "predict_champion_tabular",
     "train_register_tabular",
 )

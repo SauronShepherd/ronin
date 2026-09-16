@@ -24,6 +24,7 @@ from .runtime import (
     LocalWorkerPollOutcome,
     LocalWorkerRuntime,
     LocalWorkerRuntimeConfig,
+    artifact_store_from_environment,
     runtime_catalog_for_image,
 )
 
@@ -41,6 +42,7 @@ __all__ = (
     "WorkerPaths",
     "WorkerPreparationError",
     "build_request",
+    "artifact_store_from_environment",
     "execution_identities",
     "identity_for",
     "load_project",

@@ -7,14 +7,19 @@ name = "ronin-studio"
 version = "0.0.0"
 description = "Open-source, local-first Data + AI platform with vendor-neutral execution contracts."
 requires-python = ">=3.11"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 readme = "README.md"
+dependencies = [
+  "tzdata>=2024.1",
+]
 
 [project.scripts]
 ronin = "studio_cli.entrypoint:main"
 
 [project.optional-dependencies]
 data-plane = [
+  "boto3>=1.35,<2",
   "duckdb>=1,<2",
   "httpx>=0.27,<1",
   "psycopg[binary]>=3.2,<4",
@@ -25,6 +30,7 @@ open-tables = [
   "pyiceberg[sql-sqlite]>=0.8,<1",
 ]
 ml = [
+  "numpy>=1.23,<2.4",
   "scikit-learn>=1.5,<2",
 ]
 security = [
@@ -52,6 +58,9 @@ where = ["python"]
 [tool.setuptools.package-data]
 studio_storage = ["migrations/*.sql"]
 
+[tool.setuptools.data-files]
+"share/ronin/web" = ["web/index.html", "web/studio.css", "web/studio.js"]
+
 [tool.ruff]
 target-version = "py311"
 line-length = 100
@@ -66,6 +75,7 @@ select = ["E", "F", "I", "B", "UP", "SIM", "S", "ASYNC", "C4", "PT", "RET", "ARG
 [tool.mypy]
 python_version = "3.11"
 strict = true
+warn_redundant_casts = false
 mypy_path = "python:packages/pyronin/src"
 packages = [
   "studio_connectors",
@@ -87,6 +97,7 @@ packages = [
   "studio_streaming",
   "studio_vcs",
   "studio_execution",
+  "studio_migration",
   "studio_server",
   "studio_worker",
   "studio_cli",
@@ -123,6 +134,7 @@ source = [
   "studio_server",
   "studio_worker",
   "studio_cli",
+  "studio_migration",
   "pyronin",
 ]
 

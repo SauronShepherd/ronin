@@ -23,7 +23,7 @@ def sqlite_ready(path: Path) -> bool:
         probe = connection.execute("SELECT 1 FROM jobs LIMIT 1").fetchone()
         if probe is None:
             probe = connection.execute("SELECT 1").fetchone()
-        return probe == (1,)
+        return bool(probe == (1,))
     except sqlite3.Error:
         return False
     finally:

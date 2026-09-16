@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from studio_core import (
     ConnectionDefinition,
     ConnectionId,
@@ -91,9 +90,7 @@ def _write_bundle(path: Path) -> None:
                 project_ref,
                 project_path,
                 dependencies=(connection_ref,),
-                binding_requests=(
-                    BindingRequest("runtime", "runtime-profile:python/3.11"),
-                ),
+                binding_requests=(BindingRequest("runtime", "runtime-profile:python/3.11"),),
             ),
         )
     )

@@ -7,13 +7,13 @@ from typing import Protocol, cast, runtime_checkable
 from studio_core import WorkspaceId
 
 from .contracts import (
+    ROLE_PERMISSIONS,
     Actor,
     GroupId,
     PolicyDecision,
     PolicyRequirement,
     Principal,
     PrincipalId,
-    ROLE_PERMISSIONS,
     WorkspaceRole,
 )
 
@@ -39,10 +39,14 @@ class RbacAuthorizer:
         return Actor(principal, groups, auth_method)
 
     def authorize(self, actor: Actor, requirement: PolicyRequirement) -> PolicyDecision:
+        # The group list on Actor is request context, not an authorization source.
+        # Re-read membership at the policy boundary so a caller cannot manufacture
+        # a group claim and inherit that group's workspace role.
+        groups = self._store.groups_for_principal(actor.principal.id)
         roles_raw = self._store.roles_for_actor(
             requirement.workspace_id,
             actor.principal.id,
-            actor.groups,
+            groups,
         )
         roles: list[WorkspaceRole] = []
         for value in roles_raw:

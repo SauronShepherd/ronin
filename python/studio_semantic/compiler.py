@@ -25,10 +25,12 @@ def _measure_sql(measure: SemanticMeasure) -> str:
     if measure.aggregation == "count":
         expression = "COUNT(*)" if measure.column is None else f"COUNT({_quote(measure.column)})"
     elif measure.aggregation == "distinct_count":
-        assert measure.column is not None
+        if measure.column is None:
+            raise SemanticQueryError("distinct_count measure requires a column")
         expression = f"COUNT(DISTINCT {_quote(measure.column)})"
     else:
-        assert measure.column is not None
+        if measure.column is None:
+            raise SemanticQueryError(f"{measure.aggregation} measure requires a column")
         function = measure.aggregation.upper()
         expression = f"{function}({_quote(measure.column)})"
     return f"{expression} AS {_quote(measure.name)}"
@@ -51,8 +53,7 @@ def compile_metric_query(model: SemanticModel, query: MetricQuery) -> CompiledMe
         raise SemanticQueryError(f"unknown filter dimensions: {sorted(unknown_filters)}")
 
     select_parts = [
-        f"{_quote(dimensions[name].column)} AS {_quote(name)}"
-        for name in query.dimensions
+        f"{_quote(dimensions[name].column)} AS {_quote(name)}" for name in query.dimensions
     ]
     select_parts.extend(_measure_sql(measures[name]) for name in query.measures)
 
@@ -76,7 +77,7 @@ def compile_metric_query(model: SemanticModel, query: MetricQuery) -> CompiledMe
             predicates.append(f"{column} {operators[item.operator]} ?")
             parameters.append(item.values[0])
 
-    sql = f"SELECT {', '.join(select_parts)} FROM {_quote(model.source)}"
+    sql = f"SELECT {', '.join(select_parts)} FROM {_quote(model.source)}"  # noqa: S608 - _quote validates and escapes identifiers
     if predicates:
         sql += " WHERE " + " AND ".join(predicates)
     if query.dimensions:

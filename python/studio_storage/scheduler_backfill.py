@@ -12,7 +12,7 @@ from studio_core.canonical_json import encode as encode_canonical_json
 from studio_orchestrator import Instant
 
 from .scheduler_events import SchedulerEventStore, migrate_scheduler_events
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 
 _BACKFILL_SCHEMA_VERSION = 1
 _BACKFILL_MIGRATIONS = {1: "scheduler_backfill_001.sql"}
@@ -71,9 +71,7 @@ def _minute_aligned(value: Instant) -> bool:
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler_backfill(connection: sqlite3.Connection, *, now: Instant | str) -> None:
@@ -89,13 +87,12 @@ def migrate_scheduler_backfill(connection: sqlite3.Connection, *, now: Instant |
     current = 0 if row is None or row["version"] is None else int(row["version"])
     if current > _BACKFILL_SCHEMA_VERSION:
         raise RuntimeError(
-            f"scheduler backfill schema {current} is newer than supported {_BACKFILL_SCHEMA_VERSION}"
+            f"scheduler backfill schema {current} is newer than supported "
+            f"{_BACKFILL_SCHEMA_VERSION}"
         )
     migrations_dir = Path(__file__).with_name("migrations")
     for version in range(current + 1, _BACKFILL_SCHEMA_VERSION + 1):
-        script = migrations_dir.joinpath(_BACKFILL_MIGRATIONS[version]).read_text(
-            encoding="utf-8"
-        )
+        script = migrations_dir.joinpath(_BACKFILL_MIGRATIONS[version]).read_text(encoding="utf-8")
         connection.execute("BEGIN IMMEDIATE")
         try:
             _execute_script_in_transaction(connection, script)
@@ -306,7 +303,8 @@ class SchedulerBackfillStore(SchedulerEventStore):
             if existing is None:
                 connection.execute(
                     "INSERT INTO scheduler_backfill_runs("
-                    "workspace_id,backfill_id,logical_time,workflow_run_id,state,created_at,updated_at) "
+                    "workspace_id,backfill_id,logical_time,workflow_run_id,state,"
+                    "created_at,updated_at) "
                     "VALUES (?,?,?,?,'reserved',?,?)",
                     (
                         str(workspace_id),
@@ -321,9 +319,7 @@ class SchedulerBackfillStore(SchedulerEventStore):
             else:
                 reserved = _run_from_row(workspace_id, existing)
                 if reserved.workflow_run_id != run_id:
-                    raise BackfillConflict(
-                        "backfill logical time maps to conflicting workflow run"
-                    )
+                    raise BackfillConflict("backfill logical time maps to conflicting workflow run")
             if request.state == "pending":
                 connection.execute(
                     "UPDATE scheduler_backfills SET state='running',updated_at=?,"
