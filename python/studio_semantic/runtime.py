@@ -45,7 +45,9 @@ class SemanticRuntime:
         for tile in dashboard.tiles:
             model = models.get(tile.query.model_id)
             if model is None:
-                raise KeyError(f"dashboard references unknown semantic model: {tile.query.model_id}")
+                raise KeyError(
+                    f"dashboard references unknown semantic model: {tile.query.model_id}"
+                )
             results.append(self.execute_tile(model, tile))
         return tuple(results)
 

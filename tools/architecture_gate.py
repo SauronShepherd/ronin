@@ -28,8 +28,10 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_runners",
             "studio_orchestrator",
             "studio_storage",
+            "studio_sql",
             "studio_vcs",
             "studio_execution",
+            "studio_security",
         }
     ),
     "studio_worker": frozenset(
@@ -55,10 +57,43 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_vcs",
             "studio_execution",
             "studio_server",
+            "studio_sql",
             "studio_worker",
+            "studio_migration",
+            "studio_security",
         }
     ),
 }
+# Public v1 domain packages are independently owned source packages.  Keep
+# their observed imports explicit so the gate rejects future undeclared edges
+# while allowing the current provider-neutral v1 composition.
+PROJECT_DEPENDENCIES.update(
+    {
+        "studio_connectors": frozenset({"studio_core", "studio_storage"}),
+        "studio_finops": frozenset({"studio_core", "studio_orchestrator", "studio_observability"}),
+        "studio_genai": frozenset({"studio_core", "studio_storage"}),
+        "studio_lakehouse": frozenset(),
+        "studio_migration": frozenset({"studio_core"}),
+        "studio_ml": frozenset({"studio_core", "studio_orchestrator", "studio_storage"}),
+        "studio_observability": frozenset({"studio_orchestrator"}),
+        "studio_quality": frozenset({"studio_core", "studio_orchestrator"}),
+        "studio_security": frozenset({"studio_core", "studio_orchestrator"}),
+        "studio_semantic": frozenset({"studio_core", "studio_sql"}),
+        "studio_sql": frozenset(),
+        "studio_streaming": frozenset({"studio_core", "studio_lakehouse"}),
+    }
+)
+PROJECT_DEPENDENCIES["studio_execution"] = frozenset(
+    {
+        *PROJECT_DEPENDENCIES["studio_execution"],
+        "studio_core",
+        "studio_lakehouse",
+        "studio_streaming",
+    }
+)
+PROJECT_DEPENDENCIES["studio_orchestrator"] = frozenset(
+    {*PROJECT_DEPENDENCIES["studio_orchestrator"], "studio_kernel"}
+)
 PROJECT_PACKAGES = frozenset(PROJECT_DEPENDENCIES)
 PURE_DOMAIN_PACKAGES = frozenset({"studio_core", "studio_notebook", "studio_orchestrator"})
 PURE_STDLIB_IMPORT_ROOTS = frozenset(

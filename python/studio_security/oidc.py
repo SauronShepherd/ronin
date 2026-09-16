@@ -98,11 +98,7 @@ class OidcTokenValidator:
         raw_keys = jwks.get("keys")
         if not isinstance(raw_keys, list):
             raise OidcAuthenticationError("OIDC JWKS has invalid keys collection")
-        candidates = [
-            key
-            for key in raw_keys
-            if isinstance(key, dict) and key.get("kid") == key_id
-        ]
+        candidates = [key for key in raw_keys if isinstance(key, dict) and key.get("kid") == key_id]
         if len(candidates) != 1:
             raise OidcAuthenticationError("OIDC signing key id is missing or ambiguous")
         try:
@@ -127,7 +123,9 @@ class OidcTokenValidator:
             raise OidcAuthenticationError("OIDC claims are missing issuer/subject")
         if isinstance(audience_raw, str):
             audience = (audience_raw,)
-        elif isinstance(audience_raw, list) and all(isinstance(value, str) for value in audience_raw):
+        elif isinstance(audience_raw, list) and all(
+            isinstance(value, str) for value in audience_raw
+        ):
             audience = tuple(audience_raw)
         else:
             raise OidcAuthenticationError("OIDC audience claim has invalid shape")

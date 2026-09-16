@@ -129,7 +129,11 @@ def resolve_runtime(intent: ExecutionProfile, catalog: RuntimeCatalog) -> Runtim
             return RuntimeResolution("selected", exact.profile, True, True, evaluations)
         if intent.resolution == "strict":
             return RuntimeResolution("no_match", None, True, False, evaluations)
-    elif requested is not None and intent.resolution == "strict":
+    elif requested is not None:
+        # A compatible policy may relax capability constraints, but it must not
+        # turn an unknown opaque runtime reference into a different runtime.
+        # Doing so would silently change execution semantics and hide catalog
+        # or adapter configuration errors.
         return RuntimeResolution("no_match", None, False, False, evaluations)
 
     candidates = [evaluation for evaluation in evaluations if evaluation.compatible]

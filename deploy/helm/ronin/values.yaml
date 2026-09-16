@@ -1,0 +1,14 @@
+image:
+  repository: ronin
+  tag: local
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 8080
+storage:
+  size: 1Gi
+  accessModes: [ReadWriteOnce]
+server:
+  replicas: 1
+  token: ""
+  tokenScopes: '{}'

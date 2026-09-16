@@ -49,7 +49,7 @@ def _chunk_text(text: str, *, size: int, overlap: int) -> tuple[str, ...]:
 
 def _chunk_id(index: VectorIndexDefinition, row_index: int, chunk_index: int, text: str) -> str:
     digest = hashlib.sha256(
-        f"{index.id.value}\n{row_index}\n{chunk_index}\n{text}".encode("utf-8")
+        f"{index.id.value}\n{row_index}\n{chunk_index}\n{text}".encode()
     ).hexdigest()
     return f"chunk-{digest[:32]}"
 
@@ -84,6 +84,8 @@ def build_vector_index(
         result = provider.embed(embedding_model, tuple(pending_texts))
         if len(result.vectors) != len(pending_texts):
             raise ValueError("embedding provider returned unexpected vector count")
+        if result.model_id != embedding_model.model_id:
+            raise ValueError("embedding provider returned a different model identity")
         for (chunk_id, metadata), text, vector in zip(
             pending_meta,
             pending_texts,
@@ -99,9 +101,12 @@ def build_vector_index(
         missing_metadata = [name for name in definition.metadata_fields if name not in row]
         if missing_text or missing_metadata:
             raise ValueError(
-                f"vector source row {row_index} is missing fields: {missing_text + missing_metadata}"
+                "vector source row "
+                f"{row_index} is missing fields: {missing_text + missing_metadata}"
             )
-        combined = "\n".join(str(row[name]) for name in definition.text_fields if row[name] is not None)
+        combined = "\n".join(
+            str(row[name]) for name in definition.text_fields if row[name] is not None
+        )
         metadata = tuple(
             sorted(
                 (name, "" if row[name] is None else str(row[name]))
@@ -175,15 +180,19 @@ def run_rag(
         raise ValueError("RAG definition references a different vector index")
     if definition.prompt_id != prompt.id or definition.prompt_version != prompt.version:
         raise ValueError("RAG prompt identity does not match definition")
-    if definition.provider_id != chat_model.provider_id or definition.model_id != chat_model.model_id:
+    if (
+        definition.provider_id != chat_model.provider_id
+        or definition.model_id != chat_model.model_id
+    ):
         raise ValueError("RAG chat model does not match definition")
     if embedding_model.provider_id != index_definition.provider_id:
         raise ValueError("RAG embedding model provider does not match index")
-    query_vector = provider.embed(embedding_model, (question,)).vectors[0]
+    query_result = provider.embed(embedding_model, (question,))
+    if query_result.model_id != embedding_model.model_id:
+        raise ValueError("embedding provider returned a different model identity")
+    query_vector = query_result.vectors[0]
     matches = store.search(index_definition.id, query_vector, top_k=definition.top_k)
-    context = "\n\n".join(
-        f"[{match.chunk.chunk_id}] {match.chunk.text}" for match in matches
-    )
+    context = "\n\n".join(f"[{match.chunk.chunk_id}] {match.chunk.text}" for match in matches)
     rendered = _render_prompt(
         prompt,
         question=question,

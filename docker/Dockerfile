@@ -4,6 +4,7 @@ FROM ${PYTHON_IMAGE} AS wheel
 WORKDIR /src
 COPY pyproject.toml README.md LICENSE ./
 COPY python ./python
+COPY web ./web
 RUN python -m pip wheel --no-deps --wheel-dir /wheels .
 
 FROM docker:27.3.1-cli-alpine3.20@sha256:328eb399a065780c2cebe9224de003aa14084cf69efae882ac27430f921819b7 AS docker-cli
@@ -29,6 +30,7 @@ RUN python -m pip install --no-cache-dir /tmp/wheels/*.whl && rm -rf /tmp/wheels
 
 COPY docker/container-entrypoint.sh /usr/local/bin/ronin-container-entrypoint
 COPY docker/healthcheck.py /usr/local/lib/ronin/healthcheck.py
+COPY web /usr/local/lib/ronin/web
 RUN chmod 0755 /usr/local/bin/ronin-container-entrypoint
 
 ENV HOME=/home/ronin \
@@ -39,4 +41,4 @@ WORKDIR /workspace
 USER 65532:65532
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/ronin-container-entrypoint"]
-CMD ["ronin", "--help"]
+CMD ["ronin", "serve"]

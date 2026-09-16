@@ -27,7 +27,8 @@ def _psycopg() -> tuple[Any, Any]:
         from psycopg.rows import dict_row
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise PostgresSecurityDependencyError(
-            "PostgreSQL identity/RBAC support requires psycopg from Ronin data-plane/server dependencies"
+            "PostgreSQL identity/RBAC support requires psycopg from Ronin "
+            "data-plane/server dependencies"
         ) from exc
     return psycopg, dict_row
 
@@ -246,10 +247,11 @@ class PostgresIdentityStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "DELETE FROM ronin_security_group_members WHERE group_id=%s AND principal_id=%s",
+                    "DELETE FROM ronin_security_group_members "
+                    "WHERE group_id=%s AND principal_id=%s",
                     (group_id.value, principal_id.value),
                 )
-                removed = cursor.rowcount == 1
+                removed = bool(cursor.rowcount == 1)
             connection.commit()
             return removed
         except Exception:
@@ -321,7 +323,7 @@ class PostgresIdentityStore:
                         binding.role,
                     ),
                 )
-                removed = cursor.rowcount == 1
+                removed = bool(cursor.rowcount == 1)
             connection.commit()
             return removed
         except Exception:

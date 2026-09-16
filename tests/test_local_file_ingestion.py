@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from studio_core import AssetId, ConnectionDefinition, ConnectionId, Workspace, WorkspaceId
 from studio_orchestrator import Instant
 from studio_storage import LocalArtifactStore, SqliteCatalogStore, SqliteWorkspaceStore
@@ -64,16 +63,16 @@ def test_same_content_is_idempotent(tmp_path: Path) -> None:
     )
     catalog, artifacts = _stores(tmp_path)
     connector = LocalFileConnector(source_root)
-    kwargs = dict(
-        workspace_id=_WS,
-        connection=_CONNECTION,
-        relative_path="records.jsonl",
-        target_asset_id=AssetId("records"),
-        target_name="Records",
-        artifact_store=artifacts,
-        catalog_store=catalog,
-        now=_NOW,
-    )
+    kwargs = {
+        "workspace_id": _WS,
+        "connection": _CONNECTION,
+        "relative_path": "records.jsonl",
+        "target_asset_id": AssetId("records"),
+        "target_name": "Records",
+        "artifact_store": artifacts,
+        "catalog_store": catalog,
+        "now": _NOW,
+    }
 
     first = connector.ingest(**kwargs)
     second = connector.ingest(**kwargs)
@@ -98,7 +97,10 @@ def test_connector_rejects_symlink(tmp_path: Path) -> None:
     target = source_root / "target.csv"
     target.write_text("id\n1\n", encoding="utf-8")
     alias = source_root / "alias.csv"
-    alias.symlink_to(target)
+    try:
+        alias.symlink_to(target)
+    except OSError as exc:
+        pytest.skip(f"symlink creation is unavailable on this host: {exc}")
     connector = LocalFileConnector(source_root)
 
     with pytest.raises(ValueError, match="symlinks"):

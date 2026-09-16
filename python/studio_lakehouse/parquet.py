@@ -35,8 +35,8 @@ class ParquetFile:
 
 def _pyarrow() -> tuple[Any, Any]:
     try:
-        import pyarrow as pa
-        import pyarrow.parquet as pq
+        import pyarrow as pa  # type: ignore[import-untyped]
+        import pyarrow.parquet as pq  # type: ignore[import-untyped]
     except ImportError as exc:  # pragma: no cover - depends on optional installation
         raise ParquetDependencyError(
             "Parquet support requires the optional Ronin data-plane dependencies"
@@ -54,8 +54,7 @@ def _digest_file(path: Path) -> str:
 
 def _schema_fields(schema: Any) -> tuple[ParquetSchemaField, ...]:
     return tuple(
-        ParquetSchemaField(field.name, str(field.type), field.nullable)
-        for field in schema
+        ParquetSchemaField(field.name, str(field.type), field.nullable) for field in schema
     )
 
 
@@ -120,10 +119,19 @@ def read_parquet_rows(
         raise ValueError("Parquet read limit must be non-negative")
     _, pq = _pyarrow()
     resolved = path.resolve(strict=True)
-    table = pq.read_table(resolved, columns=list(columns) if columns else None)
-    if limit is not None:
-        table = table.slice(0, limit)
-    return tuple(dict(row) for row in table.to_pylist())
+    selected_columns = list(columns) if columns else None
+    if limit is None:
+        table = pq.read_table(resolved, columns=selected_columns)
+        return tuple(dict(row) for row in table.to_pylist())
+    if limit == 0:
+        return ()
+    rows: list[dict[str, object]] = []
+    parquet_file = pq.ParquetFile(resolved)
+    for batch in parquet_file.iter_batches(batch_size=min(limit, 1024), columns=selected_columns):
+        rows.extend(dict(row) for row in batch.to_pylist())
+        if len(rows) >= limit:
+            break
+    return tuple(rows[:limit])
 
 
 __all__ = (
