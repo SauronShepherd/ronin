@@ -42,6 +42,7 @@ from studio_sql import (
     SqlRelationUnavailableError,
     SqlTimeoutError,
 )
+from studio_sql.wire import sql_wire_value
 from studio_storage import IdempotencyConflict, StorageBackpressureError
 
 _MAX_REQUEST_BYTES = 1024 * 1024
@@ -382,7 +383,7 @@ class DurableHTTPApplication:
             "columns": [
                 {"name": column.name, "type": column.type_name} for column in result.columns
             ],
-            "rows": [list(row) for row in result.rows],
+            "rows": [[sql_wire_value(value) for value in row] for row in result.rows],
         }
 
 
