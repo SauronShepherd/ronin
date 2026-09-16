@@ -30,7 +30,7 @@ class LicenseQualificationError(ValueError):
 
 
 def _metadata_value(dist: metadata.Distribution, key: str) -> str | None:
-    return dist.metadata[key] if key in dist.metadata else None
+    return dist.metadata[key] if key in dist.metadata else None  # noqa: SIM401
 
 
 def _canonical_name(value: str) -> str:
