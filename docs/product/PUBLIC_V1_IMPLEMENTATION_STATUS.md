@@ -43,7 +43,7 @@ This document records implementation state only. It does not claim test executio
 | Palantir Foundry/AIP migration | qualification pending | deterministic fixture discovery and fail-closed Python-function translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
 | Dataiku DSS migration | qualification pending | deterministic fixture discovery and fail-closed Python/SQL recipe translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
 | Web Studio | partial | authenticated static Studio shell supports job/evidence/event workflows and project-scoped read-only SQL; authoring editors, domain workflows and complete Public v1 journeys remain |
-| Public v1 release qualification | blocked | active Actions/current exact-head qualification absent; main remains unprotected |
+| Public v1 release qualification | blocked | exact-head CI, security, Docker and release-packaging workflows are active and have passed on the latest published construction candidate; Public v1 remains blocked by incomplete mandatory product capabilities, provider certification and repository/legal administration; main remains unprotected |
 
 ## Public v1 source work merged in the current construction sequence
 
@@ -69,8 +69,8 @@ These merges do **not** imply that their parent capability families are complete
 - **#62:** language-neutral runner protocol family and compatibility semantics.
 - **#45:** choose and verify a real private vulnerability reporting path before publishing a security policy that points to it.
 - **License/NOTICE/attribution:** tooling may inventory facts; maintainers/legal review own conclusions.
-- **#199 and dependent release issues:** automated qualification is currently disabled and must not be silently re-enabled or treated as executed evidence.
-- **#63:** repository/ref protection is an administrative release-gate action after required checks are restored.
+- **#199 and dependent release issues:** automated qualification is active; each claim must still identify the exact candidate SHA, and green automation does not replace product, provider, legal or administrative release evidence.
+- **#63:** repository/ref protection remains an administrative release-gate action even though the required checks are now restored.
 
 ## Updated critical path
 
