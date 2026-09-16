@@ -15,6 +15,15 @@ SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
 HEAD_PATTERN = re.compile(r"(?m)^(\*\*Observed source head:\*\* `)[0-9a-f]{40}(` \()[^)]+(\)\.)$")
 
 
+def _read_observed() -> tuple[str, str]:
+    machine = json.loads(MACHINE.read_text(encoding="utf-8"))
+    markdown = MARKDOWN.read_text(encoding="utf-8")
+    match = HEAD_PATTERN.search(markdown)
+    if match is None:
+        raise ValueError("human ledger must contain one observed source head")
+    return machine["observed_main_sha"], match.group(0).split("`")[1]
+
+
 def synchronize(sha: str, observed_at: str) -> None:
     if not SHA_PATTERN.fullmatch(sha):
         raise ValueError("sha must be a 40-character lowercase hexadecimal Git SHA")
@@ -34,14 +43,26 @@ def synchronize(sha: str, observed_at: str) -> None:
     MARKDOWN.write_text(updated, encoding="utf-8")
 
 
+def check() -> None:
+    machine_sha, markdown_sha = _read_observed()
+    if machine_sha != markdown_sha:
+        raise SystemExit("Public v1 status ledgers disagree on observed source SHA")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("sha")
+    parser.add_argument("sha", nargs="?")
+    parser.add_argument("--check", action="store_true")
     parser.add_argument(
         "--observed-at",
         default=datetime.now(UTC).isoformat(timespec="seconds"),
     )
     args = parser.parse_args()
+    if args.check:
+        check()
+        return 0
+    if args.sha is None:
+        parser.error("sha is required unless --check is used")
     synchronize(args.sha, args.observed_at)
     return 0
 
