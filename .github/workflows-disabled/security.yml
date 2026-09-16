@@ -186,10 +186,33 @@ jobs:
           dependencies = data["project"]["optional-dependencies"]["dev"]
           output = Path(os.environ["RUNNER_TEMP"]) / "ronin-dev-requirements.txt"
           output.write_text("\n".join(dependencies) + "\n", encoding="utf-8")
+      - name: Extract Ronin-declared runtime dependency surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          with Path("pyproject.toml").open("rb") as handle:
+              data = tomllib.load(handle)
+          dependencies = list(data["project"].get("dependencies", []))
+          optional = data["project"].get("optional-dependencies", {})
+          for name, values in optional.items():
+              if name != "dev":
+                  dependencies.extend(values)
+          output = Path(os.environ["RUNNER_TEMP"]) / "ronin-runtime-requirements.txt"
+          output.write_text("\n".join(sorted(set(dependencies))) + "\n", encoding="utf-8")
+          PY
           PY
       - name: Audit Ronin root development dependencies
         run: >-
           python -m pip_audit --strict --progress-spinner=off
           --requirement "$RUNNER_TEMP/ronin-dev-requirements.txt"
+      - name: Audit Ronin runtime dependencies
+        run: >-
+          python -m pip_audit --strict --progress-spinner=off
+          --requirement "$RUNNER_TEMP/ronin-runtime-requirements.txt"
       - name: Audit pyronin dependency surface
         run: python -m pip_audit --strict --progress-spinner=off packages/pyronin
