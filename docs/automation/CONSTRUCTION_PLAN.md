@@ -6,7 +6,7 @@ Ronin Public v1 is **incomplete** until every mandatory capability family has an
 
 ## Validation mode
 
-GitHub Actions and automated qualification remain disabled by maintainer policy. Source work may proceed through repository inspection, contract tracing, static review and code-level reasoning, but no new test/CI/release evidence may be claimed unless it is actually executed after authorization. Historical v0.1 evidence remains historical and must not be presented as exact-current-head qualification.
+GitHub Actions and automated qualification are active for the current construction branch. Exact-head runs may be claimed only when the relevant workflow has actually completed for that SHA; historical v0.1 evidence remains historical and must not be presented as current qualification. A green workflow does not waive incomplete product capabilities, provider certification, legal review or repository administration.
 
 ## Mandatory invariants
 
@@ -63,7 +63,7 @@ Public-v1 capability state is maintained in `docs/product/PUBLIC_V1_IMPLEMENTATI
 - **Project+connection multi-object path (#283/#285):** deterministic topological staging, aggregate binding resolution, provider-neutral commit port and one SQLite transaction across resolved connections/projects/environment bindings.
 - **Catalog path (#287/#288):** caller-selected revision subgraph export containing exact assets/revisions and lineage only when both endpoints are selected; verified dependency-aware planning; provider-neutral atomic commit; one SQLite transaction across assets/revisions/lineage with full rollback on late conflicts.
 
-These cover only currently implemented metadata families. Catalog export remains explicit rather than whole-catalog because the provider-neutral catalog port lacks complete revision discovery. Workflow/quality/ontology/ML/GenAI and later data/semantic objects remain outside the native Bundle path. PostgreSQL has not implemented the Bundle commit ports. No certification evidence is claimed while automated qualification remains disabled.
+These cover only currently implemented metadata families. Catalog export remains explicit rather than whole-catalog because the provider-neutral catalog port lacks complete revision discovery. Workflow/quality/ontology/ML/GenAI and later data/semantic objects remain outside the native Bundle path. PostgreSQL has not implemented the Bundle commit ports. No provider certification is claimed until the corresponding authenticated fixtures, target execution and exact-head evidence exist.
 
 ## Blocked and human-decision work
 

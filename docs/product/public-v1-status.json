@@ -132,7 +132,7 @@
     {
       "id": "public-v1-release-qualification",
       "status": "blocked",
-      "summary": "GitHub Actions remain disabled, main is unprotected, current exact-head automated qualification is absent, and release/security/legal evidence still requires blocked or human-owned work."
+      "summary": "Exact-head CI, security, Docker, status-consistency and release-packaging workflows are active and have passed on the current published construction SHA; main remains unprotected, and product, provider-certification, release/security/legal evidence still requires incomplete or human-owned work."
     }
   ],
   "human_decisions": [
@@ -207,6 +207,6 @@
     "Expand Public v1 API and extend Web Studio from the verified job/evidence shell to documented domain APIs and authoring workflows.",
     "Implement remaining quality, ontology/KG/RQL, ML, GenAI, semantic, streaming, observability/alerts/FinOps and security runtime paths.",
     "Implement Kubernetes and four certified migration profiles only after their canonical target capabilities execute end to end.",
-    "Restore exact-head CI/release qualification only with maintainer authorization and do not claim release readiness before it exists."
+    "Keep exact-head CI/release qualification active, identify every claim by SHA, and do not claim Public v1 release readiness before all mandatory capabilities and human-owned evidence exist."
   ]
 }

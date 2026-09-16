@@ -83,7 +83,7 @@ The command also accepts `fabric`, `dataiku`, and `foundry`. It inventories sour
 
 ## Current qualification status
 
-GitHub Actions and automated tests are currently disabled by maintainer policy. Historical automated evidence predates later source changes, so Ronin must not be described as newly qualified or release-ready from current `main`.
+GitHub Actions and automated qualification are active for the current construction branch. The exact-head workflows cover CI, security, Docker, status consistency and release packaging; a green workflow run is evidence for that SHA only and does not by itself make Public v1 release-ready.
 
 The Public v1 gate is intentionally much broader than the earlier 15-step local execution journey. A missing mandatory capability family means Public v1 is incomplete regardless of how mature the foundation is.
 
@@ -122,7 +122,7 @@ python -m pip install --require-hashes -r requirements-dev.lock
 python -m pip install -e . --no-deps
 ```
 
-Repository validation commands and the current code-only policy are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). GitHub Actions and automated tests are currently disabled by maintainer policy. Any local/static evidence must be reported exactly and does not replace full release qualification.
+Repository validation commands and the current qualification policy are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). Local/static evidence must be reported exactly, and workflow evidence must identify the exact candidate SHA; neither replaces the remaining product, provider-certification, legal or administrative release decisions.
 
 ## Layout
 
