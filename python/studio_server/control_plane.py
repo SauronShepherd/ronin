@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Protocol, cast, runtime_checkable
 from urllib.parse import unquote, urlsplit
 
-from studio_core import ProjectId, ProjectManifest, WorkspaceId
+from studio_core import ProjectId, ProjectManifest, Workspace, WorkspaceId
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import (
     ProjectService,
@@ -60,7 +60,7 @@ def _now() -> Instant:
 
 
 def _workspace_payload(workspace: object) -> dict[str, object]:
-    item = cast(object, workspace)
+    item = cast(Workspace, workspace)
     return {
         "id": str(item.id),
         "name": item.name,
@@ -288,7 +288,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         return
                     if permitted:
                         visible.append(workspace)
-                visible.sort(key=lambda item: str(item.id))
+                visible.sort(key=lambda item: str(cast(Workspace, item).id))
                 selected, next_cursor = _page(visible, limit=limit, offset=offset)
                 self._write_json(
                     HTTPStatus.OK,
