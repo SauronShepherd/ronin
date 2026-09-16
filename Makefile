@@ -1,10 +1,10 @@
 .PHONY: check format lint typecheck architecture gates-negative test \
-	coverage-t1 coverage-t2 coverage-t3 coverage-storage-files mutation \
+	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-storage-files mutation performance \
 	canonical-json-check dependency-surfaces-check
 
 CODE_PATHS := python tests tools packages docker
 
-check: format lint typecheck architecture gates-negative test
+check: format lint typecheck architecture gates-negative test performance
 
 format:
 	ruff format --check $(CODE_PATHS)
@@ -29,8 +29,11 @@ dependency-surfaces-check:
 	python -m tools.dependency_surfaces
 
 test:
-	python -m pytest --cov --cov-branch --cov-report=
-	$(MAKE) coverage-t1 coverage-t2 coverage-t3 coverage-storage-files
+	python -m pytest --ignore=tests/perf --cov --cov-branch --cov-report=
+	$(MAKE) coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-storage-files
+
+performance:
+	python -m pytest tests/perf -q
 
 coverage-t1:
 	coverage report --fail-under=100 \
@@ -43,6 +46,10 @@ coverage-t2:
 coverage-t3:
 	coverage report --fail-under=75 \
 		--include="*/studio_execution/*,*/studio_server/*,*/studio_cli/*,*/pyronin/*"
+
+coverage-t4:
+	coverage report --fail-under=10 \
+		--include="*/studio_connectors/*,*/studio_finops/*,*/studio_genai/*,*/studio_lakehouse/*,*/studio_ml/*,*/studio_migration/*,*/studio_observability/*,*/studio_quality/*,*/studio_security/*,*/studio_semantic/*,*/studio_sql/*,*/studio_streaming/*"
 
 coverage-storage-files:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
