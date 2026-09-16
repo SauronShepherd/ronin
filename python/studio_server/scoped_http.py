@@ -10,6 +10,7 @@ from concurrent.futures import TimeoutError as FutureTimeoutError
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any, cast
+from urllib.parse import urlsplit
 
 from studio_core import GrantSet
 from studio_execution import DurableExecutionService
@@ -17,7 +18,7 @@ from studio_sql import SqlEngine
 from studio_storage import sqlite_ready
 
 from studio_server.http import RoninHTTPServer as _RoninHTTPServer
-from studio_server.http import _Handler
+from studio_server.http import _Handler, _single_query_values
 from studio_server.transport_policy import (
     BindPolicy,
     allows_plaintext_non_loopback,
@@ -95,6 +96,25 @@ class _ReadinessHandler(_Handler):
                 {"status": "ready" if ready else "not_ready"},
             )
             return
+        split = urlsplit(self.path)
+        if split.path == "/v1/jobs":
+            try:
+                query = _single_query_values(
+                    split.query,
+                    allowed=frozenset({"project", "state", "limit", "cursor"}),
+                )
+            except ValueError:
+                super().do_GET()
+                return
+            if query.get("project") is None:
+                server = cast(RoninHTTPServer, self.server)
+                if not server.permits_unfiltered_project_list():
+                    self._error(
+                        HTTPStatus.FORBIDDEN,
+                        "forbidden",
+                        "project filter is required for scoped list authorization",
+                    )
+                    return
         try:
             super().do_GET()
         except ServiceCallTimeout:
@@ -176,6 +196,23 @@ class RoninHTTPServer(_RoninHTTPServer):
         request, client_address = super().get_request()
         request.settimeout(self._request_timeout_seconds)
         return request, client_address
+
+    def permits_unfiltered_project_list(self) -> bool:
+        """Return whether every project is safely listable before choosing a storage page."""
+        supported = tuple(
+            grant
+            for grant in self.effective_grants.grants
+            if "list" in grant.actions and not grant.constraints
+        )
+        project_wildcards = tuple(
+            grant
+            for grant in supported
+            if grant.resource.kind == "project" and grant.resource.identifier is None
+        )
+        if project_wildcards:
+            return len(project_wildcards) == 1
+        global_wildcards = tuple(grant for grant in supported if grant.resource.kind == "*")
+        return len(global_wildcards) == 1
 
     def ready(self) -> bool:
         """Return readiness without exposing storage details through HTTP."""
