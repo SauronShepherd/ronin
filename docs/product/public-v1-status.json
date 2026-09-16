@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-09-16T00:00:00Z",
-  "observed_main_sha": "fe2abdd7ad6e99bbf1f99115c293d6871c5ca488",
+  "observed_main_sha": "3612ef67b6d81c8d0e0bf3aab0bf8404594f3d96",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "status_vocabulary": [
@@ -132,7 +132,7 @@
     {
       "id": "public-v1-release-qualification",
       "status": "blocked",
-      "summary": "Exact-head CI, security, Docker, status-consistency and release-packaging workflows are active and have passed on the current published construction SHA; main remains unprotected, and product, provider-certification, release/security/legal evidence still requires incomplete or human-owned work."
+      "summary": "Exact-head CI, security, Docker, status-consistency and release-packaging workflows are active and have passed on the current published construction SHA; main is protected with required PR approval, strict checks and no force-push/deletion. Product, provider-certification and legal/release evidence still requires incomplete or human-owned work."
     }
   ],
   "human_decisions": [
