@@ -86,3 +86,12 @@ def test_s3_store_validates_endpoint_and_region_configuration() -> None:
         S3ArtifactStore("ronin-test", endpoint_url="\n", client=client)
     with pytest.raises(ValueError, match="region name"):
         S3ArtifactStore("ronin-test", region_name=" ", client=client)
+
+
+def test_s3_artifact_page_accepts_numeric_only_sha256_digest() -> None:
+    client = _Client()
+    store = S3ArtifactStore("ronin-test", client=client)
+    digest = "0" * 64
+    client.objects[("ronin-test", "ronin/artifacts/sha256/" + digest)] = b""
+    page = store.list_digests_page(page_size=1)
+    assert page.digests == (digest,)

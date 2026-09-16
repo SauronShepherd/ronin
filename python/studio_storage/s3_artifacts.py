@@ -166,7 +166,7 @@ class S3ArtifactStore:
         digests = tuple(
             key.rsplit("/", 1)[-1]
             for item in response.get("Contents", ())
-            if (key := str(item.get("Key", ""))).rsplit("/", 1)[-1].islower()
+            if (key := str(item.get("Key", ""))).rsplit("/", 1)[-1]
             and len(key.rsplit("/", 1)[-1]) == 64
             and all(char in "0123456789abcdef" for char in key.rsplit("/", 1)[-1])
         )
