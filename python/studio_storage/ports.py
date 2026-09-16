@@ -29,7 +29,8 @@ from studio_core.environments import (
 )
 from studio_orchestrator import Instant
 
-from studio_storage.artifacts import ArtifactRef
+from .artifacts import ArtifactPage, ArtifactRef
+
 
 
 @runtime_checkable
@@ -59,7 +60,9 @@ class ArtifactStore(Protocol):
 class PagedArtifactStore(Protocol):
     """Optional artifact-store capability for bounded inventory discovery."""
 
-    def list_digests_page(self, *, cursor: str | None = None, page_size: int = 1000) -> object: ...
+    def list_digests_page(
+        self, *, cursor: str | None = None, page_size: int = 1000
+    ) -> ArtifactPage: ...
 
 
 @runtime_checkable
