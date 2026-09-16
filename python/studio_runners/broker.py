@@ -7,7 +7,7 @@ import contextlib
 import hashlib
 import re
 from dataclasses import dataclass, field
-from typing import cast
+from typing import Any, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -39,7 +39,9 @@ class BrokerRequestError(RuntimeError):
 
 
 class _RejectRedirects(HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
+    def redirect_request(
+        self, req: Any, fp: Any, code: Any, msg: Any, headers: Any, newurl: Any
+    ) -> None:
         del req, fp, code, msg, headers, newurl
         return
 
@@ -50,7 +52,7 @@ def _require_token(value: str) -> str:
     return value
 
 
-def _read_bounded(response, limit: int) -> bytes:  # noqa: ANN001
+def _read_bounded(response: Any, limit: int) -> bytes:
     declared = response.headers.get("Content-Length")
     if declared is not None:
         try:
@@ -62,7 +64,7 @@ def _read_bounded(response, limit: int) -> bytes:  # noqa: ANN001
     data = response.read(limit + 1)
     if len(data) > limit:
         raise BrokerProtocolError("runner broker response exceeded configured byte limit")
-    return data
+    return cast(bytes, data)
 
 
 def _object(payload: bytes) -> dict[str, object]:

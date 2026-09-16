@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from urllib.parse import unquote, urlsplit
 
 from studio_core.canonical_json import decode as decode_canonical_json
@@ -232,7 +232,7 @@ class RunnerBrokerServer(ThreadingHTTPServer):
         config.evidence_root.mkdir(parents=True, exist_ok=True)
         super().__init__(server_address, _BrokerHandler)
 
-    def get_request(self):  # noqa: ANN201
+    def get_request(self) -> tuple[Any, Any]:
         request, address = super().get_request()
         request.settimeout(self.config.request_timeout_seconds)
         return request, address
