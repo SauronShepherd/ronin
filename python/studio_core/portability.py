@@ -192,7 +192,9 @@ class MigrationObjectReport:
         _require_text(self.source_id, "migration source id")
         if self.status not in MIGRATION_STATUSES:
             raise ValueError("unsupported migration status")
-        targets = tuple(sorted(_require_text(value, "migration target ref") for value in self.target_refs))
+        targets = tuple(
+            sorted(_require_text(value, "migration target ref") for value in self.target_refs)
+        )
         if len(targets) != len(set(targets)):
             raise ValueError("migration target refs must be unique")
         notes = tuple(_reject_credential_material(value, "migration note") for value in self.notes)
@@ -201,7 +203,9 @@ class MigrationObjectReport:
         object.__setattr__(self, "notes", notes)
         object.__setattr__(self, "binding_requests", bindings)
         if self.status in {"unsupported", "manual_decision"} and not notes:
-            raise ValueError("unsupported/manual_decision migration objects require explanatory notes")
+            raise ValueError(
+                "unsupported/manual_decision migration objects require explanatory notes"
+            )
 
     @property
     def source_key(self) -> tuple[str, str]:
@@ -238,7 +242,9 @@ class MigrationObjectReport:
             raise ValueError("migration source fields must be strings")
         if not isinstance(status, str) or status not in MIGRATION_STATUSES:
             raise ValueError("unsupported migration status")
-        if not isinstance(target_refs, list) or not all(isinstance(value, str) for value in target_refs):
+        if not isinstance(target_refs, list) or not all(
+            isinstance(value, str) for value in target_refs
+        ):
             raise ValueError("migration target_refs must be string array")
         if not isinstance(notes, list) or not all(isinstance(value, str) for value in notes):
             raise ValueError("migration notes must be string array")
@@ -310,7 +316,9 @@ class MigrationReport:
         source_version = payload["source_version"]
         importer_version = payload["importer_version"]
         objects = payload["objects"]
-        if not all(isinstance(value, str) for value in (source_platform, source_version, importer_version)):
+        if not all(
+            isinstance(value, str) for value in (source_platform, source_version, importer_version)
+        ):
             raise ValueError("migration report identity/version fields must be strings")
         if not isinstance(objects, list):
             raise ValueError("migration report objects must be array")
@@ -341,7 +349,9 @@ class RoninBundleManifest:
         paths = [entry.path for entry in entries]
         if len(paths) != len(set(paths)):
             raise ValueError("Ronin Bundle entry paths must be unique")
-        reports = tuple(sorted(self.migration_reports, key=lambda item: (item.source_platform, item.digest)))
+        reports = tuple(
+            sorted(self.migration_reports, key=lambda item: (item.source_platform, item.digest))
+        )
         object.__setattr__(self, "entries", entries)
         object.__setattr__(self, "migration_reports", reports)
 

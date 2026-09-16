@@ -7,7 +7,7 @@ from pathlib import Path
 
 from studio_core import AssetRevision, CatalogAsset, LineageEdge, WorkspaceId
 from studio_orchestrator import Instant
-from studio_storage.bundle import BundleReadLimits
+from studio_storage.bundle import DEFAULT_BUNDLE_READ_LIMITS, BundleReadLimits
 from studio_storage.bundle_catalog_import_port import (
     CatalogBundleImportCommit,
     CatalogBundleImportConflict,
@@ -29,7 +29,7 @@ def commit_catalog_bundle_import(
     workspace_id: WorkspaceId,
     *,
     now: Instant | str,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = DEFAULT_BUNDLE_READ_LIMITS,
     max_inventory_bytes: int = 8 * 1024 * 1024,
     max_object_bytes: int = 8 * 1024 * 1024,
 ) -> CatalogBundleImportOutcome:

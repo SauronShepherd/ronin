@@ -2,7 +2,7 @@
 
 This is the documentation entry point for Ronin.
 
-The repository currently contains a substantial local execution/control-plane foundation under the `0.1.0a*` engineering line. That foundation is no longer the completeness bar for the first complete public product release. The target is **Ronin Public v1**, a coherent self-hostable Data + AI OS with migration/portability profiles for Microsoft Fabric, Databricks, Palantir Foundry/AIP and Dataiku DSS.
+The repository currently contains a substantial local execution/control-plane foundation under the `0.1.0a*` engineering line. That foundation is no longer the completeness bar for the first complete public product release. The target is **Ronin Public v1**, a coherent local-first Data + AI OS for simulating representative proprietary, non-open-source platform environments on a developer workstation. Portability and migration profiles may become useful secondary capabilities, but they are not the primary product purpose.
 
 ## Public v1 product contracts
 
@@ -12,6 +12,8 @@ Read these first for the target product:
 - `docs/product/PLATFORM_PORTABILITY_V1.md` — canonical Ronin Bundle and vendor import/export semantics;
 - `docs/product/PUBLIC_V1_ROADMAP.md` — implementation waves from the current foundation to Public v1;
 - `docs/product/BRAND_V1.md` — Ronin Brown visual identity.
+- `docs/product/OZONE_LOCAL_SIMULATION.md` — Apache Ozone S3 Gateway local simulation boundary.
+- `docs/product/POSTGRES_JOBSTORE_CONTRACT_V1.md` — PostgreSQL lifecycle storage contract and delivery boundary.
 
 `docs/product/V01_SCOPE.md` remains useful as the historical contract for the local durable-execution foundation. It does **not** define Public v1 completeness.
 
@@ -62,13 +64,13 @@ The complete product target includes:
 - Cost Control / FinOps;
 - multi-user security and audit;
 - local/Compose/Kubernetes deployment profiles;
-- certified migration profiles for Fabric, Databricks, Palantir and Dataiku.
+- representative local simulation profiles for proprietary, non-open-source data and AI environments; any future portability or migration support is explicitly secondary and bounded.
 
 The web Studio must expose these capabilities through the same backend contracts used by API/CLI/SDK; it is not a second semantic implementation.
 
 ## Portability principle
 
-Ronin's migration contract does not hide incompatibilities. Every source-platform object must be reported as one of:
+If portability or migration adapters are developed later, Ronin's contract must not hide incompatibilities. Every source-platform object must be reported as one of:
 
 - `exact`;
 - `translated`;

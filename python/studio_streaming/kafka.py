@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from importlib import import_module
 from typing import Any
 
 from .contracts import StreamBatch, StreamCheckpoint, StreamPosition, StreamRecord
@@ -15,12 +16,17 @@ class KafkaDependencyError(RuntimeError):
 
 def _kafka() -> tuple[Any, Any, int, int]:
     try:
-        from confluent_kafka import Consumer, KafkaError, OFFSET_BEGINNING, TopicPartition
+        kafka = import_module("confluent_kafka")
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise KafkaDependencyError(
             "Kafka streaming support requires the optional Ronin streaming dependencies"
         ) from exc
-    return Consumer, TopicPartition, KafkaError._PARTITION_EOF, OFFSET_BEGINNING
+    return (
+        kafka.Consumer,
+        kafka.TopicPartition,
+        kafka.KafkaError._PARTITION_EOF,
+        kafka.OFFSET_BEGINNING,
+    )
 
 
 def _text(value: str, name: str) -> str:

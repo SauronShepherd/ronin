@@ -13,7 +13,7 @@ from studio_core.environments import (
 )
 from studio_orchestrator import Instant
 
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
 
 _ENVIRONMENT_SCHEMA_VERSION = 1
@@ -29,9 +29,7 @@ class EnvironmentNotFound(KeyError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_environments(connection: sqlite3.Connection, *, now: Instant | str) -> None:
@@ -51,7 +49,9 @@ def migrate_environments(connection: sqlite3.Connection, *, now: Instant | str) 
         )
     migrations_dir = Path(__file__).with_name("migrations")
     for version in range(current + 1, _ENVIRONMENT_SCHEMA_VERSION + 1):
-        script = migrations_dir.joinpath(_ENVIRONMENT_MIGRATIONS[version]).read_text(encoding="utf-8")
+        script = migrations_dir.joinpath(_ENVIRONMENT_MIGRATIONS[version]).read_text(
+            encoding="utf-8"
+        )
         connection.execute("BEGIN IMMEDIATE")
         try:
             _execute_script_in_transaction(connection, script)
@@ -127,7 +127,8 @@ class SqliteEnvironmentStore:
                 )
             elif existing["definition_json"] != payload:
                 connection.execute(
-                    "UPDATE environments SET definition_json=?,updated_at=?,row_version=row_version+1 "
+                    "UPDATE environments SET definition_json=?,updated_at=?, "
+                    "row_version=row_version+1 "
                     "WHERE workspace_id=? AND environment_id=?",
                     (payload, now, str(workspace_id), str(environment.id)),
                 )
@@ -256,7 +257,9 @@ class SqliteEnvironmentStore:
                 "WHERE workspace_id=? AND project_id=? AND environment_id=?",
                 (str(workspace_id), str(project_id), str(environment_id)),
             ).fetchone()
-            return None if row is None else ProjectEnvironmentBindings.from_json(row["bindings_json"])
+            return (
+                None if row is None else ProjectEnvironmentBindings.from_json(row["bindings_json"])
+            )
         finally:
             connection.close()
 

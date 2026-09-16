@@ -109,9 +109,7 @@ def test_schedule_service_fires_once_and_catches_up_missed_minutes(tmp_path: Pat
             through=Instant("2026-09-12T10:00:30.000000Z"),
             now=NOW,
         )
-        assert [str(fire.scheduled_for) for fire in first.fires] == [
-            "2026-09-12T10:00:00.000000Z"
-        ]
+        assert [str(fire.scheduled_for) for fire in first.fires] == ["2026-09-12T10:00:00.000000Z"]
         duplicate = await service.tick(
             workspace_id,
             through=Instant("2026-09-12T10:00:59.000000Z"),

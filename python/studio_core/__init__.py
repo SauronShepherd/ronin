@@ -77,7 +77,10 @@ from .ir import (
     thaw_value,
 )
 from .ontology import (
+    ActionExecution,
     ActionType,
+    KnowledgeGraph,
+    KnowledgeObject,
     KnowledgeObjectRef,
     LinkCardinality,
     LinkType,
@@ -85,7 +88,11 @@ from .ontology import (
     OntologyDefinition,
     OntologyId,
     PropertyDefinition,
+    execute_ontology_action,
+    materialize_object_type,
+    resolve_link_type,
 )
+from .openlineage import lineage_event_payload
 from .operators import (
     OperatorCatalog,
     OperatorContract,
@@ -121,6 +128,7 @@ from .quality import (
     QualityStatus,
     SchemaCompatibility,
 )
+from .rql import RqlResult, execute_rql
 from .runtime_profiles import (
     ProfileEvaluation,
     RequirementCheck,
@@ -158,6 +166,7 @@ __all__ = (
     "QUALITY_RULE_KINDS",
     "RESOURCE_KINDS",
     "Action",
+    "ActionExecution",
     "ActionType",
     "AssetHandle",
     "AssetId",
@@ -195,10 +204,16 @@ __all__ = (
     "Grant",
     "GrantSet",
     "InstanceAnchor",
+    "KnowledgeGraph",
+    "KnowledgeObject",
     "KnowledgeObjectRef",
     "LineageEdge",
     "LineageMode",
     "LineageOperation",
+    "lineage_event_payload",
+    "RqlResult",
+    "execute_rql",
+    "execute_ontology_action",
     "LinkCardinality",
     "LinkType",
     "Node",
@@ -277,6 +292,8 @@ __all__ = (
     "parse_legacy_permission",
     "requirement_to_bearer_scope",
     "resolve_runtime",
+    "resolve_link_type",
+    "materialize_object_type",
     "snapshot_runtime_resolution",
     "thaw_value",
     "validate_operator_node",

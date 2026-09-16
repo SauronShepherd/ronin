@@ -210,7 +210,8 @@ class SqliteFinOpsStore:
             ).fetchone()
             if existing is None:
                 connection.execute(
-                    "INSERT INTO finops_costs(usage_id,workspace_id,amount,currency,provenance,rate_card_id) "
+                    "INSERT INTO finops_costs("
+                    "usage_id,workspace_id,amount,currency,provenance,rate_card_id) "
                     "VALUES (?,?,?,?,?,?)",
                     (cost.usage_id, *payload),
                 )
@@ -230,7 +231,8 @@ class SqliteFinOpsStore:
         connection = self._connect()
         try:
             connection.execute(
-                "INSERT INTO finops_budgets(budget_id,workspace_id,currency,limit_amount,period_start,"
+                "INSERT INTO finops_budgets("
+                "budget_id,workspace_id,currency,limit_amount,period_start,"
                 "period_end,action,labels_json) VALUES (?,?,?,?,?,?,?,?) "
                 "ON CONFLICT(budget_id) DO UPDATE SET workspace_id=excluded.workspace_id,"
                 "currency=excluded.currency,limit_amount=excluded.limit_amount,"

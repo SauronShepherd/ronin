@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from importlib import import_module
 from pathlib import Path
 from typing import Any
 
@@ -15,17 +16,16 @@ class DeltaDependencyError(RuntimeError):
 
 def _deltalake() -> Any:
     try:
-        import deltalake
+        return import_module("deltalake")
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise DeltaDependencyError(
             "Delta support requires the optional Ronin open-table dependencies"
         ) from exc
-    return deltalake
 
 
 def _pyarrow() -> Any:
     try:
-        import pyarrow as pa
+        import pyarrow as pa  # type: ignore[import-untyped]
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise DeltaDependencyError(
             "Delta support requires PyArrow from the optional data-plane dependencies"
@@ -48,10 +48,7 @@ def _rows_table(rows: tuple[Mapping[str, object], ...]) -> Any:
 
 
 def _field_state(schema: Any) -> tuple[OpenTableField, ...]:
-    return tuple(
-        OpenTableField(field.name, str(field.type), field.nullable)
-        for field in schema
-    )
+    return tuple(OpenTableField(field.name, str(field.type), field.nullable) for field in schema)
 
 
 class DeltaTableStore:

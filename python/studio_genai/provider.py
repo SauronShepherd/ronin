@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import json
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol, runtime_checkable
 from urllib.parse import urlsplit
 
 from studio_core.genai import GenAIModel, ModelProvider
 from studio_storage.secrets import SecretResolver
+
+_MAX_PROVIDER_RESPONSE_BYTES = 16 * 1024 * 1024
 
 ChatRole = Literal["system", "user", "assistant"]
 
@@ -85,6 +88,21 @@ def _properties(provider: ModelProvider) -> dict[str, str]:
     return dict(provider.properties)
 
 
+def _read_json_response(response: Any) -> object:
+    """Read a provider response in bounded chunks before JSON parsing."""
+    chunks: list[bytes] = []
+    size = 0
+    for chunk in response.iter_bytes():
+        size += len(chunk)
+        if size > _MAX_PROVIDER_RESPONSE_BYTES:
+            raise ValueError("GenAI provider response exceeds the configured byte limit")
+        chunks.append(chunk)
+    try:
+        return json.loads(b"".join(chunks))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("GenAI provider response is not valid JSON") from exc
+
+
 class OpenAICompatibleProvider:
     """Minimal chat-completions/embeddings adapter for OpenAI-compatible endpoints.
 
@@ -93,7 +111,13 @@ class OpenAICompatibleProvider:
     Ronin metadata and credentials are resolved only at this execution boundary.
     """
 
-    def __init__(self, provider: ModelProvider, secrets: SecretResolver) -> None:
+    def __init__(
+        self,
+        provider: ModelProvider,
+        secrets: SecretResolver,
+        *,
+        record_usage: Callable[[str, str, int, int], None] | None = None,
+    ) -> None:
         if provider.adapter not in {"openai-compatible", "openai_compatible"}:
             raise ValueError("provider metadata does not target the OpenAI-compatible adapter")
         if provider.endpoint is None:
@@ -118,6 +142,7 @@ class OpenAICompatibleProvider:
         if timeout <= 0 or timeout > 600:
             raise ValueError("provider timeout_seconds must be in (0, 600]")
         self._timeout = timeout
+        self._record_usage = record_usage
 
     def _headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -141,14 +166,17 @@ class OpenAICompatibleProvider:
             "model": model.model_id,
             "messages": [{"role": item.role, "content": item.content} for item in messages],
         }
-        with httpx.Client(follow_redirects=False, timeout=self._timeout) as client:
-            response = client.post(
+        with (
+            httpx.Client(follow_redirects=False, timeout=self._timeout) as client,
+            client.stream(
+                "POST",
                 f"{self._base_url}/chat/completions",
                 headers=self._headers(),
                 json=payload,
-            )
+            ) as response,
+        ):
             response.raise_for_status()
-            body = response.json()
+            body = _read_json_response(response)
         if not isinstance(body, dict):
             raise ValueError("chat provider response must be an object")
         choices = body.get("choices")
@@ -171,12 +199,19 @@ class OpenAICompatibleProvider:
             if isinstance(completion_tokens, int) and not isinstance(completion_tokens, bool):
                 output_tokens = completion_tokens
         returned_model = body.get("model")
-        return ChatResult(
+        result = ChatResult(
             message["content"],
             returned_model if isinstance(returned_model, str) else model.model_id,
             input_tokens,
             output_tokens,
         )
+        if (
+            self._record_usage is not None
+            and result.input_tokens is not None
+            and result.output_tokens is not None
+        ):
+            self._record_usage(model.model_id, "chat", result.input_tokens, result.output_tokens)
+        return result
 
     def embed(self, model: GenAIModel, texts: Sequence[str]) -> EmbeddingResult:
         self._require_model(model, "embedding")
@@ -186,14 +221,17 @@ class OpenAICompatibleProvider:
         if len(normalized) != len(texts):
             raise ValueError("embedding texts must be non-empty and contain no NUL")
         httpx = _httpx()
-        with httpx.Client(follow_redirects=False, timeout=self._timeout) as client:
-            response = client.post(
+        with (
+            httpx.Client(follow_redirects=False, timeout=self._timeout) as client,
+            client.stream(
+                "POST",
                 f"{self._base_url}/embeddings",
                 headers=self._headers(),
                 json={"model": model.model_id, "input": list(normalized)},
-            )
+            ) as response,
+        ):
             response.raise_for_status()
-            body = response.json()
+            body = _read_json_response(response)
         if not isinstance(body, dict) or not isinstance(body.get("data"), list):
             raise ValueError("embedding provider response has invalid shape")
         data = body["data"]
@@ -205,7 +243,9 @@ class OpenAICompatibleProvider:
             if not isinstance(index, int) or isinstance(index, bool):
                 raise ValueError("embedding provider item index must be integer")
             raw = item["embedding"]
-            if not all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in raw):
+            if not all(
+                isinstance(value, (int, float)) and not isinstance(value, bool) for value in raw
+            ):
                 raise ValueError("embedding vector must contain only numeric values")
             ordered.append((index, tuple(float(value) for value in raw)))
         ordered.sort(key=lambda item: item[0])

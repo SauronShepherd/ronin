@@ -3,19 +3,28 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
-from studio_core import AssetId, AssetRef, AssetRevision, AssetVersion, CatalogAsset, Workspace, WorkspaceId
+from studio_core import (
+    AssetId,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
+    CatalogAsset,
+    Workspace,
+    WorkspaceId,
+)
 from studio_core.ml import (
     Experiment,
     ExperimentId,
+    MetricValue,
     MLRunId,
     MLRunRecord,
-    MetricValue,
+    ModelEvaluation,
     ModelId,
     ModelSignature,
     ModelVersion,
     RegisteredModelVersion,
 )
+from studio_ml import list_registered_models, resolve_champion_model
 from studio_orchestrator import Instant
 from studio_storage.catalog import SqliteCatalogStore
 from studio_storage.ml import MLConflict, SqliteMLStore
@@ -85,6 +94,61 @@ def test_ml_run_id_reuse_with_different_content_fails_closed(tmp_path: Path) -> 
 
     with pytest.raises(MLConflict):
         store.record_run(_WS, conflicting, now=_NOW)
+
+
+def test_model_promotion_archives_previous_champion_atomically(tmp_path: Path) -> None:
+    store, _catalog = _stores(tmp_path / "ronin.sqlite3")
+    store.put_experiment(_WS, Experiment(ExperimentId("exp-1"), "Baseline"), now=_NOW)
+    run = _run()
+    store.record_run(_WS, run, now=_NOW)
+    signature = ModelSignature((("x", "float64"),), (("prediction", "float64"),))
+    first = RegisteredModelVersion(
+        ModelId("model-1"),
+        ModelVersion("1"),
+        run.id,
+        "artifact://one",
+        "sha256:one",
+        "sklearn",
+        signature,
+        "champion",
+    )
+    second = RegisteredModelVersion(
+        ModelId("model-1"),
+        ModelVersion("2"),
+        run.id,
+        "artifact://two",
+        "sha256:two",
+        "sklearn",
+        signature,
+    )
+    store.register_model(_WS, first, now=_NOW)
+    store.register_model(_WS, second, now=_NOW)
+
+    with pytest.raises(MLConflict, match="no passed evaluation"):
+        store.promote_model(_WS, second.model_id, second.version, now=_NOW)
+    store.record_evaluation(
+        _WS,
+        ModelEvaluation(
+            second.model_id,
+            second.version,
+            _DATA,
+            "passed",
+            (MetricValue("accuracy", 0.95),),
+            "job-evaluation/run-1",
+        ),
+        now=_NOW,
+    )
+
+    promoted = store.promote_model(_WS, second.model_id, second.version, now=_NOW)
+
+    assert promoted.stage == "champion"
+    assert store.get_model(_WS, first.model_id, first.version).stage == "archived"
+    assert store.get_model(_WS, second.model_id, second.version).stage == "champion"
+    assert resolve_champion_model(store, _WS, second.model_id) == promoted
+    assert tuple(model.version.value for model in list_registered_models(store, _WS)) == (
+        "1",
+        "2",
+    )
 
 
 def test_ml_parameters_reject_credential_bearing_keys() -> None:
