@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import re
 from dataclasses import dataclass, field
@@ -40,7 +41,7 @@ class BrokerRequestError(RuntimeError):
 class _RejectRedirects(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
         del req, fp, code, msg, headers, newurl
-        return None
+        return
 
 
 def _require_token(value: str) -> str:
@@ -146,7 +147,9 @@ class BrokerClient:
                 detail = code if isinstance(code, str) else "request_failed"
             except (BrokerProtocolError, OSError):
                 detail = "request_failed"
-            raise BrokerRequestError(f"runner broker request failed ({exc.code}, {detail})") from exc
+            raise BrokerRequestError(
+                f"runner broker request failed ({exc.code}, {detail})"
+            ) from exc
         except (OSError, URLError) as exc:
             raise BrokerRequestError("runner broker request failed") from exc
         return _object(body)
@@ -159,7 +162,9 @@ class BrokerClient:
         if not isinstance(image, str) or not _IMMUTABLE_IMAGE.fullmatch(image):
             raise BrokerProtocolError("runner broker runtime image is invalid")
         if image != self.config.expected_image:
-            raise BrokerProtocolError("runner broker runtime image does not match expected identity")
+            raise BrokerProtocolError(
+                "runner broker runtime image does not match expected identity"
+            )
         return image
 
     def execute(
@@ -264,7 +269,7 @@ class BrokerContainerKernelExecutor:
         )
 
     def _execution_id(self, cell: CellExecutionRequest) -> str:
-        identity = f"{self.attempt_id}:{cell.cell_id}".encode("utf-8")
+        identity = f"{self.attempt_id}:{cell.cell_id}".encode()
         return "exec-" + hashlib.sha256(identity).hexdigest()[:32]
 
     async def execute(
@@ -285,18 +290,14 @@ class BrokerContainerKernelExecutor:
             while not task.done():
                 if cancellation.is_cancelled and not cancellation_sent:
                     cancellation_sent = True
-                    try:
+                    with contextlib.suppress(BrokerRequestError):
                         await asyncio.to_thread(client.cancel, execution_id)
-                    except BrokerRequestError:
-                        pass
                 await asyncio.sleep(self.config.cancellation_poll_seconds)
             return await task
         except asyncio.CancelledError:
             if not task.done():
-                try:
+                with contextlib.suppress(BrokerRequestError):
                     await asyncio.to_thread(client.cancel, execution_id)
-                except BrokerRequestError:
-                    pass
             task.cancel()
             raise
 
