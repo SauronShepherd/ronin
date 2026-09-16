@@ -225,6 +225,16 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
         assert bad_list.value.status_code == 400
         assert bad_list.value.code == "invalid_request"
 
+        with pytest.raises(APIError) as bad_state:
+            transport.request("GET", "/v1/jobs", query={"state": "not-a-job-state"})
+        assert bad_state.value.status_code == 400
+        assert bad_state.value.code == "invalid_request"
+
+        with pytest.raises(APIError) as duplicate_filter:
+            transport.request("GET", "/v1/jobs?state=queued&state=failed")
+        assert duplicate_filter.value.status_code == 400
+        assert duplicate_filter.value.code == "invalid_request"
+
         with pytest.raises(APIError) as bad_events:
             transport.request("GET", f"/v1/jobs/{first.id}/events", query={"limit": "0"})
         assert bad_events.value.status_code == 400
