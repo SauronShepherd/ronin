@@ -13,7 +13,7 @@ _SELECT_START = re.compile(r"^SELECT\b", re.IGNORECASE)
 _MAX_SQL_BYTES = 1024 * 1024
 _UNSAFE_SQL = re.compile(
     r"\b(?:read_(?:parquet|csv|json|blob)|http(?:fs|_get)?|sqlite_scan|postgres_scan|"
-    r"delta_scan|iceberg_scan|glob|pragma|install|load|attach|copy|export|import|"
+    r"delta_scan|iceberg_scan|glob|pragma(?:_[a-z_]+)?|install|load|attach|copy|export|import|"
     r"insert|update|delete|create|drop|alter|set|call)\b|(?:https?|s3|gs)://",
     re.IGNORECASE,
 )
