@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-09-16T00:00:00+02:00",
-  "observed_main_sha": "06b395b2b75577376ccede986fe10805daa4c4be",
+  "observed_main_sha": "0af5cef4199d7dc2170c9b804f35962a13edced1",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "status_vocabulary": ["implemented", "partial", "missing", "blocked", "human_decision", "qualification_pending"],
