@@ -1,11 +1,18 @@
-const state = { baseUrl: localStorage.getItem("ronin.url") || "http://127.0.0.1:8080", token: sessionStorage.getItem("ronin.token") || "", currentJobId: null };
+const state = { baseUrl: localStorage.getItem("ronin.url") || "http://127.0.0.1:8080", token: sessionStorage.getItem("ronin.token") || "", currentJobId: null, requestSerial: 0 };
 const $ = (id) => document.getElementById(id);
 const notice = (message, error = false) => { $("notice").textContent = message; $("notice").hidden = !message; $("notice").dataset.error = error; };
 async function request(path, options = {}) {
-  const response = await fetch(`${state.baseUrl.replace(/\/$/, "")}${path}`, { ...options, headers: { Accept: "application/json", ...(state.token ? { Authorization: `Bearer ${state.token}` } : {}), ...(options.headers || {}) } });
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(`${state.baseUrl.replace(/\/$/, "")}${path}`, { ...options, signal: controller.signal, headers: { Accept: "application/json", ...(state.token ? { Authorization: `Bearer ${state.token}` } : {}), ...(options.headers || {}) } });
   const payload = await response.json().catch(() => null);
   if (!response.ok) { const error = new Error(payload?.error?.message || payload?.message || `Request failed (${response.status})`); error.status = response.status; error.code = payload?.error?.code; throw error; }
   return payload;
+  } catch (error) {
+    if (error.name === "AbortError") throw new Error("Request timed out after 15 seconds. Check the API URL and server health.");
+    throw error;
+  } finally { window.clearTimeout(timeout); }
 }
 function renderRuns(page) {
   const root = $("runs"); root.replaceChildren();
@@ -20,7 +27,7 @@ function renderRuns(page) {
     card.append(summary, state); card.onclick = () => showDetails(job.id); root.append(card);
   }
 }
-async function loadRuns() { try { notice("Loading runs…"); renderRuns(await request("/v1/jobs?limit=50")); notice(""); } catch (error) { notice(error.status === 403 ? "Forbidden: your grant does not permit listing these projects." : error.message, true); } }
+async function loadRuns() { const serial = ++state.requestSerial; try { notice("Loading runs…"); const page = await request("/v1/jobs?limit=50"); if (serial === state.requestSerial) renderRuns(page); if (serial === state.requestSerial) notice(""); } catch (error) { if (serial === state.requestSerial) notice(error.status === 403 ? "Forbidden: your grant does not permit listing these projects." : error.message, true); } }
 async function showDetails(id) { try { notice("Loading run details…"); const [status, events, evidence] = await Promise.all([request(`/v1/jobs/${encodeURIComponent(id)}`), request(`/v1/jobs/${encodeURIComponent(id)}/events?limit=100`), request(`/v1/jobs/${encodeURIComponent(id)}/evidence`)]); state.currentJobId = id; $("detail-title").textContent = id; $("status").textContent = JSON.stringify(status, null, 2); $("events").textContent = JSON.stringify(events, null, 2); $("evidence").textContent = JSON.stringify(evidence, null, 2); $("cancel").disabled = ["succeeded", "failed", "cancelled"].includes(status.state); $("cancel").onclick = () => cancelRun(id); $("runs-view").hidden = true; $("details-view").hidden = false; notice(""); } catch (error) { notice(error.status === 403 ? "Forbidden: evidence or event access is not granted." : error.message, true); } }
 async function cancelRun(id) { if (!window.confirm(`Cancel run ${id}?`)) return; try { notice("Cancelling run…"); await request(`/v1/jobs/${encodeURIComponent(id)}/cancel`, { method: "POST" }); await showDetails(id); notice("Run cancellation requested."); } catch (error) { notice(error.status === 403 ? "Forbidden: your grant does not permit cancellation." : error.message, true); } }
 $("connection-form").onsubmit = (event) => { event.preventDefault(); state.baseUrl = $("api-url").value; state.token = $("api-token").value; localStorage.setItem("ronin.url", state.baseUrl); sessionStorage.setItem("ronin.token", state.token); loadRuns(); };
