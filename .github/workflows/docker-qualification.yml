@@ -22,7 +22,7 @@ jobs:
           cache: pip
 
       - name: Install Ronin with data-plane dependencies
-        run: python -m pip install --editable ".[data-plane,dev]"
+        run: python -m pip install --editable ".[data-plane,open-tables,ml,security,streaming,dev]"
 
       - name: Run non-Docker qualification suite
         run: python -m pytest -q --ignore=tests/perf --ignore=tests/integration/test_docker_container_executor_real.py --ignore=tests/integration/test_worker_runtime_real.py
