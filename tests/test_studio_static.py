@@ -52,6 +52,10 @@ def test_studio_assets_are_allowlisted_and_served(tmp_path) -> None:
             assert "/cancel" in script
             assert 'classList.toggle("active"' in script
             assert "sessionStorage" in script
+            assert "run-project" in script
+            assert "run-state" in script
+            assert "URLSearchParams" in script
+            assert 'params.set("cursor"' in script
             assert 'localStorage.setItem("ronin.token"' not in script
             request = urllib.request.Request(  # noqa: S310
                 f"{base_url}/studio/secret.txt",
