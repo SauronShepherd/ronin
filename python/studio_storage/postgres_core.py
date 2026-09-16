@@ -266,6 +266,19 @@ class PostgresMetadataStore:
         finally:
             connection.close()
 
+    def ready(self) -> bool:
+        """Probe PostgreSQL without exposing connection details to callers."""
+        try:
+            connection = self._connect()
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    return cursor.fetchone() is not None
+            finally:
+                connection.close()
+        except Exception:
+            return False
+
     @staticmethod
     def _workspace_from_row(row: dict[str, object]) -> Workspace:
         return Workspace(

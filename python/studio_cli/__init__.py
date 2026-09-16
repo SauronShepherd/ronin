@@ -498,18 +498,7 @@ def _serve() -> int:
 
 def _postgres_ready(metadata: PostgresMetadataStore) -> bool:
     """Probe the configured PostgreSQL connection through the metadata adapter."""
-    try:
-        connection = metadata._connect()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
-                cursor.fetchone()
-            connection.commit()
-            return True
-        finally:
-            connection.close()
-    except Exception:
-        return False
+    return metadata.ready()
 
 
 def _worker() -> int:
