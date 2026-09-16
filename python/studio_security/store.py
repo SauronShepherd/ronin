@@ -54,9 +54,45 @@ class SqliteIdentityStore:
                     ON security_role_bindings(subject_kind, subject_id, workspace_id);
                 """
             )
+            self._migrate_role_binding_constraints(connection)
             connection.commit()
         finally:
             connection.close()
+
+    @staticmethod
+    def _migrate_role_binding_constraints(connection: sqlite3.Connection) -> None:
+        table_sql = connection.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='security_role_bindings'"
+        ).fetchone()[0]
+        if "CHECK(subject_kind" in str(table_sql) and "CHECK(role" in str(table_sql):
+            return
+        invalid = connection.execute(
+            "SELECT workspace_id, subject_kind, subject_id, role "
+            "FROM security_role_bindings WHERE length(trim(workspace_id)) = 0 "
+            "OR subject_kind NOT IN ('principal', 'group') "
+            "OR role NOT IN ('admin', 'operator', 'editor', 'viewer')"
+        ).fetchall()
+        if invalid:
+            raise ValueError("existing role bindings violate the database integrity contract")
+        connection.execute(
+            "ALTER TABLE security_role_bindings RENAME TO security_role_bindings_old"
+        )
+        connection.execute(
+            "CREATE TABLE security_role_bindings ("
+            "workspace_id TEXT NOT NULL CHECK(length(trim(workspace_id)) > 0),"
+            "subject_kind TEXT NOT NULL CHECK(subject_kind IN ('principal', 'group')),"
+            "subject_id TEXT NOT NULL,"
+            "role TEXT NOT NULL CHECK(role IN ('admin', 'operator', 'editor', 'viewer')),"
+            "PRIMARY KEY(workspace_id, subject_kind, subject_id, role))"
+        )
+        connection.execute(
+            "INSERT INTO security_role_bindings SELECT * FROM security_role_bindings_old"
+        )
+        connection.execute("DROP TABLE security_role_bindings_old")
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS security_role_subject_idx "
+            "ON security_role_bindings(subject_kind, subject_id, workspace_id)"
+        )
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self._path)
