@@ -5,12 +5,12 @@ from __future__ import annotations
 from dataclasses import replace
 
 from studio_core import ProjectId, WorkspaceId
-from studio_core.workspaces import Workspace
 from studio_core.environments import (
     EnvironmentDefinition,
     EnvironmentId,
     ProjectEnvironmentBindings,
 )
+from studio_core.workspaces import Workspace
 from studio_orchestrator import Instant
 from studio_storage.ports import EnvironmentStore, WorkspaceStore
 
