@@ -565,6 +565,61 @@ class PostgresJobReadPort:
         finally:
             connection.close()
 
+    def read_events(self, run_id: RunId, *, since: int) -> tuple[StoredExecutionEvent, ...]:
+        """Read attempt events for a run in deterministic attempt/sequence order."""
+        if since < 0:
+            raise ValueError("since must be non-negative")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT e.attempt_id,e.sequence,e.event_type,e.message,e.occurred_at "
+                    "FROM ronin_attempt_events e JOIN ronin_attempts a "
+                    "ON a.attempt_id=e.attempt_id WHERE a.run_id=%s "
+                    "ORDER BY a.ordinal,e.sequence OFFSET %s",
+                    (str(run_id), since),
+                )
+                rows = cursor.fetchall()
+            connection.commit()
+            return tuple(
+                StoredExecutionEvent(
+                    attempt_id=AttemptId(str(row["attempt_id"])),
+                    sequence=int(row["sequence"]),
+                    kind=str(row["event_type"]),
+                    message=str(row["message"]),
+                    occurred_at=Instant(str(row["occurred_at"])),
+                )
+                for row in rows
+            )
+        finally:
+            connection.close()
+
+    def read_cell_results(self, run_id: RunId) -> tuple[StoredCellResult, ...]:
+        """Read all persisted cell results for a run in stable cell order."""
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM ronin_cell_results WHERE run_id=%s ORDER BY cell_id",
+                    (str(run_id),),
+                )
+                rows = cursor.fetchall()
+            connection.commit()
+            return tuple(
+                StoredCellResult(
+                    run_id=RunId(str(row["run_id"])),
+                    cell_id=str(row["cell_id"]),
+                    source_digest=str(row["source_digest"]),
+                    execution_identity_digest=str(row["execution_identity_digest"]),
+                    state=str(row["state"]),
+                    result_json=str(row["result_json"]),
+                    updated_at=Instant(str(row["updated_at"])),
+                )
+                for row in rows
+            )
+        finally:
+            connection.close()
+
     def list_jobs(
         self,
         *,
