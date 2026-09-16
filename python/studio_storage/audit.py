@@ -9,7 +9,7 @@ from studio_core import WorkspaceId
 from studio_core.audit import AuditEvent, AuditEventId
 from studio_orchestrator import Instant
 
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
 
 _AUDIT_SCHEMA_VERSION = 1
@@ -21,9 +21,7 @@ class AuditConflict(RuntimeError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_audit(connection: sqlite3.Connection, *, now: Instant | str) -> None:
@@ -38,7 +36,9 @@ def migrate_audit(connection: sqlite3.Connection, *, now: Instant | str) -> None
     ).fetchone()
     current = 0 if row is None or row["version"] is None else int(row["version"])
     if current > _AUDIT_SCHEMA_VERSION:
-        raise RuntimeError(f"audit schema {current} is newer than supported {_AUDIT_SCHEMA_VERSION}")
+        raise RuntimeError(
+            f"audit schema {current} is newer than supported {_AUDIT_SCHEMA_VERSION}"
+        )
     migrations_dir = Path(__file__).with_name("migrations")
     for version in range(current + 1, _AUDIT_SCHEMA_VERSION + 1):
         script = migrations_dir.joinpath(_AUDIT_MIGRATIONS[version]).read_text(encoding="utf-8")
@@ -57,7 +57,9 @@ def migrate_audit(connection: sqlite3.Connection, *, now: Instant | str) -> None
 
 
 def audit_schema_version(connection: sqlite3.Connection) -> int:
-    row = connection.execute("SELECT MAX(version) AS version FROM audit_schema_migrations").fetchone()
+    row = connection.execute(
+        "SELECT MAX(version) AS version FROM audit_schema_migrations"
+    ).fetchone()
     return 0 if row is None or row["version"] is None else int(row["version"])
 
 
@@ -95,7 +97,8 @@ class SqliteAuditStore:
                     return event
                 raise AuditConflict(f"audit event id already exists: {event.id}")
             connection.execute(
-                "INSERT INTO audit_events(workspace_id,audit_event_id,occurred_at,actor_kind,actor_ref,"
+                "INSERT INTO audit_events("
+                "workspace_id,audit_event_id,occurred_at,actor_kind,actor_ref,"
                 "action,resource_kind,resource_ref,outcome,request_id,digest,event_json) "
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 (

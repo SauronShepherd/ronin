@@ -100,6 +100,7 @@ class InMemoryJobStore:
         self,
         *,
         project_id: str | None,
+        project_ids: tuple[str, ...] | None = None,
         state: JobState | None,
         limit: int,
         cursor: str | None,
@@ -113,6 +114,7 @@ class InMemoryJobStore:
                 item
                 for item in values
                 if (project_id is None or item.project_id == project_id)
+                and (project_ids is None or item.project_id in project_ids)
                 and (state is None or item.state is state)
             ]
             items = tuple(filtered[offset : offset + limit])

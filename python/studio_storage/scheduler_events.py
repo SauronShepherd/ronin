@@ -17,7 +17,7 @@ from studio_core.scheduler_events import (
 from studio_orchestrator import Instant
 
 from .scheduler_schedule import SchedulerScheduleStore, migrate_scheduler_schedule
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 
 _EVENTS_SCHEMA_VERSION = 1
 _EVENTS_MIGRATIONS = {1: "scheduler_events_001.sql"}
@@ -83,9 +83,7 @@ class EventDelivery:
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler_events(connection: sqlite3.Connection, *, now: Instant | str) -> None:
@@ -206,7 +204,8 @@ class SchedulerEventStore(SchedulerScheduleStore):
             if existing is None:
                 connection.execute(
                     "INSERT INTO event_triggers("
-                    "workspace_id,event_trigger_id,workflow_id,definition_json,created_at,updated_at) "
+                    "workspace_id,event_trigger_id,workflow_id,definition_json,"
+                    "created_at,updated_at) "
                     "VALUES (?,?,?,?,?,?)",
                     (
                         str(workspace_id),
@@ -307,7 +306,8 @@ class SchedulerEventStore(SchedulerScheduleStore):
                 connection.execute(
                     "INSERT INTO scheduler_event_deliveries("
                     "workspace_id,event_id,event_trigger_id,workflow_id,trigger_snapshot_json,"
-                    "workflow_run_id,state,created_at,updated_at) VALUES (?,?,?,?,?,NULL,'pending',?,?)",
+                    "workflow_run_id,state,created_at,updated_at) "
+                    "VALUES (?,?,?,?,?,NULL,'pending',?,?)",
                     (
                         str(event.workspace_id),
                         str(event.id),
@@ -403,9 +403,7 @@ class SchedulerEventStore(SchedulerScheduleStore):
             if row["state"] == "delivered":
                 existing = _delivery_from_row(row)
                 if existing.workflow_run_id != run.id:
-                    raise SchedulerEventConflict(
-                        "event delivery maps to conflicting workflow run"
-                    )
+                    raise SchedulerEventConflict("event delivery maps to conflicting workflow run")
                 connection.execute("COMMIT")
                 return existing
             connection.execute(

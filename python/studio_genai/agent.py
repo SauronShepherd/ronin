@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
+from studio_core import Requirement
 from studio_core.genai import AgentDefinition, GenAIModel, PromptAsset, ToolContract, ToolId
 
 from .provider import ChatMessage, GenAIProviderRuntime
@@ -95,6 +96,8 @@ def run_agent(
     user_input: str,
     *,
     allow_non_idempotent: bool = False,
+    record_tool: Callable[[ToolId, str], None] | None = None,
+    authorize_requirements: Callable[[tuple[Requirement, ...]], bool] | None = None,
 ) -> AgentRunResult:
     """Run a strict bounded tool loop without granting undeclared tool authority."""
 
@@ -110,8 +113,8 @@ def run_agent(
     allowed_tools = set(definition.tool_ids)
     system = (
         _render_agent_prompt(prompt, user_input)
-        + "\n\nReturn only JSON. Use {\"type\":\"tool\",\"tool_id\":\"...\",\"input\":{...}} "
-        + "to call a tool or {\"type\":\"final\",\"answer\":\"...\"} to finish."
+        + '\n\nReturn only JSON. Use {"type":"tool","tool_id":"...","input":{...}} '
+        + 'to call a tool or {"type":"final","answer":"..."} to finish.'
     )
     messages: list[ChatMessage] = [
         ChatMessage("system", system),
@@ -124,25 +127,38 @@ def run_agent(
         action = _parse_action(result.content)
         if action["type"] == "final":
             answer = action["answer"]
-            assert isinstance(answer, str)
+            if not isinstance(answer, str):
+                raise ValueError("final agent answer must be a string")
             steps.append(AgentStep(step_index, "final"))
             return AgentRunResult(answer, tuple(steps))
 
         raw_tool_id = action["tool_id"]
         payload = action["input"]
-        assert isinstance(raw_tool_id, str)
-        assert isinstance(payload, dict)
+        if not isinstance(raw_tool_id, str) or not isinstance(payload, dict):
+            raise ValueError("tool action must contain a string tool_id and object input")
         tool_id = ToolId(raw_tool_id)
         if tool_id not in allowed_tools:
             raise PermissionError(f"agent attempted undeclared tool: {tool_id}")
         runtime = tools.require(tool_id)
+        requirements = runtime.contract.requirements
+        if requirements and (
+            authorize_requirements is None or not authorize_requirements(requirements)
+        ):
+            raise PermissionError(f"tool requirements are not authorized: {tool_id}")
         if runtime.contract.side_effect == "non_idempotent" and not allow_non_idempotent:
             raise PermissionError(
                 f"non-idempotent tool requires explicit execution authorization: {tool_id}"
             )
-        output = runtime.invoke(payload)
+        try:
+            output = runtime.invoke(payload)
+        except Exception:
+            if record_tool is not None:
+                record_tool(tool_id, "failed")
+            raise
         if not isinstance(output, Mapping):
             raise TypeError("tool runtime must return a mapping")
+        if record_tool is not None:
+            record_tool(tool_id, "succeeded")
         steps.append(AgentStep(step_index, "tool", tool_id))
         messages.append(ChatMessage("assistant", result.content))
         messages.append(

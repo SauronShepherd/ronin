@@ -9,7 +9,7 @@ from studio_core import AssetRef, DataContract, QualityRun, QualityRunId, Worksp
 from studio_orchestrator import Instant
 
 from .catalog import CatalogAssetNotFound, migrate_catalog
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound
 
 _QUALITY_SCHEMA_VERSION = 1
@@ -29,9 +29,7 @@ class QualityRunConflict(RuntimeError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_quality(connection: sqlite3.Connection, *, now: Instant | str) -> None:
@@ -67,7 +65,9 @@ def migrate_quality(connection: sqlite3.Connection, *, now: Instant | str) -> No
 
 
 def quality_schema_version(connection: sqlite3.Connection) -> int:
-    row = connection.execute("SELECT MAX(version) AS version FROM quality_schema_migrations").fetchone()
+    row = connection.execute(
+        "SELECT MAX(version) AS version FROM quality_schema_migrations"
+    ).fetchone()
     return 0 if row is None or row["version"] is None else int(row["version"])
 
 
@@ -100,7 +100,8 @@ class SqliteQualityStore:
         self, connection: sqlite3.Connection, workspace_id: WorkspaceId, ref: AssetRef
     ) -> None:
         row = connection.execute(
-            "SELECT 1 FROM catalog_asset_revisions WHERE workspace_id=? AND asset_id=? AND version=?",
+            "SELECT 1 FROM catalog_asset_revisions "
+            "WHERE workspace_id=? AND asset_id=? AND version=?",
             (str(workspace_id), str(ref.asset_id), str(ref.version)),
         ).fetchone()
         if row is None:
@@ -130,7 +131,8 @@ class SqliteQualityStore:
                     connection.execute("COMMIT")
                     return contract
                 connection.execute(
-                    "UPDATE data_contracts SET contract_json=?,updated_at=?,row_version=row_version+1 "
+                    "UPDATE data_contracts SET contract_json=?,updated_at=?, "
+                    "row_version=row_version+1 "
                     "WHERE workspace_id=? AND asset_id=? AND asset_version=?",
                     (
                         payload,
@@ -195,7 +197,8 @@ class SqliteQualityStore:
                     return run
                 raise QualityRunConflict(f"quality run id already exists: {run.id}")
             connection.execute(
-                "INSERT INTO quality_runs(workspace_id,quality_run_id,asset_id,asset_version,status,"
+                "INSERT INTO quality_runs("
+                "workspace_id,quality_run_id,asset_id,asset_version,status,"
                 "run_json,created_at) VALUES (?,?,?,?,?,?,?)",
                 (
                     str(workspace_id),

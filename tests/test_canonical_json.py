@@ -15,7 +15,7 @@ def test_encode_preserves_legacy_v1_bytes() -> None:
         "z": None,
         "unicode": "café",
         "nested": {"b": False, "a": [True, 2, -0.0]},
-        "big": 9007199254740993,
+        "big": 9007199254740991,
     }
     expected = json.dumps(
         payload,
@@ -50,6 +50,11 @@ def test_decode_rejects_duplicate_and_nonfinite_numbers() -> None:
     for payload in invalid:
         with pytest.raises(ValueError, match="canonical JSON"):
             decode(payload)
+
+
+def test_rejects_integers_outside_exact_cross_language_range() -> None:
+    with pytest.raises(ValueError, match="exact cross-language"):
+        encode({"x": 2**53})
 
 
 def test_published_golden_vectors() -> None:
