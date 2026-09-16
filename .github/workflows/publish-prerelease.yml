@@ -135,7 +135,7 @@ jobs:
           set -euo pipefail
           docker run --detach --name ronin-smoke \
             --env RONIN_TOKEN=ci-smoke-token \
-            --env RONIN_TOKEN_SCOPES='{"version":1,"grants":[{"version":1,"actions":["read"],"resource":{"kind":"workspace","identifier":"smoke"},"constraints":{}}]}' \
+            --env RONIN_TOKEN_SCOPES='{"version":1,"grants":[{"version":1,"actions":["read"],"resource":{"kind":"project","identifier":"smoke"},"constraints":{}}]}' \
             "$LOCAL_IMAGE"
           trap 'docker rm -f ronin-smoke >/dev/null 2>&1 || true' EXIT
           for _ in $(seq 1 30); do
