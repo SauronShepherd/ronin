@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol, runtime_checkable
@@ -9,6 +10,8 @@ from urllib.parse import urlsplit
 
 from studio_core.genai import GenAIModel, ModelProvider
 from studio_storage.secrets import SecretResolver
+
+_MAX_PROVIDER_RESPONSE_BYTES = 16 * 1024 * 1024
 
 ChatRole = Literal["system", "user", "assistant"]
 
@@ -85,6 +88,21 @@ def _properties(provider: ModelProvider) -> dict[str, str]:
     return dict(provider.properties)
 
 
+def _read_json_response(response: Any) -> object:
+    """Read a provider response in bounded chunks before JSON parsing."""
+    chunks: list[bytes] = []
+    size = 0
+    for chunk in response.iter_bytes():
+        size += len(chunk)
+        if size > _MAX_PROVIDER_RESPONSE_BYTES:
+            raise ValueError("GenAI provider response exceeds the configured byte limit")
+        chunks.append(chunk)
+    try:
+        return json.loads(b"".join(chunks))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("GenAI provider response is not valid JSON") from exc
+
+
 class OpenAICompatibleProvider:
     """Minimal chat-completions/embeddings adapter for OpenAI-compatible endpoints.
 
@@ -149,13 +167,14 @@ class OpenAICompatibleProvider:
             "messages": [{"role": item.role, "content": item.content} for item in messages],
         }
         with httpx.Client(follow_redirects=False, timeout=self._timeout) as client:
-            response = client.post(
+            with client.stream(
+                "POST",
                 f"{self._base_url}/chat/completions",
                 headers=self._headers(),
                 json=payload,
-            )
-            response.raise_for_status()
-            body = response.json()
+            ) as response:
+                response.raise_for_status()
+                body = _read_json_response(response)
         if not isinstance(body, dict):
             raise ValueError("chat provider response must be an object")
         choices = body.get("choices")
@@ -201,13 +220,14 @@ class OpenAICompatibleProvider:
             raise ValueError("embedding texts must be non-empty and contain no NUL")
         httpx = _httpx()
         with httpx.Client(follow_redirects=False, timeout=self._timeout) as client:
-            response = client.post(
+            with client.stream(
+                "POST",
                 f"{self._base_url}/embeddings",
                 headers=self._headers(),
                 json={"model": model.model_id, "input": list(normalized)},
-            )
-            response.raise_for_status()
-            body = response.json()
+            ) as response:
+                response.raise_for_status()
+                body = _read_json_response(response)
         if not isinstance(body, dict) or not isinstance(body.get("data"), list):
             raise ValueError("embedding provider response has invalid shape")
         data = body["data"]
