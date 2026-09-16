@@ -76,6 +76,8 @@ def test_sql_reference_engine_rejects_mutating_or_multiple_statements() -> None:
             engine.execute("CREATE TABLE unsafe (value INTEGER)")
         with pytest.raises(ValueError, match="read-only SELECT"):
             engine.execute("SELECT 1; SELECT 2")
+        with pytest.raises(ValueError, match="external filesystem"):
+            engine.execute("SELECT * FROM read_parquet('outside.parquet')")
 
 
 def test_project_scoped_sql_engines_isolate_relation_collisions(tmp_path: Path) -> None:

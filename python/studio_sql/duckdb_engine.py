@@ -11,6 +11,11 @@ from .contracts import SqlColumn, SqlQueryResult
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _SELECT_START = re.compile(r"^SELECT\b", re.IGNORECASE)
 _MAX_SQL_BYTES = 1024 * 1024
+_EXTERNAL_ACCESS = re.compile(
+    r"\b(read_(?:parquet|csv|json|blob)|http(?:fs|_get)?|sqlite_scan|postgres_scan|" 
+    r"delta_scan|iceberg_scan|glob)\b",
+    re.IGNORECASE,
+)
 
 
 class DuckDbDependencyError(RuntimeError):
@@ -46,8 +51,12 @@ class DuckDbSqlEngine:
         resolved = Path(path).resolve(strict=True)
         if not resolved.is_file():
             raise ValueError("registered Parquet path must be a regular file")
-        relation = self._connection.from_parquet(str(resolved))
-        relation.create_view(name, replace=True)
+        self._connection.execute("SET enable_external_access=true")
+        try:
+            relation = self._connection.from_parquet(str(resolved))
+            relation.create_view(name, replace=True)
+        finally:
+            self._connection.execute("SET enable_external_access=false")
 
     def execute(
         self,
@@ -63,6 +72,8 @@ class DuckDbSqlEngine:
             raise ValueError("SQL text exceeds the configured byte limit")
         if ";" in sql or not _SELECT_START.match(sql):
             raise ValueError("SQL engine accepts one read-only SELECT statement")
+        if _EXTERNAL_ACCESS.search(sql):
+            raise ValueError("SQL external filesystem and network access is disabled")
         if max_rows < 1:
             raise ValueError("max_rows must be positive")
 
@@ -85,9 +96,6 @@ class DuckDbSqlEngine:
 
     def __exit__(self, _exc_type: object, _exc: object, _traceback: object) -> None:
         self.close()
-
-
-__all__ = ("DuckDbDependencyError", "DuckDbSqlEngine")
 
 
 class ProjectScopedDuckDbSqlEngine:
