@@ -11,9 +11,10 @@ from .contracts import SqlColumn, SqlQueryResult
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _SELECT_START = re.compile(r"^SELECT\b", re.IGNORECASE)
 _MAX_SQL_BYTES = 1024 * 1024
-_EXTERNAL_ACCESS = re.compile(
-    r"\b(read_(?:parquet|csv|json|blob)|http(?:fs|_get)?|sqlite_scan|postgres_scan|" 
-    r"delta_scan|iceberg_scan|glob)\b",
+_UNSAFE_SQL = re.compile(
+    r"\b(?:read_(?:parquet|csv|json|blob)|http(?:fs|_get)?|sqlite_scan|postgres_scan|"
+    r"delta_scan|iceberg_scan|glob|pragma|install|load|attach|copy|export|import|"
+    r"insert|update|delete|create|drop|alter|set|call)\b|(?:https?|s3|gs)://",
     re.IGNORECASE,
 )
 
@@ -68,7 +69,7 @@ class DuckDbSqlEngine:
             raise ValueError("SQL text exceeds the configured byte limit")
         if ";" in sql or not _SELECT_START.match(sql):
             raise ValueError("SQL engine accepts one read-only SELECT statement")
-        if _EXTERNAL_ACCESS.search(sql):
+        if _UNSAFE_SQL.search(sql):
             raise ValueError("SQL external filesystem and network access is disabled")
         if max_rows < 1:
             raise ValueError("max_rows must be positive")
