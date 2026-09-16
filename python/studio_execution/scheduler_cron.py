@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from studio_core import Schedule
 from studio_orchestrator import Instant
-from studio_storage.scheduler import Schedule
 
 
 class CronSyntaxError(ValueError):
