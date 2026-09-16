@@ -12,6 +12,7 @@ Read these first for the target product:
 - `docs/product/PLATFORM_PORTABILITY_V1.md` — canonical Ronin Bundle and vendor import/export semantics;
 - `docs/product/PUBLIC_V1_ROADMAP.md` — implementation waves from the current foundation to Public v1;
 - `docs/product/BRAND_V1.md` — Ronin Brown visual identity.
+- `docs/product/OZONE_LOCAL_SIMULATION.md` — Apache Ozone S3 Gateway local simulation boundary.
 
 `docs/product/V01_SCOPE.md` remains useful as the historical contract for the local durable-execution foundation. It does **not** define Public v1 completeness.
 
