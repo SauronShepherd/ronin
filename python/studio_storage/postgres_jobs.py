@@ -24,6 +24,7 @@ from studio_orchestrator import (
     Page,
     Run,
     RunId,
+    StoredCellResult,
     StoredExecutionEvent,
 )
 
@@ -420,6 +421,68 @@ class PostgresJobReadPort:
                         ),
                     )
                     expected += 1
+                cursor.execute(
+                    "UPDATE ronin_attempts SET updated_at=%s,row_version=row_version+1 "
+                    "WHERE attempt_id=%s",
+                    (str(current), str(attempt_id)),
+                )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def put_cell_result(
+        self,
+        attempt_id: AttemptId,
+        result: StoredCellResult,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant | str,
+    ) -> None:
+        """Upsert a cell result only while the attempt lease is authoritative."""
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT run_id,state,lease_owner,lease_token,lease_expires_at "
+                    "FROM ronin_attempts WHERE attempt_id=%s FOR UPDATE",
+                    (str(attempt_id),),
+                )
+                attempt = cursor.fetchone()
+                if (
+                    attempt is None
+                    or attempt["state"] not in {"leased", "running"}
+                    or attempt["lease_owner"] != owner
+                    or attempt["lease_token"] != str(lease_token)
+                    or attempt["lease_expires_at"] is None
+                    or Instant(str(attempt["lease_expires_at"])) <= current
+                ):
+                    raise LeaseLost("lease ownership no longer matches")
+                if result.run_id != RunId(str(attempt["run_id"])):
+                    raise ValueError("cell result run does not match attempt")
+                cursor.execute(
+                    "INSERT INTO ronin_cell_results(run_id,cell_id,source_digest,"
+                    "execution_identity_digest,state,result_json,updated_at) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s) "
+                    "ON CONFLICT(run_id,cell_id) DO UPDATE SET "
+                    "source_digest=EXCLUDED.source_digest,"
+                    "execution_identity_digest=EXCLUDED.execution_identity_digest,"
+                    "state=EXCLUDED.state,result_json=EXCLUDED.result_json,"
+                    "updated_at=EXCLUDED.updated_at",
+                    (
+                        str(result.run_id),
+                        result.cell_id,
+                        result.source_digest,
+                        result.execution_identity_digest,
+                        result.state,
+                        result.result_json,
+                        str(result.updated_at),
+                    ),
+                )
                 cursor.execute(
                     "UPDATE ronin_attempts SET updated_at=%s,row_version=row_version+1 "
                     "WHERE attempt_id=%s",
