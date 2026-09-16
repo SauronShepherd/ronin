@@ -175,7 +175,8 @@ class DeploymentBindingService:
         )
         if bindings is None:
             raise EnvironmentServiceNotFound(
-                f"project environment bindings not found: {workspace_id}/{project_id}/{environment_id}"
+                "project environment bindings not found: "
+                f"{workspace_id}/{project_id}/{environment_id}"
             )
         return bindings
 
