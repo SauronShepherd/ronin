@@ -67,7 +67,10 @@ def test_constructor_and_migrate(monkeypatch: pytest.MonkeyPatch) -> None:
     connection = _Connection([{"table_name": "ronin_workspaces"}])
     monkeypatch.setattr(
         "studio_storage.postgres_audit._psycopg",
-            lambda: (SimpleNamespace(connect=lambda *_args, **_kwargs: connection), object()),
+        lambda: (
+            SimpleNamespace(connect=lambda *_args, **_kwargs: connection),
+            object(),
+        ),
     )
     store = PostgresAuditStore("postgresql://ronin")
     assert store._application_name == "ronin-audit"
