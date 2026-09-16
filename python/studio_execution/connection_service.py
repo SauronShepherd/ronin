@@ -85,9 +85,7 @@ class ConnectionService:
         if self._connections.get_connection(workspace_id, connection_id) is None:
             raise ConnectionServiceNotFound(f"connection not found: {workspace_id}/{connection_id}")
         if not self._connections.delete_connection(workspace_id, connection_id):
-            raise ConnectionServiceNotFound(
-                f"connection not found: {workspace_id}/{connection_id}"
-            )
+            raise ConnectionServiceNotFound(f"connection not found: {workspace_id}/{connection_id}")
 
 
 __all__ = (
