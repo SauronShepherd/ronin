@@ -12,5 +12,10 @@ def test_reference_helm_chart_has_safe_single_replica_baseline() -> None:
     assert "secretKeyRef:" in deployment
     assert "readinessProbe:" in deployment
     assert "livenessProbe:" in deployment
+    assert "runAsNonRoot: true" in deployment
+    assert "type: RuntimeDefault" in deployment
+    assert "allowPrivilegeEscalation: false" in deployment
+    assert "readOnlyRootFilesystem: true" in deployment
+    assert 'drop: ["ALL"]' in deployment
     values = (root / "values.yaml").read_text(encoding="utf-8")
     assert "replicas: 1" in values
