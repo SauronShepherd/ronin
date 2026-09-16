@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 
@@ -17,5 +18,10 @@ def test_reference_helm_chart_has_safe_single_replica_baseline() -> None:
     assert "allowPrivilegeEscalation: false" in deployment
     assert "readOnlyRootFilesystem: true" in deployment
     assert 'drop: ["ALL"]' in deployment
+    schema = json.loads((root / "values.schema.json").read_text(encoding="utf-8"))
+    assert schema["properties"]["server"]["properties"]["token"]["minLength"] == 1
+    assert schema["properties"]["server"]["properties"]["tokenScopes"]["not"] == {
+        "const": "{}"
+    }
     values = (root / "values.yaml").read_text(encoding="utf-8")
     assert "replicas: 1" in values
