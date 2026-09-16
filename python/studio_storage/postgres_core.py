@@ -657,7 +657,8 @@ class PostgresMetadataStore:
             with connection.cursor() as cursor:
                 self._require_active_workspace(cursor, workspace_id)
                 cursor.execute(
-                    "SELECT definition_json FROM ronin_catalog_assets WHERE workspace_id=%s AND asset_id=%s FOR UPDATE",
+                    "SELECT definition_json FROM ronin_catalog_assets "
+                    "WHERE workspace_id=%s AND asset_id=%s FOR UPDATE",
                     (str(workspace_id), str(asset.id)),
                 )
                 row = cursor.fetchone()
@@ -667,7 +668,8 @@ class PostgresMetadataStore:
                         return asset
                     raise CatalogConflict(f"catalog asset id already exists: {asset.id}")
                 cursor.execute(
-                    "INSERT INTO ronin_catalog_assets(workspace_id,asset_id,definition_json,created_at,updated_at) "
+                    "INSERT INTO ronin_catalog_assets("
+                    "workspace_id,asset_id,definition_json,created_at,updated_at) "
                     "VALUES (%s,%s,%s,%s,%s)",
                     (str(workspace_id), str(asset.id), payload, str(current), str(current)),
                 )
@@ -688,7 +690,8 @@ class PostgresMetadataStore:
             with connection.cursor() as cursor:
                 self._require_active_workspace(cursor, workspace_id)
                 cursor.execute(
-                    "UPDATE ronin_catalog_assets SET definition_json=%s,updated_at=%s,row_version=row_version+1 "
+                    "UPDATE ronin_catalog_assets SET definition_json=%s,updated_at=%s, "
+                    "row_version=row_version+1 "
                     "WHERE workspace_id=%s AND asset_id=%s",
                     (asset.to_json(), str(current), str(workspace_id), str(asset.id)),
                 )
@@ -707,7 +710,8 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT definition_json FROM ronin_catalog_assets WHERE workspace_id=%s AND asset_id=%s",
+                    "SELECT definition_json FROM ronin_catalog_assets "
+                    "WHERE workspace_id=%s AND asset_id=%s",
                     (str(workspace_id), str(asset_id)),
                 )
                 row = cursor.fetchone()
@@ -720,7 +724,8 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT definition_json FROM ronin_catalog_assets WHERE workspace_id=%s ORDER BY asset_id",
+                    "SELECT definition_json FROM ronin_catalog_assets "
+                    "WHERE workspace_id=%s ORDER BY asset_id",
                     (str(workspace_id),),
                 )
                 return tuple(
@@ -777,7 +782,8 @@ class PostgresMetadataStore:
                 if cursor.fetchone() is None:
                     raise CatalogAssetNotFound(str(revision.ref.asset_id))
                 cursor.execute(
-                    "SELECT revision_json FROM ronin_catalog_revisions WHERE workspace_id=%s AND asset_id=%s AND version=%s FOR UPDATE",
+                    "SELECT revision_json FROM ronin_catalog_revisions "
+                    "WHERE workspace_id=%s AND asset_id=%s AND version=%s FOR UPDATE",
                     (str(workspace_id), str(revision.ref.asset_id), str(revision.ref.version)),
                 )
                 row = cursor.fetchone()
@@ -787,7 +793,8 @@ class PostgresMetadataStore:
                     )
                 if row is None:
                     cursor.execute(
-                        "INSERT INTO ronin_catalog_revisions(workspace_id,asset_id,version,revision_json,created_at) "
+                        "INSERT INTO ronin_catalog_revisions("
+                        "workspace_id,asset_id,version,revision_json,created_at) "
                         "VALUES (%s,%s,%s,%s,%s)",
                         (
                             str(workspace_id),
@@ -810,7 +817,8 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT revision_json FROM ronin_catalog_revisions WHERE workspace_id=%s AND asset_id=%s AND version=%s",
+                    "SELECT revision_json FROM ronin_catalog_revisions "
+                    "WHERE workspace_id=%s AND asset_id=%s AND version=%s",
                     (str(workspace_id), str(ref.asset_id), str(ref.version)),
                 )
                 row = cursor.fetchone()
@@ -828,13 +836,15 @@ class PostgresMetadataStore:
                 self._require_active_workspace(cursor, workspace_id)
                 for ref in (edge.source, edge.target):
                     cursor.execute(
-                        "SELECT 1 FROM ronin_catalog_revisions WHERE workspace_id=%s AND asset_id=%s AND version=%s",
+                        "SELECT 1 FROM ronin_catalog_revisions "
+                        "WHERE workspace_id=%s AND asset_id=%s AND version=%s",
                         (str(workspace_id), str(ref.asset_id), str(ref.version)),
                     )
                     if cursor.fetchone() is None:
                         raise CatalogAssetNotFound(f"{ref.asset_id}@{ref.version}")
                 cursor.execute(
-                    "SELECT edge_json FROM ronin_lineage_edges WHERE workspace_id=%s AND edge_digest=%s FOR UPDATE",
+                    "SELECT edge_json FROM ronin_lineage_edges "
+                    "WHERE workspace_id=%s AND edge_digest=%s FOR UPDATE",
                     (str(workspace_id), edge.digest),
                 )
                 row = cursor.fetchone()
@@ -843,7 +853,8 @@ class PostgresMetadataStore:
                 if row is None:
                     cursor.execute(
                         "INSERT INTO ronin_lineage_edges("
-                        "workspace_id,edge_digest,source_asset_id,source_version,target_asset_id,target_version,edge_json,created_at) "
+                        "workspace_id,edge_digest,source_asset_id,source_version,"
+                        "target_asset_id,target_version,edge_json,created_at) "
                         "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                         (
                             str(workspace_id),
