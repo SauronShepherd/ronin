@@ -56,7 +56,33 @@ coverage-t4:
 coverage-storage-files:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
 	python -m tools.coverage_file_gate coverage-storage.json python/studio_storage \
-		--threshold=80
+		--threshold=80 \
+		--baseline=artifacts.py=77.30 \
+		--baseline=backup.py=76.00 \
+		--baseline=bundle_workflow_import.py=77.55 \
+		--baseline=catalog.py=72.89 \
+		--baseline=connections.py=64.44 \
+		--baseline=environments.py=75.51 \
+		--baseline=genai.py=63.08 \
+		--baseline=local_files.py=71.78 \
+		--baseline=ml.py=73.48 \
+		--baseline=ontology.py=35.85 \
+		--baseline=postgres_core.py=10.34 \
+		--baseline=quality.py=30.34 \
+		--baseline=s3_artifacts.py=71.05 \
+		--baseline=scheduler.py=78.68 \
+		--baseline=scheduler_backfill.py=50.48 \
+		--baseline=scheduler_backfill_runtime.py=66.54 \
+		--baseline=scheduler_cancellation.py=70.76 \
+		--baseline=scheduler_controller.py=73.94 \
+		--baseline=scheduler_events.py=75.30 \
+		--baseline=scheduler_execution.py=70.50 \
+		--baseline=scheduler_fencing.py=77.41 \
+		--baseline=scheduler_leadership.py=76.29 \
+		--baseline=scheduler_schedule.py=74.00 \
+		--baseline=scheduler_timeout.py=62.50 \
+		--baseline=sqlite.py=79.12 \
+		--baseline=workspaces.py=61.63
 	@rm -f coverage-storage.json
 
 mutation:
