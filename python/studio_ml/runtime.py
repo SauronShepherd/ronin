@@ -171,7 +171,8 @@ def _validate_split_feasibility(targets: Sequence[object], spec: TrainingSpec) -
     if spec.task == "regression":
         if test_count < 2:
             raise ValueError(
-                "regression evaluation requires at least two test rows for the mandatory R2 metric; "
+                "regression evaluation requires at least two test rows for the mandatory R2 "
+                "metric; "
                 "increase the dataset size or test_fraction"
             )
         return
