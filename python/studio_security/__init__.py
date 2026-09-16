@@ -19,6 +19,7 @@ from .contracts import (
     SubjectKind,
     WorkspaceRole,
 )
+from .jwks_file import FileJwksProvider, JwksFileError
 from .oidc import (
     JwksProvider,
     OidcAuthenticationError,
@@ -28,26 +29,34 @@ from .oidc import (
     OidcPrincipalStore,
     OidcTokenValidator,
 )
+from .oidc_discovery import HttpsOidcJwksProvider, OidcDiscoveryError
+from .postgres_store import PostgresIdentityStore, PostgresSecurityDependencyError
 from .rbac import RbacAuthorizer, RbacStore
 from .store import IdentityConflict, SqliteIdentityStore
 
 __all__ = (
     "Actor",
     "PrincipalAuthenticator",
+    "FileJwksProvider",
     "Group",
     "GroupId",
+    "HttpsOidcJwksProvider",
     "IdentityConflict",
+    "JwksFileError",
     "JwksProvider",
     "OidcAuthenticationError",
     "OidcClaims",
     "OidcConfig",
     "OidcDependencyError",
+    "OidcDiscoveryError",
     "OidcPrincipalStore",
     "OidcTokenValidator",
     "PERMISSIONS",
     "Permission",
     "PolicyDecision",
     "PolicyRequirement",
+    "PostgresIdentityStore",
+    "PostgresSecurityDependencyError",
     "Principal",
     "PrincipalId",
     "PrincipalKind",
@@ -60,8 +69,8 @@ __all__ = (
     "WorkspaceRole",
     "actor_context",
     "audit_actor",
-    "authorization_audit_event",
     "authenticate_actor",
+    "authorization_audit_event",
     "current_actor",
     "require_actor",
 )
