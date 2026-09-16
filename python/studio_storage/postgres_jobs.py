@@ -19,10 +19,12 @@ from studio_orchestrator import (
     Job,
     JobId,
     JobState,
+    LeaseLost,
     LeaseToken,
     Page,
     Run,
     RunId,
+    StoredExecutionEvent,
 )
 
 from studio_storage.memory import IdempotencyConflict
@@ -362,6 +364,68 @@ class PostgresJobReadPort:
                 renewed = cursor.rowcount == 1
             connection.commit()
             return bool(renewed)
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def append_events(
+        self,
+        attempt_id: AttemptId,
+        events: tuple[StoredExecutionEvent, ...],
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant | str,
+    ) -> None:
+        """Append contiguous attempt events under the current write lease."""
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT state,lease_owner,lease_token,lease_expires_at "
+                    "FROM ronin_attempts WHERE attempt_id=%s FOR UPDATE",
+                    (str(attempt_id),),
+                )
+                attempt = cursor.fetchone()
+                if (
+                    attempt is None
+                    or attempt["state"] not in {"leased", "running"}
+                    or attempt["lease_owner"] != owner
+                    or attempt["lease_token"] != str(lease_token)
+                    or attempt["lease_expires_at"] is None
+                    or Instant(str(attempt["lease_expires_at"])) <= current
+                ):
+                    raise LeaseLost("lease ownership no longer matches")
+                cursor.execute(
+                    "SELECT COALESCE(MAX(sequence),-1)+1 AS next_sequence "
+                    "FROM ronin_attempt_events WHERE attempt_id=%s",
+                    (str(attempt_id),),
+                )
+                expected = int(cursor.fetchone()["next_sequence"])
+                for event in events:
+                    if event.attempt_id != attempt_id or event.sequence != expected:
+                        raise ValueError("event sequence must be contiguous within attempt")
+                    cursor.execute(
+                        "INSERT INTO ronin_attempt_events(attempt_id,sequence,event_type,"
+                        "message,occurred_at) VALUES (%s,%s,%s,%s,%s)",
+                        (
+                            str(attempt_id),
+                            event.sequence,
+                            event.kind,
+                            event.message,
+                            str(event.occurred_at),
+                        ),
+                    )
+                    expected += 1
+                cursor.execute(
+                    "UPDATE ronin_attempts SET updated_at=%s,row_version=row_version+1 "
+                    "WHERE attempt_id=%s",
+                    (str(current), str(attempt_id)),
+                )
+            connection.commit()
         except Exception:
             connection.rollback()
             raise
