@@ -167,6 +167,10 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
         )
 
         assert first.status() is SDKJobState.RUNNING
+        running_page = client.list_jobs(
+            project="examples/demo", state=SDKJobState.RUNNING, limit=10
+        )
+        assert {item.id for item in running_page.items} == {first.id}
         stored = store.get_job(JobId(first.id))
         assert stored is not None
         assert stored.target == "notebooks/etl"
