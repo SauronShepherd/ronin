@@ -13,7 +13,9 @@ def test_security_policy_declares_private_reporting_and_scope() -> None:
     )
     for section in required_sections:
         assert section in policy
-    assert "Report a" in policy and "vulnerability" in policy
-    assert "Do not open a" in policy and "public issue" in policy
+    assert "Report a" in policy
+    assert "vulnerability" in policy
+    assert "Do not open a" in policy
+    assert "public issue" in policy
     for sensitive_area in ("authentication", "tenant isolation", "SSRF", "artifact integrity"):
         assert sensitive_area in policy

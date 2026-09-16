@@ -63,16 +63,16 @@ def test_same_content_is_idempotent(tmp_path: Path) -> None:
     )
     catalog, artifacts = _stores(tmp_path)
     connector = LocalFileConnector(source_root)
-    kwargs = dict(
-        workspace_id=_WS,
-        connection=_CONNECTION,
-        relative_path="records.jsonl",
-        target_asset_id=AssetId("records"),
-        target_name="Records",
-        artifact_store=artifacts,
-        catalog_store=catalog,
-        now=_NOW,
-    )
+    kwargs = {
+        "workspace_id": _WS,
+        "connection": _CONNECTION,
+        "relative_path": "records.jsonl",
+        "target_asset_id": AssetId("records"),
+        "target_name": "Records",
+        "artifact_store": artifacts,
+        "catalog_store": catalog,
+        "now": _NOW,
+    }
 
     first = connector.ingest(**kwargs)
     second = connector.ingest(**kwargs)

@@ -41,10 +41,10 @@ class _Database:
 
 class _Sql:
     class _Statement:
-        def format(self, *args: object) -> "_Statement":
+        def format(self, *_args: object) -> "_Sql._Statement":
             return self
 
-    def SQL(self, value: str) -> _Statement:
+    def SQL(self, _value: str) -> "_Sql._Statement":
         return self._Statement()
 
     def Identifier(self, value: str) -> str:
