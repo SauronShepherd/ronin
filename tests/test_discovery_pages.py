@@ -1,5 +1,4 @@
 import pytest
-
 from studio_connectors import DiscoveryPage
 
 
