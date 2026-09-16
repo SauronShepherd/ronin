@@ -8,7 +8,8 @@ from typing import Literal, TypeAlias, cast
 
 from .canonical_json import decode as decode_canonical_json
 from .canonical_json import encode as encode_canonical_json
-from .ir import NodeId, Pipeline
+from .ids import NodeId
+from .ir import Pipeline
 
 TriggerKind: TypeAlias = Literal["manual", "api", "schedule", "event", "backfill"]
 WorkflowRunState: TypeAlias = Literal[

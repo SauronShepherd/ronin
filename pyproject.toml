@@ -75,6 +75,7 @@ select = ["E", "F", "I", "B", "UP", "SIM", "S", "ASYNC", "C4", "PT", "RET", "ARG
 [tool.mypy]
 python_version = "3.11"
 strict = true
+warn_redundant_casts = false
 mypy_path = "python:packages/pyronin/src"
 packages = [
   "studio_connectors",

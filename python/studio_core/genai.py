@@ -211,8 +211,8 @@ class PromptAsset:
             PromptId(cast(str, value["id"])),
             PromptVersion(cast(str, value["version"])),
             cast(str, value["template"]),
-            tuple(params),
-            frozenset(cast(list[ModelCapability], caps)),
+            tuple(cast(str, parameter) for parameter in params),
+            frozenset(cast(ModelCapability, capability) for capability in caps),
         )
 
 
