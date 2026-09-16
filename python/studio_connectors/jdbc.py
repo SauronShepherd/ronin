@@ -20,7 +20,7 @@ from studio_core import (
 )
 from studio_storage.secrets import SecretResolver
 
-from .contracts import ConnectorReadResult
+from .contracts import ConnectorReadResult, DiscoveryPage
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -165,6 +165,45 @@ class JdbcConnector:
             )
         finally:
             database.close()
+
+    def discover_page(
+        self,
+        connection: ConnectionDefinition,
+        secrets: SecretResolver,
+        *,
+        cursor: str | None = None,
+        page_size: int = 1000,
+    ) -> DiscoveryPage[DiscoveredAsset]:
+        """Discover one bounded JDBC page using a provider-neutral opaque offset cursor."""
+        if page_size < 1 or page_size > 10_000:
+            raise ValueError("JDBC discovery page_size must be between 1 and 10000")
+        offset = 0
+        if cursor is not None:
+            try:
+                offset = int(cursor)
+            except ValueError as exc:
+                raise ValueError("JDBC discovery cursor is invalid") from exc
+            if offset < 0:
+                raise ValueError("JDBC discovery cursor is invalid")
+        options = self._options(connection)
+        schema = self._identifier(options.get("schema", "public"), "schema")
+        database = self._database(connection, secrets)
+        try:
+            cursor_handle = database.cursor()
+            cursor_handle.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema = ? ORDER BY table_name LIMIT ? OFFSET ?",
+                (schema, page_size, offset),
+            )
+            rows = tuple(cursor_handle.fetchall())
+        finally:
+            database.close()
+        items = tuple(
+            DiscoveredAsset(AssetHandle(connection.id, (schema,), str(row[0])), "table", ())
+            for row in rows
+        )
+        truncated = len(items) == page_size
+        return DiscoveryPage(items, str(offset + page_size) if truncated else None, truncated)
 
     def read(
         self,
