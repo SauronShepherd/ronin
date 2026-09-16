@@ -67,3 +67,8 @@ def test_jdbc_v2_checkpoint_round_trip_preserves_typed_cursor() -> None:
         "asset-1", "updated_at", 1735689600, ("id",), (42,), "schema-hash", 3
     )
     assert JdbcIncrementalCheckpointV2.decode(checkpoint.encode()) == checkpoint
+    assert checkpoint.predicate() == (
+        '(("updated_at" > ?) OR ("updated_at" = ? AND "id" > ?))',
+        (1735689600, 1735689600, 42),
+    )
+    assert checkpoint.order_by() == '"updated_at", "id"'

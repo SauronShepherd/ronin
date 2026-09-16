@@ -86,6 +86,26 @@ class JdbcIncrementalCheckpointV2:
         except (KeyError, TypeError, ValueError) as exc:
             raise ValueError("invalid JDBC V2 checkpoint") from exc
 
+    def predicate(self) -> tuple[str, tuple[object, ...]]:
+        """Return a bound lexicographic continuation predicate and its parameters."""
+        columns = (self.incremental_column, *self.tie_breaker_columns)
+        values = (self.incremental_value, *self.tie_breaker_values)
+        predicates: list[str] = []
+        parameters: list[object] = []
+        for index, column in enumerate(columns):
+            prefix = " AND ".join(f'"{item}" = ?' for item in columns[:index])
+            predicates.append(f'({prefix + " AND " if prefix else ""}"{column}" > ?)')
+            parameters.extend(values[:index])
+            parameters.append(values[index])
+        return "(" + " OR ".join(predicates) + ")", tuple(parameters)
+
+    def order_by(self) -> str:
+        """Return deterministic watermark-plus-tie-breaker ordering."""
+        return ", ".join(f'"{column}"' for column in (
+            self.incremental_column,
+            *self.tie_breaker_columns,
+        ))
+
 
 class JdbcConnector:
     """Execute portable bounded reads through a deployment-provided DB-API bridge."""
