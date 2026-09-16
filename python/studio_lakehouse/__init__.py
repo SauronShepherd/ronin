@@ -1,7 +1,7 @@
 """Open-format lakehouse primitives for Ronin Public v1."""
 
 from .delta import DeltaDependencyError, DeltaTableStore
-from .iceberg import IcebergDependencyError, IcebergTableStore
+from .iceberg import IcebergCapabilityError, IcebergDependencyError, IcebergTableStore
 from .parquet import (
     ParquetDependencyError,
     ParquetFile,
@@ -23,6 +23,7 @@ __all__ = (
     "DeltaDependencyError",
     "DeltaTableStore",
     "IcebergDependencyError",
+    "IcebergCapabilityError",
     "IcebergTableStore",
     "OpenTableField",
     "OpenTableIdentifier",

@@ -92,6 +92,7 @@ class DurableExecutionService:
         self,
         *,
         project_id: str | None,
+        project_ids: tuple[str, ...] | None = None,
         state: JobState | None,
         limit: int,
         cursor: str | None,
@@ -100,6 +101,7 @@ class DurableExecutionService:
 
         return await self._store.list_jobs(
             project_id=project_id,
+            project_ids=project_ids,
             state=state,
             limit=limit,
             cursor=cursor,

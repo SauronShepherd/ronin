@@ -2,19 +2,19 @@
 
 ## Current validation mode
 
-GitHub Actions CI is intentionally disabled to avoid consuming GitHub Actions credits. The active workflow directory is empty; the previous workflow definitions are retained under `.github/workflows-disabled/` for possible future restoration.
+GitHub Actions CI and the exact-head qualification workflows are active for the current construction branch. They are evidence gates for the SHA that they actually execute; a green run does not imply that incomplete Public v1 capabilities, provider certification, legal review or repository administration are complete.
 
-Until the maintainer explicitly changes this policy:
+Current operating policy:
 
-- do not wait for, trigger, rerun, or require GitHub Actions;
-- do not run automated tests as part of autonomous implementation cycles;
-- do not make test execution or CI evidence a merge prerequisite;
+- wait for and inspect exact-head Actions runs after pushed changes;
+- run relevant automated tests locally as part of implementation cycles;
+- treat required CI/security/Docker/release evidence as a merge prerequisite when the workflow applies;
 - validate changes by static code inspection, contract tracing, import/dependency review, schema/API consistency review, and targeted code-level reasoning only;
 - preserve existing security, durability, performance, architecture, coverage, and acceptance requirements in the implementation even though they are not being executed as automated gates;
-- never describe unexecuted tests or disabled CI as green;
+- never describe unexecuted tests or incomplete workflows as green;
 - record material uncertainty explicitly when static inspection cannot prove runtime behavior.
 
-Historical CI evidence remains useful background evidence for already-published SHAs, but it is not required for new implementation work while this mode is active.
+Historical CI evidence remains background evidence for older SHAs; current claims must identify the exact candidate SHA and completed workflow run.
 
 ## Slice ownership
 
@@ -33,7 +33,7 @@ At most one open Builder PR may claim a domain. A slice touching multiple domain
 
 ## Slice selection priority
 
-Use `docs/automation/SLICE_PRIORITY.md` together with the current canonical `BACKLOG.md` and `CONSTRUCTION_PLAN.md`. Under code-only validation mode, CI-evidence-only handoffs do not block implementation; keep them open/deferred until automated qualification is explicitly re-enabled.
+Use `docs/automation/SLICE_PRIORITY.md` together with the current canonical `BACKLOG.md` and `CONSTRUCTION_PLAN.md`. Qualification-only work must not be treated as product completion, but exact-head evidence is required for release claims.
 
 The v0.1 dependency critical path outranks unrelated hardening. Do not expand into frozen E3-E10 scope while v0.1 contract gaps remain.
 

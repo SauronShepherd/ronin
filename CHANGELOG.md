@@ -7,6 +7,7 @@ All notable user-visible changes to Ronin are recorded here. Ronin is currently 
 ### Breaking / compatibility tightening
 
 - Public `POST /v1/jobs` request parsing now rejects duplicate JSON object members and non-finite numbers through the shared canonical JSON v1 decoder. Valid v1 canonical bytes and idempotency request digests remain unchanged.
+- Canonical JSON v1 now rejects integers outside `-(2**53 - 1)` through `2**53 - 1` so identity-bearing values remain exact for JavaScript and other IEEE-754 consumers. Larger values must be represented as strings; existing canonical vectors were checked and updated where necessary.
 
 ### Features
 
@@ -28,7 +29,7 @@ All notable user-visible changes to Ronin are recorded here. Ronin is currently 
 
 - GitHub Actions and automated tests are currently disabled by maintainer policy; current `main` therefore lacks exact-head automated release qualification.
 - The last authoritative automated frozen-journey result remains historical rather than current-head evidence; do not claim 15/15 until all fifteen steps execute on one exact candidate SHA.
-- `SECURITY.md` is intentionally absent until a private vulnerability-reporting channel is selected and verified.
+- `SECURITY.md` documents the private vulnerability-reporting route; repository configuration and release qualification remain maintainer-owned evidence.
 - Release license/NOTICE evidence still requires exact resolved-environment generation and human review.
 - Repository/ref protection remains a release-gate requirement before `v0.1.0`, no later than 2026-11-01.
 - Post-v0.1 breadth such as ingestion, CDC, lakehouse, SQL federation, streaming, catalog, BI, ML, GenAI, RAG, and additional runtimes remains out of scope.

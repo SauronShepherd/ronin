@@ -12,7 +12,7 @@ from studio_core.environments import (
     ProjectEnvironmentBindings,
 )
 from studio_orchestrator import Instant
-from studio_storage.bundle import BundleReadLimits
+from studio_storage.bundle import DEFAULT_BUNDLE_READ_LIMITS, BundleReadLimits
 from studio_storage.bundle_multi_import_port import (
     MultiObjectBundleImportCommit,
     MultiObjectBundleImportConflict,
@@ -152,7 +152,7 @@ def commit_multi_object_bundle_import(
     resolutions: tuple[DeploymentBinding, ...] = (),
     project_environments: tuple[ProjectTargetEnvironment, ...] = (),
     now: Instant | str,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = DEFAULT_BUNDLE_READ_LIMITS,
     max_inventory_bytes: int = 8 * 1024 * 1024,
     max_object_bytes: int = 8 * 1024 * 1024,
 ) -> MultiObjectBundleImportOutcome:

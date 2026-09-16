@@ -20,7 +20,12 @@ def _text(value: str, name: str) -> str:
 
 
 def _attributes(values: tuple[tuple[str, str], ...]) -> tuple[tuple[str, str], ...]:
-    normalized = tuple(sorted((_text(key, "telemetry attribute key"), _text(value, "telemetry attribute value")) for key, value in values))
+    normalized = tuple(
+        sorted(
+            (_text(key, "telemetry attribute key"), _text(value, "telemetry attribute value"))
+            for key, value in values
+        )
+    )
     keys = [key for key, _ in normalized]
     if len(keys) != len(set(keys)):
         raise ValueError("telemetry attribute keys must be unique")

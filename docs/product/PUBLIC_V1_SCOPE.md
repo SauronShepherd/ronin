@@ -10,9 +10,11 @@ Ronin MUST NOT present a first public product release as complete until it is a 
 
 The first public release is **Ronin Public v1**. The existing `0.1.0a*` line is an engineering alpha and foundation milestone, not the product-completeness gate.
 
-Public v1 is intended to let a team migrate a representative project away from Microsoft Fabric, Databricks, Palantir Foundry/AIP, or Dataiku DSS, operate that project in Ronin without a mandatory dependency on the source vendor, and export the portable parts again through documented adapters.
+Public v1 is intended to let a team simulate representative proprietary, non-open-source data and AI platform environments locally in Ronin, without requiring access to an external vendor control plane. Portability and migration may be useful secondary outcomes, but they are not the primary product purpose.
 
-Ronin does not promise fictional byte-for-byte compatibility with every proprietary feature of those products. It promises a documented migration profile, explicit loss reporting, no silent semantic downgrade, and an open canonical representation for the supported intersection.
+Ronin Public v1 is a local development, experimentation, learning and reproducible-evaluation product. Production deployment and production-operational guarantees are out of scope and are not supported or planned as part of this release target. Anyone may adapt Ronin for production at their own risk, but that use is outside Ronin's supported contract.
+
+Ronin does not promise fictional byte-for-byte compatibility with every proprietary feature of the environments it simulates. Any future portability adapter must provide explicit loss reporting, no silent semantic downgrade, and an open canonical representation for its bounded supported intersection.
 
 ## 2. Product identity
 

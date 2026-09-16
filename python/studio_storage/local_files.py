@@ -165,11 +165,7 @@ class LocalFileConnector:
         data = path.read_bytes()
         if len(data) != size:
             raise OSError("source file changed during bounded read")
-        media_type = (
-            "text/csv"
-            if path.suffix.lower() == ".csv"
-            else "application/x-ndjson"
-        )
+        media_type = "text/csv" if path.suffix.lower() == ".csv" else "application/x-ndjson"
         return path, data, media_type
 
     def discover(
@@ -207,7 +203,7 @@ class LocalFileConnector:
         digest = hashlib.sha256(data).hexdigest()
         version = AssetVersion(f"sha256:{digest}")
         source_digest = hashlib.sha256(
-            f"{connection.id.value}\n{relative_path}".encode("utf-8")
+            f"{connection.id.value}\n{relative_path}".encode()
         ).hexdigest()
         source_id = AssetId(f"source-{source_digest[:32]}")
         source_ref = AssetRef(source_id, version)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from studio_orchestrator import Instant, LeaseToken
@@ -33,9 +34,16 @@ class SchedulerControllerCycle:
 class SchedulerController:
     """Bounded controller logic; daemon timing/leadership are separate concerns."""
 
-    def __init__(self, store: SchedulerControllerStore, service: DurableJobService) -> None:
+    def __init__(
+        self,
+        store: SchedulerControllerStore,
+        service: DurableJobService,
+        *,
+        release_policy: Callable[[object, object], bool] | None = None,
+    ) -> None:
         self._store = store
         self._service = service
+        self._release_policy = release_policy
 
     async def claim_and_publish(
         self,
@@ -79,6 +87,21 @@ class SchedulerController:
                 lease_token=lease_token,
                 succeeded=False,
                 failure_code="workflow_run_missing",
+                now=now,
+            )
+            return None
+
+        if self._release_policy is not None and not await asyncio.to_thread(
+            self._release_policy, claim, workflow_run
+        ):
+            await asyncio.to_thread(
+                self._store.complete_task,
+                workspace_id,
+                attempt_id,
+                owner=owner,
+                lease_token=lease_token,
+                succeeded=False,
+                failure_code="release_policy_blocked",
                 now=now,
             )
             return None
