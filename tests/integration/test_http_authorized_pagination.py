@@ -46,11 +46,7 @@ def _close(server: RoninHTTPServer, thread: Thread) -> None:
 
 
 def test_project_scoped_listing_requires_project_before_pagination(tmp_path: Path) -> None:
-    grants = GrantSet(
-        (
-            Grant(frozenset({"list"}), ResourceScope("project", "allowed")),
-        )
-    )
+    grants = GrantSet((Grant(frozenset({"list"}), ResourceScope("project", "allowed")),))
     server, thread = _server(tmp_path, grants)
     try:
         transport = _transport(server)
@@ -70,11 +66,7 @@ def test_project_scoped_listing_requires_project_before_pagination(tmp_path: Pat
 
 
 def test_unconstrained_project_wildcard_can_list_without_project(tmp_path: Path) -> None:
-    grants = GrantSet(
-        (
-            Grant(frozenset({"list"}), ResourceScope("project", None)),
-        )
-    )
+    grants = GrantSet((Grant(frozenset({"list"}), ResourceScope("project", None)),))
     server, thread = _server(tmp_path, grants)
     try:
         page = _transport(server).request("GET", "/v1/jobs", query={"limit": "1"})
