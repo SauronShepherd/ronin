@@ -2,7 +2,7 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
-**Observed source head:** `a9664f58ba6e58c280ca046fbc008fab3ec2f413` (2026-09-16).
+**Observed source head:** `0d94036fb69f7ecc104ae61731a6907736fbd542` (2026-09-16).
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
