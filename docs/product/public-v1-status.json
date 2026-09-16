@@ -97,7 +97,7 @@
     {
       "id": "p14-deployment-operations",
       "status": "partial",
-      "summary": "Local/container/Compose foundation, PostgreSQL metadata adapter with transactional migration and healthcheck, wired PostgreSQL JobStore, SQLite online backup/restore primitives, S3-compatible artifact adapter, and a constrained single-replica SQLite Helm reference chart exist. Kubernetes production qualification, scheduler HA and production backup qualification remain incomplete."
+      "summary": "Local/container/Compose foundation, PostgreSQL metadata adapter with transactional migration and healthcheck, wired PostgreSQL JobStore, single-node real-PostgreSQL lifecycle qualification, SQLite online backup/restore primitives, S3-compatible artifact adapter, and a constrained single-replica SQLite Helm reference chart exist. PostgreSQL multi-node/HA, Kubernetes production qualification, scheduler HA and production backup qualification remain incomplete."
     },
     {
       "id": "ronin-bundle",
