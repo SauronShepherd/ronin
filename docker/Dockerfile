@@ -4,6 +4,7 @@ FROM ${PYTHON_IMAGE} AS wheel
 WORKDIR /src
 COPY pyproject.toml README.md LICENSE ./
 COPY python ./python
+COPY web ./web
 RUN python -m pip wheel --no-deps --wheel-dir /wheels .
 
 FROM docker:27.3.1-cli-alpine3.20@sha256:328eb399a065780c2cebe9224de003aa14084cf69efae882ac27430f921819b7 AS docker-cli
