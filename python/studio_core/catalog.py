@@ -320,7 +320,9 @@ class ColumnMapping:
 
     def __post_init__(self) -> None:
         _require_text(self.target_field, "lineage target field")
-        sources = tuple(sorted(_require_text(value, "lineage source field") for value in self.source_fields))
+        sources = tuple(
+            sorted(_require_text(value, "lineage source field") for value in self.source_fields)
+        )
         if not sources:
             raise ValueError("column mapping requires at least one source field")
         if len(sources) != len(set(sources)):
@@ -402,12 +404,17 @@ class LineageEdge:
             raise ValueError("lineage column_mappings must be an array")
         parsed_mappings: list[ColumnMapping] = []
         for mapping in mappings:
-            if not isinstance(mapping, Mapping) or set(mapping) != {"target_field", "source_fields"}:
+            if not isinstance(mapping, Mapping) or set(mapping) != {
+                "target_field",
+                "source_fields",
+            }:
                 raise ValueError("column mapping has invalid shape")
             target_field = mapping["target_field"]
             source_fields = mapping["source_fields"]
-            if not isinstance(target_field, str) or not isinstance(source_fields, list) or not all(
-                isinstance(value, str) for value in source_fields
+            if (
+                not isinstance(target_field, str)
+                or not isinstance(source_fields, list)
+                or not all(isinstance(value, str) for value in source_fields)
             ):
                 raise ValueError("column mapping has invalid field types")
             parsed_mappings.append(ColumnMapping(target_field, tuple(source_fields)))

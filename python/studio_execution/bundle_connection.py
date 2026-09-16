@@ -16,7 +16,13 @@ from studio_core.bundle_inventory import (
 from studio_core.environments import DeploymentBinding
 from studio_core.portability import BindingRequest, RoninBundleManifest
 from studio_orchestrator import Instant
-from studio_storage.bundle import BundleFile, BundleIntegrityError, BundleReadLimits, write_bundle
+from studio_storage.bundle import (
+    DEFAULT_BUNDLE_READ_LIMITS,
+    BundleFile,
+    BundleIntegrityError,
+    BundleReadLimits,
+    write_bundle,
+)
 from studio_storage.bundle_payload import read_bundle_payload
 from studio_storage.ports import ConnectionStore, WorkspaceStore
 
@@ -183,7 +189,7 @@ def plan_connection_bundle_import(
     connection_store: ConnectionStore,
     workspace_id: WorkspaceId,
     *,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = DEFAULT_BUNDLE_READ_LIMITS,
     max_inventory_bytes: int = 8 * 1024 * 1024,
     max_connection_bytes: int = 8 * 1024 * 1024,
 ) -> ConnectionBundleImportPlan:
@@ -269,22 +275,24 @@ def resolve_connection_secret_bindings(
     expected = {(request.kind, request.source_ref): request for request in plan.unresolved_bindings}
     supplied: dict[tuple[str, str], DeploymentBinding] = {}
     for resolution in resolutions:
-        key = (resolution.kind, resolution.source_ref)
-        if key in supplied:
+        binding_key = (resolution.kind, resolution.source_ref)
+        if binding_key in supplied:
             raise ConnectionBundleBindingError("duplicate connection Bundle binding resolution")
-        if key not in expected:
-            raise ConnectionBundleBindingError("connection Bundle binding resolution was not requested")
-        supplied[key] = resolution
+        if binding_key not in expected:
+            raise ConnectionBundleBindingError(
+                "connection Bundle binding resolution was not requested"
+            )
+        supplied[binding_key] = resolution
     if any(request.required and key not in supplied for key, request in expected.items()):
         raise ConnectionBundleBindingError("required connection Bundle bindings remain unresolved")
 
     remapped_refs: list[tuple[str, SecretRef]] = []
-    for key, source_ref in plan.connection.secret_refs:
-        resolution = supplied.get(("secret", str(source_ref)))
-        if resolution is None:
-            remapped_refs.append((key, source_ref))
+    for secret_key, source_ref in plan.connection.secret_refs:
+        matched_resolution = supplied.get(("secret", str(source_ref)))
+        if matched_resolution is None:
+            remapped_refs.append((secret_key, source_ref))
         else:
-            remapped_refs.append((key, SecretRef(resolution.target_ref)))
+            remapped_refs.append((secret_key, SecretRef(matched_resolution.target_ref)))
     return ConnectionDefinition(
         id=plan.connection.id,
         name=plan.connection.name,
@@ -302,7 +310,7 @@ def commit_connection_bundle_import(
     *,
     resolutions: tuple[DeploymentBinding, ...] = (),
     now: Instant | str,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = DEFAULT_BUNDLE_READ_LIMITS,
     max_inventory_bytes: int = 8 * 1024 * 1024,
     max_connection_bytes: int = 8 * 1024 * 1024,
 ) -> ConnectionBundleImportOutcome:

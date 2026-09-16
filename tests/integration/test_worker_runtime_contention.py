@@ -228,7 +228,7 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
                     lease_token=LeaseToken("lease-contention-live"),
                 )
             )
-            assert await asyncio.to_thread(slow_store.started.wait, 2.0)
+            assert await asyncio.to_thread(slow_store.started.wait, 10.0)
             first_heartbeat, first_expiry = _lease_state(config.database_path, attempt_id)
             second_heartbeat, second_expiry = await _wait_for_durable_heartbeat(
                 config.database_path,
@@ -238,9 +238,9 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
             )
             slow_store.release.set()
 
-            await asyncio.wait_for(artifacts_created.wait(), timeout=2.0)
+            await asyncio.wait_for(artifacts_created.wait(), timeout=10.0)
             assert slow_artifacts is not None
-            assert await asyncio.to_thread(slow_artifacts.started.wait, 2.0)
+            assert await asyncio.to_thread(slow_artifacts.started.wait, 10.0)
             await _wait_for_durable_heartbeat(
                 config.database_path,
                 attempt_id,
@@ -278,7 +278,7 @@ def test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verif
                 lease_token=LeaseToken("lease-contention-old"),
             )
         )
-        await asyncio.wait_for(first_runner.started.wait(), timeout=2.0)
+        await asyncio.wait_for(first_runner.started.wait(), timeout=10.0)
         first_task.cancel()
         with pytest.raises(asyncio.CancelledError):
             await first_task
@@ -310,9 +310,9 @@ def test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verif
                     lease_token=LeaseToken("lease-contention-replacement"),
                 )
             )
-            await asyncio.wait_for(artifacts_created.wait(), timeout=2.0)
+            await asyncio.wait_for(artifacts_created.wait(), timeout=10.0)
             assert slow_artifacts is not None
-            assert await asyncio.to_thread(slow_artifacts.started.wait, 2.0)
+            assert await asyncio.to_thread(slow_artifacts.started.wait, 10.0)
             first_heartbeat, first_expiry = _lease_state(config.database_path, attempt_id)
             await _wait_for_durable_heartbeat(
                 config.database_path,

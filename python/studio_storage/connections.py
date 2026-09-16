@@ -8,7 +8,7 @@ from pathlib import Path
 from studio_core import ConnectionDefinition, ConnectionId, WorkspaceId
 from studio_orchestrator import Instant
 
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
 
 _CONNECTION_SCHEMA_VERSION = 1
@@ -24,9 +24,7 @@ class ConnectionNotFound(KeyError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_connections(connection: sqlite3.Connection, *, now: Instant | str) -> None:
@@ -48,7 +46,9 @@ def migrate_connections(connection: sqlite3.Connection, *, now: Instant | str) -
         )
     migrations_dir = Path(__file__).with_name("migrations")
     for version in range(current + 1, _CONNECTION_SCHEMA_VERSION + 1):
-        script = migrations_dir.joinpath(_CONNECTION_MIGRATIONS[version]).read_text(encoding="utf-8")
+        script = migrations_dir.joinpath(_CONNECTION_MIGRATIONS[version]).read_text(
+            encoding="utf-8"
+        )
         connection.execute("BEGIN IMMEDIATE")
         try:
             _execute_script_in_transaction(connection, script)
@@ -118,7 +118,8 @@ class SqliteConnectionStore:
                     return definition
                 raise ConnectionConflict(f"connection id already exists: {definition.id}")
             connection.execute(
-                "INSERT INTO connections(workspace_id,connection_id,definition_json,created_at,updated_at) "
+                "INSERT INTO connections("
+                "workspace_id,connection_id,definition_json,created_at,updated_at) "
                 "VALUES (?,?,?,?,?)",
                 (str(workspace_id), str(definition.id), definition_json, now, now),
             )
@@ -176,7 +177,8 @@ class SqliteConnectionStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT definition_json FROM connections WHERE workspace_id=? ORDER BY connection_id",
+                "SELECT definition_json FROM connections "
+                "WHERE workspace_id=? ORDER BY connection_id",
                 (str(workspace_id),),
             ).fetchall()
             return tuple(ConnectionDefinition.from_json(row["definition_json"]) for row in rows)

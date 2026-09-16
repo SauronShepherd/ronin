@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ronin Studio</title>
+    <link rel="stylesheet" href="./studio.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div><span class="mark">RONIN</span><span class="muted">Public v1 Studio</span></div>
+      <form id="connection-form" class="connection-form">
+        <input id="api-url" type="url" value="http://127.0.0.1:8080" aria-label="API URL">
+        <input id="api-token" type="password" placeholder="Bearer token" aria-label="Bearer token">
+        <button type="submit">Connect</button>
+      </form>
+    </header>
+    <main class="layout">
+      <aside class="sidebar">
+        <h2>Workspace</h2>
+        <button class="nav active" data-view="runs">Runs</button>
+        <button class="nav" data-view="evidence">Evidence</button>
+        <button class="nav" data-view="logs">Logs</button>
+        <button class="nav" data-view="sql">SQL</button>
+        <p class="muted small">Provider-neutral execution control plane</p>
+      </aside>
+      <section class="content">
+        <div id="notice" class="notice" role="status" hidden></div>
+        <section id="runs-view" class="view">
+          <div class="heading"><div><p class="eyebrow">OPERATIONS</p><h1>Recent runs</h1></div><div class="actions"><button id="previous" disabled>Previous</button><button id="next" disabled>Next</button><button id="refresh">Refresh</button></div></div>
+          <form id="run-filters" class="run-filters" aria-label="Filter runs">
+            <input id="run-project" aria-label="Project filter" placeholder="Project (optional)">
+            <select id="run-state" aria-label="State filter">
+              <option value="">All states</option><option value="queued">Queued</option><option value="running">Running</option><option value="cancelling">Cancelling</option><option value="cancelled">Cancelled</option><option value="succeeded">Succeeded</option><option value="failed">Failed</option>
+            </select>
+            <button type="submit">Apply filters</button><button id="clear-filters" type="button">Clear</button>
+          </form>
+          <p id="run-filter-summary" class="muted small" aria-live="polite"></p>
+          <div id="runs" class="cards"><div class="empty">Connect to a Ronin API to load runs.</div></div>
+        </section>
+        <section id="details-view" class="view" hidden>
+          <div class="heading"><div><p class="eyebrow">RUN DETAIL</p><h1 id="detail-title">Job</h1></div><div class="actions"><button id="cancel" class="danger">Cancel run</button><button id="back">Back</button></div></div>
+          <div class="detail-grid"><article><h2>Status</h2><pre id="status"></pre></article><article><h2>Events</h2><pre id="events"></pre></article><article><h2>Evidence</h2><pre id="evidence"></pre></article></div>
+        </section>
+        <section id="sql-view" class="view" hidden>
+          <div class="heading"><div><p class="eyebrow">DATA</p><h1>Read-only SQL</h1></div></div>
+          <form id="sql-form" class="sql-form">
+            <input id="sql-project" value="examples/demo" aria-label="SQL project" placeholder="Project">
+            <textarea id="sql-text" rows="8" aria-label="SQL query">SELECT 1 AS value</textarea>
+            <button type="submit">Run query</button>
+          </form>
+          <pre id="sql-result" class="sql-result">Configure a connection and run a read-only SELECT query.</pre>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="./studio.js"></script>
+  </body>
+</html>

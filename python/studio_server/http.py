@@ -6,11 +6,13 @@ import asyncio
 import hashlib
 import hmac
 import json
+import sys
 from collections.abc import Coroutine
 from concurrent.futures import Future
 from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from threading import Event, Thread
 from typing import Any, cast
 from urllib.parse import parse_qs, unquote, urlsplit
@@ -32,12 +34,29 @@ from studio_orchestrator import (
     RunState,
     StoredEvidenceRef,
 )
+from studio_sql import (
+    DuckDbDependencyError,
+    ProjectScopedDuckDbSqlEngine,
+    SqlEngine,
+    SqlExecutionError,
+    SqlRelationUnavailableError,
+    SqlTimeoutError,
+)
+from studio_sql.wire import sql_wire_value
 from studio_storage import IdempotencyConflict, StorageBackpressureError
 
 _MAX_REQUEST_BYTES = 1024 * 1024
 _MAX_CURSOR_BYTES = 4096
 _MAX_LIST_LIMIT = 100
 _DEFAULT_LIST_LIMIT = 50
+_DEFAULT_SERVICE_TIMEOUT_SECONDS = 30.0
+_REQUEST_READ_TIMEOUT_SECONDS = 30.0
+_STUDIO_ASSETS = {
+    "/studio": "index.html",
+    "/studio/": "index.html",
+    "/studio/studio.js": "studio.js",
+    "/studio/studio.css": "studio.css",
+}
 SUPPORTED_ROUTES = frozenset(
     {
         ("POST", "/v1/jobs"),
@@ -46,8 +65,17 @@ SUPPORTED_ROUTES = frozenset(
         ("GET", "/v1/jobs/{job_id}/events"),
         ("GET", "/v1/jobs/{job_id}/evidence"),
         ("POST", "/v1/jobs/{job_id}/cancel"),
+        ("POST", "/v1/sql"),
     }
 )
+
+
+class ServiceTimeoutError(TimeoutError):
+    """Raised when an application service call exceeds its HTTP budget."""
+
+
+class RequestReadTimeoutError(TimeoutError):
+    """Raised when a client exceeds the request-body read budget."""
 
 
 def _now() -> Instant:
@@ -140,8 +168,11 @@ def _submit_project(payload: object) -> str:
 
 
 class _ServiceLoop:
-    def __init__(self, service: DurableExecutionService) -> None:
+    def __init__(self, service: DurableExecutionService, *, timeout_seconds: float) -> None:
+        if timeout_seconds <= 0:
+            raise ValueError("service timeout must be positive")
         self._service = service
+        self._timeout_seconds = timeout_seconds
         self._loop = asyncio.new_event_loop()
         self._ready = Event()
         self._thread = Thread(target=self._run, name="ronin-http-service", daemon=True)
@@ -155,7 +186,11 @@ class _ServiceLoop:
 
     def call(self, coroutine: Coroutine[Any, Any, Any]) -> Any:
         future: Future[Any] = asyncio.run_coroutine_threadsafe(coroutine, self._loop)
-        return future.result()
+        try:
+            return future.result(timeout=self._timeout_seconds)
+        except TimeoutError as exc:
+            future.cancel()
+            raise ServiceTimeoutError("service request timed out") from exc
 
     def close(self) -> None:
         if not self._thread.is_alive():
@@ -167,9 +202,16 @@ class _ServiceLoop:
 
 
 class DurableHTTPApplication:
-    def __init__(self, service: DurableExecutionService) -> None:
+    def __init__(
+        self,
+        service: DurableExecutionService,
+        *,
+        sql_engine: SqlEngine | None = None,
+        service_timeout_seconds: float = _DEFAULT_SERVICE_TIMEOUT_SECONDS,
+    ) -> None:
         self._service = service
-        self._loop = _ServiceLoop(service)
+        self._sql_engine = sql_engine
+        self._loop = _ServiceLoop(service, timeout_seconds=service_timeout_seconds)
 
     def close(self) -> None:
         self._loop.close()
@@ -240,6 +282,7 @@ class DurableHTTPApplication:
         self,
         *,
         project: str | None,
+        project_ids: tuple[str, ...] | None = None,
         state: str | None,
         limit: str | None,
         cursor: str | None,
@@ -259,6 +302,7 @@ class DurableHTTPApplication:
             self._loop.call(
                 self._service.list_jobs(
                     project_id=project,
+                    project_ids=project_ids,
                     state=job_state,
                     limit=_bounded_limit(limit, default=_DEFAULT_LIST_LIMIT),
                     cursor=_opaque_cursor(cursor, name="cursor"),
@@ -296,6 +340,52 @@ class DurableHTTPApplication:
         job = cast(Job, self._loop.call(self._service.cancel(JobId(job_id), now=_now())))
         return _job_payload(job)
 
+    def sql(self, payload: object) -> dict[str, object]:
+        if self._sql_engine is None:
+            raise LookupError("SQL engine is not configured")
+        if not isinstance(payload, dict) or set(payload) - {
+            "project",
+            "sql",
+            "parameters",
+            "max_rows",
+        }:
+            raise ValueError("SQL request contains unknown fields")
+        sql = payload.get("sql")
+        project = payload.get("project")
+        parameters = payload.get("parameters", [])
+        max_rows = payload.get("max_rows", 10_000)
+        if not isinstance(sql, str) or not sql.strip() or sql != sql.strip():
+            raise ValueError("sql must be non-empty and trimmed")
+        if not isinstance(project, str) or not project.strip() or project != project.strip():
+            raise ValueError("project must be non-empty and trimmed")
+        if not isinstance(parameters, list):
+            raise ValueError("parameters must be a JSON array")
+        if not all(
+            isinstance(value, (bool, int, float, str)) or value is None for value in parameters
+        ):
+            raise ValueError("SQL parameters must be scalar JSON values")
+        if (
+            not isinstance(max_rows, int)
+            or isinstance(max_rows, bool)
+            or not 1 <= max_rows <= 10_000
+        ):
+            raise ValueError("max_rows must be between 1 and 10000")
+        try:
+            if isinstance(self._sql_engine, ProjectScopedDuckDbSqlEngine):
+                result = self._sql_engine.execute(
+                    project, sql, tuple(parameters), max_rows=max_rows
+                )
+            else:
+                result = self._sql_engine.execute(sql, tuple(parameters), max_rows=max_rows)
+        except (SqlRelationUnavailableError, SqlExecutionError, SqlTimeoutError):
+            raise
+        return {
+            "columns": [
+                {"name": column.name, "type": column.type_name} for column in result.columns
+            ],
+            "rows": [[sql_wire_value(value) for value in row] for row in result.rows],
+        }
+
 
 class RoninHTTPServer(ThreadingHTTPServer):
     """Supported HTTP server with one bearer credential and typed project grants."""
@@ -309,12 +399,13 @@ class RoninHTTPServer(ThreadingHTTPServer):
         *,
         token: str,
         grants: GrantSet,
+        sql_engine: SqlEngine | None = None,
     ) -> None:
         if not token or token != token.strip() or "\n" in token or "\r" in token:
             raise ValueError("token must be non-empty, trimmed, and single-line")
         if not grants.grants:
             raise ValueError("bearer token requires at least one typed authorization grant")
-        self.application = DurableHTTPApplication(service)
+        self.application = DurableHTTPApplication(service, sql_engine=sql_engine)
         self._token = token
         self._grants = grants
         try:
@@ -347,6 +438,10 @@ class RoninHTTPServer(ThreadingHTTPServer):
 
 
 class _Handler(BaseHTTPRequestHandler):
+    def setup(self) -> None:
+        super().setup()
+        self.connection.settimeout(_REQUEST_READ_TIMEOUT_SECONDS)
+
     def log_message(self, _format: str, *args: object) -> None:
         del args
 
@@ -356,10 +451,53 @@ class _Handler(BaseHTTPRequestHandler):
     def _write_json(self, status: HTTPStatus, payload: object) -> None:
         body = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         self.send_response(status)
+        self._send_security_headers(api=True)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def _serve_studio(self, path: str) -> bool:
+        asset = _STUDIO_ASSETS.get(path)
+        if asset is None:
+            return False
+        candidates = (
+            Path(__file__).resolve().parents[2] / "web" / asset,
+            Path("/usr/local/lib/ronin/web") / asset,
+            Path(sys.prefix) / "share" / "ronin" / "web" / asset,
+        )
+        source = next((candidate for candidate in candidates if candidate.is_file()), candidates[0])
+        try:
+            body = source.read_bytes()
+        except OSError:
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "Studio asset not found")
+            return True
+        media_type = (
+            "text/html"
+            if asset.endswith(".html")
+            else "text/javascript"
+            if asset.endswith(".js")
+            else "text/css"
+        )
+        self.send_response(HTTPStatus.OK)
+        self._send_security_headers(api=False)
+        self.send_header("Content-Type", f"{media_type}; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+        return True
+
+    def _send_security_headers(self, *, api: bool) -> None:
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'none'; script-src 'self'; style-src 'self'; "
+            "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'",
+        )
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("X-Frame-Options", "DENY")
+        if api:
+            self.send_header("Cache-Control", "no-store")
 
     def _error(self, status: HTTPStatus, code: str, message: str) -> None:
         self._write_json(status, {"error": {"code": code, "message": message}})
@@ -396,7 +534,10 @@ class _Handler(BaseHTTPRequestHandler):
             raise ValueError("Content-Length must be an integer") from exc
         if length < 0 or length > _MAX_REQUEST_BYTES:
             raise ValueError("request body exceeds configured byte limit")
-        body = self.rfile.read(length)
+        try:
+            body = self.rfile.read(length)
+        except TimeoutError as exc:
+            raise RequestReadTimeoutError("request body read timed out") from exc
         try:
             return decode_canonical_json(body)
         except (UnicodeDecodeError, ValueError) as exc:
@@ -407,6 +548,56 @@ class _Handler(BaseHTTPRequestHandler):
             return
         split = urlsplit(self.path)
         path = split.path
+        if path == "/v1/sql":
+            if split.query:
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_request", "SQL does not accept query")
+                return
+            try:
+                payload = self._read_json()
+                if not isinstance(payload, dict):
+                    raise ValueError("request body must be a JSON object")
+                project = _submit_project(payload)
+                if not self._require_project("read", project):
+                    return
+                response_payload = self._ronin_server().application.sql(payload)
+            except SqlRelationUnavailableError:
+                self._error(
+                    HTTPStatus.NOT_FOUND,
+                    "sql_relation_unavailable",
+                    "SQL relation is unavailable",
+                )
+                return
+            except LookupError:
+                self._error(HTTPStatus.NOT_FOUND, "sql_unavailable", "SQL engine is not configured")
+                return
+            except DuckDbDependencyError:
+                self._error(
+                    HTTPStatus.SERVICE_UNAVAILABLE,
+                    "sql_dependency_unavailable",
+                    "SQL engine dependency is unavailable",
+                )
+                return
+            except SqlTimeoutError as exc:
+                self._error(HTTPStatus.GATEWAY_TIMEOUT, "sql_timeout", str(exc))
+                return
+            except SqlExecutionError:
+                self._error(
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    "sql_execution_failed",
+                    "SQL backend execution failed",
+                )
+                return
+            except RequestReadTimeoutError as exc:
+                self._error(HTTPStatus.REQUEST_TIMEOUT, "request_read_timeout", str(exc))
+                return
+            except ServiceTimeoutError as exc:
+                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
+                return
+            except ValueError as exc:
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
+                return
+            self._write_json(HTTPStatus.OK, response_payload)
+            return
         if path == "/v1/jobs":
             if split.query:
                 self._error(
@@ -429,6 +620,12 @@ class _Handler(BaseHTTPRequestHandler):
                     "idempotency_conflict",
                     "idempotency key already exists for a different request",
                 )
+                return
+            except RequestReadTimeoutError as exc:
+                self._error(HTTPStatus.REQUEST_TIMEOUT, "request_read_timeout", str(exc))
+                return
+            except ServiceTimeoutError as exc:
+                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
                 return
             except StorageBackpressureError:
                 self._error(
@@ -459,6 +656,9 @@ class _Handler(BaseHTTPRequestHandler):
         except KeyError:
             self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
             return
+        except ServiceTimeoutError as exc:
+            self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
+            return
         except StorageBackpressureError:
             self._error(HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy")
             return
@@ -468,6 +668,11 @@ class _Handler(BaseHTTPRequestHandler):
         self._write_json(HTTPStatus.OK, payload)
 
     def do_GET(self) -> None:  # noqa: N802
+        if urlsplit(self.path).path == "/healthz":
+            self._write_json(HTTPStatus.OK, {"status": "ok"})
+            return
+        if self._serve_studio(urlsplit(self.path).path):
+            return
         if not self._require_auth():
             return
         split = urlsplit(self.path)
@@ -481,21 +686,22 @@ class _Handler(BaseHTTPRequestHandler):
                 project = query.get("project")
                 if project is not None and not self._require_project("list", project):
                     return
+                project_ids = None
+                if project is None:
+                    project_ids = self._ronin_server().effective_grants.exact_resource_ids(
+                        "list", kind="project"
+                    )
                 page = self._ronin_server().application.list_jobs(
                     project=project,
+                    project_ids=project_ids,
                     state=query.get("state"),
                     limit=query.get("limit"),
                     cursor=query.get("cursor"),
                 )
-                visible = Page(
-                    tuple(
-                        job
-                        for job in page.items
-                        if self._ronin_server().permits_project("list", job.project_id)
-                    ),
-                    page.next_cursor,
-                )
-                page_payload = _page_payload(visible)
+                page_payload = _page_payload(page)
+            except ServiceTimeoutError as exc:
+                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
+                return
             except StorageBackpressureError:
                 self._error(
                     HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
@@ -523,6 +729,9 @@ class _Handler(BaseHTTPRequestHandler):
                 event_payload = self._ronin_server().application.events(
                     job_id, since=query.get("since"), limit=query.get("limit")
                 )
+            except ServiceTimeoutError as exc:
+                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
+                return
             except StorageBackpressureError:
                 self._error(
                     HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
@@ -552,6 +761,9 @@ class _Handler(BaseHTTPRequestHandler):
                 if self._require_visible_job("evidence:read", job) is None:
                     return
                 evidence_payload = self._ronin_server().application.evidence(job_id)
+            except ServiceTimeoutError as exc:
+                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
+                return
             except StorageBackpressureError:
                 self._error(
                     HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy"
@@ -576,6 +788,9 @@ class _Handler(BaseHTTPRequestHandler):
         try:
             job_id = unquote(encoded_job_id, errors="strict")
             job = self._ronin_server().application.get_job(job_id)
+        except ServiceTimeoutError as exc:
+            self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_timeout", str(exc))
+            return
         except StorageBackpressureError:
             self._error(HTTPStatus.SERVICE_UNAVAILABLE, "storage_backpressure", "server is busy")
             return

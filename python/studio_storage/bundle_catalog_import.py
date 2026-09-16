@@ -139,8 +139,7 @@ class SqliteCatalogBundleImportStore(SqliteWorkspaceStore, SqliteCatalogStore):
                         )
                 payload = edge.to_json()
                 existing = database.execute(
-                    "SELECT edge_json FROM lineage_edges "
-                    "WHERE workspace_id=? AND edge_digest=?",
+                    "SELECT edge_json FROM lineage_edges WHERE workspace_id=? AND edge_digest=?",
                     (str(workspace_id), edge.digest),
                 ).fetchone()
                 if existing is None:

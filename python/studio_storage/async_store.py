@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -63,7 +64,10 @@ class BoundedAsyncJobStore:
             max_workers=max_workers,
             thread_name_prefix="ronin-job-store",
         )
-        self._capacity_lock = asyncio.Lock()
+        # Completion callbacks may run on the executor thread, so admission
+        # accounting must be protected by a thread-safe lock rather than an
+        # event-loop-only lock.
+        self._capacity_lock = threading.Lock()
         self._available_slots = max_in_flight
         self._closed = False
 
@@ -96,6 +100,7 @@ class BoundedAsyncJobStore:
         self,
         *,
         project_id: str | None,
+        project_ids: tuple[str, ...] | None = None,
         state: JobState | None,
         limit: int,
         cursor: str | None,
@@ -104,6 +109,7 @@ class BoundedAsyncJobStore:
             partial(
                 self._store.list_jobs,
                 project_id=project_id,
+                project_ids=project_ids,
                 state=state,
                 limit=limit,
                 cursor=cursor,
@@ -253,7 +259,7 @@ class BoundedAsyncJobStore:
         return await self._call(partial(self._store.reclaim_expired, now=now))
 
     async def _reserve_slot(self) -> None:
-        async with self._capacity_lock:
+        with self._capacity_lock:
             if self._closed:
                 raise RuntimeError("job-store executor is closed")
             if self._available_slots == 0:
@@ -261,17 +267,19 @@ class BoundedAsyncJobStore:
             self._available_slots -= 1
 
     def _release_slot(self, _future: object) -> None:
-        self._available_slots += 1
+        with self._capacity_lock:
+            self._available_slots += 1
 
     async def _call(self, operation: Callable[[], _T]) -> _T:
         await self._reserve_slot()
-        loop = asyncio.get_running_loop()
         try:
-            future = loop.run_in_executor(self._executor, operation)
+            concurrent_future = self._executor.submit(operation)
         except BaseException:
-            self._available_slots += 1
+            with self._capacity_lock:
+                self._available_slots += 1
             raise
-        future.add_done_callback(self._release_slot)
+        concurrent_future.add_done_callback(self._release_slot)
+        future = asyncio.wrap_future(concurrent_future)
         return await asyncio.shield(future)
 
 

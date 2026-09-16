@@ -24,7 +24,7 @@ from studio_core import (
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_orchestrator import Instant
 
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
 
 _SCHEDULER_SCHEMA_VERSION = 1
@@ -44,9 +44,7 @@ class WorkflowRunConflict(RuntimeError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler(connection: sqlite3.Connection, *, now: Instant | str) -> None:
@@ -139,7 +137,8 @@ class SqliteSchedulerStore:
             ).fetchone()
             if existing is None:
                 connection.execute(
-                    "INSERT INTO workflows(workspace_id,workflow_id,definition_json,created_at,updated_at) "
+                    "INSERT INTO workflows("
+                    "workspace_id,workflow_id,definition_json,created_at,updated_at) "
                     "VALUES (?,?,?,?,?)",
                     (str(workspace_id), str(workflow.id), payload, now, now),
                 )
@@ -278,7 +277,9 @@ class SqliteSchedulerStore:
                 if existing.trigger == trigger:
                     connection.execute("COMMIT")
                     return existing
-                raise WorkflowRunConflict("trigger key already exists with different trigger content")
+                raise WorkflowRunConflict(
+                    "trigger key already exists with different trigger content"
+                )
             existing_id = connection.execute(
                 "SELECT 1 FROM workflow_runs WHERE workspace_id=? AND workflow_run_id=?",
                 (str(workspace_id), str(run_id)),
@@ -286,7 +287,8 @@ class SqliteSchedulerStore:
             if existing_id is not None:
                 raise WorkflowRunConflict(f"workflow run id already exists: {run_id}")
             connection.execute(
-                "INSERT INTO workflow_runs(workspace_id,workflow_run_id,workflow_id,trigger_key,state,"
+                "INSERT INTO workflow_runs("
+                "workspace_id,workflow_run_id,workflow_id,trigger_key,state,"
                 "run_json,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
                 (
                     str(workspace_id),
@@ -341,7 +343,8 @@ class SqliteSchedulerStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT * FROM task_runs WHERE workspace_id=? AND workflow_run_id=? ORDER BY node_id",
+                "SELECT * FROM task_runs "
+                "WHERE workspace_id=? AND workflow_run_id=? ORDER BY node_id",
                 (str(workspace_id), str(run_id)),
             ).fetchall()
             return tuple(

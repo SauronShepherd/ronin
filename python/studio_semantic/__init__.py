@@ -14,6 +14,7 @@ from .contracts import (
     SemanticModel,
 )
 from .runtime import DashboardTileResult, SemanticRuntime
+from .store import SemanticModelConflict, SqliteSemanticStore
 
 __all__ = (
     "Aggregation",
@@ -30,5 +31,7 @@ __all__ = (
     "SemanticModel",
     "SemanticQueryError",
     "SemanticRuntime",
+    "SemanticModelConflict",
+    "SqliteSemanticStore",
     "compile_metric_query",
 )

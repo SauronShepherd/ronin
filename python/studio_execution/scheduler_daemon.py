@@ -156,28 +156,28 @@ class SchedulerDaemon:
         schedule_fires = 0
         for workspace_id in work.schedule_workspaces:
             now = self._clock()
-            result = await schedule_service.tick(
+            schedule_result = await schedule_service.tick(
                 workspace_id,
                 through=now,
                 now=now,
             )
-            schedule_fires += len(result.fires)
+            schedule_fires += len(schedule_result.fires)
 
         event_deliveries = 0
         for workspace_id in work.event_workspaces:
             now = self._clock()
-            result = await event_service.process_pending(workspace_id, now=now)
-            event_deliveries += len(result.delivered)
+            event_result = await event_service.process_pending(workspace_id, now=now)
+            event_deliveries += len(event_result.delivered)
 
         backfill_runs = 0
         for target in work.backfills:
             now = self._clock()
-            result = await backfill_service.tick(
+            backfill_result = await backfill_service.tick(
                 target.workspace_id,
                 target.backfill_id,
                 now=now,
             )
-            backfill_runs += len(result.fires)
+            backfill_runs += len(backfill_result.fires)
 
         controller_cycles: list[SchedulerControllerCycle] = []
         for workspace_id in work.controller_workspaces:

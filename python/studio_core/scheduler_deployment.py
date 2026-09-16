@@ -29,9 +29,7 @@ class WorkflowDeploymentBinding:
         return {
             "workflow_id": str(self.workflow_id),
             "project_id": str(self.project_id),
-            "environment_id": (
-                None if self.environment_id is None else str(self.environment_id)
-            ),
+            "environment_id": (None if self.environment_id is None else str(self.environment_id)),
         }
 
     def to_json(self) -> str:
