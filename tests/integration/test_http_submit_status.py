@@ -3,17 +3,29 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from threading import Thread
+from urllib.request import urlopen
 
 import pytest
 from pyronin import APIError, HTTPTransport, Ronin
 from pyronin import JobState as SDKJobState
+from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
+from studio_lakehouse import write_parquet_rows
 from studio_orchestrator import AttemptId, Instant, JobId, LeaseToken, StoredExecutionEvent
 from studio_server import SUPPORTED_ROUTES, RoninHTTPServer
+from studio_sql import DuckDbSqlEngine
 from studio_storage import SqliteJobStore
 
 _MIGRATION_NOW = Instant("2026-09-07T06:00:00.000000Z")
 _AUTHORIZATION = "".join(("integration", "-credential"))
+_GRANTS = GrantSet(
+    (
+        Grant(
+            frozenset({"read", "list", "events", "submit", "execute", "cancel", "evidence:read"}),
+            ResourceScope("*", None),
+        ),
+    )
+)
 
 
 def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
@@ -46,7 +58,7 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
 ) -> None:
     store = SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
     service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
-    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTHORIZATION)
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=_GRANTS)
     server_thread = Thread(target=server.serve_forever, name="ronin-http-test", daemon=True)
     server_thread.start()
 
@@ -155,6 +167,10 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
         )
 
         assert first.status() is SDKJobState.RUNNING
+        running_page = client.list_jobs(
+            project="examples/demo", state=SDKJobState.RUNNING, limit=10
+        )
+        assert {item.id for item in running_page.items} == {first.id}
         stored = store.get_job(JobId(first.id))
         assert stored is not None
         assert stored.target == "notebooks/etl"
@@ -213,6 +229,16 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
         assert bad_list.value.status_code == 400
         assert bad_list.value.code == "invalid_request"
 
+        with pytest.raises(APIError) as bad_state:
+            transport.request("GET", "/v1/jobs", query={"state": "not-a-job-state"})
+        assert bad_state.value.status_code == 400
+        assert bad_state.value.code == "invalid_request"
+
+        with pytest.raises(APIError) as duplicate_filter:
+            transport.request("GET", "/v1/jobs?state=queued&state=failed")
+        assert duplicate_filter.value.status_code == 400
+        assert duplicate_filter.value.code == "invalid_request"
+
         with pytest.raises(APIError) as bad_events:
             transport.request("GET", f"/v1/jobs/{first.id}/events", query={"limit": "0"})
         assert bad_events.value.status_code == 400
@@ -240,8 +266,90 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
     finally:
         server.shutdown()
         server.server_close()
-        server_thread.join(timeout=5.0)
-        assert not server_thread.is_alive()
+
+
+def test_http_job_listing_rejects_project_outside_typed_grant(tmp_path: Path) -> None:
+    service = DurableExecutionService(
+        SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
+    )
+    grants = GrantSet((Grant(frozenset({"list"}), ResourceScope("project", "allowed/project")),))
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=grants)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        transport = HTTPTransport(
+            f"http://127.0.0.1:{server.server_port}",
+            token=_AUTHORIZATION,
+            allow_insecure_localhost=True,
+            max_retries=0,
+        )
+        with pytest.raises(APIError) as denied:
+            transport.request("GET", "/v1/jobs", query={"project": "other/project"})
+        assert denied.value.status_code == 403
+        assert denied.value.code == "forbidden"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_healthz_is_available_without_bearer_authorization(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("RONIN_DB", str(tmp_path / "ronin.db"))
+    service = DurableExecutionService(
+        SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
+    )
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=_GRANTS)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with urlopen(f"http://127.0.0.1:{server.server_port}/healthz") as response:
+            assert response.status == 200
+            assert json.loads(response.read()) == {"status": "ready"}
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_http_sql_route_requires_project_read_and_returns_bounded_result(tmp_path: Path) -> None:
+    pytest.importorskip("pyarrow")
+    pytest.importorskip("duckdb")
+    parquet = tmp_path / "events.parquet"
+    write_parquet_rows(parquet, ({"value": 3}, {"value": 4}))
+    engine = DuckDbSqlEngine()
+    engine.register_parquet("events", str(parquet))
+    service = DurableExecutionService(
+        SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
+    )
+    server = RoninHTTPServer(
+        ("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=_GRANTS, sql_engine=engine
+    )
+    thread = Thread(target=server.serve_forever, name="ronin-sql-http", daemon=True)
+    thread.start()
+    try:
+        transport = HTTPTransport(
+            f"http://127.0.0.1:{server.server_port}",
+            token=_AUTHORIZATION,
+            allow_insecure_localhost=True,
+            max_retries=0,
+        )
+        result = Ronin(transport=transport).execute_sql(
+            project="examples/demo",
+            sql="SELECT sum(value) AS total FROM events",
+        )
+        assert tuple(column.name for column in result.columns) == ("total",)
+        assert result.rows == ((7,),)
+        with pytest.raises(APIError) as invalid_sql:
+            Ronin(transport=transport).execute_sql(
+                project="examples/demo", sql="SELECT missing_column FROM events"
+            )
+        assert invalid_sql.value.status_code == 400
+        assert invalid_sql.value.code == "invalid_request"
+    finally:
+        server.shutdown()
+        server.server_close()
+        engine.close()
+        thread.join(timeout=5.0)
+        assert not thread.is_alive()
 
 
 def test_http_server_rejects_invalid_static_token(tmp_path: Path) -> None:
@@ -249,4 +357,4 @@ def test_http_server_rejects_invalid_static_token(tmp_path: Path) -> None:
     service = DurableExecutionService(store)
     invalid = "".join((" bad", "-credential"))
     with pytest.raises(ValueError, match="token must be non-empty"):
-        RoninHTTPServer(("127.0.0.1", 0), service, token=invalid)
+        RoninHTTPServer(("127.0.0.1", 0), service, token=invalid, grants=_GRANTS)

@@ -30,7 +30,7 @@ from studio_orchestrator import (
     StoredExecutionEvent,
     can_resume_cell,
 )
-from studio_storage import ArtifactRef, BoundedAsyncArtifactStore, LocalArtifactStore
+from studio_storage import ArtifactRef, ArtifactStore, BoundedAsyncArtifactStore
 
 
 class WorkerExecutionError(RuntimeError):
@@ -84,7 +84,12 @@ def _result_json(result: CellExecutionResult) -> str:
 
 
 def _artifact_ref(ref: StoredEvidenceRef) -> ArtifactRef | None:
-    if ref.digest_algorithm != "sha256" or ref.size_bytes is None or ref.storage_ref is None:
+    if (
+        ref.digest_algorithm != "sha256"
+        or ref.digest is None
+        or ref.size_bytes is None
+        or ref.storage_ref is None
+    ):
         return None
     return ArtifactRef(
         role=ref.role,
@@ -101,7 +106,7 @@ class DurableWorkerExecution:
     """Execute one already-claimed Run while preserving restart-safe cell checkpoints."""
 
     service: DurableExecutionService
-    artifact_store: LocalArtifactStore
+    artifact_store: ArtifactStore
     executor: KernelCellExecutor
     policy: SessionPolicy
     owner: str
@@ -256,20 +261,29 @@ class DurableWorkerExecution:
         cancellation: CancellationToken,
         lease_lost: asyncio.Event,
     ) -> None:
-        while True:
-            await asyncio.sleep(self.heartbeat_interval_seconds)
-            now = self.now()
-            owned = await self.service.worker_heartbeat(
-                claim.attempt_id,
-                owner=self.owner,
-                lease_token=claim.lease_token,
-                expires_at=_plus_seconds(now, self.lease_seconds),
-                now=now,
-            )
-            if not owned:
-                cancellation.cancel()
-                lease_lost.set()
-                return
+        try:
+            while True:
+                await asyncio.sleep(self.heartbeat_interval_seconds)
+                now = self.now()
+                owned = await self.service.worker_heartbeat(
+                    claim.attempt_id,
+                    owner=self.owner,
+                    lease_token=claim.lease_token,
+                    expires_at=_plus_seconds(now, self.lease_seconds),
+                    now=now,
+                )
+                if not owned:
+                    cancellation.cancel()
+                    lease_lost.set()
+                    return
+        except asyncio.CancelledError:
+            raise
+        except BaseException:
+            # A heartbeat failure makes ownership uncertain.  Stop the executor
+            # and force all later fenced writes through the lease-lost path.
+            cancellation.cancel()
+            lease_lost.set()
+            return
 
     async def _watch_cancellation(
         self,

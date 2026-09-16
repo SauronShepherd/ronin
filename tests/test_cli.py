@@ -134,3 +134,12 @@ def test_validate_rejects_missing_project(capsys) -> None:
     output = capsys.readouterr()
     assert output.out == ""
     assert output.err == "error: project does not exist: does-not-exist\n"
+
+
+def test_migrate_inventory_writes_canonical_report(tmp_path: Path, capsys) -> None:
+    source = tmp_path / "source.json"
+    output = tmp_path / "report.json"
+    source.write_text('{"objects":[{"type":"job","id":"job-1"}]}', encoding="utf-8")
+    assert main(["migrate", "inventory", "databricks", str(source), "--output", str(output)]) == 0
+    assert json.loads(output.read_text(encoding="utf-8"))["source_platform"] == "databricks"
+    assert "migration report written" in capsys.readouterr().out

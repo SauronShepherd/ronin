@@ -9,7 +9,7 @@ from studio_core import OntologyDefinition, OntologyId, WorkspaceId
 from studio_orchestrator import Instant
 
 from .catalog import CatalogAssetNotFound, migrate_catalog
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound
 
 _ONTOLOGY_SCHEMA_VERSION = 1
@@ -21,9 +21,7 @@ class OntologyConflict(RuntimeError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_ontology(connection: sqlite3.Connection, *, now: Instant | str) -> None:
@@ -120,7 +118,8 @@ class SqliteOntologyStore:
                     f"{ontology.id}@{ontology.version}"
                 )
             connection.execute(
-                "INSERT INTO ontologies(workspace_id,ontology_id,version,definition_json,created_at) "
+                "INSERT INTO ontologies("
+                "workspace_id,ontology_id,version,definition_json,created_at) "
                 "VALUES (?,?,?,?,?)",
                 (str(workspace_id), str(ontology.id), ontology.version, payload, now),
             )

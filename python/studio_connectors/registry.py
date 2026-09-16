@@ -32,4 +32,26 @@ class ConnectorRegistry:
         return tuple(sorted(self._by_id))
 
 
-__all__ = ("ConnectorRegistry",)
+def builtin_connector_registry() -> ConnectorRegistry:
+    """Return the explicit reference connector set shipped with Ronin."""
+
+    from .azure_blob_json import AzureBlobJsonConnector
+    from .http_json import HttpJsonConnector
+    from .jdbc import JdbcConnector
+    from .ozone import OzoneJsonConnector
+    from .postgres import PostgresConnector
+    from .s3_json import S3JsonConnector
+
+    return ConnectorRegistry(
+        (
+            AzureBlobJsonConnector(),
+            HttpJsonConnector(),
+            JdbcConnector(),
+            OzoneJsonConnector(),
+            PostgresConnector(),
+            S3JsonConnector(),
+        )
+    )
+
+
+__all__ = ("ConnectorRegistry", "builtin_connector_registry")

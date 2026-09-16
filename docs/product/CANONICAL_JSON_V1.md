@@ -4,7 +4,7 @@ Ronin identity-bearing JSON uses the compatibility profile `ronin/canonical-json
 
 ## Canonical bytes
 
-For a valid v1 payload, canonical bytes are UTF-8 JSON with object members ordered lexicographically by key, no insignificant whitespace, separators `,` and `:`, and non-ASCII Unicode emitted as UTF-8 rather than `\u` escapes when Python's encoder does not otherwise require escaping. Object keys are strings. Values are limited to JSON null, booleans, integers, finite floating-point numbers, strings, arrays, and objects recursively composed from those values.
+For a valid v1 payload, canonical bytes are UTF-8 JSON with object members ordered lexicographically by Unicode code point (intentionally not RFC 8785/JCS UTF-16 ordering), no insignificant whitespace, separators `,` and `:`, and non-ASCII Unicode emitted as UTF-8 rather than `\u` escapes when Python's encoder does not otherwise require escaping. Object keys are strings. Values are limited to JSON null, booleans, integers in the exact cross-language range `-(2**53 - 1)` through `2**53 - 1`, finite floating-point numbers, strings, arrays, and objects recursively composed from those values.
 
 Non-finite numbers (`NaN`, positive infinity, negative infinity, including an exponent that decodes to infinity) are invalid. Duplicate object members are invalid at canonical parsing boundaries. Unsupported Python objects and non-string object keys are invalid rather than stringified.
 
@@ -12,7 +12,7 @@ Non-finite numbers (`NaN`, positive infinity, negative infinity, including an ex
 
 Existing v1 IR and public `SubmitJobRequest.parameters` accept finite floating-point values. Therefore this slice does **not** adopt a float-rejecting rule that would change already-valid v1 inputs or persisted checkpoint/request identities. The legacy v1 byte representation is preserved exactly by `studio_core.canonical_json.encode`; in particular negative zero is encoded exactly as `-0.0`.
 
-This is a compatibility constraint, not a claim that Python's full finite-float rendering algorithm is a language-neutral numeric standard. New identity schemas should prefer integers or strings for quantities where cross-language equality matters. A future rule that rejects floats or changes their rendering requires an explicit identity/schema version boundary and migration; it cannot silently replace v1.
+This is a compatibility constraint, not a claim that Python's full finite-float rendering algorithm is a language-neutral numeric standard. New identity schemas should prefer bounded integers or strings for quantities where cross-language equality matters; non-Python implementations must not recompute v1 identity over float-bearing payloads unless they implement the exact profile. A future rule that rejects floats or changes their rendering requires an explicit identity/schema version boundary and migration; it cannot silently replace v1.
 
 ## Parsing boundary
 

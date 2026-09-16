@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from studio_core import (
     AssetId,
     AssetRef,
@@ -20,7 +19,6 @@ from studio_core.bundle_inventory import (
     BundleInventoryObject,
 )
 from studio_execution.bundle_catalog import (
-    INVENTORY_MEDIA_TYPE,
     CatalogBundleTargetError,
     UnsupportedCatalogBundle,
     build_catalog_bundle_inventory,
@@ -101,9 +99,7 @@ def test_catalog_inventory_exports_selected_subgraph_with_dependencies(tmp_path:
     assert len(built.inventory.objects) == 5
     assert built.inventory.unresolved_bindings == ()
     assets = [item for item in built.inventory.objects if item.kind == "catalog_asset"]
-    revisions = [
-        item for item in built.inventory.objects if item.kind == "catalog_revision"
-    ]
+    revisions = [item for item in built.inventory.objects if item.kind == "catalog_revision"]
     lineage = [item for item in built.inventory.objects if item.kind == "catalog_lineage"]
     assert len(assets) == 2
     assert len(revisions) == 2
@@ -211,9 +207,7 @@ def test_catalog_plan_rejects_revision_dependency_that_does_not_match_payload(
         (_SOURCE_REF, _DERIVED_REF),
     )
     assets = [item for item in built.inventory.objects if item.kind == "catalog_asset"]
-    revisions = [
-        item for item in built.inventory.objects if item.kind == "catalog_revision"
-    ]
+    revisions = [item for item in built.inventory.objects if item.kind == "catalog_revision"]
     source_revision = next(
         item
         for item in revisions
@@ -223,9 +217,7 @@ def test_catalog_plan_rejects_revision_dependency_that_does_not_match_payload(
         == _SOURCE_REF
     )
     wrong_asset_ref = next(
-        item.logical_ref
-        for item in assets
-        if item.logical_ref != source_revision.dependencies[0]
+        item.logical_ref for item in assets if item.logical_ref != source_revision.dependencies[0]
     )
     tampered_objects = tuple(
         BundleInventoryObject(

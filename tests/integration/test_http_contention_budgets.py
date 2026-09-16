@@ -8,6 +8,7 @@ from threading import Event, Thread
 
 import pytest
 from pyronin import HTTPTransport, Ronin
+from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant, Job, JobId
 from studio_server import RoninHTTPServer
@@ -15,6 +16,14 @@ from studio_storage import SqliteJobStore
 
 _MIGRATION_NOW = Instant("2026-09-07T07:30:00.000000Z")
 _AUTHORIZATION = "".join(("budget", "-qualification"))
+_GRANTS = GrantSet(
+    (
+        Grant(
+            frozenset({"read", "list", "events", "submit", "execute", "cancel", "evidence:read"}),
+            ResourceScope("*", None),
+        ),
+    )
+)
 _POST_P95_BUDGET_MS = 100.0
 _GET_P95_BUDGET_MS = 30.0
 _POST_SAMPLE_COUNT = 200
@@ -73,7 +82,7 @@ def test_real_http_submit_status_meet_p95_budgets_under_bounded_contention(
 ) -> None:
     store = _OneBlockedStatusSqliteStore(tmp_path / "ronin.db")
     service = DurableExecutionService(store, max_workers=2, max_in_flight=4)
-    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTHORIZATION)
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=_GRANTS)
     server_thread = Thread(target=server.serve_forever, name="ronin-http-budget", daemon=True)
     server_thread.start()
 

@@ -26,7 +26,7 @@ from .scheduler_backfill import (
     _run_from_row,
     migrate_scheduler_backfill,
 )
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 
 _BACKFILL_RUNTIME_SCHEMA_VERSION = 1
 _BACKFILL_RUNTIME_MIGRATIONS = {1: "scheduler_backfill_runtime_001.sql"}
@@ -47,9 +47,7 @@ class BackfillPlan:
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler_backfill_runtime(
@@ -319,9 +317,7 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
             if existing is not None:
                 reserved = _run_from_row(workspace_id, existing)
                 if reserved.workflow_run_id != run_id:
-                    raise BackfillConflict(
-                        "backfill logical time maps to conflicting workflow run"
-                    )
+                    raise BackfillConflict("backfill logical time maps to conflicting workflow run")
                 connection.execute("COMMIT")
                 return reserved
 
@@ -340,7 +336,8 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
 
             connection.execute(
                 "INSERT INTO scheduler_backfill_runs("
-                "workspace_id,backfill_id,logical_time,workflow_run_id,state,created_at,updated_at) "
+                "workspace_id,backfill_id,logical_time,workflow_run_id,state,"
+                "created_at,updated_at) "
                 "VALUES (?,?,?,?,'reserved',?,?)",
                 (
                     str(workspace_id),

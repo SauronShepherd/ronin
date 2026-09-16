@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -9,7 +10,7 @@ from studio_vcs import GitCaptureError, GitRevision, capture_revision
 
 def _git(path: Path, *args: str) -> str:
     completed = subprocess.run(  # noqa: S603
-        ("/usr/bin/git", "-C", str(path), *args),
+        (shutil.which("git") or "git", "-C", str(path), *args),
         check=True,
         capture_output=True,
         text=True,
