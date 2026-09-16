@@ -98,13 +98,13 @@ never returned to clients.
 
 The request body is parsed through the shared `ronin/canonical-json/v1` decoder before authorization-sensitive request handling and before idempotency identity is computed. Duplicate object members and non-finite JSON numbers are therefore rejected with `400 invalid_request` instead of being interpreted with implementation-specific last-wins or non-standard numeric semantics. This is an alpha validation tightening: payloads containing duplicate members or non-finite numbers that older code may have accepted are no longer valid. Canonical bytes and request digests for valid v1 inputs are unchanged.
 
-Known query parameter sets are closed per route. Limits remain `1..100`. Public `job_id` values are bounded by the canonical lifecycle ID contract. The server must not silently discard unknown query or request fields.
+Known query parameter sets are closed per route. For `GET /v1/jobs`, the supported query parameters are `project`, `state`, `limit` and opaque `cursor`; `project` and `state` are applied before pagination, and a returned `next_cursor` is valid only for the same filter scope. Limits remain `1..100`. Public `job_id` values are bounded by the canonical lifecycle ID contract. The server must not silently discard unknown query or request fields. Duplicate query parameters are rejected.
 
 ## OpenAPI / CLI / SDK synchronization
 
 `api/openapi-v1.json` is the wire schema authority for the public v1 surface. `SUPPORTED_ROUTES` in `studio_server` must not contain an undocumented public route, and OpenAPI must not advertise an unimplemented route. CLI/SDK response parsers must implement the same required fields, closed object shapes, cursor bounds, canonical instant format, error envelope, and closed enum values.
 
-While maintainer-directed code-only mode is active, these guarantees are validated by static source/schema review only. GitHub Actions and automated tests are intentionally disabled and no runtime conformance evidence is claimed. When automated qualification is restored, server/OpenAPI/CLI/SDK drift checks and real HTTP contract cases must be reinstated without weakening this contract merely to make qualification pass.
+These guarantees are validated by the exact-head workflow suite and by local HTTP contract tests. Server/OpenAPI/CLI/SDK drift checks and real HTTP contract cases remain mandatory; they must not be weakened merely to make qualification pass.
 
 ## Current v0.1 boundary
 
