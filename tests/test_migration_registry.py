@@ -63,6 +63,14 @@ def test_migration_status_wraps_corrupt_schema_errors() -> None:
         migration_status(connection)
 
 
+def test_migration_status_marks_ahead_schema_incompatible() -> None:
+    connection = sqlite3.connect(":memory:")
+    connection.execute("CREATE TABLE workspace_schema_migrations (version INTEGER NOT NULL)")
+    connection.execute("INSERT INTO workspace_schema_migrations VALUES (2)")
+
+    assert migration_status(connection)[0]["state"] == "incompatible"
+
+
 def test_migrate_storage_runs_registered_domains_in_order() -> None:
     connection = sqlite3.connect(":memory:")
 

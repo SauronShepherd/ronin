@@ -114,12 +114,13 @@ def migration_status(connection: sqlite3.Connection) -> tuple[dict[str, int | st
                 row = connection.execute(f"SELECT MAX(version) FROM {table}").fetchone()  # noqa: S608
                 current = int(row[0] or 0)
             supported = _SUPPORTED_VERSIONS[name]
+            state = "ready" if current == supported else "incompatible" if current > supported else "pending"
             status.append(
                 {
                     "domain": name,
                     "current": current,
                     "supported": supported,
-                    "state": "ready" if current == supported else "pending",
+                    "state": state,
                 }
             )
     except sqlite3.DatabaseError as exc:
