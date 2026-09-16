@@ -59,6 +59,6 @@ PostgreSQL adapter must not expose database surrogate keys as public identity.
    implemented; initialization fails closed rather than silently falling back
    to SQLite.
 
-Until all seven steps pass, PostgreSQL remains a metadata adapter only and
-Public v1 release qualification must continue to report JobStore parity as
-incomplete.
+Until all seven steps pass, the PostgreSQL JobStore remains implemented but
+not fully qualified for release; production-readiness and multi-node HA claims
+must remain out of scope.
