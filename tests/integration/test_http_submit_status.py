@@ -268,6 +268,35 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
         server.server_close()
 
 
+def test_http_job_listing_rejects_project_outside_typed_grant(tmp_path: Path) -> None:
+    service = DurableExecutionService(
+        SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
+    )
+    grants = GrantSet(
+        (Grant(frozenset({"list"}), ResourceScope("project", "allowed/project")),)
+    )
+    server = RoninHTTPServer(
+        ("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=grants
+    )
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        transport = HTTPTransport(
+            f"http://127.0.0.1:{server.server_port}",
+            token=_AUTHORIZATION,
+            allow_insecure_localhost=True,
+            max_retries=0,
+        )
+        with pytest.raises(APIError) as denied:
+            transport.request("GET", "/v1/jobs", query={"project": "other/project"})
+        assert denied.value.status_code == 403
+        assert denied.value.code == "forbidden"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
 def test_healthz_is_available_without_bearer_authorization(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("RONIN_DB", str(tmp_path / "ronin.db"))
     service = DurableExecutionService(
