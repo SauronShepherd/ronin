@@ -387,7 +387,7 @@ class PostgresMetadataStore:
                     "DELETE FROM ronin_projects WHERE workspace_id=%s AND project_id=%s",
                     (str(workspace_id), str(project_id)),
                 )
-                deleted = cursor.rowcount == 1
+                deleted = bool(cursor.rowcount == 1)
             connection.commit()
             return deleted
         except Exception:
@@ -638,7 +638,7 @@ class PostgresMetadataStore:
                     "DELETE FROM ronin_connections WHERE workspace_id=%s AND connection_id=%s",
                     (str(workspace_id), str(connection_id)),
                 )
-                deleted = cursor.rowcount == 1
+                deleted = bool(cursor.rowcount == 1)
             connection.commit()
             return deleted
         except Exception:
