@@ -480,7 +480,8 @@ class PostgresMetadataStore:
                 if cursor.fetchone() is None:
                     raise KeyError(f"project not registered: {bindings.project_id}")
                 cursor.execute(
-                    "SELECT definition_json FROM ronin_environments WHERE workspace_id=%s AND environment_id=%s",
+                    "SELECT definition_json FROM ronin_environments "
+                    "WHERE workspace_id=%s AND environment_id=%s",
                     (str(workspace_id), str(bindings.environment_id)),
                 )
                 row = cursor.fetchone()
