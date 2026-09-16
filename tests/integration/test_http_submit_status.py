@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from threading import Thread
+from urllib.request import urlopen
 
 import pytest
 from pyronin import APIError, HTTPTransport, Ronin
@@ -248,6 +249,22 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
             transport.request("GET", "/v1/unknown")
         assert route_missing.value.status_code == 404
         assert route_missing.value.code == "not_found"
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_healthz_is_available_without_bearer_authorization(tmp_path: Path) -> None:
+    service = DurableExecutionService(
+        SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
+    )
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=_GRANTS)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with urlopen(f"http://127.0.0.1:{server.server_port}/healthz") as response:
+            assert response.status == 200
+            assert json.loads(response.read()) == {"status": "ok"}
     finally:
         server.shutdown()
         server.server_close()
