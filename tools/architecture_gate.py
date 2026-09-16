@@ -15,7 +15,7 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
     "studio_vcs": frozenset({"studio_core"}),
     "studio_kernel": frozenset({"studio_core", "studio_notebook"}),
     "studio_orchestrator": frozenset({"studio_core", "studio_notebook", "studio_kernel"}),
-    "studio_runners": frozenset({"studio_core", "studio_kernel"}),
+    "studio_runners": frozenset({"studio_core", "studio_kernel", "studio_notebook"}),
     "studio_storage": frozenset(
         {"studio_core", "studio_notebook", "studio_kernel", "studio_orchestrator"}
     ),
@@ -173,7 +173,11 @@ def _source_package(path: Path, root: Path | None = None) -> str | None:
             relative = path
         if relative.parts:
             candidate = relative.parts[0]
+            if candidate == "studio_runner_broker":
+                return "studio_runners"
             return candidate if candidate.startswith("studio_") else None
+    if "studio_runner_broker" in path.parts:
+        return "studio_runners"
     return next(
         (part for part in reversed(path.parent.parts) if part.startswith("studio_")),
         None,
