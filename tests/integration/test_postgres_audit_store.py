@@ -42,7 +42,9 @@ def _event(identifier: str, occurred_at: str, *, action: str = "authorize:job.re
 def _cleanup(workspace_id: WorkspaceId) -> None:
     with psycopg.connect(_DSN, autocommit=True) as connection:
         with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM ronin_workspaces WHERE workspace_id=%s", (workspace_id.value,))
+            cursor.execute(
+                "DELETE FROM ronin_workspaces WHERE workspace_id=%s", (workspace_id.value,)
+            )
 
 
 def test_postgres_audit_round_trip_idempotency_and_conflict() -> None:
