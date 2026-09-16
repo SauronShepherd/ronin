@@ -1,4 +1,4 @@
-"""HTTP-neutral durable execution application service shared by server and worker."""
+"""HTTP-neutral durable execution and control-plane application services."""
 
 from __future__ import annotations
 
@@ -24,6 +24,21 @@ from studio_orchestrator import (
     StoredExecutionEvent,
 )
 from studio_storage import BoundedAsyncJobStore
+
+from .environment_service import (
+    DeploymentBindingService,
+    EnvironmentService,
+    EnvironmentServiceConflict,
+    EnvironmentServiceError,
+    EnvironmentServiceNotFound,
+)
+from .workspace_service import (
+    ProjectService,
+    WorkspaceService,
+    WorkspaceServiceConflict,
+    WorkspaceServiceError,
+    WorkspaceServiceNotFound,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -255,4 +270,18 @@ class DurableExecutionService:
         )
 
 
-__all__ = ("DurableExecutionService", "WorkerPollResult")
+__all__ = (
+    "DurableExecutionService",
+    "ProjectService",
+    "WorkerPollResult",
+    "WorkspaceService",
+    "WorkspaceServiceConflict",
+    "WorkspaceServiceError",
+    "WorkspaceServiceNotFound",
+    "DeploymentBindingService",
+    "EnvironmentService",
+    "EnvironmentServiceConflict",
+    "EnvironmentServiceError",
+    "EnvironmentServiceNotFound",
+    "WorkerPollResult",
+)

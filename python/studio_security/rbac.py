@@ -26,7 +26,6 @@ class RbacStore(Protocol):
         self,
         workspace_id: WorkspaceId,
         principal_id: PrincipalId,
-        groups: tuple[GroupId, ...],
     ) -> tuple[str, ...]: ...
 
 
@@ -39,14 +38,9 @@ class RbacAuthorizer:
         return Actor(principal, groups, auth_method)
 
     def authorize(self, actor: Actor, requirement: PolicyRequirement) -> PolicyDecision:
-        # The group list on Actor is request context, not an authorization source.
-        # Re-read membership at the policy boundary so a caller cannot manufacture
-        # a group claim and inherit that group's workspace role.
-        groups = self._store.groups_for_principal(actor.principal.id)
         roles_raw = self._store.roles_for_actor(
             requirement.workspace_id,
             actor.principal.id,
-            groups,
         )
         roles: list[WorkspaceRole] = []
         for value in roles_raw:

@@ -10,12 +10,8 @@ from studio_notebook import NotebookImportCell, import_notebook
 NAMESPACE = "examples/demo/notebooks/etl.ronin.json"
 OUTPUT = Path(__file__).parent / "notebooks" / "etl.ronin.json"
 
-_CUSTOMERS = (
-    "customers = {i: {'id': i, 'region': 'eu' if i % 2 else 'us'} for i in range(100)}\n"
-)
-_ORDERS = (
-    "orders = [{'id': i, 'customer_id': i % 100, 'amount': i * 3} for i in range(500)]\n"
-)
+_CUSTOMERS = "customers = {i: {'id': i, 'region': 'eu' if i % 2 else 'us'} for i in range(100)}\n"
+_ORDERS = "orders = [{'id': i, 'customer_id': i % 100, 'amount': i * 3} for i in range(500)]\n"
 _TOTALS = (
     "totals = {}\n"
     "for order in orders:\n"
@@ -70,11 +66,9 @@ CELLS: tuple[tuple[str, str, str | None, str, tuple[str, ...]], ...] = (
         "publish",
         "code",
         "python",
-        "import json\n"
-        + _CUSTOMERS
-        + _ORDERS
-        + _TOTALS
-        + "print(json.dumps({'dataset': 'revenue_by_region', 'rows': len(totals), 'totals': totals}, sort_keys=True))",
+        "import json\n" + _CUSTOMERS + _ORDERS + _TOTALS + "print(json.dumps({"
+        "'dataset': 'revenue_by_region', 'rows': len(totals), "
+        "'totals': totals}, sort_keys=True))",
         ("quality-check",),
     ),
 )
