@@ -201,7 +201,7 @@
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
     "Complete scheduler broad task adapters, branching/notifications, public scheduler APIs/UI, process/deployment wiring and PostgreSQL HA semantics/qualification.",
     "Extend native Bundle support to the next executable canonical metadata family, preferring workflow/pipeline persistence if its canonical snapshot/store contracts preserve identity without deployment locators; then quality/ontology/ML/GenAI as their contracts permit.",
-    "Finish storage ports for remaining domains, then add PostgreSQL JobStore parity and qualify the existing S3-compatible artifact adapter.",
+    "Finish storage ports for remaining domains, then qualify the wired PostgreSQL JobStore and the existing S3-compatible artifact adapter.",
     "Implement Arrow/Parquet, a reference open lakehouse table profile and a reference SQL engine before broad vendor migration adapters.",
     "Complete remote connectors and safe incremental checkpoint execution.",
     "Expand Public v1 API and extend Web Studio from the verified job/evidence shell to documented domain APIs and authoring workflows.",
