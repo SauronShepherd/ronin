@@ -5,16 +5,14 @@ from __future__ import annotations
 import argparse
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MARKDOWN = ROOT / "docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md"
 MACHINE = ROOT / "docs/product/public-v1-status.json"
 SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
-HEAD_PATTERN = re.compile(
-    r"(?m)^(\*\*Observed source head:\*\* `)[0-9a-f]{40}(` \()[^)]+(\)\.)$"
-)
+HEAD_PATTERN = re.compile(r"(?m)^(\*\*Observed source head:\*\* `)[0-9a-f]{40}(` \()[^)]+(\)\.)$")
 
 
 def synchronize(sha: str, observed_at: str) -> None:
@@ -41,7 +39,7 @@ def main() -> int:
     parser.add_argument("sha")
     parser.add_argument(
         "--observed-at",
-        default=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        default=datetime.now(UTC).isoformat(timespec="seconds"),
     )
     args = parser.parse_args()
     synchronize(args.sha, args.observed_at)
