@@ -327,6 +327,47 @@ class PostgresJobReadPort:
         finally:
             connection.close()
 
+    def heartbeat(
+        self,
+        attempt_id: AttemptId,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        expires_at: Instant | str,
+        now: Instant | str,
+    ) -> bool:
+        """Renew an unexpired lease only for its current owner and token."""
+        current = Instant(now)
+        expiry = Instant(expires_at)
+        if expiry <= current:
+            raise ValueError("expires_at must be after now")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE ronin_attempts SET heartbeat_at=%s,lease_expires_at=%s,"
+                    "updated_at=%s,row_version=row_version+1 WHERE attempt_id=%s "
+                    "AND state IN ('leased','running') AND lease_owner=%s "
+                    "AND lease_token=%s AND lease_expires_at>%s",
+                    (
+                        str(current),
+                        str(expiry),
+                        str(current),
+                        str(attempt_id),
+                        owner,
+                        str(lease_token),
+                        str(current),
+                    ),
+                )
+                renewed = cursor.rowcount == 1
+            connection.commit()
+            return renewed
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
     def list_jobs(
         self,
         *,
