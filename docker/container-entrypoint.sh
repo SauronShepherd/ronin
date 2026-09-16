@@ -54,6 +54,9 @@ prepare_workspace_git
 if [ "${1:-}" = "ronin" ] && [ "${2:-}" = "worker" ]; then
   prepare_docker_socket
   resolve_worker_image
+elif [ "${1:-}" = "ronin-runner-broker" ]; then
+  prepare_docker_socket
+  resolve_worker_image
 fi
 
 if [ "$(id -u)" -eq 0 ]; then

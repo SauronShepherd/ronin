@@ -133,7 +133,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker run --detach --name ronin-smoke "$LOCAL_IMAGE"
+          docker run --detach --name ronin-smoke \
+            --env RONIN_TOKEN=ci-smoke-token \
+            --env 'RONIN_TOKEN_SCOPES={"version":1,"grants":[{"version":1,"actions":["cancel","evidence:read","events","execute","list","read","submit"],"resource":{"kind":"project","identifier":null},"constraints":{}}]}' \
+            "$LOCAL_IMAGE"
           trap 'docker rm -f ronin-smoke >/dev/null 2>&1 || true' EXIT
           for _ in $(seq 1 30); do
             if docker exec ronin-smoke python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=1).read()"; then
