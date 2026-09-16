@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from studio_genai.provider import _MAX_PROVIDER_RESPONSE_BYTES, _read_json_response
 from studio_core import (
     AssetId,
     AssetRef,
@@ -112,3 +113,16 @@ def test_agent_requires_registered_prompt_provider_and_tools(tmp_path: Path) -> 
     store.put_agent(_WS, agent, now=_NOW)
 
     assert store.get_agent(_WS, agent.id) == agent
+
+
+class _ChunkedResponse:
+    def __init__(self, chunks: tuple[bytes, ...]) -> None:
+        self.chunks = chunks
+
+    def iter_bytes(self):
+        yield from self.chunks
+
+
+def test_provider_response_reader_fails_before_materializing_oversized_body() -> None:
+    with pytest.raises(ValueError, match="exceeds"):
+        _read_json_response(_ChunkedResponse((b"{}", b"x" * _MAX_PROVIDER_RESPONSE_BYTES)))
