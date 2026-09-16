@@ -34,7 +34,7 @@ from studio_orchestrator import (
     RunState,
     StoredEvidenceRef,
 )
-from studio_sql import SqlEngine
+from studio_sql import ProjectScopedDuckDbSqlEngine, SqlEngine
 from studio_storage import IdempotencyConflict, StorageBackpressureError
 
 _MAX_REQUEST_BYTES = 1024 * 1024
@@ -322,10 +322,13 @@ class DurableHTTPApplication:
         }:
             raise ValueError("SQL request contains unknown fields")
         sql = payload.get("sql")
+        project = payload.get("project")
         parameters = payload.get("parameters", [])
         max_rows = payload.get("max_rows", 10_000)
         if not isinstance(sql, str) or not sql.strip() or sql != sql.strip():
             raise ValueError("sql must be non-empty and trimmed")
+        if not isinstance(project, str) or not project.strip() or project != project.strip():
+            raise ValueError("project must be non-empty and trimmed")
         if not isinstance(parameters, list):
             raise ValueError("parameters must be a JSON array")
         if not all(
@@ -339,7 +342,12 @@ class DurableHTTPApplication:
         ):
             raise ValueError("max_rows must be between 1 and 10000")
         try:
-            result = self._sql_engine.execute(sql, tuple(parameters), max_rows=max_rows)
+            if isinstance(self._sql_engine, ProjectScopedDuckDbSqlEngine):
+                result = self._sql_engine.execute(
+                    project, sql, tuple(parameters), max_rows=max_rows
+                )
+            else:
+                result = self._sql_engine.execute(sql, tuple(parameters), max_rows=max_rows)
         except Exception as exc:
             raise ValueError("SQL execution failed") from exc
         return {
