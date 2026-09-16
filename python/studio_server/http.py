@@ -41,6 +41,7 @@ _MAX_REQUEST_BYTES = 1024 * 1024
 _MAX_CURSOR_BYTES = 4096
 _MAX_LIST_LIMIT = 100
 _DEFAULT_LIST_LIMIT = 50
+_DEFAULT_SERVICE_TIMEOUT_SECONDS = 30.0
 _STUDIO_ASSETS = {
     "/studio": "index.html",
     "/studio/": "index.html",
@@ -58,6 +59,10 @@ SUPPORTED_ROUTES = frozenset(
         ("POST", "/v1/sql"),
     }
 )
+
+
+class ServiceTimeoutError(TimeoutError):
+    """Raised when an application service call exceeds its HTTP budget."""
 
 
 def _now() -> Instant:
@@ -150,8 +155,11 @@ def _submit_project(payload: object) -> str:
 
 
 class _ServiceLoop:
-    def __init__(self, service: DurableExecutionService) -> None:
+    def __init__(self, service: DurableExecutionService, *, timeout_seconds: float) -> None:
+        if timeout_seconds <= 0:
+            raise ValueError("service timeout must be positive")
         self._service = service
+        self._timeout_seconds = timeout_seconds
         self._loop = asyncio.new_event_loop()
         self._ready = Event()
         self._thread = Thread(target=self._run, name="ronin-http-service", daemon=True)
@@ -165,7 +173,11 @@ class _ServiceLoop:
 
     def call(self, coroutine: Coroutine[Any, Any, Any]) -> Any:
         future: Future[Any] = asyncio.run_coroutine_threadsafe(coroutine, self._loop)
-        return future.result()
+        try:
+            return future.result(timeout=self._timeout_seconds)
+        except TimeoutError as exc:
+            future.cancel()
+            raise ServiceTimeoutError("service request timed out") from exc
 
     def close(self) -> None:
         if not self._thread.is_alive():
@@ -178,11 +190,15 @@ class _ServiceLoop:
 
 class DurableHTTPApplication:
     def __init__(
-        self, service: DurableExecutionService, *, sql_engine: SqlEngine | None = None
+        self,
+        service: DurableExecutionService,
+        *,
+        sql_engine: SqlEngine | None = None,
+        service_timeout_seconds: float = _DEFAULT_SERVICE_TIMEOUT_SECONDS,
     ) -> None:
         self._service = service
         self._sql_engine = sql_engine
-        self._loop = _ServiceLoop(service)
+        self._loop = _ServiceLoop(service, timeout_seconds=service_timeout_seconds)
 
     def close(self) -> None:
         self._loop.close()
