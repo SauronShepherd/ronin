@@ -6,7 +6,13 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .contracts import SqlColumn, SqlQueryResult
+from .contracts import (
+    SqlColumn,
+    SqlExecutionError,
+    SqlQueryResult,
+    SqlRelationUnavailableError,
+    SqlValidationError,
+)
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _SELECT_START = re.compile(r"^SELECT\b", re.IGNORECASE)
@@ -64,22 +70,30 @@ class DuckDbSqlEngine:
     ) -> SqlQueryResult:
         self._require_open()
         if not sql or sql != sql.strip():
-            raise ValueError("SQL text must be non-empty and trimmed")
+            raise SqlValidationError("SQL text must be non-empty and trimmed")
         if len(sql.encode("utf-8")) > _MAX_SQL_BYTES:
-            raise ValueError("SQL text exceeds the configured byte limit")
+            raise SqlValidationError("SQL text exceeds the configured byte limit")
         if ";" in sql or not _SELECT_START.match(sql):
-            raise ValueError("SQL engine accepts one read-only SELECT statement")
+            raise SqlValidationError("SQL engine accepts one read-only SELECT statement")
         if _UNSAFE_SQL.search(sql):
-            raise ValueError("SQL external filesystem and network access is disabled")
+            raise SqlValidationError("SQL external filesystem and network access is disabled")
         if max_rows < 1:
-            raise ValueError("max_rows must be positive")
+            raise SqlValidationError("max_rows must be positive")
 
-        cursor = self._connection.execute(sql, parameters)
+        try:
+            cursor = self._connection.execute(sql, parameters)
+        except Exception as exc:
+            message = str(exc).lower()
+            if "table with name" in message or "does not exist" in message:
+                raise SqlRelationUnavailableError("requested SQL relation is unavailable") from exc
+            if "binder error" in message or "column" in message:
+                raise SqlValidationError("SQL query references an invalid column") from exc
+            raise SqlExecutionError("SQL backend execution failed") from exc
         description = cursor.description or ()
         columns = tuple(SqlColumn(item[0], str(item[1])) for item in description)
         rows = tuple(tuple(row) for row in cursor.fetchmany(max_rows + 1))
         if len(rows) > max_rows:
-            raise ValueError("SQL result exceeds max_rows; use a more selective query")
+            raise SqlValidationError("SQL result exceeds max_rows; use a more selective query")
         return SqlQueryResult(columns, rows)
 
     def close(self) -> None:

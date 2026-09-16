@@ -34,7 +34,14 @@ from studio_orchestrator import (
     RunState,
     StoredEvidenceRef,
 )
-from studio_sql import DuckDbDependencyError, ProjectScopedDuckDbSqlEngine, SqlEngine
+from studio_sql import (
+    DuckDbDependencyError,
+    ProjectScopedDuckDbSqlEngine,
+    SqlEngine,
+    SqlExecutionError,
+    SqlRelationUnavailableError,
+    SqlTimeoutError,
+)
 from studio_storage import IdempotencyConflict, StorageBackpressureError
 
 _MAX_REQUEST_BYTES = 1024 * 1024
@@ -369,8 +376,8 @@ class DurableHTTPApplication:
                 )
             else:
                 result = self._sql_engine.execute(sql, tuple(parameters), max_rows=max_rows)
-        except Exception as exc:
-            raise ValueError("SQL execution failed") from exc
+        except (SqlRelationUnavailableError, SqlExecutionError, SqlTimeoutError):
+            raise
         return {
             "columns": [
                 {"name": column.name, "type": column.type_name} for column in result.columns
@@ -552,6 +559,13 @@ class _Handler(BaseHTTPRequestHandler):
                 if not self._require_project("read", project):
                     return
                 response_payload = self._ronin_server().application.sql(payload)
+            except SqlRelationUnavailableError:
+                self._error(
+                    HTTPStatus.NOT_FOUND,
+                    "sql_relation_unavailable",
+                    "SQL relation is unavailable",
+                )
+                return
             except LookupError:
                 self._error(HTTPStatus.NOT_FOUND, "sql_unavailable", "SQL engine is not configured")
                 return
@@ -560,6 +574,16 @@ class _Handler(BaseHTTPRequestHandler):
                     HTTPStatus.SERVICE_UNAVAILABLE,
                     "sql_dependency_unavailable",
                     "SQL engine dependency is unavailable",
+                )
+                return
+            except SqlTimeoutError as exc:
+                self._error(HTTPStatus.GATEWAY_TIMEOUT, "sql_timeout", str(exc))
+                return
+            except SqlExecutionError:
+                self._error(
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    "sql_execution_failed",
+                    "SQL backend execution failed",
                 )
                 return
             except RequestReadTimeoutError as exc:

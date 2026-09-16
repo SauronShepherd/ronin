@@ -6,6 +6,22 @@ from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 
+class SqlValidationError(ValueError):
+    """The submitted SQL request is malformed or not permitted."""
+
+
+class SqlRelationUnavailableError(LookupError):
+    """A referenced relation is not available in the selected project."""
+
+
+class SqlExecutionError(RuntimeError):
+    """The SQL backend failed while executing an otherwise valid request."""
+
+
+class SqlTimeoutError(TimeoutError):
+    """The SQL backend exceeded its execution deadline."""
+
+
 @dataclass(frozen=True, slots=True)
 class SqlColumn:
     name: str
@@ -46,4 +62,7 @@ class SqlEngine(Protocol):
     def close(self) -> None: ...
 
 
-__all__ = ("SqlColumn", "SqlEngine", "SqlQueryResult")
+__all__ = (
+    "SqlColumn", "SqlEngine", "SqlExecutionError", "SqlQueryResult",
+    "SqlRelationUnavailableError", "SqlTimeoutError", "SqlValidationError",
+)

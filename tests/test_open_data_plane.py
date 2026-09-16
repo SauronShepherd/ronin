@@ -4,7 +4,11 @@ import pytest
 from studio_core import AssetId, Workspace, WorkspaceId
 from studio_execution.lakehouse import write_governed_parquet
 from studio_lakehouse import inspect_parquet, read_parquet_rows, write_parquet_rows
-from studio_sql import DuckDbSqlEngine, ProjectScopedDuckDbSqlEngine
+from studio_sql import (
+    DuckDbSqlEngine,
+    ProjectScopedDuckDbSqlEngine,
+    SqlRelationUnavailableError,
+)
 from studio_storage import SqliteCatalogStore, SqliteWorkspaceStore
 
 pytest.importorskip("pyarrow")
@@ -97,7 +101,7 @@ def test_project_scoped_sql_engines_isolate_relation_collisions(tmp_path: Path) 
         engine.register_parquet("project-b", "events", str(second))
         assert engine.execute("project-a", "SELECT value FROM events").rows == ((1,),)
         assert engine.execute("project-b", "SELECT value FROM events").rows == ((2,),)
-        with pytest.raises(duckdb.CatalogException):
+        with pytest.raises(SqlRelationUnavailableError):
             engine.execute("project-c", "SELECT value FROM events")
 
 

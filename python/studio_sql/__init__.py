@@ -1,6 +1,14 @@
 """Provider-neutral SQL contracts and optional local reference engine."""
 
-from .contracts import SqlColumn, SqlEngine, SqlQueryResult
+from .contracts import (
+    SqlColumn,
+    SqlEngine,
+    SqlExecutionError,
+    SqlQueryResult,
+    SqlRelationUnavailableError,
+    SqlTimeoutError,
+    SqlValidationError,
+)
 from .duckdb_engine import (
     DuckDbDependencyError,
     DuckDbSqlEngine,
@@ -13,5 +21,9 @@ __all__ = (
     "ProjectScopedDuckDbSqlEngine",
     "SqlColumn",
     "SqlEngine",
+    "SqlExecutionError",
     "SqlQueryResult",
+    "SqlRelationUnavailableError",
+    "SqlTimeoutError",
+    "SqlValidationError",
 )
