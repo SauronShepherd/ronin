@@ -45,6 +45,13 @@ def test_jdbc_without_bridge_fails_closed() -> None:
         JdbcConnector().discover(_connection(), EnvironmentSecretResolver({}))
 
 
+def test_jdbc_discovery_validates_and_applies_row_limit() -> None:
+    connector = JdbcConnector(connect=lambda *_args: _Db())
+    with pytest.raises(ValueError, match="discovery limit"):
+        connector.discover(_connection(), EnvironmentSecretResolver({}), limit=0)
+    connector.discover(_connection(), EnvironmentSecretResolver({}), limit=7)
+
+
 def test_jdbc_incremental_watermark_is_ordered_and_advanced() -> None:
     connection = ConnectionDefinition(
         ConnectionId("jdbc"),

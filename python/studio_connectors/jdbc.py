@@ -140,8 +140,14 @@ class JdbcConnector:
         return value
 
     def discover(
-        self, connection: ConnectionDefinition, secrets: SecretResolver
+        self,
+        connection: ConnectionDefinition,
+        secrets: SecretResolver,
+        *,
+        limit: int = 10_000,
     ) -> tuple[DiscoveredAsset, ...]:
+        if limit < 1 or limit > 100_000:
+            raise ValueError("JDBC discovery limit must be between 1 and 100000")
         options = self._options(connection)
         schema = options.get("schema", "public")
         self._identifier(schema, "schema")
@@ -150,8 +156,8 @@ class JdbcConnector:
             cursor = database.cursor()
             cursor.execute(
                 "SELECT table_name FROM information_schema.tables "
-                "WHERE table_schema = ? ORDER BY table_name",
-                (schema,),
+                "WHERE table_schema = ? ORDER BY table_name LIMIT ?",
+                (schema, limit),
             )
             return tuple(
                 DiscoveredAsset(AssetHandle(connection.id, (schema,), str(row[0])), "table", ())
