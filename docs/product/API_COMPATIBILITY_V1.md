@@ -90,7 +90,11 @@ Before stable v1, incompatible removals/renames/type changes or required-request
 `max_rows` (`1..10000`). The request requires the project's `read` grant. The
 reference DuckDB service accepts one read-only `SELECT` statement, bounds SQL text
 to 1 MiB, and rejects mutating or multi-statement input. Deployments without a
-configured SQL engine return `404 sql_unavailable`.
+configured SQL engine return `404 sql_unavailable`. SQL result rows use JSON-safe
+scalars: UTC timestamps are RFC 3339 strings with `Z`, dates/times use ISO 8601,
+decimals and UUID-like values are strings, and binary values are standard Base64
+strings. Non-finite numeric results are rejected, and raw engine diagnostics are
+never returned to clients.
 
 The request body is parsed through the shared `ronin/canonical-json/v1` decoder before authorization-sensitive request handling and before idempotency identity is computed. Duplicate object members and non-finite JSON numbers are therefore rejected with `400 invalid_request` instead of being interpreted with implementation-specific last-wins or non-standard numeric semantics. This is an alpha validation tightening: payloads containing duplicate members or non-finite numbers that older code may have accepted are no longer valid. Canonical bytes and request digests for valid v1 inputs are unchanged.
 

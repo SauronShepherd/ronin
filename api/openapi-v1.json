@@ -19,7 +19,10 @@
           "400": {"$ref": "#/components/responses/Error"},
           "401": {"$ref": "#/components/responses/Error"},
           "403": {"$ref": "#/components/responses/Error"},
-          "404": {"$ref": "#/components/responses/Error"}
+          "404": {"$ref": "#/components/responses/Error"},
+          "500": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"},
+          "504": {"$ref": "#/components/responses/Error"}
         }
       }
     },
@@ -140,8 +143,18 @@
         "type": "object", "additionalProperties": false, "required": ["columns", "rows"],
         "properties": {
           "columns": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name", "type"], "properties": {"name": {"type": "string"}, "type": {"type": "string"}}}},
-          "rows": {"type": "array", "items": {"type": "array"}}
+          "rows": {"type": "array", "items": {"type": "array", "items": {"$ref": "#/components/schemas/SqlWireScalar"}}}
         }
+      },
+      "SqlWireScalar": {
+        "description": "JSON-safe SQL scalar. UTC timestamps use RFC 3339 with a Z suffix; decimal and UUID values are strings; binary values are standard Base64.",
+        "oneOf": [
+          {"type": "null"},
+          {"type": "boolean"},
+          {"type": "integer"},
+          {"type": "number"},
+          {"type": "string"}
+        ]
       },
       "SubmitJobRequest": {
         "type": "object", "additionalProperties": false, "required": ["project", "target"],
