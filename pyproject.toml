@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 ronin = "studio_cli.entrypoint:main"
+ronin-runner-broker = "studio_runner_broker.entrypoint:main"
 
 [project.optional-dependencies]
 data-plane = [

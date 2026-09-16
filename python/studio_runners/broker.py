@@ -127,7 +127,7 @@ class BrokerClient:
         if data is not None:
             headers["Content-Type"] = "application/json"
             headers["Content-Length"] = str(len(data))
-        request = Request(
+        request = Request(  # noqa: S310
             self.config.base_url.rstrip("/") + path,
             data=data,
             headers=headers,
