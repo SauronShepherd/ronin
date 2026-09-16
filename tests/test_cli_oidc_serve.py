@@ -62,9 +62,7 @@ def test_entrypoint_selects_oidc_serve_only_when_explicit(monkeypatch) -> None:
     assert calls == ["oidc"]
 
 
-def test_entrypoint_rejects_unknown_serve_mode_but_not_other_commands(
-    monkeypatch, capsys
-) -> None:
+def test_entrypoint_rejects_unknown_serve_mode_but_not_other_commands(monkeypatch, capsys) -> None:
     monkeypatch.setenv("RONIN_AUTH_MODE", "unknown")
     assert entrypoint.main(("serve",)) == 2
     assert "RONIN_AUTH_MODE must be static or oidc" in capsys.readouterr().err
@@ -73,7 +71,9 @@ def test_entrypoint_rejects_unknown_serve_mode_but_not_other_commands(
     assert entrypoint.main(("doctor",)) == 31
 
 
-def test_build_oidc_server_uses_preprovisioned_active_workspace(monkeypatch, tmp_path: Path) -> None:
+def test_build_oidc_server_uses_preprovisioned_active_workspace(
+    monkeypatch, tmp_path: Path
+) -> None:
     _configure_oidc(monkeypatch, tmp_path)
     server = build_oidc_server_from_env()
     try:

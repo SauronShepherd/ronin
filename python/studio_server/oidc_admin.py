@@ -206,7 +206,9 @@ class _OidcAdminHandler(_OidcHandler):
         except ValueError as exc:
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
             return
-        self._write_json(HTTPStatus.OK if existed else HTTPStatus.CREATED, _principal_payload(stored))
+        self._write_json(
+            HTTPStatus.OK if existed else HTTPStatus.CREATED, _principal_payload(stored)
+        )
 
     def _put_group(self, encoded_id: str) -> None:
         try:
@@ -266,7 +268,12 @@ class _OidcAdminHandler(_OidcHandler):
             return
         self._write_json(
             HTTPStatus.OK,
-            {"group_id": group_id.value, "principal_id": principal_id.value, "member": False, "removed": removed},
+            {
+                "group_id": group_id.value,
+                "principal_id": principal_id.value,
+                "member": False,
+                "removed": removed,
+            },
         )
 
     def _binding(self, encoded_kind: str, encoded_subject: str, encoded_role: str) -> RoleBinding:

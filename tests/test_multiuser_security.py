@@ -46,9 +46,7 @@ def test_group_role_grants_workspace_permission(tmp_path: Path) -> None:
     principal = store.put_principal(_principal())
     group = store.put_group(Group(GroupId("engineers"), "Engineers"))
     store.add_group_member(group.id, principal.id)
-    store.put_role_binding(
-        RoleBinding(WorkspaceId("workspace"), "group", group.id.value, "editor")
-    )
+    store.put_role_binding(RoleBinding(WorkspaceId("workspace"), "group", group.id.value, "editor"))
     authorizer = RbacAuthorizer(store)
     actor = authorizer.actor(principal)
     allowed = authorizer.authorize(
@@ -68,9 +66,7 @@ def test_forged_actor_group_does_not_grant_workspace_permission(tmp_path: Path) 
     store = SqliteIdentityStore(tmp_path / "security.sqlite")
     principal = store.put_principal(_principal())
     group = store.put_group(Group(GroupId("admins"), "Admins"))
-    store.put_role_binding(
-        RoleBinding(WorkspaceId("workspace"), "group", group.id.value, "admin")
-    )
+    store.put_role_binding(RoleBinding(WorkspaceId("workspace"), "group", group.id.value, "admin"))
     actor = Actor(principal, (group.id,))
 
     decision = RbacAuthorizer(store).authorize(

@@ -289,7 +289,9 @@ def test_oidc_audit_failure_blocks_mutation(monkeypatch, tmp_path: Path) -> None
         thread.join(timeout=5.0)
 
 
-def test_oidc_unprovisioned_subject_is_401_and_healthz_is_public(monkeypatch, tmp_path: Path) -> None:
+def test_oidc_unprovisioned_subject_is_401_and_healthz_is_public(
+    monkeypatch, tmp_path: Path
+) -> None:
     database = tmp_path / "ronin.sqlite3"
     server, thread, issue_token, _identities, _audit = _start_server(monkeypatch, database)
     base_url = f"http://127.0.0.1:{server.server_port}"

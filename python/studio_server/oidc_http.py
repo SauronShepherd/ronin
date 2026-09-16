@@ -85,19 +85,25 @@ class _OidcHandler(_Handler):
         authorization = self.headers.get("Authorization")
         prefix = "Bearer "
         if authorization is None or not authorization.startswith(prefix):
-            self._error(HTTPStatus.UNAUTHORIZED, "unauthorized", "valid OIDC bearer authorization required")
+            self._error(
+                HTTPStatus.UNAUTHORIZED, "unauthorized", "valid OIDC bearer authorization required"
+            )
             return None
         token = authorization[len(prefix) :]
         try:
             return self._oidc_server().authenticate(token)
         except OidcAuthenticationError:
-            self._error(HTTPStatus.UNAUTHORIZED, "unauthorized", "valid OIDC bearer authorization required")
+            self._error(
+                HTTPStatus.UNAUTHORIZED, "unauthorized", "valid OIDC bearer authorization required"
+            )
             return None
 
     def _require_auth(self) -> bool:
         if self._actor is not None:
             return True
-        self._error(HTTPStatus.UNAUTHORIZED, "unauthorized", "valid OIDC bearer authorization required")
+        self._error(
+            HTTPStatus.UNAUTHORIZED, "unauthorized", "valid OIDC bearer authorization required"
+        )
         return False
 
     def _project_registered(self, project_id: str) -> bool:
@@ -107,12 +113,16 @@ class _OidcHandler(_Handler):
             registered = False
         if registered:
             return True
-        self._error(HTTPStatus.NOT_FOUND, "project_not_found", "project does not exist in this workspace")
+        self._error(
+            HTTPStatus.NOT_FOUND, "project_not_found", "project does not exist in this workspace"
+        )
         return False
 
     def _authorize_project(self, action: Action, project_id: str) -> PolicyDecision | None:
         if self._actor is None:
-            self._error(HTTPStatus.UNAUTHORIZED, "unauthorized", "valid OIDC bearer authorization required")
+            self._error(
+                HTTPStatus.UNAUTHORIZED, "unauthorized", "valid OIDC bearer authorization required"
+            )
             return None
         if not self._project_registered(project_id):
             return None
@@ -144,7 +154,9 @@ class _OidcHandler(_Handler):
             return False
         if decision.allowed:
             return True
-        self._error(HTTPStatus.FORBIDDEN, "forbidden", "required workspace permission is not granted")
+        self._error(
+            HTTPStatus.FORBIDDEN, "forbidden", "required workspace permission is not granted"
+        )
         return False
 
     def _require_visible_job(self, action: Action, job: Job | None) -> Job | None:

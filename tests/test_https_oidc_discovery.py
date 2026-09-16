@@ -15,7 +15,9 @@ _JWKS = "https://keys.example/jwks.json"
 
 
 class _Response:
-    def __init__(self, payload: object, *, content_length: str | None = None, raw: bytes | None = None):
+    def __init__(
+        self, payload: object, *, content_length: str | None = None, raw: bytes | None = None
+    ):
         self._data = json.dumps(payload).encode("utf-8") if raw is None else raw
         self.headers = {} if content_length is None else {"Content-Length": content_length}
 
@@ -92,9 +94,7 @@ def test_https_oidc_provider_rejects_unsafe_issuer_urls(issuer: str, message: st
 
 
 def test_https_oidc_provider_rejects_discovery_issuer_mismatch() -> None:
-    provider = _provider(
-        _Opener(_Response({"issuer": "https://other.example", "jwks_uri": _JWKS}))
-    )
+    provider = _provider(_Opener(_Response({"issuer": "https://other.example", "jwks_uri": _JWKS})))
     with pytest.raises(OidcDiscoveryError, match="does not match"):
         provider.jwks()
 

@@ -245,7 +245,9 @@ def test_group_admin_revocation_is_immediately_authoritative(monkeypatch, tmp_pa
         _close(server, thread)
 
 
-def test_admin_errors_are_stable_and_identity_rebinding_conflicts(monkeypatch, tmp_path: Path) -> None:
+def test_admin_errors_are_stable_and_identity_rebinding_conflicts(
+    monkeypatch, tmp_path: Path
+) -> None:
     server, thread, issue_token, identities, _audit = _start_server(
         monkeypatch, tmp_path / "ronin.sqlite3"
     )
@@ -257,13 +259,23 @@ def test_admin_errors_are_stable_and_identity_rebinding_conflicts(monkeypatch, t
         transport.request(
             "PUT",
             "/v1/admin/security/principals/member",
-            payload={"kind": "user", "display_name": "Member", "issuer": _ISSUER, "subject": "member-sub"},
+            payload={
+                "kind": "user",
+                "display_name": "Member",
+                "issuer": _ISSUER,
+                "subject": "member-sub",
+            },
         )
         with pytest.raises(APIError) as conflict:
             transport.request(
                 "PUT",
                 "/v1/admin/security/principals/member",
-                payload={"kind": "user", "display_name": "Member", "issuer": _ISSUER, "subject": "other-sub"},
+                payload={
+                    "kind": "user",
+                    "display_name": "Member",
+                    "issuer": _ISSUER,
+                    "subject": "other-sub",
+                },
             )
         assert conflict.value.status_code == 409
         assert conflict.value.code == "identity_conflict"
@@ -292,7 +304,9 @@ def test_audit_failure_blocks_admin_mutation(monkeypatch, tmp_path: Path) -> Non
 
     try:
         with pytest.raises(APIError) as failed:
-            transport.request("PUT", "/v1/admin/security/groups/blocked", payload={"name": "Blocked"})
+            transport.request(
+                "PUT", "/v1/admin/security/groups/blocked", payload={"name": "Blocked"}
+            )
         assert failed.value.status_code == 503
         assert failed.value.code == "authorization_audit_unavailable"
         connection = sqlite3.connect(database)
