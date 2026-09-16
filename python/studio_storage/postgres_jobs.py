@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from studio_orchestrator import Instant, Job, JobId, JobState, Page, Run
+
 from studio_storage.memory import IdempotencyConflict
 from studio_storage.pagination import decode_job_cursor, encode_job_cursor, validate_limit
 
@@ -153,7 +154,7 @@ class PostgresJobReadPort:
                     values.extend((str(after[0]), after[1]))
                 where = " WHERE " + " AND ".join(clauses) if clauses else ""
                 db.execute(  # noqa: S608 - clauses are fixed SQL fragments
-                    "SELECT * FROM ronin_jobs"
+                    "SELECT * FROM ronin_jobs"  # noqa: S608 - fixed SQL fragments only
                     + where
                     + " ORDER BY created_at DESC, job_id DESC LIMIT %s",
                     (*values, limit + 1),
