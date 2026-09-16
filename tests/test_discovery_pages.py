@@ -1,6 +1,6 @@
-from studio_connectors import DiscoveryPage
-
 import pytest
+
+from studio_connectors import DiscoveryPage
 
 
 def test_discovery_page_rejects_cursor_without_truncation() -> None:
