@@ -41,4 +41,4 @@ WORKDIR /workspace
 USER 65532:65532
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/ronin-container-entrypoint"]
-CMD ["ronin", "--help"]
+CMD ["ronin", "serve"]
