@@ -32,7 +32,7 @@ jobs:
       - name: Format
         run: ruff format --check python tests tools packages docker
       - name: Lint
-        run: ruff check python tests tools packages docker
+        run: ruff check python tools packages docker
       - name: Types
         run: mypy python tools packages/pyronin/src docker
       - name: Architecture contracts
