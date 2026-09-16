@@ -61,7 +61,12 @@ def test_slow_request_body_hits_configured_read_deadline(
             "\r\n"
         ).encode("ascii")
         client.sendall(request)
-        response = client.recv(4096)
+        response = b""
+        while b"request_timeout" not in response:
+            chunk = client.recv(4096)
+            if not chunk:
+                break
+            response += chunk
         assert b" 408 " in response
         assert b"request_timeout" in response
     finally:
