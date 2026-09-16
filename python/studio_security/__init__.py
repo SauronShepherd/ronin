@@ -29,6 +29,7 @@ from .oidc import (
     OidcTokenValidator,
 )
 from .oidc_discovery import HttpsOidcJwksProvider, OidcDiscoveryError
+from .postgres_store import PostgresIdentityStore, PostgresSecurityDependencyError
 from .rbac import RbacAuthorizer, RbacStore
 from .store import IdentityConflict, SqliteIdentityStore
 
@@ -52,6 +53,8 @@ __all__ = (
     "Permission",
     "PolicyDecision",
     "PolicyRequirement",
+    "PostgresIdentityStore",
+    "PostgresSecurityDependencyError",
     "Principal",
     "PrincipalId",
     "PrincipalKind",
