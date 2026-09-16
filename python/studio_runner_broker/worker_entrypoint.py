@@ -48,7 +48,12 @@ def _runtime_image(base_url: str, token: str, *, allow_insecure_http: bool) -> s
     parsed = urlsplit(base_url)
     if parsed.scheme not in {"http", "https"} or parsed.hostname is None:
         raise ValueError("runner broker URL must be absolute HTTP(S)")
-    if parsed.username is not None or parsed.password is not None or parsed.query or parsed.fragment:
+    if (
+        parsed.username is not None
+        or parsed.password is not None
+        or parsed.query
+        or parsed.fragment
+    ):
         raise ValueError("runner broker URL must not contain credentials/query/fragment")
     if parsed.path not in {"", "/"}:
         raise ValueError("runner broker URL must not contain a path")
@@ -72,7 +77,11 @@ def _runtime_image(base_url: str, token: str, *, allow_insecure_http: bool) -> s
         payload = decode_canonical_json(body)
     except (TypeError, ValueError) as exc:
         raise RuntimeError("runner broker runtime response is invalid") from exc
-    if not isinstance(payload, dict) or set(payload) != {"version", "image"} or payload.get("version") != 1:
+    if (
+        not isinstance(payload, dict)
+        or set(payload) != {"version", "image"}
+        or payload.get("version") != 1
+    ):
         raise RuntimeError("runner broker runtime response has invalid fields")
     image = payload.get("image")
     if not isinstance(image, str) or not _IMMUTABLE_IMAGE.fullmatch(image):

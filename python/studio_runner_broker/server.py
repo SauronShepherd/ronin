@@ -86,7 +86,11 @@ class _BrokerHandler(BaseHTTPRequestHandler):
     def _authenticate(self) -> bool:
         authorization = self.headers.get("Authorization")
         prefix = "Bearer "
-        supplied = "" if authorization is None or not authorization.startswith(prefix) else authorization[len(prefix) :]
+        supplied = (
+            ""
+            if authorization is None or not authorization.startswith(prefix)
+            else authorization[len(prefix) :]
+        )
         if not supplied or not hmac.compare_digest(supplied, self._broker().config.token):
             self._error(
                 HTTPStatus.UNAUTHORIZED,
@@ -177,9 +181,7 @@ class _BrokerHandler(BaseHTTPRequestHandler):
             )
             return
         try:
-            result = asyncio.run(
-                self._broker().execute(attempt_id, cell, token)
-            )
+            result = asyncio.run(self._broker().execute(attempt_id, cell, token))
         except Exception:
             self._error(
                 HTTPStatus.SERVICE_UNAVAILABLE,
@@ -254,7 +256,11 @@ class RunnerBrokerServer(ThreadingHTTPServer):
         cell_id = cell_raw.get("cell_id")
         language = cell_raw.get("language")
         source = cell_raw.get("executable_source")
-        if not isinstance(cell_id, str) or not isinstance(language, str) or not isinstance(source, str):
+        if (
+            not isinstance(cell_id, str)
+            or not isinstance(language, str)
+            or not isinstance(source, str)
+        ):
             raise ValueError("runner broker cell values have invalid types")
         if language.casefold() != "python":
             raise ValueError("runner broker supports Python cells only")
