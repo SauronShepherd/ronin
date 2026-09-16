@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from importlib import import_module
 from pathlib import Path
 from typing import Any
 
@@ -15,12 +16,11 @@ class DeltaDependencyError(RuntimeError):
 
 def _deltalake() -> Any:
     try:
-        import deltalake  # type: ignore[import-not-found]
+        return import_module("deltalake")
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise DeltaDependencyError(
             "Delta support requires the optional Ronin open-table dependencies"
         ) from exc
-    return deltalake
 
 
 def _pyarrow() -> Any:

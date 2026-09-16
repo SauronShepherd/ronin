@@ -9,7 +9,6 @@ import json
 import re
 import tomllib
 from pathlib import Path, PurePosixPath
-from typing import cast
 
 _LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \t\\]+)$")
 _LOCKED_HASH = re.compile(r"^--hash=sha256:[0-9a-f]{64}$")
@@ -31,7 +30,7 @@ class LicenseQualificationError(ValueError):
 
 
 def _metadata_value(dist: metadata.Distribution, key: str) -> str | None:
-    return cast(str | None, dist.metadata.get(key))
+    return dist.metadata[key] if key in dist.metadata else None
 
 
 def _canonical_name(value: str) -> str:

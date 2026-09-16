@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from contextlib import suppress
+from importlib import import_module
 from typing import Any
 
 from .tables import OpenTableField, OpenTableIdentifier, OpenTableState, TableWriteMode
@@ -19,12 +20,11 @@ class IcebergCapabilityError(RuntimeError):
 
 def _pyiceberg_catalog() -> Any:
     try:
-        from pyiceberg.catalog import load_catalog  # type: ignore[import-not-found]
+        return import_module("pyiceberg.catalog").load_catalog
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise IcebergDependencyError(
             "Iceberg support requires the optional Ronin open-table dependencies"
         ) from exc
-    return load_catalog
 
 
 def _pyarrow() -> Any:
