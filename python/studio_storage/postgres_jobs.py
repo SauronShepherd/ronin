@@ -15,6 +15,7 @@ from studio_orchestrator import (
     AttemptLimitExceeded,
     AttemptState,
     ClaimedRun,
+    EventPage,
     EvidenceAvailability,
     Instant,
     Job,
@@ -24,6 +25,7 @@ from studio_orchestrator import (
     LeaseToken,
     Page,
     Run,
+    RunExecutionEvent,
     RunId,
     StoredCellResult,
     StoredEvidenceRef,
@@ -32,7 +34,14 @@ from studio_orchestrator import (
 
 from studio_storage.limits import MAX_EVIDENCE_REFS_PER_RUN
 from studio_storage.memory import IdempotencyConflict
-from studio_storage.pagination import decode_job_cursor, encode_job_cursor, validate_limit
+from studio_storage.pagination import (
+    decode_event_cursor,
+    decode_job_cursor,
+    encode_event_cursor,
+    encode_job_cursor,
+    initial_event_cursor,
+    validate_limit,
+)
 
 from .postgres_core import PostgresDependencyError, _psycopg
 
@@ -594,6 +603,51 @@ class PostgresJobReadPort:
             )
         finally:
             connection.close()
+
+    def read_event_page(self, run_id: RunId, *, since: str | None, limit: int) -> EventPage:
+        """Read a bounded run-global event page using the shared opaque cursor."""
+        validate_limit(limit)
+        cursor = initial_event_cursor(run_id) if since is None else since
+        next_sequence, after_ordinal, after_sequence = decode_event_cursor(cursor, run_id=run_id)
+        connection = self._connect()
+        try:
+            with connection.cursor() as db:
+                db.execute(
+                    "SELECT a.ordinal,e.attempt_id,e.sequence,e.event_type,e.message,e.occurred_at "
+                    "FROM ronin_attempt_events e JOIN ronin_attempts a "
+                    "ON a.attempt_id=e.attempt_id WHERE a.run_id=%s AND "
+                    "(a.ordinal>%s OR (a.ordinal=%s AND e.sequence>%s)) "
+                    "ORDER BY a.ordinal,e.sequence LIMIT %s",
+                    (str(run_id), after_ordinal, after_ordinal, after_sequence, limit + 1),
+                )
+                rows = list(db.fetchall())
+            connection.commit()
+        finally:
+            connection.close()
+        selected = rows[:limit]
+        items = tuple(
+            RunExecutionEvent(
+                sequence=next_sequence + index,
+                attempt_id=AttemptId(str(row["attempt_id"])),
+                attempt_sequence=int(row["sequence"]),
+                kind=str(row["event_type"]),
+                message=str(row["message"]),
+                occurred_at=Instant(str(row["occurred_at"])),
+            )
+            for index, row in enumerate(selected)
+        )
+        if not selected:
+            return EventPage(items, cursor)
+        last = selected[-1]
+        return EventPage(
+            items,
+            encode_event_cursor(
+                run_id=run_id,
+                next_sequence=next_sequence + len(selected),
+                attempt_ordinal=int(last["ordinal"]),
+                attempt_sequence=int(last["sequence"]),
+            ),
+        )
 
     def read_cell_results(self, run_id: RunId) -> tuple[StoredCellResult, ...]:
         """Read all persisted cell results for a run in stable cell order."""
