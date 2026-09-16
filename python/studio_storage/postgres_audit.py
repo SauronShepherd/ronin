@@ -28,7 +28,9 @@ CREATE TABLE IF NOT EXISTS ronin_audit_events (
     PRIMARY KEY(workspace_id, audit_event_id)
 );
 CREATE INDEX IF NOT EXISTS ronin_audit_resource_idx
-    ON ronin_audit_events(workspace_id, resource_kind, resource_ref, occurred_at DESC, audit_event_id DESC);
+    ON ronin_audit_events(
+        workspace_id, resource_kind, resource_ref, occurred_at DESC, audit_event_id DESC
+    );
 """
 
 
