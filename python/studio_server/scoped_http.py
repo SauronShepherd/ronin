@@ -81,6 +81,11 @@ class _BoundedServiceLoop:
 class _ReadinessHandler(_Handler):
     """Add one non-versioned readiness route and stable timeout responses."""
 
+    def setup(self) -> None:
+        super().setup()
+        server = cast(RoninHTTPServer, self.server)
+        self.connection.settimeout(server._request_timeout_seconds)
+
     def do_GET(self) -> None:  # noqa: N802
         if self.path == "/healthz":
             server = cast(RoninHTTPServer, self.server)
