@@ -272,12 +272,8 @@ def test_http_job_listing_rejects_project_outside_typed_grant(tmp_path: Path) ->
     service = DurableExecutionService(
         SqliteJobStore(tmp_path / "ronin.db", migration_now=_MIGRATION_NOW)
     )
-    grants = GrantSet(
-        (Grant(frozenset({"list"}), ResourceScope("project", "allowed/project")),)
-    )
-    server = RoninHTTPServer(
-        ("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=grants
-    )
+    grants = GrantSet((Grant(frozenset({"list"}), ResourceScope("project", "allowed/project")),))
+    server = RoninHTTPServer(("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=grants)
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
