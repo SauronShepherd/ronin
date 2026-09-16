@@ -50,7 +50,11 @@ class SemanticDimension:
             raise ValueError("semantic dimension has invalid shape")
         if not all(isinstance(payload[key], str) for key in payload):
             raise ValueError("semantic dimension fields must be strings")
-        return cls(cast(str, payload["name"]), cast(str, payload["column"]), cast(str, payload["data_type"]))
+        return cls(
+            cast(str, payload["name"]),
+            cast(str, payload["column"]),
+            cast(str, payload["data_type"]),
+        )
 
 
 @dataclass(frozen=True, order=True, slots=True)
@@ -84,7 +88,7 @@ class SemanticMeasure:
             raise ValueError("semantic measure column must be string or null")
         if aggregation not in {"sum", "count", "avg", "min", "max", "distinct_count"}:
             raise ValueError("unsupported semantic aggregation")
-        return cls(name, cast(Aggregation, aggregation), cast(str | None, column))
+        return cls(name, cast(Aggregation, aggregation), column)
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,7 +131,13 @@ class SemanticModel:
     @classmethod
     def from_json(cls, payload: str) -> SemanticModel:
         data = decode_canonical_json(payload)
-        if not isinstance(data, Mapping) or set(data) != {"id", "name", "source", "dimensions", "measures"}:
+        if not isinstance(data, Mapping) or set(data) != {
+            "id",
+            "name",
+            "source",
+            "dimensions",
+            "measures",
+        }:
             raise ValueError("semantic model has invalid shape")
         identifier = data["id"]
         name = data["name"]
@@ -164,6 +174,23 @@ class SemanticFilter:
             raise ValueError("non-in semantic filter requires exactly one value")
         object.__setattr__(self, "values", values)
 
+    def to_payload(self) -> dict[str, object]:
+        return {"dimension": self.dimension, "operator": self.operator, "values": list(self.values)}
+
+    @classmethod
+    def from_payload(cls, payload: object) -> SemanticFilter:
+        if not isinstance(payload, Mapping) or set(payload) != {"dimension", "operator", "values"}:
+            raise ValueError("semantic filter has invalid shape")
+        dimension, operator, values = payload["dimension"], payload["operator"], payload["values"]
+        if (
+            not isinstance(dimension, str)
+            or not isinstance(operator, str)
+            or not isinstance(values, list)
+            or not all(isinstance(value, str) for value in values)
+        ):
+            raise ValueError("semantic filter fields have invalid types")
+        return cls(dimension, cast(FilterOperator, operator), tuple(values))
+
 
 @dataclass(frozen=True, slots=True)
 class MetricQuery:
@@ -176,7 +203,9 @@ class MetricQuery:
     def __post_init__(self) -> None:
         object.__setattr__(self, "model_id", _identifier(self.model_id, "metric query model_id"))
         measures = tuple(sorted(_identifier(value, "metric measure") for value in self.measures))
-        dimensions = tuple(sorted(_identifier(value, "metric dimension") for value in self.dimensions))
+        dimensions = tuple(
+            sorted(_identifier(value, "metric dimension") for value in self.dimensions)
+        )
         if not measures:
             raise ValueError("metric query requires at least one measure")
         if len(measures) != len(set(measures)) or len(dimensions) != len(set(dimensions)):
@@ -186,6 +215,54 @@ class MetricQuery:
         object.__setattr__(self, "measures", measures)
         object.__setattr__(self, "dimensions", dimensions)
         object.__setattr__(self, "filters", tuple(sorted(self.filters)))
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "model_id": self.model_id,
+            "measures": list(self.measures),
+            "dimensions": list(self.dimensions),
+            "filters": [item.to_payload() for item in self.filters],
+            "limit": self.limit,
+        }
+
+    @classmethod
+    def from_payload(cls, payload: object) -> MetricQuery:
+        if not isinstance(payload, Mapping) or set(payload) != {
+            "model_id",
+            "measures",
+            "dimensions",
+            "filters",
+            "limit",
+        }:
+            raise ValueError("metric query has invalid shape")
+        model_id, measures, dimensions, filters, limit = (
+            payload[key] for key in ("model_id", "measures", "dimensions", "filters", "limit")
+        )
+        if (
+            not isinstance(model_id, str)
+            or not isinstance(measures, list)
+            or not all(isinstance(value, str) for value in measures)
+            or not isinstance(dimensions, list)
+            or not all(isinstance(value, str) for value in dimensions)
+            or not isinstance(filters, list)
+            or not isinstance(limit, int)
+            or isinstance(limit, bool)
+        ):
+            raise ValueError("metric query fields have invalid types")
+        return cls(
+            model_id,
+            tuple(measures),
+            tuple(dimensions),
+            tuple(SemanticFilter.from_payload(item) for item in filters),
+            limit,
+        )
+
+    def to_json(self) -> str:
+        return encode_canonical_json(self.to_payload()).decode("utf-8")
+
+    @classmethod
+    def from_json(cls, payload: str) -> MetricQuery:
+        return cls.from_payload(decode_canonical_json(payload))
 
 
 @dataclass(frozen=True, slots=True)
@@ -200,6 +277,31 @@ class DashboardTile:
         _text(self.title, "dashboard tile title")
         if self.chart not in {"table", "number", "bar", "line", "area"}:
             raise ValueError("unsupported dashboard chart kind")
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "title": self.title,
+            "chart": self.chart,
+            "query": self.query.to_payload(),
+        }
+
+    @classmethod
+    def from_payload(cls, payload: object) -> DashboardTile:
+        if not isinstance(payload, Mapping) or set(payload) != {"id", "title", "chart", "query"}:
+            raise ValueError("dashboard tile has invalid shape")
+        if (
+            not isinstance(payload["id"], str)
+            or not isinstance(payload["title"], str)
+            or not isinstance(payload["chart"], str)
+        ):
+            raise ValueError("dashboard tile identity fields must be strings")
+        return cls(
+            payload["id"],
+            payload["title"],
+            cast(ChartKind, payload["chart"]),
+            MetricQuery.from_payload(payload["query"]),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -218,6 +320,33 @@ class DashboardDefinition:
         if len(ids) != len(set(ids)):
             raise ValueError("dashboard tile ids must be unique")
         object.__setattr__(self, "tiles", tiles)
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "tiles": [tile.to_payload() for tile in self.tiles],
+        }
+
+    def to_json(self) -> str:
+        return encode_canonical_json(self.to_payload()).decode("utf-8")
+
+    @classmethod
+    def from_payload(cls, payload: object) -> DashboardDefinition:
+        if not isinstance(payload, Mapping) or set(payload) != {"id", "name", "tiles"}:
+            raise ValueError("dashboard has invalid shape")
+        identifier, name, tiles = payload["id"], payload["name"], payload["tiles"]
+        if (
+            not isinstance(identifier, str)
+            or not isinstance(name, str)
+            or not isinstance(tiles, list)
+        ):
+            raise ValueError("dashboard fields have invalid types")
+        return cls(identifier, name, tuple(DashboardTile.from_payload(item) for item in tiles))
+
+    @classmethod
+    def from_json(cls, payload: str) -> DashboardDefinition:
+        return cls.from_payload(decode_canonical_json(payload))
 
 
 __all__ = (

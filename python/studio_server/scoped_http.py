@@ -6,12 +6,14 @@ import asyncio
 import os
 from collections.abc import Coroutine
 from concurrent.futures import Future, TimeoutError as FutureTimeoutError
+from collections.abc import Callable
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any, cast
 
 from studio_core import GrantSet
 from studio_execution import DurableExecutionService
+from studio_sql import SqlEngine
 from studio_storage import sqlite_ready
 
 from studio_server.http import RoninHTTPServer as _RoninHTTPServer
@@ -130,6 +132,8 @@ class RoninHTTPServer(_RoninHTTPServer):
         *,
         token: str,
         grants: GrantSet,
+        sql_engine: SqlEngine | None = None,
+        readiness_probe: Callable[[], bool] | None = None,
     ) -> None:
         host, _port = server_address
         policy = _bind_policy_from_env()
@@ -141,6 +145,7 @@ class RoninHTTPServer(_RoninHTTPServer):
                 "trusted development network. Use an external TLS terminator for remote access."
             )
         self._readiness_database = _readiness_database_from_env()
+        self._readiness_probe = readiness_probe
         self._request_timeout_seconds = _positive_timeout_from_env(
             _REQUEST_TIMEOUT_ENV,
             _DEFAULT_REQUEST_TIMEOUT_SECONDS,
@@ -149,9 +154,17 @@ class RoninHTTPServer(_RoninHTTPServer):
             _SERVICE_TIMEOUT_ENV,
             _DEFAULT_SERVICE_TIMEOUT_SECONDS,
         )
-        super().__init__(server_address, service, token=token, grants=grants)
+        super().__init__(
+            server_address,
+            service,
+            token=token,
+            grants=grants,
+            sql_engine=sql_engine,
+        )
         original_loop = getattr(self.application, "_loop")
-        setattr(self.application, "_loop", _BoundedServiceLoop(original_loop, service_timeout_seconds))
+        setattr(
+            self.application, "_loop", _BoundedServiceLoop(original_loop, service_timeout_seconds)
+        )
         self.RequestHandlerClass = _ReadinessHandler
 
     def get_request(self) -> tuple[Any, Any]:
@@ -161,6 +174,8 @@ class RoninHTTPServer(_RoninHTTPServer):
 
     def ready(self) -> bool:
         """Return readiness without exposing storage details through HTTP."""
+        if self._readiness_probe is not None:
+            return self._readiness_probe()
         return sqlite_ready(self._readiness_database)
 
 

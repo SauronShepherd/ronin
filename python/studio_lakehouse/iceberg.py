@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from contextlib import suppress
+from importlib import import_module
 from typing import Any
 
 from .tables import OpenTableField, OpenTableIdentifier, OpenTableState, TableWriteMode
@@ -12,19 +14,22 @@ class IcebergDependencyError(RuntimeError):
     """Raised when the optional PyIceberg dependency is unavailable."""
 
 
+class IcebergCapabilityError(RuntimeError):
+    """Raised when the configured Iceberg runtime lacks a requested capability."""
+
+
 def _pyiceberg_catalog() -> Any:
     try:
-        from pyiceberg.catalog import load_catalog
+        return import_module("pyiceberg.catalog").load_catalog
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise IcebergDependencyError(
             "Iceberg support requires the optional Ronin open-table dependencies"
         ) from exc
-    return load_catalog
 
 
 def _pyarrow() -> Any:
     try:
-        import pyarrow as pa
+        import pyarrow as pa  # type: ignore[import-untyped]
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise IcebergDependencyError(
             "Iceberg support requires PyArrow from the optional data-plane dependencies"
@@ -46,10 +51,7 @@ def _rows_table(rows: tuple[Mapping[str, object], ...]) -> Any:
 
 
 def _field_state(schema: Any) -> tuple[OpenTableField, ...]:
-    return tuple(
-        OpenTableField(field.name, str(field.type), field.nullable)
-        for field in schema
-    )
+    return tuple(OpenTableField(field.name, str(field.type), field.nullable) for field in schema)
 
 
 class IcebergTableStore:
@@ -97,15 +99,11 @@ class IcebergTableStore:
             except Exception:
                 for index in range(1, len(identifier.namespace) + 1):
                     namespace = identifier.namespace[:index]
-                    try:
+                    with suppress(Exception):
                         self._catalog.create_namespace(namespace)
-                    except Exception:
-                        pass
                 self._catalog.create_table(table_identifier, schema=arrow.schema)
             else:
-                raise FileExistsError(
-                    f"Iceberg table already exists: {identifier.qualified_name}"
-                )
+                raise FileExistsError(f"Iceberg table already exists: {identifier.qualified_name}")
             table = self._catalog.load_table(table_identifier)
             table.append(arrow)
         elif mode == "append":
@@ -116,7 +114,7 @@ class IcebergTableStore:
             if hasattr(table, "overwrite"):
                 table.overwrite(arrow)
             else:
-                raise NotImplementedError(
+                raise IcebergCapabilityError(
                     "configured PyIceberg runtime does not expose overwrite support"
                 )
         return self.inspect(identifier)
@@ -169,4 +167,4 @@ class IcebergTableStore:
         )
 
 
-__all__ = ("IcebergDependencyError", "IcebergTableStore")
+__all__ = ("IcebergCapabilityError", "IcebergDependencyError", "IcebergTableStore")

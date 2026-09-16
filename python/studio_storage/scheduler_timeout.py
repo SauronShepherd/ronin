@@ -21,12 +21,8 @@ class TaskTimeoutRequest:
 
 
 def _add_seconds(value: Instant | str, seconds: int) -> Instant:
-    parsed = datetime.strptime(
-        str(Instant(value)), "%Y-%m-%dT%H:%M:%S.%fZ"
-    ).replace(tzinfo=UTC)
-    return Instant(
-        (parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    )
+    parsed = datetime.strptime(str(Instant(value)), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
+    return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
 def request_overdue_timeouts(
@@ -181,8 +177,7 @@ def finalize_timed_out_attempt(
     try:
         connection.execute("BEGIN IMMEDIATE")
         marker = connection.execute(
-            "SELECT job_id FROM task_timeout_requests "
-            "WHERE workspace_id=? AND task_attempt_id=?",
+            "SELECT job_id FROM task_timeout_requests WHERE workspace_id=? AND task_attempt_id=?",
             (str(request.workspace_id), str(request.task_attempt_id)),
         ).fetchone()
         if marker is None:
@@ -254,8 +249,7 @@ def finalize_timed_out_attempt(
                 )
 
         connection.execute(
-            "DELETE FROM task_execution_intents "
-            "WHERE workspace_id=? AND task_attempt_id=?",
+            "DELETE FROM task_execution_intents WHERE workspace_id=? AND task_attempt_id=?",
             (str(request.workspace_id), str(request.task_attempt_id)),
         )
         connection.execute(

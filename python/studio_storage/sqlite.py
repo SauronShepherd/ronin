@@ -52,10 +52,22 @@ def open_database(path: Path) -> sqlite3.Connection:
     return connection
 
 
+def execute_migration_script(connection: sqlite3.Connection, script: str) -> None:
+    """Execute SQLite SQL without splitting semicolons inside statements."""
+
+    statement = ""
+    for line in script.splitlines(keepends=True):
+        statement += line
+        if sqlite3.complete_statement(statement):
+            if statement.strip():
+                connection.execute(statement)
+            statement = ""
+    if statement.strip():
+        raise ValueError("migration script ended with an incomplete SQL statement")
+
+
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate(connection: sqlite3.Connection, *, now: Instant | str) -> None:

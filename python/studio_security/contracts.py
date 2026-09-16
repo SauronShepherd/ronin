@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, cast
 
 from studio_core import WorkspaceId
 
@@ -121,11 +121,11 @@ ROLE_PERMISSIONS: dict[WorkspaceRole, frozenset[Permission]] = {
         }
     ),
     "editor": frozenset(
-        permission
+        cast(Permission, permission)
         for permission in PERMISSIONS
         if permission not in {"workspace.admin", "audit.read"}
     ),
-    "admin": frozenset(PERMISSIONS),
+    "admin": frozenset(cast(Permission, permission) for permission in PERMISSIONS),
 }
 
 

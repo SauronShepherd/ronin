@@ -3,8 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
-from studio_core import AssetId, AssetRef, AssetRevision, AssetVersion, CatalogAsset, Workspace, WorkspaceId
+from studio_core import (
+    AssetId,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
+    CatalogAsset,
+    Workspace,
+    WorkspaceId,
+)
 from studio_core.connections import SecretRef
 from studio_core.genai import (
     AgentDefinition,
@@ -19,6 +26,7 @@ from studio_core.genai import (
     VectorIndexDefinition,
     VectorIndexId,
 )
+from studio_genai.provider import _MAX_PROVIDER_RESPONSE_BYTES, _read_json_response
 from studio_orchestrator import Instant
 from studio_storage.catalog import SqliteCatalogStore
 from studio_storage.genai import GenAIConflict, SqliteGenAIStore
@@ -54,8 +62,12 @@ def test_provider_persists_only_secret_reference(tmp_path: Path) -> None:
 
 def test_prompt_version_is_immutable(tmp_path: Path) -> None:
     store = _store(tmp_path / "ronin.sqlite3")
-    first = PromptAsset(PromptId("prompt-1"), PromptVersion("1"), "Answer {question}", ("question",))
-    second = PromptAsset(PromptId("prompt-1"), PromptVersion("1"), "Changed {question}", ("question",))
+    first = PromptAsset(
+        PromptId("prompt-1"), PromptVersion("1"), "Answer {question}", ("question",)
+    )
+    second = PromptAsset(
+        PromptId("prompt-1"), PromptVersion("1"), "Changed {question}", ("question",)
+    )
     store.put_prompt(_WS, first, now=_NOW)
 
     with pytest.raises(GenAIConflict):
@@ -101,3 +113,16 @@ def test_agent_requires_registered_prompt_provider_and_tools(tmp_path: Path) -> 
     store.put_agent(_WS, agent, now=_NOW)
 
     assert store.get_agent(_WS, agent.id) == agent
+
+
+class _ChunkedResponse:
+    def __init__(self, chunks: tuple[bytes, ...]) -> None:
+        self.chunks = chunks
+
+    def iter_bytes(self):
+        yield from self.chunks
+
+
+def test_provider_response_reader_fails_before_materializing_oversized_body() -> None:
+    with pytest.raises(ValueError, match="exceeds"):
+        _read_json_response(_ChunkedResponse((b"{}", b"x" * _MAX_PROVIDER_RESPONSE_BYTES)))

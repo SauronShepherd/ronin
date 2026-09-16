@@ -29,6 +29,7 @@ RUN python -m pip install --no-cache-dir /tmp/wheels/*.whl && rm -rf /tmp/wheels
 
 COPY docker/container-entrypoint.sh /usr/local/bin/ronin-container-entrypoint
 COPY docker/healthcheck.py /usr/local/lib/ronin/healthcheck.py
+COPY web /usr/local/lib/ronin/web
 RUN chmod 0755 /usr/local/bin/ronin-container-entrypoint
 
 ENV HOME=/home/ronin \
