@@ -13,6 +13,10 @@ class IcebergDependencyError(RuntimeError):
     """Raised when the optional PyIceberg dependency is unavailable."""
 
 
+class IcebergCapabilityError(RuntimeError):
+    """Raised when the configured Iceberg runtime lacks a requested capability."""
+
+
 def _pyiceberg_catalog() -> Any:
     try:
         from pyiceberg.catalog import load_catalog  # type: ignore[import-not-found]
@@ -110,7 +114,7 @@ class IcebergTableStore:
             if hasattr(table, "overwrite"):
                 table.overwrite(arrow)
             else:
-                raise NotImplementedError(
+                raise IcebergCapabilityError(
                     "configured PyIceberg runtime does not expose overwrite support"
                 )
         return self.inspect(identifier)
@@ -163,4 +167,4 @@ class IcebergTableStore:
         )
 
 
-__all__ = ("IcebergDependencyError", "IcebergTableStore")
+__all__ = ("IcebergCapabilityError", "IcebergDependencyError", "IcebergTableStore")
