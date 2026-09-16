@@ -32,7 +32,6 @@ from studio_orchestrator import Instant
 from .artifacts import ArtifactPage, ArtifactRef
 
 
-
 @runtime_checkable
 class ArtifactStore(Protocol):
     """Content-addressed artifact storage independent of physical backend."""
