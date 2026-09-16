@@ -29,7 +29,9 @@ class EnvironmentServiceConflict(EnvironmentServiceError):
 class _EnvironmentContext:
     """Shared provider-neutral preflight over workspace/project metadata."""
 
-    def __init__(self, workspace_store: WorkspaceStore, environment_store: EnvironmentStore) -> None:
+    def __init__(
+        self, workspace_store: WorkspaceStore, environment_store: EnvironmentStore
+    ) -> None:
         self._workspace_store = workspace_store
         self._environment_store = environment_store
 
@@ -65,7 +67,9 @@ class _EnvironmentContext:
 class EnvironmentService:
     """Application boundary for workspace-local environment definitions."""
 
-    def __init__(self, workspace_store: WorkspaceStore, environment_store: EnvironmentStore) -> None:
+    def __init__(
+        self, workspace_store: WorkspaceStore, environment_store: EnvironmentStore
+    ) -> None:
         self._environments = environment_store
         self._context = _EnvironmentContext(workspace_store, environment_store)
 
@@ -126,7 +130,9 @@ class EnvironmentService:
 class DeploymentBindingService:
     """Application boundary for project/environment deployment bindings."""
 
-    def __init__(self, workspace_store: WorkspaceStore, environment_store: EnvironmentStore) -> None:
+    def __init__(
+        self, workspace_store: WorkspaceStore, environment_store: EnvironmentStore
+    ) -> None:
         self._environments = environment_store
         self._context = _EnvironmentContext(workspace_store, environment_store)
 
