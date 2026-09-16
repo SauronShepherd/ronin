@@ -7,14 +7,33 @@ evidence and reclaim operations are complete.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from studio_orchestrator import Instant, Job, JobId, JobState, Page, Run, RunId
+from studio_orchestrator import (
+    AttemptId,
+    AttemptLimitExceeded,
+    AttemptState,
+    ClaimedRun,
+    Instant,
+    Job,
+    JobId,
+    JobState,
+    LeaseToken,
+    Page,
+    Run,
+    RunId,
+)
 
 from studio_storage.memory import IdempotencyConflict
 from studio_storage.pagination import decode_job_cursor, encode_job_cursor, validate_limit
 
 from .postgres_core import PostgresDependencyError, _psycopg
+
+
+def _add_seconds(value: Instant | str, seconds: int) -> Instant:
+    parsed = datetime.strptime(str(Instant(value)), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
+    return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
 def _job(row: dict[str, object]) -> Job:
@@ -184,6 +203,124 @@ class PostgresJobReadPort:
             if updated is None:
                 raise AssertionError("updated job disappeared")
             return _job(updated)
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def claim_next_run(
+        self,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        attempt_id: AttemptId,
+        lease_seconds: int,
+        now: Instant | str,
+    ) -> ClaimedRun | None:
+        """Claim one pending run with PostgreSQL row-lock concurrency semantics."""
+        if lease_seconds < 1:
+            raise ValueError("lease_seconds must be positive")
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT r.* FROM ronin_runs r JOIN ronin_jobs j ON j.job_id=r.job_id "
+                    "WHERE r.state='pending' AND r.not_before<=%s "
+                    "AND j.state IN ('queued','running') "
+                    "ORDER BY r.not_before,r.run_id LIMIT 1 FOR UPDATE SKIP LOCKED",
+                    (str(current),),
+                )
+                run_row = cursor.fetchone()
+                if run_row is None:
+                    connection.commit()
+                    return None
+                cursor.execute(
+                    "SELECT * FROM ronin_jobs WHERE job_id=%s FOR UPDATE",
+                    (str(run_row["job_id"]),),
+                )
+                job_row = cursor.fetchone()
+                if job_row is None:
+                    raise AssertionError("run references missing job")
+                job = _job(job_row)
+                cursor.execute(
+                    "SELECT COALESCE(MAX(ordinal),0)+1 AS ordinal "
+                    "FROM ronin_attempts WHERE run_id=%s",
+                    (str(run_row["run_id"]),),
+                )
+                ordinal = int(cursor.fetchone()["ordinal"])
+                if ordinal > 10:
+                    cursor.execute(
+                        "UPDATE ronin_runs SET state='failed',updated_at=%s,"
+                        "row_version=row_version+1 WHERE run_id=%s AND state='pending'",
+                        (str(current), str(run_row["run_id"])),
+                    )
+                    cursor.execute(
+                        "UPDATE ronin_jobs SET state='failed',failure_code=%s,updated_at=%s,"
+                        "row_version=row_version+1 WHERE job_id=%s",
+                        ("attempt_limit_exceeded", str(current), str(job.id)),
+                    )
+                    connection.commit()
+                    raise AttemptLimitExceeded("attempt limit exceeded")
+                expiry = _add_seconds(current, lease_seconds)
+                cursor.execute(
+                    "INSERT INTO ronin_attempts(attempt_id,run_id,ordinal,state,lease_owner,"
+                    "lease_token,lease_expires_at,heartbeat_at,created_at,updated_at) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (
+                        str(attempt_id),
+                        str(run_row["run_id"]),
+                        ordinal,
+                        AttemptState.RUNNING.value,
+                        owner,
+                        str(lease_token),
+                        str(expiry),
+                        str(current),
+                        str(current),
+                        str(current),
+                    ),
+                )
+                cursor.execute(
+                    "UPDATE ronin_runs SET state='running',updated_at=%s,"
+                    "row_version=row_version+1 WHERE run_id=%s AND state='pending' "
+                    "RETURNING *",
+                    (str(current), str(run_row["run_id"])),
+                )
+                updated_run = cursor.fetchone()
+                if updated_run is None:
+                    raise RuntimeError("run claim lost compare-and-set")
+                if job.state is JobState.QUEUED:
+                    cursor.execute(
+                        "UPDATE ronin_jobs SET state='running',updated_at=%s,"
+                        "row_version=row_version+1 WHERE job_id=%s AND state='queued' "
+                        "RETURNING *",
+                        (str(current), str(job.id)),
+                    )
+                    updated_job = cursor.fetchone()
+                else:
+                    updated_job = job_row
+            connection.commit()
+            if updated_job is None:
+                raise RuntimeError("job claim lost compare-and-set")
+            from studio_orchestrator import RunState
+
+            run = Run(
+                id=RunId(str(updated_run["run_id"])),
+                job_id=JobId(str(updated_run["job_id"])),
+                ordinal=int(updated_run["ordinal"]),
+                state=RunState(str(updated_run["state"])),
+                not_before=Instant(str(updated_run["not_before"])),
+                created_at=Instant(str(updated_run["created_at"])),
+                updated_at=Instant(str(updated_run["updated_at"])),
+            )
+            return ClaimedRun(
+                job=_job(updated_job),
+                run=run,
+                attempt_id=attempt_id,
+                attempt_ordinal=ordinal,
+                lease_token=lease_token,
+            )
         except Exception:
             connection.rollback()
             raise
