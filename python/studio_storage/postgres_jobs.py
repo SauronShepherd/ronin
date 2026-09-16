@@ -655,6 +655,85 @@ class PostgresJobReadPort:
         finally:
             connection.close()
 
+    def complete_attempt(
+        self,
+        attempt_id: AttemptId,
+        *,
+        state: AttemptState,
+        failure_code: str | None,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant | str,
+    ) -> None:
+        """Complete a fenced attempt and atomically project its terminal state."""
+        if not state.terminal:
+            raise ValueError("attempt completion state must be terminal")
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT a.run_id,r.job_id,a.state,a.lease_owner,a.lease_token,"
+                    "a.lease_expires_at FROM ronin_attempts a "
+                    "JOIN ronin_runs r ON r.run_id=a.run_id "
+                    "WHERE a.attempt_id=%s FOR UPDATE",
+                    (str(attempt_id),),
+                )
+                row = cursor.fetchone()
+                if (
+                    row is None
+                    or row["state"] not in {"leased", "running"}
+                    or row["lease_owner"] != owner
+                    or row["lease_token"] != str(lease_token)
+                    or row["lease_expires_at"] is None
+                    or Instant(str(row["lease_expires_at"])) <= current
+                ):
+                    raise LeaseLost("lease ownership no longer matches")
+                cursor.execute(
+                    "UPDATE ronin_attempts SET state=%s,failure_code=%s,"
+                    "lease_owner=NULL,lease_token=NULL,lease_expires_at=NULL,"
+                    "updated_at=%s,row_version=row_version+1 WHERE attempt_id=%s",
+                    (state.value, failure_code, str(current), str(attempt_id)),
+                )
+                run_id = str(row["run_id"])
+                job_id = str(row["job_id"])
+                if state is AttemptState.ABANDONED:
+                    cursor.execute(
+                        "UPDATE ronin_runs SET state='pending',not_before=%s,"
+                        "updated_at=%s,row_version=row_version+1 WHERE run_id=%s",
+                        (str(current), str(current), run_id),
+                    )
+                else:
+                    run_state = {
+                        AttemptState.SUCCEEDED: "succeeded",
+                        AttemptState.CANCELLED: "cancelled",
+                    }.get(state, "failed")
+                    job_state = {
+                        AttemptState.SUCCEEDED: "succeeded",
+                        AttemptState.CANCELLED: "cancelled",
+                    }.get(state, "failed")
+                    cursor.execute(
+                        "UPDATE ronin_runs SET state=%s,updated_at=%s,"
+                        "row_version=row_version+1 WHERE run_id=%s",
+                        (run_state, str(current), run_id),
+                    )
+                    cursor.execute(
+                        "UPDATE ronin_jobs SET state=%s,failure_code=%s,updated_at=%s,"
+                        "row_version=row_version+1 WHERE job_id=%s",
+                        (
+                            job_state,
+                            None if state is not AttemptState.FAILED else failure_code,
+                            str(current),
+                            job_id,
+                        ),
+                    )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
     def list_jobs(
         self,
         *,
