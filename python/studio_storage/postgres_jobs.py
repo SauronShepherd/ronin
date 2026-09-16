@@ -25,9 +25,11 @@ from studio_orchestrator import (
     Run,
     RunId,
     StoredCellResult,
+    StoredEvidenceRef,
     StoredExecutionEvent,
 )
 
+from studio_storage.limits import MAX_EVIDENCE_REFS_PER_RUN
 from studio_storage.memory import IdempotencyConflict
 from studio_storage.pagination import decode_job_cursor, encode_job_cursor, validate_limit
 
@@ -481,6 +483,74 @@ class PostgresJobReadPort:
                         result.state,
                         result.result_json,
                         str(result.updated_at),
+                    ),
+                )
+                cursor.execute(
+                    "UPDATE ronin_attempts SET updated_at=%s,row_version=row_version+1 "
+                    "WHERE attempt_id=%s",
+                    (str(current), str(attempt_id)),
+                )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def put_evidence(
+        self,
+        attempt_id: AttemptId,
+        ref: StoredEvidenceRef,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant | str,
+    ) -> None:
+        """Persist one evidence reference under a fenced attempt lease."""
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT run_id,state,lease_owner,lease_token,lease_expires_at "
+                    "FROM ronin_attempts WHERE attempt_id=%s FOR UPDATE",
+                    (str(attempt_id),),
+                )
+                attempt = cursor.fetchone()
+                if (
+                    attempt is None
+                    or attempt["state"] not in {"leased", "running"}
+                    or attempt["lease_owner"] != owner
+                    or attempt["lease_token"] != str(lease_token)
+                    or attempt["lease_expires_at"] is None
+                    or Instant(str(attempt["lease_expires_at"])) <= current
+                ):
+                    raise LeaseLost("lease ownership no longer matches")
+                if ref.run_id != RunId(str(attempt["run_id"])):
+                    raise ValueError("evidence run does not match attempt")
+                cursor.execute(
+                    "SELECT COUNT(*) AS count FROM ronin_evidence_refs WHERE run_id=%s",
+                    (str(ref.run_id),),
+                )
+                if int(cursor.fetchone()["count"]) >= MAX_EVIDENCE_REFS_PER_RUN:
+                    raise ValueError(
+                        f"run evidence must contain at most {MAX_EVIDENCE_REFS_PER_RUN} references"
+                    )
+                cursor.execute(
+                    "INSERT INTO ronin_evidence_refs(run_id,cell_id,role,digest_algorithm,"
+                    "digest,media_type,size_bytes,storage_ref,availability,unavailable_reason) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (
+                        str(ref.run_id),
+                        ref.cell_id,
+                        ref.role,
+                        ref.digest_algorithm,
+                        ref.digest,
+                        ref.media_type,
+                        ref.size_bytes,
+                        ref.storage_ref,
+                        ref.availability.value,
+                        ref.unavailable_reason,
                     ),
                 )
                 cursor.execute(
