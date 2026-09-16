@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from studio_core import (
     ConnectionDefinition,
     ConnectionId,
@@ -88,9 +87,7 @@ def test_connection_bundle_export_is_deterministic_and_requests_secret_remap(
     assert item.logical_ref == f"connection:{_CONNECTION}"
     assert item.path.startswith("objects/connection/")
     assert str(_CONNECTION) not in item.path
-    assert built.inventory.unresolved_bindings == (
-        built.inventory.objects[0].binding_requests[0],
-    )
+    assert built.inventory.unresolved_bindings == (built.inventory.objects[0].binding_requests[0],)
     request = built.inventory.unresolved_bindings[0]
     assert request.kind == "secret"
     assert request.source_ref == str(_SOURCE_SECRET)
@@ -332,6 +329,4 @@ def test_existing_connection_rejects_different_secret_remap_at_atomic_create(
             resolutions=(different,),
             now=_NOW,
         )
-    assert connections.get_connection(_WS, _CONNECTION) == _definition(
-        secret_ref=_TARGET_SECRET
-    )
+    assert connections.get_connection(_WS, _CONNECTION) == _definition(secret_ref=_TARGET_SECRET)

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_core.portability import (
     BindingRequest,
     BundleEntry,

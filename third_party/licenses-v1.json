@@ -1,0 +1,598 @@
+{
+  "lock_file": "requirements-dev.lock",
+  "lock_sha256": "976a3d8148eb5d89ced8f6f34eb9e7d24719f5817ec30d85e1820c74ca416a30",
+  "packages": [
+    {
+      "declared_license": "BSD-3-Clause",
+      "declared_license_files": [
+        "LICENSE.txt"
+      ],
+      "direct": false,
+      "evidence_sha256": "6d71dea41d6b69207e22a1c7a9b3f38c955980b13ce5403640444ad439919370",
+      "license_files": [
+        {
+          "path": "click-8.5.0.dist-info/licenses/LICENSE.txt",
+          "sha256": "9a8ad106a394e853bfe21f42f4e72d592819a22805d991b5f3275029292b658d"
+        }
+      ],
+      "package": "click",
+      "source": "https://github.com/pallets/click/",
+      "version": "8.5.0"
+    },
+    {
+      "declared_license": "OSI Approved :: BSD License",
+      "declared_license_files": [
+        "LICENSE.txt"
+      ],
+      "direct": false,
+      "evidence_sha256": "1637e91a1ab5aecbee79e01fda53e5b01a05c12ec826146ef1a2a9ab6124c757",
+      "license_files": [
+        {
+          "path": "colorama-0.4.6.dist-info/licenses/LICENSE.txt",
+          "sha256": "cac35c02686e5d04a5a7140bfb3b36e73aed496656e891102e428886d7930318"
+        }
+      ],
+      "package": "colorama",
+      "source": "https://github.com/tartley/colorama",
+      "version": "0.4.6"
+    },
+    {
+      "declared_license": "Apache-2.0",
+      "declared_license_files": [
+        "LICENSE.txt",
+        "NOTICE.txt"
+      ],
+      "direct": false,
+      "evidence_sha256": "277051905e939128f0266ce33155e1f408bd58a6343798a8b948159a3093a259",
+      "license_files": [
+        {
+          "path": "coverage-7.16.0.dist-info/licenses/LICENSE.txt",
+          "sha256": "eb3d7b5485466acbd81f2b496f595ab637d2792e268206b27d99e793bdb67549"
+        },
+        {
+          "path": "coverage-7.16.0.dist-info/licenses/NOTICE.txt",
+          "sha256": "445e6e7876ff25ff16254af9ba7cb38939b108bad08034ab7742334473ad0e34"
+        }
+      ],
+      "package": "coverage",
+      "source": "https://github.com/coveragepy/coveragepy",
+      "version": "7.16.0"
+    },
+    {
+      "declared_license": "MPL-2.0",
+      "declared_license_files": [
+        "LICENSE.txt"
+      ],
+      "direct": true,
+      "evidence_sha256": "662608a827275004199882cf3f37d6ed3d119301dbc904613d3988990baa8874",
+      "license_files": [
+        {
+          "path": "hypothesis-6.167.1.dist-info/licenses/LICENSE.txt",
+          "sha256": "ac89037bac63550644dce8cf32c6765e5fab9dc1a1ce94b89f8a805f341a6750"
+        }
+      ],
+      "package": "hypothesis",
+      "source": "https://hypothesis.works",
+      "version": "6.167.1"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "d18d43d5559abc6956c38079e94fafb58c1b3dff86d2043df3ac6c1269643145",
+      "license_files": [
+        {
+          "path": "iniconfig-2.3.0.dist-info/licenses/LICENSE",
+          "sha256": "3409fa91f7ace557894632676656e32264fe5ef7581535725dc9a23774551bd4"
+        }
+      ],
+      "package": "iniconfig",
+      "source": "https://github.com/pytest-dev/iniconfig",
+      "version": "2.3.0"
+    },
+    {
+      "declared_license": "All contributions towards LibCST are MIT licensed.\n\nSome Python files have been derived from the standard library and are therefore\nPSF licensed. Modifications on these files are dual licensed (both MIT and\nPSF). These files are:\n\n- libcst/_parser/base_parser.py\n- libcst/_parser/parso/utils.py\n- libcst/_parser/parso/pgen2/generator.py\n- libcst/_parser/parso/pgen2/grammar_parser.py\n- libcst/_parser/parso/python/py_token.py\n- libcst/_parser/parso/python/tokenize.py\n- libcst/_parser/parso/tests/test_fstring.py\n- libcst/_parser/parso/tests/test_tokenize.py\n- libcst/_parser/parso/tests/test_utils.py\n- native/libcst/src/tokenizer/core/mod.rs\n- native/libcst/src/tokenizer/core/string_types.rs\n\nSome Python files have been taken from dataclasses and are therefore Apache\nlicensed. Modifications on these files are licensed under Apache 2.0 license.\nThese files are:\n\n- libcst/_add_slots.py\n\n-------------------------------------------------------------------------------\n\nMIT License\n\nCopyright (c) Meta Platforms, Inc. and affiliates.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n\n-------------------------------------------------------------------------------\n\nPYTHON SOFTWARE FOUNDATION LICENSE VERSION 2\n\n1. This LICENSE AGREEMENT is between the Python Software Foundation\n(\"PSF\"), and the Individual or Organization (\"Licensee\") accessing and\notherwise using this software (\"Python\") in source or binary form and\nits associated documentation.\n\n2. Subject to the terms and conditions of this License Agreement, PSF hereby\ngrants Licensee a nonexclusive, royalty-free, world-wide license to reproduce,\nanalyze, test, perform and/or display publicly, prepare derivative works,\ndistribute, and otherwise use Python alone or in any derivative version,\nprovided, however, that PSF's License Agreement and PSF's notice of copyright,\ni.e., \"Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,\n2011, 2012, 2013, 2014, 2015 Python Software Foundation; All Rights Reserved\"\nare retained in Python alone or in any derivative version prepared by Licensee.\n\n3. In the event Licensee prepares a derivative work that is based on\nor incorporates Python or any part thereof, and wants to make\nthe derivative work available to others as provided herein, then\nLicensee hereby agrees to include in any such work a brief summary of\nthe changes made to Python.\n\n4. PSF is making Python available to Licensee on an \"AS IS\"\nbasis.  PSF MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR\nIMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, PSF MAKES NO AND\nDISCLAIMS ANY REPRESENTATION OR WARRANTY OF MERCHANTABILITY OR FITNESS\nFOR ANY PARTICULAR PURPOSE OR THAT THE USE OF PYTHON WILL NOT\nINFRINGE ANY THIRD PARTY RIGHTS.\n\n5. PSF SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF PYTHON\nFOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS AS\nA RESULT OF MODIFYING, DISTRIBUTING, OR OTHERWISE USING PYTHON,\nOR ANY DERIVATIVE THEREOF, EVEN IF ADVISED OF THE POSSIBILITY THEREOF.\n\n6. This License Agreement will automatically terminate upon a material\nbreach of its terms and conditions.\n\n7. Nothing in this License Agreement shall be deemed to create any\nrelationship of agency, partnership, or joint venture between PSF and\nLicensee.  This License Agreement does not grant permission to use PSF\ntrademarks or trade name in a trademark sense to endorse or promote\nproducts or services of Licensee, or any third party.\n\n8. By copying, installing or otherwise using Python, Licensee\nagrees to be bound by the terms and conditions of this License\nAgreement.\n\n-------------------------------------------------------------------------------\n\nAPACHE LICENSE, VERSION 2.0\n\nhttp://www.apache.org/licenses/LICENSE-2.0",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "c067231473babf97d523d7c7098febb6e0ac4a801e8ab576f8eb64a442c4c9ad",
+      "license_files": [
+        {
+          "path": "libcst-1.9.0.dist-info/licenses/LICENSE",
+          "sha256": "f7eccb6b4e8f60c81199175636977df0fb54a8f17a83dd825804f027f51815e2"
+        }
+      ],
+      "package": "libcst",
+      "source": null,
+      "version": "1.9.0"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "ffb61af9c6e584cbe077e55460c571072e707fb9d5cf27fcb7c489c7c798f081",
+      "license_files": [
+        {
+          "path": "librt-0.15.0.dist-info/licenses/LICENSE",
+          "sha256": "81b7ac7e5dc9410dd4aa4c8f8c5884b43cb821137904dc247b381132389b6aa8"
+        }
+      ],
+      "package": "librt",
+      "source": "https://github.com/mypyc/librt",
+      "version": "0.15.0"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "b9af514588f48e6cd5250cf39cb6b0829910b706e6183ff5b5c08bb1cdca437e",
+      "license_files": [
+        {
+          "path": "linkify_it_py-2.2.0.dist-info/licenses/LICENSE",
+          "sha256": "db5d71f61f0f781f5078df4b6a00d5d3c799fb0bb82bcf448a688e9762618a2e"
+        }
+      ],
+      "package": "linkify-it-py",
+      "source": "https://github.com/tsutsu3/linkify-it-py",
+      "version": "2.2.0"
+    },
+    {
+      "declared_license": "OSI Approved :: MIT License",
+      "declared_license_files": [
+        "LICENSE",
+        "LICENSE.markdown-it"
+      ],
+      "direct": false,
+      "evidence_sha256": "bfb8fe1ab99ed2e8af82ba79b58b7992b2aec701235b9220a0c16f615728ac6b",
+      "license_files": [
+        {
+          "path": "markdown_it_py-4.2.0.dist-info/licenses/LICENSE",
+          "sha256": "4a2260d6e2cd0f5a151a1e86dbfe7d3ed552b1e2beabf9941c1ba5c49cbce484"
+        },
+        {
+          "path": "markdown_it_py-4.2.0.dist-info/licenses/LICENSE.markdown-it",
+          "sha256": "792c48c5a849a15fdf9e37e8bcf9e6d1dd13b32b46c642a748a0a46a9919d473"
+        }
+      ],
+      "package": "markdown-it-py",
+      "source": "https://github.com/executablebooks/markdown-it-py",
+      "version": "4.2.0"
+    },
+    {
+      "declared_license": "OSI Approved :: MIT License",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "f3296eb119945c04ac9fb4a50d7819edd2d51df51ae9ee2d5d354c16ef98838e",
+      "license_files": [
+        {
+          "path": "mdit_py_plugins-0.6.1.dist-info/licenses/LICENSE",
+          "sha256": "4a2260d6e2cd0f5a151a1e86dbfe7d3ed552b1e2beabf9941c1ba5c49cbce484"
+        },
+        {
+          "path": "mdit_py_plugins/admon/LICENSE",
+          "sha256": "699355a44cb248631a4cde542029b593b7e6663823b0518338e85fd65360bac3"
+        },
+        {
+          "path": "mdit_py_plugins/container/LICENSE",
+          "sha256": "c91339910d300f163edcaddbfb3909f1cffae19a496b7fe3935a9a4073dc305a"
+        },
+        {
+          "path": "mdit_py_plugins/deflist/LICENSE",
+          "sha256": "81d61236a5f25294b2dad0c866d4ad6a40b865148b28df9a71f49ba771a6c54b"
+        },
+        {
+          "path": "mdit_py_plugins/footnote/LICENSE",
+          "sha256": "81d61236a5f25294b2dad0c866d4ad6a40b865148b28df9a71f49ba771a6c54b"
+        },
+        {
+          "path": "mdit_py_plugins/front_matter/LICENSE",
+          "sha256": "9e1bc1fafae020b5c33cc9cb745c707a5addf109cd814f0dac2d41424b83554a"
+        },
+        {
+          "path": "mdit_py_plugins/texmath/LICENSE",
+          "sha256": "012a56cf9e23a2917336178cca417ab4c88fc64ad7086d621d6a8b956593629f"
+        }
+      ],
+      "package": "mdit-py-plugins",
+      "source": "https://github.com/executablebooks/mdit-py-plugins",
+      "version": "0.6.1"
+    },
+    {
+      "declared_license": "OSI Approved :: MIT License",
+      "declared_license_files": [],
+      "direct": false,
+      "evidence_sha256": "c7746166ee532fe65755ae1c1a290efe0fbd4ae2196f3c387adee824ce677e89",
+      "license_files": [
+        {
+          "path": "mdurl-0.1.2.dist-info/LICENSE",
+          "sha256": "7c605df6e28667a9603118e98274f64a49ce3eed0d26fccce9534a345e0ef955"
+        }
+      ],
+      "package": "mdurl",
+      "source": "https://github.com/executablebooks/mdurl",
+      "version": "0.1.2"
+    },
+    {
+      "declared_license": "BSD-3-Clause",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": true,
+      "evidence_sha256": "7de49bfc193d309152be61c4bc1ac3c3445ffc3868dd67dd11e76b02fcca4524",
+      "license_files": [
+        {
+          "path": "mutmut-3.7.0.dist-info/licenses/LICENSE",
+          "sha256": "bb2efac8fedf0c74ed237ed589ae172df148904a5781a7ec9999092dcaf6f439"
+        }
+      ],
+      "package": "mutmut",
+      "source": "https://github.com/boxed/mutmut",
+      "version": "3.7.0"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE",
+        "mypy/typeshed/LICENSE"
+      ],
+      "direct": true,
+      "evidence_sha256": "d07b140d9f067b734edcfd133b97c568937059a775c96b5d15e8174e65441462",
+      "license_files": [
+        {
+          "path": "mypy-1.20.2.dist-info/licenses/LICENSE",
+          "sha256": "1cdee80ea9363fbe69582df40fa64e1853d7647fb4978c2b376f5854d88142be"
+        },
+        {
+          "path": "mypy-1.20.2.dist-info/licenses/mypy/typeshed/LICENSE",
+          "sha256": "13c71e0962836d8850762bda0f6234ff213034871fa66b6c42962549d73517a4"
+        },
+        {
+          "path": "mypy/typeshed/LICENSE",
+          "sha256": "13c71e0962836d8850762bda0f6234ff213034871fa66b6c42962549d73517a4"
+        }
+      ],
+      "package": "mypy",
+      "source": "https://www.mypy-lang.org/",
+      "version": "1.20.2"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "0cda063bc6ea019e196d4159bba6bdde6ec2ae7c1822439cc3464f2dc26fd6d8",
+      "license_files": [
+        {
+          "path": "mypy_extensions-1.1.0.dist-info/licenses/LICENSE",
+          "sha256": "a50450da1d53cd777b80ced77c58ff96abe0ccd879706bd142c3ec20e245f0b4"
+        }
+      ],
+      "package": "mypy-extensions",
+      "source": "https://github.com/python/mypy_extensions",
+      "version": "1.1.0"
+    },
+    {
+      "declared_license": "Apache-2.0 OR BSD-2-Clause",
+      "declared_license_files": [
+        "LICENSE",
+        "LICENSE.APACHE",
+        "LICENSE.BSD"
+      ],
+      "direct": false,
+      "evidence_sha256": "d3a6046c4f3196a97a5751e931cadbeebf280fb0dec4f9df8365b83359d4a2c6",
+      "license_files": [
+        {
+          "path": "packaging-26.3.dist-info/licenses/LICENSE",
+          "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48"
+        },
+        {
+          "path": "packaging-26.3.dist-info/licenses/LICENSE.APACHE",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+        },
+        {
+          "path": "packaging-26.3.dist-info/licenses/LICENSE.BSD",
+          "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5"
+        }
+      ],
+      "package": "packaging",
+      "source": "https://github.com/pypa/packaging",
+      "version": "26.3"
+    },
+    {
+      "declared_license": "OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "74295aa1aeecf52aa9d84566401d2de8ce11da2a2fe459b89a47487a2018044f",
+      "license_files": [
+        {
+          "path": "pathspec-1.1.1.dist-info/licenses/LICENSE",
+          "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
+        }
+      ],
+      "package": "pathspec",
+      "source": "https://github.com/cpburnz/python-pathspec",
+      "version": "1.1.1"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "ed47a85260073547abe0f41c3238280b04f493f874f2dd9d6a71f29a23c2d91f",
+      "license_files": [
+        {
+          "path": "platformdirs-4.11.7.dist-info/licenses/LICENSE",
+          "sha256": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6"
+        }
+      ],
+      "package": "platformdirs",
+      "source": "https://github.com/tox-dev/platformdirs",
+      "version": "4.11.7"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "a89bda56da452a29624f126ceed01a0929c185d84141283d1f696d6aab53745c",
+      "license_files": [
+        {
+          "path": "pluggy-1.6.0.dist-info/licenses/LICENSE",
+          "sha256": "d6b65e6c213a5d0b577911d34d6e5949b9f59d76c238c5071a2f3fc16cfb2606"
+        }
+      ],
+      "package": "pluggy",
+      "source": null,
+      "version": "1.6.0"
+    },
+    {
+      "declared_license": "BSD-2-Clause",
+      "declared_license_files": [
+        "AUTHORS",
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "d2df641cf5a5054a361975c792d2659f355ff7647f2adad558d2e7b183546f01",
+      "license_files": [
+        {
+          "path": "pygments-2.21.0.dist-info/licenses/AUTHORS",
+          "sha256": "71a83872ad82f57be692cf827e048e2cd51d45169cfa1ea3f28706d97a872c0f"
+        },
+        {
+          "path": "pygments-2.21.0.dist-info/licenses/LICENSE",
+          "sha256": "a9d66f1d526df02e29dce73436d34e56e8632f46c275bbdffc70569e882f9f17"
+        }
+      ],
+      "package": "pygments",
+      "source": "https://pygments.org",
+      "version": "2.21.0"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": true,
+      "evidence_sha256": "35cb24c22c8c17703533a1b8b63d68e71a46c896f048e36bd705c443193fce1e",
+      "license_files": [
+        {
+          "path": "pytest-9.1.1.dist-info/licenses/LICENSE",
+          "sha256": "ca836a5f9ecca3b2f350230faa20a48fb8b145653b5568d784862df864706b9b"
+        }
+      ],
+      "package": "pytest",
+      "source": "https://docs.pytest.org/en/latest/",
+      "version": "9.1.1"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "AUTHORS.rst",
+        "LICENSE"
+      ],
+      "direct": true,
+      "evidence_sha256": "0ac1c8b37720c93c3692d4d950375353593394825ca3f395c1be56b589da98c7",
+      "license_files": [
+        {
+          "path": "pytest_cov-6.3.0.dist-info/licenses/AUTHORS.rst",
+          "sha256": "1c738308a35392f28d86f210d73a4ddf4590b9d25e7b4dc4e40bf223a55a26f2"
+        },
+        {
+          "path": "pytest_cov-6.3.0.dist-info/licenses/LICENSE",
+          "sha256": "835586ae156766a24e3c103fbc55d9af6b1a16df57ca932c97482a2737fd83d5"
+        }
+      ],
+      "package": "pytest-cov",
+      "source": "https://github.com/pytest-dev/pytest-cov",
+      "version": "6.3.0"
+    },
+    {
+      "declared_license": "OSI Approved :: MIT License",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": true,
+      "evidence_sha256": "20929a98e4040ce58c5c8b5ef34db59782f0e7e552282273b3eb0ee87ad3e631",
+      "license_files": [
+        {
+          "path": "pytest_randomly-3.16.0.dist-info/LICENSE",
+          "sha256": "d9705af1319332f41bedb7845e1dc9e71d83c07c29cfb534f1ceb2f13d3f60dc"
+        }
+      ],
+      "package": "pytest-randomly",
+      "source": "https://github.com/pytest-dev/pytest-randomly",
+      "version": "3.16.0"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "bcc6ffcee1ae42bf56ac1bd4d6b70b9294cded2c8c7a35a913a423e380c92974",
+      "license_files": [
+        {
+          "path": "pyyaml-6.0.3.dist-info/licenses/LICENSE",
+          "sha256": "8d3928f9dc4490fd635707cb88eb26bd764102a7282954307d3e5167a577e8a4"
+        }
+      ],
+      "package": "pyyaml",
+      "source": "https://github.com/yaml/pyyaml",
+      "version": "6.0.3"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "46c6be4cd13322209ea1fcd1d303a4e7099503b844ce28707370cf8533beb737",
+      "license_files": [
+        {
+          "path": "pyyaml_ft-8.0.0.dist-info/licenses/LICENSE",
+          "sha256": "8d3928f9dc4490fd635707cb88eb26bd764102a7282954307d3e5167a577e8a4"
+        }
+      ],
+      "package": "pyyaml-ft",
+      "source": "https://github.com/Quansight-Labs/pyyaml-ft",
+      "version": "8.0.0"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "5398511cd1575e1c8999ea2d81dff3da888b86f52acf1e033a040702400406b2",
+      "license_files": [
+        {
+          "path": "rich-15.0.0.dist-info/licenses/LICENSE",
+          "sha256": "deed7c17a4318158190a3ea239cc879a5a50271cebb98ae7025f48fbe58dca15"
+        }
+      ],
+      "package": "rich",
+      "source": "https://github.com/Textualize/rich",
+      "version": "15.0.0"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": true,
+      "evidence_sha256": "bd6e3b74c5303e05c10fec359b586d28965879d1b7155d6a71bb8924b3f06adc",
+      "license_files": [
+        {
+          "path": "ruff-0.16.6.dist-info/licenses/LICENSE",
+          "sha256": "2597d854122b77ddc71971564ca2350a37608575ce324adc5650a2b2051c8f18"
+        }
+      ],
+      "package": "ruff",
+      "source": "https://github.com/astral-sh/ruff",
+      "version": "0.16.6"
+    },
+    {
+      "declared_license": "BSD-3-Clause",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "e421d530810466d70a63c8bf2ca59fd40c44c75df769c6a137f84f1b40d04a63",
+      "license_files": [
+        {
+          "path": "setproctitle-1.3.7.dist-info/licenses/LICENSE",
+          "sha256": "1d3f6c835788afce09a7a3e151dbff8a27ad94b412db615f3b860ea781ec50e3"
+        }
+      ],
+      "package": "setproctitle",
+      "source": "https://github.com/dvarrazzo/py-setproctitle",
+      "version": "1.3.7"
+    },
+    {
+      "declared_license": "Apache 2.0",
+      "declared_license_files": [],
+      "direct": false,
+      "evidence_sha256": "ece98cbed62f3367af292cb6dafdabfbc9448c22fb42b9eadddc6d7945c3dc3c",
+      "license_files": [
+        {
+          "path": "sortedcontainers-2.4.0.dist-info/LICENSE",
+          "sha256": "1db7cae7fce6452e2e608e401a0f953e0133e4c2d75db69fb8ae851d2086f5b6"
+        }
+      ],
+      "package": "sortedcontainers",
+      "source": "http://www.grantjenks.com/docs/sortedcontainers/",
+      "version": "2.4.0"
+    },
+    {
+      "declared_license": "MIT",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "002dbe17c2585383e0d9caafa903e984d59cde91ed24f8e797364377764f4211",
+      "license_files": [
+        {
+          "path": "textual-8.2.8.dist-info/licenses/LICENSE",
+          "sha256": "94f290a762376dfdb7768e42070618b0abfd2a2799eab1b1c097816c3a39eb57"
+        }
+      ],
+      "package": "textual",
+      "source": "https://github.com/Textualize/textual",
+      "version": "8.2.8"
+    },
+    {
+      "declared_license": "PSF-2.0",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": false,
+      "evidence_sha256": "7972efa37d0713c9af13952a5283a6fc3048ec8bab90a3f095626ac93c03912a",
+      "license_files": [
+        {
+          "path": "typing_extensions-4.16.0.dist-info/licenses/LICENSE",
+          "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf"
+        }
+      ],
+      "package": "typing-extensions",
+      "source": "https://github.com/python/typing_extensions",
+      "version": "4.16.0"
+    },
+    {
+      "declared_license": "Apache-2.0",
+      "declared_license_files": [
+        "LICENSE",
+        "licenses/LICENSE_APACHE"
+      ],
+      "direct": true,
+      "evidence_sha256": "988d8d5f582733517ee436c2b197cfccf7464b1ce6b8723e727b8074a5854763",
+      "license_files": [
+        {
+          "path": "tzdata-2026.4.dist-info/licenses/LICENSE",
+          "sha256": "df58f69ea88683035d720b5375bcef0cf5aeaa98a1d098d572e0992c378deb46"
+        },
+        {
+          "path": "tzdata-2026.4.dist-info/licenses/licenses/LICENSE_APACHE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        }
+      ],
+      "package": "tzdata",
+      "source": "https://github.com/python/tzdata",
+      "version": "2026.4"
+    }
+  ],
+  "schema_version": 1
+}

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sqlite3
+
 from studio_core import WorkflowRunId, WorkspaceId
 from studio_orchestrator import Instant, Job, JobId, JobState
 
@@ -15,7 +17,7 @@ from .scheduler_fencing import TaskAttemptId
 
 def _finish_workflow_if_cancelled(
     store: SchedulerExecutionLinkStore,
-    connection,
+    connection: sqlite3.Connection,
     workspace_id: WorkspaceId,
     workflow_run_id: WorkflowRunId,
     *,

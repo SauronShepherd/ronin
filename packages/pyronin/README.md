@@ -29,6 +29,19 @@ result = job.wait()
 print(result.state)
 ```
 
+## Query registered Parquet data
+
+When the server has an SQL engine configured, the SDK exposes the bounded,
+project-authorized read-only query surface:
+
+```python
+result = ronin.execute_sql(
+    project="demo",
+    sql="SELECT count(*) AS rows FROM events",
+)
+print(result.columns[0].name, result.rows)
+```
+
 The SDK is intentionally a control-plane client. It does not execute Python, Spark, Docker, Kubernetes, Fabric, Databricks, or other provider runtimes itself. Those concerns remain behind Ronin server/orchestrator adapters.
 
 ## Initial API
@@ -40,6 +53,7 @@ The SDK is intentionally a control-plane client. It does not execute Python, Spa
 - `JobHandle.wait()`
 - `JobHandle.cancel()`
 - `JobHandle.events()`
+- `Ronin.execute_sql(...)`
 
 Transports are replaceable so HTTP is not embedded in the public job model. Authentication is also transport-side; tokens are never persisted by job objects.
 

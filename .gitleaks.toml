@@ -1,0 +1,3 @@
+[allowlist]
+description = "Known non-secret static bearer tokens used only by the local HTTP E2E fixture."
+commits = ["8beea36ce50347d054dac3fe2c09a98209132632"]

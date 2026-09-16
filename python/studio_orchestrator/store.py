@@ -137,7 +137,10 @@ class StoredEvidenceRef:
                 raise ValueError("unavailable evidence requires a bounded trimmed reason")
             return
         if any(value is None for value in identity):
-            raise ValueError("available, missing, and tombstoned evidence require content identity")
+            raise ValueError(
+                "available, missing, and tombstoned evidence require content identity; "
+                "unavailable evidence must omit it"
+            )
         if self.digest_algorithm != "sha256":
             raise ValueError("unsupported evidence digest algorithm")
         digest = self.digest
@@ -242,6 +245,7 @@ class JobStore(Protocol):
         self,
         *,
         project_id: str | None,
+        project_ids: tuple[str, ...] | None = None,
         state: JobState | None,
         limit: int,
         cursor: str | None,
