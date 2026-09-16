@@ -59,6 +59,7 @@ from studio_storage.ports import (
     PagedArtifactStore,
     WorkspaceStore,
 )
+from studio_storage.postgres_audit import PostgresAuditStore
 from studio_storage.postgres_core import PostgresDependencyError, PostgresMetadataStore
 from studio_storage.postgres_jobs import PostgresJobReadPort
 from studio_storage.quality import (
@@ -138,6 +139,7 @@ __all__ = (
     "collect_unreferenced",
     "MountedFileSecretResolver",
     "OntologyConflict",
+    "PostgresAuditStore",
     "PostgresDependencyError",
     "PostgresMetadataStore",
     "PostgresJobReadPort",

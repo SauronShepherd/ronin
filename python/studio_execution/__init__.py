@@ -25,6 +25,14 @@ from studio_orchestrator import (
 )
 from studio_storage import BoundedAsyncJobStore
 
+from .environment_service import (
+    DeploymentBindingService,
+    EnvironmentService,
+    EnvironmentServiceConflict,
+    EnvironmentServiceError,
+    EnvironmentServiceNotFound,
+)
+
 
 @dataclass(frozen=True, slots=True)
 class WorkerPollResult:
@@ -255,4 +263,12 @@ class DurableExecutionService:
         )
 
 
-__all__ = ("DurableExecutionService", "WorkerPollResult")
+__all__ = (
+    "DeploymentBindingService",
+    "DurableExecutionService",
+    "EnvironmentService",
+    "EnvironmentServiceConflict",
+    "EnvironmentServiceError",
+    "EnvironmentServiceNotFound",
+    "WorkerPollResult",
+)
