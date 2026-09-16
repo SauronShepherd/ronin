@@ -31,6 +31,17 @@ class ArtifactPage:
     next_cursor: str | None
     truncated: bool
 
+    def __post_init__(self) -> None:
+        if any(
+            len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest)
+            for digest in self.digests
+        ):
+            raise ValueError("artifact page contains an invalid SHA-256 digest")
+        if self.next_cursor is not None and not self.next_cursor:
+            raise ValueError("artifact page cursor must be non-empty when present")
+        if self.truncated != (self.next_cursor is not None):
+            raise ValueError("truncated artifact page must have exactly one cursor")
+
 
 class LocalArtifactStore:
     def __init__(self, root: Path) -> None:
