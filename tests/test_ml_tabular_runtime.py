@@ -41,6 +41,13 @@ def _classification_rows():
     )
 
 
+def _regression_rows(count: int):
+    return tuple(
+        {"x": float(index), "target": float(index * 2 + 1)}
+        for index in range(count)
+    )
+
+
 def test_classification_training_and_prediction() -> None:
     trained = train_tabular(
         _classification_rows(),
@@ -49,6 +56,63 @@ def test_classification_training_and_prediction() -> None:
     assert dict(trained.metrics)["accuracy"] >= 0.0
     predicted = predict_tabular(trained.artifact_bytes, ({"x": 2.0, "y": 2.0},))
     assert len(predicted) == 1
+
+
+@pytest.mark.parametrize("row_count", (4, 5))
+def test_regression_rejects_test_partition_too_small_for_r2(row_count: int) -> None:
+    with pytest.raises(ValueError, match="at least two test rows"):
+        train_tabular(
+            _regression_rows(row_count),
+            TrainingSpec("regression", "linear_regression", ("x",), "target", 0.2, 7),
+        )
+
+
+@pytest.mark.parametrize("row_count", (4, 5))
+def test_binary_classification_rejects_test_partition_smaller_than_class_count(
+    row_count: int,
+) -> None:
+    rows = tuple(
+        {
+            "x": float(index),
+            "label": "low" if index < (row_count + 1) // 2 else "high",
+        }
+        for index in range(row_count)
+    )
+    with pytest.raises(ValueError, match="test split must contain at least one row per target class"):
+        train_tabular(
+            rows,
+            TrainingSpec("classification", "logistic_regression", ("x",), "label", 0.2, 7),
+        )
+
+
+def test_classification_rejects_singleton_minority_class() -> None:
+    rows = (
+        {"x": 0.0, "label": "majority"},
+        {"x": 1.0, "label": "majority"},
+        {"x": 2.0, "label": "majority"},
+        {"x": 3.0, "label": "minority"},
+    )
+    with pytest.raises(ValueError, match="at least two rows in every target class"):
+        train_tabular(
+            rows,
+            TrainingSpec("classification", "logistic_regression", ("x",), "label", 0.4, 7),
+        )
+
+
+def test_classification_rejects_very_small_test_fraction() -> None:
+    with pytest.raises(ValueError, match="test split must contain at least one row per target class"):
+        train_tabular(
+            _classification_rows(),
+            TrainingSpec("classification", "logistic_regression", ("x", "y"), "label", 0.01, 7),
+        )
+
+
+def test_nearby_regression_split_remains_feasible() -> None:
+    trained = train_tabular(
+        _regression_rows(6),
+        TrainingSpec("regression", "linear_regression", ("x",), "target", 0.34, 7),
+    )
+    assert set(dict(trained.metrics)) == {"mae", "r2", "rmse"}
 
 
 def test_training_service_records_run_and_registered_digest(tmp_path: Path) -> None:
