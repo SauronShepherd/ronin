@@ -40,7 +40,7 @@ jobs:
             --volume "$GITHUB_WORKSPACE:/repo:ro" \
             --volume "$RUNNER_TEMP:/out" \
             "$image" \
-            git --redact --no-banner --log-opts="$protected_history_ref" \
+            --config=/repo/.gitleaks.toml git --redact --no-banner --log-opts="$protected_history_ref" \
             --report-format=json --report-path=/out/gitleaks-history.json /repo
           history_status=$?
 
@@ -50,7 +50,7 @@ jobs:
               --volume "$GITHUB_WORKSPACE:/repo:ro" \
               --volume "$RUNNER_TEMP:/out" \
               "$image" \
-              git --redact --no-banner --log-opts="$candidate_history_ref" \
+              --config=/repo/.gitleaks.toml git --redact --no-banner --log-opts="$candidate_history_ref" \
               --report-format=json --report-path=/out/gitleaks-candidate-history.json /repo
             candidate_status=$?
           fi
@@ -59,7 +59,7 @@ jobs:
             --volume "$GITHUB_WORKSPACE:/repo:ro" \
             --volume "$RUNNER_TEMP:/out" \
             "$image" \
-            dir --redact --no-banner --report-format=json \
+            --config=/repo/.gitleaks.toml dir --redact --no-banner --report-format=json \
             --report-path=/out/gitleaks-tree.json /repo
           tree_status=$?
           set -e
@@ -112,7 +112,7 @@ jobs:
             if docker run --rm \
               --volume "$fixture:/repo:ro" \
               "$image" \
-              git --redact --no-banner --log-opts="$base_sha..HEAD" /repo; then
+              --config=/repo/.gitleaks.toml git --redact --no-banner --log-opts="$base_sha..HEAD" /repo; then
               echo "Gitleaks failed to reject a removed synthetic detector fixture in candidate history." >&2
               rm -rf "$fixture"
               exit 1
@@ -120,7 +120,7 @@ jobs:
             if ! docker run --rm \
               --volume "$fixture:/repo:ro" \
               "$image" \
-              dir --redact --no-banner /repo; then
+              --config=/repo/.gitleaks.toml dir --redact --no-banner /repo; then
               echo "Gitleaks unexpectedly rejected the clean final tree in the negative candidate-history fixture." >&2
               rm -rf "$fixture"
               exit 1
@@ -146,7 +146,7 @@ jobs:
             if ! docker run --rm \
               --volume "$fixture:/repo:ro" \
               "$image" \
-              git --redact --no-banner --log-opts="$base_sha..HEAD" /repo; then
+              --config=/repo/.gitleaks.toml git --redact --no-banner --log-opts="$base_sha..HEAD" /repo; then
               echo "Gitleaks unexpectedly rejected clean candidate history." >&2
               rm -rf "$fixture"
               exit 1
