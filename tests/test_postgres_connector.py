@@ -41,10 +41,10 @@ class _Database:
 
 class _Sql:
     class _Statement:
-        def format(self, *_args: object) -> "_Sql._Statement":
+        def format(self, *_args: object) -> _Sql._Statement:
             return self
 
-    def SQL(self, _value: str) -> "_Sql._Statement":
+    def SQL(self, _value: str) -> _Sql._Statement:
         return self._Statement()
 
     def Identifier(self, value: str) -> str:
@@ -70,7 +70,7 @@ def test_postgres_snapshot_checkpoint_suppresses_unchanged_rows(
     database = _Database()
     monkeypatch.setattr(
         "studio_connectors.postgres._psycopg",
-        lambda: (SimpleNamespace(connect=lambda **kwargs: database), _Sql()),
+        lambda: (SimpleNamespace(connect=lambda **_kwargs: database), _Sql()),
     )
     connector = PostgresConnector()
     connection = _connection()
