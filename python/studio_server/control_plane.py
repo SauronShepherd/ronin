@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import base64
 import json
-import socket
 from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -63,10 +62,10 @@ def _now() -> Instant:
 def _workspace_payload(workspace: object) -> dict[str, object]:
     item = cast(object, workspace)
     return {
-        "id": str(getattr(item, "id")),
-        "name": getattr(item, "name"),
-        "description": getattr(item, "description"),
-        "state": getattr(item, "state"),
+        "id": str(item.id),
+        "name": item.name,
+        "description": item.description,
+        "state": item.state,
     }
 
 
@@ -245,7 +244,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         self.connection.settimeout(self._server().request_timeout_seconds)
         try:
             body = self.rfile.read(length)
-        except (TimeoutError, socket.timeout) as exc:
+        except TimeoutError as exc:
             raise TimeoutError("request body read timed out") from exc
         if len(body) != length:
             raise ValueError("request body ended before Content-Length bytes were received")
@@ -289,7 +288,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         return
                     if permitted:
                         visible.append(workspace)
-                visible.sort(key=lambda item: str(getattr(item, "id")))
+                visible.sort(key=lambda item: str(item.id))
                 selected, next_cursor = _page(visible, limit=limit, offset=offset)
                 self._write_json(
                     HTTPStatus.OK,
@@ -501,20 +500,20 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
 
     def _method_or_not_found(self, method: str, segments: tuple[str, ...]) -> None:
         known = False
-        if segments == ("v1", "workspaces"):
-            known = True
-        elif len(segments) == 3 and segments[:2] == ("v1", "workspaces"):
-            known = True
-        elif (
-            len(segments) == 4
+        if (
+            segments == ("v1", "workspaces")
+            or len(segments) == 3
             and segments[:2] == ("v1", "workspaces")
-            and segments[3] in {"archive", "projects"}
-        ):
-            known = True
-        elif (
-            len(segments) == 5
-            and segments[:2] == ("v1", "workspaces")
-            and segments[3] == "projects"
+            or (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] in {"archive", "projects"}
+            )
+            or (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+            )
         ):
             known = True
         if known:
