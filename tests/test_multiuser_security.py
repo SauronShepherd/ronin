@@ -64,6 +64,48 @@ def test_group_role_grants_workspace_permission(tmp_path: Path) -> None:
     assert not denied.allowed
 
 
+def test_forged_actor_group_does_not_grant_workspace_permission(tmp_path: Path) -> None:
+    store = SqliteIdentityStore(tmp_path / "security.sqlite")
+    principal = store.put_principal(_principal())
+    group = store.put_group(Group(GroupId("admins"), "Admins"))
+    store.put_role_binding(
+        RoleBinding(WorkspaceId("workspace"), "group", group.id.value, "admin")
+    )
+    actor = Actor(principal, (group.id,))
+
+    decision = RbacAuthorizer(store).authorize(
+        actor,
+        PolicyRequirement(WorkspaceId("workspace"), "workspace.admin"),
+    )
+
+    assert not decision.allowed
+    assert decision.reason == "no_workspace_role"
+    assert decision.matched_roles == ()
+
+
+def test_revoked_group_membership_denies_stale_actor(tmp_path: Path) -> None:
+    store = SqliteIdentityStore(tmp_path / "security.sqlite")
+    principal = store.put_principal(_principal())
+    group = store.put_group(Group(GroupId("operators"), "Operators"))
+    store.add_group_member(group.id, principal.id)
+    store.put_role_binding(
+        RoleBinding(WorkspaceId("workspace"), "group", group.id.value, "operator")
+    )
+    authorizer = RbacAuthorizer(store)
+    actor = authorizer.actor(principal)
+    assert actor.groups == (group.id,)
+
+    assert store.remove_group_member(group.id, principal.id)
+    decision = authorizer.authorize(
+        actor,
+        PolicyRequirement(WorkspaceId("workspace"), "job.submit"),
+    )
+
+    assert not decision.allowed
+    assert decision.reason == "no_workspace_role"
+    assert decision.matched_roles == ()
+
+
 def test_actor_context_is_request_local() -> None:
     actor = Actor(_principal())
     assert current_actor() is None
