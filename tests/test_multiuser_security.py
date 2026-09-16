@@ -1,9 +1,9 @@
 import json
+import sqlite3
 import time
 from pathlib import Path
 
 import pytest
-
 from studio_core import WorkspaceId
 from studio_security import (
     Actor,
@@ -46,9 +46,7 @@ def test_group_role_grants_workspace_permission(tmp_path: Path) -> None:
     principal = store.put_principal(_principal())
     group = store.put_group(Group(GroupId("engineers"), "Engineers"))
     store.add_group_member(group.id, principal.id)
-    store.put_role_binding(
-        RoleBinding(WorkspaceId("workspace"), "group", group.id.value, "editor")
-    )
+    store.put_role_binding(RoleBinding(WorkspaceId("workspace"), "group", group.id.value, "editor"))
     authorizer = RbacAuthorizer(store)
     actor = authorizer.actor(principal)
     allowed = authorizer.authorize(
@@ -62,6 +60,49 @@ def test_group_role_grants_workspace_permission(tmp_path: Path) -> None:
         PolicyRequirement(WorkspaceId("workspace"), "audit.read"),
     )
     assert not denied.allowed
+
+
+def test_database_rejects_invalid_role_binding_shape(tmp_path: Path) -> None:
+    store = SqliteIdentityStore(tmp_path / "security.sqlite")
+    with pytest.raises(sqlite3.IntegrityError), store._connect() as connection:
+        connection.execute(
+            "INSERT INTO security_role_bindings "
+            "(workspace_id, subject_kind, subject_id, role) VALUES (?, ?, ?, ?)",
+            ("workspace", "principal", "alice", "unknown"),
+        )
+
+
+def test_legacy_role_binding_schema_is_migrated_with_constraints(tmp_path: Path) -> None:
+    database = tmp_path / "security.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            "CREATE TABLE security_role_bindings (workspace_id TEXT NOT NULL, "
+            "subject_kind TEXT NOT NULL, subject_id TEXT NOT NULL, role TEXT NOT NULL, "
+            "PRIMARY KEY(workspace_id, subject_kind, subject_id, role))"
+        )
+        connection.commit()
+    SqliteIdentityStore(database)
+    with pytest.raises(sqlite3.IntegrityError), sqlite3.connect(database) as connection:
+        connection.execute(
+            "INSERT INTO security_role_bindings VALUES (?, ?, ?, ?)",
+            ("workspace", "principal", "alice", "unknown"),
+        )
+
+
+def test_authorization_ignores_caller_supplied_group_claims(tmp_path: Path) -> None:
+    store = SqliteIdentityStore(tmp_path / "security.sqlite")
+    principal = store.put_principal(_principal())
+    group = store.put_group(Group(GroupId("admins"), "Administrators"))
+    store.put_role_binding(RoleBinding(WorkspaceId("workspace"), "group", group.id.value, "admin"))
+    forged_actor = Actor(principal, (group.id,))
+
+    decision = RbacAuthorizer(store).authorize(
+        forged_actor,
+        PolicyRequirement(WorkspaceId("workspace"), "audit.read"),
+    )
+
+    assert not decision.allowed
+    assert decision.reason == "no_workspace_role"
 
 
 def test_actor_context_is_request_local() -> None:

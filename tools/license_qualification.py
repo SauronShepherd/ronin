@@ -10,7 +10,7 @@ import re
 import tomllib
 from pathlib import Path, PurePosixPath
 
-_LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \t\\]+)$")
+_LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \t\\;]+)(?:[ \t]+;[ \t]+.+)?$")
 _LOCKED_HASH = re.compile(r"^--hash=sha256:[0-9a-f]{64}$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _LICENSE_FILE_NAMES = ("license", "copying", "notice", "authors", "copyright")
@@ -27,6 +27,10 @@ _PACKAGE_EVIDENCE_FIELDS = (
 
 class LicenseQualificationError(ValueError):
     """Raised when dependency/license evidence is incomplete or inconsistent."""
+
+
+def _metadata_value(dist: metadata.Distribution, key: str) -> str | None:
+    return dist.metadata[key] if key in dist.metadata else None  # noqa: SIM401
 
 
 def _canonical_name(value: str) -> str:
@@ -55,14 +59,11 @@ def locked_graph(path: Path) -> dict[str, str]:
     result: dict[str, str] = {}
     current_name: str | None = None
     current_hashes = 0
-    for line_number, raw_line in enumerate(
-        path.read_text(encoding="utf-8").splitlines(), start=1
-    ):
+    for line_number, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         stripped = raw_line.strip()
         if (not stripped or stripped.startswith("#")) and current_name is not None:
             raise LicenseQualificationError(
-                f"continued locked requirement interrupted at line {line_number}: "
-                f"{current_name}"
+                f"continued locked requirement interrupted at line {line_number}: {current_name}"
             )
         if not stripped or stripped.startswith("#"):
             continue
@@ -141,10 +142,10 @@ def _require_direct_coverage(graph: dict[str, str], direct: set[str]) -> None:
 
 
 def _declared_license(dist: metadata.Distribution) -> str | None:
-    expression = dist.metadata.get("License-Expression")
+    expression = _metadata_value(dist, "License-Expression")
     if expression and expression.strip():
         return expression.strip()
-    value = dist.metadata.get("License")
+    value = _metadata_value(dist, "License")
     if value and value.strip() and value.strip().upper() != "UNKNOWN":
         return value.strip()
     classifiers = [
@@ -165,7 +166,7 @@ def _source(dist: metadata.Distribution) -> str | None:
             "homepage",
         }:
             return url.strip() or None
-    home_page = dist.metadata.get("Home-page")
+    home_page = _metadata_value(dist, "Home-page")
     return home_page.strip() if home_page and home_page.strip() else None
 
 
@@ -227,7 +228,7 @@ def _license_files(
         if path in seen:
             continue
         seen.add(path)
-        located = Path(dist.locate_file(file))
+        located = Path(str(dist.locate_file(file)))
         try:
             digest = hashlib.sha256(located.read_bytes()).hexdigest()
         except OSError as exc:
@@ -314,15 +315,14 @@ def _require_declared_license_file_evidence(
     ]
     if missing:
         raise LicenseQualificationError(
-            f"declared License-File evidence missing from inventory: {key}: "
-            + ", ".join(missing)
+            f"declared License-File evidence missing from inventory: {key}: " + ", ".join(missing)
         )
 
 
 def _locked_distributions(graph: dict[str, str]) -> dict[str, metadata.Distribution]:
     installed: dict[str, metadata.Distribution] = {}
     for dist in metadata.distributions():
-        raw_name = dist.metadata.get("Name")
+        raw_name = _metadata_value(dist, "Name")
         if not raw_name or not raw_name.strip():
             continue
         name = _canonical_name(raw_name)

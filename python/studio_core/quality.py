@@ -116,7 +116,11 @@ class QualityRule:
         blocking = payload["blocking"]
         field = payload["field"]
         parameters = payload["parameters"]
-        if not isinstance(identifier, str) or not isinstance(kind, str) or not isinstance(name, str):
+        if (
+            not isinstance(identifier, str)
+            or not isinstance(kind, str)
+            or not isinstance(name, str)
+        ):
             raise ValueError("quality rule id, kind, and name must be strings")
         if not isinstance(severity, str) or severity not in {"info", "warning", "error"}:
             raise ValueError("invalid quality severity")
@@ -191,7 +195,9 @@ class DataContract:
             "full",
         }:
             raise ValueError("unsupported schema compatibility mode")
-        if freshness is not None and (not isinstance(freshness, int) or isinstance(freshness, bool)):
+        if freshness is not None and (
+            not isinstance(freshness, int) or isinstance(freshness, bool)
+        ):
             raise ValueError("freshness_seconds must be integer or null")
         if not isinstance(rules, list):
             raise ValueError("data contract rules must be an array")
@@ -253,12 +259,17 @@ class QualityResult:
         status = payload["status"]
         observed = payload["observed"]
         message = payload["message"]
-        if not isinstance(rule_id, str) or not isinstance(status, str) or status not in {
-            "passed",
-            "failed",
-            "error",
-            "unknown",
-        }:
+        if (
+            not isinstance(rule_id, str)
+            or not isinstance(status, str)
+            or status
+            not in {
+                "passed",
+                "failed",
+                "error",
+                "unknown",
+            }
+        ):
             raise ValueError("quality result has invalid identity/status")
         if message is not None and not isinstance(message, str):
             raise ValueError("quality result message must be string or null")

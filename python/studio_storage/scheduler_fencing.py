@@ -6,13 +6,22 @@ import sqlite3
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import cast
 
-from studio_core import NodeId, TaskRunId, WorkflowRun, WorkflowRunId, WorkspaceId
+from studio_core import (
+    NodeId,
+    TaskPolicy,
+    TaskRunId,
+    WorkflowRun,
+    WorkflowRunId,
+    WorkflowRunState,
+    WorkspaceId,
+)
 from studio_core.scheduler_resources import ResourcePoolDefinition
 from studio_orchestrator import Instant, LeaseToken
 
 from .scheduler import SqliteSchedulerStore, migrate_scheduler
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 
 _FENCING_SCHEMA_VERSION = 2
 _FENCING_MIGRATIONS = {
@@ -50,15 +59,11 @@ class ClaimedTask:
 def _add_seconds(value: Instant | str, seconds: int) -> Instant:
     base = Instant(value)
     parsed = datetime.strptime(str(base), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
-    return Instant(
-        (parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    )
+    return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler_fencing(
@@ -78,20 +83,16 @@ def migrate_scheduler_fencing(
     current = 0 if row is None or row["version"] is None else int(row["version"])
     if current > _FENCING_SCHEMA_VERSION:
         raise RuntimeError(
-            f"scheduler fencing schema {current} is newer than supported "
-            f"{_FENCING_SCHEMA_VERSION}"
+            f"scheduler fencing schema {current} is newer than supported {_FENCING_SCHEMA_VERSION}"
         )
     migrations_dir = Path(__file__).with_name("migrations")
     for version in range(current + 1, _FENCING_SCHEMA_VERSION + 1):
-        script = migrations_dir.joinpath(_FENCING_MIGRATIONS[version]).read_text(
-            encoding="utf-8"
-        )
+        script = migrations_dir.joinpath(_FENCING_MIGRATIONS[version]).read_text(encoding="utf-8")
         connection.execute("BEGIN IMMEDIATE")
         try:
             _execute_script_in_transaction(connection, script)
             connection.execute(
-                "INSERT INTO scheduler_fencing_schema_migrations(version,applied_at) "
-                "VALUES (?,?)",
+                "INSERT INTO scheduler_fencing_schema_migrations(version,applied_at) VALUES (?,?)",
                 (version, now),
             )
             connection.execute("COMMIT")
@@ -198,8 +199,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                 (str(workspace_id),),
             ).fetchall()
             return tuple(
-                ResourcePoolDefinition(row["pool_name"], int(row["capacity"]))
-                for row in rows
+                ResourcePoolDefinition(row["pool_name"], int(row["capacity"])) for row in rows
             )
         finally:
             connection.close()
@@ -246,7 +246,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
         ).fetchone()
         if row is None:
             raise ValueError("task attempt lease ownership lost")
-        return row
+        return cast(sqlite3.Row, row)
 
     @staticmethod
     def _workflow_state(
@@ -268,7 +268,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
         workspace_id: WorkspaceId,
         run: WorkflowRun,
         *,
-        state: str,
+        state: WorkflowRunState,
         now: Instant,
     ) -> None:
         updated = replace(run, state=state)
@@ -295,7 +295,7 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
         )
 
     @staticmethod
-    def _task_policy(run: WorkflowRun, node_id: NodeId):
+    def _task_policy(run: WorkflowRun, node_id: NodeId) -> TaskPolicy:
         return run.workflow_snapshot.policy_for(node_id)
 
     def _mark_failure_or_retry(
@@ -419,11 +419,14 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                 clauses.append("t.workspace_id=?")
                 values.append(str(workspace_id))
             rows = connection.execute(
-                "SELECT t.* FROM task_runs t JOIN workflow_runs w "
+                "SELECT t.* FROM task_runs t JOIN workflow_runs w "  # noqa: S608
                 "ON w.workspace_id=t.workspace_id "
                 "AND w.workflow_run_id=t.workflow_run_id WHERE "
                 + " AND ".join(clauses)
-                + " ORDER BY t.created_at,t.task_run_id",
+                # Task ids are content-derived and therefore do not encode
+                # run creation order.  Select the oldest eligible workflow
+                # run first so admission remains deterministic across runs.
+                + " ORDER BY w.created_at,w.workflow_run_id,t.created_at,t.task_run_id",
                 tuple(values),
             ).fetchall()
             for task in rows:
@@ -437,11 +440,9 @@ class FencedSqliteSchedulerStore(SqliteSchedulerStore):
                 predecessors = self._predecessor_ids(run, node_id)
                 if predecessors:
                     placeholders = ",".join("?" for _ in predecessors)
-                    predecessor_rows = connection.execute(
-                        "SELECT node_id,state FROM task_runs WHERE workspace_id=? "
-                        "AND workflow_run_id=? AND node_id IN ("
-                        + placeholders
-                        + ")",
+                    predecessor_rows = connection.execute(  # noqa: S608
+                        "SELECT node_id,state FROM task_runs WHERE workspace_id=? "  # noqa: S608
+                        "AND workflow_run_id=? AND node_id IN (" + placeholders + ")",
                         (
                             str(task_workspace),
                             str(run.id),

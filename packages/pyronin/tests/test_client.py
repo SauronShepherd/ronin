@@ -61,11 +61,15 @@ class _FlakyOpener:
         return _Response(b'{"ok":true}')
 
 
+def _job_payload(state: str) -> dict[str, object]:
+    return {"id": "job/a", "state": state, "failure_code": None}
+
+
 def test_submit_status_cancel_events_and_wait(monkeypatch: pytest.MonkeyPatch) -> None:
     transport = FakeTransport(
         [
-            {"id": "job/a", "state": "queued"},
-            {"id": "job/a", "state": "running"},
+            _job_payload("queued"),
+            _job_payload("running"),
             {
                 "items": [
                     {
@@ -79,9 +83,9 @@ def test_submit_status_cancel_events_and_wait(monkeypatch: pytest.MonkeyPatch) -
                 ],
                 "next_since": "next-events",
             },
-            {"id": "job/a", "state": "cancelling"},
-            {"id": "job/a", "state": "running"},
-            {"id": "job/a", "state": "succeeded"},
+            _job_payload("cancelling"),
+            _job_payload("running"),
+            _job_payload("succeeded"),
         ]
     )
     client = Ronin(transport=transport)
@@ -160,6 +164,51 @@ def test_list_jobs_and_validation() -> None:
         client.get_events("job", limit=0)
     with pytest.raises(ValueError):
         client.get_events("job", since=" ")
+
+
+def test_execute_sql_parses_result_and_sends_bounded_request() -> None:
+    transport = FakeTransport(
+        [
+            {
+                "columns": [{"name": "total", "type": "BIGINT"}],
+                "rows": [[7]],
+            }
+        ]
+    )
+    client = Ronin(transport=transport)
+    result = client.execute_sql(
+        project="demo",
+        sql="SELECT sum(value) AS total FROM events",
+        parameters=("events",),
+        max_rows=25,
+    )
+    assert result.columns[0].name == "total"
+    assert result.rows == ((7,),)
+    assert transport.calls[0][0:3] == (
+        "POST",
+        "/v1/sql",
+        {
+            "project": "demo",
+            "sql": "SELECT sum(value) AS total FROM events",
+            "parameters": ["events"],
+            "max_rows": 25,
+        },
+    )
+    with pytest.raises(ValueError):
+        client.execute_sql(project="demo", sql="SELECT 1", max_rows=0)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"columns": [{"name": "value", "type": "INTEGER", "extra": True}], "rows": []},
+        {"columns": [{"name": "value", "type": "INTEGER"}], "rows": [[1, 2]]},
+        {"columns": "not-an-array", "rows": []},
+    ],
+)
+def test_invalid_sql_results_fail_closed(payload: object) -> None:
+    with pytest.raises(ProtocolError):
+        Ronin(transport=FakeTransport([payload])).execute_sql(project="demo", sql="SELECT 1")
 
 
 @pytest.mark.parametrize(

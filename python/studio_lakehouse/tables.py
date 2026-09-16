@@ -16,7 +16,8 @@ _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
 def _identifier(value: str, name: str) -> str:
     if not _IDENTIFIER_RE.fullmatch(value):
         raise ValueError(
-            f"{name} must start with a letter/underscore and contain only letters, digits, '_' or '-'"
+            f"{name} must start with a letter/underscore and contain only "
+            "letters, digits, '_' or '-'"
         )
     return value
 

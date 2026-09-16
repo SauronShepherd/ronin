@@ -6,6 +6,8 @@ from .service import (
     QualityExecutionBlocked,
     QualityExecutionStore,
     execute_quality,
+    list_quality_runs,
+    quality_gate,
 )
 
 __all__ = (
@@ -17,4 +19,6 @@ __all__ = (
     "evaluate_contract",
     "evaluate_rule",
     "execute_quality",
+    "quality_gate",
+    "list_quality_runs",
 )

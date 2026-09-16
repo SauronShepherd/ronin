@@ -6,9 +6,23 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .contracts import SqlColumn, SqlQueryResult
+from .contracts import (
+    SqlColumn,
+    SqlExecutionError,
+    SqlQueryResult,
+    SqlRelationUnavailableError,
+    SqlValidationError,
+)
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_SELECT_START = re.compile(r"^SELECT\b", re.IGNORECASE)
+_MAX_SQL_BYTES = 1024 * 1024
+_UNSAFE_SQL = re.compile(
+    r"\b(?:read_(?:parquet|csv|json|blob)|http(?:fs|_get)?|sqlite_scan|postgres_scan|"
+    r"delta_scan|iceberg_scan|glob|pragma(?:_[a-z_]+)?|install|load|attach|copy|export|import|"
+    r"insert|update|delete|create|drop|alter|set|call)\b|(?:https?|s3|gs)://",
+    re.IGNORECASE,
+)
 
 
 class DuckDbDependencyError(RuntimeError):
@@ -56,16 +70,30 @@ class DuckDbSqlEngine:
     ) -> SqlQueryResult:
         self._require_open()
         if not sql or sql != sql.strip():
-            raise ValueError("SQL text must be non-empty and trimmed")
+            raise SqlValidationError("SQL text must be non-empty and trimmed")
+        if len(sql.encode("utf-8")) > _MAX_SQL_BYTES:
+            raise SqlValidationError("SQL text exceeds the configured byte limit")
+        if ";" in sql or not _SELECT_START.match(sql):
+            raise SqlValidationError("SQL engine accepts one read-only SELECT statement")
+        if _UNSAFE_SQL.search(sql):
+            raise SqlValidationError("SQL external filesystem and network access is disabled")
         if max_rows < 1:
-            raise ValueError("max_rows must be positive")
+            raise SqlValidationError("max_rows must be positive")
 
-        cursor = self._connection.execute(sql, parameters)
+        try:
+            cursor = self._connection.execute(sql, parameters)
+        except Exception as exc:
+            message = str(exc).lower()
+            if "table with name" in message or "does not exist" in message:
+                raise SqlRelationUnavailableError("requested SQL relation is unavailable") from exc
+            if "binder error" in message or "column" in message:
+                raise SqlValidationError("SQL query references an invalid column") from exc
+            raise SqlExecutionError("SQL backend execution failed") from exc
         description = cursor.description or ()
         columns = tuple(SqlColumn(item[0], str(item[1])) for item in description)
         rows = tuple(tuple(row) for row in cursor.fetchmany(max_rows + 1))
         if len(rows) > max_rows:
-            raise ValueError("SQL result exceeds max_rows; use a more selective query")
+            raise SqlValidationError("SQL result exceeds max_rows; use a more selective query")
         return SqlQueryResult(columns, rows)
 
     def close(self) -> None:
@@ -81,4 +109,47 @@ class DuckDbSqlEngine:
         self.close()
 
 
-__all__ = ("DuckDbDependencyError", "DuckDbSqlEngine")
+class ProjectScopedDuckDbSqlEngine:
+    """DuckDB reference engine with independent relation namespaces per project."""
+
+    def __init__(self) -> None:
+        self._engines: dict[str, DuckDbSqlEngine] = {}
+        self._closed = False
+
+    def _engine(self, project: str) -> DuckDbSqlEngine:
+        if not project or project != project.strip():
+            raise ValueError("SQL project must be non-empty and trimmed")
+        if self._closed:
+            raise RuntimeError("SQL engine is closed")
+        return self._engines.setdefault(project, DuckDbSqlEngine())
+
+    def register_parquet(self, project: str, name: str, path: str) -> None:
+        self._engine(project).register_parquet(name, path)
+
+    def execute(
+        self,
+        project: str,
+        sql: str,
+        parameters: tuple[object, ...] = (),
+        *,
+        max_rows: int = 10_000,
+    ) -> SqlQueryResult:
+        return self._engine(project).execute(sql, parameters, max_rows=max_rows)
+
+    def close(self) -> None:
+        if not self._closed:
+            for engine in self._engines.values():
+                engine.close()
+            self._engines.clear()
+            self._closed = True
+
+    def __enter__(self) -> ProjectScopedDuckDbSqlEngine:
+        if self._closed:
+            raise RuntimeError("SQL engine is closed")
+        return self
+
+    def __exit__(self, _exc_type: object, _exc: object, _traceback: object) -> None:
+        self.close()
+
+
+__all__ = ("DuckDbDependencyError", "DuckDbSqlEngine", "ProjectScopedDuckDbSqlEngine")

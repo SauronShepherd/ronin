@@ -38,23 +38,61 @@ class SqliteIdentityStore:
                 );
                 CREATE TABLE IF NOT EXISTS security_group_members (
                     group_id TEXT NOT NULL REFERENCES security_groups(group_id) ON DELETE CASCADE,
-                    principal_id TEXT NOT NULL REFERENCES security_principals(principal_id) ON DELETE CASCADE,
+                    principal_id TEXT NOT NULL REFERENCES security_principals(
+                        principal_id
+                    ) ON DELETE CASCADE,
                     PRIMARY KEY(group_id, principal_id)
                 );
                 CREATE TABLE IF NOT EXISTS security_role_bindings (
-                    workspace_id TEXT NOT NULL,
-                    subject_kind TEXT NOT NULL,
+                    workspace_id TEXT NOT NULL CHECK(length(trim(workspace_id)) > 0),
+                    subject_kind TEXT NOT NULL CHECK(subject_kind IN ('principal', 'group')),
                     subject_id TEXT NOT NULL,
-                    role TEXT NOT NULL,
+                    role TEXT NOT NULL CHECK(role IN ('admin', 'operator', 'editor', 'viewer')),
                     PRIMARY KEY(workspace_id, subject_kind, subject_id, role)
                 );
                 CREATE INDEX IF NOT EXISTS security_role_subject_idx
                     ON security_role_bindings(subject_kind, subject_id, workspace_id);
                 """
             )
+            self._migrate_role_binding_constraints(connection)
             connection.commit()
         finally:
             connection.close()
+
+    @staticmethod
+    def _migrate_role_binding_constraints(connection: sqlite3.Connection) -> None:
+        table_sql = connection.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='security_role_bindings'"
+        ).fetchone()[0]
+        if "CHECK(subject_kind" in str(table_sql) and "CHECK(role" in str(table_sql):
+            return
+        invalid = connection.execute(
+            "SELECT workspace_id, subject_kind, subject_id, role "
+            "FROM security_role_bindings WHERE length(trim(workspace_id)) = 0 "
+            "OR subject_kind NOT IN ('principal', 'group') "
+            "OR role NOT IN ('admin', 'operator', 'editor', 'viewer')"
+        ).fetchall()
+        if invalid:
+            raise ValueError("existing role bindings violate the database integrity contract")
+        connection.execute(
+            "ALTER TABLE security_role_bindings RENAME TO security_role_bindings_old"
+        )
+        connection.execute(
+            "CREATE TABLE security_role_bindings ("
+            "workspace_id TEXT NOT NULL CHECK(length(trim(workspace_id)) > 0),"
+            "subject_kind TEXT NOT NULL CHECK(subject_kind IN ('principal', 'group')),"
+            "subject_id TEXT NOT NULL,"
+            "role TEXT NOT NULL CHECK(role IN ('admin', 'operator', 'editor', 'viewer')),"
+            "PRIMARY KEY(workspace_id, subject_kind, subject_id, role))"
+        )
+        connection.execute(
+            "INSERT INTO security_role_bindings SELECT * FROM security_role_bindings_old"
+        )
+        connection.execute("DROP TABLE security_role_bindings_old")
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS security_role_subject_idx "
+            "ON security_role_bindings(subject_kind, subject_id, workspace_id)"
+        )
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self._path)
@@ -101,17 +139,28 @@ class SqliteIdentityStore:
             if row is None:
                 connection.execute(
                     "INSERT INTO security_principals("
-                    "principal_id,kind,display_name,issuer,subject,email,active) VALUES (?,?,?,?,?,?,?)",
+                    "principal_id,kind,display_name,issuer,subject,email,active) "
+                    "VALUES (?,?,?,?,?,?,?)",
                     (principal.id.value, *payload),
                 )
             elif tuple(row) != payload:
-                if row[2] != principal.issuer or row[3] != principal.subject or row[0] != principal.kind:
+                if (
+                    row[2] != principal.issuer
+                    or row[3] != principal.subject
+                    or row[0] != principal.kind
+                ):
                     raise IdentityConflict(
                         "principal id cannot be rebound to a different identity kind or subject"
                     )
                 connection.execute(
-                    "UPDATE security_principals SET display_name=?,email=?,active=? WHERE principal_id=?",
-                    (principal.display_name, principal.email, 1 if principal.active else 0, principal.id.value),
+                    "UPDATE security_principals SET display_name=?,email=?,active=? "
+                    "WHERE principal_id=?",
+                    (
+                        principal.display_name,
+                        principal.email,
+                        1 if principal.active else 0,
+                        principal.id.value,
+                    ),
                 )
             connection.commit()
             return principal
@@ -185,7 +234,8 @@ class SqliteIdentityStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT group_id FROM security_group_members WHERE principal_id=? ORDER BY group_id",
+                "SELECT group_id FROM security_group_members "
+                "WHERE principal_id=? ORDER BY group_id",
                 (principal_id.value,),
             ).fetchall()
             return tuple(GroupId(str(row[0])) for row in rows)
@@ -246,7 +296,10 @@ class SqliteIdentityStore:
         principal_id: PrincipalId,
         groups: tuple[GroupId, ...],
     ) -> tuple[str, ...]:
-        subjects = [("principal", principal_id.value), *(('group', group.value) for group in groups)]
+        subjects = [
+            ("principal", principal_id.value),
+            *(("group", group.value) for group in groups),
+        ]
         connection = self._connect()
         try:
             roles: set[str] = set()

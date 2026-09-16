@@ -1,15 +1,18 @@
 from pathlib import Path
 
 import pytest
-
 from studio_core import AssetId, Workspace, WorkspaceId
 from studio_execution.lakehouse import write_governed_parquet
 from studio_lakehouse import inspect_parquet, read_parquet_rows, write_parquet_rows
-from studio_sql import DuckDbSqlEngine
+from studio_sql import (
+    DuckDbSqlEngine,
+    ProjectScopedDuckDbSqlEngine,
+    SqlRelationUnavailableError,
+)
 from studio_storage import SqliteCatalogStore, SqliteWorkspaceStore
 
 pytest.importorskip("pyarrow")
-pytest.importorskip("duckdb")
+duckdb = pytest.importorskip("duckdb")
 
 _NOW = "2026-09-13T10:30:00.000000Z"
 _WS = WorkspaceId("workspace-data-plane")
@@ -49,7 +52,7 @@ def test_duckdb_reference_engine_queries_registered_parquet(tmp_path: Path) -> N
     with DuckDbSqlEngine() as engine:
         engine.register_parquet("events", str(path))
         result = engine.execute(
-            "SELECT group, sum(value) AS total FROM events GROUP BY group ORDER BY group"
+            'SELECT "group", sum(value) AS total FROM events GROUP BY "group" ORDER BY "group"'
         )
 
     assert tuple(column.name for column in result.columns) == ("group", "total")
@@ -64,6 +67,42 @@ def test_sql_reference_engine_bounds_materialized_results(tmp_path: Path) -> Non
         engine.register_parquet("events", str(path))
         with pytest.raises(ValueError, match="max_rows"):
             engine.execute("SELECT * FROM events ORDER BY id", max_rows=1)
+
+
+def test_sql_reference_engine_bounds_query_text() -> None:
+    with DuckDbSqlEngine() as engine, pytest.raises(ValueError, match="SQL text exceeds"):
+        engine.execute("SELECT 1 -- " + "x" * (1024 * 1024))
+
+
+def test_sql_reference_engine_rejects_mutating_or_multiple_statements() -> None:
+    with DuckDbSqlEngine() as engine:
+        with pytest.raises(ValueError, match="read-only SELECT"):
+            engine.execute("CREATE TABLE unsafe (value INTEGER)")
+        with pytest.raises(ValueError, match="read-only SELECT"):
+            engine.execute("SELECT 1; SELECT 2")
+        for query in (
+            "SELECT * FROM read_parquet('outside.parquet')",
+            "SELECT * FROM read_csv('outside.csv')",
+            "SELECT * FROM 'https://example.invalid/data.parquet'",
+            "SELECT * FROM pragma_database_list()",
+        ):
+            with pytest.raises(ValueError, match="external filesystem"):
+                engine.execute(query)
+
+
+def test_project_scoped_sql_engines_isolate_relation_collisions(tmp_path: Path) -> None:
+    first = tmp_path / "first.parquet"
+    second = tmp_path / "second.parquet"
+    write_parquet_rows(first, ({"value": 1},))
+    write_parquet_rows(second, ({"value": 2},))
+
+    with ProjectScopedDuckDbSqlEngine() as engine:
+        engine.register_parquet("project-a", "events", str(first))
+        engine.register_parquet("project-b", "events", str(second))
+        assert engine.execute("project-a", "SELECT value FROM events").rows == ((1,),)
+        assert engine.execute("project-b", "SELECT value FROM events").rows == ((2,),)
+        with pytest.raises(SqlRelationUnavailableError):
+            engine.execute("project-c", "SELECT value FROM events")
 
 
 def test_governed_parquet_write_commits_content_addressed_catalog_revision(

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import Generic, Protocol, TypeVar, runtime_checkable
 
 from studio_core import (
     AssetHandle,
@@ -14,6 +14,24 @@ from studio_core import (
     SourceCheckpoint,
 )
 from studio_storage.secrets import SecretResolver
+
+T = TypeVar("T")
+
+
+@dataclass(frozen=True, slots=True)
+class DiscoveryPage(Generic[T]):
+    """Bounded connector discovery page with an opaque provider cursor."""
+
+    items: tuple[T, ...]
+    next_cursor: str | None
+    truncated: bool
+    source_version: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.next_cursor is not None and not self.next_cursor:
+            raise ValueError("discovery next_cursor must be non-empty when present")
+        if not self.truncated and self.next_cursor is not None:
+            raise ValueError("non-truncated discovery page must not have a cursor")
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,4 +72,18 @@ class Connector(Protocol):
     ) -> ConnectorReadResult: ...
 
 
-__all__ = ("Connector", "ConnectorReadResult")
+@runtime_checkable
+class PagedConnector(Protocol):
+    """Connector capability for bounded, cursor-based asset discovery."""
+
+    def discover_page(
+        self,
+        connection: ConnectionDefinition,
+        secrets: SecretResolver,
+        *,
+        cursor: str | None = None,
+        page_size: int = 1000,
+    ) -> DiscoveryPage[DiscoveredAsset]: ...
+
+
+__all__ = ("Connector", "ConnectorReadResult", "DiscoveryPage", "PagedConnector")

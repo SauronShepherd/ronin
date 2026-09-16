@@ -14,7 +14,7 @@ from .scheduler_execution import (
     SchedulerExecutionLinkStore,
     migrate_scheduler_execution,
 )
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound
 
 _CONTROLLER_SCHEMA_VERSION = 2
@@ -33,9 +33,7 @@ class WorkflowDeploymentNotFound(KeyError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_scheduler_controller(connection: sqlite3.Connection, *, now: Instant | str) -> None:
@@ -201,9 +199,7 @@ class SchedulerControllerStore(SchedulerExecutionLinkStore):
                 "WHERE workspace_id=? AND workflow_id=?",
                 (str(workspace_id), str(workflow_id)),
             ).fetchone()
-            return None if row is None else WorkflowDeploymentBinding.from_json(
-                row["binding_json"]
-            )
+            return None if row is None else WorkflowDeploymentBinding.from_json(row["binding_json"])
         finally:
             connection.close()
 

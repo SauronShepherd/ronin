@@ -28,7 +28,8 @@ from studio_core.environments import (
     ProjectEnvironmentBindings,
 )
 from studio_orchestrator import Instant
-from studio_storage.artifacts import ArtifactRef
+
+from .artifacts import ArtifactPage, ArtifactRef
 
 
 @runtime_checkable
@@ -46,6 +47,21 @@ class ArtifactStore(Protocol):
     def get_bytes(self, ref: ArtifactRef) -> bytes: ...
 
     def verify(self, ref: ArtifactRef) -> bool: ...
+
+    def delete(self, ref: ArtifactRef) -> bool: ...
+
+    def list_digests(self) -> tuple[str, ...]: ...
+
+    def storage_ref_for_digest(self, digest: str) -> str: ...
+
+
+@runtime_checkable
+class PagedArtifactStore(Protocol):
+    """Optional artifact-store capability for bounded inventory discovery."""
+
+    def list_digests_page(
+        self, *, cursor: str | None = None, page_size: int = 1000
+    ) -> ArtifactPage: ...
 
 
 @runtime_checkable
@@ -177,6 +193,10 @@ class CatalogStore(Protocol):
     def get_asset(self, workspace_id: WorkspaceId, asset_id: AssetId) -> CatalogAsset | None: ...
 
     def list_assets(self, workspace_id: WorkspaceId) -> tuple[CatalogAsset, ...]: ...
+
+    def search_assets(
+        self, workspace_id: WorkspaceId, query: str, *, limit: int = 100
+    ) -> tuple[CatalogAsset, ...]: ...
 
     def put_revision(
         self,

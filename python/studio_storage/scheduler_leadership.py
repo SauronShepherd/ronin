@@ -10,7 +10,7 @@ from pathlib import Path
 from studio_orchestrator import Instant, LeaseToken
 
 from .scheduler_controller import SchedulerControllerStore, migrate_scheduler_controller
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 
 _LEADERSHIP_SCHEMA_VERSION = 1
 _LEADERSHIP_MIGRATIONS = {1: "scheduler_leadership_001.sql"}
@@ -38,16 +38,12 @@ class SchedulerLeaderLease:
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def _add_seconds(value: Instant | str, seconds: int) -> Instant:
     parsed = datetime.strptime(str(Instant(value)), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
-    return Instant(
-        (parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    )
+    return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
 
 def migrate_scheduler_leadership(connection: sqlite3.Connection, *, now: Instant | str) -> None:

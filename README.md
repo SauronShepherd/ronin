@@ -1,10 +1,6 @@
 <p align="center">
-  <img src="docs/assets/ronin-logo.webp" alt="Ronin logo" width="360">
+  <img src="docs/assets/logo_ronin.png" alt="Ronin — The lordless Data + AI OS platform." width="720">
 </p>
-
-# Ronin
-
-**The lordless Data + AI OS platform.**
 
 Ronin is being built as a professional, free, open-source and self-hostable **Data + AI platform** designed around portability rather than a mandatory proprietary control plane.
 
@@ -17,7 +13,7 @@ Ronin Public v1 will not be declared complete until the platform has end-to-end 
 The normative contracts are:
 
 - [`docs/product/PUBLIC_V1_SCOPE.md`](docs/product/PUBLIC_V1_SCOPE.md) — mandatory product capability families and release gate;
-- [`docs/product/PLATFORM_PORTABILITY_V1.md`](docs/product/PLATFORM_PORTABILITY_V1.md) — import/export and migration contract for Microsoft Fabric, Databricks, Palantir Foundry/AIP and Dataiku DSS;
+- [`docs/product/PLATFORM_PORTABILITY_V1.md`](docs/product/PLATFORM_PORTABILITY_V1.md) — optional import/export and interoperability contract for proprietary, non-open-source data platforms;
 - [`docs/product/PUBLIC_V1_ROADMAP.md`](docs/product/PUBLIC_V1_ROADMAP.md) — implementation waves from the current foundation to Public v1;
 - [`docs/product/BRAND_V1.md`](docs/product/BRAND_V1.md) — Ronin Brown visual identity.
 
@@ -25,9 +21,11 @@ The original [`docs/product/V01_SCOPE.md`](docs/product/V01_SCOPE.md) remains th
 
 ## Product direction
 
-Public v1 is intended to let a team migrate a representative project away from **Microsoft Fabric, Databricks, Palantir Foundry/AIP or Dataiku DSS**, operate the supported portable subset in Ronin without a mandatory dependency on the source vendor, and export it through documented canonical/adaptor formats.
+Public v1 is intended to let a team simulate representative **proprietary, non-open-source data and AI platform** environments locally in Ronin, using provider-inspired capabilities without requiring external vendors or their control planes. The project is focused on local development, experimentation, learning and reproducible evaluation; migration and interoperability may be useful secondary outcomes, but they are not the product's primary purpose.
 
-Ronin does not promise fictional byte-for-byte compatibility with every proprietary feature. Migration behavior is classified explicitly as `exact`, `translated`, `partial`, `passthrough`, `unsupported` or `manual_decision`; objects may not be silently dropped or semantically weakened.
+> **Production-use warning:** Ronin is currently a local simulation and development platform. Production deployments and production workloads are not supported, are not covered by the current release guarantees, and are not part of the current roadmap. Anyone choosing to use Ronin in production does so at their own risk and responsibility.
+
+Ronin does not promise fictional byte-for-byte compatibility with every proprietary feature. Any interoperability or simulation gap is classified explicitly as `exact`, `translated`, `partial`, `passthrough`, `unsupported` or `manual_decision`; capabilities may not be silently dropped or semantically weakened.
 
 The target platform includes:
 
@@ -59,7 +57,7 @@ The current source tree already provides reusable platform primitives:
 - OpenAPI 3.1 and `pyronin`;
 - typed least-privilege grants;
 - public portable execution evidence;
-- CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, `jobs` and `cancel`;
+- CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, `jobs`, `cancel`, and bounded migration inventory reports via `migrate inventory`;
 - local Git revision identity;
 - real-Docker worker execution;
 - production local image/Compose topology;
@@ -73,9 +71,19 @@ Ronin is multi-project. Each project selects a primary Git repository, optional 
 
 See [`docs/product/PROJECTS_AND_EXECUTION.md`](docs/product/PROJECTS_AND_EXECUTION.md) for the existing project/repository/runtime contract. Public v1 expands this into workspace, migration, data, scheduler and platform-level contracts.
 
+### Migration inventory
+
+To produce a canonical, credential-free inventory report from a supported vendor export:
+
+```text
+ronin migrate inventory databricks export.json --source-version 15 --output migration-report.json
+```
+
+The command also accepts `fabric`, `dataiku`, and `foundry`. It inventories source objects and classifies unsupported semantics explicitly; it does not claim vendor execution translation or certification.
+
 ## Current qualification status
 
-GitHub Actions and automated tests are currently disabled by maintainer policy. Historical automated evidence predates later source changes, so Ronin must not be described as newly qualified or release-ready from current `main`.
+GitHub Actions and automated qualification are active for the current construction branch. The exact-head workflows cover CI, security, Docker, status consistency and release packaging; a green workflow run is evidence for that SHA only and does not by itself make Public v1 release-ready.
 
 The Public v1 gate is intentionally much broader than the earlier 15-step local execution journey. A missing mandatory capability family means Public v1 is incomplete regardless of how mature the foundation is.
 
@@ -95,7 +103,7 @@ Key current and future contracts include:
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — contributor setup and architecture expectations;
 - [`docs/RELEASE_RUNBOOK.md`](docs/RELEASE_RUNBOOK.md) and [`CHANGELOG.md`](CHANGELOG.md) — release operations and user-visible change communication.
 
-`SECURITY.md` is intentionally not published yet because the project has not selected and verified a private vulnerability-reporting channel. A verified private channel is a mandatory Public v1 release requirement; Ronin must not invent one.
+See [`SECURITY.md`](SECURITY.md) for the private vulnerability-reporting route, supported versions, and security scope.
 
 ## Governance and contribution
 
@@ -114,7 +122,7 @@ python -m pip install --require-hashes -r requirements-dev.lock
 python -m pip install -e . --no-deps
 ```
 
-Repository validation commands and the current code-only policy are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). GitHub Actions and automated tests are currently disabled by maintainer policy. Any local/static evidence must be reported exactly and does not replace full release qualification.
+Repository validation commands and the current qualification policy are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). Local/static evidence must be reported exactly, and workflow evidence must identify the exact candidate SHA; neither replaces the remaining product, provider-certification, legal or administrative release decisions.
 
 ## Layout
 

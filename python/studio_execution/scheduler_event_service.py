@@ -6,12 +6,12 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
+from studio_core import WorkspaceId
 from studio_orchestrator import Instant
 from studio_storage.scheduler_events import (
     EventDelivery,
     SchedulerEventRecord,
     SchedulerEventStore,
-    WorkspaceId,
 )
 
 AuthorityCheck = Callable[[Instant | str], Awaitable[None]]

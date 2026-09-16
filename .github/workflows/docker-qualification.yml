@@ -1,0 +1,67 @@
+name: Docker qualification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docker-qualification:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ronin
+          POSTGRES_USER: ronin
+          POSTGRES_DB: ronin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ronin -d ronin"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Ronin with data-plane dependencies
+        run: python -m pip install --editable ".[data-plane,open-tables,ml,security,streaming,dev]"
+
+      - name: Run non-Docker qualification suite
+        env:
+          RONIN_POSTGRES_TEST_DSN: postgresql://ronin:ronin@localhost:5432/ronin
+        run: python -m pytest -q --ignore=tests/perf --ignore=tests/integration/test_docker_container_executor_real.py --ignore=tests/integration/test_worker_runtime_real.py
+
+      - name: Build pinned qualification image
+        run: docker build --file docker/Dockerfile.probe --tag ronin-probe:ci .
+
+      - name: Resolve qualification image digest
+        run: echo "RONIN_DOCKER_QUALIFICATION_IMAGE=$(docker image inspect ronin-probe:ci --format '{{.Id}}')" >> "$GITHUB_ENV"
+
+      - name: Run real Docker qualification
+        env:
+          RONIN_REAL_DOCKER_QUALIFICATION: "1"
+          RONIN_DOCKER_QUALIFICATION_EVIDENCE: ${{ github.workspace }}/qualification-evidence
+          RONIN_HOST_WORKSPACE: ${{ github.workspace }}
+        run: |
+          mkdir -p qualification-evidence
+          python -m pytest -q tests/integration/test_docker_container_executor_real.py tests/integration/test_worker_runtime_real.py
+
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-qualification-evidence
+          path: qualification-evidence
+          if-no-files-found: ignore
