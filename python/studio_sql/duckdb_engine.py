@@ -51,12 +51,8 @@ class DuckDbSqlEngine:
         resolved = Path(path).resolve(strict=True)
         if not resolved.is_file():
             raise ValueError("registered Parquet path must be a regular file")
-        self._connection.execute("SET enable_external_access=true")
-        try:
-            relation = self._connection.from_parquet(str(resolved))
-            relation.create_view(name, replace=True)
-        finally:
-            self._connection.execute("SET enable_external_access=false")
+        relation = self._connection.from_parquet(str(resolved))
+        relation.create_view(name, replace=True)
 
     def execute(
         self,
