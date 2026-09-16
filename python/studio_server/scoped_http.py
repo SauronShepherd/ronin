@@ -84,7 +84,7 @@ class _ReadinessHandler(_Handler):
     def setup(self) -> None:
         super().setup()
         server = cast(RoninHTTPServer, self.server)
-        self.connection.settimeout(server._request_timeout_seconds)
+        self.connection.settimeout(getattr(server, "_request_timeout_seconds", 30.0))
 
     def do_GET(self) -> None:  # noqa: N802
         if self.path == "/healthz":
@@ -167,7 +167,9 @@ class RoninHTTPServer(_RoninHTTPServer):
             sql_engine=sql_engine,
         )
         original_loop = self.application._loop
-        self.application._loop = _BoundedServiceLoop(original_loop, service_timeout_seconds)
+        cast(Any, self.application)._loop = _BoundedServiceLoop(
+            original_loop, service_timeout_seconds
+        )
         self.RequestHandlerClass = _ReadinessHandler
 
     def get_request(self) -> tuple[Any, Any]:
