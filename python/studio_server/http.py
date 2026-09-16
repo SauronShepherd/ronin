@@ -593,6 +593,9 @@ class _Handler(BaseHTTPRequestHandler):
         self._write_json(HTTPStatus.OK, payload)
 
     def do_GET(self) -> None:  # noqa: N802
+        if urlsplit(self.path).path == "/healthz":
+            self._write_json(HTTPStatus.OK, {"status": "ok"})
+            return
         if self._serve_studio(urlsplit(self.path).path):
             return
         if not self._require_auth():
