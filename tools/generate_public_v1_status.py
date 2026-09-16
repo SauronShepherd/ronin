@@ -49,19 +49,19 @@ def check() -> None:
     machine_sha, markdown_sha = _read_observed()
     if machine_sha != markdown_sha:
         raise SystemExit("Public v1 status ledgers disagree on observed source SHA")
-    head = subprocess.run(
+    head = subprocess.run(  # noqa: S603, S607 - fixed Git executable and validated SHA inputs
         ["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True
     ).stdout.strip()
     if not SHA_PATTERN.fullmatch(head):
         raise SystemExit("Git returned an invalid HEAD SHA")
-    distance = subprocess.run(
+    distance = subprocess.run(  # noqa: S603, S607 - fixed Git executable and validated SHA inputs
         ["git", "rev-list", "--count", f"{machine_sha}..{head}"],
         cwd=ROOT,
         capture_output=True,
         text=True,
         check=True,
     ).stdout.strip()
-    ancestor = subprocess.run(
+    ancestor = subprocess.run(  # noqa: S603, S607 - fixed Git executable and validated SHA inputs
         ["git", "merge-base", "--is-ancestor", machine_sha, head],
         cwd=ROOT,
         capture_output=True,
