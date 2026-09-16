@@ -34,7 +34,7 @@ from studio_orchestrator import (
     RunState,
     StoredEvidenceRef,
 )
-from studio_sql import ProjectScopedDuckDbSqlEngine, SqlEngine
+from studio_sql import DuckDbDependencyError, ProjectScopedDuckDbSqlEngine, SqlEngine
 from studio_storage import IdempotencyConflict, StorageBackpressureError
 
 _MAX_REQUEST_BYTES = 1024 * 1024
@@ -526,6 +526,13 @@ class _Handler(BaseHTTPRequestHandler):
                 response_payload = self._ronin_server().application.sql(payload)
             except LookupError:
                 self._error(HTTPStatus.NOT_FOUND, "sql_unavailable", "SQL engine is not configured")
+                return
+            except DuckDbDependencyError:
+                self._error(
+                    HTTPStatus.SERVICE_UNAVAILABLE,
+                    "sql_dependency_unavailable",
+                    "SQL engine dependency is unavailable",
+                )
                 return
             except ValueError as exc:
                 self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
