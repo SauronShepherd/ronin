@@ -29,7 +29,10 @@ class MLDependencyError(RuntimeError):
 
 def _sklearn() -> dict[str, Any]:
     try:
-        from sklearn.linear_model import LinearRegression, LogisticRegression  # type: ignore[import-untyped]
+        from sklearn.linear_model import (  # type: ignore[import-untyped]
+            LinearRegression,
+            LogisticRegression,
+        )
         from sklearn.metrics import (  # type: ignore[import-untyped]
             accuracy_score,
             mean_absolute_error,
@@ -217,14 +220,14 @@ def _model_parameters(model: object, spec: TrainingSpec) -> dict[str, object]:
     classes_raw = getattr(model, "classes_", None)
     if coefficients_raw is None or intercepts_raw is None or classes_raw is None:
         raise ValueError("trained logistic regression model is missing fitted parameters")
-    coefficients: list[list[float]] = [
+    logistic_coefficients: list[list[float]] = [
         [_finite_float(value, "logistic coefficient") for value in row]
         for row in coefficients_raw.tolist()
     ]
     intercepts = [_finite_float(value, "logistic intercept") for value in intercepts_raw.tolist()]
     classes = [_classification_label(value) for value in classes_raw.tolist()]
     return {
-        "coefficients": coefficients,
+        "coefficients": logistic_coefficients,
         "intercepts": intercepts,
         "classes": classes,
     }
