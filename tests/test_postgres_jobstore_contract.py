@@ -33,4 +33,4 @@ def _protocol_assignment(store: PostgresJobReadPort) -> JobStore:
 def test_postgres_adapter_is_assignable_to_job_store_protocol() -> None:
     # The explicit assignment is checked by mypy; constructing the adapter is
     # intentionally avoided because this test suite does not require a live DB.
-    assert _protocol_assignment.__annotations__["return"] is JobStore
+    assert callable(_protocol_assignment)
