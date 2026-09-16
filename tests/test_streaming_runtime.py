@@ -111,6 +111,23 @@ def test_parquet_sink_replays_same_checkpoint_idempotently(tmp_path: Path) -> No
     assert first.rows == 2
 
 
+def test_parquet_sink_does_not_leave_partial_output_when_write_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pytest.importorskip("pyarrow")
+    sink = ParquetMicroBatchSink(tmp_path / "warehouse")
+
+    def fail_write(path: Path, _rows: tuple[dict[str, object], ...]) -> None:
+        path.write_bytes(b"partial")
+        raise RuntimeError("simulated sink failure")
+
+    monkeypatch.setattr("studio_streaming.parquet_sink.write_parquet_rows", fail_write)
+    with pytest.raises(RuntimeError, match="simulated"):
+        sink.write("orders", _batch(), tuple(record.value for record in _batch().records))
+    assert not list((tmp_path / "warehouse").rglob("*.parquet"))
+    assert not list((tmp_path / "warehouse").rglob("*.tmp"))
+
+
 def test_checkpoint_store_compare_and_set_rejects_stale_expected(tmp_path: Path) -> None:
     store = SqliteStreamCheckpointStore(tmp_path / "checkpoints.sqlite")
     first = StreamCheckpoint((StreamPosition(0, 10),))
