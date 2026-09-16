@@ -126,13 +126,67 @@ class PostgresJobReadPort:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT run_id FROM ronin_runs WHERE job_id=%s "
-                    "ORDER BY ordinal DESC LIMIT 1",
+                    "SELECT run_id FROM ronin_runs WHERE job_id=%s ORDER BY ordinal DESC LIMIT 1",
                     (str(job_id),),
                 )
                 row = cursor.fetchone()
             connection.commit()
             return None if row is None else RunId(str(row["run_id"]))
+        finally:
+            connection.close()
+
+    def request_cancel(self, job_id: JobId, *, now: Instant | str) -> Job:
+        """Request cancellation while serializing against worker state changes."""
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM ronin_jobs WHERE job_id=%s FOR UPDATE", (str(job_id),)
+                )
+                row = cursor.fetchone()
+                if row is None:
+                    raise KeyError(str(job_id))
+                job = _job(row)
+                if job.state.terminal:
+                    connection.commit()
+                    return job
+                cursor.execute(
+                    "SELECT 1 FROM ronin_attempts a "
+                    "JOIN ronin_runs r ON r.run_id=a.run_id "
+                    "WHERE r.job_id=%s AND a.state IN ('leased','running') LIMIT 1",
+                    (str(job_id),),
+                )
+                active = cursor.fetchone() is not None
+                if active:
+                    cursor.execute(
+                        "UPDATE ronin_runs SET state='cancelling',updated_at=%s,"
+                        "row_version=row_version+1 WHERE job_id=%s "
+                        "AND state IN ('leased','running')",
+                        (str(current), str(job_id)),
+                    )
+                    next_state = "cancelling"
+                else:
+                    cursor.execute(
+                        "UPDATE ronin_runs SET state='cancelled',updated_at=%s,"
+                        "row_version=row_version+1 WHERE job_id=%s AND state='pending'",
+                        (str(current), str(job_id)),
+                    )
+                    next_state = "cancelled"
+                cursor.execute(
+                    "UPDATE ronin_jobs SET state=%s,updated_at=%s,row_version=row_version+1 "
+                    "WHERE job_id=%s",
+                    (next_state, str(current), str(job_id)),
+                )
+                cursor.execute("SELECT * FROM ronin_jobs WHERE job_id=%s", (str(job_id),))
+                updated = cursor.fetchone()
+            connection.commit()
+            if updated is None:
+                raise AssertionError("updated job disappeared")
+            return _job(updated)
+        except Exception:
+            connection.rollback()
+            raise
         finally:
             connection.close()
 
