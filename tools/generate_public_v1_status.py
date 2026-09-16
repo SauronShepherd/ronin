@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -13,6 +14,7 @@ MARKDOWN = ROOT / "docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md"
 MACHINE = ROOT / "docs/product/public-v1-status.json"
 SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
 HEAD_PATTERN = re.compile(r"(?m)^(\*\*Observed source head:\*\* `)[0-9a-f]{40}(` \()[^)]+(\)\.)$")
+MAX_LEDGER_AGE_COMMITS = 50
 
 
 def _read_observed() -> tuple[str, str]:
@@ -47,6 +49,31 @@ def check() -> None:
     machine_sha, markdown_sha = _read_observed()
     if machine_sha != markdown_sha:
         raise SystemExit("Public v1 status ledgers disagree on observed source SHA")
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True
+    ).stdout.strip()
+    if not SHA_PATTERN.fullmatch(head):
+        raise SystemExit("Git returned an invalid HEAD SHA")
+    distance = subprocess.run(
+        ["git", "rev-list", "--count", f"{machine_sha}..{head}"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", machine_sha, head],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if machine_sha != head and (
+        ancestor.returncode != 0 or not distance.isdigit() or int(distance) > MAX_LEDGER_AGE_COMMITS
+    ):
+        raise SystemExit(
+            f"status ledger is stale: records {machine_sha[:12]}, HEAD is {head[:12]} "
+            f"({distance} commits behind)"
+        )
 
 
 def main() -> int:

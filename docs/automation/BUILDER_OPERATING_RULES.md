@@ -16,6 +16,14 @@ Current operating policy:
 
 Historical CI evidence remains background evidence for older SHAs; current claims must identify the exact candidate SHA and completed workflow run.
 
+## Coverage and baseline ratchet
+
+Coverage thresholds and per-file baselines are monotonic quality floors: they
+may only increase. Lowering a threshold or baseline requires an explicit human
+decision recorded in `docs/automation/DECISIONS.md`, including the measured
+evidence and the reason the contract changed. A green build is never a reason
+to lower a quality floor.
+
 ## Slice ownership
 
 Builder work uses single-writer ownership per file domain rather than one global writer.
