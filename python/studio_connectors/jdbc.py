@@ -181,6 +181,25 @@ class JdbcConnector:
         incremental_column = options.get("incremental_column")
         if incremental_column is not None:
             incremental_column = self._identifier(incremental_column, "incremental_column")
+        tie_breaker_columns = tuple(
+            self._identifier(item.strip(), "tie_breaker_column")
+            for item in options.get("tie_breaker_columns", "").split(",")
+            if item.strip()
+        )
+        checkpoint_v2 = (
+            JdbcIncrementalCheckpointV2.decode(checkpoint.value)
+            if checkpoint is not None
+            and checkpoint.strategy == "watermark"
+            and checkpoint.value.startswith("{")
+            else None
+        )
+        if checkpoint_v2 is not None:
+            if checkpoint_v2.source_asset_id != asset.qualified_name:
+                raise ValueError("JDBC checkpoint belongs to a different source asset")
+            if checkpoint_v2.incremental_column != incremental_column:
+                raise ValueError("JDBC checkpoint column does not match connection")
+            if checkpoint_v2.tie_breaker_columns != tie_breaker_columns:
+                raise ValueError("JDBC checkpoint tie-breakers do not match connection")
         if (
             checkpoint is not None
             and checkpoint.strategy == "watermark"
@@ -192,12 +211,20 @@ class JdbcConnector:
             cursor = database.cursor()
             predicate = ""
             params: tuple[object, ...] = ()
-            if checkpoint is not None and checkpoint.strategy == "watermark":
+            if checkpoint_v2 is not None:
+                predicate, params = checkpoint_v2.predicate()
+                predicate = f" WHERE {predicate}"
+            elif checkpoint is not None and checkpoint.strategy == "watermark":
                 if incremental_column is None:
                     raise ValueError("JDBC watermark checkpoints require incremental_column")
                 predicate = f' WHERE "{incremental_column}" > ?'
                 params = (checkpoint.value,)
-            ordering = f' ORDER BY "{incremental_column}"' if incremental_column else ""
+            ordering_columns = (incremental_column, *tie_breaker_columns)
+            ordering = (
+                " ORDER BY " + ", ".join(f'"{column}"' for column in ordering_columns)
+                if incremental_column
+                else ""
+            )
             cursor.execute(
                 f'SELECT * FROM "{schema}"."{table}"{predicate}{ordering} LIMIT ?',  # noqa: S608 - identifiers are validated by _identifier and values are bound
                 (*params, limit),
@@ -217,12 +244,41 @@ class JdbcConnector:
             names = [field.name for field in fields]
             if incremental_column not in names:
                 raise ValueError("JDBC incremental_column is not present in the result")
-            watermark = (
-                str(rows[-1][incremental_column])
-                if rows
-                else (checkpoint.value if checkpoint is not None else "")
-            )
-            next_checkpoint = SourceCheckpoint("watermark", watermark)
+            if checkpoint_v2 is not None or tie_breaker_columns:
+                if not rows:
+                    next_checkpoint = checkpoint or SourceCheckpoint(
+                        "watermark",
+                        JdbcIncrementalCheckpointV2(
+                            asset.qualified_name,
+                            incremental_column,
+                            None,
+                            tie_breaker_columns,
+                            tuple(None for _ in tie_breaker_columns),
+                            hashlib.sha256(repr(fields).encode()).hexdigest(),
+                            0,
+                        ).encode(),
+                    )
+                else:
+                    last = rows[-1]
+                    next_checkpoint = SourceCheckpoint(
+                        "watermark",
+                        JdbcIncrementalCheckpointV2(
+                            asset.qualified_name,
+                            incremental_column,
+                            last[incremental_column],
+                            tie_breaker_columns,
+                            tuple(last[column] for column in tie_breaker_columns),
+                            hashlib.sha256(repr(fields).encode()).hexdigest(),
+                            (checkpoint_v2.checkpoint_generation + 1) if checkpoint_v2 else 1,
+                        ).encode(),
+                    )
+            else:
+                watermark = (
+                    str(rows[-1][incremental_column])
+                    if rows
+                    else (checkpoint.value if checkpoint is not None else "")
+                )
+                next_checkpoint = SourceCheckpoint("watermark", watermark)
         else:
             next_checkpoint = SourceCheckpoint(
                 "snapshot",

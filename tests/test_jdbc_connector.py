@@ -72,3 +72,37 @@ def test_jdbc_v2_checkpoint_round_trip_preserves_typed_cursor() -> None:
         (1735689600, 1735689600, 42),
     )
     assert checkpoint.order_by() == '"updated_at", "id"'
+
+
+def test_jdbc_v2_read_binds_lexicographic_cursor() -> None:
+    class Cursor(_Cursor):
+        description = (("updated_at", "integer"), ("id", "integer"))
+
+        def fetchall(self):
+            return [(10, 8)]
+
+    class Database(_Db):
+        def cursor(self):
+            return Cursor()
+
+    checkpoint = JdbcIncrementalCheckpointV2(
+        "public.events", "updated_at", 10, ("id",), (7,), "schema", 1
+    )
+    connection = ConnectionDefinition(
+        ConnectionId("jdbc"),
+        "JDBC",
+        "jdbc",
+        options=(
+            ("url", "jdbc:test"),
+            ("incremental_column", "updated_at"),
+            ("tie_breaker_columns", "id"),
+        ),
+    )
+    connector = JdbcConnector(connect=lambda *_args: Database())
+    result = connector.read(
+        connection,
+        AssetHandle(connection.id, ("public",), "events"),
+        EnvironmentSecretResolver({}),
+        checkpoint=SourceCheckpoint("watermark", checkpoint.encode()),
+    )
+    assert result.rows == ({"updated_at": 10, "id": 8},)
