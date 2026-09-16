@@ -18,7 +18,7 @@ class OidcDiscoveryError(RuntimeError):
 class _RejectRedirects(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
         del req, fp, code, msg, headers, newurl
-        return None
+        return
 
 
 def _issuer_url(value: str) -> str:
@@ -88,7 +88,9 @@ class HttpsOidcJwksProvider:
                     try:
                         declared_length = int(length_header)
                     except ValueError as exc:
-                        raise OidcDiscoveryError(f"{label} response has invalid Content-Length") from exc
+                        raise OidcDiscoveryError(
+                            f"{label} response has invalid Content-Length"
+                        ) from exc
                     if declared_length < 0 or declared_length > self._max_response_bytes:
                         raise OidcDiscoveryError(f"{label} response exceeds configured byte limit")
                 raw = response.read(self._max_response_bytes + 1)

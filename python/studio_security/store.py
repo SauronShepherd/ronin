@@ -38,7 +38,9 @@ class SqliteIdentityStore:
                 );
                 CREATE TABLE IF NOT EXISTS security_group_members (
                     group_id TEXT NOT NULL REFERENCES security_groups(group_id) ON DELETE CASCADE,
-                    principal_id TEXT NOT NULL REFERENCES security_principals(principal_id) ON DELETE CASCADE,
+                    principal_id TEXT NOT NULL REFERENCES security_principals(
+                        principal_id
+                    ) ON DELETE CASCADE,
                     PRIMARY KEY(group_id, principal_id)
                 );
                 CREATE TABLE IF NOT EXISTS security_role_bindings (
@@ -101,17 +103,28 @@ class SqliteIdentityStore:
             if row is None:
                 connection.execute(
                     "INSERT INTO security_principals("
-                    "principal_id,kind,display_name,issuer,subject,email,active) VALUES (?,?,?,?,?,?,?)",
+                    "principal_id,kind,display_name,issuer,subject,email,active) "
+                    "VALUES (?,?,?,?,?,?,?)",
                     (principal.id.value, *payload),
                 )
             elif tuple(row) != payload:
-                if row[2] != principal.issuer or row[3] != principal.subject or row[0] != principal.kind:
+                if (
+                    row[2] != principal.issuer
+                    or row[3] != principal.subject
+                    or row[0] != principal.kind
+                ):
                     raise IdentityConflict(
                         "principal id cannot be rebound to a different identity kind or subject"
                     )
                 connection.execute(
-                    "UPDATE security_principals SET display_name=?,email=?,active=? WHERE principal_id=?",
-                    (principal.display_name, principal.email, 1 if principal.active else 0, principal.id.value),
+                    "UPDATE security_principals SET display_name=?,email=?,active=? "
+                    "WHERE principal_id=?",
+                    (
+                        principal.display_name,
+                        principal.email,
+                        1 if principal.active else 0,
+                        principal.id.value,
+                    ),
                 )
             connection.commit()
             return principal
@@ -185,7 +198,8 @@ class SqliteIdentityStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT group_id FROM security_group_members WHERE principal_id=? ORDER BY group_id",
+                "SELECT group_id FROM security_group_members "
+                "WHERE principal_id=? ORDER BY group_id",
                 (principal_id.value,),
             ).fetchall()
             return tuple(GroupId(str(row[0])) for row in rows)

@@ -3,17 +3,17 @@
 from .audit import audit_actor, authorization_audit_event
 from .context import actor_context, current_actor, require_actor
 from .contracts import (
+    PERMISSIONS,
+    ROLE_PERMISSIONS,
     Actor,
     Group,
     GroupId,
-    PERMISSIONS,
     Permission,
     PolicyDecision,
     PolicyRequirement,
     Principal,
     PrincipalId,
     PrincipalKind,
-    ROLE_PERMISSIONS,
     RoleBinding,
     SubjectKind,
     WorkspaceRole,

@@ -7,13 +7,13 @@ from typing import Protocol, cast, runtime_checkable
 from studio_core import WorkspaceId
 
 from .contracts import (
+    ROLE_PERMISSIONS,
     Actor,
     GroupId,
     PolicyDecision,
     PolicyRequirement,
     Principal,
     PrincipalId,
-    ROLE_PERMISSIONS,
     WorkspaceRole,
 )
 
