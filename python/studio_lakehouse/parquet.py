@@ -121,7 +121,8 @@ def read_parquet_rows(
     resolved = path.resolve(strict=True)
     selected_columns = list(columns) if columns else None
     if limit is None:
-        return tuple(dict(row) for row in pq.read_table(resolved, columns=selected_columns).to_pylist())
+        table = pq.read_table(resolved, columns=selected_columns)
+        return tuple(dict(row) for row in table.to_pylist())
     if limit == 0:
         return ()
     rows: list[dict[str, object]] = []
