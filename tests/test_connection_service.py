@@ -41,19 +41,19 @@ class _WorkspaceStore:
         self.workspaces[workspace.id] = workspace
         return workspace
 
-    def register_project(self, workspace_id, manifest, *, now):
+    def register_project(self, _workspace_id, _manifest, *, _now):
         raise AssertionError("project operations are not used by ConnectionService")
 
-    def replace_project(self, workspace_id, manifest, *, now):
+    def replace_project(self, _workspace_id, _manifest, *, _now):
         raise AssertionError("project operations are not used by ConnectionService")
 
-    def get_project(self, workspace_id, project_id):
+    def get_project(self, _workspace_id, _project_id):
         raise AssertionError("project operations are not used by ConnectionService")
 
-    def list_projects(self, workspace_id):
+    def list_projects(self, _workspace_id):
         raise AssertionError("project operations are not used by ConnectionService")
 
-    def unregister_project(self, workspace_id, project_id):
+    def unregister_project(self, _workspace_id, _project_id):
         raise AssertionError("project operations are not used by ConnectionService")
 
 

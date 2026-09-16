@@ -6,7 +6,9 @@ from studio_migration import inventory_json_document
 
 def test_inventory_classifies_every_object_and_reports_binding() -> None:
     report = inventory_json_document(
-        '{"objects":[{"type":"job","id":"j-1","status":"manual_decision","notes":["Review schedule"],"bindings":[{"kind":"connection","source_ref":"prod-db"}]}]}',
+        '{"objects":[{"type":"job","id":"j-1","status":"manual_decision",'
+        '"notes":["Review schedule"],"bindings":[{"kind":"connection",'
+        '"source_ref":"prod-db"}]}]}',
         source_platform="databricks",
         source_version="2026.1",
         importer_version="ronin-databricks-0.1",

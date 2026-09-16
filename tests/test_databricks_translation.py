@@ -26,7 +26,8 @@ def test_databricks_dependencies_become_canonical_dag_edges() -> None:
 
 def test_databricks_schedule_is_preserved_as_canonical_schedule() -> None:
     result = translate_notebook_job(
-        '{"job_id":"8","schedule":{"cron":"0 5 * * *"},"tasks":[{"task_key":"a","notebook_task":{"notebook_path":"/a"}}]}',
+        '{"job_id":"8","schedule":{"cron":"0 5 * * *"},'
+        '"tasks":[{"task_key":"a","notebook_task":{"notebook_path":"/a"}}]}',
     )
     assert result.schedule is not None
     assert result.schedule.workflow_id == result.workflow.id

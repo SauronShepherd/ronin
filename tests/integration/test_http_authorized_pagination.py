@@ -12,7 +12,7 @@ from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
 
 _MIGRATION_NOW = Instant("2026-09-13T00:00:00.000000Z")
-_TOKEN = "pagination-test-token"
+_TOKEN = "pagination-test-token"  # noqa: S105 - deterministic fixture credential
 
 
 def _server(tmp_path: Path, grants: GrantSet) -> tuple[RoninHTTPServer, Thread]:

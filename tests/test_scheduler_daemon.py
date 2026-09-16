@@ -103,7 +103,7 @@ def test_daemon_leadership_is_exclusive_and_takeover_increments_generation(
                 service=service,
                 owner="scheduler-a",
                 clock=clock_a,
-                token="leader-a",
+                token="leader-a",  # noqa: S106 - deterministic lease-owner fixture
             )
             second = _daemon(
                 leadership_store=leadership,
@@ -113,7 +113,7 @@ def test_daemon_leadership_is_exclusive_and_takeover_increments_generation(
                 service=service,
                 owner="scheduler-b",
                 clock=clock_b,
-                token="leader-b",
+                token="leader-b",  # noqa: S106 - deterministic lease-owner fixture
             )
 
             first_cycle = await first.run_once(SchedulerDaemonWork())
@@ -154,7 +154,7 @@ def test_daemon_schedule_work_runs_under_durable_leadership(tmp_path: Path) -> N
                 service=service,
                 owner="scheduler-a",
                 clock=clock,
-                token="leader-a",
+                token="leader-a",  # noqa: S106 - deterministic lease-owner fixture
             )
             cycle = await daemon.run_once(SchedulerDaemonWork(schedule_workspaces=(_WS,)))
             assert cycle.is_leader
@@ -199,7 +199,7 @@ def test_daemon_loop_renews_leadership_and_releases_on_shutdown(tmp_path: Path) 
                 service=service,
                 owner="scheduler-a",
                 clock=clock,
-                token="leader-a",
+                token="leader-a",  # noqa: S106 - deterministic lease-owner fixture
             )
             result = await daemon.run_forever(
                 work_provider=work_provider,

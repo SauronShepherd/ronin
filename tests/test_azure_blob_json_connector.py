@@ -15,15 +15,15 @@ class _Downloader:
 
 
 class _BlobClient:
-    def download_blob(self, **kwargs):
+    def download_blob(self, **_kwargs):
         return _Downloader(b'[{"id": 1}]')
 
 
 class _Container:
-    def list_blobs(self, **kwargs):
+    def list_blobs(self, **_kwargs):
         return [type("Blob", (), {"name": "raw/events.json"})()]
 
-    def get_blob_client(self, name):
+    def get_blob_client(self, _name):
         return _BlobClient()
 
 

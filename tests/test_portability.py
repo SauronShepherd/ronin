@@ -65,7 +65,7 @@ def test_manual_decision_requires_explanation() -> None:
 
 def test_bundle_paths_fail_closed() -> None:
     for path in ("/absolute.json", "../escape.json", "a/../escape.json", "a\\b.json"):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="path"):
             BundleEntry(path, "application/json", "sha256", "00", 1)
 
 

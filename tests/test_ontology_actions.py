@@ -23,8 +23,8 @@ def test_ontology_action_authorizes_and_dispatches_exact_inputs() -> None:
         action,
         target,
         {"reason": "valid"},
-        authorize=lambda requirement: True,
-        write=lambda definition, ref, inputs: {"status": "approved"},
+        authorize=lambda _requirement: True,
+        write=lambda _definition, _ref, _inputs: {"status": "approved"},
         idempotency_key="request-1",
     )
     assert result.output == {"status": "approved"}

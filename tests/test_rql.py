@@ -16,7 +16,7 @@ def test_rql_select_where_and_limit() -> None:
 
 def test_rql_rejects_unsupported_or_unbounded_limit() -> None:
     graph = KnowledgeGraph(())
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="unsupported"):
         execute_rql("DELETE Customer", graph)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="limit"):
         execute_rql("SELECT Customer LIMIT 10001", graph)

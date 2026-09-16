@@ -40,9 +40,7 @@ def _event(identifier: str, occurred_at: str, *, action: str = "authorize:job.re
 
 def _cleanup(workspace_id: WorkspaceId) -> None:
     with psycopg.connect(_DSN, autocommit=True) as connection, connection.cursor() as cursor:
-        cursor.execute(
-            "DELETE FROM ronin_workspaces WHERE workspace_id=%s", (workspace_id.value,)
-        )
+        cursor.execute("DELETE FROM ronin_workspaces WHERE workspace_id=%s", (workspace_id.value,))
 
 
 def test_postgres_audit_round_trip_idempotency_and_conflict() -> None:
@@ -123,7 +121,7 @@ def test_postgres_audit_database_check_rejects_invalid_outcome() -> None:
 
     try:
         with psycopg.connect(_DSN, autocommit=True) as connection:
-            with connection.cursor() as cursor:
+            with connection.cursor() as cursor:  # noqa: SIM117 - cursor needed for assertion scope
                 with pytest.raises(psycopg.errors.CheckViolation) as violation:
                     cursor.execute(
                         "INSERT INTO ronin_audit_events("
@@ -145,6 +143,6 @@ def test_postgres_audit_database_check_rejects_invalid_outcome() -> None:
                             "{}",
                         ),
                     )
-                assert violation.value.sqlstate == "23514"
+            assert violation.value.sqlstate == "23514"
     finally:
         _cleanup(workspace.id)

@@ -29,7 +29,7 @@ def test_studio_assets_are_allowlisted_and_served(tmp_path) -> None:
     server = RoninHTTPServer(  # noqa: S106
         ("127.0.0.1", 0),
         service,
-        token="test-token",
+        token="test-token",  # noqa: S106 - deterministic fixture credential
         grants=_GRANTS,  # noqa: S106
     )
     thread = Thread(target=server.serve_forever, daemon=True)

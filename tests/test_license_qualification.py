@@ -107,7 +107,8 @@ def _qualify(
 def test_locked_graph_reads_exact_versions_and_normalizes_names(tmp_path: Path) -> None:
     lock = tmp_path / "requirements-dev.lock"
     lock.write_text(
-        f"Foo_Bar==1.2.3 \\\n    --hash=sha256:{_HASH}\nother.pkg==4.5.6 \\\n    --hash=sha256:{_HASH}\n",
+        f"Foo_Bar==1.2.3 \\\n    --hash=sha256:{_HASH}\n"
+        f"other.pkg==4.5.6 \\\n    --hash=sha256:{_HASH}\n",
         encoding="utf-8",
     )
 
@@ -169,7 +170,8 @@ def test_locked_graph_rejects_hash_not_joined_to_requirement(tmp_path: Path) -> 
 def test_locked_graph_rejects_unterminated_hash_continuation(tmp_path: Path) -> None:
     lock = tmp_path / "requirements-dev.lock"
     lock.write_text(
-        f"demo==1.0.0 \\\n    --hash=sha256:{_HASH} \\\nother==2.0.0 \\\n    --hash=sha256:{_HASH}\n",
+        f"demo==1.0.0 \\\n    --hash=sha256:{_HASH} \\\n"
+        f"other==2.0.0 \\\n    --hash=sha256:{_HASH}\n",
         encoding="utf-8",
     )
 

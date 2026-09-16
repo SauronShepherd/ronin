@@ -134,7 +134,7 @@ def test_postgres_role_binding_database_checks_reject_invalid_values() -> None:
     connection = psycopg.connect(_DSN, autocommit=False)
     try:
         with connection.cursor() as cursor:
-            with pytest.raises(Exception) as invalid_kind:
+            with pytest.raises(psycopg.errors.CheckViolation) as invalid_kind:
                 cursor.execute(
                     "INSERT INTO ronin_security_role_bindings("
                     "workspace_id,subject_kind,subject_id,role) VALUES (%s,%s,%s,%s)",
@@ -144,7 +144,7 @@ def test_postgres_role_binding_database_checks_reject_invalid_values() -> None:
         connection.rollback()
 
         with connection.cursor() as cursor:
-            with pytest.raises(Exception) as invalid_role:
+            with pytest.raises(psycopg.errors.CheckViolation) as invalid_role:
                 cursor.execute(
                     "INSERT INTO ronin_security_role_bindings("
                     "workspace_id,subject_kind,subject_id,role) VALUES (%s,%s,%s,%s)",

@@ -297,7 +297,9 @@ def test_oidc_unprovisioned_subject_is_401_and_healthz_is_public(
     base_url = f"http://127.0.0.1:{server.server_port}"
 
     try:
-        with urllib.request.urlopen(f"{base_url}/healthz", timeout=2.0) as response:
+        with urllib.request.urlopen(  # noqa: S310 - loopback test server only
+            f"{base_url}/healthz", timeout=2.0
+        ) as response:
             assert response.status == 200
             assert json.loads(response.read()) == {"status": "ready"}
 

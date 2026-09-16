@@ -1,3 +1,4 @@
+import pytest
 from studio_semantic import (
     DashboardDefinition,
     DashboardTile,
@@ -46,12 +47,8 @@ def test_metric_query_compiles_filters_as_parameters() -> None:
 
 def test_unknown_semantic_field_fails_closed() -> None:
     query = MetricQuery("sales", ("missing",))
-    try:
+    with pytest.raises(SemanticQueryError, match="unknown measures"):
         compile_metric_query(_model(), query)
-    except SemanticQueryError as exc:
-        assert "unknown measures" in str(exc)
-    else:
-        raise AssertionError("unknown semantic measure must fail")
 
 
 class _FakeEngine:

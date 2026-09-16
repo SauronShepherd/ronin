@@ -2,9 +2,9 @@ from studio_security import Actor, Principal, PrincipalId, RbacAuthorizer, authe
 
 
 class _Validator:
-    def authenticate_principal(self, token, store):
-        assert token == "valid"
-        return store.principal
+    def authenticate_principal(self, token, _store):
+        assert token == "valid"  # noqa: S105 - deterministic fixture credential
+        return _store.principal
 
 
 class _Identities:
@@ -16,10 +16,10 @@ class _Identities:
 
 
 class _Rbac:
-    def groups_for_principal(self, principal_id):
+    def groups_for_principal(self, _principal_id):
         return ()
 
-    def roles_for_actor(self, workspace_id, principal_id, groups):
+    def roles_for_actor(self, _workspace_id, _principal_id, _groups):
         return ()
 
 

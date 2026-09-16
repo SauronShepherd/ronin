@@ -26,7 +26,7 @@ from studio_runners import (
 
 _IMAGE = "sha256:" + "a" * 64
 _OTHER_IMAGE = "sha256:" + "b" * 64
-_TOKEN = "broker-test-token"
+_TOKEN = "broker-test-token"  # noqa: S105 - deterministic fixture credential
 
 
 class _FakeBrokerServer(RunnerBrokerServer):
@@ -40,7 +40,7 @@ class _FakeBrokerServer(RunnerBrokerServer):
         del attempt_id
         self.execute_count += 1
         self.started.set()
-        while not cancellation.is_cancelled:
+        while not cancellation.is_cancelled:  # noqa: ASYNC110 - polls cancellation signal
             await asyncio.sleep(0.01)
         self.cancelled.set()
         return CellExecutionResult(cell.cell_id, "cancelled")

@@ -15,10 +15,10 @@ class _Body:
 
 
 class _S3:
-    def list_objects_v2(self, **kwargs):
+    def list_objects_v2(self, **_kwargs):
         return {"Contents": [{"Key": "raw/events.json"}, {"Key": "raw/readme.txt"}]}
 
-    def get_object(self, **kwargs):
+    def get_object(self, **_kwargs):
         return {"Body": _Body(b'[{"id": 1}]')}
 
 

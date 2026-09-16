@@ -66,7 +66,8 @@ def test_secret_reference_percent_decoded_traversal_is_rejected(tmp_path: Path) 
         resolver.resolve(SecretRef("secret://file/%2E%2E/outside"))
 
 
-def test_composite_resolver_dispatches_only_configured_backends(tmp_path: Path) -> None:
+@pytest.mark.usefixtures("tmp_path")
+def test_composite_resolver_dispatches_only_configured_backends() -> None:
     environment = EnvironmentSecretResolver({"API_TOKEN": "token-value"})
     composite = CompositeSecretResolver(environment=environment)
     assert composite.resolve(SecretRef("secret://env/API_TOKEN")).reveal_text() == "token-value"

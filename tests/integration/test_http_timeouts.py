@@ -14,7 +14,7 @@ from studio_server.scoped_http import ServiceCallTimeout, _BoundedServiceLoop
 from studio_storage import SqliteJobStore
 
 _MIGRATION_NOW = Instant("2026-09-13T00:00:00.000000Z")
-_TOKEN = "timeout-test-token"
+_TOKEN = "timeout-test-token"  # noqa: S105 - deterministic fixture credential
 
 
 def _grants() -> GrantSet:
