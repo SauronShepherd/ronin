@@ -5,11 +5,6 @@ from __future__ import annotations
 from studio_storage.artifacts import ArtifactIntegrityError, ArtifactRef, LocalArtifactStore
 from studio_storage.async_artifacts import BoundedAsyncArtifactStore
 from studio_storage.async_store import StorageBackpressureError
-from studio_storage.source_checkpoints import (
-    SourceCheckpointConflict,
-    SqliteSourceCheckpointStore,
-    StoredSourceCheckpoint,
-)
 from studio_storage.backup import backup_sqlite, restore_sqlite
 from studio_storage.bundle import (
     BUNDLE_MANIFEST_PATH,
@@ -85,6 +80,11 @@ from studio_storage.secrets import (
     SecretMaterial,
     SecretResolutionError,
     SecretResolver,
+)
+from studio_storage.source_checkpoints import (
+    SourceCheckpointConflict,
+    SqliteSourceCheckpointStore,
+    StoredSourceCheckpoint,
 )
 from studio_storage.sqlite import migrate, open_database, schema_version
 from studio_storage.workspaces import (

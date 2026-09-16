@@ -137,7 +137,9 @@ class SqliteMultiObjectBundleImportStore(SqliteWorkspaceStore, SqliteConnectionS
                     raise MultiObjectBundleImportConflict(
                         f"target environment does not exist: {item.environment_id}"
                     )
-                environment_definition = EnvironmentDefinition.from_json(environment["definition_json"])
+                environment_definition = EnvironmentDefinition.from_json(
+                    environment["definition_json"]
+                )
                 if environment_definition.disabled:
                     raise MultiObjectBundleImportConflict(
                         f"target environment is disabled: {item.environment_id}"
