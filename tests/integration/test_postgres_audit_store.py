@@ -4,7 +4,6 @@ import os
 from uuid import uuid4
 
 import pytest
-
 from studio_core import Workspace, WorkspaceId
 from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource
 from studio_orchestrator import Instant
@@ -40,11 +39,10 @@ def _event(identifier: str, occurred_at: str, *, action: str = "authorize:job.re
 
 
 def _cleanup(workspace_id: WorkspaceId) -> None:
-    with psycopg.connect(_DSN, autocommit=True) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "DELETE FROM ronin_workspaces WHERE workspace_id=%s", (workspace_id.value,)
-            )
+    with psycopg.connect(_DSN, autocommit=True) as connection, connection.cursor() as cursor:
+        cursor.execute(
+            "DELETE FROM ronin_workspaces WHERE workspace_id=%s", (workspace_id.value,)
+        )
 
 
 def test_postgres_audit_round_trip_idempotency_and_conflict() -> None:

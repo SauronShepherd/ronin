@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import http.client
 import json
+from collections.abc import Iterator
 from contextlib import contextmanager
 from threading import Thread
-from typing import Iterator
 
 from studio_core import (
     ExecutionProfile,

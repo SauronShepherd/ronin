@@ -6,7 +6,6 @@ from pathlib import Path
 from threading import Event, Thread
 
 import pytest
-
 from studio_core.grants import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant

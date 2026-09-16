@@ -6,7 +6,6 @@ from urllib.error import URLError
 from urllib.request import OpenerDirector
 
 import pytest
-
 from studio_security import HttpsOidcJwksProvider, OidcDiscoveryError
 
 _ISSUER = "https://issuer.example/tenant"
@@ -80,7 +79,7 @@ def test_https_oidc_provider_refetches_to_observe_key_rotation() -> None:
 
 
 @pytest.mark.parametrize(
-    "issuer,message",
+    ("issuer", "message"),
     [
         ("http://issuer.example", "HTTPS"),
         ("https://user:pass@issuer.example", "credentials"),
@@ -100,7 +99,7 @@ def test_https_oidc_provider_rejects_discovery_issuer_mismatch() -> None:
 
 
 @pytest.mark.parametrize(
-    "jwks_uri,message",
+    ("jwks_uri", "message"),
     [
         ("http://keys.example/jwks", "HTTPS"),
         ("https://user:pass@keys.example/jwks", "forbidden"),

@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from studio_security import FileJwksProvider, JwksFileError
 
 
@@ -45,7 +44,7 @@ def test_file_jwks_provider_rejects_malformed_utf8_and_json(tmp_path: Path) -> N
 
 
 @pytest.mark.parametrize(
-    "payload,message",
+    ("payload", "message"),
     [
         ([], "JSON object"),
         ({}, "keys array"),

@@ -68,7 +68,7 @@ def test_classification_training_and_prediction() -> None:
         predict_tabular(trained.artifact_bytes, ({"x": 2.0, "y": 2.0},), max_rows=0)
 
 
-@pytest.mark.parametrize("row_count", (4, 5))
+@pytest.mark.parametrize("row_count", [4, 5])
 def test_regression_rejects_test_partition_too_small_for_r2(row_count: int) -> None:
     with pytest.raises(ValueError, match="at least two test rows"):
         train_tabular(
@@ -77,7 +77,7 @@ def test_regression_rejects_test_partition_too_small_for_r2(row_count: int) -> N
         )
 
 
-@pytest.mark.parametrize("row_count", (4, 5))
+@pytest.mark.parametrize("row_count", [4, 5])
 def test_binary_classification_rejects_test_partition_smaller_than_class_count(
     row_count: int,
 ) -> None:

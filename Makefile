@@ -50,7 +50,8 @@ coverage-t3:
 		--include="*/studio_execution/*,*/studio_server/*,*/studio_cli/*,*/pyronin/*"
 
 coverage-t4:
-	coverage report --fail-under=10 \
+	# Public v1 domain packages currently qualify at 65%; keep a five-point regression margin.
+	coverage report --fail-under=60 \
 		--include="*/studio_connectors/*,*/studio_finops/*,*/studio_genai/*,*/studio_lakehouse/*,*/studio_ml/*,*/studio_migration/*,*/studio_observability/*,*/studio_quality/*,*/studio_security/*,*/studio_semantic/*,*/studio_sql/*,*/studio_streaming/*"
 
 coverage-storage-files:

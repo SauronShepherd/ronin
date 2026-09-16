@@ -5,7 +5,6 @@ import socket
 from pathlib import Path
 
 import pytest
-
 import studio_cli.entrypoint as entrypoint
 from studio_cli.oidc_serve import build_oidc_server_from_env
 from studio_core import Workspace, WorkspaceId
