@@ -18,6 +18,7 @@ from .contracts import (
     SubjectKind,
     WorkspaceRole,
 )
+from .jwks_file import FileJwksProvider, JwksFileError
 from .oidc import (
     JwksProvider,
     OidcAuthenticationError,
@@ -33,10 +34,12 @@ from .store import IdentityConflict, SqliteIdentityStore
 
 __all__ = (
     "Actor",
+    "FileJwksProvider",
     "Group",
     "GroupId",
     "HttpsOidcJwksProvider",
     "IdentityConflict",
+    "JwksFileError",
     "JwksProvider",
     "OidcAuthenticationError",
     "OidcClaims",
