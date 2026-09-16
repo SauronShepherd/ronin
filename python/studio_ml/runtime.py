@@ -10,6 +10,7 @@ from __future__ import annotations
 import pickle
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from io import BytesIO
 from math import ceil, sqrt
 from typing import Any, Literal, TypeAlias
 
@@ -47,6 +48,27 @@ def _sklearn() -> dict[str, Any]:
         "r2_score": r2_score,
         "train_test_split": train_test_split,
     }
+
+
+class _RestrictedUnpickler(pickle.Unpickler):
+    """Load only the sklearn/numpy primitives emitted by the tabular runtime."""
+
+    _ALLOWED_PREFIXES = (
+        "builtins",
+        "collections",
+        "copyreg",
+        "numpy",
+        "sklearn.linear_model",
+    )
+
+    def find_class(self, module: str, name: str) -> object:
+        if not module.startswith(self._ALLOWED_PREFIXES):
+            raise pickle.UnpicklingError(f"ML artifact global is not allowed: {module}.{name}")
+        return super().find_class(module, name)
+
+
+def _restricted_loads(data: bytes) -> object:
+    return _RestrictedUnpickler(BytesIO(data)).load()
 
 
 def _text(value: str, name: str) -> str:
@@ -218,7 +240,7 @@ def predict_tabular(
     if len(rows) > max_rows:
         raise ValueError("ML prediction input exceeds configured row limit")
     try:
-        payload = pickle.loads(artifact_bytes)  # noqa: S301 - trusted internal artifact boundary
+        payload = _restricted_loads(artifact_bytes)
     except Exception as exc:
         raise ValueError("ML artifact is not a valid Ronin tabular model") from exc
     if not isinstance(payload, dict) or payload.get("schema") != "ronin.sklearn.tabular/v1":
