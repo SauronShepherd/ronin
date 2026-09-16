@@ -275,24 +275,24 @@ def resolve_connection_secret_bindings(
     expected = {(request.kind, request.source_ref): request for request in plan.unresolved_bindings}
     supplied: dict[tuple[str, str], DeploymentBinding] = {}
     for resolution in resolutions:
-        key = (resolution.kind, resolution.source_ref)
-        if key in supplied:
+        binding_key = (resolution.kind, resolution.source_ref)
+        if binding_key in supplied:
             raise ConnectionBundleBindingError("duplicate connection Bundle binding resolution")
-        if key not in expected:
+        if binding_key not in expected:
             raise ConnectionBundleBindingError(
                 "connection Bundle binding resolution was not requested"
             )
-        supplied[key] = resolution
+        supplied[binding_key] = resolution
     if any(request.required and key not in supplied for key, request in expected.items()):
         raise ConnectionBundleBindingError("required connection Bundle bindings remain unresolved")
 
     remapped_refs: list[tuple[str, SecretRef]] = []
-    for key, source_ref in plan.connection.secret_refs:
-        resolution = supplied.get(("secret", str(source_ref)))
-        if resolution is None:
-            remapped_refs.append((key, source_ref))
+    for secret_key, source_ref in plan.connection.secret_refs:
+        matched_resolution = supplied.get(("secret", str(source_ref)))
+        if matched_resolution is None:
+            remapped_refs.append((secret_key, source_ref))
         else:
-            remapped_refs.append((key, SecretRef(resolution.target_ref)))
+            remapped_refs.append((secret_key, SecretRef(matched_resolution.target_ref)))
     return ConnectionDefinition(
         id=plan.connection.id,
         name=plan.connection.name,
