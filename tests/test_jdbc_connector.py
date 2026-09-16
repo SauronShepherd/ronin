@@ -106,3 +106,34 @@ def test_jdbc_v2_read_binds_lexicographic_cursor() -> None:
         checkpoint=SourceCheckpoint("watermark", checkpoint.encode()),
     )
     assert result.rows == ({"updated_at": 10, "id": 8},)
+
+
+def test_jdbc_v2_empty_source_does_not_create_empty_string_cursor() -> None:
+    class EmptyCursor(_Cursor):
+        description = (("updated_at", "timestamp"), ("id", "integer"))
+
+        def fetchall(self):
+            return []
+
+    class EmptyDatabase(_Db):
+        def cursor(self):
+            return EmptyCursor()
+
+    connection = ConnectionDefinition(
+        ConnectionId("jdbc"),
+        "JDBC",
+        "jdbc",
+        options=(
+            ("url", "jdbc:test"),
+            ("incremental_column", "updated_at"),
+            ("tie_breaker_columns", "id"),
+        ),
+    )
+    result = JdbcConnector(connect=lambda *_args: EmptyDatabase()).read(
+        connection,
+        AssetHandle(connection.id, ("public",), "events"),
+        EnvironmentSecretResolver({}),
+    )
+    decoded = JdbcIncrementalCheckpointV2.decode(result.checkpoint.value)
+    assert decoded.incremental_value is None
+    assert decoded.incremental_value != ""
