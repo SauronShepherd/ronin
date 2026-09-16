@@ -88,3 +88,49 @@ class DuckDbSqlEngine:
 
 
 __all__ = ("DuckDbDependencyError", "DuckDbSqlEngine")
+
+
+class ProjectScopedDuckDbSqlEngine:
+    """DuckDB reference engine with independent relation namespaces per project."""
+
+    def __init__(self) -> None:
+        self._engines: dict[str, DuckDbSqlEngine] = {}
+        self._closed = False
+
+    def _engine(self, project: str) -> DuckDbSqlEngine:
+        if not project or project != project.strip():
+            raise ValueError("SQL project must be non-empty and trimmed")
+        if self._closed:
+            raise RuntimeError("SQL engine is closed")
+        return self._engines.setdefault(project, DuckDbSqlEngine())
+
+    def register_parquet(self, project: str, name: str, path: str) -> None:
+        self._engine(project).register_parquet(name, path)
+
+    def execute(
+        self,
+        project: str,
+        sql: str,
+        parameters: tuple[object, ...] = (),
+        *,
+        max_rows: int = 10_000,
+    ) -> SqlQueryResult:
+        return self._engine(project).execute(sql, parameters, max_rows=max_rows)
+
+    def close(self) -> None:
+        if not self._closed:
+            for engine in self._engines.values():
+                engine.close()
+            self._engines.clear()
+            self._closed = True
+
+    def __enter__(self) -> ProjectScopedDuckDbSqlEngine:
+        if self._closed:
+            raise RuntimeError("SQL engine is closed")
+        return self
+
+    def __exit__(self, _exc_type: object, _exc: object, _traceback: object) -> None:
+        self.close()
+
+
+__all__ = ("DuckDbDependencyError", "DuckDbSqlEngine", "ProjectScopedDuckDbSqlEngine")

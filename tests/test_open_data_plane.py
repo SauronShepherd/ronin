@@ -4,11 +4,11 @@ import pytest
 from studio_core import AssetId, Workspace, WorkspaceId
 from studio_execution.lakehouse import write_governed_parquet
 from studio_lakehouse import inspect_parquet, read_parquet_rows, write_parquet_rows
-from studio_sql import DuckDbSqlEngine
+from studio_sql import DuckDbSqlEngine, ProjectScopedDuckDbSqlEngine
 from studio_storage import SqliteCatalogStore, SqliteWorkspaceStore
 
 pytest.importorskip("pyarrow")
-pytest.importorskip("duckdb")
+duckdb = pytest.importorskip("duckdb")
 
 _NOW = "2026-09-13T10:30:00.000000Z"
 _WS = WorkspaceId("workspace-data-plane")
@@ -76,6 +76,21 @@ def test_sql_reference_engine_rejects_mutating_or_multiple_statements() -> None:
             engine.execute("CREATE TABLE unsafe (value INTEGER)")
         with pytest.raises(ValueError, match="read-only SELECT"):
             engine.execute("SELECT 1; SELECT 2")
+
+
+def test_project_scoped_sql_engines_isolate_relation_collisions(tmp_path: Path) -> None:
+    first = tmp_path / "first.parquet"
+    second = tmp_path / "second.parquet"
+    write_parquet_rows(first, ({"value": 1},))
+    write_parquet_rows(second, ({"value": 2},))
+
+    with ProjectScopedDuckDbSqlEngine() as engine:
+        engine.register_parquet("project-a", "events", str(first))
+        engine.register_parquet("project-b", "events", str(second))
+        assert engine.execute("project-a", "SELECT value FROM events").rows == ((1,),)
+        assert engine.execute("project-b", "SELECT value FROM events").rows == ((2,),)
+        with pytest.raises(duckdb.CatalogException):
+            engine.execute("project-c", "SELECT value FROM events")
 
 
 def test_governed_parquet_write_commits_content_addressed_catalog_revision(
