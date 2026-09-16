@@ -83,7 +83,9 @@ def test_bundle_rejects_unmanifested_member(tmp_path: Path) -> None:
 def test_bundle_rejects_path_traversal_member_before_extraction(tmp_path: Path) -> None:
     path = tmp_path / "unsafe.roninbundle"
     with zipfile.ZipFile(path, mode="w") as archive:
-        archive.writestr(BUNDLE_MANIFEST_PATH, '{"schema_version":1,"entries":[],"migration_reports":[]}')
+        archive.writestr(
+            BUNDLE_MANIFEST_PATH, '{"schema_version":1,"entries":[],"migration_reports":[]}'
+        )
         archive.writestr("../escape.txt", b"escape")
 
     with pytest.raises(BundleIntegrityError, match="unsafe components"):

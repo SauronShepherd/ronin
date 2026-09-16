@@ -6,12 +6,11 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
+from studio_core import Schedule, WorkspaceId
 from studio_orchestrator import Instant
 from studio_storage.scheduler_schedule import (
-    Schedule,
     ScheduleFire,
     SchedulerScheduleStore,
-    WorkspaceId,
 )
 
 from .scheduler_cron import evaluated_minutes, schedule_matches

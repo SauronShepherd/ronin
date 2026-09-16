@@ -20,8 +20,18 @@ class NotificationIntent:
     attributes: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
-        for value, name in ((self.id, "notification id"), (self.kind, "notification kind"), (self.title, "notification title")):
-            if not value or value != value.strip() or "\n" in value or "\r" in value or "\x00" in value:
+        for value, name in (
+            (self.id, "notification id"),
+            (self.kind, "notification kind"),
+            (self.title, "notification title"),
+        ):
+            if (
+                not value
+                or value != value.strip()
+                or "\n" in value
+                or "\r" in value
+                or "\x00" in value
+            ):
                 raise ValueError(f"{name} must be non-empty, trimmed, and single-line")
         if not self.body or "\x00" in self.body:
             raise ValueError("notification body must be non-empty")

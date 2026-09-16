@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
-from studio_storage.artifacts import ArtifactIntegrityError, ArtifactRef, LocalArtifactStore
+from studio_storage.artifacts import (
+    ArtifactIntegrityError,
+    ArtifactPage,
+    ArtifactRef,
+    LocalArtifactStore,
+)
 from studio_storage.async_artifacts import BoundedAsyncArtifactStore
 from studio_storage.async_store import StorageBackpressureError
+from studio_storage.backup import backup_sqlite, restore_sqlite
 from studio_storage.bundle import (
     BUNDLE_MANIFEST_PATH,
     BundleFile,
@@ -43,16 +49,19 @@ from studio_storage.ontology import (
     migrate_ontology,
     ontology_schema_version,
 )
+from studio_storage.ontology_graph import KnowledgeGraphConflict, SqliteKnowledgeGraphStore
 from studio_storage.paged_store import BoundedAsyncJobStore, InMemoryJobStore
 from studio_storage.ports import (
     ArtifactStore,
     CatalogStore,
     ConnectionStore,
     EnvironmentStore,
+    PagedArtifactStore,
     WorkspaceStore,
 )
 from studio_storage.postgres_audit import PostgresAuditStore
 from studio_storage.postgres_core import PostgresDependencyError, PostgresMetadataStore
+from studio_storage.postgres_jobs import PostgresJobReadPort
 from studio_storage.quality import (
     DataContractConflict,
     DataContractNotFound,
@@ -62,6 +71,8 @@ from studio_storage.quality import (
     quality_schema_version,
 )
 from studio_storage.readiness import sqlite_ready
+from studio_storage.retention import collect_unreferenced
+from studio_storage.s3_artifacts import S3ArtifactStore, S3DependencyError
 from studio_storage.scheduler import (
     SqliteSchedulerStore,
     WorkflowConflict,
@@ -78,6 +89,11 @@ from studio_storage.secrets import (
     SecretResolutionError,
     SecretResolver,
 )
+from studio_storage.source_checkpoints import (
+    SourceCheckpointConflict,
+    SqliteSourceCheckpointStore,
+    StoredSourceCheckpoint,
+)
 from studio_storage.sqlite import migrate, open_database, schema_version
 from studio_storage.workspaces import (
     ProjectRegistrationConflict,
@@ -91,7 +107,10 @@ from studio_storage.workspaces import (
 __all__ = (
     "ArtifactIntegrityError",
     "ArtifactRef",
+    "ArtifactPage",
+    "backup_sqlite",
     "ArtifactStore",
+    "PagedArtifactStore",
     "BUNDLE_MANIFEST_PATH",
     "BoundedAsyncArtifactStore",
     "BoundedAsyncJobStore",
@@ -114,11 +133,18 @@ __all__ = (
     "IdempotencyConflict",
     "InMemoryJobStore",
     "LocalArtifactStore",
+    "restore_sqlite",
+    "S3ArtifactStore",
+    "S3DependencyError",
+    "collect_unreferenced",
     "MountedFileSecretResolver",
     "OntologyConflict",
     "PostgresAuditStore",
     "PostgresDependencyError",
     "PostgresMetadataStore",
+    "PostgresJobReadPort",
+    "KnowledgeGraphConflict",
+    "SqliteKnowledgeGraphStore",
     "ProjectRegistrationConflict",
     "QualityRunConflict",
     "SecretMaterial",
@@ -133,6 +159,9 @@ __all__ = (
     "SqliteSchedulerStore",
     "SqliteWorkspaceStore",
     "StorageBackpressureError",
+    "SourceCheckpointConflict",
+    "SqliteSourceCheckpointStore",
+    "StoredSourceCheckpoint",
     "WorkflowConflict",
     "WorkflowNotFound",
     "WorkflowRunConflict",

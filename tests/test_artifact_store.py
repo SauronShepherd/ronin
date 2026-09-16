@@ -3,7 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from studio_storage import ArtifactIntegrityError, ArtifactRef, LocalArtifactStore
+from studio_storage import (
+    ArtifactIntegrityError,
+    ArtifactRef,
+    LocalArtifactStore,
+    collect_unreferenced,
+)
 
 
 def test_artifact_round_trip_is_content_addressed(tmp_path: Path) -> None:
@@ -14,6 +19,11 @@ def test_artifact_round_trip_is_content_addressed(tmp_path: Path) -> None:
     assert first.storage_ref == second.storage_ref
     assert store.get_bytes(first) == b"hello"
     assert store.verify(first)
+    assert store.list_digests() == (first.digest,)
+    assert store.storage_ref_for_digest(first.digest) == first.storage_ref
+    assert store.delete(first)
+    assert not store.delete(first)
+    assert store.list_digests() == ()
 
 
 def test_corrupted_artifact_fails_closed_and_same_content_repairs_it(tmp_path: Path) -> None:
@@ -50,3 +60,13 @@ def test_invalid_role_is_rejected_without_persisting(tmp_path: Path) -> None:
     store = LocalArtifactStore(tmp_path / "artifacts")
     with pytest.raises(ValueError, match="role"):
         store.put_bytes(role=" bad", data=b"secret")
+
+
+def test_retention_deletes_only_unreferenced_digests(tmp_path: Path) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    live = store.put_bytes(role="live", data=b"live")
+    stale = store.put_bytes(role="stale", data=b"stale")
+
+    assert collect_unreferenced(store, (live.digest,)) == (stale.digest,)
+    assert store.verify(live)
+    assert not store.verify(stale)

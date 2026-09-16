@@ -24,6 +24,7 @@ from studio_core.bundle_inventory import (
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.portability import RoninBundleManifest
 from studio_storage.bundle import (
+    DEFAULT_BUNDLE_READ_LIMITS,
     BundleFile,
     BundleIntegrityError,
     BundleReadLimits,
@@ -63,9 +64,7 @@ class CatalogBundleInventory:
             *(item.path for item in self.inventory.objects),
         }
         if set(paths) != expected:
-            raise ValueError(
-                "catalog Bundle files must exactly match semantic inventory paths"
-            )
+            raise ValueError("catalog Bundle files must exactly match semantic inventory paths")
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,9 +105,7 @@ def _asset_logical_ref(asset: CatalogAsset) -> str:
 
 
 def _revision_logical_ref(revision: AssetRevision) -> str:
-    digest = hashlib.sha256(
-        encode_canonical_json(revision.ref.to_payload())
-    ).hexdigest()
+    digest = hashlib.sha256(encode_canonical_json(revision.ref.to_payload())).hexdigest()
     return f"catalog-revision:{digest}"
 
 
@@ -125,9 +122,7 @@ def _manifest_entry_digest(manifest: RoninBundleManifest, path: str) -> str:
     for entry in manifest.entries:
         if entry.path == path:
             return entry.digest
-    raise BundleIntegrityError(
-        "catalog inventory references a payload absent from manifest"
-    )
+    raise BundleIntegrityError("catalog inventory references a payload absent from manifest")
 
 
 def _require_active_workspace(
@@ -188,9 +183,7 @@ def build_catalog_bundle_inventory(
 
     assets, revisions, lineage = _selected_catalog(store, workspace_id, refs)
     asset_refs = {asset.id: _asset_logical_ref(asset) for asset in assets}
-    revision_refs = {
-        revision.ref: _revision_logical_ref(revision) for revision in revisions
-    }
+    revision_refs = {revision.ref: _revision_logical_ref(revision) for revision in revisions}
     objects: list[BundleInventoryObject] = []
     payloads: list[BundleFile] = []
 
@@ -312,9 +305,7 @@ def _stage_asset(
     except (UnicodeDecodeError, ValueError) as exc:
         raise UnsupportedCatalogBundle("catalog asset payload is invalid") from exc
     if item.logical_ref != _asset_logical_ref(asset):
-        raise UnsupportedCatalogBundle(
-            "catalog asset logical identity does not match payload"
-        )
+        raise UnsupportedCatalogBundle("catalog asset logical identity does not match payload")
     existing = store.get_asset(workspace_id, asset.id)
     if existing is None:
         disposition: CatalogDisposition = "create"
@@ -345,22 +336,16 @@ def _stage_revision(
     known_assets: dict[AssetId, str],
 ) -> StagedCatalogObject:
     if item.binding_requests:
-        raise UnsupportedCatalogBundle(
-            "catalog revision must not request deployment bindings"
-        )
+        raise UnsupportedCatalogBundle("catalog revision must not request deployment bindings")
     try:
         revision = AssetRevision.from_json(data.decode("utf-8"))
     except (UnicodeDecodeError, ValueError) as exc:
         raise UnsupportedCatalogBundle("catalog revision payload is invalid") from exc
     expected_dependency = known_assets.get(revision.ref.asset_id)
     if expected_dependency is None or item.dependencies != (expected_dependency,):
-        raise UnsupportedCatalogBundle(
-            "catalog revision dependency does not match asset payload"
-        )
+        raise UnsupportedCatalogBundle("catalog revision dependency does not match asset payload")
     if item.logical_ref != _revision_logical_ref(revision):
-        raise UnsupportedCatalogBundle(
-            "catalog revision logical identity does not match payload"
-        )
+        raise UnsupportedCatalogBundle("catalog revision logical identity does not match payload")
     existing = store.get_revision(workspace_id, revision.ref)
     if existing is None:
         disposition: CatalogDisposition = "create"
@@ -391,9 +376,7 @@ def _stage_lineage(
     known_revisions: dict[AssetRef, str],
 ) -> StagedCatalogObject:
     if item.binding_requests:
-        raise UnsupportedCatalogBundle(
-            "catalog lineage must not request deployment bindings"
-        )
+        raise UnsupportedCatalogBundle("catalog lineage must not request deployment bindings")
     try:
         edge = LineageEdge.from_json(data.decode("utf-8"))
     except (UnicodeDecodeError, ValueError) as exc:
@@ -410,9 +393,7 @@ def _stage_lineage(
             "catalog lineage dependencies do not match payload revisions"
         )
     if item.logical_ref != _lineage_logical_ref(edge):
-        raise UnsupportedCatalogBundle(
-            "catalog lineage logical identity does not match payload"
-        )
+        raise UnsupportedCatalogBundle("catalog lineage logical identity does not match payload")
     existing = next(
         (
             candidate
@@ -438,7 +419,7 @@ def plan_catalog_bundle_import(
     catalog_store: CatalogStore,
     workspace_id: WorkspaceId,
     *,
-    limits: BundleReadLimits = BundleReadLimits(),
+    limits: BundleReadLimits = DEFAULT_BUNDLE_READ_LIMITS,
     max_inventory_bytes: int = 8 * 1024 * 1024,
     max_object_bytes: int = 8 * 1024 * 1024,
 ) -> CatalogBundleImportPlan:
@@ -452,13 +433,9 @@ def plan_catalog_bundle_import(
         limits=limits,
     )
     if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
-        raise UnsupportedCatalogBundle(
-            "catalog Bundle inventory has unsupported media type"
-        )
+        raise UnsupportedCatalogBundle("catalog Bundle inventory has unsupported media type")
     try:
-        inventory = BundleInventory.from_json(
-            inventory_payload.file.data.decode("utf-8")
-        )
+        inventory = BundleInventory.from_json(inventory_payload.file.data.decode("utf-8"))
     except (UnicodeDecodeError, ValueError) as exc:
         raise UnsupportedCatalogBundle("catalog Bundle inventory is invalid") from exc
 
@@ -473,15 +450,11 @@ def plan_catalog_bundle_import(
             limits=limits,
         )
         if payload.manifest != inventory_payload.manifest:
-            raise BundleIntegrityError(
-                "catalog Bundle changed while import plan was constructed"
-            )
+            raise BundleIntegrityError("catalog Bundle changed while import plan was constructed")
         digest = _manifest_entry_digest(inventory_payload.manifest, item.path)
         if item.kind == "catalog_asset":
             if payload.file.media_type != CATALOG_ASSET_MEDIA_TYPE:
-                raise UnsupportedCatalogBundle(
-                    "catalog asset has unsupported media type"
-                )
+                raise UnsupportedCatalogBundle("catalog asset has unsupported media type")
             staged_item = _stage_asset(
                 item,
                 payload.file.data,
@@ -489,13 +462,12 @@ def plan_catalog_bundle_import(
                 workspace_id,
                 digest,
             )
-            assert isinstance(staged_item.payload, CatalogAsset)
+            if not isinstance(staged_item.payload, CatalogAsset):
+                raise BundleIntegrityError("staged catalog asset has an invalid payload")
             known_assets[staged_item.payload.id] = staged_item.logical_ref
         elif item.kind == "catalog_revision":
             if payload.file.media_type != CATALOG_REVISION_MEDIA_TYPE:
-                raise UnsupportedCatalogBundle(
-                    "catalog revision has unsupported media type"
-                )
+                raise UnsupportedCatalogBundle("catalog revision has unsupported media type")
             staged_item = _stage_revision(
                 item,
                 payload.file.data,
@@ -504,13 +476,12 @@ def plan_catalog_bundle_import(
                 digest,
                 known_assets,
             )
-            assert isinstance(staged_item.payload, AssetRevision)
+            if not isinstance(staged_item.payload, AssetRevision):
+                raise BundleIntegrityError("staged catalog revision has an invalid payload")
             known_revisions[staged_item.payload.ref] = staged_item.logical_ref
         elif item.kind == "catalog_lineage":
             if payload.file.media_type != CATALOG_LINEAGE_MEDIA_TYPE:
-                raise UnsupportedCatalogBundle(
-                    "catalog lineage has unsupported media type"
-                )
+                raise UnsupportedCatalogBundle("catalog lineage has unsupported media type")
             staged_item = _stage_lineage(
                 item,
                 payload.file.data,
@@ -520,9 +491,7 @@ def plan_catalog_bundle_import(
                 known_revisions,
             )
         else:
-            raise UnsupportedCatalogBundle(
-                f"unsupported catalog Bundle object kind: {item.kind}"
-            )
+            raise UnsupportedCatalogBundle(f"unsupported catalog Bundle object kind: {item.kind}")
         staged.append(staged_item)
 
     return CatalogBundleImportPlan(

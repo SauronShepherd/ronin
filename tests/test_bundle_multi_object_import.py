@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from studio_core import (
     ConnectionDefinition,
     ConnectionId,
@@ -99,9 +98,7 @@ def _write_project_connection_bundle(
                 project_ref,
                 project_path,
                 dependencies=(connection_ref,),
-                binding_requests=(
-                    BindingRequest("runtime", "runtime-profile:python/3.11"),
-                ),
+                binding_requests=(BindingRequest("runtime", "runtime-profile:python/3.11"),),
             ),
         )
     )
@@ -187,9 +184,7 @@ def test_multi_object_plan_rejects_cyclic_dependencies(tmp_path: Path) -> None:
 
 def test_multi_object_plan_rejects_unknown_object_kind(tmp_path: Path) -> None:
     object_path = "objects/future/object.json"
-    inventory = BundleInventory(
-        (BundleInventoryObject("future", "future:1", object_path),)
-    )
+    inventory = BundleInventory((BundleInventoryObject("future", "future:1", object_path),))
     bundle = tmp_path / "future.roninbundle"
     write_bundle(
         bundle,

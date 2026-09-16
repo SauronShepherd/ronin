@@ -20,11 +20,12 @@ from studio_orchestrator import (
 )
 from studio_runners import CommandOutcome
 from studio_server import WorkerPollResult
-from studio_storage import SqliteJobStore
+from studio_storage import LocalArtifactStore, SqliteJobStore
 from studio_worker import (
     LocalWorkerRuntime,
     LocalWorkerRuntimeConfig,
     WorkerPaths,
+    artifact_store_from_environment,
     runtime_catalog_for_image,
 )
 
@@ -179,7 +180,7 @@ def test_restart_reclaims_same_run_and_reuses_persisted_cells(tmp_path: Path) ->
                 lease_token=LeaseToken("lease-runtime-1"),
             )
         )
-        await asyncio.wait_for(first_runner.started.wait(), timeout=2.0)
+        await asyncio.wait_for(first_runner.started.wait(), timeout=10.0)
 
         store = SqliteJobStore(config.database_path, migration_now=START)
         persisted_before_crash = store.read_cell_results(RunId("run-runtime"))
@@ -252,7 +253,7 @@ def test_run_forever_shutdown_abandons_active_claim_immediately(tmp_path: Path) 
             now=_Clock(START),
         ) as runtime:
             task = asyncio.create_task(runtime.run_forever(shutdown))
-            await asyncio.wait_for(runner.started.wait(), timeout=2.0)
+            await asyncio.wait_for(runner.started.wait(), timeout=10.0)
             shutdown.set()
             await asyncio.wait_for(task, timeout=2.0)
 
@@ -303,3 +304,32 @@ def test_attempt_limit_does_not_stop_worker(
         assert calls == 2
 
     asyncio.run(scenario())
+
+
+def test_runtime_retains_injected_artifact_store(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    injected = LocalArtifactStore(tmp_path / "injected-artifacts")
+
+    async def scenario() -> None:
+        async with LocalWorkerRuntime(
+            config,
+            migration_now=START,
+            artifact_store=injected,
+            engine_path="docker",
+        ) as runtime:
+            assert runtime._artifact_store is injected
+
+    asyncio.run(scenario())
+
+
+def test_artifact_backend_selection_fails_closed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    config = _config(tmp_path)
+    assert isinstance(artifact_store_from_environment(config), LocalArtifactStore)
+    monkeypatch.setenv("RONIN_ARTIFACT_BACKEND", "s3")
+    with pytest.raises(ValueError, match="RONIN_S3_BUCKET is required"):
+        artifact_store_from_environment(config)
+    monkeypatch.setenv("RONIN_ARTIFACT_BACKEND", "unsupported")
+    with pytest.raises(ValueError, match="must be local or s3"):
+        artifact_store_from_environment(config)

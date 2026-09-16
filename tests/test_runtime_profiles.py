@@ -163,7 +163,7 @@ def test_compatible_resolution_falls_back_without_relaxing_required_capabilities
     assert missing_required.selected is None
 
 
-def test_compatible_resolution_can_fallback_when_requested_profile_is_missing() -> None:
+def test_compatible_resolution_rejects_unknown_requested_profile() -> None:
     fallback = _profile("local", "default", RuntimeCapability("engine.spark"))
     resolution = resolve_runtime(
         ExecutionProfile(
@@ -173,7 +173,8 @@ def test_compatible_resolution_can_fallback_when_requested_profile_is_missing() 
         ),
         RuntimeCatalog((fallback,)),
     )
-    assert resolution.selected == fallback
+    assert resolution.status == "no_match"
+    assert resolution.selected is None
     assert resolution.requested_profile_found is False
 
 

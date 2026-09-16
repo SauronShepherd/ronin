@@ -74,7 +74,8 @@ class SqliteVectorStore:
             connection.execute("DELETE FROM vector_chunks WHERE index_id=?", (str(index_id),))
             for chunk in chunks:
                 connection.execute(
-                    "INSERT INTO vector_chunks(index_id,chunk_id,text_value,vector_json,metadata_json) "
+                    "INSERT INTO vector_chunks("
+                    "index_id,chunk_id,text_value,vector_json,metadata_json) "
                     "VALUES (?,?,?,?,?)",
                     (
                         str(index_id),
@@ -105,7 +106,9 @@ class SqliteVectorStore:
                     row[0],
                     row[1],
                     tuple(float(value) for value in json.loads(row[2])),
-                    tuple(sorted((str(key), str(value)) for key, value in json.loads(row[3]).items())),
+                    tuple(
+                        sorted((str(key), str(value)) for key, value in json.loads(row[3]).items())
+                    ),
                 )
                 for row in rows
             )

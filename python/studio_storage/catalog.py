@@ -8,7 +8,7 @@ from pathlib import Path
 from studio_core import AssetId, AssetRef, AssetRevision, CatalogAsset, LineageEdge, WorkspaceId
 from studio_orchestrator import Instant
 
-from .sqlite import open_database
+from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
 
 _CATALOG_SCHEMA_VERSION = 1
@@ -24,9 +24,7 @@ class CatalogAssetNotFound(KeyError):
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
-    for statement in script.split(";"):
-        if statement.strip():
-            connection.execute(statement)
+    execute_migration_script(connection, script)
 
 
 def migrate_catalog(connection: sqlite3.Connection, *, now: Instant | str) -> None:
@@ -62,7 +60,9 @@ def migrate_catalog(connection: sqlite3.Connection, *, now: Instant | str) -> No
 
 
 def catalog_schema_version(connection: sqlite3.Connection) -> int:
-    row = connection.execute("SELECT MAX(version) AS version FROM catalog_schema_migrations").fetchone()
+    row = connection.execute(
+        "SELECT MAX(version) AS version FROM catalog_schema_migrations"
+    ).fetchone()
     return 0 if row is None or row["version"] is None else int(row["version"])
 
 
@@ -108,7 +108,8 @@ class SqliteCatalogStore:
                     return asset
                 raise CatalogConflict(f"asset id already exists: {asset.id}")
             connection.execute(
-                "INSERT INTO catalog_assets(workspace_id,asset_id,definition_json,created_at,updated_at) "
+                "INSERT INTO catalog_assets("
+                "workspace_id,asset_id,definition_json,created_at,updated_at) "
                 "VALUES (?,?,?,?,?)",
                 (str(workspace_id), str(asset.id), payload, now, now),
             )
@@ -130,7 +131,8 @@ class SqliteCatalogStore:
             connection.execute("BEGIN IMMEDIATE")
             self._require_workspace(connection, workspace_id)
             cursor = connection.execute(
-                "UPDATE catalog_assets SET definition_json=?,updated_at=?,row_version=row_version+1 "
+                "UPDATE catalog_assets SET definition_json=?,updated_at=?, "
+                "row_version=row_version+1 "
                 "WHERE workspace_id=? AND asset_id=?",
                 (asset.to_json(), now, str(workspace_id), str(asset.id)),
             )
@@ -167,6 +169,23 @@ class SqliteCatalogStore:
         finally:
             connection.close()
 
+    def search_assets(
+        self, workspace_id: WorkspaceId, query: str, *, limit: int = 100
+    ) -> tuple[CatalogAsset, ...]:
+        term = query.strip().casefold()
+        if not term:
+            raise ValueError("catalog search query must not be empty")
+        if limit < 1 or limit > 1_000:
+            raise ValueError("catalog search limit must be between 1 and 1000")
+        matches = []
+        for asset in self.list_assets(workspace_id):
+            haystack = " ".join(
+                (str(asset.id), asset.kind, asset.name, *asset.tags, *asset.classifications)
+            ).casefold()
+            if term in haystack:
+                matches.append(asset)
+        return tuple(matches[:limit])
+
     def put_revision(
         self, workspace_id: WorkspaceId, revision: AssetRevision, *, now: Instant | str
     ) -> AssetRevision:
@@ -195,9 +214,12 @@ class SqliteCatalogStore:
                 if existing["revision_json"] == payload:
                     connection.execute("COMMIT")
                     return revision
-                raise CatalogConflict("asset version already exists with different revision metadata")
+                raise CatalogConflict(
+                    "asset version already exists with different revision metadata"
+                )
             connection.execute(
-                "INSERT INTO catalog_asset_revisions(workspace_id,asset_id,version,revision_json,created_at) "
+                "INSERT INTO catalog_asset_revisions("
+                "workspace_id,asset_id,version,revision_json,created_at) "
                 "VALUES (?,?,?,?,?)",
                 (
                     str(workspace_id),
@@ -243,7 +265,9 @@ class SqliteCatalogStore:
                     (str(workspace_id), str(ref.asset_id), str(ref.version)),
                 ).fetchone()
                 if revision is None:
-                    raise CatalogAssetNotFound(f"missing lineage revision: {ref.asset_id}@{ref.version}")
+                    raise CatalogAssetNotFound(
+                        f"missing lineage revision: {ref.asset_id}@{ref.version}"
+                    )
             existing = connection.execute(
                 "SELECT edge_json FROM lineage_edges WHERE workspace_id=? AND edge_digest=?",
                 (str(workspace_id), edge.digest),

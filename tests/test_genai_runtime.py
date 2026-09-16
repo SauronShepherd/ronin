@@ -1,8 +1,7 @@
 from pathlib import Path
 
 import pytest
-
-from studio_core import AssetId, AssetRef, AssetVersion
+from studio_core import AssetId, AssetRef, AssetVersion, Requirement, ResourceScope
 from studio_core.genai import (
     AgentDefinition,
     AgentId,
@@ -27,7 +26,6 @@ from studio_genai import (
     run_agent,
     run_rag,
 )
-
 
 _PROVIDER = ProviderId("provider")
 _EMBED = GenAIModel(_PROVIDER, "embed", frozenset({"embedding"}))
@@ -59,12 +57,15 @@ class _Provider:
 
 
 class _Tool:
-    def __init__(self, side_effect: str = "none") -> None:
+    def __init__(
+        self, side_effect: str = "none", requirements: tuple[Requirement, ...] = ()
+    ) -> None:
         self.contract = ToolContract(
             ToolId("lookup"),
             "Lookup",
             "schema://input",
             "schema://output",
+            requirements=requirements,
             side_effect=side_effect,
         )
         self.calls = []
@@ -130,6 +131,33 @@ def test_vector_index_and_rag_retrieve_relevant_context(tmp_path: Path) -> None:
     assert result.matches[0].chunk.metadata == (("source", "a"),)
 
 
+def test_vector_index_rejects_provider_model_identity_mismatch(tmp_path: Path) -> None:
+    index = VectorIndexDefinition(
+        VectorIndexId("docs"),
+        AssetRef(AssetId("dataset"), AssetVersion("v1")),
+        _PROVIDER,
+        "embed",
+        ("text",),
+        (),
+        chunk_size=100,
+        chunk_overlap=10,
+    )
+
+    class MismatchedProvider(_Provider):
+        def embed(self, model, texts):
+            result = super().embed(model, texts)
+            return EmbeddingResult(result.vectors, "different-model")
+
+    with pytest.raises(ValueError, match="different model identity"):
+        build_vector_index(
+            index,
+            ({"text": "alpha"},),
+            _EMBED,
+            MismatchedProvider(),
+            SqliteVectorStore(tmp_path / "vectors.sqlite"),
+        )
+
+
 def test_agent_calls_only_declared_tool_then_finishes() -> None:
     prompt = PromptAsset(
         PromptId("agent-prompt"),
@@ -193,4 +221,31 @@ def test_agent_blocks_non_idempotent_tool_without_explicit_authorization() -> No
             provider,
             ToolRegistry((_Tool("non_idempotent"),)),
             "do something",
+        )
+
+
+def test_agent_enforces_declared_tool_requirements() -> None:
+    prompt = PromptAsset(PromptId("agent-prompt"), PromptVersion("1"), "Handle {input}", ("input",))
+    definition = AgentDefinition(
+        AgentId("agent"),
+        "Agent",
+        _PROVIDER,
+        "chat",
+        prompt.id,
+        prompt.version,
+        (ToolId("lookup"),),
+        max_steps=1,
+    )
+    requirement = Requirement("read", ResourceScope("project", "demo"))
+    provider = _Provider(['{"type":"tool","tool_id":"lookup","input":{}}'])
+    tool = _Tool(requirements=(requirement,))
+    with pytest.raises(PermissionError, match="requirements"):
+        run_agent(
+            definition,
+            prompt,
+            _CHAT,
+            provider,
+            ToolRegistry((tool,)),
+            "read",
+            authorize_requirements=lambda _: False,
         )

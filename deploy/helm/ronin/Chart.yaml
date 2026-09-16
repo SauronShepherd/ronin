@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ronin
+description: Ronin Public v1 reference server deployment
+type: application
+version: 0.1.0
+appVersion: "0.1"

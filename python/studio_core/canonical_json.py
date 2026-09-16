@@ -9,14 +9,19 @@ from typing import TypeAlias, cast
 
 JSONScalar: TypeAlias = None | bool | int | float | str
 JSONValue: TypeAlias = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
+_MAX_EXACT_INTEGER = (2**53) - 1
 
 
 def _validate(value: object) -> None:
-    if value is None or isinstance(value, (bool, int, str)):
+    if value is None or isinstance(value, (bool, str)):
+        return
+    if isinstance(value, int):
+        if abs(value) > _MAX_EXACT_INTEGER:
+            raise ValueError("canonical JSON integers must fit the exact cross-language range")
         return
     if isinstance(value, float):
         if not math.isfinite(value):
-            raise ValueError("canonical JSON numbers must be finite")
+            raise ValueError("canonical JSON numbers must be finite: Out of range float values")
         return
     if isinstance(value, Mapping):
         for key, child in value.items():

@@ -254,7 +254,7 @@ class Job:
         try:
             parameters = decode_canonical_json(self.parameters_json)
         except (TypeError, ValueError) as exc:
-            raise ValueError("parameters_json must be valid canonical JSON") from exc
+            raise ValueError("parameters_json must be valid JSON in canonical form") from exc
         if not isinstance(parameters, dict):
             raise ValueError("parameters_json must encode a JSON object")
 

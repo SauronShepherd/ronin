@@ -74,26 +74,24 @@ async def enforce_task_timeouts(
                 request.task_attempt_id,
             )
             continue
-        if job.state is JobState.CANCELLED:
-            if await asyncio.to_thread(
-                finalize_timed_out_attempt,
-                store,
-                request,
-                now=current,
-            ):
-                finalized += 1
+        if job.state is JobState.CANCELLED and await asyncio.to_thread(
+            finalize_timed_out_attempt,
+            store,
+            request,
+            now=current,
+        ):
+            finalized += 1
             continue
         if job.state is not JobState.CANCELLING:
             job = await service.cancel(request.job_id, now=current)
             cancellations += 1
-        if job.state is JobState.CANCELLED:
-            if await asyncio.to_thread(
-                finalize_timed_out_attempt,
-                store,
-                request,
-                now=current,
-            ):
-                finalized += 1
+        if job.state is JobState.CANCELLED and await asyncio.to_thread(
+            finalize_timed_out_attempt,
+            store,
+            request,
+            now=current,
+        ):
+            finalized += 1
 
     return SchedulerTimeoutCycle(len(detected), cancellations, finalized)
 

@@ -4,13 +4,13 @@ from pathlib import Path
 
 import pytest
 from studio_core import (
+    ExecutionProfile,
     Node,
     OperatorRef,
     Pipeline,
     ProjectId,
     ProjectManifest,
     RepositoryBinding,
-    ExecutionProfile,
     RuntimeProfileRef,
     Trigger,
     WorkflowDefinition,

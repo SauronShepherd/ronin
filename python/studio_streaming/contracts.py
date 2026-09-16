@@ -43,8 +43,7 @@ class StreamCheckpoint:
     def digest(self) -> str:
         payload = {
             "positions": [
-                {"partition": item.partition, "offset": item.offset}
-                for item in self.positions
+                {"partition": item.partition, "offset": item.offset} for item in self.positions
             ]
         }
         return hashlib.sha256(encode_canonical_json(payload)).hexdigest()
