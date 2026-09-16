@@ -60,6 +60,7 @@ from studio_storage.ports import (
     WorkspaceStore,
 )
 from studio_storage.postgres_core import PostgresDependencyError, PostgresMetadataStore
+from studio_storage.postgres_jobs import PostgresJobReadPort
 from studio_storage.quality import (
     DataContractConflict,
     DataContractNotFound,
@@ -139,6 +140,7 @@ __all__ = (
     "OntologyConflict",
     "PostgresDependencyError",
     "PostgresMetadataStore",
+    "PostgresJobReadPort",
     "KnowledgeGraphConflict",
     "SqliteKnowledgeGraphStore",
     "ProjectRegistrationConflict",

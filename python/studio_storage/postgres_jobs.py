@@ -7,6 +7,7 @@ evidence and reclaim operations are complete.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -386,11 +387,11 @@ class PostgresJobReadPort:
     def append_events(
         self,
         attempt_id: AttemptId,
-        events: tuple[StoredExecutionEvent, ...],
+        events: Sequence[StoredExecutionEvent],
         *,
         owner: str,
         lease_token: LeaseToken,
-        now: Instant | str,
+        now: Instant,
     ) -> None:
         """Append contiguous attempt events under the current write lease."""
         current = Instant(now)

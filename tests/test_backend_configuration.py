@@ -6,12 +6,12 @@ import pytest
 from studio_cli import CliError, _serve, _sql_engine_from_environment
 
 
-def test_server_rejects_postgres_dsn_instead_of_silent_sqlite_fallback(
+def test_server_reports_postgres_initialization_failure_instead_of_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("RONIN_POSTGRES_DSN", "postgresql://example.invalid/ronin")
 
-    with pytest.raises(CliError, match="refusing to fall back to SQLite"):
+    with pytest.raises(CliError, match="PostgreSQL backend initialization failed"):
         _serve()
 
 

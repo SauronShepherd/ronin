@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from http import HTTPStatus
 from pathlib import Path
 from typing import cast
@@ -58,6 +59,7 @@ class RoninHTTPServer(_RoninHTTPServer):
         token: str,
         grants: GrantSet,
         sql_engine: SqlEngine | None = None,
+        readiness_probe: Callable[[], bool] | None = None,
     ) -> None:
         host, _port = server_address
         policy = _bind_policy_from_env()
@@ -69,11 +71,14 @@ class RoninHTTPServer(_RoninHTTPServer):
                 "trusted development network. Use an external TLS terminator for remote access."
             )
         self._readiness_database = _readiness_database_from_env()
+        self._readiness_probe = readiness_probe
         super().__init__(server_address, service, token=token, grants=grants, sql_engine=sql_engine)
         self.RequestHandlerClass = _ReadinessHandler
 
     def ready(self) -> bool:
         """Return readiness without exposing storage details through HTTP."""
+        if self._readiness_probe is not None:
+            return self._readiness_probe()
         return sqlite_ready(self._readiness_database)
 
 

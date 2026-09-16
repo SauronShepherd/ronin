@@ -10,7 +10,7 @@ import shutil
 import sqlite3
 import sys
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
@@ -29,10 +29,10 @@ from studio_notebook import (
     NotebookDocument,
     analyze_notebook_dependencies,
 )
-from studio_orchestrator import Instant
+from studio_orchestrator import Instant, JobStore
 from studio_server import RoninHTTPServer
 from studio_sql import DuckDbDependencyError, DuckDbSqlEngine
-from studio_storage import SqliteJobStore
+from studio_storage import PostgresJobReadPort, PostgresMetadataStore, SqliteJobStore
 from studio_storage.migration_registry import MigrationStatusError, migration_status
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
@@ -453,11 +453,7 @@ def _sql_engine_from_environment() -> DuckDbSqlEngine | None:
 
 def _serve() -> int:
     postgres_dsn = os.environ.get("RONIN_POSTGRES_DSN")
-    if postgres_dsn is not None:
-        raise CliError(
-            "RONIN_POSTGRES_DSN is not supported by the execution server yet; "
-            "refusing to fall back to SQLite until PostgreSQL JobStore parity is qualified"
-        )
+    readiness_probe: Callable[[], bool] | None = None
     try:
         port = int(_env("RONIN_PORT", "8080"))
     except ValueError as exc:
@@ -466,7 +462,22 @@ def _serve() -> int:
         raise CliError("RONIN_PORT must be between 1 and 65535")
     database = _database()
     database.parent.mkdir(parents=True, exist_ok=True)
-    service = DurableExecutionService(SqliteJobStore(database, migration_now=_now()))
+    job_store: JobStore
+    if postgres_dsn is not None and not postgres_dsn.strip():
+        raise CliError("RONIN_POSTGRES_DSN must be non-empty and trimmed")
+    if postgres_dsn is not None:
+        try:
+            postgres_metadata = PostgresMetadataStore(postgres_dsn, application_name="ronin-server")
+            job_store = PostgresJobReadPort(postgres_dsn, application_name="ronin-server")
+
+            def readiness_probe() -> bool:
+                return _postgres_ready(postgres_metadata)
+
+        except Exception as exc:
+            raise CliError(f"PostgreSQL backend initialization failed: {exc}") from exc
+    else:
+        job_store = SqliteJobStore(database, migration_now=_now())
+    service = DurableExecutionService(job_store)
     sql_engine = _sql_engine_from_environment()
     server = RoninHTTPServer(
         (_env("RONIN_HOST", "127.0.0.1"), port),
@@ -474,6 +485,7 @@ def _serve() -> int:
         token=_token(),
         grants=_token_grants(),
         sql_engine=sql_engine,
+        readiness_probe=readiness_probe,
     )
     try:
         server.serve_forever()
@@ -482,6 +494,22 @@ def _serve() -> int:
         if sql_engine is not None:
             sql_engine.close()
     return 0
+
+
+def _postgres_ready(metadata: PostgresMetadataStore) -> bool:
+    """Probe the configured PostgreSQL connection through the metadata adapter."""
+    try:
+        connection = metadata._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+            connection.commit()
+            return True
+        finally:
+            connection.close()
+    except Exception:
+        return False
 
 
 def _worker() -> int:
