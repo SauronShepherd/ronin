@@ -24,6 +24,10 @@ decision recorded in `docs/automation/DECISIONS.md`, including the measured
 evidence and the reason the contract changed. A green build is never a reason
 to lower a quality floor.
 
+The current T4 floor is 60%. The latest full local qualification measured 69%
+for the Public v1 domain packages (`1017 passed`, `12 skipped`); this margin is
+an observed baseline, not permission to reduce the floor.
+
 ## Slice ownership
 
 Builder work uses single-writer ownership per file domain rather than one global writer.
