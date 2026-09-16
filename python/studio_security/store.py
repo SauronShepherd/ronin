@@ -44,10 +44,10 @@ class SqliteIdentityStore:
                     PRIMARY KEY(group_id, principal_id)
                 );
                 CREATE TABLE IF NOT EXISTS security_role_bindings (
-                    workspace_id TEXT NOT NULL,
-                    subject_kind TEXT NOT NULL,
+                    workspace_id TEXT NOT NULL CHECK(length(trim(workspace_id)) > 0),
+                    subject_kind TEXT NOT NULL CHECK(subject_kind IN ('principal', 'group')),
                     subject_id TEXT NOT NULL,
-                    role TEXT NOT NULL,
+                    role TEXT NOT NULL CHECK(role IN ('admin', 'operator', 'editor', 'viewer')),
                     PRIMARY KEY(workspace_id, subject_kind, subject_id, role)
                 );
                 CREATE INDEX IF NOT EXISTS security_role_subject_idx

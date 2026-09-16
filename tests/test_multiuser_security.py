@@ -1,4 +1,5 @@
 import json
+import sqlite3
 import time
 from pathlib import Path
 
@@ -59,6 +60,17 @@ def test_group_role_grants_workspace_permission(tmp_path: Path) -> None:
         PolicyRequirement(WorkspaceId("workspace"), "audit.read"),
     )
     assert not denied.allowed
+
+
+def test_database_rejects_invalid_role_binding_shape(tmp_path: Path) -> None:
+    store = SqliteIdentityStore(tmp_path / "security.sqlite")
+    with pytest.raises(sqlite3.IntegrityError):
+        with store._connect() as connection:
+            connection.execute(
+                "INSERT INTO security_role_bindings "
+                "(workspace_id, subject_kind, subject_id, role) VALUES (?, ?, ?, ?)",
+                ("workspace", "principal", "alice", "unknown"),
+            )
 
 
 def test_authorization_ignores_caller_supplied_group_claims(tmp_path: Path) -> None:
