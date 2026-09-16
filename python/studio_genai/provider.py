@@ -166,15 +166,14 @@ class OpenAICompatibleProvider:
             "model": model.model_id,
             "messages": [{"role": item.role, "content": item.content} for item in messages],
         }
-        with httpx.Client(follow_redirects=False, timeout=self._timeout) as client:
-            with client.stream(
+        with httpx.Client(follow_redirects=False, timeout=self._timeout) as client, client.stream(
                 "POST",
                 f"{self._base_url}/chat/completions",
                 headers=self._headers(),
                 json=payload,
             ) as response:
-                response.raise_for_status()
-                body = _read_json_response(response)
+            response.raise_for_status()
+            body = _read_json_response(response)
         if not isinstance(body, dict):
             raise ValueError("chat provider response must be an object")
         choices = body.get("choices")
@@ -219,15 +218,14 @@ class OpenAICompatibleProvider:
         if len(normalized) != len(texts):
             raise ValueError("embedding texts must be non-empty and contain no NUL")
         httpx = _httpx()
-        with httpx.Client(follow_redirects=False, timeout=self._timeout) as client:
-            with client.stream(
+        with httpx.Client(follow_redirects=False, timeout=self._timeout) as client, client.stream(
                 "POST",
                 f"{self._base_url}/embeddings",
                 headers=self._headers(),
                 json={"model": model.model_id, "input": list(normalized)},
             ) as response:
-                response.raise_for_status()
-                body = _read_json_response(response)
+            response.raise_for_status()
+            body = _read_json_response(response)
         if not isinstance(body, dict) or not isinstance(body.get("data"), list):
             raise ValueError("embedding provider response has invalid shape")
         data = body["data"]
