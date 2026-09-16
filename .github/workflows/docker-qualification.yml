@@ -30,13 +30,15 @@ jobs:
       - name: Build pinned qualification image
         run: docker build --file docker/Dockerfile.probe --tag ronin-probe:ci .
 
+      - name: Resolve qualification image digest
+        run: echo "RONIN_DOCKER_QUALIFICATION_IMAGE=$(docker image inspect ronin-probe:ci --format '{{.Id}}')" >> "$GITHUB_ENV"
+
       - name: Run real Docker qualification
         env:
           RONIN_REAL_DOCKER_QUALIFICATION: "1"
           RONIN_DOCKER_QUALIFICATION_EVIDENCE: ${{ github.workspace }}/qualification-evidence
           RONIN_HOST_WORKSPACE: ${{ github.workspace }}
         run: |
-          echo "RONIN_DOCKER_QUALIFICATION_IMAGE=$(docker image inspect ronin-probe:ci --format '{{.Id}}')" >> "$GITHUB_ENV"
           mkdir -p qualification-evidence
           python -m pytest -q tests/integration/test_docker_container_executor_real.py tests/integration/test_worker_runtime_real.py
 
