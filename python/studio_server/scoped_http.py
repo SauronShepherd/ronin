@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import os
-from collections.abc import Coroutine
-from concurrent.futures import Future, TimeoutError as FutureTimeoutError
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
+from concurrent.futures import Future
+from concurrent.futures import TimeoutError as FutureTimeoutError
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any, cast
@@ -161,10 +161,8 @@ class RoninHTTPServer(_RoninHTTPServer):
             grants=grants,
             sql_engine=sql_engine,
         )
-        original_loop = getattr(self.application, "_loop")
-        setattr(
-            self.application, "_loop", _BoundedServiceLoop(original_loop, service_timeout_seconds)
-        )
+        original_loop = self.application._loop
+        self.application._loop = _BoundedServiceLoop(original_loop, service_timeout_seconds)
         self.RequestHandlerClass = _ReadinessHandler
 
     def get_request(self) -> tuple[Any, Any]:
