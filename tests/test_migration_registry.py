@@ -5,6 +5,7 @@ from studio_storage.migration_registry import (
     STORAGE_MIGRATION_DOMAINS,
     MigrationDomain,
     MigrationRegistryError,
+    MigrationStatusError,
     migrate_storage,
     migration_order,
     migration_status,
@@ -52,6 +53,14 @@ def test_migration_status_is_read_only_and_reports_uninitialized_domains() -> No
     assert (
         connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall() == []
     )
+
+
+def test_migration_status_wraps_corrupt_schema_errors() -> None:
+    connection = sqlite3.connect(":memory:")
+    connection.execute("CREATE TABLE workspace_schema_migrations (not_version INTEGER)")
+
+    with pytest.raises(MigrationStatusError, match="unable to inspect"):
+        migration_status(connection)
 
 
 def test_migrate_storage_runs_registered_domains_in_order() -> None:

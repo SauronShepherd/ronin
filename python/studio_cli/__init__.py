@@ -33,7 +33,7 @@ from studio_orchestrator import Instant
 from studio_server import RoninHTTPServer
 from studio_sql import DuckDbDependencyError, DuckDbSqlEngine
 from studio_storage import SqliteJobStore
-from studio_storage.migration_registry import migration_status
+from studio_storage.migration_registry import MigrationStatusError, migration_status
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
 from .network import TERMINAL_STATES, ControlPlaneClient, ControlPlaneError
@@ -537,7 +537,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 return _migration_status(namespace)
             raise CliError(f"unsupported migrate command: {namespace.migrate_command}")
         raise CliError(f"unsupported command: {command}")
-    except (CliError, ControlPlaneError, ValueError) as exc:
+    except (CliError, ControlPlaneError, MigrationStatusError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     except KeyboardInterrupt:

@@ -12,6 +12,10 @@ class MigrationRegistryError(ValueError):
     """Raised when a migration registry is ambiguous or cyclic."""
 
 
+class MigrationStatusError(RuntimeError):
+    """Raised when a database cannot be inspected for migration status."""
+
+
 @dataclass(frozen=True, slots=True)
 class MigrationDomain:
     """A storage domain and the domains that must be migrated before it."""
@@ -99,27 +103,27 @@ def migration_order(domains: tuple[MigrationDomain, ...]) -> tuple[str, ...]:
 def migration_status(connection: sqlite3.Connection) -> tuple[dict[str, int | str], ...]:
     """Return current and supported versions without changing *connection*."""
     status: list[dict[str, int | str]] = []
-    for name in migration_order(STORAGE_MIGRATION_DOMAINS):
-        table = _SCHEMA_TABLES[name]
-        exists = connection.execute(
-            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)
-        ).fetchone()
-        current = 0
-        if exists:
-            # Table names come exclusively from the immutable registry above.
-            row = connection.execute(
-                f"SELECT MAX(version) FROM {table}"  # noqa: S608
+    try:
+        for name in migration_order(STORAGE_MIGRATION_DOMAINS):
+            table = _SCHEMA_TABLES[name]
+            exists = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)
             ).fetchone()
-            current = int(row[0] or 0)
-        supported = _SUPPORTED_VERSIONS[name]
-        status.append(
-            {
-                "domain": name,
-                "current": current,
-                "supported": supported,
-                "state": "ready" if current == supported else "pending",
-            }
-        )
+            current = 0
+            if exists:
+                row = connection.execute(f"SELECT MAX(version) FROM {table}").fetchone()  # noqa: S608
+                current = int(row[0] or 0)
+            supported = _SUPPORTED_VERSIONS[name]
+            status.append(
+                {
+                    "domain": name,
+                    "current": current,
+                    "supported": supported,
+                    "state": "ready" if current == supported else "pending",
+                }
+            )
+    except sqlite3.DatabaseError as exc:
+        raise MigrationStatusError("unable to inspect database migration status") from exc
     return tuple(status)
 
 
