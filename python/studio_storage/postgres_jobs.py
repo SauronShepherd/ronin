@@ -734,6 +734,42 @@ class PostgresJobReadPort:
         finally:
             connection.close()
 
+    def reclaim_expired(self, *, now: Instant | str) -> tuple[RunId, ...]:
+        """Abandon expired leases and return their runs to the pending queue."""
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT attempt_id,run_id FROM ronin_attempts "
+                    "WHERE state IN ('leased','running') AND lease_expires_at<=%s "
+                    "ORDER BY run_id,ordinal FOR UPDATE SKIP LOCKED",
+                    (str(current),),
+                )
+                rows = cursor.fetchall()
+                run_ids: list[RunId] = []
+                for row in rows:
+                    cursor.execute(
+                        "UPDATE ronin_attempts SET state='abandoned',failure_code=%s,"
+                        "lease_owner=NULL,lease_token=NULL,lease_expires_at=NULL,"
+                        "updated_at=%s,row_version=row_version+1 WHERE attempt_id=%s",
+                        ("lease_expired", str(current), str(row["attempt_id"])),
+                    )
+                    cursor.execute(
+                        "UPDATE ronin_runs SET state='pending',not_before=%s,"
+                        "updated_at=%s,row_version=row_version+1 "
+                        "WHERE run_id=%s AND state IN ('leased','running')",
+                        (str(current), str(current), str(row["run_id"])),
+                    )
+                    run_ids.append(RunId(str(row["run_id"])))
+            connection.commit()
+            return tuple(run_ids)
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
     def list_jobs(
         self,
         *,
