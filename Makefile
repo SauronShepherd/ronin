@@ -1,10 +1,13 @@
-.PHONY: check format lint typecheck architecture gates-negative test \
+.PHONY: check format lint typecheck architecture gates-negative route-consistency test \
 	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files mutation performance \
 	canonical-json-check dependency-surfaces-check
 
 CODE_PATHS := python tests tools packages docker
 
-check: format lint typecheck architecture gates-negative test performance
+check: format lint typecheck architecture gates-negative route-consistency test performance
+
+route-consistency:
+	python -m tools.route_consistency
 
 format:
 	ruff format --check $(CODE_PATHS)
