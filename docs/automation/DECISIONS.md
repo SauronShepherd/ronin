@@ -403,3 +403,51 @@ Cells that depend on implicit interpreter memory across boundaries are unsupport
 
 - Stateful kernel/interpreter snapshots: runtime-specific, security-sensitive and outside v0.1.
 - Whole-run-only replay: simpler but fails the frozen acceptance journey's per-cell resume requirement.
+
+## ADR-V01-006 — Local-first simulation with Apache-compatible governance
+
+**Status:** Accepted — 2026-09-17
+
+### Context
+
+Ronin is intended to approximate the behavior and contracts of non-open-source
+data and AI environments while remaining useful as a public, self-hostable
+local project. It is not a production support contract and does not promise
+production SLAs. Users may nevertheless choose to deploy it beyond local
+development at their own risk; that possibility does not expand the supported
+scope or roadmap.
+
+### Decision
+
+- All Public v1 capabilities are local-first. Remote or production backends
+  are outside the immediate roadmap.
+- Compatibility means behavioral and contract approximation, not binary
+  compatibility, automatic migration, or certification of another product.
+- The implementation order prioritizes workspace/project foundations,
+  connectors, lakehouse/SQL, pipelines and the durable scheduler before web,
+  ML and GenAI. The web interface remains a first-class and important local
+  product surface and may be developed in parallel in a dedicated workstream.
+- Code authored by Ronin is Apache License 2.0. Future Apache distribution
+  candidates may include only reviewed, compatible third-party licenses.
+- `NOTICE` remains minimal and is generated only when the dependency and
+  bundled-material inventory establishes an attribution obligation.
+- Coverage floors are T1 100%, T2 90%, T3 75% and T4 60%; floors and file
+  baselines may only ratchet upward.
+- `main` remains intentionally unprotected while the project has one active
+  maintainer. Protection and mandatory review checks become a governance
+  requirement before multi-contributor or Apache-incubation operation.
+
+### Consequences
+
+F8 work is evaluated by local reproducibility, deterministic evidence and
+provider-neutral contracts. A future adapter can be added without changing
+the local domain contract, but its existence does not imply production
+support. Legal qualification of a release still requires reviewing the exact
+dependency graph and provenance; this ADR does not substitute for that review.
+
+### Alternatives rejected
+
+- Treating local simulation as a production compatibility promise.
+- Prioritizing provider-specific integrations before the local execution spine.
+- Adding a blanket dependency list to `NOTICE` without an evidence-backed
+  attribution requirement.
