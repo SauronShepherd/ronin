@@ -120,6 +120,38 @@
         }
       }
     },
+    "/v1/workspaces": {
+      "get": {
+        "operationId": "listWorkspaces",
+        "parameters": [{"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}}, {"name": "cursor", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "responses": {"200": {"description": "Visible workspaces", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WorkspacePage"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}": {
+      "get": {
+        "operationId": "getWorkspace",
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}],
+        "responses": {"200": {"description": "Workspace", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Workspace"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      },
+      "patch": {
+        "operationId": "updateWorkspace",
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WorkspaceUpdate"}}}},
+        "responses": {"200": {"description": "Updated workspace", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Workspace"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/archive": {
+      "post": {"operationId": "archiveWorkspace", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}], "responses": {"200": {"description": "Archived workspace", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Workspace"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects": {
+      "get": {"operationId": "listProjects", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}}, {"name": "cursor", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 256}}], "responses": {"200": {"description": "Workspace projects", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectPage"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}},
+      "post": {"operationId": "registerProject", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectManifest"}}}}, "responses": {"201": {"description": "Registered project", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectManifest"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}": {
+      "get": {"operationId": "getProject", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Project manifest", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectManifest"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}},
+      "put": {"operationId": "replaceProject", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectManifest"}}}}, "responses": {"200": {"description": "Replaced project", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectManifest"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}},
+      "delete": {"operationId": "unregisterProject", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Unregistered project", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectUnregistration"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}
+    },
     "/v1/workspaces/{workspace_id}/workflows": {
       "get": {
         "operationId": "listWorkflows",
@@ -176,6 +208,10 @@
     }
   },
   "components": {
+    "parameters": {
+      "WorkspaceId": {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}},
+      "ProjectId": {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}
+    },
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
@@ -273,6 +309,12 @@
         "type": "object", "additionalProperties": false, "required": ["items"],
         "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/EvidenceReference"}}}
       },
+      "Workspace": {"type": "object", "additionalProperties": false, "required": ["id", "name", "description", "state"], "properties": {"id": {"type": "string"}, "name": {"type": "string"}, "description": {"type": ["string", "null"]}, "state": {"type": "string"}}},
+      "WorkspacePage": {"type": "object", "additionalProperties": false, "required": ["items", "next_cursor"], "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/Workspace"}}, "next_cursor": {"type": ["string", "null"]}}},
+      "WorkspaceUpdate": {"type": "object", "additionalProperties": false, "required": ["name", "description"], "properties": {"name": {"type": "string"}, "description": {"type": ["string", "null"]}}},
+      "ProjectManifest": {"type": "object", "additionalProperties": true},
+      "ProjectPage": {"type": "object", "additionalProperties": false, "required": ["items", "next_cursor"], "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/ProjectManifest"}}, "next_cursor": {"type": ["string", "null"]}}},
+      "ProjectUnregistration": {"type": "object", "additionalProperties": false, "required": ["unregistered", "project_id"], "properties": {"unregistered": {"type": "boolean"}, "project_id": {"type": "string"}}},
       "WorkflowPage": {
         "type": "object", "additionalProperties": false, "required": ["items", "next_cursor"],
         "properties": {

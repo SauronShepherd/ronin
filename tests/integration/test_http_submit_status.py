@@ -12,19 +12,9 @@ from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_lakehouse import write_parquet_rows
 from studio_orchestrator import AttemptId, Instant, JobId, LeaseToken, StoredExecutionEvent
-from studio_server import SUPPORTED_ROUTES, RoninHTTPServer
-
+from studio_server import CONTROL_PLANE_ROUTES, SUPPORTED_ROUTES, RoninHTTPServer
 from studio_sql import DuckDbSqlEngine
 from studio_storage import SqliteJobStore
-
-_DOCUMENTED_SCHEDULER_ROUTES = frozenset(
-    {
-        ("GET", "/v1/workspaces/{workspace_id}/workflows"),
-        ("POST", "/v1/workspaces/{workspace_id}/workflows/{workflow_id}/runs"),
-        ("GET", "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}"),
-        ("POST", "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}/cancel"),
-    }
-)
 
 _MIGRATION_NOW = Instant("2026-09-07T06:00:00.000000Z")
 _AUTHORIZATION = "".join(("integration", "-credential"))
@@ -44,9 +34,9 @@ def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
         (method.upper(), path)
         for path, path_item in document["paths"].items()
         for method in path_item
-        if method in {"get", "post"}
+        if method in {"get", "post", "patch", "put", "delete"}
     }
-    assert documented_routes == SUPPORTED_ROUTES | _DOCUMENTED_SCHEDULER_ROUTES
+    assert documented_routes == SUPPORTED_ROUTES | CONTROL_PLANE_ROUTES
 
     states = document["components"]["schemas"]["Job"]["properties"]["state"]["enum"]
     assert set(states) == {state.value for state in SDKJobState}
