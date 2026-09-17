@@ -76,7 +76,7 @@ coverage-storage-files:
 		--baseline=local_files.py=71.78 \
 		--baseline=ml.py=73.47 \
 		--baseline=ontology.py=35.84 \
-		--baseline=postgres_core.py=10.34 \
+		--baseline=postgres_core.py=14.91 \
 		--baseline=postgres_jobs.py=7.56 \
 		--baseline=quality.py=30.34 \
 		--baseline=s3_artifacts.py=71.05 \
