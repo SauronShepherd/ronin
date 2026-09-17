@@ -10,7 +10,16 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Protocol, cast, runtime_checkable
 from urllib.parse import unquote, urlsplit
 
-from studio_core import ProjectId, ProjectManifest, WorkflowDefinition, Workspace, WorkspaceId
+from studio_core import (
+    ProjectId,
+    ProjectManifest,
+    TaskRun,
+    WorkflowDefinition,
+    WorkflowRun,
+    WorkflowRunId,
+    Workspace,
+    WorkspaceId,
+)
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import (
     ProjectService,
@@ -58,6 +67,12 @@ class ControlPlaneAuthorizer(Protocol):
 @runtime_checkable
 class WorkflowReader(Protocol):
     def list_workflows(self, workspace_id: WorkspaceId) -> tuple[WorkflowDefinition, ...]: ...
+
+    def get_run(self, workspace_id: WorkspaceId, run_id: WorkflowRunId) -> WorkflowRun | None: ...
+
+    def list_task_runs(
+        self, workspace_id: WorkspaceId, run_id: WorkflowRunId
+    ) -> tuple[TaskRun, ...]: ...
 
 
 def _now() -> Instant:
@@ -344,6 +359,43 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         "next_cursor": next_cursor,
                     },
                 )
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "workflow-runs"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("workflow run read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                run_id = WorkflowRunId(segments[4])
+                if not self._authorize(actor, workspace_id, "workflow.read"):
+                    return
+                workflow_run = reader.get_run(workspace_id, run_id)
+                if workflow_run is None:
+                    self._error(HTTPStatus.NOT_FOUND, "not_found", "workflow run does not exist")
+                    return
+                tasks = reader.list_task_runs(workspace_id, run_id)
+                payload = workflow_run.to_payload()
+                payload["tasks"] = [
+                    {
+                        "id": task.id.value,
+                        "workflow_run_id": task.workflow_run_id.value,
+                        "node_id": task.node_id.value,
+                        "state": task.state,
+                        "attempt_count": task.attempt_count,
+                    }
+                    for task in tasks
+                ]
+                self._write_json(HTTPStatus.OK, payload)
                 return
             if (
                 len(segments) == 4
