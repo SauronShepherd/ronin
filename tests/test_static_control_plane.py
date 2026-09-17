@@ -1,8 +1,7 @@
 import pytest
-
 from studio_core import WorkspaceId
-from studio_server import StaticControlPlaneAuthenticator, StaticControlPlaneAuthorizer
 from studio_security import PolicyRequirement
+from studio_server import StaticControlPlaneAuthenticator, StaticControlPlaneAuthorizer
 
 
 def test_static_control_plane_is_explicit_and_workspace_scoped() -> None:
