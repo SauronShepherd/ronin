@@ -452,6 +452,8 @@ def _sql_engine_from_environment() -> DuckDbSqlEngine | None:
 
 
 def _serve() -> int:
+    if os.environ.get("RONIN_SERVER_PROFILE", "single") == "local-composed":
+        return _serve_local_composed()
     postgres_dsn = os.environ.get("RONIN_POSTGRES_DSN")
     readiness_probe: Callable[[], bool] | None = None
     try:
@@ -493,6 +495,23 @@ def _serve() -> int:
         server.server_close()
         if sql_engine is not None:
             sql_engine.close()
+    return 0
+
+
+def _serve_local_composed() -> int:
+    """Run the opt-in jobs plus control-plane local composition."""
+    from threading import Event
+
+    from .local_composed import build_local_composed_from_env
+
+    composition = build_local_composed_from_env()
+    composition.start()
+    try:
+        Event().wait()
+    except KeyboardInterrupt:
+        return 130
+    finally:
+        composition.stop()
     return 0
 
 
