@@ -451,3 +451,31 @@ dependency graph and provenance; this ADR does not substitute for that review.
 - Prioritizing provider-specific integrations before the local execution spine.
 - Adding a blanket dependency list to `NOTICE` without an evidence-backed
   attribution requirement.
+
+## ADR-V01-007 — Keep job and control-plane HTTP surfaces separate
+
+**Status:** Accepted — 2026-09-17
+
+### Decision
+
+The local deployment keeps the existing job/evidence server and the workspace
+control-plane server as separate HTTP surfaces. A future local composition
+profile may start both with one coordinated lifecycle, but it must not merge
+their route namespaces or bypass either surface's authentication and
+authorization boundary. Web Studio will use separate provider-neutral clients
+for workspace/workflow authoring and job/evidence observation.
+
+### Rationale
+
+The job server is already qualified and has a distinct durability, execution and
+backpressure contract. The control plane has a distinct workspace, project,
+workflow and authorization contract. Keeping the boundaries explicit allows
+each surface to evolve and be tested independently while still supporting a
+single local developer experience through composition.
+
+### Consequence
+
+The next bootstrap slice must define coordinated ports, readiness and shutdown
+for the two local servers. It must not silently replace the existing `ronin
+serve` job server or expose workflow routes without an injected control-plane
+store and authorization policy.
