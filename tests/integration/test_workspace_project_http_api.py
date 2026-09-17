@@ -86,6 +86,57 @@ class _Store:
         return self.projects.pop((workspace_id, project_id), None) is not None
 
 
+class _Workflow:
+    def __init__(self, workflow_id: str) -> None:
+        self.id = workflow_id
+
+    def to_payload(self) -> dict[str, object]:
+        return {"id": self.id, "name": "Demo workflow"}
+
+
+class _WorkflowRun:
+    def __init__(self, run_id: str) -> None:
+        self.id = type("RunId", (), {"value": run_id})()
+
+    def to_payload(self) -> dict[str, object]:
+        return {"id": self.id.value, "state": "pending"}
+
+
+class _TaskRun:
+    id = type("TaskId", (), {"value": "task-1"})()
+    workflow_run_id = type("RunId", (), {"value": "run-1"})()
+    node_id = type("NodeId", (), {"value": "node-1"})()
+    state = "pending"
+    attempt_count = 0
+
+
+class _Scheduler:
+    def list_workflows(self, workspace_id):
+        assert workspace_id == _WS_A
+        return (_Workflow("workflow-1"),)
+
+    def get_run(self, workspace_id, run_id):
+        assert workspace_id == _WS_A
+        return _WorkflowRun(run_id.value) if run_id.value == "run-1" else None
+
+    def list_task_runs(self, workspace_id, run_id):
+        assert workspace_id == _WS_A
+        assert run_id.value == "run-1"
+        return (_TaskRun(),)
+
+    def create_workflow_run(self, workspace_id, workflow_id, trigger, *, idempotency_key):
+        assert workspace_id == _WS_A
+        assert workflow_id.value == "workflow-1"
+        assert trigger.kind == "api"
+        assert idempotency_key == "request-1"
+        return _WorkflowRun("run-1")
+
+    def cancel_workflow_run(self, workspace_id, run_id):
+        assert workspace_id == _WS_A
+        assert run_id.value == "run-1"
+        return 2
+
+
 _ACTOR = Actor(
     Principal(
         PrincipalId("principal-test"),
@@ -143,6 +194,7 @@ def _manifest(name: str = "Project") -> ProjectManifest:
 def _server(
     store: _Store,
     authorizer: _Authorizer,
+    scheduler: _Scheduler | None = None,
 ) -> Iterator[tuple[str, int]]:
     server = WorkspaceProjectHTTPServer(
         ("127.0.0.1", 0),
@@ -150,6 +202,9 @@ def _server(
         ProjectService(store),
         authenticator=_Authenticator(),
         authorizer=authorizer,
+        workflow_reader=scheduler,
+        workflow_runner=scheduler,
+        workflow_canceller=scheduler,
         request_timeout_seconds=1.0,
     )
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -197,7 +252,6 @@ def test_workflow_routes_fail_closed_when_scheduler_is_not_configured() -> None:
         status, payload = _request(address, "GET", "/v1/workspaces/workspace-a/workflows")
         assert status == 503
         assert payload["error"]["code"] == "scheduler_unavailable"
-
         status, payload = _request(
             address,
             "POST",
@@ -211,6 +265,50 @@ def test_workflow_routes_fail_closed_when_scheduler_is_not_configured() -> None:
         )
         assert status == 503
         assert payload["error"]["code"] == "scheduler_unavailable"
+
+
+def test_scheduler_routes_list_start_read_and_cancel() -> None:
+    store = _Store()
+    authorizer = _Authorizer()
+    scheduler = _Scheduler()
+    with _server(store, authorizer, scheduler) as address:
+        status, payload = _request(address, "GET", "/v1/workspaces/workspace-a/workflows?limit=10")
+        assert status == 200
+        assert payload["items"] == [{"id": "workflow-1", "name": "Demo workflow"}]
+
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-a/workflows/workflow-1/runs",
+            body=_json_body(
+                {
+                    "trigger": {"kind": "api", "key": "run-1", "source_ref": None},
+                    "idempotency_key": "request-1",
+                }
+            ),
+        )
+        assert status == 201
+        assert payload["id"] == "run-1"
+
+        status, payload = _request(address, "GET", "/v1/workspaces/workspace-a/workflow-runs/run-1")
+        assert status == 200
+        assert payload["tasks"] == [
+            {
+                "id": "task-1",
+                "workflow_run_id": "run-1",
+                "node_id": "node-1",
+                "state": "pending",
+                "attempt_count": 0,
+            }
+        ]
+
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-a/workflow-runs/run-1/cancel",
+        )
+        assert status == 200
+        assert payload == {"workflow_run_id": "run-1", "cancelled_jobs": 2}
 
 
 def test_authentication_and_denial_are_stable_json() -> None:
