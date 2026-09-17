@@ -318,6 +318,21 @@ def test_scheduler_routes_list_start_read_and_cancel() -> None:
         assert payload == {"workflow_run_id": "run-1", "cancelled_jobs": 2}
 
 
+def test_scheduler_route_with_unsupported_method_is_not_method_not_found() -> None:
+    store = _Store()
+    authorizer = _Authorizer()
+    scheduler = _Scheduler()
+    with _server(store, authorizer, scheduler) as address:
+        status, payload = _request(
+            address,
+            "PUT",
+            "/v1/workspaces/workspace-a/workflows",
+            body=_json_body({}),
+        )
+        assert status == 405
+        assert payload["error"]["code"] == "method_not_allowed"
+
+
 def test_authentication_and_denial_are_stable_json() -> None:
     store = _Store()
     store.workspaces[_WS_A] = Workspace(_WS_A, "A")

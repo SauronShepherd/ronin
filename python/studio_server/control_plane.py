@@ -699,6 +699,28 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "projects"
             )
+            or (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "workflows"
+            )
+            or (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "workflows"
+                and segments[5] == "runs"
+            )
+            or (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "workflow-runs"
+            )
+            or (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "workflow-runs"
+                and segments[5] == "cancel"
+            )
         ):
             known = True
         if known:
