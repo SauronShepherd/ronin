@@ -35,6 +35,17 @@ from studio_server.oidc_http import (
 _ADMIN_PREFIX = "/v1/admin/security/"
 _MAX_IDENTIFIER_CHARS = 256
 
+OIDC_ADMIN_ROUTES = frozenset(
+    {
+        ("PUT", "/v1/admin/security/principals/{principal_id}"),
+        ("PUT", "/v1/admin/security/groups/{group_id}"),
+        ("PUT", "/v1/admin/security/groups/{group_id}/members/{principal_id}"),
+        ("PUT", "/v1/admin/security/role-bindings/{subject_kind}/{subject_id}/{role}"),
+        ("DELETE", "/v1/admin/security/groups/{group_id}/members/{principal_id}"),
+        ("DELETE", "/v1/admin/security/role-bindings/{subject_kind}/{subject_id}/{role}"),
+    }
+)
+
 
 @runtime_checkable
 class SecurityAdminStore(OidcPrincipalStore, RbacStore, Protocol):
@@ -426,4 +437,4 @@ class OidcAdminRoninHTTPServer(OidcRoninHTTPServer):
         return self._admin_store
 
 
-__all__ = ("OidcAdminRoninHTTPServer", "SecurityAdminStore")
+__all__ = ("OIDC_ADMIN_ROUTES", "OidcAdminRoninHTTPServer", "SecurityAdminStore")

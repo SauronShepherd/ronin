@@ -13,7 +13,7 @@ from studio_server.control_plane import (
     WorkspaceProjectHTTPServer,
 )
 from studio_server.http import SUPPORTED_ROUTES, DurableHTTPApplication
-from studio_server.oidc_admin import OidcAdminRoninHTTPServer
+from studio_server.oidc_admin import OIDC_ADMIN_ROUTES, OidcAdminRoninHTTPServer
 from studio_server.oidc_http import OidcRoninHTTPServer
 from studio_server.scoped_http import RoninHTTPServer
 from studio_server.static_control_plane import (
@@ -30,6 +30,7 @@ __all__ = (
     "DurableHTTPApplication",
     "LocalServerComposition",
     "OidcAdminRoninHTTPServer",
+    "OIDC_ADMIN_ROUTES",
     "OidcRoninHTTPServer",
     "RoninHTTPServer",
     "StaticControlPlaneAuthenticator",
