@@ -12,7 +12,7 @@ from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_lakehouse import write_parquet_rows
 from studio_orchestrator import AttemptId, Instant, JobId, LeaseToken, StoredExecutionEvent
-from studio_server import CONTROL_PLANE_ROUTES, SUPPORTED_ROUTES, RoninHTTPServer
+from studio_server import CONTROL_PLANE_ROUTES, OIDC_ADMIN_ROUTES, SUPPORTED_ROUTES, RoninHTTPServer
 from studio_sql import DuckDbSqlEngine
 from studio_storage import SqliteJobStore
 
@@ -36,7 +36,7 @@ def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
         for method in path_item
         if method in {"get", "post", "patch", "put", "delete"}
     }
-    assert documented_routes == SUPPORTED_ROUTES | CONTROL_PLANE_ROUTES
+    assert documented_routes == SUPPORTED_ROUTES | CONTROL_PLANE_ROUTES | OIDC_ADMIN_ROUTES
 
     states = document["components"]["schemas"]["Job"]["properties"]["state"]["enum"]
     assert set(states) == {state.value for state in SDKJobState}

@@ -120,6 +120,20 @@
         }
       }
     },
+    "/v1/admin/security/principals/{principal_id}": {
+      "put": {"operationId": "putSecurityPrincipal", "parameters": [{"name": "principal_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PrincipalRequest"}}}}, "responses": {"200": {"description": "Updated principal", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Principal"}}}}, "201": {"description": "Created principal", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Principal"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/admin/security/groups/{group_id}": {
+      "put": {"operationId": "putSecurityGroup", "parameters": [{"name": "group_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GroupRequest"}}}}, "responses": {"200": {"description": "Stored group", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Group"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/admin/security/groups/{group_id}/members/{principal_id}": {
+      "put": {"operationId": "addSecurityGroupMember", "parameters": [{"name": "group_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "principal_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Member added", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GroupMembership"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}},
+      "delete": {"operationId": "removeSecurityGroupMember", "parameters": [{"name": "group_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "principal_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Member removal result", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GroupMembership"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/admin/security/role-bindings/{subject_kind}/{subject_id}/{role}": {
+      "put": {"operationId": "putSecurityRoleBinding", "parameters": [{"name": "subject_kind", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "subject_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "role", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Stored role binding", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RoleBinding"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}}},
+      "delete": {"operationId": "deleteSecurityRoleBinding", "parameters": [{"name": "subject_kind", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "subject_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "role", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Role binding removal result", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RoleBinding"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}
+    },
     "/v1/workspaces": {
       "get": {
         "operationId": "listWorkspaces",
@@ -309,6 +323,12 @@
         "type": "object", "additionalProperties": false, "required": ["items"],
         "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/EvidenceReference"}}}
       },
+      "PrincipalRequest": {"type": "object", "additionalProperties": false, "required": ["kind", "display_name", "issuer", "subject"], "properties": {"kind": {"type": "string", "enum": ["user", "service"]}, "display_name": {"type": "string"}, "issuer": {"type": "string"}, "subject": {"type": "string"}, "email": {"type": ["string", "null"]}, "active": {"type": "boolean", "default": true}}},
+      "Principal": {"type": "object", "additionalProperties": false, "required": ["id", "kind", "display_name", "issuer", "subject", "email", "active"], "properties": {"id": {"type": "string"}, "kind": {"type": "string"}, "display_name": {"type": "string"}, "issuer": {"type": "string"}, "subject": {"type": "string"}, "email": {"type": ["string", "null"]}, "active": {"type": "boolean"}}},
+      "GroupRequest": {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"type": "string"}}},
+      "Group": {"type": "object", "additionalProperties": false, "required": ["id", "name"], "properties": {"id": {"type": "string"}, "name": {"type": "string"}}},
+      "GroupMembership": {"type": "object", "additionalProperties": false, "required": ["group_id", "principal_id", "member"], "properties": {"group_id": {"type": "string"}, "principal_id": {"type": "string"}, "member": {"type": "boolean"}}},
+      "RoleBinding": {"type": "object", "additionalProperties": true},
       "Workspace": {"type": "object", "additionalProperties": false, "required": ["id", "name", "description", "state"], "properties": {"id": {"type": "string"}, "name": {"type": "string"}, "description": {"type": ["string", "null"]}, "state": {"type": "string"}}},
       "WorkspacePage": {"type": "object", "additionalProperties": false, "required": ["items", "next_cursor"], "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/Workspace"}}, "next_cursor": {"type": ["string", "null"]}}},
       "WorkspaceUpdate": {"type": "object", "additionalProperties": false, "required": ["name", "description"], "properties": {"name": {"type": "string"}, "description": {"type": ["string", "null"]}}},
