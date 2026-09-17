@@ -39,6 +39,7 @@ from .workspace_service import (
     WorkspaceServiceError,
     WorkspaceServiceNotFound,
 )
+from .scheduler_http import SqliteWorkflowHTTPAdapter, WorkflowStore
 
 
 @dataclass(frozen=True, slots=True)
@@ -273,11 +274,13 @@ class DurableExecutionService:
 __all__ = (
     "DurableExecutionService",
     "ProjectService",
+    "SqliteWorkflowHTTPAdapter",
     "WorkerPollResult",
     "WorkspaceService",
     "WorkspaceServiceConflict",
     "WorkspaceServiceError",
     "WorkspaceServiceNotFound",
+    "WorkflowStore",
     "DeploymentBindingService",
     "EnvironmentService",
     "EnvironmentServiceConflict",
