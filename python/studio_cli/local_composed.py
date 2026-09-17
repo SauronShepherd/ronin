@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 from studio_core import GrantSet, WorkspaceId
+from studio_orchestrator import Instant
 from studio_execution import (
     DurableExecutionService,
     ProjectService,
@@ -45,6 +46,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
 
     database = Path(_env("RONIN_DB", ".ronin/ronin.sqlite3")).expanduser().resolve()
     database.parent.mkdir(parents=True, exist_ok=True)
+    now = Instant("2026-09-17T00:00:00.000000Z")
     workspace_id = WorkspaceId(_env("RONIN_WORKSPACE_ID"))
     control_token = _env("RONIN_CONTROL_PLANE_TOKEN")
     raw_permissions = _env(
@@ -62,7 +64,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
     }:
         raise ValueError("RONIN_CONTROL_PLANE_PERMISSIONS contains unsupported permissions")
 
-    job_service = DurableExecutionService(SqliteJobStore(database))
+    job_service = DurableExecutionService(SqliteJobStore(database, migration_now=now))
     try:
         job_grants = GrantSet.from_json(_env("RONIN_TOKEN_SCOPES"))
     except ValueError as exc:
@@ -73,14 +75,14 @@ def build_local_composed_from_env() -> LocalServerComposition:
         token=_env("RONIN_TOKEN"),
         grants=job_grants,
     )
-    scheduler = SqliteWorkflowBundleImportStore(database)
+    scheduler = SqliteWorkflowBundleImportStore(database, migration_now=now)
     control_server = WorkspaceProjectHTTPServer(
         (_env("RONIN_HOST", "127.0.0.1"), _port("RONIN_CONTROL_PLANE_PORT", "8081")),
         WorkspaceService(scheduler),
         ProjectService(scheduler),
         authenticator=StaticControlPlaneAuthenticator(control_token),
         authorizer=StaticControlPlaneAuthorizer(workspace_id, permissions),
-        workflow_reader=SqliteWorkflowHTTPAdapter(scheduler, now="2026-09-17T00:00:00.000000Z"),
+        workflow_reader=SqliteWorkflowHTTPAdapter(scheduler, now=now),
     )
     return LocalServerComposition(job_server, control_server)
 
