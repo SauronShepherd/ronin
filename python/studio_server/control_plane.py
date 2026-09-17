@@ -14,7 +14,9 @@ from studio_core import (
     ProjectId,
     ProjectManifest,
     TaskRun,
+    Trigger,
     WorkflowDefinition,
+    WorkflowId,
     WorkflowRun,
     WorkflowRunId,
     Workspace,
@@ -78,6 +80,18 @@ class WorkflowReader(Protocol):
 @runtime_checkable
 class WorkflowCanceller(Protocol):
     def cancel_workflow_run(self, workspace_id: WorkspaceId, run_id: WorkflowRunId) -> int: ...
+
+
+@runtime_checkable
+class WorkflowRunner(Protocol):
+    def create_workflow_run(
+        self,
+        workspace_id: WorkspaceId,
+        workflow_id: WorkflowId,
+        trigger: Trigger,
+        *,
+        idempotency_key: str,
+    ) -> WorkflowRun: ...
 
 
 def _now() -> Instant:
@@ -181,6 +195,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         authorizer: ControlPlaneAuthorizer,
         workflow_reader: WorkflowReader | None = None,
         workflow_canceller: WorkflowCanceller | None = None,
+        workflow_runner: WorkflowRunner | None = None,
         request_timeout_seconds: float = 15.0,
     ) -> None:
         if request_timeout_seconds <= 0:
@@ -191,6 +206,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.authorizer = authorizer
         self.workflow_reader = workflow_reader
         self.workflow_canceller = workflow_canceller
+        self.workflow_runner = workflow_runner
         self.request_timeout_seconds = request_timeout_seconds
         super().__init__(server_address, _WorkspaceProjectHandler)
 
@@ -489,6 +505,42 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "workflows"
+                and segments[5] == "runs"
+            ):
+                runner = self._server().workflow_runner
+                if runner is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("workflow run creation does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                workflow_id = WorkflowId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "workflow.execute", resource_ref=str(workflow_id)
+                ):
+                    return
+                payload = self._read_json()
+                if not isinstance(payload, dict) or set(payload) != {"trigger", "idempotency_key"}:
+                    raise ValueError("workflow run body must contain trigger and idempotency_key")
+                idempotency_key = payload["idempotency_key"]
+                if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+                    raise ValueError("idempotency_key must be a non-empty string")
+                run = runner.create_workflow_run(
+                    workspace_id,
+                    workflow_id,
+                    Trigger.from_payload(payload["trigger"]),
+                    idempotency_key=idempotency_key,
+                )
+                self._write_json(HTTPStatus.CREATED, run.to_payload())
+                return
             if (
                 len(segments) == 6
                 and segments[:2] == ("v1", "workspaces")
