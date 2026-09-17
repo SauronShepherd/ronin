@@ -367,7 +367,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     )
                     return
                 workspace_id = WorkspaceId(segments[2])
-                if not self._authorize(actor, workspace_id, "workflow.read"):
+                if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
                 limit, offset = _list_query(query)
                 workflows = sorted(
@@ -400,7 +400,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     raise ValueError("workflow run read does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
                 run_id = WorkflowRunId(segments[4])
-                if not self._authorize(actor, workspace_id, "workflow.read"):
+                if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
                 workflow_run = reader.get_run(workspace_id, run_id)
                 if workflow_run is None:
@@ -524,7 +524,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 workflow_id = WorkflowId(segments[4])
                 if not self._authorize(
-                    actor, workspace_id, "workflow.execute", resource_ref=str(workflow_id)
+                    actor, workspace_id, "scheduler.write", resource_ref=str(workflow_id)
                 ):
                     return
                 payload = self._read_json()
@@ -559,7 +559,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     raise ValueError("workflow cancellation does not accept a query or body")
                 workspace_id = WorkspaceId(segments[2])
                 run_id = WorkflowRunId(segments[4])
-                if not self._authorize(actor, workspace_id, "workflow.write"):
+                if not self._authorize(actor, workspace_id, "scheduler.write"):
                     return
                 cancelled_jobs = canceller.cancel_workflow_run(workspace_id, run_id)
                 self._write_json(

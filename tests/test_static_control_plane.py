@@ -8,19 +8,19 @@ from studio_security import PolicyRequirement
 def test_static_control_plane_is_explicit_and_workspace_scoped() -> None:
     authenticator = StaticControlPlaneAuthenticator("secret")
     authorizer = StaticControlPlaneAuthorizer(
-        WorkspaceId("workspace-a"), frozenset({"workflow.read"})
+        WorkspaceId("workspace-a"), frozenset({"scheduler.read"})
     )
     actor = authenticator.authenticate("Bearer secret")
     assert actor is not None
     assert authenticator.authenticate("Bearer other") is None
     assert authorizer.authorize(
-        actor, PolicyRequirement(WorkspaceId("workspace-a"), "workflow.read")
+        actor, PolicyRequirement(WorkspaceId("workspace-a"), "scheduler.read")
     ).allowed
     assert not authorizer.authorize(
-        actor, PolicyRequirement(WorkspaceId("workspace-b"), "workflow.read")
+        actor, PolicyRequirement(WorkspaceId("workspace-b"), "scheduler.read")
     ).allowed
     assert not authorizer.authorize(
-        actor, PolicyRequirement(WorkspaceId("workspace-a"), "workflow.write")
+        actor, PolicyRequirement(WorkspaceId("workspace-a"), "scheduler.write")
     ).allowed
 
 
