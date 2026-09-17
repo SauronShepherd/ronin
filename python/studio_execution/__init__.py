@@ -32,6 +32,7 @@ from .environment_service import (
     EnvironmentServiceError,
     EnvironmentServiceNotFound,
 )
+from .scheduler_http import SqliteWorkflowHTTPAdapter, WorkflowStore
 from .workspace_service import (
     ProjectService,
     WorkspaceService,
@@ -39,7 +40,6 @@ from .workspace_service import (
     WorkspaceServiceError,
     WorkspaceServiceNotFound,
 )
-from .scheduler_http import SqliteWorkflowHTTPAdapter, WorkflowStore
 
 
 @dataclass(frozen=True, slots=True)
