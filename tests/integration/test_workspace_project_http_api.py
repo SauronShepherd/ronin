@@ -190,6 +190,29 @@ def _json_body(value: object) -> bytes:
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
 
 
+def test_workflow_routes_fail_closed_when_scheduler_is_not_configured() -> None:
+    store = _Store()
+    authorizer = _Authorizer()
+    with _server(store, authorizer) as address:
+        status, payload = _request(address, "GET", "/v1/workspaces/workspace-a/workflows")
+        assert status == 503
+        assert payload["error"]["code"] == "scheduler_unavailable"
+
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-a/workflows/workflow-1/runs",
+            body=_json_body(
+                {
+                    "trigger": {"kind": "api", "key": "run-1", "source_ref": None},
+                    "idempotency_key": "request-1",
+                }
+            ),
+        )
+        assert status == 503
+        assert payload["error"]["code"] == "scheduler_unavailable"
+
+
 def test_authentication_and_denial_are_stable_json() -> None:
     store = _Store()
     store.workspaces[_WS_A] = Workspace(_WS_A, "A")
