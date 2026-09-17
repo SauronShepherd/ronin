@@ -15,6 +15,16 @@ class IdentityConflict(RuntimeError):
 
 
 class SqliteIdentityStore:
+    _ROLE_BINDING_SCHEMA = """
+        CREATE TABLE security_role_bindings (
+            workspace_id TEXT NOT NULL,
+            subject_kind TEXT NOT NULL CHECK (subject_kind IN ('principal', 'group')),
+            subject_id TEXT NOT NULL,
+            role TEXT NOT NULL CHECK (role IN ('admin', 'operator', 'editor', 'viewer')),
+            PRIMARY KEY(workspace_id, subject_kind, subject_id, role)
+        )
+    """
+
     def __init__(self, path: Path) -> None:
         self._path = path
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -45,18 +55,46 @@ class SqliteIdentityStore:
                 );
                 CREATE TABLE IF NOT EXISTS security_role_bindings (
                     workspace_id TEXT NOT NULL,
-                    subject_kind TEXT NOT NULL,
+                    subject_kind TEXT NOT NULL CHECK (subject_kind IN ('principal', 'group')),
                     subject_id TEXT NOT NULL,
-                    role TEXT NOT NULL,
+                    role TEXT NOT NULL CHECK (role IN ('admin', 'operator', 'editor', 'viewer')),
                     PRIMARY KEY(workspace_id, subject_kind, subject_id, role)
                 );
                 CREATE INDEX IF NOT EXISTS security_role_subject_idx
                     ON security_role_bindings(subject_kind, subject_id, workspace_id);
                 """
             )
+            self._migrate_role_binding_constraints(connection)
             connection.commit()
         finally:
             connection.close()
+
+    def _migrate_role_binding_constraints(self, connection: sqlite3.Connection) -> None:
+        schema_row = connection.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name=?",
+            ("security_role_bindings",),
+        ).fetchone()
+        schema = "" if schema_row is None or schema_row[0] is None else str(schema_row[0])
+        required_checks = ("subject_kind IN", "role IN")
+        if all(check in schema for check in required_checks):
+            return
+
+        connection.execute("DROP INDEX IF EXISTS security_role_subject_idx")
+        connection.execute(
+            "ALTER TABLE security_role_bindings RENAME TO security_role_bindings_legacy"
+        )
+        connection.execute(self._ROLE_BINDING_SCHEMA)
+        connection.execute(
+            """INSERT INTO security_role_bindings
+               (workspace_id, subject_kind, subject_id, role)
+               SELECT workspace_id, subject_kind, subject_id, role
+               FROM security_role_bindings_legacy"""
+        )
+        connection.execute("DROP TABLE security_role_bindings_legacy")
+        connection.execute(
+            """CREATE INDEX security_role_subject_idx
+               ON security_role_bindings(subject_kind, subject_id, workspace_id)"""
+        )
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self._path)

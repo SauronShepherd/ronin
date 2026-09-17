@@ -1,4 +1,5 @@
 import json
+import sqlite3
 import time
 from pathlib import Path
 
@@ -59,6 +60,65 @@ def test_group_role_grants_workspace_permission(tmp_path: Path) -> None:
         PolicyRequirement(WorkspaceId("workspace"), "audit.read"),
     )
     assert not denied.allowed
+
+
+@pytest.mark.parametrize(
+    ("column", "value"),
+    [("subject_kind", "tenant"), ("role", "owner")],
+)
+def test_sqlite_role_binding_constraints_reject_invalid_direct_writes(
+    tmp_path: Path, column: str, value: str
+) -> None:
+    store = SqliteIdentityStore(tmp_path / "security.sqlite")
+    connection = store._connect()  # noqa: SLF001 - exercise the durable storage boundary
+    try:
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "INSERT INTO security_role_bindings "
+                "(workspace_id, subject_kind, subject_id, role) VALUES (?, ?, ?, ?)",
+                (
+                    "workspace",
+                    value if column == "subject_kind" else "principal",
+                    "alice",
+                    value if column == "role" else "viewer",
+                ),
+            )
+    finally:
+        connection.close()
+
+
+def test_sqlite_role_binding_constraints_migrate_legacy_schema(tmp_path: Path) -> None:
+    database = tmp_path / "security.sqlite"
+    connection = sqlite3.connect(database)
+    connection.executescript(
+        """
+        CREATE TABLE security_role_bindings (
+            workspace_id TEXT NOT NULL,
+            subject_kind TEXT NOT NULL,
+            subject_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            PRIMARY KEY(workspace_id, subject_kind, subject_id, role)
+        );
+        CREATE INDEX security_role_subject_idx
+            ON security_role_bindings(subject_kind, subject_id, workspace_id);
+        INSERT INTO security_role_bindings VALUES ('workspace', 'principal', 'alice', 'viewer');
+        """
+    )
+    connection.commit()
+    connection.close()
+
+    store = SqliteIdentityStore(database)
+    connection = store._connect()  # noqa: SLF001 - verify migrated SQLite schema
+    try:
+        assert connection.execute(
+            "SELECT role FROM security_role_bindings WHERE subject_id='alice'"
+        ).fetchone() == ("viewer",)
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "UPDATE security_role_bindings SET role='owner' WHERE subject_id='alice'"
+            )
+    finally:
+        connection.close()
 
 
 def test_forged_actor_group_does_not_grant_workspace_permission(tmp_path: Path) -> None:
