@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-09-17T00:00:00Z",
-  "observed_main_sha": "3691fd66538abf6352b4287cc6b69ccf4fc6172d",
+  "observed_main_sha": "8ad760ea69140f4e697d82b297795619c56767ef",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "status_vocabulary": [
