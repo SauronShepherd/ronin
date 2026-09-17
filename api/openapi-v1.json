@@ -119,6 +119,60 @@
           "503": {"$ref": "#/components/responses/Error"}
         }
       }
+    },
+    "/v1/workspaces/{workspace_id}/workflows": {
+      "get": {
+        "operationId": "listWorkflows",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}},
+          {"name": "cursor", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 256}}
+        ],
+        "responses": {
+          "200": {"description": "Workspace workflow definitions", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WorkflowPage"}}}},
+          "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/workspaces/{workspace_id}/workflows/{workflow_id}/runs": {
+      "post": {
+        "operationId": "createWorkflowRun",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}},
+          {"name": "workflow_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CreateWorkflowRunRequest"}}}},
+        "responses": {
+          "201": {"description": "Workflow run created", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WorkflowRun"}}}},
+          "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}": {
+      "get": {
+        "operationId": "getWorkflowRun",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}},
+          {"name": "run_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}
+        ],
+        "responses": {
+          "200": {"description": "Durable workflow run and task state", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WorkflowRunDetail"}}}},
+          "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}/cancel": {
+      "post": {
+        "operationId": "cancelWorkflowRun",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}},
+          {"name": "run_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}
+        ],
+        "responses": {
+          "200": {"description": "Workflow cancellation result", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WorkflowCancellation"}}}},
+          "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
     }
   },
   "components": {
@@ -218,6 +272,37 @@
       "JobEvidence": {
         "type": "object", "additionalProperties": false, "required": ["items"],
         "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/EvidenceReference"}}}
+      },
+      "WorkflowPage": {
+        "type": "object", "additionalProperties": false, "required": ["items", "next_cursor"],
+        "properties": {
+          "items": {"type": "array", "items": {"$ref": "#/components/schemas/Workflow"}},
+          "next_cursor": {"type": ["string", "null"]}
+        }
+      },
+      "Workflow": {
+        "type": "object", "additionalProperties": true,
+        "required": ["id"], "properties": {"id": {"type": "string", "minLength": 1}}
+      },
+      "CreateWorkflowRunRequest": {
+        "type": "object", "additionalProperties": false, "required": ["trigger", "idempotency_key"],
+        "properties": {
+          "trigger": {"type": "object"},
+          "idempotency_key": {"type": "string", "minLength": 1, "maxLength": 256}
+        }
+      },
+      "WorkflowRun": {
+        "type": "object", "additionalProperties": true,
+        "required": ["id"], "properties": {"id": {"type": "string", "minLength": 1}}
+      },
+      "WorkflowRunDetail": {
+        "type": "object", "additionalProperties": true,
+        "required": ["id", "tasks"],
+        "properties": {"id": {"type": "string", "minLength": 1}, "tasks": {"type": "array", "items": {"type": "object"}}}
+      },
+      "WorkflowCancellation": {
+        "type": "object", "additionalProperties": false, "required": ["workflow_run_id", "cancelled_jobs"],
+        "properties": {"workflow_run_id": {"type": "string", "minLength": 1}, "cancelled_jobs": {"type": "integer", "minimum": 0}}
       },
       "Error": {
         "type": "object", "additionalProperties": false, "required": ["error"],
