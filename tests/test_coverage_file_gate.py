@@ -59,6 +59,35 @@ def test_legacy_baseline_is_a_non_regression_ratchet(tmp_path: Path) -> None:
         )
 
 
+def test_ratchet_requires_raising_baseline_after_material_improvement(tmp_path: Path) -> None:
+    root = _package(tmp_path, "sqlite.py")
+    evidence = _coverage({str(root / "sqlite.py"): 62.1})
+    with pytest.raises(ValueError, match="raise the baseline"):
+        validate_package_files(
+            evidence,
+            root,
+            baselines={"sqlite.py": 59.0},
+            ratchet_margin=2.0,
+        )
+
+
+def test_ratchet_allows_small_improvement_and_rejects_negative_margin(tmp_path: Path) -> None:
+    root = _package(tmp_path, "sqlite.py")
+    validate_package_files(
+        _coverage({str(root / "sqlite.py"): 60.9}),
+        root,
+        baselines={"sqlite.py": 59.0},
+        ratchet_margin=2.0,
+    )
+    with pytest.raises(ValueError, match="must not be negative"):
+        validate_package_files(
+            _coverage({str(root / "sqlite.py"): 60.0}),
+            root,
+            baselines={"sqlite.py": 59.0},
+            ratchet_margin=-1.0,
+        )
+
+
 def test_missing_measurement_and_stale_baseline_fail_closed(tmp_path: Path) -> None:
     root = _package(tmp_path, "measured.py", "missing.py")
     with pytest.raises(ValueError, match="missing.py: missing coverage evidence"):

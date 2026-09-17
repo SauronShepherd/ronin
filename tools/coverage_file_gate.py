@@ -43,10 +43,13 @@ def validate_package_files(
     *,
     threshold: float = DEFAULT_THRESHOLD,
     baselines: Mapping[str, float] | None = None,
+    ratchet_margin: float | None = None,
 ) -> dict[str, float]:
     if not 0.0 <= threshold <= 100.0:
         raise ValueError("coverage threshold must be between 0 and 100")
     baselines = {} if baselines is None else baselines
+    if ratchet_margin is not None and ratchet_margin < 0.0:
+        raise ValueError("coverage ratchet margin must not be negative")
     for relative, baseline in baselines.items():
         if not 0.0 <= baseline <= 100.0:
             raise ValueError(f"coverage baseline for {relative} must be between 0 and 100")
@@ -82,6 +85,15 @@ def validate_package_files(
         required = baselines.get(relative, threshold)
         if percent + 1e-9 < required:
             failures.append(f"{relative}: {percent:.2f}% < required {required:.2f}%")
+        elif (
+            ratchet_margin is not None
+            and relative in baselines
+            and percent > baselines[relative] + ratchet_margin + 1e-9
+        ):
+            failures.append(
+                f"{relative}: {percent:.2f}% exceeds baseline {baselines[relative]:.2f}% "
+                f"by more than ratchet margin {ratchet_margin:.2f}%; raise the baseline"
+            )
 
     unknown_baselines = sorted(
         set(baselines) - {path.relative_to(source_root).as_posix() for path in expected}
@@ -100,6 +112,12 @@ def main() -> None:
     parser.add_argument("coverage_json", type=Path)
     parser.add_argument("source_root", type=Path)
     parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD)
+    parser.add_argument(
+        "--ratchet-margin",
+        type=float,
+        default=None,
+        help="fail when measured coverage exceeds an explicit baseline by this margin",
+    )
     parser.add_argument(
         "--baseline",
         action="append",
@@ -124,6 +142,7 @@ def main() -> None:
         args.source_root,
         threshold=args.threshold,
         baselines=baselines,
+        ratchet_margin=args.ratchet_margin,
     )
     print(
         f"per-file coverage policy passed for {len(measured)} files "

@@ -12,6 +12,8 @@ Current operating policy:
 - validate changes by static code inspection, contract tracing, import/dependency review, schema/API consistency review, and targeted code-level reasoning only;
 - preserve existing security, durability, performance, architecture, coverage, and acceptance requirements in the implementation even though they are not being executed as automated gates;
 - never describe unexecuted tests or incomplete workflows as green;
+- coverage thresholds and per-file baselines may only ratchet upward; lowering one requires a recorded human decision with justification;
+- closing the corresponding issue is part of a slice's Definition of Done, alongside removing obsolete source branches;
 - record material uncertainty explicitly when static inspection cannot prove runtime behavior.
 
 Historical CI evidence remains background evidence for older SHAs; current claims must identify the exact candidate SHA and completed workflow run.

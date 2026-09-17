@@ -65,6 +65,7 @@ coverage-storage-files:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
 	python -m tools.coverage_file_gate coverage-storage.json python/studio_storage \
 		--threshold=80 \
+		--ratchet-margin=2 \
 		--baseline=artifacts.py=77.30 \
 		--baseline=backup.py=76.00 \
 		--baseline=bundle_workflow_import.py=77.55 \
