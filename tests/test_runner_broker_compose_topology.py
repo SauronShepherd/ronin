@@ -24,7 +24,7 @@ def test_compose_mounts_docker_socket_only_in_runner_broker() -> None:
     assert 'command: ["ronin-broker-worker"]' in worker
     assert "ports:" not in broker
     assert "RONIN_RUNNER_BROKER_URL: http://runner-broker:8090" in worker
-    assert 'RONIN_RUNNER_BROKER_ALLOW_INSECURE: "true"' in worker
+    assert "RONIN_BIND_POLICY: container-internal" in worker
 
 
 def test_broker_worker_does_not_trigger_container_entrypoint_socket_setup() -> None:

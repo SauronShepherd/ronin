@@ -14,6 +14,7 @@ from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from studio_core.canonical_json import decode as decode_canonical_json
+from studio_core.transport_policy import allows_plaintext_non_loopback, parse_bind_policy
 from studio_orchestrator import Instant
 from studio_runners import BrokerExecutorConfig
 from studio_worker import BrokerWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
@@ -96,7 +97,8 @@ def main() -> int:
     try:
         broker_url = _env("RONIN_RUNNER_BROKER_URL")
         broker_token = _env("RONIN_RUNNER_BROKER_TOKEN")
-        allow_insecure = _boolean_env("RONIN_RUNNER_BROKER_ALLOW_INSECURE")
+        transport_policy = parse_bind_policy(os.environ.get("RONIN_BIND_POLICY"))
+        allow_insecure = allows_plaintext_non_loopback(transport_policy)
         image = _runtime_image(
             broker_url,
             broker_token,

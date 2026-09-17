@@ -70,7 +70,7 @@ services:
       RONIN_WORKER_OWNER: compose-worker
       RONIN_RUNNER_BROKER_URL: http://runner-broker:8090
       RONIN_RUNNER_BROKER_TOKEN: ${RONIN_RUNNER_BROKER_TOKEN:?set RONIN_RUNNER_BROKER_TOKEN before starting Ronin}
-      RONIN_RUNNER_BROKER_ALLOW_INSECURE: "true"
+      RONIN_BIND_POLICY: container-internal
       RONIN_IMAGE_REF: ${RONIN_IMAGE_REF:-ronin:local}
       RONIN_ARTIFACT_BACKEND: ${RONIN_ARTIFACT_BACKEND:-local}
       RONIN_S3_BUCKET: ${RONIN_S3_BUCKET:-}
