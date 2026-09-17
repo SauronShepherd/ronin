@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Protocol, cast, runtime_checkable
 from urllib.parse import unquote, urlsplit
 
-from studio_core import ProjectId, ProjectManifest, Workspace, WorkspaceId
+from studio_core import ProjectId, ProjectManifest, WorkflowDefinition, Workspace, WorkspaceId
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import (
     ProjectService,
@@ -53,6 +53,11 @@ class ControlPlaneAuthenticator(Protocol):
 @runtime_checkable
 class ControlPlaneAuthorizer(Protocol):
     def authorize(self, actor: Actor, requirement: PolicyRequirement) -> PolicyDecision: ...
+
+
+@runtime_checkable
+class WorkflowReader(Protocol):
+    def list_workflows(self, workspace_id: WorkspaceId) -> tuple[WorkflowDefinition, ...]: ...
 
 
 def _now() -> Instant:
@@ -154,6 +159,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         *,
         authenticator: ControlPlaneAuthenticator,
         authorizer: ControlPlaneAuthorizer,
+        workflow_reader: WorkflowReader | None = None,
         request_timeout_seconds: float = 15.0,
     ) -> None:
         if request_timeout_seconds <= 0:
@@ -162,6 +168,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.project_service = project_service
         self.authenticator = authenticator
         self.authorizer = authorizer
+        self.workflow_reader = workflow_reader
         self.request_timeout_seconds = request_timeout_seconds
         super().__init__(server_address, _WorkspaceProjectHandler)
 
@@ -307,6 +314,35 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 self._write_json(
                     HTTPStatus.OK,
                     _workspace_payload(self._server().workspace_service.get(workspace_id)),
+                )
+                return
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "workflows"
+            ):
+                if self._server().workflow_reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workflow.read"):
+                    return
+                limit, offset = _list_query(query)
+                workflows = sorted(
+                    self._server().workflow_reader.list_workflows(workspace_id),
+                    key=lambda item: str(item.id),
+                )
+                selected, next_cursor = _page(list(workflows), limit=limit, offset=offset)
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "items": [cast(WorkflowDefinition, item).to_data() for item in selected],
+                        "next_cursor": next_cursor,
+                    },
                 )
                 return
             if (
