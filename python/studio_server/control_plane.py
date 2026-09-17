@@ -75,6 +75,11 @@ class WorkflowReader(Protocol):
     ) -> tuple[TaskRun, ...]: ...
 
 
+@runtime_checkable
+class WorkflowCanceller(Protocol):
+    def cancel_workflow_run(self, workspace_id: WorkspaceId, run_id: WorkflowRunId) -> int: ...
+
+
 def _now() -> Instant:
     return Instant(datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 
@@ -175,6 +180,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         authenticator: ControlPlaneAuthenticator,
         authorizer: ControlPlaneAuthorizer,
         workflow_reader: WorkflowReader | None = None,
+        workflow_canceller: WorkflowCanceller | None = None,
         request_timeout_seconds: float = 15.0,
     ) -> None:
         if request_timeout_seconds <= 0:
@@ -184,6 +190,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.authenticator = authenticator
         self.authorizer = authorizer
         self.workflow_reader = workflow_reader
+        self.workflow_canceller = workflow_canceller
         self.request_timeout_seconds = request_timeout_seconds
         super().__init__(server_address, _WorkspaceProjectHandler)
 
@@ -482,6 +489,32 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "workflow-runs"
+                and segments[5] == "cancel"
+            ):
+                canceller = self._server().workflow_canceller
+                if canceller is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                if query or self.headers.get("Content-Length") not in {None, "0"}:
+                    raise ValueError("workflow cancellation does not accept a query or body")
+                workspace_id = WorkspaceId(segments[2])
+                run_id = WorkflowRunId(segments[4])
+                if not self._authorize(actor, workspace_id, "workflow.write"):
+                    return
+                cancelled_jobs = canceller.cancel_workflow_run(workspace_id, run_id)
+                self._write_json(
+                    HTTPStatus.OK,
+                    {"workflow_run_id": run_id.value, "cancelled_jobs": cancelled_jobs},
+                )
+                return
             if (
                 len(segments) == 4
                 and segments[:2] == ("v1", "workspaces")
