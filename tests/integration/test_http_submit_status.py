@@ -14,6 +14,9 @@ from studio_lakehouse import write_parquet_rows
 from studio_orchestrator import AttemptId, Instant, JobId, LeaseToken, StoredExecutionEvent
 from studio_server import SUPPORTED_ROUTES, RoninHTTPServer
 
+from studio_sql import DuckDbSqlEngine
+from studio_storage import SqliteJobStore
+
 _DOCUMENTED_SCHEDULER_ROUTES = frozenset(
     {
         ("GET", "/v1/workspaces/{workspace_id}/workflows"),
@@ -22,8 +25,6 @@ _DOCUMENTED_SCHEDULER_ROUTES = frozenset(
         ("POST", "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}/cancel"),
     }
 )
-from studio_sql import DuckDbSqlEngine
-from studio_storage import SqliteJobStore
 
 _MIGRATION_NOW = Instant("2026-09-07T06:00:00.000000Z")
 _AUTHORIZATION = "".join(("integration", "-credential"))
