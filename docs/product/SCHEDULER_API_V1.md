@@ -21,13 +21,13 @@ model.
 
 | Method | Route | Purpose |
 |---|---|---|
-| GET | `/v1/workflows` | List workflow definitions with cursor pagination |
-| POST | `/v1/workflows/{workflow_id}/runs` | Create one run from the current workflow snapshot |
-| GET | `/v1/workflow-runs/{run_id}` | Read durable workflow and task state |
-| POST | `/v1/workflow-runs/{run_id}/cancel` | Request idempotent cancellation |
-| GET | `/v1/workflow-runs/{run_id}/events` | Read ordered event pages |
-| GET | `/v1/schedules` | List local schedules |
-| POST | `/v1/schedules/{schedule_id}/trigger` | Fire one schedule deterministically |
+| GET | `/v1/workspaces/{workspace_id}/workflows` | List workflow definitions with cursor pagination |
+| POST | `/v1/workspaces/{workspace_id}/workflows/{workflow_id}/runs` | Create one run from the current workflow snapshot |
+| GET | `/v1/workspaces/{workspace_id}/workflow-runs/{run_id}` | Read durable workflow and task state |
+| POST | `/v1/workspaces/{workspace_id}/workflow-runs/{run_id}/cancel` | Request idempotent cancellation |
+
+Event pages, schedules and deterministic schedule triggering remain reserved
+for later increments; they are not advertised as implemented by this slice.
 
 ## Invariants
 
@@ -46,7 +46,7 @@ model.
 
 ## Initial implementation boundary
 
-The first implementation targets the existing SQLite/local scheduler services
+The current implementation targets the existing SQLite/local scheduler services
 and typed-grant HTTP server. PostgreSQL, remote runners, production deployment
 and provider-specific compatibility remain out of scope for this contract.
 

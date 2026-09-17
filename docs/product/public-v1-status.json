@@ -42,7 +42,7 @@
     {
       "id": "p5-durable-dag-scheduler",
       "status": "partial",
-      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, group backfill cancellation, and a bounded fail-closed conditional-branch contract with explicit skip decisions exist; durable branch-state integration, notifications, broad operator execution, public scheduler APIs/UI, process/deployment wiring and PostgreSQL multi-node HA qualification remain incomplete."
+      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, group backfill cancellation, bounded fail-closed conditional branches, and a workspace-scoped authenticated workflow list/run/read/cancel HTTP foundation exist; durable branch-state integration, notifications, broad operator execution, schedules/events public routes, Web Studio authoring, process/deployment wiring and PostgreSQL multi-node HA qualification remain incomplete."
     },
     {
       "id": "p6-catalog-lineage",
