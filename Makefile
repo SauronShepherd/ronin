@@ -1,5 +1,5 @@
 .PHONY: check format lint typecheck architecture gates-negative test \
-	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-storage-files mutation performance \
+	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files mutation performance \
 	canonical-json-check dependency-surfaces-check
 
 CODE_PATHS := python tests tools packages docker
@@ -30,7 +30,7 @@ dependency-surfaces-check:
 
 test:
 	python -m pytest --ignore=tests/perf --cov --cov-branch --cov-report=
-	$(MAKE) coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-storage-files
+	$(MAKE) coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files
 
 performance:
 	python -m pytest tests/perf -q
@@ -41,9 +41,9 @@ coverage-t1:
 		--include="*/studio_core/*,*/studio_notebook/*,*/studio_orchestrator/*"
 
 coverage-t2:
-	# Runtime/storage foundations currently qualify at 75%; keep a regression margin.
+	# Runtime/storage and Docker-broker foundations currently qualify at 75%; keep a regression margin.
 	coverage report --fail-under=70 \
-		--include="*/studio_kernel/*,*/studio_runners/*,*/studio_storage/*,*/studio_vcs/*,*/studio_worker/*"
+		--include="*/studio_kernel/*,*/studio_runners/*,*/studio_runner_broker/*,*/studio_storage/*,*/studio_vcs/*,*/studio_worker/*"
 
 coverage-t3:
 	coverage report --fail-under=75 \
@@ -53,6 +53,10 @@ coverage-t4:
 	# Public v1 domain packages currently qualify at 65%; keep a five-point regression margin.
 	coverage report --fail-under=60 \
 		--include="*/studio_connectors/*,*/studio_finops/*,*/studio_genai/*,*/studio_lakehouse/*,*/studio_ml/*,*/studio_migration/*,*/studio_observability/*,*/studio_quality/*,*/studio_security/*,*/studio_semantic/*,*/studio_sql/*,*/studio_streaming/*"
+
+coverage-broker:
+	# The Docker-authority broker currently measures 49%; keep a five-point regression margin.
+	coverage report --fail-under=45 --include="*/studio_runner_broker/*"
 
 coverage-storage-files:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
