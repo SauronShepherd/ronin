@@ -8,8 +8,6 @@ from typing import Protocol
 
 
 class StoppableServer(Protocol):
-    server_address: tuple[str, int]
-
     def serve_forever(self) -> None: ...
 
     def shutdown(self) -> None: ...

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import cast
 
 from studio_core import GrantSet, WorkspaceId
 from studio_execution import (
@@ -13,6 +14,7 @@ from studio_execution import (
     WorkspaceService,
 )
 from studio_orchestrator import Instant
+from studio_security import Permission
 from studio_server import (
     LocalServerComposition,
     RoninHTTPServer,
@@ -53,7 +55,9 @@ def build_local_composed_from_env() -> LocalServerComposition:
         "RONIN_CONTROL_PLANE_PERMISSIONS",
         "scheduler.read,scheduler.write,workspace.read,project.read",
     )
-    permissions = frozenset(item.strip() for item in raw_permissions.split(",") if item.strip())
+    permissions = frozenset(
+        cast(Permission, item.strip()) for item in raw_permissions.split(",") if item.strip()
+    )
     if not permissions or not permissions <= {
         "scheduler.read",
         "scheduler.write",

@@ -370,15 +370,23 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
                 limit, offset = _list_query(query)
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
                 workflows = sorted(
-                    self._server().workflow_reader.list_workflows(workspace_id),
+                    reader.list_workflows(workspace_id),
                     key=lambda item: str(item.id),
                 )
                 selected, next_cursor = _page(list(workflows), limit=limit, offset=offset)
                 self._write_json(
                     HTTPStatus.OK,
                     {
-                        "items": [cast(WorkflowDefinition, item).to_data() for item in selected],
+                        "items": [cast(WorkflowDefinition, item).to_payload() for item in selected],
                         "next_cursor": next_cursor,
                     },
                 )
