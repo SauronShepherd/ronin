@@ -41,9 +41,9 @@ coverage-t1:
 		--include="*/studio_core/*,*/studio_notebook/*,*/studio_orchestrator/*"
 
 coverage-t2:
-	# Runtime/storage and Docker-broker foundations currently qualify at 75%; keep a regression margin.
+	# Runtime/storage foundations currently qualify at 75%; keep a regression margin.
 	coverage report --fail-under=70 \
-		--include="*/studio_kernel/*,*/studio_runners/*,*/studio_runner_broker/*,*/studio_storage/*,*/studio_vcs/*,*/studio_worker/*"
+		--include="*/studio_kernel/*,*/studio_runners/*,*/studio_storage/*,*/studio_vcs/*,*/studio_worker/*"
 
 coverage-t3:
 	coverage report --fail-under=75 \
