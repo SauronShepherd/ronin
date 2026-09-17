@@ -48,6 +48,10 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
         ("PUT", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
         ("DELETE", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
+        ("GET", "/v1/workspaces/{workspace_id}/workflows"),
+        ("POST", "/v1/workspaces/{workspace_id}/workflows/{workflow_id}/runs"),
+        ("GET", "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}/cancel"),
     }
 )
 

@@ -19,6 +19,7 @@ from studio_core import (
 from studio_execution import ProjectService, WorkspaceService
 from studio_security import Actor, PolicyDecision, Principal, PrincipalId
 from studio_server import (
+    CONTROL_PLANE_ROUTES,
     ControlPlaneUnavailable,
     WorkspaceProjectHTTPServer,
 )
@@ -246,6 +247,12 @@ def _json_body(value: object) -> bytes:
 
 
 def test_workflow_routes_fail_closed_when_scheduler_is_not_configured() -> None:
+    assert {
+        ("GET", "/v1/workspaces/{workspace_id}/workflows"),
+        ("POST", "/v1/workspaces/{workspace_id}/workflows/{workflow_id}/runs"),
+        ("GET", "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}/cancel"),
+    } <= CONTROL_PLANE_ROUTES
     store = _Store()
     authorizer = _Authorizer()
     with _server(store, authorizer) as address:
