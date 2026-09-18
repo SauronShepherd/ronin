@@ -1,6 +1,6 @@
 .PHONY: check format lint typecheck architecture gates-negative route-consistency test \
 	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files mutation performance \
-	canonical-json-check dependency-surfaces-check
+	canonical-json-check runner-protocol-check dependency-surfaces-check
 
 CODE_PATHS := python tests tools packages docker
 
@@ -30,6 +30,10 @@ canonical-json-check:
 
 dependency-surfaces-check:
 	python -m tools.dependency_surfaces
+
+runner-protocol-check:
+	@command -v go >/dev/null 2>&1 || { echo "go toolchain required for runner protocol check"; exit 1; }
+	go run tools/runner_protocol_check.go tests/golden/runner_protocol_v1.json
 
 test:
 	python -m pytest --ignore=tests/perf --cov --cov-branch --cov-report=
