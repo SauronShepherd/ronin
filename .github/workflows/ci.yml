@@ -217,6 +217,7 @@ jobs:
       - name: Install hash-locked development environment
         run: |
           python -m pip install --require-hashes -r requirements-dev.lock
+          python -m pip install --no-deps --editable .
           python -m pip install -e '.[data-plane,open-tables,ml,security,streaming]'
       - name: Prepare mutation source alias
         run: |
