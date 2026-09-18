@@ -148,7 +148,7 @@ show_missing = true
 
 [tool.mutmut]
 source_paths = ["src/studio_core"]
-pytest_add_cli_args = ["-o", "addopts="]
+pytest_add_cli_args = ["-o", "addopts=", "-o", "pythonpath=../python:../packages/pyronin/src:.."]
 pytest_add_cli_args_test_selection = [
   "tests/test_contract_snapshots.py",
   "tests/test_core_ir.py",
