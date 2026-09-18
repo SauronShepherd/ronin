@@ -56,4 +56,8 @@ If a patch artifact is introduced later, it must use this content identity contr
 
 ## Qualification status
 
-This implementation makes the frozen step-12 capability present in supported code paths, but the repository is currently in maintainer-directed code-only mode. GitHub Actions and automated tests are disabled, so the last automated acceptance baseline remains **13/15** with gaps `01` and `12`. Do not describe step 12 as automatically qualified until automated validation is explicitly restored and executed.
+This implementation makes the frozen step-12 capability present in supported
+code paths. Qualification workflows are active, but the historical **13/15**
+acceptance baseline must not be confused with current release qualification.
+Do not describe step 12 as automatically qualified until it executes in a
+complete exact-candidate acceptance run.
