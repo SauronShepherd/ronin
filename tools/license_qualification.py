@@ -171,7 +171,7 @@ def _source(dist: metadata.Distribution) -> str | None:
     home_page = _metadata_value(dist, "Home-page")
     if home_page and home_page.strip():
         return home_page.strip()
-    name = dist.metadata.get("Name")
+    name = _metadata_value(dist, "Name")
     version = dist.version
     if name and version:
         return f"https://pypi.org/project/{quote(name)}/{quote(version)}/"
