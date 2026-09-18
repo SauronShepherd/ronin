@@ -8,6 +8,7 @@ from studio_core import (
     KnowledgeGraph,
     KnowledgeObjectRef,
     LinkType,
+    OntologyId,
     ObjectType,
     PropertyDefinition,
     materialize_object_type,
@@ -38,6 +39,14 @@ def test_materialize_rejects_duplicate_or_missing_keys() -> None:
         materialize_object_type(_object_type(), ({"customer_id": 7}, {"customer_id": 7}))
     with pytest.raises(ValueError, match="missing required fields"):
         materialize_object_type(_object_type(), ({"name": "Ada"},))
+
+
+@pytest.mark.parametrize(
+    "value", ("", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00value")
+)
+def test_ontology_identifiers_reject_non_canonical_text(value: str) -> None:
+    with pytest.raises(ValueError, match="single-line"):
+        OntologyId(value)
 
 
 def test_resolve_link_type_joins_references_and_enforces_cardinality() -> None:
