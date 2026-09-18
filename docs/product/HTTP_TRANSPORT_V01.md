@@ -68,4 +68,4 @@ The supported Compose path requires the operator to provide `RONIN_TOKEN` before
 
 ## Current validation mode
 
-GitHub Actions remain disabled. Targeted local validation may be executed from exact connector-reconstructed source where the required dependencies are already available; such local evidence is reported separately and is not CI or full acceptance qualification.
+Targeted local validation may be executed from exact connector-reconstructed source where the required dependencies are already available; such local evidence is reported separately and is not CI or full acceptance qualification.
