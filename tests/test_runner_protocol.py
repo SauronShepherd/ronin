@@ -1,4 +1,8 @@
+import json
+from pathlib import Path
+
 import pytest
+from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.runner_protocol import (
     PROTOCOL,
     RunnerProtocolError,
@@ -51,3 +55,13 @@ def test_runner_envelope_rejects_unsafe_shape(change: dict[str, object]) -> None
 def test_runner_envelope_rejects_noncanonical_json() -> None:
     with pytest.raises(RunnerProtocolError, match="canonical JSON"):
         decode_envelope(b'{"protocol":"ronin/runner/v1","protocol":"duplicate"}')
+
+
+def test_runner_protocol_golden_fixtures_preserve_canonical_bytes() -> None:
+    fixture_path = Path(__file__).parent / "golden" / "runner_protocol_v1.json"
+    document = json.loads(fixture_path.read_text(encoding="utf-8"))
+    assert document["schema"] == "ronin.runner.protocol/v1"
+    for fixture in document["fixtures"]:
+        payload = fixture["payload"]
+        assert encode_canonical_json(payload).decode("utf-8") == fixture["canonical"]
+        validate_envelope(payload)
