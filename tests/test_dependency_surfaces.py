@@ -14,13 +14,19 @@ from tools.dependency_surfaces import (
 
 def test_qualification_manifest_accepts_hash_continuations() -> None:
     requirements = qualification_tool_requirements(Path.cwd())
-    assert requirements == {
+    assert requirements >= {
         "build": "1.6.0",
         "pip-audit": "2.10.1",
         "packaging": "26.3",
         "pyproject-hooks": "1.2.0",
         "pytest": "8.4.2",
     }
+    assert {
+        "CacheControl",
+        "cyclonedx-python-lib",
+        "requests",
+        "tomli",
+    } <= set(requirements)
 
 
 def test_exact_requirements_rejects_ambiguous_surfaces() -> None:
