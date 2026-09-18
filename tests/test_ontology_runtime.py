@@ -10,6 +10,7 @@ from studio_core import (
     LinkType,
     OntologyId,
     ObjectType,
+    OntologyId,
     PropertyDefinition,
     materialize_object_type,
     resolve_link_type,
@@ -42,7 +43,7 @@ def test_materialize_rejects_duplicate_or_missing_keys() -> None:
 
 
 @pytest.mark.parametrize(
-    "value", ("", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00value")
+    "value", ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00value"]
 )
 def test_ontology_identifiers_reject_non_canonical_text(value: str) -> None:
     with pytest.raises(ValueError, match="single-line"):
