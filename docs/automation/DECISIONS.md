@@ -130,6 +130,8 @@ The repository uses a temporary `src -> python` source alias only inside the mut
 
 Initial mutation evidence was 1,599 killed and 508 survived out of 2,107 total (75.89%), with no invalid categories. Rather than weaken the threshold, Ronin added complete deterministic snapshots for the built-in provider-neutral operator and diagnostic catalogs plus exact metadata-boundary assertions. The resulting evidence is 1,899 killed and 208 survived out of 2,107 total (90.13%), again with zero invalid categories. CI retains the compact exported counts and survivor list as a short-lived artifact so the gate is auditable even when log transport is truncated.
 
+The later exact-head qualification run `35371211041` on `cba0a660587732a52880f425ad621a9914be1814` measured the expanded current selection at 2,495 killed and 485 survived out of 2,980 total (83.72%), with zero invalid categories. This is a current baseline and an open strengthening item; the 90% gate remains unchanged.
+
 A reuse search across `SauronShepherd/sdp-studio` and `SauronShepherd/ronin-old` did not surface mutation-testing machinery suitable for reuse, so this quality boundary is implemented directly in Ronin.
 
 ## ADR-AUTO-013 — Notebook execution dependencies are explicit pure intent
