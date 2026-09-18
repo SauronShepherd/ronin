@@ -489,3 +489,8 @@ retained machine-readable coverage artifacts. The T3 package set
 82.57% line coverage across 45 files in both interpreters, above the unchanged
 75% gate. This replaces earlier non-authoritative local measurements for the
 T3 decision; no threshold was lowered.
+
+The same artifacts measured all 12 release/qualification modules under
+`tools/` at 71.31% line coverage in both interpreters, above the existing 60%
+`coverage-tools` gate. The measured tooling baseline is retained as evidence;
+the threshold is unchanged.
