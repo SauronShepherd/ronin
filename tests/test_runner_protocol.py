@@ -7,6 +7,7 @@ from studio_core.runner_protocol import (
     PROTOCOL,
     RunnerProtocolError,
     decode_envelope,
+    negotiate_capabilities,
     validate_envelope,
 )
 
@@ -65,3 +66,17 @@ def test_runner_protocol_golden_fixtures_preserve_canonical_bytes() -> None:
         payload = fixture["payload"]
         assert encode_canonical_json(payload).decode("utf-8") == fixture["canonical"]
         validate_envelope(payload)
+
+
+def test_runner_capability_negotiation_fails_closed_on_missing_required() -> None:
+    assert negotiate_capabilities(
+        ["cancel.cooperative", "execute.python"],
+        ["cancel.cooperative", "execute.python", "resource.observation.v1"],
+    ) == ("cancel.cooperative", "execute.python")
+    with pytest.raises(RunnerProtocolError, match="unavailable"):
+        negotiate_capabilities(["execute.rust"], ["execute.python"])
+
+
+def test_runner_capability_negotiation_rejects_unordered_sets() -> None:
+    with pytest.raises(RunnerProtocolError, match="sorted"):
+        negotiate_capabilities(["z", "a"], ["a", "z"])

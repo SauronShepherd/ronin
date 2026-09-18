@@ -20,6 +20,29 @@ class RunnerProtocolError(ValueError):
     """Raised when an envelope cannot be safely interpreted by a v1 peer."""
 
 
+def negotiate_capabilities(required: object, offered: object) -> tuple[str, ...]:
+    """Return the usable required capabilities or fail closed on incompatibility."""
+
+    def normalize(value: object, label: str) -> tuple[str, ...]:
+        if not isinstance(value, (list, tuple)) or any(
+            not isinstance(item, str) or not item.strip() for item in value
+        ):
+            raise RunnerProtocolError(f"runner {label} capabilities are invalid")
+        result = tuple(value)
+        if result != tuple(sorted(set(result))):
+            raise RunnerProtocolError(f"runner {label} capabilities must be sorted and unique")
+        return result
+
+    required_values = normalize(required, "required")
+    offered_values = set(normalize(offered, "offered"))
+    missing = tuple(item for item in required_values if item not in offered_values)
+    if missing:
+        raise RunnerProtocolError(
+            "runner required capability is unavailable: " + ", ".join(missing)
+        )
+    return required_values
+
+
 def validate_envelope(payload: object) -> dict[str, JSONValue]:
     """Validate and return one neutral runner envelope without provider semantics."""
 
@@ -69,4 +92,10 @@ def decode_envelope(payload: str | bytes | bytearray) -> dict[str, JSONValue]:
     return validate_envelope(decoded)
 
 
-__all__ = ("PROTOCOL", "RunnerProtocolError", "decode_envelope", "validate_envelope")
+__all__ = (
+    "PROTOCOL",
+    "RunnerProtocolError",
+    "decode_envelope",
+    "negotiate_capabilities",
+    "validate_envelope",
+)
