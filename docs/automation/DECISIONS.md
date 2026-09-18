@@ -494,3 +494,13 @@ The same artifacts measured all 12 release/qualification modules under
 `tools/` at 71.31% line coverage in both interpreters, above the existing 60%
 `coverage-tools` gate. The measured tooling baseline is retained as evidence;
 the threshold is unchanged.
+
+### Manual qualification evidence — 2026-09-18
+
+CI run `35376271745` was dispatched manually against exact commit `f43c520`.
+The scheduled/manual path passed quality, architecture-negative tests, both
+Python test matrices, verification, and acceptance-progress jobs. The run
+retained mutation evidence with 2,495 killed and 485 surviving mutants out of
+2,980 (83.72%), with no skipped, timeout, suspicious, or interrupted mutants.
+The 90% mutation policy remains enforced; this run is a measured baseline and
+does not authorize lowering the gate.
