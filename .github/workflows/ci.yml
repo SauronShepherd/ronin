@@ -62,6 +62,15 @@ jobs:
           python -m pip install -e '.[data-plane,open-tables,ml,security,streaming]'
       - name: Tests and tier coverage
         run: make test
+      - name: Export tier coverage evidence
+        run: coverage json -o coverage-tier-evidence.json
+      - name: Upload tier coverage evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: coverage-tier-${{ matrix.python-version }}
+          path: coverage-tier-evidence.json
+          if-no-files-found: error
+          retention-days: 7
 
   test:
     needs: test-matrix
