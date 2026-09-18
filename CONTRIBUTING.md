@@ -19,7 +19,10 @@ Storage coverage has two explicit modes: `make coverage-storage-files` is the po
 
 ## Current validation policy
 
-GitHub Actions and automated repository qualification are currently disabled by maintainer policy. Do not interpret a code review or merged change as current release qualification. The retained workflow definitions live under `.github/workflows-disabled/` and must not be reactivated as part of unrelated contribution work.
+GitHub Actions and the repository qualification workflows are active for the
+current construction branch. Treat a check as evidence only for the exact
+commit it executed; a green check does not by itself constitute release or
+Public v1 approval.
 
 Useful repository commands include:
 
