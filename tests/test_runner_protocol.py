@@ -80,3 +80,10 @@ def test_runner_capability_negotiation_fails_closed_on_missing_required() -> Non
 def test_runner_capability_negotiation_rejects_unordered_sets() -> None:
     with pytest.raises(RunnerProtocolError, match="sorted"):
         negotiate_capabilities(["z", "a"], ["a", "z"])
+
+
+def test_runner_protocol_json_schema_matches_public_contract() -> None:
+    schema_path = Path(__file__).parents[1] / "api" / "runner-protocol-v1.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    assert schema["properties"]["protocol"]["const"] == PROTOCOL
+    assert set(schema["required"]) == {"protocol", "message_type", "request_id", "payload"}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ronin.example/schemas/runner-protocol-v1.json",
+  "title": "Ronin neutral runner protocol v1 envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "message_type", "request_id", "payload"],
+  "properties": {
+    "protocol": { "const": "ronin/runner/v1" },
+    "message_type": { "enum": ["capabilities", "dispatch", "heartbeat", "cancel", "result", "error"] },
+    "request_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "execution_id": { "type": "string", "minLength": 1 },
+    "attempt_id": { "type": "string", "minLength": 1 },
+    "capabilities": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "payload": { "type": "object" }
+  }
+}
