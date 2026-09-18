@@ -9,7 +9,7 @@ Current operating policy:
 - wait for and inspect exact-head Actions runs after pushed changes;
 - run relevant automated tests locally as part of implementation cycles;
 - treat required CI/security/Docker/release evidence as a merge prerequisite when the workflow applies;
-- validate changes by static code inspection, contract tracing, import/dependency review, schema/API consistency review, and targeted code-level reasoning only;
+- complement executed tests and exact-head workflow evidence with static code inspection, contract tracing, import/dependency review, schema/API consistency review, and targeted code-level reasoning;
 - preserve existing security, durability, performance, architecture, coverage, and acceptance requirements in the implementation even though they are not being executed as automated gates;
 - never describe unexecuted tests or incomplete workflows as green;
 - coverage thresholds and per-file baselines may only ratchet upward; lowering one requires a recorded human decision with justification;
