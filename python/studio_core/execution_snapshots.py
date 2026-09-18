@@ -25,7 +25,7 @@ def snapshot_runtime_resolution(
     resolution: RuntimeResolution,
 ) -> ResolvedRuntimeSnapshot | None:
     """Freeze a successful resolution without clocks, I/O, or provider metadata."""
-    if resolution.status == "no_match":
+    if resolution.status != "selected":
         if resolution.selected is not None:
             raise ValueError("no-match runtime resolution must not contain a selected profile")
         return None

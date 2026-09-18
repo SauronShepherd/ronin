@@ -46,6 +46,11 @@ def test_runtime_capability_validates_and_profile_canonicalizes() -> None:
     assert profile.capability("spark.version") == RuntimeCapability("spark.version", "4.0")
     assert profile.capability("missing") is None
 
+    extension = RuntimeCapability("engine.spark", namespace="adapter.spark/v1")
+    assert profile.capability("engine.spark") is not None
+    assert profile.capability("engine.spark", "adapter.spark/v1") is None
+    assert extension.namespace == "adapter.spark/v1"
+
     with pytest.raises(ValueError, match="unique"):
         _profile(
             "local",
@@ -205,9 +210,24 @@ def test_capability_only_resolution_ranks_preferred_matches_then_stable_ref() ->
         resolution="compatible",
     )
     tie = resolve_runtime(tie_intent, RuntimeCatalog((beta, alpha)))
-    assert tie.selected == alpha
+    assert tie.selected is None
     assert tie.requested_profile_found is True
     assert tie.exact_profile_selected is False
+    assert tie.status == "ambiguous"
+    assert tie.selected is None
+
+
+def test_capability_namespaces_prevent_cross_adapter_collisions() -> None:
+    profile = _profile(
+        "adapter",
+        "default",
+        RuntimeCapability("engine", "core", namespace="adapter.one/v1"),
+        RuntimeCapability("engine", "core", namespace="adapter.two/v1"),
+    )
+    assert profile.capability("engine", "adapter.one/v1") == RuntimeCapability(
+        "engine", "core", namespace="adapter.one/v1"
+    )
+    assert profile.capability("engine") is None
 
 
 def test_requirement_evidence_distinguishes_missing_value_and_failed_constraint() -> None:
