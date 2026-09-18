@@ -10,7 +10,6 @@ from studio_core import (
     LinkType,
     OntologyId,
     ObjectType,
-    OntologyId,
     PropertyDefinition,
     materialize_object_type,
     resolve_link_type,
