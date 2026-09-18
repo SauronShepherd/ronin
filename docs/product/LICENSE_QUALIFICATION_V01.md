@@ -68,4 +68,12 @@ This package evidence digest is not claimed to be the immutable identity of the 
 
 ## Current validation mode
 
-Automated tests and GitHub Actions are currently disabled by maintainer policy. The generator, validator, and adversarial unit tests are implemented in the repository, but this slice does not claim that an inventory was generated from an executed locked environment, that license decisions were completed, or that CI passed. #58 remains open until those evidence and review criteria are genuinely satisfied, including reconciliation of build-tool and security-audit surfaces with the resolved dependency evidence.
+The generator, validator, and adversarial unit tests are implemented and the
+inventory has been generated from the repository's locked virtual environment.
+The qualification workflows are active and have passed on the current exact
+head where applicable. The policy file, package decisions, and project NOTICE
+conclusion remain separate release-review inputs; the inventory alone does not
+approve any dependency or establish that a NOTICE is required. #58 remains
+open until those evidence and review criteria are genuinely satisfied,
+including reconciliation of build-tool and security-audit surfaces with the
+resolved dependency evidence.
