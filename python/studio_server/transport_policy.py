@@ -1,4 +1,4 @@
-"""Shared transport policy for Ronin's plaintext HTTP server and CLI client."""
+"""Compatibility exports for Ronin's shared transport policy."""
 
 from __future__ import annotations
 

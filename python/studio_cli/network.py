@@ -10,12 +10,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, OpenerDirector, Request, build_opener
 
-from studio_server.transport_policy import (
+from studio_core.transport_policy import (
     BindPolicy,
     allows_plaintext_non_loopback,
-    is_loopback_host,
     parse_bind_policy,
 )
+from studio_server.transport_policy import is_loopback_host
 
 _MAX_RESPONSE_BYTES = 1024 * 1024
 _MAX_ERROR_BYTES = 64 * 1024
