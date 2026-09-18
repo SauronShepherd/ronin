@@ -65,10 +65,14 @@ class RuntimeProfile:
             key,
             key=lambda capability: (capability.namespace, capability.name),
         )
-        if index < len(self.capabilities) and (
-            self.capabilities[index].namespace,
-            self.capabilities[index].name,
-        ) == key:
+        if (
+            index < len(self.capabilities)
+            and (
+                self.capabilities[index].namespace,
+                self.capabilities[index].name,
+            )
+            == key
+        ):
             return self.capabilities[index]
         return None
 
