@@ -22,7 +22,7 @@ def test_qualification_manifest_accepts_hash_continuations() -> None:
         "pytest": "8.4.2",
     }.items() <= requirements.items()
     assert {
-        "CacheControl",
+        "cachecontrol",
         "cyclonedx-python-lib",
         "requests",
         "tomli",
