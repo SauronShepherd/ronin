@@ -163,11 +163,13 @@ pytest_add_cli_args_test_selection = [
   "tests/test_grants.py",
   "tests/test_catalog_search.py",
   "tests/test_ontology_actions.py",
+  "tests/test_ontology_runtime.py",
   "tests/test_quality_runtime.py",
   "tests/test_genai_foundation.py",
   "tests/test_ml_foundation.py",
   "tests/test_portability.py",
   "tests/test_audit.py",
+  "tests/test_rql.py",
   "tests/test_bundle_project_inventory.py",
 ]
 mutate_only_covered_lines = true
