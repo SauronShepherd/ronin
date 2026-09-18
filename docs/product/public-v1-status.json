@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-17T00:00:00Z",
-  "observed_main_sha": "8ad760ea69140f4e697d82b297795619c56767ef",
+  "observed_at": "2026-09-18T00:00:00Z",
+  "observed_main_sha": "5b33e10554ece861d69b6bd564562672c98e38a8",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "status_vocabulary": [
@@ -139,10 +139,6 @@
     {
       "issue": 50,
       "summary": "Runtime capability namespace, value semantics and ambiguity policy."
-    },
-    {
-      "issue": 62,
-      "summary": "Language-neutral runner protocol family and compatibility semantics."
     },
     {
       "summary": "License/NOTICE/attribution conclusions and release approval remain human review decisions."

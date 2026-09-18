@@ -140,6 +140,7 @@ source = [
   "studio_cli",
   "studio_migration",
   "pyronin",
+  "tools",
 ]
 
 [tool.coverage.report]

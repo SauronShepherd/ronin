@@ -13,7 +13,9 @@ python -m pip install --require-hashes -r requirements-dev.lock
 python -m pip install -e . --no-deps
 ```
 
-Docker is required for the supported local container journey. Go is required only for the independent canonical JSON cross-language checker. Runtime product packages intentionally add no third-party runtime dependencies.
+Docker is required for the supported local container journey. Go 1.22 or newer is required for the independent cross-language checkers: run `make canonical-json-check` and `make runner-protocol-check`. Runtime product packages intentionally add no third-party runtime dependencies.
+
+Storage coverage has two explicit modes: `make coverage-storage-files` is the portable gate and excludes only PostgreSQL adapter files; `make coverage-storage-files-full` runs the same unchanged baselines for PostgreSQL-backed qualification. The portable gate does not lower or replace the infrastructure-backed baselines.
 
 ## Current validation policy
 

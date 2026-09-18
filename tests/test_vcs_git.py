@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import os
 import shutil
+import stat
 import subprocess
 from pathlib import Path
 
 import pytest
 from studio_vcs import GitCaptureError, GitRevision, capture_revision
+from studio_vcs.git import _normalized_untracked_mode
 
 
 def _git(path: Path, *args: str) -> str:
@@ -58,6 +61,26 @@ def test_untracked_content_changes_dirty_identity(tmp_path: Path) -> None:
     second = capture_revision(root)
     assert first.commit == second.commit
     assert first.dirty_patch_sha256 != second.dirty_patch_sha256
+
+
+@pytest.mark.skipif(os.name != "posix", reason="executable mode is POSIX-specific")
+def test_untracked_executable_mode_changes_dirty_identity(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    untracked = root / "tool.sh"
+    untracked.write_text("#!/bin/sh\n", encoding="utf-8")
+    regular = capture_revision(root)
+    untracked.chmod(untracked.stat().st_mode | stat.S_IXUSR)
+    executable = capture_revision(root)
+    assert regular.dirty_patch_sha256 != executable.dirty_patch_sha256
+
+
+def test_untracked_mode_normalization_uses_git_file_modes(tmp_path: Path) -> None:
+    path = tmp_path / "file"
+    path.write_text("x", encoding="utf-8")
+    assert _normalized_untracked_mode(path.stat()) == b"100644"
+    path.chmod(path.stat().st_mode | stat.S_IXUSR)
+    expected = b"100755" if os.name == "posix" else b"100644"
+    assert _normalized_untracked_mode(path.stat()) == expected
 
 
 def test_capture_rejects_non_repository(tmp_path: Path) -> None:

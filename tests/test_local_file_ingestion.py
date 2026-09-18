@@ -105,3 +105,33 @@ def test_connector_rejects_symlink(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="symlinks"):
         connector.discover(_CONNECTION, "alias.csv")
+
+
+@pytest.mark.parametrize(
+    ("filename", "contents", "message"),
+    [
+        ("bad.csv", "id,id\n1,2\n", "unique"),
+        ("bad.jsonl", "[]\n", "objects"),
+        ("bad.txt", "value\n", "supports only"),
+    ],
+)
+def test_connector_rejects_invalid_input_shapes(
+    tmp_path: Path, filename: str, contents: str, message: str
+) -> None:
+    source_root = tmp_path / "source"
+    source_root.mkdir()
+    (source_root / filename).write_text(contents, encoding="utf-8")
+    connector = LocalFileConnector(source_root)
+
+    with pytest.raises(ValueError, match=message):
+        connector.discover(_CONNECTION, filename)
+
+
+def test_connector_enforces_bounded_reads(tmp_path: Path) -> None:
+    source_root = tmp_path / "source"
+    source_root.mkdir()
+    (source_root / "large.csv").write_text("value\n123\n", encoding="utf-8")
+    connector = LocalFileConnector(source_root, max_bytes=3)
+
+    with pytest.raises(ValueError, match="read limit"):
+        connector.read("large.csv")

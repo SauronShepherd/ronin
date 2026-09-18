@@ -77,7 +77,12 @@ def qualification_tool_requirements(root: Path) -> dict[str, str]:
         lines = path.read_text(encoding="utf-8").splitlines()
     except OSError as exc:
         raise DependencySurfaceError("cannot read third_party/qualification-tools-v1.txt") from exc
-    active = [line.strip() for line in lines if line.strip() and not line.lstrip().startswith("#")]
+    active = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or stripped.startswith("--hash="):
+            continue
+        active.append(stripped.rstrip("\\").rstrip())
     return _exact_requirements(active, surface="qualification-tools-v1")
 
 

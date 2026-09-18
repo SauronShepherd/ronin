@@ -16,6 +16,12 @@ Current operating policy:
 - closing the corresponding issue is part of a slice's Definition of Done, alongside removing obsolete source branches;
 - record material uncertainty explicitly when static inspection cannot prove runtime behavior.
 
+Before selecting or discarding any issue or handoff, revalidate its recorded
+`Observed-Main-SHA` against the current source head. If the recorded SHA is
+stale, inspect the current tree and update the handoff's premise and status
+before using it for prioritization; do not treat an old `BLOCKED` explanation
+as authoritative merely because the issue remains open.
+
 Historical CI evidence remains background evidence for older SHAs; current claims must identify the exact candidate SHA and completed workflow run.
 
 ## Coverage and baseline ratchet

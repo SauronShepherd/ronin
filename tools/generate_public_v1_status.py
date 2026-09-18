@@ -14,7 +14,7 @@ MARKDOWN = ROOT / "docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md"
 MACHINE = ROOT / "docs/product/public-v1-status.json"
 SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
 HEAD_PATTERN = re.compile(r"(?m)^(\*\*Observed source head:\*\* `)[0-9a-f]{40}(` \()[^)]+(\)\.)$")
-MAX_LEDGER_AGE_COMMITS = 50
+MAX_LEDGER_AGE_COMMITS = 10
 
 
 def _read_observed() -> tuple[str, str]:

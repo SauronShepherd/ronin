@@ -1,6 +1,9 @@
 # Exact Python tools retained by release/security qualification definitions.
 # This surface is intentionally separate from requirements-dev.lock because
 # qualification may require tool versions different from the developer environment.
-build==1.6.0
-pip-audit==2.10.1
-pytest==8.4.2
+build==1.6.0 \\
+    --hash=sha256:f7aaf1ebbb79178a02ba248bb524f2176b256017e17e8e4bd4289c7b38cc2bad
+pip-audit==2.10.1 \\
+    --hash=sha256:99ef3f600a317c1945f1e89e227ef26e1c2d618429b8bd3fa6f4f7c440c4611a
+pytest==8.4.2 \\
+    --hash=sha256:872f880de3fc3a5bdc88a11b39c9710c3497a547cfa9320bc3c5e62fbf272e79
