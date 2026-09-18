@@ -4,7 +4,7 @@
 
 CODE_PATHS := python tests tools packages docker
 
-check: format lint typecheck architecture gates-negative route-consistency test performance
+check: format lint typecheck architecture gates-negative route-consistency canonical-json-check runner-protocol-check test performance
 
 route-consistency:
 	python -m tools.route_consistency
