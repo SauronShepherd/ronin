@@ -17,6 +17,8 @@ def test_qualification_manifest_accepts_hash_continuations() -> None:
     assert requirements == {
         "build": "1.6.0",
         "pip-audit": "2.10.1",
+        "packaging": "26.3",
+        "pyproject-hooks": "1.2.0",
         "pytest": "8.4.2",
     }
 
