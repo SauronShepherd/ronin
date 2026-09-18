@@ -481,3 +481,11 @@ The next bootstrap slice must define coordinated ports, readiness and shutdown
 for the two local servers. It must not silently replace the existing `ronin
 serve` job server or expose workflow routes without an injected control-plane
 store and authorization policy.
+### CI coverage evidence — 2026-09-18
+
+CI run `35372433356` on commit `d96f6b4` passed on Python 3.11 and 3.12 and
+retained machine-readable coverage artifacts. The T3 package set
+(`studio_execution`, `studio_server`, `studio_cli`, and `pyronin`) measured
+82.57% line coverage across 45 files in both interpreters, above the unchanged
+75% gate. This replaces earlier non-authoritative local measurements for the
+T3 decision; no threshold was lowered.
