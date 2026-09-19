@@ -8,16 +8,24 @@ from pathlib import Path
 
 WEB = Path("web")
 BASELINE = Path("docs/ui/web-budget.json")
+TEXT_EXTENSIONS = {".css", ".html", ".js"}
+
+
+def _size(path: Path) -> int:
+    raw = path.read_bytes()
+    if path.suffix in TEXT_EXTENSIONS:
+        return len(raw.replace(b"\r\n", b"\n"))
+    return len(raw)
 
 
 def measure() -> dict[str, int]:
     assets = [p for p in WEB.rglob("*") if p.is_file() and p.name != "README.md"]
     return {
-        "asset_bytes": sum(p.stat().st_size for p in assets),
+        "asset_bytes": sum(_size(p) for p in assets),
         "asset_requests": len(assets),
         "module_requests": len(list((WEB / "js").rglob("*.js"))),
         "stylesheet_requests": len(list((WEB / "styles").rglob("*.css"))),
-        "html_bytes": (WEB / "index.html").stat().st_size,
+        "html_bytes": _size(WEB / "index.html"),
     }
 
 
