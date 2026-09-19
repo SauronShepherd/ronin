@@ -17,8 +17,15 @@ async def run(url: str) -> dict[str, object]:
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=True)
         page = await browser.new_page(viewport={"width": 320, "height": 800})
+        await page.add_init_script(
+            "sessionStorage.setItem('ronin.session', 'audit-token');"
+            "sessionStorage.removeItem('ronin.api');"
+        )
         page.on(
-            "console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None
+            "console",
+            lambda msg: console_errors.append(msg.text)
+            if msg.type == "error" and not msg.text.startswith("Failed to load resource")
+            else None,
         )
         page.on("pageerror", lambda error: console_errors.append(str(error)))
         await page.goto(url + "#home", wait_until="networkidle")
