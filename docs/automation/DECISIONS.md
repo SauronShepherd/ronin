@@ -130,6 +130,8 @@ The repository uses a temporary `src -> python` source alias only inside the mut
 
 Initial mutation evidence was 1,599 killed and 508 survived out of 2,107 total (75.89%), with no invalid categories. Rather than weaken the threshold, Ronin added complete deterministic snapshots for the built-in provider-neutral operator and diagnostic catalogs plus exact metadata-boundary assertions. The resulting evidence is 1,899 killed and 208 survived out of 2,107 total (90.13%), again with zero invalid categories. CI retains the compact exported counts and survivor list as a short-lived artifact so the gate is auditable even when log transport is truncated.
 
+The later exact-head qualification run `35371211041` on `cba0a660587732a52880f425ad621a9914be1814` measured the expanded current selection at 2,495 killed and 485 survived out of 2,980 total (83.72%), with zero invalid categories. This is a current baseline and an open strengthening item; the 90% gate remains unchanged.
+
 A reuse search across `SauronShepherd/sdp-studio` and `SauronShepherd/ronin-old` did not surface mutation-testing machinery suitable for reuse, so this quality boundary is implemented directly in Ronin.
 
 ## ADR-AUTO-013 — Notebook execution dependencies are explicit pure intent
@@ -433,9 +435,12 @@ scope or roadmap.
   bundled-material inventory establishes an attribution obligation.
 - Coverage floors are T1 100%, T2 90%, T3 75% and T4 60%; floors and file
   baselines may only ratchet upward.
-- `main` remains intentionally unprotected while the project has one active
-  maintainer. Protection and mandatory review checks become a governance
-  requirement before multi-contributor or Apache-incubation operation.
+- `main` is protected with one required pull-request approval, stale-review
+  dismissal, admin enforcement, strict required checks for CI, Security
+  qualification, Release qualification, Status consistency and Docker
+  qualification, and no direct push restriction beyond branch protection.
+  This is the current repository configuration; the historical single-
+  maintainer exception is retained only in the dated decision record.
 
 ### Consequences
 
@@ -479,3 +484,26 @@ The next bootstrap slice must define coordinated ports, readiness and shutdown
 for the two local servers. It must not silently replace the existing `ronin
 serve` job server or expose workflow routes without an injected control-plane
 store and authorization policy.
+### CI coverage evidence — 2026-09-18
+
+CI run `35372433356` on commit `d96f6b4` passed on Python 3.11 and 3.12 and
+retained machine-readable coverage artifacts. The T3 package set
+(`studio_execution`, `studio_server`, `studio_cli`, and `pyronin`) measured
+82.57% line coverage across 45 files in both interpreters, above the unchanged
+75% gate. This replaces earlier non-authoritative local measurements for the
+T3 decision; no threshold was lowered.
+
+The same artifacts measured all 12 release/qualification modules under
+`tools/` at 71.31% line coverage in both interpreters, above the existing 60%
+`coverage-tools` gate. The measured tooling baseline is retained as evidence;
+the threshold is unchanged.
+
+### Manual qualification evidence — 2026-09-18
+
+CI run `35376271745` was dispatched manually against exact commit `f43c520`.
+The scheduled/manual path passed quality, architecture-negative tests, both
+Python test matrices, verification, and acceptance-progress jobs. The run
+retained mutation evidence with 2,495 killed and 485 surviving mutants out of
+2,980 (83.72%), with no skipped, timeout, suspicious, or interrupted mutants.
+The 90% mutation policy remains enforced; this run is a measured baseline and
+does not authorize lowering the gate.

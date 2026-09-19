@@ -98,7 +98,7 @@
         "LICENSE"
       ],
       "direct": false,
-      "evidence_sha256": "c067231473babf97d523d7c7098febb6e0ac4a801e8ab576f8eb64a442c4c9ad",
+      "evidence_sha256": "ca8768e1f008ebcdae6f21b1b883964fb1853c2543860155793ae3147d79d9ba",
       "license_files": [
         {
           "path": "libcst-1.9.0.dist-info/licenses/LICENSE",
@@ -106,7 +106,7 @@
         }
       ],
       "package": "libcst",
-      "source": null,
+      "source": "https://github.com/Instagram/LibCST",
       "version": "1.9.0"
     },
     {
@@ -348,7 +348,7 @@
         "LICENSE"
       ],
       "direct": false,
-      "evidence_sha256": "a89bda56da452a29624f126ceed01a0929c185d84141283d1f696d6aab53745c",
+      "evidence_sha256": "7271c8b637167945db3309b7111c9f64994c9739b11b2aecfd85eaf34e87b9c3",
       "license_files": [
         {
           "path": "pluggy-1.6.0.dist-info/licenses/LICENSE",
@@ -356,7 +356,7 @@
         }
       ],
       "package": "pluggy",
-      "source": null,
+      "source": "https://pypi.org/project/pluggy/1.6.0/",
       "version": "1.6.0"
     },
     {

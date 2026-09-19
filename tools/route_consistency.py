@@ -6,7 +6,15 @@ import json
 from pathlib import Path
 from typing import Final
 
-from studio_server import CONTROL_PLANE_ROUTES, OIDC_ADMIN_ROUTES, SUPPORTED_ROUTES
+try:
+    from studio_server import CONTROL_PLANE_ROUTES, OIDC_ADMIN_ROUTES, SUPPORTED_ROUTES
+except ModuleNotFoundError as exc:  # pragma: no cover - environment diagnostic
+    if exc.name == "studio_server":
+        raise SystemExit(
+            "route consistency check requires the source tree on PYTHONPATH; "
+            "run `PYTHONPATH=python python -m tools.route_consistency` or install the package"
+        ) from exc
+    raise
 
 OPENAPI_PATH: Final = Path("api/openapi-v1.json")
 _METHODS: Final = frozenset({"get", "post", "patch", "put", "delete"})

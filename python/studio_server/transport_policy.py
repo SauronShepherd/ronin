@@ -1,26 +1,15 @@
-"""Shared transport policy for Ronin's plaintext HTTP server and CLI client."""
+"""Compatibility exports for Ronin's shared transport policy."""
 
 from __future__ import annotations
 
 import ipaddress
-from typing import Literal, cast
 
-BindPolicy = Literal["loopback", "container-internal", "insecure-plaintext-network"]
-BIND_POLICIES: tuple[BindPolicy, ...] = (
-    "loopback",
-    "container-internal",
-    "insecure-plaintext-network",
+from studio_core.transport_policy import (
+    BIND_POLICIES,
+    BindPolicy,
+    allows_plaintext_non_loopback,
+    parse_bind_policy,
 )
-
-
-def parse_bind_policy(value: str | None) -> BindPolicy:
-    """Validate one deployment binding policy, defaulting to loopback-only."""
-    if value is None:
-        return "loopback"
-    if value not in BIND_POLICIES:
-        allowed = ", ".join(BIND_POLICIES)
-        raise ValueError(f"RONIN_BIND_POLICY must be one of: {allowed}")
-    return cast(BindPolicy, value)
 
 
 def is_loopback_host(hostname: str | None) -> bool:
@@ -33,11 +22,6 @@ def is_loopback_host(hostname: str | None) -> bool:
         return ipaddress.ip_address(hostname).is_loopback
     except ValueError:
         return False
-
-
-def allows_plaintext_non_loopback(policy: BindPolicy) -> bool:
-    """Return whether the declared topology permits non-loopback plaintext HTTP."""
-    return policy in {"container-internal", "insecure-plaintext-network"}
 
 
 __all__ = (

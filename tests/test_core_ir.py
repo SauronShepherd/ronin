@@ -76,6 +76,10 @@ def test_freeze_value_rejects_non_string_mapping_keys_unsupported_and_nonfinite_
         freeze_value({1: "invalid"})
     with pytest.raises(TypeError, match="unsupported"):
         freeze_value(object())
+    assert freeze_value((1, True)) == FrozenList((1, True))
+    for value in (b"bytes", bytearray(b"bytearray")):
+        with pytest.raises(TypeError, match="unsupported"):
+            freeze_value(value)
     for value in (float("nan"), float("inf"), float("-inf")):
         with pytest.raises(ValueError, match="finite"):
             freeze_value(value)

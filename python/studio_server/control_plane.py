@@ -56,6 +56,14 @@ CONTROL_PLANE_ROUTES = frozenset(
 )
 
 
+def _registered_path_matches(route: str, segments: tuple[str, ...]) -> bool:
+    pattern = tuple(part for part in route.removeprefix("/").split("/") if part)
+    return len(pattern) == len(segments) and all(
+        expected.startswith("{") and expected.endswith("}") or expected == actual
+        for expected, actual in zip(pattern, segments, strict=True)
+    )
+
+
 class ControlPlaneUnavailable(RuntimeError):
     """Raised by auth/authz adapters when a required dependency is unavailable."""
 
@@ -326,6 +334,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if not self._registered_path(segments):
+                self._method_or_not_found("GET", segments)
+                return
             if segments == ("v1", "workspaces"):
                 limit, offset = _list_query(query)
                 visible: list[object] = []
@@ -482,6 +493,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if not self._registered_path(segments):
+                self._method_or_not_found("PATCH", segments)
+                return
             if len(segments) == 3 and segments[:2] == ("v1", "workspaces"):
                 if query:
                     raise ValueError("workspace update does not accept query parameters")
@@ -517,6 +531,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if not self._registered_path(segments):
+                self._method_or_not_found("POST", segments)
+                return
             if (
                 len(segments) == 6
                 and segments[:2] == ("v1", "workspaces")
@@ -624,6 +641,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if not self._registered_path(segments):
+                self._method_or_not_found("PUT", segments)
+                return
             if (
                 len(segments) == 5
                 and segments[:2] == ("v1", "workspaces")
@@ -656,6 +676,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if not self._registered_path(segments):
+                self._method_or_not_found("DELETE", segments)
+                return
             if (
                 len(segments) == 5
                 and segments[:2] == ("v1", "workspaces")
@@ -684,46 +707,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             self._handle_failure(exc)
 
     def _method_or_not_found(self, method: str, segments: tuple[str, ...]) -> None:
-        known = False
-        if (
-            segments == ("v1", "workspaces")
-            or len(segments) == 3
-            and segments[:2] == ("v1", "workspaces")
-            or (
-                len(segments) == 4
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3] in {"archive", "projects"}
-            )
-            or (
-                len(segments) == 5
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3] == "projects"
-            )
-            or (
-                len(segments) == 4
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3] == "workflows"
-            )
-            or (
-                len(segments) == 6
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3] == "workflows"
-                and segments[5] == "runs"
-            )
-            or (
-                len(segments) == 5
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3] == "workflow-runs"
-            )
-            or (
-                len(segments) == 6
-                and segments[:2] == ("v1", "workspaces")
-                and segments[3] == "workflow-runs"
-                and segments[5] == "cancel"
-            )
-        ):
-            known = True
-        if known:
+        route_methods = {
+            registered_method
+            for registered_method, registered_path in CONTROL_PLANE_ROUTES
+            if _registered_path_matches(registered_path, segments)
+        }
+        if route_methods and method not in route_methods:
             self._error(
                 HTTPStatus.METHOD_NOT_ALLOWED,
                 "method_not_allowed",
@@ -731,6 +720,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             )
         else:
             self._error(HTTPStatus.NOT_FOUND, "not_found", "route does not exist")
+
+    @staticmethod
+    def _registered_path(segments: tuple[str, ...]) -> bool:
+        return any(
+            _registered_path_matches(registered_path, segments)
+            for _, registered_path in CONTROL_PLANE_ROUTES
+        )
 
 
 __all__ = (

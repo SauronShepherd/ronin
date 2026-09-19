@@ -9,12 +9,18 @@ Current operating policy:
 - wait for and inspect exact-head Actions runs after pushed changes;
 - run relevant automated tests locally as part of implementation cycles;
 - treat required CI/security/Docker/release evidence as a merge prerequisite when the workflow applies;
-- validate changes by static code inspection, contract tracing, import/dependency review, schema/API consistency review, and targeted code-level reasoning only;
+- complement executed tests and exact-head workflow evidence with static code inspection, contract tracing, import/dependency review, schema/API consistency review, and targeted code-level reasoning;
 - preserve existing security, durability, performance, architecture, coverage, and acceptance requirements in the implementation even though they are not being executed as automated gates;
 - never describe unexecuted tests or incomplete workflows as green;
 - coverage thresholds and per-file baselines may only ratchet upward; lowering one requires a recorded human decision with justification;
 - closing the corresponding issue is part of a slice's Definition of Done, alongside removing obsolete source branches;
 - record material uncertainty explicitly when static inspection cannot prove runtime behavior.
+
+Before selecting or discarding any issue or handoff, revalidate its recorded
+`Observed-Main-SHA` against the current source head. If the recorded SHA is
+stale, inspect the current tree and update the handoff's premise and status
+before using it for prioritization; do not treat an old `BLOCKED` explanation
+as authoritative merely because the issue remains open.
 
 Historical CI evidence remains background evidence for older SHAs; current claims must identify the exact candidate SHA and completed workflow run.
 

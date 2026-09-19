@@ -11,6 +11,7 @@ from studio_core import (
     ProjectId,
     ProjectManifest,
     RepositoryBinding,
+    RuntimeCapability,
     RuntimeCatalog,
     RuntimeProfile,
     RuntimeProfileRef,
@@ -110,6 +111,26 @@ def test_local_runtime_resolves_demo_and_builds_five_python_requests(
     assert len(runtime_snapshot_digest(runtime)) == 64
     assert len(request.cells) == 5
     assert all(cell.language == "python" for cell in request.cells)
+
+
+def test_runtime_snapshot_digest_includes_capability_namespace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    loaded = _load_demo(monkeypatch)
+    runtime = resolve_runtime_snapshot(loaded.manifest, RuntimeCatalog((LOCAL_DOCKER_PROFILE,)))
+    namespaced_profile = replace(
+        runtime.resolved_profile,
+        capabilities=tuple(
+            RuntimeCapability(
+                capability.name,
+                capability.value,
+                namespace="adapter.docker/v1",
+            )
+            for capability in runtime.resolved_profile.capabilities
+        ),
+    )
+    namespaced_runtime = replace(runtime, resolved_profile=namespaced_profile)
+    assert runtime_snapshot_digest(runtime) != runtime_snapshot_digest(namespaced_runtime)
 
 
 def test_runtime_resolution_fails_closed_without_compatible_profile(

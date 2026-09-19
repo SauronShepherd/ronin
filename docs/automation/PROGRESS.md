@@ -574,3 +574,19 @@ Repository protection status:
 - Enabling `main` protection is externally blocked by GitHub administration permission. Direct repository Actions API attempt run `33956464592` returned HTTP 403 `Resource not accessible by integration`; the connected GitHub App likewise exposes branch protection only read-only. The temporary helper removed itself and no protection setting was partially applied.
 
 Monday starting point: execute the Week-1 queue #75-#86 under milestone `v0.1.0`, preserving the frozen scope, accepted ADRs, hash-locked quality gates, and the fifteen-step acceptance journey as the release contract.
+
+## 2026-09-19 — Repository governance qualification
+
+GitHub repository administration was verified after the build-plan release
+qualification work:
+
+- `main` protection is enabled with strict required checks for CI, Security
+  qualification, Release qualification, Status consistency and Docker
+  qualification.
+- Pull requests require one approval; stale approvals are dismissed and admin
+  enforcement is enabled.
+- GitHub vulnerability alerts and Dependabot security updates are enabled.
+- Secret scanning and push protection remain enabled.
+
+The exact-head qualification suite for commit `775b42b` passed all five
+workflows, including Docker/PostgreSQL qualification.

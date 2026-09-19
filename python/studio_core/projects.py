@@ -107,9 +107,11 @@ class CapabilityRequirement:
     name: str
     constraint: str | None = None
     level: RequirementLevel = "required"
+    namespace: str = "ronin.core/v1"
 
     def __post_init__(self) -> None:
         _require_text(self.name, "capability name")
+        _require_text(self.namespace, "capability namespace")
         if self.constraint is not None:
             _require_text(self.constraint, "capability constraint")
             _validate_constraint(self.constraint)

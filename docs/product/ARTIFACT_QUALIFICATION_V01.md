@@ -25,4 +25,4 @@ The function fails closed on missing, duplicate, version-mismatched, or malforme
 
 ## Current execution status
 
-This document describes implementation mechanics, not release evidence. A real `pyronin` candidate must still be built with the exact pinned build backend, qualified outside the checkout, retained without rebuilding, and subsequently published as that exact candidate. GitHub Actions remain disabled, so no current exact-head workflow evidence is implied by this implementation.
+This document describes implementation mechanics, not release evidence. A real `pyronin` candidate must still be built with the exact pinned build backend, qualified outside the checkout, retained without rebuilding, and subsequently published as that exact candidate. Active qualification workflows must still complete on the exact candidate SHA; this implementation document does not imply qualification by itself.

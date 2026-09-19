@@ -16,7 +16,7 @@ List only checks, inspections, or qualification that were actually performed. Do
 
 ## Known validation gaps
 
-State what remains unverified, especially while GitHub Actions and automated tests are disabled.
+State what remains unverified, especially when the relevant GitHub Actions or automated tests have not completed for the exact candidate SHA.
 
 ## Architecture / security invariants
 

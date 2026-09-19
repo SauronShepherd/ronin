@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
 import math
+import os
+import subprocess
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from statistics import median
 from threading import Event, Thread
@@ -13,6 +17,8 @@ from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant, Job, JobId
 from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
+
+from tools.performance_artifact import build_artifact
 
 _MIGRATION_NOW = Instant("2026-09-07T07:30:00.000000Z")
 _AUTHORIZATION = "".join(("budget", "-qualification"))
@@ -63,6 +69,26 @@ def _assert_p95_budget(label: str, samples_seconds: list[float], budget_ms: floa
     summary = _latency_summary(label, samples_seconds, budget_ms)
     print(summary, flush=True)
     assert _p95_ms(samples_seconds) < budget_ms, summary
+
+
+def _write_performance_artifact(samples: dict[str, list[float]]) -> None:
+    destination = os.environ.get("RONIN_PERFORMANCE_ARTIFACT")
+    if not destination:
+        return
+    sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"],  # noqa: S603, S607 - fixed Git executable
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    artifact = build_artifact(
+        samples,
+        sha=sha,
+        measured_at=datetime.now(UTC).isoformat(timespec="seconds"),
+    )
+    path = Path(destination)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
 
 
 def test_latency_budget_failure_reports_distribution_shape() -> None:
@@ -136,6 +162,9 @@ def test_real_http_submit_status_meet_p95_budgets_under_bounded_contention(
 
         _assert_p95_budget("POST /v1/jobs", post_samples, _POST_P95_BUDGET_MS)
         _assert_p95_budget("GET /v1/jobs/{id}", get_samples, _GET_P95_BUDGET_MS)
+        _write_performance_artifact(
+            {"POST /v1/jobs": post_samples, "GET /v1/jobs/{id}": get_samples}
+        )
     finally:
         store.release_block.set()
         blocker.join(timeout=5.0)

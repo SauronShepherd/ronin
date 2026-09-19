@@ -87,7 +87,10 @@ Ronin's dominant identity is brown, with gold/amber accents and charcoal/ivory n
 
 ## Qualification status
 
-GitHub Actions and automated tests are currently disabled. The repository therefore does not claim exact-head full release qualification for current `main`.
+GitHub Actions and automated qualification are active for the current construction
+branch. Exact-head qualification may be claimed only when the relevant workflow
+has completed for that SHA; a green workflow does not waive incomplete product
+capabilities, legal review, or repository administration.
 
 The Public v1 product gate is broader than the older 15-step local execution journey. Missing any mandatory capability family means Public v1 remains incomplete.
 
@@ -126,4 +129,6 @@ For current Compose startup, token/authentication, readiness, Docker access, cle
 
 For contributor-environment issues, verify that dependencies came from `requirements-dev.lock`, the checkout is clean, the expected Python version is active, Docker is available where required and no disabled workflow was accidentally reactivated.
 
-If a documented command has been source-reviewed but not rerun under the current code-only policy, treat it as implementation documentation rather than current qualification evidence.
+If a documented command has been source-reviewed but not rerun for the exact
+current SHA, treat it as implementation documentation rather than current
+qualification evidence.

@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "30 3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -43,7 +45,19 @@ jobs:
       - name: Run non-Docker qualification suite
         env:
           RONIN_POSTGRES_TEST_DSN: postgresql://ronin:ronin@localhost:5432/ronin
+          RONIN_TEST_POSTGRES_DSN: postgresql://ronin:ronin@localhost:5432/ronin
+          RONIN_PERFORMANCE_ARTIFACT: ${{ github.workspace }}/qualification-evidence/http-performance.json
         run: python -m pytest -q --ignore=tests/perf --ignore=tests/integration/test_docker_container_executor_real.py --ignore=tests/integration/test_worker_runtime_real.py
+
+      - name: Run PostgreSQL-backed storage coverage gate
+        env:
+          RONIN_POSTGRES_TEST_DSN: postgresql://ronin:ronin@localhost:5432/ronin
+          RONIN_TEST_POSTGRES_DSN: postgresql://ronin:ronin@localhost:5432/ronin
+          PYTHONUNBUFFERED: "1"
+        run: |
+          timeout --foreground --signal=TERM --kill-after=30s 15m \
+            python -m pytest -q --ignore=tests/perf --cov --cov-branch --cov-report=
+          make coverage-storage-files-full
 
       - name: Build pinned qualification image
         run: docker build --file docker/Dockerfile.probe --tag ronin-probe:ci .

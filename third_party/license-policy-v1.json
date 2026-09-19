@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "project_notice": "not_required",
+  "project_notice_rationale": "Locked dependency inventory was reviewed; no dependency requires a project-level NOTICE under the selected policy.",
+  "reviews": {
+    "click==8.5.0": {
+      "decision": "allow",
+      "evidence_sha256": "6d71dea41d6b69207e22a1c7a9b3f38c955980b13ce5403640444ad439919370",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "colorama==0.4.6": {
+      "decision": "allow",
+      "evidence_sha256": "1637e91a1ab5aecbee79e01fda53e5b01a05c12ec826146ef1a2a9ab6124c757",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "coverage==7.16.0": {
+      "decision": "allow",
+      "evidence_sha256": "277051905e939128f0266ce33155e1f408bd58a6343798a8b948159a3093a259",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "hypothesis==6.167.1": {
+      "decision": "allow",
+      "evidence_sha256": "662608a827275004199882cf3f37d6ed3d119301dbc904613d3988990baa8874",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "iniconfig==2.3.0": {
+      "decision": "allow",
+      "evidence_sha256": "d18d43d5559abc6956c38079e94fafb58c1b3dff86d2043df3ac6c1269643145",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "libcst==1.9.0": {
+      "decision": "allow",
+      "evidence_sha256": "ca8768e1f008ebcdae6f21b1b883964fb1853c2543860155793ae3147d79d9ba",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "librt==0.15.0": {
+      "decision": "allow",
+      "evidence_sha256": "ffb61af9c6e584cbe077e55460c571072e707fb9d5cf27fcb7c489c7c798f081",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "linkify-it-py==2.2.0": {
+      "decision": "allow",
+      "evidence_sha256": "b9af514588f48e6cd5250cf39cb6b0829910b706e6183ff5b5c08bb1cdca437e",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "markdown-it-py==4.2.0": {
+      "decision": "allow",
+      "evidence_sha256": "bfb8fe1ab99ed2e8af82ba79b58b7992b2aec701235b9220a0c16f615728ac6b",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "mdit-py-plugins==0.6.1": {
+      "decision": "allow",
+      "evidence_sha256": "f3296eb119945c04ac9fb4a50d7819edd2d51df51ae9ee2d5d354c16ef98838e",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "mdurl==0.1.2": {
+      "decision": "allow",
+      "evidence_sha256": "c7746166ee532fe65755ae1c1a290efe0fbd4ae2196f3c387adee824ce677e89",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "mutmut==3.7.0": {
+      "decision": "allow",
+      "evidence_sha256": "7de49bfc193d309152be61c4bc1ac3c3445ffc3868dd67dd11e76b02fcca4524",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "mypy==1.20.2": {
+      "decision": "allow",
+      "evidence_sha256": "d07b140d9f067b734edcfd133b97c568937059a775c96b5d15e8174e65441462",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "mypy-extensions==1.1.0": {
+      "decision": "allow",
+      "evidence_sha256": "0cda063bc6ea019e196d4159bba6bdde6ec2ae7c1822439cc3464f2dc26fd6d8",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "packaging==26.3": {
+      "decision": "allow",
+      "evidence_sha256": "d3a6046c4f3196a97a5751e931cadbeebf280fb0dec4f9df8365b83359d4a2c6",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "pathspec==1.1.1": {
+      "decision": "allow",
+      "evidence_sha256": "74295aa1aeecf52aa9d84566401d2de8ce11da2a2fe459b89a47487a2018044f",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "platformdirs==4.11.7": {
+      "decision": "allow",
+      "evidence_sha256": "ed47a85260073547abe0f41c3238280b04f493f874f2dd9d6a71f29a23c2d91f",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "pluggy==1.6.0": {
+      "decision": "allow",
+      "evidence_sha256": "7271c8b637167945db3309b7111c9f64994c9739b11b2aecfd85eaf34e87b9c3",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "pygments==2.21.0": {
+      "decision": "allow",
+      "evidence_sha256": "d2df641cf5a5054a361975c792d2659f355ff7647f2adad558d2e7b183546f01",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "pytest==9.1.1": {
+      "decision": "allow",
+      "evidence_sha256": "35cb24c22c8c17703533a1b8b63d68e71a46c896f048e36bd705c443193fce1e",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "pytest-cov==6.3.0": {
+      "decision": "allow",
+      "evidence_sha256": "0ac1c8b37720c93c3692d4d950375353593394825ca3f395c1be56b589da98c7",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "pytest-randomly==3.16.0": {
+      "decision": "allow",
+      "evidence_sha256": "20929a98e4040ce58c5c8b5ef34db59782f0e7e552282273b3eb0ee87ad3e631",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "pyyaml==6.0.3": {
+      "decision": "allow",
+      "evidence_sha256": "bcc6ffcee1ae42bf56ac1bd4d6b70b9294cded2c8c7a35a913a423e380c92974",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "pyyaml-ft==8.0.0": {
+      "decision": "allow",
+      "evidence_sha256": "46c6be4cd13322209ea1fcd1d303a4e7099503b844ce28707370cf8533beb737",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "rich==15.0.0": {
+      "decision": "allow",
+      "evidence_sha256": "5398511cd1575e1c8999ea2d81dff3da888b86f52acf1e033a040702400406b2",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "ruff==0.16.6": {
+      "decision": "allow",
+      "evidence_sha256": "bd6e3b74c5303e05c10fec359b586d28965879d1b7155d6a71bb8924b3f06adc",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "setproctitle==1.3.7": {
+      "decision": "allow",
+      "evidence_sha256": "e421d530810466d70a63c8bf2ca59fd40c44c75df769c6a137f84f1b40d04a63",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "sortedcontainers==2.4.0": {
+      "decision": "allow",
+      "evidence_sha256": "ece98cbed62f3367af292cb6dafdabfbc9448c22fb42b9eadddc6d7945c3dc3c",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "textual==8.2.8": {
+      "decision": "allow",
+      "evidence_sha256": "002dbe17c2585383e0d9caafa903e984d59cde91ed24f8e797364377764f4211",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "typing-extensions==4.16.0": {
+      "decision": "allow",
+      "evidence_sha256": "7972efa37d0713c9af13952a5283a6fc3048ec8bab90a3f095626ac93c03912a",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
+    "tzdata==2026.4": {
+      "decision": "allow",
+      "evidence_sha256": "988d8d5f582733517ee436c2b197cfccf7464b1ce6b8723e727b8074a5854763",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    }
+  }
+}

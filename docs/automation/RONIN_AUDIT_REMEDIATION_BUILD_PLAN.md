@@ -231,12 +231,13 @@ declare the gate restored until `make check` itself passes.
 
 ### F1. Re-enable the contributor gate (T4)
 
-1. Do not rename `.github/workflows-disabled` until T34 and the full local gate are green.
-2. Obtain maintainer authorization to enable `ci.yml` on pull requests only.
+1. Historical prerequisite: do not reactivate workflows until T34 and the full local gate are green. This prerequisite has been satisfied for the current construction branch; active workflows now live under `.github/workflows/`.
+2. Preserve the maintainer-authorized active `ci.yml` and exact-head qualification workflow configuration.
 3. Verify path filters, pinned actions, Python versions, dependency installation, and artifact
    retention.
-4. Keep Docker qualification, publish, release, and security workflows parked until their
-   external evidence and policy prerequisites are approved.
+4. Keep release publication gated until Docker, release, security, legal, governance, and
+   external-evidence prerequisites are approved; qualification workflows themselves remain
+   active and must run on the exact candidate.
 5. Update the status ledger only after the workflow executes successfully on the exact candidate.
 
 ### F2. Documentation consistency (T24–T27, T30)

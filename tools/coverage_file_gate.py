@@ -44,6 +44,7 @@ def validate_package_files(
     threshold: float = DEFAULT_THRESHOLD,
     baselines: Mapping[str, float] | None = None,
     ratchet_margin: float | None = None,
+    excluded_files: set[str] | frozenset[str] = frozenset(),
 ) -> dict[str, float]:
     if not 0.0 <= threshold <= 100.0:
         raise ValueError("coverage threshold must be between 0 and 100")
@@ -60,7 +61,11 @@ def validate_package_files(
     if not isinstance(files, dict):
         raise TypeError("coverage evidence must contain a files object")
 
-    expected = sorted(path for path in source_root.rglob("*.py") if path.is_file())
+    expected = sorted(
+        path
+        for path in source_root.rglob("*.py")
+        if path.is_file() and path.relative_to(source_root).as_posix() not in excluded_files
+    )
     if not expected:
         raise ValueError(f"no Python source files found under {source_root}")
 
@@ -125,6 +130,13 @@ def main() -> None:
         metavar="RELATIVE_PATH=PERCENT",
         help="explicit non-regression baseline for a legacy file below the default floor",
     )
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="RELATIVE_PATH",
+        help="exclude an infrastructure-only source file from this portable gate",
+    )
     args = parser.parse_args()
     baselines: dict[str, float] = {}
     for item in args.baseline:
@@ -143,6 +155,7 @@ def main() -> None:
         threshold=args.threshold,
         baselines=baselines,
         ratchet_margin=args.ratchet_margin,
+        excluded_files=frozenset(args.exclude),
     )
     print(
         f"per-file coverage policy passed for {len(measured)} files "

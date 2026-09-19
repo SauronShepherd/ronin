@@ -1,0 +1,30 @@
+{
+  "schema": "ronin.http-performance/v1",
+  "source_sha": "5b33e10554ece861d69b6bd564562672c98e38a8",
+  "measured_at": "2026-09-18T06:28:20+00:00",
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.14"
+  },
+  "metrics": {
+    "GET /v1/jobs/{id}": {
+      "sample_count": 200,
+      "p50_ms": 3.374,
+      "p95_ms": 16.709,
+      "max_ms": 22.498,
+      "throughput_per_second": 174.969
+    },
+    "POST /v1/jobs": {
+      "sample_count": 200,
+      "p50_ms": 5.232,
+      "p95_ms": 21.593,
+      "max_ms": 55.724,
+      "throughput_per_second": 116.704
+    }
+  },
+  "resources": {
+    "cpu": null,
+    "memory_bytes": null,
+    "io_bytes": null
+  }
+}

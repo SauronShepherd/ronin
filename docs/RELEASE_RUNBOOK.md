@@ -80,4 +80,7 @@ After publication, verify that:
 
 ## Current code-only state
 
-At the time this runbook was added, GitHub Actions and automated tests are intentionally disabled. Therefore this document is an operational contract for the future release gate, not evidence that current `main` has passed it. Do not make a new release-readiness claim until #199 and its dependent qualification blockers are resolved with exact-SHA evidence.
+This runbook is an operational contract, not evidence that current `main` has
+passed every release gate. The qualification workflows are active and exact-SHA
+runs are retained, but do not make a release-readiness claim until #199 and its
+dependent qualification blockers are resolved with complete evidence.

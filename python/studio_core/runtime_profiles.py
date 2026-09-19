@@ -9,7 +9,7 @@ from typing import Literal
 from .projects import CapabilityRequirement, ExecutionProfile, RuntimeProfileRef
 from .versions import compare_releases
 
-ResolutionStatus = Literal["selected", "no_match"]
+ResolutionStatus = Literal["selected", "no_match", "ambiguous"]
 
 
 def _require_text(value: str, field_name: str) -> None:
@@ -25,9 +25,11 @@ class RuntimeCapability:
 
     name: str
     value: str | None = None
+    namespace: str = "ronin.core/v1"
 
     def __post_init__(self) -> None:
         _require_text(self.name, "runtime capability name")
+        _require_text(self.namespace, "runtime capability namespace")
         if self.value is not None:
             _require_text(self.value, "runtime capability value")
 
@@ -44,17 +46,33 @@ class RuntimeProfile:
         canonical = tuple(
             sorted(
                 self.capabilities,
-                key=lambda capability: (capability.name, capability.value or ""),
+                key=lambda capability: (
+                    capability.namespace,
+                    capability.name,
+                    capability.value or "",
+                ),
             )
         )
-        names = [capability.name for capability in canonical]
-        if len(names) != len(set(names)):
+        identities = [(capability.namespace, capability.name) for capability in canonical]
+        if len(identities) != len(set(identities)):
             raise ValueError("runtime capability names must be unique within a profile")
         object.__setattr__(self, "capabilities", canonical)
 
-    def capability(self, name: str) -> RuntimeCapability | None:
-        index = bisect_left(self.capabilities, name, key=lambda capability: capability.name)
-        if index < len(self.capabilities) and self.capabilities[index].name == name:
+    def capability(self, name: str, namespace: str = "ronin.core/v1") -> RuntimeCapability | None:
+        key = (namespace, name)
+        index = bisect_left(
+            self.capabilities,
+            key,
+            key=lambda capability: (capability.namespace, capability.name),
+        )
+        if (
+            index < len(self.capabilities)
+            and (
+                self.capabilities[index].namespace,
+                self.capabilities[index].name,
+            )
+            == key
+        ):
             return self.capabilities[index]
         return None
 
@@ -139,14 +157,11 @@ def resolve_runtime(intent: ExecutionProfile, catalog: RuntimeCatalog) -> Runtim
     candidates = [evaluation for evaluation in evaluations if evaluation.compatible]
     if not candidates:
         return RuntimeResolution("no_match", None, requested_found, False, evaluations)
-    selected = min(
-        candidates,
-        key=lambda evaluation: (
-            -evaluation.preferred_matches,
-            evaluation.profile.ref.adapter_id,
-            evaluation.profile.ref.profile_id,
-        ),
-    )
+    best_score = max(evaluation.preferred_matches for evaluation in candidates)
+    best = [evaluation for evaluation in candidates if evaluation.preferred_matches == best_score]
+    if len(best) > 1:
+        return RuntimeResolution("ambiguous", None, requested_found, False, evaluations)
+    selected = best[0]
     return RuntimeResolution("selected", selected.profile, requested_found, False, evaluations)
 
 
@@ -154,7 +169,8 @@ def _evaluate(
     profile: RuntimeProfile, requirements: tuple[CapabilityRequirement, ...]
 ) -> ProfileEvaluation:
     checks = tuple(
-        _check(requirement, profile.capability(requirement.name)) for requirement in requirements
+        _check(requirement, profile.capability(requirement.name, requirement.namespace))
+        for requirement in requirements
     )
     required_ok = all(check.satisfied for check in checks if check.requirement.level == "required")
     preferred_matches = sum(

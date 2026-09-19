@@ -14,6 +14,10 @@ from uuid import uuid4
 
 from studio_core import Action, ProjectId, WorkspaceId
 from studio_core.audit import AuditEvent
+from studio_core.transport_policy import (
+    allows_plaintext_non_loopback,
+    parse_bind_policy,
+)
 from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant, Job
 from studio_security import (
@@ -32,11 +36,7 @@ from studio_security import (
 from studio_storage import sqlite_ready
 
 from studio_server.http import DurableHTTPApplication, _Handler
-from studio_server.transport_policy import (
-    allows_plaintext_non_loopback,
-    is_loopback_host,
-    parse_bind_policy,
-)
+from studio_server.transport_policy import is_loopback_host
 
 _BIND_POLICY_ENV = "RONIN_BIND_POLICY"
 

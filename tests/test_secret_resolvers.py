@@ -79,3 +79,10 @@ def test_composite_resolver_dispatches_only_configured_backends() -> None:
 def test_secret_material_rejects_empty_values() -> None:
     with pytest.raises(SecretResolutionError, match="empty"):
         SecretMaterial(b"")
+
+
+def test_secret_material_redacts_invalid_text_and_enforces_size() -> None:
+    with pytest.raises(SecretResolutionError, match="valid text"):
+        SecretMaterial(b"\xff").reveal_text()
+    with pytest.raises(ValueError, match="must be positive"):
+        MountedFileSecretResolver(Path(), max_secret_bytes=0)

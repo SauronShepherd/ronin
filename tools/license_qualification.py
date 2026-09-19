@@ -9,6 +9,7 @@ import json
 import re
 import tomllib
 from pathlib import Path, PurePosixPath
+from urllib.parse import quote
 
 _LOCKED_REQUIREMENT = re.compile(r"^([A-Za-z0-9_.-]+)==([^ \t\\;]+)(?:[ \t]+;[ \t]+.+)?$")
 _LOCKED_HASH = re.compile(r"^--hash=sha256:[0-9a-f]{64}$")
@@ -163,11 +164,18 @@ def _source(dist: metadata.Distribution) -> str | None:
             "source",
             "source code",
             "repository",
+            "github",
             "homepage",
         }:
             return url.strip() or None
     home_page = _metadata_value(dist, "Home-page")
-    return home_page.strip() if home_page and home_page.strip() else None
+    if home_page and home_page.strip():
+        return home_page.strip()
+    name = _metadata_value(dist, "Name")
+    version = dist.version
+    if name and version:
+        return f"https://pypi.org/project/{quote(name)}/{quote(version)}/"
+    return None
 
 
 def _normalize_declared_license_file(value: str) -> str:

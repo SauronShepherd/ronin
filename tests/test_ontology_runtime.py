@@ -9,6 +9,7 @@ from studio_core import (
     KnowledgeObjectRef,
     LinkType,
     ObjectType,
+    OntologyId,
     PropertyDefinition,
     materialize_object_type,
     resolve_link_type,
@@ -38,6 +39,39 @@ def test_materialize_rejects_duplicate_or_missing_keys() -> None:
         materialize_object_type(_object_type(), ({"customer_id": 7}, {"customer_id": 7}))
     with pytest.raises(ValueError, match="missing required fields"):
         materialize_object_type(_object_type(), ({"name": "Ada"},))
+
+
+@pytest.mark.parametrize(
+    "value", ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00value"]
+)
+def test_ontology_identifiers_reject_non_canonical_text(value: str) -> None:
+    with pytest.raises(ValueError, match="single-line"):
+        OntologyId(value)
+
+
+def test_link_type_rejects_unsupported_cardinality_and_unaligned_fields() -> None:
+    with pytest.raises(ValueError, match="unsupported link cardinality"):
+        LinkType("link", "Customer", "Order", "invalid", ("id",), ("id",))  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="non-empty and aligned"):
+        LinkType("link", "Customer", "Order", "one-to-one", ("id",), ())
+
+
+def test_object_type_rejects_duplicate_keys_and_unrepresented_key_fields() -> None:
+    asset = AssetRef(AssetId("customers"), AssetVersion("1"))
+    with pytest.raises(ValueError, match="unique key_fields"):
+        ObjectType(
+            "Customer",
+            asset,
+            ("customer_id", "customer_id"),
+            (PropertyDefinition("customer_id", "string", "customer_id"),),
+        )
+    with pytest.raises(ValueError, match="represented by properties"):
+        ObjectType(
+            "Customer",
+            asset,
+            ("customer_id",),
+            (PropertyDefinition("name", "string", "name"),),
+        )
 
 
 def test_resolve_link_type_joins_references_and_enforces_cardinality() -> None:

@@ -165,7 +165,11 @@ def runtime_snapshot_digest(runtime: ResolvedRuntimeSnapshot) -> str:
             "ref": _profile_ref(profile.ref),
             "available": profile.available,
             "capabilities": [
-                {"name": capability.name, "value": capability.value}
+                {
+                    "namespace": capability.namespace,
+                    "name": capability.name,
+                    "value": capability.value,
+                }
                 for capability in profile.capabilities
             ],
         },
