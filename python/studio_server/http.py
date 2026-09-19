@@ -455,8 +455,14 @@ class _Handler(BaseHTTPRequestHandler):
     def _serve_studio(self, path: str) -> bool:
         if path not in {"/studio", "/studio/"} and not path.startswith("/studio/"):
             return False
-        relative = "index.html" if path in {"/studio", "/studio/"} else path.removeprefix("/studio/")
-        if not relative or ".." in Path(relative).parts or any(part.startswith(".") for part in Path(relative).parts):
+        relative = (
+            "index.html" if path in {"/studio", "/studio/"} else path.removeprefix("/studio/")
+        )
+        if (
+            not relative
+            or ".." in Path(relative).parts
+            or any(part.startswith(".") for part in Path(relative).parts)
+        ):
             self._error(HTTPStatus.NOT_FOUND, "not_found", "Studio asset not found")
             return True
         asset_path = Path(relative)
@@ -489,11 +495,21 @@ class _Handler(BaseHTTPRequestHandler):
         )
         self.send_response(HTTPStatus.OK)
         self._send_security_headers(api=False)
-        self.send_header("Content-Type", f"{media_type}; charset=utf-8" if media_type.startswith("text/") or media_type == "image/svg+xml" else media_type)
+        self.send_header(
+            "Content-Type",
+            f"{media_type}; charset=utf-8"
+            if media_type.startswith("text/") or media_type == "image/svg+xml"
+            else media_type,
+        )
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-cache" if asset_path.suffix == ".html" else "public, max-age=3600")
+        self.send_header(
+            "Cache-Control", "no-cache" if asset_path.suffix == ".html" else "public, max-age=3600"
+        )
         if asset_path.suffix == ".svg":
-            self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'none'")
+            self.send_header(
+                "Content-Security-Policy",
+                "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'none'",
+            )
         self.end_headers()
         self.wfile.write(body)
         return True
