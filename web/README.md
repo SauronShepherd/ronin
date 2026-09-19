@@ -16,10 +16,18 @@ The UI uses these authenticated v1 routes:
 - `GET /v1/jobs/{job_id}/events` to inspect durable events;
 - `GET /v1/jobs/{job_id}/evidence` to inspect portable evidence;
 - `POST /v1/jobs/{job_id}/cancel` to request cancellation.
+- `POST /v1/sql` to run bounded read-only SQL.
+
+The shell also includes backend-aware entry points for workspaces, workflows,
+and governance access. Surfaces without a published route remain visible as
+disabled planned capabilities and never render invented records.
 
 The server remains the authorization boundary. A Studio user must have
 `list`, `read`, `events`, `evidence:read`, and, for cancellation, `cancel`
 permission on the job's project.
+
+Bearer tokens are kept in `sessionStorage` only. Cursors are opaque and are
+passed through without construction or decoding in the browser.
 
 ## Delivery
 

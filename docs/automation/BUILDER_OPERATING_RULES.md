@@ -65,6 +65,8 @@ Before merging Builder work, reread current `main`, inspect the complete diff ag
 
 Deleting the merged source branch is part of the Builder Definition of Done whenever that branch has no unmerged work remaining. If the active GitHub integration cannot delete refs, record the branch as an explicit repository-administration cleanup item rather than silently treating the merge as fully hygienic.
 
+Before each planning cycle, run `PYTHONPATH=python python -m tools.branch_triage --output artifacts/studio/branch-triage.txt`. The authority for a branch being identical to `main` is its content diff, not `git branch --merged`, because this repository uses squash merges. Any branch reported as `REVISAR` must be reviewed against merged PRs before deletion; never delete branches solely from the triage output.
+
 ## Pre-PR benefit check
 
 For a change presented as an optimization or throughput improvement, state whether the expected benefit materializes end to end or whether an adjacent unchanged line neutralizes it. Use code-path/complexity reasoning or already-available measurements; do not claim a measured performance win unless such evidence actually exists.

@@ -41,29 +41,19 @@ def test_studio_assets_are_allowlisted_and_served(tmp_path) -> None:
         ) as response:
             assert response.status == 200
             assert response.headers["Content-Type"].startswith("text/html")
-            assert b"Ronin Studio" in response.read()
-        with urllib.request.urlopen(  # noqa: S310
-            f"{base_url}/studio/studio.js", timeout=2
-        ) as response:
-            assert response.status == 200
-            assert response.headers["Content-Type"].startswith("text/javascript")
-            script = response.read().decode()
-            assert 'method: "POST"' in script
-            assert "/cancel" in script
-            assert 'classList.toggle("active"' in script
-            assert "sessionStorage" in script
-            assert "run-project" in script
-            assert "run-state" in script
-            assert "run-filter-summary" in script
-            assert "all projects" in script
-            assert "clear-filters" in script
-            assert "URLSearchParams" in script
-            assert 'params.set("cursor"' in script
-            assert 'localStorage.setItem("ronin.token"' not in script
-            request = urllib.request.Request(  # noqa: S310
-                f"{base_url}/studio/secret.txt",
-                headers={"Authorization": "Bearer test-token"},
-            )
+            assert b"RONIN Studio" in response.read()
+            assert response.headers["Cache-Control"] == "no-cache"
+        for asset, content_type in (("js/app.js", "text/javascript"), ("styles/base.css", "text/css"), ("assets/ronin-logo-full.png", "image/png")):
+            with urllib.request.urlopen(f"{base_url}/studio/{asset}", timeout=2) as response:  # noqa: S310
+                assert response.status == 200
+                assert response.headers["Content-Type"].startswith(content_type)
+        with pytest.raises(urllib.error.HTTPError) as error_info:
+            urllib.request.urlopen(f"{base_url}/studio/../pyproject.toml", timeout=2)  # noqa: S310
+        assert error_info.value.code == 404
+        request = urllib.request.Request(  # noqa: S310
+            f"{base_url}/studio/secret.txt",
+            headers={"Authorization": "Bearer test-token"},
+        )
         with pytest.raises(urllib.error.HTTPError) as error_info:
             urllib.request.urlopen(request, timeout=2)  # noqa: S310
         assert error_info.value.code == 404

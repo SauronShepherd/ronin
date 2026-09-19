@@ -61,7 +61,23 @@ where = ["python"]
 studio_storage = ["migrations/*.sql"]
 
 [tool.setuptools.data-files]
-"share/ronin/web" = ["web/index.html", "web/studio.css", "web/studio.js"]
+"share/ronin/web" = ["web/index.html", "web/README.md"]
+"share/ronin/web/assets" = [
+  "web/assets/ronin-logo-full.png",
+  "web/assets/ronin-logo-mark.png",
+]
+"share/ronin/web/js" = [
+  "web/js/api.js",
+  "web/js/app.js",
+  "web/js/dom.js",
+  "web/js/features.js",
+]
+"share/ronin/web/styles" = [
+  "web/styles/base.css",
+  "web/styles/components.css",
+  "web/styles/layout.css",
+  "web/styles/tokens.css",
+]
 
 [tool.ruff]
 target-version = "py311"
