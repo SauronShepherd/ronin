@@ -435,9 +435,12 @@ scope or roadmap.
   bundled-material inventory establishes an attribution obligation.
 - Coverage floors are T1 100%, T2 90%, T3 75% and T4 60%; floors and file
   baselines may only ratchet upward.
-- `main` remains intentionally unprotected while the project has one active
-  maintainer. Protection and mandatory review checks become a governance
-  requirement before multi-contributor or Apache-incubation operation.
+- `main` is protected with one required pull-request approval, stale-review
+  dismissal, admin enforcement, strict required checks for CI, Security
+  qualification, Release qualification, Status consistency and Docker
+  qualification, and no direct push restriction beyond branch protection.
+  This is the current repository configuration; the historical single-
+  maintainer exception is retained only in the dated decision record.
 
 ### Consequences
 
