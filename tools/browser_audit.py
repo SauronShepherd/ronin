@@ -5,11 +5,12 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+from importlib import import_module
 from pathlib import Path
 
 
 async def run(url: str) -> dict[str, object]:
-    from playwright.async_api import async_playwright  # type: ignore[import-not-found]
+    async_playwright = import_module("playwright.async_api").async_playwright
 
     console_errors: list[str] = []
     pages: list[dict[str, object]] = []
