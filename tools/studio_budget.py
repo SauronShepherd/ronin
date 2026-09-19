@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 WEB = Path("web")
-BASELINE = Path("artifacts/studio/web-budget.json")
+BASELINE = Path("docs/ui/web-budget.json")
 
 
 def measure() -> dict[str, int]:
