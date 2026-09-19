@@ -56,6 +56,24 @@ def test_link_type_rejects_unsupported_cardinality_and_unaligned_fields() -> Non
         LinkType("link", "Customer", "Order", "one-to-one", ("id",), ())
 
 
+def test_object_type_rejects_duplicate_keys_and_unrepresented_key_fields() -> None:
+    asset = AssetRef(AssetId("customers"), AssetVersion("1"))
+    with pytest.raises(ValueError, match="unique key_fields"):
+        ObjectType(
+            "Customer",
+            asset,
+            ("customer_id", "customer_id"),
+            (PropertyDefinition("customer_id", "string", "customer_id"),),
+        )
+    with pytest.raises(ValueError, match="represented by properties"):
+        ObjectType(
+            "Customer",
+            asset,
+            ("customer_id",),
+            (PropertyDefinition("name", "string", "name"),),
+        )
+
+
 def test_resolve_link_type_joins_references_and_enforces_cardinality() -> None:
     source = materialize_object_type(_object_type(), ({"customer_id": 7, "name": "Ada"},))
     target_type = ObjectType(
