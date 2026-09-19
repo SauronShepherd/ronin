@@ -174,7 +174,7 @@ class AuditEvent:
             cast(str, action),
             AuditResource.from_payload(payload["resource"]),
             cast(AuditOutcome, outcome),
-            cast(str | None, request_id),
+            request_id,
             tuple(sorted(cast(Mapping[str, str], metadata).items())),
         )
 
