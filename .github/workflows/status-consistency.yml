@@ -8,6 +8,7 @@ on:
       - "docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md"
       - "docs/product/public-v1-status.json"
       - "tools/generate_public_v1_status.py"
+      - "docs/ui/**"
       - ".github/workflows/status-consistency.yml"
   workflow_dispatch:
 
