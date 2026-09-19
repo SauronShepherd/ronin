@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 async def run(url: str) -> dict[str, object]:
-    from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright  # type: ignore[import-not-found]
 
     console_errors: list[str] = []
     pages: list[dict[str, object]] = []
