@@ -508,7 +508,8 @@ class _Handler(BaseHTTPRequestHandler):
         if asset_path.suffix == ".svg":
             self.send_header(
                 "Content-Security-Policy",
-                "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'none'",
+                "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; "
+                "frame-ancestors 'none'",
             )
         self.end_headers()
         self.wfile.write(body)
