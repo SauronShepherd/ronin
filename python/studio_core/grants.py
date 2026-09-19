@@ -131,7 +131,7 @@ class ResourceScope:
             identifier is not None and not isinstance(identifier, str)
         ):
             raise ValueError("authorization resource has invalid field types")
-        return cls(_require_resource_kind(kind), cast(str | None, identifier))
+        return cls(_require_resource_kind(kind), identifier)
 
 
 @dataclass(frozen=True, slots=True)

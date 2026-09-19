@@ -140,7 +140,7 @@ class QualityRule:
             name,
             cast(QualitySeverity, severity),
             blocking,
-            cast(str | None, field),
+            field,
             tuple(sorted(cast(Mapping[str, str], parameters).items())),
         )
 
@@ -205,7 +205,7 @@ class DataContract:
             asset=AssetRef.from_payload(payload["asset"]),
             compatibility=cast(SchemaCompatibility, compatibility),
             rules=tuple(QualityRule.from_payload(rule) for rule in rules),
-            freshness_seconds=cast(int | None, freshness),
+            freshness_seconds=freshness,
         )
 
     @classmethod
@@ -281,7 +281,7 @@ class QualityResult:
             QualityRuleId(rule_id),
             cast(QualityStatus, status),
             tuple(sorted(cast(Mapping[str, str], observed).items())),
-            cast(str | None, message),
+            message,
         )
 
 
@@ -344,7 +344,7 @@ class QualityRun:
         return cls(
             QualityRunId(identifier),
             AssetRef.from_payload(payload["asset"]),
-            cast(str | None, execution_ref),
+            execution_ref,
             tuple(QualityResult.from_payload(result) for result in results),
         )
 

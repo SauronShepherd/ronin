@@ -27,10 +27,26 @@ def test_project_configuration_preserves_validation_contract() -> None:
     mutation = config["tool"]["mutmut"]
     assert mutation["source_paths"] == ["src/studio_core"]
     assert mutation["mutate_only_covered_lines"] is True
-    assert config["tool"]["setuptools"]["data-files"]["share/ronin/web"] == [
+    data_files = config["tool"]["setuptools"]["data-files"]
+    assert data_files["share/ronin/web"] == [
         "web/index.html",
-        "web/studio.css",
-        "web/studio.js",
+        "web/README.md",
+    ]
+    assert data_files["share/ronin/web/assets"] == [
+        "web/assets/ronin-logo-full.png",
+        "web/assets/ronin-logo-mark.png",
+    ]
+    assert data_files["share/ronin/web/js"] == [
+        "web/js/api.js",
+        "web/js/app.js",
+        "web/js/dom.js",
+        "web/js/features.js",
+    ]
+    assert data_files["share/ronin/web/styles"] == [
+        "web/styles/base.css",
+        "web/styles/components.css",
+        "web/styles/layout.css",
+        "web/styles/tokens.css",
     ]
 
     compose = (root / "compose.yaml").read_text(encoding="utf-8")

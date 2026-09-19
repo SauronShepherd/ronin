@@ -238,8 +238,8 @@ class CatalogAsset:
             id=AssetId(asset_id),
             kind=cast(AssetKind, kind),
             name=name,
-            project_id=cast(str | None, project_id),
-            owner_ref=cast(str | None, owner_ref),
+            project_id=project_id,
+            owner_ref=owner_ref,
             tags=tuple(cast(list[str], tags)),
             classifications=tuple(cast(list[str], classifications)),
             properties=tuple(sorted(cast(Mapping[str, str], properties).items())),
@@ -303,8 +303,8 @@ class AssetRevision:
             raise ValueError("asset revision metadata must be string object")
         return cls(
             ref=AssetRef.from_payload(payload["ref"]),
-            schema_digest=cast(str | None, schema_digest),
-            content_digest=cast(str | None, content_digest),
+            schema_digest=schema_digest,
+            content_digest=content_digest,
             metadata=tuple(sorted(cast(Mapping[str, str], metadata).items())),
         )
 
@@ -423,7 +423,7 @@ class LineageEdge:
             target=AssetRef.from_payload(payload["target"]),
             operation=cast(LineageOperation, operation),
             mode=cast(LineageMode, mode),
-            execution_ref=cast(str | None, execution_ref),
+            execution_ref=execution_ref,
             column_mappings=tuple(parsed_mappings),
         )
 

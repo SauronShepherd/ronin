@@ -1,13 +1,26 @@
-.PHONY: check format lint typecheck architecture gates-negative route-consistency test \
+.PHONY: check format lint typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget browser-audit test \
 	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-storage-files-full coverage-tools mutation performance \
 	canonical-json-check runner-protocol-check dependency-surfaces-check
 
 CODE_PATHS := python tests tools packages docker
 
-check: format lint typecheck architecture gates-negative route-consistency canonical-json-check runner-protocol-check test performance
+check: format lint typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget canonical-json-check runner-protocol-check test performance
 
 route-consistency:
 	PYTHONPATH=python python -m tools.route_consistency
+
+studio-surface:
+	python -m tools.studio_surface
+
+web-lint:
+	python -m tools.studio_web_audit
+
+web-budget:
+	python -m tools.studio_budget --check
+
+browser-audit:
+	@python -c "import playwright" 2>NUL || (echo Playwright is required for browser-audit && exit /b 1)
+	python tools/browser_audit.py $${RONIN_STUDIO_AUDIT_URL:-http://127.0.0.1:8080/studio/}
 
 format:
 	ruff format --check $(CODE_PATHS)

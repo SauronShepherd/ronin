@@ -51,12 +51,7 @@ _MAX_LIST_LIMIT = 100
 _DEFAULT_LIST_LIMIT = 50
 _DEFAULT_SERVICE_TIMEOUT_SECONDS = 30.0
 _REQUEST_READ_TIMEOUT_SECONDS = 30.0
-_STUDIO_ASSETS = {
-    "/studio": "index.html",
-    "/studio/": "index.html",
-    "/studio/studio.js": "studio.js",
-    "/studio/studio.css": "studio.css",
-}
+_STUDIO_EXTENSIONS = frozenset({".html", ".css", ".js", ".png", ".webp", ".svg"})
 SUPPORTED_ROUTES = frozenset(
     {
         ("POST", "/v1/jobs"),
@@ -458,13 +453,26 @@ class _Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _serve_studio(self, path: str) -> bool:
-        asset = _STUDIO_ASSETS.get(path)
-        if asset is None:
+        if path not in {"/studio", "/studio/"} and not path.startswith("/studio/"):
             return False
+        relative = (
+            "index.html" if path in {"/studio", "/studio/"} else path.removeprefix("/studio/")
+        )
+        if (
+            not relative
+            or ".." in Path(relative).parts
+            or any(part.startswith(".") for part in Path(relative).parts)
+        ):
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "Studio asset not found")
+            return True
+        asset_path = Path(relative)
+        if asset_path.suffix not in _STUDIO_EXTENSIONS:
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "Studio asset not found")
+            return True
         candidates = (
-            Path(__file__).resolve().parents[2] / "web" / asset,
-            Path("/usr/local/lib/ronin/web") / asset,
-            Path(sys.prefix) / "share" / "ronin" / "web" / asset,
+            Path(__file__).resolve().parents[2] / "web" / asset_path,
+            Path("/usr/local/lib/ronin/web") / asset_path,
+            Path(sys.prefix) / "share" / "ronin" / "web" / asset_path,
         )
         source = next((candidate for candidate in candidates if candidate.is_file()), candidates[0])
         try:
@@ -474,15 +482,35 @@ class _Handler(BaseHTTPRequestHandler):
             return True
         media_type = (
             "text/html"
-            if asset.endswith(".html")
+            if asset_path.suffix == ".html"
             else "text/javascript"
-            if asset.endswith(".js")
+            if asset_path.suffix == ".js"
             else "text/css"
+            if asset_path.suffix == ".css"
+            else "image/png"
+            if asset_path.suffix == ".png"
+            else "image/webp"
+            if asset_path.suffix == ".webp"
+            else "image/svg+xml"
         )
         self.send_response(HTTPStatus.OK)
         self._send_security_headers(api=False)
-        self.send_header("Content-Type", f"{media_type}; charset=utf-8")
+        self.send_header(
+            "Content-Type",
+            f"{media_type}; charset=utf-8"
+            if media_type.startswith("text/") or media_type == "image/svg+xml"
+            else media_type,
+        )
         self.send_header("Content-Length", str(len(body)))
+        self.send_header(
+            "Cache-Control", "no-cache" if asset_path.suffix == ".html" else "public, max-age=3600"
+        )
+        if asset_path.suffix == ".svg":
+            self.send_header(
+                "Content-Security-Policy",
+                "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; "
+                "frame-ancestors 'none'",
+            )
         self.end_headers()
         self.wfile.write(body)
         return True
@@ -491,7 +519,7 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header(
             "Content-Security-Policy",
-            "default-src 'none'; script-src 'self'; style-src 'self'; "
+            "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; "
             "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'",
         )
         self.send_header("Referrer-Policy", "no-referrer")

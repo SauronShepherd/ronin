@@ -175,7 +175,7 @@ class BindingRequest:
             raise ValueError("binding request has invalid field types")
         if suggestion is not None and not isinstance(suggestion, str):
             raise ValueError("binding suggestion must be string or null")
-        return cls(cast(BindingKind, kind), source_ref, required, cast(str | None, suggestion))
+        return cls(cast(BindingKind, kind), source_ref, required, suggestion)
 
 
 @dataclass(frozen=True, order=True, slots=True)
