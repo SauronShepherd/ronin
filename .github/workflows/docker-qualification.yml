@@ -51,8 +51,10 @@ jobs:
         env:
           RONIN_POSTGRES_TEST_DSN: postgresql://ronin:ronin@localhost:5432/ronin
           RONIN_TEST_POSTGRES_DSN: postgresql://ronin:ronin@localhost:5432/ronin
+          PYTHONUNBUFFERED: "1"
         run: |
-          python -m pytest --ignore=tests/perf --cov --cov-branch --cov-report=
+          timeout --foreground --signal=TERM --kill-after=30s 15m \
+            python -m pytest -q --ignore=tests/perf --cov --cov-branch --cov-report=
           make coverage-storage-files-full
 
       - name: Build pinned qualification image
