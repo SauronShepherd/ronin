@@ -1,4 +1,4 @@
-import {del,get,post,put} from './api.js';
+import {del,get,patch,post,put} from './api.js';
 import {esc,json,page,status} from './dom.js';
 
 const root=()=>document.querySelector('#view');
