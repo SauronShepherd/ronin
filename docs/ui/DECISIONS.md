@@ -15,3 +15,7 @@ Security and data invariants remain authoritative: the server owns
 authorization; bearer tokens are session-only; cursors remain opaque; secrets
 are references only; physical evidence locators are never rendered; and no
 screen may present invented provider or connector data.
+
+Unavailable navigation surfaces are intentionally rendered as visibly planned
+and `aria-disabled`; they remain discoverable without presenting mock data as
+live capability.
