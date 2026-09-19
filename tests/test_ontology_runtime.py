@@ -49,6 +49,13 @@ def test_ontology_identifiers_reject_non_canonical_text(value: str) -> None:
         OntologyId(value)
 
 
+def test_link_type_rejects_unsupported_cardinality_and_unaligned_fields() -> None:
+    with pytest.raises(ValueError, match="unsupported link cardinality"):
+        LinkType("link", "Customer", "Order", "invalid", ("id",), ("id",))  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="non-empty and aligned"):
+        LinkType("link", "Customer", "Order", "one-to-one", ("id",), ())
+
+
 def test_resolve_link_type_joins_references_and_enforces_cardinality() -> None:
     source = materialize_object_type(_object_type(), ({"customer_id": 7, "name": "Ada"},))
     target_type = ObjectType(
