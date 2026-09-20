@@ -14,7 +14,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, OpenerDirector, Request, build_opener
 
-__version__ = "0.1.0a2"
+__version__ = "0.0.1a0"
 
 _DEFAULT_MAX_RESPONSE_BYTES = 1024 * 1024
 _MAX_CURSOR_BYTES = 4096
@@ -144,6 +144,95 @@ class SqlColumn:
 class SqlResult:
     columns: tuple[SqlColumn, ...]
     rows: tuple[tuple[object, ...], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class PluginSurface:
+    id: str
+    plugin_id: str
+    namespace: str
+    command: str
+    operation_id: str
+    capability: str
+    permission: str
+    transport: str
+    api_version: str
+    path: str
+    method: str
+
+
+@dataclass(frozen=True, slots=True)
+class PluginInfo:
+    id: str
+    version: str
+    state: str
+    error: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class PluginCliContribution:
+    id: str
+    namespace: str
+    command: str
+    operation_id: str
+    options: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class PluginClientOperation:
+    id: str
+    operation_id: str
+    transport: str
+    path: str
+    method: str
+
+
+@dataclass(frozen=True, slots=True)
+class PlatformPlugins:
+    items: tuple[PluginInfo, ...]
+    surfaces: tuple[PluginSurface, ...]
+    cli: tuple[PluginCliContribution, ...] = ()
+    client_operations: tuple[PluginClientOperation, ...] = ()
+
+
+class PluginClient:
+    """Namespaced transport facade backed by server-advertised surfaces."""
+
+    def __init__(self, client: Ronin, namespace: str) -> None:
+        self._client = client
+        self._namespace = namespace
+
+    def invoke(
+        self,
+        operation_id: str,
+        *,
+        payload: Mapping[str, object] | None = None,
+        path_params: Mapping[str, str] | None = None,
+    ) -> object:
+        surface = next(
+            (
+                item
+                for item in self._client.platform_plugins().surfaces
+                if item.namespace == self._namespace and item.operation_id == operation_id
+            ),
+            None,
+        )
+        if surface is None:
+            raise ValueError(f"operation is not advertised for plugin namespace: {operation_id}")
+        if surface.transport != "http" or not surface.path:
+            raise ProtocolError(f"operation cannot be invoked over HTTP: {operation_id}")
+        path = surface.path
+        for key, value in (path_params or {}).items():
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"path parameter {key} must be non-empty")
+            path = path.replace("{" + key + "}", quote(value, safe=""))
+        if "{" in path or "}" in path:
+            raise ValueError(f"missing path parameter for operation: {operation_id}")
+        return self._client._transport.request(
+            surface.method,
+            path,
+            payload=payload,
+        )
 
 
 class Transport(Protocol):
@@ -421,6 +510,66 @@ class Ronin:
         )
         return _parse_sql_result(payload)
 
+    def platform_plugins(self) -> PlatformPlugins:
+        """Return ready plugin and operation metadata advertised by the host."""
+        payload = self._transport.request("GET", "/v1/platform/plugins")
+        if not isinstance(payload, dict):
+            raise ProtocolError("platform plugins response must be an object")
+        raw_items = payload.get("items")
+        raw_surfaces = payload.get("surfaces", [])
+        raw_cli = payload.get("cli", [])
+        raw_operations = payload.get("client_operations", [])
+        if not all(isinstance(value, list) for value in (raw_items, raw_surfaces, raw_cli, raw_operations)):
+            raise ProtocolError("platform plugin metadata collections must be arrays")
+        items: list[PluginInfo] = []
+        for item in raw_items:
+            if not isinstance(item, dict):
+                raise ProtocolError("plugin metadata item must be an object")
+            identifier = item.get("id")
+            version = item.get("version")
+            state = item.get("state")
+            error = item.get("error")
+            if not all(isinstance(value, str) and value for value in (identifier, version, state)):
+                raise ProtocolError("plugin metadata identifiers must be non-empty strings")
+            if error is not None and not isinstance(error, str):
+                raise ProtocolError("plugin metadata error must be a string or null")
+            items.append(PluginInfo(identifier, version, state, error))
+        surfaces: list[PluginSurface] = []
+        for item in raw_surfaces:
+            if not isinstance(item, dict):
+                raise ProtocolError("plugin surface must be an object")
+            fields = (
+                "id", "plugin_id", "namespace", "command", "operation_id",
+                "capability", "permission", "transport", "api_version", "path", "method",
+            )
+            values = tuple(item.get(field) for field in fields)
+            if not all(isinstance(value, str) and value for value in values):
+                raise ProtocolError("plugin surface fields must be non-empty strings")
+            surfaces.append(PluginSurface(*values))
+        cli: list[PluginCliContribution] = []
+        for item in raw_cli:
+            if not isinstance(item, dict) or not all(isinstance(item.get(field), str) and item.get(field) for field in ("id", "namespace", "command", "operation_id")):
+                raise ProtocolError("plugin CLI contribution has invalid fields")
+            options = item.get("options", [])
+            if not isinstance(options, list) or not all(isinstance(value, str) for value in options):
+                raise ProtocolError("plugin CLI contribution options must be strings")
+            cli.append(PluginCliContribution(item["id"], item["namespace"], item["command"], item["operation_id"], tuple(options)))
+        operations: list[PluginClientOperation] = []
+        for item in raw_operations:
+            if not isinstance(item, dict):
+                raise ProtocolError("plugin client operation must be an object")
+            fields = ("id", "operation_id", "transport", "path", "method")
+            values = tuple(item.get(field) for field in fields)
+            if not all(isinstance(value, str) for value in values):
+                raise ProtocolError("plugin client operation fields must be strings")
+            operations.append(PluginClientOperation(*values))
+        return PlatformPlugins(tuple(items), tuple(surfaces), tuple(cli), tuple(operations))
+
+    def plugin(self, namespace: str) -> PluginClient:
+        if not namespace or namespace != namespace.strip() or " " in namespace:
+            raise ValueError("plugin namespace must be non-empty and trimmed")
+        return PluginClient(self, namespace)
+
     def get_job(self, job_id: str) -> Job:
         return _parse_job(self._transport.request("GET", f"/v1/jobs/{quote(job_id, safe='')}"))
 
@@ -663,6 +812,11 @@ __all__ = [
     "JobHandle",
     "JobPage",
     "JobState",
+    "PlatformPlugins",
+    "PluginCliContribution",
+    "PluginClientOperation",
+    "PluginInfo",
+    "PluginSurface",
     "ProtocolError",
     "Ronin",
     "SqlColumn",

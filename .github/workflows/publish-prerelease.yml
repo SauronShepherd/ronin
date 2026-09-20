@@ -369,6 +369,7 @@ jobs:
           set -euo pipefail
           version_tag="$IMAGE_NAME:${{ needs.validate-release.outputs.image-version }}"
           alpha_tag="$IMAGE_NAME:alpha"
+          dev_tag="$IMAGE_NAME:dev"
 
           if existing_json="$(docker buildx imagetools inspect "$version_tag" --format '{{json .Manifest}}' 2>/dev/null)"; then
             existing_digest="$(python -c 'import json,sys; print(json.load(sys.stdin)["digest"])' <<<"$existing_json")"
@@ -385,3 +386,4 @@ jobs:
           test "$version_digest" = "$REGISTRY_DIGEST"
 
           docker buildx imagetools create --tag "$alpha_tag" "$IMAGE_NAME@$REGISTRY_DIGEST"
+          docker buildx imagetools create --tag "$dev_tag" "$IMAGE_NAME@$REGISTRY_DIGEST"
