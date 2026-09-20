@@ -94,6 +94,13 @@ capabilities, legal review, or repository administration.
 
 The Public v1 product gate is broader than the older 15-step local execution journey. Missing any mandatory capability family means Public v1 remains incomplete.
 
+The current workspace snapshot was reviewed on 2026-09-20. It is uncommitted
+and the local `master` branch has no commits, so historical SHA/CI references
+must not be presented as current-head qualification. Use
+`docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md` for the conservative,
+source-grounded implementation ledger and `docs/product/public-v1-status.json`
+for its machine-readable form.
+
 ## Alpha / unstable
 
 Ronin remains `0.1.0a*`. HTTP/OpenAPI/CLI/SDK changes follow the strict alpha compatibility rules documented in `docs/product/API_COMPATIBILITY_V1.md`. Identity-bearing formats are versioned and fail closed.

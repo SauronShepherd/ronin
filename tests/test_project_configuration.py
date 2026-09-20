@@ -31,6 +31,9 @@ def test_project_configuration_preserves_validation_contract() -> None:
     assert data_files["share/ronin/web"] == [
         "web/index.html",
         "web/README.md",
+        "web/data-enginerring-studio.html",
+        "web/data-enginerring-studio.css",
+        "web/data-enginerring-studio.js",
     ]
     assert data_files["share/ronin/web/assets"] == [
         "web/assets/ronin-logo-full.png",
@@ -41,6 +44,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
         "web/js/app.js",
         "web/js/dom.js",
         "web/js/features.js",
+        "web/js/performance-studio.js",
     ]
     assert data_files["share/ronin/web/styles"] == [
         "web/styles/base.css",

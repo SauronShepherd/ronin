@@ -19,6 +19,7 @@ from studio_core.transport_policy import (
     parse_bind_policy,
 )
 from studio_execution import DurableExecutionService
+from studio_migration import MigrationAPIRouter
 from studio_orchestrator import Instant, Job
 from studio_security import (
     Actor,
@@ -228,6 +229,7 @@ class OidcRoninHTTPServer(ThreadingHTTPServer):
         rbac_store: RbacStore,
         workspace_store: OidcWorkspaceStore,
         audit_store: AuthorizationAuditStore,
+        migration_router: MigrationAPIRouter | None = None,
     ) -> None:
         host, _port = server_address
         policy = parse_bind_policy(os.environ.get(_BIND_POLICY_ENV))
@@ -243,6 +245,8 @@ class OidcRoninHTTPServer(ThreadingHTTPServer):
         self._authorizer = RbacAuthorizer(rbac_store)
         self._workspace_store = workspace_store
         self._audit_store = audit_store
+        self.migration_router = migration_router
+        self.migration_router = migration_router
         self._readiness_database = _readiness_database_from_env()
         try:
             super().__init__(server_address, _OidcHandler)

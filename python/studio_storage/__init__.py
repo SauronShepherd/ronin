@@ -10,6 +10,7 @@ from studio_storage.artifacts import (
 )
 from studio_storage.async_artifacts import BoundedAsyncArtifactStore
 from studio_storage.async_store import StorageBackpressureError
+from studio_storage.audit import SqliteAuditStore
 from studio_storage.backup import backup_sqlite, restore_sqlite
 from studio_storage.bundle import (
     BUNDLE_MANIFEST_PATH,
@@ -62,6 +63,8 @@ from studio_storage.ports import (
 from studio_storage.postgres_audit import PostgresAuditStore
 from studio_storage.postgres_core import PostgresDependencyError, PostgresMetadataStore
 from studio_storage.postgres_jobs import PostgresJobReadPort
+from studio_storage.postgres_ml import PostgresMLStore
+from studio_storage.postgres_workflow import PostgresWorkflowBundleImportStore
 from studio_storage.quality import (
     DataContractConflict,
     DataContractNotFound,
@@ -140,9 +143,12 @@ __all__ = (
     "MountedFileSecretResolver",
     "OntologyConflict",
     "PostgresAuditStore",
+    "SqliteAuditStore",
     "PostgresDependencyError",
     "PostgresMetadataStore",
+    "PostgresWorkflowBundleImportStore",
     "PostgresJobReadPort",
+    "PostgresMLStore",
     "KnowledgeGraphConflict",
     "SqliteKnowledgeGraphStore",
     "ProjectRegistrationConflict",

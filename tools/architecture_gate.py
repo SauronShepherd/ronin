@@ -40,6 +40,7 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_vcs",
             "studio_execution",
             "studio_security",
+            "studio_migration",
         }
     ),
     "studio_worker": frozenset(
@@ -69,6 +70,9 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_worker",
             "studio_migration",
             "studio_security",
+            "studio_runtime",
+            "studio_plugin_observability",
+            "studio_ml",
         }
     ),
 }
@@ -89,6 +93,22 @@ PROJECT_DEPENDENCIES.update(
         "studio_semantic": frozenset({"studio_core", "studio_sql"}),
         "studio_sql": frozenset(),
         "studio_streaming": frozenset({"studio_core", "studio_lakehouse"}),
+        "studio_runtime": frozenset(
+            {
+                "studio_core",
+                "studio_plugin_observability",
+                "studio_plugin_workspaces",
+                "studio_synthetic_data",
+            }
+        ),
+        "studio_plugin_observability": frozenset({"studio_core"}),
+        "studio_plugin_workspaces": frozenset({"studio_core"}),
+        "studio_plugin_sdk": frozenset({"studio_core"}),
+        "studio_plugin_testkit": frozenset({"studio_core"}),
+        "studio_synthetic_data": frozenset(
+            {"studio_core", "studio_storage", "studio_orchestrator"}
+        ),
+        "studio_cloud": frozenset({"studio_core"}),
     }
 )
 PROJECT_DEPENDENCIES["studio_execution"] = frozenset(
@@ -103,6 +123,9 @@ PROJECT_DEPENDENCIES["studio_orchestrator"] = frozenset(
     {*PROJECT_DEPENDENCIES["studio_orchestrator"], "studio_kernel"}
 )
 PROJECT_PACKAGES = frozenset(PROJECT_DEPENDENCIES)
+# Community plugins are independently packaged and therefore must not be
+# added to the v0.1 core matrix. They may depend only on public core contracts.
+OPTIONAL_PLUGIN_PACKAGES = frozenset({"studio_data_engineering", "studio_ai_studio"})
 PURE_DOMAIN_PACKAGES = frozenset({"studio_core", "studio_notebook", "studio_orchestrator"})
 PURE_STDLIB_IMPORT_ROOTS = frozenset(
     {
@@ -125,6 +148,7 @@ PURE_STDLIB_IMPORT_ROOTS = frozenset(
         "operator",
         "re",
         "typing",
+        "types",
     }
 )
 PURE_STDLIB_EXACT_IMPORTS = frozenset({"urllib.parse"})
@@ -230,11 +254,19 @@ def _dotted_name(node: ast.AST, aliases: dict[str, str]) -> str | None:
 def _dependency_violations(tree: ast.AST, path: Path, source: str | None) -> list[Violation]:
     if source is None:
         return []
-    if source not in PROJECT_DEPENDENCIES:
+    if source in OPTIONAL_PLUGIN_PACKAGES:
+        allowed = {
+            "studio_core",
+            "studio_storage",
+            "studio_genai",
+            "studio_orchestrator",
+        }
+    elif source not in PROJECT_DEPENDENCIES:
         return [Violation(path, 1, "DEP000", f"undeclared project package {source!r}")]
+    else:
+        allowed = PROJECT_DEPENDENCIES[source]
 
     violations: list[Violation] = []
-    allowed = PROJECT_DEPENDENCIES[source]
     for node in ast.walk(tree):
         modules: list[str] = []
         if isinstance(node, ast.Import):

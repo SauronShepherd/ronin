@@ -1,5 +1,45 @@
 """Executable ML/MLOps runtime for Ronin Public v1."""
 
+from .backends import (
+    BackendCapabilities,
+    BackendRegistry,
+    ExperimentRequest,
+    LocalScikitLearnBackend,
+    MLBackend,
+    ModelInspection,
+    PredictionContext,
+    RemoteAdapterError,
+    RemoteCapacityError,
+    RemoteConfigurationError,
+    RemoteMLBackend,
+    RemoteRetryPolicy,
+    RemoteTrainingRequest,
+    RemoteTrainingResult,
+    RemoteTransientError,
+    RemoteValidationError,
+    TrainingContext,
+    default_backends,
+)
+from .clustering import KMeansModel, fit_kmeans, inertia
+from .domain import FeatureSpec, Lab, PipelineIR, PipelineNode
+from .optimization import SearchSpec, Trial, rank_trials
+from .orchestration import (
+    ExecutionSnapshot,
+    ExecutionStore,
+    InMemoryExecutionStore,
+    LocalExecutionCoordinator,
+)
+from .postgres import PostgresExecutionStore, PostgresMLLabStore
+from .provenance import run_record
+from .quality import ColumnProfile, QualityReport, profile_and_validate
+from .remote import (
+    JsonRemoteBackend,
+    MLflowBackend,
+    RemoteExecutionController,
+    SparkBackend,
+    urllib_json_transport,
+)
+from .runner import BackendNotFound, ExperimentResult, LocalExperimentRunner
 from .runtime import (
     Algorithm,
     MLDependencyError,
@@ -14,6 +54,7 @@ from .service import (
     MLRegistryStore,
     list_model_evaluations,
     list_registered_models,
+    persist_experiment_result,
     predict_champion_tabular,
     predict_registered_tabular,
     promote_registered_model,
@@ -21,6 +62,8 @@ from .service import (
     resolve_champion_model,
     train_register_tabular,
 )
+from .services import InMemoryMLLabStore, LabService, MLLabConflict
+from .sqlite import SqliteExecutionStore, SqliteMLLabStore
 
 __all__ = (
     "Algorithm",
@@ -39,5 +82,57 @@ __all__ = (
     "predict_champion_tabular",
     "predict_tabular",
     "train_register_tabular",
+    "persist_experiment_result",
     "train_tabular",
+    "ExperimentRequest",
+    "BackendCapabilities",
+    "BackendRegistry",
+    "TrainingContext",
+    "PredictionContext",
+    "ModelInspection",
+    "RemoteTrainingRequest",
+    "RemoteTrainingResult",
+    "RemoteAdapterError",
+    "RemoteConfigurationError",
+    "RemoteValidationError",
+    "RemoteCapacityError",
+    "RemoteTransientError",
+    "RemoteRetryPolicy",
+    "RemoteExecutionController",
+    "JsonRemoteBackend",
+    "MLflowBackend",
+    "SparkBackend",
+    "urllib_json_transport",
+    "RemoteMLBackend",
+    "MLBackend",
+    "LocalScikitLearnBackend",
+    "default_backends",
+    "FeatureSpec",
+    "Lab",
+    "PipelineIR",
+    "PipelineNode",
+    "InMemoryMLLabStore",
+    "LabService",
+    "MLLabConflict",
+    "SqliteMLLabStore",
+    "SqliteExecutionStore",
+    "PostgresMLLabStore",
+    "PostgresExecutionStore",
+    "ExecutionSnapshot",
+    "ExecutionStore",
+    "InMemoryExecutionStore",
+    "LocalExecutionCoordinator",
+    "KMeansModel",
+    "fit_kmeans",
+    "inertia",
+    "BackendNotFound",
+    "ExperimentResult",
+    "LocalExperimentRunner",
+    "run_record",
+    "ColumnProfile",
+    "QualityReport",
+    "profile_and_validate",
+    "SearchSpec",
+    "Trial",
+    "rank_trials",
 )

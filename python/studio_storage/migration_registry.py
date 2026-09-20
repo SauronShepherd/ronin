@@ -55,7 +55,7 @@ _SUPPORTED_VERSIONS = {
     "workspaces": 1,
     "environments": 1,
     "connections": 1,
-    "catalog": 1,
+    "catalog": 2,
     "ontology": 1,
     "quality": 1,
     "scheduler": 1,

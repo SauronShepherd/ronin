@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import base64
 import json
+import mimetypes
 from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Protocol, cast, runtime_checkable
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 from studio_core import (
     ProjectId,
@@ -39,6 +41,12 @@ _MAX_CURSOR_BYTES = 256
 
 CONTROL_PLANE_ROUTES = frozenset(
     {
+        ("GET", "/v1/platform/plugins"),
+        ("GET", "/v1/platform/capabilities"),
+        ("GET", "/v1/platform/ui-manifest"),
+        ("GET", "/v1/platform/logs"),
+        ("GET", "/v1/platform/traces"),
+        ("GET", "/v1/platform/metrics"),
         ("GET", "/v1/workspaces"),
         ("GET", "/v1/workspaces/{workspace_id}"),
         ("PATCH", "/v1/workspaces/{workspace_id}"),
@@ -52,6 +60,16 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("POST", "/v1/workspaces/{workspace_id}/workflows/{workflow_id}/runs"),
         ("GET", "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}"),
         ("POST", "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}/cancel"),
+        ("GET", "/v1/ml-studio/labs"),
+        ("POST", "/v1/ml-studio/labs"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/quality"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/executions"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/compare"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/search"),
+        ("GET", "/v1/ml-studio/models"),
+        ("POST", "/v1/ml-studio/models/{model_id}/{version}/promote"),
+        ("POST", "/v1/ml-studio/models/{model_id}/{version}/predict"),
+        ("GET", "/v1/ml-studio/models/{model_id}/{version}/card"),
     }
 )
 
@@ -104,6 +122,30 @@ class WorkflowRunner(Protocol):
         *,
         idempotency_key: str,
     ) -> WorkflowRun: ...
+
+
+@runtime_checkable
+class PluginDiagnostics(Protocol):
+    def diagnostics(self) -> tuple[dict[str, str | None], ...]: ...
+
+    def contribution_diagnostics(self) -> dict[str, object]: ...
+
+
+@runtime_checkable
+class PluginRouter(Protocol):
+    def resolve_route(
+        self, method: str, path: str
+    ) -> tuple[object, dict[str, str]] | None: ...
+
+    def invoke_route(
+        self,
+        method: str,
+        path: str,
+        *,
+        query: str | None = None,
+        body: object | None = None,
+        idempotency_key: str | None = None,
+    ) -> object: ...
 
 
 def _now() -> Instant:
@@ -208,6 +250,9 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         workflow_reader: WorkflowReader | None = None,
         workflow_canceller: WorkflowCanceller | None = None,
         workflow_runner: WorkflowRunner | None = None,
+        plugin_host: PluginDiagnostics | None = None,
+        plugin_routes_enabled: bool = False,
+        studio_root: Path | None = None,
         request_timeout_seconds: float = 15.0,
     ) -> None:
         if request_timeout_seconds <= 0:
@@ -219,6 +264,9 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.workflow_reader = workflow_reader
         self.workflow_canceller = workflow_canceller
         self.workflow_runner = workflow_runner
+        self.plugin_host = plugin_host
+        self.plugin_routes_enabled = plugin_routes_enabled
+        self.studio_root = studio_root.resolve() if studio_root is not None else None
         self.request_timeout_seconds = request_timeout_seconds
         super().__init__(server_address, _WorkspaceProjectHandler)
 
@@ -314,6 +362,30 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         split = urlsplit(self.path)
         return _segments(split.path), split.query
 
+    def _serve_studio(self) -> bool:
+        split = urlsplit(self.path)
+        if not split.path.startswith("/studio/"):
+            return False
+        root = self._server().studio_root
+        if root is None:
+            return False
+        relative = split.path.removeprefix("/studio/") or "index.html"
+        candidate = (root / relative).resolve()
+        if root not in candidate.parents and candidate != root:
+            self.send_error(HTTPStatus.NOT_FOUND)
+            return True
+        if not candidate.is_file():
+            self.send_error(HTTPStatus.NOT_FOUND)
+            return True
+        body = candidate.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        content_type = mimetypes.guess_type(candidate.name)[0] or "application/octet-stream"
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+        return True
+
     def _handle_failure(self, exc: Exception) -> None:
         if isinstance(exc, WorkspaceServiceNotFound):
             self._error(HTTPStatus.NOT_FOUND, "not_found", "requested resource does not exist")
@@ -329,11 +401,112 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             raise exc
 
     def do_GET(self) -> None:  # noqa: N802
+        if self._serve_studio():
+            return
         actor = self._authenticate()
         if actor is None:
             return
         try:
             segments, query = self._split()
+            if segments == ("v1", "platform", "plugins"):
+                if query:
+                    raise ValueError("plugin diagnostics does not accept query parameters")
+                plugin_host = self._server().plugin_host
+                if plugin_host is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "plugins_unavailable",
+                        "plugin host is not configured",
+                    )
+                    return
+                self._write_json(HTTPStatus.OK, {"items": list(plugin_host.diagnostics())})
+                return
+            if segments in {
+                ("v1", "platform", "capabilities"),
+                ("v1", "platform", "ui-manifest"),
+            }:
+                if query:
+                    raise ValueError("platform capabilities does not accept query parameters")
+                plugin_host = self._server().plugin_host
+                if not isinstance(plugin_host, PluginDiagnostics):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "plugins_unavailable",
+                        "plugin host is not configured",
+                    )
+                    return
+                states = {
+                    item["id"]: item["state"]
+                    for item in plugin_host.diagnostics()
+                }
+                contributions = plugin_host.contribution_diagnostics()
+                if segments[-1] == "capabilities":
+                    payload = {
+                        key: value
+                        for key, value in cast(
+                            dict[str, object], contributions["capabilities"]
+                        ).items()
+                        if states.get(str(value)) == "ready"
+                    }
+                else:
+                    ui_items = cast(list[dict[str, object]], contributions["ui"])
+                    payload = {
+                        "items": [
+                            item
+                            for item in ui_items
+                            if states.get(str(item.get("plugin_id"))) == "ready"
+                        ]
+                    }
+                self._write_json(HTTPStatus.OK, payload)
+                return
+            if self._server().plugin_routes_enabled:
+                plugin_host = self._server().plugin_host
+                if isinstance(plugin_host, PluginRouter):
+                    resolved = plugin_host.resolve_route("GET", urlsplit(self.path).path)
+                    if resolved is not None:
+                        route, parameters = resolved
+                        permission = getattr(route, "permission", "")
+                        workspace_value = parameters.get("workspace_id")
+                        if workspace_value is None and (
+                            permission.startswith("data-engineering:")
+                            or permission.startswith("ml-studio:")
+                        ):
+                            workspace_value = parse_qs(query).get("workspace_id", [None])[0]
+                        if workspace_value is not None:
+                            workspace_id = WorkspaceId(workspace_value)
+                            mapped_permission = {
+                                "workspaces:read": "workspace.read",
+                                "workspaces:write": "workspace.write",
+                                "projects:read": "project.read",
+                                "projects:write": "project.write",
+                                "synthetic:read": "project.read",
+                                "ml-studio:read": "project.read",
+                                "ml-studio:write": "project.write",
+                                "ml-studio:execute": "scheduler.write",
+                                "data-engineering:read": "project.read",
+                                "data-engineering:write": "project.write",
+                                "data-engineering:execute": "scheduler.write",
+                            }.get(permission)
+                            if mapped_permission is None:
+                                self._error(
+                                    HTTPStatus.FORBIDDEN,
+                                    "plugin_permission_unmapped",
+                                    "plugin route permission is not mapped",
+                                )
+                                return
+                            if not self._authorize(actor, workspace_id, mapped_permission):
+                                return
+                        elif permission == "synthetic:read":
+                            workspace_value = parse_qs(query).get("workspace_id", [None])[0]
+                            if workspace_value is None or not self._authorize(
+                                actor, WorkspaceId(workspace_value), "project.read"
+                            ):
+                                return
+                        payload = plugin_host.invoke_route(
+                            "GET", urlsplit(self.path).path, query=query
+                        )
+                        self._write_json(HTTPStatus.OK, payload)
+                        return
             if not self._registered_path(segments):
                 self._method_or_not_found("GET", segments)
                 return
@@ -531,6 +704,55 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if self._server().plugin_routes_enabled:
+                plugin_host = self._server().plugin_host
+                if isinstance(plugin_host, PluginRouter):
+                    resolved = plugin_host.resolve_route("POST", urlsplit(self.path).path)
+                    if resolved is not None:
+                        route, parameters = resolved
+                        workspace_value = parameters.get("workspace_id")
+                        permission = getattr(route, "permission", "")
+                        if workspace_value is None and (
+                            permission.startswith("data-engineering:")
+                            or permission.startswith("ml-studio:")
+                        ):
+                            workspace_value = parse_qs(query).get("workspace_id", [None])[0]
+                        mapped_permission = {
+                            "projects:write": "project.write",
+                            "workspaces:write": "workspace.write",
+                            "ai-studio:invoke": "workspace.read",
+                            "synthetic:read": "project.read",
+                            "ml-studio:read": "project.read",
+                            "ml-studio:write": "project.write",
+                            "ml-studio:execute": "scheduler.write",
+                            "data-engineering:read": "project.read",
+                            "data-engineering:write": "project.write",
+                            "data-engineering:execute": "scheduler.write",
+                            "synthetic:write": "project.write",
+                            "synthetic:execute": "project.write",
+                        }.get(permission)
+                        if workspace_value is None and permission.startswith("synthetic:"):
+                            workspace_value = parse_qs(query).get("workspace_id", [None])[0]
+                        if workspace_value is None or mapped_permission is None:
+                            self._error(
+                                HTTPStatus.FORBIDDEN,
+                                "plugin_permission_unmapped",
+                                "plugin route permission is not mapped",
+                            )
+                            return
+                        workspace_id = WorkspaceId(workspace_value)
+                        if not self._authorize(actor, workspace_id, mapped_permission):
+                            return
+                        body = self._read_json()
+                        payload = plugin_host.invoke_route(
+                            "POST",
+                            urlsplit(self.path).path,
+                            query=query,
+                            body=body,
+                            idempotency_key=self.headers.get("Idempotency-Key"),
+                        )
+                        self._write_json(HTTPStatus.OK, payload)
+                        return
             if not self._registered_path(segments):
                 self._method_or_not_found("POST", segments)
                 return
@@ -641,6 +863,43 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if self._server().plugin_routes_enabled:
+                plugin_host = self._server().plugin_host
+                if isinstance(plugin_host, PluginRouter):
+                    resolved = plugin_host.resolve_route("PUT", urlsplit(self.path).path)
+                    if resolved is not None:
+                        route, parameters = resolved
+                        workspace_value = parameters.get("workspace_id")
+                        mapped_permission = {
+                            "projects:write": "project.write",
+                            "workspaces:write": "workspace.write",
+                            "ai-studio:write": "workspace.write",
+                            "ai-studio:read": "workspace.read",
+                        }.get(getattr(route, "permission", ""))
+                        if workspace_value is None or mapped_permission is None:
+                            self._error(
+                                HTTPStatus.FORBIDDEN,
+                                "plugin_permission_unmapped",
+                                "plugin route permission is not mapped",
+                            )
+                            return
+                        workspace_id = WorkspaceId(workspace_value)
+                        project_id = parameters.get("project_id")
+                        if not self._authorize(
+                            actor,
+                            workspace_id,
+                            mapped_permission,
+                            resource_ref=project_id,
+                        ):
+                            return
+                        payload = plugin_host.invoke_route(
+                            "PUT",
+                            urlsplit(self.path).path,
+                            query=query,
+                            body=self._read_json(),
+                        )
+                        self._write_json(HTTPStatus.OK, payload)
+                        return
             if not self._registered_path(segments):
                 self._method_or_not_found("PUT", segments)
                 return
@@ -676,6 +935,42 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if self._server().plugin_routes_enabled:
+                plugin_host = self._server().plugin_host
+                if isinstance(plugin_host, PluginRouter):
+                    resolved = plugin_host.resolve_route("DELETE", urlsplit(self.path).path)
+                    if resolved is not None:
+                        route, parameters = resolved
+                        workspace_value = parameters.get("workspace_id")
+                        mapped_permission = {
+                            "projects:write": "project.write",
+                            "workspaces:write": "workspace.write",
+                        }.get(getattr(route, "permission", ""))
+                        project_id = parameters.get("project_id")
+                        if (
+                            workspace_value is None
+                            or mapped_permission is None
+                            or project_id is None
+                        ):
+                            self._error(
+                                HTTPStatus.FORBIDDEN,
+                                "plugin_permission_unmapped",
+                                "plugin route permission is not mapped",
+                            )
+                            return
+                        workspace_id = WorkspaceId(workspace_value)
+                        if not self._authorize(
+                            actor,
+                            workspace_id,
+                            mapped_permission,
+                            resource_ref=project_id,
+                        ):
+                            return
+                        payload = plugin_host.invoke_route(
+                            "DELETE", urlsplit(self.path).path, query=query
+                        )
+                        self._write_json(HTTPStatus.OK, payload)
+                        return
             if not self._registered_path(segments):
                 self._method_or_not_found("DELETE", segments)
                 return
@@ -731,6 +1026,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
 
 __all__ = (
     "CONTROL_PLANE_ROUTES",
+    "PluginDiagnostics",
+    "PluginRouter",
     "ControlPlaneAuthenticator",
     "ControlPlaneAuthorizer",
     "ControlPlaneUnavailable",

@@ -31,7 +31,17 @@ async def run(url: str) -> dict[str, object]:
         )
         page.on("pageerror", lambda error: console_errors.append(str(error)))
         await page.goto(url + "#home", wait_until="networkidle")
-        for route in ("home", "runs", "workspaces", "workflows", "access", "sql", "catalog"):
+        for route in (
+            "home",
+            "runs",
+            "workspaces",
+            "workflows",
+            "access",
+            "sql",
+            "catalog",
+            "migration",
+            "mlstudio",
+        ):
             await page.goto(url + "#" + route, wait_until="networkidle")
             pages.append(
                 {
@@ -45,6 +55,20 @@ async def run(url: str) -> dict[str, object]:
                     ),
                 }
             )
+            if route == "mlstudio":
+                pages[-1]["has_ml_controls"] = await page.locator(
+                    '[data-feature-form="ml-create"], #ml-labs, #ml-output'
+                ).count() == 3
+                pages[-1]["has_ml_score"] = await page.locator(
+                    '[data-feature-form="ml-score"]'
+                ).count() == 1
+            if route == "migration":
+                pages[-1]["has_migration_controls"] = await page.locator(
+                    "#migration-cockpit-create, #migration-cockpit-validate"
+                ).count() == 2
+                pages[-1]["has_migration_artifact_form"] = await page.locator(
+                    "#migration-artifact-form, #migration-artifact-file, #migration-artifact-media"
+                ).count() == 3
         await page.goto(url + "#home", wait_until="networkidle")
         focused: list[str] = []
         for _ in range(8):
@@ -67,6 +91,12 @@ async def run(url: str) -> dict[str, object]:
         p["route"]
         for p in pages
         if p["h1_count"] != 1 or not p["has_main"] or not p["has_nav"] or p["horizontal_overflow"]
+        or (
+            p["route"] == "mlstudio"
+            and (not p.get("has_ml_controls", False) or not p.get("has_ml_score", False))
+        )
+        or (p["route"] == "migration" and not p.get("has_migration_controls", False))
+        or (p["route"] == "migration" and not p.get("has_migration_artifact_form", False))
     ]
     if console_errors or failures:
         raise SystemExit(json.dumps(result, indent=2))

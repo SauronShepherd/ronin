@@ -2,10 +2,40 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
+**Observed workspace snapshot:** 2026-09-20. The checkout has no Git commit yet
+(`master` is an empty branch), so there is no valid source SHA for this snapshot.
 **Observed source head:** `11944d6bbcc3b3a7499b965d329fe9ec99f659fb` (2026-09-19).
+Historical ledger value only; this SHA is qualification context and must not be
+used as the identity of the current implementation.
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
+
+## Reading this snapshot
+
+The source tree is the authority for implementation presence. The status ledger
+is intentionally conservative: a capability is `partial` until its mandatory
+Public v1 path is complete end to end. Historical CI/evidence files retain the
+candidate SHA they were generated for. They are not current-head evidence for
+this uncommitted workspace.
+
+The current workspace includes the implementation families listed in the
+package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
+`studio_migration`, `studio_ml`, `studio_streaming`, `studio_synthetic_data`,
+and the shared runtime/storage/server packages). It also includes the current
+ML, migration, Cloud Studio, PostgreSQL and synthetic-data contracts under
+`docs/`; those documents describe implemented slices and remaining boundaries,
+not Public v1 completion.
+
+## Local verification on this snapshot
+
+On Python 3.13/Windows, `python -m pytest -q` produced **1424 passed, 5
+failed, 16 skipped**. The failures are not documentation-only noise: two are
+ledger synchronization assumptions exposed by this uncommitted snapshot, one
+is a worker-runtime contention timeout, one reflects the newly exposed
+`clustering` ML capability, and one is a workspace HTTP integration abort.
+Docker, PostgreSQL, Spark, symlink and POSIX-specific checks were skipped where
+their prerequisites were unavailable. No release qualification is claimed.
 
 ## Status vocabulary
 

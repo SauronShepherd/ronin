@@ -13,7 +13,11 @@ from studio_execution import (
     SqliteWorkflowHTTPAdapter,
     WorkspaceService,
 )
+from studio_ml import PostgresExecutionStore, PostgresMLLabStore
+from studio_ml.sqlite import SqliteExecutionStore, SqliteMLLabStore
 from studio_orchestrator import Instant
+from studio_plugin_observability import LocalObservabilityBuffer
+from studio_runtime import PluginAuditSink, PluginHost, PluginLock, PluginLockError
 from studio_security import Permission
 from studio_server import (
     LocalServerComposition,
@@ -22,8 +26,17 @@ from studio_server import (
     StaticControlPlaneAuthorizer,
     WorkspaceProjectHTTPServer,
 )
-from studio_storage import SqliteJobStore
+from studio_storage import (
+    LocalArtifactStore,
+    PostgresAuditStore,
+    PostgresJobReadPort,
+    PostgresMLStore,
+    PostgresWorkflowBundleImportStore,
+    SqliteAuditStore,
+    SqliteJobStore,
+)
 from studio_storage.bundle_workflow_import import SqliteWorkflowBundleImportStore
+from studio_storage.ml import SqliteMLStore
 
 
 def _env(name: str, default: str | None = None) -> str:
@@ -48,6 +61,10 @@ def build_local_composed_from_env() -> LocalServerComposition:
 
     database = Path(_env("RONIN_DB", ".ronin/ronin.sqlite3")).expanduser().resolve()
     database.parent.mkdir(parents=True, exist_ok=True)
+    storage_backend = _env("RONIN_STORAGE_BACKEND", "sqlite").casefold()
+    if storage_backend not in {"sqlite", "postgres"}:
+        raise ValueError("RONIN_STORAGE_BACKEND must be sqlite or postgres")
+    postgres_dsn = _env("RONIN_POSTGRES_DSN") if storage_backend == "postgres" else None
     now = Instant("2026-09-17T00:00:00.000000Z")
     workspace_id = WorkspaceId(_env("RONIN_WORKSPACE_ID"))
     control_token = _env("RONIN_CONTROL_PLANE_TOKEN")
@@ -68,7 +85,12 @@ def build_local_composed_from_env() -> LocalServerComposition:
     }:
         raise ValueError("RONIN_CONTROL_PLANE_PERMISSIONS contains unsupported permissions")
 
-    job_service = DurableExecutionService(SqliteJobStore(database, migration_now=now))
+    job_store = (
+        PostgresJobReadPort(postgres_dsn, application_name="ronin-composed-jobs")
+        if postgres_dsn is not None
+        else SqliteJobStore(database, migration_now=now)
+    )
+    job_service = DurableExecutionService(job_store)
     try:
         job_grants = GrantSet.from_json(_env("RONIN_TOKEN_SCOPES"))
     except ValueError as exc:
@@ -79,16 +101,68 @@ def build_local_composed_from_env() -> LocalServerComposition:
         token=_env("RONIN_TOKEN"),
         grants=job_grants,
     )
-    scheduler = SqliteWorkflowBundleImportStore(database, migration_now=now)
+    scheduler = (
+        PostgresWorkflowBundleImportStore(
+            postgres_dsn,
+            application_name="ronin-composed-workflows",
+        )
+        if postgres_dsn is not None
+        else SqliteWorkflowBundleImportStore(database, migration_now=now)
+    )
+    workspace_service = WorkspaceService(scheduler)
+    project_service = ProjectService(scheduler)
+    audit_store = (
+        PostgresAuditStore(postgres_dsn, application_name="ronin-composed-audit")
+        if postgres_dsn is not None
+        else SqliteAuditStore(database, migration_now=now)
+    )
+    observability_buffer = LocalObservabilityBuffer()
+    plugin_host = PluginHost.discover(
+        services={
+            "workspace_service": workspace_service,
+            "project_service": project_service,
+            "observability_buffer": observability_buffer,
+            "ml_lab_store": (
+                PostgresMLLabStore(postgres_dsn, application_name="ronin-composed-ml")
+                if postgres_dsn is not None
+                else SqliteMLLabStore(database, migration_now=now)
+            ),
+            "ml_execution_store": (
+                PostgresExecutionStore(postgres_dsn, application_name="ronin-composed-ml-execution")
+                if postgres_dsn is not None
+                else SqliteExecutionStore(database)
+            ),
+            "ml_registry": (
+                PostgresMLStore(postgres_dsn, application_name="ronin-composed-ml-registry")
+                if postgres_dsn is not None
+                else SqliteMLStore(database, migration_now=now)
+            ),
+            "artifact_store": LocalArtifactStore(database.parent / "artifacts"),
+        }
+    )
+    plugin_host.audit = PluginAuditSink(audit_store.append, workspace_id)
+    lock_path = os.environ.get("RONIN_PLUGIN_LOCK")
+    if lock_path is not None:
+        try:
+            lock = PluginLock.read(str(Path(lock_path).expanduser().resolve()))
+            plugin_host.verify_lock(lock)
+        except (OSError, PluginLockError) as exc:
+            raise ValueError(f"RONIN_PLUGIN_LOCK validation failed: {exc}") from exc
+    plugin_api_mode = os.environ.get("RONIN_PLUGIN_API", "plugin")
+    if plugin_api_mode not in {"legacy", "plugin"}:
+        raise ValueError("RONIN_PLUGIN_API must be legacy or plugin")
+    plugin_routes_enabled = plugin_api_mode == "plugin"
     control_server = WorkspaceProjectHTTPServer(
         (_env("RONIN_HOST", "127.0.0.1"), _port("RONIN_CONTROL_PLANE_PORT", "8081")),
-        WorkspaceService(scheduler),
-        ProjectService(scheduler),
+        workspace_service,
+        project_service,
         authenticator=StaticControlPlaneAuthenticator(control_token),
         authorizer=StaticControlPlaneAuthorizer(workspace_id, permissions),
         workflow_reader=SqliteWorkflowHTTPAdapter(scheduler, now=now),
+        plugin_host=plugin_host,
+        plugin_routes_enabled=plugin_routes_enabled,
     )
-    return LocalServerComposition(job_server, control_server)
+    return LocalServerComposition(job_server, control_server, plugin_host=plugin_host)
 
 
 __all__ = ("build_local_composed_from_env",)

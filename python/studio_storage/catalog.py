@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 
@@ -11,8 +12,8 @@ from studio_orchestrator import Instant
 from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
 
-_CATALOG_SCHEMA_VERSION = 1
-_CATALOG_MIGRATIONS = {1: "catalog_001.sql"}
+_CATALOG_SCHEMA_VERSION = 2
+_CATALOG_MIGRATIONS = {1: "catalog_001.sql", 2: "catalog_002.sql"}
 
 
 class CatalogConflict(RuntimeError):
@@ -247,6 +248,68 @@ class SqliteCatalogStore:
                 (str(workspace_id), str(ref.asset_id), str(ref.version)),
             ).fetchone()
             return None if row is None else AssetRevision.from_json(row["revision_json"])
+        finally:
+            connection.close()
+
+    def register_namespace(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        provider_id: str,
+        identifier: str,
+        namespace: dict[str, str],
+        now: Instant | str,
+    ) -> dict[str, object]:
+        if not provider_id.strip() or not identifier.strip() or not namespace:
+            raise ValueError("provider_id, identifier and namespace are required")
+        now = Instant(now)
+        payload = json.dumps(namespace, sort_keys=True, separators=(",", ":"))
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_workspace(connection, workspace_id)
+            connection.execute(
+                "INSERT INTO catalog_namespace_bindings(workspace_id,provider_id,identifier,namespace_json,created_at,updated_at) "
+                "VALUES (?,?,?,?,?,?) ON CONFLICT(workspace_id,provider_id,identifier) DO UPDATE SET namespace_json=excluded.namespace_json,updated_at=excluded.updated_at",
+                (str(workspace_id), provider_id, identifier, payload, now, now),
+            )
+            connection.execute("COMMIT")
+            return {"provider_id": provider_id, "identifier": identifier, "namespace": dict(namespace)}
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
+    def list_namespaces(
+        self, workspace_id: WorkspaceId, *, provider_id: str | None = None
+    ) -> tuple[dict[str, object], ...]:
+        connection = self._connect()
+        try:
+            if provider_id:
+                rows = connection.execute(
+                    "SELECT provider_id,identifier,namespace_json FROM catalog_namespace_bindings WHERE workspace_id=? AND provider_id=? ORDER BY identifier",
+                    (str(workspace_id), provider_id),
+                ).fetchall()
+            else:
+                rows = connection.execute(
+                    "SELECT provider_id,identifier,namespace_json FROM catalog_namespace_bindings WHERE workspace_id=? ORDER BY provider_id,identifier",
+                    (str(workspace_id),),
+                ).fetchall()
+            return tuple({"provider_id": row["provider_id"], "identifier": row["identifier"], "namespace": json.loads(row["namespace_json"])} for row in rows)
+        finally:
+            connection.close()
+
+    def list_revisions(self, workspace_id: WorkspaceId, asset_id: AssetId) -> tuple[AssetRevision, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT revision_json FROM catalog_asset_revisions "
+                "WHERE workspace_id=? AND asset_id=? ORDER BY version",
+                (str(workspace_id), str(asset_id)),
+            ).fetchall()
+            return tuple(AssetRevision.from_json(row["revision_json"]) for row in rows)
         finally:
             connection.close()
 

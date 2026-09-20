@@ -17,6 +17,7 @@ Action: TypeAlias = Literal[
     "list",
     "events",
     "submit",
+    "write",
     "execute",
     "cancel",
     "evidence:read",
@@ -31,7 +32,7 @@ DecisionReason: TypeAlias = Literal[
 GRANT_SCHEMA_VERSION = 1
 RESOURCE_KINDS: frozenset[str] = frozenset({"project", "job", "run", "evidence", "*"})
 ACTIONS: frozenset[str] = frozenset(
-    {"read", "list", "events", "submit", "execute", "cancel", "evidence:read"}
+    {"read", "list", "events", "submit", "write", "execute", "cancel", "evidence:read"}
 )
 MAX_GRANTS = 128
 MAX_ACTIONS_PER_GRANT = len(ACTIONS)

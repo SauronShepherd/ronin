@@ -43,6 +43,13 @@ def test_matrix_contains_exactly_the_v01_packages() -> None:
         "studio_semantic",
         "studio_sql",
         "studio_streaming",
+        "studio_runtime",
+        "studio_plugin_workspaces",
+        "studio_plugin_observability",
+        "studio_plugin_sdk",
+        "studio_plugin_testkit",
+        "studio_cloud",
+        "studio_synthetic_data",
     }
 
 

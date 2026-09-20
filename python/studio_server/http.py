@@ -22,6 +22,7 @@ from studio_core import Action, GrantSet, Requirement, ResourceScope
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_execution import DurableExecutionService
+from studio_migration import MIGRATION_ROUTES, MigrationAPIRouter
 from studio_orchestrator import (
     EventPage,
     Instant,
@@ -46,22 +47,26 @@ from studio_sql.wire import sql_wire_value
 from studio_storage import IdempotencyConflict, StorageBackpressureError
 
 _MAX_REQUEST_BYTES = 1024 * 1024
+_MAX_MIGRATION_ARTIFACT_BYTES = 512 * 1024 * 1024
 _MAX_CURSOR_BYTES = 4096
 _MAX_LIST_LIMIT = 100
 _DEFAULT_LIST_LIMIT = 50
 _DEFAULT_SERVICE_TIMEOUT_SECONDS = 30.0
 _REQUEST_READ_TIMEOUT_SECONDS = 30.0
 _STUDIO_EXTENSIONS = frozenset({".html", ".css", ".js", ".png", ".webp", ".svg"})
-SUPPORTED_ROUTES = frozenset(
-    {
-        ("POST", "/v1/jobs"),
-        ("GET", "/v1/jobs"),
-        ("GET", "/v1/jobs/{job_id}"),
-        ("GET", "/v1/jobs/{job_id}/events"),
-        ("GET", "/v1/jobs/{job_id}/evidence"),
-        ("POST", "/v1/jobs/{job_id}/cancel"),
-        ("POST", "/v1/sql"),
-    }
+SUPPORTED_ROUTES = (
+    frozenset(
+        {
+            ("POST", "/v1/jobs"),
+            ("GET", "/v1/jobs"),
+            ("GET", "/v1/jobs/{job_id}"),
+            ("GET", "/v1/jobs/{job_id}/events"),
+            ("GET", "/v1/jobs/{job_id}/evidence"),
+            ("POST", "/v1/jobs/{job_id}/cancel"),
+            ("POST", "/v1/sql"),
+        }
+    )
+    | MIGRATION_ROUTES
 )
 
 
@@ -395,12 +400,14 @@ class RoninHTTPServer(ThreadingHTTPServer):
         token: str,
         grants: GrantSet,
         sql_engine: SqlEngine | None = None,
+        migration_router: MigrationAPIRouter | None = None,
     ) -> None:
         if not token or token != token.strip() or "\n" in token or "\r" in token:
             raise ValueError("token must be non-empty, trimmed, and single-line")
         if not grants.grants:
             raise ValueError("bearer token requires at least one typed authorization grant")
         self.application = DurableHTTPApplication(service, sql_engine=sql_engine)
+        self.migration_router = migration_router
         self._token = token
         self._grants = grants
         try:
@@ -536,6 +543,44 @@ class _Handler(BaseHTTPRequestHandler):
         self._error(HTTPStatus.UNAUTHORIZED, "unauthorized", "valid bearer authorization required")
         return False
 
+    def _dispatch_migration(self, method: str, path: str) -> bool:
+        router = self._ronin_server().migration_router
+        if (
+            router is None
+            or not path.startswith("/v1/workspaces/")
+            or "/migration/sessions" not in path
+        ):
+            return False
+        segments = tuple(unquote(part) for part in path.split("/") if part)
+        if len(segments) < 7 or segments[1] != "workspaces" or segments[3] != "projects":
+            return False
+        required_action = "read" if method == "GET" else "submit"
+        if not self._ronin_server().permits_project(required_action, segments[4]):
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "forbidden",
+                "required authorization scope is not granted",
+            )
+            return True
+        payload: object | None = None
+        if method in {"POST", "PUT"}:
+            try:
+                if (
+                    method == "PUT"
+                    and "/source-artifacts/" in path
+                    and self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+                    not in {"", "application/json"}
+                ):
+                    payload = self._read_bytes(max_bytes=_MAX_MIGRATION_ARTIFACT_BYTES)
+                else:
+                    payload = self._read_json()
+            except (RequestReadTimeoutError, ValueError) as exc:
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
+                return True
+        response = router.dispatch(method, path, payload, authorized=True)
+        self._write_json(HTTPStatus(response.status), response.payload)
+        return True
+
     def _require_project(self, action: Action, project_id: str) -> bool:
         if self._ronin_server().permits_project(action, project_id):
             return True
@@ -571,11 +616,31 @@ class _Handler(BaseHTTPRequestHandler):
         except (UnicodeDecodeError, ValueError) as exc:
             raise ValueError("request body must be valid canonical UTF-8 JSON") from exc
 
+    def _read_bytes(self, *, max_bytes: int) -> bytes:
+        length_header = self.headers.get("Content-Length")
+        if length_header is None:
+            raise ValueError("Content-Length is required")
+        try:
+            length = int(length_header)
+        except ValueError as exc:
+            raise ValueError("Content-Length must be an integer") from exc
+        if length < 0 or length > max_bytes:
+            raise ValueError("request body exceeds configured byte limit")
+        try:
+            body = self.rfile.read(length)
+        except TimeoutError as exc:
+            raise RequestReadTimeoutError("request body read timed out") from exc
+        if len(body) != length:
+            raise ValueError("request body ended before Content-Length")
+        return body
+
     def do_POST(self) -> None:  # noqa: N802
         if not self._require_auth():
             return
         split = urlsplit(self.path)
         path = split.path
+        if self._dispatch_migration("POST", path):
+            return
         if path == "/v1/sql":
             if split.query:
                 self._error(HTTPStatus.BAD_REQUEST, "invalid_request", "SQL does not accept query")
@@ -695,6 +760,14 @@ class _Handler(BaseHTTPRequestHandler):
             return
         self._write_json(HTTPStatus.OK, payload)
 
+    def do_PUT(self) -> None:  # noqa: N802
+        if not self._require_auth():
+            return
+        path = urlsplit(self.path).path
+        if self._dispatch_migration("PUT", path):
+            return
+        self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
+
     def do_GET(self) -> None:  # noqa: N802
         if urlsplit(self.path).path == "/healthz":
             self._write_json(HTTPStatus.OK, {"status": "ok"})
@@ -705,6 +778,8 @@ class _Handler(BaseHTTPRequestHandler):
             return
         split = urlsplit(self.path)
         path = split.path
+        if self._dispatch_migration("GET", path):
+            return
         if path == "/v1/jobs":
             try:
                 query = _single_query_values(

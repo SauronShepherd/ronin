@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import urllib.error
 import urllib.request
+from pathlib import Path
 from threading import Thread
 
 import pytest
@@ -47,6 +48,9 @@ def test_studio_assets_are_allowlisted_and_served(tmp_path) -> None:
             ("js/app.js", "text/javascript"),
             ("styles/base.css", "text/css"),
             ("assets/ronin-logo-full.png", "image/png"),
+            ("data-enginerring-studio.html", "text/html"),
+            ("data-enginerring-studio.js", "text/javascript"),
+            ("data-enginerring-studio.css", "text/css"),
         ):
             with urllib.request.urlopen(f"{base_url}/studio/{asset}", timeout=2) as response:  # noqa: S310
                 assert response.status == 200
@@ -66,3 +70,25 @@ def test_studio_assets_are_allowlisted_and_served(tmp_path) -> None:
         server.server_close()
         thread.join(timeout=2)
         asyncio.run(service.aclose())
+
+
+def test_published_migration_cockpit_contains_operational_controls() -> None:
+    source = (Path(__file__).parents[1] / "web" / "js" / "app.js").read_text(encoding="utf-8")
+    for marker in (
+        "Migration runtime cockpit",
+        "migration-cockpit-create",
+        "migration-cockpit-discover",
+        "migration-capture",
+        "migration-optimize",
+        "migration-export",
+        "migration-cockpit-validate",
+        "migration-validation-level",
+        "/promote`,",
+        "No synthetic benchmark is generated",
+        "migration-submit-promotion",
+        "migration-artifact-form",
+        "source-artifacts/",
+        "/export",
+        "Portable migration script",
+    ):
+        assert marker in source

@@ -9,6 +9,75 @@
   "x-ronin-authorization-model": "typed-project-grants-v1",
   "security": [{"bearerAuth": []}],
   "paths": {
+    "/v1/platform/plugins": {
+      "get": {
+        "operationId": "listPlugins",
+        "description": "List the community plugins composed by the local host.",
+        "responses": {
+          "200": {
+            "description": "Plugin composition diagnostics",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PluginDiagnosticsPage"}}}
+          },
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/platform/capabilities": {
+      "get": {
+        "operationId": "listPluginCapabilities",
+        "description": "List capabilities provided by ready plugins.",
+        "responses": {
+          "200": {"description": "Capability ownership map", "content": {"application/json": {"schema": {"type": "object", "additionalProperties": {"type": "string"}}}}},
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/platform/ui-manifest": {
+      "get": {
+        "operationId": "getPluginUiManifest",
+        "description": "List UI contributions from ready plugins.",
+        "responses": {
+          "200": {"description": "UI contribution manifest", "content": {"application/json": {"schema": {"type": "object", "required": ["items"], "properties": {"items": {"type": "array", "items": {"type": "object"}}}}}}},
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/platform/logs": {
+      "get": {
+        "operationId": "listLocalLogs",
+        "description": "List bounded local log entries from the community observability plugin.",
+        "responses": {
+          "200": {"description": "Local log entries", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/LocalObservabilityPage"}}}},
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/platform/traces": {
+      "get": {
+        "operationId": "listLocalTraces",
+        "description": "List bounded local trace spans from the community observability plugin.",
+        "responses": {
+          "200": {"description": "Local trace spans", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/LocalObservabilityPage"}}}},
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/platform/metrics": {
+      "get": {
+        "operationId": "listLocalMetrics",
+        "description": "List bounded local metrics from the community observability plugin.",
+        "responses": {
+          "200": {"description": "Local metrics", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/LocalObservabilityPage"}}}},
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
     "/v1/sql": {
       "post": {
         "operationId": "executeSql",
@@ -166,6 +235,136 @@
       "put": {"operationId": "replaceProject", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectManifest"}}}}, "responses": {"200": {"description": "Replaced project", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectManifest"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}},
       "delete": {"operationId": "unregisterProject", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Unregistered project", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectUnregistration"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}
     },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/adapters": {"get": {"operationId": "listMigrationAdapters", "x-ronin-required-project-actions": ["read"], "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Migration adapters", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions": {
+      "get": {
+        "operationId": "listMigrationSessions",
+        "x-ronin-required-project-actions": ["read"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}],
+        "responses": {"200": {"description": "Project-scoped Migration Studio sessions", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MigrationSessionPage"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      },
+      "post": {
+        "operationId": "createMigrationSession",
+          "x-ronin-required-project-actions": ["submit"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}],
+        "requestBody": {"required": false, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false}}}},
+        "responses": {"201": {"description": "Migration Studio session created", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MigrationSession"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}": {
+      "get": {
+        "operationId": "getMigrationSession",
+        "x-ronin-required-project-actions": ["read"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "responses": {"200": {"description": "Migration Studio session", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MigrationSession"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/source-artifacts/{name}": {"put": {"operationId": "putMigrationSourceArtifact", "x-ronin-required-project-actions": ["submit"], "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "name", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["content_base64"], "properties": {"content_base64": {"type": "string"}, "media_type": {"type": "string"}}, "additionalProperties": false}}}}, "responses": {"200": {"description": "Stored source artifact", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/discover": {
+      "post": {
+        "operationId": "discoverMigrationSession",
+        "x-ronin-required-project-actions": ["submit"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["archives"], "properties": {"archives": {"type": "array", "items": {"type": "object"}}}, "additionalProperties": false}}}},
+        "responses": {"200": {"description": "Discovered migration inventory", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MigrationSession"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/scope": {
+      "put": {
+        "operationId": "setMigrationSessionScope",
+        "x-ronin-required-project-actions": ["submit"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["selected"], "properties": {"selected": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": false}}}},
+        "responses": {"200": {"description": "Migration scope selected", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MigrationSession"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/blueprint": {
+      "put": {
+        "operationId": "setMigrationSessionBlueprint",
+        "x-ronin-required-project-actions": ["submit"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+        "responses": {"200": {"description": "Migration blueprint captured", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MigrationSession"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/blueprint/{name}": {
+      "put": {
+        "operationId": "uploadMigrationSessionBlueprint",
+        "x-ronin-required-project-actions": ["submit"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}, {"name": "name", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+$"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}, "application/json; charset=utf-8": {"schema": {"type": "object"}}, "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}}},
+        "responses": {"200": {"description": "Migration blueprint uploaded", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MigrationSession"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/generate": {
+      "post": {
+        "operationId": "generateMigrationSession",
+        "x-ronin-required-project-actions": ["submit"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "responses": {"200": {"description": "Generated migration project candidate", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/export": {
+      "get": {
+        "operationId": "exportMigrationSessionScript",
+        "x-ronin-required-project-actions": ["read"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "responses": {"200": {"description": "Portable PySpark migration script", "content": {"application/json": {"schema": {"type": "object", "required": ["filename", "content", "project_digest"]}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/qualify": {
+      "post": {
+        "operationId": "qualifyMigrationSession",
+        "x-ronin-required-project-actions": ["submit"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "responses": {"200": {"description": "Generated project qualification", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/validate": {
+      "post": {
+        "operationId": "validateMigrationResult",
+        "x-ronin-required-project-actions": ["submit"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["expected", "actual"], "properties": {"asset_id": {"type": "string"}, "expected": {"type": "array", "items": {"type": "object"}}, "actual": {"type": "array", "items": {"type": "object"}}, "level": {"type": "string", "enum": ["simple", "full"]}, "modes": {"type": "array", "items": {"type": "string"}}, "key_columns": {"type": "array", "items": {"type": "string"}}, "tolerances": {"type": "object"}, "format": {"type": "string", "enum": ["json", "markdown", "html"], "default": "json"}}, "additionalProperties": false}}}},
+        "responses": {"200": {"description": "Simple or full migration result report", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/promote": {
+      "post": {
+        "operationId": "promoteMigrationCandidate",
+        "x-ronin-required-project-actions": ["submit"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["candidate_id", "baseline", "candidate", "semantic_passed", "quality_passed"], "properties": {"candidate_id": {"type": "string"}, "baseline": {"type": "object"}, "candidate": {"type": "object"}, "semantic_passed": {"type": "boolean"}, "quality_passed": {"type": "boolean"}, "max_regression_ratio": {"type": "number", "minimum": 0}}, "additionalProperties": false}}}},
+        "responses": {"200": {"description": "Auditable safe-promotion decision and evidence", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/convert": {"post": {"operationId": "convertMigrationSession", "x-ronin-required-project-actions": ["submit"], "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Generated migration project", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/findings": {"get": {"operationId": "getMigrationFindings", "x-ronin-required-project-actions": ["read"], "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Migration findings", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/qualification": {"get": {"operationId": "getMigrationQualification", "x-ronin-required-project-actions": ["read"], "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Migration qualification", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/inventory": {
+      "get": {
+        "operationId": "getMigrationInventory",
+        "x-ronin-required-project-actions": ["read"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "responses": {"200": {"description": "Migration inventory", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/blueprint-contract": {
+      "get": {
+        "operationId": "getMigrationBlueprintContract",
+        "x-ronin-required-project-actions": ["read"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "responses": {"200": {"description": "Migration blueprint contract", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/result": {
+      "get": {
+        "operationId": "getMigrationResult",
+        "x-ronin-required-project-actions": ["read"],
+        "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "session_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "responses": {"200": {"description": "Migration session result", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
     "/v1/workspaces/{workspace_id}/workflows": {
       "get": {
         "operationId": "listWorkflows",
@@ -219,6 +418,91 @@
           "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}
         }
       }
+    },
+    "/v1/ml-studio/backends": {
+      "get": {
+        "operationId": "listMlStudioBackends",
+        "responses": {
+          "200": {"description": "Available ML backends and capabilities", "content": {"application/json": {"schema": {"type": "object", "required": ["schema", "items"]}}}},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/ml-studio/labs": {
+      "get": {
+        "operationId": "listMlStudioLabs",
+        "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Machine Learning Studio labs", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      },
+      "post": {
+        "operationId": "createMlStudioLab",
+        "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+        "responses": {"200": {"description": "Created lab", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/ml-studio/labs/{lab_id}/quality": {
+      "post": {
+        "operationId": "qualityCheckMlStudioLab",
+        "parameters": [{"name": "lab_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["rows"]}}}},
+        "responses": {"200": {"description": "Quality report", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/ml-studio/labs/{lab_id}/executions": {
+      "post": {
+        "operationId": "submitMlStudioExecution",
+        "parameters": [{"name": "lab_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["rows"]}}}},
+        "responses": {"200": {"description": "Execution snapshot", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/ml-studio/labs/{lab_id}/compare": {
+      "post": {
+        "operationId": "compareMlStudioTrials",
+        "parameters": [{"name": "lab_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["spec", "trials"]}}}},
+        "responses": {"200": {"description": "Ranked trials", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/ml-studio/labs/{lab_id}/search": {
+      "post": {
+        "operationId": "searchMlStudioTrials",
+        "parameters": [{"name": "lab_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["spec", "rows"]}}}},
+        "responses": {"200": {"description": "Executed and ranked trials", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/ml-studio/models": {
+      "get": {
+        "operationId": "listMlStudioModels",
+        "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Registered models", "content": {"application/json": {"schema": {"type": "object"}}}}, "403": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/ml-studio/models/{model_id}/{version}/promote": {
+      "post": {
+        "operationId": "promoteMlStudioModel",
+        "parameters": [{"name": "model_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "version", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["reason"]}}}},
+        "responses": {"200": {"description": "Promoted model", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/ml-studio/models/{model_id}/{version}/predict": {
+      "post": {
+        "operationId": "predictMlStudioModel",
+        "parameters": [{"name": "model_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "version", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["artifact_base64", "rows"]}}}},
+        "responses": {"200": {"description": "Batch predictions", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/ml-studio/models/{model_id}/{version}/card": {
+      "get": {
+        "operationId": "getMlStudioModelCard",
+        "parameters": [{"name": "model_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "version", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Model card", "content": {"application/json": {"schema": {"type": "object"}}}}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
     }
   },
   "components": {
@@ -234,6 +518,31 @@
       }
     },
     "schemas": {
+      "PluginDiagnosticsPage": {
+        "type": "object", "additionalProperties": false, "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["id", "version", "edition", "state"],
+              "properties": {
+                "id": {"type": "string", "minLength": 1, "maxLength": 256},
+                "version": {"type": "string", "minLength": 1, "maxLength": 64},
+                "edition": {"type": "string", "enum": ["community", "pro", "third-party"]},
+                "state": {"type": "string", "enum": ["discovered", "validated", "registered", "starting", "ready", "degraded", "stopping", "stopped", "failed"]},
+                "error": {"type": ["string", "null"]}
+              }
+            }
+          }
+        }
+      },
+      "LocalObservabilityPage": {
+        "type": "object", "additionalProperties": false, "required": ["items"],
+        "properties": {
+          "items": {"type": "array", "items": {"type": "object"}}
+        }
+      },
       "SqlRequest": {
         "type": "object", "additionalProperties": false, "required": ["project", "sql"],
         "properties": {
@@ -365,6 +674,24 @@
       "WorkflowCancellation": {
         "type": "object", "additionalProperties": false, "required": ["workflow_run_id", "cancelled_jobs"],
         "properties": {"workflow_run_id": {"type": "string", "minLength": 1}, "cancelled_jobs": {"type": "integer", "minimum": 0}}
+      },
+      "MigrationSession": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "workspace_id", "project_id", "state", "inventory_digest", "scope_digest", "blueprint_digest", "result_digest"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "workspace_id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "project_id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "state": {"type": "string", "enum": ["draft", "artifacts_ready", "discovering", "scope_ready", "converting", "qualifying", "completed", "failed", "cancelled"]},
+          "inventory_digest": {"type": ["string", "null"]},
+          "scope_digest": {"type": ["string", "null"]},
+          "blueprint_digest": {"type": ["string", "null"]},
+          "result_digest": {"type": ["string", "null"]}
+        }
+      },
+      "MigrationSessionPage": {
+        "type": "object", "additionalProperties": false, "required": ["items"],
+        "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/MigrationSession"}}}
       },
       "Error": {
         "type": "object", "additionalProperties": false, "required": ["error"],

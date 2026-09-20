@@ -39,7 +39,13 @@ from studio_runners import (
     DockerContainerKernelExecutor,
     LocalExecutionEvidenceStore,
 )
-from studio_storage import ArtifactStore, LocalArtifactStore, S3ArtifactStore, SqliteJobStore
+from studio_storage import (
+    ArtifactStore,
+    LocalArtifactStore,
+    PostgresJobReadPort,
+    S3ArtifactStore,
+    SqliteJobStore,
+)
 
 from .execution import DurableWorkerExecution, WorkerExecutionOutcome, utc_now
 from .preparation import (
@@ -54,7 +60,7 @@ from .preparation import (
 
 @dataclass(frozen=True, slots=True)
 class LocalWorkerRuntimeConfig:
-    """Process-local configuration for one durable SQLite/Docker worker."""
+    """Process-local configuration for one durable database/Docker worker."""
 
     paths: WorkerPaths
     owner: str
@@ -62,6 +68,7 @@ class LocalWorkerRuntimeConfig:
     engine: str = "docker"
     limits: ContainerExecutionLimits = field(default_factory=ContainerExecutionLimits)
     database_name: str = "ronin.sqlite3"
+    postgres_dsn: str | None = None
     lease_seconds: int = 30
     heartbeat_interval_seconds: float = 10.0
     poll_seconds: float = 1.0
@@ -76,6 +83,10 @@ class LocalWorkerRuntimeConfig:
             raise ValueError("worker owner must be non-empty and trimmed")
         if not self.database_name or Path(self.database_name).name != self.database_name:
             raise ValueError("worker database name must be one local filename")
+        if self.postgres_dsn is not None and (
+            not self.postgres_dsn or self.postgres_dsn != self.postgres_dsn.strip()
+        ):
+            raise ValueError("postgres_dsn must be non-empty and trimmed")
         if self.lease_seconds < 2:
             raise ValueError("lease_seconds must be at least 2")
         if not 0 < self.heartbeat_interval_seconds < self.lease_seconds:
@@ -166,7 +177,11 @@ class LocalWorkerRuntime:
         self._engine_path = engine_path
         self._artifact_store = artifact_store or artifact_store_from_environment(config)
         config.paths.data_dir.mkdir(parents=True, exist_ok=True)
-        store = SqliteJobStore(config.database_path, migration_now=migration_now)
+        store = (
+            PostgresJobReadPort(config.postgres_dsn, application_name="ronin-worker")
+            if config.postgres_dsn is not None
+            else SqliteJobStore(config.database_path, migration_now=migration_now)
+        )
         self._service = DurableExecutionService(
             store,
             max_workers=config.store_max_workers,

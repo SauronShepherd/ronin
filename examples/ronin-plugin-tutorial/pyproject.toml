@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ronin-plugin-tutorial"
+version = "0.1.0"
+description = "Minimal third-party Ronin plugin tutorial"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.entry-points."ronin.plugins.v1"]
+tutorial = "ronin_tutorial_plugin:factory"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -8,6 +8,7 @@ from typing import Protocol, runtime_checkable
 
 from studio_core import AssetRef, WorkspaceId
 from studio_core.ml import (
+    Experiment,
     ExperimentId,
     MetricValue,
     MLRunId,
@@ -21,11 +22,18 @@ from studio_core.ml import (
 from studio_orchestrator import Instant
 from studio_storage.ports import ArtifactStore
 
+from .domain import Lab
+from .runner import ExperimentResult
 from .runtime import TrainingSpec, predict_tabular, train_tabular
 
 
 @runtime_checkable
 class MLRegistryStore(Protocol):
+    def get_run(self, workspace_id: WorkspaceId, run_id: MLRunId) -> MLRunRecord | None: ...
+
+    def put_experiment(
+        self, workspace_id: WorkspaceId, experiment: Experiment, *, now: Instant | str
+    ) -> Experiment: ...
     def record_evaluation(
         self, workspace_id: WorkspaceId, evaluation: ModelEvaluation, *, now: Instant | str
     ) -> ModelEvaluation: ...
@@ -77,6 +85,33 @@ class MLRegistryStore(Protocol):
 
 class MLModelNotFound(KeyError):
     """Raised when inference references a model version absent from registry."""
+
+
+def persist_experiment_result(
+    registry: MLRegistryStore,
+    workspace_id: WorkspaceId,
+    lab: Lab,
+    result: ExperimentResult,
+    *,
+    run_id: MLRunId,
+    execution_ref: str,
+    source_revision: str,
+    now: Instant | str,
+) -> MLRunRecord:
+    """Persist the experiment identity and its immutable run provenance."""
+    from .provenance import run_record
+
+    registry.put_experiment(
+        workspace_id, Experiment(ExperimentId(lab.id), lab.name, lab.project_id)
+    )
+    record = run_record(
+        lab,
+        result,
+        run_id=run_id.value,
+        execution_ref=execution_ref,
+        source_revision=source_revision,
+    )
+    return registry.record_run(workspace_id, record, now=now)
 
 
 def promote_registered_model(

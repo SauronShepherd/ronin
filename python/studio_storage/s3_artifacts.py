@@ -103,6 +103,18 @@ class S3ArtifactStore:
             raise ArtifactIntegrityError("S3 artifact digest or size verification failed")
         return data
 
+    def get_bytes_by_storage_ref(
+        self, storage_ref: str, *, digest: str
+    ) -> bytes:
+        expected = f"s3://{self._bucket}/{self._key(digest)}"
+        if storage_ref != expected:
+            raise ValueError("artifact storage_ref does not match S3 digest")
+        response = self._client.get_object(Bucket=self._bucket, Key=self._key(digest))
+        data = response["Body"].read()
+        if not isinstance(data, bytes) or hashlib.sha256(data).hexdigest() != digest:
+            raise ArtifactIntegrityError("S3 artifact digest verification failed")
+        return data
+
     def verify(self, ref: ArtifactRef) -> bool:
         try:
             self.get_bytes(ref)

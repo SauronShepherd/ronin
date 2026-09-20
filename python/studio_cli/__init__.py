@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import os
 import shutil
@@ -19,10 +20,31 @@ from studio_core import GrantSet, ProjectManifest
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import DurableExecutionService
 from studio_migration import (
+    IICS_ADAPTER_VERSION,
+    BenchmarkResult,
+    GeneratedProgram,
+    GeneratedProject,
+    MigrationUnit,
+    SourceArtifact,
+    SourceInventory,
+    analyze_pyspark,
+    decide_promotion,
     discover_databricks,
     discover_dataiku,
     discover_fabric,
     discover_foundry,
+    discover_iics_zip,
+    export_migration_script,
+    extract_blueprint,
+    generate_project,
+    promotion_evidence,
+    qualify_spark_runtime,
+    render_validation_html,
+    render_validation_markdown,
+    run_spark_smoke,
+    select_all,
+    select_scope,
+    validate_results,
 )
 from studio_notebook import (
     NotebookDependencyAnalysis,
@@ -57,6 +79,15 @@ def _parser() -> argparse.ArgumentParser:
     plan.add_argument("-t", "--target", required=True)
     commands.add_parser("serve", help="run the local Ronin HTTP control plane")
     commands.add_parser("worker", help="run the local durable Docker worker")
+    plugins = commands.add_parser("plugins", help="inspect installed Ronin plugins")
+    plugins.add_argument("plugins_command", choices=("list", "validate", "lock", "rollback"))
+    plugins.add_argument("snapshot", type=Path, nargs="?", help="lock snapshot used by rollback")
+    plugins.add_argument(
+        "--file",
+        type=Path,
+        default=Path(".ronin/plugin-lock.json"),
+        help="plugin lock path (default: .ronin/plugin-lock.json)",
+    )
 
     submit = commands.add_parser("submit", help="submit a project notebook for execution")
     submit.add_argument("project")
@@ -102,6 +133,84 @@ def _parser() -> argparse.ArgumentParser:
     inventory.add_argument("source", type=Path)
     inventory.add_argument("--source-version", default="unknown")
     inventory.add_argument("--output", type=Path)
+    migrate_commands.add_parser("adapters", help="list supported Migration Studio adapters")
+    artifact_migration = migrate_commands.add_parser(
+        "artifact", help="inspect a source artifact without executing it"
+    )
+    artifact_migration.add_argument("name")
+    artifact_migration.add_argument("source", type=Path)
+    artifact_migration.add_argument("--media-type", default="application/octet-stream")
+    artifact_migration.add_argument("--output", type=Path)
+    iics = migrate_commands.add_parser(
+        "iics-discover", help="discover IICS ZIP artifacts and emit Migration Studio inventory"
+    )
+    iics.add_argument("archive", type=Path, nargs="+", help="one or more IICS ZIP exports")
+    iics.add_argument("--select", action="append", default=[], metavar="UNIT_KEY")
+    iics.add_argument("--output", type=Path)
+    validate_migration = migrate_commands.add_parser(
+        "validate", help="compare expected and actual result JSON rows"
+    )
+    validate_migration.add_argument("asset_id")
+    validate_migration.add_argument("expected", type=Path)
+    validate_migration.add_argument("actual", type=Path)
+    validate_migration.add_argument("--level", choices=("simple", "full"), default="simple")
+    validate_migration.add_argument(
+        "--mode",
+        action="append",
+        choices=("schema", "counts", "multiset", "keyed"),
+        default=[],
+    )
+    promote_migration = migrate_commands.add_parser(
+        "promote", help="evaluate safe promotion from measured benchmark JSON"
+    )
+    promote_migration.add_argument("candidate_id")
+    promote_migration.add_argument("baseline", type=Path)
+    promote_migration.add_argument("candidate", type=Path)
+    promote_migration.add_argument("--semantic-passed", action="store_true")
+    promote_migration.add_argument("--quality-passed", action="store_true")
+    promote_migration.add_argument("--max-regression-ratio", type=float, default=0.05)
+    promote_migration.add_argument("--output", type=Path)
+    validate_migration.add_argument("--key", action="append", default=[])
+    validate_migration.add_argument(
+        "--tolerance", action="append", default=[], metavar="COLUMN=VALUE"
+    )
+    validate_migration.add_argument("--output", type=Path)
+    validate_migration.add_argument(
+        "--format",
+        choices=("json", "markdown", "html"),
+        default="json",
+        help="report format (default: json)",
+    )
+    analyze_migration = migrate_commands.add_parser(
+        "analyze", help="run deterministic static analysis on PySpark source"
+    )
+    analyze_migration.add_argument("source", type=Path)
+    analyze_migration.add_argument("--output", type=Path)
+    spark_preflight = migrate_commands.add_parser(
+        "spark-preflight", help="check the local Spark Python runtime and emit evidence"
+    )
+    spark_preflight.add_argument("--output", type=Path)
+    spark_smoke = migrate_commands.add_parser(
+        "spark-smoke", help="run a native Spark validation smoke test and emit evidence"
+    )
+    spark_smoke.add_argument("--output", type=Path)
+    generate_migration = migrate_commands.add_parser(
+        "generate", help="generate a deterministic PySpark candidate project"
+    )
+    generate_migration.add_argument("inventory", type=Path)
+    generate_migration.add_argument("output", type=Path)
+    generate_migration.add_argument("--select", action="append", default=[])
+    generate_migration.add_argument("--blueprint", type=Path)
+    qualify_migration = migrate_commands.add_parser(
+        "qualify", help="qualify a generated PySpark candidate project"
+    )
+    qualify_migration.add_argument("project", type=Path)
+    qualify_migration.add_argument("--output", type=Path)
+    export_migration = migrate_commands.add_parser(
+        "export", help="export a standalone PySpark migration script"
+    )
+    export_migration.add_argument("project", type=Path)
+    export_migration.add_argument("--output", type=Path, required=True)
     migration_status_command = migrate_commands.add_parser(
         "status", help="show local storage migration status"
     )
@@ -403,6 +512,46 @@ def _migration_inventory(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _migration_adapters() -> int:
+    payload = {
+        "items": [
+            {
+                "adapter_id": "iics",
+                "adapter_version": IICS_ADAPTER_VERSION,
+                "capabilities": ["discover", "scope", "generate"],
+            }
+        ]
+    }
+    print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+    return 0
+
+
+def _migration_artifact(namespace: argparse.Namespace) -> int:
+    source = cast(Path, namespace.source).resolve(strict=True)
+    if not source.is_file():
+        raise CliError(f"source artifact is not a file: {source}")
+    content = source.read_bytes()
+    media_type = cast(str, namespace.media_type)
+    if not media_type or media_type != media_type.strip():
+        raise CliError("--media-type must be non-empty and trimmed")
+    payload = {
+        "name": cast(str, namespace.name),
+        "digest": hashlib.sha256(content).hexdigest(),
+        "size_bytes": len(content),
+        "media_type": media_type,
+        "execution": "not_run",
+    }
+    output = json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n"
+    if namespace.output is None:
+        print(output, end="")
+    else:
+        target = cast(Path, namespace.output).resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(output, encoding="utf-8", newline="\n")
+        print(f"artifact descriptor written: {target}")
+    return 0
+
+
 def _migration_status(namespace: argparse.Namespace) -> int:
     database = (namespace.database or _database()).expanduser().resolve()
     if not database.is_file():
@@ -454,6 +603,9 @@ def _sql_engine_from_environment() -> DuckDbSqlEngine | None:
 def _serve() -> int:
     if os.environ.get("RONIN_SERVER_PROFILE", "single") == "local-composed":
         return _serve_local_composed()
+    storage_backend = os.environ.get("RONIN_STORAGE_BACKEND", "sqlite").strip().lower()
+    if storage_backend not in {"sqlite", "postgres"}:
+        raise CliError("RONIN_STORAGE_BACKEND must be sqlite or postgres")
     postgres_dsn = os.environ.get("RONIN_POSTGRES_DSN")
     readiness_probe: Callable[[], bool] | None = None
     try:
@@ -465,9 +617,11 @@ def _serve() -> int:
     database = _database()
     database.parent.mkdir(parents=True, exist_ok=True)
     job_store: JobStore
+    if storage_backend == "postgres" and postgres_dsn is None:
+        raise CliError("RONIN_POSTGRES_DSN is required for PostgreSQL storage")
     if postgres_dsn is not None and not postgres_dsn.strip():
         raise CliError("RONIN_POSTGRES_DSN must be non-empty and trimmed")
-    if postgres_dsn is not None:
+    if storage_backend == "postgres" or postgres_dsn is not None:
         try:
             postgres_metadata = PostgresMetadataStore(postgres_dsn, application_name="ronin-server")
             job_store = PostgresJobReadPort(postgres_dsn, application_name="ronin-server")
@@ -538,6 +692,375 @@ def _worker() -> int:
     return 0
 
 
+def _migration_iics_discover(namespace: argparse.Namespace) -> int:
+    archives: list[tuple[str, bytes]] = []
+    for raw_path in sorted(cast(Sequence[Path], namespace.archive), key=lambda item: item.name):
+        path = raw_path.resolve(strict=True)
+        if not path.is_file() or path.suffix.casefold() != ".zip":
+            raise CliError(f"IICS artifact must be a ZIP file: {path}")
+        if path.stat().st_size > 512 * 1024 * 1024:
+            raise CliError(f"IICS artifact exceeds the 512 MiB limit: {path}")
+        archives.append((path.name, path.read_bytes()))
+    inventory = discover_iics_zip(archives)
+    selected = set(cast(Sequence[str], namespace.select))
+    if selected:
+        unknown = selected - {unit.key for unit in inventory.units}
+        if unknown:
+            raise CliError(f"unknown IICS migration unit(s): {sorted(unknown)}")
+    payload = {
+        "adapter_id": inventory.adapter_id,
+        "adapter_version": inventory.adapter_version,
+        "inventory_digest": inventory.digest,
+        "artifacts": [
+            {
+                "name": item.name,
+                "digest": item.digest,
+                "size_bytes": item.size_bytes,
+                "media_type": item.media_type,
+            }
+            for item in inventory.artifacts
+        ],
+        "units": [
+            {
+                "key": unit.key,
+                "kind": unit.kind,
+                "name": unit.name,
+                "state": unit.state,
+                "dependencies": list(unit.dependencies),
+                "source_refs": list(unit.source_refs),
+                "notes": list(unit.notes),
+            }
+            for unit in inventory.units
+        ],
+        "selected": sorted(selected),
+    }
+    output = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
+    if namespace.output is None:
+        print(output, end="")
+    else:
+        target = namespace.output.resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(output, encoding="utf-8", newline="\n")
+        print(f"migration inventory written: {target}")
+    return 0
+
+
+def _load_result_rows(path: Path, label: str) -> list[dict[str, object]]:
+    try:
+        payload = json.loads(_read_text(path.resolve(strict=True), label))
+    except json.JSONDecodeError as exc:
+        raise CliError(f"{label} is not valid JSON: {path}") from exc
+    if not isinstance(payload, list) or not all(isinstance(row, dict) for row in payload):
+        raise CliError(f"{label} must be a JSON array of objects: {path}")
+    return cast(list[dict[str, object]], payload)
+
+
+def _load_migration_inventory(path: Path) -> SourceInventory:
+    try:
+        payload = json.loads(_read_text(path.resolve(strict=True), "migration inventory"))
+    except json.JSONDecodeError as exc:
+        raise CliError(f"migration inventory is not valid JSON: {path}") from exc
+    if not isinstance(payload, dict):
+        raise CliError("migration inventory root must be an object")
+    try:
+        artifacts = tuple(
+            SourceArtifact(
+                str(item["name"]),
+                str(item["digest"]),
+                int(item["size_bytes"]),
+                str(item.get("media_type", "application/octet-stream")),
+            )
+            for item in cast(list[dict[str, object]], payload["artifacts"])
+        )
+        units = tuple(
+            MigrationUnit(
+                str(item["key"]),
+                str(item["kind"]),
+                str(item["name"]),
+                cast(str, item["state"]),
+                tuple(cast(list[str], item.get("dependencies", []))),
+                tuple(cast(list[str], item.get("source_refs", []))),
+                tuple(cast(list[str], item.get("notes", []))),
+            )
+            for item in cast(list[dict[str, object]], payload["units"])
+        )
+        return SourceInventory(
+            str(payload["adapter_id"]), str(payload["adapter_version"]), artifacts, units
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise CliError(f"invalid migration inventory: {exc}") from exc
+
+
+def _migration_generate(namespace: argparse.Namespace) -> int:
+    inventory = _load_migration_inventory(cast(Path, namespace.inventory))
+    requested = tuple(cast(Sequence[str], namespace.select))
+    try:
+        selection = select_scope(inventory, requested) if requested else select_all(inventory)
+        blueprint = (
+            extract_blueprint(_read_text(cast(Path, namespace.blueprint), "blueprint"))
+            if namespace.blueprint
+            else None
+        )
+        project = generate_project(inventory=inventory, selection=selection, blueprint=blueprint)
+    except (TypeError, ValueError) as exc:
+        raise CliError(f"cannot generate migration project: {exc}") from exc
+    output_dir = cast(Path, namespace.output).resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for program in project.files:
+        target = output_dir / program.path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target.exists():
+            raise CliError(f"refusing to overwrite generated file: {target}")
+        target.write_text(program.content, encoding="utf-8", newline="\n")
+    manifest = output_dir / "manifest.json"
+    if manifest.exists():
+        raise CliError(f"refusing to overwrite generated manifest: {manifest}")
+    manifest.write_text(project.manifest + "\n", encoding="utf-8", newline="\n")
+    print(f"migration project written: {output_dir}")
+    return 0
+
+
+def _migration_export(namespace: argparse.Namespace) -> int:
+    project_dir = cast(Path, namespace.project).resolve(strict=True)
+    manifest_path = project_dir / "manifest.json"
+    try:
+        manifest = json.loads(_read_text(manifest_path, "generated migration manifest"))
+        programs = tuple(
+            GeneratedProgram(
+                str(path),
+                _read_text(project_dir / str(path), "generated migration program"),
+                cast(str | None, manifest.get("blueprint_digest")),
+            )
+            for path in cast(list[object], manifest["files"])
+        )
+        project = GeneratedProject(
+            programs,
+            json.dumps(manifest, sort_keys=True, separators=(",", ":")),
+            str(manifest["inventory_digest"]),
+            str(manifest["scope_digest"]),
+            cast(str | None, manifest.get("blueprint_digest")),
+            hashlib.sha256(
+                (
+                    json.dumps(manifest, sort_keys=True, separators=(",", ":"))
+                    + "\n"
+                    + "\n".join(program.content for program in programs)
+                ).encode()
+            ).hexdigest(),
+        )
+        exported = export_migration_script(project)
+    except (KeyError, TypeError, ValueError, OSError) as exc:
+        raise CliError(f"cannot export migration project: {exc}") from exc
+    output = cast(Path, namespace.output).resolve()
+    if output.exists():
+        raise CliError(f"refusing to overwrite export: {output}")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(exported.content, encoding="utf-8", newline="\n")
+    print(f"portable migration script written: {output}")
+    return 0
+
+
+def _migration_qualify(namespace: argparse.Namespace) -> int:
+    project_dir = cast(Path, namespace.project).resolve(strict=True)
+    files = tuple(sorted(project_dir.rglob("*.py")))
+    if not files:
+        raise CliError(f"generated project contains no Python files: {project_dir}")
+    findings = tuple(
+        item for path in files for item in analyze_pyspark(_read_text(path, "generated PySpark"))
+    )
+    payload = {
+        "schema": "ronin.migration.generated-qualification/v1",
+        "project": str(project_dir),
+        "files_checked": len(files),
+        "status": "failed"
+        if any(item.severity == "error" for item in findings)
+        else "review_required"
+        if findings
+        else "passed",
+        "findings": [item.to_payload() for item in findings],
+    }
+    output = json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n"
+    if namespace.output is None:
+        print(output, end="")
+    else:
+        target = cast(Path, namespace.output).resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(output, encoding="utf-8", newline="\n")
+        print(f"qualification report written: {target}")
+    return 1 if payload["status"] == "failed" else 0
+
+
+def _migration_validate(namespace: argparse.Namespace) -> int:
+    tolerances: dict[str, float] = {}
+    for raw in cast(Sequence[str], namespace.tolerance):
+        column, separator, value = raw.partition("=")
+        if not separator or not column or column in tolerances:
+            raise CliError("--tolerance values must be unique COLUMN=VALUE pairs")
+        try:
+            parsed = float(value)
+        except ValueError as exc:
+            raise CliError(f"invalid tolerance: {raw}") from exc
+        if parsed < 0:
+            raise CliError("tolerances must be non-negative")
+        tolerances[column] = parsed
+    requested_modes = cast(Sequence[str], namespace.mode)
+    modes = tuple(dict.fromkeys(requested_modes or ("schema", "counts", "multiset")))
+    report = validate_results(
+        _load_result_rows(cast(Path, namespace.expected), "expected result"),
+        _load_result_rows(cast(Path, namespace.actual), "actual result"),
+        asset_id=cast(str, namespace.asset_id),
+        level=cast(str, namespace.level),
+        modes=modes,
+        key_columns=tuple(cast(Sequence[str], namespace.key)),
+        tolerances=tolerances,
+    )
+    report_format = cast(str, namespace.format)
+    output = {
+        "json": report.to_json() + "\n",
+        "markdown": render_validation_markdown(report),
+        "html": render_validation_html(report),
+    }[report_format]
+    if namespace.output is None:
+        print(output, end="")
+    else:
+        target = namespace.output.resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(output, encoding="utf-8", newline="\n")
+        print(f"validation report written: {target}")
+    return 0 if report.status == "pass" else 1
+
+
+def _migration_promote(namespace: argparse.Namespace) -> int:
+    def load_benchmark(path: Path, label: str) -> BenchmarkResult:
+        payload = json.loads(_read_text(path.resolve(strict=True), label))
+        if not isinstance(payload, dict):
+            raise CliError(f"{label} must contain a benchmark object")
+        try:
+            return BenchmarkResult(
+                payload["name"],
+                payload["warmup_runs"],
+                payload["measured_runs"],
+                tuple(payload["durations_ms"]),
+                payload["median_ms"],
+                payload["fingerprint"],
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise CliError(f"{label} has invalid benchmark fields") from exc
+
+    baseline = load_benchmark(cast(Path, namespace.baseline), "baseline benchmark")
+    candidate = load_benchmark(cast(Path, namespace.candidate), "candidate benchmark")
+    decision = decide_promotion(
+        cast(str, namespace.candidate_id),
+        baseline=baseline,
+        candidate=candidate,
+        semantic_passed=cast(bool, namespace.semantic_passed),
+        quality_passed=cast(bool, namespace.quality_passed),
+        max_regression_ratio=cast(float, namespace.max_regression_ratio),
+    )
+    payload = promotion_evidence(
+        decision,
+        baseline=baseline,
+        candidate=candidate,
+        semantic_passed=cast(bool, namespace.semantic_passed),
+        quality_passed=cast(bool, namespace.quality_passed),
+    )
+    output = json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n"
+    if namespace.output is None:
+        print(output, end="")
+    else:
+        target = cast(Path, namespace.output).resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(output, encoding="utf-8", newline="\n")
+        print(f"promotion evidence written: {target}")
+    return 0 if decision.promoted else 1
+
+
+def _migration_analyze(namespace: argparse.Namespace) -> int:
+    source = cast(Path, namespace.source).resolve(strict=True)
+    if not source.is_file() or source.suffix.casefold() != ".py":
+        raise CliError(f"PySpark analysis source must be a .py file: {source}")
+    findings = analyze_pyspark(_read_text(source, "PySpark source"))
+    payload = {
+        "source": str(source),
+        "status": "fail"
+        if any(item.severity == "error" for item in findings)
+        else "warn"
+        if findings
+        else "pass",
+        "findings": [item.to_payload() for item in findings],
+    }
+    output = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
+    if namespace.output is None:
+        print(output, end="")
+    else:
+        target = namespace.output.resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(output, encoding="utf-8", newline="\n")
+        print(f"analysis report written: {target}")
+    return 1 if payload["status"] == "fail" else 0
+
+
+def _migration_spark_preflight(namespace: argparse.Namespace) -> int:
+    evidence = qualify_spark_runtime()
+    output = json.dumps(evidence.to_payload(), sort_keys=True, separators=(",", ":")) + "\n"
+    if namespace.output is None:
+        print(output, end="")
+    else:
+        target = namespace.output.resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(output, encoding="utf-8", newline="\n")
+        print(f"Spark qualification evidence written: {target}")
+    return 0 if evidence.status == "passed" else 1
+
+
+def _migration_spark_smoke(namespace: argparse.Namespace) -> int:
+    evidence = run_spark_smoke()
+    output = json.dumps(evidence.to_payload(), sort_keys=True, separators=(",", ":")) + "\n"
+    if namespace.output is None:
+        print(output, end="")
+    else:
+        target = namespace.output.resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(output, encoding="utf-8", newline="\n")
+        print(f"Spark smoke evidence written: {target}")
+    return 0 if evidence.status == "passed" else 1
+
+
+def _plugins(namespace: argparse.Namespace) -> int:
+    from studio_runtime import PluginHost, PluginLock, PluginLockError
+
+    host = PluginHost.discover()
+    diagnostics = host.diagnostics()
+    if namespace.plugins_command == "validate":
+        try:
+            lock = PluginLock.read(str(namespace.file))
+            host.verify_lock(lock)
+        except (OSError, PluginLockError) as exc:
+            raise CliError(f"plugin lock validation failed: {exc}") from exc
+        print(f"validated {len(diagnostics)} plugin(s) against {namespace.file}")
+        return 0
+    if namespace.plugins_command == "lock":
+        path = namespace.file.resolve()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        host.create_lock().write(str(path))
+        print(f"plugin lock written: {path}")
+        return 0
+    if namespace.plugins_command == "rollback":
+        if namespace.snapshot is None:
+            raise CliError("plugins rollback requires a snapshot path")
+        try:
+            snapshot = PluginLock.read(str(namespace.snapshot))
+        except (OSError, PluginLockError) as exc:
+            raise CliError(f"plugin rollback snapshot is invalid: {exc}") from exc
+        target = namespace.file.resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        snapshot.write(str(target))
+        print(f"plugin lock restored: {target}")
+        return 0
+    for item in diagnostics:
+        print(f"{item['id']}\t{item['version']}\t{item['edition']}\t{item['state']}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run one bounded CLI command and return a process exit code."""
 
@@ -554,6 +1077,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _serve()
         if command == "worker":
             return _worker()
+        if command == "plugins":
+            return _plugins(namespace)
         if command == "submit":
             return _submit(namespace)
         if command == "status":
@@ -569,6 +1094,28 @@ def main(argv: Sequence[str] | None = None) -> int:
         if command == "migrate":
             if namespace.migrate_command == "inventory":
                 return _migration_inventory(namespace)
+            if namespace.migrate_command == "adapters":
+                return _migration_adapters()
+            if namespace.migrate_command == "artifact":
+                return _migration_artifact(namespace)
+            if namespace.migrate_command == "iics-discover":
+                return _migration_iics_discover(namespace)
+            if namespace.migrate_command == "validate":
+                return _migration_validate(namespace)
+            if namespace.migrate_command == "promote":
+                return _migration_promote(namespace)
+            if namespace.migrate_command == "analyze":
+                return _migration_analyze(namespace)
+            if namespace.migrate_command == "spark-preflight":
+                return _migration_spark_preflight(namespace)
+            if namespace.migrate_command == "spark-smoke":
+                return _migration_spark_smoke(namespace)
+            if namespace.migrate_command == "generate":
+                return _migration_generate(namespace)
+            if namespace.migrate_command == "qualify":
+                return _migration_qualify(namespace)
+            if namespace.migrate_command == "export":
+                return _migration_export(namespace)
             if namespace.migrate_command == "status":
                 return _migration_status(namespace)
             raise CliError(f"unsupported migrate command: {namespace.migrate_command}")

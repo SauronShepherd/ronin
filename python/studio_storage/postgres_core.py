@@ -230,6 +230,25 @@ CREATE INDEX IF NOT EXISTS ronin_runs_job_idx
     ON ronin_runs(job_id, ordinal);
 CREATE INDEX IF NOT EXISTS ronin_attempts_run_idx
     ON ronin_attempts(run_id, ordinal);
+CREATE TABLE IF NOT EXISTS ronin_workflows (
+    workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
+    workflow_id TEXT NOT NULL,
+    definition_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY(workspace_id, workflow_id)
+);
+CREATE TABLE IF NOT EXISTS ronin_schedules (
+    workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
+    schedule_id TEXT NOT NULL,
+    workflow_id TEXT NOT NULL,
+    schedule_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY(workspace_id, schedule_id),
+    FOREIGN KEY(workspace_id, workflow_id)
+        REFERENCES ronin_workflows(workspace_id, workflow_id) ON DELETE CASCADE
+);
 """
 
 

@@ -10,6 +10,8 @@ from studio_server.control_plane import (
     ControlPlaneAuthenticator,
     ControlPlaneAuthorizer,
     ControlPlaneUnavailable,
+    PluginDiagnostics,
+    PluginRouter,
     WorkspaceProjectHTTPServer,
 )
 from studio_server.http import SUPPORTED_ROUTES, DurableHTTPApplication
@@ -38,4 +40,6 @@ __all__ = (
     "SUPPORTED_ROUTES",
     "WorkerPollResult",
     "WorkspaceProjectHTTPServer",
+    "PluginDiagnostics",
+    "PluginRouter",
 )

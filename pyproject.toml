@@ -19,6 +19,20 @@ ronin = "studio_cli.entrypoint:main"
 ronin-runner-broker = "studio_runner_broker.entrypoint:main"
 ronin-broker-worker = "studio_runner_broker.worker_entrypoint:main"
 
+[project.entry-points."ronin.plugins.v1"]
+workspaces = "studio_plugin_workspaces.plugin:factory"
+logging = "studio_plugin_observability.plugins:logging_factory"
+monitoring = "studio_plugin_observability.plugins:monitoring_factory"
+  govern_studio = "studio_synthetic_data.plugin:factory"
+  ai_studio = "studio_ai_studio.plugin:factory"
+data_science_studio = "studio_ml.plugin:factory"
+cloud_studio = "studio_cloud.plugin:factory"
+
+[project.entry-points."ronin.formats.v1"]
+delta = "studio_synthetic_data.formats:delta_provider"
+iceberg = "studio_synthetic_data.formats:iceberg_provider"
+hudi = "studio_synthetic_data.formats:hudi_provider"
+
 [project.optional-dependencies]
 data-plane = [
   "boto3>=1.35,<2",
@@ -61,7 +75,13 @@ where = ["python"]
 studio_storage = ["migrations/*.sql"]
 
 [tool.setuptools.data-files]
-"share/ronin/web" = ["web/index.html", "web/README.md"]
+"share/ronin/web" = [
+  "web/index.html",
+  "web/README.md",
+  "web/data-enginerring-studio.html",
+  "web/data-enginerring-studio.css",
+  "web/data-enginerring-studio.js",
+]
 "share/ronin/web/assets" = [
   "web/assets/ronin-logo-full.png",
   "web/assets/ronin-logo-mark.png",
@@ -71,6 +91,7 @@ studio_storage = ["migrations/*.sql"]
   "web/js/app.js",
   "web/js/dom.js",
   "web/js/features.js",
+  "web/js/performance-studio.js",
 ]
 "share/ronin/web/styles" = [
   "web/styles/base.css",
@@ -78,10 +99,15 @@ studio_storage = ["migrations/*.sql"]
   "web/styles/layout.css",
   "web/styles/tokens.css",
 ]
-
+"share/ronin/web/cloud-studio" = [
+  "web/cloud-studio.html",
+  "web/cloud-studio.css",
+  "web/cloud-studio.js",
+]
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+extend-exclude = ["build", "**/build/**"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "S", "ASYNC", "C4", "PT", "RET", "ARG", "PTH"]
@@ -89,6 +115,15 @@ select = ["E", "F", "I", "B", "UP", "SIM", "S", "ASYNC", "C4", "PT", "RET", "ARG
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"]
 "packages/**/tests/**/*.py" = ["S101", "PT011"]
+"python/studio_storage/catalog.py" = ["E501"]
+"python/studio_storage/postgres_ml.py" = ["E501"]
+"python/studio_ai_studio/http_api.py" = ["E501"]
+"python/studio_synthetic_data/async_generation.py" = ["E501", "SIM105"]
+"python/studio_synthetic_data/engine.py" = ["E501"]
+"python/studio_synthetic_data/local_catalogs.py" = ["E501"]
+"python/studio_synthetic_data/plugin.py" = ["E501"]
+"python/studio_synthetic_data/publication.py" = ["E501"]
+"tools/cloud_studio_e2e.py" = ["S101"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -100,6 +135,7 @@ packages = [
   "studio_core",
   "studio_finops",
   "studio_genai",
+  "studio_ai_studio",
   "studio_lakehouse",
   "studio_ml",
   "studio_notebook",
@@ -114,6 +150,13 @@ packages = [
   "studio_sql",
   "studio_storage",
   "studio_streaming",
+  "studio_cloud",
+  "studio_synthetic_data",
+  "studio_plugin_observability",
+  "studio_plugin_sdk",
+  "studio_plugin_testkit",
+  "studio_plugin_workspaces",
+  "studio_runtime",
   "studio_vcs",
   "studio_execution",
   "studio_migration",
@@ -124,7 +167,7 @@ packages = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "packages/pyronin/tests"]
-pythonpath = ["python", "packages/pyronin/src", "."]
+pythonpath = ["python", "packages/pyronin/src", "packages/ronin-plugin-performance/src", "."]
 addopts = "-ra --strict-config --strict-markers"
 markers = ["e2e: full v0.1 acceptance journey; requires Docker and a built image"]
 
@@ -155,6 +198,11 @@ source = [
   "studio_worker",
   "studio_cli",
   "studio_migration",
+  "studio_plugin_observability",
+  "studio_plugin_sdk",
+  "studio_plugin_testkit",
+  "studio_plugin_workspaces",
+  "studio_runtime",
   "pyronin",
   "tools",
 ]

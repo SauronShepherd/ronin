@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ronin.performance/config-v1",
+  "title": "Performance Studio configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "skew_ratio": {"type": "number", "exclusiveMinimum": 1},
+        "min_skew_task_ms": {"type": "number", "minimum": 0},
+        "shuffle_bytes_per_second": {"type": "number", "exclusiveMinimum": 0},
+        "small_file_count": {"type": "integer", "minimum": 1},
+        "small_file_average_bytes": {"type": "integer", "minimum": 1},
+        "gc_ratio": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1},
+        "min_tasks_per_stage": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

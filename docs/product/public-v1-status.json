@@ -1,9 +1,16 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-19T06:05:00Z",
+  "observed_at": "2026-09-20T00:00:00Z",
   "observed_main_sha": "11944d6bbcc3b3a7499b965d329fe9ec99f659fb",
+  "observed_workspace_state": "uncommitted workspace snapshot; master has no commits",
   "release_status": "incomplete",
   "qualification_status": "blocked",
+  "local_verification": {
+    "observed_at": "2026-09-20",
+    "command": "python -m pytest -q",
+    "result": "1424 passed, 5 failed, 16 skipped",
+    "qualification_claimed": false
+  },
   "status_vocabulary": [
     "implemented",
     "partial",
