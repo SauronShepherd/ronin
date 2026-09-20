@@ -13,6 +13,12 @@ on:
     tags:
       - "v*.*.*a*"
   workflow_dispatch:
+    inputs:
+      reserve:
+        description: "Publish the dummy PyPI package and mutable dev image only"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -27,6 +33,34 @@ env:
   LOCAL_IMAGE: ronin-prerelease:${{ github.sha }}
 
 jobs:
+  reserve-names:
+    if: github.event_name == 'workflow_dispatch' && inputs.reserve == true
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build pyronin
+        run: |
+          python -m pip install --disable-pip-version-check build
+          python -m build packages/pyronin
+      - name: Publish pyronin dummy version
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/pyronin/dist
+      - name: Log in to GHCR
+        run: echo "${{ github.token }}" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+      - name: Publish mutable development image
+        run: |
+          docker build --file docker/Dockerfile --tag "$IMAGE_NAME:dev" .
+          docker push "$IMAGE_NAME:dev"
+
   v01-acceptance:
     name: strict v0.1 acceptance
     if: startsWith(github.ref, 'refs/tags/')
