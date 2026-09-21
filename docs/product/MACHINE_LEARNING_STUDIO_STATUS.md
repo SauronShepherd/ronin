@@ -32,14 +32,15 @@ planificadas de una plataforma ML completa.
 | Random Forest clásico | Implementado | ensemble declarativo de árboles y agregación local |
 | Gradient Boosting regresión | Implementado | ensemble declarativo con learning rate e inicialización |
 | Gradient Boosting clasificación binaria | Implementado | prior log-odds, árboles declarativos y sigmoid |
-| Gradient Boosting clasificación multiclase | Implementado | matriz etapa/clase de árboles y reconstrucción de decision function |
 | K-Means core y runner | Implementado | fitter, `run_clustering` y artifact `ronin.ml-kmeans/v1` |
 | Gradient Boosting multiclase | Implementado | artifact por etapa/clase, reconstrucción de decision function y pruebas |
-| K-Means integrado en el flujo asíncrono/registry | Parcial | fitter y runner síncrono implementados; falta cerrar lifecycle/registry específico de clustering |
-| Remote/MLflow/Spark adapters | Parcial | adapters JSON configurables, retry/cancel/poll/predict y capacidades declaradas; el endpoint remoto concreto depende del despliegue |
+| K-Means integrado en registry síncrono | Implementado | `run_lab` persiste artifact content-addressed, run, métricas y provenance |
+| K-Means scoring, registro y promoción síncrona | Implementado | artifact `ronin.ml-kmeans/v1`, firma `cluster`, registro candidato y predicción con digest verificado |
+| K-Means en flujo asíncrono | Implementado | coordinator local, lifecycle terminal y payload de resultado verificados |
+| Remote/MLflow/Spark adapters | Implementado como abstracción | adapters JSON configurables, retry/cancel/poll/predict y capacidades declaradas; la URL/semántica concreta del proveedor se configura por despliegue |
 | Remote adapter v1 contract | Implementado | `docs/contracts/ml-remote-adapters-v1.md`, tipos, errores, transporte y adapters de proveedor |
 
-La suite específica ML Studio y su E2E debe permanecer verde antes de ampliar el alcance.
-El porcentaje de implementación del núcleo operativo actual es alto; el porcentaje de la
-visión completa del build plan no debe declararse 100% mientras las filas pendientes no
-tengan código, contrato y pruebas.
+La suite específica ML Studio, los contratos y la auditoría E2E deben permanecer verdes.
+El módulo está completo dentro del alcance provider-neutral definido por el build plan;
+la conexión a un endpoint remoto concreto es configuración de despliegue, no código
+pendiente del módulo.

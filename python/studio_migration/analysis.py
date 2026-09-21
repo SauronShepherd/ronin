@@ -4,10 +4,53 @@ from __future__ import annotations
 
 import ast
 from dataclasses import dataclass
+from collections.abc import Callable
 from typing import Literal
 
 Severity = Literal["info", "warning", "error"]
 AutomationMode = Literal["AUTO_SAFE", "SHADOW_ONLY", "REVIEW", "ADVISORY"]
+
+
+@dataclass(frozen=True, slots=True)
+class AnalyzerSpec:
+    analyzer_id: str
+    version: str
+    analyze: Callable[[str], tuple["Finding", ...]]
+
+    def __post_init__(self) -> None:
+        if not self.analyzer_id or self.analyzer_id != self.analyzer_id.strip():
+            raise ValueError("analyzer id must be non-empty and trimmed")
+        if not self.version or self.version != self.version.strip():
+            raise ValueError("analyzer version must be non-empty and trimmed")
+
+
+class AnalyzerRegistry:
+    """Deterministic registry for provider-neutral migration analyzers."""
+
+    def __init__(self) -> None:
+        self._items: dict[str, AnalyzerSpec] = {}
+        self._frozen = False
+
+    def add(self, spec: AnalyzerSpec) -> None:
+        if self._frozen:
+            raise ValueError("analyzer registry is frozen")
+        if spec.analyzer_id in self._items:
+            raise ValueError(f"analyzer collision: {spec.analyzer_id}")
+        self._items[spec.analyzer_id] = spec
+
+    def freeze(self) -> None:
+        self._frozen = True
+
+    @property
+    def items(self) -> tuple[AnalyzerSpec, ...]:
+        return tuple(self._items[key] for key in sorted(self._items))
+
+    def analyze(self, analyzer_id: str, source: str) -> tuple[Finding, ...]:
+        try:
+            spec = self._items[analyzer_id]
+        except KeyError as exc:
+            raise ValueError(f"unknown analyzer: {analyzer_id}") from exc
+        return tuple(sorted(spec.analyze(source), key=lambda item: (item.line, item.column, item.rule_id)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -150,4 +193,4 @@ def analyze_pyspark(source: str) -> tuple[Finding, ...]:
     return tuple(sorted(findings, key=lambda item: (item.line, item.rule_id)))
 
 
-__all__ = ("Finding", "analyze_pyspark")
+__all__ = ("AnalyzerRegistry", "AnalyzerSpec", "Finding", "analyze_pyspark")

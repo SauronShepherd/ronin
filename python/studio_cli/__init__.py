@@ -80,7 +80,9 @@ def _parser() -> argparse.ArgumentParser:
     commands.add_parser("serve", help="run the local Ronin HTTP control plane")
     commands.add_parser("worker", help="run the local durable Docker worker")
     plugins = commands.add_parser("plugins", help="inspect installed Ronin plugins")
-    plugins.add_argument("plugins_command", choices=("list", "validate", "lock", "rollback"))
+    plugins.add_argument(
+        "plugins_command", choices=("list", "surfaces", "validate", "lock", "rollback")
+    )
     plugins.add_argument("snapshot", type=Path, nargs="?", help="lock snapshot used by rollback")
     plugins.add_argument(
         "--file",
@@ -942,6 +944,7 @@ def _migration_promote(namespace: argparse.Namespace) -> int:
                 tuple(payload["durations_ms"]),
                 payload["median_ms"],
                 payload["fingerprint"],
+                payload.get("runtime_build_fingerprint"),
             )
         except (KeyError, TypeError, ValueError) as exc:
             raise CliError(f"{label} has invalid benchmark fields") from exc
@@ -1030,6 +1033,14 @@ def _plugins(namespace: argparse.Namespace) -> int:
 
     host = PluginHost.discover()
     diagnostics = host.diagnostics()
+    if namespace.plugins_command == "surfaces":
+        contributions = host.contribution_diagnostics()
+        print(json.dumps({
+            "surfaces": contributions["surfaces"],
+            "cli": contributions["cli"],
+            "client_operations": contributions["client_operations"],
+        }, sort_keys=True, separators=(",", ":")))
+        return 0
     if namespace.plugins_command == "validate":
         try:
             lock = PluginLock.read(str(namespace.file))

@@ -4,7 +4,7 @@ import os
 from typing import Any
 
 from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
-from studio_core.plugins import PluginContext, PluginManifest
+from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 from studio_storage.catalog import SqliteCatalogStore
 
 from studio_synthetic_data.application import GovernStudioService, plan_from_payload
@@ -33,6 +33,13 @@ class SyntheticDataStudioPlugin:
             "synthetic-data-studio.jobs.v1",
         ),
         permissions=("synthetic:read", "synthetic:write", "synthetic:execute"),
+        surface_ids=(
+            "synthetic-data.formats.v1",
+            "synthetic-data.health.v1",
+            "synthetic-data.plan.v1",
+            "synthetic-data.generate.v1",
+            "synthetic-data.validate.v1",
+        ),
     )
 
     def __init__(
@@ -63,6 +70,44 @@ class SyntheticDataStudioPlugin:
             self.formats,
             permission="synthetic:read",
         )
+        for contribution in (
+            SurfaceContribution(
+                id="synthetic-data.formats.v1", plugin_id=context.plugin_id,
+                namespace="synthetic-data", command="formats",
+                operation_id="synthetic-data.formats.v1", capability="synthetic-data-studio.plan.v1",
+                permission="synthetic:read", path="/v1/synthetic-data-studio/formats", method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="synthetic-data.health.v1", plugin_id=context.plugin_id,
+                namespace="synthetic-data", command="health",
+                operation_id="synthetic-data.health.v1", capability="synthetic-data-studio.plan.v1",
+                permission="synthetic:read", path="/v1/synthetic-data-studio/health", method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="synthetic-data.plan.v1", plugin_id=context.plugin_id,
+                namespace="synthetic-data", command="create-plan",
+                operation_id="synthetic-data.plan.v1", capability="synthetic-data-studio.plan.v1",
+                permission="synthetic:write", path="/v1/synthetic-data-studio/plans", method="POST",
+                input_schema={"type": "object"}, output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="synthetic-data.generate.v1", plugin_id=context.plugin_id,
+                namespace="synthetic-data", command="generate",
+                operation_id="synthetic-data.generate.v1", capability="synthetic-data-studio.generate.v1",
+                permission="synthetic:execute", path="/v1/synthetic-data-studio/generate", method="POST",
+                input_schema={"type": "object"}, output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="synthetic-data.validate.v1", plugin_id=context.plugin_id,
+                namespace="synthetic-data", command="validate",
+                operation_id="synthetic-data.validate.v1", capability="synthetic-data-studio.validate.v1",
+                permission="synthetic:read", path="/v1/synthetic-data-studio/validate", method="POST",
+                input_schema={"type": "object"}, output_schema={"type": "object"},
+            ),
+        ):
+            context.contributions.add_surface(contribution)
         context.contributions.add_route(
             "GET",
             "/v1/synthetic-data-studio/health",

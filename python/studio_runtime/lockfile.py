@@ -26,6 +26,7 @@ class PluginLockEntry:
     job_types: tuple[str, ...]
     event_types: tuple[str, ...]
     migration_ids: tuple[str, ...]
+    surface_ids: tuple[str, ...]
     ui_entry: str | None
     config_schema: str | None
     distribution: str | None
@@ -46,6 +47,7 @@ class PluginLockEntry:
             job_types=tuple(sorted(manifest.job_types)),
             event_types=tuple(sorted(manifest.event_types)),
             migration_ids=tuple(sorted(manifest.migration_ids)),
+            surface_ids=tuple(sorted(manifest.surface_ids)),
             ui_entry=manifest.ui_entry,
             config_schema=manifest.config_schema,
             distribution=record.distribution,
@@ -65,6 +67,7 @@ class PluginLockEntry:
             "job_types": list(self.job_types),
             "event_types": list(self.event_types),
             "migration_ids": list(self.migration_ids),
+            "surface_ids": list(self.surface_ids),
             "ui_entry": self.ui_entry,
             "config_schema": self.config_schema,
             "distribution": self.distribution,
@@ -123,6 +126,7 @@ class PluginLock:
                     job_types=tuple(item.get("job_types", ())),
                     event_types=tuple(item.get("event_types", ())),
                     migration_ids=tuple(item.get("migration_ids", ())),
+                    surface_ids=tuple(item.get("surface_ids", ())),
                     ui_entry=item.get("ui_entry"),
                     config_schema=item.get("config_schema"),
                     distribution=item.get("distribution"),

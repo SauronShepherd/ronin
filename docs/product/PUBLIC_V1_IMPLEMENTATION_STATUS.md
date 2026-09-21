@@ -4,7 +4,7 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Observed workspace snapshot:** 2026-09-20. The checkout has no Git commit yet
 (`master` is an empty branch), so there is no valid source SHA for this snapshot.
-**Observed source head:** `11944d6bbcc3b3a7499b965d329fe9ec99f659fb` (2026-09-19).
+**Observed source head:** `7823e30c2ccb0acedbced9ca1f643b97d30dfafd` (2026-09-20).
 Historical ledger value only; this SHA is qualification context and must not be
 used as the identity of the current implementation.
 **Release status:** **INCOMPLETE**.

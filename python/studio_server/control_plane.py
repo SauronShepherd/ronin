@@ -272,6 +272,11 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
 
 
 class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
+    # Requests may be rejected before their body is parsed (auth/readiness).
+    # Closing each response prevents unread bytes from becoming a second
+    # request on the same socket, especially on Windows.
+    protocol_version = "HTTP/1.0"
+
     def log_message(self, _format: str, *args: object) -> None:
         del args
 
@@ -419,7 +424,33 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         "plugin host is not configured",
                     )
                     return
-                self._write_json(HTTPStatus.OK, {"items": list(plugin_host.diagnostics())})
+                diagnostics = list(plugin_host.diagnostics())
+                contributions = plugin_host.contribution_diagnostics()
+                ready = {
+                    item["id"] for item in diagnostics if item.get("state") == "ready"
+                }
+                surfaces = [
+                    item for item in cast(list[dict[str, object]], contributions["surfaces"])
+                    if str(item.get("plugin_id")) in ready
+                ]
+                cli = [
+                    item for item in cast(list[dict[str, object]], contributions["cli"])
+                    if any(surface.get("id") == item.get("id") for surface in surfaces)
+                ]
+                client_operations = [
+                    item
+                    for item in cast(list[dict[str, object]], contributions["client_operations"])
+                    if any(surface.get("id") == item.get("id") for surface in surfaces)
+                ]
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "items": diagnostics,
+                        "surfaces": surfaces,
+                        "cli": cli,
+                        "client_operations": client_operations,
+                    },
+                )
                 return
             if segments in {
                 ("v1", "platform", "capabilities"),

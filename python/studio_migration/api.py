@@ -40,6 +40,11 @@ def _benchmark_from_payload(value: object, label: str) -> BenchmarkResult:
         )
     ):
         raise ValueError(f"{label} benchmark has invalid fields")
+    runtime_digest = value.get("runtime_build_fingerprint")
+    if runtime_digest is not None and (
+        not isinstance(runtime_digest, str) or not runtime_digest.strip()
+    ):
+        raise ValueError(f"{label} benchmark has invalid runtime build fingerprint")
     return BenchmarkResult(
         value["name"],
         value["warmup_runs"],
@@ -47,6 +52,7 @@ def _benchmark_from_payload(value: object, label: str) -> BenchmarkResult:
         tuple(float(item) for item in durations),
         float(value["median_ms"]),
         value["fingerprint"],
+        runtime_digest,
     )
 
 

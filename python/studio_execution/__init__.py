@@ -32,6 +32,19 @@ from .environment_service import (
     EnvironmentServiceError,
     EnvironmentServiceNotFound,
 )
+from .backend import (
+    BackendCapabilities,
+    ExecutionBackend,
+    ExecutionEvidence,
+    InMemoryExecutionBackend,
+    LogBatch,
+    ResourceLimits,
+    WorkloadHandle,
+    WorkloadSpec,
+    WorkloadState,
+    WorkloadStatus,
+)
+from .kubernetes import KubernetesManifestError, render_job
 from .scheduler_http import SqliteWorkflowHTTPAdapter, WorkflowStore
 from .workspace_service import (
     ProjectService,
@@ -272,6 +285,18 @@ class DurableExecutionService:
 
 
 __all__ = (
+    "BackendCapabilities",
+    "ExecutionBackend",
+    "ExecutionEvidence",
+    "InMemoryExecutionBackend",
+    "LogBatch",
+    "ResourceLimits",
+    "WorkloadHandle",
+    "WorkloadSpec",
+    "WorkloadState",
+    "WorkloadStatus",
+    "KubernetesManifestError",
+    "render_job",
     "DurableExecutionService",
     "ProjectService",
     "SqliteWorkflowHTTPAdapter",

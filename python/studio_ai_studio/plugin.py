@@ -2,7 +2,7 @@
 
 from typing import Protocol, cast
 
-from studio_core.plugins import PluginContext, PluginManifest
+from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
 from .ui_manifest import UI_MANIFEST
 
@@ -27,6 +27,7 @@ class AIStudioPlugin:
         isolation="worker",
         ui_entry="studio_ai_studio.ui_manifest:UI_MANIFEST",
         config_schema="config/ai-studio.schema.json",
+        surface_ids=("ai-studio.models.v1", "ai-studio.invoke.v1"),
     )
 
     def __init__(self) -> None:
@@ -45,12 +46,41 @@ class AIStudioPlugin:
             self.list_models,
             permission="ai-studio:read",
         )
+        context.contributions.add_surface(
+            SurfaceContribution(
+                id="ai-studio.models.v1",
+                plugin_id=context.plugin_id,
+                namespace="ai-studio",
+                command="models",
+                operation_id="ai-studio.models.v1",
+                capability="ai-studio.discovery",
+                permission="ai-studio:read",
+                path="/v1/workspaces/{workspace_id}/ai-studio/models",
+                method="GET",
+                output_schema={"type": "object"},
+            )
+        )
         context.contributions.add_route(
             "POST",
             "/v1/workspaces/{workspace_id}/ai-studio/invoke",
             context.plugin_id,
             self.invoke,
             permission="ai-studio:invoke",
+        )
+        context.contributions.add_surface(
+            SurfaceContribution(
+                id="ai-studio.invoke.v1",
+                plugin_id=context.plugin_id,
+                namespace="ai-studio",
+                command="invoke",
+                operation_id="ai-studio.invoke.v1",
+                capability="ai-studio.proxy",
+                permission="ai-studio:invoke",
+                path="/v1/workspaces/{workspace_id}/ai-studio/invoke",
+                method="POST",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
+            )
         )
 
     def startup(self) -> None:

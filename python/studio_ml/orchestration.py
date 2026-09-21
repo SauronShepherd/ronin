@@ -8,7 +8,7 @@ from threading import Lock
 from typing import Literal, Protocol
 
 from .domain import Lab
-from .runner import ExperimentResult, LocalExperimentRunner
+from .runner import ClusteringResult, ExperimentResult, LocalExperimentRunner
 
 RunState = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 
@@ -17,7 +17,7 @@ RunState = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 class ExecutionSnapshot:
     run_id: str
     state: RunState
-    result: ExperimentResult | None = None
+    result: ExperimentResult | ClusteringResult | None = None
     error: str | None = None
     result_payload: dict[str, object] | None = None
 
@@ -60,7 +60,7 @@ class LocalExecutionCoordinator:
         self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="ronin-ml")
         self._lock = Lock()
         self._snapshots: dict[str, ExecutionSnapshot] = {}
-        self._futures: dict[str, Future[ExperimentResult]] = {}
+        self._futures: dict[str, Future[object]] = {}
 
     def submit(self, run_id: str, lab: Lab, rows: list[dict[str, object]]) -> ExecutionSnapshot:
         with self._lock:
@@ -76,14 +76,18 @@ class LocalExecutionCoordinator:
             self._futures[run_id] = future
             return self._snapshots[run_id]
 
-    def _execute(self, run_id: str, lab: Lab, rows: list[dict[str, object]]) -> ExperimentResult:
+    def _execute(self, run_id: str, lab: Lab, rows: list[dict[str, object]]) -> object:
         with self._lock:
             if self._snapshots[run_id].state == "cancelled":
                 raise RuntimeError("execution cancelled before start")
             self._snapshots[run_id] = ExecutionSnapshot(run_id, "running")
             self._store.put(self._snapshots[run_id])
         try:
-            result = self._runner.run(lab, rows)
+            result: ExperimentResult | ClusteringResult
+            if lab.task == "clustering":
+                result = self._runner.run_clustering_result(lab, rows)
+            else:
+                result = self._runner.run(lab, rows)
         except Exception as exc:
             with self._lock:
                 self._snapshots[run_id] = ExecutionSnapshot(run_id, "failed", error=str(exc))

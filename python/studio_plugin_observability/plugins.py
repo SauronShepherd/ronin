@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from studio_core.plugins import PluginContext, PluginManifest
+from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
 from .buffer import LocalObservabilityBuffer
 
@@ -19,6 +19,7 @@ class LoggingPlugin:
         edition="community",
         capabilities=("logging.local", "tracing.local"),
         permissions=("logging:read",),
+        surface_ids=("observability.logs.v1", "observability.traces.v1"),
     )
 
     def __init__(self, buffer: LocalObservabilityBuffer | None = None) -> None:
@@ -35,6 +36,21 @@ class LoggingPlugin:
         context.contributions.add_route(
             "GET", "/v1/platform/traces", context.plugin_id, self.traces, permission="logging:read"
         )
+        for contribution in (
+            SurfaceContribution(
+                id="observability.logs.v1", plugin_id=context.plugin_id,
+                namespace="observability", command="logs", operation_id="observability.logs.v1",
+                capability="logging.local", permission="logging:read",
+                path="/v1/platform/logs", method="GET", output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="observability.traces.v1", plugin_id=context.plugin_id,
+                namespace="observability", command="traces", operation_id="observability.traces.v1",
+                capability="tracing.local", permission="logging:read",
+                path="/v1/platform/traces", method="GET", output_schema={"type": "object"},
+            ),
+        ):
+            context.contributions.add_surface(contribution)
 
     def startup(self) -> None:
         self.started = True
@@ -59,6 +75,7 @@ class MonitoringPlugin:
         edition="community",
         capabilities=("monitoring.local",),
         permissions=("monitoring:read",),
+        surface_ids=("observability.metrics.v1",),
     )
 
     def __init__(self, buffer: LocalObservabilityBuffer | None = None) -> None:
@@ -75,6 +92,14 @@ class MonitoringPlugin:
             context.plugin_id,
             self.metrics,
             permission="monitoring:read",
+        )
+        context.contributions.add_surface(
+            SurfaceContribution(
+                id="observability.metrics.v1", plugin_id=context.plugin_id,
+                namespace="observability", command="metrics", operation_id="observability.metrics.v1",
+                capability="monitoring.local", permission="monitoring:read",
+                path="/v1/platform/metrics", method="GET", output_schema={"type": "object"},
+            )
         )
 
     def startup(self) -> None:

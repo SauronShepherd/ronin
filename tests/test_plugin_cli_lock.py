@@ -29,3 +29,12 @@ def test_plugins_rollback_restores_snapshot(tmp_path: Path, capsys) -> None:
 
     assert target.read_text(encoding="utf-8") == snapshot.read_text(encoding="utf-8")
     assert "plugin lock restored" in capsys.readouterr().out
+
+
+def test_plugins_surfaces_is_machine_readable(capsys) -> None:
+    assert main(["plugins", "surfaces"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert set(payload) == {"surfaces", "cli", "client_operations"}
+    assert isinstance(payload["surfaces"], list)
+    assert isinstance(payload["cli"], list)
+    assert isinstance(payload["client_operations"], list)

@@ -7,10 +7,17 @@ import json
 from typing import Any
 
 from studio_core.operators import builtin_operator_catalog
-from studio_core.plugins import PluginContext, PluginDependency, PluginManifest
+from studio_core.plugins import (
+    PluginContext,
+    PluginDependency,
+    PluginManifest,
+    SurfaceContribution,
+)
 
 from .compilations import SqliteCompilationStore
 from .compiler import compile_pipeline
+from .debugger import DebuggerService
+from .ide import IdeCell
 from .execution import plan_pipeline_execution
 from .previews import preview_pipeline
 from .revisions import RevisionApplication
@@ -53,6 +60,14 @@ class DataEnginerringStudioPlugin:
             "data-engineering.schema-drift-detected.v1",
         ),
         migration_ids=("data-engineering.schema.v1",),
+        surface_ids=(
+            "data-engineering.health.v1",
+            "data-engineering.validate.v1",
+            "data-engineering.preview.v1",
+            "data-engineering.debugger.create.v1",
+            "data-engineering.debugger.get.v1",
+            "data-engineering.debugger.breakpoint.v1",
+        ),
         ui_entry="studio_data_engineering.ui",
         config_schema="studio_data_engineering/config.schema.json",
     )
@@ -62,6 +77,7 @@ class DataEnginerringStudioPlugin:
         self.context: PluginContext | None = None
         self._revisions: RevisionApplication | None = None
         self._compilations: SqliteCompilationStore | None = None
+        self._debugger = DebuggerService()
 
     def register(self, context: PluginContext) -> None:
         self.context = context
@@ -82,11 +98,79 @@ class DataEnginerringStudioPlugin:
             permission="data-engineering:read",
         )
         context.contributions.add_route(
+            "POST", "/v1/data-engineering/debugger/sessions", context.plugin_id,
+            self.debugger_create, permission="data-engineering:read"
+        )
+        context.contributions.add_route(
+            "GET", "/v1/data-engineering/debugger/sessions/{session_id}", context.plugin_id,
+            self.debugger_get, permission="data-engineering:read"
+        )
+        context.contributions.add_route(
+            "POST", "/v1/data-engineering/debugger/sessions/{session_id}/breakpoints/{cell_id}",
+            context.plugin_id, self.debugger_breakpoint, permission="data-engineering:read"
+        )
+        context.contributions.add_surface(
+            SurfaceContribution(
+                id="data-engineering.health.v1",
+                plugin_id=context.plugin_id,
+                namespace="data-engineering",
+                command="health",
+                operation_id="data-engineering.health.v1",
+                capability="data-engineering.projects.v1",
+                permission="data-engineering:read",
+                path="/v1/data-engineering/health",
+                method="GET",
+                output_schema={"type": "object"},
+            )
+        )
+        for contribution in (
+            SurfaceContribution(
+                id="data-engineering.debugger.create.v1", plugin_id=context.plugin_id,
+                namespace="debugger", command="create",
+                operation_id="data-engineering.debugger.create.v1",
+                capability="data-engineering.pipelines.v1", permission="data-engineering:read",
+                path="/v1/data-engineering/debugger/sessions", method="POST",
+                input_schema={"type": "object"}, output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="data-engineering.debugger.get.v1", plugin_id=context.plugin_id,
+                namespace="debugger", command="get",
+                operation_id="data-engineering.debugger.get.v1",
+                capability="data-engineering.pipelines.v1", permission="data-engineering:read",
+                path="/v1/data-engineering/debugger/sessions/{session_id}", method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="data-engineering.debugger.breakpoint.v1", plugin_id=context.plugin_id,
+                namespace="debugger", command="breakpoint",
+                operation_id="data-engineering.debugger.breakpoint.v1",
+                capability="data-engineering.pipelines.v1", permission="data-engineering:read",
+                path="/v1/data-engineering/debugger/sessions/{session_id}/breakpoints/{cell_id}", method="POST",
+                output_schema={"type": "object"},
+            ),
+        ):
+            context.contributions.add_surface(contribution)
+        context.contributions.add_route(
             "GET",
             "/v1/data-engineering/runtimes",
             context.plugin_id,
             self.list_runtimes,
             permission="data-engineering:read",
+        )
+        context.contributions.add_surface(
+            SurfaceContribution(
+                id="data-engineering.validate.v1",
+                plugin_id=context.plugin_id,
+                namespace="data-engineering",
+                command="validate",
+                operation_id="data-engineering.validate.v1",
+                capability="data-engineering.pipelines.v1",
+                permission="data-engineering:read",
+                path="/v1/data-engineering/pipelines/validate",
+                method="POST",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
+            )
         )
         context.contributions.add_route(
             "POST",
@@ -101,6 +185,21 @@ class DataEnginerringStudioPlugin:
             context.plugin_id,
             self.preview_pipeline,
             permission="data-engineering:execute",
+        )
+        context.contributions.add_surface(
+            SurfaceContribution(
+                id="data-engineering.preview.v1",
+                plugin_id=context.plugin_id,
+                namespace="data-engineering",
+                command="preview",
+                operation_id="data-engineering.preview.v1",
+                capability="data-engineering.preview.v1",
+                permission="data-engineering:execute",
+                path="/v1/data-engineering/pipelines/preview",
+                method="POST",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
+            )
         )
         context.contributions.add_route(
             "POST",
@@ -166,6 +265,22 @@ class DataEnginerringStudioPlugin:
                 ],
             },
         )
+
+    def debugger_create(self, *, body: object | None = None, **_kwargs: Any) -> dict[str, object]:
+        if not isinstance(body, dict) or not isinstance(body.get("session_id"), str):
+            raise ValueError("debugger session requires session_id")
+        cells = tuple(
+            IdeCell(str(item["cell_id"]), str(item.get("source", "")))
+            for item in body.get("cells", [])
+            if isinstance(item, dict) and "cell_id" in item
+        )
+        return self._debugger.create(str(body["session_id"]), cells).to_payload()
+
+    def debugger_get(self, session_id: str, **_kwargs: Any) -> dict[str, object]:
+        return self._debugger.get(session_id).to_payload()
+
+    def debugger_breakpoint(self, session_id: str, cell_id: str, **_kwargs: Any) -> dict[str, object]:
+        return self._debugger.breakpoint(session_id, cell_id).to_payload()
 
     def startup(self) -> None:
         self.started = True

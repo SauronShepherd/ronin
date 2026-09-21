@@ -2,9 +2,21 @@
 	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-storage-files-full coverage-tools mutation performance \
 	canonical-json-check runner-protocol-check dependency-surfaces-check
 
+release-evidence-validate:
+	python -m tools.release_evidence validate $(BUNDLE)
+
+release-evidence-merge:
+	python -m tools.release_evidence merge $(OUTPUT) $(BUNDLES)
+
+cloud-studio-floci:
+	python -m tools.cloud_studio_floci_qualification $(ARGS)
+
+capability-status-check:
+	python -m tools.capability_status docs/product/public-v1-status.json
+
 CODE_PATHS := python tests tools packages docker
 
-check: format lint typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget canonical-json-check runner-protocol-check test performance
+check: format lint typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget canonical-json-check runner-protocol-check capability-status-check test performance
 
 route-consistency:
 	PYTHONPATH=python python -m tools.route_consistency

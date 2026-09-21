@@ -419,16 +419,6 @@
         }
       }
     },
-    "/v1/ml-studio/backends": {
-      "get": {
-        "operationId": "listMlStudioBackends",
-        "responses": {
-          "200": {"description": "Available ML backends and capabilities", "content": {"application/json": {"schema": {"type": "object", "required": ["schema", "items"]}}}},
-          "401": {"$ref": "#/components/responses/Error"},
-          "403": {"$ref": "#/components/responses/Error"}
-        }
-      }
-    },
     "/v1/ml-studio/labs": {
       "get": {
         "operationId": "listMlStudioLabs",
@@ -519,7 +509,7 @@
     },
     "schemas": {
       "PluginDiagnosticsPage": {
-        "type": "object", "additionalProperties": false, "required": ["items"],
+        "type": "object", "additionalProperties": false, "required": ["items", "surfaces", "cli", "client_operations"],
         "properties": {
           "items": {
             "type": "array",
@@ -534,7 +524,61 @@
                 "error": {"type": ["string", "null"]}
               }
             }
+          },
+          "surfaces": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/PluginSurface"}
+          },
+          "cli": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/PluginCliContribution"}
+          },
+          "client_operations": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/PluginClientOperation"}
           }
+        }
+      },
+      "PluginCliContribution": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "namespace", "command", "operation_id", "options"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "namespace": {"type": "string", "minLength": 1, "maxLength": 128},
+          "command": {"type": "string", "minLength": 1, "maxLength": 128},
+          "operation_id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "options": {"type": "array", "items": {"type": "string"}}
+        }
+      },
+      "PluginClientOperation": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "operation_id", "transport", "path", "method"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "operation_id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "transport": {"type": "string", "enum": ["http", "worker", "in_process"]},
+          "path": {"type": "string", "maxLength": 512},
+          "method": {"type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]}
+        }
+      },
+      "PluginSurface": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "plugin_id", "namespace", "command", "operation_id", "capability", "permission", "transport", "api_version", "path", "method"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "plugin_id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "namespace": {"type": "string", "minLength": 1, "maxLength": 128},
+          "command": {"type": "string", "minLength": 1, "maxLength": 128},
+          "operation_id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "capability": {"type": "string", "minLength": 1, "maxLength": 256},
+          "permission": {"type": "string", "minLength": 1, "maxLength": 256},
+          "transport": {"type": "string", "enum": ["http", "worker", "in_process"]},
+          "api_version": {"type": "string", "minLength": 1, "maxLength": 32},
+          "path": {"type": "string", "minLength": 1, "maxLength": 512},
+          "method": {"type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]},
+          "input_schema": {"type": "object"},
+          "output_schema": {"type": "object"},
+          "options": {"type": "array", "items": {"type": "object"}}
         }
       },
       "LocalObservabilityPage": {

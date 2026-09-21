@@ -3,7 +3,7 @@
 import os
 from typing import Any
 
-from studio_core.plugins import PluginContext, PluginManifest
+from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
 from .backends import create_backend, terraform_provider_config
 from .engine import (
@@ -31,6 +31,12 @@ class CloudStudioPlugin:
         ),
         permissions=("cloud-studio:read", "cloud-studio:write"),
         ui_entry="cloud-studio",
+        surface_ids=(
+            "cloud-studio.catalog.v1",
+            "cloud-studio.validate.v1",
+            "cloud-studio.plan.v1",
+            "cloud-studio.terraform.v1",
+        ),
     )
 
     def __init__(
@@ -70,6 +76,37 @@ class CloudStudioPlugin:
             self.catalog,
             permission="cloud-studio:read",
         )
+        for contribution in (
+            SurfaceContribution(
+                id="cloud-studio.catalog.v1", plugin_id=context.plugin_id,
+                namespace="cloud-studio", command="catalog",
+                operation_id="cloud-studio.catalog.v1", capability="cloud-studio.catalog",
+                permission="cloud-studio:read", path="/v1/cloud-studio/catalog", method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="cloud-studio.validate.v1", plugin_id=context.plugin_id,
+                namespace="cloud-studio", command="validate",
+                operation_id="cloud-studio.validate.v1", capability="cloud-studio.topology",
+                permission="cloud-studio:read", path="/v1/cloud-studio/validate", method="POST",
+                input_schema={"type": "object"}, output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="cloud-studio.plan.v1", plugin_id=context.plugin_id,
+                namespace="cloud-studio", command="plan",
+                operation_id="cloud-studio.plan.v1", capability="cloud-studio.emulator",
+                permission="cloud-studio:read", path="/v1/cloud-studio/plan", method="POST",
+                input_schema={"type": "object"}, output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="cloud-studio.terraform.v1", plugin_id=context.plugin_id,
+                namespace="cloud-studio", command="terraform",
+                operation_id="cloud-studio.terraform.v1", capability="cloud-studio.terraform",
+                permission="cloud-studio:read", path="/v1/cloud-studio/terraform", method="POST",
+                input_schema={"type": "object"}, output_schema={"type": "object"},
+            ),
+        ):
+            context.contributions.add_surface(contribution)
         context.contributions.add_route(
             "POST",
             "/v1/cloud-studio/validate",

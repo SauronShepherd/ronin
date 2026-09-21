@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from studio_core.plugins import PluginContext, PluginManifest
+from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
 from .resources import load_config_schema, load_ui_manifest
 from .service import analyze_http, analyze_performance
@@ -24,6 +24,7 @@ class PerformancePlugin:
         job_types=("performance.analyze",),
         ui_entry="ronin_plugin_performance/ui_manifest.json",
         config_schema="ronin.performance/config-v1",
+        surface_ids=("performance.analyze.v1",),
     )
 
     def register(self, context: PluginContext) -> None:
@@ -41,6 +42,21 @@ class PerformancePlugin:
             PLUGIN_ID,
             analyze_http,
             permission="performance:analyze",
+        )
+        context.contributions.add_surface(
+            SurfaceContribution(
+                id="performance.analyze.v1",
+                plugin_id=PLUGIN_ID,
+                namespace="performance",
+                command="analyze",
+                operation_id="performance.analyze.v1",
+                capability="performance.analysis",
+                permission="performance:analyze",
+                path="/api/v1/performance/analyze",
+                method="POST",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
+            )
         )
         context.contributions.add_ui(
             PLUGIN_ID,

@@ -1,14 +1,14 @@
 # Ronin plugin authoring
 
 Ronin loads plugins through the `ronin.plugins.v1` Python entry-point group.
-Community plugins run locally and must depend only on public contracts and
-the plugin SDK. Ronin Pro may add private plugins in its own repository, but
-must not import Ronin internals or add commercial branches to this repository.
+Plugins run locally and must depend only on public contracts and the plugin SDK.
+This repository defines Ronin OSS; commercial distributions are outside its
+scope and must not add branches or conditionals here.
 
 ## Minimal plugin
 
 ```python
-from studio_plugin_sdk import PluginContext, PluginManifest
+from studio_plugin_sdk import PluginContext, PluginManifest, SurfaceContribution
 
 
 class ExamplePlugin:
@@ -19,8 +19,9 @@ class ExamplePlugin:
         plugin_api="1.0",
         host_requires=">=1,<2",
         edition="third-party",
-        capabilities=("example.read",),
-        permissions=("example:read",),
+    capabilities=("example.read",),
+    permissions=("example:read",),
+    surface_ids=("example.get.v1",),
     )
 
     def register(self, context: PluginContext) -> None:
@@ -28,6 +29,18 @@ class ExamplePlugin:
             "GET", "/v1/example", context.plugin_id, self.get,
             permission="example:read",
         )
+        context.contributions.add_surface(SurfaceContribution(
+            id="example.get.v1",
+            plugin_id=context.plugin_id,
+            namespace="example",
+            command="get",
+            operation_id="example.get.v1",
+            capability="example.read",
+            permission="example:read",
+            path="/v1/example",
+            method="GET",
+            output_schema={"type": "object"},
+        ))
 
     def startup(self) -> None:
         pass
@@ -55,6 +68,9 @@ example = "example_plugin:factory"
 - `register()` declares contributions only; it must not perform I/O.
 - Startup/shutdown must be bounded and repeatable.
 - Every route permission must be declared by the same manifest.
+- Every surface capability and permission must be owned by the same plugin.
+- Every surface ID must be declared in `surface_ids`; surfaces publish the
+  stable CLI/SDK operation ID, HTTP/worker binding and input/output schemas.
 - Capabilities, job types, event types, migrations and UI contributions must
   be declared in the manifest where applicable.
 - Route collisions, duplicate IDs and duplicate owners reject composition.
@@ -126,10 +142,9 @@ bounded payloads, heartbeats, cancellation and retryable error categories.
 Cloud SDKs and credentials belong in the worker/plugin distribution, never in
 the Ronin HTTP process.
 
-## Ronin Pro boundary
+## OSS boundary
 
-Ronin Pro may implement public ports and add private capabilities, routes,
-workers, migrations and UI. It must depend on published Ronin contracts/SDK,
-keep its own lockfile and license policy, and never import private modules,
-touch another plugin's tables, bypass audit/telemetry or add `if PRO` branches
-to community code.
+Ronin OSS is the only product contract in this repository. Extensions must use
+the public plugin SDK, remain independently installable, and never import
+private modules, touch another plugin's tables, bypass authorization/audit, or
+add product-edition conditionals to host code.

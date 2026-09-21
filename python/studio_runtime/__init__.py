@@ -218,7 +218,8 @@ class PluginHost:
         if self.plan is None:
             return {
                 "capabilities": {}, "permissions": {}, "routes": [], "jobs": [],
-                "events": [], "migrations": [], "ui": [],
+                "events": [], "migrations": [], "ui": [], "surfaces": [],
+                "cli": [], "client_operations": [],
             }
         contributions = self.plan.contributions
         return {
@@ -228,6 +229,7 @@ class PluginHost:
                 {
                     "method": item.method,
                     "path": item.path,
+                    "method": item.method.upper(),
                     "plugin_id": item.plugin_id,
                     "permission": item.permission,
                 }
@@ -248,6 +250,42 @@ class PluginHost:
             "ui": [
                 {"plugin_id": item.plugin_id, "manifest": dict(item.manifest)}
                 for item in contributions.ui_registry.items
+            ],
+            "surfaces": [
+                {
+                    "id": item.id,
+                    "plugin_id": item.plugin_id,
+                    "namespace": item.namespace,
+                    "command": item.command,
+                    "operation_id": item.operation_id,
+                    "capability": item.capability,
+                    "permission": item.permission,
+                    "input_schema": dict(item.input_schema),
+                    "output_schema": dict(item.output_schema),
+                    "options": [
+                        {
+                            "name": option.name,
+                            "schema": dict(option.schema),
+                            "required": option.required,
+                            "secret": option.secret,
+                        }
+                        for option in item.options
+                    ],
+                    "transport": item.transport,
+                    "api_version": item.api_version,
+                    "path": item.path,
+                }
+                for item in contributions.surface_registry.items
+            ],
+            "cli": [
+                {"id": item.id, "namespace": item.namespace, "command": item.command,
+                 "operation_id": item.operation_id, "options": [option.name for option in item.options]}
+                for item in contributions.cli_registry.items
+            ],
+            "client_operations": [
+                {"id": item.id, "operation_id": item.operation_id, "transport": item.transport,
+                 "path": item.path, "method": item.method.upper()}
+                for item in contributions.client_operation_registry.items
             ],
             "settings": {
                 "values": self.settings_registry.redacted(),

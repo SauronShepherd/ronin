@@ -13,6 +13,10 @@ from studio_core.plugins import (
     PluginRecord,
     PluginState,
     RoninPlugin,
+    CliContributionRegistry,
+    ClientOperationRegistry,
+    SurfaceContribution,
+    SurfaceOption,
 )
 
 __all__ = (
@@ -25,5 +29,9 @@ __all__ = (
     "PluginRecord",
     "PluginState",
     "RoninPlugin",
+    "CliContributionRegistry",
+    "ClientOperationRegistry",
+    "SurfaceContribution",
+    "SurfaceOption",
     "new_event",
 )

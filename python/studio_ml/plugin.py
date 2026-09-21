@@ -7,7 +7,7 @@ from typing import Any, cast
 from urllib.parse import parse_qs
 
 from studio_core import WorkspaceId
-from studio_core.plugins import PluginContext, PluginManifest
+from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
 from .backends import default_backends
 from .domain import Lab
@@ -16,7 +16,13 @@ from .orchestration import LocalExecutionCoordinator
 from .quality import profile_and_validate
 from .runner import LocalExperimentRunner
 from .runtime import TrainingSpec
-from .service import persist_experiment_result, predict_registered_tabular, train_register_tabular
+from .service import (
+    persist_clustering_result,
+    persist_experiment_result,
+    predict_registered_tabular,
+    register_clustering_model,
+    train_register_tabular,
+)
 from .services import InMemoryMLLabStore, LabService
 
 
@@ -35,6 +41,12 @@ class MachineLearningStudioPlugin:
         ),
         permissions=("ml-studio:read", "ml-studio:write", "ml-studio:execute"),
         ui_entry="ml-studio",
+        surface_ids=(
+            "ml-studio.backends.v1",
+            "ml-studio.labs.v1",
+            "ml-studio.run.v1",
+            "ml-studio.models.v1",
+        ),
     )
 
     def __init__(self) -> None:
@@ -73,6 +85,38 @@ class MachineLearningStudioPlugin:
             self.list_labs,
             permission="ml-studio:read",
         )
+
+        for contribution in (
+            SurfaceContribution(
+                id="ml-studio.backends.v1", plugin_id=context.plugin_id,
+                namespace="ml-studio", command="backends",
+                operation_id="ml-studio.backends.v1", capability="ml-studio.backends",
+                permission="ml-studio:read", path="/v1/ml-studio/backends", method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="ml-studio.labs.v1", plugin_id=context.plugin_id,
+                namespace="ml-studio", command="list-labs",
+                operation_id="ml-studio.labs.v1", capability="ml-studio.labs",
+                permission="ml-studio:read", path="/v1/ml-studio/labs", method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="ml-studio.run.v1", plugin_id=context.plugin_id,
+                namespace="ml-studio", command="run",
+                operation_id="ml-studio.run.v1", capability="ml-studio.experiments",
+                permission="ml-studio:execute", path="/v1/ml-studio/labs/{lab_id}/runs", method="POST",
+                input_schema={"type": "object"}, output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="ml-studio.models.v1", plugin_id=context.plugin_id,
+                namespace="ml-studio", command="models",
+                operation_id="ml-studio.models.v1", capability="ml-studio.models",
+                permission="ml-studio:read", path="/v1/ml-studio/models", method="GET",
+                output_schema={"type": "object"},
+            ),
+        ):
+            context.contributions.add_surface(contribution)
         context.contributions.add_route(
             "POST",
             "/v1/ml-studio/labs",
@@ -372,7 +416,37 @@ class MachineLearningStudioPlugin:
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
         if lab.task == "clustering":
             result = self._runner.run_clustering_result(lab, rows)
-            return result.to_payload()
+            payload = result.to_payload()
+            if self._registry is not None and self._artifacts is not None:
+                from studio_core.ml import MLRunId
+
+                run = persist_clustering_result(
+                    self._registry,
+                    self._artifacts,
+                    WorkspaceId(workspace_id),
+                    lab,
+                    result,
+                    run_id=MLRunId(str(body.get("run_id", f"run-{lab_id}"))),
+                    execution_ref=str(body.get("execution_ref", "ml-studio-local")),
+                    source_revision=str(body.get("source_revision", "local")),
+                    now="plugin",
+                )
+                payload["run"] = run.to_payload()
+                registration = body.get("register")
+                if registration is not None:
+                    if not isinstance(registration, dict):
+                        raise ValueError("register must be an object")
+                    from studio_core.ml import ModelId, ModelVersion
+
+                    model = register_clustering_model(
+                        self._registry, self._artifacts, WorkspaceId(workspace_id), lab, result,
+                        run_id=MLRunId(run.id.value),
+                        model_id=ModelId(str(registration.get("model_id", lab.id))),
+                        model_version=ModelVersion(str(registration.get("version", "candidate-1"))),
+                        now="plugin",
+                    )
+                    payload["model"] = model.to_payload()
+            return payload
         result = self._runner.run(lab, rows)
         payload = result.to_payload()
         if self._registry is not None:

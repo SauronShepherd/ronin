@@ -13,6 +13,31 @@ from studio_core.canonical_json import encode as encode_canonical_json
 
 
 @dataclass(frozen=True, slots=True)
+class RuntimeBuildFingerprint:
+    """Exact, non-secret identity required for cross-run comparisons."""
+
+    engine: str
+    version: str
+    build_id: str
+    image_digest: str = ""
+
+    def __post_init__(self) -> None:
+        for value, label in ((self.engine, "engine"), (self.version, "version"), (self.build_id, "build_id")):
+            if not value or value != value.strip():
+                raise ValueError(f"runtime fingerprint {label} must be non-empty and trimmed")
+
+    def to_payload(self) -> dict[str, str]:
+        payload = {"engine": self.engine, "version": self.version, "build_id": self.build_id}
+        if self.image_digest:
+            payload["image_digest"] = self.image_digest
+        return payload
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(encode_canonical_json(self.to_payload())).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
 class BenchmarkResult:
     name: str
     warmup_runs: int
@@ -20,6 +45,7 @@ class BenchmarkResult:
     durations_ms: tuple[float, ...]
     median_ms: float
     fingerprint: str
+    runtime_build_fingerprint: str | None = None
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -29,6 +55,7 @@ class BenchmarkResult:
             "durations_ms": list(self.durations_ms),
             "median_ms": self.median_ms,
             "fingerprint": self.fingerprint,
+            **({"runtime_build_fingerprint": self.runtime_build_fingerprint} if self.runtime_build_fingerprint else {}),
         }
 
 
@@ -39,6 +66,7 @@ def benchmark(
     warmup_runs: int = 1,
     measured_runs: int = 5,
     fingerprint_inputs: dict[str, object] | None = None,
+    runtime_build_fingerprint: RuntimeBuildFingerprint | None = None,
 ) -> BenchmarkResult:
     if not name or name != name.strip():
         raise ValueError("benchmark name must be non-empty and trimmed")
@@ -56,6 +84,8 @@ def benchmark(
         "platform": platform.platform(),
         **(fingerprint_inputs or {}),
     }
+    if runtime_build_fingerprint is not None:
+        inputs["runtime_build_fingerprint"] = runtime_build_fingerprint.to_payload()
     fingerprint = hashlib.sha256(encode_canonical_json(inputs)).hexdigest()
     return BenchmarkResult(
         name,
@@ -64,6 +94,7 @@ def benchmark(
         tuple(durations),
         statistics.median(durations),
         fingerprint,
+        runtime_build_fingerprint.digest if runtime_build_fingerprint is not None else None,
     )
 
 
@@ -117,6 +148,14 @@ def decide_promotion(
         raise ValueError("candidate_id must be non-empty and trimmed")
     if max_regression_ratio < 0:
         raise ValueError("max_regression_ratio must be non-negative")
+    if baseline.runtime_build_fingerprint != candidate.runtime_build_fingerprint:
+        return OptimizationDecision(
+            candidate_id,
+            False,
+            "runtime build fingerprints are incompatible",
+            baseline.median_ms,
+            candidate.median_ms,
+        )
     if baseline.fingerprint != candidate.fingerprint:
         return OptimizationDecision(
             candidate_id,
@@ -154,6 +193,7 @@ def decide_promotion(
 
 __all__ = (
     "BenchmarkResult",
+    "RuntimeBuildFingerprint",
     "OptimizationDecision",
     "benchmark",
     "decide_promotion",

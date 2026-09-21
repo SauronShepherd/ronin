@@ -2,6 +2,7 @@
 
 from .compilations import SqliteCompilationStore, publish_pending_compilation_events
 from .compiler import CompilationReport, CompileDiagnostic, compile_pipeline
+from .debugger import DebugSnapshot, DebuggerService, snapshot
 from .evidence import persist_pipeline_evidence
 from .execution import PipelineExecutionPlan, plan_pipeline_execution
 from .execution_bridge import (
@@ -27,6 +28,9 @@ __all__ = (
     "CompilationReport",
     "DataEnginerringStudioPlugin",
     "compile_pipeline",
+    "DebugSnapshot",
+    "DebuggerService",
+    "snapshot",
     "SqliteCompilationStore",
     "publish_pending_compilation_events",
     "PipelineExecutionPlan",

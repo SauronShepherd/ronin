@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import pytest
 from studio_core.plugins import (
+    ContributionRegistry,
     PluginCompatibilityError,
     PluginDependency,
     PluginManager,
     PluginManifest,
     PluginState,
     PluginValidationError,
+    SurfaceContribution,
+    SurfaceContributionRegistry,
+    SurfaceOption,
 )
 from studio_plugin_workspaces import WorkspacesPlugin
 from studio_runtime import discover_plugins
@@ -28,6 +32,18 @@ def test_community_plugin_composes_and_starts() -> None:
         ("PUT", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
         ("DELETE", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
         ("GET", "/v1/workspaces/{workspace_id}/projects"),
+    ]
+    assert [item.id for item in plan.contributions.cli_registry.items] == [
+        "projects.create.v1",
+        "projects.get.v1",
+        "projects.list.v1",
+        "workspaces.list.v1",
+    ]
+    assert [item.operation_id for item in plan.contributions.client_operation_registry.items] == [
+        "projects.create.v1",
+        "projects.get.v1",
+        "projects.list.v1",
+        "workspaces.list.v1",
     ]
     assert plan.contributions.permissions == {
         "workspaces:read": "com.sauronshepherd.ronin.workspaces",
@@ -167,6 +183,89 @@ def test_workspace_plugin_delegates_to_injected_service() -> None:
         }
     ]
     manager.stop(plan)
+
+
+def test_surface_contributions_are_sorted_and_collision_safe() -> None:
+    registry = SurfaceContributionRegistry()
+    registry.add(
+        SurfaceContribution(
+            id="com.example.z.inspect",
+            plugin_id="com.example.z",
+            namespace="z",
+            command="inspect",
+            operation_id="z.inspect.v1",
+            capability="z:read",
+            permission="z:read",
+            options=(SurfaceOption("limit", {"type": "integer"}),),
+            path="/v1/z/inspect",
+        )
+    )
+    registry.add(
+        SurfaceContribution(
+            id="com.example.a.inspect",
+            plugin_id="com.example.a",
+            namespace="a",
+            command="inspect",
+            operation_id="a.inspect.v1",
+            capability="a:read",
+            permission="a:read",
+            path="/v1/a/inspect",
+        )
+    )
+
+    assert [item.id for item in registry.items] == [
+        "com.example.a.inspect",
+        "com.example.z.inspect",
+    ]
+    with pytest.raises(PluginValidationError, match="surface command collision"):
+        registry.add(
+            SurfaceContribution(
+                id="com.example.a.other",
+                plugin_id="com.example.a",
+                namespace="a",
+                command="inspect",
+                operation_id="a.other.v1",
+                capability="a:read",
+                permission="a:read",
+                path="/v1/a/inspect",
+            )
+        )
+
+
+def test_surface_contribution_rejects_duplicate_options() -> None:
+    with pytest.raises(PluginValidationError, match="duplicate surface option"):
+        SurfaceContribution(
+            id="com.example.inspect",
+            plugin_id="com.example",
+            namespace="example",
+            command="inspect",
+            operation_id="example.inspect.v1",
+            capability="example:read",
+            permission="example:read",
+            options=(
+                SurfaceOption("format", {"type": "string"}),
+                SurfaceOption("format", {"type": "string"}),
+            ),
+            path="/v1/example/inspect",
+        ).validate()
+
+
+def test_surface_requires_owned_capability_and_permission() -> None:
+    registry = ContributionRegistry()
+    registry.add_capability("example.read", "com.example")
+    registry.add_permission("example:read", "com.example")
+    contribution = SurfaceContribution(
+        id="com.example.inspect",
+        plugin_id="com.other",
+        namespace="example",
+        command="inspect",
+        operation_id="example.inspect.v1",
+        capability="example.read",
+        permission="example:read",
+        path="/v1/example/inspect",
+    )
+    with pytest.raises(PluginValidationError, match="surface capability"):
+        registry.add_surface(contribution)
 
 
 def __import_record(plugin: WorkspacesPlugin, *, plugin_id: str | None = None):

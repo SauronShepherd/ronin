@@ -119,6 +119,99 @@ def test_client_retries_with_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
     assert sleeps == [0.25, 0.5]
 
 
+def test_platform_plugins_parses_surface_metadata() -> None:
+    transport = FakeTransport(
+        [
+            {
+                "items": [
+                    {
+                        "id": "com.example.data",
+                        "version": "1.0.0",
+                        "state": "ready",
+                        "error": None,
+                    }
+                ],
+                "surfaces": [
+                    {
+                        "id": "com.example.data.preview",
+                        "plugin_id": "com.example.data",
+                        "namespace": "data",
+                        "command": "preview",
+                        "operation_id": "data.preview.v1",
+                        "capability": "data:read",
+                        "permission": "data:read",
+                        "transport": "http",
+                        "api_version": "1.0",
+                        "path": "/v1/data/preview",
+                        "method": "POST",
+                    }
+                ],
+                "cli": [{
+                    "id": "com.example.data.preview", "namespace": "data",
+                    "command": "preview", "operation_id": "data.preview.v1", "options": ["limit"]
+                }],
+                "client_operations": [{
+                    "id": "com.example.data.preview", "operation_id": "data.preview.v1",
+                    "transport": "http", "path": "/v1/data/preview", "method": "POST"
+                }],
+            }
+        ]
+    )
+    platform = Ronin(transport=transport).platform_plugins()
+    assert platform.items[0].state == "ready"
+    assert platform.surfaces[0].operation_id == "data.preview.v1"
+    assert platform.cli[0].options == ("limit",)
+    assert platform.client_operations[0].method == "POST"
+    assert transport.calls[0][0:2] == ("GET", "/v1/platform/plugins")
+
+
+def test_plugin_client_invokes_advertised_operation() -> None:
+    transport = FakeTransport(
+        [
+            {
+                "items": [],
+                "surfaces": [{
+                    "id": "com.example.data.preview", "plugin_id": "com.example.data",
+                    "namespace": "data", "command": "preview", "operation_id": "data.preview.v1",
+                    "capability": "data:read", "permission": "data:read", "transport": "http",
+                    "api_version": "1.0", "path": "/v1/data/preview", "method": "POST",
+                }],
+            },
+            {"ok": True},
+        ]
+    )
+    result = Ronin(transport=transport).plugin("data").invoke(
+        "data.preview.v1", payload={"limit": 10}
+    )
+    assert result == {"ok": True}
+    assert transport.calls[1][0:3] == ("POST", "/v1/data/preview", {"limit": 10})
+
+
+def test_plugin_client_expands_and_escapes_path_parameters() -> None:
+    transport = FakeTransport(
+        [
+            {"items": [], "surfaces": [{
+                "id": "com.example.run", "plugin_id": "com.example",
+                "namespace": "example", "command": "run", "operation_id": "example.run.v1",
+                "capability": "example.run", "permission": "example:execute", "transport": "http",
+                "api_version": "1.0", "path": "/v1/example/labs/{lab_id}/runs", "method": "POST",
+            }]},
+            {"id": "run-1"},
+        ]
+    )
+    result = Ronin(transport=transport).plugin("example").invoke(
+        "example.run.v1", path_params={"lab_id": "lab/a"}, payload={"x": 1}
+    )
+    assert result == {"id": "run-1"}
+    assert transport.calls[1][1] == "/v1/example/labs/lab%2Fa/runs"
+
+
+def test_platform_plugins_rejects_malformed_surface_metadata() -> None:
+    client = Ronin(transport=FakeTransport([{"items": [], "surfaces": [{"id": "bad"}]}]))
+    with pytest.raises(ProtocolError, match="surface fields"):
+        client.platform_plugins()
+
+
 def test_unsafe_submission_without_idempotency_is_not_retried() -> None:
     transport = HTTPTransport("https://example.test", max_retries=3, backoff_seconds=0)
     opener = _FlakyOpener(failures=3)

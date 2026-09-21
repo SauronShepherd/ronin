@@ -1,4 +1,46 @@
-from studio_migration import benchmark, decide_promotion, promotion_evidence
+from studio_migration import (
+    AnalyzerRegistry,
+    AnalyzerSpec,
+    RuntimeBuildFingerprint,
+    benchmark,
+    decide_promotion,
+    promotion_evidence,
+)
+
+
+def test_analyzer_registry_is_deterministic_and_frozen() -> None:
+    registry = AnalyzerRegistry()
+    registry.add(AnalyzerSpec("pyspark.v1", "1.0", lambda source: ()))
+    assert [item.analyzer_id for item in registry.items] == ["pyspark.v1"]
+    assert registry.analyze("pyspark.v1", "") == ()
+    registry.freeze()
+    try:
+        registry.add(AnalyzerSpec("other.v1", "1.0", lambda source: ()))
+    except ValueError as error:
+        assert str(error) == "analyzer registry is frozen"
+    else:
+        raise AssertionError("frozen analyzer registry accepted a contribution")
+
+
+def test_runtime_build_fingerprint_is_required_for_explicit_comparisons() -> None:
+    runtime = RuntimeBuildFingerprint("spark", "3.5.1", "build-a", "sha256:image")
+    baseline = benchmark(lambda: None, name="orders", measured_runs=1, runtime_build_fingerprint=runtime)
+    candidate = benchmark(
+        lambda: None,
+        name="orders",
+        measured_runs=1,
+        runtime_build_fingerprint=RuntimeBuildFingerprint("spark", "3.5.1", "build-b", "sha256:image"),
+    )
+
+    decision = decide_promotion(
+        "candidate",
+        baseline=baseline,
+        candidate=candidate,
+        semantic_passed=True,
+        quality_passed=True,
+    )
+    assert decision.reason == "runtime build fingerprints are incompatible"
+    assert baseline.to_payload()["runtime_build_fingerprint"] == runtime.digest
 
 
 def test_benchmark_records_median_and_environment_fingerprint() -> None:

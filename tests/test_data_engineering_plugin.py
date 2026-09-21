@@ -30,7 +30,7 @@ def test_data_enginerring_studio_manifest_and_contributions(tmp_path) -> None:
 
     assert plugin.manifest.name == "Data Enginerring Studio"
     assert "data-engineering.ir.v1" in registry.capabilities
-    assert len(registry.routes) == 8
+    assert len(registry.routes) == 11
     assert registry.job_registry.items[0].job_type == "data-engineering.pipeline-run.v1"
     assert registry.ui_registry.items[0].manifest["navigation"][0]["label"] == (
         "Data Enginerring Studio"

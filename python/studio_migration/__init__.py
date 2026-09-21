@@ -1,11 +1,12 @@
 """Deterministic source inventory and migration-report generation."""
 
 from studio_migration.adapters import IICS_ADAPTER_VERSION, discover_iics_zip
-from studio_migration.analysis import Finding, analyze_pyspark
+from studio_migration.analysis import AnalyzerRegistry, AnalyzerSpec, Finding, analyze_pyspark
 from studio_migration.api import MIGRATION_ROUTES, APIResponse, MigrationAPIRouter
 from studio_migration.benchmark import (
     BenchmarkResult,
     OptimizationDecision,
+    RuntimeBuildFingerprint,
     benchmark,
     decide_promotion,
     promotion_evidence,
@@ -112,6 +113,9 @@ __all__ = (
     "Finding",
     "analyze_pyspark",
     "BenchmarkResult",
+    "AnalyzerRegistry",
+    "AnalyzerSpec",
+    "RuntimeBuildFingerprint",
     "OptimizationDecision",
     "benchmark",
     "decide_promotion",

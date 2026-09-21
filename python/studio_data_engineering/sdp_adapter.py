@@ -45,6 +45,16 @@ class SdpImportReport:
     artifact_names: tuple[str, ...]
     lossless: bool
     diagnostics: tuple[str, ...] = ()
+    loss_report: tuple[Mapping[str, str], ...] = ()
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "source_digest": self.source_digest,
+            "artifact_names": list(self.artifact_names),
+            "lossless": self.lossless,
+            "diagnostics": list(self.diagnostics),
+            "loss_report": [dict(item) for item in self.loss_report],
+        }
 
 
 class SdpStudioProvider:
@@ -85,6 +95,7 @@ class SdpStudioProvider:
                 "status": "provider_required",
                 "lossless": report.lossless,
                 "diagnostics": ["install or configure the SDP Studio compiler"],
+                "loss_report": report.to_payload()["loss_report"],
             }
         return {
             "provider": self.provider_id,
@@ -92,6 +103,7 @@ class SdpStudioProvider:
             "status": "valid" if compiled.get("valid", False) else "invalid",
             "lossless": report.lossless,
             "compiled": dict(compiled),
+            "loss_report": report.to_payload()["loss_report"],
         }
 
     def compile(self, source: SdpProjectSource) -> dict[str, object]:

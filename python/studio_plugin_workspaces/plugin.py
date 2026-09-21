@@ -9,7 +9,7 @@ from typing import Any, cast
 
 from studio_core import ProjectId, ProjectManifest, WorkspaceId
 from studio_core.plugin_events import new_event
-from studio_core.plugins import PluginContext, PluginManifest
+from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
 from .ports import WorkspacePort
 from .services import ProjectApplication, WorkspaceApplication, parse_page_query
@@ -35,6 +35,12 @@ class WorkspacesPlugin:
             "projects.project-created.v1",
             "projects.project-updated.v1",
             "projects.project-deleted.v1",
+        ),
+        surface_ids=(
+            "workspaces.list.v1",
+            "projects.list.v1",
+            "projects.create.v1",
+            "projects.get.v1",
         ),
     )
 
@@ -83,6 +89,37 @@ class WorkspacesPlugin:
             self.list_workspaces,
             permission="workspaces:read",
         )
+        for contribution in (
+            SurfaceContribution(
+                id="workspaces.list.v1", plugin_id=context.plugin_id,
+                namespace="workspaces", command="list",
+                operation_id="workspaces.list.v1", capability="workspaces.read",
+                permission="workspaces:read", path="/v1/workspaces", method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="projects.list.v1", plugin_id=context.plugin_id,
+                namespace="projects", command="list",
+                operation_id="projects.list.v1", capability="workspaces.read",
+                permission="workspaces:read", path="/v1/workspaces/{workspace_id}/projects", method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="projects.create.v1", plugin_id=context.plugin_id,
+                namespace="projects", command="create",
+                operation_id="projects.create.v1", capability="workspaces.write",
+                permission="projects:write", path="/v1/workspaces/{workspace_id}/projects", method="POST",
+                input_schema={"type": "object"}, output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="projects.get.v1", plugin_id=context.plugin_id,
+                namespace="projects", command="get",
+                operation_id="projects.get.v1", capability="workspaces.read",
+                permission="projects:read", path="/v1/workspaces/{workspace_id}/projects/{project_id}", method="GET",
+                output_schema={"type": "object"},
+            ),
+        ):
+            context.contributions.add_surface(contribution)
         context.contributions.add_route(
             "POST",
             "/v1/workspaces/{workspace_id}/projects",

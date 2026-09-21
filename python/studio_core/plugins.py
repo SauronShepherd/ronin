@@ -64,6 +64,7 @@ class PluginManifest:
     job_types: tuple[str, ...] = ()
     event_types: tuple[str, ...] = ()
     migration_ids: tuple[str, ...] = ()
+    surface_ids: tuple[str, ...] = ()
     ui_entry: str | None = None
     config_schema: str | None = None
 
@@ -90,6 +91,7 @@ class PluginManifest:
             (self.job_types, "job type"),
             (self.event_types, "event type"),
             (self.migration_ids, "migration id"),
+            (self.surface_ids, "surface id"),
         ):
             if any(not value or value != value.strip() for value in values):
                 raise PluginValidationError(f"invalid {label} in {self.id}")
@@ -165,6 +167,62 @@ class UiContribution:
     manifest: Mapping[str, Any]
 
 
+@dataclass(frozen=True, slots=True)
+class SurfaceOption:
+    """Portable option metadata projected to CLI, SDK and UI surfaces."""
+
+    name: str
+    schema: Mapping[str, Any]
+    required: bool = False
+    secret: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class SurfaceContribution:
+    """Declarative plugin operation; it contains no executable parser state."""
+
+    id: str
+    plugin_id: str
+    namespace: str
+    command: str
+    operation_id: str
+    capability: str
+    permission: str
+    input_schema: Mapping[str, Any] = field(default_factory=dict)
+    output_schema: Mapping[str, Any] = field(default_factory=dict)
+    options: tuple[SurfaceOption, ...] = ()
+    transport: str = "http"
+    api_version: str = "1.0"
+    path: str = ""
+    method: str = "POST"
+
+    def validate(self) -> None:
+        if not self.id or not self.plugin_id or not self.operation_id:
+            raise PluginValidationError("surface contribution identifiers are required")
+        for value, label in (
+            (self.namespace, "namespace"),
+            (self.command, "command"),
+            (self.capability, "capability"),
+            (self.permission, "permission"),
+        ):
+            if not value or value != value.strip() or " " in value:
+                raise PluginValidationError(f"invalid surface {label}: {value!r}")
+        if self.transport not in {"http", "worker", "in_process"}:
+            raise PluginValidationError(f"invalid surface transport: {self.transport}")
+        if self.transport == "http" and (
+            not (self.path.startswith("/v1/") or self.path.startswith("/api/v1/"))
+            or " " in self.path
+        ):
+            raise PluginValidationError(f"HTTP surface requires a versioned API path: {self.id}")
+        if self.method.upper() not in {"GET", "POST", "PUT", "PATCH", "DELETE"}:
+            raise PluginValidationError(f"invalid HTTP surface method: {self.method}")
+        names = [option.name for option in self.options]
+        if any(not name or name.startswith("-") for name in names):
+            raise PluginValidationError(f"invalid surface option in {self.id}")
+        if len(names) != len(set(names)):
+            raise PluginValidationError(f"duplicate surface option in {self.id}")
+
+
 class _FrozenRegistry:
     """Small common lifecycle primitive for composition registries."""
 
@@ -177,6 +235,42 @@ class _FrozenRegistry:
 
     def freeze(self) -> None:
         self._frozen = True
+
+
+class SurfaceContributionRegistry(_FrozenRegistry):
+    """Deterministic registry shared by CLI, SDK and remote metadata."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._items: dict[str, SurfaceContribution] = {}
+        self._commands: dict[tuple[str, str], str] = {}
+        self._operations: dict[str, str] = {}
+
+    def add(self, contribution: SurfaceContribution) -> None:
+        self._assert_mutable()
+        contribution.validate()
+        if contribution.id in self._items:
+            raise PluginValidationError(f"surface contribution collision: {contribution.id}")
+        command_key = (contribution.namespace, contribution.command)
+        if command_key in self._commands:
+            raise PluginValidationError(f"surface command collision: {command_key[0]} {command_key[1]}")
+        if contribution.operation_id in self._operations:
+            raise PluginValidationError(f"surface operation collision: {contribution.operation_id}")
+        self._items[contribution.id] = contribution
+        self._commands[command_key] = contribution.id
+        self._operations[contribution.operation_id] = contribution.id
+
+    @property
+    def items(self) -> tuple[SurfaceContribution, ...]:
+        return tuple(self._items[key] for key in sorted(self._items))
+
+
+class CliContributionRegistry(SurfaceContributionRegistry):
+    """CLI projection of the shared declarative surface contract."""
+
+
+class ClientOperationRegistry(SurfaceContributionRegistry):
+    """SDK/client projection of the shared declarative surface contract."""
 
 
 class CapabilityRegistry(_FrozenRegistry):
@@ -332,6 +426,9 @@ class ContributionRegistry:
         self.event_subscription_registry = EventSubscriptionRegistry()
         self.migration_registry = MigrationRegistry()
         self.ui_registry = UiContributionRegistry()
+        self.surface_registry = SurfaceContributionRegistry()
+        self.cli_registry = CliContributionRegistry()
+        self.client_operation_registry = ClientOperationRegistry()
 
     def _assert_mutable(self) -> None:
         self.capability_registry._assert_mutable()
@@ -365,6 +462,20 @@ class ContributionRegistry:
     def add_ui(self, plugin_id: str, manifest: Mapping[str, Any]) -> None:
         self.ui_registry.add(plugin_id, manifest)
 
+    def add_surface(self, contribution: SurfaceContribution) -> None:
+        capability_owners = self.capability_registry.items
+        if capability_owners and capability_owners.get(contribution.capability) != contribution.plugin_id:
+            raise PluginValidationError(
+                f"surface capability {contribution.capability!r} is not declared by {contribution.plugin_id}"
+            )
+        if not self.permission_registry.owns(contribution.permission, contribution.plugin_id):
+            raise PluginValidationError(
+                f"surface permission {contribution.permission!r} is not declared by {contribution.plugin_id}"
+            )
+        self.surface_registry.add(contribution)
+        self.cli_registry.add(contribution)
+        self.client_operation_registry.add(contribution)
+
     def validate_manifest(self, manifest: PluginManifest) -> None:
         plugin_id = manifest.id
         jobs = {item.job_type for item in self.job_registry.items if item.plugin_id == plugin_id}
@@ -378,12 +489,17 @@ class ContributionRegistry:
             for item in self.migration_registry.items
             if item.plugin_id == plugin_id
         }
+        surfaces = {
+            item.id for item in self.surface_registry.items if item.plugin_id == plugin_id
+        }
         if not jobs <= set(manifest.job_types):
             raise PluginValidationError(f"undeclared job contribution in {plugin_id}")
         if not events <= set(manifest.event_types):
             raise PluginValidationError(f"undeclared event contribution in {plugin_id}")
         if not migrations <= set(manifest.migration_ids):
             raise PluginValidationError(f"undeclared migration contribution in {plugin_id}")
+        if not surfaces <= set(manifest.surface_ids):
+            raise PluginValidationError(f"undeclared surface contribution in {plugin_id}")
         if (
             any(item.plugin_id == plugin_id for item in self.ui_registry.items)
             and not manifest.ui_entry
@@ -398,6 +514,9 @@ class ContributionRegistry:
         self.event_subscription_registry.freeze()
         self.migration_registry.freeze()
         self.ui_registry.freeze()
+        self.surface_registry.freeze()
+        self.cli_registry.freeze()
+        self.client_operation_registry.freeze()
 
     @property
     def routes(self) -> tuple[RouteContribution, ...]:
