@@ -2046,21 +2046,21 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if self.headers.get("Content-Length") not in {None, "0"}:
                     raise ValueError("project archive does not accept a request body")
                 workspace_id = WorkspaceId(segments[2])
-                project_id = ProjectId(segments[4])
+                project_ref = ProjectId(segments[4])
                 if not self._authorize(
-                    actor, workspace_id, "project.write", resource_ref=str(project_id)
+                    actor, workspace_id, "project.write", resource_ref=str(project_ref)
                 ):
                     return
                 if not self._audit_mutation(
-                    actor, "project.archive", workspace_id, {"resource": str(project_id)}
+                    actor, "project.archive", workspace_id, {"resource": str(project_ref)}
                 ):
                     return
                 archived = self._server().project_service.archive(
-                    workspace_id, project_id, now=_now()
+                    workspace_id, project_ref, now=_now()
                 )
                 if not archived:
-                    raise KeyError(f"{workspace_id}/{project_id}")
-                self._write_json(HTTPStatus.OK, {"archived": True, "project_id": str(project_id)})
+                    raise KeyError(f"{workspace_id}/{project_ref}")
+                self._write_json(HTTPStatus.OK, {"archived": True, "project_id": str(project_ref)})
                 return
             if (
                 len(segments) == 7
@@ -2073,9 +2073,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self.headers.get("Idempotency-Key", "").strip():
                     raise ValueError("Idempotency-Key header is required")
                 workspace_id = WorkspaceId(segments[2])
-                project_id = ProjectId(segments[4])
+                project_ref = ProjectId(segments[4])
                 if not self._authorize(
-                    actor, workspace_id, "project.write", resource_ref=str(project_id)
+                    actor, workspace_id, "project.write", resource_ref=str(project_ref)
                 ):
                     return
                 body = self._read_json()
@@ -2092,17 +2092,17 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     archive_path.write_bytes(archive)
                     verified = read_bundle_payload(archive_path, ".ronin/project.json")
                 imported = ProjectManifest.from_json(verified.file.data.decode("utf-8"))
-                if imported.project.id != project_id:
+                if imported.project.id != project_ref:
                     raise ValueError("Bundle project id must match the request path")
                 if not self._audit_mutation(
-                    actor, "project.bundle.import", workspace_id, {"resource": str(project_id)}
+                    actor, "project.bundle.import", workspace_id, {"resource": str(project_ref)}
                 ):
                     return
                 existing = next(
                     (
                         item
                         for item in self._server().project_service.list(workspace_id)
-                        if item.project.id == project_id
+                        if item.project.id == project_ref
                     ),
                     None,
                 )
