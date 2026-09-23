@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "observed_at": "2026-09-22T00:00:00Z",
-  "observed_main_sha": "7823e30c2ccb0acedbced9ca1f643b97d30dfafd",
+  "observed_main_sha": "0d2cebb85cdb5acecbf55f0b376d764b6be87f3e",
   "observed_workspace_state": "uncommitted workspace snapshot; master has no commits",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "local_verification": {
     "observed_at": "2026-09-23",
     "command": "python -m pytest -q",
-    "result": "1910 passed, 20 skipped",
+    "result": "1957 passed, 20 skipped",
     "qualification_claimed": false
   },
   "status_vocabulary": [
