@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Protocol, cast, runtime_checkable
+from typing import Any, Protocol, TypeVar, cast, runtime_checkable
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from studio_core import (
@@ -587,7 +587,10 @@ def _finops_payload(item: object) -> dict[str, object]:
     return payload
 
 
-def _page(items: list[object], *, limit: int, offset: int) -> tuple[list[object], str | None]:
+_PageItem = TypeVar("_PageItem")
+
+
+def _page(items: list[_PageItem], *, limit: int, offset: int) -> tuple[list[_PageItem], str | None]:
     selected = items[offset : offset + limit]
     next_offset = offset + len(selected)
     cursor = None if next_offset >= len(items) else _encode_cursor(next_offset)
@@ -659,6 +662,8 @@ class FeatureDefinitionServicePort(Protocol):
     def list(self, workspace_id: WorkspaceId) -> tuple[Any, ...]: ...
 
     def get(self, workspace_id: WorkspaceId, feature_id: str, version: int) -> Any: ...
+
+    def publish_payload(self, workspace_id: WorkspaceId, payload: object) -> Any: ...
 
 
 class ConnectorCapabilityPort(Protocol):
