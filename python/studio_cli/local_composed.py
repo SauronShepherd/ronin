@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from studio_core import GrantSet, WorkspaceId
 from studio_data_engineering import (
@@ -57,24 +57,24 @@ from studio_storage.ml import SqliteMLStore
 
 
 class _LocalDataEngineeringRevisions:
-    def __init__(self, records, artifact_root: Path) -> None:
+    def __init__(self, records: Any, artifact_root: Path) -> None:
         self._records = records
         self._application = RevisionApplication(LocalArtifactStore(artifact_root), self._records)
 
-    def list_revisions(self, *, project_id: str, pipeline_id: str):
+    def list_revisions(self, *, project_id: str, pipeline_id: str) -> Any:
         return self._records.list_revisions(project_id=project_id, pipeline_id=pipeline_id)
 
-    def list_pipelines(self, *, project_id: str):
+    def list_pipelines(self, *, project_id: str) -> Any:
         return self._records.list_pipelines(project_id=project_id)
 
-    def get_revision(self, *, project_id: str, pipeline_id: str, revision: int):
+    def get_revision(self, *, project_id: str, pipeline_id: str, revision: int) -> Any:
         return self._records.get_revision(
             project_id=project_id, pipeline_id=pipeline_id, revision=revision
         )
 
     def compare(
         self, *, project_id: str, pipeline_id: str, left_revision: int, right_revision: int
-    ):
+    ) -> Any:
         return self._records.compare(
             project_id=project_id,
             pipeline_id=pipeline_id,
@@ -83,9 +83,16 @@ class _LocalDataEngineeringRevisions:
         )
 
     def archive(self, *, project_id: str, pipeline_id: str) -> bool:
-        return self._records.archive(project_id=project_id, pipeline_id=pipeline_id)
+        return bool(self._records.archive(project_id=project_id, pipeline_id=pipeline_id))
 
-    def import_sdp(self, *, project_id: str, pipeline_id: str, source, expected_revision=None):
+    def import_sdp(
+        self,
+        *,
+        project_id: str,
+        pipeline_id: str,
+        source: Any,
+        expected_revision: int | None = None,
+    ) -> Any:
         return self._application.import_sdp(
             project_id=project_id,
             pipeline_id=pipeline_id,
@@ -209,7 +216,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
     plugin_routes_enabled = plugin_api_mode == "plugin"
     graph_adapter = (
         OntologyHTTPAdapter(
-            SqliteOntologyStore(database, migration_now=now),
+            cast(Any, SqliteOntologyStore(database, migration_now=now)),
             SqliteKnowledgeGraphStore(database),
         )
         if postgres_dsn is None
@@ -257,8 +264,8 @@ def build_local_composed_from_env() -> LocalServerComposition:
         project_service,
         authenticator=StaticControlPlaneAuthenticator(control_token),
         authorizer=StaticControlPlaneAuthorizer(workspace_id, permissions),
-        workflow_reader=SqliteWorkflowHTTPAdapter(scheduler, now=now),
-        graph_query_reader=graph_adapter,
+        workflow_reader=cast(Any, SqliteWorkflowHTTPAdapter(cast(Any, scheduler), now=now)),
+        graph_query_reader=cast(Any, graph_adapter),
         ontology_reader=graph_adapter,
         catalog_reader=catalog_reader,
         semantic_reader=semantic_reader,

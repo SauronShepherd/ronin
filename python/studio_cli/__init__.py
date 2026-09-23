@@ -14,7 +14,7 @@ import time
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 from studio_core import GrantSet, ProjectManifest
 from studio_core.canonical_json import decode as decode_canonical_json
@@ -625,8 +625,9 @@ def _serve() -> int:
         raise CliError("RONIN_POSTGRES_DSN must be non-empty and trimmed")
     if storage_backend == "postgres" or postgres_dsn is not None:
         try:
-            postgres_metadata = PostgresMetadataStore(postgres_dsn, application_name="ronin-server")
-            job_store = PostgresJobReadPort(postgres_dsn, application_name="ronin-server")
+            dsn = cast(str, postgres_dsn)
+            postgres_metadata = PostgresMetadataStore(dsn, application_name="ronin-server")
+            job_store = PostgresJobReadPort(dsn, application_name="ronin-server")
 
             def readiness_probe() -> bool:
                 return _postgres_ready(postgres_metadata)
@@ -774,7 +775,7 @@ def _load_migration_inventory(path: Path) -> SourceInventory:
             SourceArtifact(
                 str(item["name"]),
                 str(item["digest"]),
-                int(item["size_bytes"]),
+                int(cast(int | str, item["size_bytes"])),
                 str(item.get("media_type", "application/octet-stream")),
             )
             for item in cast(list[dict[str, object]], payload["artifacts"])
@@ -784,7 +785,7 @@ def _load_migration_inventory(path: Path) -> SourceInventory:
                 str(item["key"]),
                 str(item["kind"]),
                 str(item["name"]),
-                cast(str, item["state"]),
+                cast(Literal["ready", "review_required", "unsupported"], str(item["state"])),
                 tuple(cast(list[str], item.get("dependencies", []))),
                 tuple(cast(list[str], item.get("source_refs", []))),
                 tuple(cast(list[str], item.get("notes", []))),
@@ -915,8 +916,8 @@ def _migration_validate(namespace: argparse.Namespace) -> int:
         _load_result_rows(cast(Path, namespace.expected), "expected result"),
         _load_result_rows(cast(Path, namespace.actual), "actual result"),
         asset_id=cast(str, namespace.asset_id),
-        level=cast(str, namespace.level),
-        modes=modes,
+        level=cast(Literal["simple", "full"], str(namespace.level)),
+        modes=cast(tuple[Literal["schema", "counts", "multiset", "keyed"], ...], modes),
         key_columns=tuple(cast(Sequence[str], namespace.key)),
         tolerances=tolerances,
     )
