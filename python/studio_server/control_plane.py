@@ -2232,8 +2232,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "environments"
             ):
-                service = self._server().environment_service
-                if service is None:
+                environment_service = self._server().environment_service
+                if environment_service is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "environments_unavailable",
@@ -2245,7 +2245,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 limit, offset = _list_query(query)
                 items, next_cursor = _page(
-                    list(service.list(workspace_id)), limit=limit, offset=offset
+                    list(environment_service.list(workspace_id)), limit=limit, offset=offset
                 )
                 self._write_json(
                     HTTPStatus.OK,
@@ -2257,8 +2257,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "environments"
             ):
-                service = self._server().environment_service
-                if service is None:
+                environment_service = self._server().environment_service
+                if environment_service is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "environments_unavailable",
@@ -2273,7 +2273,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "workspace.read", resource_ref=str(environment_id)
                 ):
                     return
-                payload = service.get(workspace_id, environment_id).to_payload()
+                payload = environment_service.get(workspace_id, environment_id).to_payload()
                 self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
                 return
             if (
@@ -2282,8 +2282,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[5] == "environments"
                 and segments[7] == "bindings"
             ):
-                service = self._server().binding_service
-                if service is None:
+                binding_service = self._server().binding_service
+                if binding_service is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "environments_unavailable",
@@ -2301,7 +2301,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 self._write_json(
                     HTTPStatus.OK,
-                    service.get(workspace_id, project_id, environment_id).to_payload(),
+                    binding_service.get(workspace_id, project_id, environment_id).to_payload(),
                 )
                 return
             if (
@@ -3444,8 +3444,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "environments"
                 and segments[5] == "diff"
             ):
-                service = self._server().environment_service
-                if service is None:
+                environment_service = self._server().environment_service
+                if environment_service is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "environments_unavailable",
@@ -3461,7 +3461,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 proposed = EnvironmentDefinition.from_payload(self._read_json())
                 if proposed.id != environment_id:
                     raise ValueError("environment id must match the request path")
-                result = diff_environments(service.get(workspace_id, environment_id), proposed)
+                result = diff_environments(
+                    environment_service.get(workspace_id, environment_id), proposed
+                )
                 self._write_json(
                     HTTPStatus.OK,
                     {
@@ -3607,8 +3609,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "environments"
             ):
-                service = self._server().environment_service
-                if service is None:
+                environment_service = self._server().environment_service
+                if environment_service is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "environments_unavailable",
@@ -3626,12 +3628,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": str(environment.id)},
                 ):
                     return
-                stored = service.create(workspace_id, environment, now=_now())
+                stored = environment_service.create(workspace_id, environment, now=_now())
                 self._write_json(HTTPStatus.CREATED, stored.to_payload())
                 return
             if len(segments) == 6 and segments[3] == "environments" and segments[5] == "disable":
-                service = self._server().environment_service
-                if service is None:
+                environment_service = self._server().environment_service
+                if environment_service is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "environments_unavailable",
@@ -3655,7 +3657,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 self._write_json(
                     HTTPStatus.OK,
-                    service.disable(workspace_id, environment_id, now=_now()).to_payload(),
+                    environment_service.disable(
+                        workspace_id, environment_id, now=_now()
+                    ).to_payload(),
                 )
                 return
             self._method_or_not_found("POST", segments)
