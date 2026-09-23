@@ -142,7 +142,9 @@ def merge(paths: list[Path]) -> dict[str, Any]:
     return validate_bundle(result)
 
 
-def release_verdict(bundle: dict[str, Any], required_gates: set[str]) -> dict[str, Any]:
+def release_verdict(
+    bundle: dict[str, Any], required_gates: set[str], *, expected_commit: str | None = None
+) -> dict[str, Any]:
     """Return an authoritative verdict; missing/skipped/stale gates fail closed."""
 
     validated = validate_bundle(bundle)
@@ -152,6 +154,13 @@ def release_verdict(bundle: dict[str, Any], required_gates: set[str]) -> dict[st
         raise EvidenceError("release verdict requires one exact commit")
     if validated.get("commit") != next(iter(commits)):
         raise EvidenceError("release verdict root commit does not match gate evidence")
+    if expected_commit is not None and validated["commit"] != _text(
+        expected_commit, "expected_commit"
+    ):
+        raise EvidenceError(
+            f"release evidence commit {validated['commit']!r} does not match expected commit "
+            f"{expected_commit!r}"
+        )
     missing = sorted(required_gates - records.keys())
     non_passing = sorted(
         gate_id
@@ -191,6 +200,10 @@ def _main() -> int:
     verdict = sub.add_parser("verdict")
     verdict.add_argument("bundle", type=Path)
     verdict.add_argument("--required-gate", action="append", required=True)
+    verdict.add_argument(
+        "--expected-commit",
+        help="require the evidence bundle to target this exact source commit",
+    )
     args = parser.parse_args()
     try:
         if args.action == "validate":
@@ -198,7 +211,11 @@ def _main() -> int:
         elif args.action == "merge":
             result = merge(args.bundles)
         else:
-            result = release_verdict(load(args.bundle), set(args.required_gate))
+            result = release_verdict(
+                load(args.bundle),
+                set(args.required_gate),
+                expected_commit=args.expected_commit,
+            )
         if args.action == "merge":
             args.output.write_text(
                 json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"

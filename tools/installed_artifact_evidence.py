@@ -105,7 +105,7 @@ def build_bundle(
     ]
     bundle = {"schema": SCHEMA, "commit": commit, "generated_at": now, "records": records}
     validate_bundle(bundle)
-    release_verdict(bundle, set(GATES))
+    release_verdict(bundle, set(GATES), expected_commit=commit)
     return bundle
 
 
@@ -119,7 +119,7 @@ def main() -> int:
     args = parser.parse_args()
     bundle = build_bundle(args.commit, args.artifact_identity, args.sbom)
     args.output.write_text(json.dumps(bundle, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    verdict = release_verdict(bundle, set(GATES))
+    verdict = release_verdict(bundle, set(GATES), expected_commit=args.commit)
     if args.verdict_output is not None:
         args.verdict_output.write_text(
             json.dumps(verdict, indent=2, sort_keys=True) + "\n", encoding="utf-8"

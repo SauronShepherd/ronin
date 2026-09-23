@@ -128,3 +128,9 @@ def test_release_verdict_rejects_root_commit_drift() -> None:
     bundle = {"schema": SCHEMA, "commit": "other", "records": [record("unit")]}
     with pytest.raises(EvidenceError, match="does not match"):
         release_verdict(bundle, {"unit"})
+
+
+def test_release_verdict_rejects_stale_expected_commit() -> None:
+    bundle = {"schema": SCHEMA, "commit": "abc123", "records": [record("unit")]}
+    with pytest.raises(EvidenceError, match="expected commit"):
+        release_verdict(bundle, {"unit"}, expected_commit="current456")
