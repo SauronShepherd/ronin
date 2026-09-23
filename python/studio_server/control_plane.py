@@ -2810,8 +2810,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5:] == ("semantic", "query")
             ):
-                reader = self._server().semantic_reader
-                if reader is None:
+                semantic_reader = self._server().semantic_reader
+                if semantic_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "semantic_unavailable",
@@ -2826,7 +2826,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
-                self._write_json(HTTPStatus.OK, reader.query(project_id, self._read_json()))
+                self._write_json(
+                    HTTPStatus.OK, semantic_reader.query(project_id, self._read_json())
+                )
                 return
             if (
                 len(segments) == 7
@@ -2834,8 +2836,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5:] == ("sql", "query")
             ):
-                reader = self._server().sql_reader
-                if reader is None:
+                sql_reader = self._server().sql_reader
+                if sql_reader is None:
                     self._discard_request_body()
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
@@ -2851,7 +2853,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
-                self._write_json(HTTPStatus.OK, reader.query(project_id, self._read_json()))
+                self._write_json(HTTPStatus.OK, sql_reader.query(project_id, self._read_json()))
                 return
             if (
                 len(segments) == 7
@@ -2859,8 +2861,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5:] == ("semantic", "join")
             ):
-                reader = self._server().semantic_reader
-                if reader is None:
+                semantic_reader = self._server().semantic_reader
+                if semantic_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "semantic_unavailable",
@@ -2875,7 +2877,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
-                self._write_json(HTTPStatus.OK, reader.join_query(project_id, self._read_json()))
+                self._write_json(
+                    HTTPStatus.OK, semantic_reader.join_query(project_id, self._read_json())
+                )
                 return
             if (
                 len(segments) == 9
@@ -2884,8 +2888,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[5:7] == ("semantic", "dashboards")
                 and segments[8] == "execute"
             ):
-                reader = self._server().semantic_reader
-                if reader is None:
+                semantic_reader = self._server().semantic_reader
+                if semantic_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "semantic_unavailable",
@@ -2911,15 +2915,17 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": f"{project_id}/{dashboard_id}"},
                 ):
                     return
-                self._write_json(HTTPStatus.OK, reader.execute_dashboard(project_id, dashboard_id))
+                self._write_json(
+                    HTTPStatus.OK, semantic_reader.execute_dashboard(project_id, dashboard_id)
+                )
                 return
             if (
                 len(segments) == 5
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:] == ("glossary", "terms")
             ):
-                reader = self._server().glossary_reader
-                if reader is None:
+                glossary_reader = self._server().glossary_reader
+                if glossary_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "glossary_unavailable",
@@ -2939,7 +2945,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": f"{term.id}/{term.version}"},
                 ):
                     return
-                stored = reader.put(workspace_id, term, now=_now())
+                stored = glossary_reader.put(workspace_id, term, now=_now())
                 self._write_json(HTTPStatus.CREATED, stored.to_payload())
                 return
             if (
@@ -2948,8 +2954,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3:5] == ("catalog", "assets")
                 and segments[6] == "revisions"
             ):
-                reader = self._server().catalog_reader
-                if reader is None or not callable(getattr(reader, "list_revisions", None)):
+                catalog_reader = self._server().catalog_reader
+                if catalog_reader is None or not callable(
+                    getattr(catalog_reader, "list_revisions", None)
+                ):
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "catalog_unavailable",
@@ -2961,7 +2969,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                revisions = reader.list_revisions(workspace_id, AssetId(unquote(segments[5])))
+                revisions = catalog_reader.list_revisions(
+                    workspace_id, AssetId(unquote(segments[5]))
+                )
                 self._write_json(
                     HTTPStatus.OK, {"items": [revision.to_payload() for revision in revisions]}
                 )
@@ -2972,8 +2982,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3:5] == ("catalog", "assets")
                 and segments[6] == "revisions"
             ):
-                reader = self._server().catalog_reader
-                if reader is None or not callable(getattr(reader, "get_revision", None)):
+                catalog_reader = self._server().catalog_reader
+                if catalog_reader is None or not callable(
+                    getattr(catalog_reader, "get_revision", None)
+                ):
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "catalog_unavailable",
@@ -2985,7 +2997,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                revision = reader.get_revision(
+                revision = catalog_reader.get_revision(
                     workspace_id,
                     AssetRef(AssetId(unquote(segments[5])), AssetVersion(unquote(segments[7]))),
                 )
@@ -3001,8 +3013,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:] == ("catalog", "assets")
             ):
-                reader = self._server().catalog_reader
-                if reader is None or not callable(getattr(reader, "create_asset", None)):
+                catalog_reader = self._server().catalog_reader
+                if catalog_reader is None or not callable(
+                    getattr(catalog_reader, "create_asset", None)
+                ):
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "catalog_unavailable",
@@ -3019,7 +3033,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, "catalog.asset.create", workspace_id, {"resource": str(asset.id)}
                 ):
                     return
-                stored = reader.create_asset(workspace_id, asset, now=_now())
+                stored = catalog_reader.create_asset(workspace_id, asset, now=_now())
                 self._write_json(HTTPStatus.CREATED, stored.to_payload())
                 return
             if (
@@ -3028,8 +3042,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3:5] == ("catalog", "assets")
                 and segments[6] in {"sensitivity", "ownership"}
             ):
-                reader = self._server().catalog_reader
-                if reader is None:
+                catalog_reader = self._server().catalog_reader
+                if catalog_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "catalog_unavailable",
@@ -3046,11 +3060,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if segments[6] == "sensitivity":
                     metadata = SensitivityMetadata.from_payload(payload)
                     action = "catalog.sensitivity.put"
-                    method = getattr(reader, "put_sensitivity", None)
+                    method = getattr(catalog_reader, "put_sensitivity", None)
                 else:
                     metadata = OwnershipMetadata.from_payload(payload)
                     action = "catalog.ownership.put"
-                    method = getattr(reader, "put_ownership", None)
+                    method = getattr(catalog_reader, "put_ownership", None)
                 if not callable(method):
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
