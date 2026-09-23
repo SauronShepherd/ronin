@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Protocol, cast, runtime_checkable
+from typing import Any, Protocol, cast, runtime_checkable
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from studio_core import (
@@ -641,6 +641,16 @@ def _segments(path: str) -> tuple[str, ...]:
     return tuple(unquote(segment) for segment in raw if segment)
 
 
+class FeatureDefinitionServicePort(Protocol):
+    def list(self, workspace_id: WorkspaceId) -> tuple[Any, ...]: ...
+
+    def get(self, workspace_id: WorkspaceId, feature_id: str, version: int) -> Any: ...
+
+
+class ConnectorCapabilityPort(Protocol):
+    def capability_payload(self) -> dict[str, object]: ...
+
+
 class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
     """HTTP adapter with injected authentication/authorization policy boundaries."""
 
@@ -669,12 +679,12 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         sql_reader: SqlReader | None = None,
         quality_reader: QualityHTTPAdapter | None = None,
         alert_reader: AlertReader | None = None,
-        feature_definition_service: object | None = None,
+        feature_definition_service: FeatureDefinitionServicePort | None = None,
         finops_reader: FinOpsReader | None = None,
         environment_service: EnvironmentService | None = None,
         binding_service: DeploymentBindingService | None = None,
         plugin_host: PluginDiagnostics | None = None,
-        connector_registry: object | None = None,
+        connector_registry: ConnectorCapabilityPort | None = None,
         ingestion_adapter: object | None = None,
         plugin_routes_enabled: bool = False,
         studio_root: Path | None = None,
