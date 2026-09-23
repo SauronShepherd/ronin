@@ -963,8 +963,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "catalog"
                 and segments[4] == "lineage"
             ):
-                reader = self._server().catalog_reader
-                if reader is None:
+                catalog_reader = self._server().catalog_reader
+                if catalog_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "catalog_unavailable",
@@ -1477,8 +1477,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "schedules"
                 and segments[5] == "history"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -1497,7 +1497,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
-                fires = reader.list_schedule_fires(workspace_id, ScheduleId(segments[4]))
+                fires = workflow_reader.list_schedule_fires(workspace_id, ScheduleId(segments[4]))
                 self._write_json(
                     HTTPStatus.OK,
                     {
@@ -1517,8 +1517,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "schedules"
                 and segments[5] == "next-runs"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -1539,7 +1539,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
-                values = reader.preview_schedule_next_runs(
+                values = workflow_reader.preview_schedule_next_runs(
                     workspace_id,
                     ScheduleId(segments[4]),
                     after=after,
@@ -1555,8 +1555,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "event-deliveries"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -1567,7 +1567,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
                 limit, offset = _list_query(query)
-                deliveries = reader.list_pending_deliveries(
+                deliveries = workflow_reader.list_pending_deliveries(
                     workspace_id, limit=min(limit + offset, 1000)
                 )
                 selected, next_cursor = _page(list(deliveries), limit=limit, offset=offset)
@@ -1592,8 +1592,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "ontologies"
             ):
-                reader = self._server().ontology_reader
-                if reader is None:
+                ontology_reader = self._server().ontology_reader
+                if ontology_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "ontology_unavailable",
@@ -1604,7 +1604,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
                 ontology_id = OntologyId(segments[4])
-                versions = reader.list_schema_versions(workspace_id, ontology_id)
+                versions = ontology_reader.list_schema_versions(workspace_id, ontology_id)
                 self._write_json(HTTPStatus.OK, {"items": [item.to_payload() for item in versions]})
                 return
             if (
@@ -1629,9 +1629,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not 1 <= limit <= _MAX_LIST_LIMIT:
                     raise ValueError("catalog limit must be between 1 and 100")
                 assets = (
-                    reader.search_assets(workspace_id, search, limit=limit)
+                    catalog_reader.search_assets(workspace_id, search, limit=limit)
                     if search
-                    else reader.list_assets(workspace_id)[:limit]
+                    else catalog_reader.list_assets(workspace_id)[:limit]
                 )
                 include_governance = (
                     params.get("include_governance", ["false"])[0].casefold() == "true"
@@ -1640,8 +1640,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 for item in assets:
                     payload = item.to_payload()
                     if include_governance:
-                        sensitivity = getattr(reader, "get_sensitivity", None)
-                        ownership = getattr(reader, "get_ownership", None)
+                        sensitivity = getattr(catalog_reader, "get_sensitivity", None)
+                        ownership = getattr(catalog_reader, "get_ownership", None)
                         if callable(sensitivity):
                             value = sensitivity(workspace_id, AssetId(str(item.id)))
                             payload["sensitivity"] = None if value is None else value.to_payload()
@@ -1656,8 +1656,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:] == ("glossary", "terms")
             ):
-                reader = self._server().glossary_reader
-                if reader is None:
+                glossary_reader = self._server().glossary_reader
+                if glossary_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "glossary_unavailable",
@@ -1673,9 +1673,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not 1 <= limit <= _MAX_LIST_LIMIT:
                     raise ValueError("glossary limit must be between 1 and 100")
                 terms = (
-                    reader.search(workspace_id, search, limit=limit)
+                    glossary_reader.search(workspace_id, search, limit=limit)
                     if search
-                    else reader.list_latest(workspace_id)[:limit]
+                    else glossary_reader.list_latest(workspace_id)[:limit]
                 )
                 self._write_json(HTTPStatus.OK, {"items": [term.to_payload() for term in terms]})
                 return
@@ -1685,8 +1685,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "streams"
                 and segments[5] == "health"
             ):
-                reader = self._server().streaming_health_reader
-                if reader is None:
+                streaming_reader = self._server().streaming_health_reader
+                if streaming_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "streaming_unavailable",
@@ -1698,7 +1698,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                self._write_json(HTTPStatus.OK, reader.health(workspace_id, segments[4]))
+                self._write_json(HTTPStatus.OK, streaming_reader.health(workspace_id, segments[4]))
                 return
             if (
                 len(segments) == 7
