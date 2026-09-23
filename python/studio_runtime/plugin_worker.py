@@ -5,10 +5,10 @@ from __future__ import annotations
 import asyncio
 import inspect
 import json
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable, Coroutine, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Coroutine, cast
+from typing import Any, cast
 
 
 class WorkerFailureKind(StrEnum):

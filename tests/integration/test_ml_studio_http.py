@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 from studio_core.plugins import PluginManager, PluginRecord
-from studio_ml.plugin import MachineLearningStudioPlugin
 from studio_ml import FeatureDefinitionService
+from studio_ml.plugin import MachineLearningStudioPlugin
 from studio_ml.sqlite import SqliteMLLabStore
 from studio_orchestrator import Instant
 from studio_plugin_workspaces import WorkspacesPlugin

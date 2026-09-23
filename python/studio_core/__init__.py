@@ -62,8 +62,6 @@ from .grants import (
     parse_legacy_permission,
     requirement_to_bearer_scope,
 )
-from .roles import RoleDefinition, RoleName, role_definition, role_names
-from .role_assignments import Principal, PrincipalKind, RoleAssignment
 from .graph_executor import GraphQueryExecutor, LocalGraphQueryExecutor
 from .ids import InstanceAnchor, NodeId, allocate_instance_keys
 from .ir import (
@@ -156,6 +154,8 @@ from .quality import (
     SchemaCompatibility,
 )
 from .reproducible_manifest import REPRODUCIBLE_MANIFEST_SCHEMA, ReproducibleManifest
+from .role_assignments import Principal, PrincipalKind, RoleAssignment
+from .roles import RoleDefinition, RoleName, role_definition, role_names
 from .rql import RqlQuery, RqlResult, execute_rql, parse_rql
 from .runtime_profiles import (
     ProfileEvaluation,

@@ -178,4 +178,6 @@ def test_checkpoint_health_reports_output_commit(tmp_path):
     assert not store.health(identity).present
     fence = store.acquire(identity)
     health = store.health(identity)
-    assert health.present and health.fence == fence and not health.output_committed
+    assert health.present
+    assert health.fence == fence
+    assert not health.output_committed

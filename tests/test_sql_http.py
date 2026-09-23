@@ -31,7 +31,7 @@ def test_sql_http_adapter_validates_and_serializes_query() -> None:
     "body", [{}, {"sql": "SELECT 1", "parameters": "bad"}, {"sql": "SELECT 1", "max_rows": 0}]
 )
 def test_sql_http_adapter_rejects_invalid_requests(body: object) -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="(sql|parameters|max_rows|body)"):
         SqlHTTPAdapter(Engine()).query("project-1", body)
 
 

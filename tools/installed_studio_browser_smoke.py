@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import tarfile
 import tempfile
@@ -111,10 +112,8 @@ def qualify(wheel: Path) -> dict[str, object]:
                     contract = route_contracts[route]
                     selector = contract.get("smoke_selector")
                     if selector:
-                        try:
+                        with contextlib.suppress(Exception):
                             page.locator(selector).first.wait_for(state="attached", timeout=3000)
-                        except Exception:
-                            pass
                     selector_count = page.locator(selector).count() if selector else 0
                     pages.append(
                         {

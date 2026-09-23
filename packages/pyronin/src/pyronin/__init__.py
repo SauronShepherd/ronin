@@ -1630,7 +1630,8 @@ class Ronin:
             self._transport.request(
                 "GET",
                 f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
-                f"{quote(project_id, safe='')}/environments/{quote(environment_id, safe='')}/bindings",
+                f"{quote(project_id, safe='')}/environments/"
+                f"{quote(environment_id, safe='')}/bindings",
             )
         )
 

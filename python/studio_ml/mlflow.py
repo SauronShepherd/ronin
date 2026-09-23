@@ -36,9 +36,9 @@ class MLflowSubset:
             raise ValueError("artifact_digest must be a lowercase sha256 digest")
         if self.schema != MLFLOW_SUBSET_SCHEMA:
             raise ValueError("unsupported MLflow subset schema")
-        if len(set(name for name, _ in self.inputs)) != len(self.inputs):
+        if len({name for name, _ in self.inputs}) != len(self.inputs):
             raise ValueError("MLflow input names must be unique")
-        if len(set(name for name, _ in self.outputs)) != len(self.outputs):
+        if len({name for name, _ in self.outputs}) != len(self.outputs):
             raise ValueError("MLflow output names must be unique")
 
     def to_payload(self) -> dict[str, object]:
@@ -48,8 +48,8 @@ class MLflowSubset:
             "version": self.version,
             "framework": self.framework,
             "artifact_digest": self.artifact_digest,
-            "inputs": [dict(name=name, type=kind) for name, kind in self.inputs],
-            "outputs": [dict(name=name, type=kind) for name, kind in self.outputs],
+            "inputs": [{"name": name, "type": kind} for name, kind in self.inputs],
+            "outputs": [{"name": name, "type": kind} for name, kind in self.outputs],
             "metrics": dict(self.metrics),
         }
 

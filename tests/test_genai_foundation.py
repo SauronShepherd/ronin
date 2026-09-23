@@ -26,8 +26,8 @@ from studio_core.genai import (
     VectorIndexDefinition,
     VectorIndexId,
 )
-from studio_genai.provider import _MAX_PROVIDER_RESPONSE_BYTES, _read_json_response
 from studio_genai.agent import ToolRegistry
+from studio_genai.provider import _MAX_PROVIDER_RESPONSE_BYTES, _read_json_response
 from studio_orchestrator import Instant
 from studio_storage.catalog import SqliteCatalogStore
 from studio_storage.genai import GenAIConflict, SqliteGenAIStore

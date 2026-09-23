@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 from collections.abc import Callable, Mapping
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 from studio_core import OpenLineageTransportError
-from studio_core.openlineage import JsonValue
 from studio_core.canonical_json import encode as encode_canonical_json
+from studio_core.openlineage import JsonValue
 
 
 class HttpOpenLineageSink:

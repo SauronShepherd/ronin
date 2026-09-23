@@ -16,8 +16,8 @@ from studio_core import (
     RuntimeProfile,
     RuntimeProfileRef,
 )
-from studio_kernel import RepositoryRevision
 from studio_core.canonical_json import encode as encode_canonical_json
+from studio_kernel import RepositoryRevision
 from studio_notebook import CellId, NotebookCell
 from studio_orchestrator import AttemptId, Job, JobId, JobState, RunId
 from studio_vcs import GitRevision

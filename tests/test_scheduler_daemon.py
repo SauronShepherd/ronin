@@ -21,6 +21,8 @@ from studio_execution.scheduler_daemon import (
     SchedulerDaemonWork,
     install_scheduler_stop_signals,
 )
+from studio_observability import NotificationDispatcher, scheduler_notification
+from studio_observability.dispatcher import SqliteNotificationIntentStore
 from studio_orchestrator import Instant, LeaseToken
 from studio_storage import InMemoryJobStore
 from studio_storage.scheduler_backfill_runtime import SchedulerBackfillRuntimeStore
@@ -29,8 +31,6 @@ from studio_storage.scheduler_fencing import TaskAttemptId
 from studio_storage.scheduler_leadership import SchedulerLeadershipStore
 from studio_storage.scheduler_schedule import SchedulerScheduleStore
 from studio_storage.workspaces import SqliteWorkspaceStore
-from studio_observability import NotificationDispatcher, scheduler_notification
-from studio_observability.dispatcher import SqliteNotificationIntentStore
 
 _T0 = Instant("2026-09-13T08:50:00.000000Z")
 _T10 = Instant("2026-09-13T08:50:10.000000Z")
@@ -60,7 +60,7 @@ def test_daemon_process_entrypoint_stops_on_sigterm_and_releases_lease(tmp_path:
         service=DurableExecutionService(InMemoryJobStore()),
         owner="scheduler-process",
         clock=MutableClock(_T0),
-        token="process-token",
+        token="process-token",  # noqa: S106
     )
     previous = signal.getsignal(signal.SIGTERM)
     calls = 0
@@ -91,7 +91,7 @@ def test_scheduler_health_and_readiness_do_not_expose_lease_secrets(tmp_path: Pa
         service=DurableExecutionService(InMemoryJobStore()),
         owner="scheduler-a",
         clock=MutableClock(_T0),
-        token="secret-token",
+        token="secret-token",  # noqa: S106
     )
     assert daemon.health() == {
         "status": "ok",
@@ -128,7 +128,7 @@ def test_scheduler_daemon_dispatches_durable_notifications_when_configured(tmp_p
         service=DurableExecutionService(InMemoryJobStore()),
         owner="scheduler-a",
         clock=MutableClock(_T0),
-        token="leader-a",
+        token="leader-a",  # noqa: S106
         notification_dispatcher=NotificationDispatcher(
             intent_store, Sink(), clock=lambda: str(_T0)
         ),

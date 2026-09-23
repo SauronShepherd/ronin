@@ -23,12 +23,15 @@ from studio_core import (
     CatalogAsset,
     GlossaryTerm,
     GlossaryTermId,
+    KnowledgeObject,
+    LineageEdge,
     OntologyDefinition,
     OntologyId,
     OwnershipMetadata,
     Pipeline,
     ProjectId,
     ProjectManifest,
+    RqlResult,
     Schedule,
     ScheduleId,
     SensitivityMetadata,
@@ -40,9 +43,6 @@ from studio_core import (
     WorkflowRunId,
     Workspace,
     WorkspaceId,
-    KnowledgeObject,
-    LineageEdge,
-    RqlResult,
 )
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.environments import (
@@ -2763,7 +2763,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 required = {"revision_key", "ir_digest", "runtime"}
                 if set(payload) - required - {"parameters"} or not required.issubset(payload):
                     raise ValueError(
-                        "pipeline run body must contain revision_key, ir_digest, runtime, and optional parameters"
+                        "pipeline run body must contain revision_key, ir_digest, runtime, "
+                        "and optional parameters"
                     )
                 revision_key, ir_digest, runtime = (
                     payload["revision_key"],

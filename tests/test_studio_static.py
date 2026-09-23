@@ -14,6 +14,7 @@ from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant
 from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
+
 from tools.check_web_assets import referenced_assets
 
 _GRANTS = GrantSet(
@@ -117,12 +118,15 @@ def test_studio_import_graph_includes_css_url_resources(tmp_path: Path) -> None:
 def test_active_route_manifest_requires_functional_smoke_contract() -> None:
     manifest = json.loads((Path(__file__).parents[1] / "web" / "routes.json").read_text())
     for route in manifest:
-        assert route["id"] and route["title"] and route["state"]
+        assert route["id"]
+        assert route["title"]
+        assert route["state"]
         assert route["smoke_selector"]
         if route["id"] != "home" and route["state"] == "active":
             assert route["smoke_selector"] != "#view"
         for endpoint in route.get("required_api", []):
-            assert isinstance(endpoint, str) and endpoint.startswith("/")
+            assert isinstance(endpoint, str)
+            assert endpoint.startswith("/")
 
 
 def test_studio_index_has_one_valid_document_shell() -> None:

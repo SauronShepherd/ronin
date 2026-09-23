@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import json
 import os
@@ -266,9 +267,8 @@ class AsyncioCommandRunner:
         completed_normally = False
         try:
             stdin.write(input_text.encode())
-            try:
+            with contextlib.suppress(ConnectionResetError):
                 await stdin.drain()
-            except ConnectionResetError:
                 # A short-lived command may exit before the input pipe is
                 # drained (notably on Windows); its stdout/stderr remain the
                 # authoritative outcome and are collected below.

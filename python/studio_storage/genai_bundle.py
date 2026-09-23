@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from collections.abc import Sequence
-from typing import Any, Callable
+from typing import Any
 
 from studio_core import WorkspaceId
 from studio_core.bundle_inventory import (
@@ -15,10 +15,10 @@ from studio_core.bundle_inventory import (
     BundleInventoryObject,
 )
 from studio_core.canonical_json import encode as encode_canonical_json
-from studio_core.portability import RoninBundleManifest
 from studio_core.genai import (
     PromptAsset,
 )
+from studio_core.portability import RoninBundleManifest
 
 from studio_storage.bundle import BundleFile, write_bundle
 from studio_storage.bundle_payload import read_bundle_payload

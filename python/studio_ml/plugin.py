@@ -16,6 +16,7 @@ from .backends import default_backends
 from .domain import Lab
 from .optimization import SearchSpec, Trial, propose_bayesian_candidates, rank_trials
 from .orchestration import ExecutionStore, LocalExecutionCoordinator
+from .ports import MLLabStore
 from .quality import profile_and_validate
 from .runner import LocalExperimentRunner
 from .runtime import TrainingSpec
@@ -27,7 +28,6 @@ from .service import (
     register_clustering_model,
     train_register_tabular,
 )
-from .ports import MLLabStore
 from .services import InMemoryMLLabStore, LabService
 
 

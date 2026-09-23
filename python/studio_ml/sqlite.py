@@ -11,7 +11,7 @@ from studio_core import WorkspaceId
 from studio_orchestrator import Instant
 from studio_storage.sqlite import open_database
 
-from .domain import FeatureDefinition, Lab, PipelineIR, PipelineNode
+from .domain import FeatureDefinition, Lab, PipelineIR
 from .orchestration import ExecutionSnapshot, ExecutionStore
 from .ports import MLLabStore
 from .services import MLLabConflict

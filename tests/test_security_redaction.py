@@ -46,4 +46,4 @@ def test_redaction_truncates_nested_tuples_without_mutating_input():
     value = {"items": ("safe", {"token": "hidden"}, "ignored")}
     result = redact(value, max_depth=3, max_items=2)
     assert result == {"items": ["safe", {"token": "[REDACTED]"}]}
-    assert value["items"][1]["token"] == "hidden"
+    assert value["items"][1]["token"] == "hidden"  # noqa: S105

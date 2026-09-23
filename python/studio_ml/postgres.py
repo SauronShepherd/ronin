@@ -5,7 +5,7 @@ from __future__ import annotations
 from studio_core import WorkspaceId
 from studio_storage.postgres_core import PostgresMetadataStore
 
-from studio_ml.domain import Lab, PipelineIR, PipelineNode
+from studio_ml.domain import Lab, PipelineIR
 from studio_ml.orchestration import ExecutionSnapshot, ExecutionStore
 from studio_ml.ports import MLLabStore
 from studio_ml.services import MLLabConflict

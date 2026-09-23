@@ -1,7 +1,5 @@
 import pytest
-from studio_core import AssetId, AssetRef, AssetVersion
-from studio_core import WorkspaceId
-from studio_orchestrator import Instant
+from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
 from studio_ml import (
     FeatureDefinition,
     FeatureDefinitionConflict,
@@ -9,6 +7,7 @@ from studio_ml import (
     FeatureSpec,
 )
 from studio_ml.sqlite import SqliteMLLabStore
+from studio_orchestrator import Instant
 
 
 def test_feature_definition_round_trips_with_dataset_snapshot() -> None:
