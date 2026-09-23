@@ -39,6 +39,8 @@ from studio_core import (
     WorkflowRunId,
     Workspace,
     WorkspaceId,
+    KnowledgeObject,
+    RqlResult,
 )
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.environments import (
@@ -335,11 +337,15 @@ class WorkflowCanceller(Protocol):
 
 @runtime_checkable
 class GraphQueryReader(Protocol):
-    def query(self, graph_id: str, query: str, *, max_limit: int = 1000) -> object: ...
+    def query(self, graph_id: str, query: str, *, max_limit: int = 1000) -> RqlResult: ...
 
-    def list_objects(self, graph_id: str, object_type: str, *, limit: int = 100) -> object: ...
+    def list_objects(
+        self, graph_id: str, object_type: str, *, limit: int = 100
+    ) -> tuple[KnowledgeObject, ...]: ...
 
-    def neighbors(self, graph_id: str, ref: object, *, limit: int = 100) -> object: ...
+    def neighbors(
+        self, graph_id: str, ref: KnowledgeObjectRef, *, limit: int = 100
+    ) -> tuple[KnowledgeObjectRef, ...]: ...
 
 
 class GraphActionReader(Protocol):
