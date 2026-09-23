@@ -2130,15 +2130,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if existing is not None:
                     if existing.to_json() != imported.to_json():
                         raise ValueError("project already exists with a different manifest")
-                    stored = existing
+                    imported_project = existing
                 else:
-                    stored = self._server().project_service.register(
+                    imported_project = self._server().project_service.register(
                         workspace_id, imported, now=_now()
                     )
                 self._write_json(
                     HTTPStatus.OK,
                     {
-                        "project": _manifest_payload(stored),
+                        "project": _manifest_payload(imported_project),
                         "bundle_digest": hashlib.sha256(archive).hexdigest(),
                     },
                 )
