@@ -7,6 +7,7 @@ import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from tools.release_evidence import SCHEMA, release_verdict, validate_bundle
 
@@ -103,7 +104,12 @@ def build_bundle(
         }
         for gate in sorted(GATES)
     ]
-    bundle = {"schema": SCHEMA, "commit": commit, "generated_at": now, "records": records}
+    bundle: dict[str, Any] = {
+        "schema": SCHEMA,
+        "commit": commit,
+        "generated_at": now,
+        "records": records,
+    }
     validate_bundle(bundle)
     release_verdict(bundle, set(GATES), expected_commit=commit)
     return bundle
