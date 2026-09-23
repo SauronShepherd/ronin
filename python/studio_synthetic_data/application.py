@@ -14,7 +14,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from threading import RLock
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from .engine import (
     CsvExporter,
@@ -126,12 +126,13 @@ def _result_from_json(value: str | None) -> GenerationResult | None:
 def _validation_json(report: object | None) -> str | None:
     if report is None:
         return None
+    validation = cast(ValidationReport, report)
     return json.dumps(
         {
-            "passed": report.passed,
-            "checks": list(report.checks),
-            "errors": list(report.errors),
-            "evidence_id": report.evidence_id,
+            "passed": validation.passed,
+            "checks": list(validation.checks),
+            "errors": list(validation.errors),
+            "evidence_id": validation.evidence_id,
         },
         sort_keys=True,
     )

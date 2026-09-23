@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import cast
 
 from .previews import PreviewError, preview_pipeline
 from .spark_connect import SparkConnectProvider, SparkConnectUnavailable
@@ -43,16 +44,16 @@ def execute_pipeline_job(payload: Mapping[str, object]) -> PipelineWorkerResult:
                 "DE-EXEC-007", "compiled SQL is required for Spark Connect"
             )
         try:
-            result = SparkConnectProvider(endpoint).execute_sql(
-                sql, limit=int(payload.get("row_limit", 100))
+            spark_result = SparkConnectProvider(endpoint).execute_sql(
+                sql, limit=int(cast(int | str, payload.get("row_limit", 100)))
             )
         except (SparkConnectUnavailable, ValueError) as exc:
             raise PipelineExecutionError("DE-EXEC-008", str(exc), retryable=True) from exc
         return PipelineWorkerResult(
             "succeeded",
             runtime,
-            {"rows": [dict(row) for row in result.rows], "row_count": result.row_count},
-            {"kind": "data-engineering.spark-connect", "endpoint": result.endpoint},
+            {"rows": [dict(row) for row in spark_result.rows], "row_count": spark_result.row_count},
+            {"kind": "data-engineering.spark-connect", "endpoint": spark_result.endpoint},
         )
     if runtime != "local-preview":
         raise PipelineExecutionError(
@@ -66,7 +67,7 @@ def execute_pipeline_job(payload: Mapping[str, object]) -> PipelineWorkerResult:
         result = preview_pipeline(
             pipeline,
             fixtures=fixtures,
-            row_limit=int(payload.get("row_limit", 100)),
+            row_limit=int(cast(int | str, payload.get("row_limit", 100))),
         )
     except (PreviewError, ValueError, TypeError) as exc:
         raise PipelineExecutionError("DE-EXEC-005", str(exc)) from exc

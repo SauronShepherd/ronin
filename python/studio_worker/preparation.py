@@ -121,7 +121,8 @@ def load_project(paths: WorkerPaths, job: Job) -> LoadedProject:
         if not isinstance(document_payload, dict):
             raise WorkerPreparationError("inline notebook document must be an object")
         execution_mode = str(parameters.get("mode", "all"))
-        selected_cell_id = parameters.get("cell_id")
+        raw_cell_id = parameters.get("cell_id")
+        selected_cell_id = raw_cell_id if isinstance(raw_cell_id, str) else None
         if parameters.get("mode") == "cell" and not isinstance(selected_cell_id, str):
             raise WorkerPreparationError("cell execution requires a string cell_id")
         try:

@@ -6,6 +6,7 @@ import json
 import sqlite3
 from collections.abc import Awaitable, Callable, Mapping
 from pathlib import Path
+from typing import cast
 
 from studio_storage.sqlite import open_database
 
@@ -87,7 +88,9 @@ class SqliteCompilationStore:
                 "AND runtime=? AND ir_digest=?",
                 (revision_key, runtime, ir_digest),
             ).fetchone()
-            return None if row is None else json.loads(row["report_json"])
+            return (
+                None if row is None else cast(Mapping[str, object], json.loads(row["report_json"]))
+            )
         finally:
             connection.close()
 
@@ -101,7 +104,7 @@ class SqliteCompilationStore:
             ).fetchone()
             if row is None:
                 return None
-            report = json.loads(row["report_json"])
+            report = cast(dict[str, object], json.loads(row["report_json"]))
             report["ir_digest"] = row["ir_digest"]
             return report
         finally:

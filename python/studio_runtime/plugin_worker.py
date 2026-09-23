@@ -8,7 +8,7 @@ import json
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any
+from typing import Any, Coroutine, cast
 
 
 class WorkerFailureKind(StrEnum):
@@ -92,7 +92,7 @@ async def execute_worker(
         result = handler(request.payload)
         if not inspect.isawaitable(result):
             result = asyncio.sleep(0, result)
-        task = asyncio.create_task(result)
+        task: asyncio.Task[Any] = asyncio.create_task(cast(Coroutine[Any, Any, Any], result))
         if cancellation is None:
             value = await asyncio.wait_for(task, contract.timeout_seconds)
         else:

@@ -18,7 +18,7 @@ from studio_core import (
 from studio_core.plugin_events import new_event
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
-from .ports import WorkspacePort
+from .ports import ProjectPort, WorkspacePort
 from .services import ProjectApplication, WorkspaceApplication, parse_page_query
 
 
@@ -74,7 +74,7 @@ class WorkspacesPlugin:
             cast(WorkspacePort | None, context.services.get("workspace_service"))
         )
         self._projects = ProjectApplication(
-            cast(object, context.services.get("project_service"))
+            cast(ProjectPort, context.services.get("project_service"))
             if context.services.get("project_service") is not None
             else None
         )
@@ -541,7 +541,7 @@ class WorkspacesPlugin:
             raise RuntimeError("workspaces plugin is not ready")
         projects = self._projects
         if projects is None:
-            return []
+            return {"items": [], "next_cursor": None}
         limit, offset = parse_page_query(query)
         items, next_cursor = projects.list_payloads(
             WorkspaceId(workspace_id), limit=limit, offset=offset

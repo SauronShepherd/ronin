@@ -30,7 +30,7 @@ class LocalGenerationJobs:
         self._owner = uuid4().hex
         self._executor = ThreadPoolExecutor(max_workers=workers, thread_name_prefix="sds")
         self._jobs: dict[str, GenerationJob] = {}
-        self._futures: dict[str, Future[object]] = {}
+        self._futures: dict[str, Future[None]] = {}
         self._lock = RLock()
         self._db = sqlite3.connect(db_path, check_same_thread=False) if db_path else None
         if self._db:

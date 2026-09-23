@@ -6,6 +6,7 @@ import json
 import sqlite3
 from decimal import Decimal
 from pathlib import Path
+from typing import Literal, cast
 
 from studio_core import WorkspaceId
 from studio_orchestrator import Instant
@@ -340,7 +341,7 @@ class SqliteFinOpsStore:
                     Decimal(str(row[2])),
                     Instant(row[3]),
                     Instant(row[4]),
-                    str(row[5]),
+                    cast(Literal["notify", "deny_new_work"], str(row[5])),
                     tuple(sorted((str(k), str(v)) for k, v in json.loads(row[6]).items())),
                 )
                 for row in rows

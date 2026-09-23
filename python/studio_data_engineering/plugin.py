@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any
+from typing import Any, cast
 
 from studio_core.operators import builtin_operator_catalog
 from studio_core.plugins import (
@@ -20,7 +20,7 @@ from .debugger import DebuggerService
 from .execution import plan_pipeline_execution
 from .ide import IdeCell
 from .previews import preview_pipeline
-from .revisions import RevisionApplication
+from .revisions import RevisionApplication, RevisionArtifactStore, RevisionRecordStore
 from .sdp_adapter import SdpProjectSource
 from .worker import PipelineExecutionError, execute_pipeline_job
 
@@ -82,9 +82,9 @@ class DataEnginerringStudioPlugin:
         artifact_store = context.services.get("artifact_store")
         if artifact_store is not None:
             self._revisions = RevisionApplication(
-                artifact_store,
-                context.services.get("revision_store"),
-            )  # type: ignore[arg-type]
+                cast(RevisionArtifactStore, artifact_store),
+                cast(RevisionRecordStore | None, context.services.get("revision_store")),
+            )
         compilation_store = context.services.get("compilation_store")
         if isinstance(compilation_store, SqliteCompilationStore):
             self._compilations = compilation_store
@@ -435,6 +435,10 @@ class DataEnginerringStudioPlugin:
         required = (project_id, revision_key, ir_digest, runtime)
         if not all(isinstance(value, str) for value in required):
             raise ValueError("project_id, revision_key, ir_digest and runtime are required strings")
+        project_id = cast(str, project_id)
+        revision_key = cast(str, revision_key)
+        ir_digest = cast(str, ir_digest)
+        runtime = cast(str, runtime)
         plan = plan_pipeline_execution(
             project_id=project_id,
             revision_key=revision_key,
@@ -472,6 +476,9 @@ class DataEnginerringStudioPlugin:
         required = (project_id, pipeline_id, project_yaml)
         if not all(isinstance(value, str) and value.strip() for value in required):
             raise ValueError("project_id, pipeline_id and project_yaml are required strings")
+        project_id = cast(str, project_id)
+        pipeline_id = cast(str, pipeline_id)
+        project_yaml = cast(str, project_yaml)
         if not isinstance(pipeline_documents, list):
             raise ValueError("pipeline_documents must be an array")
         documents: list[tuple[str, bytes]] = []

@@ -7,6 +7,7 @@ import importlib.metadata
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
 
 from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource
 from studio_core.plugins import (
@@ -39,7 +40,7 @@ def _distribution_digest(distribution: importlib.metadata.Distribution) -> str |
     digest = hashlib.sha256()
     found = False
     for relative in sorted(files, key=str):
-        path = distribution.locate_file(relative)
+        path = Path(str(distribution.locate_file(relative)))
         try:
             if not path.is_file():
                 continue

@@ -1,7 +1,7 @@
 """Ronin plugin boundary for Synthetic Data Studio."""
 
 import os
-from typing import Any
+from typing import Any, cast
 
 from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
@@ -9,7 +9,7 @@ from studio_storage.catalog import SqliteCatalogStore
 
 from studio_synthetic_data.application import GovernStudioService, plan_from_payload
 from studio_synthetic_data.async_generation import LocalGenerationJobs
-from studio_synthetic_data.engine import GenerationPlan, assess_privacy
+from studio_synthetic_data.engine import GenerationPlan, ValidationReport, assess_privacy
 from studio_synthetic_data.engine import validate as validate_plan
 from studio_synthetic_data.formats import format_availability
 from studio_synthetic_data.local_catalogs import (
@@ -373,12 +373,13 @@ class SyntheticDataStudioPlugin:
             run_id = str(body["run_id"])
         run = self.service.validate(run_id, plan)
         report = run.validation
+        validation = cast(ValidationReport | None, report)
         return {
             "status": run.status,
             "contract": "synthetic-data-studio/validation/v1",
-            "checks": list(report.checks) if report else [],
-            "errors": list(report.errors) if report else [],
-            "evidenceId": report.evidence_id if report else None,
+            "checks": list(validation.checks) if validation else [],
+            "errors": list(validation.errors) if validation else [],
+            "evidenceId": validation.evidence_id if validation else None,
         }
 
     def get_run(self, *, run_id: str, **_kwargs: Any) -> dict[str, object]:

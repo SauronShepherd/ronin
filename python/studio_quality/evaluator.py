@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
-from typing import TypeAlias
+from typing import TypeAlias, cast
 
 from studio_core import (
     DataContract,
@@ -264,7 +264,7 @@ def evaluate_rule(
                     rule, "custom_python execution is not enabled in the built-in evaluator"
                 )
             passed = (
-                evaluate_python_predicate(expression, rows)
+                evaluate_python_predicate(cast(str, expression), rows)
                 if custom_python is None
                 else custom_python(rule, rows)
             )

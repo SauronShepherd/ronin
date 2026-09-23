@@ -7,6 +7,7 @@ import sqlite3
 from collections.abc import Mapping
 from hashlib import sha256
 from pathlib import Path
+from typing import cast
 
 from studio_storage.sqlite import open_database
 
@@ -139,7 +140,9 @@ class SqliteRevisionStore:
                 "revision": int(row["revision"]),
                 "source_digest": row["source_digest"],
                 "project_artifact_ref": row["project_artifact_ref"],
-                "pipeline_artifacts": json.loads(row["pipeline_artifacts_json"]),
+                "pipeline_artifacts": cast(
+                    dict[str, str], json.loads(row["pipeline_artifacts_json"])
+                ),
                 "metadata_artifact_ref": row["metadata_artifact_ref"],
             }
             result["revision_digest"] = self._revision_digest(result)
@@ -165,7 +168,7 @@ class SqliteRevisionStore:
             "revision": int(row["revision"]),
             "source_digest": row["source_digest"],
             "project_artifact_ref": row["project_artifact_ref"],
-            "pipeline_artifacts": json.loads(row["pipeline_artifacts_json"]),
+            "pipeline_artifacts": cast(dict[str, str], json.loads(row["pipeline_artifacts_json"])),
             "metadata_artifact_ref": row["metadata_artifact_ref"],
         }
         result["revision_digest"] = self._revision_digest(result)
@@ -180,7 +183,9 @@ class SqliteRevisionStore:
                 "revision": record["revision"],
                 "source_digest": record["source_digest"],
                 "project_artifact_ref": record["project_artifact_ref"],
-                "pipeline_artifacts": dict(sorted(record["pipeline_artifacts"].items())),
+                "pipeline_artifacts": dict(
+                    sorted(cast(Mapping[str, str], record["pipeline_artifacts"]).items())
+                ),
                 "metadata_artifact_ref": record["metadata_artifact_ref"],
             },
             sort_keys=True,
@@ -196,7 +201,12 @@ class SqliteRevisionStore:
                 (project_id, pipeline_id),
             ).fetchall()
         return tuple(
-            self.get_revision(project_id=project_id, pipeline_id=pipeline_id, revision=int(row[0]))
+            cast(
+                dict[str, object],
+                self.get_revision(
+                    project_id=project_id, pipeline_id=pipeline_id, revision=int(row[0])
+                ),
+            )
             for row in revisions
         )
 

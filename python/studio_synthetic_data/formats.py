@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from typing import Protocol
 
-from .engine import CsvExporter, JsonlExporter, SyntheticTable
+from .engine import CsvExporter, Exporter, JsonlExporter, SyntheticTable
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,6 +38,7 @@ class FormatAvailability:
 
 class FormatProvider(Protocol):
     manifest: FormatManifest
+    format_id: str
 
     def export(self, table: SyntheticTable) -> str: ...
 
@@ -166,7 +167,7 @@ def hudi_provider() -> DeclarativeTableProvider:
     return DeclarativeTableProvider(builtin_table_format_manifests()[2])
 
 
-def builtin_format_providers() -> tuple[FormatProvider, ...]:
+def builtin_format_providers() -> tuple[Exporter, ...]:
     return (
         CsvExporter(),
         JsonExporter(),

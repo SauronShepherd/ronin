@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Mapping
-from typing import Protocol
+from typing import Protocol, cast
 
-from studio_core import AssetRef, LineageEdge, WorkspaceId, lineage_event_payload
+from studio_core import AssetRef, LineageEdge, LineageOperation, WorkspaceId, lineage_event_payload
 from studio_orchestrator import Instant
 
 
@@ -31,7 +31,7 @@ def record_pipeline_lineage(
     edge = LineageEdge(
         source=source,
         target=target,
-        operation=operation,
+        operation=cast(LineageOperation, operation),
         mode="observed",
         execution_ref=execution_ref,
     )

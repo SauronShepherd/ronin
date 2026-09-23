@@ -9,7 +9,9 @@ from __future__ import annotations
 import ast
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any, cast
 
+from studio_core.ids import NodeId
 from studio_core.ir import Edge, Node, Pipeline
 from studio_core.operators import builtin_operator_catalog, operator_parameter_value
 
@@ -45,13 +47,13 @@ def preview_pipeline(
         raise PreviewError(str(exc)) from exc
 
     by_id = {node.id: node for node in pipeline.nodes}
-    incoming: dict[object, list[Edge]] = {node.id: [] for node in pipeline.nodes}
-    outgoing: dict[object, list[Edge]] = {node.id: [] for node in pipeline.nodes}
+    incoming: dict[NodeId, list[Edge]] = {node.id: [] for node in pipeline.nodes}
+    outgoing: dict[NodeId, list[Edge]] = {node.id: [] for node in pipeline.nodes}
     for edge in pipeline.edges:
         incoming[edge.target].append(edge)
         outgoing[edge.source].append(edge)
     order = _topological_order(pipeline)
-    values: dict[object, tuple[Mapping[str, object], ...]] = {}
+    values: dict[NodeId, tuple[Mapping[str, object], ...]] = {}
     metrics: dict[str, Mapping[str, int]] = {}
 
     for node_id in order:
@@ -75,7 +77,7 @@ def preview_pipeline(
 def _input_rows(
     node: Node,
     edges: list[Edge],
-    values: Mapping[object, tuple[Mapping[str, object], ...]],
+    values: Mapping[NodeId, tuple[Mapping[str, object], ...]],
     fixtures: Mapping[str, list[Mapping[str, object]]],
 ) -> tuple[Mapping[str, object], ...]:
     if node.operator.name == "source.fixture":
@@ -124,14 +126,14 @@ def _apply(
     return rows[:row_limit]
 
 
-def _topological_order(pipeline: Pipeline) -> list[object]:
-    incoming = {node.id: 0 for node in pipeline.nodes}
-    outgoing: dict[object, list[object]] = {node.id: [] for node in pipeline.nodes}
+def _topological_order(pipeline: Pipeline) -> list[NodeId]:
+    incoming: dict[NodeId, int] = {node.id: 0 for node in pipeline.nodes}
+    outgoing: dict[NodeId, list[NodeId]] = {node.id: [] for node in pipeline.nodes}
     for edge in pipeline.edges:
         incoming[edge.target] += 1
         outgoing[edge.source].append(edge.target)
     queue = sorted(node_id for node_id, count in incoming.items() if count == 0)
-    result: list[object] = []
+    result: list[NodeId] = []
     while queue:
         current = queue.pop(0)
         result.append(current)
@@ -159,15 +161,19 @@ def _eval_node(node: ast.AST, row: Mapping[str, object]) -> object:
     if isinstance(node, ast.Constant) and isinstance(node.value, (str, int, float, bool)):
         return node.value
     if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
-        left, right = _eval_node(node.left, row), _eval_node(node.right, row)
-        return {
-            ast.Add: lambda: left + right,
-            ast.Sub: lambda: left - right,
-            ast.Mult: lambda: left * right,
-            ast.Div: lambda: left / right,
-        }[type(node.op)]()
+        left, right = cast(Any, _eval_node(node.left, row)), cast(Any, _eval_node(node.right, row))
+        if isinstance(node.op, ast.Add):
+            return left + right
+        if isinstance(node.op, ast.Sub):
+            return left - right
+        if isinstance(node.op, ast.Mult):
+            return left * right
+        return left / right
     if isinstance(node, ast.Compare) and len(node.ops) == 1:
-        left, right = _eval_node(node.left, row), _eval_node(node.comparators[0], row)
+        left, right = (
+            cast(Any, _eval_node(node.left, row)),
+            cast(Any, _eval_node(node.comparators[0], row)),
+        )
         operator = node.ops[0]
         if isinstance(operator, ast.Eq):
             return left == right

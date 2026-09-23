@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, cast
 
 from studio_storage import ArtifactRef
 
@@ -74,7 +74,7 @@ class RevisionApplication:
         if self._records is not None and key not in self._latest:
             existing = self._records.get_latest(project_id=project_id, pipeline_id=pipeline_id)
             if existing is not None:
-                latest = int(existing["revision"])
+                latest = int(cast(int | str, existing["revision"]))
         if expected_revision is not None and expected_revision != latest:
             raise RevisionConflict(
                 f"stale revision: expected {expected_revision}, current {latest}"
