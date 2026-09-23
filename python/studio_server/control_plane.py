@@ -1208,13 +1208,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
-                payload = semantic_reader.get_dashboard(project_id, dashboard_id)
-                if payload is None:
+                dashboard_payload = semantic_reader.get_dashboard(project_id, dashboard_id)
+                if dashboard_payload is None:
                     self._error(
                         HTTPStatus.NOT_FOUND, "not_found", "semantic dashboard does not exist"
                     )
                     return
-                self._write_json(HTTPStatus.OK, payload)
+                self._write_json(HTTPStatus.OK, dashboard_payload)
                 return
             if (
                 len(segments) == 8
@@ -1289,12 +1289,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if query:
                     raise ValueError("project bundle export does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
-                project_id = ProjectId(segments[4])
+                project_ref = ProjectId(segments[4])
                 if not self._authorize(
-                    actor, workspace_id, "project.read", resource_ref=str(project_id)
+                    actor, workspace_id, "project.read", resource_ref=str(project_ref)
                 ):
                     return
-                manifest = self._server().project_service.get(workspace_id, project_id)
+                manifest = self._server().project_service.get(workspace_id, project_ref)
                 payload = _manifest_payload(manifest)
                 self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
                 return
@@ -1309,20 +1309,20 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         "project Bundle archive export does not accept query parameters"
                     )
                 workspace_id = WorkspaceId(segments[2])
-                project_id = ProjectId(segments[4])
+                project_ref = ProjectId(segments[4])
                 if not self._authorize(
-                    actor, workspace_id, "project.read", resource_ref=str(project_id)
+                    actor, workspace_id, "project.read", resource_ref=str(project_ref)
                 ):
                     return
-                manifest = self._server().project_service.get(workspace_id, project_id)
-                payload = manifest.to_json().encode("utf-8")
-                if len(payload) > 8 * 1024 * 1024:
+                manifest = self._server().project_service.get(workspace_id, project_ref)
+                archive_payload = manifest.to_json().encode("utf-8")
+                if len(archive_payload) > 8 * 1024 * 1024:
                     raise ValueError("project manifest exceeds Bundle export limit")
                 with tempfile.TemporaryDirectory(prefix="ronin-bundle-") as directory:
                     archive_path = Path(directory) / "project.roninbundle"
                     write_bundle(
                         archive_path,
-                        (BundleFile(".ronin/project.json", "application/json", payload),),
+                        (BundleFile(".ronin/project.json", "application/json", archive_payload),),
                     )
                     archive = archive_path.read_bytes()
                 digest = hashlib.sha256(archive).hexdigest()
