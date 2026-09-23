@@ -1600,6 +1600,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 )
                 delivery_items: list[EventDelivery] = list(deliveries)
                 selected, next_cursor = _page(delivery_items, limit=limit, offset=offset)
+                selected_deliveries = cast(list[EventDelivery], selected)
                 self._write_json(
                     HTTPStatus.OK,
                     {
@@ -1610,7 +1611,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                                 "workflow_id": delivery.trigger.workflow_id.value,
                                 "state": delivery.state,
                             }
-                            for delivery in selected
+                            for delivery in selected_deliveries
                         ],
                         "next_cursor": next_cursor,
                     },
@@ -1667,23 +1668,23 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 )
                 catalog_items: list[dict[str, object]] = []
                 for item in assets:
-                    asset_payload = item.to_payload()
+                    catalog_asset_payload: dict[str, object] = item.to_payload()
                     if include_governance:
                         sensitivity = getattr(catalog_reader, "get_sensitivity", None)
                         ownership = getattr(catalog_reader, "get_ownership", None)
                         if callable(sensitivity):
                             sensitivity_value = sensitivity(workspace_id, AssetId(str(item.id)))
-                            asset_payload["sensitivity"] = (
+                            catalog_asset_payload["sensitivity"] = (
                                 None
                                 if sensitivity_value is None
                                 else sensitivity_value.to_payload()
                             )
                         if callable(ownership):
                             ownership_value = ownership(workspace_id, AssetId(str(item.id)))
-                            asset_payload["ownership"] = (
+                            catalog_asset_payload["ownership"] = (
                                 None if ownership_value is None else ownership_value.to_payload()
                             )
-                    catalog_items.append(asset_payload)
+                    catalog_items.append(catalog_asset_payload)
                 self._write_json(HTTPStatus.OK, {"items": catalog_items})
                 return
             if (
