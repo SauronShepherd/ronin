@@ -70,10 +70,19 @@ class SQLiteAIStudioStore:
             base_url=excluded.base_url,models_json=excluded.models_json,
             priority=excluded.priority,weight=excluded.weight,max_in_flight=excluded.max_in_flight,
             desired_state=excluded.desired_state,allow_http=excluded.allow_http,version=excluded.version""",
-            (endpoint.id.value, endpoint.adapter.value, endpoint.base_url,
-             json.dumps([m.value for m in endpoint.models]), endpoint.priority, endpoint.weight,
-             endpoint.max_in_flight, endpoint.desired_state.value, ObservedState.UNKNOWN.value,
-             int(endpoint.allow_http), version),
+            (
+                endpoint.id.value,
+                endpoint.adapter.value,
+                endpoint.base_url,
+                json.dumps([m.value for m in endpoint.models]),
+                endpoint.priority,
+                endpoint.weight,
+                endpoint.max_in_flight,
+                endpoint.desired_state.value,
+                ObservedState.UNKNOWN.value,
+                int(endpoint.allow_http),
+                version,
+            ),
         )
         self._connection.commit()
         return version
@@ -87,10 +96,15 @@ class SQLiteAIStudioStore:
         if row is None:
             return None
         endpoint = EndpointConfig(
-            endpoint_id, AdapterKind(row["adapter"]), row["base_url"],
+            endpoint_id,
+            AdapterKind(row["adapter"]),
+            row["base_url"],
             tuple(PublicModelName(value) for value in json.loads(row["models_json"])),
-            row["priority"], row["weight"], row["max_in_flight"],
-            endpoint_desired(row["desired_state"]), bool(row["allow_http"]),
+            row["priority"],
+            row["weight"],
+            row["max_in_flight"],
+            endpoint_desired(row["desired_state"]),
+            bool(row["allow_http"]),
         )
         return endpoint, ObservedState(row["observed_state"]), row["version"]
 
@@ -110,9 +124,14 @@ class SQLiteAIStudioStore:
                 VALUES (?,?,?,?,?,?) ON CONFLICT(endpoint_id,provider_model_id) DO UPDATE SET
                 public_name=excluded.public_name,capabilities_json=excluded.capabilities_json,
                 context_window=excluded.context_window,last_seen_at=excluded.last_seen_at""",
-                (snapshot.endpoint_id.value, snapshot.provider_model_id, snapshot.public_name.value,
-                 json.dumps(sorted(capability.value for capability in snapshot.capabilities)),
-                 snapshot.context_window, snapshot.last_seen_at),
+                (
+                    snapshot.endpoint_id.value,
+                    snapshot.provider_model_id,
+                    snapshot.public_name.value,
+                    json.dumps(sorted(capability.value for capability in snapshot.capabilities)),
+                    snapshot.context_window,
+                    snapshot.last_seen_at,
+                ),
             )
         self._connection.commit()
 

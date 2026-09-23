@@ -149,9 +149,7 @@ def test_sqlite_store_persists_export_artifact_metadata(tmp_path) -> None:
 def test_generation_invokes_publication_hook_before_commit() -> None:
     published = []
     service = GovernStudioService(
-        publication_hook=lambda run_id, result: published.append(
-            (run_id, result.plan_fingerprint)
-        )
+        publication_hook=lambda run_id, result: published.append((run_id, result.plan_fingerprint))
     )
     plan = _plan()
     run = service.create_run(plan, idempotency_key="publish-hook")

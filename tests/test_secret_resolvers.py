@@ -76,6 +76,20 @@ def test_composite_resolver_dispatches_only_configured_backends() -> None:
         composite.resolve(SecretRef("secret://file/unavailable"))
 
 
+def test_composite_resolver_supports_injected_external_backend_without_listing() -> None:
+    class ExternalResolver:
+        def resolve(self, reference: SecretRef) -> SecretMaterial:
+            assert reference.uri == "secret://vault/app/token"
+            return SecretMaterial(b"external-value")
+
+    composite = CompositeSecretResolver(backends={"vault": ExternalResolver()})
+    assert (
+        composite.resolve(SecretRef("secret://vault/app/token")).reveal_text() == "external-value"
+    )
+    with pytest.raises(ValueError, match="reserved"):
+        CompositeSecretResolver(backends={"env": ExternalResolver()})
+
+
 def test_secret_material_rejects_empty_values() -> None:
     with pytest.raises(SecretResolutionError, match="empty"):
         SecretMaterial(b"")

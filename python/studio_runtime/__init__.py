@@ -25,22 +25,30 @@ from studio_runtime.settings import (
     PluginSettingsError,
     PluginSettingsRegistry,
     PluginSettingsSpec,
+    SecretReference,
 )
 
 
 def _distribution_digest(distribution: importlib.metadata.Distribution) -> str | None:
-    files = distribution.files
+    try:
+        files = distribution.files
+    except OSError:
+        return None
     if files is None:
         return None
     digest = hashlib.sha256()
     found = False
     for relative in sorted(files, key=str):
         path = distribution.locate_file(relative)
-        if not path.is_file():
+        try:
+            if not path.is_file():
+                continue
+            content = path.read_bytes()
+        except OSError:
             continue
         found = True
         digest.update(str(relative).encode("utf-8"))
-        digest.update(path.read_bytes())
+        digest.update(content)
     return digest.hexdigest() if found else None
 
 
@@ -59,9 +67,7 @@ class PluginAuditSink:
         occurred_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
         plugin_id = str(invocation.get("plugin_id", "unknown"))
         path = str(invocation.get("path", "unknown"))
-        identifier = hashlib.sha256(
-            f"{occurred_at}|{plugin_id}|{path}".encode()
-        ).hexdigest()
+        identifier = hashlib.sha256(f"{occurred_at}|{plugin_id}|{path}".encode()).hexdigest()
         metadata = tuple(
             (key, str(value))
             for key, value in sorted(invocation.items())
@@ -119,9 +125,7 @@ def discover_plugins(
         except Exception as exc:
             if ignore_load_errors:
                 continue
-            raise PluginLoadError(
-                f"could not load plugin entry point {entry_point.name}"
-            ) from exc
+            raise PluginLoadError(f"could not load plugin entry point {entry_point.name}") from exc
     if include_builtins:
         from studio_plugin_observability import LoggingPlugin, MonitoringPlugin
         from studio_plugin_workspaces import factory as workspaces_factory
@@ -217,9 +221,16 @@ class PluginHost:
         """Return stable host-facing composition surface diagnostics."""
         if self.plan is None:
             return {
-                "capabilities": {}, "permissions": {}, "routes": [], "jobs": [],
-                "events": [], "migrations": [], "ui": [], "surfaces": [],
-                "cli": [], "client_operations": [],
+                "capabilities": {},
+                "permissions": {},
+                "routes": [],
+                "jobs": [],
+                "events": [],
+                "migrations": [],
+                "ui": [],
+                "surfaces": [],
+                "cli": [],
+                "client_operations": [],
             }
         contributions = self.plan.contributions
         return {
@@ -227,7 +238,6 @@ class PluginHost:
             "permissions": contributions.permissions,
             "routes": [
                 {
-                    "method": item.method,
                     "path": item.path,
                     "method": item.method.upper(),
                     "plugin_id": item.plugin_id,
@@ -278,13 +288,23 @@ class PluginHost:
                 for item in contributions.surface_registry.items
             ],
             "cli": [
-                {"id": item.id, "namespace": item.namespace, "command": item.command,
-                 "operation_id": item.operation_id, "options": [option.name for option in item.options]}
+                {
+                    "id": item.id,
+                    "namespace": item.namespace,
+                    "command": item.command,
+                    "operation_id": item.operation_id,
+                    "options": [option.name for option in item.options],
+                }
                 for item in contributions.cli_registry.items
             ],
             "client_operations": [
-                {"id": item.id, "operation_id": item.operation_id, "transport": item.transport,
-                 "path": item.path, "method": item.method.upper()}
+                {
+                    "id": item.id,
+                    "operation_id": item.operation_id,
+                    "transport": item.transport,
+                    "path": item.path,
+                    "method": item.method.upper(),
+                }
                 for item in contributions.client_operation_registry.items
             ],
             "settings": {
@@ -386,5 +406,6 @@ __all__ = (
     "PluginSettingsRegistry",
     "PluginSettingsError",
     "PluginSettingsSpec",
+    "SecretReference",
     "discover_plugins",
 )

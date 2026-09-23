@@ -136,18 +136,21 @@ def validate_results(
     tolerance_map = tolerances or {}
     checks: list[ValidationCheck] = []
     if "schema" in modes:
-        left, right = _schema(expected), _schema(actual)
+        schema_left, schema_right = _schema(expected), _schema(actual)
         checks.append(
             ValidationCheck(
                 "schema",
                 "schema",
-                "pass" if left == right else "fail",
-                "schemas match" if left == right else "schemas differ",
-                (("expected_columns", str(len(left))), ("actual_columns", str(len(right)))),
+                "pass" if schema_left == schema_right else "fail",
+                "schemas match" if schema_left == schema_right else "schemas differ",
+                (
+                    ("expected_columns", str(len(schema_left))),
+                    ("actual_columns", str(len(schema_right))),
+                ),
                 (
                     {
-                        "missing": sorted(set(left) - set(right)),
-                        "unexpected": sorted(set(right) - set(left)),
+                        "missing": sorted(set(schema_left) - set(schema_right)),
+                        "unexpected": sorted(set(schema_right) - set(schema_left)),
                     },
                 )
                 if level == "full"
@@ -173,12 +176,13 @@ def validate_results(
         right = Counter(json.dumps(row, sort_keys=True, default=str) for row in actual)
         only_expected = sum((left - right).values())
         only_actual = sum((right - left).values())
-        details = ()
+        multiset_details: list[dict[str, object]] = []
         if level == "full":
-            details = tuple(
+            multiset_details.extend(
                 {"side": "expected", "row": json.loads(raw), "count": count}
                 for raw, count in sorted((left - right).items())
-            ) + tuple(
+            )
+            multiset_details.extend(
                 {"side": "actual", "row": json.loads(raw), "count": count}
                 for raw, count in sorted((right - left).items())
             )
@@ -191,7 +195,7 @@ def validate_results(
                 if not only_expected and not only_actual
                 else "duplicate-aware rows differ",
                 (("expected_only", str(only_expected)), ("actual_only", str(only_actual))),
-                details,
+                tuple(multiset_details),
             )
         )
     if "keyed" in modes:
@@ -205,12 +209,12 @@ def validate_results(
             expected_groups[_key(row, key_columns)].append(row)
         for row in actual:
             actual_groups[_key(row, key_columns)].append(row)
-        details: list[dict[str, object]] = []
+        keyed_details: list[dict[str, object]] = []
         for key in sorted(set(expected_groups) | set(actual_groups), key=str):
             left_rows, right_rows = expected_groups.get(key, []), actual_groups.get(key, [])
             if len(left_rows) != 1 or len(right_rows) != 1:
                 if left_rows != right_rows:
-                    details.append(
+                    keyed_details.append(
                         {
                             "status": "__PAYLOAD__",
                             "key": list(key),
@@ -226,7 +230,7 @@ def validate_results(
                 if not _equal(
                     left_row.get(column), right_row.get(column), tolerance_map.get(column, 0.0)
                 ):
-                    details.append(
+                    keyed_details.append(
                         {
                             "status": "<>",
                             "key": list(key),
@@ -236,15 +240,15 @@ def validate_results(
                         }
                     )
         if level == "simple":
-            details = details[:20]
+            keyed_details = keyed_details[:20]
         checks.append(
             ValidationCheck(
                 "keyed",
                 "keyed",
-                "pass" if not details else "fail",
-                "keyed values match" if not details else "keyed values differ",
-                (("keys", str(len(expected_groups))), ("differences", str(len(details)))),
-                tuple(details) if level == "full" else tuple(details[:20]),
+                "pass" if not keyed_details else "fail",
+                "keyed values match" if not keyed_details else "keyed values differ",
+                (("keys", str(len(expected_groups))), ("differences", str(len(keyed_details)))),
+                tuple(keyed_details) if level == "full" else tuple(keyed_details[:20]),
             )
         )
     return ValidationReport(asset_id, level, tuple(checks), _digest(expected), _digest(actual))

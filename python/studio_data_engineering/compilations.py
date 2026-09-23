@@ -91,9 +91,7 @@ class SqliteCompilationStore:
         finally:
             connection.close()
 
-    def get_latest_report(
-        self, *, revision_key: str, runtime: str
-    ) -> Mapping[str, object] | None:
+    def get_latest_report(self, *, revision_key: str, runtime: str) -> Mapping[str, object] | None:
         connection = self._connect()
         try:
             row = connection.execute(

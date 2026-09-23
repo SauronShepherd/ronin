@@ -8,8 +8,9 @@ environment identity.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -40,15 +41,47 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         raise EvidenceError(f"unsupported status for {gate_id}: {status}")
     _text(record["commit"], "commit")
     _text(record["command"], "command")
-    _text(record["started_at"], "started_at")
-    _text(record["ended_at"], "ended_at")
+    started_at = _text(record["started_at"], "started_at")
+    ended_at = _text(record["ended_at"], "ended_at")
+    try:
+        started = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+        ended = datetime.fromisoformat(ended_at.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise EvidenceError(f"timestamps must be ISO-8601 for {gate_id}") from exc
+    if started.tzinfo is None or ended.tzinfo is None:
+        raise EvidenceError(f"timestamps must include a timezone for {gate_id}")
+    if ended < started:
+        raise EvidenceError(f"ended_at must not precede started_at for {gate_id}")
     if not isinstance(record["environment"], dict):
         raise EvidenceError(f"environment must be an object for {gate_id}")
     if status == "passed":
         if not record["environment"].get("fingerprint"):
             raise EvidenceError(f"passed evidence requires environment.fingerprint: {gate_id}")
-        if not record.get("artifacts"):
+        artifacts = record.get("artifacts")
+        if (
+            not isinstance(artifacts, list)
+            or not artifacts
+            or not all(isinstance(item, str) and item.strip() for item in artifacts)
+        ):
             raise EvidenceError(f"passed evidence requires artifacts: {gate_id}")
+        digests = record.get("artifact_digests")
+        if not isinstance(digests, dict) or not digests:
+            raise EvidenceError(f"passed evidence requires artifact_digests: {gate_id}")
+        missing_digests = [item for item in artifacts if item not in digests]
+        if missing_digests:
+            raise EvidenceError(
+                f"passed evidence is missing artifact digests for {gate_id}: "
+                + ", ".join(missing_digests)
+            )
+        for artifact, digest in digests.items():
+            if not isinstance(artifact, str) or not artifact.strip():
+                raise EvidenceError(f"artifact_digests contains an invalid name: {gate_id}")
+            if (
+                not isinstance(digest, str)
+                or len(digest) != 64
+                or any(character not in "0123456789abcdef" for character in digest)
+            ):
+                raise EvidenceError(f"artifact_digests contains an invalid SHA-256: {gate_id}")
     if status in {"skipped", "blocked"}:
         reason = record.get("reason")
         if not isinstance(reason, str) or not reason.strip():
@@ -62,9 +95,16 @@ def validate_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
     records = bundle.get("records")
     if not isinstance(records, list) or not records:
         raise EvidenceError("records must be a non-empty array")
+    if "commit" not in bundle:
+        raise EvidenceError("bundle commit is required")
+    bundle_commit = _text(bundle["commit"], "commit")
     seen: set[str] = set()
     for record in records:
         validated = validate_record(record)
+        if bundle_commit is not None and validated["commit"] != bundle_commit:
+            raise EvidenceError(
+                f"bundle commit {bundle_commit!r} does not match gate {validated['gate_id']}"
+            )
         gate_id = validated["gate_id"]
         if gate_id in seen:
             raise EvidenceError(f"duplicate gate_id: {gate_id}")
@@ -96,10 +136,48 @@ def merge(paths: list[Path]) -> dict[str, Any]:
     result = {
         "schema": SCHEMA,
         "commit": next(iter(commits)),
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "records": [records[key] for key in sorted(records)],
     }
     return validate_bundle(result)
+
+
+def release_verdict(bundle: dict[str, Any], required_gates: set[str]) -> dict[str, Any]:
+    """Return an authoritative verdict; missing/skipped/stale gates fail closed."""
+
+    validated = validate_bundle(bundle)
+    records = {record["gate_id"]: record for record in validated["records"]}
+    commits = {record["commit"] for record in validated["records"]}
+    if len(commits) != 1:
+        raise EvidenceError("release verdict requires one exact commit")
+    if validated.get("commit") != next(iter(commits)):
+        raise EvidenceError("release verdict root commit does not match gate evidence")
+    missing = sorted(required_gates - records.keys())
+    non_passing = sorted(
+        gate_id
+        for gate_id in required_gates
+        if gate_id in records and records[gate_id]["status"] != "passed"
+    )
+    if missing or non_passing:
+        raise EvidenceError(
+            f"release verdict is not green: missing={missing}, non_passing={non_passing}"
+        )
+    verdict = {
+        "schema": "ronin.release-verdict/v1",
+        "commit": validated["commit"],
+        "required_gates": sorted(required_gates),
+        "status": "passed",
+        "evidence": {
+            gate_id: {
+                "artifacts": records[gate_id].get("artifacts", []),
+                "artifact_digests": records[gate_id].get("artifact_digests", {}),
+            }
+            for gate_id in sorted(required_gates)
+        },
+    }
+    canonical = json.dumps(verdict, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    verdict["verdict_sha256"] = hashlib.sha256(canonical).hexdigest()
+    return verdict
 
 
 def _main() -> int:
@@ -110,11 +188,21 @@ def _main() -> int:
     combine = sub.add_parser("merge")
     combine.add_argument("output", type=Path)
     combine.add_argument("bundles", type=Path, nargs="+")
+    verdict = sub.add_parser("verdict")
+    verdict.add_argument("bundle", type=Path)
+    verdict.add_argument("--required-gate", action="append", required=True)
     args = parser.parse_args()
     try:
-        result = load(args.bundle) if args.action == "validate" else merge(args.bundles)
+        if args.action == "validate":
+            result = load(args.bundle)
+        elif args.action == "merge":
+            result = merge(args.bundles)
+        else:
+            result = release_verdict(load(args.bundle), set(args.required_gate))
         if args.action == "merge":
-            args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            args.output.write_text(
+                json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+            )
         print(json.dumps(result, sort_keys=True))
         return 0
     except EvidenceError as exc:

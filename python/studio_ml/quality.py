@@ -76,13 +76,14 @@ def profile_and_validate(
             warnings.append(f"column {name!r} contains {profile.null_count} null values")
         if profile.constant:
             warnings.append(f"column {name!r} is constant")
-    target = next((profile for profile in profiles if profile.name == lab.target), None)
-    if target is not None and lab.task == "classification":
+    target_name = lab.target
+    target = next((profile for profile in profiles if profile.name == target_name), None)
+    if target is not None and lab.task == "classification" and target_name is not None:
         if target.distinct_count < 2:
             failures.append("classification target must contain at least two classes")
         counts: dict[str, int] = {}
         for row in rows:
-            key = repr(row.get(lab.target))
+            key = repr(row.get(target_name))
             counts[key] = counts.get(key, 0) + 1
         if counts and min(counts.values()) < 2:
             failures.append("each classification class must contain at least two rows")

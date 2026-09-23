@@ -80,7 +80,8 @@ class ModelRouter:
         strategy: RoutingStrategy = RoutingStrategy.PRIORITY,
     ) -> RouteDecision:
         eligible = [
-            candidate for candidate in candidates
+            candidate
+            for candidate in candidates
             if candidate.snapshot.public_name == model
             and candidate.endpoint.desired_state.value == "enabled"
             and candidate.state in {ObservedState.READY, ObservedState.DEGRADED}

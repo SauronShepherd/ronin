@@ -2,8 +2,8 @@
 
 from .compilations import SqliteCompilationStore, publish_pending_compilation_events
 from .compiler import CompilationReport, CompileDiagnostic, compile_pipeline
-from .debugger import DebugSnapshot, DebuggerService, snapshot
-from .evidence import persist_pipeline_evidence
+from .debugger import DebuggerService, DebugSnapshot, snapshot
+from .evidence import persist_pipeline_evidence, persist_query_engine_evidence
 from .execution import PipelineExecutionPlan, plan_pipeline_execution
 from .execution_bridge import (
     attach_pipeline_evidence,
@@ -14,12 +14,27 @@ from .execution_bridge import (
 )
 from .ide import IdeCell, IdeSession, execute_ide_session
 from .lineage import LineageCatalog, publish_lineage_event, record_pipeline_lineage
+from .pipeline_contracts import PipelineParameter, PipelineParameterSchema
 from .plugin import DataEnginerringStudioPlugin, factory
+from .postgres_revisions import PostgresRevisionDependencyError, PostgresRevisionStore
 from .previews import PreviewError, PreviewResult, preview_pipeline
+from .query_execution import QueryExecutionResult, QueryTransport, execute_query
 from .revisions import PipelineRevisionRecord, RevisionApplication, RevisionConflict
-from .runtimes import RuntimeHandshake, RuntimeProvider, local_runtime_handshake, negotiate_runtime
+from .runtimes import (
+    QueryEngineRuntimeProvider,
+    RuntimeHandshake,
+    RuntimeProvider,
+    local_runtime_handshake,
+    negotiate_runtime,
+)
 from .sdp_adapter import SdpImportReport, SdpProjectSource, SdpStudioProvider
 from .spark_connect import SparkConnectProvider, SparkConnectResult, SparkConnectUnavailable
+from .sql_editor import (
+    SqlExecutionRecord,
+    SqliteSqlEditorStore,
+    SqlQueryRevision,
+    export_sql_rows,
+)
 from .sqlite_revisions import SqliteRevisionStore
 from .worker import PipelineExecutionError, PipelineWorkerResult, execute_pipeline_job
 
@@ -47,7 +62,13 @@ __all__ = (
     "cancel_pipeline",
     "pipeline_evidence",
     "persist_pipeline_evidence",
+    "persist_query_engine_evidence",
+    "QueryExecutionResult",
+    "QueryTransport",
+    "execute_query",
     "PipelineExecutionError",
+    "PipelineParameter",
+    "PipelineParameterSchema",
     "PipelineWorkerResult",
     "execute_pipeline_job",
     "factory",
@@ -61,7 +82,14 @@ __all__ = (
     "RevisionApplication",
     "RevisionConflict",
     "SqliteRevisionStore",
+    "PostgresRevisionDependencyError",
+    "PostgresRevisionStore",
+    "SqlExecutionRecord",
+    "export_sql_rows",
+    "SqlQueryRevision",
+    "SqliteSqlEditorStore",
     "RuntimeHandshake",
+    "QueryEngineRuntimeProvider",
     "RuntimeProvider",
     "local_runtime_handshake",
     "negotiate_runtime",

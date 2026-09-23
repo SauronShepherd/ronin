@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import ast
-from dataclasses import dataclass
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Literal
 
 Severity = Literal["info", "warning", "error"]
@@ -15,7 +15,7 @@ AutomationMode = Literal["AUTO_SAFE", "SHADOW_ONLY", "REVIEW", "ADVISORY"]
 class AnalyzerSpec:
     analyzer_id: str
     version: str
-    analyze: Callable[[str], tuple["Finding", ...]]
+    analyze: Callable[[str], tuple[Finding, ...]]
 
     def __post_init__(self) -> None:
         if not self.analyzer_id or self.analyzer_id != self.analyzer_id.strip():
@@ -50,7 +50,9 @@ class AnalyzerRegistry:
             spec = self._items[analyzer_id]
         except KeyError as exc:
             raise ValueError(f"unknown analyzer: {analyzer_id}") from exc
-        return tuple(sorted(spec.analyze(source), key=lambda item: (item.line, item.column, item.rule_id)))
+        return tuple(
+            sorted(spec.analyze(source), key=lambda item: (item.line, item.column, item.rule_id))
+        )
 
 
 @dataclass(frozen=True, slots=True)

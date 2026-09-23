@@ -16,10 +16,12 @@ def _zip(files: dict[str, str]) -> bytes:
 
 
 def test_iics_discovery_is_deterministic_and_resolves_mapping() -> None:
-    raw = _zip({
-        "pkg/DTEMPLATE.json": '{"assetFrsGuid":"map-1","name":"orders"}',
-        "pkg/MTT.json": '{"mappingId":"map-1","id":"proc-1"}',
-    })
+    raw = _zip(
+        {
+            "pkg/DTEMPLATE.json": '{"assetFrsGuid":"map-1","name":"orders"}',
+            "pkg/MTT.json": '{"mappingId":"map-1","id":"proc-1"}',
+        }
+    )
     first = discover_iics_zip((("export.zip", raw),))
     second = discover_iics_zip((("export.zip", raw),))
     assert first.digest == second.digest
@@ -44,11 +46,16 @@ def test_iics_rejects_unsafe_paths() -> None:
 
 
 def test_scope_closes_transitive_dependencies_with_reasons() -> None:
-    inventory = SourceInventory("test", "1", (), (
-        MigrationUnit("a", "process", "a", "ready", ("b",)),
-        MigrationUnit("b", "mapping", "b", "ready", ("c",)),
-        MigrationUnit("c", "package", "c", "ready"),
-    ))
+    inventory = SourceInventory(
+        "test",
+        "1",
+        (),
+        (
+            MigrationUnit("a", "process", "a", "ready", ("b",)),
+            MigrationUnit("b", "mapping", "b", "ready", ("c",)),
+            MigrationUnit("c", "package", "c", "ready"),
+        ),
+    )
     selection = select_scope(inventory, ("a",))
     assert selection.selected == ("a",)
     assert selection.auto_included == ("b", "c")

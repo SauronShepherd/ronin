@@ -98,6 +98,37 @@ def test_bearer_scope_round_trip_and_canonical_encoding() -> None:
         parse_bearer_scope("ronin:v1:read:project:p%ZZ")
 
 
+@pytest.mark.parametrize(
+    "value",
+    [
+        "ronin:v1:read:project",
+        "ronin:v2:read:project:p-1",
+        "other:v1:read:project:p-1",
+        "ronin:v1:unknown:project:p-1",
+        "ronin:v1:read:unknown:p-1",
+        "ronin:v1:read:project:",
+        "ronin:v1:read:project:%2A",
+        "ronin:v1:read:project:p-1:extra",
+        "ronin:v1:read:project:p%2f1",
+    ],
+)
+def test_bearer_scope_rejects_noncanonical_or_malformed_shapes(value: str) -> None:
+    with pytest.raises(ValueError, match="bearer scope|unsupported|canonical"):
+        parse_bearer_scope(value)
+
+
+@pytest.mark.parametrize("value", [None, 1, [], {}])
+def test_bearer_scope_requires_text(value: object) -> None:
+    with pytest.raises(ValueError, match="bearer scope"):
+        parse_bearer_scope(value)  # type: ignore[arg-type]
+
+
+def test_bearer_scope_preserves_wildcard_identifier_semantics() -> None:
+    requirement = parse_bearer_scope("ronin:v1:read:project:*")
+    assert requirement.resource.identifier is None
+    assert requirement_to_bearer_scope(requirement) == "ronin:v1:read:project:*"
+
+
 def test_decision_and_evidence_invariants() -> None:
     grant = Grant(frozenset({"read"}), ResourceScope("project", "p-1"))
     with pytest.raises(ValueError, match="matched"):

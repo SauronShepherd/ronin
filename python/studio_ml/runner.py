@@ -6,12 +6,13 @@ import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from typing import cast
 
 from .backends import BackendRegistry, ExperimentRequest, MLBackend, default_backends
 from .clustering import KMeansModel, fit_kmeans
 from .domain import Lab
 from .quality import profile_and_validate
-from .runtime import TrainedTabularModel, TrainingSpec
+from .runtime import Algorithm, TrainedTabularModel, TrainingSpec
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,13 +82,14 @@ class LocalExperimentRunner:
             raise ValueError("local tabular runner does not support clustering yet")
         capabilities = getattr(backend, "capabilities", None)
         if capabilities is not None and lab.task not in capabilities.tasks:
-            raise ValueError(
-                f"backend {backend.backend_id!r} does not support task {lab.task!r}"
-            )
+            raise ValueError(f"backend {backend.backend_id!r} does not support task {lab.task!r}")
         quality = profile_and_validate(lab, [dict(row) for row in rows])
         if not quality.passed:
             raise ValueError("quality gate failed: " + "; ".join(quality.failures))
-        algorithm = "logistic_regression" if lab.task == "classification" else "linear_regression"
+        algorithm = cast(
+            Algorithm,
+            "logistic_regression" if lab.task == "classification" else "linear_regression",
+        )
         spec = TrainingSpec(
             task=lab.task,
             algorithm=algorithm,
@@ -140,9 +142,7 @@ class LocalExperimentRunner:
         max_iterations: int = 100,
     ) -> ClusteringResult:
         features = tuple(feature.column for feature in lab.features if feature.role != "ignored")
-        model = self.run_clustering(
-            lab, rows, clusters=clusters, max_iterations=max_iterations
-        )
+        model = self.run_clustering(lab, rows, clusters=clusters, max_iterations=max_iterations)
         artifact = json.dumps(model.to_artifact(), sort_keys=True, separators=(",", ":")).encode()
         digest = hashlib.sha256(artifact).hexdigest()
         from .clustering import inertia

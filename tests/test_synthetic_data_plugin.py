@@ -1,16 +1,25 @@
 import time
+
 import pytest
+from studio_core import (
+    AssetId,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
+    CatalogAsset,
+    Workspace,
+    WorkspaceId,
+)
 from studio_core.plugins import ContributionRegistry, PluginContext, PluginManager, PluginRecord
-from studio_runtime import PluginHost
-from studio_core import AssetId, AssetRef, AssetRevision, AssetVersion, CatalogAsset, Workspace, WorkspaceId
 from studio_orchestrator import Instant
+from studio_runtime import PluginHost
+from studio_storage.artifacts import LocalArtifactStore
 from studio_storage.catalog import SqliteCatalogStore
 from studio_storage.workspaces import SqliteWorkspaceStore
-from studio_storage.artifacts import LocalArtifactStore
 from studio_synthetic_data import ColumnSpec, GenerationPlan, TableSpec
 from studio_synthetic_data.application import GovernStudioService, SqliteRunStore
-from studio_synthetic_data.plugin import SyntheticDataStudioPlugin
 from studio_synthetic_data.local_catalogs import resolve_local_identifier
+from studio_synthetic_data.plugin import SyntheticDataStudioPlugin
 
 
 def _plan() -> GenerationPlan:
@@ -53,16 +62,21 @@ def test_catalog_provider_profiles_are_local_only() -> None:
     assert response["mode"] == "local-only"
     assert response["external_connections"] is False
     assert {item["provider_id"] for item in response["items"]} >= {
-        "unity-catalog-local", "polaris-local"
+        "unity-catalog-local",
+        "polaris-local",
     }
 
 
 def test_local_catalog_identifier_resolution_is_provider_specific() -> None:
     assert resolve_local_identifier("unity-catalog-local", "main.crm.customers") == {
-        "catalog": "main", "schema": "crm", "table": "customers"
+        "catalog": "main",
+        "schema": "crm",
+        "table": "customers",
     }
     assert resolve_local_identifier("polaris-local", "lakehouse.crm.customers") == {
-        "catalog": "lakehouse", "namespace": "crm", "table": "customers"
+        "catalog": "lakehouse",
+        "namespace": "crm",
+        "table": "customers",
     }
     with pytest.raises(ValueError, match="must follow"):
         resolve_local_identifier("unity-catalog-local", "crm.customers")
@@ -76,25 +90,25 @@ def test_plugin_registers_all_application_handlers() -> None:
     plugin.register(PluginContext(plugin.manifest.id, contributions, {}))
     routes = {(item.method, item.path) for item in contributions.routes}
     assert routes == {
-            ("GET", "/v1/synthetic-data-studio/formats"),
-            ("GET", "/v1/synthetic-data-studio/health"),
+        ("GET", "/v1/synthetic-data-studio/formats"),
+        ("GET", "/v1/synthetic-data-studio/health"),
         ("GET", "/v1/synthetic-data-studio/runs/{run_id}"),
         ("POST", "/v1/synthetic-data-studio/plans"),
-            ("POST", "/v1/synthetic-data-studio/generate"),
-            ("POST", "/v1/synthetic-data-studio/generate/async"),
-            ("GET", "/v1/synthetic-data-studio/jobs/{job_id}"),
-            ("POST", "/v1/synthetic-data-studio/jobs/{job_id}/cancel"),
+        ("POST", "/v1/synthetic-data-studio/generate"),
+        ("POST", "/v1/synthetic-data-studio/generate/async"),
+        ("GET", "/v1/synthetic-data-studio/jobs/{job_id}"),
+        ("POST", "/v1/synthetic-data-studio/jobs/{job_id}/cancel"),
         ("POST", "/v1/synthetic-data-studio/validate"),
-            ("POST", "/v1/synthetic-data-studio/export"),
-            ("GET", "/v1/synthetic-data-studio/catalog/providers"),
-            ("POST", "/v1/synthetic-data-studio/catalog/resolve"),
-            ("GET", "/v1/synthetic-data-studio/catalog/namespaces"),
-            ("POST", "/v1/synthetic-data-studio/catalog/namespaces"),
-            ("GET", "/v1/synthetic-data-studio/catalog/assets"),
-            ("GET", "/v1/synthetic-data-studio/catalog/assets/{asset_id}"),
-            ("GET", "/v1/synthetic-data-studio/catalog/assets/{asset_id}/lineage"),
-            ("GET", "/v1/synthetic-data-studio/catalog/assets/{asset_id}/revisions"),
-            ("GET", "/v1/synthetic-data-studio/runs"),
+        ("POST", "/v1/synthetic-data-studio/export"),
+        ("GET", "/v1/synthetic-data-studio/catalog/providers"),
+        ("POST", "/v1/synthetic-data-studio/catalog/resolve"),
+        ("GET", "/v1/synthetic-data-studio/catalog/namespaces"),
+        ("POST", "/v1/synthetic-data-studio/catalog/namespaces"),
+        ("GET", "/v1/synthetic-data-studio/catalog/assets"),
+        ("GET", "/v1/synthetic-data-studio/catalog/assets/{asset_id}"),
+        ("GET", "/v1/synthetic-data-studio/catalog/assets/{asset_id}/lineage"),
+        ("GET", "/v1/synthetic-data-studio/catalog/assets/{asset_id}/revisions"),
+        ("GET", "/v1/synthetic-data-studio/runs"),
     }
 
 
@@ -107,10 +121,12 @@ def test_local_generation_route_executes_deterministic_slice() -> None:
 
 
 def test_generation_route_reports_privacy_review_for_source_sample() -> None:
-    response = _plugin().generate(body={
-        "plan": _plan(),
-        "source_sample": {"customers": [{"customer_id": 1, "email": "user0@example.test"}]},
-    })
+    response = _plugin().generate(
+        body={
+            "plan": _plan(),
+            "source_sample": {"customers": [{"customer_id": 1, "email": "user0@example.test"}]},
+        }
+    )
     assert response["privacy"]["status"] == "review_required"
     assert response["privacy"]["exact_row_matches"] == 1
 
@@ -225,11 +241,13 @@ def test_plugin_host_invokes_generate_validate_and_export_routes() -> None:
         )
         run_id = generated["run_id"]
         validated = host.invoke_route(
-            "POST", "/v1/synthetic-data-studio/validate",
+            "POST",
+            "/v1/synthetic-data-studio/validate",
             body={"plan": _plan(), "run_id": run_id},
         )
         exported = host.invoke_route(
-            "POST", "/v1/synthetic-data-studio/export",
+            "POST",
+            "/v1/synthetic-data-studio/export",
             body={"run_id": run_id, "format_id": "json", "table": "customers"},
         )
         assert validated["status"] == "validated"
@@ -284,7 +302,9 @@ def test_plugin_catalog_routes_read_assets_and_lineage(tmp_path) -> None:
     assert [item["id"] for item in filtered["items"]] == ["crm.customers"]
     detail = plugin.get_asset(asset_id="crm.customers", body={"workspace_id": "workspace-a"})
     assert detail["asset"]["name"] == "customers"
-    revisions = plugin.list_revisions(asset_id="crm.customers", body={"workspace_id": "workspace-a"})
+    revisions = plugin.list_revisions(
+        asset_id="crm.customers", body={"workspace_id": "workspace-a"}
+    )
     assert revisions["items"][0]["ref"]["version"] == "1"
     lineage = plugin.get_lineage(
         asset_id="crm.customers", body={"workspace_id": "workspace-a", "version": "1"}
@@ -296,18 +316,30 @@ def test_catalog_namespaces_are_persisted(tmp_path) -> None:
     now = Instant("2026-01-01T00:00:00.000000Z")
     database = tmp_path / "catalog.db"
     workspace_id = WorkspaceId("workspace-a")
-    SqliteWorkspaceStore(database, migration_now=now).create_workspace(Workspace(workspace_id, "A"), now=now)
+    SqliteWorkspaceStore(database, migration_now=now).create_workspace(
+        Workspace(workspace_id, "A"), now=now
+    )
     catalog = SqliteCatalogStore(database, migration_now=now)
-    registered = catalog.register_namespace(workspace_id, provider_id="polaris-local", identifier="lake.crm", namespace={"catalog": "lake", "namespace": "crm"}, now=now)
+    registered = catalog.register_namespace(
+        workspace_id,
+        provider_id="polaris-local",
+        identifier="lake.crm",
+        namespace={"catalog": "lake", "namespace": "crm"},
+        now=now,
+    )
     assert registered["identifier"] == "lake.crm"
     assert catalog.list_namespaces(workspace_id)[0]["provider_id"] == "polaris-local"
 
 
 def test_catalog_identifier_resolution_route() -> None:
-    response = _plugin().resolve_catalog_identifier(body={
-        "provider_id": "polaris-local",
-        "identifier": "lakehouse.crm.customers",
-    })
+    response = _plugin().resolve_catalog_identifier(
+        body={
+            "provider_id": "polaris-local",
+            "identifier": "lakehouse.crm.customers",
+        }
+    )
     assert response["namespace"] == {
-        "catalog": "lakehouse", "namespace": "crm", "table": "customers"
+        "catalog": "lakehouse",
+        "namespace": "crm",
+        "table": "customers",
     }

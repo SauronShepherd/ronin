@@ -24,7 +24,11 @@ def test_decision_tree_regressor_predicts_from_artifact() -> None:
 def test_random_forest_classifier_uses_tree_ensemble_artifact() -> None:
     rows = [{"x": value, "target": "low" if value < 5 else "high"} for value in range(12)]
     spec = TrainingSpec(
-        "classification", "random_forest_classifier", ("x",), "target", test_fraction=0.2,
+        "classification",
+        "random_forest_classifier",
+        ("x",),
+        "target",
+        test_fraction=0.2,
         parameters=(("n_estimators", 3), ("max_depth", 3)),
     )
     model = train_tabular(rows, spec)

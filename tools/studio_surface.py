@@ -10,6 +10,10 @@ OPENAPI = Path("api/openapi-v1.json")
 WEB = Path("web/js")
 MAP = Path("docs/ui/SCREEN_API_MAP.md")
 METHODS = {"get", "post", "put", "patch", "delete"}
+PLUGIN_ROUTE = re.compile(
+    r'context\.contributions\.add_route\(\s*"(GET|POST|PUT|PATCH|DELETE)"\s*,\s*"(/v1/[^"?]+)"',
+    re.MULTILINE,
+)
 
 
 def published_operations() -> set[str]:
@@ -20,6 +24,16 @@ def published_operations() -> set[str]:
         for method in item
         if method in METHODS
     }
+
+
+def plugin_operations() -> set[str]:
+    """Include routes published through the explicit plugin contribution port."""
+
+    operations: set[str] = set()
+    for path in Path("python").glob("studio_*/plugin.py"):
+        source = path.read_text(encoding="utf-8")
+        operations.update(f"{method} {route}" for method, route in PLUGIN_ROUTE.findall(source))
+    return operations
 
 
 def ui_operations() -> set[str]:
@@ -37,7 +51,7 @@ def declared_map() -> str:
 
 
 def check() -> None:
-    operations = published_operations()
+    operations = published_operations() | plugin_operations()
     invoked = ui_operations()
     route_paths = {route.split(" ", 1)[1] for route in operations}
 

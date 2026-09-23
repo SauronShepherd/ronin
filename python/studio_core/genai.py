@@ -331,7 +331,12 @@ class AgentDefinition:
         _text(self.name, "agent name")
         _text(self.model_id, "agent model id")
         tools = tuple(sorted(set(self.tool_ids)))
-        if self.max_steps < 1 or self.max_steps > 128:
+        if (
+            not isinstance(self.max_steps, int)
+            or isinstance(self.max_steps, bool)
+            or self.max_steps < 1
+            or self.max_steps > 128
+        ):
             raise ValueError("agent max_steps must be between 1 and 128")
         object.__setattr__(self, "tool_ids", tools)
 

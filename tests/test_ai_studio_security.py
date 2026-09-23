@@ -5,9 +5,10 @@ from studio_ai_studio.security import NetworkPolicy, NetworkPolicyError, validat
 def test_loopback_http_requires_explicit_local_policy():
     with pytest.raises(NetworkPolicyError, match="scheme"):
         validate_endpoint_url("http://127.0.0.1:11434")
-    assert validate_endpoint_url(
-        "http://127.0.0.1:11434", policy=NetworkPolicy(allow_http=True)
-    ) == "127.0.0.1"
+    assert (
+        validate_endpoint_url("http://127.0.0.1:11434", policy=NetworkPolicy(allow_http=True))
+        == "127.0.0.1"
+    )
 
 
 def test_credentials_query_and_unresolved_host_are_rejected():

@@ -1,4 +1,5 @@
 """Deterministic scope selection and dependency closure."""
+
 from __future__ import annotations
 
 from collections.abc import Iterable

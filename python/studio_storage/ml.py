@@ -253,6 +253,18 @@ class SqliteMLStore:
         finally:
             connection.close()
 
+    def list_experiments(self, workspace_id: WorkspaceId) -> tuple[Experiment, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT experiment_json FROM ml_experiments WHERE workspace_id=? "
+                "ORDER BY experiment_id",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(Experiment.from_json(row["experiment_json"]) for row in rows)
+        finally:
+            connection.close()
+
     def record_run(
         self, workspace_id: WorkspaceId, run: MLRunRecord, *, now: Instant | str
     ) -> MLRunRecord:
@@ -302,6 +314,17 @@ class SqliteMLStore:
                 (str(workspace_id), str(run_id)),
             ).fetchone()
             return None if row is None else MLRunRecord.from_json(row["run_json"])
+        finally:
+            connection.close()
+
+    def list_runs(self, workspace_id: WorkspaceId) -> tuple[MLRunRecord, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT run_json FROM ml_runs WHERE workspace_id=? ORDER BY ml_run_id",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(MLRunRecord.from_json(row["run_json"]) for row in rows)
         finally:
             connection.close()
 

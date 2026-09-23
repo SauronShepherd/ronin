@@ -52,13 +52,13 @@ _SCHEMA_TABLES = {
     "ml": "ml_schema_migrations",
 }
 _SUPPORTED_VERSIONS = {
-    "workspaces": 1,
+    "workspaces": 2,
     "environments": 1,
     "connections": 1,
-    "catalog": 2,
+    "catalog": 4,
     "ontology": 1,
     "quality": 1,
-    "scheduler": 1,
+    "scheduler": 2,
     "audit": 1,
     "genai": 1,
     "ml": 1,

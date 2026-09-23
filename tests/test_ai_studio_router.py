@@ -16,8 +16,12 @@ from studio_ai_studio.router import CapacityLedger, ModelRouter, RouteCandidate
 
 def candidate(name: str, priority: int, max_in_flight: int = 1) -> RouteCandidate:
     endpoint = EndpointConfig(
-        EndpointId(name), AdapterKind.OLLAMA, f"http://127.0.0.1:{8000 + priority}",
-        (PublicModelName("qwen"),), priority=priority, max_in_flight=max_in_flight,
+        EndpointId(name),
+        AdapterKind.OLLAMA,
+        f"http://127.0.0.1:{8000 + priority}",
+        (PublicModelName("qwen"),),
+        priority=priority,
+        max_in_flight=max_in_flight,
     )
     snapshot = ModelSnapshot(
         endpoint.id, "qwen", PublicModelName("qwen"), frozenset({Capability.CHAT})

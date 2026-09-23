@@ -5,9 +5,7 @@ def test_sqlite_execution_store_survives_reopen(tmp_path) -> None:
     path = tmp_path / "ml.sqlite"
     first = SqliteExecutionStore(path)
     first.put(
-        ExecutionSnapshot(
-            "run-1", "succeeded", result_payload={"metrics": {"accuracy": 1.0}}
-        )
+        ExecutionSnapshot("run-1", "succeeded", result_payload={"metrics": {"accuracy": 1.0}})
     )
     second = SqliteExecutionStore(path)
     restored = second.get("run-1")

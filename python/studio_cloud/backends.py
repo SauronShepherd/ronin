@@ -65,7 +65,7 @@ class HttpEmulatorBackend:
     """
 
     name: str
-    endpoint: str
+    endpoint: str | None
     license_required: bool = False
     timeout_seconds: float = 2.0
 
@@ -92,6 +92,8 @@ class HttpEmulatorBackend:
             "license_required": self.license_required,
         }
         try:
+            if self.endpoint is None:
+                raise ValueError("emulator endpoint is not configured")
             if urlparse(self.endpoint).scheme not in {"http", "https"}:
                 raise ValueError("emulator endpoint must use http or https")
             request = Request(self.endpoint, method="GET")  # noqa: S310

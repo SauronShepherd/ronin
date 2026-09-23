@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib
+
 import tempfile
 from pathlib import Path
 
@@ -16,6 +18,16 @@ def _fixture(directory: str, package: str, source: str) -> Path:
 
 def test_current_project_respects_architecture_contracts() -> None:
     assert inspect_roots([Path("python")]) == []
+
+
+def test_public_v1_packages_import_cleanly() -> None:
+    packages = tuple(PROJECT_DEPENDENCIES) + (
+        "studio_ai_studio",
+        "studio_data_engineering",
+        "studio_query_engine",
+    )
+    for package in packages:
+        assert importlib.import_module(package).__name__ == package
 
 
 def test_matrix_contains_exactly_the_v01_packages() -> None:

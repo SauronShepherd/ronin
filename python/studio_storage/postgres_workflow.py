@@ -14,7 +14,8 @@ from .postgres_core import PostgresMetadataStore
 class PostgresWorkflowBundleImportStore(PostgresMetadataStore):
     """Shared PostgreSQL adapter for workspace metadata and portable workflows."""
 
-    def _require_active_workspace(self, cursor: Any, workspace_id: WorkspaceId) -> None:
+    @staticmethod
+    def _require_active_workspace(cursor: Any, workspace_id: WorkspaceId) -> None:
         cursor.execute(
             "SELECT archived_at FROM ronin_workspaces WHERE workspace_id=%s",
             (str(workspace_id),),

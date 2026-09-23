@@ -207,21 +207,21 @@ class SqliteRunStore:
         with self._lock:
             self._db.execute("BEGIN IMMEDIATE")
             self._db.execute(
-            """INSERT INTO govern_runs
+                """INSERT INTO govern_runs
             (run_id,idempotency_key,plan_json,plan_fingerprint,status,result_json,validation_json,error)
             VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(run_id) DO UPDATE SET
             status=excluded.status,result_json=excluded.result_json,
             validation_json=excluded.validation_json,error=excluded.error""",
-            (
-                run.run_id,
-                idempotency_key,
-                json.dumps(_plan_payload(plan), sort_keys=True),
-                run.plan_fingerprint,
-                run.status.value,
-                _result_json(run.result),
-                _validation_json(run.validation),
-                run.error,
-            ),
+                (
+                    run.run_id,
+                    idempotency_key,
+                    json.dumps(_plan_payload(plan), sort_keys=True),
+                    run.plan_fingerprint,
+                    run.status.value,
+                    _result_json(run.result),
+                    _validation_json(run.validation),
+                    run.error,
+                ),
             )
             self._db.commit()
 
@@ -239,8 +239,8 @@ class SqliteRunStore:
     def get(self, run_id: str) -> GovernRun:
         with self._lock:
             row = self._db.execute(
-            "SELECT run_id,idempotency_key,plan_json,plan_fingerprint,status,result_json,validation_json,error FROM govern_runs WHERE run_id=?",  # noqa: E501
-            (run_id,),
+                "SELECT run_id,idempotency_key,plan_json,plan_fingerprint,status,result_json,validation_json,error FROM govern_runs WHERE run_id=?",  # noqa: E501
+                (run_id,),
             ).fetchone()
         if row is None:
             raise KeyError(run_id)
@@ -249,18 +249,18 @@ class SqliteRunStore:
     def find_by_idempotency(self, key: str) -> GovernRun | None:
         with self._lock:
             row = self._db.execute(
-            "SELECT run_id,idempotency_key,plan_json,plan_fingerprint,status,result_json,validation_json,error FROM govern_runs WHERE idempotency_key=?",  # noqa: E501
-            (key,),
+                "SELECT run_id,idempotency_key,plan_json,plan_fingerprint,status,result_json,validation_json,error FROM govern_runs WHERE idempotency_key=?",  # noqa: E501
+                (key,),
             ).fetchone()
         return self._row(row) if row else None
 
     def all(self) -> tuple[GovernRun, ...]:
         with self._lock:
             return tuple(
-            self._row(row)
-            for row in self._db.execute(
-                "SELECT run_id,idempotency_key,plan_json,plan_fingerprint,status,result_json,validation_json,error FROM govern_runs ORDER BY run_id"  # noqa: E501
-            )
+                self._row(row)
+                for row in self._db.execute(
+                    "SELECT run_id,idempotency_key,plan_json,plan_fingerprint,status,result_json,validation_json,error FROM govern_runs ORDER BY run_id"  # noqa: E501
+                )
             )
 
     def add_artifact(self, run_id: str, artifact: dict[str, Any]) -> None:
@@ -279,8 +279,7 @@ class SqliteRunStore:
     def artifacts(self, run_id: str) -> tuple[dict[str, Any], ...]:
         with self._lock:
             rows = self._db.execute(
-                "SELECT artifact_json FROM govern_artifacts "
-                "WHERE run_id=? ORDER BY sequence",
+                "SELECT artifact_json FROM govern_artifacts WHERE run_id=? ORDER BY sequence",
                 (run_id,),
             )
             return tuple(json.loads(row[0]) for row in rows)
@@ -397,9 +396,13 @@ class GovernStudioService:
             digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
             self._store.add_artifact(
                 run_id,
-                {"format_id": format_id, "table": table_name,
-                 "size_bytes": len(content.encode("utf-8")), "digest": digest,
-                 "storage_ref": f"artifact://sha256/{digest}"},
+                {
+                    "format_id": format_id,
+                    "table": table_name,
+                    "size_bytes": len(content.encode("utf-8")),
+                    "digest": digest,
+                    "storage_ref": f"artifact://sha256/{digest}",
+                },
             )
             return content
 

@@ -84,9 +84,7 @@ class PluginLock:
     plugins: tuple[PluginLockEntry, ...]
 
     @classmethod
-    def from_plan(
-        cls, plan: CompositionPlan, *, host_version: str, plugin_api: str
-    ) -> PluginLock:
+    def from_plan(cls, plan: CompositionPlan, *, host_version: str, plugin_api: str) -> PluginLock:
         entries = tuple(
             sorted(
                 (PluginLockEntry.from_record(item) for item in plan.records),

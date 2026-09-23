@@ -55,3 +55,17 @@ def test_azure_blob_json_rejects_cursor_checkpoint() -> None:
             EnvironmentSecretResolver({}),
             checkpoint=SourceCheckpoint("cursor", "x"),
         )
+
+
+def test_azure_blob_rejects_persisted_credential_and_requires_secret_ref() -> None:
+    with pytest.raises(ValueError, match="secret_refs"):
+        ConnectionDefinition(
+            ConnectionId("azure"),
+            "Azure",
+            "azure.blob.json",
+            options=(
+                ("container", "data"),
+                ("account_url", "https://account.blob.core.windows.net"),
+                ("credential", "plaintext-secret"),
+            ),
+        )

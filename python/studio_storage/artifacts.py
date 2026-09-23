@@ -89,9 +89,7 @@ class LocalArtifactStore:
             raise ArtifactIntegrityError("artifact digest verification failed")
         return data
 
-    def get_bytes_by_storage_ref(
-        self, storage_ref: str, *, digest: str
-    ) -> bytes:
+    def get_bytes_by_storage_ref(self, storage_ref: str, *, digest: str) -> bytes:
         if storage_ref != f"artifact://sha256/{digest}":
             raise ValueError("artifact storage_ref does not match local digest")
         data = self._path_for_digest(digest).read_bytes()

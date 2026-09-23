@@ -136,6 +136,13 @@ class ModelSnapshot:
 
 
 __all__ = [
-    "AdapterKind", "Capability", "DesiredState", "EndpointConfig", "EndpointId",
-    "ModelSnapshot", "ObservedState", "PublicModelName", "RequestLimits",
+    "AdapterKind",
+    "Capability",
+    "DesiredState",
+    "EndpointConfig",
+    "EndpointId",
+    "ModelSnapshot",
+    "ObservedState",
+    "PublicModelName",
+    "RequestLimits",
 ]

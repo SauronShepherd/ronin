@@ -24,9 +24,24 @@ class LocalCatalogProfile:
 
 
 LOCAL_CATALOG_PROFILES = (
-    LocalCatalogProfile("ronin-sqlite", "Ronin Local Catalog", ("workspace", "namespace", "asset"), ("assets", "revisions", "lineage", "search")),
-    LocalCatalogProfile("unity-catalog-local", "Unity Catalog (local profile)", ("catalog", "schema", "table"), ("assets", "revisions", "lineage", "search", "three-level-namespace")),
-    LocalCatalogProfile("polaris-local", "Apache Polaris (local profile)", ("catalog", "namespace", "table"), ("assets", "revisions", "lineage", "search", "namespace-branching")),
+    LocalCatalogProfile(
+        "ronin-sqlite",
+        "Ronin Local Catalog",
+        ("workspace", "namespace", "asset"),
+        ("assets", "revisions", "lineage", "search"),
+    ),
+    LocalCatalogProfile(
+        "unity-catalog-local",
+        "Unity Catalog (local profile)",
+        ("catalog", "schema", "table"),
+        ("assets", "revisions", "lineage", "search", "three-level-namespace"),
+    ),
+    LocalCatalogProfile(
+        "polaris-local",
+        "Apache Polaris (local profile)",
+        ("catalog", "namespace", "table"),
+        ("assets", "revisions", "lineage", "search", "namespace-branching"),
+    ),
 )
 
 
@@ -36,7 +51,9 @@ def list_local_catalog_profiles() -> tuple[LocalCatalogProfile, ...]:
 
 def resolve_local_identifier(provider_id: str, identifier: str) -> dict[str, str]:
     """Resolve a local catalog identifier into its provider namespace."""
-    profile = next((item for item in LOCAL_CATALOG_PROFILES if item.provider_id == provider_id), None)
+    profile = next(
+        (item for item in LOCAL_CATALOG_PROFILES if item.provider_id == provider_id), None
+    )
     if profile is None:
         raise ValueError(f"unknown local catalog provider: {provider_id}")
     parts = tuple(part for part in identifier.split(".") if part)

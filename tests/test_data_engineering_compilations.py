@@ -13,9 +13,7 @@ def test_compilation_report_survives_reopen(tmp_path: Path) -> None:
     report = CompilationReport("local-preview", True, (), 2, 1)
     store.save_report(revision_key="p/main/1", ir_digest="ir-1", report=report)
     reopened = SqliteCompilationStore(tmp_path / "ronin.db")
-    found = reopened.get_report(
-        revision_key="p/main/1", runtime="local-preview", ir_digest="ir-1"
-    )
+    found = reopened.get_report(revision_key="p/main/1", runtime="local-preview", ir_digest="ir-1")
     assert found is not None
     assert found["portable"] is True
     assert found["node_count"] == 2

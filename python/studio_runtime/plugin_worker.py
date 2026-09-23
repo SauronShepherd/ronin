@@ -5,9 +5,10 @@ from __future__ import annotations
 import asyncio
 import inspect
 import json
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Awaitable, Callable, Mapping
+from typing import Any
 
 
 class WorkerFailureKind(StrEnum):
@@ -40,7 +41,11 @@ class WorkerRequest:
     request_id: str
 
     def encoded_size(self) -> int:
-        return len(json.dumps(self.payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8"))
+        return len(
+            json.dumps(
+                self.payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            ).encode("utf-8")
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,19 +57,29 @@ class WorkerResponse:
 
 
 def _failure(request_id: str, kind: WorkerFailureKind) -> WorkerResponse:
-    return WorkerResponse(request_id, failure=kind, retryable=kind in {WorkerFailureKind.TIMEOUT, WorkerFailureKind.CRASH})
+    return WorkerResponse(
+        request_id,
+        failure=kind,
+        retryable=kind in {WorkerFailureKind.TIMEOUT, WorkerFailureKind.CRASH},
+    )
 
 
 async def execute_worker(
     request: WorkerRequest,
     handler: Callable[[Mapping[str, Any]], Any | Awaitable[Any]],
     *,
-    contract: WorkerContract = WorkerContract(),
+    contract: WorkerContract | None = None,
     cancellation: asyncio.Event | None = None,
 ) -> WorkerResponse:
     """Execute one bounded request with stable timeout/cancel/crash results."""
+    if contract is None:
+        contract = WorkerContract()
     contract.validate()
-    if not request.plugin_id.strip() or not request.operation_id.strip() or not request.request_id.strip():
+    if (
+        not request.plugin_id.strip()
+        or not request.operation_id.strip()
+        or not request.request_id.strip()
+    ):
         return _failure(request.request_id, WorkerFailureKind.INVALID_PAYLOAD)
     try:
         if request.encoded_size() > contract.max_payload_bytes:
@@ -82,7 +97,11 @@ async def execute_worker(
             value = await asyncio.wait_for(task, contract.timeout_seconds)
         else:
             cancel_task = asyncio.create_task(cancellation.wait())
-            done, _ = await asyncio.wait({task, cancel_task}, timeout=contract.timeout_seconds, return_when=asyncio.FIRST_COMPLETED)
+            done, _ = await asyncio.wait(
+                {task, cancel_task},
+                timeout=contract.timeout_seconds,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
             cancel_task.cancel()
             if cancel_task in done and cancellation.is_set():
                 task.cancel()
@@ -92,7 +111,7 @@ async def execute_worker(
                 return _failure(request.request_id, WorkerFailureKind.TIMEOUT)
             value = task.result()
         return WorkerResponse(request.request_id, payload=value)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return _failure(request.request_id, WorkerFailureKind.TIMEOUT)
     except asyncio.CancelledError:
         return _failure(request.request_id, WorkerFailureKind.CANCELLED)
@@ -100,4 +119,10 @@ async def execute_worker(
         return _failure(request.request_id, WorkerFailureKind.CRASH)
 
 
-__all__ = ("WorkerContract", "WorkerFailureKind", "WorkerRequest", "WorkerResponse", "execute_worker")
+__all__ = (
+    "WorkerContract",
+    "WorkerFailureKind",
+    "WorkerRequest",
+    "WorkerResponse",
+    "execute_worker",
+)

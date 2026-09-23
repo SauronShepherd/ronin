@@ -2,27 +2,32 @@
 # ruff: noqa: E501, E701
 
 import base64
+import hashlib
+import json
 from dataclasses import replace
-from typing import Any, cast
+from typing import Any, Literal, cast
 from urllib.parse import parse_qs
 
 from studio_core import WorkspaceId
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
+from studio_storage.ports import ArtifactStore
 
 from .backends import default_backends
 from .domain import Lab
 from .optimization import SearchSpec, Trial, propose_bayesian_candidates, rank_trials
-from .orchestration import LocalExecutionCoordinator
+from .orchestration import ExecutionStore, LocalExecutionCoordinator
 from .quality import profile_and_validate
 from .runner import LocalExperimentRunner
 from .runtime import TrainingSpec
 from .service import (
+    MLRegistryStore,
     persist_clustering_result,
     persist_experiment_result,
     predict_registered_tabular,
     register_clustering_model,
     train_register_tabular,
 )
+from .ports import MLLabStore
 from .services import InMemoryMLLabStore, LabService
 
 
@@ -53,20 +58,22 @@ class MachineLearningStudioPlugin:
         self._labs: LabService | None = None
         self._runner = LocalExperimentRunner()
         self._coordinator = LocalExecutionCoordinator(self._runner)
-        self._registry: object | None = None
-        self._artifacts: object | None = None
+        self._registry: MLRegistryStore | None = None
+        self._artifacts: ArtifactStore | None = None
 
     def register(self, context: PluginContext) -> None:
         store = context.services.get("ml_lab_store")
         if store is None:
             store = InMemoryMLLabStore()
-        self._labs = LabService(cast(object, store))
+        self._labs = LabService(cast(MLLabStore, store))
         execution_store = context.services.get("ml_execution_store")
         if execution_store is not None:
             self._coordinator.close()
-            self._coordinator = LocalExecutionCoordinator(self._runner, store=cast(object, execution_store))
-        self._registry = context.services.get("ml_registry")
-        self._artifacts = context.services.get("artifact_store")
+            self._coordinator = LocalExecutionCoordinator(
+                self._runner, store=cast(ExecutionStore, execution_store)
+            )
+        self._registry = cast(MLRegistryStore | None, context.services.get("ml_registry"))
+        self._artifacts = cast(ArtifactStore | None, context.services.get("artifact_store"))
         context.contributions.add_ui(
             context.plugin_id,
             {
@@ -88,31 +95,52 @@ class MachineLearningStudioPlugin:
 
         for contribution in (
             SurfaceContribution(
-                id="ml-studio.backends.v1", plugin_id=context.plugin_id,
-                namespace="ml-studio", command="backends",
-                operation_id="ml-studio.backends.v1", capability="ml-studio.backends",
-                permission="ml-studio:read", path="/v1/ml-studio/backends", method="GET",
+                id="ml-studio.backends.v1",
+                plugin_id=context.plugin_id,
+                namespace="ml-studio",
+                command="backends",
+                operation_id="ml-studio.backends.v1",
+                capability="ml-studio.backends",
+                permission="ml-studio:read",
+                path="/v1/ml-studio/backends",
+                method="GET",
                 output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="ml-studio.labs.v1", plugin_id=context.plugin_id,
-                namespace="ml-studio", command="list-labs",
-                operation_id="ml-studio.labs.v1", capability="ml-studio.labs",
-                permission="ml-studio:read", path="/v1/ml-studio/labs", method="GET",
+                id="ml-studio.labs.v1",
+                plugin_id=context.plugin_id,
+                namespace="ml-studio",
+                command="list-labs",
+                operation_id="ml-studio.labs.v1",
+                capability="ml-studio.labs",
+                permission="ml-studio:read",
+                path="/v1/ml-studio/labs",
+                method="GET",
                 output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="ml-studio.run.v1", plugin_id=context.plugin_id,
-                namespace="ml-studio", command="run",
-                operation_id="ml-studio.run.v1", capability="ml-studio.experiments",
-                permission="ml-studio:execute", path="/v1/ml-studio/labs/{lab_id}/runs", method="POST",
-                input_schema={"type": "object"}, output_schema={"type": "object"},
+                id="ml-studio.run.v1",
+                plugin_id=context.plugin_id,
+                namespace="ml-studio",
+                command="run",
+                operation_id="ml-studio.run.v1",
+                capability="ml-studio.experiments",
+                permission="ml-studio:execute",
+                path="/v1/ml-studio/labs/{lab_id}/runs",
+                method="POST",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="ml-studio.models.v1", plugin_id=context.plugin_id,
-                namespace="ml-studio", command="models",
-                operation_id="ml-studio.models.v1", capability="ml-studio.models",
-                permission="ml-studio:read", path="/v1/ml-studio/models", method="GET",
+                id="ml-studio.models.v1",
+                plugin_id=context.plugin_id,
+                namespace="ml-studio",
+                command="models",
+                operation_id="ml-studio.models.v1",
+                capability="ml-studio.models",
+                permission="ml-studio:read",
+                path="/v1/ml-studio/models",
+                method="GET",
                 output_schema={"type": "object"},
             ),
         ):
@@ -230,6 +258,13 @@ class MachineLearningStudioPlugin:
             permission="ml-studio:execute",
         )
         context.contributions.add_route(
+            "POST",
+            "/v1/ml-studio/models/{model_id}/{version}/batch-predict",
+            context.plugin_id,
+            self.batch_predict_model,
+            permission="ml-studio:execute",
+        )
+        context.contributions.add_route(
             "GET",
             "/v1/ml-studio/models/{model_id}/{version}/card",
             context.plugin_id,
@@ -286,7 +321,11 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, _kwargs)
         if not model_id or not version:
             raise ValueError("model_id and version are required")
-        if not isinstance(body, dict) or not isinstance(body.get("reason"), str) or not body["reason"].strip():
+        if (
+            not isinstance(body, dict)
+            or not isinstance(body.get("reason"), str)
+            or not body["reason"].strip()
+        ):
             raise ValueError("promotion reason is required")
         from studio_core.ml import ModelId, ModelVersion
 
@@ -315,7 +354,9 @@ class MachineLearningStudioPlugin:
 
         if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
             raise ValueError("predict requires rows")
-        model = self._registry.get_model(WorkspaceId(workspace_id), ModelId(model_id), ModelVersion(version))
+        model = self._registry.get_model(
+            WorkspaceId(workspace_id), ModelId(model_id), ModelVersion(version)
+        )
         if model is None:
             raise KeyError(f"{model_id}@{version}")
         if isinstance(encoded, str):
@@ -331,9 +372,57 @@ class MachineLearningStudioPlugin:
             raise ValueError("artifact_base64 is required when artifact store is unavailable")
 
         predictions = predict_registered_tabular(
-            self._registry, WorkspaceId(workspace_id), ModelId(model_id), ModelVersion(version), artifact, rows
+            self._registry,
+            WorkspaceId(workspace_id),
+            ModelId(model_id),
+            ModelVersion(version),
+            artifact,
+            rows,
         )
         return {"model_id": model_id, "version": version, "predictions": list(predictions)}
+
+    def batch_predict_model(
+        self,
+        workspace_id: str | None = None,
+        model_id: str | None = None,
+        version: str | None = None,
+        *,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        """Run bounded batch inference with an explicit replay identity."""
+        if not isinstance(body, dict) or not isinstance(body.get("batch_id"), str):
+            raise ValueError("batch_id is required for batch prediction")
+        batch_id = body["batch_id"].strip()
+        if not batch_id or len(batch_id) > 256 or any(char in batch_id for char in "\r\n\x00"):
+            raise ValueError("batch_id must be a bounded single-line identifier")
+        rows = body.get("rows")
+        if (
+            not isinstance(rows, list)
+            or not rows
+            or len(rows) > 100_000
+            or not all(isinstance(row, dict) for row in rows)
+        ):
+            raise ValueError("batch prediction rows must contain at most 100000 items")
+        result = self.predict_model(
+            workspace_id,
+            model_id,
+            version,
+            body=body,
+            **_kwargs,
+        )
+        return {
+            **result,
+            "batch_id": batch_id,
+            "row_count": len(rows),
+            "evidence": {
+                "kind": "batch-inference",
+                "replay_key": f"{model_id}@{version}:{batch_id}",
+                "input_sha256": hashlib.sha256(
+                    json.dumps(rows, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                ).hexdigest(),
+            },
+        }
 
     def model_card(
         self,
@@ -357,7 +446,11 @@ class MachineLearningStudioPlugin:
         return {
             "schema": "ronin.ml-model-card/v1",
             "identity": {"model_id": model_id, "version": version, "stage": model.stage},
-            "provenance": {"source_run_id": model.source_run_id.value, "artifact_ref": model.artifact_ref, "artifact_digest": model.artifact_digest},
+            "provenance": {
+                "source_run_id": model.source_run_id.value,
+                "artifact_ref": model.artifact_ref,
+                "artifact_digest": model.artifact_digest,
+            },
             "framework": model.framework,
             "signature": model.signature.to_payload(),
             "limitations": ["Review dataset quality and evaluation evidence before promotion."],
@@ -439,7 +532,11 @@ class MachineLearningStudioPlugin:
                     from studio_core.ml import ModelId, ModelVersion
 
                     model = register_clustering_model(
-                        self._registry, self._artifacts, WorkspaceId(workspace_id), lab, result,
+                        self._registry,
+                        self._artifacts,
+                        WorkspaceId(workspace_id),
+                        lab,
+                        result,
                         run_id=MLRunId(run.id.value),
                         model_id=ModelId(str(registration.get("model_id", lab.id))),
                         model_version=ModelVersion(str(registration.get("version", "candidate-1"))),
@@ -447,8 +544,8 @@ class MachineLearningStudioPlugin:
                     )
                     payload["model"] = model.to_payload()
             return payload
-        result = self._runner.run(lab, rows)
-        payload = result.to_payload()
+        experiment_result = self._runner.run(lab, rows)
+        payload = experiment_result.to_payload()
         if self._registry is not None:
             from studio_core.ml import MLRunId
 
@@ -456,7 +553,7 @@ class MachineLearningStudioPlugin:
                 self._registry,
                 WorkspaceId(workspace_id),
                 lab,
-                result,
+                experiment_result,
                 run_id=MLRunId(str(body.get("run_id", f"run-{lab_id}"))),
                 execution_ref=str(body.get("execution_ref", "ml-studio-local")),
                 source_revision=str(body.get("source_revision", "local")),
@@ -538,7 +635,11 @@ class MachineLearningStudioPlugin:
             raise ValueError("spec parameters must be an array")
         normalized: list[tuple[str, tuple[object, ...]]] = []
         for item in parameters:
-            if not isinstance(item, dict) or not isinstance(item.get("name"), str) or not isinstance(item.get("values"), list):
+            if (
+                not isinstance(item, dict)
+                or not isinstance(item.get("name"), str)
+                or not isinstance(item.get("values"), list)
+            ):
                 raise ValueError("invalid search parameter")
             normalized.append((item["name"], tuple(item["values"])))
         spec = SearchSpec(
@@ -551,13 +652,28 @@ class MachineLearningStudioPlugin:
         )
         trials: list[Trial] = []
         for item in raw_trials:
-            if not isinstance(item, dict) or not isinstance(item.get("parameters"), dict) or not isinstance(item.get("metrics"), dict):
+            if (
+                not isinstance(item, dict)
+                or not isinstance(item.get("parameters"), dict)
+                or not isinstance(item.get("metrics"), dict)
+            ):
                 raise ValueError("invalid trial")
             metrics = item["metrics"]
-            if not all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in metrics.values()):
+            if not all(
+                isinstance(value, (int, float)) and not isinstance(value, bool)
+                for value in metrics.values()
+            ):
                 raise ValueError("trial metrics must be numeric")
-            trials.append(Trial.create(item["parameters"], {key: float(value) for key, value in metrics.items()}))
-        return {"metric": spec.metric, "direction": spec.direction, "items": [trial.to_payload() for trial in rank_trials(spec, tuple(trials))]}
+            trials.append(
+                Trial.create(
+                    item["parameters"], {key: float(value) for key, value in metrics.items()}
+                )
+            )
+        return {
+            "metric": spec.metric,
+            "direction": spec.direction,
+            "items": [trial.to_payload() for trial in rank_trials(spec, tuple(trials))],
+        }
 
     def search_trials(
         self,
@@ -581,13 +697,17 @@ class MachineLearningStudioPlugin:
         normalized = tuple(
             (item["name"], tuple(item["values"]))
             for item in parameters
-            if isinstance(item, dict) and isinstance(item.get("name"), str) and isinstance(item.get("values"), list)
+            if isinstance(item, dict)
+            and isinstance(item.get("name"), str)
+            and isinstance(item.get("values"), list)
         )
         if len(normalized) != len(parameters):
             raise ValueError("invalid search parameter")
         spec = SearchSpec(
-            mode=raw_spec.get("mode", "single"), parameters=normalized,
-            metric=raw_spec.get("metric", "score"), direction=raw_spec.get("direction", "maximize"),
+            mode=raw_spec.get("mode", "single"),
+            parameters=normalized,
+            metric=raw_spec.get("metric", "score"),
+            direction=raw_spec.get("direction", "maximize"),
             max_trials=raw_spec.get("max_trials", 100),
             random_seed=raw_spec.get("random_seed", 17),
         )
@@ -615,9 +735,14 @@ class MachineLearningStudioPlugin:
                 if not isinstance(parameters["seed"], int) or isinstance(parameters["seed"], bool):
                     raise ValueError("seed trial parameter must be an integer")
                 candidate = replace(lab, seed=parameters["seed"])
-            effective = tuple(
-                (name, value) for name, value in parameters.items() if name != "seed"
-            )
+            effective_values: list[tuple[str, float | int]] = []
+            for name, value in parameters.items():
+                if name == "seed":
+                    continue
+                if isinstance(value, bool) or not isinstance(value, (int, float)):
+                    raise ValueError("search parameters must be numeric")
+                effective_values.append((name, value))
+            effective = tuple(effective_values)
             result = self._runner.run(candidate, rows, effective)
             trials.append(Trial.create(parameters, dict(result.model.metrics)))
             if isinstance(registration, dict):
@@ -627,10 +752,18 @@ class MachineLearningStudioPlugin:
                     raise ValueError("register model_id and version_prefix must be strings")
                 from studio_core.ml import ExperimentId, MLRunId, ModelId, ModelVersion
 
+                if lab.task not in {"classification", "regression"}:
+                    raise ValueError("model registration requires a supervised lab")
+                if self._registry is None or self._artifacts is None:
+                    raise RuntimeError("model registration requires registry and artifact store")
                 training_spec = TrainingSpec(
-                    task=lab.task,
-                    algorithm="logistic_regression" if lab.task == "classification" else "linear_regression",
-                    features=tuple(feature.column for feature in lab.features if feature.role != "ignored"),
+                    task=cast(Literal["classification", "regression"], lab.task),
+                    algorithm="logistic_regression"
+                    if lab.task == "classification"
+                    else "linear_regression",
+                    features=tuple(
+                        feature.column for feature in lab.features if feature.role != "ignored"
+                    ),
                     target=lab.target or "",
                     test_fraction=lab.test_fraction,
                     random_seed=candidate.seed,
@@ -641,14 +774,14 @@ class MachineLearningStudioPlugin:
                     self._artifacts,
                     WorkspaceId(workspace_id),
                     rows,
-                    lab.dataset,
-                    ExperimentId(lab.id),
-                    MLRunId(f"{lab.id}-trial-{len(trials)}"),
-                    ModelId(model_id),
-                    ModelVersion(f"{version_prefix}-{len(trials)}"),
-                    "search",
-                    "ml-studio-search",
-                    training_spec,
+                    dataset=lab.dataset,
+                    experiment_id=ExperimentId(lab.id),
+                    run_id=MLRunId(f"{lab.id}-trial-{len(trials)}"),
+                    model_id=ModelId(model_id),
+                    model_version=ModelVersion(f"{version_prefix}-{len(trials)}"),
+                    source_revision="search",
+                    execution_ref="ml-studio-search",
+                    spec=training_spec,
                     now="plugin",
                 )
                 registered.append(registered_model.to_payload())

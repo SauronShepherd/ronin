@@ -22,7 +22,11 @@ class RuntimeBuildFingerprint:
     image_digest: str = ""
 
     def __post_init__(self) -> None:
-        for value, label in ((self.engine, "engine"), (self.version, "version"), (self.build_id, "build_id")):
+        for value, label in (
+            (self.engine, "engine"),
+            (self.version, "version"),
+            (self.build_id, "build_id"),
+        ):
             if not value or value != value.strip():
                 raise ValueError(f"runtime fingerprint {label} must be non-empty and trimmed")
 
@@ -55,7 +59,11 @@ class BenchmarkResult:
             "durations_ms": list(self.durations_ms),
             "median_ms": self.median_ms,
             "fingerprint": self.fingerprint,
-            **({"runtime_build_fingerprint": self.runtime_build_fingerprint} if self.runtime_build_fingerprint else {}),
+            **(
+                {"runtime_build_fingerprint": self.runtime_build_fingerprint}
+                if self.runtime_build_fingerprint
+                else {}
+            ),
         }
 
 

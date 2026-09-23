@@ -20,8 +20,22 @@ from .backends import (
     TrainingContext,
     default_backends,
 )
+from .bundle import (
+    MLBundleImportPlan,
+    commit_ml_bundle_import,
+    export_ml_bundle,
+    plan_ml_bundle_import,
+)
 from .clustering import KMeansModel, fit_kmeans, inertia
-from .domain import FeatureSpec, Lab, PipelineIR, PipelineNode
+from .domain import FeatureDefinition, FeatureSpec, Lab, PipelineIR, PipelineNode
+from .drift import (
+    DriftAssessment,
+    DriftThreshold,
+    NumericDrift,
+    assess_numeric_drift,
+    compare_numeric_drift,
+)
+from .mlflow import MLFLOW_SUBSET_SCHEMA, MLflowSubset
 from .optimization import SearchSpec, Trial, rank_trials
 from .orchestration import (
     ExecutionSnapshot,
@@ -32,6 +46,13 @@ from .orchestration import (
 from .postgres import PostgresExecutionStore, PostgresMLLabStore
 from .provenance import run_record
 from .quality import ColumnProfile, QualityReport, profile_and_validate
+from .registry_bundle import (
+    MLRegistryBundleImportPlan,
+    MLRegistryBundleStore,
+    commit_ml_registry_bundle_import,
+    export_ml_registry_bundle,
+    plan_ml_registry_bundle_import,
+)
 from .remote import (
     JsonRemoteBackend,
     MLflowBackend,
@@ -41,17 +62,20 @@ from .remote import (
 )
 from .runner import BackendNotFound, ExperimentResult, LocalExperimentRunner
 from .runtime import (
+    ALGORITHM_CAPABILITIES,
     Algorithm,
     MLDependencyError,
     TaskKind,
     TrainedTabularModel,
     TrainingSpec,
+    algorithm_capabilities,
     predict_tabular,
     train_tabular,
 )
 from .service import (
     MLModelNotFound,
     MLRegistryStore,
+    compare_model_evaluations,
     list_model_evaluations,
     list_registered_models,
     persist_experiment_result,
@@ -62,7 +86,13 @@ from .service import (
     resolve_champion_model,
     train_register_tabular,
 )
-from .services import InMemoryMLLabStore, LabService, MLLabConflict
+from .services import (
+    FeatureDefinitionConflict,
+    FeatureDefinitionService,
+    InMemoryMLLabStore,
+    LabService,
+    MLLabConflict,
+)
 from .sqlite import SqliteExecutionStore, SqliteMLLabStore
 
 __all__ = (
@@ -70,14 +100,22 @@ __all__ = (
     "MLDependencyError",
     "MLModelNotFound",
     "MLRegistryStore",
+    "MLRegistryBundleImportPlan",
+    "MLRegistryBundleStore",
+    "commit_ml_registry_bundle_import",
+    "export_ml_registry_bundle",
+    "plan_ml_registry_bundle_import",
     "list_registered_models",
     "list_model_evaluations",
+    "compare_model_evaluations",
     "promote_registered_model",
     "record_model_evaluation",
     "resolve_champion_model",
     "TaskKind",
     "TrainedTabularModel",
     "TrainingSpec",
+    "ALGORITHM_CAPABILITIES",
+    "algorithm_capabilities",
     "predict_registered_tabular",
     "predict_champion_tabular",
     "predict_tabular",
@@ -108,9 +146,19 @@ __all__ = (
     "LocalScikitLearnBackend",
     "default_backends",
     "FeatureSpec",
+    "FeatureDefinition",
+    "FeatureDefinitionConflict",
+    "FeatureDefinitionService",
+    "MLFLOW_SUBSET_SCHEMA",
+    "MLflowSubset",
     "Lab",
     "PipelineIR",
     "PipelineNode",
+    "NumericDrift",
+    "DriftAssessment",
+    "DriftThreshold",
+    "assess_numeric_drift",
+    "compare_numeric_drift",
     "InMemoryMLLabStore",
     "LabService",
     "MLLabConflict",
@@ -125,6 +173,10 @@ __all__ = (
     "KMeansModel",
     "fit_kmeans",
     "inertia",
+    "MLBundleImportPlan",
+    "commit_ml_bundle_import",
+    "export_ml_bundle",
+    "plan_ml_bundle_import",
     "BackendNotFound",
     "ExperimentResult",
     "LocalExperimentRunner",

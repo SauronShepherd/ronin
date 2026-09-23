@@ -33,6 +33,7 @@ def test_non_http_registries_reject_collisions_and_freeze() -> None:
 
     def handler(**_: object) -> None:
         return None
+
     registry.add_job("example", "plugin-a", handler)
     with pytest.raises(PluginValidationError, match="job type collision"):
         registry.add_job("example", "plugin-b", handler)

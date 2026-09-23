@@ -8,6 +8,8 @@ from studio_core import ProjectId, ProjectManifest, Workspace, WorkspaceId
 
 
 class WorkspacePort(Protocol):
+    def create(self, workspace: Workspace, *, now: object) -> Workspace: ...
+
     def list(self) -> tuple[Workspace, ...]: ...
 
     def get(self, workspace_id: WorkspaceId) -> Workspace: ...
@@ -20,6 +22,8 @@ class WorkspacePort(Protocol):
         description: str | None,
         now: object,
     ) -> Workspace: ...
+
+    def archive(self, workspace_id: WorkspaceId, *, now: object) -> Workspace: ...
 
 
 class ProjectPort(Protocol):
@@ -36,6 +40,8 @@ class ProjectPort(Protocol):
     ) -> ProjectManifest: ...
 
     def unregister(self, workspace_id: WorkspaceId, project_id: ProjectId) -> None: ...
+
+    def archive(self, workspace_id: WorkspaceId, project_id: ProjectId, *, now: object) -> bool: ...
 
 
 __all__ = ("ProjectPort", "WorkspacePort")

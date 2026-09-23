@@ -19,6 +19,11 @@ on:
         required: false
         default: false
         type: boolean
+      reserve_confirmation:
+        description: "Type I_UNDERSTAND_RESERVED_ONLY to confirm this is not a release"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -34,7 +39,7 @@ env:
 
 jobs:
   reserve-names:
-    if: github.event_name == 'workflow_dispatch' && inputs.reserve == true
+    if: github.event_name == 'workflow_dispatch' && inputs.reserve == true && inputs.reserve_confirmation == 'I_UNDERSTAND_RESERVED_ONLY'
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -42,8 +47,12 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Require explicit reservation confirmation
+        env:
+          CONFIRMATION: ${{ inputs.reserve_confirmation }}
+        run: test "$CONFIRMATION" = "I_UNDERSTAND_RESERVED_ONLY"
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
       - name: Build pyronin
@@ -51,7 +60,7 @@ jobs:
           python -m pip install --disable-pip-version-check build
           python -m build packages/pyronin
       - name: Publish pyronin dummy version
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
         with:
           packages-dir: packages/pyronin/dist
       - name: Log in to GHCR
@@ -323,6 +332,39 @@ jobs:
           output-file: ronin-image.spdx.json
           upload-artifact: false
           upload-release-assets: false
+      - name: Record exact Python artifact identity
+        run: python -m tools.artifact_identity dist/*.whl dist/*.tar.gz --output pyronin-artifact-identity.json
+      - name: Create candidate provenance subject descriptor
+        shell: bash
+        env:
+          CANDIDATE_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          identity = json.loads(Path("pyronin-artifact-identity.json").read_text(encoding="utf-8"))
+          subjects = [{"name": item["name"], "digest": {"sha256": item["sha256"]}} for item in identity["artifacts"]]
+          image_path = Path("ronin-image.tar.gz")
+          image_digest = __import__("hashlib").sha256(image_path.read_bytes()).hexdigest()
+          subjects.append({"name": image_path.name, "digest": {"sha256": image_digest}})
+          Path("candidate-provenance.json").write_text(json.dumps({
+              "schema": "ronin.candidate-provenance/v1",
+              "commit": os.environ["CANDIDATE_COMMIT"],
+              "buildType": "github-actions/release-candidate",
+              "subject": subjects,
+          }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          PY
+      - name: Validate candidate-bound supply-chain evidence
+        run: >-
+          python -m tools.supply_chain_evidence
+          --commit "${{ github.sha }}"
+          --artifact-identity pyronin-artifact-identity.json
+          --sbom pyronin.spdx.json
+          --sbom ronin-image.spdx.json
+          --provenance candidate-provenance.json
+          --output supply-chain-evidence.json
       - name: Attest exact Python distributions
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
@@ -333,6 +375,9 @@ jobs:
           path: |
             pyronin.spdx.json
             ronin-image.spdx.json
+            pyronin-artifact-identity.json
+            candidate-provenance.json
+            supply-chain-evidence.json
           if-no-files-found: error
           retention-days: 90
 
@@ -352,6 +397,8 @@ jobs:
           name: pyronin-dist
           path: dist
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        with:
+          packages-dir: dist
 
   publish-ghcr:
     needs:

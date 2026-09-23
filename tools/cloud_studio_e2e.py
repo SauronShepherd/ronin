@@ -1,4 +1,5 @@
 """Headless browser smoke test for the standalone Cloud Studio surface."""
+
 from pathlib import Path
 
 from playwright.sync_api import Page, sync_playwright

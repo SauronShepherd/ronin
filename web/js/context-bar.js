@@ -12,6 +12,7 @@ export function renderContextBar(context = globalThis.roninStudioContext || {}) 
   if (!bar) {
     bar = document.createElement('div');
     bar.className = 'context-bar';
+    bar.setAttribute('role', 'region');
     bar.setAttribute('aria-label', 'Studio context');
     topbar.append(bar);
   }

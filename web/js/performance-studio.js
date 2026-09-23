@@ -6,7 +6,7 @@ const view = () => document.querySelector('#view');
 function addNavigation() {
   const nav = document.querySelector('.nav-group');
   if (nav && !nav.querySelector('[data-performance-nav]')) {
-    nav.insertAdjacentHTML('beforeend', '<a class="nav-item" data-performance-nav href="#performance" aria-current="false"><span aria-hidden="true">◈</span><span class="nav-label">Performance Studio</span></a>');
+    nav.insertAdjacentHTML('beforeend', '<a class="nav-item" data-performance-nav href="#performance" aria-label="Performance Studio" aria-current="false"><span aria-hidden="true">◈</span><span class="nav-label">Performance Studio</span></a>');
   }
 }
 
@@ -21,12 +21,12 @@ function renderReport(report) {
   return `<div class="panel"><h2>Analysis result</h2><p>Score: <strong>${esc(report.score)}</strong></p><svg viewBox="0 0 720 ${Math.max(64, 24 + stages.length * 30)}" role="img" aria-label="Stage duration, shuffle and spill chart"><title>Stage performance</title>${bars}</svg><details><summary>Findings (${report.issues?.length || 0})</summary><pre class="code">${esc(JSON.stringify(report.issues || [], null, 2))}</pre></details></div>`;
 }
 
-function render() {
+export function renderPerformance() {
   if (location.hash !== '#performance') return;
   addNavigation();
   const target = view();
   if (!target) return;
-  target.innerHTML = '<div class="page-heading"><div><p class="eyebrow">RUNTIME INTELLIGENCE</p><h1>Performance Studio</h1><p class="muted">Analyze a normalized run and inspect stage bottlenecks.</p></div></div><div class="panel"><form id="performance-form"><label for="performance-run">Normalized run JSON</label><textarea class="field sql-editor" id="performance-run" rows="12" required>{"run_id":"demo","stages":[]}</textarea><label for="performance-baseline">Baseline JSON (optional)</label><textarea class="field sql-editor" id="performance-baseline" rows="6"></textarea><button class="button primary" type="submit">Analyze performance</button></form><pre id="performance-error" class="error" aria-live="polite"></pre></div><div id="performance-result" aria-live="polite"></div>';
+  target.innerHTML = '<div class="page-heading"><div><p class="eyebrow">RUNTIME INTELLIGENCE</p><h1 id="view-title">Performance Studio</h1><p class="muted">Analyze a normalized run and inspect stage bottlenecks.</p></div></div><div class="panel"><form id="performance-form"><label for="performance-run">Normalized run JSON</label><textarea class="field sql-editor" id="performance-run" rows="12" required>{"run_id":"demo","stages":[]}</textarea><label for="performance-baseline">Baseline JSON (optional)</label><textarea class="field sql-editor" id="performance-baseline" rows="6"></textarea><button class="button primary" type="submit">Analyze performance</button></form><pre id="performance-error" class="error" aria-live="polite"></pre></div><div id="performance-result" aria-live="polite"></div>';
 }
 
 document.addEventListener('submit', async event => {
@@ -47,7 +47,12 @@ document.addEventListener('submit', async event => {
   }
 });
 
-new MutationObserver(addNavigation).observe(document.body, {childList: true, subtree: true});
-window.addEventListener('hashchange', render);
+new MutationObserver(() => {
+  addNavigation();
+  if (location.hash === '#performance' && !document.querySelector('#performance-form')) {
+    renderPerformance();
+  }
+}).observe(document.body, {childList: true, subtree: true});
+window.addEventListener('hashchange', () => setTimeout(renderPerformance, 0));
 addNavigation();
-render();
+renderPerformance();

@@ -103,7 +103,9 @@ def persist_experiment_result(
     from .provenance import run_record
 
     registry.put_experiment(
-        workspace_id, Experiment(ExperimentId(lab.id), lab.name, lab.project_id)
+        workspace_id,
+        Experiment(ExperimentId(lab.id), lab.name, lab.project_id),
+        now=now,
     )
     record = run_record(
         lab,
@@ -137,7 +139,9 @@ def persist_clustering_result(
         media_type="application/vnd.ronin.ml-kmeans+json",
     )
     registry.put_experiment(
-        workspace_id, Experiment(ExperimentId(lab.id), lab.name, lab.project_id)
+        workspace_id,
+        Experiment(ExperimentId(lab.id), lab.name, lab.project_id),
+        now=now,
     )
     record = MLRunRecord(
         id=run_id,
@@ -185,8 +189,14 @@ def register_clustering_model(
     return registry.register_model(
         workspace_id,
         RegisteredModelVersion(
-            model_id, model_version, run_id, artifact.storage_ref, artifact.digest,
-            "ronin-kmeans", signature, "candidate"
+            model_id,
+            model_version,
+            run_id,
+            artifact.storage_ref,
+            artifact.digest,
+            "ronin-kmeans",
+            signature,
+            "candidate",
         ),
         now=now,
     )
@@ -237,6 +247,32 @@ def list_model_evaluations(
     """List evaluation evidence for one registered model version."""
 
     return registry.list_evaluations(workspace_id, model_id, model_version)
+
+
+def compare_model_evaluations(
+    evaluations: Sequence[ModelEvaluation],
+    *,
+    metric: str,
+    higher_is_better: bool = True,
+) -> tuple[ModelEvaluation, ...]:
+    """Return deterministic evaluation ranking without inventing missing metrics."""
+    if not metric.strip():
+        raise ValueError("metric must be non-empty")
+    selected: list[tuple[ModelEvaluation, float]] = []
+    for evaluation in evaluations:
+        values = [item.value for item in evaluation.metrics if item.name == metric]
+        if not values:
+            continue
+        selected.append((evaluation, values[-1]))
+    selected.sort(
+        key=lambda item: (
+            -item[1] if higher_is_better else item[1],
+            item[0].model_id.value,
+            item[0].version.value,
+            item[0].execution_ref,
+        )
+    )
+    return tuple(item[0] for item in selected)
 
 
 def list_registered_models(
@@ -408,6 +444,7 @@ __all__ = (
     "list_registered_models",
     "record_model_evaluation",
     "list_model_evaluations",
+    "compare_model_evaluations",
     "predict_registered_tabular",
     "predict_champion_tabular",
     "train_register_tabular",

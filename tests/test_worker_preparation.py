@@ -17,6 +17,7 @@ from studio_core import (
     RuntimeProfileRef,
 )
 from studio_kernel import RepositoryRevision
+from studio_core.canonical_json import encode as encode_canonical_json
 from studio_notebook import CellId, NotebookCell
 from studio_orchestrator import AttemptId, Job, JobId, JobState, RunId
 from studio_vcs import GitRevision
@@ -80,6 +81,27 @@ def test_load_project_uses_real_fixture_and_captured_dirty_revision(
     assert loaded.project_dir == (Path.cwd() / "examples" / "demo").resolve()
 
 
+def test_inline_cell_execution_selects_only_requested_cell(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    loaded = _load_demo(monkeypatch)
+    cell_id = str(loaded.document.notebook.cells[2].id)
+    job = _job(
+        target="notebook:etl",
+        parameters_json=encode_canonical_json(
+            {
+                "document": loaded.document.to_data(),
+                "mode": "cell",
+                "cell_id": cell_id,
+            }
+        ).decode(),
+    )
+    selected = load_project(WorkerPaths(Path.cwd(), Path(".ronin-data")), job)
+    runtime = resolve_runtime_snapshot(selected.manifest, RuntimeCatalog((LOCAL_DOCKER_PROFILE,)))
+    request = build_request(selected, runtime, AttemptId("attempt-cell"))
+    assert tuple(str(cell.cell_id) for cell in request.cells) == (cell_id,)
+
+
 def test_load_project_missing_manifest_names_absolute_path(tmp_path: Path) -> None:
     project = tmp_path / "project"
     project.mkdir()
@@ -99,6 +121,20 @@ def test_load_project_rejects_empty_and_escaping_target(
     assert loaded.manifest.project.id == ProjectId("demo")
     with pytest.raises(WorkerPreparationError, match="notebook target path escapes"):
         load_project(paths, _job(target="../../pyproject.toml"))
+
+
+def test_load_project_accepts_canonical_inline_notebook_document(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    loaded = _load_demo(monkeypatch)
+    parameters = encode_canonical_json(
+        {"mode": "all", "notebook_id": "api-notebook", "document": loaded.document.to_data()}
+    ).decode("utf-8")
+    inline = load_project(
+        WorkerPaths(Path.cwd(), Path(".ronin-data")),
+        _job(target="notebook:inline", parameters_json=parameters),
+    )
+    assert inline.document.to_json() == loaded.document.to_json()
 
 
 def test_local_runtime_resolves_demo_and_builds_five_python_requests(

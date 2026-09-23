@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
 from studio_core import ProjectId, WorkspaceId
 from studio_core.environments import (
@@ -25,6 +25,31 @@ class EnvironmentServiceNotFound(EnvironmentServiceError, KeyError):
 
 class EnvironmentServiceConflict(EnvironmentServiceError):
     """Raised when a mutation conflicts with current durable state."""
+
+
+@dataclass(frozen=True, slots=True)
+class EnvironmentDiff:
+    """Stable, secret-free description of environment definition changes."""
+
+    environment_id: EnvironmentId
+    changed_fields: tuple[str, ...]
+
+    @property
+    def changed(self) -> bool:
+        return bool(self.changed_fields)
+
+
+def diff_environments(
+    before: EnvironmentDefinition, after: EnvironmentDefinition
+) -> EnvironmentDiff:
+    if before.id != after.id:
+        raise ValueError("environment diff requires matching environment ids")
+    fields = tuple(
+        field
+        for field in ("name", "description", "state")
+        if getattr(before, field) != getattr(after, field)
+    )
+    return EnvironmentDiff(before.id, fields)
 
 
 class _EnvironmentContext:
@@ -186,6 +211,8 @@ __all__ = (
     "DeploymentBindingService",
     "EnvironmentService",
     "EnvironmentServiceConflict",
+    "EnvironmentDiff",
     "EnvironmentServiceError",
     "EnvironmentServiceNotFound",
+    "diff_environments",
 )

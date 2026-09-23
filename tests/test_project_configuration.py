@@ -30,6 +30,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
     data_files = config["tool"]["setuptools"]["data-files"]
     assert data_files["share/ronin/web"] == [
         "web/index.html",
+        "web/routes.json",
         "web/README.md",
         "web/data-enginerring-studio.html",
         "web/data-enginerring-studio.css",
@@ -39,13 +40,43 @@ def test_project_configuration_preserves_validation_contract() -> None:
         "web/assets/ronin-logo-full.png",
         "web/assets/ronin-logo-mark.png",
     ]
-    assert data_files["share/ronin/web/js"] == [
-        "web/js/api.js",
-        "web/js/app.js",
-        "web/js/dom.js",
-        "web/js/features.js",
-        "web/js/performance-studio.js",
-    ]
+    assert set(data_files["share/ronin/web/js"]) == {
+        f"web/js/{name}.js"
+        for name in (
+            "api",
+            "access-studio",
+            "a11y",
+            "app",
+            "ai-studio",
+            "alerts-studio",
+            "cloud-studio",
+            "catalog-studio",
+            "command-palette",
+            "context-bar",
+            "debugger-studio",
+            "data-engineering-studio",
+            "deployment-studio",
+            "dom",
+            "features",
+            "environment-studio",
+            "finops-studio",
+            "graph-studio",
+            "i18n",
+            "quality-studio",
+            "ingestion-studio",
+            "notebook-studio",
+            "scheduler-studio",
+            "performance-studio",
+            "project-journey",
+            "studio-context",
+            "semantic-studio",
+            "streaming-studio",
+            "synthetic-data-studio",
+            "synthetic-journey",
+            "ml-studio-journey",
+            "workspace-journey",
+        )
+    }
     assert data_files["share/ronin/web/styles"] == [
         "web/styles/base.css",
         "web/styles/components.css",

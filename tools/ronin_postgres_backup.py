@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 
@@ -17,6 +19,18 @@ def _required_env(name: str) -> str:
 
 def _compose_prefix(compose_file: Path) -> list[str]:
     return ["docker", "compose", "-f", str(compose_file)]
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _checksum_path(source: Path) -> Path:
+    return source.with_name(f"{source.name}.sha256")
 
 
 def backup(compose_file: Path, output: Path) -> None:
@@ -36,13 +50,36 @@ def backup(compose_file: Path, output: Path) -> None:
         user,
         database,
     ]
-    with output.open("wb") as stream:
-        subprocess.run(command, check=True, stdout=stream)  # noqa: S603
+    fd, temporary_name = tempfile.mkstemp(
+        prefix=f".{output.name}.", suffix=".tmp", dir=output.parent
+    )
+    os.close(fd)
+    temporary = Path(temporary_name)
+    try:
+        with temporary.open("wb") as stream:
+            subprocess.run(command, check=True, stdout=stream)  # noqa: S603
+        digest = _sha256(temporary)
+        temporary.replace(output)
+        _checksum_path(output).write_text(f"{digest}  {output.name}\n", encoding="ascii")
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def restore(compose_file: Path, source: Path, *, force: bool) -> None:
     if not source.is_file():
         raise ValueError("restore source must be an existing file")
+    checksum = _checksum_path(source)
+    if checksum.is_file():
+        expected = checksum.read_text(encoding="ascii").strip().split()
+        if (
+            len(expected) != 2
+            or expected[1] != source.name
+            or len(expected[0]) != 64
+            or any(character not in "0123456789abcdefABCDEF" for character in expected[0])
+        ):
+            raise ValueError("invalid PostgreSQL backup checksum sidecar")
+        if _sha256(source) != expected[0]:
+            raise ValueError("PostgreSQL backup checksum mismatch")
     if not force:
         raise ValueError("restore is destructive; pass --force explicitly")
     user = os.environ.get("POSTGRES_USER", "ronin").strip() or "ronin"

@@ -123,8 +123,10 @@ document.addEventListener('click', async (event) => {
   const output = document.querySelector('#synthetic-studio-result');
   try {
     const assetId = button?.dataset.sdsLineage || revisions.dataset.sdsRevisions;
-    const suffix = button ? `/lineage?workspace_id=${encodeURIComponent(workspace())}&version=1` : `/revisions?workspace_id=${encodeURIComponent(workspace())}`;
-    const data = await get(`/v1/synthetic-data-studio/catalog/assets/${encodeURIComponent(assetId)}${suffix}`);
+    const endpoint = button
+      ? `/v1/synthetic-data-studio/catalog/assets/${encodeURIComponent(assetId)}/lineage?workspace_id=${encodeURIComponent(workspace())}&version=1`
+      : `/v1/synthetic-data-studio/catalog/assets/${encodeURIComponent(assetId)}/revisions?workspace_id=${encodeURIComponent(workspace())}`;
+    const data = await get(endpoint);
     output.textContent = JSON.stringify(data, null, 2);
   } catch (error) {
     output.textContent = `Lineage unavailable: ${error.message}`;

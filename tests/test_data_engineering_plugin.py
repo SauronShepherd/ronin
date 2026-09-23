@@ -61,9 +61,7 @@ def test_pipeline_compiler_reports_validity_and_runtime() -> None:
         "nodes": [],
         "edges": [],
     }
-    report = compile_pipeline(
-        pipeline, runtime="local-preview", catalog=builtin_operator_catalog()
-    )
+    report = compile_pipeline(pipeline, runtime="local-preview", catalog=builtin_operator_catalog())
     assert report.portable is True
     assert report.node_count == 0
     assert report.edge_count == 0
@@ -87,11 +85,14 @@ def test_validation_persists_report_and_outbox(tmp_path) -> None:
         }
     )
     assert result["portable"] is True
-    assert store.get_report(
-        revision_key="p/main/1",
-        runtime="local-preview",
-        ir_digest=result["ir_digest"],
-    ) is not None
+    assert (
+        store.get_report(
+            revision_key="p/main/1",
+            runtime="local-preview",
+            ir_digest=result["ir_digest"],
+        )
+        is not None
+    )
     assert len(store.pending_events()) == 1
     assert plugin.get_compilation("p/main/1", "local-preview")["portable"] is True
     assert len(plugin.pending_events()["items"]) == 1
@@ -157,17 +158,19 @@ def test_plugin_preview_endpoint_returns_real_rows() -> None:
     payload = {
         "pipeline": {
             "config": {"name": "orders"},
-            "nodes": [{
-                "id": node.id.value,
-                "instance_key": node.instance_key,
-                "operator": {"name": node.operator.name, "version": 1},
-                "params": {"fixture": "orders"},
-                "inputs": [],
-                "outputs": [{"name": "out", "kind": "batch", "schema": None}],
-                "origin": {"view": "graph", "reference": None},
-                "ownership": "GRAPH",
-                "label": None,
-            }],
+            "nodes": [
+                {
+                    "id": node.id.value,
+                    "instance_key": node.instance_key,
+                    "operator": {"name": node.operator.name, "version": 1},
+                    "params": {"fixture": "orders"},
+                    "inputs": [],
+                    "outputs": [{"name": "out", "kind": "batch", "schema": None}],
+                    "origin": {"view": "graph", "reference": None},
+                    "ownership": "GRAPH",
+                    "label": None,
+                }
+            ],
             "edges": [],
         },
         "fixtures": {"orders": [{"id": 1}]},

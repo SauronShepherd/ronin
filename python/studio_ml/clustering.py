@@ -6,6 +6,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 
+def _number(value: object) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError("clustering feature values must be numeric")
+    return float(value)
+
+
 @dataclass(frozen=True, slots=True)
 class KMeansModel:
     centroids: tuple[tuple[float, ...], ...]
@@ -14,7 +20,7 @@ class KMeansModel:
     def predict(
         self, rows: Sequence[Mapping[str, object]], features: tuple[str, ...]
     ) -> tuple[int, ...]:
-        matrix = [[float(row[name]) for name in features] for row in rows]
+        matrix = [[_number(row[name]) for name in features] for row in rows]
         return tuple(_nearest(vector, self.centroids) for vector in matrix)
 
     def to_artifact(self) -> dict[str, object]:
@@ -47,7 +53,7 @@ def fit_kmeans(
         raise ValueError("K-Means clusters must be between 2 and row count")
     if not features:
         raise ValueError("K-Means requires at least one feature")
-    matrix = [[float(row[name]) for name in features] for row in rows]
+    matrix = [[_number(row[name]) for name in features] for row in rows]
     centroids = [tuple(vector) for vector in matrix[:clusters]]
     for iteration in range(1, max_iterations + 1):
         assignments = [_nearest(vector, centroids) for vector in matrix]
@@ -72,7 +78,7 @@ def inertia(
     model: KMeansModel, rows: Sequence[Mapping[str, object]], features: tuple[str, ...]
 ) -> float:
     return sum(
-        _distance([float(row[name]) for name in features], model.centroids[cluster])
+        _distance([_number(row[name]) for name in features], model.centroids[cluster])
         for row, cluster in zip(rows, model.predict(rows, features), strict=True)
     )
 

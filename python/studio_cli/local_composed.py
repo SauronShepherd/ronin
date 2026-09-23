@@ -7,25 +7,37 @@ from pathlib import Path
 from typing import cast
 
 from studio_core import GrantSet, WorkspaceId
+from studio_data_engineering import (
+    PostgresRevisionStore,
+    RevisionApplication,
+    SqliteRevisionStore,
+)
 from studio_execution import (
+    DeploymentBindingService,
     DurableExecutionService,
+    EnvironmentService,
+    OntologyHTTPAdapter,
     ProjectService,
     SqliteWorkflowHTTPAdapter,
     WorkspaceService,
 )
+from studio_finops import SqliteFinOpsStore
 from studio_ml import PostgresExecutionStore, PostgresMLLabStore
 from studio_ml.sqlite import SqliteExecutionStore, SqliteMLLabStore
 from studio_orchestrator import Instant
 from studio_plugin_observability import LocalObservabilityBuffer
 from studio_runtime import PluginAuditSink, PluginHost, PluginLock, PluginLockError
 from studio_security import Permission
+from studio_semantic import ProjectScopedSemanticRuntime, SemanticHTTPAdapter, SqliteSemanticStore
 from studio_server import (
     LocalServerComposition,
+    QualityHTTPAdapter,
     RoninHTTPServer,
     StaticControlPlaneAuthenticator,
     StaticControlPlaneAuthorizer,
     WorkspaceProjectHTTPServer,
 )
+from studio_sql import ProjectScopedDuckDbSqlEngine
 from studio_storage import (
     LocalArtifactStore,
     PostgresAuditStore,
@@ -33,10 +45,53 @@ from studio_storage import (
     PostgresMLStore,
     PostgresWorkflowBundleImportStore,
     SqliteAuditStore,
+    SqliteCatalogStore,
+    SqliteEnvironmentStore,
     SqliteJobStore,
+    SqliteKnowledgeGraphStore,
+    SqliteOntologyStore,
+    SqliteQualityStore,
 )
 from studio_storage.bundle_workflow_import import SqliteWorkflowBundleImportStore
 from studio_storage.ml import SqliteMLStore
+
+
+class _LocalDataEngineeringRevisions:
+    def __init__(self, records, artifact_root: Path) -> None:
+        self._records = records
+        self._application = RevisionApplication(LocalArtifactStore(artifact_root), self._records)
+
+    def list_revisions(self, *, project_id: str, pipeline_id: str):
+        return self._records.list_revisions(project_id=project_id, pipeline_id=pipeline_id)
+
+    def list_pipelines(self, *, project_id: str):
+        return self._records.list_pipelines(project_id=project_id)
+
+    def get_revision(self, *, project_id: str, pipeline_id: str, revision: int):
+        return self._records.get_revision(
+            project_id=project_id, pipeline_id=pipeline_id, revision=revision
+        )
+
+    def compare(
+        self, *, project_id: str, pipeline_id: str, left_revision: int, right_revision: int
+    ):
+        return self._records.compare(
+            project_id=project_id,
+            pipeline_id=pipeline_id,
+            left_revision=left_revision,
+            right_revision=right_revision,
+        )
+
+    def archive(self, *, project_id: str, pipeline_id: str) -> bool:
+        return self._records.archive(project_id=project_id, pipeline_id=pipeline_id)
+
+    def import_sdp(self, *, project_id: str, pipeline_id: str, source, expected_revision=None):
+        return self._application.import_sdp(
+            project_id=project_id,
+            pipeline_id=pipeline_id,
+            source=source,
+            expected_revision=expected_revision,
+        )
 
 
 def _env(name: str, default: str | None = None) -> str:
@@ -152,6 +207,50 @@ def build_local_composed_from_env() -> LocalServerComposition:
     if plugin_api_mode not in {"legacy", "plugin"}:
         raise ValueError("RONIN_PLUGIN_API must be legacy or plugin")
     plugin_routes_enabled = plugin_api_mode == "plugin"
+    graph_adapter = (
+        OntologyHTTPAdapter(
+            SqliteOntologyStore(database, migration_now=now),
+            SqliteKnowledgeGraphStore(database),
+        )
+        if postgres_dsn is None
+        else None
+    )
+    catalog_reader = (
+        SqliteCatalogStore(database, migration_now=now) if postgres_dsn is None else None
+    )
+    semantic_reader = None
+    try:
+        semantic_reader = SemanticHTTPAdapter(
+            SqliteSemanticStore(database),
+            ProjectScopedSemanticRuntime(ProjectScopedDuckDbSqlEngine()),
+        )
+    except Exception as exc:
+        if postgres_dsn is None and os.environ.get("RONIN_SEMANTIC_REQUIRED") == "1":
+            raise ValueError(f"semantic runtime is required but unavailable: {exc}") from exc
+    environment_store = (
+        SqliteEnvironmentStore(database, migration_now=now) if postgres_dsn is None else None
+    )
+    environment_service = (
+        EnvironmentService(scheduler, environment_store) if environment_store is not None else None
+    )
+    binding_service = (
+        DeploymentBindingService(scheduler, environment_store)
+        if environment_store is not None
+        else None
+    )
+    quality_reader = (
+        QualityHTTPAdapter(SqliteQualityStore(database, migration_now=now))
+        if postgres_dsn is None
+        else None
+    )
+    finops_reader = SqliteFinOpsStore(database) if postgres_dsn is None else None
+    data_engineering_reader = (
+        _LocalDataEngineeringRevisions(SqliteRevisionStore(database), database.parent / "artifacts")
+        if postgres_dsn is None
+        else _LocalDataEngineeringRevisions(
+            PostgresRevisionStore(postgres_dsn), database.parent / "artifacts"
+        )
+    )
     control_server = WorkspaceProjectHTTPServer(
         (_env("RONIN_HOST", "127.0.0.1"), _port("RONIN_CONTROL_PLANE_PORT", "8081")),
         workspace_service,
@@ -159,6 +258,15 @@ def build_local_composed_from_env() -> LocalServerComposition:
         authenticator=StaticControlPlaneAuthenticator(control_token),
         authorizer=StaticControlPlaneAuthorizer(workspace_id, permissions),
         workflow_reader=SqliteWorkflowHTTPAdapter(scheduler, now=now),
+        graph_query_reader=graph_adapter,
+        ontology_reader=graph_adapter,
+        catalog_reader=catalog_reader,
+        semantic_reader=semantic_reader,
+        environment_service=environment_service,
+        binding_service=binding_service,
+        quality_reader=quality_reader,
+        finops_reader=finops_reader,
+        data_engineering_reader=data_engineering_reader,
         plugin_host=plugin_host,
         plugin_routes_enabled=plugin_routes_enabled,
     )

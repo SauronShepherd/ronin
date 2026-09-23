@@ -27,9 +27,11 @@ from studio_core.genai import (
     VectorIndexId,
 )
 from studio_genai.provider import _MAX_PROVIDER_RESPONSE_BYTES, _read_json_response
+from studio_genai.agent import ToolRegistry
 from studio_orchestrator import Instant
 from studio_storage.catalog import SqliteCatalogStore
 from studio_storage.genai import GenAIConflict, SqliteGenAIStore
+from studio_storage.genai_bundle import export_genai_bundle, import_genai_bundle
 from studio_storage.workspaces import SqliteWorkspaceStore
 
 _NOW = Instant("2026-09-12T00:00:00.000000Z")
@@ -113,6 +115,44 @@ def test_agent_requires_registered_prompt_provider_and_tools(tmp_path: Path) -> 
     store.put_agent(_WS, agent, now=_NOW)
 
     assert store.get_agent(_WS, agent.id) == agent
+
+
+def test_tool_registry_exposes_deterministic_contract_inventory() -> None:
+    class Runtime:
+        def __init__(self, contract: ToolContract) -> None:
+            self.contract = contract
+
+        def invoke(self, payload: dict[str, object]) -> dict[str, object]:
+            return payload
+
+    first = Runtime(ToolContract(ToolId("tool-b"), "B", "schema://in", "schema://out"))
+    second = Runtime(ToolContract(ToolId("tool-a"), "A", "schema://in", "schema://out"))
+    registry = ToolRegistry((first, second))
+    assert tuple(item.id for item in registry.list_contracts()) == (
+        ToolId("tool-a"),
+        ToolId("tool-b"),
+    )
+
+
+def test_genai_definition_bundle_round_trip_preserves_secret_reference_only(tmp_path: Path) -> None:
+    source = _store(tmp_path / "source.sqlite3")
+    provider = ModelProvider(
+        ProviderId("provider-1"),
+        adapter="openai-compatible",
+        secret_ref=SecretRef("secret://llm/key"),
+    )
+    prompt = PromptAsset(PromptId("prompt-1"), PromptVersion("1"), "Answer safely")
+    tool = ToolContract(ToolId("tool-1"), "Lookup", "schema://in", "schema://out")
+    source.put_provider(_WS, provider, now=_NOW)
+    source.put_prompt(_WS, prompt, now=_NOW)
+    source.put_tool(_WS, tool, now=_NOW)
+    bundle = tmp_path / "genai.roninbundle"
+    export_genai_bundle(_WS, source, bundle)
+    target = _store(tmp_path / "target.sqlite3")
+    import_genai_bundle(bundle, _WS, target, now=_NOW)
+    assert target.get_provider(_WS, provider.id) == provider
+    assert target.get_prompt(_WS, prompt.id, prompt.version) == prompt
+    assert target.get_tool(_WS, tool.id) == tool
 
 
 class _ChunkedResponse:

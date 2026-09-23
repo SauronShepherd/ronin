@@ -31,20 +31,31 @@ class AIStudioHTTPAPI:
     ) -> HTTPResponse:
         try:
             if method == "GET" and path == "/v1/models":
-                return HTTPResponse(HTTPStatus.OK, {"object": "list", "data": [
-                    {"id": item.snapshot.public_name.value, "object": "model"}
-                    for item in self._candidates
-                ]})
+                return HTTPResponse(
+                    HTTPStatus.OK,
+                    {
+                        "object": "list",
+                        "data": [
+                            {"id": item.snapshot.public_name.value, "object": "model"}
+                            for item in self._candidates
+                        ],
+                    },
+                )
             if method == "POST" and path in {
-                "/v1/chat/completions", "/v1/completions", "/v1/embeddings", "/v1/responses"
+                "/v1/chat/completions",
+                "/v1/completions",
+                "/v1/embeddings",
+                "/v1/responses",
             }:
                 if body is None:
                     return HTTPResponse(
                         HTTPStatus.BAD_REQUEST, {"error": {"code": "invalid_request"}}
                     )
                 operation = {
-                    "/v1/chat/completions": "chat", "/v1/completions": "completion",
-                    "/v1/embeddings": "embedding", "/v1/responses": "response",
+                    "/v1/chat/completions": "chat",
+                    "/v1/completions": "completion",
+                    "/v1/embeddings": "embedding",
+                    "/v1/responses": "response",
                 }[path]
                 model = body.get("model")
                 if not isinstance(model, str):

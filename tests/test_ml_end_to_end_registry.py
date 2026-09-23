@@ -31,22 +31,43 @@ def test_train_register_evaluate_promote_and_score_from_artifact_store(tmp_path)
     rows = [{"x": value, "target": value % 2} for value in range(1, 21)]
     spec = TrainingSpec("classification", "logistic_regression", ("x",), "target")
     registry.put_experiment(
-        workspace, Experiment(ExperimentId("churn"), "Churn search"),
+        workspace,
+        Experiment(ExperimentId("churn"), "Churn search"),
         now="2026-09-12T00:00:00.000000Z",
     )
     model = train_register_tabular(
-        registry, artifacts, workspace, rows,
-        dataset=dataset, experiment_id=ExperimentId("churn"), run_id=MLRunId("churn-trial-1"),
-        model_id=ModelId("churn"), model_version=ModelVersion("1"), source_revision="source",
-        execution_ref="local", spec=spec, now="2026-09-12T00:00:00.000000Z",
+        registry,
+        artifacts,
+        workspace,
+        rows,
+        dataset=dataset,
+        experiment_id=ExperimentId("churn"),
+        run_id=MLRunId("churn-trial-1"),
+        model_id=ModelId("churn"),
+        model_version=ModelVersion("1"),
+        source_revision="source",
+        execution_ref="local",
+        spec=spec,
+        now="2026-09-12T00:00:00.000000Z",
     )
     registry.record_evaluation(
         workspace,
-        ModelEvaluation(model.model_id, model.version, dataset, "passed", (MetricValue("accuracy", 1.0),), "eval-1"),
+        ModelEvaluation(
+            model.model_id,
+            model.version,
+            dataset,
+            "passed",
+            (MetricValue("accuracy", 1.0),),
+            "eval-1",
+        ),
         now="2026-09-12T00:00:00.000000Z",
     )
-    promoted = promote_registered_model(registry, workspace, model.model_id, model.version, now="2026-09-12T00:00:00.000000Z")
+    promoted = promote_registered_model(
+        registry, workspace, model.model_id, model.version, now="2026-09-12T00:00:00.000000Z"
+    )
     artifact = artifacts.get_bytes_by_storage_ref(model.artifact_ref, digest=model.artifact_digest)
-    predictions = predict_registered_tabular(registry, workspace, model.model_id, model.version, artifact, [{"x": 21}])
+    predictions = predict_registered_tabular(
+        registry, workspace, model.model_id, model.version, artifact, [{"x": 21}]
+    )
     assert promoted.stage == "champion"
     assert len(predictions) == 1

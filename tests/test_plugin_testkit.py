@@ -37,16 +37,23 @@ class _Plugin:
 
 
 def test_external_plugin_testkit_validates_contract() -> None:
-    report = assert_plugin_ready(_Plugin())
+    plugin = _Plugin()
+    report = assert_plugin_ready(plugin)
 
     assert report.plugin_id == "com.example.test"
     assert report.routes == (("GET", "/v1/example"),)
+    assert report.ui_surfaces == ()
+    assert report.settings_schema is None
+    assert report.isolation == "in_process"
     assert report.states == ("ready",)
+    assert plugin.started is False
 
 
 def test_testkit_reports_degraded_optional_plugin() -> None:
-    report = validate_plugin(_Plugin(fail=True))
+    plugin = _Plugin(fail=True)
+    report = validate_plugin(plugin)
 
     assert report.states == ("degraded",)
     with pytest.raises(AssertionError, match="did not become ready"):
-        assert_plugin_ready(_Plugin(fail=True))
+        assert_plugin_ready(plugin)
+    assert plugin.started is False

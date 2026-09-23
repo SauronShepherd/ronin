@@ -126,17 +126,12 @@ class PostgresMLLabStore(PostgresMetadataStore, MLLabStore):
                 row = cursor.fetchone()
             if row is None:
                 return None
-            from studio_core.canonical_json import decode
-
-            value = decode(row["pipeline_json"])
-            return PipelineIR(
-                tuple(
-                    PipelineNode(item["id"], item["kind"], tuple(item["depends_on"]))
-                    for item in value["nodes"]
-                ),
-                tuple(sorted(value["parameters"].items())),
-                value["schema"],
-            )
+            raw = row["pipeline_json"]
+            if isinstance(raw, bytes):
+                raw = raw.decode("utf-8")
+            if not isinstance(raw, str):
+                raise ValueError("stored ML pipeline must be JSON text")
+            return PipelineIR.from_json(raw)
         finally:
             connection.close()
 

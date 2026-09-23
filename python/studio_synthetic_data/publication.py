@@ -61,15 +61,24 @@ class SyntheticOutputPublisher:
             "tables": [{"name": table.name, "rows": list(table.rows)} for table in result.tables],
             "plan_fingerprint": result.plan_fingerprint,
         }
-        content_digest = "sha256:" + hashlib.sha256(
-            json.dumps(payload, sort_keys=True, default=str, separators=(",", ":")).encode()
-        ).hexdigest()
-        schema_digest = "sha256:" + hashlib.sha256(
-            json.dumps(
-                {table.name: sorted(table.rows[0]) if table.rows else [] for table in result.tables},
-                sort_keys=True,
-            ).encode()
-        ).hexdigest()
+        content_digest = (
+            "sha256:"
+            + hashlib.sha256(
+                json.dumps(payload, sort_keys=True, default=str, separators=(",", ":")).encode()
+            ).hexdigest()
+        )
+        schema_digest = (
+            "sha256:"
+            + hashlib.sha256(
+                json.dumps(
+                    {
+                        table.name: sorted(table.rows[0]) if table.rows else []
+                        for table in result.tables
+                    },
+                    sort_keys=True,
+                ).encode()
+            ).hexdigest()
+        )
         revision = AssetRevision(
             revision_ref,
             schema_digest=schema_digest,

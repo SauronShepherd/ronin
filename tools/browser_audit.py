@@ -2,20 +2,41 @@
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
-import sys
+import os
 from importlib import import_module
 from pathlib import Path
 
 
-async def run(url: str) -> dict[str, object]:
+def load_routes(path: Path = Path("web/routes.json")) -> tuple[str, ...]:
+    """Load the canonical Studio route manifest instead of duplicating it."""
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"cannot read Studio route manifest: {path}") from exc
+    if not isinstance(manifest, list) or not manifest:
+        raise RuntimeError("Studio route manifest must be a non-empty array")
+    routes = tuple(item.get("id") for item in manifest if isinstance(item, dict))
+    if not routes or any(not isinstance(route, str) or not route for route in routes):
+        raise RuntimeError("Studio route manifest contains an invalid route")
+    if len(set(routes)) != len(routes):
+        raise RuntimeError("Studio route manifest contains duplicate routes")
+    return routes
+
+
+STUDIO_ROUTES = load_routes()
+
+
+async def run(url: str, *, headed: bool = False, slow_mo_ms: float = 0) -> dict[str, object]:
     async_playwright = import_module("playwright.async_api").async_playwright
 
     console_errors: list[str] = []
     pages: list[dict[str, object]] = []
+    studio_routes = load_routes()
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch(headless=True)
+        browser = await playwright.chromium.launch(headless=not headed, slow_mo=slow_mo_ms)
         page = await browser.new_page(viewport={"width": 320, "height": 800})
         await page.add_init_script(
             "sessionStorage.setItem('ronin.session', 'audit-token');"
@@ -31,17 +52,7 @@ async def run(url: str) -> dict[str, object]:
         )
         page.on("pageerror", lambda error: console_errors.append(str(error)))
         await page.goto(url + "#home", wait_until="networkidle")
-        for route in (
-            "home",
-            "runs",
-            "workspaces",
-            "workflows",
-            "access",
-            "sql",
-            "catalog",
-            "migration",
-            "mlstudio",
-        ):
+        for route in studio_routes:
             await page.goto(url + "#" + route, wait_until="networkidle")
             pages.append(
                 {
@@ -56,19 +67,29 @@ async def run(url: str) -> dict[str, object]:
                 }
             )
             if route == "mlstudio":
-                pages[-1]["has_ml_controls"] = await page.locator(
-                    '[data-feature-form="ml-create"], #ml-labs, #ml-output'
-                ).count() == 3
-                pages[-1]["has_ml_score"] = await page.locator(
-                    '[data-feature-form="ml-score"]'
-                ).count() == 1
+                pages[-1]["has_ml_controls"] = (
+                    await page.locator(
+                        '[data-feature-form="ml-create"], #ml-labs, #ml-output'
+                    ).count()
+                    == 3
+                )
+                pages[-1]["has_ml_score"] = (
+                    await page.locator('[data-feature-form="ml-score"]').count() == 1
+                )
             if route == "migration":
-                pages[-1]["has_migration_controls"] = await page.locator(
-                    "#migration-cockpit-create, #migration-cockpit-validate"
-                ).count() == 2
-                pages[-1]["has_migration_artifact_form"] = await page.locator(
-                    "#migration-artifact-form, #migration-artifact-file, #migration-artifact-media"
-                ).count() == 3
+                pages[-1]["has_migration_controls"] = (
+                    await page.locator(
+                        "#migration-cockpit-create, #migration-cockpit-validate"
+                    ).count()
+                    == 2
+                )
+                pages[-1]["has_migration_artifact_form"] = (
+                    await page.locator(
+                        "#migration-artifact-form, #migration-artifact-file, "
+                        "#migration-artifact-media"
+                    ).count()
+                    == 3
+                )
         await page.goto(url + "#home", wait_until="networkidle")
         focused: list[str] = []
         for _ in range(8):
@@ -82,6 +103,7 @@ async def run(url: str) -> dict[str, object]:
     result = {
         "url": url,
         "pages_visited": len(pages),
+        "routes": list(studio_routes),
         "pages": pages,
         "console_errors": console_errors,
         "tab_focus": focused,
@@ -90,7 +112,10 @@ async def run(url: str) -> dict[str, object]:
     failures = [
         p["route"]
         for p in pages
-        if p["h1_count"] != 1 or not p["has_main"] or not p["has_nav"] or p["horizontal_overflow"]
+        if p["h1_count"] != 1
+        or not p["has_main"]
+        or not p["has_nav"]
+        or p["horizontal_overflow"]
         or (
             p["route"] == "mlstudio"
             and (not p.get("has_ml_controls", False) or not p.get("has_ml_score", False))
@@ -112,4 +137,14 @@ def _write_audit(result: dict[str, object]) -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(run(sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8765/"))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("url", nargs="?", default="http://127.0.0.1:8765/")
+    parser.add_argument("--headed", action="store_true", help="show the Chromium window")
+    parser.add_argument(
+        "--slow-mo-ms",
+        type=float,
+        default=float(os.environ.get("RONIN_UI_SLOW_MO_MS", "0")),
+        help="delay each Playwright action by this many milliseconds",
+    )
+    args = parser.parse_args()
+    asyncio.run(run(args.url, headed=args.headed, slow_mo_ms=args.slow_mo_ms))

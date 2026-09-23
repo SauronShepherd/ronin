@@ -32,7 +32,11 @@ class BayesianStopPolicy:
         ordered = rank_trials(spec, trials)
         best = ordered[0].metric(spec.metric)
         prior = ordered[self.patience].metric(spec.metric)
-        return (best - prior) < self.min_improvement if spec.direction == "maximize" else (prior - best) < self.min_improvement
+        return (
+            (best - prior) < self.min_improvement
+            if spec.direction == "maximize"
+            else (prior - best) < self.min_improvement
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,7 +53,9 @@ class SearchSpec:
             raise ValueError("unsupported search mode")
         if self.direction not in {"maximize", "minimize"} or not self.metric.strip():
             raise ValueError("invalid search objective")
-        if self.max_trials < 1 or len({name for name, _ in self.parameters}) != len(self.parameters):
+        if self.max_trials < 1 or len({name for name, _ in self.parameters}) != len(
+            self.parameters
+        ):
             raise ValueError("invalid search limits or duplicate parameter")
         if any(not name.strip() or not values for name, values in self.parameters):
             raise ValueError("search parameters require a name and values")
@@ -80,7 +86,9 @@ class Trial:
     def create(cls, parameters: dict[str, object], metrics: dict[str, float]) -> Trial:
         encoded = json.dumps(parameters, sort_keys=True, separators=(",", ":"))
         digest = hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
-        return cls(f"trial-{digest}", tuple(sorted(parameters.items())), tuple(sorted(metrics.items())))
+        return cls(
+            f"trial-{digest}", tuple(sorted(parameters.items())), tuple(sorted(metrics.items()))
+        )
 
     def metric(self, name: str) -> float:
         for metric_name, value in self.metrics:
@@ -89,12 +97,22 @@ class Trial:
         raise KeyError(name)
 
     def to_payload(self) -> dict[str, object]:
-        return {"trial_id": self.trial_id, "parameters": dict(self.parameters), "metrics": dict(self.metrics)}
+        return {
+            "trial_id": self.trial_id,
+            "parameters": dict(self.parameters),
+            "metrics": dict(self.metrics),
+        }
 
 
 def rank_trials(spec: SearchSpec, trials: tuple[Trial, ...]) -> tuple[Trial, ...]:
     """Return deterministic ranking, using trial id as the tie-breaker."""
-    return tuple(sorted(trials, key=lambda trial: (trial.metric(spec.metric), trial.trial_id), reverse=spec.direction == "maximize"))
+    return tuple(
+        sorted(
+            trials,
+            key=lambda trial: (trial.metric(spec.metric), trial.trial_id),
+            reverse=spec.direction == "maximize",
+        )
+    )
 
 
 def propose_bayesian_candidates(
@@ -111,10 +129,17 @@ def propose_bayesian_candidates(
     """
     if spec.mode != "bayesian":
         raise ValueError("bayesian candidate proposals require mode='bayesian'")
-    candidates = [dict(item) for item in SearchSpec(
-        mode="grid", parameters=spec.parameters, max_trials=spec.max_trials,
-        metric=spec.metric, direction=spec.direction, random_seed=spec.random_seed,
-    ).trials()]
+    candidates = [
+        dict(item)
+        for item in SearchSpec(
+            mode="grid",
+            parameters=spec.parameters,
+            max_trials=spec.max_trials,
+            metric=spec.metric,
+            direction=spec.direction,
+            random_seed=spec.random_seed,
+        ).trials()
+    ]
     observed = {tuple(sorted(trial.parameters)) for trial in observations}
     candidates = [item for item in candidates if tuple(sorted(item.items())) not in observed]
     if not candidates:
@@ -144,7 +169,9 @@ def propose_bayesian_candidates(
     scored = []
     for candidate in candidates:
         exploitation = 1.0 - distance(candidate, best_values)
-        exploration = min((distance(candidate, dict(t.parameters)) for t in observations), default=1.0)
+        exploration = min(
+            (distance(candidate, dict(t.parameters)) for t in observations), default=1.0
+        )
         scored.append((0.7 * exploitation + 0.3 * exploration + rng.random() * 1e-9, candidate))
     scored.sort(key=lambda item: (-item[0], json.dumps(item[1], sort_keys=True)))
     return tuple(candidate for _, candidate in scored[: spec.max_trials])
@@ -173,7 +200,9 @@ def expected_improvement(
         params = dict(trial.parameters)
         for name, choices in spec.parameters:
             if len(choices) > 1:
-                distance += abs(choices.index(candidate[name]) - choices.index(params[name])) / (len(choices) - 1)
+                distance += abs(choices.index(candidate[name]) - choices.index(params[name])) / (
+                    len(choices) - 1
+                )
         distances.append(distance / max(len(spec.parameters), 1))
     if min(distances) <= 1e-12:
         return 0.0
@@ -189,4 +218,12 @@ def expected_improvement(
     return max(0.0, improvement * cdf + uncertainty * pdf)
 
 
-__all__ = ["BayesianStopPolicy", "SearchMode", "SearchSpec", "Trial", "expected_improvement", "propose_bayesian_candidates", "rank_trials"]
+__all__ = [
+    "BayesianStopPolicy",
+    "SearchMode",
+    "SearchSpec",
+    "Trial",
+    "expected_improvement",
+    "propose_bayesian_candidates",
+    "rank_trials",
+]

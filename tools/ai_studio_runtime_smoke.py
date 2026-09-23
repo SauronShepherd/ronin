@@ -26,7 +26,9 @@ def _get(base_url: str, path: str, timeout: float) -> Any:
 def _post(base_url: str, path: str, payload: dict[str, object], timeout: float) -> Any:
     body = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(  # noqa: S310
-        _url(base_url, path), data=body, method="POST",  # noqa: S310
+        _url(base_url, path),
+        data=body,
+        method="POST",  # noqa: S310
         headers={"Content-Type": "application/json"},
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
@@ -39,14 +41,17 @@ def run(base_url: str, model: str, timeout: float) -> dict[str, object]:
     if model not in advertised:
         raise RuntimeError(f"model {model!r} is not advertised by runtime")
     response = _post(
-        base_url, "/v1/chat/completions",
+        base_url,
+        "/v1/chat/completions",
         {"model": model, "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1},
         timeout,
     )
     if not isinstance(response, dict) or not response.get("choices"):
         raise RuntimeError("runtime returned no choices")
     return {
-        "status": "passed", "base_url": base_url, "model": model,
+        "status": "passed",
+        "base_url": base_url,
+        "model": model,
         "choices": len(response["choices"]),
     }
 

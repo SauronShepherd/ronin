@@ -7,7 +7,14 @@ import json
 from pathlib import Path
 from typing import Any
 
-STATUSES = {"implemented", "partial", "missing", "blocked", "human_decision", "qualification_pending"}
+STATUSES = {
+    "implemented",
+    "partial",
+    "missing",
+    "blocked",
+    "human_decision",
+    "qualification_pending",
+}
 SCHEMA_VERSION = 1
 
 

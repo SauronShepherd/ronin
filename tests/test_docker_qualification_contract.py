@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -24,5 +23,5 @@ def test_ci_docker_qualification_declares_postgres_and_real_worker_gate() -> Non
     assert "postgres:16" in workflow
     assert "RONIN_POSTGRES_TEST_DSN" in workflow
     assert "RONIN_TEST_POSTGRES_DSN" in workflow
-    assert "RONIN_REAL_DOCKER_QUALIFICATION: \"1\"" in workflow
+    assert 'RONIN_REAL_DOCKER_QUALIFICATION: "1"' in workflow
     assert "tests/integration/test_worker_runtime_real.py" in workflow

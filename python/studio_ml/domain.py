@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal, TypeAlias, cast
@@ -17,6 +18,7 @@ NodeKind: TypeAlias = Literal[
 ]
 LAB_SCHEMA = "ronin.ml-lab/v1"
 PIPELINE_SCHEMA = "ronin.ml-pipeline-ir/v1"
+FEATURE_SCHEMA = "ronin.ml-feature/v1"
 
 
 def _text(value: object, name: str) -> str:
@@ -42,6 +44,77 @@ class FeatureSpec:
 
     def to_payload(self) -> dict[str, str]:
         return {"column": self.column, "role": self.role}
+
+
+@dataclass(frozen=True, slots=True)
+class FeatureDefinition:
+    """Versioned, reusable feature binding to a governed dataset snapshot."""
+
+    id: str
+    name: str
+    project_id: str
+    dataset: AssetRef
+    features: tuple[FeatureSpec, ...]
+    transform: str = "identity"
+    version: int = 1
+    schema: str = FEATURE_SCHEMA
+
+    def __post_init__(self) -> None:
+        _text(self.id, "feature definition id")
+        _text(self.name, "feature definition name")
+        _text(self.project_id, "feature definition project")
+        _text(self.transform, "feature transform")
+        if (
+            self.schema != FEATURE_SCHEMA
+            or not isinstance(self.version, int)
+            or isinstance(self.version, bool)
+            or self.version < 1
+        ):
+            raise ValueError("invalid feature definition schema or version")
+        if not self.features or len({item.column for item in self.features}) != len(self.features):
+            raise ValueError("feature definition columns must be non-empty and unique")
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "id": self.id,
+            "name": self.name,
+            "project_id": self.project_id,
+            "dataset": self.dataset.to_payload(),
+            "features": [item.to_payload() for item in self.features],
+            "transform": self.transform,
+            "version": self.version,
+        }
+
+    def to_json(self) -> str:
+        return encode_canonical_json(self.to_payload()).decode("utf-8")
+
+    @classmethod
+    def from_payload(cls, payload: object) -> FeatureDefinition:
+        if (
+            not isinstance(payload, Mapping)
+            or set(payload)
+            != {"schema", "id", "name", "project_id", "dataset", "features", "transform", "version"}
+            or not isinstance(payload["features"], list)
+        ):
+            raise ValueError("feature definition has invalid shape")
+        return cls(
+            cast(str, payload["id"]),
+            cast(str, payload["name"]),
+            cast(str, payload["project_id"]),
+            AssetRef.from_payload(payload["dataset"]),
+            tuple(
+                FeatureSpec(cast(str, item["column"]), cast(str, item["role"]))
+                for item in payload["features"]
+            ),
+            cast(str, payload["transform"]),
+            cast(int, payload["version"]),
+            cast(str, payload["schema"]),
+        )
+
+    @classmethod
+    def from_json(cls, payload: str) -> FeatureDefinition:
+        return cls.from_payload(decode_canonical_json(payload))
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,7 +150,14 @@ class Lab:
             raise ValueError("lab features must be non-empty and unique")
         if self.target is not None and self.target in {item.column for item in self.features}:
             raise ValueError("target must not also be a feature")
-        if self.seed < 0 or not 0 < self.test_fraction < 0.5:
+        if not isinstance(self.seed, int) or isinstance(self.seed, bool) or self.seed < 0:
+            raise ValueError("seed must be a non-negative integer")
+        if (
+            not isinstance(self.test_fraction, (int, float))
+            or isinstance(self.test_fraction, bool)
+            or not math.isfinite(float(self.test_fraction))
+            or not 0 < self.test_fraction < 0.5
+        ):
             raise ValueError("invalid seed or test fraction")
 
     def to_payload(self) -> dict[str, object]:
@@ -164,6 +244,20 @@ class PipelineNode:
     def to_payload(self) -> dict[str, object]:
         return {"id": self.id, "kind": self.kind, "depends_on": list(self.depends_on)}
 
+    @classmethod
+    def from_payload(cls, payload: object) -> PipelineNode:
+        if not isinstance(payload, Mapping) or set(payload) != {"id", "kind", "depends_on"}:
+            raise ValueError("pipeline node has invalid shape")
+        if (
+            not isinstance(payload["id"], str)
+            or not isinstance(payload["kind"], str)
+            or not isinstance(payload["depends_on"], list)
+        ):
+            raise ValueError("pipeline node fields have invalid types")
+        if not all(isinstance(item, str) for item in payload["depends_on"]):
+            raise ValueError("pipeline node dependencies must be strings")
+        return cls(payload["id"], cast(NodeKind, payload["kind"]), tuple(payload["depends_on"]))
+
 
 @dataclass(frozen=True, slots=True)
 class PipelineIR:
@@ -199,5 +293,37 @@ class PipelineIR:
     def to_json(self) -> str:
         return encode_canonical_json(self.to_payload()).decode("utf-8")
 
+    @classmethod
+    def from_payload(cls, payload: object) -> PipelineIR:
+        if not isinstance(payload, Mapping) or set(payload) != {"schema", "nodes", "parameters"}:
+            raise ValueError("pipeline IR has invalid shape")
+        nodes = payload["nodes"]
+        parameters = payload["parameters"]
+        if not isinstance(nodes, list) or not isinstance(parameters, Mapping):
+            raise ValueError("pipeline IR nodes/parameters have invalid types")
+        parsed = []
+        for item in nodes:
+            if not isinstance(item, Mapping):
+                raise ValueError("pipeline IR node must be an object")
+            parsed.append(PipelineNode.from_payload(item))
+        if not all(
+            isinstance(key, str) and isinstance(value, str) for key, value in parameters.items()
+        ):
+            raise ValueError("pipeline IR parameters must be string pairs")
+        return cls(tuple(parsed), tuple(sorted(parameters.items())), cast(str, payload["schema"]))
 
-__all__ = ["FeatureSpec", "Lab", "LabTask", "NodeKind", "PipelineIR", "PipelineNode"]
+    @classmethod
+    def from_json(cls, payload: str) -> PipelineIR:
+        return cls.from_payload(decode_canonical_json(payload))
+
+
+__all__ = [
+    "FEATURE_SCHEMA",
+    "FeatureDefinition",
+    "FeatureSpec",
+    "Lab",
+    "LabTask",
+    "NodeKind",
+    "PipelineIR",
+    "PipelineNode",
+]

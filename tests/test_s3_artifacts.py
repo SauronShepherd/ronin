@@ -42,6 +42,24 @@ class _Client:
         }
 
 
+class _TransientError(RuntimeError):
+    def __init__(self) -> None:
+        super().__init__("temporary")
+        self.response = {"Error": {"Code": "503"}}
+
+
+class _RetryClient(_Client):
+    def __init__(self) -> None:
+        super().__init__()
+        self.failures = 2
+
+    def put_object(self, *, Bucket: str, Key: str, Body: bytes, **kwargs: object) -> None:
+        if self.failures:
+            self.failures -= 1
+            raise _TransientError
+        super().put_object(Bucket=Bucket, Key=Key, Body=Body, **kwargs)
+
+
 def test_s3_store_is_content_addressed_and_verifies_round_trip() -> None:
     client = _Client()
     store = S3ArtifactStore("ronin-test", client=client)
@@ -88,6 +106,14 @@ def test_s3_store_validates_endpoint_and_region_configuration() -> None:
         S3ArtifactStore("ronin-test", region_name=" ", client=client)
 
 
+def test_s3_store_retries_transient_provider_failures() -> None:
+    client = _RetryClient()
+    store = S3ArtifactStore("ronin-test", client=client, retry_delay_seconds=0)
+    ref = store.put_bytes(role="model", data=b"model")
+    assert ref.digest
+    assert client.failures == 0
+
+
 def test_s3_artifact_page_accepts_numeric_only_sha256_digest() -> None:
     client = _Client()
     store = S3ArtifactStore("ronin-test", client=client)
@@ -95,3 +121,11 @@ def test_s3_artifact_page_accepts_numeric_only_sha256_digest() -> None:
     client.objects[("ronin-test", "ronin/artifacts/sha256/" + digest)] = b""
     page = store.list_digests_page(page_size=1)
     assert page.digests == (digest,)
+
+
+def test_s3_artifact_page_rejects_unbounded_or_control_cursor() -> None:
+    store = S3ArtifactStore("ronin-test", client=_Client())
+    with pytest.raises(ValueError, match="bounded opaque"):
+        store.list_digests_page(cursor="x\n")
+    with pytest.raises(ValueError, match="bounded opaque"):
+        store.list_digests_page(cursor="x" * 2049)

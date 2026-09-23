@@ -1,4 +1,5 @@
 """Build-independent audit for a Cloud Studio wheel."""
+
 from __future__ import annotations
 
 import sys

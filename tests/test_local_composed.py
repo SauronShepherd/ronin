@@ -32,6 +32,7 @@ def test_build_local_composed_from_env_creates_two_surface_composition(
     assert composition.job_server.server_address[1] == 8080
     assert composition.control_plane_server.server_address[1] == 8081
     assert composition.plugin_host is not None
+    assert composition.control_plane_server.data_engineering_reader is not None
     assert composition.control_plane_server.plugin_routes_enabled
     composition.stop()
 

@@ -266,7 +266,13 @@ class AsyncioCommandRunner:
         completed_normally = False
         try:
             stdin.write(input_text.encode())
-            await stdin.drain()
+            try:
+                await stdin.drain()
+            except ConnectionResetError:
+                # A short-lived command may exit before the input pipe is
+                # drained (notably on Windows); its stdout/stderr remain the
+                # authoritative outcome and are collected below.
+                pass
             stdin.close()
             cancelled = False
             timed_out = False

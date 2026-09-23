@@ -8,8 +8,9 @@ import json
 import posixpath
 import zipfile
 from collections.abc import Iterable, Mapping
+from typing import cast
 
-from ..model import MigrationUnit, SourceArtifact, SourceInventory
+from ..model import MigrationUnit, ObjectState, SourceArtifact, SourceInventory
 
 IICS_ADAPTER_VERSION = "ronin-iics-0.1"
 MAX_ENTRY_COUNT = 10_000
@@ -109,7 +110,9 @@ def discover_iics_zip(archives: Iterable[tuple[str, bytes]]) -> SourceInventory:
             if mapping_id.strip() not in template_ids:
                 state = "review_required"
                 notes.append("mappingId could not be resolved to DTEMPLATE.assetFrsGuid")
-        units[key] = MigrationUnit(key, kind, identity, state, (), refs, tuple(notes))
+        units[key] = MigrationUnit(
+            key, kind, identity, cast(ObjectState, state), (), refs, tuple(notes)
+        )
     if not units:
         raise ValueError("IICS archives contain no discoverable DTEMPLATE, MTT or mapping JSON")
     package_names = sorted({path.split("/")[0] for path in members})

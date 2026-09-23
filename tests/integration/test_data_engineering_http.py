@@ -79,9 +79,7 @@ def test_data_engineering_routes_execute_through_real_control_plane() -> None:
             import http.client
 
             asset_connection = http.client.HTTPConnection(*address, timeout=3)
-            asset_connection.request(
-                "GET", "/studio/data-enginerring-studio.html?e2e=1"
-            )
+            asset_connection.request("GET", "/studio/data-enginerring-studio.html?e2e=1")
             asset_response = asset_connection.getresponse()
             asset_body = asset_response.read().decode("utf-8")
             asset_connection.close()

@@ -7,14 +7,14 @@ from studio_core.plugin_events import (
     new_event,
 )
 from studio_core.plugins import (
+    CliContributionRegistry,
+    ClientOperationRegistry,
     PluginContext,
     PluginDependency,
     PluginManifest,
     PluginRecord,
     PluginState,
     RoninPlugin,
-    CliContributionRegistry,
-    ClientOperationRegistry,
     SurfaceContribution,
     SurfaceOption,
 )

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from typing import Callable
 
 from .ide import IdeCell, IdeSession, execute_ide_session
 
@@ -15,7 +15,11 @@ class DebugSnapshot:
     paused_at: str | None
 
     def to_payload(self) -> dict[str, object]:
-        return {"session_id": self.session_id, "cells": list(self.cells), "paused_at": self.paused_at}
+        return {
+            "session_id": self.session_id,
+            "cells": list(self.cells),
+            "paused_at": self.paused_at,
+        }
 
 
 def snapshot(session: IdeSession) -> DebugSnapshot:
@@ -53,7 +57,9 @@ class DebuggerService:
         self._sessions[session_id] = updated
         return snapshot(updated)
 
-    def replay(self, session_id: str, execute: Callable[[str], object], start_cell: str | None = None) -> DebugSnapshot:
+    def replay(
+        self, session_id: str, execute: Callable[[str], object], start_cell: str | None = None
+    ) -> DebugSnapshot:
         updated = execute_ide_session(self._require(session_id), execute, start_cell=start_cell)
         self._sessions[session_id] = updated
         return snapshot(updated)

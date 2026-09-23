@@ -60,6 +60,7 @@ dev = [
   "mutmut==3.7.0",
   "mypy>=1.17,<2",
   "pytest>=9.0.3,<10",
+  "pytest-asyncio>=1.2,<2",
   "pytest-cov>=6.2,<7",
   "pytest-randomly>=3.16,<4",
   "ruff>=0.12,<1",
@@ -77,6 +78,7 @@ studio_storage = ["migrations/*.sql"]
 [tool.setuptools.data-files]
 "share/ronin/web" = [
   "web/index.html",
+  "web/routes.json",
   "web/README.md",
   "web/data-enginerring-studio.html",
   "web/data-enginerring-studio.css",
@@ -87,11 +89,38 @@ studio_storage = ["migrations/*.sql"]
   "web/assets/ronin-logo-mark.png",
 ]
 "share/ronin/web/js" = [
+  "web/js/a11y.js",
+  "web/js/access-studio.js",
+  "web/js/ai-studio.js",
+  "web/js/alerts-studio.js",
   "web/js/api.js",
   "web/js/app.js",
+  "web/js/catalog-studio.js",
+  "web/js/cloud-studio.js",
+  "web/js/command-palette.js",
+  "web/js/context-bar.js",
+  "web/js/data-engineering-studio.js",
+  "web/js/debugger-studio.js",
+  "web/js/deployment-studio.js",
   "web/js/dom.js",
+  "web/js/environment-studio.js",
   "web/js/features.js",
+  "web/js/finops-studio.js",
+  "web/js/graph-studio.js",
+  "web/js/i18n.js",
+  "web/js/ingestion-studio.js",
+  "web/js/ml-studio-journey.js",
+  "web/js/notebook-studio.js",
   "web/js/performance-studio.js",
+  "web/js/project-journey.js",
+  "web/js/quality-studio.js",
+  "web/js/semantic-studio.js",
+  "web/js/streaming-studio.js",
+  "web/js/scheduler-studio.js",
+  "web/js/studio-context.js",
+  "web/js/synthetic-data-studio.js",
+  "web/js/synthetic-journey.js",
+  "web/js/workspace-journey.js",
 ]
 "share/ronin/web/styles" = [
   "web/styles/base.css",
@@ -169,7 +198,13 @@ packages = [
 testpaths = ["tests", "packages/pyronin/tests"]
 pythonpath = ["python", "packages/pyronin/src", "packages/ronin-plugin-performance/src", "."]
 addopts = "-ra --strict-config --strict-markers"
-markers = ["e2e: full v0.1 acceptance journey; requires Docker and a built image"]
+markers = [
+  "e2e: full v0.1 acceptance journey; requires Docker and a built image",
+  "asyncio: run the test in an asyncio event loop",
+]
+# Existing integration tests intentionally drive their own event loops with
+# asyncio.run; auto preserves that contract while still enabling @pytest.mark.asyncio.
+asyncio_mode = "auto"
 
 [tool.coverage.run]
 branch = true
@@ -237,3 +272,4 @@ pytest_add_cli_args_test_selection = [
   "tests/test_bundle_project_inventory.py",
 ]
 mutate_only_covered_lines = true
+on_dependency_change = "ignore"

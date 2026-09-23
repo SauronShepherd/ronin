@@ -34,6 +34,56 @@
         }
       }
     },
+    "/v1/platform/connectors": {
+      "get": {
+        "operationId": "listConnectorCapabilities",
+        "description": "List executable connector capabilities exposed by the configured data plane.",
+        "responses": {
+          "200": {"description": "Connector capability registry", "content": {"application/json": {"schema": {"type": "object"}}}},
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/platform/connectors/preview": {
+      "post": {
+        "operationId": "previewConnectorIngestion",
+        "description": "Preview a bounded connector read and return its sync plan and checkpoint health.",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+        "responses": {
+          "200": {"description": "Bounded ingestion preview", "content": {"application/json": {"schema": {"type": "object"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/platform/connectors/plan": {
+      "post": {
+        "operationId": "planConnectorIngestion",
+        "description": "Validate and plan a bounded connector sync without reading source data.",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+        "responses": {
+          "200": {"description": "Connector sync plan and checkpoint health", "content": {"application/json": {"schema": {"type": "object"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/platform/connectors/checkpoint-health": {
+      "post": {
+        "operationId": "getConnectorCheckpointHealth",
+        "description": "Read durable checkpoint health for one ingestion identity.",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["checkpoint_identity"]}}}},
+        "responses": {
+          "200": {"description": "Checkpoint health", "content": {"application/json": {"schema": {"type": "object"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
     "/v1/platform/ui-manifest": {
       "get": {
         "operationId": "getPluginUiManifest",
@@ -175,6 +225,9 @@
         }
       }
     },
+    "/v1/jobs/{job_id}/results": {
+      "get": {"operationId": "getJobCellResults", "parameters": [{"name": "job_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Durable per-cell execution results"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
     "/v1/jobs/{job_id}/cancel": {
       "post": {
         "operationId": "cancelJob",
@@ -190,9 +243,11 @@
       }
     },
     "/v1/admin/security/principals/{principal_id}": {
+      "get": {"operationId": "getSecurityPrincipal", "parameters": [{"name": "principal_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}], "responses": {"200": {"description": "Security principal", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Principal"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}},
       "put": {"operationId": "putSecurityPrincipal", "parameters": [{"name": "principal_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PrincipalRequest"}}}}, "responses": {"200": {"description": "Updated principal", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Principal"}}}}, "201": {"description": "Created principal", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Principal"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}}}
     },
     "/v1/admin/security/groups/{group_id}": {
+      "get": {"operationId": "getSecurityGroup", "parameters": [{"name": "group_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}], "responses": {"200": {"description": "Security group", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Group"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}},
       "put": {"operationId": "putSecurityGroup", "parameters": [{"name": "group_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GroupRequest"}}}}, "responses": {"200": {"description": "Stored group", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Group"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}}
     },
     "/v1/admin/security/groups/{group_id}/members/{principal_id}": {
@@ -208,7 +263,25 @@
         "operationId": "listWorkspaces",
         "parameters": [{"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}}, {"name": "cursor", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
         "responses": {"200": {"description": "Visible workspaces", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WorkspacePage"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      },
+      "post": {
+        "operationId": "createWorkspace",
+        "parameters": [{"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/WorkspaceCreate"}}}},
+        "responses": {"201": {"description": "Created workspace", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Workspace"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}}
       }
+    },
+    "/v1/admin/security/principals": {
+      "get": {"operationId": "listSecurityPrincipals", "responses": {"200": {"description": "Security principals", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/admin/security/groups": {
+      "get": {"operationId": "listSecurityGroups", "responses": {"200": {"description": "Security groups", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/admin/security/groups/{group_id}/members": {
+      "get": {"operationId": "listSecurityGroupMembers", "parameters": [{"name": "group_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Group members", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/admin/security/role-bindings": {
+      "get": {"operationId": "listSecurityRoleBindings", "responses": {"200": {"description": "Role bindings", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
     },
     "/v1/workspaces/{workspace_id}": {
       "get": {
@@ -234,6 +307,74 @@
       "get": {"operationId": "getProject", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Project manifest", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectManifest"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}},
       "put": {"operationId": "replaceProject", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectManifest"}}}}, "responses": {"200": {"description": "Replaced project", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectManifest"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}},
       "delete": {"operationId": "unregisterProject", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Unregistered project", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectUnregistration"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/bundle": {
+      "get": {"operationId": "exportProjectBundleManifest", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Canonical project Bundle manifest", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectManifest"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/bundle/archive": {
+      "get": {"operationId": "exportProjectBundleArchive", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Deterministic project Bundle archive", "content": {"application/json": {"schema": {"type": "object", "required": ["media_type", "digest", "size_bytes", "content_base64"], "additionalProperties": false}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/bundle/import": {
+      "post": {"operationId": "importProjectBundleArchive", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["content_base64"], "additionalProperties": false}}}}, "responses": {"200": {"description": "Imported project Bundle", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/archive": {
+      "post": {"operationId": "archiveProject", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Archived project", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ProjectArchive"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines": {
+      "get": {"operationId": "listPipelines", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Project pipelines", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/revisions": {
+      "get": {"operationId": "listPipelineRevisions", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "pipeline_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Pipeline revisions", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+      ,"post": {"operationId": "importPipelineRevision", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "pipeline_id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["project_name", "project_yaml_base64", "pipeline_documents"], "additionalProperties": false}}}}, "responses": {"201": {"description": "Imported pipeline revision"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/revisions/{revision}": {
+      "get": {"operationId": "getPipelineRevision", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "pipeline_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "revision", "in": "path", "required": true, "schema": {"type": "integer", "minimum": 1}}], "responses": {"200": {"description": "Pipeline revision", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/revisions/compare": {
+      "get": {"operationId": "comparePipelineRevisions", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "pipeline_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "left_revision", "in": "query", "required": true, "schema": {"type": "integer", "minimum": 1}}, {"name": "right_revision", "in": "query", "required": true, "schema": {"type": "integer", "minimum": 1}}], "responses": {"200": {"description": "Pipeline revision comparison"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/archive": {
+      "post": {"operationId": "archivePipeline", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "pipeline_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Archived pipeline", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/runs": {
+      "post": {"operationId": "createPipelineRun", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "pipeline_id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["revision_key", "ir_digest", "runtime"], "properties": {"revision_key": {"type": "string"}, "ir_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "runtime": {"type": "string"}, "parameters": {"type": "object"}}, "additionalProperties": false}}}}, "responses": {"201": {"description": "Created pipeline workflow run"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks": {
+      "get": {"operationId": "listNotebooks", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Project notebooks"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}},
+      "post": {"operationId": "createNotebook", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/NotebookMutation"}}}}, "responses": {"201": {"description": "Created notebook"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks/{notebook_id}": {
+      "get": {"operationId": "getNotebook", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "notebook_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Notebook"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}},
+      "put": {"operationId": "saveNotebook", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "notebook_id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/NotebookMutation"}}}}, "responses": {"200": {"description": "Saved notebook"}, "409": {"$ref": "#/components/responses/Error"}}},
+      "delete": {"operationId": "deleteNotebook", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "notebook_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "If-Match", "in": "header", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Deleted notebook"}, "409": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks/{notebook_id}/archive": {
+      "post": {"operationId": "archiveNotebook", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "notebook_id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["expected_revision"], "additionalProperties": false}}}}, "responses": {"200": {"description": "Archived notebook"}, "409": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/quality/contracts/{asset_id}/{version}": {"get": {"operationId": "getQualityContract", "responses": {"200": {"description": "Data quality contract"}}}},
+    "/v1/workspaces/{workspace_id}/quality/runs": {"post": {"operationId": "runQuality", "responses": {"201": {"description": "Quality evidence"}}}},
+    "/v1/workspaces/{workspace_id}/quality/runs/{asset_id}/{version}": {"get": {"operationId": "listQualityRuns", "responses": {"200": {"description": "Quality history"}}}},
+    "/v1/workspaces/{workspace_id}/quality/state/{asset_id}/{version}": {"get": {"operationId": "getQualityState", "responses": {"200": {"description": "Latest quality state and immutable history"}}}},
+    "/v1/workspaces/{workspace_id}/alerts/instances": {"get": {"operationId": "listAlertInstances", "parameters": [{"name": "limit", "in": "query", "required": false, "schema": {"type": "integer", "minimum": 1, "maximum": 1000}}], "responses": {"200": {"description": "Persisted alert instances"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/alerts/rules": {"get": {"operationId": "listAlertRules", "responses": {"200": {"description": "Alert rules"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/alerts/evaluate": {"post": {"operationId": "evaluateAlert", "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["rule_id"], "properties": {"rule_id": {"type": "string"}}, "additionalProperties": false}}}}, "responses": {"200": {"description": "Alert evaluation"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/alerts/acknowledge": {"post": {"operationId": "acknowledgeAlert", "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["rule_id", "fingerprint"], "properties": {"rule_id": {"type": "string"}, "fingerprint": {"type": "string"}}, "additionalProperties": false}}}}, "responses": {"200": {"description": "Alert acknowledgement"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/finops/usage": {"get": {"operationId": "listFinOpsUsage", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "period_start", "in": "query", "required": true, "schema": {"type": "string"}}, {"name": "period_end", "in": "query", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Usage ledger records"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/finops/costs": {"get": {"operationId": "listFinOpsCosts", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "period_start", "in": "query", "required": true, "schema": {"type": "string"}}, {"name": "period_end", "in": "query", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Cost ledger records"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/finops/budgets": {"get": {"operationId": "listFinOpsBudgets", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}], "responses": {"200": {"description": "Budget policies"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}},
+    "/v1/workspaces/{workspace_id}/environments": {
+      "get": {"operationId": "listEnvironments", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}], "responses": {"200": {"description": "Workspace environments", "content": {"application/json": {"schema": {"type": "object"}}}}}},
+      "post": {"operationId": "createEnvironment", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnvironmentDefinition"}}}}, "responses": {"201": {"description": "Created environment", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnvironmentDefinition"}}}}}}
+    },
+    "/v1/workspaces/{workspace_id}/environments/{environment_id}": {
+      "get": {"operationId": "getEnvironment", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "environment_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Environment", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnvironmentDefinition"}}}}}},
+      "put": {"operationId": "replaceEnvironment", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "environment_id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnvironmentDefinition"}}}}, "responses": {"200": {"description": "Environment", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnvironmentDefinition"}}}}}}
+    },
+    "/v1/workspaces/{workspace_id}/environments/{environment_id}/disable": {"post": {"operationId": "disableEnvironment", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "environment_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Disabled environment", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnvironmentDefinition"}}}}}}},
+    "/v1/workspaces/{workspace_id}/environments/{environment_id}/diff": {"post": {"operationId": "diffEnvironment", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "environment_id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnvironmentDefinition"}}}}, "responses": {"200": {"description": "Environment diff", "content": {"application/json": {"schema": {"type": "object"}}}}}}},
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/environments/{environment_id}/bindings": {
+      "get": {"operationId": "getDeploymentBindings", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "environment_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Deployment bindings", "content": {"application/json": {"schema": {"type": "object"}}}}}},
+      "put": {"operationId": "putDeploymentBindings", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "environment_id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}}, "responses": {"200": {"description": "Deployment bindings", "content": {"application/json": {"schema": {"type": "object"}}}}}}
     },
     "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/adapters": {"get": {"operationId": "listMigrationAdapters", "x-ronin-required-project-actions": ["read"], "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}], "responses": {"200": {"description": "Migration adapters", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}}},
     "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions": {
@@ -379,6 +520,286 @@
         }
       }
     },
+    "/v1/workspaces/{workspace_id}/schedules": {
+      "get": {
+        "operationId": "listSchedules",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100}}, {"name": "cursor", "in": "query", "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Workspace schedules", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SchedulePage"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/schedules/{schedule_id}": {
+      "get": {
+        "operationId": "getSchedule",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "schedule_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Schedule", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Schedule"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      },
+      "put": {
+        "operationId": "replaceSchedule",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "schedule_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Schedule"}}}},
+        "responses": {"200": {"description": "Schedule replaced", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Schedule"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/schedules/{schedule_id}/next-runs": {
+      "get": {
+        "operationId": "previewScheduleNextRuns",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "schedule_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "after", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}},
+          {"name": "count", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 10}}
+        ],
+        "responses": {
+          "200": {"description": "Bounded future schedule fire times", "content": {"application/json": {"schema": {"type": "object", "required": ["items"], "properties": {"items": {"type": "array", "items": {"type": "string"}}}}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
+          "404": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/workspaces/{workspace_id}/schedules/{schedule_id}/history": {
+      "get": {
+        "operationId": "listScheduleHistory",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "schedule_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 100}}
+        ],
+        "responses": {
+          "200": {"description": "Schedule fire history", "content": {"application/json": {"schema": {"type": "object", "required": ["items"], "properties": {"items": {"type": "array", "items": {"type": "object"}}}}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/workspaces/{workspace_id}/event-triggers": {
+      "get": {
+        "operationId": "listEventTriggers",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100}}, {"name": "cursor", "in": "query", "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Workspace event triggers", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EventTriggerPage"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/event-deliveries": {
+      "get": {
+        "operationId": "listPendingEventDeliveries",
+        "parameters": [
+          {"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100}},
+          {"name": "cursor", "in": "query", "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "Pending event deliveries", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EventDeliveryPage"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/workspaces/{workspace_id}/event-triggers/{trigger_id}": {
+      "put": {
+        "operationId": "replaceEventTrigger",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "trigger_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EventTrigger"}}}},
+        "responses": {"200": {"description": "Event trigger replaced", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EventTrigger"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/events": {
+      "post": {
+        "operationId": "ingestSchedulerEvent",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SchedulerEvent"}}}},
+        "responses": {"202": {"description": "Event accepted", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/catalog/assets": {
+      "get": {
+        "operationId": "listCatalogAssets",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "q", "in": "query", "schema": {"type": "string"}}, {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100}}],
+        "responses": {"200": {"description": "Governed catalog assets", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      },
+      "post": {
+        "operationId": "createCatalogAsset",
+        "responses": {"201": {"description": "Catalog asset created"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/catalog/assets/{asset_id}": {
+      "put": {"operationId": "replaceCatalogAsset", "responses": {"200": {"description": "Catalog asset replaced"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/catalog/assets/{asset_id}/revisions": {
+      "get": {"operationId": "listCatalogAssetRevisions", "responses": {"200": {"description": "Asset revisions"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/catalog/assets/{asset_id}/revisions/{version}": {
+      "get": {"operationId": "getCatalogAssetRevision", "responses": {"200": {"description": "Asset revision"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/catalog/assets/{asset_id}/sensitivity": {
+      "post": {"operationId": "putCatalogAssetSensitivity", "responses": {"201": {"description": "Sensitivity metadata published"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/catalog/assets/{asset_id}/ownership": {
+      "post": {"operationId": "putCatalogAssetOwnership", "responses": {"201": {"description": "Ownership metadata published"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/catalog/lineage/{asset_id}/{version}": {
+      "get": {"operationId": "getCatalogLineage", "responses": {"200": {"description": "Asset lineage"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/glossary/terms": {
+      "get": {
+        "operationId": "listGlossaryTerms",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "q", "in": "query", "schema": {"type": "string"}}, {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100}}],
+        "responses": {"200": {"description": "Glossary terms", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      },
+      "post": {"operationId": "publishGlossaryTerm", "responses": {"201": {"description": "Glossary term published"}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/workspaces/{workspace_id}/glossary/terms/{term_id}/{version}": {
+      "get": {
+        "operationId": "getGlossaryTerm",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "term_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "version", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Glossary term", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/models": {
+      "get": {
+        "operationId": "listSemanticModels",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Semantic models", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/sql/query": {
+      "post": {
+        "operationId": "querySql",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["sql"], "properties": {"sql": {"type": "string"}, "parameters": {"type": "array"}, "max_rows": {"type": "integer", "minimum": 1, "maximum": 10000}}}}}},
+        "responses": {"200": {"description": "SQL query result", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/query": {
+      "post": {
+        "operationId": "querySemanticMetrics",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+        "responses": {"200": {"description": "Metric query result", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/join": {
+      "post": {
+        "operationId": "joinSemanticModels",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+        "responses": {"200": {"description": "Semantic join result", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/dashboards/{dashboard_id}": {
+      "get": {
+        "operationId": "getSemanticDashboard",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "dashboard_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Semantic dashboard", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      },
+      "put": {
+        "operationId": "putSemanticDashboard",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "dashboard_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+        "responses": {"200": {"description": "Dashboard saved", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/dashboards": {
+      "get": {
+        "operationId": "listSemanticDashboards",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Semantic dashboards", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/dashboards/{dashboard_id}/execute": {
+      "post": {
+        "operationId": "executeSemanticDashboard",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "project_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "dashboard_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Dashboard result", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/streams/{stream_id}/health": {
+      "get": {
+        "operationId": "getStreamingHealth",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "stream_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Streaming health and lag", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/graphs/{graph_id}/query": {
+      "post": {
+        "operationId": "queryKnowledgeGraph",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "graph_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GraphQuery"}}}},
+        "responses": {"200": {"description": "Bounded graph query result", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GraphQueryResult"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/graphs/{graph_id}/objects/{object_type}": {
+      "get": {
+        "operationId": "listKnowledgeGraphObjects",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "graph_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "object_type", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100}}],
+        "responses": {"200": {"description": "Bounded graph objects", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/graphs/{graph_id}/neighbors": {
+      "post": {
+        "operationId": "listKnowledgeGraphNeighbors",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "graph_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GraphNeighborQuery"}}}},
+        "responses": {"200": {"description": "Bounded graph neighbors", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/graphs/{graph_id}/actions": {
+      "post": {
+        "operationId": "executeKnowledgeGraphAction",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "graph_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GraphAction"}}}},
+        "responses": {"200": {"description": "Authorized action result", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/ontologies/{ontology_id}": {
+      "get": {
+        "operationId": "listOntologyVersions",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "ontology_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Ontology schema versions", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/ontologies/{ontology_id}/{version}": {
+      "get": {
+        "operationId": "getOntologyVersion",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "ontology_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "version", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Ontology schema", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/backfills": {
+      "post": {
+        "operationId": "createBackfill",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Backfill"}}}},
+        "responses": {"201": {"description": "Backfill created", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Backfill"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/backfills/preview": {
+      "post": {
+        "operationId": "previewBackfill",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["schedule_id", "start_at", "end_at"], "properties": {"schedule_id": {"type": "string"}, "start_at": {"type": "string"}, "end_at": {"type": "string"}, "max_runs": {"type": "integer", "minimum": 1, "maximum": 10000}}}}}},
+        "responses": {"200": {"description": "Bounded backfill fire preview", "content": {"application/json": {"schema": {"type": "object", "required": ["items"], "properties": {"items": {"type": "array", "items": {"type": "string"}}}}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/backfills/{backfill_id}": {
+      "get": {
+        "operationId": "getBackfill",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "backfill_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Backfill", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Backfill"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/workspaces/{workspace_id}/backfills/{backfill_id}/cancel": {
+      "post": {
+        "operationId": "cancelBackfill",
+        "parameters": [{"name": "workspace_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "backfill_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Backfill cancelled", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Backfill"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
     "/v1/workspaces/{workspace_id}/workflows/{workflow_id}/runs": {
       "post": {
         "operationId": "createWorkflowRun",
@@ -418,6 +839,13 @@
           "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}
         }
       }
+    },
+    "/v1/ml-studio/features": {
+      "get": {"operationId": "listMlFeatureDefinitions", "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Feature definitions", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}},
+      "post": {"operationId": "publishMlFeatureDefinition", "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}}, "responses": {"201": {"description": "Feature definition published", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
+    },
+    "/v1/ml-studio/features/{feature_id}/{version}": {
+      "get": {"operationId": "getMlFeatureDefinition", "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}, {"name": "feature_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "version", "in": "path", "required": true, "schema": {"type": "integer", "minimum": 1}}], "responses": {"200": {"description": "Feature definition", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
     },
     "/v1/ml-studio/labs": {
       "get": {
@@ -487,6 +915,14 @@
         "responses": {"200": {"description": "Batch predictions", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
       }
     },
+    "/v1/ml-studio/models/{model_id}/{version}/batch-predict": {
+      "post": {
+        "operationId": "batchPredictMlStudioModel",
+        "parameters": [{"name": "model_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "version", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["batch_id", "rows"]}}}},
+        "responses": {"200": {"description": "Bounded batch predictions with replay evidence", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+      }
+    },
     "/v1/ml-studio/models/{model_id}/{version}/card": {
       "get": {
         "operationId": "getMlStudioModelCard",
@@ -508,6 +944,10 @@
       }
     },
     "schemas": {
+      "EnvironmentDefinition": {
+        "type": "object", "additionalProperties": false, "required": ["id", "name", "description", "state"],
+        "properties": {"id": {"type": "string"}, "name": {"type": "string"}, "description": {"type": "string"}, "state": {"type": "string", "enum": ["active", "disabled"]}}
+      },
       "PluginDiagnosticsPage": {
         "type": "object", "additionalProperties": false, "required": ["items", "surfaces", "cli", "client_operations"],
         "properties": {
@@ -593,7 +1033,9 @@
           "project": {"type": "string", "minLength": 1, "maxLength": 256},
           "sql": {"type": "string", "minLength": 1, "maxLength": 1048576},
           "parameters": {"type": "array", "items": {"type": ["boolean", "integer", "number", "string", "null"]}, "default": []},
-          "max_rows": {"type": "integer", "minimum": 1, "maximum": 10000, "default": 10000}
+          "max_rows": {"type": "integer", "minimum": 1, "maximum": 10000, "default": 10000},
+          "profile": {"type": "string", "enum": ["local", "queryflux"], "default": "local"},
+          "translation_policy": {"type": "string", "enum": ["native_only", "best_effort", "strict"], "default": "native_only"}
         }
       },
       "SqlResult": {
@@ -684,10 +1126,25 @@
       "RoleBinding": {"type": "object", "additionalProperties": true},
       "Workspace": {"type": "object", "additionalProperties": false, "required": ["id", "name", "description", "state"], "properties": {"id": {"type": "string"}, "name": {"type": "string"}, "description": {"type": ["string", "null"]}, "state": {"type": "string"}}},
       "WorkspacePage": {"type": "object", "additionalProperties": false, "required": ["items", "next_cursor"], "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/Workspace"}}, "next_cursor": {"type": ["string", "null"]}}},
+      "WorkspaceCreate": {"type": "object", "additionalProperties": false, "required": ["id", "name", "description"], "properties": {"id": {"type": "string", "minLength": 1}, "name": {"type": "string", "minLength": 1}, "description": {"type": ["string", "null"]}}},
       "WorkspaceUpdate": {"type": "object", "additionalProperties": false, "required": ["name", "description"], "properties": {"name": {"type": "string"}, "description": {"type": ["string", "null"]}}},
       "ProjectManifest": {"type": "object", "additionalProperties": true},
       "ProjectPage": {"type": "object", "additionalProperties": false, "required": ["items", "next_cursor"], "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/ProjectManifest"}}, "next_cursor": {"type": ["string", "null"]}}},
       "ProjectUnregistration": {"type": "object", "additionalProperties": false, "required": ["unregistered", "project_id"], "properties": {"unregistered": {"type": "boolean"}, "project_id": {"type": "string"}}},
+      "ProjectArchive": {"type": "object", "additionalProperties": false, "required": ["archived", "project_id"], "properties": {"archived": {"type": "boolean"}, "project_id": {"type": "string"}}},
+      "NotebookMutation": {"type": "object", "additionalProperties": false, "required": ["id", "document"], "properties": {"id": {"type": "string"}, "document": {"type": "object"}, "expected_revision": {"type": "integer", "minimum": 1}, "source_revision": {"type": ["string", "null"]}, "execution_binding": {"type": ["string", "null"]}, "evidence_digest": {"type": ["string", "null"]}, "parameter_schema": {"type": "array"}}},
+      "Notebook": {"type": "object", "additionalProperties": true},
+      "Schedule": {"type": "object", "additionalProperties": false, "required": ["id", "workflow_id", "cron", "timezone", "enabled"], "properties": {"id": {"type": "string"}, "workflow_id": {"type": "string"}, "cron": {"type": "string"}, "timezone": {"type": "string"}, "enabled": {"type": "boolean"}}},
+      "SchedulePage": {"type": "object", "additionalProperties": false, "required": ["items", "next_cursor"], "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/Schedule"}}, "next_cursor": {"type": ["string", "null"]}}},
+      "EventTrigger": {"type": "object", "additionalProperties": false, "required": ["id", "workflow_id", "event_type", "source_ref", "subject_ref", "enabled"], "properties": {"id": {"type": "string"}, "workflow_id": {"type": "string"}, "event_type": {"type": "string"}, "source_ref": {"type": ["string", "null"]}, "subject_ref": {"type": ["string", "null"]}, "enabled": {"type": "boolean"}}},
+      "EventTriggerPage": {"type": "object", "additionalProperties": false, "required": ["items", "next_cursor"], "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/EventTrigger"}}, "next_cursor": {"type": ["string", "null"]}}},
+      "EventDeliveryPage": {"type": "object", "additionalProperties": false, "required": ["items", "next_cursor"], "properties": {"items": {"type": "array", "items": {"type": "object", "required": ["event_id", "trigger_id", "workflow_id", "state"], "properties": {"event_id": {"type": "string"}, "trigger_id": {"type": "string"}, "workflow_id": {"type": "string"}, "state": {"type": "string", "enum": ["pending", "delivered"]}}}}, "next_cursor": {"type": ["string", "null"]}}},
+      "SchedulerEvent": {"type": "object", "additionalProperties": false, "required": ["event_id", "event_type", "payload_digest", "occurred_at"], "properties": {"event_id": {"type": "string"}, "event_type": {"type": "string"}, "payload_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "occurred_at": {"type": "string"}, "received_at": {"type": "string"}, "source_ref": {"type": ["string", "null"]}, "subject_ref": {"type": ["string", "null"]}}},
+      "Backfill": {"type": "object", "additionalProperties": false, "required": ["id", "schedule_id", "start_at", "end_at", "state"], "properties": {"id": {"type": "string"}, "schedule_id": {"type": "string"}, "start_at": {"type": "string"}, "end_at": {"type": "string"}, "state": {"type": "string", "enum": ["pending", "running", "completed", "cancelled"]}}},
+      "GraphQuery": {"type": "object", "additionalProperties": false, "required": ["query"], "properties": {"query": {"type": "string", "maxLength": 2000}, "max_limit": {"type": "integer", "minimum": 1, "maximum": 100000}}},
+      "GraphQueryResult": {"type": "object", "additionalProperties": false, "required": ["objects"], "properties": {"objects": {"type": "array", "items": {"type": "object"}}}},
+      "GraphNeighborQuery": {"type": "object", "additionalProperties": false, "required": ["object_type", "key"], "properties": {"object_type": {"type": "string"}, "key": {"type": "array", "items": {"type": "array"}}, "limit": {"type": "integer", "minimum": 1, "maximum": 1000}}},
+      "GraphAction": {"type": "object", "additionalProperties": false, "required": ["action", "target", "inputs"], "properties": {"action": {"type": "object"}, "target": {"type": "object"}, "inputs": {"type": "object"}, "idempotency_key": {"type": ["string", "null"]}}},
       "WorkflowPage": {
         "type": "object", "additionalProperties": false, "required": ["items", "next_cursor"],
         "properties": {

@@ -3,7 +3,10 @@ from studio_ml.optimization import SearchSpec, Trial, propose_bayesian_candidate
 
 def test_bayesian_proposals_are_consumable_as_sequential_search_rounds() -> None:
     spec = SearchSpec(
-        mode="bayesian", metric="accuracy", max_trials=3, random_seed=7,
+        mode="bayesian",
+        metric="accuracy",
+        max_trials=3,
+        random_seed=7,
         parameters=(("C", (0.1, 1.0, 10.0)),),
     )
     seen: list[dict[str, object]] = [spec.trials()[0]]

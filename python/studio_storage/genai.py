@@ -302,6 +302,18 @@ class SqliteGenAIStore:
         finally:
             connection.close()
 
+    def list_providers(self, workspace_id: WorkspaceId) -> tuple[ModelProvider, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT provider_json FROM genai_providers WHERE workspace_id=? "
+                "ORDER BY provider_id",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(_provider_from_json(row["provider_json"]) for row in rows)
+        finally:
+            connection.close()
+
     def put_prompt(
         self, workspace_id: WorkspaceId, prompt: PromptAsset, *, now: Instant | str
     ) -> PromptAsset:
@@ -346,6 +358,18 @@ class SqliteGenAIStore:
                 (str(workspace_id), str(prompt_id), str(version)),
             ).fetchone()
             return None if row is None else PromptAsset.from_json(row["prompt_json"])
+        finally:
+            connection.close()
+
+    def list_prompts(self, workspace_id: WorkspaceId) -> tuple[PromptAsset, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT prompt_json FROM prompt_versions WHERE workspace_id=? "
+                "ORDER BY prompt_id, version",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(PromptAsset.from_json(row["prompt_json"]) for row in rows)
         finally:
             connection.close()
 
@@ -418,6 +442,18 @@ class SqliteGenAIStore:
         finally:
             connection.close()
 
+    def list_indexes(self, workspace_id: WorkspaceId) -> tuple[VectorIndexDefinition, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT definition_json FROM vector_indexes WHERE workspace_id=? "
+                "ORDER BY vector_index_id",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(_index_from_json(row["definition_json"]) for row in rows)
+        finally:
+            connection.close()
+
     def put_tool(
         self, workspace_id: WorkspaceId, tool: ToolContract, *, now: Instant | str
     ) -> ToolContract:
@@ -461,6 +497,17 @@ class SqliteGenAIStore:
                 (str(workspace_id), str(tool_id)),
             ).fetchone()
             return None if row is None else _tool_from_json(row["definition_json"])
+        finally:
+            connection.close()
+
+    def list_tools(self, workspace_id: WorkspaceId) -> tuple[ToolContract, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT definition_json FROM genai_tools WHERE workspace_id=? ORDER BY tool_id",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(_tool_from_json(row["definition_json"]) for row in rows)
         finally:
             connection.close()
 
@@ -533,5 +580,16 @@ class SqliteGenAIStore:
                 (str(workspace_id), str(agent_id)),
             ).fetchone()
             return None if row is None else _agent_from_json(row["definition_json"])
+        finally:
+            connection.close()
+
+    def list_agents(self, workspace_id: WorkspaceId) -> tuple[AgentDefinition, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT definition_json FROM genai_agents WHERE workspace_id=? ORDER BY agent_id",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(_agent_from_json(row["definition_json"]) for row in rows)
         finally:
             connection.close()

@@ -10,8 +10,8 @@ from studio_orchestrator import Instant
 
 from .sqlite import execute_migration_script, open_database
 
-_WORKSPACE_SCHEMA_VERSION = 1
-_WORKSPACE_MIGRATIONS = {1: "workspace_001.sql"}
+_WORKSPACE_SCHEMA_VERSION = 2
+_WORKSPACE_MIGRATIONS = {1: "workspace_001.sql", 2: "workspace_002_project_archive.sql"}
 
 
 class WorkspaceConflict(RuntimeError):
@@ -253,10 +253,25 @@ class SqliteWorkspaceStore:
         try:
             rows = connection.execute(
                 "SELECT manifest_json FROM workspace_projects "
-                "WHERE workspace_id=? ORDER BY project_id",
+                "WHERE workspace_id=? AND archived_at IS NULL ORDER BY project_id",
                 (str(workspace_id),),
             ).fetchall()
             return tuple(ProjectManifest.from_json(row["manifest_json"]) for row in rows)
+        finally:
+            connection.close()
+
+    def archive_project(
+        self, workspace_id: WorkspaceId, project_id: ProjectId, *, now: Instant | str
+    ) -> bool:
+        connection = self._connect()
+        try:
+            cursor = connection.execute(
+                "UPDATE workspace_projects SET archived_at=?,updated_at=?,"
+                "row_version=row_version+1 "
+                "WHERE workspace_id=? AND project_id=? AND archived_at IS NULL",
+                (str(Instant(now)), str(Instant(now)), str(workspace_id), str(project_id)),
+            )
+            return cursor.rowcount == 1
         finally:
             connection.close()
 

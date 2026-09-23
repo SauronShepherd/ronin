@@ -23,7 +23,9 @@ class GenerationJob:
 
 
 class LocalGenerationJobs:
-    def __init__(self, service: GovernStudioService, *, workers: int = 2, db_path: str | None = None) -> None:
+    def __init__(
+        self, service: GovernStudioService, *, workers: int = 2, db_path: str | None = None
+    ) -> None:
         self._service = service
         self._owner = uuid4().hex
         self._executor = ThreadPoolExecutor(max_workers=workers, thread_name_prefix="sds")
@@ -32,17 +34,31 @@ class LocalGenerationJobs:
         self._lock = RLock()
         self._db = sqlite3.connect(db_path, check_same_thread=False) if db_path else None
         if self._db:
-            self._db.execute("CREATE TABLE IF NOT EXISTS synthetic_jobs (job_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, plan_json TEXT NOT NULL, status TEXT NOT NULL, error TEXT, lease_owner TEXT, lease_epoch INTEGER NOT NULL DEFAULT 0, lease_expires_at REAL)")
-            for statement in ("ALTER TABLE synthetic_jobs ADD COLUMN lease_owner TEXT", "ALTER TABLE synthetic_jobs ADD COLUMN lease_epoch INTEGER NOT NULL DEFAULT 0", "ALTER TABLE synthetic_jobs ADD COLUMN lease_expires_at REAL"):
+            self._db.execute(
+                "CREATE TABLE IF NOT EXISTS synthetic_jobs (job_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, plan_json TEXT NOT NULL, status TEXT NOT NULL, error TEXT, lease_owner TEXT, lease_epoch INTEGER NOT NULL DEFAULT 0, lease_expires_at REAL)"
+            )
+            for statement in (
+                "ALTER TABLE synthetic_jobs ADD COLUMN lease_owner TEXT",
+                "ALTER TABLE synthetic_jobs ADD COLUMN lease_epoch INTEGER NOT NULL DEFAULT 0",
+                "ALTER TABLE synthetic_jobs ADD COLUMN lease_expires_at REAL",
+            ):
                 try:
                     self._db.execute(statement)
                 except sqlite3.OperationalError:
                     pass
             self._db.commit()
-            for job_id, run_id, plan_json in self._db.execute("SELECT job_id,run_id,plan_json FROM synthetic_jobs WHERE status='queued' OR (status='running' AND lease_expires_at IS NOT NULL AND lease_expires_at < ?)", (time.time(),)).fetchall():
+            for job_id, run_id, plan_json in self._db.execute(
+                "SELECT job_id,run_id,plan_json FROM synthetic_jobs WHERE status='queued' OR (status='running' AND lease_expires_at IS NOT NULL AND lease_expires_at < ?)",
+                (time.time(),),
+            ).fetchall():
                 self._jobs[job_id] = GenerationJob(job_id, run_id, "queued")
-                self._db.execute("UPDATE synthetic_jobs SET status='queued',lease_owner=NULL,lease_expires_at=NULL,error=NULL WHERE job_id=?", (job_id,))
-                self._futures[job_id] = self._executor.submit(self._execute, job_id, run_id, plan_from_payload(json.loads(plan_json)))
+                self._db.execute(
+                    "UPDATE synthetic_jobs SET status='queued',lease_owner=NULL,lease_expires_at=NULL,error=NULL WHERE job_id=?",
+                    (job_id,),
+                )
+                self._futures[job_id] = self._executor.submit(
+                    self._execute, job_id, run_id, plan_from_payload(json.loads(plan_json))
+                )
             self._db.commit()
 
     def submit(self, plan: GenerationPlan, *, idempotency_key: str) -> GenerationJob:
@@ -51,7 +67,16 @@ class LocalGenerationJobs:
         with self._lock:
             self._jobs[job.job_id] = job
             if self._db:
-                self._db.execute("INSERT INTO synthetic_jobs(job_id,run_id,plan_json,status,error) VALUES(?,?,?,?,?)", (job.job_id, job.run_id, json.dumps(_plan_payload(plan), sort_keys=True), job.status, None))
+                self._db.execute(
+                    "INSERT INTO synthetic_jobs(job_id,run_id,plan_json,status,error) VALUES(?,?,?,?,?)",
+                    (
+                        job.job_id,
+                        job.run_id,
+                        json.dumps(_plan_payload(plan), sort_keys=True),
+                        job.status,
+                        None,
+                    ),
+                )
                 self._db.commit()
             future = self._executor.submit(self._execute, job.job_id, run.run_id, plan)
             self._futures[job.job_id] = future
@@ -60,7 +85,10 @@ class LocalGenerationJobs:
     def _execute(self, job_id: str, run_id: str, plan: GenerationPlan) -> None:
         with self._lock:
             if self._db:
-                claimed = self._db.execute("UPDATE synthetic_jobs SET status='running',lease_owner=?,lease_epoch=lease_epoch+1,lease_expires_at=? WHERE job_id=? AND status='queued'", (self._owner, time.time() + 60, job_id)).rowcount
+                claimed = self._db.execute(
+                    "UPDATE synthetic_jobs SET status='running',lease_owner=?,lease_epoch=lease_epoch+1,lease_expires_at=? WHERE job_id=? AND status='queued'",
+                    (self._owner, time.time() + 60, job_id),
+                ).rowcount
                 self._db.commit()
                 if not claimed:
                     return
@@ -82,7 +110,10 @@ class LocalGenerationJobs:
         while not stop.wait(10):
             with self._lock:
                 if self._db:
-                    self._db.execute("UPDATE synthetic_jobs SET lease_expires_at=? WHERE job_id=? AND status='running' AND lease_owner=?", (time.time() + 60, job_id, self._owner))
+                    self._db.execute(
+                        "UPDATE synthetic_jobs SET lease_expires_at=? WHERE job_id=? AND status='running' AND lease_owner=?",
+                        (time.time() + 60, job_id, self._owner),
+                    )
                     self._db.commit()
 
     def _set(self, job_id: str, status: str, error: str | None = None) -> None:
@@ -90,13 +121,18 @@ class LocalGenerationJobs:
             current = self._jobs[job_id]
             self._jobs[job_id] = GenerationJob(current.job_id, current.run_id, status, error)
             if self._db:
-                self._db.execute("UPDATE synthetic_jobs SET status=?,error=?,lease_owner=NULL,lease_expires_at=NULL WHERE job_id=?", (status, error, job_id))
+                self._db.execute(
+                    "UPDATE synthetic_jobs SET status=?,error=?,lease_owner=NULL,lease_expires_at=NULL WHERE job_id=?",
+                    (status, error, job_id),
+                )
                 self._db.commit()
 
     def get(self, job_id: str) -> GenerationJob:
         with self._lock:
             if job_id not in self._jobs and self._db:
-                row = self._db.execute("SELECT run_id,status,error FROM synthetic_jobs WHERE job_id=?", (job_id,)).fetchone()
+                row = self._db.execute(
+                    "SELECT run_id,status,error FROM synthetic_jobs WHERE job_id=?", (job_id,)
+                ).fetchone()
                 if row:
                     self._jobs[job_id] = GenerationJob(job_id, row[0], row[1], row[2])
             try:
@@ -113,7 +149,9 @@ class LocalGenerationJobs:
                     future.cancel()
                 self._jobs[job_id] = GenerationJob(job.job_id, job.run_id, "cancelled")
                 if self._db:
-                    self._db.execute("UPDATE synthetic_jobs SET status='cancelled' WHERE job_id=?", (job_id,))
+                    self._db.execute(
+                        "UPDATE synthetic_jobs SET status='cancelled' WHERE job_id=?", (job_id,)
+                    )
                     self._db.commit()
             return self._jobs[job_id]
 

@@ -24,10 +24,29 @@ Algorithm: TypeAlias = Literal[
     "decision_tree_regressor",
     "random_forest_classifier",
     "random_forest_regressor",
+    "gradient_boosting_classifier",
+    "gradient_boosting_regressor",
 ]
 ClassificationLabel: TypeAlias = bool | int | float | str
 
 _ARTIFACT_SCHEMA = "ronin.sklearn.tabular/v2"
+
+ALGORITHM_CAPABILITIES: dict[str, frozenset[str]] = {
+    "logistic_regression": frozenset({"classification"}),
+    "linear_regression": frozenset({"regression"}),
+    "decision_tree_classifier": frozenset({"classification"}),
+    "decision_tree_regressor": frozenset({"regression"}),
+    "random_forest_classifier": frozenset({"classification"}),
+    "random_forest_regressor": frozenset({"regression"}),
+    "gradient_boosting_classifier": frozenset({"classification"}),
+    "gradient_boosting_regressor": frozenset({"regression"}),
+}
+
+
+def algorithm_capabilities() -> dict[str, frozenset[str]]:
+    """Return the immutable task matrix exposed by the local ML provider."""
+
+    return dict(ALGORITHM_CAPABILITIES)
 
 
 class MLDependencyError(RuntimeError):
@@ -121,17 +140,10 @@ class TrainingSpec:
     def __post_init__(self) -> None:
         if self.task not in {"classification", "regression"}:
             raise ValueError("unsupported ML task")
-        allowed = {
-            "classification": {
-                "logistic_regression", "decision_tree_classifier", "random_forest_classifier",
-                "gradient_boosting_classifier",
-            },
-            "regression": {
-                "linear_regression", "decision_tree_regressor", "random_forest_regressor",
-                "gradient_boosting_regressor", "gradient_boosting_classifier",
-            },
-        }
-        if self.algorithm not in allowed[self.task]:
+        if (
+            self.algorithm not in ALGORITHM_CAPABILITIES
+            or self.task not in ALGORITHM_CAPABILITIES[self.algorithm]
+        ):
             raise ValueError("algorithm is incompatible with ML task")
         features = tuple(_text(item, "ML feature") for item in self.features)
         if not features:
@@ -238,25 +250,25 @@ def _validate_split_feasibility(targets: Sequence[object], spec: TrainingSpec) -
         )
 
 
-def _model_parameters(model: object, spec: TrainingSpec) -> dict[str, object]:
+def _model_parameters(model: Any, spec: TrainingSpec) -> dict[str, object]:
     if spec.algorithm in {"random_forest_classifier", "random_forest_regressor"}:
         estimators = getattr(model, "estimators_", None)
         if not estimators:
             raise ValueError("trained random forest is missing estimators")
         trees = [
-                _model_parameters(
-                    tree,
-                    replace(
-                        spec,
-                        algorithm=(
-                            "decision_tree_classifier"
-                            if spec.task == "classification"
-                            else "decision_tree_regressor"
-                        ),
+            _model_parameters(
+                tree,
+                replace(
+                    spec,
+                    algorithm=(
+                        "decision_tree_classifier"
+                        if spec.task == "classification"
+                        else "decision_tree_regressor"
                     ),
-                )
-                for tree in estimators
-            ]
+                ),
+            )
+            for tree in estimators
+        ]
         if spec.task == "classification":
             classes = [_classification_label(value) for value in model.classes_.tolist()]
             for tree in trees:
@@ -285,10 +297,10 @@ def _model_parameters(model: object, spec: TrainingSpec) -> dict[str, object]:
     if spec.algorithm == "gradient_boosting_classifier":
         estimators = getattr(model, "estimators_", None)
         init = getattr(model, "init_", None)
-        classes = getattr(model, "classes_", [])
-        if estimators is None or init is None or len(classes) < 2:
+        class_values: Any = getattr(model, "classes_", [])
+        if estimators is None or init is None or len(class_values) < 2:
             raise ValueError("gradient boosting classifier has invalid fitted state")
-        trees = [
+        boosting_trees = [
             [
                 _model_parameters(
                     tree,
@@ -299,36 +311,40 @@ def _model_parameters(model: object, spec: TrainingSpec) -> dict[str, object]:
             for stage in estimators
         ]
         import numpy as np
+
         zero = np.zeros((1, len(spec.features)))
         initial = (
             model.decision_function(zero)[0].tolist()
-            if len(classes) > 2
+            if len(class_values) > 2
             else [float(model.decision_function(zero)[0])]
         )
         return {
-            "trees": trees,
+            "trees": boosting_trees,
             "learning_rate": _finite_float(model.learning_rate, "learning rate"),
             "initial": initial,
-            "classes": [_classification_label(value) for value in classes.tolist()],
+            "classes": [_classification_label(value) for value in class_values.tolist()],
             "hyperparameters": dict(spec.parameters),
         }
     if spec.algorithm in {"decision_tree_classifier", "decision_tree_regressor"}:
-        tree = getattr(model, "tree_", None)
-        if tree is None:
+        tree_model: Any = getattr(model, "tree_", None)
+        if tree_model is None:
             raise ValueError("trained decision tree is missing tree parameters")
         return {
-            "children_left": [int(value) for value in tree.children_left.tolist()],
-            "children_right": [int(value) for value in tree.children_right.tolist()],
-            "features": [int(value) for value in tree.feature.tolist()],
+            "children_left": [int(value) for value in tree_model.children_left.tolist()],
+            "children_right": [int(value) for value in tree_model.children_right.tolist()],
+            "features": [int(value) for value in tree_model.feature.tolist()],
             "thresholds": [
-                _finite_float(value, "tree threshold") for value in tree.threshold.tolist()
+                _finite_float(value, "tree threshold") for value in tree_model.threshold.tolist()
             ],
             "values": [
                 [_finite_float(value, "tree value") for value in row.flatten().tolist()]
-                for row in tree.value
+                for row in tree_model.value
             ],
             "classes": (
-                [_classification_label(value) for value in getattr(model, "classes_", []).tolist()]
+                [
+                    _classification_label(value)
+                    for value in cast(Any, getattr(model, "classes_", [])).tolist()
+                ]
                 if spec.task == "classification"
                 else []
             ),
@@ -620,72 +636,101 @@ def predict_tabular(
         raise ValueError("ML artifact feature signature does not match registered model")
     matrix = _prediction_matrix(rows, features)
     parameters = cast(Mapping[str, object], payload["parameters"])
+
+    def numeric(value: object, name: str) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"ML artifact {name} must be numeric")
+        return float(value)
+
     if payload["algorithm"] == "linear_regression":
         return _linear_predictions(parameters, matrix, len(features))
     if payload["algorithm"] == "gradient_boosting_classifier":
         initial = parameters["initial"]
         class_count = len(cast(list[object], parameters["classes"]))
-        totals = [[float(initial)] * len(rows) for initial in cast(list[float], initial)]
+        totals = [
+            [numeric(value, "initial") for _ in rows] for value in cast(list[object], initial)
+        ]
         for stage in cast(list[list[dict[str, object]]], parameters["trees"]):
             for class_index, tree in enumerate(stage):
-                tree_artifact = encode_canonical_json({
-                    "schema": _ARTIFACT_SCHEMA, "task": "regression",
-                    "algorithm": "decision_tree_regressor", "features": payload["features"],
-                    "target": payload["target"], "parameters": tree,
-                })
-                values = predict_tabular(
+                tree_artifact = encode_canonical_json(
+                    {
+                        "schema": _ARTIFACT_SCHEMA,
+                        "task": "regression",
+                        "algorithm": "decision_tree_regressor",
+                        "features": payload["features"],
+                        "target": payload["target"],
+                        "parameters": tree,
+                    }
+                )
+                predicted_values = predict_tabular(
                     tree_artifact, rows, expected_features=features, max_rows=max_rows
                 )
-                for index, value in enumerate(values):
-                    totals[class_index][index] += float(parameters["learning_rate"]) * float(value)
+                for index, value in enumerate(predicted_values):
+                    totals[class_index][index] += numeric(
+                        parameters["learning_rate"], "learning_rate"
+                    ) * numeric(value, "tree prediction")
         classes = cast(list[ClassificationLabel], parameters["classes"])
         if class_count == 2:
             import math
+
             return tuple(
                 classes[1] if 1.0 / (1.0 + math.exp(-totals[0][i])) >= 0.5 else classes[0]
                 for i in range(len(rows))
             )
         return tuple(
-            classes[max(range(class_count), key=lambda c: totals[c][i])]
-            for i in range(len(rows))
+            classes[max(range(class_count), key=lambda c: totals[c][i])] for i in range(len(rows))
         )
     if payload["algorithm"] == "gradient_boosting_regressor":
-        base = float(parameters["initial"])
-        learning_rate = float(parameters["learning_rate"])
+        base = numeric(parameters["initial"], "initial")
+        learning_rate = numeric(parameters["learning_rate"], "learning_rate")
         total = [base] * len(rows)
         for tree in cast(list[dict[str, object]], parameters["trees"]):
-            tree_artifact = encode_canonical_json({
-                "schema": _ARTIFACT_SCHEMA, "task": "regression",
-                "algorithm": "decision_tree_regressor", "features": payload["features"],
-                "target": payload["target"], "parameters": tree,
-            })
-            values = predict_tabular(
+            tree_artifact = encode_canonical_json(
+                {
+                    "schema": _ARTIFACT_SCHEMA,
+                    "task": "regression",
+                    "algorithm": "decision_tree_regressor",
+                    "features": payload["features"],
+                    "target": payload["target"],
+                    "parameters": tree,
+                }
+            )
+            predicted_values = predict_tabular(
                 tree_artifact, rows, expected_features=features, max_rows=max_rows
             )
-            for index, value in enumerate(values):
-                total[index] += learning_rate * float(value)
+            for index, value in enumerate(predicted_values):
+                total[index] += learning_rate * numeric(value, "tree prediction")
         return tuple(total)
     if payload["algorithm"] in {"random_forest_classifier", "random_forest_regressor"}:
         tree_predictions = [
             predict_tabular(
-                encode_canonical_json({
-                    "schema": _ARTIFACT_SCHEMA,
-                    "task": payload["task"],
-                    "algorithm": (
-                        "decision_tree_classifier"
-                        if payload["task"] == "classification"
-                        else "decision_tree_regressor"
-                    ),
-                    "features": payload["features"],
-                    "target": payload["target"],
-                    "parameters": tree,
-                }), rows, expected_features=features, max_rows=max_rows,
+                encode_canonical_json(
+                    {
+                        "schema": _ARTIFACT_SCHEMA,
+                        "task": payload["task"],
+                        "algorithm": (
+                            "decision_tree_classifier"
+                            if payload["task"] == "classification"
+                            else "decision_tree_regressor"
+                        ),
+                        "features": payload["features"],
+                        "target": payload["target"],
+                        "parameters": tree,
+                    }
+                ),
+                rows,
+                expected_features=features,
+                max_rows=max_rows,
             )
             for tree in cast(list[dict[str, object]], parameters["trees"])
         ]
         if payload["task"] == "regression":
             return tuple(
-                sum(float(values[index]) for values in tree_predictions) / len(tree_predictions)
+                sum(
+                    numeric(tree_values[index], "tree prediction")
+                    for tree_values in tree_predictions
+                )
+                / len(tree_predictions)
                 for index in range(len(rows))
             )
         return tuple(
@@ -702,18 +747,16 @@ def predict_tabular(
         right = cast(list[int], parameters["children_right"])
         node_features = cast(list[int], parameters["features"])
         thresholds = cast(list[float], parameters["thresholds"])
-        values = cast(list[list[float]], parameters["values"])
+        node_values = cast(list[list[float]], parameters["values"])
         classes = cast(list[ClassificationLabel], parameters["classes"])
         results: list[object] = []
         for vector in matrix:
             node = 0
             while left[node] != -1:
                 node = (
-                    left[node]
-                    if vector[node_features[node]] <= thresholds[node]
-                    else right[node]
+                    left[node] if vector[node_features[node]] <= thresholds[node] else right[node]
                 )
-            leaf = values[node]
+            leaf = node_values[node]
             results.append(
                 leaf[0]
                 if payload["task"] == "regression"
@@ -730,5 +773,7 @@ __all__ = (
     "TrainedTabularModel",
     "TrainingSpec",
     "predict_tabular",
+    "ALGORITHM_CAPABILITIES",
+    "algorithm_capabilities",
     "train_tabular",
 )

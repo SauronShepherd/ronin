@@ -15,9 +15,7 @@ def test_sdp_import_persists_content_addressed_revision(tmp_path: Path) -> None:
     source = SdpProjectSource(
         "retail", b"name: retail\n", (("pipelines/main.yaml", b"nodes: []\n"),)
     )
-    record = service.import_sdp(
-        project_id="project-1", pipeline_id="main", source=source
-    )
+    record = service.import_sdp(project_id="project-1", pipeline_id="main", source=source)
     assert record.revision == 1
     assert record.source_digest == source.source_digest
     assert record.project_artifact.digest

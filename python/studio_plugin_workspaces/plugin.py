@@ -7,7 +7,14 @@ import json
 from datetime import UTC, datetime
 from typing import Any, cast
 
-from studio_core import ProjectId, ProjectManifest, WorkspaceId
+from studio_core import (
+    EnvironmentDefinition,
+    EnvironmentId,
+    ProjectId,
+    ProjectManifest,
+    Workspace,
+    WorkspaceId,
+)
 from studio_core.plugin_events import new_event
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
@@ -38,6 +45,15 @@ class WorkspacesPlugin:
         ),
         surface_ids=(
             "workspaces.list.v1",
+            "workspaces.get.v1",
+            "workspaces.create.v1",
+            "workspaces.update.v1",
+            "workspaces.archive.v1",
+            "environments.list.v1",
+            "environments.get.v1",
+            "environments.create.v1",
+            "environments.replace.v1",
+            "environments.disable.v1",
             "projects.list.v1",
             "projects.create.v1",
             "projects.get.v1",
@@ -49,6 +65,7 @@ class WorkspacesPlugin:
         self.context: PluginContext | None = None
         self._application: WorkspaceApplication | None = None
         self._projects: ProjectApplication | None = None
+        self._environment_service: object | None = None
         self._event_dispatcher: object | None = None
 
     def register(self, context: PluginContext) -> None:
@@ -61,6 +78,7 @@ class WorkspacesPlugin:
             if context.services.get("project_service") is not None
             else None
         )
+        self._environment_service = context.services.get("environment_service")
         self._event_dispatcher = context.services.get("event_dispatcher")
         context.contributions.add_ui(
             context.plugin_id,
@@ -89,33 +107,229 @@ class WorkspacesPlugin:
             self.list_workspaces,
             permission="workspaces:read",
         )
+        context.contributions.add_route(
+            "GET",
+            "/v1/workspaces/{workspace_id}",
+            context.plugin_id,
+            self.get_workspace,
+            permission="workspaces:read",
+        )
+        context.contributions.add_route(
+            "POST",
+            "/v1/workspaces",
+            context.plugin_id,
+            self.create_workspace,
+            permission="workspaces:write",
+        )
+        context.contributions.add_route(
+            "PUT",
+            "/v1/workspaces/{workspace_id}",
+            context.plugin_id,
+            self.update_workspace,
+            permission="workspaces:write",
+        )
+        context.contributions.add_route(
+            "POST",
+            "/v1/workspaces/{workspace_id}/archive",
+            context.plugin_id,
+            self.archive_workspace,
+            permission="workspaces:write",
+        )
+        for method, path, handler, permission in (
+            (
+                "GET",
+                "/v1/workspaces/{workspace_id}/environments",
+                self.list_environments,
+                "workspaces:read",
+            ),
+            (
+                "POST",
+                "/v1/workspaces/{workspace_id}/environments",
+                self.create_environment,
+                "workspaces:write",
+            ),
+            (
+                "GET",
+                "/v1/workspaces/{workspace_id}/environments/{environment_id}",
+                self.get_environment,
+                "workspaces:read",
+            ),
+            (
+                "PUT",
+                "/v1/workspaces/{workspace_id}/environments/{environment_id}",
+                self.replace_environment,
+                "workspaces:write",
+            ),
+            (
+                "POST",
+                "/v1/workspaces/{workspace_id}/environments/{environment_id}/disable",
+                self.disable_environment,
+                "workspaces:write",
+            ),
+        ):
+            context.contributions.add_route(
+                method, path, context.plugin_id, handler, permission=permission
+            )
         for contribution in (
             SurfaceContribution(
-                id="workspaces.list.v1", plugin_id=context.plugin_id,
-                namespace="workspaces", command="list",
-                operation_id="workspaces.list.v1", capability="workspaces.read",
-                permission="workspaces:read", path="/v1/workspaces", method="GET",
+                id="workspaces.list.v1",
+                plugin_id=context.plugin_id,
+                namespace="workspaces",
+                command="list",
+                operation_id="workspaces.list.v1",
+                capability="workspaces.read",
+                permission="workspaces:read",
+                path="/v1/workspaces",
+                method="GET",
                 output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="projects.list.v1", plugin_id=context.plugin_id,
-                namespace="projects", command="list",
-                operation_id="projects.list.v1", capability="workspaces.read",
-                permission="workspaces:read", path="/v1/workspaces/{workspace_id}/projects", method="GET",
+                id="workspaces.get.v1",
+                plugin_id=context.plugin_id,
+                namespace="workspaces",
+                command="get",
+                operation_id="workspaces.get.v1",
+                capability="workspaces.read",
+                permission="workspaces:read",
+                path="/v1/workspaces/{workspace_id}",
+                method="GET",
                 output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="projects.create.v1", plugin_id=context.plugin_id,
-                namespace="projects", command="create",
-                operation_id="projects.create.v1", capability="workspaces.write",
-                permission="projects:write", path="/v1/workspaces/{workspace_id}/projects", method="POST",
-                input_schema={"type": "object"}, output_schema={"type": "object"},
+                id="workspaces.create.v1",
+                plugin_id=context.plugin_id,
+                namespace="workspaces",
+                command="create",
+                operation_id="workspaces.create.v1",
+                capability="workspaces.write",
+                permission="workspaces:write",
+                path="/v1/workspaces",
+                method="POST",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="projects.get.v1", plugin_id=context.plugin_id,
-                namespace="projects", command="get",
-                operation_id="projects.get.v1", capability="workspaces.read",
-                permission="projects:read", path="/v1/workspaces/{workspace_id}/projects/{project_id}", method="GET",
+                id="workspaces.update.v1",
+                plugin_id=context.plugin_id,
+                namespace="workspaces",
+                command="update",
+                operation_id="workspaces.update.v1",
+                capability="workspaces.write",
+                permission="workspaces:write",
+                path="/v1/workspaces/{workspace_id}",
+                method="PUT",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="workspaces.archive.v1",
+                plugin_id=context.plugin_id,
+                namespace="workspaces",
+                command="archive",
+                operation_id="workspaces.archive.v1",
+                capability="workspaces.write",
+                permission="workspaces:write",
+                path="/v1/workspaces/{workspace_id}/archive",
+                method="POST",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="environments.list.v1",
+                plugin_id=context.plugin_id,
+                namespace="environments",
+                command="list",
+                operation_id="environments.list.v1",
+                capability="workspaces.read",
+                permission="workspaces:read",
+                path="/v1/workspaces/{workspace_id}/environments",
+                method="GET",
+                output_schema={"type": "array"},
+            ),
+            SurfaceContribution(
+                id="environments.get.v1",
+                plugin_id=context.plugin_id,
+                namespace="environments",
+                command="get",
+                operation_id="environments.get.v1",
+                capability="workspaces.read",
+                permission="workspaces:read",
+                path="/v1/workspaces/{workspace_id}/environments/{environment_id}",
+                method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="environments.create.v1",
+                plugin_id=context.plugin_id,
+                namespace="environments",
+                command="create",
+                operation_id="environments.create.v1",
+                capability="workspaces.write",
+                permission="workspaces:write",
+                path="/v1/workspaces/{workspace_id}/environments",
+                method="POST",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="environments.replace.v1",
+                plugin_id=context.plugin_id,
+                namespace="environments",
+                command="replace",
+                operation_id="environments.replace.v1",
+                capability="workspaces.write",
+                permission="workspaces:write",
+                path="/v1/workspaces/{workspace_id}/environments/{environment_id}",
+                method="PUT",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="environments.disable.v1",
+                plugin_id=context.plugin_id,
+                namespace="environments",
+                command="disable",
+                operation_id="environments.disable.v1",
+                capability="workspaces.write",
+                permission="workspaces:write",
+                path="/v1/workspaces/{workspace_id}/environments/{environment_id}/disable",
+                method="POST",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="projects.list.v1",
+                plugin_id=context.plugin_id,
+                namespace="projects",
+                command="list",
+                operation_id="projects.list.v1",
+                capability="workspaces.read",
+                permission="workspaces:read",
+                path="/v1/workspaces/{workspace_id}/projects",
+                method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="projects.create.v1",
+                plugin_id=context.plugin_id,
+                namespace="projects",
+                command="create",
+                operation_id="projects.create.v1",
+                capability="workspaces.write",
+                permission="projects:write",
+                path="/v1/workspaces/{workspace_id}/projects",
+                method="POST",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="projects.get.v1",
+                plugin_id=context.plugin_id,
+                namespace="projects",
+                command="get",
+                operation_id="projects.get.v1",
+                capability="workspaces.read",
+                permission="projects:read",
+                path="/v1/workspaces/{workspace_id}/projects/{project_id}",
+                method="GET",
                 output_schema={"type": "object"},
             ),
         ):
@@ -169,6 +383,156 @@ class WorkspacesPlugin:
         if application is None:
             return []
         return application.list_payloads()
+
+    def get_workspace(self, workspace_id: str, **_kwargs: Any) -> dict[str, object]:
+        if not self.started or self._application is None:
+            raise RuntimeError("workspace service is unavailable")
+        workspace = self._application.get(WorkspaceId(workspace_id))
+        return {
+            "id": str(workspace.id),
+            "name": workspace.name,
+            "description": workspace.description,
+            "state": workspace.state,
+        }
+
+    def create_workspace(
+        self,
+        *,
+        body: object | None = None,
+        idempotency_key: str | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        if not self.started or self._application is None:
+            raise RuntimeError("workspace service is unavailable")
+        if not idempotency_key or not idempotency_key.strip():
+            raise ValueError("Idempotency-Key is required")
+        if not isinstance(body, dict):
+            raise ValueError("workspace body must be an object")
+        raw_id, raw_name = body.get("id"), body.get("name")
+        if not isinstance(raw_id, str) or not isinstance(raw_name, str):
+            raise ValueError("workspace body requires string id and name")
+        description = body.get("description")
+        if description is not None and not isinstance(description, str):
+            raise ValueError("workspace description must be a string or null")
+        workspace = self._application.create(
+            Workspace(WorkspaceId(raw_id), raw_name, description), now="plugin"
+        )
+        return {
+            "id": str(workspace.id),
+            "name": workspace.name,
+            "description": workspace.description,
+            "state": workspace.state,
+        }
+
+    def update_workspace(
+        self,
+        workspace_id: str,
+        *,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        if not self.started or self._application is None:
+            raise RuntimeError("workspace service is unavailable")
+        if not isinstance(body, dict):
+            raise ValueError("workspace body must be an object")
+        name, description = body.get("name"), body.get("description")
+        if not isinstance(name, str) or (
+            description is not None and not isinstance(description, str)
+        ):
+            raise ValueError("workspace body requires string name and description")
+        workspace = self._application.update(
+            WorkspaceId(workspace_id), name=name, description=description, now="plugin"
+        )
+        return {
+            "id": str(workspace.id),
+            "name": workspace.name,
+            "description": workspace.description,
+            "state": workspace.state,
+        }
+
+    def archive_workspace(self, workspace_id: str, **_kwargs: Any) -> dict[str, object]:
+        if not self.started or self._application is None:
+            raise RuntimeError("workspace service is unavailable")
+        workspace = self._application.archive(WorkspaceId(workspace_id), now="plugin")
+        return {
+            "id": str(workspace.id),
+            "name": workspace.name,
+            "description": workspace.description,
+            "state": workspace.state,
+        }
+
+    def _environment_service_or_raise(self) -> Any:
+        if self._environment_service is None:
+            raise RuntimeError("environment service is unavailable")
+        return self._environment_service
+
+    @staticmethod
+    def _environment_payload(item: EnvironmentDefinition) -> dict[str, object]:
+        return item.to_payload()
+
+    def list_environments(self, workspace_id: str, **_kwargs: Any) -> list[dict[str, object]]:
+        if not self.started:
+            raise RuntimeError("workspaces plugin is not ready")
+        return [
+            self._environment_payload(item)
+            for item in self._environment_service_or_raise().list(WorkspaceId(workspace_id))
+        ]
+
+    def get_environment(
+        self, workspace_id: str, environment_id: str, **_kwargs: Any
+    ) -> dict[str, object]:
+        if not self.started:
+            raise RuntimeError("workspaces plugin is not ready")
+        item = self._environment_service_or_raise().get(
+            WorkspaceId(workspace_id), EnvironmentId(environment_id)
+        )
+        return self._environment_payload(item)
+
+    @staticmethod
+    def _parse_environment(
+        body: object, environment_id: str | None = None
+    ) -> EnvironmentDefinition:
+        if not isinstance(body, dict):
+            raise ValueError("environment body must be an object")
+        item = EnvironmentDefinition.from_payload(body)
+        if environment_id is not None and str(item.id) != environment_id:
+            raise ValueError("environment body id does not match path")
+        return item
+
+    def create_environment(
+        self, workspace_id: str, *, body: object | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
+        if not self.started:
+            raise RuntimeError("workspaces plugin is not ready")
+        item = self._environment_service_or_raise().create(
+            WorkspaceId(workspace_id), self._parse_environment(body), now="plugin"
+        )
+        return self._environment_payload(item)
+
+    def replace_environment(
+        self,
+        workspace_id: str,
+        environment_id: str,
+        *,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        if not self.started:
+            raise RuntimeError("workspaces plugin is not ready")
+        item = self._environment_service_or_raise().replace(
+            WorkspaceId(workspace_id), self._parse_environment(body, environment_id), now="plugin"
+        )
+        return self._environment_payload(item)
+
+    def disable_environment(
+        self, workspace_id: str, environment_id: str, **_kwargs: Any
+    ) -> dict[str, object]:
+        if not self.started:
+            raise RuntimeError("workspaces plugin is not ready")
+        item = self._environment_service_or_raise().disable(
+            WorkspaceId(workspace_id), EnvironmentId(environment_id), now="plugin"
+        )
+        return self._environment_payload(item)
 
     def list_projects(
         self, workspace_id: str, *, query: str | None = None, **_kwargs: Any

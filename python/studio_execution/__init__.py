@@ -25,13 +25,6 @@ from studio_orchestrator import (
 )
 from studio_storage import BoundedAsyncJobStore
 
-from .environment_service import (
-    DeploymentBindingService,
-    EnvironmentService,
-    EnvironmentServiceConflict,
-    EnvironmentServiceError,
-    EnvironmentServiceNotFound,
-)
 from .backend import (
     BackendCapabilities,
     ExecutionBackend,
@@ -44,7 +37,24 @@ from .backend import (
     WorkloadState,
     WorkloadStatus,
 )
-from .kubernetes import KubernetesManifestError, render_job
+from .branch_state import (
+    BranchDecisionStore,
+    BranchStateConflict,
+    PersistedBranchDecision,
+    SqliteBranchDecisionStore,
+)
+from .environment_service import (
+    DeploymentBindingService,
+    EnvironmentDiff,
+    EnvironmentService,
+    EnvironmentServiceConflict,
+    EnvironmentServiceError,
+    EnvironmentServiceNotFound,
+    diff_environments,
+)
+from .git_source import GitCheckoutResult, GitSourceAdapter, GitSourceError
+from .kubernetes import KubernetesExecutionAdapter, KubernetesManifestError, render_job
+from .ontology_http import GraphStore, OntologyHTTPAdapter, OntologyStore
 from .scheduler_http import SqliteWorkflowHTTPAdapter, WorkflowStore
 from .workspace_service import (
     ProjectService,
@@ -149,6 +159,13 @@ class DurableExecutionService:
         if run_id is None:
             return None
         return await self._store.read_evidence(run_id)
+
+    async def cell_results(self, job_id: JobId) -> tuple[StoredCellResult, ...] | None:
+        """Read durable per-cell checkpoints for the latest Run of a Job."""
+        run_id = await self._store.get_run_id_for_job(job_id)
+        if run_id is None:
+            return None
+        return await self._store.read_cell_results(run_id)
 
     async def cancel(self, job_id: JobId, *, now: Instant) -> Job:
         """Request cancellation through the same bounded store boundary."""
@@ -296,6 +313,7 @@ __all__ = (
     "WorkloadState",
     "WorkloadStatus",
     "KubernetesManifestError",
+    "KubernetesExecutionAdapter",
     "render_job",
     "DurableExecutionService",
     "ProjectService",
@@ -306,10 +324,22 @@ __all__ = (
     "WorkspaceServiceError",
     "WorkspaceServiceNotFound",
     "WorkflowStore",
+    "GraphStore",
+    "OntologyHTTPAdapter",
+    "OntologyStore",
     "DeploymentBindingService",
+    "BranchDecisionStore",
+    "BranchStateConflict",
+    "PersistedBranchDecision",
+    "SqliteBranchDecisionStore",
+    "EnvironmentDiff",
     "EnvironmentService",
     "EnvironmentServiceConflict",
     "EnvironmentServiceError",
     "EnvironmentServiceNotFound",
+    "GitCheckoutResult",
+    "GitSourceAdapter",
+    "GitSourceError",
+    "diff_environments",
     "WorkerPollResult",
 )

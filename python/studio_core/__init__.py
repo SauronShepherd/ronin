@@ -42,6 +42,7 @@ from .environments import (
     ProjectEnvironmentBindings,
 )
 from .execution_snapshots import ResolvedRuntimeSnapshot, snapshot_runtime_resolution
+from .glossary import GlossaryTerm, GlossaryTermId
 from .grants import (
     ACTIONS,
     GRANT_SCHEMA_VERSION,
@@ -61,6 +62,9 @@ from .grants import (
     parse_legacy_permission,
     requirement_to_bearer_scope,
 )
+from .roles import RoleDefinition, RoleName, role_definition, role_names
+from .role_assignments import Principal, PrincipalKind, RoleAssignment
+from .graph_executor import GraphQueryExecutor, LocalGraphQueryExecutor
 from .ids import InstanceAnchor, NodeId, allocate_instance_keys
 from .ir import (
     Edge,
@@ -93,6 +97,14 @@ from .ontology import (
     resolve_link_type,
 )
 from .openlineage import lineage_event_payload
+from .openlineage_transport import (
+    OPENLINEAGE_API_VERSION,
+    OpenLineageSink,
+    OpenLineageTransport,
+    OpenLineageTransportError,
+    PublishReceipt,
+    validate_openlineage_event,
+)
 from .operators import (
     OperatorCatalog,
     OperatorContract,
@@ -104,6 +116,7 @@ from .operators import (
     validate_operator_node,
     validate_operator_pipeline,
 )
+from .ownership import OwnershipMetadata
 from .plugins import (
     CompositionPlan,
     ContributionRegistry,
@@ -142,7 +155,8 @@ from .quality import (
     QualityStatus,
     SchemaCompatibility,
 )
-from .rql import RqlResult, execute_rql
+from .reproducible_manifest import REPRODUCIBLE_MANIFEST_SCHEMA, ReproducibleManifest
+from .rql import RqlQuery, RqlResult, execute_rql, parse_rql
 from .runtime_profiles import (
     ProfileEvaluation,
     RequirementCheck,
@@ -169,11 +183,15 @@ from .scheduler import (
     WorkflowRunState,
 )
 from .scheduler_resources import ResourcePoolDefinition
+from .sensitivity import SensitivityMetadata
+from .source_control import SourceRepository, safe_checkout_path
 from .workspaces import Workspace, WorkspaceId, WorkspaceState
 
 __all__ = (
     "ACTIONS",
     "ASSET_KINDS",
+    "SensitivityMetadata",
+    "OwnershipMetadata",
     "GRANT_SCHEMA_VERSION",
     "MAX_CONSTRAINTS",
     "MAX_GRANTS",
@@ -219,6 +237,16 @@ __all__ = (
     "FrozenMap",
     "Grant",
     "GrantSet",
+    "GlossaryTerm",
+    "GlossaryTermId",
+    "OpenLineageSink",
+    "OPENLINEAGE_API_VERSION",
+    "OpenLineageTransport",
+    "OpenLineageTransportError",
+    "PublishReceipt",
+    "validate_openlineage_event",
+    "GraphQueryExecutor",
+    "LocalGraphQueryExecutor",
     "InstanceAnchor",
     "KnowledgeGraph",
     "KnowledgeObject",
@@ -228,6 +256,8 @@ __all__ = (
     "LineageOperation",
     "lineage_event_payload",
     "RqlResult",
+    "RqlQuery",
+    "parse_rql",
     "execute_rql",
     "execute_ontology_action",
     "LinkCardinality",
@@ -255,6 +285,8 @@ __all__ = (
     "ProjectEnvironmentBindings",
     "ProjectId",
     "ProjectManifest",
+    "REPRODUCIBLE_MANIFEST_SCHEMA",
+    "ReproducibleManifest",
     "PluginCompatibilityError",
     "PluginContext",
     "PluginDependency",
@@ -288,6 +320,8 @@ __all__ = (
     "RuntimeProfile",
     "RuntimeProfileRef",
     "RuntimeResolution",
+    "SourceRepository",
+    "safe_checkout_path",
     "Schedule",
     "ScheduleId",
     "SchemaCompatibility",
@@ -317,6 +351,13 @@ __all__ = (
     "parse_bearer_scope",
     "parse_legacy_permission",
     "requirement_to_bearer_scope",
+    "RoleDefinition",
+    "RoleName",
+    "role_definition",
+    "role_names",
+    "Principal",
+    "PrincipalKind",
+    "RoleAssignment",
     "resolve_runtime",
     "resolve_link_type",
     "materialize_object_type",

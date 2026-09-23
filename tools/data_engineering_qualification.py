@@ -14,13 +14,16 @@ def qualify() -> dict[str, object]:
     docker_path = shutil.which("docker")
     if docker_path is not None:
         try:
-            docker = subprocess.run(  # noqa: S603 - fixed diagnostic command
-                [docker_path, "info"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                timeout=5,
-                check=False,
-            ).returncode == 0
+            docker = (
+                subprocess.run(  # noqa: S603 - fixed diagnostic command
+                    [docker_path, "info"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=5,
+                    check=False,
+                ).returncode
+                == 0
+            )
         except (OSError, subprocess.TimeoutExpired):
             docker = False
     return {

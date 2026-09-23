@@ -7,12 +7,12 @@ import json
 from dataclasses import dataclass, replace
 from typing import Literal, cast
 
-from .blueprint import BlueprintContract, BlueprintRule
-from .model import MigrationUnit, ScopeSelection, SourceArtifact, SourceInventory
+from .blueprint import BlueprintContract, BlueprintRule, RuleClass
+from .model import MigrationUnit, ObjectState, ScopeSelection, SourceArtifact, SourceInventory
 from .pyspark_codegen import GeneratedProject, generate_project
 from .qualification import GeneratedQualification, qualify_generated_project
 from .scope import select_scope
-from .validation import ValidationReport, validate_results
+from .validation import CheckMode, ReportLevel, ValidationReport, validate_results
 
 SessionState = Literal[
     "draft",
@@ -131,7 +131,7 @@ class MigrationSession:
                     SourceArtifact(
                         str(item["name"]),
                         str(item["digest"]),
-                        int(item["size_bytes"]),
+                        cast(int, item["size_bytes"]),
                         str(item.get("media_type", "application/octet-stream")),
                     )
                     for item in cast(list[dict[str, object]], inventory_payload["artifacts"])
@@ -141,7 +141,7 @@ class MigrationSession:
                         str(item["key"]),
                         str(item["kind"]),
                         str(item["name"]),
-                        cast(str, item["state"]),
+                        cast(ObjectState, item["state"]),
                         tuple(cast(list[str], item.get("dependencies", []))),
                         tuple(cast(list[str], item.get("source_refs", []))),
                         tuple(cast(list[str], item.get("notes", []))),
@@ -157,8 +157,9 @@ class MigrationSession:
                 tuple(cast(list[str], selection_payload["selected"])),
                 tuple(cast(list[str], selection_payload.get("auto_included", []))),
                 tuple(
-                    tuple(item)
+                    (str(item[0]), str(item[1]))
                     for item in cast(list[list[str]], selection_payload.get("reasons", []))
+                    if len(item) == 2
                 ),
             )
         )
@@ -171,7 +172,7 @@ class MigrationSession:
                 tuple(
                     BlueprintRule(
                         str(item["rule_id"]),
-                        cast(str, item["classification"]),
+                        cast(RuleClass, item["classification"]),
                         str(item["evidence"]),
                         str(item["effect"]),
                     )
@@ -232,7 +233,7 @@ class MigrationSessionService:
                     pass
                 else:
                     self._sessions[session_id] = session
-                    return session
+                    return cast(MigrationSession, session)
             raise KeyError(f"migration session not found: {session_id}") from exc
 
     def store_list(self, workspace_id: str, project_id: str) -> tuple[dict[str, object], ...]:
@@ -357,8 +358,8 @@ class MigrationSessionService:
         actual: list[dict[str, object]],
         *,
         asset_id: str | None = None,
-        level: str = "simple",
-        modes: tuple[str, ...] = ("schema", "counts", "multiset"),
+        level: ReportLevel = "simple",
+        modes: tuple[CheckMode, ...] = ("schema", "counts", "multiset"),
         key_columns: tuple[str, ...] = (),
         tolerances: dict[str, float] | None = None,
     ) -> ValidationReport:
@@ -369,7 +370,7 @@ class MigrationSessionService:
             actual,
             asset_id=asset_id or session_id,
             level=level,
-            modes=modes,  # type: ignore[arg-type]
+            modes=modes,
             key_columns=key_columns,
             tolerances=tolerances,
         )

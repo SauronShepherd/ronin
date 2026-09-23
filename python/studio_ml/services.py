@@ -7,12 +7,16 @@ from dataclasses import dataclass, field
 
 from studio_core import WorkspaceId
 
-from .domain import Lab, PipelineIR
-from .ports import MLLabStore
+from .domain import FeatureDefinition, Lab, NodeKind, PipelineIR, PipelineNode
+from .ports import FeatureDefinitionStore, MLLabStore
 
 
 class MLLabConflict(RuntimeError):
     """Raised when an immutable lab identity is reused with different content."""
+
+
+class FeatureDefinitionConflict(RuntimeError):
+    """Raised when a feature identity/version is reused with different content."""
 
 
 @dataclass
@@ -88,10 +92,54 @@ class LabService:
         return self.store.put_pipeline(workspace_id, lab.id, pipeline)
 
 
-def _node(kind: str, depends_on: tuple[str, ...] = ()):
-    from .domain import PipelineNode
+@dataclass(frozen=True, slots=True)
+class FeatureDefinitionService:
+    store: FeatureDefinitionStore
 
-    return PipelineNode(kind, kind, depends_on)
+    def publish(
+        self, workspace_id: WorkspaceId, definition: FeatureDefinition
+    ) -> FeatureDefinition:
+        current = self.store.get_feature_definition(workspace_id, definition.id, definition.version)
+        if current is not None:
+            if current != definition:
+                raise FeatureDefinitionConflict(
+                    f"feature definition version already exists: {definition.id}/{definition.version}"
+                )
+            return current
+        latest = self.store.get_feature_definition(workspace_id, definition.id)
+        if latest is not None and definition.version <= latest.version:
+            raise FeatureDefinitionConflict(
+                f"feature definition version must advance: {definition.id}/{latest.version}"
+            )
+        return self.store.put_feature_definition(workspace_id, definition)
+
+    def publish_payload(self, workspace_id: WorkspaceId, payload: object) -> FeatureDefinition:
+        return self.publish(workspace_id, FeatureDefinition.from_payload(payload))
+
+    def get(
+        self, workspace_id: WorkspaceId, feature_id: str, version: int | None = None
+    ) -> FeatureDefinition:
+        result = self.store.get_feature_definition(workspace_id, feature_id, version)
+        if result is None:
+            raise KeyError(feature_id)
+        return result
+
+    def list(
+        self, workspace_id: WorkspaceId, feature_id: str | None = None
+    ) -> tuple[FeatureDefinition, ...]:
+        return self.store.list_feature_definitions(workspace_id, feature_id)
 
 
-__all__ = ["InMemoryMLLabStore", "LabService", "MLLabConflict"]
+def _node(kind: str, depends_on: tuple[str, ...] = ()) -> PipelineNode:
+    from typing import cast
+
+    return PipelineNode(kind, cast(NodeKind, kind), depends_on)
+
+
+__all__ = [
+    "FeatureDefinitionConflict",
+    "FeatureDefinitionService",
+    "InMemoryMLLabStore",
+    "LabService",
+    "MLLabConflict",
+]

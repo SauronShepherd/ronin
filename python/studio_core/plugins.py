@@ -253,7 +253,9 @@ class SurfaceContributionRegistry(_FrozenRegistry):
             raise PluginValidationError(f"surface contribution collision: {contribution.id}")
         command_key = (contribution.namespace, contribution.command)
         if command_key in self._commands:
-            raise PluginValidationError(f"surface command collision: {command_key[0]} {command_key[1]}")
+            raise PluginValidationError(
+                f"surface command collision: {command_key[0]} {command_key[1]}"
+            )
         if contribution.operation_id in self._operations:
             raise PluginValidationError(f"surface operation collision: {contribution.operation_id}")
         self._items[contribution.id] = contribution
@@ -284,9 +286,7 @@ class CapabilityRegistry(_FrozenRegistry):
         self._assert_mutable()
         owner = self._items.get(capability)
         if owner is not None and owner != plugin_id:
-            raise PluginValidationError(
-                f"capability {capability!r} is already provided by {owner}"
-            )
+            raise PluginValidationError(f"capability {capability!r} is already provided by {owner}")
         self._items[capability] = plugin_id
 
     @property
@@ -305,9 +305,7 @@ class PermissionRegistry(_FrozenRegistry):
         self._assert_mutable()
         owner = self._items.get(permission)
         if owner is not None and owner != plugin_id:
-            raise PluginValidationError(
-                f"permission {permission!r} is already owned by {owner}"
-            )
+            raise PluginValidationError(f"permission {permission!r} is already owned by {owner}")
         self._items[permission] = plugin_id
 
     def owns(self, permission: str, plugin_id: str) -> bool:
@@ -464,13 +462,18 @@ class ContributionRegistry:
 
     def add_surface(self, contribution: SurfaceContribution) -> None:
         capability_owners = self.capability_registry.items
-        if capability_owners and capability_owners.get(contribution.capability) != contribution.plugin_id:
+        if (
+            capability_owners
+            and capability_owners.get(contribution.capability) != contribution.plugin_id
+        ):
             raise PluginValidationError(
-                f"surface capability {contribution.capability!r} is not declared by {contribution.plugin_id}"
+                f"surface capability {contribution.capability!r} is not declared by "
+                f"{contribution.plugin_id}"
             )
         if not self.permission_registry.owns(contribution.permission, contribution.plugin_id):
             raise PluginValidationError(
-                f"surface permission {contribution.permission!r} is not declared by {contribution.plugin_id}"
+                f"surface permission {contribution.permission!r} is not declared by "
+                f"{contribution.plugin_id}"
             )
         self.surface_registry.add(contribution)
         self.cli_registry.add(contribution)
@@ -489,9 +492,7 @@ class ContributionRegistry:
             for item in self.migration_registry.items
             if item.plugin_id == plugin_id
         }
-        surfaces = {
-            item.id for item in self.surface_registry.items if item.plugin_id == plugin_id
-        }
+        surfaces = {item.id for item in self.surface_registry.items if item.plugin_id == plugin_id}
         if not jobs <= set(manifest.job_types):
             raise PluginValidationError(f"undeclared job contribution in {plugin_id}")
         if not events <= set(manifest.event_types):

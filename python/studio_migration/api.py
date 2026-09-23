@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass
+from typing import cast
 from urllib.parse import unquote
 
 from .adapters.iics import IICS_ADAPTER_VERSION, discover_iics_zip
@@ -17,6 +18,7 @@ from .model import SourceArtifact
 from .pyspark_codegen import export_migration_script
 from .reports import render_validation_html, render_validation_markdown
 from .session import MigrationSessionService
+from .validation import CheckMode, ReportLevel
 
 MAX_VALIDATION_ROWS = 100_000
 MAX_VALIDATION_COLUMNS = 1_000
@@ -399,8 +401,8 @@ class MigrationAPIRouter:
                         expected,
                         actual,
                         asset_id=asset_id,
-                        level=level,
-                        modes=tuple(modes),
+                        level=cast(ReportLevel, level),
+                        modes=cast(tuple[CheckMode, ...], tuple(modes)),
                         key_columns=tuple(keys),
                         tolerances=tolerances,
                     )
@@ -493,7 +495,7 @@ class MigrationAPIRouter:
                 if isinstance(payload, (bytes, bytearray, memoryview)):
                     document = bytes(payload)
                 elif isinstance(payload, dict):
-                    document = json.dumps(payload, separators=(",", ":"))
+                    document = json.dumps(payload, separators=(",", ":")).encode("utf-8")
                 else:
                     raise ValueError("blueprint requires JSON or binary JSON content")
                 updated = self.service.set_blueprint(session_id, extract_blueprint(document))

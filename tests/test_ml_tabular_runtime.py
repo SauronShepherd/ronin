@@ -4,6 +4,7 @@ import pytest
 from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
 from studio_core.ml import ExperimentId, MLRunId, ModelId, ModelVersion
 from studio_ml import (
+    algorithm_capabilities,
     TrainingSpec,
     predict_registered_tabular,
     predict_tabular,
@@ -241,3 +242,13 @@ def test_classification_split_rejects_insufficient_test_rows() -> None:
             ),
             TrainingSpec("classification", "logistic_regression", ("x",), "label", 0.2),
         )
+
+
+from studio_ml import TrainingSpec, algorithm_capabilities
+
+
+def test_algorithm_capability_matrix_rejects_cross_task_selection() -> None:
+    capabilities = algorithm_capabilities()
+    assert capabilities["gradient_boosting_classifier"] == frozenset({"classification"})
+    with pytest.raises(ValueError, match="incompatible"):
+        TrainingSpec("regression", "gradient_boosting_classifier", ("x",), "y")

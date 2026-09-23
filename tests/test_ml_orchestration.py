@@ -1,8 +1,8 @@
 """Asynchronous ML Studio lifecycle tests."""
 # ruff: noqa: E501
 
-import time
 import os
+import time
 
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_ml.domain import FeatureSpec, Lab
@@ -38,9 +38,13 @@ def test_local_coordinator_reaches_terminal_state() -> None:
 
 def test_local_coordinator_executes_clustering_lab() -> None:
     lab = Lab(
-        id="clusters", name="Clusters", project_id="project",
-        dataset=AssetRef("asset", AssetVersion("v1")), target=None,
-        task="clustering", features=(FeatureSpec("x"),),
+        id="clusters",
+        name="Clusters",
+        project_id="project",
+        dataset=AssetRef("asset", AssetVersion("v1")),
+        target=None,
+        task="clustering",
+        features=(FeatureSpec("x"),),
     )
     coordinator = LocalExecutionCoordinator()
     try:
@@ -54,6 +58,7 @@ def test_local_coordinator_executes_clustering_lab() -> None:
             if snapshot.state == "failed":
                 raise AssertionError(snapshot.error)
             import time
+
             time.sleep(0.01)
         raise AssertionError("clustering execution did not finish")
     finally:

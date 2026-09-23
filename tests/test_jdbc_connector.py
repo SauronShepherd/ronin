@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 import pytest
-from studio_connectors import JdbcConnector, JdbcDependencyError, JdbcIncrementalCheckpointV2
+from studio_connectors import (
+    JdbcBridgeProvenance,
+    JdbcConnector,
+    JdbcDependencyError,
+    JdbcIncrementalCheckpointV2,
+)
 from studio_core import AssetHandle, ConnectionDefinition, ConnectionId, SourceCheckpoint
 from studio_storage import EnvironmentSecretResolver
 
@@ -152,3 +157,13 @@ def test_jdbc_v2_empty_source_does_not_create_empty_string_cursor() -> None:
     decoded = JdbcIncrementalCheckpointV2.decode(result.checkpoint.value)
     assert decoded.incremental_value is None
     assert decoded.incremental_value != ""
+
+
+def test_jdbc_bridge_provenance_is_explicit_and_fail_closed() -> None:
+    connector = JdbcConnector(
+        connect=lambda _connection, _secrets: object(),
+        provenance=JdbcBridgeProvenance("bridge-1", "sqlite-jdbc", "3.45.0"),
+    )
+    assert connector.bridge_provenance().driver_name == "sqlite-jdbc"
+    with pytest.raises(JdbcDependencyError):
+        JdbcConnector(connect=lambda _connection, _secrets: object()).bridge_provenance()

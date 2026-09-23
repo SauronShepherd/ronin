@@ -89,6 +89,11 @@ class LlamaCppAdapter(OpenAICompatibleAdapter):
 
 
 __all__ = [
-    "AdapterError", "CapabilitySnapshot", "LlamaCppAdapter", "OllamaAdapter",
-    "OpenAICompatibleAdapter", "Transport", "VLLMAdapter",
+    "AdapterError",
+    "CapabilitySnapshot",
+    "LlamaCppAdapter",
+    "OllamaAdapter",
+    "OpenAICompatibleAdapter",
+    "Transport",
+    "VLLMAdapter",
 ]

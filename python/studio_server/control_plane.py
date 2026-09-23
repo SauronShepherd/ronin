@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import mimetypes
+import tempfile
+from collections.abc import Callable
 from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -13,8 +16,21 @@ from typing import Protocol, cast, runtime_checkable
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from studio_core import (
+    AssetId,
+    AssetRef,
+    AssetVersion,
+    CatalogAsset,
+    GlossaryTerm,
+    GlossaryTermId,
+    OntologyDefinition,
+    OntologyId,
+    OwnershipMetadata,
+    Pipeline,
     ProjectId,
     ProjectManifest,
+    Schedule,
+    ScheduleId,
+    SensitivityMetadata,
     TaskRun,
     Trigger,
     WorkflowDefinition,
@@ -25,14 +41,33 @@ from studio_core import (
     WorkspaceId,
 )
 from studio_core.canonical_json import decode as decode_canonical_json
+from studio_core.environments import (
+    EnvironmentDefinition,
+    EnvironmentId,
+    ProjectEnvironmentBindings,
+)
+from studio_core.ontology import KnowledgeObjectRef
+from studio_core.scheduler_events import EventTriggerDefinition, SchedulerEventId
+from studio_data_engineering import SdpProjectSource
 from studio_execution import (
+    DeploymentBindingService,
+    EnvironmentService,
+    EnvironmentServiceConflict,
+    EnvironmentServiceNotFound,
     ProjectService,
     WorkspaceService,
     WorkspaceServiceConflict,
     WorkspaceServiceNotFound,
+    diff_environments,
 )
 from studio_orchestrator import Instant
+from studio_quality.http import QualityHTTPAdapter
 from studio_security import Actor, Permission, PolicyDecision, PolicyRequirement
+from studio_storage.bundle import BundleFile, write_bundle
+from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.scheduler_backfill import BackfillId, BackfillRequest
+from studio_storage.scheduler_events import EventDelivery, SchedulerEventRecord
+from studio_storage.scheduler_schedule import ScheduleFire
 
 _MAX_REQUEST_BYTES = 1024 * 1024
 _MAX_LIST_LIMIT = 100
@@ -43,25 +78,150 @@ CONTROL_PLANE_ROUTES = frozenset(
     {
         ("GET", "/v1/platform/plugins"),
         ("GET", "/v1/platform/capabilities"),
+        ("GET", "/v1/platform/connectors"),
+        ("POST", "/v1/platform/connectors/preview"),
+        ("POST", "/v1/platform/connectors/plan"),
+        ("POST", "/v1/platform/connectors/checkpoint-health"),
         ("GET", "/v1/platform/ui-manifest"),
         ("GET", "/v1/platform/logs"),
         ("GET", "/v1/platform/traces"),
         ("GET", "/v1/platform/metrics"),
         ("GET", "/v1/workspaces"),
+        ("POST", "/v1/workspaces"),
         ("GET", "/v1/workspaces/{workspace_id}"),
         ("PATCH", "/v1/workspaces/{workspace_id}"),
         ("POST", "/v1/workspaces/{workspace_id}/archive"),
         ("GET", "/v1/workspaces/{workspace_id}/projects"),
         ("POST", "/v1/workspaces/{workspace_id}/projects"),
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
+        ("GET", "/v1/workspaces/{workspace_id}/quality/contracts/{asset_id}/{version}"),
+        ("POST", "/v1/workspaces/{workspace_id}/quality/runs"),
+        ("GET", "/v1/workspaces/{workspace_id}/quality/runs/{asset_id}/{version}"),
+        ("GET", "/v1/workspaces/{workspace_id}/quality/state/{asset_id}/{version}"),
+        ("GET", "/v1/workspaces/{workspace_id}/alerts/rules"),
+        ("GET", "/v1/workspaces/{workspace_id}/alerts/instances"),
+        ("POST", "/v1/workspaces/{workspace_id}/alerts/evaluate"),
+        ("POST", "/v1/workspaces/{workspace_id}/alerts/acknowledge"),
+        ("GET", "/v1/workspaces/{workspace_id}/finops/usage"),
+        ("GET", "/v1/workspaces/{workspace_id}/finops/costs"),
+        ("GET", "/v1/workspaces/{workspace_id}/finops/budgets"),
+        ("GET", "/v1/workspaces/{workspace_id}/environments"),
+        ("POST", "/v1/workspaces/{workspace_id}/environments"),
+        ("GET", "/v1/workspaces/{workspace_id}/environments/{environment_id}"),
+        ("PUT", "/v1/workspaces/{workspace_id}/environments/{environment_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/environments/{environment_id}/diff"),
+        ("POST", "/v1/workspaces/{workspace_id}/environments/{environment_id}/disable"),
+        (
+            "GET",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/environments/{environment_id}/bindings",
+        ),
+        (
+            "PUT",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/environments/{environment_id}/bindings",
+        ),
         ("PUT", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
+        ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/bundle"),
+        ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/bundle/archive"),
+        ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/bundle/import"),
         ("DELETE", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/archive"),
+        (
+            "GET",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines",
+        ),
+        (
+            "GET",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/revisions",
+        ),
+        (
+            "GET",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/revisions/{revision}",
+        ),
+        (
+            "GET",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/revisions/compare",
+        ),
+        (
+            "POST",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/archive",
+        ),
+        (
+            "POST",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/runs",
+        ),
+        (
+            "POST",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/revisions",
+        ),
+        ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks"),
+        ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks/{notebook_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks"),
+        ("PUT", "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks/{notebook_id}"),
+        (
+            "POST",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks/{notebook_id}/archive",
+        ),
+        ("DELETE", "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks/{notebook_id}"),
         ("GET", "/v1/workspaces/{workspace_id}/workflows"),
+        ("GET", "/v1/workspaces/{workspace_id}/schedules"),
+        ("GET", "/v1/workspaces/{workspace_id}/schedules/{schedule_id}"),
+        ("GET", "/v1/workspaces/{workspace_id}/schedules/{schedule_id}/next-runs"),
+        ("GET", "/v1/workspaces/{workspace_id}/schedules/{schedule_id}/history"),
+        ("PUT", "/v1/workspaces/{workspace_id}/schedules/{schedule_id}"),
+        ("GET", "/v1/workspaces/{workspace_id}/event-triggers"),
+        ("GET", "/v1/workspaces/{workspace_id}/event-deliveries"),
+        ("PUT", "/v1/workspaces/{workspace_id}/event-triggers/{trigger_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/events"),
+        ("POST", "/v1/workspaces/{workspace_id}/backfills"),
+        ("POST", "/v1/workspaces/{workspace_id}/backfills/preview"),
+        ("GET", "/v1/workspaces/{workspace_id}/backfills/{backfill_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/backfills/{backfill_id}/cancel"),
+        ("POST", "/v1/workspaces/{workspace_id}/graphs/{graph_id}/query"),
+        ("GET", "/v1/workspaces/{workspace_id}/graphs/{graph_id}/objects/{object_type}"),
+        ("POST", "/v1/workspaces/{workspace_id}/graphs/{graph_id}/neighbors"),
+        ("POST", "/v1/workspaces/{workspace_id}/graphs/{graph_id}/actions"),
+        ("GET", "/v1/workspaces/{workspace_id}/ontologies/{ontology_id}"),
+        ("GET", "/v1/workspaces/{workspace_id}/ontologies/{ontology_id}/{version}"),
+        ("GET", "/v1/workspaces/{workspace_id}/catalog/assets"),
+        ("GET", "/v1/workspaces/{workspace_id}/catalog/assets/{asset_id}/revisions"),
+        ("GET", "/v1/workspaces/{workspace_id}/catalog/lineage/{asset_id}/{version}"),
+        (
+            "GET",
+            "/v1/workspaces/{workspace_id}/catalog/assets/{asset_id}/revisions/{version}",
+        ),
+        ("POST", "/v1/workspaces/{workspace_id}/catalog/assets"),
+        ("PUT", "/v1/workspaces/{workspace_id}/catalog/assets/{asset_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/catalog/assets/{asset_id}/sensitivity"),
+        ("POST", "/v1/workspaces/{workspace_id}/catalog/assets/{asset_id}/ownership"),
+        ("GET", "/v1/workspaces/{workspace_id}/glossary/terms"),
+        ("POST", "/v1/workspaces/{workspace_id}/glossary/terms"),
+        ("GET", "/v1/workspaces/{workspace_id}/glossary/terms/{term_id}/{version}"),
+        ("GET", "/v1/workspaces/{workspace_id}/streams/{stream_id}/health"),
+        ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/models"),
+        ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/query"),
+        ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/sql/query"),
+        ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/join"),
+        ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/dashboards"),
+        (
+            "GET",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/dashboards/{dashboard_id}",
+        ),
+        (
+            "PUT",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/dashboards/{dashboard_id}",
+        ),
+        (
+            "POST",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/semantic/dashboards/{dashboard_id}/execute",
+        ),
         ("POST", "/v1/workspaces/{workspace_id}/workflows/{workflow_id}/runs"),
         ("GET", "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}"),
         ("POST", "/v1/workspaces/{workspace_id}/workflow-runs/{run_id}/cancel"),
         ("GET", "/v1/ml-studio/labs"),
         ("POST", "/v1/ml-studio/labs"),
+        ("GET", "/v1/ml-studio/features"),
+        ("POST", "/v1/ml-studio/features"),
+        ("GET", "/v1/ml-studio/features/{feature_id}/{version}"),
         ("POST", "/v1/ml-studio/labs/{lab_id}/quality"),
         ("POST", "/v1/ml-studio/labs/{lab_id}/executions"),
         ("POST", "/v1/ml-studio/labs/{lab_id}/compare"),
@@ -69,6 +229,7 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("GET", "/v1/ml-studio/models"),
         ("POST", "/v1/ml-studio/models/{model_id}/{version}/promote"),
         ("POST", "/v1/ml-studio/models/{model_id}/{version}/predict"),
+        ("POST", "/v1/ml-studio/models/{model_id}/{version}/batch-predict"),
         ("GET", "/v1/ml-studio/models/{model_id}/{version}/card"),
     }
 )
@@ -96,9 +257,69 @@ class ControlPlaneAuthorizer(Protocol):
     def authorize(self, actor: Actor, requirement: PolicyRequirement) -> PolicyDecision: ...
 
 
+ControlPlaneAuditHook = Callable[[Actor, str, WorkspaceId, dict[str, object]], None]
+
+
 @runtime_checkable
 class WorkflowReader(Protocol):
     def list_workflows(self, workspace_id: WorkspaceId) -> tuple[WorkflowDefinition, ...]: ...
+
+    def list_schedules(self, workspace_id: WorkspaceId) -> tuple[Schedule, ...]: ...
+
+    def get_schedule(
+        self, workspace_id: WorkspaceId, schedule_id: ScheduleId
+    ) -> Schedule | None: ...
+
+    def preview_schedule_next_runs(
+        self,
+        workspace_id: WorkspaceId,
+        schedule_id: ScheduleId,
+        *,
+        after: Instant | str,
+        count: int = 10,
+    ) -> tuple[Instant, ...]: ...
+
+    def list_schedule_fires(
+        self, workspace_id: WorkspaceId, schedule_id: ScheduleId
+    ) -> tuple[ScheduleFire, ...]: ...
+
+    def list_pending_deliveries(
+        self, workspace_id: WorkspaceId, *, limit: int = 100
+    ) -> tuple[EventDelivery, ...]: ...
+
+    def preview_backfill(
+        self,
+        workspace_id: WorkspaceId,
+        schedule_id: ScheduleId,
+        *,
+        start_at: Instant | str,
+        end_at: Instant | str,
+        max_runs: int = 1000,
+    ) -> tuple[Instant, ...]: ...
+
+    def put_schedule(self, workspace_id: WorkspaceId, schedule: Schedule) -> Schedule: ...
+
+    def list_event_triggers(
+        self, workspace_id: WorkspaceId
+    ) -> tuple[EventTriggerDefinition, ...]: ...
+
+    def put_event_trigger(
+        self, workspace_id: WorkspaceId, trigger: EventTriggerDefinition
+    ) -> EventTriggerDefinition: ...
+
+    def ingest_event(self, event: SchedulerEventRecord): ...
+
+    def create_backfill(
+        self, workspace_id: WorkspaceId, request: BackfillRequest
+    ) -> BackfillRequest: ...
+
+    def get_backfill(
+        self, workspace_id: WorkspaceId, backfill_id: BackfillId
+    ) -> BackfillRequest | None: ...
+
+    def cancel_backfill(
+        self, workspace_id: WorkspaceId, backfill_id: BackfillId
+    ) -> BackfillRequest: ...
 
     def get_run(self, workspace_id: WorkspaceId, run_id: WorkflowRunId) -> WorkflowRun | None: ...
 
@@ -113,7 +334,165 @@ class WorkflowCanceller(Protocol):
 
 
 @runtime_checkable
+class GraphQueryReader(Protocol):
+    def query(self, graph_id: str, query: str, *, max_limit: int = 1000): ...
+
+    def list_objects(self, graph_id: str, object_type: str, *, limit: int = 100): ...
+
+    def neighbors(self, graph_id: str, ref: object, *, limit: int = 100): ...
+
+
+class GraphActionReader(Protocol):
+    def execute_action_payload(self, graph_id: str, payload: dict[str, object]): ...
+
+
+class OntologyReader(Protocol):
+    def list_schema_versions(
+        self, workspace_id: WorkspaceId, ontology_id: OntologyId
+    ) -> tuple[OntologyDefinition, ...]: ...
+
+    def get_schema(
+        self, workspace_id: WorkspaceId, ontology_id: OntologyId, version: str
+    ) -> OntologyDefinition | None: ...
+
+
+@runtime_checkable
+class CatalogReader(Protocol):
+    def list_assets(self, workspace_id: WorkspaceId): ...
+
+    def search_assets(self, workspace_id: WorkspaceId, query: str, *, limit: int = 100): ...
+
+    def create_asset(self, workspace_id: WorkspaceId, asset: CatalogAsset, *, now: Instant): ...
+
+    def replace_asset(self, workspace_id: WorkspaceId, asset: CatalogAsset, *, now: Instant): ...
+
+    def list_revisions(self, workspace_id: WorkspaceId, asset_id: AssetId): ...
+
+    def get_revision(self, workspace_id: WorkspaceId, ref: AssetRef): ...
+
+    def upstream(self, workspace_id: WorkspaceId, ref: AssetRef): ...
+
+    def downstream(self, workspace_id: WorkspaceId, ref: AssetRef): ...
+
+    def list_lineage(self, workspace_id: WorkspaceId, *, limit: int = 1000): ...
+
+    def put_sensitivity(
+        self,
+        workspace_id: WorkspaceId,
+        asset_id: AssetId,
+        metadata: SensitivityMetadata,
+        *,
+        now: Instant,
+    ): ...
+
+    def put_ownership(
+        self,
+        workspace_id: WorkspaceId,
+        asset_id: AssetId,
+        metadata: OwnershipMetadata,
+        *,
+        now: Instant,
+    ): ...
+
+
+@runtime_checkable
+class DataEngineeringRevisionReader(Protocol):
+    def list_pipelines(self, *, project_id: str): ...
+
+    def list_revisions(self, *, project_id: str, pipeline_id: str): ...
+
+    def get_revision(self, *, project_id: str, pipeline_id: str, revision: int): ...
+
+    def compare(
+        self, *, project_id: str, pipeline_id: str, left_revision: int, right_revision: int
+    ): ...
+
+    def archive(self, *, project_id: str, pipeline_id: str) -> bool: ...
+
+    def import_sdp(
+        self,
+        *,
+        project_id: str,
+        pipeline_id: str,
+        source: SdpProjectSource,
+        expected_revision: int | None = None,
+    ): ...
+
+
+@runtime_checkable
+class NotebookReader(Protocol):
+    def list(self, *, project_id: str, include_archived: bool = False): ...
+    def get(self, *, project_id: str, notebook_id: str): ...
+    def create(self, *, project_id: str, payload: dict[str, object]): ...
+    def save(self, *, project_id: str, notebook_id: str, payload: dict[str, object]): ...
+    def archive(self, *, project_id: str, notebook_id: str, expected_revision: int): ...
+    def delete(self, *, project_id: str, notebook_id: str, expected_revision: int): ...
+
+
+@runtime_checkable
+class GlossaryReader(Protocol):
+    def list_all(self, workspace_id: WorkspaceId): ...
+
+    def list_latest(self, workspace_id: WorkspaceId): ...
+
+    def search(self, workspace_id: WorkspaceId, query: str, *, limit: int = 100): ...
+
+    def get(self, workspace_id: WorkspaceId, term_id: GlossaryTermId, version: str): ...
+
+    def put(self, workspace_id: WorkspaceId, term: GlossaryTerm, *, now: Instant): ...
+
+
+@runtime_checkable
+class StreamingHealthReader(Protocol):
+    def health(self, workspace_id: WorkspaceId, stream_id: str) -> dict[str, object]: ...
+
+
+@runtime_checkable
+class FinOpsReader(Protocol):
+    def list_usage(self, workspace_id: WorkspaceId, *, period_start: str, period_end: str): ...
+    def list_costs(self, workspace_id: WorkspaceId, *, period_start: str, period_end: str): ...
+    def list_budgets(self, workspace_id: WorkspaceId): ...
+
+
+@runtime_checkable
+class AlertReader(Protocol):
+    def list_rules(self) -> dict[str, object]: ...
+
+    def list_instances(self, *, limit: int = 100) -> dict[str, object]: ...
+
+    def evaluate(self, body: object, *, now: Instant | str) -> dict[str, object]: ...
+
+    def acknowledge(self, body: object, *, now: Instant | str) -> dict[str, object]: ...
+
+
+@runtime_checkable
+class SemanticReader(Protocol):
+    def list_models(self, project_id: str) -> dict[str, object]: ...
+
+    def list_dashboards(self, project_id: str) -> dict[str, object]: ...
+
+    def get_dashboard(self, project_id: str, dashboard_id: str) -> dict[str, object] | None: ...
+
+    def query(self, project_id: str, body: object) -> dict[str, object]: ...
+
+    def join_query(self, project_id: str, body: object) -> dict[str, object]: ...
+
+    def put_dashboard(self, project_id: str, body: object) -> dict[str, object]: ...
+
+    def execute_dashboard(self, project_id: str, dashboard_id: str) -> dict[str, object]: ...
+
+
+@runtime_checkable
+class SqlReader(Protocol):
+    def query(self, project_id: str, body: object) -> dict[str, object]: ...
+
+
+@runtime_checkable
 class WorkflowRunner(Protocol):
+    def put_workflow(
+        self, workspace_id: WorkspaceId, workflow: WorkflowDefinition
+    ) -> WorkflowDefinition: ...
+
     def create_workflow_run(
         self,
         workspace_id: WorkspaceId,
@@ -133,9 +512,7 @@ class PluginDiagnostics(Protocol):
 
 @runtime_checkable
 class PluginRouter(Protocol):
-    def resolve_route(
-        self, method: str, path: str
-    ) -> tuple[object, dict[str, str]] | None: ...
+    def resolve_route(self, method: str, path: str) -> tuple[object, dict[str, str]] | None: ...
 
     def invoke_route(
         self,
@@ -162,8 +539,32 @@ def _workspace_payload(workspace: object) -> dict[str, object]:
     }
 
 
+def _etag(payload: object) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return '"' + hashlib.sha256(encoded.encode("utf-8")).hexdigest() + '"'
+
+
 def _manifest_payload(manifest: ProjectManifest) -> dict[str, object]:
     return manifest.to_data()
+
+
+def _finops_payload(item: object) -> dict[str, object]:
+    """Serialize FinOps records without coercing missing values into estimates."""
+    values = getattr(item, "__dict__", {})
+    payload: dict[str, object] = {}
+    for key, value in values.items():
+        if key.startswith("_"):
+            continue
+        if hasattr(value, "value"):
+            value = value.value
+        elif hasattr(value, "isoformat"):
+            value = value.isoformat()
+        elif isinstance(value, (int, float)):
+            value = str(value)
+        elif isinstance(value, dict):
+            value = dict(value)
+        payload[key] = value
+    return payload
 
 
 def _page(items: list[object], *, limit: int, offset: int) -> tuple[list[object], str | None]:
@@ -250,10 +651,29 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         workflow_reader: WorkflowReader | None = None,
         workflow_canceller: WorkflowCanceller | None = None,
         workflow_runner: WorkflowRunner | None = None,
+        graph_query_reader: GraphQueryReader | None = None,
+        graph_action_reader: GraphActionReader | None = None,
+        ontology_reader: OntologyReader | None = None,
+        catalog_reader: CatalogReader | None = None,
+        data_engineering_reader: DataEngineeringRevisionReader | None = None,
+        notebook_reader: NotebookReader | None = None,
+        glossary_reader: GlossaryReader | None = None,
+        streaming_health_reader: StreamingHealthReader | None = None,
+        semantic_reader: SemanticReader | None = None,
+        sql_reader: SqlReader | None = None,
+        quality_reader: QualityHTTPAdapter | None = None,
+        alert_reader: AlertReader | None = None,
+        feature_definition_service: object | None = None,
+        finops_reader: FinOpsReader | None = None,
+        environment_service: EnvironmentService | None = None,
+        binding_service: DeploymentBindingService | None = None,
         plugin_host: PluginDiagnostics | None = None,
+        connector_registry: object | None = None,
+        ingestion_adapter: object | None = None,
         plugin_routes_enabled: bool = False,
         studio_root: Path | None = None,
         request_timeout_seconds: float = 15.0,
+        audit_mutation: ControlPlaneAuditHook | None = None,
     ) -> None:
         if request_timeout_seconds <= 0:
             raise ValueError("request_timeout_seconds must be positive")
@@ -264,10 +684,29 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.workflow_reader = workflow_reader
         self.workflow_canceller = workflow_canceller
         self.workflow_runner = workflow_runner
+        self.graph_query_reader = graph_query_reader
+        self.graph_action_reader = graph_action_reader
+        self.ontology_reader = ontology_reader
+        self.catalog_reader = catalog_reader
+        self.data_engineering_reader = data_engineering_reader
+        self.notebook_reader = notebook_reader
+        self.glossary_reader = glossary_reader
+        self.streaming_health_reader = streaming_health_reader
+        self.semantic_reader = semantic_reader
+        self.sql_reader = sql_reader
+        self.quality_reader = quality_reader
+        self.alert_reader = alert_reader
+        self.feature_definition_service = feature_definition_service
+        self.finops_reader = finops_reader
+        self.environment_service = environment_service
+        self.binding_service = binding_service
         self.plugin_host = plugin_host
+        self.connector_registry = connector_registry
+        self.ingestion_adapter = ingestion_adapter
         self.plugin_routes_enabled = plugin_routes_enabled
         self.studio_root = studio_root.resolve() if studio_root is not None else None
         self.request_timeout_seconds = request_timeout_seconds
+        self.audit_mutation = audit_mutation
         super().__init__(server_address, _WorkspaceProjectHandler)
 
 
@@ -283,21 +722,57 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
     def _server(self) -> WorkspaceProjectHTTPServer:
         return cast(WorkspaceProjectHTTPServer, self.server)
 
-    def _write_json(self, status: HTTPStatus, payload: object) -> None:
+    def _write_json(self, status: HTTPStatus, payload: object, *, etag: str | None = None) -> None:
         body = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
+        if etag is not None:
+            self.send_header("ETag", etag)
         self.end_headers()
         self.wfile.write(body)
 
     def _error(self, status: HTTPStatus, code: str, message: str) -> None:
         self._write_json(status, {"error": {"code": code, "message": message}})
 
+    def _discard_request_body(self) -> None:
+        """Consume a bounded rejected body without decoding or validating it.
+
+        Windows may reset a socket when a handler responds while unread request
+        bytes remain buffered. Early auth/readiness failures must still avoid
+        parsing the body, but they can safely drain its declared bytes.
+        """
+        raw_length = self.headers.get("Content-Length")
+        if raw_length is None:
+            return
+        try:
+            length = int(raw_length)
+        except ValueError:
+            return
+        if length <= 0 or length > _MAX_REQUEST_BYTES:
+            return
+        self.connection.settimeout(self._server().request_timeout_seconds)
+        try:
+            self.rfile.read(length)
+        except (OSError, TimeoutError):
+            return
+
+    def _check_if_match(self, current: object) -> bool:
+        expected = self.headers.get("If-Match")
+        if expected is not None and expected != _etag(current):
+            self._error(
+                HTTPStatus.PRECONDITION_FAILED,
+                "etag_mismatch",
+                "resource changed since it was read",
+            )
+            return False
+        return True
+
     def _authenticate(self) -> Actor | None:
         try:
             actor = self._server().authenticator.authenticate(self.headers.get("Authorization"))
         except ControlPlaneUnavailable:
+            self._discard_request_body()
             self._error(
                 HTTPStatus.SERVICE_UNAVAILABLE,
                 "authentication_unavailable",
@@ -305,6 +780,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             )
             return None
         if actor is None:
+            self._discard_request_body()
             self._error(HTTPStatus.UNAUTHORIZED, "unauthorized", "valid authorization required")
             return None
         return actor
@@ -324,6 +800,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 PolicyRequirement(workspace_id, permission, resource_ref),
             )
         except ControlPlaneUnavailable:
+            self._discard_request_body()
             self._error(
                 HTTPStatus.SERVICE_UNAVAILABLE,
                 "authorization_unavailable",
@@ -334,10 +811,32 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return True
         if hide_denial:
             return False
+        self._discard_request_body()
         self._error(
             HTTPStatus.FORBIDDEN, "forbidden", "required workspace permission is not granted"
         )
         return False
+
+    def _audit_mutation(
+        self,
+        actor: Actor,
+        action: str,
+        workspace_id: WorkspaceId,
+        metadata: dict[str, object],
+    ) -> bool:
+        hook = self._server().audit_mutation
+        if hook is None:
+            return True
+        try:
+            hook(actor, action, workspace_id, metadata)
+        except Exception:
+            self._error(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                "mutation_audit_unavailable",
+                "mutation audit persistence is unavailable",
+            )
+            return False
+        return True
 
     def _read_json(self) -> object:
         if self.headers.get("Transfer-Encoding") is not None:
@@ -392,9 +891,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         return True
 
     def _handle_failure(self, exc: Exception) -> None:
-        if isinstance(exc, WorkspaceServiceNotFound):
+        if isinstance(exc, (WorkspaceServiceNotFound, EnvironmentServiceNotFound)):
             self._error(HTTPStatus.NOT_FOUND, "not_found", "requested resource does not exist")
-        elif isinstance(exc, WorkspaceServiceConflict):
+        elif isinstance(exc, (WorkspaceServiceConflict, EnvironmentServiceConflict)):
             self._error(HTTPStatus.CONFLICT, "conflict", str(exc))
         elif isinstance(exc, TimeoutError):
             self._error(
@@ -413,6 +912,83 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if segments[:3] == ("v1", "ml-studio", "features"):
+                service = self._server().feature_definition_service
+                if service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "ml_features_unavailable",
+                        "feature definition service is not configured",
+                    )
+                    return
+                params = parse_qs(query or "", keep_blank_values=True)
+                workspace_value = params.pop("workspace_id", [None])[0]
+                if workspace_value is None or params:
+                    raise ValueError("feature requests require only workspace_id")
+                workspace_id = WorkspaceId(workspace_value)
+                if not self._authorize(actor, workspace_id, "project.read"):
+                    return
+                if len(segments) == 3:
+                    items = service.list(workspace_id)
+                elif len(segments) == 5:
+                    try:
+                        version = int(unquote(segments[4]))
+                    except ValueError as exc:
+                        raise ValueError("feature version must be an integer") from exc
+                    items = (service.get(workspace_id, unquote(segments[3]), version),)
+                else:
+                    self._method_or_not_found("GET", segments)
+                    return
+                self._write_json(HTTPStatus.OK, {"items": [item.to_payload() for item in items]})
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "catalog"
+                and segments[4] == "lineage"
+            ):
+                reader = self._server().catalog_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "catalog_unavailable",
+                        "catalog lineage reader is not configured",
+                    )
+                    return
+                params = parse_qs(query or "", keep_blank_values=True)
+                direction = params.get("direction", ["upstream"])[0]
+                if direction not in {"upstream", "downstream"} or any(
+                    key != "direction" for key in params
+                ):
+                    raise ValueError("lineage direction must be upstream or downstream")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                ref = AssetRef(AssetId(unquote(segments[5])), AssetVersion(unquote(segments[6])))
+                method = getattr(reader, direction, None)
+                if not callable(method):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "catalog_unavailable",
+                        "catalog lineage reader is not configured",
+                    )
+                    return
+                edges = method(workspace_id, ref)
+                self._write_json(HTTPStatus.OK, {"items": [edge.to_payload() for edge in edges]})
+                return
+            if segments == ("v1", "platform", "connectors"):
+                if query:
+                    raise ValueError("connector capabilities does not accept query parameters")
+                registry = self._server().connector_registry
+                if registry is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "connectors_unavailable",
+                        "connector registry is not configured",
+                    )
+                    return
+                self._write_json(HTTPStatus.OK, registry.capability_payload())
+                return
             if segments == ("v1", "platform", "plugins"):
                 if query:
                     raise ValueError("plugin diagnostics does not accept query parameters")
@@ -426,15 +1002,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 diagnostics = list(plugin_host.diagnostics())
                 contributions = plugin_host.contribution_diagnostics()
-                ready = {
-                    item["id"] for item in diagnostics if item.get("state") == "ready"
-                }
+                ready = {item["id"] for item in diagnostics if item.get("state") == "ready"}
                 surfaces = [
-                    item for item in cast(list[dict[str, object]], contributions["surfaces"])
+                    item
+                    for item in cast(list[dict[str, object]], contributions["surfaces"])
                     if str(item.get("plugin_id")) in ready
                 ]
                 cli = [
-                    item for item in cast(list[dict[str, object]], contributions["cli"])
+                    item
+                    for item in cast(list[dict[str, object]], contributions["cli"])
                     if any(surface.get("id") == item.get("id") for surface in surfaces)
                 ]
                 client_operations = [
@@ -466,10 +1042,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         "plugin host is not configured",
                     )
                     return
-                states = {
-                    item["id"]: item["state"]
-                    for item in plugin_host.diagnostics()
-                }
+                states = {item["id"]: item["state"] for item in plugin_host.diagnostics()}
                 contributions = plugin_host.contribution_diagnostics()
                 if segments[-1] == "capabilities":
                     payload = {
@@ -538,6 +1111,119 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         )
                         self._write_json(HTTPStatus.OK, payload)
                         return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:] == ("semantic", "dashboards")
+            ):
+                reader = self._server().semantic_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "semantic_unavailable",
+                        "semantic service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                self._write_json(HTTPStatus.OK, reader.list_dashboards(project_id))
+                return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "notebooks"
+            ):
+                reader = self._server().notebook_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "notebook_unavailable",
+                        "Notebook service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                project_id = segments[4]
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=project_id
+                ):
+                    return
+                if query:
+                    raise ValueError("notebook replacement does not accept query parameters")
+                body = self._read_json()
+                if not isinstance(body, dict):
+                    raise ValueError("notebook body must be an object")
+                self._write_json(
+                    HTTPStatus.OK,
+                    reader.save(project_id=project_id, notebook_id=segments[7], payload=body),
+                )
+                return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:7] == ("semantic", "dashboards")
+            ):
+                reader = self._server().semantic_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "semantic_unavailable",
+                        "semantic service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("dashboard read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                dashboard_id = unquote(segments[7])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                payload = reader.get_dashboard(project_id, dashboard_id)
+                if payload is None:
+                    self._error(
+                        HTTPStatus.NOT_FOUND, "not_found", "semantic dashboard does not exist"
+                    )
+                    return
+                self._write_json(HTTPStatus.OK, payload)
+                return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "notebooks"
+            ):
+                reader = self._server().notebook_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "notebook_unavailable",
+                        "Notebook service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                project_id = segments[4]
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=project_id
+                ):
+                    return
+                if query or self.headers.get("Content-Length") not in {None, "0"}:
+                    raise ValueError("notebook delete does not accept query or body")
+                revision = self.headers.get("If-Match")
+                if revision is None or not revision.isdigit() or int(revision) < 1:
+                    raise ValueError("If-Match must contain the expected positive revision")
+                reader.delete(
+                    project_id=project_id, notebook_id=segments[7], expected_revision=int(revision)
+                )
+                self._write_json(HTTPStatus.OK, {"deleted": True, "id": segments[7]})
+                return
             if not self._registered_path(segments):
                 self._method_or_not_found("GET", segments)
                 return
@@ -568,10 +1254,506 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
+                workspace = self._server().workspace_service.get(workspace_id)
+                payload = _workspace_payload(workspace)
+                self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "bundle"
+            ):
+                if query:
+                    raise ValueError("project bundle export does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = ProjectId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=str(project_id)
+                ):
+                    return
+                manifest = self._server().project_service.get(workspace_id, project_id)
+                payload = _manifest_payload(manifest)
+                self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:7] == ("bundle", "archive")
+            ):
+                if query:
+                    raise ValueError(
+                        "project Bundle archive export does not accept query parameters"
+                    )
+                workspace_id = WorkspaceId(segments[2])
+                project_id = ProjectId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=str(project_id)
+                ):
+                    return
+                manifest = self._server().project_service.get(workspace_id, project_id)
+                payload = manifest.to_json().encode("utf-8")
+                if len(payload) > 8 * 1024 * 1024:
+                    raise ValueError("project manifest exceeds Bundle export limit")
+                with tempfile.TemporaryDirectory(prefix="ronin-bundle-") as directory:
+                    archive_path = Path(directory) / "project.roninbundle"
+                    write_bundle(
+                        archive_path,
+                        (BundleFile(".ronin/project.json", "application/json", payload),),
+                    )
+                    archive = archive_path.read_bytes()
+                digest = hashlib.sha256(archive).hexdigest()
                 self._write_json(
                     HTTPStatus.OK,
-                    _workspace_payload(self._server().workspace_service.get(workspace_id)),
+                    {
+                        "media_type": "application/vnd.ronin.bundle+zip",
+                        "digest": digest,
+                        "size_bytes": len(archive),
+                        "content_base64": base64.b64encode(archive).decode("ascii"),
+                    },
                 )
+                return
+            if (
+                len(segments) in (7, 8)
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "notebooks"
+            ):
+                reader = self._server().notebook_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "notebook_unavailable",
+                        "Notebook service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                project_id = segments[4]
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                if query:
+                    raise ValueError("notebook reads do not accept query parameters")
+                if len(segments) == 7:
+                    self._write_json(HTTPStatus.OK, reader.list(project_id=project_id))
+                else:
+                    self._write_json(
+                        HTTPStatus.OK, reader.get(project_id=project_id, notebook_id=segments[7])
+                    )
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "pipelines"
+            ):
+                reader = self._server().data_engineering_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "data_engineering_unavailable",
+                        "Data Engineering service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("pipeline listing does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = segments[4]
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                pipelines = reader.list_pipelines(project_id=project_id)
+                self._write_json(
+                    HTTPStatus.OK,
+                    {"items": [{"pipeline_id": pipeline_id} for pipeline_id in pipelines]},
+                )
+                return
+            if (
+                len(segments) == 9
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "pipelines"
+                and segments[7:] == ("revisions", "compare")
+            ):
+                reader = self._server().data_engineering_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "data_engineering_unavailable",
+                        "Data Engineering service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                project_id, pipeline_id = segments[4], segments[6]
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                try:
+                    left_revision = int(query.get("left_revision", [""])[0])
+                    right_revision = int(query.get("right_revision", [""])[0])
+                except (KeyError, ValueError) as exc:
+                    raise ValueError(
+                        "compare requires integer left_revision and right_revision"
+                    ) from exc
+                self._write_json(
+                    HTTPStatus.OK,
+                    reader.compare(
+                        project_id=project_id,
+                        pipeline_id=pipeline_id,
+                        left_revision=left_revision,
+                        right_revision=right_revision,
+                    ),
+                )
+                return
+            if (
+                len(segments) in {8, 9}
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "pipelines"
+                and segments[7] == "revisions"
+            ):
+                reader = self._server().data_engineering_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "data_engineering_unavailable",
+                        "Data Engineering service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("pipeline revision read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id, pipeline_id = segments[4], segments[6]
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                if len(segments) == 8:
+                    revisions = reader.list_revisions(
+                        project_id=project_id, pipeline_id=pipeline_id
+                    )
+                    self._write_json(HTTPStatus.OK, {"items": list(revisions)})
+                else:
+                    try:
+                        revision = int(segments[8])
+                    except ValueError as exc:
+                        raise ValueError("pipeline revision must be an integer") from exc
+                    item = reader.get_revision(
+                        project_id=project_id, pipeline_id=pipeline_id, revision=revision
+                    )
+                    if item is None:
+                        self._error(
+                            HTTPStatus.NOT_FOUND, "not_found", "pipeline revision does not exist"
+                        )
+                        return
+                    self._write_json(HTTPStatus.OK, item)
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "schedules"
+                and segments[5] == "history"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                params = parse_qs(query or "", keep_blank_values=True)
+                if set(params) - {"limit"}:
+                    raise ValueError("schedule history accepts only limit")
+                try:
+                    limit = int(params.get("limit", ["100"])[0])
+                except ValueError as exc:
+                    raise ValueError("schedule history limit must be an integer") from exc
+                if limit < 1 or limit > 1000:
+                    raise ValueError("schedule history limit must be between 1 and 1000")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "scheduler.read"):
+                    return
+                fires = reader.list_schedule_fires(workspace_id, ScheduleId(segments[4]))
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "items": [
+                            {
+                                "scheduled_for": str(fire.scheduled_for),
+                                "workflow_run_id": str(fire.workflow_run_id),
+                            }
+                            for fire in fires[-limit:]
+                        ]
+                    },
+                )
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "schedules"
+                and segments[5] == "next-runs"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                params = parse_qs(query or "", keep_blank_values=True)
+                if set(params) - {"after", "count"} or "after" not in params:
+                    raise ValueError("next-runs requires only after and optional count")
+                after = params["after"][0]
+                if not after:
+                    raise ValueError("next-runs after must be non-empty")
+                raw_count = params.get("count", ["10"])[0]
+                try:
+                    count = int(raw_count)
+                except ValueError as exc:
+                    raise ValueError("next-runs count must be an integer") from exc
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "scheduler.read"):
+                    return
+                values = reader.preview_schedule_next_runs(
+                    workspace_id,
+                    ScheduleId(segments[4]),
+                    after=after,
+                    count=count,
+                )
+                self._write_json(
+                    HTTPStatus.OK,
+                    {"items": [str(value) for value in values]},
+                )
+                return
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "event-deliveries"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "scheduler.read"):
+                    return
+                limit, offset = _list_query(query)
+                deliveries = reader.list_pending_deliveries(
+                    workspace_id, limit=min(limit + offset, 1000)
+                )
+                selected, next_cursor = _page(list(deliveries), limit=limit, offset=offset)
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "items": [
+                            {
+                                "event_id": delivery.event_id.value,
+                                "trigger_id": delivery.trigger.id.value,
+                                "workflow_id": delivery.trigger.workflow_id.value,
+                                "state": delivery.state,
+                            }
+                            for delivery in selected
+                        ],
+                        "next_cursor": next_cursor,
+                    },
+                )
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "ontologies"
+            ):
+                reader = self._server().ontology_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "ontology_unavailable",
+                        "ontology service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                ontology_id = OntologyId(segments[4])
+                versions = reader.list_schema_versions(workspace_id, ontology_id)
+                self._write_json(HTTPStatus.OK, {"items": [item.to_payload() for item in versions]})
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:] == ("catalog", "assets")
+            ):
+                reader = self._server().catalog_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "catalog_unavailable",
+                        "catalog service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                params = parse_qs(query or "", keep_blank_values=True)
+                search = params.get("q", [""])[0].strip()
+                limit = int(params.get("limit", [str(_DEFAULT_LIST_LIMIT)])[0])
+                if not 1 <= limit <= _MAX_LIST_LIMIT:
+                    raise ValueError("catalog limit must be between 1 and 100")
+                assets = (
+                    reader.search_assets(workspace_id, search, limit=limit)
+                    if search
+                    else reader.list_assets(workspace_id)[:limit]
+                )
+                include_governance = (
+                    params.get("include_governance", ["false"])[0].casefold() == "true"
+                )
+                items = []
+                for item in assets:
+                    payload = item.to_payload()
+                    if include_governance:
+                        sensitivity = getattr(reader, "get_sensitivity", None)
+                        ownership = getattr(reader, "get_ownership", None)
+                        if callable(sensitivity):
+                            value = sensitivity(workspace_id, AssetId(str(item.id)))
+                            payload["sensitivity"] = None if value is None else value.to_payload()
+                        if callable(ownership):
+                            value = ownership(workspace_id, AssetId(str(item.id)))
+                            payload["ownership"] = None if value is None else value.to_payload()
+                    items.append(payload)
+                self._write_json(HTTPStatus.OK, {"items": items})
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:] == ("glossary", "terms")
+            ):
+                reader = self._server().glossary_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "glossary_unavailable",
+                        "glossary service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                params = parse_qs(query or "", keep_blank_values=True)
+                search = params.get("q", [""])[0].strip()
+                limit = int(params.get("limit", [str(_DEFAULT_LIST_LIMIT)])[0])
+                if not 1 <= limit <= _MAX_LIST_LIMIT:
+                    raise ValueError("glossary limit must be between 1 and 100")
+                terms = (
+                    reader.search(workspace_id, search, limit=limit)
+                    if search
+                    else reader.list_latest(workspace_id)[:limit]
+                )
+                self._write_json(HTTPStatus.OK, {"items": [term.to_payload() for term in terms]})
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "streams"
+                and segments[5] == "health"
+            ):
+                reader = self._server().streaming_health_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "streaming_unavailable",
+                        "streaming health is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("stream health does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                self._write_json(HTTPStatus.OK, reader.health(workspace_id, segments[4]))
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:] == ("semantic", "models")
+            ):
+                reader = self._server().semantic_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "semantic_unavailable",
+                        "semantic service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("semantic model listing does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                self._write_json(HTTPStatus.OK, reader.list_models(project_id))
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "ontologies"
+            ):
+                reader = self._server().ontology_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "ontology_unavailable",
+                        "ontology service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("ontology read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                ontology = reader.get_schema(workspace_id, OntologyId(segments[4]), segments[5])
+                if ontology is None:
+                    self._error(HTTPStatus.NOT_FOUND, "not_found", "ontology schema does not exist")
+                    return
+                self._write_json(HTTPStatus.OK, ontology.to_payload())
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:5] == ("glossary", "terms")
+            ):
+                reader = self._server().glossary_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "glossary_unavailable",
+                        "glossary service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("glossary term read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                term = reader.get(
+                    workspace_id, GlossaryTermId(unquote(segments[5])), unquote(segments[6])
+                )
+                if term is None:
+                    self._error(HTTPStatus.NOT_FOUND, "not_found", "glossary term does not exist")
+                    return
+                self._write_json(HTTPStatus.OK, term.to_payload())
                 return
             if (
                 len(segments) == 4
@@ -607,6 +1789,151 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {
                         "items": [cast(WorkflowDefinition, item).to_payload() for item in selected],
                         "next_cursor": next_cursor,
+                    },
+                )
+                return
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "schedules"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "scheduler.read"):
+                    return
+                limit, offset = _list_query(query)
+                schedules = sorted(
+                    reader.list_schedules(workspace_id), key=lambda item: item.id.value
+                )
+                selected, next_cursor = _page(list(schedules), limit=limit, offset=offset)
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "items": [item.to_payload() for item in selected],
+                        "next_cursor": next_cursor,
+                    },
+                )
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "schedules"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("schedule read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "scheduler.read"):
+                    return
+                schedule = reader.get_schedule(workspace_id, ScheduleId(segments[4]))
+                if schedule is None:
+                    self._error(HTTPStatus.NOT_FOUND, "not_found", "schedule does not exist")
+                    return
+                self._write_json(HTTPStatus.OK, schedule.to_payload())
+                return
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "event-triggers"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "scheduler.read"):
+                    return
+                limit, offset = _list_query(query)
+                triggers = sorted(
+                    reader.list_event_triggers(workspace_id), key=lambda item: item.id.value
+                )
+                selected, next_cursor = _page(list(triggers), limit=limit, offset=offset)
+                self._write_json(
+                    HTTPStatus.OK,
+                    {"items": [item.to_payload() for item in selected], "next_cursor": next_cursor},
+                )
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "backfills"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("backfill read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "scheduler.read"):
+                    return
+                stored = reader.get_backfill(workspace_id, BackfillId(segments[4]))
+                if stored is None:
+                    self._error(HTTPStatus.NOT_FOUND, "not_found", "backfill does not exist")
+                    return
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "id": stored.id.value,
+                        "schedule_id": stored.schedule_id.value,
+                        "start_at": str(stored.start_at),
+                        "end_at": str(stored.end_at),
+                        "state": stored.state,
+                    },
+                )
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "graphs"
+                and segments[5] == "objects"
+            ):
+                reader = self._server().graph_query_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "graph_unavailable",
+                        "graph query is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                limit, _offset = _list_query(query)
+                objects = reader.list_objects(segments[4], segments[6], limit=limit)
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "items": [
+                            {
+                                "object_type": item.ref.object_type,
+                                "key": list(item.ref.key),
+                                "properties": list(item.properties),
+                            }
+                            for item in objects
+                        ],
                     },
                 )
                 return
@@ -672,6 +1999,286 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 )
                 return
             if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "archive"
+            ):
+                if query:
+                    raise ValueError("project archive does not accept query parameters")
+                if self.headers.get("Content-Length") not in {None, "0"}:
+                    raise ValueError("project archive does not accept a request body")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = ProjectId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=str(project_id)
+                ):
+                    return
+                if not self._audit_mutation(
+                    actor, "project.archive", workspace_id, {"resource": str(project_id)}
+                ):
+                    return
+                archived = self._server().project_service.archive(
+                    workspace_id, project_id, now=_now()
+                )
+                if not archived:
+                    raise KeyError(f"{workspace_id}/{project_id}")
+                self._write_json(HTTPStatus.OK, {"archived": True, "project_id": str(project_id)})
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:7] == ("bundle", "import")
+            ):
+                if query:
+                    raise ValueError("project Bundle import does not accept query parameters")
+                if not self.headers.get("Idempotency-Key", "").strip():
+                    raise ValueError("Idempotency-Key header is required")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = ProjectId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=str(project_id)
+                ):
+                    return
+                body = self._read_json()
+                if not isinstance(body, dict) or not isinstance(body.get("content_base64"), str):
+                    raise ValueError("Bundle import body must contain content_base64")
+                try:
+                    archive = base64.b64decode(body["content_base64"], validate=True)
+                except (ValueError, TypeError) as exc:
+                    raise ValueError("content_base64 must be valid Base64") from exc
+                if len(archive) > 8 * 1024 * 1024:
+                    raise ValueError("Bundle archive exceeds import limit")
+                with tempfile.TemporaryDirectory(prefix="ronin-bundle-import-") as directory:
+                    archive_path = Path(directory) / "import.roninbundle"
+                    archive_path.write_bytes(archive)
+                    verified = read_bundle_payload(archive_path, ".ronin/project.json")
+                imported = ProjectManifest.from_json(verified.file.data.decode("utf-8"))
+                if imported.project.id != project_id:
+                    raise ValueError("Bundle project id must match the request path")
+                if not self._audit_mutation(
+                    actor, "project.bundle.import", workspace_id, {"resource": str(project_id)}
+                ):
+                    return
+                existing = next(
+                    (
+                        item
+                        for item in self._server().project_service.list(workspace_id)
+                        if item.project.id == project_id
+                    ),
+                    None,
+                )
+                if existing is not None:
+                    if existing.to_json() != imported.to_json():
+                        raise ValueError("project already exists with a different manifest")
+                    stored = existing
+                else:
+                    stored = self._server().project_service.register(
+                        workspace_id, imported, now=_now()
+                    )
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "project": _manifest_payload(stored),
+                        "bundle_digest": hashlib.sha256(archive).hexdigest(),
+                    },
+                )
+                return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "pipelines"
+                and segments[7] == "revisions"
+            ):
+                reader = self._server().data_engineering_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "data_engineering_unavailable",
+                        "Data Engineering service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("pipeline revision import does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id, pipeline_id = segments[4], segments[6]
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=project_id
+                ):
+                    return
+                body = self._read_json()
+                if (
+                    not isinstance(body, dict)
+                    or not isinstance(body.get("project_name"), str)
+                    or not isinstance(body.get("project_yaml_base64"), str)
+                    or not isinstance(body.get("pipeline_documents"), list)
+                ):
+                    raise ValueError(
+                        "revision body must contain project_name, project_yaml_base64, "
+                        "and pipeline_documents"
+                    )
+                try:
+                    project_yaml = base64.b64decode(body["project_yaml_base64"], validate=True)
+                    documents = tuple(
+                        (item["name"], base64.b64decode(item["content_base64"], validate=True))
+                        for item in body["pipeline_documents"]
+                        if isinstance(item, dict)
+                        and isinstance(item.get("name"), str)
+                        and isinstance(item.get("content_base64"), str)
+                    )
+                except (ValueError, TypeError, KeyError) as exc:
+                    raise ValueError("revision document content must be valid Base64") from exc
+                expected = body.get("expected_revision")
+                if expected is not None and (
+                    isinstance(expected, bool) or not isinstance(expected, int) or expected < 0
+                ):
+                    raise ValueError("expected_revision must be a non-negative integer")
+                source = SdpProjectSource(body["project_name"], project_yaml, documents)
+                if not self._audit_mutation(
+                    actor,
+                    "pipeline.revision.import",
+                    workspace_id,
+                    {"resource": f"{project_id}/{pipeline_id}"},
+                ):
+                    return
+                record = reader.import_sdp(
+                    project_id=project_id,
+                    pipeline_id=pipeline_id,
+                    source=source,
+                    expected_revision=expected,
+                )
+                self._write_json(
+                    HTTPStatus.CREATED,
+                    {
+                        "project_id": record.project_id,
+                        "pipeline_id": record.pipeline_id,
+                        "revision": record.revision,
+                        "source_digest": record.source_digest,
+                        "metadata_artifact": record.metadata_artifact.storage_ref,
+                    },
+                )
+                return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "pipelines"
+                and segments[7] == "archive"
+            ):
+                reader = self._server().data_engineering_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "data_engineering_unavailable",
+                        "Data Engineering service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("pipeline archive does not accept query parameters")
+                if (
+                    self.headers.get("Content-Length") not in {None, "0"}
+                    or self.headers.get("Transfer-Encoding") is not None
+                ):
+                    raise ValueError("pipeline archive does not accept a request body")
+                workspace_id = WorkspaceId(segments[2])
+                project_id, pipeline_id = segments[4], segments[6]
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=project_id
+                ):
+                    return
+                if not self._audit_mutation(
+                    actor,
+                    "pipeline.archive",
+                    workspace_id,
+                    {"resource": f"{project_id}/{pipeline_id}"},
+                ):
+                    return
+                archived = reader.archive(project_id=project_id, pipeline_id=pipeline_id)
+                self._write_json(
+                    HTTPStatus.OK,
+                    {"archived": archived, "project_id": project_id, "pipeline_id": pipeline_id},
+                )
+                return
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "environments"
+            ):
+                service = self._server().environment_service
+                if service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "environments_unavailable",
+                        "environment service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                limit, offset = _list_query(query)
+                items, next_cursor = _page(
+                    list(service.list(workspace_id)), limit=limit, offset=offset
+                )
+                self._write_json(
+                    HTTPStatus.OK,
+                    {"items": [item.to_payload() for item in items], "next_cursor": next_cursor},
+                )
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "environments"
+            ):
+                service = self._server().environment_service
+                if service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "environments_unavailable",
+                        "environment service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("environment read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                environment_id = EnvironmentId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "workspace.read", resource_ref=str(environment_id)
+                ):
+                    return
+                payload = service.get(workspace_id, environment_id).to_payload()
+                self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
+                return
+            if (
+                len(segments) == 8
+                and segments[3] == "projects"
+                and segments[5] == "environments"
+                and segments[7] == "bindings"
+            ):
+                service = self._server().binding_service
+                if service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "environments_unavailable",
+                        "binding service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("binding read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = ProjectId(segments[4])
+                environment_id = EnvironmentId(segments[6])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=str(project_id)
+                ):
+                    return
+                self._write_json(
+                    HTTPStatus.OK,
+                    service.get(workspace_id, project_id, environment_id).to_payload(),
+                )
+                return
+            if (
                 len(segments) == 5
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "projects"
@@ -685,7 +2292,159 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     return
                 manifest = self._server().project_service.get(workspace_id, project_id)
-                self._write_json(HTTPStatus.OK, _manifest_payload(manifest))
+                payload = _manifest_payload(manifest)
+                self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "quality"
+                and segments[4] == "contracts"
+            ):
+                reader = self._server().quality_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "quality_unavailable",
+                        "quality service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("quality contract read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=segments[5]
+                ):
+                    return
+                payload = reader.get_contract(
+                    workspace_id, {"asset_id": segments[5], "version": segments[6]}
+                ).to_payload()
+                self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "quality"
+                and segments[4] == "runs"
+            ):
+                reader = self._server().quality_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "quality_unavailable",
+                        "quality service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("quality history does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=segments[5]
+                ):
+                    return
+                payload = {"asset_id": segments[5], "version": segments[6]}
+                self._write_json(
+                    HTTPStatus.OK, {"items": list(reader.history(workspace_id, payload))}
+                )
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "quality"
+                and segments[4] == "state"
+            ):
+                reader = self._server().quality_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "quality_unavailable",
+                        "quality service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("quality state does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=segments[5]
+                ):
+                    return
+                self._write_json(
+                    HTTPStatus.OK,
+                    reader.state(workspace_id, {"asset_id": segments[5], "version": segments[6]}),
+                )
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:] == ("alerts", "rules")
+            ):
+                reader = self._server().alert_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "alerts_unavailable",
+                        "alert service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("alert rule listing does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                self._write_json(HTTPStatus.OK, reader.list_rules())
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:] == ("alerts", "instances")
+            ):
+                reader = self._server().alert_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "alerts_unavailable",
+                        "alert service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                limit = int(query.get("limit", ["100"])[0]) if query else 100
+                self._write_json(HTTPStatus.OK, reader.list_instances(limit=limit))
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "finops"
+                and segments[4] in {"usage", "costs", "budgets"}
+            ):
+                reader = self._server().finops_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "finops_unavailable",
+                        "finops service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                params = parse_qs(query or "", keep_blank_values=True)
+                kind = segments[4]
+                if kind in {"usage", "costs"}:
+                    period_start = params.get("period_start", [None])[0]
+                    period_end = params.get("period_end", [None])[0]
+                    if not period_start or not period_end:
+                        raise ValueError(
+                            "finops usage and costs require period_start and period_end"
+                        )
+                    items = getattr(reader, f"list_{kind}")(
+                        workspace_id, period_start=period_start, period_end=period_end
+                    )
+                else:
+                    items = reader.list_budgets(workspace_id)
+                payload = {"items": [_finops_payload(item) for item in items]}
+                self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
                 return
             self._method_or_not_found("GET", segments)
         except Exception as exc:  # stable transport translation for domain/validation failures
@@ -706,6 +2465,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.admin"):
                     return
+                current = self._server().workspace_service.get(workspace_id)
+                if not self._check_if_match(_workspace_payload(current)):
+                    return
                 payload = self._read_json()
                 if not isinstance(payload, dict) or set(payload) != {"name", "description"}:
                     raise ValueError(
@@ -717,13 +2479,21 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     raise TypeError("workspace name must be a string")
                 if description is not None and not isinstance(description, str):
                     raise TypeError("workspace description must be a string or null")
+                if not self._audit_mutation(
+                    actor,
+                    "workspace.update",
+                    workspace_id,
+                    {"resource": str(workspace_id)},
+                ):
+                    return
                 workspace = self._server().workspace_service.update(
                     workspace_id,
                     name=name,
                     description=description,
                     now=_now(),
                 )
-                self._write_json(HTTPStatus.OK, _workspace_payload(workspace))
+                result = _workspace_payload(workspace)
+                self._write_json(HTTPStatus.OK, result, etag=_etag(result))
                 return
             self._method_or_not_found("PATCH", segments)
         except Exception as exc:
@@ -735,6 +2505,61 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if segments == ("v1", "ml-studio", "features"):
+                service = self._server().feature_definition_service
+                if service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "ml_features_unavailable",
+                        "feature definition service is not configured",
+                    )
+                    return
+                params = parse_qs(query or "", keep_blank_values=True)
+                workspace_value = params.pop("workspace_id", [None])[0]
+                if workspace_value is None or params:
+                    raise ValueError("feature requests require only workspace_id")
+                workspace_id = WorkspaceId(workspace_value)
+                if not self._authorize(actor, workspace_id, "project.write"):
+                    return
+                try:
+                    stored = service.publish_payload(workspace_id, self._read_json())
+                except RuntimeError as exc:
+                    self._error(HTTPStatus.CONFLICT, "feature_conflict", str(exc))
+                    return
+                self._write_json(HTTPStatus.CREATED, stored.to_payload())
+                return
+            if segments == ("v1", "platform", "connectors", "preview"):
+                if query:
+                    raise ValueError("connector preview does not accept query parameters")
+                adapter = self._server().ingestion_adapter
+                preview = getattr(adapter, "preview", None) if adapter is not None else None
+                if not callable(preview):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "connectors_unavailable",
+                        "ingestion preview is not configured",
+                    )
+                    return
+                self._write_json(HTTPStatus.OK, preview(self._read_json()))
+                return
+            if segments in {
+                ("v1", "platform", "connectors", "plan"),
+                ("v1", "platform", "connectors", "checkpoint-health"),
+            }:
+                if query:
+                    raise ValueError("connector operation does not accept query parameters")
+                adapter = self._server().ingestion_adapter
+                method_name = "plan" if segments[-1] == "plan" else "checkpoint_health"
+                operation = getattr(adapter, method_name, None) if adapter is not None else None
+                if not callable(operation):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "connectors_unavailable",
+                        f"connector {method_name} is not configured",
+                    )
+                    return
+                self._write_json(HTTPStatus.OK, operation(self._read_json()))
+                return
             if self._server().plugin_routes_enabled:
                 plugin_host = self._server().plugin_host
                 if isinstance(plugin_host, PluginRouter):
@@ -775,6 +2600,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         if not self._authorize(actor, workspace_id, mapped_permission):
                             return
                         body = self._read_json()
+                        if not self._audit_mutation(
+                            actor,
+                            "plugin.post",
+                            workspace_id,
+                            {"resource": urlsplit(self.path).path},
+                        ):
+                            return
                         payload = plugin_host.invoke_route(
                             "POST",
                             urlsplit(self.path).path,
@@ -784,6 +2616,430 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         )
                         self._write_json(HTTPStatus.OK, payload)
                         return
+            if segments == ("v1", "workspaces"):
+                if query:
+                    raise ValueError("workspace creation does not accept query parameters")
+                if not self.headers.get("Idempotency-Key", "").strip():
+                    raise ValueError("Idempotency-Key header is required")
+                payload = self._read_json()
+                if not isinstance(payload, dict) or set(payload) != {"id", "name", "description"}:
+                    raise ValueError("workspace body must contain exactly id, name and description")
+                raw_id, name, description = payload["id"], payload["name"], payload["description"]
+                if not isinstance(raw_id, str) or not isinstance(name, str):
+                    raise ValueError("workspace id and name must be strings")
+                if description is not None and not isinstance(description, str):
+                    raise ValueError("workspace description must be a string or null")
+                workspace_id = WorkspaceId(raw_id)
+                if not self._authorize(actor, workspace_id, "workspace.write"):
+                    return
+                if not self._audit_mutation(
+                    actor, "workspace.create", workspace_id, {"resource": str(workspace_id)}
+                ):
+                    return
+                workspace = self._server().workspace_service.create(
+                    Workspace(workspace_id, name, description), now=_now()
+                )
+                result = _workspace_payload(workspace)
+                self._write_json(HTTPStatus.CREATED, result, etag=_etag(result))
+                return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "pipelines"
+                and segments[7] == "runs"
+            ):
+                runner = self._server().workflow_runner
+                if runner is None:
+                    self._discard_request_body()
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("pipeline run creation does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id, pipeline_id = segments[4], segments[6]
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=project_id
+                ):
+                    return
+                payload = self._read_json()
+                if not isinstance(payload, dict):
+                    raise ValueError("pipeline run body must be a JSON object")
+                required = {"revision_key", "ir_digest", "runtime"}
+                if set(payload) - required - {"parameters"} or not required.issubset(payload):
+                    raise ValueError(
+                        "pipeline run body must contain revision_key, ir_digest, runtime, and optional parameters"
+                    )
+                revision_key, ir_digest, runtime = (
+                    payload["revision_key"],
+                    payload["ir_digest"],
+                    payload["runtime"],
+                )
+                parameters = payload.get("parameters", {})
+                if (
+                    not isinstance(revision_key, str)
+                    or not revision_key.strip()
+                    or not isinstance(ir_digest, str)
+                    or len(ir_digest) != 64
+                    or ir_digest != ir_digest.lower()
+                    or any(c not in "0123456789abcdef" for c in ir_digest)
+                    or not isinstance(runtime, str)
+                    or not runtime.strip()
+                    or not isinstance(parameters, dict)
+                ):
+                    raise ValueError("pipeline run fields have invalid types or values")
+                workflow_id = WorkflowId(f"pipeline:{project_id}:{pipeline_id}")
+                pipeline_data = parameters.get("pipeline")
+                if pipeline_data is not None:
+                    if not isinstance(pipeline_data, dict):
+                        raise ValueError("parameters.pipeline must be an object")
+                    pipeline = Pipeline.from_data(pipeline_data)
+                    runner.put_workflow(
+                        workspace_id,
+                        WorkflowDefinition(workflow_id, pipeline.config.name, pipeline),
+                    )
+                trigger = Trigger(
+                    "api",
+                    f"{pipeline_id}:{revision_key}:{ir_digest}",
+                    json.dumps(
+                        {
+                            "kind": "pipeline",
+                            "project_id": project_id,
+                            "pipeline_id": pipeline_id,
+                            "revision_key": revision_key,
+                            "ir_digest": ir_digest,
+                            "runtime": runtime,
+                            "parameters": parameters,
+                        },
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
+                )
+                if not self._audit_mutation(
+                    actor,
+                    "pipeline.run.create",
+                    workspace_id,
+                    {"resource": f"{project_id}/{pipeline_id}", "revision_key": revision_key},
+                ):
+                    return
+                run = runner.create_workflow_run(
+                    workspace_id,
+                    workflow_id,
+                    trigger,
+                    idempotency_key=f"pipeline:{project_id}:{pipeline_id}:{revision_key}:{ir_digest}",
+                )
+                self._write_json(HTTPStatus.CREATED, run.to_payload())
+                return
+            if (
+                len(segments) in (7, 8)
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "notebooks"
+            ):
+                reader = self._server().notebook_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "notebook_unavailable",
+                        "Notebook service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                project_id = segments[4]
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=project_id
+                ):
+                    return
+                body = self._read_json()
+                if not isinstance(body, dict):
+                    raise ValueError("notebook body must be an object")
+                if len(segments) == 7:
+                    self._write_json(
+                        HTTPStatus.CREATED, reader.create(project_id=project_id, payload=body)
+                    )
+                elif segments[7:] == ("archive",):
+                    expected = body.get("expected_revision")
+                    if isinstance(expected, bool) or not isinstance(expected, int) or expected < 1:
+                        raise ValueError("expected_revision must be a positive integer")
+                    self._write_json(
+                        HTTPStatus.OK,
+                        reader.archive(
+                            project_id=project_id,
+                            notebook_id=segments[6],
+                            expected_revision=expected,
+                        ),
+                    )
+                else:
+                    self._method_or_not_found("POST", segments)
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:] == ("semantic", "query")
+            ):
+                reader = self._server().semantic_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "semantic_unavailable",
+                        "semantic service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("semantic query does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                self._write_json(HTTPStatus.OK, reader.query(project_id, self._read_json()))
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:] == ("sql", "query")
+            ):
+                reader = self._server().sql_reader
+                if reader is None:
+                    self._discard_request_body()
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "sql_unavailable",
+                        "SQL service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("SQL query does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                self._write_json(HTTPStatus.OK, reader.query(project_id, self._read_json()))
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:] == ("semantic", "join")
+            ):
+                reader = self._server().semantic_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "semantic_unavailable",
+                        "semantic service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("semantic join does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                self._write_json(HTTPStatus.OK, reader.join_query(project_id, self._read_json()))
+                return
+            if (
+                len(segments) == 9
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:7] == ("semantic", "dashboards")
+                and segments[8] == "execute"
+            ):
+                reader = self._server().semantic_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "semantic_unavailable",
+                        "semantic service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                dashboard_id = unquote(segments[7])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                if self.headers.get("Content-Length") not in {
+                    None,
+                    "0",
+                } and self._read_json() not in ({}, None):
+                    raise ValueError("dashboard execute does not accept a request body")
+                if not self._audit_mutation(
+                    actor,
+                    "semantic.dashboard.execute",
+                    workspace_id,
+                    {"resource": f"{project_id}/{dashboard_id}"},
+                ):
+                    return
+                self._write_json(HTTPStatus.OK, reader.execute_dashboard(project_id, dashboard_id))
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:] == ("glossary", "terms")
+            ):
+                reader = self._server().glossary_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "glossary_unavailable",
+                        "glossary service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("glossary term creation does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.admin"):
+                    return
+                term = GlossaryTerm.from_payload(self._read_json())
+                if not self._audit_mutation(
+                    actor,
+                    "glossary.term.put",
+                    workspace_id,
+                    {"resource": f"{term.id}/{term.version}"},
+                ):
+                    return
+                stored = reader.put(workspace_id, term, now=_now())
+                self._write_json(HTTPStatus.CREATED, stored.to_payload())
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:5] == ("catalog", "assets")
+                and segments[6] == "revisions"
+            ):
+                reader = self._server().catalog_reader
+                if reader is None or not callable(getattr(reader, "list_revisions", None)):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "catalog_unavailable",
+                        "catalog revision reader is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("catalog revision listing does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                revisions = reader.list_revisions(workspace_id, AssetId(unquote(segments[5])))
+                self._write_json(
+                    HTTPStatus.OK, {"items": [revision.to_payload() for revision in revisions]}
+                )
+                return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:5] == ("catalog", "assets")
+                and segments[6] == "revisions"
+            ):
+                reader = self._server().catalog_reader
+                if reader is None or not callable(getattr(reader, "get_revision", None)):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "catalog_unavailable",
+                        "catalog revision reader is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("catalog revision read does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                revision = reader.get_revision(
+                    workspace_id,
+                    AssetRef(AssetId(unquote(segments[5])), AssetVersion(unquote(segments[7]))),
+                )
+                if revision is None:
+                    self._error(
+                        HTTPStatus.NOT_FOUND, "not_found", "catalog revision does not exist"
+                    )
+                    return
+                self._write_json(HTTPStatus.OK, revision.to_payload())
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:] == ("catalog", "assets")
+            ):
+                reader = self._server().catalog_reader
+                if reader is None or not callable(getattr(reader, "create_asset", None)):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "catalog_unavailable",
+                        "catalog writer is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("catalog asset creation does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.admin"):
+                    return
+                asset = CatalogAsset.from_payload(self._read_json())
+                if not self._audit_mutation(
+                    actor, "catalog.asset.create", workspace_id, {"resource": str(asset.id)}
+                ):
+                    return
+                stored = reader.create_asset(workspace_id, asset, now=_now())
+                self._write_json(HTTPStatus.CREATED, stored.to_payload())
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:5] == ("catalog", "assets")
+                and segments[6] in {"sensitivity", "ownership"}
+            ):
+                reader = self._server().catalog_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "catalog_unavailable",
+                        "catalog service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("catalog governance mutation does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.admin"):
+                    return
+                asset_id = AssetId(unquote(segments[5]))
+                payload = self._read_json()
+                if segments[6] == "sensitivity":
+                    metadata = SensitivityMetadata.from_payload(payload)
+                    action = "catalog.sensitivity.put"
+                    method = getattr(reader, "put_sensitivity", None)
+                else:
+                    metadata = OwnershipMetadata.from_payload(payload)
+                    action = "catalog.ownership.put"
+                    method = getattr(reader, "put_ownership", None)
+                if not callable(method):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "catalog_governance_unavailable",
+                        "catalog governance writer is not configured",
+                    )
+                    return
+                if not self._audit_mutation(
+                    actor,
+                    action,
+                    workspace_id,
+                    {"resource": f"{asset_id}/{metadata.version}"},
+                ):
+                    return
+                stored = method(workspace_id, asset_id, metadata, now=_now())
+                self._write_json(HTTPStatus.CREATED, stored.to_payload())
+                return
             if not self._registered_path(segments):
                 self._method_or_not_found("POST", segments)
                 return
@@ -795,6 +3051,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             ):
                 runner = self._server().workflow_runner
                 if runner is None:
+                    self._discard_request_body()
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -815,6 +3072,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 idempotency_key = payload["idempotency_key"]
                 if not isinstance(idempotency_key, str) or not idempotency_key.strip():
                     raise ValueError("idempotency_key must be a non-empty string")
+                if not self._audit_mutation(
+                    actor,
+                    "workflow.run.create",
+                    workspace_id,
+                    {"resource": str(workflow_id)},
+                ):
+                    return
                 run = runner.create_workflow_run(
                     workspace_id,
                     workflow_id,
@@ -822,6 +3086,281 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     idempotency_key=idempotency_key,
                 )
                 self._write_json(HTTPStatus.CREATED, run.to_payload())
+                return
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "events"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("event ingestion does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "scheduler.write"):
+                    return
+                payload = self._read_json()
+                if not isinstance(payload, dict):
+                    raise ValueError("event body must be a JSON object")
+                required = {"event_id", "event_type", "payload_digest", "occurred_at"}
+                if set(payload) - required - {
+                    "source_ref",
+                    "subject_ref",
+                    "received_at",
+                } or not required.issubset(payload):
+                    raise ValueError("event body has invalid fields")
+                event = SchedulerEventRecord(
+                    workspace_id,
+                    SchedulerEventId(payload["event_id"]),
+                    payload["event_type"],
+                    payload.get("source_ref"),
+                    payload.get("subject_ref"),
+                    payload["payload_digest"],
+                    Instant(payload["occurred_at"]),
+                    Instant(payload.get("received_at", _now())),
+                )
+                if not self._audit_mutation(
+                    actor,
+                    "scheduler.event.ingest",
+                    workspace_id,
+                    {"resource": event.id.value},
+                ):
+                    return
+                deliveries = reader.ingest_event(event)
+                self._write_json(
+                    HTTPStatus.ACCEPTED,
+                    {
+                        "event_id": event.id.value,
+                        "deliveries": [delivery.state for delivery in deliveries],
+                    },
+                )
+                return
+            if (
+                len(segments) in {4, 5}
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "backfills"
+                and (len(segments) == 4 or segments[4] == "preview")
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(
+                    actor,
+                    workspace_id,
+                    "scheduler.read" if segments[4:] == ("preview",) else "scheduler.write",
+                ):
+                    return
+                payload = self._read_json()
+                if segments[4:] == ("preview",):
+                    if (
+                        not isinstance(payload, dict)
+                        or set(payload) - {"schedule_id", "start_at", "end_at", "max_runs"}
+                        or not {"schedule_id", "start_at", "end_at"}.issubset(payload)
+                    ):
+                        raise ValueError("backfill preview body has invalid fields")
+                    values = reader.preview_backfill(
+                        workspace_id,
+                        ScheduleId(payload["schedule_id"]),
+                        start_at=Instant(payload["start_at"]),
+                        end_at=Instant(payload["end_at"]),
+                        max_runs=payload.get("max_runs", 1000),
+                    )
+                    self._write_json(HTTPStatus.OK, {"items": [str(value) for value in values]})
+                    return
+                if query:
+                    raise ValueError("backfill creation does not accept query parameters")
+                if not isinstance(payload, dict) or set(payload) != {
+                    "id",
+                    "schedule_id",
+                    "start_at",
+                    "end_at",
+                }:
+                    raise ValueError(
+                        "backfill body must contain exactly id, schedule_id, start_at, end_at"
+                    )
+                request = BackfillRequest(
+                    BackfillId(payload["id"]),
+                    ScheduleId(payload["schedule_id"]),
+                    Instant(payload["start_at"]),
+                    Instant(payload["end_at"]),
+                )
+                if not self._audit_mutation(
+                    actor,
+                    "scheduler.backfill.create",
+                    workspace_id,
+                    {"resource": request.id.value},
+                ):
+                    return
+                stored = reader.create_backfill(workspace_id, request)
+                self._write_json(
+                    HTTPStatus.CREATED,
+                    {
+                        "id": stored.id.value,
+                        "schedule_id": stored.schedule_id.value,
+                        "start_at": str(stored.start_at),
+                        "end_at": str(stored.end_at),
+                        "state": stored.state,
+                    },
+                )
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "backfills"
+                and segments[5] == "cancel"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("backfill cancellation does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "scheduler.write"):
+                    return
+                if not self._audit_mutation(
+                    actor,
+                    "scheduler.backfill.cancel",
+                    workspace_id,
+                    {"resource": segments[4]},
+                ):
+                    return
+                stored = reader.cancel_backfill(workspace_id, BackfillId(segments[4]))
+                self._write_json(HTTPStatus.OK, {"id": stored.id.value, "state": stored.state})
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "graphs"
+                and segments[5] == "actions"
+            ):
+                reader = self._server().graph_action_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "graph_action_unavailable",
+                        "graph actions are not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.write"):
+                    return
+                payload = self._read_json()
+                if not isinstance(payload, dict):
+                    raise ValueError("graph action body must be a JSON object")
+                if not self._audit_mutation(
+                    actor,
+                    "graph.action.execute",
+                    workspace_id,
+                    {"resource": segments[4]},
+                ):
+                    return
+                result = reader.execute_action_payload(segments[4], payload)
+                self._write_json(HTTPStatus.OK, result)
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "graphs"
+                and segments[5] == "neighbors"
+            ):
+                reader = self._server().graph_query_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "graph_unavailable",
+                        "graph query is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                payload = self._read_json()
+                if (
+                    not isinstance(payload, dict)
+                    or set(payload) - {"object_type", "key", "limit"}
+                    or not {"object_type", "key"}.issubset(payload)
+                ):
+                    raise ValueError("neighbor body must contain object_type and key")
+                object_type, key = payload["object_type"], payload["key"]
+                limit = payload.get("limit", 100)
+                if (
+                    not isinstance(object_type, str)
+                    or not isinstance(key, list)
+                    or not isinstance(limit, int)
+                    or isinstance(limit, bool)
+                ):
+                    raise TypeError("neighbor fields have invalid types")
+                ref = KnowledgeObjectRef(object_type, tuple(tuple(item) for item in key))
+                neighbors = reader.neighbors(segments[4], ref, limit=limit)
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "items": [
+                            {"object_type": item.object_type, "key": list(item.key)}
+                            for item in neighbors
+                        ]
+                    },
+                )
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "graphs"
+                and segments[5] == "query"
+            ):
+                reader = self._server().graph_query_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "graph_unavailable",
+                        "graph query is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                payload = self._read_json()
+                if (
+                    not isinstance(payload, dict)
+                    or set(payload) - {"query", "max_limit"}
+                    or "query" not in payload
+                ):
+                    raise ValueError("graph query body must contain query and optional max_limit")
+                query = payload["query"]
+                max_limit = payload.get("max_limit", 1000)
+                if (
+                    not isinstance(query, str)
+                    or not isinstance(max_limit, int)
+                    or isinstance(max_limit, bool)
+                ):
+                    raise TypeError("graph query fields have invalid types")
+                result = reader.query(segments[4], query, max_limit=max_limit)
+                objects = [
+                    {
+                        "object_type": item.ref.object_type,
+                        "key": list(item.ref.key),
+                        "properties": list(item.properties),
+                    }
+                    for item in result.objects
+                ]
+                self._write_json(HTTPStatus.OK, {"objects": objects})
                 return
             if (
                 len(segments) == 6
@@ -843,11 +3382,131 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 run_id = WorkflowRunId(segments[4])
                 if not self._authorize(actor, workspace_id, "scheduler.write"):
                     return
+                if not self._audit_mutation(
+                    actor,
+                    "workflow.run.cancel",
+                    workspace_id,
+                    {"resource": run_id.value},
+                ):
+                    return
                 cancelled_jobs = canceller.cancel_workflow_run(workspace_id, run_id)
                 self._write_json(
                     HTTPStatus.OK,
                     {"workflow_run_id": run_id.value, "cancelled_jobs": cancelled_jobs},
                 )
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "environments"
+                and segments[5] == "diff"
+            ):
+                service = self._server().environment_service
+                if service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "environments_unavailable",
+                        "environment service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                environment_id = EnvironmentId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "workspace.read", resource_ref=str(environment_id)
+                ):
+                    return
+                proposed = EnvironmentDefinition.from_payload(self._read_json())
+                if proposed.id != environment_id:
+                    raise ValueError("environment id must match the request path")
+                result = diff_environments(service.get(workspace_id, environment_id), proposed)
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "environment_id": str(result.environment_id),
+                        "changed": result.changed,
+                        "changed_fields": list(result.changed_fields),
+                    },
+                )
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:] == ("quality", "runs")
+            ):
+                reader = self._server().quality_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "quality_unavailable",
+                        "quality service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("quality run does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "project.write"):
+                    return
+                body = self._read_json()
+                if not isinstance(body, dict):
+                    raise ValueError("quality run body must be an object")
+                if not self._audit_mutation(
+                    actor,
+                    "quality.run.create",
+                    workspace_id,
+                    {"resource": str(body.get("asset_id", "quality-run"))},
+                ):
+                    return
+                self._write_json(HTTPStatus.CREATED, reader.run(workspace_id, body, now=_now()))
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:] == ("alerts", "evaluate")
+            ):
+                reader = self._server().alert_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "alerts_unavailable",
+                        "alert service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("alert evaluation does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.write"):
+                    return
+                body = self._read_json()
+                if not self._audit_mutation(
+                    actor, "alert.evaluate", workspace_id, {"resource": "alert"}
+                ):
+                    return
+                self._write_json(HTTPStatus.OK, reader.evaluate(body, now=_now()))
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:] == ("alerts", "acknowledge")
+            ):
+                reader = self._server().alert_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "alerts_unavailable",
+                        "alert service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("alert acknowledgement does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.write"):
+                    return
+                body = self._read_json()
+                if not self._audit_mutation(
+                    actor, "alert.acknowledge", workspace_id, {"resource": "alert"}
+                ):
+                    return
+                self._write_json(HTTPStatus.OK, reader.acknowledge(body, now=_now()))
                 return
             if (
                 len(segments) == 4
@@ -864,6 +3523,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     or self.headers.get("Transfer-Encoding") is not None
                 ):
                     raise ValueError("workspace archive does not accept a request body")
+                if not self._audit_mutation(
+                    actor,
+                    "workspace.archive",
+                    workspace_id,
+                    {"resource": str(workspace_id)},
+                ):
+                    return
                 workspace = self._server().workspace_service.archive(workspace_id, now=_now())
                 self._write_json(HTTPStatus.OK, _workspace_payload(workspace))
                 return
@@ -881,8 +3547,71 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not isinstance(payload, dict):
                     raise ValueError("project manifest body must be a JSON object")
                 manifest = ProjectManifest.from_data(payload)
+                if not self._audit_mutation(
+                    actor,
+                    "project.register",
+                    workspace_id,
+                    {"resource": str(manifest.project.id)},
+                ):
+                    return
                 stored = self._server().project_service.register(workspace_id, manifest, now=_now())
                 self._write_json(HTTPStatus.CREATED, _manifest_payload(stored))
+                return
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "environments"
+            ):
+                service = self._server().environment_service
+                if service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "environments_unavailable",
+                        "environment service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.write"):
+                    return
+                environment = EnvironmentDefinition.from_payload(self._read_json())
+                if not self._audit_mutation(
+                    actor,
+                    "environment.create",
+                    workspace_id,
+                    {"resource": str(environment.id)},
+                ):
+                    return
+                stored = service.create(workspace_id, environment, now=_now())
+                self._write_json(HTTPStatus.CREATED, stored.to_payload())
+                return
+            if len(segments) == 6 and segments[3] == "environments" and segments[5] == "disable":
+                service = self._server().environment_service
+                if service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "environments_unavailable",
+                        "environment service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                environment_id = EnvironmentId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "workspace.write", resource_ref=str(environment_id)
+                ):
+                    return
+                if self._read_json() not in ({}, None):
+                    raise ValueError("environment disable body must be empty")
+                if not self._audit_mutation(
+                    actor,
+                    "environment.disable",
+                    workspace_id,
+                    {"resource": str(environment_id)},
+                ):
+                    return
+                self._write_json(
+                    HTTPStatus.OK,
+                    service.disable(workspace_id, environment_id, now=_now()).to_payload(),
+                )
                 return
             self._method_or_not_found("POST", segments)
         except Exception as exc:
@@ -923,6 +3652,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             resource_ref=project_id,
                         ):
                             return
+                        if not self._audit_mutation(
+                            actor,
+                            "plugin.put",
+                            workspace_id,
+                            {"resource": urlsplit(self.path).path},
+                        ):
+                            return
                         payload = plugin_host.invoke_route(
                             "PUT",
                             urlsplit(self.path).path,
@@ -931,6 +3667,41 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         )
                         self._write_json(HTTPStatus.OK, payload)
                         return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:7] == ("semantic", "dashboards")
+            ):
+                reader = self._server().semantic_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "semantic_unavailable",
+                        "semantic service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("dashboard replacement does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                dashboard_id = unquote(segments[7])
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=project_id
+                ):
+                    return
+                body = self._read_json()
+                if not isinstance(body, dict) or body.get("id") != dashboard_id:
+                    raise ValueError("dashboard body id must match dashboard_id path parameter")
+                if not self._audit_mutation(
+                    actor,
+                    "semantic.dashboard.replace",
+                    workspace_id,
+                    {"resource": f"{project_id}/{dashboard_id}"},
+                ):
+                    return
+                self._write_json(HTTPStatus.OK, reader.put_dashboard(project_id, body))
+                return
             if not self._registered_path(segments):
                 self._method_or_not_found("PUT", segments)
                 return
@@ -947,14 +3718,208 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.write", resource_ref=str(project_id)
                 ):
                     return
+                try:
+                    current = self._server().project_service.get(workspace_id, project_id)
+                except (WorkspaceServiceNotFound, WorkspaceServiceConflict):
+                    self._discard_request_body()
+                    raise
+                if not self._check_if_match(_manifest_payload(current)):
+                    return
                 payload = self._read_json()
                 if not isinstance(payload, dict):
                     raise ValueError("project manifest body must be a JSON object")
                 manifest = ProjectManifest.from_data(payload)
                 if manifest.project.id != project_id:
                     raise ValueError("project manifest id must match the request path")
+                if not self._audit_mutation(
+                    actor,
+                    "project.replace",
+                    workspace_id,
+                    {"resource": str(project_id)},
+                ):
+                    return
                 stored = self._server().project_service.replace(workspace_id, manifest, now=_now())
-                self._write_json(HTTPStatus.OK, _manifest_payload(stored))
+                result = _manifest_payload(stored)
+                self._write_json(HTTPStatus.OK, result, etag=_etag(result))
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "schedules"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("schedule replacement does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                schedule_id = ScheduleId(segments[4])
+                if not self._authorize(
+                    actor,
+                    workspace_id,
+                    "scheduler.write",
+                    resource_ref=schedule_id.value,
+                ):
+                    return
+                payload = self._read_json()
+                if not isinstance(payload, dict):
+                    raise ValueError("schedule body must be a JSON object")
+                schedule = Schedule.from_payload(payload)
+                if schedule.id != schedule_id:
+                    raise ValueError("schedule id must match the request path")
+                if not self._audit_mutation(
+                    actor,
+                    "scheduler.schedule.replace",
+                    workspace_id,
+                    {"resource": schedule_id.value},
+                ):
+                    return
+                stored = reader.put_schedule(workspace_id, schedule)
+                self._write_json(HTTPStatus.OK, stored.to_payload())
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "event-triggers"
+            ):
+                reader = self._server().workflow_reader
+                if reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "workflow scheduler is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("event trigger replacement does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                trigger_id = segments[4]
+                if not self._authorize(
+                    actor, workspace_id, "scheduler.write", resource_ref=trigger_id
+                ):
+                    return
+                payload = self._read_json()
+                if not isinstance(payload, dict):
+                    raise ValueError("event trigger body must be a JSON object")
+                trigger = EventTriggerDefinition.from_payload(payload)
+                if trigger.id.value != trigger_id:
+                    raise ValueError("event trigger id must match the request path")
+                if not self._audit_mutation(
+                    actor,
+                    "scheduler.event_trigger.replace",
+                    workspace_id,
+                    {"resource": trigger_id},
+                ):
+                    return
+                stored = reader.put_event_trigger(workspace_id, trigger)
+                self._write_json(HTTPStatus.OK, stored.to_payload())
+                return
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "environments"
+            ):
+                service = self._server().environment_service
+                if service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "environments_unavailable",
+                        "environment service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("environment replacement does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                environment_id = EnvironmentId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "workspace.write", resource_ref=str(environment_id)
+                ):
+                    return
+                current = service.get(workspace_id, environment_id)
+                if not self._check_if_match(current.to_payload()):
+                    return
+                environment = EnvironmentDefinition.from_payload(self._read_json())
+                if environment.id != environment_id:
+                    raise ValueError("environment id must match the request path")
+                if not self._audit_mutation(
+                    actor,
+                    "environment.replace",
+                    workspace_id,
+                    {"resource": str(environment_id)},
+                ):
+                    return
+                result = service.replace(workspace_id, environment, now=_now()).to_payload()
+                self._write_json(HTTPStatus.OK, result, etag=_etag(result))
+                return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "environments"
+                and segments[7] == "bindings"
+            ):
+                service = self._server().binding_service
+                if service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "environments_unavailable",
+                        "binding service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                project_id = ProjectId(segments[4])
+                environment_id = EnvironmentId(segments[6])
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=str(project_id)
+                ):
+                    return
+                bindings = ProjectEnvironmentBindings.from_payload(self._read_json())
+                if bindings.project_id != project_id or bindings.environment_id != environment_id:
+                    raise ValueError("binding ids must match the request path")
+                if not self._audit_mutation(
+                    actor,
+                    "environment.binding.replace",
+                    workspace_id,
+                    {"resource": f"{project_id}/{environment_id}"},
+                ):
+                    return
+                self._write_json(
+                    HTTPStatus.OK, service.put(workspace_id, bindings, now=_now()).to_payload()
+                )
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3:5] == ("catalog", "assets")
+            ):
+                reader = self._server().catalog_reader
+                if reader is None or not callable(getattr(reader, "replace_asset", None)):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "catalog_unavailable",
+                        "catalog writer is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("catalog asset replacement does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.admin"):
+                    return
+                asset = CatalogAsset.from_payload(self._read_json())
+                asset_id = AssetId(unquote(segments[5]))
+                if asset.id != asset_id:
+                    raise ValueError("catalog asset id must match the request path")
+                if not self._audit_mutation(
+                    actor, "catalog.asset.replace", workspace_id, {"resource": str(asset.id)}
+                ):
+                    return
+                stored = reader.replace_asset(workspace_id, asset, now=_now())
+                self._write_json(HTTPStatus.OK, stored.to_payload())
                 return
             self._method_or_not_found("PUT", segments)
         except Exception as exc:
@@ -997,6 +3962,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             resource_ref=project_id,
                         ):
                             return
+                        if not self._audit_mutation(
+                            actor,
+                            "plugin.delete",
+                            workspace_id,
+                            {"resource": urlsplit(self.path).path},
+                        ):
+                            return
                         payload = plugin_host.invoke_route(
                             "DELETE", urlsplit(self.path).path, query=query
                         )
@@ -1023,6 +3995,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     or self.headers.get("Transfer-Encoding") is not None
                 ):
                     raise ValueError("project unregister does not accept a request body")
+                if not self._audit_mutation(
+                    actor,
+                    "project.unregister",
+                    workspace_id,
+                    {"resource": str(project_id)},
+                ):
+                    return
                 self._server().project_service.unregister(workspace_id, project_id)
                 self._write_json(
                     HTTPStatus.OK, {"unregistered": True, "project_id": str(project_id)}
@@ -1039,12 +4018,14 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             if _registered_path_matches(registered_path, segments)
         }
         if route_methods and method not in route_methods:
+            self._discard_request_body()
             self._error(
                 HTTPStatus.METHOD_NOT_ALLOWED,
                 "method_not_allowed",
                 f"method {method} is not allowed for this route",
             )
         else:
+            self._discard_request_body()
             self._error(HTTPStatus.NOT_FOUND, "not_found", "route does not exist")
 
     @staticmethod
@@ -1063,4 +4044,5 @@ __all__ = (
     "ControlPlaneAuthorizer",
     "ControlPlaneUnavailable",
     "WorkspaceProjectHTTPServer",
+    "SqlReader",
 )

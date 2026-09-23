@@ -35,6 +35,25 @@ class WorkspaceApplication:
             raise LookupError(f"workspace service is unavailable: {workspace_id}")
         return self._workspace_port.get(workspace_id)
 
+    def create(self, workspace: Workspace, *, now: object) -> Workspace:
+        if self._workspace_port is None:
+            raise LookupError("workspace service is unavailable")
+        return self._workspace_port.create(workspace, now=now)
+
+    def update(
+        self, workspace_id: WorkspaceId, *, name: str, description: str | None, now: object
+    ) -> Workspace:
+        if self._workspace_port is None:
+            raise LookupError("workspace service is unavailable")
+        return self._workspace_port.update(
+            workspace_id, name=name, description=description, now=now
+        )
+
+    def archive(self, workspace_id: WorkspaceId, *, now: object) -> Workspace:
+        if self._workspace_port is None:
+            raise LookupError("workspace service is unavailable")
+        return self._workspace_port.archive(workspace_id, now=now)
+
 
 class ProjectApplication:
     """Project use cases exposed without importing the legacy service."""
@@ -91,6 +110,11 @@ class ProjectApplication:
             raise LookupError("project service is unavailable")
         self._project_port.unregister(workspace_id, project_id)
 
+    def archive(self, workspace_id: WorkspaceId, project_id: ProjectId, *, now: object) -> bool:
+        if self._project_port is None:
+            raise LookupError("project service is unavailable")
+        return self._project_port.archive(workspace_id, project_id, now=now)
+
 
 def parse_page_query(query: str | None) -> tuple[int, int]:
     """Parse a bounded plugin cursor without accepting duplicate parameters."""
@@ -125,5 +149,6 @@ def parse_page_query(query: str | None) -> tuple[int, int]:
     if offset < 0:
         raise ValueError("plugin cursor is invalid")
     return limit, offset
+
 
 __all__ = ("ProjectApplication", "WorkspaceApplication", "parse_page_query")

@@ -63,6 +63,8 @@ def qualify_fixture(
     missing = set(required_source_ids) - ids
     if missing:
         raise ValueError(f"migration fixture report omits source objects: {sorted(missing)}")
+    if not report.objects:
+        raise ValueError("migration fixture report contains no source objects")
     for item in report.objects:
         for note in item.notes:
             folded = note.casefold()

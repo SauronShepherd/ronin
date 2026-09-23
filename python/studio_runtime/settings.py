@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import MappingProxyType
 
 
@@ -13,10 +15,21 @@ class PluginSettingsError(ValueError):
 
 
 @dataclass(frozen=True, slots=True)
+class SecretReference:
+    """Portable reference to a secret; the referenced value never enters settings."""
+
+    uri: str
+
+    def __post_init__(self) -> None:
+        if not self.uri.startswith("secret://") or len(self.uri) <= len("secret://"):
+            raise PluginSettingsError("secret references must use a non-empty secret:// URI")
+
+
+@dataclass(frozen=True, slots=True)
 class PluginSettingsSpec:
     plugin_id: str
     keys: tuple[str, ...] = ()
-    defaults: Mapping[str, object] = MappingProxyType({})
+    defaults: Mapping[str, object] = field(default_factory=lambda: MappingProxyType({}))
     secret_keys: frozenset[str] = frozenset()
     reloadable_keys: frozenset[str] = frozenset()
 
@@ -62,6 +75,8 @@ class PluginSettingsRegistry:
                     raise PluginSettingsError(f"unknown setting {key} for {plugin_id}")
                 if not value.strip():
                     raise PluginSettingsError(f"setting {key} must not be empty")
+                if setting in spec.secret_keys and not value.startswith("secret://"):
+                    raise PluginSettingsError(f"secret setting {key} must be a secret:// reference")
                 values[setting] = value
             self._values[plugin_id] = values
 
@@ -72,6 +87,12 @@ class PluginSettingsRegistry:
         unknown = set(values) - set(spec.keys)
         if unknown:
             raise PluginSettingsError(f"unknown settings for {plugin_id}: {sorted(unknown)}")
+        for key in spec.secret_keys & set(values):
+            value = values[key]
+            if not isinstance(value, SecretReference) and not (
+                isinstance(value, str) and value.startswith("secret://")
+            ):
+                raise PluginSettingsError(f"secret setting {key} must be a secret:// reference")
         merged = dict(spec.defaults)
         merged.update(values)
         self._values[plugin_id] = merged
@@ -97,5 +118,18 @@ class PluginSettingsRegistry:
             for plugin_id, spec in sorted(self._specs.items())
         }
 
+    def digest(self, plugin_id: str) -> str:
+        """Return a stable digest over redacted effective settings for evidence."""
+        payload = self.redacted().get(plugin_id)
+        if payload is None:
+            raise PluginSettingsError(f"unknown plugin settings schema: {plugin_id}")
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode()
+        return hashlib.sha256(encoded).hexdigest()
 
-__all__ = ("PluginSettingsError", "PluginSettingsRegistry", "PluginSettingsSpec")
+
+__all__ = (
+    "PluginSettingsError",
+    "PluginSettingsRegistry",
+    "PluginSettingsSpec",
+    "SecretReference",
+)

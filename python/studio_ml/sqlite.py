@@ -11,7 +11,7 @@ from studio_core import WorkspaceId
 from studio_orchestrator import Instant
 from studio_storage.sqlite import open_database
 
-from .domain import Lab, PipelineIR, PipelineNode
+from .domain import FeatureDefinition, Lab, PipelineIR, PipelineNode
 from .orchestration import ExecutionSnapshot, ExecutionStore
 from .ports import MLLabStore
 from .services import MLLabConflict
@@ -33,6 +33,9 @@ class SqliteMLLabStore(MLLabStore):
             )
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS ml_studio_executions (run_id TEXT PRIMARY KEY, state TEXT NOT NULL, error TEXT, result_json TEXT)"
+            )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS ml_studio_features (workspace_id TEXT NOT NULL, feature_id TEXT NOT NULL, version INTEGER NOT NULL, feature_json TEXT NOT NULL, PRIMARY KEY(workspace_id, feature_id, version))"
             )
             connection.execute(
                 "INSERT OR IGNORE INTO ml_studio_schema_migrations(version, applied_at) VALUES (1, ?)",
@@ -112,17 +115,60 @@ class SqliteMLLabStore(MLLabStore):
             ).fetchone()
             if row is None:
                 return None
-            from studio_core.canonical_json import decode
+            raw = row["pipeline_json"]
+            if isinstance(raw, bytes):
+                raw = raw.decode("utf-8")
+            if not isinstance(raw, str):
+                raise ValueError("stored ML pipeline must be JSON text")
+            return PipelineIR.from_json(raw)
+        finally:
+            connection.close()
 
-            payload = decode(row["pipeline_json"])
-            return PipelineIR(
-                tuple(
-                    PipelineNode(item["id"], item["kind"], tuple(item["depends_on"]))
-                    for item in payload["nodes"]
-                ),
-                tuple(sorted(payload["parameters"].items())),
-                payload["schema"],
+    def put_feature_definition(
+        self, workspace_id: WorkspaceId, definition: FeatureDefinition
+    ) -> FeatureDefinition:
+        connection = self._connect()
+        try:
+            connection.execute(
+                "INSERT OR REPLACE INTO ml_studio_features(workspace_id,feature_id,version,feature_json) VALUES (?,?,?,?)",
+                (str(workspace_id), definition.id, definition.version, definition.to_json()),
             )
+            return definition
+        finally:
+            connection.close()
+
+    def get_feature_definition(
+        self, workspace_id: WorkspaceId, feature_id: str, version: int | None = None
+    ) -> FeatureDefinition | None:
+        connection = self._connect()
+        try:
+            if version is None:
+                row = connection.execute(
+                    "SELECT feature_json FROM ml_studio_features WHERE workspace_id=? AND feature_id=? ORDER BY version DESC LIMIT 1",
+                    (str(workspace_id), feature_id),
+                ).fetchone()
+            else:
+                row = connection.execute(
+                    "SELECT feature_json FROM ml_studio_features WHERE workspace_id=? AND feature_id=? AND version=?",
+                    (str(workspace_id), feature_id, version),
+                ).fetchone()
+            return None if row is None else FeatureDefinition.from_json(row["feature_json"])
+        finally:
+            connection.close()
+
+    def list_feature_definitions(
+        self, workspace_id: WorkspaceId, feature_id: str | None = None
+    ) -> tuple[FeatureDefinition, ...]:
+        connection = self._connect()
+        try:
+            query = "SELECT feature_json FROM ml_studio_features WHERE workspace_id=?"
+            args: tuple[object, ...] = (str(workspace_id),)
+            if feature_id is not None:
+                query += " AND feature_id=?"
+                args += (feature_id,)
+            query += " ORDER BY feature_id,version"
+            rows = connection.execute(query, args).fetchall()
+            return tuple(FeatureDefinition.from_json(row["feature_json"]) for row in rows)
         finally:
             connection.close()
 
@@ -143,7 +189,11 @@ class SqliteExecutionStore(ExecutionStore):
     def put(self, snapshot: ExecutionSnapshot) -> None:
         connection = open_database(self._path)
         try:
-            payload = snapshot.result.to_payload() if snapshot.result is not None else snapshot.result_payload
+            payload = (
+                snapshot.result.to_payload()
+                if snapshot.result is not None
+                else snapshot.result_payload
+            )
             result = None if payload is None else json.dumps(payload, sort_keys=True)
             connection.execute(
                 "INSERT OR REPLACE INTO ml_studio_executions(run_id,state,error,result_json) VALUES (?,?,?,?)",

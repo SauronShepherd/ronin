@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from studio_execution.branching import UnsupportedBranchExpression, evaluate_branch
+from studio_execution.branching import BranchDecision, UnsupportedBranchExpression, evaluate_branch
 
 
 def test_branch_composition_is_deterministic_and_explicitly_runs_or_skips() -> None:
@@ -23,3 +23,13 @@ def test_branch_evaluation_fails_closed_for_unknown_or_malformed_input() -> None
         evaluate_branch({"op": "python", "source": "True"}, {})
     with pytest.raises(UnsupportedBranchExpression):
         evaluate_branch({"op": "equals", "field": "x", "value": {"nested": True}}, {})
+
+
+def test_branch_decision_has_strict_canonical_round_trip() -> None:
+    decision = BranchDecision(False, "predicate_false_skip")
+    assert BranchDecision.from_json(decision.to_json()) == decision
+    assert len(decision.digest) == 64
+    invalid = decision.to_payload()
+    invalid["version"] = 2
+    with pytest.raises(ValueError, match="version"):
+        BranchDecision.from_payload(invalid)

@@ -28,7 +28,7 @@ def test_round_robin_and_bounds():
     proxy = LocalModelProxy(
         endpoints,
         policy=RoutingPolicy(strategy="round_robin"),
-        transport=lambda endpoint, *_: (seen.append(endpoint.id) or (200, {})),
+        transport=lambda endpoint, *_: seen.append(endpoint.id) or (200, {}),
     )
     proxy.forward("/responses", {"model": "m"})
     proxy.forward("/responses", {"model": "m"})

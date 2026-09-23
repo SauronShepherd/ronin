@@ -117,7 +117,12 @@ class PrivacyAssessment:
     warnings: tuple[str, ...]
 
     def to_payload(self) -> dict[str, object]:
-        return {"status": self.status, "generated_rows": self.generated_rows, "exact_row_matches": self.exact_row_matches, "warnings": list(self.warnings)}
+        return {
+            "status": self.status,
+            "generated_rows": self.generated_rows,
+            "exact_row_matches": self.exact_row_matches,
+            "warnings": list(self.warnings),
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -335,14 +340,33 @@ def validate(plan: GenerationPlan, result: GenerationResult) -> ValidationReport
     return ValidationReport(not errors, tuple(checks), tuple(errors), evidence)
 
 
-def assess_privacy(result: GenerationResult, source_sample: dict[str, tuple[dict[str, object], ...]] | None = None) -> PrivacyAssessment:
+def assess_privacy(
+    result: GenerationResult, source_sample: dict[str, tuple[dict[str, object], ...]] | None = None
+) -> PrivacyAssessment:
     """Assess exact row reuse; this is evidence, not an anonymity guarantee."""
     generated = [row for table in result.tables for row in table.rows]
     if source_sample is None:
-        return PrivacyAssessment("not_assessed", len(generated), 0, ("no source sample supplied; synthetic output is not proven anonymous",))
-    source_rows = {json.dumps(row, sort_keys=True, default=str, separators=(",", ":")) for rows in source_sample.values() for row in rows}
-    matches = sum(json.dumps(row, sort_keys=True, default=str, separators=(",", ":")) in source_rows for row in generated)
-    return PrivacyAssessment("review_required" if matches else "no_exact_matches_observed", len(generated), matches, ("exact generated rows match source sample",) if matches else ())
+        return PrivacyAssessment(
+            "not_assessed",
+            len(generated),
+            0,
+            ("no source sample supplied; synthetic output is not proven anonymous",),
+        )
+    source_rows = {
+        json.dumps(row, sort_keys=True, default=str, separators=(",", ":"))
+        for rows in source_sample.values()
+        for row in rows
+    }
+    matches = sum(
+        json.dumps(row, sort_keys=True, default=str, separators=(",", ":")) in source_rows
+        for row in generated
+    )
+    return PrivacyAssessment(
+        "review_required" if matches else "no_exact_matches_observed",
+        len(generated),
+        matches,
+        ("exact generated rows match source sample",) if matches else (),
+    )
 
 
 __all__ = [

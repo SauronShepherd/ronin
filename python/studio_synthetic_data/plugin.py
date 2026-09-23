@@ -72,39 +72,67 @@ class SyntheticDataStudioPlugin:
         )
         for contribution in (
             SurfaceContribution(
-                id="synthetic-data.formats.v1", plugin_id=context.plugin_id,
-                namespace="synthetic-data", command="formats",
-                operation_id="synthetic-data.formats.v1", capability="synthetic-data-studio.plan.v1",
-                permission="synthetic:read", path="/v1/synthetic-data-studio/formats", method="GET",
+                id="synthetic-data.formats.v1",
+                plugin_id=context.plugin_id,
+                namespace="synthetic-data",
+                command="formats",
+                operation_id="synthetic-data.formats.v1",
+                capability="synthetic-data-studio.plan.v1",
+                permission="synthetic:read",
+                path="/v1/synthetic-data-studio/formats",
+                method="GET",
                 output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="synthetic-data.health.v1", plugin_id=context.plugin_id,
-                namespace="synthetic-data", command="health",
-                operation_id="synthetic-data.health.v1", capability="synthetic-data-studio.plan.v1",
-                permission="synthetic:read", path="/v1/synthetic-data-studio/health", method="GET",
+                id="synthetic-data.health.v1",
+                plugin_id=context.plugin_id,
+                namespace="synthetic-data",
+                command="health",
+                operation_id="synthetic-data.health.v1",
+                capability="synthetic-data-studio.plan.v1",
+                permission="synthetic:read",
+                path="/v1/synthetic-data-studio/health",
+                method="GET",
                 output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="synthetic-data.plan.v1", plugin_id=context.plugin_id,
-                namespace="synthetic-data", command="create-plan",
-                operation_id="synthetic-data.plan.v1", capability="synthetic-data-studio.plan.v1",
-                permission="synthetic:write", path="/v1/synthetic-data-studio/plans", method="POST",
-                input_schema={"type": "object"}, output_schema={"type": "object"},
+                id="synthetic-data.plan.v1",
+                plugin_id=context.plugin_id,
+                namespace="synthetic-data",
+                command="create-plan",
+                operation_id="synthetic-data.plan.v1",
+                capability="synthetic-data-studio.plan.v1",
+                permission="synthetic:write",
+                path="/v1/synthetic-data-studio/plans",
+                method="POST",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="synthetic-data.generate.v1", plugin_id=context.plugin_id,
-                namespace="synthetic-data", command="generate",
-                operation_id="synthetic-data.generate.v1", capability="synthetic-data-studio.generate.v1",
-                permission="synthetic:execute", path="/v1/synthetic-data-studio/generate", method="POST",
-                input_schema={"type": "object"}, output_schema={"type": "object"},
+                id="synthetic-data.generate.v1",
+                plugin_id=context.plugin_id,
+                namespace="synthetic-data",
+                command="generate",
+                operation_id="synthetic-data.generate.v1",
+                capability="synthetic-data-studio.generate.v1",
+                permission="synthetic:execute",
+                path="/v1/synthetic-data-studio/generate",
+                method="POST",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="synthetic-data.validate.v1", plugin_id=context.plugin_id,
-                namespace="synthetic-data", command="validate",
-                operation_id="synthetic-data.validate.v1", capability="synthetic-data-studio.validate.v1",
-                permission="synthetic:read", path="/v1/synthetic-data-studio/validate", method="POST",
-                input_schema={"type": "object"}, output_schema={"type": "object"},
+                id="synthetic-data.validate.v1",
+                plugin_id=context.plugin_id,
+                namespace="synthetic-data",
+                command="validate",
+                operation_id="synthetic-data.validate.v1",
+                capability="synthetic-data-studio.validate.v1",
+                permission="synthetic:read",
+                path="/v1/synthetic-data-studio/validate",
+                method="POST",
+                input_schema={"type": "object"},
+                output_schema={"type": "object"},
             ),
         ):
             context.contributions.add_surface(contribution)
@@ -129,9 +157,27 @@ class SyntheticDataStudioPlugin:
             self.generate,
             permission="synthetic:execute",
         )
-        context.contributions.add_route("POST", "/v1/synthetic-data-studio/generate/async", context.plugin_id, self.generate_async, permission="synthetic:execute")
-        context.contributions.add_route("GET", "/v1/synthetic-data-studio/jobs/{job_id}", context.plugin_id, self.get_generation_job, permission="synthetic:read")
-        context.contributions.add_route("POST", "/v1/synthetic-data-studio/jobs/{job_id}/cancel", context.plugin_id, self.cancel_generation_job, permission="synthetic:execute")
+        context.contributions.add_route(
+            "POST",
+            "/v1/synthetic-data-studio/generate/async",
+            context.plugin_id,
+            self.generate_async,
+            permission="synthetic:execute",
+        )
+        context.contributions.add_route(
+            "GET",
+            "/v1/synthetic-data-studio/jobs/{job_id}",
+            context.plugin_id,
+            self.get_generation_job,
+            permission="synthetic:read",
+        )
+        context.contributions.add_route(
+            "POST",
+            "/v1/synthetic-data-studio/jobs/{job_id}/cancel",
+            context.plugin_id,
+            self.cancel_generation_job,
+            permission="synthetic:execute",
+        )
         context.contributions.add_route(
             "POST",
             "/v1/synthetic-data-studio/validate",
@@ -182,12 +228,18 @@ class SyntheticDataStudioPlugin:
             permission="synthetic:read",
         )
         context.contributions.add_route(
-            "GET", "/v1/synthetic-data-studio/catalog/namespaces", context.plugin_id,
-            self.list_catalog_namespaces, permission="synthetic:read"
+            "GET",
+            "/v1/synthetic-data-studio/catalog/namespaces",
+            context.plugin_id,
+            self.list_catalog_namespaces,
+            permission="synthetic:read",
         )
         context.contributions.add_route(
-            "POST", "/v1/synthetic-data-studio/catalog/namespaces", context.plugin_id,
-            self.register_catalog_namespace, permission="synthetic:write"
+            "POST",
+            "/v1/synthetic-data-studio/catalog/namespaces",
+            context.plugin_id,
+            self.register_catalog_namespace,
+            permission="synthetic:write",
         )
         context.contributions.add_route(
             "GET",
@@ -277,21 +329,40 @@ class SyntheticDataStudioPlugin:
             }
             if generated_report
             else None,
-            "privacy": assess_privacy(result, _source_sample(body)).to_payload() if result else None,
+            "privacy": assess_privacy(result, _source_sample(body)).to_payload()
+            if result
+            else None,
         }
 
     def generate_async(self, *, body: object | None = None, **_kwargs: Any) -> dict[str, object]:
         plan = _decode_plan(body)
-        job = self.jobs.submit(plan, idempotency_key=str(_kwargs.get("idempotency_key", "async-generate")))
-        return {"job_id": job.job_id, "run_id": job.run_id, "status": job.status, "contract": "synthetic-data-studio/jobs/v1"}
+        job = self.jobs.submit(
+            plan, idempotency_key=str(_kwargs.get("idempotency_key", "async-generate"))
+        )
+        return {
+            "job_id": job.job_id,
+            "run_id": job.run_id,
+            "status": job.status,
+            "contract": "synthetic-data-studio/jobs/v1",
+        }
 
     def get_generation_job(self, *, job_id: str, **_kwargs: Any) -> dict[str, object]:
         job = self.jobs.get(job_id)
-        return {"job_id": job.job_id, "run_id": job.run_id, "status": job.status, "error": job.error}
+        return {
+            "job_id": job.job_id,
+            "run_id": job.run_id,
+            "status": job.status,
+            "error": job.error,
+        }
 
     def cancel_generation_job(self, *, job_id: str, **_kwargs: Any) -> dict[str, object]:
         job = self.jobs.cancel(job_id)
-        return {"job_id": job.job_id, "run_id": job.run_id, "status": job.status, "error": job.error}
+        return {
+            "job_id": job.job_id,
+            "run_id": job.run_id,
+            "status": job.status,
+            "error": job.error,
+        }
 
     def validate(self, *, body: object | None = None, **_kwargs: Any) -> dict[str, object]:
         plan = _decode_plan(body)
@@ -368,11 +439,14 @@ class SyntheticDataStudioPlugin:
             }
         return response
 
-    def list_assets(self, *, body: object | None = None, query: str | None = None, **_kwargs: Any) -> dict[str, object]:
+    def list_assets(
+        self, *, body: object | None = None, query: str | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
         store, workspace_id = self._catalog_request(body, query)
         search = body.get("search") if isinstance(body, dict) else None
         if not isinstance(search, str) and query:
             from urllib.parse import parse_qs
+
             search = parse_qs(query).get("search", [None])[0]
         if isinstance(search, str) and search.strip():
             assets = store.search_assets(workspace_id, search)
@@ -391,41 +465,76 @@ class SyntheticDataStudioPlugin:
             "items": [profile.to_payload() for profile in list_local_catalog_profiles()],
         }
 
-    def resolve_catalog_identifier(self, *, body: object | None = None, **_kwargs: Any) -> dict[str, object]:
+    def resolve_catalog_identifier(
+        self, *, body: object | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
         if not isinstance(body, dict):
             raise ValueError("body must be an object")
         provider_id = body.get("provider_id")
         identifier = body.get("identifier")
         if not isinstance(provider_id, str) or not isinstance(identifier, str):
             raise ValueError("provider_id and identifier are required")
-        return {"provider_id": provider_id, "identifier": identifier, "namespace": resolve_local_identifier(provider_id, identifier)}
+        return {
+            "provider_id": provider_id,
+            "identifier": identifier,
+            "namespace": resolve_local_identifier(provider_id, identifier),
+        }
 
-    def list_catalog_namespaces(self, *, body: object | None = None, query: str | None = None, **_kwargs: Any) -> dict[str, object]:
+    def list_catalog_namespaces(
+        self, *, body: object | None = None, query: str | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
         store, workspace_id = self._catalog_request(body, query)
         provider = body.get("provider_id") if isinstance(body, dict) else None
-        return {"workspace_id": str(workspace_id), "items": list(store.list_namespaces(workspace_id, provider_id=provider if isinstance(provider, str) else None))}
+        return {
+            "workspace_id": str(workspace_id),
+            "items": list(
+                store.list_namespaces(
+                    workspace_id, provider_id=provider if isinstance(provider, str) else None
+                )
+            ),
+        }
 
-    def register_catalog_namespace(self, *, body: object | None = None, **_kwargs: Any) -> dict[str, object]:
+    def register_catalog_namespace(
+        self, *, body: object | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
         store, workspace_id = self._catalog_request(body)
-        if not isinstance(body, dict) or not isinstance(body.get("provider_id"), str) or not isinstance(body.get("identifier"), str) or not isinstance(body.get("namespace"), dict):
+        if (
+            not isinstance(body, dict)
+            or not isinstance(body.get("provider_id"), str)
+            or not isinstance(body.get("identifier"), str)
+            or not isinstance(body.get("namespace"), dict)
+        ):
             raise ValueError("workspace_id, provider_id, identifier and namespace are required")
         namespace = body["namespace"]
-        if not all(isinstance(key, str) and isinstance(value, str) for key, value in namespace.items()):
+        if not all(
+            isinstance(key, str) and isinstance(value, str) for key, value in namespace.items()
+        ):
             raise ValueError("namespace values must be strings")
-        return store.register_namespace(workspace_id, provider_id=body["provider_id"], identifier=body["identifier"], namespace=namespace, now="2026-01-01T00:00:00.000000Z")
+        return store.register_namespace(
+            workspace_id,
+            provider_id=body["provider_id"],
+            identifier=body["identifier"],
+            namespace=namespace,
+            now="2026-01-01T00:00:00.000000Z",
+        )
 
-    def get_asset(self, *, asset_id: str, body: object | None = None, query: str | None = None, **_kwargs: Any) -> dict[str, object]:
+    def get_asset(
+        self, *, asset_id: str, body: object | None = None, query: str | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
         store, workspace_id = self._catalog_request(body, query)
         asset = store.get_asset(workspace_id, AssetId(asset_id))
         if asset is None:
             raise KeyError(asset_id)
         return {"asset": asset.to_payload(), "workspace_id": str(workspace_id)}
 
-    def get_lineage(self, *, asset_id: str, body: object | None = None, query: str | None = None, **_kwargs: Any) -> dict[str, object]:
+    def get_lineage(
+        self, *, asset_id: str, body: object | None = None, query: str | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
         store, workspace_id = self._catalog_request(body, query)
         version = body.get("version") if isinstance(body, dict) else None
         if not isinstance(version, str) and query:
             from urllib.parse import parse_qs
+
             version = parse_qs(query).get("version", [None])[0]
         if not isinstance(version, str):
             raise ValueError("body.version is required for lineage")
@@ -436,19 +545,27 @@ class SyntheticDataStudioPlugin:
             "downstream": [edge.to_payload() for edge in store.downstream(workspace_id, ref)],
         }
 
-    def list_revisions(self, *, asset_id: str, body: object | None = None, query: str | None = None, **_kwargs: Any) -> dict[str, object]:
+    def list_revisions(
+        self, *, asset_id: str, body: object | None = None, query: str | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
         store, workspace_id = self._catalog_request(body, query)
         return {
             "asset_id": asset_id,
-            "items": [revision.to_payload() for revision in store.list_revisions(workspace_id, AssetId(asset_id))],
+            "items": [
+                revision.to_payload()
+                for revision in store.list_revisions(workspace_id, AssetId(asset_id))
+            ],
         }
 
-    def _catalog_request(self, body: object | None, query: str | None = None) -> tuple[SqliteCatalogStore, WorkspaceId]:
+    def _catalog_request(
+        self, body: object | None, query: str | None = None
+    ) -> tuple[SqliteCatalogStore, WorkspaceId]:
         if self.catalog_store is None:
             raise RuntimeError("catalog store is not configured")
         workspace = body.get("workspace_id") if isinstance(body, dict) else None
         if not isinstance(workspace, str) and query:
             from urllib.parse import parse_qs
+
             workspace = parse_qs(query).get("workspace_id", [None])[0]
         if not isinstance(workspace, str):
             raise ValueError("body.workspace_id is required")
@@ -480,7 +597,11 @@ def _source_sample(body: object | None) -> dict[str, tuple[dict[str, object], ..
         raise ValueError("source_sample must be an object of table names to row arrays")
     sample: dict[str, tuple[dict[str, object], ...]] = {}
     for table, rows in raw.items():
-        if not isinstance(table, str) or not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+        if (
+            not isinstance(table, str)
+            or not isinstance(rows, list)
+            or not all(isinstance(row, dict) for row in rows)
+        ):
             raise ValueError("source_sample rows must be objects")
         sample[table] = tuple(rows)
     return sample
@@ -504,8 +625,10 @@ def _enforce_limits(plan: GenerationPlan) -> None:
 
 def _media_type(format_id: str) -> str:
     media_types = {
-        "csv": "text/csv", "json": "application/json",
-        "jsonl": "application/x-ndjson", "xml": "application/xml",
+        "csv": "text/csv",
+        "json": "application/json",
+        "jsonl": "application/x-ndjson",
+        "xml": "application/xml",
     }
     return media_types.get(format_id, "application/octet-stream")
 

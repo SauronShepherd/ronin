@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import time
 from typing import Any
 
 from .artifacts import ArtifactIntegrityError, ArtifactPage, ArtifactRef
@@ -23,6 +24,8 @@ class S3ArtifactStore:
         endpoint_url: str | None = None,
         region_name: str | None = None,
         client: Any = None,
+        max_attempts: int = 3,
+        retry_delay_seconds: float = 0.05,
     ) -> None:
         if not bucket or bucket != bucket.strip() or "/" in bucket:
             raise ValueError("S3 bucket must be non-empty and contain no slash")
@@ -36,13 +39,49 @@ class S3ArtifactStore:
             not region_name or region_name != region_name.strip() or "\n" in region_name
         ):
             raise ValueError("S3 region name must be non-empty, trimmed, and single-line")
+        if max_attempts < 1 or max_attempts > 10:
+            raise ValueError("S3 max_attempts must be between 1 and 10")
+        if retry_delay_seconds < 0 or retry_delay_seconds > 5:
+            raise ValueError("S3 retry delay must be between 0 and 5 seconds")
         self._bucket = bucket
         self._prefix = prefix
+        self._max_attempts = max_attempts
+        self._retry_delay_seconds = retry_delay_seconds
         self._client = (
             client
             if client is not None
             else self._load_client(endpoint_url=endpoint_url, region_name=region_name)
         )
+
+    def _call(self, operation: str, **kwargs: object) -> Any:
+        """Call S3 with bounded retries for explicitly transient failures."""
+
+        for attempt in range(self._max_attempts):
+            try:
+                return getattr(self._client, operation)(**kwargs)
+            except Exception as exc:
+                response = getattr(exc, "response", None)
+                error = response.get("Error", {}) if isinstance(response, dict) else {}
+                code = error.get("Code") if isinstance(error, dict) else None
+                transient = code in {
+                    "408",
+                    "425",
+                    "429",
+                    "500",
+                    "502",
+                    "503",
+                    "504",
+                    "RequestTimeout",
+                    "SlowDown",
+                    "Throttling",
+                    "InternalError",
+                }
+                if not transient or attempt + 1 >= self._max_attempts:
+                    raise
+                delay = self._retry_delay_seconds * (2**attempt)
+                if delay:
+                    time.sleep(delay)
+        raise AssertionError("unreachable")
 
     @staticmethod
     def _load_client(*, endpoint_url: str | None, region_name: str | None) -> Any:
@@ -77,7 +116,8 @@ class S3ArtifactStore:
             raise ValueError("artifact role must be non-empty, trimmed, and single-line")
         digest = hashlib.sha256(data).hexdigest()
         key = self._key(digest)
-        self._client.put_object(
+        self._call(
+            "put_object",
             Bucket=self._bucket,
             Key=key,
             Body=data,
@@ -95,7 +135,7 @@ class S3ArtifactStore:
             or ref.storage_ref != f"s3://{self._bucket}/{self._key(ref.digest)}"
         ):
             raise ValueError("artifact storage_ref does not match S3 digest")
-        response = self._client.get_object(Bucket=self._bucket, Key=self._key(ref.digest))
+        response = self._call("get_object", Bucket=self._bucket, Key=self._key(ref.digest))
         data = response["Body"].read()
         if not isinstance(data, bytes):
             raise ArtifactIntegrityError("S3 artifact body was not bytes")
@@ -103,13 +143,11 @@ class S3ArtifactStore:
             raise ArtifactIntegrityError("S3 artifact digest or size verification failed")
         return data
 
-    def get_bytes_by_storage_ref(
-        self, storage_ref: str, *, digest: str
-    ) -> bytes:
+    def get_bytes_by_storage_ref(self, storage_ref: str, *, digest: str) -> bytes:
         expected = f"s3://{self._bucket}/{self._key(digest)}"
         if storage_ref != expected:
             raise ValueError("artifact storage_ref does not match S3 digest")
-        response = self._client.get_object(Bucket=self._bucket, Key=self._key(digest))
+        response = self._call("get_object", Bucket=self._bucket, Key=self._key(digest))
         data = response["Body"].read()
         if not isinstance(data, bytes) or hashlib.sha256(data).hexdigest() != digest:
             raise ArtifactIntegrityError("S3 artifact digest verification failed")
@@ -129,7 +167,7 @@ class S3ArtifactStore:
         if ref.storage_ref != f"s3://{self._bucket}/{key}":
             raise ValueError("artifact storage_ref does not match S3 digest")
         try:
-            self._client.head_object(Bucket=self._bucket, Key=key)
+            self._call("head_object", Bucket=self._bucket, Key=key)
         except Exception as exc:
             response = getattr(exc, "response", None)
             error = response.get("Error", {}) if isinstance(response, dict) else {}
@@ -137,7 +175,7 @@ class S3ArtifactStore:
             if error_code in {"404", "NoSuchKey", "NotFound"} or isinstance(exc, KeyError):
                 return False
             raise
-        self._client.delete_object(Bucket=self._bucket, Key=key)
+        self._call("delete_object", Bucket=self._bucket, Key=key)
         return True
 
     def list_digests(self) -> tuple[str, ...]:
@@ -147,7 +185,7 @@ class S3ArtifactStore:
         digests: list[str] = []
         request: dict[str, str] = {"Bucket": self._bucket, "Prefix": prefix}
         while True:
-            response = self._client.list_objects_v2(**request)
+            response = self._call("list_objects_v2", **request)
             for item in response.get("Contents", ()):
                 key = item.get("Key", "")
                 digest = key.rsplit("/", 1)[-1]
@@ -166,6 +204,13 @@ class S3ArtifactStore:
     ) -> ArtifactPage:
         if page_size < 1 or page_size > 1000:
             raise ValueError("S3 artifact discovery page_size must be between 1 and 1000")
+        if cursor is not None and (
+            not cursor
+            or cursor != cursor.strip()
+            or len(cursor) > 2048
+            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in cursor)
+        ):
+            raise ValueError("S3 artifact discovery cursor must be a bounded opaque token")
         prefix = f"{self._prefix + '/' if self._prefix else ''}sha256/"
         request: dict[str, object] = {
             "Bucket": self._bucket,
@@ -174,7 +219,7 @@ class S3ArtifactStore:
         }
         if cursor is not None:
             request["ContinuationToken"] = cursor
-        response = self._client.list_objects_v2(**request)
+        response = self._call("list_objects_v2", **request)
         digests = tuple(
             key.rsplit("/", 1)[-1]
             for item in response.get("Contents", ())

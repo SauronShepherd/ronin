@@ -36,9 +36,7 @@ def preview_pipeline(
 ) -> PreviewResult:
     if row_limit < 1 or row_limit > 10_000:
         raise PreviewError("row_limit must be between 1 and 10000")
-    report = compile_pipeline(
-        data, runtime="local-preview", catalog=builtin_operator_catalog()
-    )
+    report = compile_pipeline(data, runtime="local-preview", catalog=builtin_operator_catalog())
     if not report.portable:
         raise PreviewError("pipeline is not valid for local preview")
     try:
@@ -69,9 +67,7 @@ def preview_pipeline(
 
     return PreviewResult(
         runtime="local-preview",
-        rows_by_node={
-            by_id[node_id].instance_key: rows for node_id, rows in values.items()
-        },
+        rows_by_node={by_id[node_id].instance_key: rows for node_id, rows in values.items()},
         metrics=metrics,
     )
 
@@ -96,7 +92,8 @@ def _input_rows(
             {**dict(values[left.source][0]), **dict(values[right.source][0])}
             if values[left.source] and values[right.source]
             else {}
-        for _ in [0])
+            for _ in [0]
+        )
     return values[edges[0].source]
 
 
@@ -163,8 +160,12 @@ def _eval_node(node: ast.AST, row: Mapping[str, object]) -> object:
         return node.value
     if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
         left, right = _eval_node(node.left, row), _eval_node(node.right, row)
-        return {ast.Add: lambda: left + right, ast.Sub: lambda: left - right,
-                ast.Mult: lambda: left * right, ast.Div: lambda: left / right}[type(node.op)]()
+        return {
+            ast.Add: lambda: left + right,
+            ast.Sub: lambda: left - right,
+            ast.Mult: lambda: left * right,
+            ast.Div: lambda: left / right,
+        }[type(node.op)]()
     if isinstance(node, ast.Compare) and len(node.ops) == 1:
         left, right = _eval_node(node.left, row), _eval_node(node.comparators[0], row)
         operator = node.ops[0]

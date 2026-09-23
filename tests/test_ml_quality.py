@@ -4,10 +4,16 @@ from studio_ml import FeatureSpec, Lab, profile_and_validate
 
 def lab() -> Lab:
     return Lab(
-        id="lab-quality", name="Quality", project_id="project-1",
-        dataset=AssetRef(AssetId("dataset"), AssetVersion("v1")), target="label",
-        task="classification", features=(FeatureSpec("value"),), backend_id="local.sklearn",
-        seed=7, test_fraction=0.25,
+        id="lab-quality",
+        name="Quality",
+        project_id="project-1",
+        dataset=AssetRef(AssetId("dataset"), AssetVersion("v1")),
+        target="label",
+        task="classification",
+        features=(FeatureSpec("value"),),
+        backend_id="local.sklearn",
+        seed=7,
+        test_fraction=0.25,
     )
 
 

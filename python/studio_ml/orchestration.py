@@ -51,8 +51,12 @@ class InMemoryExecutionStore:
 class LocalExecutionCoordinator:
     """Bounded local coordinator with the same lifecycle a remote adapter must expose."""
 
-    def __init__(self, runner: LocalExperimentRunner | None = None, max_workers: int = 2,
-                 store: ExecutionStore | None = None) -> None:
+    def __init__(
+        self,
+        runner: LocalExperimentRunner | None = None,
+        max_workers: int = 2,
+        store: ExecutionStore | None = None,
+    ) -> None:
         if max_workers < 1 or max_workers > 32:
             raise ValueError("max_workers must be between 1 and 32")
         self._runner = runner or LocalExperimentRunner()

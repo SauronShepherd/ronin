@@ -17,6 +17,17 @@ from studio_plugin_workspaces import WorkspacesPlugin
 from studio_runtime import discover_plugins
 
 
+def test_plugin_manager_defaults_are_explicit_and_fresh() -> None:
+    first = PluginManager()
+    second = PluginManager()
+
+    assert first.host_version == "1.0.0"
+    assert first.plugin_api == "1.0"
+    assert first._records == {}
+    assert first._started is False
+    assert first._records is not second._records
+
+
 def test_community_plugin_composes_and_starts() -> None:
     manager = PluginManager(host_version="1.2.0", plugin_api="1.0")
     plan = manager.compose((__import_record(WorkspacesPlugin()),))
@@ -27,6 +38,15 @@ def test_community_plugin_composes_and_starts() -> None:
     }
     assert [(route.method, route.path) for route in plan.contributions.routes] == [
         ("GET", "/v1/workspaces"),
+        ("GET", "/v1/workspaces/{workspace_id}"),
+        ("POST", "/v1/workspaces"),
+        ("PUT", "/v1/workspaces/{workspace_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/archive"),
+        ("GET", "/v1/workspaces/{workspace_id}/environments"),
+        ("POST", "/v1/workspaces/{workspace_id}/environments"),
+        ("GET", "/v1/workspaces/{workspace_id}/environments/{environment_id}"),
+        ("PUT", "/v1/workspaces/{workspace_id}/environments/{environment_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/environments/{environment_id}/disable"),
         ("POST", "/v1/workspaces/{workspace_id}/projects"),
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
         ("PUT", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
@@ -34,16 +54,34 @@ def test_community_plugin_composes_and_starts() -> None:
         ("GET", "/v1/workspaces/{workspace_id}/projects"),
     ]
     assert [item.id for item in plan.contributions.cli_registry.items] == [
+        "environments.create.v1",
+        "environments.disable.v1",
+        "environments.get.v1",
+        "environments.list.v1",
+        "environments.replace.v1",
         "projects.create.v1",
         "projects.get.v1",
         "projects.list.v1",
+        "workspaces.archive.v1",
+        "workspaces.create.v1",
+        "workspaces.get.v1",
         "workspaces.list.v1",
+        "workspaces.update.v1",
     ]
     assert [item.operation_id for item in plan.contributions.client_operation_registry.items] == [
+        "environments.create.v1",
+        "environments.disable.v1",
+        "environments.get.v1",
+        "environments.list.v1",
+        "environments.replace.v1",
         "projects.create.v1",
         "projects.get.v1",
         "projects.list.v1",
+        "workspaces.archive.v1",
+        "workspaces.create.v1",
+        "workspaces.get.v1",
         "workspaces.list.v1",
+        "workspaces.update.v1",
     ]
     assert plan.contributions.permissions == {
         "workspaces:read": "com.sauronshepherd.ronin.workspaces",
@@ -169,9 +207,7 @@ def test_workspace_plugin_delegates_to_injected_service() -> None:
 
     plugin = WorkspacesPlugin()
     manager = PluginManager()
-    plan = manager.compose(
-        (__import_record(plugin),), services={"workspace_service": Service()}
-    )
+    plan = manager.compose((__import_record(plugin),), services={"workspace_service": Service()})
     manager.start(plan)
 
     assert plugin.list_workspaces() == [

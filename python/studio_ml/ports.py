@@ -7,7 +7,7 @@ from typing import Protocol, runtime_checkable
 
 from studio_core import WorkspaceId
 
-from .domain import Lab, PipelineIR
+from .domain import FeatureDefinition, Lab, PipelineIR
 
 
 @runtime_checkable
@@ -21,4 +21,17 @@ class MLLabStore(Protocol):
     def get_pipeline(self, workspace_id: WorkspaceId, lab_id: str) -> PipelineIR | None: ...
 
 
-__all__ = ["MLLabStore"]
+@runtime_checkable
+class FeatureDefinitionStore(Protocol):
+    def put_feature_definition(
+        self, workspace_id: WorkspaceId, definition: FeatureDefinition
+    ) -> FeatureDefinition: ...
+    def get_feature_definition(
+        self, workspace_id: WorkspaceId, feature_id: str, version: int | None = None
+    ) -> FeatureDefinition | None: ...
+    def list_feature_definitions(
+        self, workspace_id: WorkspaceId, feature_id: str | None = None
+    ) -> tuple[FeatureDefinition, ...]: ...
+
+
+__all__ = ["FeatureDefinitionStore", "MLLabStore"]

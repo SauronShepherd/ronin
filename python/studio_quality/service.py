@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol, runtime_checkable
 
@@ -37,6 +38,52 @@ class QualityExecutionBlocked(RuntimeError):
     def __init__(self, run: QualityRun) -> None:
         super().__init__(f"quality run {run.id} contains blocking failures")
         self.run = run
+
+
+@dataclass(frozen=True, slots=True)
+class QualityAlertSignal:
+    """Provider-neutral metric projection for quality alert evaluation."""
+
+    metric_name: str
+    value: float
+    attributes: tuple[tuple[str, str], ...]
+
+
+def quality_alert_signals(run: QualityRun) -> tuple[QualityAlertSignal, ...]:
+    """Project one immutable quality run into deterministic alert metrics."""
+
+    signals = [
+        QualityAlertSignal(
+            "quality.rule.failure",
+            1.0 if result.status in {"failed", "error"} else 0.0,
+            (("asset", str(run.asset)), ("rule_id", result.rule_id.value)),
+        )
+        for result in run.results
+    ]
+    signals.append(
+        QualityAlertSignal(
+            "quality.run.failure",
+            1.0 if run.status in {"failed", "error"} else 0.0,
+            (("asset", str(run.asset)), ("run_id", run.id.value)),
+        )
+    )
+    return tuple(signals)
+
+
+def quality_state_summary(runs: tuple[QualityRun, ...]) -> dict[str, object]:
+    """Project immutable quality history into catalog-safe state."""
+
+    ordered = tuple(sorted(runs, key=lambda item: item.id.value))
+    latest = ordered[-1] if ordered else None
+    return {
+        "latest_run_id": latest.id.value if latest is not None else None,
+        "latest_status": latest.status if latest is not None else "unknown",
+        "run_count": len(ordered),
+        "history": [
+            {"run_id": run.id.value, "status": run.status, "asset": run.asset.to_payload()}
+            for run in ordered
+        ],
+    }
 
 
 def quality_gate(contract: DataContract, run: QualityRun) -> bool:
@@ -96,7 +143,10 @@ __all__ = (
     "QualityContractNotFound",
     "QualityExecutionBlocked",
     "QualityExecutionStore",
+    "QualityAlertSignal",
     "execute_quality",
     "quality_gate",
     "list_quality_runs",
+    "quality_alert_signals",
+    "quality_state_summary",
 )

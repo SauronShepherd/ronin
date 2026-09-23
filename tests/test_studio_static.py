@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import urllib.error
 import urllib.request
+from html.parser import HTMLParser
 from pathlib import Path
 from threading import Thread
 
@@ -12,6 +14,7 @@ from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant
 from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
+from tools.check_web_assets import referenced_assets
 
 _GRANTS = GrantSet(
     (
@@ -92,3 +95,52 @@ def test_published_migration_cockpit_contains_operational_controls() -> None:
         "Portable migration script",
     ):
         assert marker in source
+
+
+def test_studio_import_graph_resolves_every_relative_asset() -> None:
+    root = Path(__file__).parents[1] / "web"
+    referenced = referenced_assets(root)
+    assert referenced
+    assert all(asset.is_file() for asset in referenced)
+
+
+def test_studio_import_graph_includes_css_url_resources(tmp_path: Path) -> None:
+    root = tmp_path / "web"
+    root.mkdir()
+    (root / "index.html").write_text('<link rel="stylesheet" href="styles.css">', encoding="utf-8")
+    (root / "styles.css").write_text("body { background: url('assets/bg.png'); }", encoding="utf-8")
+    (root / "assets").mkdir()
+    (root / "assets" / "bg.png").write_bytes(b"png")
+    assert root / "assets" / "bg.png" in referenced_assets(root)
+
+
+def test_active_route_manifest_requires_functional_smoke_contract() -> None:
+    manifest = json.loads((Path(__file__).parents[1] / "web" / "routes.json").read_text())
+    for route in manifest:
+        assert route["id"] and route["title"] and route["state"]
+        assert route["smoke_selector"]
+        if route["id"] != "home" and route["state"] == "active":
+            assert route["smoke_selector"] != "#view"
+        for endpoint in route.get("required_api", []):
+            assert isinstance(endpoint, str) and endpoint.startswith("/")
+
+
+def test_studio_index_has_one_valid_document_shell() -> None:
+    class Structure(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__()
+            self.starts: list[str] = []
+            self.module_scripts = 0
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            self.starts.append(tag)
+            if tag == "script" and dict(attrs).get("type") == "module":
+                self.module_scripts += 1
+
+    parser = Structure()
+    parser.feed((Path(__file__).parents[1] / "web" / "index.html").read_text(encoding="utf-8"))
+    assert parser.starts.count("html") == 1
+    assert parser.starts.count("head") == 1
+    assert parser.starts.count("body") == 1
+    assert parser.starts.count("main") == 1
+    assert parser.module_scripts >= 1

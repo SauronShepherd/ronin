@@ -87,6 +87,16 @@ def test_project_inventory_uses_safe_payload_path_and_runtime_binding(tmp_path: 
     assert parsed.project.repositories[0].auth_ref is None
 
 
+def test_project_archive_is_persisted_and_idempotent(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+
+    assert len(store.list_projects(_WS)) == 1
+    assert store.archive_project(_WS, _PROJECT, now=Instant("2026-09-13T09:11:00.000000Z")) is True
+    assert store.list_projects(_WS) == ()
+    assert store.get_project(_WS, _PROJECT) is not None
+    assert store.archive_project(_WS, _PROJECT, now=Instant("2026-09-13T09:12:00.000000Z")) is False
+
+
 def test_project_bundle_export_is_byte_deterministic_and_verifiable(tmp_path: Path) -> None:
     store = _store(tmp_path)
     first = tmp_path / "first.roninbundle"
@@ -102,3 +112,20 @@ def test_project_bundle_export_is_byte_deterministic_and_verifiable(tmp_path: Pa
     assert {entry.path for entry in verified.entries} == {
         file.path for file in build_project_bundle_inventory(store, _WS, _PROJECT).files
     }
+
+
+def test_bundle_inventory_round_trip_preserves_semantic_digest() -> None:
+    inventory = BundleInventory(
+        (
+            BundleInventoryObject("connection", "connection:db", "objects/db.json"),
+            BundleInventoryObject(
+                "project",
+                "project:orders",
+                "objects/project.json",
+                dependencies=("connection:db",),
+            ),
+        )
+    )
+    restored = BundleInventory.from_json(inventory.to_json())
+    assert restored == inventory
+    assert restored.digest == inventory.digest

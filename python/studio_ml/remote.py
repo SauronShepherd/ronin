@@ -45,7 +45,7 @@ class JsonRemoteBackend:
         self,
         backend_id: str,
         display_name: str,
-        capabilities: object,
+        capabilities: BackendCapabilities,
         transport: Callable[[str, Mapping[str, object]], Mapping[str, object]],
     ) -> None:
         self.backend_id = backend_id
@@ -54,13 +54,24 @@ class JsonRemoteBackend:
         self._transport = transport
 
     def _result(self, payload: Mapping[str, object]) -> RemoteTrainingResult:
+        raw_metrics = payload.get("metrics", {})
+        if not isinstance(raw_metrics, Mapping):
+            raise ValueError("remote metrics must be an object")
+        metrics: list[tuple[str, float]] = []
+        for key, value in raw_metrics.items():
+            if (
+                not isinstance(key, str)
+                or isinstance(value, bool)
+                or not isinstance(value, (int, float))
+            ):
+                raise ValueError("remote metrics must contain numeric values")
+            metrics.append((key, float(value)))
         return RemoteTrainingResult(
-            str(payload["run_id"]), str(payload.get("artifact_ref", "")),
-            str(payload.get("artifact_digest", "")), str(payload["status"]),
-            tuple(
-                (str(key), float(value))
-                for key, value in dict(payload.get("metrics", {})).items()
-            ),
+            str(payload["run_id"]),
+            str(payload.get("artifact_ref", "")),
+            str(payload.get("artifact_digest", "")),
+            str(payload["status"]),
+            tuple(metrics),
         )
 
     def submit(self, request: RemoteTrainingRequest) -> RemoteTrainingResult:
@@ -74,7 +85,10 @@ class JsonRemoteBackend:
 
     def predict(self, model_ref: str, rows: Sequence[Mapping[str, object]]) -> Sequence[object]:
         payload = self._transport("predict", {"model_ref": model_ref, "rows": list(rows)})
-        return list(payload.get("predictions", []))
+        predictions = payload.get("predictions", [])
+        if not isinstance(predictions, list):
+            raise ValueError("remote predictions must be an array")
+        return predictions
 
 
 def urllib_json_transport(
@@ -106,13 +120,18 @@ class MLflowBackend(JsonRemoteBackend):
         self, transport: Callable[[str, Mapping[str, object]], Mapping[str, object]]
     ) -> None:
         super().__init__(
-            "remote.mlflow", "Remote · MLflow", BackendCapabilities(
+            "remote.mlflow",
+            "Remote · MLflow",
+            BackendCapabilities(
                 tasks=("classification", "regression"),
                 algorithms=(
-                    "logistic_regression", "linear_regression",
-                    "random_forest_classifier", "random_forest_regressor",
+                    "logistic_regression",
+                    "linear_regression",
+                    "random_forest_classifier",
+                    "random_forest_regressor",
                 ),
-            ), transport,
+            ),
+            transport,
         )
 
 
@@ -121,14 +140,20 @@ class SparkBackend(JsonRemoteBackend):
         self, transport: Callable[[str, Mapping[str, object]], Mapping[str, object]]
     ) -> None:
         super().__init__(
-            "remote.spark", "Remote · Spark ML", BackendCapabilities(
+            "remote.spark",
+            "Remote · Spark ML",
+            BackendCapabilities(
                 tasks=("classification", "regression", "clustering"),
                 algorithms=("spark.gbt", "spark.rf", "spark.kmeans"),
-            ), transport,
+            ),
+            transport,
         )
 
 
 __all__ = [
-    "JsonRemoteBackend", "MLflowBackend", "RemoteExecutionController", "SparkBackend",
+    "JsonRemoteBackend",
+    "MLflowBackend",
+    "RemoteExecutionController",
+    "SparkBackend",
     "urllib_json_transport",
 ]

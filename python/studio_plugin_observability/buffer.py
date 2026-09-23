@@ -24,6 +24,13 @@ def _redact(value: object) -> object:
     return value
 
 
+def _redacted_attributes(value: dict[str, object]) -> dict[str, object]:
+    redacted = _redact(value)
+    if not isinstance(redacted, dict):
+        raise TypeError("redacted attributes must remain an object")
+    return redacted
+
+
 @dataclass(frozen=True, slots=True)
 class LocalLogEntry:
     occurred_at: str
@@ -77,7 +84,7 @@ class LocalObservabilityBuffer:
         if level not in {"debug", "info", "warning", "error"} or not message.strip():
             raise ValueError("invalid local log entry")
         entry = LocalLogEntry(
-            self._now(), level, message.strip(), plugin_id, _redact(attributes or {})
+            self._now(), level, message.strip(), plugin_id, _redacted_attributes(attributes or {})
         )
         with self._lock:
             self._logs.append(entry)
@@ -101,7 +108,7 @@ class LocalObservabilityBuffer:
             operation.strip(),
             plugin_id,
             duration_ms,
-            _redact(attributes or {}),
+            _redacted_attributes(attributes or {}),
         )
         with self._lock:
             self._traces.append(entry)
@@ -117,7 +124,11 @@ class LocalObservabilityBuffer:
         if not name.strip():
             raise ValueError("metric name is required")
         entry = LocalMetric(
-            self._now(), name.strip(), float(value), plugin_id, _redact(attributes or {})
+            self._now(),
+            name.strip(),
+            float(value),
+            plugin_id,
+            _redacted_attributes(attributes or {}),
         )
         with self._lock:
             self._metrics.append(entry)

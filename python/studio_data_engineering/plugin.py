@@ -17,8 +17,8 @@ from studio_core.plugins import (
 from .compilations import SqliteCompilationStore
 from .compiler import compile_pipeline
 from .debugger import DebuggerService
-from .ide import IdeCell
 from .execution import plan_pipeline_execution
+from .ide import IdeCell
 from .previews import preview_pipeline
 from .revisions import RevisionApplication
 from .sdp_adapter import SdpProjectSource
@@ -43,9 +43,7 @@ class DataEnginerringStudioPlugin:
             "data-engineering.lineage.v1",
             "data-engineering.runtime-provider.v1",
         ),
-        dependencies=(
-            PluginDependency("com.sauronshepherd.ronin.workspaces"),
-        ),
+        dependencies=(PluginDependency("com.sauronshepherd.ronin.workspaces"),),
         permissions=(
             "data-engineering:read",
             "data-engineering:write",
@@ -98,16 +96,25 @@ class DataEnginerringStudioPlugin:
             permission="data-engineering:read",
         )
         context.contributions.add_route(
-            "POST", "/v1/data-engineering/debugger/sessions", context.plugin_id,
-            self.debugger_create, permission="data-engineering:read"
+            "POST",
+            "/v1/data-engineering/debugger/sessions",
+            context.plugin_id,
+            self.debugger_create,
+            permission="data-engineering:read",
         )
         context.contributions.add_route(
-            "GET", "/v1/data-engineering/debugger/sessions/{session_id}", context.plugin_id,
-            self.debugger_get, permission="data-engineering:read"
+            "GET",
+            "/v1/data-engineering/debugger/sessions/{session_id}",
+            context.plugin_id,
+            self.debugger_get,
+            permission="data-engineering:read",
         )
         context.contributions.add_route(
-            "POST", "/v1/data-engineering/debugger/sessions/{session_id}/breakpoints/{cell_id}",
-            context.plugin_id, self.debugger_breakpoint, permission="data-engineering:read"
+            "POST",
+            "/v1/data-engineering/debugger/sessions/{session_id}/breakpoints/{cell_id}",
+            context.plugin_id,
+            self.debugger_breakpoint,
+            permission="data-engineering:read",
         )
         context.contributions.add_surface(
             SurfaceContribution(
@@ -125,27 +132,40 @@ class DataEnginerringStudioPlugin:
         )
         for contribution in (
             SurfaceContribution(
-                id="data-engineering.debugger.create.v1", plugin_id=context.plugin_id,
-                namespace="debugger", command="create",
+                id="data-engineering.debugger.create.v1",
+                plugin_id=context.plugin_id,
+                namespace="debugger",
+                command="create",
                 operation_id="data-engineering.debugger.create.v1",
-                capability="data-engineering.pipelines.v1", permission="data-engineering:read",
-                path="/v1/data-engineering/debugger/sessions", method="POST",
-                input_schema={"type": "object"}, output_schema={"type": "object"},
-            ),
-            SurfaceContribution(
-                id="data-engineering.debugger.get.v1", plugin_id=context.plugin_id,
-                namespace="debugger", command="get",
-                operation_id="data-engineering.debugger.get.v1",
-                capability="data-engineering.pipelines.v1", permission="data-engineering:read",
-                path="/v1/data-engineering/debugger/sessions/{session_id}", method="GET",
+                capability="data-engineering.pipelines.v1",
+                permission="data-engineering:read",
+                path="/v1/data-engineering/debugger/sessions",
+                method="POST",
+                input_schema={"type": "object"},
                 output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="data-engineering.debugger.breakpoint.v1", plugin_id=context.plugin_id,
-                namespace="debugger", command="breakpoint",
+                id="data-engineering.debugger.get.v1",
+                plugin_id=context.plugin_id,
+                namespace="debugger",
+                command="get",
+                operation_id="data-engineering.debugger.get.v1",
+                capability="data-engineering.pipelines.v1",
+                permission="data-engineering:read",
+                path="/v1/data-engineering/debugger/sessions/{session_id}",
+                method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="data-engineering.debugger.breakpoint.v1",
+                plugin_id=context.plugin_id,
+                namespace="debugger",
+                command="breakpoint",
                 operation_id="data-engineering.debugger.breakpoint.v1",
-                capability="data-engineering.pipelines.v1", permission="data-engineering:read",
-                path="/v1/data-engineering/debugger/sessions/{session_id}/breakpoints/{cell_id}", method="POST",
+                capability="data-engineering.pipelines.v1",
+                permission="data-engineering:read",
+                path="/v1/data-engineering/debugger/sessions/{session_id}/breakpoints/{cell_id}",
+                method="POST",
                 output_schema={"type": "object"},
             ),
         ):
@@ -234,9 +254,7 @@ class DataEnginerringStudioPlugin:
             context.plugin_id,
             self.run_pipeline,
         )
-        context.contributions.add_migration(
-            "data-engineering.schema.v1", context.plugin_id
-        )
+        context.contributions.add_migration("data-engineering.schema.v1", context.plugin_id)
         context.contributions.add_ui(
             context.plugin_id,
             {
@@ -279,7 +297,9 @@ class DataEnginerringStudioPlugin:
     def debugger_get(self, session_id: str, **_kwargs: Any) -> dict[str, object]:
         return self._debugger.get(session_id).to_payload()
 
-    def debugger_breakpoint(self, session_id: str, cell_id: str, **_kwargs: Any) -> dict[str, object]:
+    def debugger_breakpoint(
+        self, session_id: str, cell_id: str, **_kwargs: Any
+    ) -> dict[str, object]:
         return self._debugger.breakpoint(session_id, cell_id).to_payload()
 
     def startup(self) -> None:
@@ -334,9 +354,7 @@ class DataEnginerringStudioPlugin:
         pipeline = body.get("pipeline", body)
         if not isinstance(runtime, str) or not isinstance(pipeline, dict):
             raise ValueError("runtime must be a string and pipeline must be an object")
-        report = compile_pipeline(
-            pipeline, runtime=runtime, catalog=builtin_operator_catalog()
-        )
+        report = compile_pipeline(pipeline, runtime=runtime, catalog=builtin_operator_catalog())
         ir_digest = hashlib.sha256(
             json.dumps(pipeline, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()
@@ -387,8 +405,7 @@ class DataEnginerringStudioPlugin:
         if not isinstance(pipeline, dict):
             raise ValueError("pipeline must be an object")
         if not isinstance(fixtures, dict) or not all(
-            isinstance(key, str) and isinstance(value, list)
-            for key, value in fixtures.items()
+            isinstance(key, str) and isinstance(value, list) for key, value in fixtures.items()
         ):
             raise ValueError("fixtures must be an object of arrays")
         if not isinstance(row_limit, int) or isinstance(row_limit, bool):
@@ -402,9 +419,7 @@ class DataEnginerringStudioPlugin:
             "status": "completed",
             "mode": "preview",
             "runtime": result.runtime,
-            "rows_by_node": {
-                key: list(rows) for key, rows in result.rows_by_node.items()
-            },
+            "rows_by_node": {key: list(rows) for key, rows in result.rows_by_node.items()},
             "metrics": dict(result.metrics),
             "diagnostics": list(result.diagnostics),
         }
@@ -490,15 +505,11 @@ class DataEnginerringStudioPlugin:
             "metadata_artifact": record.metadata_artifact.storage_ref,
         }
 
-    def get_compilation(
-        self, revision_key: str, runtime: str, **_kwargs: Any
-    ) -> dict[str, object]:
+    def get_compilation(self, revision_key: str, runtime: str, **_kwargs: Any) -> dict[str, object]:
         self._assert_ready()
         if self._compilations is None:
             raise RuntimeError("compilation store is unavailable")
-        report = self._compilations.get_latest_report(
-            revision_key=revision_key, runtime=runtime
-        )
+        report = self._compilations.get_latest_report(revision_key=revision_key, runtime=runtime)
         if report is None:
             raise KeyError(f"compilation not found: {revision_key}/{runtime}")
         return dict(report)

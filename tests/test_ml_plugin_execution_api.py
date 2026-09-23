@@ -43,13 +43,16 @@ def test_quality_route_returns_blocking_findings() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())
     lab = Lab(
-        "quality", "Quality", "crm", AssetRef(AssetId("customers"), AssetVersion("v1")),
-        "target", "classification", (FeatureSpec("x"),),
+        "quality",
+        "Quality",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
     )
     plugin._labs.create(WorkspaceId("ws"), lab)
-    report = plugin.quality_check(
-        "ws", "quality", body={"rows": [{"x": 1, "target": "only"}] * 3}
-    )
+    report = plugin.quality_check("ws", "quality", body={"rows": [{"x": 1, "target": "only"}] * 3})
     assert report["passed"] is False
     assert report["failures"]
     plugin._coordinator.close()
@@ -58,7 +61,9 @@ def test_quality_route_returns_blocking_findings() -> None:
 def test_compare_route_ranks_trials_deterministically() -> None:
     plugin = MachineLearningStudioPlugin()
     result = plugin.compare_trials(
-        "ws", "lab", body={
+        "ws",
+        "lab",
+        body={
             "spec": {"mode": "grid", "metric": "accuracy", "direction": "maximize"},
             "trials": [
                 {"parameters": {"C": 1}, "metrics": {"accuracy": 0.8}},
@@ -74,13 +79,24 @@ def test_search_route_executes_grid_trials() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())
     lab = Lab(
-        "search", "Search", "crm", AssetRef(AssetId("customers"), AssetVersion("v1")),
-        "target", "classification", (FeatureSpec("x"),),
+        "search",
+        "Search",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
     )
     plugin._labs.create(WorkspaceId("ws"), lab)
     result = plugin.search_trials(
-        "ws", "search", body={
-            "spec": {"mode": "grid", "parameters": [{"name": "seed", "values": [1, 2]}], "metric": "accuracy"},
+        "ws",
+        "search",
+        body={
+            "spec": {
+                "mode": "grid",
+                "parameters": [{"name": "seed", "values": [1, 2]}],
+                "metric": "accuracy",
+            },
             "rows": [{"x": n, "target": n % 2} for n in range(1, 21)],
         },
     )
@@ -93,15 +109,48 @@ def test_search_registration_requires_persistent_services() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())
     lab = Lab(
-        "search-register", "Search", "crm", AssetRef(AssetId("customers"), AssetVersion("v1")),
-        "target", "classification", (FeatureSpec("x"),),
+        "search-register",
+        "Search",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
     )
     plugin._labs.create(WorkspaceId("ws"), lab)
     with pytest.raises(ValueError, match="artifact_store"):
         plugin.search_trials(
-            "ws", "search-register", body={
-                "spec": {"mode": "single"}, "register": {"model_id": "churn"},
+            "ws",
+            "search-register",
+            body={
+                "spec": {"mode": "single"},
+                "register": {"model_id": "churn"},
                 "rows": [{"x": n, "target": n % 2} for n in range(1, 21)],
             },
         )
     plugin._coordinator.close()
+
+
+def test_batch_prediction_evidence_binds_input_and_replay_identity() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin.predict_model = lambda *_args, **_kwargs: {"predictions": [1, 0]}  # type: ignore[method-assign]
+    result = plugin.batch_predict_model(
+        "ws",
+        "model",
+        "v1",
+        body={"batch_id": "batch-1", "rows": [{"x": 1}, {"x": 2}]},
+    )
+    assert result["row_count"] == 2
+    evidence = result["evidence"]
+    assert evidence["replay_key"] == "model@v1:batch-1"  # type: ignore[index]
+    assert len(evidence["input_sha256"]) == 64  # type: ignore[index]
+
+
+def test_batch_prediction_rejects_empty_or_non_object_rows() -> None:
+    plugin = MachineLearningStudioPlugin()
+    with pytest.raises(ValueError, match="at most 100000"):
+        plugin.batch_predict_model("ws", "model", "v1", body={"batch_id": "b", "rows": []})
+    with pytest.raises(ValueError, match="at most 100000"):
+        plugin.batch_predict_model(
+            "ws", "model", "v1", body={"batch_id": "b", "rows": ["not-an-object"]}
+        )

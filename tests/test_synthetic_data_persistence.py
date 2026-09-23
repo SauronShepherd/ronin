@@ -43,7 +43,7 @@ def test_sqlite_run_store_rejects_idempotency_reuse_for_other_plan(tmp_path: Pat
         store.create_or_get(
             run_id="run-2",
             idempotency_key="key-1",
-            plan_json="{\"different\":true}",
+            plan_json='{"different":true}',
             plan_fingerprint="fp-2",
             created_at="2026-01-01T00:00:00.000Z",
         )

@@ -49,16 +49,12 @@ async def test_execution_bridge_persists_and_replays_idempotently(tmp_path) -> N
         runtime="local-preview",
         now=Instant("2026-09-19T10:00:00.000000Z"),
     )
-    store = SqliteJobStore(
-        tmp_path / "jobs.db", migration_now="2026-09-19T10:00:00.000000Z"
-    )
+    store = SqliteJobStore(tmp_path / "jobs.db", migration_now="2026-09-19T10:00:00.000000Z")
     async with DurableExecutionService(store) as service:
         first = await submit_pipeline_plan(service, plan)
         second = await submit_pipeline_plan(service, plan)
     assert first["job_id"] == second["job_id"]
-    reopened = SqliteJobStore(
-        tmp_path / "jobs.db", migration_now="2026-09-19T10:00:00.000000Z"
-    )
+    reopened = SqliteJobStore(tmp_path / "jobs.db", migration_now="2026-09-19T10:00:00.000000Z")
     assert reopened.get_job(plan.job.id) is not None
 
 
@@ -71,9 +67,7 @@ async def test_pipeline_job_claim_heartbeat_and_completion(tmp_path) -> None:
         runtime="local-preview",
         now=Instant("2026-09-19T10:00:00.000000Z"),
     )
-    store = SqliteJobStore(
-        tmp_path / "jobs.db", migration_now="2026-09-19T10:00:00.000000Z"
-    )
+    store = SqliteJobStore(tmp_path / "jobs.db", migration_now="2026-09-19T10:00:00.000000Z")
     async with DurableExecutionService(store) as service:
         await submit_pipeline_plan(service, plan)
         claim = await service.worker_poll(
@@ -84,13 +78,16 @@ async def test_pipeline_job_claim_heartbeat_and_completion(tmp_path) -> None:
             now=Instant("2026-09-19T10:00:01.000000Z"),
         )
         assert claim.claim is not None
-        assert await service.worker_heartbeat(
-            claim.claim.attempt_id,
-            owner="worker-1",
-            lease_token=LeaseToken("lease-1"),
-            expires_at=Instant("2026-09-19T10:01:30.000000Z"),
-            now=Instant("2026-09-19T10:00:10.000000Z"),
-        ) is True
+        assert (
+            await service.worker_heartbeat(
+                claim.claim.attempt_id,
+                owner="worker-1",
+                lease_token=LeaseToken("lease-1"),
+                expires_at=Instant("2026-09-19T10:01:30.000000Z"),
+                now=Instant("2026-09-19T10:00:10.000000Z"),
+            )
+            is True
+        )
         await service.worker_complete_attempt(
             claim.claim.attempt_id,
             state=AttemptState.SUCCEEDED,
@@ -113,9 +110,7 @@ async def test_pipeline_status_cancel_and_evidence_use_durable_service(tmp_path)
         runtime="local-preview",
         now=Instant("2026-09-19T10:00:00.000000Z"),
     )
-    store = SqliteJobStore(
-        tmp_path / "jobs.db", migration_now="2026-09-19T10:00:00.000000Z"
-    )
+    store = SqliteJobStore(tmp_path / "jobs.db", migration_now="2026-09-19T10:00:00.000000Z")
     async with DurableExecutionService(store) as service:
         await submit_pipeline_plan(service, plan)
         assert (await pipeline_status(service, str(plan.job.id)))["state"] == "queued"
@@ -137,9 +132,7 @@ async def test_worker_output_evidence_is_attached_to_fenced_attempt(tmp_path) ->
         runtime="local-preview",
         now=Instant("2026-09-19T10:00:00.000000Z"),
     )
-    store = SqliteJobStore(
-        tmp_path / "jobs.db", migration_now="2026-09-19T10:00:00.000000Z"
-    )
+    store = SqliteJobStore(tmp_path / "jobs.db", migration_now="2026-09-19T10:00:00.000000Z")
     artifacts = LocalArtifactStore(tmp_path / "artifacts")
     async with DurableExecutionService(store) as service:
         await submit_pipeline_plan(service, plan)

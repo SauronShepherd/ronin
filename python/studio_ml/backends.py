@@ -140,7 +140,8 @@ class RemoteRetryPolicy:
     def delay_for(self, attempt: int) -> float:
         if attempt < 1:
             raise ValueError("retry attempt must be positive")
-        return min(self.max_delay_seconds, self.initial_delay_seconds * (2 ** (attempt - 1)))
+        delay: float = self.initial_delay_seconds * (2.0 ** (attempt - 1))
+        return min(self.max_delay_seconds, delay)
 
 
 @runtime_checkable
@@ -175,8 +176,11 @@ class LocalScikitLearnBackend:
     capabilities = BackendCapabilities(
         tasks=("classification", "regression", "clustering"),
         algorithms=(
-            "logistic_regression", "linear_regression", "decision_tree_classifier",
-            "decision_tree_regressor", "random_forest_classifier",
+            "logistic_regression",
+            "linear_regression",
+            "decision_tree_classifier",
+            "decision_tree_regressor",
+            "random_forest_classifier",
             "random_forest_regressor",
             "kmeans",
             "gradient_boosting_regressor",

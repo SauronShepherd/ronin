@@ -77,9 +77,7 @@ class SdpStudioProvider:
         self.timeout_seconds = timeout_seconds
 
     def import_project(self, source: SdpProjectSource) -> SdpImportReport:
-        names = (".sdpstudio/project.yaml",) + tuple(
-            name for name, _ in source.pipeline_documents
-        )
+        names = (".sdpstudio/project.yaml",) + tuple(name for name, _ in source.pipeline_documents)
         return SdpImportReport(source.source_digest, names, lossless=True)
 
     def validate(
@@ -113,6 +111,9 @@ class SdpStudioProvider:
         return self._invoke("compile", source)
 
     def _invoke(self, action: str, source: SdpProjectSource) -> dict[str, object]:
+        if self.command is None:
+            raise RuntimeError("SDP Studio provider command is not configured")
+        command = self.command
         payload = {
             "action": action,
             "project_name": source.project_name,
@@ -124,7 +125,7 @@ class SdpStudioProvider:
         }
         try:
             completed = subprocess.run(  # noqa: S603 - command is explicit provider config
-                list(self.command),
+                list(command),
                 input=json.dumps(payload, sort_keys=True),
                 capture_output=True,
                 text=True,

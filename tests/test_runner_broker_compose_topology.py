@@ -34,7 +34,7 @@ def test_compose_provides_private_persistent_postgres_for_appliance_profile() ->
 
     assert "image: postgres:16.4-alpine" in postgres
     assert "ronin-postgres:/var/lib/postgresql/data" in postgres
-    assert '127.0.0.1:${RONIN_POSTGRES_PORT:-5432}:5432' in postgres
+    assert "127.0.0.1:${RONIN_POSTGRES_PORT:-5432}:5432" in postgres
     assert "pg_isready" in postgres
     assert "RONIN_STORAGE_BACKEND: postgres" in server
     assert "RONIN_POSTGRES_DSN:" in compose

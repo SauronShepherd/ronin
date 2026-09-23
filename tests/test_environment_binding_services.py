@@ -24,6 +24,7 @@ from studio_execution import (
     EnvironmentService,
     EnvironmentServiceConflict,
     EnvironmentServiceNotFound,
+    diff_environments,
 )
 
 _NOW = "2026-09-14T08:50:00.000000Z"
@@ -303,3 +304,20 @@ def test_binding_missing_uses_stable_not_found() -> None:
 
     with pytest.raises(EnvironmentServiceNotFound, match="bindings not found"):
         service.get(_WS, _PROJECT, _ENV)
+
+
+def test_environment_diff_is_deterministic_and_secret_free() -> None:
+    before = EnvironmentDefinition(_ENV, "Production", "primary")
+    after = EnvironmentDefinition(_ENV, "Production", "secondary", state="disabled")
+    result = diff_environments(before, after)
+    assert result.changed
+    assert result.changed_fields == ("description", "state")
+    assert "secret" not in repr(result).casefold()
+
+
+def test_environment_diff_rejects_different_identity() -> None:
+    with pytest.raises(ValueError, match="matching environment ids"):
+        diff_environments(
+            EnvironmentDefinition(EnvironmentId("a"), "A"),
+            EnvironmentDefinition(EnvironmentId("b"), "B"),
+        )

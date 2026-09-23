@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS ronin_projects (
     manifest_json TEXT NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
+    archived_at TEXT,
     row_version BIGINT NOT NULL DEFAULT 1,
     PRIMARY KEY(workspace_id, project_id)
 );
@@ -278,6 +279,9 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(_SCHEMA)
+                cursor.execute(
+                    "ALTER TABLE ronin_projects ADD COLUMN IF NOT EXISTS archived_at TEXT"
+                )
             connection.commit()
         except Exception:
             connection.rollback()
@@ -491,12 +495,34 @@ class PostgresMetadataStore:
             with connection.cursor() as cursor:
                 cursor.execute(
                     "SELECT manifest_json FROM ronin_projects "
-                    "WHERE workspace_id=%s ORDER BY project_id",
+                    "WHERE workspace_id=%s AND archived_at IS NULL ORDER BY project_id",
                     (str(workspace_id),),
                 )
                 return tuple(
                     ProjectManifest.from_json(row["manifest_json"]) for row in cursor.fetchall()
                 )
+        finally:
+            connection.close()
+
+    def archive_project(
+        self, workspace_id: WorkspaceId, project_id: ProjectId, *, now: Instant | str
+    ) -> bool:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                self._require_active_workspace(cursor, workspace_id)
+                cursor.execute(
+                    "UPDATE ronin_projects SET archived_at=%s,updated_at=%s,"
+                    "row_version=row_version+1 "
+                    "WHERE workspace_id=%s AND project_id=%s AND archived_at IS NULL",
+                    (str(Instant(now)), str(Instant(now)), str(workspace_id), str(project_id)),
+                )
+                archived = bool(cursor.rowcount == 1)
+            connection.commit()
+            return archived
+        except Exception:
+            connection.rollback()
+            raise
         finally:
             connection.close()
 

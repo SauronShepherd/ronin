@@ -49,9 +49,7 @@ def test_worker_delegates_spark_connect_execution(monkeypatch) -> None:
         assert limit == 10
         return SparkConnectResult(({"value": 1},), 1, "sc://local")
 
-    monkeypatch.setattr(
-        "studio_data_engineering.worker.SparkConnectProvider.execute_sql", execute
-    )
+    monkeypatch.setattr("studio_data_engineering.worker.SparkConnectProvider.execute_sql", execute)
     result = execute_pipeline_job(
         {
             "runtime": "spark-connect",

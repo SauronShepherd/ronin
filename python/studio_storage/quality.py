@@ -177,6 +177,18 @@ class SqliteQualityStore:
         finally:
             connection.close()
 
+    def list_contracts(self, workspace_id: WorkspaceId) -> tuple[DataContract, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT contract_json FROM data_contracts WHERE workspace_id=? "
+                "ORDER BY asset_id, asset_version",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(DataContract.from_json(row["contract_json"]) for row in rows)
+        finally:
+            connection.close()
+
     def record_run(
         self, workspace_id: WorkspaceId, run: QualityRun, *, now: Instant | str
     ) -> QualityRun:

@@ -4,8 +4,11 @@ from studio_ai_studio.processes import ProcessPolicyError, ProcessProfile, Proce
 
 def profile():
     return ProcessProfile(
-        "C:/ronin/bin/llama-server", ("--host", "127.0.0.1"), "C:/ronin/models",
-        frozenset({"C:/ronin/bin/llama-server"}), frozenset({"C:/ronin/models"}),
+        "C:/ronin/bin/llama-server",
+        ("--host", "127.0.0.1"),
+        "C:/ronin/models",
+        frozenset({"C:/ronin/bin/llama-server"}),
+        frozenset({"C:/ronin/models"}),
     )
 
 
@@ -21,8 +24,12 @@ def test_supervisor_uses_no_shell_and_stops_cleanly():
     calls = []
 
     class FakeChild:
-        def terminate(self): calls.append("terminate")
-        def kill(self): calls.append("kill")
+        def terminate(self):
+            calls.append("terminate")
+
+        def kill(self):
+            calls.append("kill")
+
         def wait(self, timeout=None):
             calls.append(("wait", timeout))
             return 0

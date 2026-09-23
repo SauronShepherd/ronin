@@ -33,6 +33,7 @@ from studio_security import (
     RbacStore,
     actor_context,
     authorization_audit_event,
+    mutation_audit_event,
 )
 from studio_storage import sqlite_ready
 
@@ -288,6 +289,29 @@ class OidcRoninHTTPServer(ThreadingHTTPServer):
         except Exception as exc:
             raise AuthorizationAuditError("authorization audit persistence failed") from exc
         return decision
+
+    def audit_mutation(
+        self,
+        actor: Actor,
+        *,
+        action: str,
+        resource_ref: str,
+        metadata: dict[str, object] | None = None,
+        request_id: str | None,
+    ) -> None:
+        event = mutation_audit_event(
+            actor,
+            workspace_id=self._workspace_id.value,
+            action=action,
+            resource_ref=resource_ref,
+            metadata=metadata,
+            now=_now(),
+            request_id=request_id,
+        )
+        try:
+            self._audit_store.append(self._workspace_id, event)
+        except Exception as exc:
+            raise AuthorizationAuditError("mutation audit persistence failed") from exc
 
     def ready(self) -> bool:
         return sqlite_ready(self._readiness_database)

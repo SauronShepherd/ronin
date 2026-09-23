@@ -38,6 +38,11 @@ class ToolRegistry:
         except KeyError as exc:
             raise KeyError(f"tool runtime is not registered: {tool_id}") from exc
 
+    def list_contracts(self) -> tuple[ToolContract, ...]:
+        """Return a deterministic, read-only view of registered tool contracts."""
+
+        return tuple(self._tools[key].contract for key in sorted(self._tools, key=str))
+
 
 @dataclass(frozen=True, slots=True)
 class AgentStep:
@@ -101,7 +106,7 @@ def run_agent(
 ) -> AgentRunResult:
     """Run a strict bounded tool loop without granting undeclared tool authority."""
 
-    if not user_input or "\x00" in user_input:
+    if not isinstance(user_input, str) or not user_input.strip() or "\x00" in user_input:
         raise ValueError("agent input must be non-empty")
     if definition.provider_id != model.provider_id or definition.model_id != model.model_id:
         raise ValueError("agent model does not match definition")

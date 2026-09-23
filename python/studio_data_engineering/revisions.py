@@ -72,9 +72,7 @@ class RevisionApplication:
         key = (project_id, pipeline_id)
         latest = self._latest.get(key, 0)
         if self._records is not None and key not in self._latest:
-            existing = self._records.get_latest(
-                project_id=project_id, pipeline_id=pipeline_id
-            )
+            existing = self._records.get_latest(project_id=project_id, pipeline_id=pipeline_id)
             if existing is not None:
                 latest = int(existing["revision"])
         if expected_revision is not None and expected_revision != latest:
@@ -103,9 +101,7 @@ class RevisionApplication:
             "pipeline_id": pipeline_id,
             "revision": revision,
             "source_digest": source.source_digest,
-            "artifacts": [
-                {"name": name, "digest": ref.digest} for name, ref in pipeline_artifacts
-            ],
+            "artifacts": [{"name": name, "digest": ref.digest} for name, ref in pipeline_artifacts],
         }
         metadata_artifact = self._artifacts.put_bytes(
             role=f"data-engineering/{project_id}/{pipeline_id}/revision-{revision}.json",

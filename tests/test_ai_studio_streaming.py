@@ -9,7 +9,7 @@ from studio_ai_studio.streaming import (
 
 
 def test_parser_handles_fragmented_events():
-    result = list(parse_sse([b"data: {\"a\"", b":1}\n", b"\ndata: [DONE]\n\n"]))
+    result = list(parse_sse([b'data: {"a"', b":1}\n", b"\ndata: [DONE]\n\n"]))
     assert result == [b'data: {"a":1}\n\n', b"data: [DONE]\n\n"]
 
 

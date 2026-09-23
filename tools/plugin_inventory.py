@@ -14,7 +14,7 @@ import re
 from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 _ROUTE_DECORATORS = {"get", "post", "put", "patch", "delete", "route", "api_route"}
 _CLI_MARKERS = {"click", "typer", "argparse", "console_scripts"}
@@ -60,11 +60,14 @@ def _route_info(node: ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[dict[str,
             if target.attr in {"route", "api_route"} and call and call.keywords:
                 methods = next((kw.value for kw in call.keywords if kw.arg == "methods"), None)
                 if isinstance(methods, (ast.List, ast.Tuple)):
-                    method = ",".join(
-                        item.value.upper()
-                        for item in methods.elts
-                        if isinstance(item, ast.Constant)
-                    ) or method
+                    method = (
+                        ",".join(
+                            item.value.upper()
+                            for item in methods.elts
+                            if isinstance(item, ast.Constant) and isinstance(item.value, str)
+                        )
+                        or method
+                    )
             path = ""
             if call and call.args and isinstance(call.args[0], ast.Constant):
                 path = str(call.args[0].value)
@@ -95,20 +98,23 @@ def inspect_python_file(path: Path, source_root: Path, tests_root: Path) -> File
             and node.func.attr == "add_route"
             and len(node.args) >= 3
         ):
-                method = node.args[0]
-                path_value = node.args[1]
-                handler = node.args[2]
-                if all(isinstance(value, ast.Constant) for value in (method, path_value)):
-                    handler_name = (
-                        handler.id if isinstance(handler, ast.Name) else ast.unparse(handler)
-                    )
-                    routes.append(
-                        {
-                            "method": str(method.value).upper(),
-                            "path": str(path_value.value),
-                            "function": handler_name,
-                        }
-                    )
+            method = node.args[0]
+            path_value = node.args[1]
+            handler = node.args[2]
+            if (
+                isinstance(method, ast.Constant)
+                and isinstance(method.value, str)
+                and isinstance(path_value, ast.Constant)
+                and isinstance(path_value.value, str)
+            ):
+                handler_name = handler.id if isinstance(handler, ast.Name) else ast.unparse(handler)
+                routes.append(
+                    {
+                        "method": method.value.upper(),
+                        "path": path_value.value,
+                        "function": handler_name,
+                    }
+                )
     markers = {
         category: sum(source.lower().count(marker.lower()) for marker in marker_set)
         for category, marker_set in _TEXT_MARKERS.items()
@@ -142,7 +148,7 @@ def _entry_points(pyproject: Path) -> dict[str, dict[str, str]]:
             group = None
             continue
         match = re.match(r"\s*([A-Za-z0-9_.-]+)\s*=\s*\"([^\"]+)\"", line)
-        if group and match:
+        if group is not None and match:
             result.setdefault(group, {})[match.group(1)] = match.group(2)
     return result
 
@@ -157,13 +163,12 @@ def build_inventory(root: Path) -> dict[str, Any]:
     ]
     package_counts = Counter(item.package for item in files if item.package)
     routes = [
-        route | {"file": item.path, "package": item.package}
+        route | {"file": item.path, "package": cast(str, item.package)}
         for item in files
         for route in item.routes
     ]
     marker_counts = {
-        category: sum(item.markers[category] for item in files)
-        for category in _TEXT_MARKERS
+        category: sum(item.markers[category] for item in files) for category in _TEXT_MARKERS
     }
     return {
         "schema_version": 1,

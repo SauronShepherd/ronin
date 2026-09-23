@@ -658,15 +658,20 @@ def _serve_local_composed() -> int:
     """Run the opt-in jobs plus control-plane local composition."""
     from threading import Event
 
+    from studio_execution.scheduler_daemon import install_scheduler_stop_signals
+
     from .local_composed import build_local_composed_from_env
 
     composition = build_local_composed_from_env()
     composition.start()
+    stopped = Event()
+    restore_signals = install_scheduler_stop_signals(stopped.set)
     try:
-        Event().wait()
+        stopped.wait()
     except KeyboardInterrupt:
         return 130
     finally:
+        restore_signals()
         composition.stop()
     return 0
 
@@ -1035,11 +1040,17 @@ def _plugins(namespace: argparse.Namespace) -> int:
     diagnostics = host.diagnostics()
     if namespace.plugins_command == "surfaces":
         contributions = host.contribution_diagnostics()
-        print(json.dumps({
-            "surfaces": contributions["surfaces"],
-            "cli": contributions["cli"],
-            "client_operations": contributions["client_operations"],
-        }, sort_keys=True, separators=(",", ":")))
+        print(
+            json.dumps(
+                {
+                    "surfaces": contributions["surfaces"],
+                    "cli": contributions["cli"],
+                    "client_operations": contributions["client_operations"],
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        )
         return 0
     if namespace.plugins_command == "validate":
         try:

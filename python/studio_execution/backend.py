@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Protocol
 
@@ -54,13 +54,23 @@ class WorkloadSpec:
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip() or value != value.strip():
                 raise ValueError(f"{name} must be a trimmed non-empty string")
-        if self.timeout_seconds <= 0:
+        if (
+            not isinstance(self.timeout_seconds, int)
+            or isinstance(self.timeout_seconds, bool)
+            or self.timeout_seconds <= 0
+        ):
             raise ValueError("timeout_seconds must be positive")
         if not self.command:
             raise ValueError("command must not be empty")
         if any(not item or item != item.strip() for item in self.command):
             raise ValueError("command entries must be trimmed and non-empty")
-        if any(not key or not value for key, value in self.labels.items()):
+        if any(
+            not isinstance(key, str)
+            or not isinstance(value, str)
+            or not key.strip()
+            or not value.strip()
+            for key, value in self.labels.items()
+        ):
             raise ValueError("labels must contain non-empty keys and values")
 
 
@@ -76,7 +86,7 @@ class WorkloadStatus:
     handle: WorkloadHandle
     state: WorkloadState
     reason: str | None = None
-    observed_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    observed_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,7 +133,14 @@ class InMemoryExecutionBackend:
         return BackendCapabilities("in-memory", runtime_fingerprint=self._fingerprint)
 
     def submit(self, spec: WorkloadSpec) -> WorkloadHandle:
-        existing = next((record[1].handle for record in self._records.values() if record[0].run_id == spec.run_id), None)
+        existing = next(
+            (
+                record[1].handle
+                for record in self._records.values()
+                if record[0].run_id == spec.run_id
+            ),
+            None,
+        )
         if existing is not None:
             return existing
         handle = WorkloadHandle(f"memory-{len(self._records) + 1}", spec.run_id, "in-memory")
@@ -143,7 +160,11 @@ class InMemoryExecutionBackend:
         spec, status, logs = self._record(handle)
         if status.state in {WorkloadState.SUCCEEDED, WorkloadState.FAILED, WorkloadState.CANCELLED}:
             return
-        self._records[handle.workload_id] = (spec, WorkloadStatus(handle, WorkloadState.CANCELLED, reason), logs)
+        self._records[handle.workload_id] = (
+            spec,
+            WorkloadStatus(handle, WorkloadState.CANCELLED, reason),
+            logs,
+        )
 
     def delete(self, handle: WorkloadHandle) -> None:
         self._records.pop(handle.workload_id, None)
@@ -152,13 +173,23 @@ class InMemoryExecutionBackend:
         status = self.get_status(handle)
         return ExecutionEvidence(handle, status.state, self._fingerprint)
 
-    def _record(self, handle: WorkloadHandle) -> tuple[WorkloadSpec, WorkloadStatus, tuple[str, ...]]:
+    def _record(
+        self, handle: WorkloadHandle
+    ) -> tuple[WorkloadSpec, WorkloadStatus, tuple[str, ...]]:
         if handle.backend != "in-memory" or handle.workload_id not in self._records:
             raise KeyError(f"unknown workload: {handle.workload_id}")
         return self._records[handle.workload_id]
 
 
 __all__ = (
-    "BackendCapabilities", "ExecutionBackend", "ExecutionEvidence", "InMemoryExecutionBackend",
-    "LogBatch", "ResourceLimits", "WorkloadHandle", "WorkloadSpec", "WorkloadState", "WorkloadStatus",
+    "BackendCapabilities",
+    "ExecutionBackend",
+    "ExecutionEvidence",
+    "InMemoryExecutionBackend",
+    "LogBatch",
+    "ResourceLimits",
+    "WorkloadHandle",
+    "WorkloadSpec",
+    "WorkloadState",
+    "WorkloadStatus",
 )

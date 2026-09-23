@@ -38,10 +38,12 @@ def test_probe_rejects_malformed_provider_payload():
 
 
 def test_llama_readiness_is_separate_from_model_discovery():
-    transport = FakeTransport({
-        "http://127.0.0.1:8000/v1/models": (200, {"data": [{"id": "qwen"}]}),
-        "http://127.0.0.1:8000/health": (503, {}),
-    })
+    transport = FakeTransport(
+        {
+            "http://127.0.0.1:8000/v1/models": (200, {"data": [{"id": "qwen"}]}),
+            "http://127.0.0.1:8000/health": (503, {}),
+        }
+    )
     result = LlamaCppAdapter(transport).probe(config(AdapterKind.LLAMA_CPP))
     assert result.ready is False
     assert result.models

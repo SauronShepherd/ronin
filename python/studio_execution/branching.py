@@ -8,9 +8,13 @@ Durable task-state integration remains a scheduler concern.
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TypeAlias
+
+from studio_core.canonical_json import decode as decode_canonical_json
+from studio_core.canonical_json import encode as encode_canonical_json
 
 Scalar: TypeAlias = None | bool | int | float | str
 Context: TypeAlias = Mapping[str, Scalar]
@@ -26,6 +30,36 @@ class BranchDecision:
 
     should_run: bool
     reason: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.should_run, bool):
+            raise TypeError("branch decision should_run must be boolean")
+        if not self.reason or self.reason != self.reason.strip():
+            raise ValueError("branch decision reason must be non-empty and trimmed")
+
+    def to_payload(self) -> dict[str, object]:
+        return {"version": 1, "should_run": self.should_run, "reason": self.reason}
+
+    def to_json(self) -> str:
+        return encode_canonical_json(self.to_payload()).decode()
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(self.to_json().encode()).hexdigest()
+
+    @classmethod
+    def from_payload(cls, value: object) -> BranchDecision:
+        if not isinstance(value, Mapping) or set(value) != {"version", "should_run", "reason"}:
+            raise ValueError("branch decision has invalid shape")
+        if value["version"] != 1:
+            raise ValueError("unsupported branch decision version")
+        if not isinstance(value["should_run"], bool) or not isinstance(value["reason"], str):
+            raise TypeError("branch decision fields have invalid types")
+        return cls(value["should_run"], value["reason"])
+
+    @classmethod
+    def from_json(cls, payload: str) -> BranchDecision:
+        return cls.from_payload(decode_canonical_json(payload))
 
 
 def evaluate_branch(expression: object, context: Context) -> BranchDecision:

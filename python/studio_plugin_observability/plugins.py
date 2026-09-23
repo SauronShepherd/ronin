@@ -38,16 +38,28 @@ class LoggingPlugin:
         )
         for contribution in (
             SurfaceContribution(
-                id="observability.logs.v1", plugin_id=context.plugin_id,
-                namespace="observability", command="logs", operation_id="observability.logs.v1",
-                capability="logging.local", permission="logging:read",
-                path="/v1/platform/logs", method="GET", output_schema={"type": "object"},
+                id="observability.logs.v1",
+                plugin_id=context.plugin_id,
+                namespace="observability",
+                command="logs",
+                operation_id="observability.logs.v1",
+                capability="logging.local",
+                permission="logging:read",
+                path="/v1/platform/logs",
+                method="GET",
+                output_schema={"type": "object"},
             ),
             SurfaceContribution(
-                id="observability.traces.v1", plugin_id=context.plugin_id,
-                namespace="observability", command="traces", operation_id="observability.traces.v1",
-                capability="tracing.local", permission="logging:read",
-                path="/v1/platform/traces", method="GET", output_schema={"type": "object"},
+                id="observability.traces.v1",
+                plugin_id=context.plugin_id,
+                namespace="observability",
+                command="traces",
+                operation_id="observability.traces.v1",
+                capability="tracing.local",
+                permission="logging:read",
+                path="/v1/platform/traces",
+                method="GET",
+                output_schema={"type": "object"},
             ),
         ):
             context.contributions.add_surface(contribution)
@@ -95,10 +107,16 @@ class MonitoringPlugin:
         )
         context.contributions.add_surface(
             SurfaceContribution(
-                id="observability.metrics.v1", plugin_id=context.plugin_id,
-                namespace="observability", command="metrics", operation_id="observability.metrics.v1",
-                capability="monitoring.local", permission="monitoring:read",
-                path="/v1/platform/metrics", method="GET", output_schema={"type": "object"},
+                id="observability.metrics.v1",
+                plugin_id=context.plugin_id,
+                namespace="observability",
+                command="metrics",
+                operation_id="observability.metrics.v1",
+                capability="monitoring.local",
+                permission="monitoring:read",
+                path="/v1/platform/metrics",
+                method="GET",
+                output_schema={"type": "object"},
             )
         )
 

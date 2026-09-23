@@ -48,7 +48,11 @@ def test_audit_event_id_conflict_fails_closed(tmp_path: Path) -> None:
         store.append(WorkspaceId("ws-1"), _event(action="workspace.delete"))
 
 
-def test_audit_metadata_rejects_secret_keys() -> None:
+@pytest.mark.parametrize(
+    "key",
+    ["api_key", "authorization", "cookie", "private_key", "client_secret", "password"],
+)
+def test_audit_metadata_rejects_secret_keys(key: str) -> None:
     with pytest.raises(ValueError, match="credential-bearing"):
         AuditEvent(
             id=AuditEventId("audit-1"),
@@ -57,7 +61,7 @@ def test_audit_metadata_rejects_secret_keys() -> None:
             action="connection.test",
             resource=AuditResource("connection", "c1"),
             outcome="succeeded",
-            metadata=(("api_key", "not-allowed"),),
+            metadata=((key, "not-allowed"),),
         )
 
 

@@ -1,7 +1,13 @@
 """Open-format lakehouse primitives for Ronin Public v1."""
 
-from .delta import DeltaDependencyError, DeltaTableStore
-from .iceberg import IcebergCapabilityError, IcebergDependencyError, IcebergTableStore
+from .bundle import export_table_metadata_bundle, import_table_metadata_bundle
+from .delta import DeltaCompatibilityProfile, DeltaDependencyError, DeltaTableStore
+from .iceberg import (
+    IcebergCapabilityError,
+    IcebergCompatibilityProfile,
+    IcebergDependencyError,
+    IcebergTableStore,
+)
 from .parquet import (
     ParquetDependencyError,
     ParquetFile,
@@ -16,14 +22,17 @@ from .tables import (
     OpenTableState,
     OpenTableStore,
     TableFormat,
+    TableMetadata,
     TableWriteMode,
 )
 
 __all__ = (
     "DeltaDependencyError",
+    "DeltaCompatibilityProfile",
     "DeltaTableStore",
     "IcebergDependencyError",
     "IcebergCapabilityError",
+    "IcebergCompatibilityProfile",
     "IcebergTableStore",
     "OpenTableField",
     "OpenTableIdentifier",
@@ -33,6 +42,9 @@ __all__ = (
     "ParquetFile",
     "ParquetSchemaField",
     "TableFormat",
+    "TableMetadata",
+    "export_table_metadata_bundle",
+    "import_table_metadata_bundle",
     "TableWriteMode",
     "inspect_parquet",
     "read_parquet_rows",
