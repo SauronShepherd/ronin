@@ -1662,20 +1662,24 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 include_governance = (
                     params.get("include_governance", ["false"])[0].casefold() == "true"
                 )
-                items = []
+                catalog_items: list[dict[str, object]] = []
                 for item in assets:
-                    payload = item.to_payload()
+                    asset_payload = item.to_payload()
                     if include_governance:
                         sensitivity = getattr(catalog_reader, "get_sensitivity", None)
                         ownership = getattr(catalog_reader, "get_ownership", None)
                         if callable(sensitivity):
                             value = sensitivity(workspace_id, AssetId(str(item.id)))
-                            payload["sensitivity"] = None if value is None else value.to_payload()
+                            asset_payload["sensitivity"] = (
+                                None if value is None else value.to_payload()
+                            )
                         if callable(ownership):
                             value = ownership(workspace_id, AssetId(str(item.id)))
-                            payload["ownership"] = None if value is None else value.to_payload()
-                    items.append(payload)
-                self._write_json(HTTPStatus.OK, {"items": items})
+                            asset_payload["ownership"] = (
+                                None if value is None else value.to_payload()
+                            )
+                    catalog_items.append(asset_payload)
+                self._write_json(HTTPStatus.OK, {"items": catalog_items})
                 return
             if (
                 len(segments) == 5
@@ -2459,7 +2463,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                limit = int(query.get("limit", ["100"])[0]) if query else 100
+                alert_params = parse_qs(query or "", keep_blank_values=True)
+                limit = int(alert_params.get("limit", ["100"])[0]) if query else 100
                 self._write_json(HTTPStatus.OK, alert_reader.list_instances(limit=limit))
                 return
             if (
