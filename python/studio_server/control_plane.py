@@ -1706,8 +1706,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5:] == ("semantic", "models")
             ):
-                reader = self._server().semantic_reader
-                if reader is None:
+                semantic_reader = self._server().semantic_reader
+                if semantic_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "semantic_unavailable",
@@ -1722,15 +1722,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
-                self._write_json(HTTPStatus.OK, reader.list_models(project_id))
+                self._write_json(HTTPStatus.OK, semantic_reader.list_models(project_id))
                 return
             if (
                 len(segments) == 6
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "ontologies"
             ):
-                reader = self._server().ontology_reader
-                if reader is None:
+                ontology_reader = self._server().ontology_reader
+                if ontology_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "ontology_unavailable",
@@ -1742,7 +1742,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                ontology = reader.get_schema(workspace_id, OntologyId(segments[4]), segments[5])
+                ontology = ontology_reader.get_schema(
+                    workspace_id, OntologyId(segments[4]), segments[5]
+                )
                 if ontology is None:
                     self._error(HTTPStatus.NOT_FOUND, "not_found", "ontology schema does not exist")
                     return
@@ -1753,8 +1755,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:5] == ("glossary", "terms")
             ):
-                reader = self._server().glossary_reader
-                if reader is None:
+                glossary_reader = self._server().glossary_reader
+                if glossary_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "glossary_unavailable",
@@ -1766,7 +1768,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                term = reader.get(
+                term = glossary_reader.get(
                     workspace_id, GlossaryTermId(unquote(segments[5])), unquote(segments[6])
                 )
                 if term is None:
