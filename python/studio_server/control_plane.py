@@ -1133,8 +1133,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5:] == ("semantic", "dashboards")
             ):
-                reader = self._server().semantic_reader
-                if reader is None:
+                semantic_reader = self._server().semantic_reader
+                if semantic_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "semantic_unavailable",
@@ -1147,7 +1147,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
-                self._write_json(HTTPStatus.OK, reader.list_dashboards(project_id))
+                self._write_json(HTTPStatus.OK, semantic_reader.list_dashboards(project_id))
                 return
             if (
                 len(segments) == 8
@@ -1155,8 +1155,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5] == "notebooks"
             ):
-                reader = self._server().notebook_reader
-                if reader is None:
+                notebook_reader = self._server().notebook_reader
+                if notebook_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "notebook_unavailable",
@@ -1176,7 +1176,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     raise ValueError("notebook body must be an object")
                 self._write_json(
                     HTTPStatus.OK,
-                    reader.save(project_id=project_id, notebook_id=segments[7], payload=body),
+                    notebook_reader.save(
+                        project_id=project_id, notebook_id=segments[7], payload=body
+                    ),
                 )
                 return
             if (
@@ -1185,8 +1187,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5:7] == ("semantic", "dashboards")
             ):
-                reader = self._server().semantic_reader
-                if reader is None:
+                semantic_reader = self._server().semantic_reader
+                if semantic_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "semantic_unavailable",
@@ -1202,7 +1204,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
-                payload = reader.get_dashboard(project_id, dashboard_id)
+                payload = semantic_reader.get_dashboard(project_id, dashboard_id)
                 if payload is None:
                     self._error(
                         HTTPStatus.NOT_FOUND, "not_found", "semantic dashboard does not exist"
@@ -1216,8 +1218,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5] == "notebooks"
             ):
-                reader = self._server().notebook_reader
-                if reader is None:
+                notebook_reader = self._server().notebook_reader
+                if notebook_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "notebook_unavailable",
@@ -1235,7 +1237,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 revision = self.headers.get("If-Match")
                 if revision is None or not revision.isdigit() or int(revision) < 1:
                     raise ValueError("If-Match must contain the expected positive revision")
-                reader.delete(
+                notebook_reader.delete(
                     project_id=project_id, notebook_id=segments[7], expected_revision=int(revision)
                 )
                 self._write_json(HTTPStatus.OK, {"deleted": True, "id": segments[7]})
@@ -1336,8 +1338,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5] == "notebooks"
             ):
-                reader = self._server().notebook_reader
-                if reader is None:
+                notebook_reader = self._server().notebook_reader
+                if notebook_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "notebook_unavailable",
@@ -1353,10 +1355,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if query:
                     raise ValueError("notebook reads do not accept query parameters")
                 if len(segments) == 7:
-                    self._write_json(HTTPStatus.OK, reader.list(project_id=project_id))
+                    self._write_json(HTTPStatus.OK, notebook_reader.list(project_id=project_id))
                 else:
                     self._write_json(
-                        HTTPStatus.OK, reader.get(project_id=project_id, notebook_id=segments[7])
+                        HTTPStatus.OK,
+                        notebook_reader.get(project_id=project_id, notebook_id=segments[7]),
                     )
                 return
             if (
@@ -1365,8 +1368,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5] == "pipelines"
             ):
-                reader = self._server().data_engineering_reader
-                if reader is None:
+                de_reader = self._server().data_engineering_reader
+                if de_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "data_engineering_unavailable",
@@ -1381,7 +1384,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
-                pipelines = reader.list_pipelines(project_id=project_id)
+                pipelines = de_reader.list_pipelines(project_id=project_id)
                 self._write_json(
                     HTTPStatus.OK,
                     {"items": [{"pipeline_id": pipeline_id} for pipeline_id in pipelines]},
@@ -1394,8 +1397,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[5] == "pipelines"
                 and segments[7:] == ("revisions", "compare")
             ):
-                reader = self._server().data_engineering_reader
-                if reader is None:
+                de_reader = self._server().data_engineering_reader
+                if de_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "data_engineering_unavailable",
@@ -1417,7 +1420,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     ) from exc
                 self._write_json(
                     HTTPStatus.OK,
-                    reader.compare(
+                    de_reader.compare(
                         project_id=project_id,
                         pipeline_id=pipeline_id,
                         left_revision=left_revision,
@@ -1432,8 +1435,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[5] == "pipelines"
                 and segments[7] == "revisions"
             ):
-                reader = self._server().data_engineering_reader
-                if reader is None:
+                de_reader = self._server().data_engineering_reader
+                if de_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "data_engineering_unavailable",
@@ -1449,7 +1452,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     return
                 if len(segments) == 8:
-                    revisions = reader.list_revisions(
+                    revisions = de_reader.list_revisions(
                         project_id=project_id, pipeline_id=pipeline_id
                     )
                     self._write_json(HTTPStatus.OK, {"items": list(revisions)})
@@ -1458,7 +1461,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         revision = int(segments[8])
                     except ValueError as exc:
                         raise ValueError("pipeline revision must be an integer") from exc
-                    item = reader.get_revision(
+                    item = de_reader.get_revision(
                         project_id=project_id, pipeline_id=pipeline_id, revision=revision
                     )
                     if item is None:
