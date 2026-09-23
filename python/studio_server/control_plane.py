@@ -3390,15 +3390,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                payload = self._read_json()
+                graph_payload = self._read_json()
                 if (
-                    not isinstance(payload, dict)
-                    or set(payload) - {"query", "max_limit"}
-                    or "query" not in payload
+                    not isinstance(graph_payload, dict)
+                    or set(graph_payload) - {"query", "max_limit"}
+                    or "query" not in graph_payload
                 ):
                     raise ValueError("graph query body must contain query and optional max_limit")
-                query = payload["query"]
-                max_limit = payload.get("max_limit", 1000)
+                query = graph_payload["query"]
+                max_limit = graph_payload.get("max_limit", 1000)
                 if (
                     not isinstance(query, str)
                     or not isinstance(max_limit, int)
@@ -3472,15 +3472,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 proposed = EnvironmentDefinition.from_payload(self._read_json())
                 if proposed.id != environment_id:
                     raise ValueError("environment id must match the request path")
-                result = diff_environments(
+                diff_result = diff_environments(
                     environment_service.get(workspace_id, environment_id), proposed
                 )
                 self._write_json(
                     HTTPStatus.OK,
                     {
-                        "environment_id": str(result.environment_id),
-                        "changed": result.changed,
-                        "changed_fields": list(result.changed_fields),
+                        "environment_id": str(diff_result.environment_id),
+                        "changed": diff_result.changed,
+                        "changed_fields": list(diff_result.changed_fields),
                     },
                 )
                 return
