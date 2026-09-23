@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-23T00:00:00Z",
-  "observed_main_sha": "daddbb80ba509bb8a6e060adf94776b2d3aef9be",
+  "observed_at": "2026-09-23T15:30:00+02:00",
+  "observed_main_sha": "46f027433e72d2e32c6890da2e27c9e45dff60d7",
   "observed_workspace_state": "implementation branch with tracked changes committed and pushed; generated local artifacts remain untracked",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -29,7 +29,7 @@
     {
       "id": "p1-workspace-project-source-control",
       "status": "partial",
-    "summary": "Workspace/project persistence, authenticated create/read/update/archive workspace and project lifecycles with idempotency, audit and active-project filtering, project manifests, reproducible secret-free deployment manifest with canonical identity, Git identity, validated source URIs, detached checkout, dirty-worktree policy, safe revision evidence, local branch create/delete, remote fetch/update adapter, environments and deployment bindings exist; the Studio workspace-to-project authoring surface now covers create/list/archive projects and environment edit/disable actions with route smoke; remote-provider qualification, complete Public v1 UI and multi-user membership remain incomplete."
+      "summary": "Workspace/project persistence, authenticated create/read/update/archive workspace and project lifecycles with idempotency, audit and active-project filtering, project manifests, reproducible secret-free deployment manifest with canonical identity, Git identity, validated source URIs, detached checkout, dirty-worktree policy, safe revision evidence, local branch create/delete, remote fetch/update adapter, environments and deployment bindings exist; the Studio workspace-to-project authoring surface now covers create/list/archive projects and environment edit/disable actions with route smoke; remote-provider qualification, complete Public v1 UI and multi-user membership remain incomplete."
     },
     {
       "id": "p2-connectors-ingestion",
@@ -44,12 +44,12 @@
     {
       "id": "p4-data-engineering-studio",
       "status": "partial",
-    "summary": "Notebook execution and pipeline IR foundations, durable SQL editor revisions/history/bounded export, parameter schemas, deterministic project pipeline inventory, pipeline revision comparison/archive, authenticated pipeline revision import/list/detail/compare/archive exposed through an injected HTTP/OpenAPI/SDK port, and an authenticated pipeline-revision-to-workflow-run creation route with deterministic idempotency exist; bounded read-only SQL over registered Parquet is exposed through HTTP/OpenAPI/SDK/Studio, while worker/evidence lineage, PostgreSQL runtime qualification, complete notebook/SQL/pipeline public CRUD and broader authoring surfaces remain incomplete."
+      "summary": "Notebook execution and pipeline IR foundations, durable SQL editor revisions/history/bounded export, parameter schemas, deterministic project pipeline inventory, pipeline revision comparison/archive, authenticated pipeline revision import/list/detail/compare/archive exposed through an injected HTTP/OpenAPI/SDK port, and an authenticated pipeline-revision-to-workflow-run creation route with deterministic idempotency exist; bounded read-only SQL over registered Parquet is exposed through HTTP/OpenAPI/SDK/Studio, while worker/evidence lineage, PostgreSQL runtime qualification, complete notebook/SQL/pipeline public CRUD and broader authoring surfaces remain incomplete."
     },
     {
       "id": "p5-durable-dag-scheduler",
       "status": "partial",
-    "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook adapters, and durable notification retry/error recording exist; notification provider qualification, broader operator execution, crash-restart/deployment qualification and PostgreSQL multi-node HA qualification remain incomplete."
+      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook adapters, and durable notification retry/error recording exist; notification provider qualification, broader operator execution, crash-restart/deployment qualification and PostgreSQL multi-node HA qualification remain incomplete."
     },
     {
       "id": "p6-catalog-lineage",
@@ -69,7 +69,7 @@
     {
       "id": "p7-data-quality-contracts",
       "status": "partial",
-    "summary": "Versioned contracts/rules/results and persistence exist; built-in null, unique, range, domain, row-count, freshness, referential, and explicitly injected sandboxed SQL/Python predicate execution plus provider-neutral scheduler-facing quality_gate release decisions, controller release-policy enforcement, quality-to-common-alert transition evaluation, authenticated alert rule-list/evaluation APIs, pyronin SDK parity, and an accessible Monitoring & Alerts rules/evaluation Studio surface exist; provider production qualification remains incomplete."
+      "summary": "Versioned contracts/rules/results and persistence exist; built-in null, unique, range, domain, row-count, freshness, referential, and explicitly injected sandboxed SQL/Python predicate execution plus provider-neutral scheduler-facing quality_gate release decisions, controller release-policy enforcement, quality-to-common-alert transition evaluation, authenticated alert rule-list/evaluation APIs, pyronin SDK parity, and an accessible Monitoring & Alerts rules/evaluation Studio surface exist; provider production qualification remains incomplete."
     },
     {
       "id": "p8-ai-ml-mlops",
@@ -94,7 +94,7 @@
     {
       "id": "p12-observability-alerts-finops",
       "status": "partial",
-    "summary": "Durable normalized metrics/events, configurable pending/firing/open/resolved alert state transitions with cooldown and acknowledgement persistence, deterministic alert and budget notification intents with durable delivery attempts/errors/backoff, bounded SMTP and HTTPS webhook delivery, dependency-free deterministic Prometheus text export, reusable execution instrumentation, LocalWorkerRuntime instrumentation callbacks in one-shot and continuous loops, usage pricing, actual-versus-estimated cost records, non-ledger forecast projections, budget evaluation, deny-new-work budget_gate decisions, and bounded explainable anomaly hooks exist; authenticated alert-rule/evaluation APIs, SDK parity and the Monitoring & Alerts Studio route are covered by static and Playwright smoke evidence; broader service adoption and production qualification remain incomplete."
+      "summary": "Durable normalized metrics/events, configurable pending/firing/open/resolved alert state transitions with cooldown and acknowledgement persistence, deterministic alert and budget notification intents with durable delivery attempts/errors/backoff, bounded SMTP and HTTPS webhook delivery, dependency-free deterministic Prometheus text export, reusable execution instrumentation, LocalWorkerRuntime instrumentation callbacks in one-shot and continuous loops, usage pricing, actual-versus-estimated cost records, non-ledger forecast projections, budget evaluation, deny-new-work budget_gate decisions, and bounded explainable anomaly hooks exist; authenticated alert-rule/evaluation APIs, SDK parity and the Monitoring & Alerts Studio route are covered by static and Playwright smoke evidence; broader service adoption and production qualification remain incomplete."
     },
     {
       "id": "p13-multi-user-security-audit",
@@ -104,7 +104,7 @@
     {
       "id": "p14-deployment-operations",
       "status": "partial",
-    "summary": "Local/container/Compose foundation, PostgreSQL metadata adapter with transactional migration and healthcheck, wired PostgreSQL JobStore, single-node real-PostgreSQL lifecycle qualification, SQLite online backup/restore with path-bound artifact-tree manifests, PostgreSQL dump backup with checksum sidecar verification, S3-compatible artifact adapter with retries and corruption checks, Kubernetes Job submit/status/cancel/log lifecycle adapter, forward-only migration qualification, explicit upgrade/failure recovery runbooks, multi-user Helm wiring and scheduler HA fencing profile exist. PostgreSQL multi-node/HA and external production qualification remain incomplete."
+      "summary": "Local/container/Compose foundation, PostgreSQL metadata adapter with transactional migration and healthcheck, wired PostgreSQL JobStore, single-node real-PostgreSQL lifecycle qualification, SQLite online backup/restore with path-bound artifact-tree manifests, PostgreSQL dump backup with checksum sidecar verification, S3-compatible artifact adapter with retries and corruption checks, Kubernetes Job submit/status/cancel/log lifecycle adapter, forward-only migration qualification, explicit upgrade/failure recovery runbooks, multi-user Helm wiring and scheduler HA fencing profile exist. PostgreSQL multi-node/HA and external production qualification remain incomplete."
     },
     {
       "id": "ronin-bundle",
@@ -134,7 +134,7 @@
     {
       "id": "web-studio",
       "status": "partial",
-    "summary": "Authenticated static Studio shell supports job listing, detail status, events, evidence, cancellation, navigation, packaged asset delivery, project-scoped read-only SQL, workspace creation, project creation/listing/archive, environment editing/disabling and a Monitoring & Alerts route backed by alert APIs; 72 Playwright route/accessibility/history/domain-journey checks pass; authoring editors, domain workflows, and complete Public v1 journeys remain incomplete."
+      "summary": "Authenticated static Studio shell supports job listing, detail status, events, evidence, cancellation, navigation, packaged asset delivery, project-scoped read-only SQL, workspace creation, project creation/listing/archive, environment editing/disabling and a Monitoring & Alerts route backed by alert APIs; 72 Playwright route/accessibility/history/domain-journey checks pass; authoring editors, domain workflows, and complete Public v1 journeys remain incomplete."
     },
     {
       "id": "public-v1-release-qualification",
@@ -213,4 +213,3 @@
     "Keep exact-head CI/release qualification active, identify every claim by SHA, and do not claim Public v1 release readiness before all mandatory capabilities and human-owned evidence exist."
   ]
 }
-
