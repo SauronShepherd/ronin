@@ -2113,8 +2113,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[5] == "pipelines"
                 and segments[7] == "revisions"
             ):
-                reader = self._server().data_engineering_reader
-                if reader is None:
+                de_writer = self._server().data_engineering_reader
+                if de_writer is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "data_engineering_unavailable",
@@ -2164,7 +2164,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": f"{project_id}/{pipeline_id}"},
                 ):
                     return
-                record = reader.import_sdp(
+                record = de_writer.import_sdp(
                     project_id=project_id,
                     pipeline_id=pipeline_id,
                     source=source,
@@ -2188,8 +2188,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[5] == "pipelines"
                 and segments[7] == "archive"
             ):
-                reader = self._server().data_engineering_reader
-                if reader is None:
+                de_writer = self._server().data_engineering_reader
+                if de_writer is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "data_engineering_unavailable",
@@ -2216,7 +2216,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": f"{project_id}/{pipeline_id}"},
                 ):
                     return
-                archived = reader.archive(project_id=project_id, pipeline_id=pipeline_id)
+                archived = de_writer.archive(project_id=project_id, pipeline_id=pipeline_id)
                 self._write_json(
                     HTTPStatus.OK,
                     {"archived": archived, "project_id": project_id, "pipeline_id": pipeline_id},
