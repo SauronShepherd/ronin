@@ -3778,13 +3778,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if query:
                     raise ValueError("project replacement does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
-                project_id = ProjectId(segments[4])
+                project_ref = ProjectId(segments[4])
                 if not self._authorize(
-                    actor, workspace_id, "project.write", resource_ref=str(project_id)
+                    actor, workspace_id, "project.write", resource_ref=str(project_ref)
                 ):
                     return
                 try:
-                    current = self._server().project_service.get(workspace_id, project_id)
+                    current = self._server().project_service.get(workspace_id, project_ref)
                 except (WorkspaceServiceNotFound, WorkspaceServiceConflict):
                     self._discard_request_body()
                     raise
@@ -3794,18 +3794,18 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not isinstance(payload, dict):
                     raise ValueError("project manifest body must be a JSON object")
                 manifest = ProjectManifest.from_data(payload)
-                if manifest.project.id != project_id:
+                if manifest.project.id != project_ref:
                     raise ValueError("project manifest id must match the request path")
                 if not self._audit_mutation(
                     actor,
                     "project.replace",
                     workspace_id,
-                    {"resource": str(project_id)},
+                    {"resource": str(project_ref)},
                 ):
                     return
                 stored = self._server().project_service.replace(workspace_id, manifest, now=_now())
-                result = _manifest_payload(stored)
-                self._write_json(HTTPStatus.OK, result, etag=_etag(result))
+                project_result = _manifest_payload(stored)
+                self._write_json(HTTPStatus.OK, project_result, etag=_etag(project_result))
                 return
             if (
                 len(segments) == 5
