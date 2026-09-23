@@ -2768,8 +2768,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5] == "notebooks"
             ):
-                reader = self._server().notebook_reader
-                if reader is None:
+                notebook_reader = self._server().notebook_reader
+                if notebook_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "notebook_unavailable",
@@ -2787,7 +2787,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     raise ValueError("notebook body must be an object")
                 if len(segments) == 7:
                     self._write_json(
-                        HTTPStatus.CREATED, reader.create(project_id=project_id, payload=body)
+                        HTTPStatus.CREATED,
+                        notebook_reader.create(project_id=project_id, payload=body),
                     )
                 elif segments[7:] == ("archive",):
                     expected = body.get("expected_revision")
@@ -2795,7 +2796,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         raise ValueError("expected_revision must be a positive integer")
                     self._write_json(
                         HTTPStatus.OK,
-                        reader.archive(
+                        notebook_reader.archive(
                             project_id=project_id,
                             notebook_id=segments[6],
                             expected_revision=expected,
@@ -3134,8 +3135,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "events"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -3174,7 +3175,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": event.id.value},
                 ):
                     return
-                deliveries = reader.ingest_event(event)
+                deliveries = workflow_reader.ingest_event(event)
                 self._write_json(
                     HTTPStatus.ACCEPTED,
                     {
@@ -3189,8 +3190,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "backfills"
                 and (len(segments) == 4 or segments[4] == "preview")
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -3212,7 +3213,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         or not {"schedule_id", "start_at", "end_at"}.issubset(payload)
                     ):
                         raise ValueError("backfill preview body has invalid fields")
-                    values = reader.preview_backfill(
+                    values = workflow_reader.preview_backfill(
                         workspace_id,
                         ScheduleId(payload["schedule_id"]),
                         start_at=Instant(payload["start_at"]),
@@ -3245,7 +3246,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": request.id.value},
                 ):
                     return
-                stored = reader.create_backfill(workspace_id, request)
+                stored = workflow_reader.create_backfill(workspace_id, request)
                 self._write_json(
                     HTTPStatus.CREATED,
                     {
@@ -3263,8 +3264,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "backfills"
                 and segments[5] == "cancel"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -3283,7 +3284,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": segments[4]},
                 ):
                     return
-                stored = reader.cancel_backfill(workspace_id, BackfillId(segments[4]))
+                stored = workflow_reader.cancel_backfill(workspace_id, BackfillId(segments[4]))
                 self._write_json(HTTPStatus.OK, {"id": stored.id.value, "state": stored.state})
                 return
             if (
@@ -3292,8 +3293,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "graphs"
                 and segments[5] == "actions"
             ):
-                reader = self._server().graph_action_reader
-                if reader is None:
+                graph_action_reader = self._server().graph_action_reader
+                if graph_action_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "graph_action_unavailable",
@@ -3313,7 +3314,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": segments[4]},
                 ):
                     return
-                result = reader.execute_action_payload(segments[4], payload)
+                result = graph_action_reader.execute_action_payload(segments[4], payload)
                 self._write_json(HTTPStatus.OK, result)
                 return
             if (
@@ -3322,8 +3323,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "graphs"
                 and segments[5] == "neighbors"
             ):
-                reader = self._server().graph_query_reader
-                if reader is None:
+                graph_query_reader = self._server().graph_query_reader
+                if graph_query_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "graph_unavailable",
@@ -3350,7 +3351,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     raise TypeError("neighbor fields have invalid types")
                 ref = KnowledgeObjectRef(object_type, tuple(tuple(item) for item in key))
-                neighbors = reader.neighbors(segments[4], ref, limit=limit)
+                neighbors = graph_query_reader.neighbors(segments[4], ref, limit=limit)
                 self._write_json(
                     HTTPStatus.OK,
                     {
@@ -3367,8 +3368,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "graphs"
                 and segments[5] == "query"
             ):
-                reader = self._server().graph_query_reader
-                if reader is None:
+                graph_query_reader = self._server().graph_query_reader
+                if graph_query_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "graph_unavailable",
@@ -3393,7 +3394,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     or isinstance(max_limit, bool)
                 ):
                     raise TypeError("graph query fields have invalid types")
-                result = reader.query(segments[4], query, max_limit=max_limit)
+                result = graph_query_reader.query(segments[4], query, max_limit=max_limit)
                 objects = [
                     {
                         "object_type": item.ref.object_type,
