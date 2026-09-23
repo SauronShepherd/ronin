@@ -403,15 +403,19 @@ class CatalogReader(Protocol):
 
 @runtime_checkable
 class DataEngineeringRevisionReader(Protocol):
-    def list_pipelines(self, *, project_id: str) -> object: ...
+    def list_pipelines(self, *, project_id: str) -> tuple[str, ...]: ...
 
-    def list_revisions(self, *, project_id: str, pipeline_id: str) -> object: ...
+    def list_revisions(
+        self, *, project_id: str, pipeline_id: str
+    ) -> tuple[dict[str, object], ...]: ...
 
-    def get_revision(self, *, project_id: str, pipeline_id: str, revision: int) -> object: ...
+    def get_revision(
+        self, *, project_id: str, pipeline_id: str, revision: int
+    ) -> dict[str, object] | None: ...
 
     def compare(
         self, *, project_id: str, pipeline_id: str, left_revision: int, right_revision: int
-    ) -> object: ...
+    ) -> dict[str, object]: ...
 
     def archive(self, *, project_id: str, pipeline_id: str) -> bool: ...
 
@@ -1415,9 +1419,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
+                params = parse_qs(query or "", keep_blank_values=True)
                 try:
-                    left_revision = int(query.get("left_revision", [""])[0])
-                    right_revision = int(query.get("right_revision", [""])[0])
+                    left_revision = int(params.get("left_revision", [""])[0])
+                    right_revision = int(params.get("right_revision", [""])[0])
                 except (KeyError, ValueError) as exc:
                     raise ValueError(
                         "compare requires integer left_revision and right_revision"
@@ -1462,11 +1467,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     self._write_json(HTTPStatus.OK, {"items": list(revisions)})
                 else:
                     try:
-                        revision = int(segments[8])
+                        revision_number = int(segments[8])
                     except ValueError as exc:
                         raise ValueError("pipeline revision must be an integer") from exc
                     item = de_reader.get_revision(
-                        project_id=project_id, pipeline_id=pipeline_id, revision=revision
+                        project_id=project_id, pipeline_id=pipeline_id, revision=revision_number
                     )
                     if item is None:
                         self._error(
