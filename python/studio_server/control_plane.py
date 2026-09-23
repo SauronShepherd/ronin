@@ -7,7 +7,7 @@ import hashlib
 import json
 import mimetypes
 import tempfile
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -596,8 +596,10 @@ def _finops_payload(item: object) -> dict[str, object]:
 _PageItem = TypeVar("_PageItem")
 
 
-def _page(items: list[_PageItem], *, limit: int, offset: int) -> tuple[list[_PageItem], str | None]:
-    selected = items[offset : offset + limit]
+def _page(
+    items: Sequence[_PageItem], *, limit: int, offset: int
+) -> tuple[list[_PageItem], str | None]:
+    selected = list(items[offset : offset + limit])
     next_offset = offset + len(selected)
     cursor = None if next_offset >= len(items) else _encode_cursor(next_offset)
     return selected, cursor
@@ -1670,14 +1672,16 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         sensitivity = getattr(catalog_reader, "get_sensitivity", None)
                         ownership = getattr(catalog_reader, "get_ownership", None)
                         if callable(sensitivity):
-                            value = sensitivity(workspace_id, AssetId(str(item.id)))
+                            sensitivity_value = sensitivity(workspace_id, AssetId(str(item.id)))
                             asset_payload["sensitivity"] = (
-                                None if value is None else value.to_payload()
+                                None
+                                if sensitivity_value is None
+                                else sensitivity_value.to_payload()
                             )
                         if callable(ownership):
-                            value = ownership(workspace_id, AssetId(str(item.id)))
+                            ownership_value = ownership(workspace_id, AssetId(str(item.id)))
                             asset_payload["ownership"] = (
-                                None if value is None else value.to_payload()
+                                None if ownership_value is None else ownership_value.to_payload()
                             )
                     catalog_items.append(asset_payload)
                 self._write_json(HTTPStatus.OK, {"items": catalog_items})
