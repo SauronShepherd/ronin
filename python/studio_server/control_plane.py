@@ -2322,8 +2322,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "quality"
                 and segments[4] == "contracts"
             ):
-                reader = self._server().quality_reader
-                if reader is None:
+                quality_reader = self._server().quality_reader
+                if quality_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "quality_unavailable",
@@ -2337,7 +2337,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=segments[5]
                 ):
                     return
-                payload = reader.get_contract(
+                payload = quality_reader.get_contract(
                     workspace_id, {"asset_id": segments[5], "version": segments[6]}
                 ).to_payload()
                 self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
@@ -2348,8 +2348,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "quality"
                 and segments[4] == "runs"
             ):
-                reader = self._server().quality_reader
-                if reader is None:
+                quality_reader = self._server().quality_reader
+                if quality_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "quality_unavailable",
@@ -2365,7 +2365,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 payload = {"asset_id": segments[5], "version": segments[6]}
                 self._write_json(
-                    HTTPStatus.OK, {"items": list(reader.history(workspace_id, payload))}
+                    HTTPStatus.OK, {"items": list(quality_reader.history(workspace_id, payload))}
                 )
                 return
             if (
@@ -2374,8 +2374,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "quality"
                 and segments[4] == "state"
             ):
-                reader = self._server().quality_reader
-                if reader is None:
+                quality_reader = self._server().quality_reader
+                if quality_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "quality_unavailable",
@@ -2391,7 +2391,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 self._write_json(
                     HTTPStatus.OK,
-                    reader.state(workspace_id, {"asset_id": segments[5], "version": segments[6]}),
+                    quality_reader.state(
+                        workspace_id, {"asset_id": segments[5], "version": segments[6]}
+                    ),
                 )
                 return
             if (
@@ -2399,8 +2401,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:] == ("alerts", "rules")
             ):
-                reader = self._server().alert_reader
-                if reader is None:
+                alert_reader = self._server().alert_reader
+                if alert_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "alerts_unavailable",
@@ -2412,15 +2414,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                self._write_json(HTTPStatus.OK, reader.list_rules())
+                self._write_json(HTTPStatus.OK, alert_reader.list_rules())
                 return
             if (
                 len(segments) == 5
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:] == ("alerts", "instances")
             ):
-                reader = self._server().alert_reader
-                if reader is None:
+                alert_reader = self._server().alert_reader
+                if alert_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "alerts_unavailable",
@@ -2431,7 +2433,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
                 limit = int(query.get("limit", ["100"])[0]) if query else 100
-                self._write_json(HTTPStatus.OK, reader.list_instances(limit=limit))
+                self._write_json(HTTPStatus.OK, alert_reader.list_instances(limit=limit))
                 return
             if (
                 len(segments) == 5
@@ -2439,8 +2441,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "finops"
                 and segments[4] in {"usage", "costs", "budgets"}
             ):
-                reader = self._server().finops_reader
-                if reader is None:
+                finops_reader = self._server().finops_reader
+                if finops_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "finops_unavailable",
@@ -2459,11 +2461,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         raise ValueError(
                             "finops usage and costs require period_start and period_end"
                         )
-                    items = getattr(reader, f"list_{kind}")(
+                    items = getattr(finops_reader, f"list_{kind}")(
                         workspace_id, period_start=period_start, period_end=period_end
                     )
                 else:
-                    items = reader.list_budgets(workspace_id)
+                    items = finops_reader.list_budgets(workspace_id)
                 payload = {"items": [_finops_payload(item) for item in items]}
                 self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
                 return
@@ -3454,8 +3456,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:] == ("quality", "runs")
             ):
-                reader = self._server().quality_reader
-                if reader is None:
+                quality_reader = self._server().quality_reader
+                if quality_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "quality_unavailable",
@@ -3477,15 +3479,17 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": str(body.get("asset_id", "quality-run"))},
                 ):
                     return
-                self._write_json(HTTPStatus.CREATED, reader.run(workspace_id, body, now=_now()))
+                self._write_json(
+                    HTTPStatus.CREATED, quality_reader.run(workspace_id, body, now=_now())
+                )
                 return
             if (
                 len(segments) == 5
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:] == ("alerts", "evaluate")
             ):
-                reader = self._server().alert_reader
-                if reader is None:
+                alert_reader = self._server().alert_reader
+                if alert_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "alerts_unavailable",
@@ -3502,15 +3506,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, "alert.evaluate", workspace_id, {"resource": "alert"}
                 ):
                     return
-                self._write_json(HTTPStatus.OK, reader.evaluate(body, now=_now()))
+                self._write_json(HTTPStatus.OK, alert_reader.evaluate(body, now=_now()))
                 return
             if (
                 len(segments) == 5
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:] == ("alerts", "acknowledge")
             ):
-                reader = self._server().alert_reader
-                if reader is None:
+                alert_reader = self._server().alert_reader
+                if alert_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "alerts_unavailable",
@@ -3527,7 +3531,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, "alert.acknowledge", workspace_id, {"resource": "alert"}
                 ):
                     return
-                self._write_json(HTTPStatus.OK, reader.acknowledge(body, now=_now()))
+                self._write_json(HTTPStatus.OK, alert_reader.acknowledge(body, now=_now()))
                 return
             if (
                 len(segments) == 4
