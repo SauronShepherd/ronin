@@ -3722,8 +3722,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "projects"
                 and segments[5:7] == ("semantic", "dashboards")
             ):
-                reader = self._server().semantic_reader
-                if reader is None:
+                semantic_reader = self._server().semantic_reader
+                if semantic_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "semantic_unavailable",
@@ -3749,7 +3749,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": f"{project_id}/{dashboard_id}"},
                 ):
                     return
-                self._write_json(HTTPStatus.OK, reader.put_dashboard(project_id, body))
+                self._write_json(HTTPStatus.OK, semantic_reader.put_dashboard(project_id, body))
                 return
             if not self._registered_path(segments):
                 self._method_or_not_found("PUT", segments)
@@ -3796,8 +3796,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "schedules"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -3828,7 +3828,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": schedule_id.value},
                 ):
                     return
-                stored = reader.put_schedule(workspace_id, schedule)
+                stored = workflow_reader.put_schedule(workspace_id, schedule)
                 self._write_json(HTTPStatus.OK, stored.to_payload())
                 return
             if (
@@ -3836,8 +3836,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "event-triggers"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -3865,7 +3865,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": trigger_id},
                 ):
                     return
-                stored = reader.put_event_trigger(workspace_id, trigger)
+                stored = workflow_reader.put_event_trigger(workspace_id, trigger)
                 self._write_json(HTTPStatus.OK, stored.to_payload())
                 return
             if (
@@ -3873,8 +3873,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "environments"
             ):
-                service = self._server().environment_service
-                if service is None:
+                environment_service = self._server().environment_service
+                if environment_service is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "environments_unavailable",
@@ -3889,7 +3889,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "workspace.write", resource_ref=str(environment_id)
                 ):
                     return
-                current = service.get(workspace_id, environment_id)
+                current = environment_service.get(workspace_id, environment_id)
                 if not self._check_if_match(current.to_payload()):
                     return
                 environment = EnvironmentDefinition.from_payload(self._read_json())
@@ -3902,7 +3902,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": str(environment_id)},
                 ):
                     return
-                result = service.replace(workspace_id, environment, now=_now()).to_payload()
+                result = environment_service.replace(
+                    workspace_id, environment, now=_now()
+                ).to_payload()
                 self._write_json(HTTPStatus.OK, result, etag=_etag(result))
                 return
             if (
@@ -3912,8 +3914,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[5] == "environments"
                 and segments[7] == "bindings"
             ):
-                service = self._server().binding_service
-                if service is None:
+                binding_service = self._server().binding_service
+                if binding_service is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "environments_unavailable",
@@ -3938,7 +3940,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     return
                 self._write_json(
-                    HTTPStatus.OK, service.put(workspace_id, bindings, now=_now()).to_payload()
+                    HTTPStatus.OK,
+                    binding_service.put(workspace_id, bindings, now=_now()).to_payload(),
                 )
                 return
             if (
@@ -3946,8 +3949,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:5] == ("catalog", "assets")
             ):
-                reader = self._server().catalog_reader
-                if reader is None or not callable(getattr(reader, "replace_asset", None)):
+                catalog_reader = self._server().catalog_reader
+                if catalog_reader is None or not callable(
+                    getattr(catalog_reader, "replace_asset", None)
+                ):
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "catalog_unavailable",
@@ -3967,7 +3972,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, "catalog.asset.replace", workspace_id, {"resource": str(asset.id)}
                 ):
                     return
-                stored = reader.replace_asset(workspace_id, asset, now=_now())
+                stored = catalog_reader.replace_asset(workspace_id, asset, now=_now())
                 self._write_json(HTTPStatus.OK, stored.to_payload())
                 return
             self._method_or_not_found("PUT", segments)
