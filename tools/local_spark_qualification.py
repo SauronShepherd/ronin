@@ -1,0 +1,74 @@
+"""Run a bounded, reproducible local PySpark SQL qualification.
+
+This is deliberately separate from Spark Connect qualification: local PySpark
+evidence never implies that a remote Spark Connect endpoint is available.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import platform
+import sys
+from pathlib import Path
+from typing import Any
+
+
+def qualify() -> dict[str, Any]:
+    # PySpark defaults workers to ``python3``; Windows installations commonly
+    # expose only the active interpreter executable.
+    os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
+    os.environ.setdefault("PYSPARK_DRIVER_PYTHON", sys.executable)
+    try:
+        from pyspark.sql import SparkSession
+    except ImportError as exc:  # pragma: no cover - environment dependent
+        return {"status": "unavailable", "reason": f"pyspark unavailable: {exc}"}
+
+    spark = (
+        SparkSession.builder.master("local[2]")
+        .appName("ronin-local-spark-qualification")
+        .config("spark.ui.enabled", "false")
+        .config("spark.sql.shuffle.partitions", "2")
+        .getOrCreate()
+    )
+    try:
+        source = [(1, "a"), (2, "b"), (3, "a")]
+        spark.createDataFrame(source, ("id", "group")).createOrReplaceTempView("events")
+        rows = [
+            tuple(row)
+            for row in spark.sql(
+                "select `group`, count(*) as n from events group by `group` order by `group`"
+            ).collect()
+        ]
+        normalized = json.dumps(rows, separators=(",", ":"), default=str)
+        return {
+            "status": "passed",
+            "provider": "pyspark-local",
+            "runtime": platform.python_version(),
+            "spark_version": spark.version,
+            "row_count": len(rows),
+            "correctness_digest": hashlib.sha256(normalized.encode()).hexdigest(),
+            "expected_digest": hashlib.sha256(b'[["a",2],["b",1]]').hexdigest(),
+            "rows": rows,
+        }
+    finally:
+        spark.stop()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    result = qualify()
+    payload = json.dumps(result, indent=2, sort_keys=True, default=str)
+    if args.output is not None:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(payload + "\n", encoding="utf-8")
+    print(payload)
+    return 0 if result.get("status") == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
