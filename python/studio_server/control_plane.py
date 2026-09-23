@@ -453,15 +453,21 @@ class NotebookReader(Protocol):
 
 @runtime_checkable
 class GlossaryReader(Protocol):
-    def list_all(self, workspace_id: WorkspaceId) -> object: ...
+    def list_all(self, workspace_id: WorkspaceId) -> tuple[GlossaryTerm, ...]: ...
 
-    def list_latest(self, workspace_id: WorkspaceId) -> object: ...
+    def list_latest(self, workspace_id: WorkspaceId) -> tuple[GlossaryTerm, ...]: ...
 
-    def search(self, workspace_id: WorkspaceId, query: str, *, limit: int = 100) -> object: ...
+    def search(
+        self, workspace_id: WorkspaceId, query: str, *, limit: int = 100
+    ) -> tuple[GlossaryTerm, ...]: ...
 
-    def get(self, workspace_id: WorkspaceId, term_id: GlossaryTermId, version: str) -> object: ...
+    def get(
+        self, workspace_id: WorkspaceId, term_id: GlossaryTermId, version: str
+    ) -> GlossaryTerm | None: ...
 
-    def put(self, workspace_id: WorkspaceId, term: GlossaryTerm, *, now: Instant) -> object: ...
+    def put(
+        self, workspace_id: WorkspaceId, term: GlossaryTerm, *, now: Instant
+    ) -> GlossaryTerm: ...
 
 
 @runtime_checkable
@@ -1658,7 +1664,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 limit = int(params.get("limit", [str(_DEFAULT_LIST_LIMIT)])[0])
                 if not 1 <= limit <= _MAX_LIST_LIMIT:
                     raise ValueError("catalog limit must be between 1 and 100")
-                assets = (
+                catalog_assets = (
                     catalog_reader.search_assets(workspace_id, search, limit=limit)
                     if search
                     else catalog_reader.list_assets(workspace_id)[:limit]
@@ -1667,20 +1673,25 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     params.get("include_governance", ["false"])[0].casefold() == "true"
                 )
                 catalog_items: list[dict[str, object]] = []
-                for item in assets:
-                    catalog_asset_payload = cast(dict[str, object], item.to_payload())
+                for catalog_asset_entry in catalog_assets:
+                    catalog_asset = cast(CatalogAsset, catalog_asset_entry)
+                    catalog_asset_payload = cast(dict[str, object], catalog_asset.to_payload())
                     if include_governance:
                         sensitivity = getattr(catalog_reader, "get_sensitivity", None)
                         ownership = getattr(catalog_reader, "get_ownership", None)
                         if callable(sensitivity):
-                            sensitivity_value = sensitivity(workspace_id, AssetId(str(item.id)))
+                            sensitivity_value = sensitivity(
+                                workspace_id, AssetId(str(catalog_asset.id))
+                            )
                             catalog_asset_payload["sensitivity"] = (
                                 None
                                 if sensitivity_value is None
                                 else sensitivity_value.to_payload()
                             )
                         if callable(ownership):
-                            ownership_value = ownership(workspace_id, AssetId(str(item.id)))
+                            ownership_value = ownership(
+                                workspace_id, AssetId(str(catalog_asset.id))
+                            )
                             catalog_asset_payload["ownership"] = (
                                 None if ownership_value is None else ownership_value.to_payload()
                             )
@@ -1708,12 +1719,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 limit = int(params.get("limit", [str(_DEFAULT_LIST_LIMIT)])[0])
                 if not 1 <= limit <= _MAX_LIST_LIMIT:
                     raise ValueError("glossary limit must be between 1 and 100")
-                terms = (
+                glossary_terms = (
                     glossary_reader.search(workspace_id, search, limit=limit)
                     if search
                     else glossary_reader.list_latest(workspace_id)[:limit]
                 )
-                self._write_json(HTTPStatus.OK, {"items": [term.to_payload() for term in terms]})
+                self._write_json(
+                    HTTPStatus.OK,
+                    {"items": [cast(GlossaryTerm, term).to_payload() for term in glossary_terms]},
+                )
                 return
             if (
                 len(segments) == 6
@@ -1804,13 +1818,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
-                term = glossary_reader.get(
+                glossary_term = glossary_reader.get(
                     workspace_id, GlossaryTermId(unquote(segments[5])), unquote(segments[6])
                 )
-                if term is None:
+                if glossary_term is None:
                     self._error(HTTPStatus.NOT_FOUND, "not_found", "glossary term does not exist")
                     return
-                self._write_json(HTTPStatus.OK, term.to_payload())
+                self._write_json(HTTPStatus.OK, cast(GlossaryTerm, glossary_term).to_payload())
                 return
             if (
                 len(segments) == 4
@@ -1836,15 +1850,19 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         "workflow scheduler is not configured",
                     )
                     return
-                workflows = sorted(
+                workflow_entries = sorted(
                     workflow_reader.list_workflows(workspace_id),
                     key=lambda item: str(item.id),
                 )
-                selected, next_cursor = _page(list(workflows), limit=limit, offset=offset)
+                workflow_page, next_cursor = _page(
+                    list(workflow_entries), limit=limit, offset=offset
+                )
                 self._write_json(
                     HTTPStatus.OK,
                     {
-                        "items": [cast(WorkflowDefinition, item).to_payload() for item in selected],
+                        "items": [
+                            cast(WorkflowDefinition, item).to_payload() for item in workflow_page
+                        ],
                         "next_cursor": next_cursor,
                     },
                 )
@@ -1866,14 +1884,16 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
                 limit, offset = _list_query(query)
-                schedules = sorted(
+                schedule_entries = sorted(
                     workflow_reader.list_schedules(workspace_id), key=lambda item: item.id.value
                 )
-                selected, next_cursor = _page(list(schedules), limit=limit, offset=offset)
+                schedule_page, next_cursor = _page(
+                    list(schedule_entries), limit=limit, offset=offset
+                )
                 self._write_json(
                     HTTPStatus.OK,
                     {
-                        "items": [item.to_payload() for item in selected],
+                        "items": [cast(Schedule, item).to_payload() for item in schedule_page],
                         "next_cursor": next_cursor,
                     },
                 )
@@ -1919,14 +1939,19 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
                 limit, offset = _list_query(query)
-                triggers = sorted(
+                trigger_entries = sorted(
                     workflow_reader.list_event_triggers(workspace_id),
                     key=lambda item: item.id.value,
                 )
-                selected, next_cursor = _page(list(triggers), limit=limit, offset=offset)
+                trigger_page, next_cursor = _page(list(trigger_entries), limit=limit, offset=offset)
                 self._write_json(
                     HTTPStatus.OK,
-                    {"items": [item.to_payload() for item in selected], "next_cursor": next_cursor},
+                    {
+                        "items": [
+                            cast(EventTriggerDefinition, item).to_payload() for item in trigger_page
+                        ],
+                        "next_cursor": next_cursor,
+                    },
                 )
                 return
             if (
@@ -2276,12 +2301,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
                 limit, offset = _list_query(query)
-                items, next_cursor = _page(
+                environment_page, next_cursor = _page(
                     list(environment_service.list(workspace_id)), limit=limit, offset=offset
                 )
                 self._write_json(
                     HTTPStatus.OK,
-                    {"items": [item.to_payload() for item in items], "next_cursor": next_cursor},
+                    {
+                        "items": [item.to_payload() for item in environment_page],
+                        "next_cursor": next_cursor,
+                    },
                 )
                 return
             if (
@@ -2325,15 +2353,17 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if query:
                     raise ValueError("binding read does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
-                project_id = ProjectId(segments[4])
+                binding_project_id = ProjectId(segments[4])
                 environment_id = EnvironmentId(segments[6])
                 if not self._authorize(
-                    actor, workspace_id, "project.read", resource_ref=str(project_id)
+                    actor, workspace_id, "project.read", resource_ref=str(binding_project_id)
                 ):
                     return
                 self._write_json(
                     HTTPStatus.OK,
-                    binding_service.get(workspace_id, project_id, environment_id).to_payload(),
+                    binding_service.get(
+                        workspace_id, binding_project_id, environment_id
+                    ).to_payload(),
                 )
                 return
             if (
@@ -2344,12 +2374,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if query:
                     raise ValueError("project read does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
-                project_id = ProjectId(segments[4])
+                project_ref = ProjectId(segments[4])
                 if not self._authorize(
-                    actor, workspace_id, "project.read", resource_ref=str(project_id)
+                    actor, workspace_id, "project.read", resource_ref=str(project_ref)
                 ):
                     return
-                manifest = self._server().project_service.get(workspace_id, project_id)
+                manifest = self._server().project_service.get(workspace_id, project_ref)
                 payload = _manifest_payload(manifest)
                 self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
                 return
@@ -2499,12 +2529,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         raise ValueError(
                             "finops usage and costs require period_start and period_end"
                         )
-                    items = getattr(finops_reader, f"list_{kind}")(
+                    finops_entries = getattr(finops_reader, f"list_{kind}")(
                         workspace_id, period_start=period_start, period_end=period_end
                     )
                 else:
-                    items = finops_reader.list_budgets(workspace_id)
-                payload = {"items": [_finops_payload(item) for item in items]}
+                    finops_entries = finops_reader.list_budgets(workspace_id)
+                payload = {"items": [_finops_payload(item) for item in finops_entries]}
                 self._write_json(HTTPStatus.OK, payload, etag=_etag(payload))
                 return
             self._method_or_not_found("GET", segments)
@@ -2979,8 +3009,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": f"{term.id}/{term.version}"},
                 ):
                     return
-                stored = glossary_reader.put(workspace_id, term, now=_now())
-                self._write_json(HTTPStatus.CREATED, stored.to_payload())
+                glossary_created = glossary_reader.put(workspace_id, term, now=_now())
+                self._write_json(
+                    HTTPStatus.CREATED, cast(GlossaryTerm, glossary_created).to_payload()
+                )
                 return
             if (
                 len(segments) == 7
@@ -3092,11 +3124,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 asset_id = AssetId(unquote(segments[5]))
                 payload = self._read_json()
                 if segments[6] == "sensitivity":
-                    metadata = SensitivityMetadata.from_payload(payload)
+                    governance_metadata: SensitivityMetadata | OwnershipMetadata = (
+                        SensitivityMetadata.from_payload(payload)
+                    )
                     action = "catalog.sensitivity.put"
                     method = getattr(catalog_reader, "put_sensitivity", None)
                 else:
-                    metadata = OwnershipMetadata.from_payload(payload)
+                    governance_metadata = OwnershipMetadata.from_payload(payload)
                     action = "catalog.ownership.put"
                     method = getattr(catalog_reader, "put_ownership", None)
                 if not callable(method):
@@ -3110,10 +3144,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor,
                     action,
                     workspace_id,
-                    {"resource": f"{asset_id}/{metadata.version}"},
+                    {"resource": f"{asset_id}/{governance_metadata.version}"},
                 ):
                     return
-                stored = method(workspace_id, asset_id, metadata, now=_now())
+                stored = method(workspace_id, asset_id, governance_metadata, now=_now())
                 self._write_json(HTTPStatus.CREATED, stored.to_payload())
                 return
             if not self._registered_path(segments):
@@ -3337,8 +3371,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.write"):
                     return
-                payload = self._read_json()
-                if not isinstance(payload, dict):
+                graph_action_payload = self._read_json()
+                if not isinstance(graph_action_payload, dict):
                     raise ValueError("graph action body must be a JSON object")
                 if not self._audit_mutation(
                     actor,
@@ -3347,8 +3381,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": segments[4]},
                 ):
                     return
-                result = graph_action_reader.execute_action_payload(segments[4], payload)
-                self._write_json(HTTPStatus.OK, result)
+                graph_action_result = graph_action_reader.execute_action_payload(
+                    segments[4], graph_action_payload
+                )
+                self._write_json(HTTPStatus.OK, graph_action_result)
                 return
             if (
                 len(segments) == 6
@@ -3922,11 +3958,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "workspace.write", resource_ref=str(environment_id)
                 ):
                     return
-                current = environment_service.get(workspace_id, environment_id)
-                if not self._check_if_match(current.to_payload()):
+                environment_current = cast(
+                    EnvironmentDefinition, environment_service.get(workspace_id, environment_id)
+                )
+                if not self._check_if_match(environment_current.to_payload()):
                     return
-                environment = EnvironmentDefinition.from_payload(self._read_json())
-                if environment.id != environment_id:
+                replacement_environment = EnvironmentDefinition.from_payload(self._read_json())
+                if replacement_environment.id != environment_id:
                     raise ValueError("environment id must match the request path")
                 if not self._audit_mutation(
                     actor,
@@ -3936,7 +3974,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 ):
                     return
                 environment_result = environment_service.replace(
-                    workspace_id, environment, now=_now()
+                    workspace_id, replacement_environment, now=_now()
                 ).to_payload()
                 self._write_json(HTTPStatus.OK, environment_result, etag=_etag(environment_result))
                 return
@@ -3997,16 +4035,21 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "workspace.admin"):
                     return
-                asset = CatalogAsset.from_payload(self._read_json())
+                replacement_asset = CatalogAsset.from_payload(self._read_json())
                 asset_id = AssetId(unquote(segments[5]))
-                if asset.id != asset_id:
+                if replacement_asset.id != asset_id:
                     raise ValueError("catalog asset id must match the request path")
                 if not self._audit_mutation(
-                    actor, "catalog.asset.replace", workspace_id, {"resource": str(asset.id)}
+                    actor,
+                    "catalog.asset.replace",
+                    workspace_id,
+                    {"resource": str(replacement_asset.id)},
                 ):
                     return
-                stored = catalog_reader.replace_asset(workspace_id, asset, now=_now())
-                self._write_json(HTTPStatus.OK, stored.to_payload())
+                catalog_asset_stored = catalog_reader.replace_asset(
+                    workspace_id, replacement_asset, now=_now()
+                )
+                self._write_json(HTTPStatus.OK, catalog_asset_stored.to_payload())
                 return
             self._method_or_not_found("PUT", segments)
         except Exception as exc:
