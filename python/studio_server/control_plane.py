@@ -52,7 +52,7 @@ from studio_core.environments import (
 )
 from studio_core.ontology import KnowledgeObjectRef
 from studio_core.scheduler_events import EventTriggerDefinition, SchedulerEventId
-from studio_data_engineering import SdpProjectSource
+from studio_data_engineering import PipelineRevisionRecord, SdpProjectSource
 from studio_execution import (
     DeploymentBindingService,
     EnvironmentService,
@@ -438,7 +438,7 @@ class DataEngineeringRevisionReader(Protocol):
         pipeline_id: str,
         source: SdpProjectSource,
         expected_revision: int | None = None,
-    ) -> object: ...
+    ) -> PipelineRevisionRecord: ...
 
 
 @runtime_checkable
@@ -1668,7 +1668,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 )
                 catalog_items: list[dict[str, object]] = []
                 for item in assets:
-                    catalog_asset_payload: dict[str, object] = item.to_payload()
+                    catalog_asset_payload = cast(dict[str, object], item.to_payload())
                     if include_governance:
                         sensitivity = getattr(catalog_reader, "get_sensitivity", None)
                         ownership = getattr(catalog_reader, "get_ownership", None)
