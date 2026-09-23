@@ -53,6 +53,20 @@ def test_rql_traversal_does_not_return_unrelated_types() -> None:
     assert execute_rql("SELECT Customer TRAVERSE Store", graph).objects == ()
 
 
+def test_rql_bounded_multi_hop_traversal_returns_terminal_objects() -> None:
+    customer = KnowledgeObjectRef("Customer", (("id", "1"),))
+    order = KnowledgeObjectRef("Order", (("id", "10"),))
+    item = KnowledgeObjectRef("Item", (("id", "100"),))
+    graph = KnowledgeGraph(
+        (KnowledgeObject(customer, ()), KnowledgeObject(order, ()), KnowledgeObject(item, ())),
+        ((customer, order), (order, item)),
+    )
+
+    result = execute_rql("SELECT Customer TRAVERSE Order->Item", graph)
+
+    assert [obj.ref for obj in result.objects] == [item]
+
+
 def test_rql_bounded_typed_join_matches_property_values() -> None:
     graph = KnowledgeGraph(
         (

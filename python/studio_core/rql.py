@@ -13,7 +13,7 @@ from .ontology import KnowledgeGraph, KnowledgeObject
 _SELECT = re.compile(
     r"^SELECT\s+(?P<type>[A-Za-z_][\w.-]*)"
     r"(?:\s+WHERE\s+(?P<field>[A-Za-z_][\w.-]*)\s*=\s*'(?P<value>[^']*)')?"
-    r"(?:\s+TRAVERSE\s+(?P<target>[A-Za-z_][\w.-]*))?"
+    r"(?:\s+TRAVERSE\s+(?P<target>[A-Za-z_][\w.-]*(?:->[A-Za-z_][\w.-]*)*))?"
     r"(?:\s+JOIN\s+(?P<join_type>[A-Za-z_][\w.-]*)\s+ON\s+"
     r"(?P<join_left>[A-Za-z_][\w.-]*)\s*=\s*(?P<join_right>[A-Za-z_][\w.-]*))?"
     r"(?:\s+LIMIT\s+(?P<limit>\d+))?$",
@@ -102,9 +102,7 @@ class RqlQuery:
             source_type,
             where_field,
             literal,
-            None
-            if value["traverse_type"] is None
-            else _identifier(value["traverse_type"], "RQL AST traverse_type"),
+            None if value["traverse_type"] is None else _traverse_path(value["traverse_type"]),
             join_type,
             join_left,
             join_right,
@@ -132,6 +130,14 @@ def _identifier(value: object, name: str) -> str:
     text = _as_text(value, name)
     if re.fullmatch(r"[A-Za-z_][\w.-]*", text) is None:
         raise ValueError(f"{name} must be a portable identifier")
+    return text
+
+
+def _traverse_path(value: object) -> str:
+    text = _as_text(value, "RQL AST traverse_type")
+    parts = text.split("->")
+    if not parts or any(re.fullmatch(r"[A-Za-z_][\w.-]*", part) is None for part in parts):
+        raise ValueError("RQL AST traverse_type must be a typed path")
     return text
 
 
@@ -168,14 +174,18 @@ def execute_rql(query: str, graph: KnowledgeGraph, *, max_limit: int = 10_000) -
     objects = graph.objects_of_type(source_type, limit=limit)
     if field is not None:
         objects = tuple(item for item in objects if dict(item.properties).get(field) == value)
-    target_type = parsed.traverse_type
-    if target_type is not None:
-        refs = {
-            neighbor
-            for item in objects
-            for neighbor in graph.neighbors(item.ref, limit=limit)
-            if neighbor.object_type == target_type
-        }
+    target_path = None if parsed.traverse_type is None else parsed.traverse_type.split("->")
+    if target_path is not None:
+        current_refs = {item.ref for item in objects}
+        for target_type in target_path:
+            refs = {
+                neighbor
+                for ref in current_refs
+                for neighbor in graph.neighbors(ref, limit=limit)
+                if neighbor.object_type == target_type
+            }
+            current_refs = refs
+        refs = current_refs
         by_ref = {item.ref: item for item in graph.objects if item.ref in refs}
         objects = tuple(by_ref[ref] for ref in sorted(refs) if ref in by_ref)
     join_type = parsed.join_type
