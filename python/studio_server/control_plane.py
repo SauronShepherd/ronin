@@ -1596,7 +1596,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 deliveries = workflow_reader.list_pending_deliveries(
                     workspace_id, limit=min(limit + offset, 1000)
                 )
-                selected, next_cursor = _page(list(deliveries), limit=limit, offset=offset)
+                delivery_items: list[EventDelivery] = list(deliveries)
+                selected, next_cursor = _page(delivery_items, limit=limit, offset=offset)
                 self._write_json(
                     HTTPStatus.OK,
                     {
@@ -3929,10 +3930,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": str(environment_id)},
                 ):
                     return
-                result = environment_service.replace(
+                environment_result = environment_service.replace(
                     workspace_id, environment, now=_now()
                 ).to_payload()
-                self._write_json(HTTPStatus.OK, result, etag=_etag(result))
+                self._write_json(HTTPStatus.OK, environment_result, etag=_etag(environment_result))
                 return
             if (
                 len(segments) == 8
@@ -3950,20 +3951,20 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     )
                     return
                 workspace_id = WorkspaceId(segments[2])
-                project_id = ProjectId(segments[4])
+                project_ref = ProjectId(segments[4])
                 environment_id = EnvironmentId(segments[6])
                 if not self._authorize(
-                    actor, workspace_id, "project.write", resource_ref=str(project_id)
+                    actor, workspace_id, "project.write", resource_ref=str(project_ref)
                 ):
                     return
                 bindings = ProjectEnvironmentBindings.from_payload(self._read_json())
-                if bindings.project_id != project_id or bindings.environment_id != environment_id:
+                if bindings.project_id != project_ref or bindings.environment_id != environment_id:
                     raise ValueError("binding ids must match the request path")
                 if not self._audit_mutation(
                     actor,
                     "environment.binding.replace",
                     workspace_id,
-                    {"resource": f"{project_id}/{environment_id}"},
+                    {"resource": f"{project_ref}/{environment_id}"},
                 ):
                     return
                 self._write_json(
