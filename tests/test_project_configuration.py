@@ -25,7 +25,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
     assert {"studio_core", "studio_server", "studio_worker", "pyronin"} <= coverage
 
     mutation = config["tool"]["mutmut"]
-    assert mutation["source_paths"] == ["src/studio_core"]
+    assert mutation["source_paths"] == ["python/studio_core"]
     assert mutation["mutate_only_covered_lines"] is True
     data_files = config["tool"]["setuptools"]["data-files"]
     assert data_files["share/ronin/web"] == [
