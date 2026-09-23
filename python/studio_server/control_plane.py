@@ -3405,14 +3405,14 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     or isinstance(max_limit, bool)
                 ):
                     raise TypeError("graph query fields have invalid types")
-                result = graph_query_reader.query(segments[4], query, max_limit=max_limit)
+                graph_result = graph_query_reader.query(segments[4], query, max_limit=max_limit)
                 objects = [
                     {
                         "object_type": item.ref.object_type,
                         "key": list(item.ref.key),
                         "properties": list(item.properties),
                     }
-                    for item in result.objects
+                    for item in graph_result.objects
                 ]
                 self._write_json(HTTPStatus.OK, {"objects": objects})
                 return
@@ -3839,8 +3839,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": schedule_id.value},
                 ):
                     return
-                stored = workflow_reader.put_schedule(workspace_id, schedule)
-                self._write_json(HTTPStatus.OK, stored.to_payload())
+                stored_schedule = workflow_reader.put_schedule(workspace_id, schedule)
+                self._write_json(HTTPStatus.OK, stored_schedule.to_payload())
                 return
             if (
                 len(segments) == 5
@@ -3876,8 +3876,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     {"resource": trigger_id},
                 ):
                     return
-                stored = workflow_reader.put_event_trigger(workspace_id, trigger)
-                self._write_json(HTTPStatus.OK, stored.to_payload())
+                stored_trigger = workflow_reader.put_event_trigger(workspace_id, trigger)
+                self._write_json(HTTPStatus.OK, stored_trigger.to_payload())
                 return
             if (
                 len(segments) == 5
