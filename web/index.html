@@ -1,4 +1,52 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="RONIN Studio control plane"><title>RONIN Studio</title><link rel="icon" href="./assets/ronin-logo-mark.png"><link rel="stylesheet" href="./styles/tokens.css"><link rel="stylesheet" href="./styles/base.css"><link rel="stylesheet" href="./styles/layout.css"><link rel="stylesheet" href="./styles/components.css"></head>
-<body><a class="skip-link" href="#main">Skip to content</a><div id="app" class="app-shell"><aside id="rail" class="rail" aria-label="Primary navigation"></aside><div class="app-main"><header class="topbar"><button class="icon-button" data-action="toggle-sidebar" aria-label="Toggle navigation" aria-expanded="true">☰</button><div class="breadcrumb" id="breadcrumb">Studio</div><form id="connection-form" class="connection-form" novalidate><label class="sr-only" for="api-url">API URL</label><input id="api-url" type="url" value="" placeholder="Same-origin API" autocomplete="url"><label class="sr-only" for="api-token">Bearer token</label><input id="api-token" type="password" placeholder="Bearer token" autocomplete="off"><button class="button primary" type="submit">Connect</button></form><button class="icon-button" data-action="open-command" aria-label="Open command menu">⌘K</button></header><main id="main" tabindex="-1"><div id="view"></div></main></div></div><div id="toast" class="toast" role="status" aria-live="polite" hidden></div><dialog id="confirm-dialog" class="dialog"><form method="dialog"><h2 id="confirm-title">Confirm action</h2><p id="confirm-copy"></p><div class="dialog-actions"><button class="button" value="cancel">Cancel</button><button id="confirm-submit" class="button danger" value="confirm">Confirm</button></div></form></dialog><script type="module" src="./js/app.js"></script><script type="module" src="./js/features.js"></script><script type="module" src="./js/performance-studio.js"></script><script type="module" src="./js/workspace-journey.js"></script><script type="module" src="./js/synthetic-data-studio.js"></script><script type="module" src="./js/ml-studio-journey.js"></script></body></html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="RONIN Studio control plane">
+    <title>RONIN Studio</title>
+    <link rel="icon" href="./assets/ronin-logo-mark.png">
+    <link rel="stylesheet" href="./styles/tokens.css">
+    <link rel="stylesheet" href="./styles/base.css">
+    <link rel="stylesheet" href="./styles/layout.css">
+    <link rel="stylesheet" href="./styles/components.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div id="app" class="app-shell">
+      <aside id="rail" class="rail" aria-label="Primary navigation"></aside>
+      <div class="app-main">
+        <header class="topbar">
+          <button class="icon-button" data-action="toggle-sidebar" aria-label="Toggle navigation" aria-expanded="true">☰</button>
+          <div class="breadcrumb" id="breadcrumb">Studio</div>
+          <form id="connection-form" class="connection-form" novalidate>
+            <label class="sr-only" for="api-url">API URL</label>
+            <input id="api-url" type="url" value="" placeholder="Same-origin API" autocomplete="url">
+            <label class="sr-only" for="api-token">Bearer token</label>
+            <input id="api-token" type="password" placeholder="Bearer token" autocomplete="off">
+            <button class="button primary" type="submit">Connect</button>
+          </form>
+          <button class="icon-button" data-action="open-command" aria-label="Open command menu">⌘K</button>
+        </header>
+        <main id="main" tabindex="-1"><div id="view"></div></main>
+      </div>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <dialog id="confirm-dialog" class="dialog">
+      <form method="dialog">
+        <h2 id="confirm-title">Confirm action</h2>
+        <p id="confirm-copy"></p>
+        <div class="dialog-actions">
+          <button class="button" value="cancel">Cancel</button>
+          <button id="confirm-submit" class="button danger" value="confirm">Confirm</button>
+        </div>
+      </form>
+    </dialog>
+    <script type="module" src="./js/app.js"></script>
+    <script type="module" src="./js/features.js"></script>
+    <script type="module" src="./js/performance-studio.js"></script>
+    <script type="module" src="./js/workspace-journey.js"></script>
+    <script type="module" src="./js/synthetic-data-studio.js"></script>
+    <script type="module" src="./js/ml-studio-journey.js"></script>
+  </body>
+</html>
