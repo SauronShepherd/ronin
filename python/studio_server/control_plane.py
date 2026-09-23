@@ -981,7 +981,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
                 ref = AssetRef(AssetId(unquote(segments[5])), AssetVersion(unquote(segments[6])))
-                method = getattr(reader, direction, None)
+                method = getattr(catalog_reader, direction, None)
                 if not callable(method):
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
@@ -1612,8 +1612,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3:] == ("catalog", "assets")
             ):
-                reader = self._server().catalog_reader
-                if reader is None:
+                catalog_reader = self._server().catalog_reader
+                if catalog_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "catalog_unavailable",
@@ -1792,8 +1792,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
                 limit, offset = _list_query(query)
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -1801,7 +1801,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     )
                     return
                 workflows = sorted(
-                    reader.list_workflows(workspace_id),
+                    workflow_reader.list_workflows(workspace_id),
                     key=lambda item: str(item.id),
                 )
                 selected, next_cursor = _page(list(workflows), limit=limit, offset=offset)
@@ -1818,8 +1818,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "schedules"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -1831,7 +1831,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 limit, offset = _list_query(query)
                 schedules = sorted(
-                    reader.list_schedules(workspace_id), key=lambda item: item.id.value
+                    workflow_reader.list_schedules(workspace_id), key=lambda item: item.id.value
                 )
                 selected, next_cursor = _page(list(schedules), limit=limit, offset=offset)
                 self._write_json(
@@ -1847,8 +1847,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "schedules"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -1860,7 +1860,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
-                schedule = reader.get_schedule(workspace_id, ScheduleId(segments[4]))
+                schedule = workflow_reader.get_schedule(workspace_id, ScheduleId(segments[4]))
                 if schedule is None:
                     self._error(HTTPStatus.NOT_FOUND, "not_found", "schedule does not exist")
                     return
@@ -1871,8 +1871,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "event-triggers"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -1884,7 +1884,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 limit, offset = _list_query(query)
                 triggers = sorted(
-                    reader.list_event_triggers(workspace_id), key=lambda item: item.id.value
+                    workflow_reader.list_event_triggers(workspace_id),
+                    key=lambda item: item.id.value,
                 )
                 selected, next_cursor = _page(list(triggers), limit=limit, offset=offset)
                 self._write_json(
@@ -1897,8 +1898,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "backfills"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -1910,7 +1911,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 workspace_id = WorkspaceId(segments[2])
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
-                stored = reader.get_backfill(workspace_id, BackfillId(segments[4]))
+                stored = workflow_reader.get_backfill(workspace_id, BackfillId(segments[4]))
                 if stored is None:
                     self._error(HTTPStatus.NOT_FOUND, "not_found", "backfill does not exist")
                     return
@@ -1931,8 +1932,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[3] == "graphs"
                 and segments[5] == "objects"
             ):
-                reader = self._server().graph_query_reader
-                if reader is None:
+                graph_reader = self._server().graph_query_reader
+                if graph_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "graph_unavailable",
@@ -1943,7 +1944,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if not self._authorize(actor, workspace_id, "workspace.read"):
                     return
                 limit, _offset = _list_query(query)
-                objects = reader.list_objects(segments[4], segments[6], limit=limit)
+                objects = graph_reader.list_objects(segments[4], segments[6], limit=limit)
                 self._write_json(
                     HTTPStatus.OK,
                     {
@@ -1963,8 +1964,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "workflow-runs"
             ):
-                reader = self._server().workflow_reader
-                if reader is None:
+                workflow_reader = self._server().workflow_reader
+                if workflow_reader is None:
                     self._error(
                         HTTPStatus.SERVICE_UNAVAILABLE,
                         "scheduler_unavailable",
@@ -1977,11 +1978,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 run_id = WorkflowRunId(segments[4])
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
-                workflow_run = reader.get_run(workspace_id, run_id)
+                workflow_run = workflow_reader.get_run(workspace_id, run_id)
                 if workflow_run is None:
                     self._error(HTTPStatus.NOT_FOUND, "not_found", "workflow run does not exist")
                     return
-                tasks = reader.list_task_runs(workspace_id, run_id)
+                tasks = workflow_reader.list_task_runs(workspace_id, run_id)
                 payload = workflow_run.to_payload()
                 payload["tasks"] = [
                     {
