@@ -9,6 +9,7 @@ from studio_core import (
     OperatorParameter,
     OperatorPort,
     OperatorRef,
+    OperatorViolation,
     Port,
     builtin_operator_catalog,
     operator_parameter_value,
@@ -253,3 +254,33 @@ def test_node_validation_distinguishes_boolean_from_integer_and_number() -> None
     node = _node(contract.ref, params={"integer": True, "number": False})
     violations = validate_operator_node(node, OperatorCatalog((contract,)))
     assert [item.path for item in violations] == ["params.integer", "params.number"]
+
+
+def test_node_validation_treats_empty_required_and_optional_values_as_missing() -> None:
+    contract = OperatorContract(
+        OperatorRef("missing-values"),
+        "Missing values",
+        "test",
+        inputs=(OperatorPort("required"), OperatorPort("optional", optional=True)),
+        parameters=(
+            OperatorParameter("required", "string", required=True),
+            OperatorParameter("optional", "integer"),
+        ),
+    )
+
+    violations = validate_operator_node(
+        _node(
+            contract.ref,
+            params={"required": "", "optional": ""},
+            inputs=(Port("required"),),
+        ),
+        OperatorCatalog((contract,)),
+    )
+
+    assert violations == (
+        OperatorViolation(
+            "RONIN-OP-002",
+            "required operator parameter is missing: required",
+            "params.required",
+        ),
+    )
