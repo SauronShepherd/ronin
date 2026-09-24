@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 from studio_core import Workspace, WorkspaceId
-from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource
+from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource, _metadata
 from studio_orchestrator import Instant
 from studio_storage.audit import AuditConflict, SqliteAuditStore
 from studio_storage.workspaces import SqliteWorkspaceStore
@@ -63,6 +63,29 @@ def test_audit_metadata_rejects_secret_keys(key: str) -> None:
             outcome="succeeded",
             metadata=((key, "not-allowed"),),
         )
+
+
+@pytest.mark.parametrize(
+    "value", ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00byte"]
+)
+def test_audit_metadata_rejects_unportable_values(value: str) -> None:
+    with pytest.raises(ValueError, match="non-empty, trimmed"):
+        _metadata((("source", value),))
+
+
+def test_audit_metadata_rejects_credential_material_and_duplicate_keys() -> None:
+    for value in ("Bearer abc123", "-----BEGIN PRIVATE KEY-----"):
+        with pytest.raises(ValueError, match="credential material"):
+            _metadata((("source", value),))
+    with pytest.raises(ValueError, match="keys must be unique"):
+        _metadata((("source", "one"), ("source", "two")))
+
+
+def test_audit_metadata_is_sorted_and_does_not_alias_input() -> None:
+    values = [("z-key", "last"), ("a-key", "first")]
+    result = _metadata(tuple(values))
+    values.reverse()
+    assert result == (("a-key", "first"), ("z-key", "last"))
 
 
 def test_list_for_resource_is_scoped(tmp_path: Path) -> None:
