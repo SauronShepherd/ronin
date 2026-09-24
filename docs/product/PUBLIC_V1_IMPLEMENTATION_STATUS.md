@@ -4,11 +4,10 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-09-22. The checkout has no Git commit yet
-(`master` is an empty branch), so there is no valid source SHA for this snapshot.
+**Observed workspace snapshot:** 2026-09-24. The implementation branch is
+committed and pushed; generated local qualification artifacts remain untracked.
 **Observed source head:** `caafef96238789151191de2ced69a601f7616d2b` (2026-09-24).
-Historical ledger value only; this SHA is qualification context and must not be
-used as the identity of the current implementation.
+This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
@@ -31,10 +30,12 @@ not Public v1 completion.
 
 ## Local verification on this snapshot
 
-On Windows, `python -m pytest -x -q` produced **1982 passed, 20
-skipped**. Docker, PostgreSQL, Spark, symlink and POSIX-specific checks were
-skipped where their prerequisites were unavailable. No release qualification is
-claimed.
+On Windows, `python -m pytest -q` produced **2046 passed, 21 skipped**.
+Additional exact-head evidence on this snapshot includes Docker qualification
+(21 passed), real PostgreSQL integration (11 passed), the installed-wheel
+browser smoke (no console/request/CSP failures), installed-wheel accessibility
+(no violations at 320/768/1440 px), and four credential-free migration fixture
+certifications. These checks do not constitute Public v1 release qualification.
 
 ## Status vocabulary
 
