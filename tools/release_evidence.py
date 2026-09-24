@@ -231,7 +231,9 @@ def _main() -> int:
     combine.add_argument("bundles", type=Path, nargs="+")
     verdict = sub.add_parser("verdict")
     verdict.add_argument("bundle", type=Path)
-    verdict.add_argument("--required-gate", action="append", required=True)
+    required = verdict.add_mutually_exclusive_group(required=True)
+    required.add_argument("--required-gate", action="append")
+    required.add_argument("--profile", choices=sorted(GATE_PROFILES))
     verdict.add_argument(
         "--expected-commit",
         help="require the evidence bundle to target this exact source commit",
@@ -243,9 +245,14 @@ def _main() -> int:
         elif args.action == "merge":
             result = merge(args.bundles)
         else:
+            gates = (
+                set(args.required_gate)
+                if args.required_gate is not None
+                else set(required_gates(args.profile))
+            )
             result = release_verdict(
                 load(args.bundle),
-                set(args.required_gate),
+                gates,
                 expected_commit=args.expected_commit,
             )
         if args.action == "merge":

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -151,3 +153,28 @@ def test_gate_profiles_keep_release_strictly_broader_than_merge() -> None:
 def test_unknown_gate_profile_fails_closed() -> None:
     with pytest.raises(EvidenceError, match="unknown gate profile"):
         required_gates("not-a-profile")
+
+
+def test_cli_profile_verdict_uses_named_gate_set(tmp_path: Path) -> None:
+    path = tmp_path / "bundle.json"
+    records = [record(gate) for gate in sorted(MERGE_REQUIRED_GATES)]
+    path.write_text(
+        json.dumps({"schema": SCHEMA, "commit": "abc123", "records": records}),
+        encoding="utf-8",
+    )
+    result = subprocess.run(  # noqa: S603
+        [
+            sys.executable,
+            "-m",
+            "tools.release_evidence",
+            "verdict",
+            str(path),
+            "--profile",
+            "merge_required",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0
+    assert '"status": "passed"' in result.stdout
