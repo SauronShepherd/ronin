@@ -82,6 +82,27 @@ class AIStudioPlugin:
                 output_schema={"type": "object"},
             )
         )
+        context.contributions.add_route(
+            "GET",
+            "/v1/workspaces/{workspace_id}/ai-studio/health",
+            context.plugin_id,
+            self.health,
+            permission="ai-studio:read",
+        )
+        context.contributions.add_surface(
+            SurfaceContribution(
+                id="ai-studio.health.v1",
+                plugin_id=context.plugin_id,
+                namespace="ai-studio",
+                command="health",
+                operation_id="ai-studio.health.v1",
+                capability="ai-studio.discovery",
+                permission="ai-studio:read",
+                path="/v1/workspaces/{workspace_id}/ai-studio/health",
+                method="GET",
+                output_schema={"type": "object"},
+            )
+        )
 
     def startup(self) -> None:
         return None
@@ -103,6 +124,16 @@ class AIStudioPlugin:
         path = "/v1/chat/completions"
         response = self._api.dispatch("POST", path, body)
         return dict(response.body)
+
+    def health(self, *, body: object | None = None, **_kwargs: object) -> dict[str, object]:
+        """Expose bounded provider health without leaking provider configuration."""
+        if self._api is None:
+            return {"status": "not_configured", "provider": "unavailable"}
+        try:
+            response = self._api.dispatch("GET", "/health", body if isinstance(body, dict) else None)
+        except Exception:
+            return {"status": "unhealthy", "provider": "unavailable"}
+        return {"status": "healthy", "provider": "configured", "upstream": dict(response.body)}
 
 
 def factory() -> AIStudioPlugin:
