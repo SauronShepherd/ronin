@@ -98,6 +98,7 @@ class LocalWorkerRuntimeConfig:
     ml_rows: object | None = None
     genai_runner: object | None = None
     semantic_refresh_runner: object | None = None
+    pipeline_runner: object | None = None
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
@@ -277,6 +278,7 @@ class LocalWorkerRuntime:
             "ml.run",
             "genai.run",
             "semantic.refresh",
+            "data-engineering.pipeline-run.v1",
         }:
             if claim.job.target == "sql.query" and self.config.scheduler_sql_engine is None:
                 raise UnsupportedSchedulerWorkload(
@@ -319,6 +321,13 @@ class LocalWorkerRuntime:
                 raise UnsupportedSchedulerWorkload(
                     "semantic.refresh scheduler execution requires semantic_refresh_runner"
                 )
+            if (
+                claim.job.target == "data-engineering.pipeline-run.v1"
+                and self.config.pipeline_runner is None
+            ):
+                raise UnsupportedSchedulerWorkload(
+                    "data-engineering.pipeline-run.v1 scheduler execution requires pipeline_runner"
+                )
             try:
                 result = await loop.run_in_executor(
                     self._preparation_executor,
@@ -344,6 +353,7 @@ class LocalWorkerRuntime:
                         ml_rows=self.config.ml_rows,
                         genai_runner=self.config.genai_runner,
                         semantic_refresh_runner=self.config.semantic_refresh_runner,
+                        pipeline_runner=self.config.pipeline_runner,
                     ),
                 )
             except Exception:
@@ -363,6 +373,8 @@ class LocalWorkerRuntime:
                     else "scheduler.genai.error"
                     if claim.job.target == "genai.run"
                     else "scheduler.semantic.error"
+                    if claim.job.target == "semantic.refresh"
+                    else "scheduler.pipeline.error"
                 )
                 await self._service.worker_complete_attempt(
                     claim.attempt_id,

@@ -31,6 +31,7 @@ class SchedulerWorkloadResult:
     ml: dict[str, object] | None = None
     genai: dict[str, object] | None = None
     semantic: dict[str, object] | None = None
+    pipeline: dict[str, object] | None = None
 
     def evidence_payload(self) -> dict[str, Any]:
         """Return the portable, deterministic payload stored as scheduler evidence."""
@@ -64,6 +65,8 @@ class SchedulerWorkloadResult:
             return {"family": self.family, "genai": self.genai, "version": 1}
         if self.family == "semantic" and self.semantic is not None:
             return {"family": self.family, "semantic": self.semantic, "version": 1}
+        if self.family == "pipeline" and self.pipeline is not None:
+            return {"family": self.family, "pipeline": self.pipeline, "version": 1}
         raise UnsupportedSchedulerWorkload("scheduler result has no portable evidence payload")
 
 
@@ -90,6 +93,7 @@ def execute_scheduler_job(
     ml_rows: object | None = None,
     genai_runner: object | None = None,
     semantic_refresh_runner: object | None = None,
+    pipeline_runner: object | None = None,
     max_rows: int = 10_000,
     timeout_seconds: int | None = None,
 ) -> SchedulerWorkloadResult:
@@ -294,6 +298,41 @@ def execute_scheduler_job(
         if not isinstance(result, dict):
             raise UnsupportedSchedulerWorkload("semantic refresh runner returned an invalid result")
         return SchedulerWorkloadResult(family="semantic", semantic=result)
+    if job.target == "data-engineering.pipeline-run.v1":
+        if pipeline_runner is None:
+            raise UnsupportedSchedulerWorkload(
+                "data-engineering.pipeline-run.v1 requires an injected pipeline_runner"
+            )
+        try:
+            payload = json.loads(job.parameters_json)
+            revision_key = payload["revision_key"]
+            ir_digest = payload["ir_digest"]
+            runtime = payload["runtime"]
+            parameters = payload.get("parameters", {})
+            if (
+                not isinstance(revision_key, str)
+                or not revision_key.strip()
+                or not isinstance(ir_digest, str)
+                or len(ir_digest) != 64
+                or any(char not in "0123456789abcdef" for char in ir_digest)
+                or not isinstance(runtime, str)
+                or not runtime.strip()
+                or not isinstance(parameters, dict)
+            ):
+                raise ValueError("invalid pipeline execution identity")
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise UnsupportedSchedulerWorkload(
+                "data-engineering.pipeline-run.v1 parameters are invalid"
+            ) from exc
+        result = pipeline_runner.run(
+            revision_key=revision_key,
+            ir_digest=ir_digest,
+            runtime=runtime,
+            parameters=parameters,
+        )
+        if not isinstance(result, dict):
+            raise UnsupportedSchedulerWorkload("pipeline runner returned an invalid result")
+        return SchedulerWorkloadResult(family="pipeline", pipeline=result)
     if job.target == "graph.query":
         if graph_adapter is None:
             raise UnsupportedSchedulerWorkload("graph.query requires an injected graph adapter")

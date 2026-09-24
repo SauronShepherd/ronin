@@ -99,6 +99,40 @@ def test_scheduler_dispatch_routes_semantic_refresh_through_injected_runner() ->
     assert result.evidence_payload()["semantic"]["status"] == "refreshed"
 
 
+def test_scheduler_dispatch_routes_pipeline_run_through_injected_runner() -> None:
+    class Runner:
+        def run(
+            self,
+            *,
+            revision_key: str,
+            ir_digest: str,
+            runtime: str,
+            parameters: dict[str, object],
+        ) -> dict[str, object]:
+            return {
+                "revision_key": revision_key,
+                "ir_digest": ir_digest,
+                "runtime": runtime,
+                "parameters": parameters,
+                "status": "succeeded",
+            }
+
+    result = execute_scheduler_job(
+        _job(
+            "data-engineering.pipeline-run.v1",
+            {
+                "revision_key": "orders-v1",
+                "ir_digest": "c" * 64,
+                "runtime": "local",
+                "parameters": {"limit": 10},
+            },
+        ),
+        pipeline_runner=Runner(),
+    )
+    assert result.family == "pipeline"
+    assert result.evidence_payload()["pipeline"]["status"] == "succeeded"
+
+
 def test_scheduler_dispatch_routes_graph_query() -> None:
     object_ref = SimpleNamespace(object_type="Order", key=(("id", 1),))
     graph_object = SimpleNamespace(ref=object_ref, properties=(("total", 5),))
