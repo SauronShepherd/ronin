@@ -4,6 +4,7 @@ import { json, page } from './dom.js';
 const sample = '{"runtime":"local-preview","pipeline":{"nodes":[],"edges":[]}}';
 const pipelineHistory = [];
 let pipelineHistoryIndex = -1;
+const sqlHistory = [];
 function pipelineDocument() {
   const field = document.querySelector('#de-pipeline-form [name="pipeline"]');
   if (!field) throw new Error('Pipeline editor is not available');
@@ -71,8 +72,24 @@ function render() {
   if (!view) return;
   view.innerHTML = `${page('Data Engineering', 'PIPELINES')}<section class="panel"><div class="toolbar"><button class="button" data-action="de-health">Health</button><button class="button" data-action="de-runtimes">Runtimes</button></div><pre id="de-health-result" class="code">No health check requested.</pre></section><section class="panel"><h2>SQL editor</h2><form id="de-sql-form"><div class="grid three"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Project<input class="field" name="project" value="examples/demo" required></label><label>Profile<select class="field" name="profile"><option value="local">Local</option><option value="queryflux">QueryFlux</option></select></label></div><label>SQL<textarea class="field sql-editor" name="sql" rows="6" required>SELECT 1 AS value</textarea><button class="button primary" data-action="de-sql-execute" type="button">Execute bounded query</button><button class="button" data-action="de-sql-export" type="button">Export CSV</button></form><pre id="de-sql-result" class="code" aria-live="polite">No SQL operation requested.</pre></section><section class="panel"><form id="de-pipeline-form"><div class="grid three"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Project<input class="field" name="project" value="examples/demo" required></label><label>Pipeline<input class="field" name="pipeline_id" value="main" required></label><label>Revision<input class="field" name="revision" type="number" min="1"></label><label>Compare revision<input class="field" name="compare_revision" type="number" min="1"></label><label>Revision key<input class="field" name="revision_key" value="main/working"></label><label>IR digest<input class="field" name="ir_digest" minlength="64" maxlength="64"></label><label>Runtime<input class="field" name="runtime" value="local-preview"></label><label>Run ID<input class="field" name="run_id"></label></div><label>Pipeline JSON<textarea class="field sql-editor" name="pipeline" rows="8">${sample}</textarea></label><button class="button primary" data-action="de-validate" type="button">Validate</button><button class="button" data-action="de-preview" type="button">Preview</button><button class="button" data-action="de-pipelines" type="button">List pipelines</button><button class="button" data-action="de-revisions" type="button">List revisions</button><button class="button" data-action="de-compare" type="button">Compare revisions</button><button class="button" data-action="de-revision" type="button">Get revision</button><button class="button" data-action="de-run" type="button">Run pipeline</button><button class="button" data-action="de-run-inspect" type="button">Inspect run</button><button class="button" data-action="de-archive" type="button">Archive pipeline</button></form><pre id="de-pipeline-result" class="code" aria-live="polite">No pipeline operation requested.</pre></section>`;
 }
+function renderSqlHistory() {
+  const history = document.querySelector('#de-sql-history');
+  if (!history) return;
+  history.innerHTML = sqlHistory.map((entry, index) => `<button class="button" type="button" data-sql-history-index="${index}">${entry.profile}: ${entry.sql.slice(0, 48)}</button>`).join(' ') || '<span class="muted">No saved queries in this session.</span>';
+}
+function addSqlHistoryPanel() {
+  const form = document.querySelector('#de-sql-form');
+  if (!form || document.querySelector('#de-sql-history')) return;
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+  panel.innerHTML = '<h3>Query history</h3><div id="de-sql-history" class="toolbar" aria-live="polite"></div>';
+  form.insertAdjacentElement('afterend', panel);
+  renderSqlHistory();
+}
 document.addEventListener('click', async event => {
   const action = event.target.closest('[data-action]')?.dataset.action;
+  const historyIndex = event.target.closest('[data-sql-history-index]')?.dataset.sqlHistoryIndex;
+  if (historyIndex !== undefined) { const entry = sqlHistory[Number(historyIndex)]; if (entry) { const form = document.querySelector('#de-sql-form'); form.querySelector('[name="sql"]').value = entry.sql; form.querySelector('[name="profile"]').value = entry.profile; } return; }
   if (!action || !action.startsWith('de-')) return;
   if (action === 'de-load-revision') {
     const out = document.querySelector('#de-pipeline-visual-result');
@@ -172,7 +189,7 @@ document.addEventListener('click', async event => {
       return;
     }
     if (action === 'de-health') out.textContent = json(await get('/v1/data-engineering/health'));
-    else if (action === 'de-sql-execute' || action === 'de-sql-export') { const data = new FormData(document.querySelector('#de-sql-form')); const workspace = encodeURIComponent(data.get('workspace')); const project = encodeURIComponent(data.get('project')); const result = await post(`/v1/workspaces/${workspace}/projects/${project}/sql/query`, { sql: data.get('sql'), max_rows: 1000, profile: data.get('profile'), translation_policy: data.get('translation_policy') }); if (action === 'de-sql-export') { const columns = (result.columns || []).map(column => typeof column === 'string' ? column : column.name); const rows = result.rows || []; out.textContent = [columns.join(','), ...rows.map(row => row.map(value => JSON.stringify(value ?? '')).join(','))].join('\n'); } else out.textContent = json(result); }
+    else if (action === 'de-sql-execute' || action === 'de-sql-export') { const data = new FormData(document.querySelector('#de-sql-form')); const workspace = encodeURIComponent(data.get('workspace')); const project = encodeURIComponent(data.get('project')); const result = await post(`/v1/workspaces/${workspace}/projects/${project}/sql/query`, { sql: data.get('sql'), max_rows: 1000, profile: data.get('profile'), translation_policy: data.get('translation_policy') }); sqlHistory.unshift({ sql: String(data.get('sql')), profile: String(data.get('profile')) }); if (sqlHistory.length > 10) sqlHistory.pop(); renderSqlHistory(); if (action === 'de-sql-export') { const columns = (result.columns || []).map(column => typeof column === 'string' ? column : column.name); const rows = result.rows || []; out.textContent = [columns.join(','), ...rows.map(row => row.map(value => JSON.stringify(value ?? '')).join('\n'))].join('\n'); } else out.textContent = json(result); }
     else if (action === 'de-runtimes') out.textContent = json(await get('/v1/data-engineering/runtimes'));
     else if (action === 'de-run' || action === 'de-run-inspect') { const data = new FormData(document.querySelector('#de-pipeline-form')); const workspace = encodeURIComponent(data.get('workspace')); const project = encodeURIComponent(data.get('project')); const pipeline = encodeURIComponent(data.get('pipeline_id')); if (action === 'de-run') { const parameters = JSON.parse(data.get('pipeline')); const result = await post(`/v1/workspaces/${workspace}/projects/${project}/pipelines/${pipeline}/runs`, { revision_key: data.get('revision_key'), ir_digest: data.get('ir_digest'), runtime: data.get('runtime'), parameters: { pipeline: parameters } }); if (result.id) document.querySelector('[name="run_id"]').value = result.id; out.textContent = json(result); } else { const runId = String(data.get('run_id') || '').trim(); if (!runId) throw new Error('Enter a workflow run ID'); showPipelineRunEvidence(out, runId, await get(`/v1/workspaces/${workspace}/workflow-runs/${encodeURIComponent(runId)}`)); } }
     else if (action === 'de-archive') { const data = new FormData(document.querySelector('#de-pipeline-form')); if (!confirm(`Archive pipeline ${data.get('pipeline_id')}?`)) return; out.textContent = json(await post(`/v1/workspaces/${encodeURIComponent(data.get('workspace'))}/projects/${encodeURIComponent(data.get('project'))}/pipelines/${encodeURIComponent(data.get('pipeline_id'))}/archive`, {})); }
@@ -213,6 +230,8 @@ function addQueryTranslationPolicy() {
 }
 setTimeout(addQueryTranslationPolicy, 0);
 window.addEventListener('hashchange', addQueryTranslationPolicy);
+setTimeout(addSqlHistoryPanel, 0);
+window.addEventListener('hashchange', addSqlHistoryPanel);
 window.addEventListener('hashchange', addPipelineEditor);
 document.addEventListener('keydown', event => {
   if (location.hash.slice(1) !== 'data' || !document.querySelector('#de-pipeline-visual')) return;
