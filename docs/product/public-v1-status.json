@@ -29,7 +29,7 @@
     {
       "id": "p1-workspace-project-source-control",
       "status": "partial",
-      "summary": "Workspace/project persistence, authenticated create/read/update/archive workspace and project lifecycles with idempotency, audit and active-project filtering, project manifests, reproducible secret-free deployment manifest with canonical identity, Git identity, validated source URIs, detached checkout, dirty-worktree policy, safe revision evidence, local branch create/delete, remote fetch/update adapter, environments and deployment bindings exist; Studio and pyronin SDK cover project creation/lifecycle, environment binding, Bundle actions, governed pipeline execution and resource-scoped permission inspection; remote-provider qualification, complete Public v1 UI and multi-user membership remain incomplete."
+      "summary": "Workspace/project persistence, authenticated create/read/update/archive workspace and project lifecycles with idempotency, audit and active-project filtering, project manifests, reproducible secret-free deployment manifest with canonical identity, Git identity, validated source URIs, detached checkout, dirty-worktree policy, safe revision evidence, local branch create/delete, remote fetch/update adapter, environments and deployment bindings exist; Studio and pyronin SDK cover project lifecycle, environment binding, Bundle actions, audited/idempotent governed pipeline execution and resource-scoped permission inspection; remote-provider qualification, complete Public v1 UI and multi-user membership remain incomplete."
     },
     {
       "id": "p2-connectors-ingestion",
