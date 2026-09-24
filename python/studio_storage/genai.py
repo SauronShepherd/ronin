@@ -454,6 +454,24 @@ class SqliteGenAIStore:
         finally:
             connection.close()
 
+    def delete_index(self, workspace_id: WorkspaceId, index_id: VectorIndexId) -> bool:
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
+            cursor = connection.execute(
+                "DELETE FROM vector_indexes WHERE workspace_id=? AND vector_index_id=?",
+                (str(workspace_id), str(index_id)),
+            )
+            connection.execute("COMMIT")
+            return cursor.rowcount == 1
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
     def put_tool(
         self, workspace_id: WorkspaceId, tool: ToolContract, *, now: Instant | str
     ) -> ToolContract:

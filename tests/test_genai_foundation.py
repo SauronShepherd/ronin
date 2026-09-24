@@ -91,6 +91,9 @@ def test_vector_index_requires_governed_source_and_provider(tmp_path: Path) -> N
     store.put_index(_WS, index, now=_NOW)
 
     assert store.get_index(_WS, index.id) == index
+    assert store.delete_index(_WS, index.id) is True
+    assert store.get_index(_WS, index.id) is None
+    assert store.delete_index(_WS, index.id) is False
 
 
 def test_agent_requires_registered_prompt_provider_and_tools(tmp_path: Path) -> None:
