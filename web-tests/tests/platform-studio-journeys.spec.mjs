@@ -213,6 +213,8 @@ test('Data Engineering Studio executes a bounded read-only SQL query', async ({ 
   await page.getByRole('button', { name: 'Execute bounded query' }).click();
   await expect(page.locator('#de-sql-result')).toContainText('INTEGER');
   await expect(page.locator('#de-sql-result')).toContainText('[\n    1\n  ]');
+  await page.getByRole('button', { name: 'Export CSV' }).click();
+  await expect(page.locator('#de-sql-result')).toHaveText('value\n1');
   await expect(page.locator('#de-sql-history')).toContainText('local: SELECT 1 AS value');
   await page.locator('#de-sql-form textarea[name="sql"]').fill('SELECT changed');
   await page.getByRole('button', { name: 'local: SELECT 1 AS value', exact: true }).click();
