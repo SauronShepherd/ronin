@@ -2,6 +2,8 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
+**Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).  
+**Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).  
 **Observed workspace snapshot:** 2026-09-22. The checkout has no Git commit yet
 (`master` is an empty branch), so there is no valid source SHA for this snapshot.
 **Observed source head:** `1bc954aea183800fa2d6f5b4da65e7316f7ca549` (2026-09-24).
