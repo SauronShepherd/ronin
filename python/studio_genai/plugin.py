@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Protocol, cast
 
-from studio_core.genai import PromptAsset, ToolContract
+from studio_core.genai import AgentDefinition, PromptAsset, ToolContract
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
 
@@ -20,6 +20,8 @@ class _GenAIService(Protocol):
     def get_tool(self, workspace_id: str, tool_id: str) -> object: ...
     def put_tool(self, workspace_id: str, tool: ToolContract, idempotency_key: str) -> object: ...
     def delete_tool(self, workspace_id: str, tool_id: str, idempotency_key: str) -> object: ...
+    def agents(self, workspace_id: str) -> object: ...
+    def get_agent(self, workspace_id: str, agent_id: str) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
     def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
     def build_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
@@ -49,6 +51,8 @@ class GenAIPlugin:
             "genai.tool.v1",
             "genai.tool.put.v1",
             "genai.tool.delete.v1",
+            "genai.agents.v1",
+            "genai.agent.v1",
         ),
     )
 
@@ -112,6 +116,13 @@ class GenAIPlugin:
                 "/v1/workspaces/{workspace_id}/genai/tools/{tool_id}",
                 "tool.delete",
                 self.delete_tool,
+            ),
+            ("GET", "/v1/workspaces/{workspace_id}/genai/agents", "agents", self.agents),
+            (
+                "GET",
+                "/v1/workspaces/{workspace_id}/genai/agents/{agent_id}",
+                "agent",
+                self.get_agent,
             ),
         ):
             surface_id = f"genai.{operation}.v1"
@@ -337,6 +348,25 @@ class GenAIPlugin:
             }
         except Exception:
             return {"status": "unavailable", "deleted": False}
+
+    def agents(self, *, workspace_id: str = "", **_kwargs: object) -> object:
+        if self._service is None:
+            return {"status": "not_configured", "items": []}
+        try:
+            return self._service.agents(workspace_id)
+        except Exception:
+            return {"status": "unavailable", "items": []}
+
+    def get_agent(
+        self, *, workspace_id: str = "", agent_id: str = "", **_kwargs: object
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured", "item": None}
+        try:
+            result = self._service.get_agent(workspace_id, agent_id)
+            return {"item": result} if isinstance(result, AgentDefinition) else {"item": result}
+        except Exception:
+            return {"status": "unavailable", "item": None}
 
 
 def factory() -> GenAIPlugin:
