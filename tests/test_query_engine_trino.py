@@ -66,6 +66,23 @@ def test_trino_transport_enforces_request_row_bound() -> None:
         transport.poll(handle, uri)
 
 
+def test_trino_transport_enforces_request_row_bound_across_pages() -> None:
+    client = _Client(
+        [
+            {"id": "q-1", "nextUri": "http://engine/q-1"},
+            {"columns": [{"name": "id"}], "data": [[1]], "nextUri": "http://engine/q-1/2"},
+            {"columns": [{"name": "id"}], "data": [[2]]},
+        ]
+    )
+    transport = TrinoHttpTransport(client, base_url="http://engine/")
+    handle, uri = transport.submit(QueryRequest("SELECT 1", "trino", max_rows=1))
+    status, page, next_uri = transport.poll(handle, uri)
+    assert status.state == "running"
+    assert page is not None and page.rows == ((1,),)
+    with pytest.raises(QueryFailure, match="too many rows"):
+        transport.poll(handle, next_uri or "")
+
+
 @pytest.mark.parametrize("unsafe_uri", ["http://other/q-1", "http://user:pass@engine/q-1"])
 def test_trino_transport_rejects_provider_uri_escape(unsafe_uri: str) -> None:
     client = _Client([{"id": "q-1", "nextUri": unsafe_uri}])

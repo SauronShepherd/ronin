@@ -65,6 +65,7 @@ class TrinoHttpTransport:
         self._base_url = base_url
         self._provider_id = provider_id
         self._max_rows: dict[str, int] = {}
+        self._rows_seen: dict[str, int] = {}
 
     def submit(self, request: QueryRequest) -> tuple[QueryHandle, str]:
         response = self._client.request(
@@ -73,6 +74,7 @@ class TrinoHttpTransport:
         query_id = _text(response.get("id"), "id")
         next_uri = _safe_uri(response.get("nextUri"), base_url=self._base_url, name="nextUri")
         self._max_rows[query_id] = request.max_rows
+        self._rows_seen[query_id] = 0
         return QueryHandle(query_id, self._provider_id, provider_query_id=query_id), next_uri
 
     def poll(
@@ -92,6 +94,11 @@ class TrinoHttpTransport:
         next_page = response.get("nextUri")
         page = self._result_page(response, max_rows=self._max_rows.get(handle.query_id, 1_000_000))
         if page is not None:
+            max_rows = self._max_rows.get(handle.query_id, 1_000_000)
+            seen = self._rows_seen.get(handle.query_id, 0)
+            if seen + len(page.rows) > max_rows:
+                raise QueryFailure("result_limit_exceeded", "provider returned too many rows")
+            self._rows_seen[handle.query_id] = seen + len(page.rows)
             if next_page is not None:
                 return (
                     QueryStatus("running", provider_query_id=handle.provider_query_id),
