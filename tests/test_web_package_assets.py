@@ -55,3 +55,10 @@ def test_catalog_studio_exposes_glossary_publication() -> None:
     source = (root / "web/js/catalog-studio.js").read_text(encoding="utf-8")
     for marker in ("glossary-form", "glossary-search-form", "catalog-lineage-form", "/glossary/terms", "/catalog/lineage/", "Idempotency-Key", "references"):
         assert marker in source, f"catalog glossary integration missing: {marker}"
+
+
+def test_ml_studio_exposes_feature_definition_lifecycle() -> None:
+    root = Path(__file__).parents[1]
+    source = (root / "web/js/ml-features-studio.js").read_text(encoding="utf-8")
+    for marker in ("ml-feature-form", "/v1/ml-studio/features", "ronin.ml-feature/v1", "columns"):
+        assert marker in source, f"ML feature lifecycle missing: {marker}"
