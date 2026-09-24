@@ -68,6 +68,20 @@ jobs:
             --command "Playwright route, installed-wheel browser and a11y qualification" \
             --artifact "$wheel" \
             --output web-tests/web-release-evidence.json
+      - name: Emit normalized accessibility release evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheel="$(find dist-web-qualification -name '*.whl' -print -quit)"
+          test -n "$wheel"
+          python -m tools.emit_release_evidence \
+            --gate-id a11y \
+            --commit "${GITHUB_SHA}" \
+            --status passed \
+            --fingerprint "github-actions-web-${RUNNER_OS}-chromium" \
+            --command "Installed-wheel accessibility qualification" \
+            --artifact "$wheel" \
+            --output web-tests/a11y-release-evidence.json
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -77,4 +91,5 @@ jobs:
             web-tests/test-results
             web-tests/playwright-report
             web-tests/web-release-evidence.json
+            web-tests/a11y-release-evidence.json
           if-no-files-found: ignore

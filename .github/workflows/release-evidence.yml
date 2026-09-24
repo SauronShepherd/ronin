@@ -15,6 +15,10 @@ on:
         description: Successful Security run ID for the exact commit
         required: true
         type: string
+      status_run_id:
+        description: Successful Status consistency run ID for the exact commit
+        required: true
+        type: string
       docker_run_id:
         description: Successful Docker qualification run ID for the exact commit
         required: true
@@ -64,6 +68,14 @@ jobs:
           run-id: ${{ inputs.docker_run_id }}
           name: docker-qualification-evidence
           path: evidence/docker
+      - name: Download exact-status evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.status_run_id }}
+          name: status-consistency-release-evidence
+          path: evidence/status
       - name: Download exact-Web evidence
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
