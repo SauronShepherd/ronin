@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 
 import pytest
 from studio_execution import (
@@ -19,7 +20,7 @@ class Engine:
         return SqlQueryResult((SqlColumn("value", "INTEGER"),), ((1,),))
 
 
-def _job(target: str) -> Job:
+def _job(target: str, payload: object | None = None) -> Job:
     now = Instant("2026-09-24T00:00:00.000000Z")
     return Job(
         id=JobId("job-1"),
@@ -30,7 +31,9 @@ def _job(target: str) -> Job:
         created_at=now,
         updated_at=now,
         target=target,
-        parameters_json=json.dumps({"query": "SELECT 1", "parameters": {}}),
+        parameters_json=json.dumps(
+            payload if payload is not None else {"query": "SELECT 1", "parameters": {}}
+        ),
     )
 
 
@@ -46,3 +49,20 @@ def test_scheduler_dispatch_routes_sql_without_notebook_fallback() -> None:
 def test_scheduler_dispatch_rejects_unqualified_family() -> None:
     with pytest.raises(UnsupportedSchedulerWorkload, match="no qualified"):
         execute_scheduler_job(_job("ml.run"))
+
+
+def test_scheduler_dispatch_routes_graph_query() -> None:
+    object_ref = SimpleNamespace(object_type="Order", key=(("id", 1),))
+    graph_object = SimpleNamespace(ref=object_ref, properties=(("total", 5),))
+    adapter = SimpleNamespace(
+        query=lambda graph_id, query, *, max_limit: SimpleNamespace(objects=(graph_object,))
+    )
+    result = execute_scheduler_job(
+        _job(
+            "graph.query",
+            {"graph_id": "orders", "query": "SELECT o FROM Order o", "limit": 10},
+        ),
+        graph_adapter=adapter,
+    )
+    assert result.family == "graph"
+    assert result.evidence_payload()["objects"][0]["object_type"] == "Order"

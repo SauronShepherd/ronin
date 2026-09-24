@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any
 
@@ -19,6 +20,7 @@ class UnsupportedSchedulerWorkload(RuntimeError):
 class SchedulerWorkloadResult:
     family: str
     sql: SchedulerSqlResult | None = None
+    graph: tuple[dict[str, object], ...] | None = None
 
     def evidence_payload(self) -> dict[str, Any]:
         """Return the portable, deterministic payload stored as scheduler evidence."""
@@ -34,6 +36,12 @@ class SchedulerWorkloadResult:
                 "rows": [list(row) for row in self.sql.result.rows],
                 "version": 1,
             }
+        if self.family == "graph" and self.graph is not None:
+            return {
+                "family": self.family,
+                "objects": list(self.graph),
+                "version": 1,
+            }
         raise UnsupportedSchedulerWorkload("scheduler result has no portable evidence payload")
 
 
@@ -41,6 +49,7 @@ def execute_scheduler_job(
     job: Job,
     *,
     sql_engine: SqlEngine | None = None,
+    graph_adapter: object | None = None,
     max_rows: int = 10_000,
     timeout_seconds: int | None = None,
 ) -> SchedulerWorkloadResult:
@@ -56,6 +65,30 @@ def execute_scheduler_job(
                 sql_engine,
                 max_rows=max_rows,
                 timeout_seconds=timeout_seconds,
+            ),
+        )
+    if job.target == "graph.query":
+        if graph_adapter is None:
+            raise UnsupportedSchedulerWorkload("graph.query requires an injected graph adapter")
+        try:
+            payload = json.loads(job.parameters_json)
+            graph_id = payload["graph_id"]
+            query = payload["query"]
+            limit = payload.get("limit", 100)
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise UnsupportedSchedulerWorkload("graph.query parameters are invalid") from exc
+        if not isinstance(graph_id, str) or not isinstance(query, str):
+            raise UnsupportedSchedulerWorkload("graph.query requires graph_id and query")
+        objects = graph_adapter.query(graph_id, query, max_limit=limit).objects
+        return SchedulerWorkloadResult(
+            family="graph",
+            graph=tuple(
+                {
+                    "object_type": item.ref.object_type,
+                    "key": [[name, value] for name, value in item.ref.key],
+                    "properties": [[name, value] for name, value in item.properties],
+                }
+                for item in objects
             ),
         )
     raise UnsupportedSchedulerWorkload(f"no qualified scheduler adapter for {job.target}")
