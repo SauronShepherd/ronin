@@ -29,6 +29,7 @@ class _GenAIService(Protocol):
     def delete_agent(self, workspace_id: str, agent_id: str, idempotency_key: str) -> object: ...
     def agent_runs(self, workspace_id: str, agent_id: str) -> object: ...
     def get_agent_run(self, workspace_id: str, run_id: str) -> object: ...
+    def evaluate_rag(self, workspace_id: str, body: dict[str, object]) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
     def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
     def build_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
@@ -62,6 +63,7 @@ class GenAIPlugin:
             "genai.agent.v1",
             "genai.agent.run.v1",
             "genai.agent.run.get.v1",
+            "genai.rag.evaluation.v1",
             "genai.agent.put.v1",
             "genai.agent.delete.v1",
             "genai.agent.runs.v1",
@@ -166,6 +168,12 @@ class GenAIPlugin:
                 "/v1/workspaces/{workspace_id}/genai/runs/{run_id}",
                 "agent.run.get",
                 self.get_agent_run,
+            ),
+            (
+                "POST",
+                "/v1/workspaces/{workspace_id}/genai/rag/evaluations",
+                "rag.evaluation",
+                self.evaluate_rag,
             ),
         ):
             surface_id = f"genai.{operation}.v1"
@@ -523,6 +531,26 @@ class GenAIPlugin:
             return {"item": result} if result is not None else {"item": None}
         except Exception:
             return {"status": "unavailable", "item": None}
+
+    def evaluate_rag(
+        self, *, workspace_id: str = "", body: object | None = None, **_kwargs: object
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured"}
+        if not isinstance(body, dict):
+            return {"error": {"code": "invalid_request"}}
+        examples = body.get("examples")
+        if (
+            not isinstance(examples, list)
+            or not examples
+            or len(examples) > 1000
+            or not all(isinstance(example, dict) for example in examples)
+        ):
+            return {"error": {"code": "invalid_evaluation"}}
+        try:
+            return self._service.evaluate_rag(workspace_id, {"examples": examples})
+        except Exception as exc:
+            return {"error": {"code": "evaluation_failed", "message": str(exc)}}
 
 
 def factory() -> GenAIPlugin:
