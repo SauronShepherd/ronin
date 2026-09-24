@@ -29,6 +29,7 @@ def test_genai_plugin_registers_discovery_surfaces() -> None:
         ("GET", "/v1/workspaces/{workspace_id}/genai/runs/{run_id}"),
         ("POST", "/v1/workspaces/{workspace_id}/genai/rag/evaluations"),
         ("GET", "/v1/workspaces/{workspace_id}/genai/rag/evaluations/{evaluation_id}"),
+        ("GET", "/v1/workspaces/{workspace_id}/genai/rag/evaluations"),
         (
             "POST",
             "/v1/workspaces/{workspace_id}/genai/providers/{provider_id}/qualification",
@@ -107,6 +108,10 @@ def test_genai_plugin_fails_closed_without_runtime() -> None:
     assert plugin.get_rag_evaluation(workspace_id="ws", evaluation_id="eval") == {
         "status": "not_configured",
         "item": None,
+    }
+    assert plugin.rag_evaluations(workspace_id="ws") == {
+        "status": "not_configured",
+        "items": [],
     }
     assert plugin.qualify_provider(workspace_id="ws", provider_id="provider", body={}) == {
         "status": "not_configured"

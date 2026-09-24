@@ -33,6 +33,7 @@ class _GenAIService(Protocol):
     def get_agent_run(self, workspace_id: str, run_id: str) -> object: ...
     def evaluate_rag(self, workspace_id: str, body: dict[str, object]) -> object: ...
     def get_rag_evaluation(self, workspace_id: str, evaluation_id: str) -> object: ...
+    def rag_evaluations(self, workspace_id: str) -> object: ...
     def qualify_provider(
         self, workspace_id: str, provider_id: str, body: dict[str, object]
     ) -> object: ...
@@ -71,6 +72,7 @@ class GenAIPlugin:
             "genai.agent.run.get.v1",
             "genai.rag.evaluation.v1",
             "genai.rag.evaluation.get.v1",
+            "genai.rag.evaluations.v1",
             "genai.provider.qualification.v1",
             "genai.agent.put.v1",
             "genai.agent.delete.v1",
@@ -188,6 +190,12 @@ class GenAIPlugin:
                 "/v1/workspaces/{workspace_id}/genai/rag/evaluations/{evaluation_id}",
                 "rag.evaluation.get",
                 self.get_rag_evaluation,
+            ),
+            (
+                "GET",
+                "/v1/workspaces/{workspace_id}/genai/rag/evaluations",
+                "rag.evaluations",
+                self.rag_evaluations,
             ),
             (
                 "POST",
@@ -587,6 +595,14 @@ class GenAIPlugin:
             return {"item": result} if result is not None else {"item": None}
         except Exception:
             return {"status": "unavailable", "item": None}
+
+    def rag_evaluations(self, *, workspace_id: str = "", **_kwargs: object) -> object:
+        if self._service is None:
+            return {"status": "not_configured", "items": []}
+        try:
+            return self._service.rag_evaluations(workspace_id)
+        except Exception:
+            return {"status": "unavailable", "items": []}
 
     def qualify_provider(
         self,

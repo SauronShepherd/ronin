@@ -90,6 +90,7 @@ def test_rag_evaluation_evidence_is_immutable(tmp_path: Path) -> None:
     expected = {"evaluation_id": "eval-1", "payload": payload, "digest": "d" * 64}
     assert store.put_rag_evaluation(_WS, "eval-1", payload, "d" * 64, now=_NOW) == expected
     assert store.get_rag_evaluation(_WS, "eval-1") == expected
+    assert store.list_rag_evaluations(_WS) == (expected,)
     with pytest.raises(GenAIConflict, match="RAG evaluation identity"):
         store.put_rag_evaluation(_WS, "eval-1", {"example_count": 2}, "e" * 64, now=_NOW)
 

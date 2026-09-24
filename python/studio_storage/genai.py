@@ -809,3 +809,24 @@ class SqliteGenAIStore:
             }
         finally:
             connection.close()
+
+    def list_rag_evaluations(
+        self, workspace_id: WorkspaceId
+    ) -> tuple[dict[str, object], ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT evaluation_id,payload_json,digest FROM genai_rag_evaluations "
+                "WHERE workspace_id=? ORDER BY evaluation_id",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(
+                {
+                    "evaluation_id": row["evaluation_id"],
+                    "payload": decode_canonical_json(row["payload_json"]),
+                    "digest": row["digest"],
+                }
+                for row in rows
+            )
+        finally:
+            connection.close()
