@@ -27,7 +27,11 @@ class AIStudioPlugin:
         isolation="worker",
         ui_entry="studio_ai_studio.ui_manifest:UI_MANIFEST",
         config_schema="config/ai-studio.schema.json",
-        surface_ids=("ai-studio.models.v1", "ai-studio.invoke.v1"),
+        surface_ids=(
+            "ai-studio.models.v1",
+            "ai-studio.invoke.v1",
+            "ai-studio.health.v1",
+        ),
     )
 
     def __init__(self) -> None:

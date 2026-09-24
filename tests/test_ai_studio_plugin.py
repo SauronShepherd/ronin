@@ -13,6 +13,18 @@ def test_ai_studio_plugin_registers_workspace_scoped_routes():
     ]
 
 
+def test_ai_studio_manifest_declares_every_registered_surface():
+    contributions = ContributionRegistry()
+    plugin = AIStudioPlugin()
+    plugin.register(PluginContext("com.sauronshepherd.ronin.ai-studio", contributions, {}))
+    registered = {
+        item.id
+        for item in contributions.surface_registry.items
+        if item.plugin_id == plugin.manifest.id
+    }
+    assert registered == set(plugin.manifest.surface_ids)
+
+
 def test_ai_studio_health_is_fail_closed_when_unconfigured():
     plugin = AIStudioPlugin()
     assert plugin.health() == {"status": "not_configured", "provider": "unavailable"}
