@@ -77,6 +77,29 @@ def test_migration_api_discovers_named_vendor_profiles_into_canonical_inventory(
     }
 
 
+def test_migration_api_converts_named_vendor_profile_to_workflow_and_loss_report() -> None:
+    router = MigrationAPIRouter(MigrationSessionService())
+    base = "/v1/workspaces/ws-1/projects/project-1/migration/sessions"
+    session_id = router.dispatch("POST", base, {}, authorized=True).payload["id"]
+    converted = router.dispatch(
+        "POST",
+        f"{base}/{session_id}/convert",
+        {
+            "profile": "fabric",
+            "source_version": "2026",
+            "document_base64": base64.b64encode(
+                b'{"id":"fabric-project","items":[{"id":"nb-1","type":"notebook","path":"/jobs/nb"}]}'
+            ).decode(),
+        },
+        authorized=True,
+    )
+    assert converted.status == 200
+    assert converted.payload["profile"] == "fabric"
+    assert converted.payload["workflow"]["id"] == "fabric-project-fabric-project"
+    assert converted.payload["report"]["objects"][0]["status"] == "translated"
+    assert len(converted.payload["report_digest"]) == 64
+
+
 def test_migration_api_hides_other_project_session_and_requires_auth() -> None:
     router = MigrationAPIRouter(MigrationSessionService())
     path = "/v1/workspaces/ws-1/projects/project-1/migration/sessions"

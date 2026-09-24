@@ -14,6 +14,10 @@ from urllib.parse import unquote
 from .adapters.iics import IICS_ADAPTER_VERSION, discover_iics_zip
 from .benchmark import BenchmarkResult, decide_promotion, promotion_evidence
 from .blueprint import extract_blueprint
+from .databricks import translate_notebook_job
+from .dataiku import translate_code_recipes
+from .fabric import translate_notebook_items
+from .foundry import translate_python_functions
 from .model import MigrationUnit, SourceArtifact, SourceInventory
 from .profiles import discover_databricks, discover_dataiku, discover_fabric, discover_foundry
 from .pyspark_codegen import export_migration_script
@@ -30,6 +34,12 @@ _PROFILE_DISCOVERERS = {
     "fabric": discover_fabric,
     "foundry": discover_foundry,
     "dataiku": discover_dataiku,
+}
+_PROFILE_TRANSLATORS = {
+    "databricks": translate_notebook_job,
+    "fabric": translate_notebook_items,
+    "foundry": translate_python_functions,
+    "dataiku": translate_code_recipes,
 }
 
 
@@ -407,6 +417,37 @@ class MigrationAPIRouter:
                         session_id, extract_blueprint(json.dumps(payload, separators=(",", ":")))
                     )
                 elif operation in {"generate", "convert"} and method == "POST":
+                    if isinstance(payload, dict) and "profile" in payload:
+                        profile = payload.get("profile")
+                        document_base64 = payload.get("document_base64")
+                        source_version = payload.get("source_version", "unknown")
+                        if (
+                            not isinstance(profile, str)
+                            or not isinstance(document_base64, str)
+                            or not isinstance(source_version, str)
+                        ):
+                            raise ValueError(
+                                "profile conversion requires profile, document_base64 "
+                                "and source_version"
+                            )
+                        try:
+                            document = base64.b64decode(document_base64, validate=True)
+                        except (binascii.Error, ValueError) as exc:
+                            raise ValueError("document_base64 is invalid") from exc
+                        try:
+                            translator = _PROFILE_TRANSLATORS[profile]
+                        except KeyError as exc:
+                            raise ValueError("migration profile is unsupported") from exc
+                        translation = translator(document, source_version=source_version)
+                        return APIResponse(
+                            200,
+                            {
+                                "profile": profile,
+                                "workflow": json.loads(translation.workflow.to_json()),
+                                "report": translation.report.to_payload(),
+                                "report_digest": translation.report.digest,
+                            },
+                        )
                     project = self.service.generate(session_id)
                     return APIResponse(
                         200,
