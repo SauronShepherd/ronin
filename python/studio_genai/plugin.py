@@ -22,6 +22,7 @@ class _GenAIService(Protocol):
     def delete_tool(self, workspace_id: str, tool_id: str, idempotency_key: str) -> object: ...
     def agents(self, workspace_id: str) -> object: ...
     def get_agent(self, workspace_id: str, agent_id: str) -> object: ...
+    def run_agent(self, workspace_id: str, agent_id: str, body: dict[str, object]) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
     def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
     def build_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
@@ -53,6 +54,7 @@ class GenAIPlugin:
             "genai.tool.delete.v1",
             "genai.agents.v1",
             "genai.agent.v1",
+            "genai.agent.run.v1",
         ),
     )
 
@@ -123,6 +125,12 @@ class GenAIPlugin:
                 "/v1/workspaces/{workspace_id}/genai/agents/{agent_id}",
                 "agent",
                 self.get_agent,
+            ),
+            (
+                "POST",
+                "/v1/workspaces/{workspace_id}/genai/agents/{agent_id}/runs",
+                "agent.run",
+                self.run_agent,
             ),
         ):
             surface_id = f"genai.{operation}.v1"
@@ -367,6 +375,48 @@ class GenAIPlugin:
             return {"item": result} if isinstance(result, AgentDefinition) else {"item": result}
         except Exception:
             return {"status": "unavailable", "item": None}
+
+    def run_agent(
+        self,
+        *,
+        workspace_id: str = "",
+        agent_id: str = "",
+        body: object | None = None,
+        **_kwargs: object,
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured"}
+        if not isinstance(body, dict):
+            return {"error": {"code": "invalid_request"}}
+        input_value = body.get("input")
+        timeout = body.get("timeout_seconds", 60)
+        cancel_requested = body.get("cancel_requested", False)
+        if (
+            not isinstance(input_value, str)
+            or not input_value.strip()
+            or "\x00" in input_value
+            or not isinstance(timeout, (int, float))
+            or isinstance(timeout, bool)
+            or not 0.1 <= timeout <= 3600
+            or not isinstance(cancel_requested, bool)
+        ):
+            return {"error": {"code": "invalid_agent_run"}}
+        if cancel_requested:
+            return {"status": "cancelled", "steps": []}
+        try:
+            return self._service.run_agent(
+                workspace_id,
+                agent_id,
+                {
+                    "input": input_value,
+                    "timeout_seconds": float(timeout),
+                    "cancel_requested": False,
+                },
+            )
+        except TimeoutError:
+            return {"status": "timeout", "steps": []}
+        except Exception as exc:
+            return {"error": {"code": "agent_failed", "message": str(exc)}}
 
 
 def factory() -> GenAIPlugin:
