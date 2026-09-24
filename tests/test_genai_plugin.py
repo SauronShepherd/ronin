@@ -18,6 +18,7 @@ def test_genai_plugin_registers_discovery_surfaces() -> None:
         ("POST", "/v1/workspaces/{workspace_id}/genai/indexes/{index_id}/build"),
         ("GET", "/v1/workspaces/{workspace_id}/genai/tools"),
         ("GET", "/v1/workspaces/{workspace_id}/genai/tools/{tool_id}"),
+        ("PUT", "/v1/workspaces/{workspace_id}/genai/tools/{tool_id}"),
     ]
     assert {item.id for item in contributions.surface_registry.items} == set(
         plugin.manifest.surface_ids
@@ -55,4 +56,7 @@ def test_genai_plugin_fails_closed_without_runtime() -> None:
     assert plugin.get_tool(workspace_id="ws", tool_id="tool") == {
         "status": "not_configured",
         "item": None,
+    }
+    assert plugin.put_tool(workspace_id="ws", tool_id="tool", body={}) == {
+        "status": "not_configured"
     }

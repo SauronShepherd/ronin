@@ -315,6 +315,33 @@ class ToolContract:
             "side_effect": self.side_effect,
         }
 
+    @classmethod
+    def from_payload(cls, payload: object) -> ToolContract:
+        if not isinstance(payload, Mapping):
+            raise ValueError("tool payload must be an object")
+        required = {
+            "id", "name", "input_schema_ref", "output_schema_ref", "requirements", "side_effect"
+        }
+        if set(payload) != required:
+            raise ValueError("tool payload has invalid shape")
+        strings = tuple(
+            payload[key]
+            for key in ("id", "name", "input_schema_ref", "output_schema_ref", "side_effect")
+        )
+        if not all(isinstance(value, str) for value in strings):
+            raise ValueError("tool identity and schema fields must be strings")
+        requirements = payload["requirements"]
+        if not isinstance(requirements, list):
+            raise ValueError("tool requirements must be a list")
+        return cls(
+            ToolId(cast(str, payload["id"])),
+            cast(str, payload["name"]),
+            cast(str, payload["input_schema_ref"]),
+            cast(str, payload["output_schema_ref"]),
+            tuple(Requirement.from_payload(item) for item in requirements),
+            cast(ToolSideEffect, payload["side_effect"]),
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class AgentDefinition:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Protocol, cast
 
-from studio_core.genai import PromptAsset
+from studio_core.genai import PromptAsset, ToolContract
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
 
@@ -18,6 +18,7 @@ class _GenAIService(Protocol):
     def get_index(self, workspace_id: str, index_id: str) -> object: ...
     def tools(self, workspace_id: str) -> object: ...
     def get_tool(self, workspace_id: str, tool_id: str) -> object: ...
+    def put_tool(self, workspace_id: str, tool: ToolContract) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
     def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
     def build_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
@@ -45,6 +46,7 @@ class GenAIPlugin:
             "genai.index.build.v1",
             "genai.tools.v1",
             "genai.tool.v1",
+            "genai.tool.put.v1",
         ),
     )
 
@@ -96,6 +98,12 @@ class GenAIPlugin:
                 "/v1/workspaces/{workspace_id}/genai/tools/{tool_id}",
                 "tool",
                 self.get_tool,
+            ),
+            (
+                "PUT",
+                "/v1/workspaces/{workspace_id}/genai/tools/{tool_id}",
+                "tool.put",
+                self.put_tool,
             ),
         ):
             surface_id = f"genai.{operation}.v1"
@@ -276,6 +284,27 @@ class GenAIPlugin:
             return {"item": result} if result is not None else {"item": None}
         except Exception:
             return {"status": "unavailable", "item": None}
+
+    def put_tool(
+        self,
+        *,
+        workspace_id: str = "",
+        tool_id: str = "",
+        body: object | None = None,
+        **_kwargs: object,
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured"}
+        if not isinstance(body, dict):
+            return {"error": {"code": "invalid_request"}}
+        try:
+            payload = dict(body)
+            payload["id"] = tool_id
+            tool = ToolContract.from_payload(payload)
+            result = self._service.put_tool(workspace_id, tool)
+            return result.to_payload() if isinstance(result, ToolContract) else result
+        except Exception as exc:
+            return {"error": {"code": "invalid_tool", "message": str(exc)}}
 
 
 def factory() -> GenAIPlugin:
