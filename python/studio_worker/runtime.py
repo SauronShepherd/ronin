@@ -91,6 +91,8 @@ class LocalWorkerRuntimeConfig:
     connector_asset: object | None = None
     connector_secrets: object | None = None
     connector_destination: object | None = None
+    notification_sink: object | None = None
+    notification_artifacts: ArtifactStore | None = None
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
@@ -261,7 +263,13 @@ class LocalWorkerRuntime:
 
     async def _execute_claim(self, claim: ClaimedRun) -> WorkerExecutionOutcome:
         loop = asyncio.get_running_loop()
-        if claim.job.target in {"sql.query", "graph.query", "quality.gate", "connector.sync"}:
+        if claim.job.target in {
+            "sql.query",
+            "graph.query",
+            "quality.gate",
+            "connector.sync",
+            "notification.send",
+        }:
             if claim.job.target == "sql.query" and self.config.scheduler_sql_engine is None:
                 raise UnsupportedSchedulerWorkload(
                     "sql.query scheduler execution requires scheduler_sql_engine"
@@ -277,6 +285,12 @@ class LocalWorkerRuntime:
             if claim.job.target == "connector.sync" and self.config.connector_sync_service is None:
                 raise UnsupportedSchedulerWorkload(
                     "connector.sync scheduler execution requires connector_sync_service"
+                )
+            if claim.job.target == "notification.send" and (
+                self.config.notification_sink is None or self.config.notification_artifacts is None
+            ):
+                raise UnsupportedSchedulerWorkload(
+                    "notification.send scheduler execution requires sink and artifacts"
                 )
             try:
                 result = await loop.run_in_executor(
@@ -295,6 +309,9 @@ class LocalWorkerRuntime:
                         connector_asset=self.config.connector_asset,
                         connector_secrets=self.config.connector_secrets,
                         connector_destination=self.config.connector_destination,
+                        notification_sink=self.config.notification_sink,
+                        notification_artifacts=self.config.notification_artifacts,
+                        notification_now=self._now(),
                     ),
                 )
             except Exception:
@@ -306,6 +323,8 @@ class LocalWorkerRuntime:
                     else "scheduler.quality.error"
                     if claim.job.target == "quality.gate"
                     else "scheduler.connector.error"
+                    if claim.job.target == "connector.sync"
+                    else "scheduler.notification.error"
                 )
                 await self._service.worker_complete_attempt(
                     claim.attempt_id,
