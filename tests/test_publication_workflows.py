@@ -38,3 +38,29 @@ def test_name_reservation_requires_explicit_non_release_confirmation() -> None:
     assert "reserve_confirmation:" in workflow
     assert "I_UNDERSTAND_RESERVED_ONLY" in workflow
     assert "inputs.reserve_confirmation == 'I_UNDERSTAND_RESERVED_ONLY'" in workflow
+
+
+def test_tag_publication_requires_exact_aggregate_release_verdict() -> None:
+    workflow = _workflow("publish-prerelease.yml")
+
+    assert "authoritative-release-verdict:" in workflow
+    assert "actions/workflows/release-evidence.yml/runs?head_sha=${GITHUB_SHA}" in workflow
+    assert "name: exact-release-verdict" in workflow
+    assert "verdict.get(\"schema\") != \"ronin.release-verdict/v1\"" in workflow
+    assert "verdict.get(\"commit\") != os.environ[\"EXPECTED_COMMIT\"]" in workflow
+    assert 'verdict.get("status") != "passed"' in workflow
+    for gate in (
+        '"ci"',
+        '"security"',
+        '"status-consistency"',
+        '"docker-qualification"',
+        '"mutation"',
+        '"browser"',
+        '"a11y"',
+        '"installed-artifact"',
+        '"sbom-provenance"',
+        '"license"',
+        '"artifact-identity"',
+    ):
+        assert gate in workflow
+    assert "- authoritative-release-verdict" in workflow
