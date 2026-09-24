@@ -26,7 +26,12 @@ class GenAIPlugin:
         capabilities=("genai.discovery",),
         permissions=("genai:read",),
         isolation="worker",
-        surface_ids=("genai.providers.v1", "genai.health.v1", "genai.prompts.v1", "genai.prompt.v1"),
+        surface_ids=(
+            "genai.providers.v1",
+            "genai.health.v1",
+            "genai.prompts.v1",
+            "genai.prompt.v1",
+        ),
     )
 
     def __init__(self) -> None:
@@ -39,7 +44,12 @@ class GenAIPlugin:
             ("GET", "/v1/workspaces/{workspace_id}/genai/providers", "providers", self.providers),
             ("GET", "/v1/workspaces/{workspace_id}/genai/health", "health", self.health),
             ("GET", "/v1/workspaces/{workspace_id}/genai/prompts", "prompts", self.prompts),
-            ("PUT", "/v1/workspaces/{workspace_id}/genai/prompts/{prompt_id}/{version}", "prompt", self.put_prompt),
+            (
+                "PUT",
+                "/v1/workspaces/{workspace_id}/genai/prompts/{prompt_id}/{version}",
+                "prompt",
+                self.put_prompt,
+            ),
         ):
             surface_id = f"genai.{operation}.v1"
             context.contributions.add_route(
