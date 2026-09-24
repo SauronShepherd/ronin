@@ -15,6 +15,7 @@ class _GenAIService(Protocol):
     def prompts(self, workspace_id: str) -> object: ...
     def put_prompt(self, workspace_id: str, prompt: PromptAsset) -> object: ...
     def indexes(self, workspace_id: str) -> object: ...
+    def get_index(self, workspace_id: str, index_id: str) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
     def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
     def build_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
@@ -36,6 +37,7 @@ class GenAIPlugin:
             "genai.prompts.v1",
             "genai.prompt.v1",
             "genai.indexes.v1",
+            "genai.index.v1",
             "genai.index.delete.v1",
             "genai.index.query.v1",
             "genai.index.build.v1",
@@ -60,6 +62,12 @@ class GenAIPlugin:
                 self.put_prompt,
             ),
             ("GET", "/v1/workspaces/{workspace_id}/genai/indexes", "indexes", self.indexes),
+            (
+                "GET",
+                "/v1/workspaces/{workspace_id}/genai/indexes/{index_id}",
+                "index",
+                self.get_index,
+            ),
             (
                 "DELETE",
                 "/v1/workspaces/{workspace_id}/genai/indexes/{index_id}",
@@ -151,6 +159,17 @@ class GenAIPlugin:
             return self._service.indexes(workspace_id)
         except Exception:
             return {"status": "unavailable", "items": []}
+
+    def get_index(
+        self, *, workspace_id: str = "", index_id: str = "", **_kwargs: object
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured", "item": None}
+        try:
+            result = self._service.get_index(workspace_id, index_id)
+            return {"item": result} if result is not None else {"item": None}
+        except Exception:
+            return {"status": "unavailable", "item": None}
 
     def delete_index(
         self, *, workspace_id: str = "", index_id: str = "", **_kwargs: object
