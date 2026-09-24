@@ -25,3 +25,13 @@ def test_ci_docker_qualification_declares_postgres_and_real_worker_gate() -> Non
     assert "RONIN_TEST_POSTGRES_DSN" in workflow
     assert 'RONIN_REAL_DOCKER_QUALIFICATION: "1"' in workflow
     assert "tests/integration/test_worker_runtime_real.py" in workflow
+
+
+def test_release_acceptance_runs_on_tag_commit_without_cross_workflow_artifact_assumptions() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "publish-prerelease.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "python -m pytest tests/e2e -m e2e -v --junitxml=acceptance-evidence/v01-acceptance.xml" in workflow
+    assert "python -m tools.v01_acceptance_gate" in workflow
+    assert "docker-qualification-${{ github.sha }}" not in workflow
+    assert "v01-acceptance-provenance.json" not in workflow
