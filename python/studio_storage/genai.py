@@ -31,8 +31,8 @@ from .catalog import CatalogAssetNotFound, migrate_catalog
 from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound
 
-_GENAI_SCHEMA_VERSION = 2
-_GENAI_MIGRATIONS = {1: "genai_001.sql", 2: "genai_002.sql"}
+_GENAI_SCHEMA_VERSION = 3
+_GENAI_MIGRATIONS = {1: "genai_001.sql", 2: "genai_002.sql", 3: "genai_003.sql"}
 
 
 class GenAIConflict(RuntimeError):
@@ -745,5 +745,67 @@ class SqliteGenAIStore:
                 }
                 for row in rows
             )
+        finally:
+            connection.close()
+
+    def put_rag_evaluation(
+        self,
+        workspace_id: WorkspaceId,
+        evaluation_id: str,
+        payload: Mapping[str, object],
+        digest: str,
+        *,
+        now: Instant | str,
+    ) -> dict[str, object]:
+        if not evaluation_id.strip() or not digest.strip():
+            raise ValueError("RAG evaluation identity and digest are required")
+        encoded = encode_canonical_json(dict(payload)).decode("utf-8")
+        now = Instant(now)
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
+            existing = connection.execute(
+                "SELECT payload_json,digest FROM genai_rag_evaluations "
+                "WHERE workspace_id=? AND evaluation_id=?",
+                (str(workspace_id), evaluation_id),
+            ).fetchone()
+            if existing is not None:
+                if existing["payload_json"] != encoded or existing["digest"] != digest:
+                    raise GenAIConflict("RAG evaluation identity conflicts with durable state")
+                connection.execute("COMMIT")
+                return {"evaluation_id": evaluation_id, "payload": dict(payload), "digest": digest}
+            connection.execute(
+                "INSERT INTO genai_rag_evaluations("
+                "workspace_id,evaluation_id,payload_json,digest,created_at) "
+                "VALUES (?,?,?,?,?)",
+                (str(workspace_id), evaluation_id, encoded, digest, now),
+            )
+            connection.execute("COMMIT")
+            return {"evaluation_id": evaluation_id, "payload": dict(payload), "digest": digest}
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
+    def get_rag_evaluation(
+        self, workspace_id: WorkspaceId, evaluation_id: str
+    ) -> dict[str, object] | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT payload_json,digest FROM genai_rag_evaluations "
+                "WHERE workspace_id=? AND evaluation_id=?",
+                (str(workspace_id), evaluation_id),
+            ).fetchone()
+            if row is None:
+                return None
+            return {
+                "evaluation_id": evaluation_id,
+                "payload": decode_canonical_json(row["payload_json"]),
+                "digest": row["digest"],
+            }
         finally:
             connection.close()

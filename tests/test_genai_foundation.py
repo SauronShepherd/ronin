@@ -84,6 +84,16 @@ def test_agent_run_evidence_is_durable_and_secret_safe(tmp_path: Path) -> None:
         store.put_agent_run(_WS, "run-2", "agent-1", "completed", {"answer": "secret"}, now=_NOW)
 
 
+def test_rag_evaluation_evidence_is_immutable(tmp_path: Path) -> None:
+    store = _store(tmp_path / "ronin.sqlite3")
+    payload = {"example_count": 1, "metrics": {"recall": 1.0}}
+    expected = {"evaluation_id": "eval-1", "payload": payload, "digest": "d" * 64}
+    assert store.put_rag_evaluation(_WS, "eval-1", payload, "d" * 64, now=_NOW) == expected
+    assert store.get_rag_evaluation(_WS, "eval-1") == expected
+    with pytest.raises(GenAIConflict, match="RAG evaluation identity"):
+        store.put_rag_evaluation(_WS, "eval-1", {"example_count": 2}, "e" * 64, now=_NOW)
+
+
 def test_prompt_version_is_immutable(tmp_path: Path) -> None:
     store = _store(tmp_path / "ronin.sqlite3")
     first = PromptAsset(
