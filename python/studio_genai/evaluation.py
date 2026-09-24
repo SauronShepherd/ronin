@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
 from dataclasses import dataclass
+
+from studio_core.canonical_json import encode as encode_canonical_json
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +76,12 @@ class RAGEvaluationReport:
             },
             "examples": [item.to_payload() for item in self.examples],
         }
+
+    def evidence_digest(self) -> str:
+        """Return the stable digest of the complete serialized evaluation evidence."""
+
+        encoded = encode_canonical_json(self.to_payload())
+        return hashlib.sha256(encoded).hexdigest()
 
 
 def summarize_rag_evaluation(

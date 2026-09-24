@@ -43,6 +43,8 @@ def test_rag_evaluation_report_sorts_and_averages_bounded_evidence() -> None:
     assert report.retrieval_recall == 0.5
     assert report.answer_exact_match == 0.5
     assert report.to_payload()["example_count"] == 2
+    assert report.evidence_digest() == report.evidence_digest()
+    assert len(report.evidence_digest()) == 64
 
 
 def test_rag_evaluation_rejects_non_finite_or_out_of_range_metrics() -> None:
