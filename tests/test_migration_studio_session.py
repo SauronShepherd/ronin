@@ -1,6 +1,7 @@
 import pytest
 import studio_migration.session as session_module
 from studio_migration import (
+    MigrationSession,
     MigrationSessionService,
     MigrationUnit,
     SourceInventory,
@@ -58,3 +59,21 @@ def test_session_artifact_budget_is_enforced_before_state_change(monkeypatch) ->
         service.add_artifact(session.id, second)
     assert service.get(session.id).inventory is not None
     assert len(service.get(session.id).inventory.artifacts) == 1
+
+
+def test_generated_project_and_import_evidence_survive_snapshot_round_trip() -> None:
+    service = MigrationSessionService()
+    session = service.create("ws", "project")
+    inventory = SourceInventory("iics", "1", (), (MigrationUnit("m", "mapping", "m", "ready"),))
+    service.discover(session.id, inventory)
+    service.set_scope(session.id, ("m",))
+    project = service.generate(session.id)
+    saved = service.record_import(session.id, project, target="project-catalog")
+
+    assert saved.result_digest == project.project_digest
+    assert saved.generated_manifest_digest
+    assert saved.generated_file_digests
+    assert saved.import_status == "importable"
+    restored = MigrationSession.from_snapshot(saved.to_snapshot())
+    assert restored.generated_file_digests == saved.generated_file_digests
+    assert restored.import_digest == saved.import_digest

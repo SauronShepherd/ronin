@@ -40,6 +40,10 @@ class MigrationSession:
     selection: ScopeSelection | None = None
     blueprint: BlueprintContract | None = None
     result_digest: str | None = None
+    generated_manifest_digest: str | None = None
+    generated_file_digests: tuple[tuple[str, str], ...] = ()
+    import_digest: str | None = None
+    import_status: str | None = None
     validation_digest: str | None = None
     validation_status: str | None = None
     promotion_digest: str | None = None
@@ -55,6 +59,13 @@ class MigrationSession:
             "scope_digest": self.selection.digest if self.selection else None,
             "blueprint_digest": self.blueprint.digest if self.blueprint else None,
             "result_digest": self.result_digest,
+            "generated_manifest_digest": self.generated_manifest_digest,
+            "generated_file_digests": [
+                {"path": path, "digest": digest}
+                for path, digest in self.generated_file_digests
+            ],
+            "import_digest": self.import_digest,
+            "import_status": self.import_status,
             "validation_digest": self.validation_digest,
             "validation_status": self.validation_status,
             "promotion_digest": self.promotion_digest,
@@ -189,6 +200,13 @@ class MigrationSession:
             selection,
             blueprint,
             cast(str | None, payload.get("result_digest")),
+            cast(str | None, payload.get("generated_manifest_digest")),
+            tuple(
+                (str(item["path"]), str(item["digest"]))
+                for item in cast(list[dict[str, object]], payload.get("generated_file_digests", []))
+            ),
+            cast(str | None, payload.get("import_digest")),
+            cast(str | None, payload.get("import_status")),
             cast(str | None, payload.get("validation_digest")),
             cast(str | None, payload.get("validation_status")),
             cast(str | None, payload.get("promotion_digest")),
@@ -331,20 +349,56 @@ class MigrationSessionService:
             blueprint=session.blueprint,
         )
         updated = replace(session, state="converting", result_digest=project.project_digest)
+        updated = replace(
+            updated,
+            generated_manifest_digest=hashlib.sha256(project.manifest.encode()).hexdigest(),
+            generated_file_digests=tuple(
+                (item.path, hashlib.sha256(item.content.encode()).hexdigest())
+                for item in project.files
+            ),
+        )
         self._sessions[session_id] = updated
         self._save(updated)
         return project
+
+    def record_import(
+        self, session_id: str, project: GeneratedProject, *, target: str
+    ) -> MigrationSession:
+        """Persist deterministic import evidence without claiming target-side execution."""
+        session = self.get(session_id)
+        self._require(session, {"converting", "qualifying", "completed"})
+        if not target or target != target.strip():
+            raise ValueError("import target is required")
+        expected = generate_project(
+            inventory=session.inventory, selection=session.selection, blueprint=session.blueprint
+        ) if session.inventory is not None and session.selection is not None else None
+        if expected is None or expected.project_digest != project.project_digest:
+            raise ValueError("generated project does not match the frozen session scope")
+        evidence = json.dumps(
+            {
+                "project_digest": project.project_digest,
+                "target": target,
+                "files": [item.path for item in project.files],
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+        updated = replace(
+            session,
+            import_digest=hashlib.sha256(evidence).hexdigest(),
+            import_status="importable",
+        )
+        self._sessions[session_id] = updated
+        self._save(updated)
+        return updated
 
     def qualify_generated(self, session_id: str) -> GeneratedQualification:
         session = self.get(session_id)
         self._require(session, {"converting", "qualifying"})
         if session.inventory is None or session.selection is None:
             raise ValueError("qualification requires generated scope")
-        project = generate_project(
-            inventory=session.inventory,
-            selection=session.selection,
-            blueprint=session.blueprint,
-        )
+        project = self.generate(session_id)
+        session = self.get(session_id)
         qualification = qualify_generated_project(project)
         updated = replace(session, state="qualifying")
         self._sessions[session_id] = updated
