@@ -25,6 +25,8 @@ def test_genai_plugin_registers_discovery_surfaces() -> None:
         ("POST", "/v1/workspaces/{workspace_id}/genai/agents/{agent_id}/runs"),
         ("PUT", "/v1/workspaces/{workspace_id}/genai/agents/{agent_id}"),
         ("DELETE", "/v1/workspaces/{workspace_id}/genai/agents/{agent_id}"),
+        ("GET", "/v1/workspaces/{workspace_id}/genai/agents/{agent_id}/runs"),
+        ("GET", "/v1/workspaces/{workspace_id}/genai/runs/{run_id}"),
     ]
     assert {item.id for item in contributions.surface_registry.items} == set(
         plugin.manifest.surface_ids
@@ -84,4 +86,12 @@ def test_genai_plugin_fails_closed_without_runtime() -> None:
     assert plugin.delete_agent(workspace_id="ws", agent_id="agent") == {
         "status": "not_configured",
         "deleted": False,
+    }
+    assert plugin.agent_runs(workspace_id="ws", agent_id="agent") == {
+        "status": "not_configured",
+        "items": [],
+    }
+    assert plugin.get_agent_run(workspace_id="ws", run_id="run") == {
+        "status": "not_configured",
+        "item": None,
     }
