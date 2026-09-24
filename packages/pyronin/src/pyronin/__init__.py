@@ -1108,7 +1108,8 @@ class Ronin:
         result = self._transport.request(
             "POST",
             f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
-            f"{quote(project_id, safe='')}/migration/sessions/{quote(session_id, safe='')}/validate",
+            f"{quote(project_id, safe='')}/migration/sessions/"
+            f"{quote(session_id, safe='')}/validate",
             payload=payload,
         )
         if not isinstance(result, dict) or not isinstance(result.get("status"), str):
