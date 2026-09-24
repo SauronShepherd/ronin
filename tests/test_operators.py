@@ -284,3 +284,13 @@ def test_node_validation_treats_empty_required_and_optional_values_as_missing() 
             "params.required",
         ),
     )
+
+    valid = validate_operator_node(
+        _node(
+            contract.ref,
+            params={"required": "present"},
+            inputs=(Port("required"),),
+        ),
+        OperatorCatalog((contract,)),
+    )
+    assert not any(item.path == "params.required" for item in valid)
