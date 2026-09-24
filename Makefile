@@ -191,5 +191,5 @@ coverage-storage-files-full:
 mutation:
 	@rm -rf mutants
 	@test ! -e src && test ! -L src
-	@ln -s python src; trap 'rm -f src' 0; PYTHONPATH=python:packages/pyronin/src mutmut run && mutmut export-cicd-stats
+	@cp -a python src; trap 'rm -rf src' 0; PYTHONPATH=python:packages/pyronin/src mutmut run && mutmut export-cicd-stats
 	@python -m tools.mutation_gate mutants/mutmut-cicd-stats.json
