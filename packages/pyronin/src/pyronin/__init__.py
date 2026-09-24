@@ -345,7 +345,11 @@ class ProjectPermissionDecision:
     matched_roles: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        if not isinstance(self.allowed, bool) or not isinstance(self.reason, str) or not self.reason.strip():
+        if (
+            not isinstance(self.allowed, bool)
+            or not isinstance(self.reason, str)
+            or not self.reason.strip()
+        ):
             raise ValueError("permission decision must contain a boolean and non-empty reason")
         roles = tuple(self.matched_roles)
         if any(not isinstance(role, str) or not role.strip() for role in roles):
@@ -365,7 +369,12 @@ class ProjectPermissions:
         if not self.workspace_id.strip() or not self.project_id.strip():
             raise ValueError("workspace_id and project_id must be non-empty")
         entries = tuple(sorted(self.permissions))
-        if any(not isinstance(name, str) or not name.strip() or not isinstance(decision, ProjectPermissionDecision) for name, decision in entries):
+        if any(
+            not isinstance(name, str)
+            or not name.strip()
+            or not isinstance(decision, ProjectPermissionDecision)
+            for name, decision in entries
+        ):
             raise ValueError("permissions must contain named decisions")
         if len({name for name, _ in entries}) != len(entries):
             raise ValueError("permissions must have unique names")
@@ -415,16 +424,29 @@ def _parse_project_permissions(payload: object) -> ProjectPermissions:
     workspace_id = item.get("workspace_id")
     project_id = item.get("project_id")
     raw = item.get("permissions")
-    if not isinstance(workspace_id, str) or not workspace_id or not isinstance(project_id, str) or not project_id or not isinstance(raw, dict):
+    if (
+        not isinstance(workspace_id, str)
+        or not workspace_id
+        or not isinstance(project_id, str)
+        or not project_id
+        or not isinstance(raw, dict)
+    ):
         raise ProtocolError("project permissions response has invalid identity")
     decisions = []
     for permission, value in raw.items():
-        if not isinstance(permission, str) or not isinstance(value, dict) or not isinstance(value.get("allowed"), bool) or not isinstance(value.get("reason"), str):
+        if (
+            not isinstance(permission, str)
+            or not isinstance(value, dict)
+            or not isinstance(value.get("allowed"), bool)
+            or not isinstance(value.get("reason"), str)
+        ):
             raise ProtocolError("project permissions response has invalid decision")
         roles = value.get("matched_roles", [])
         if not isinstance(roles, list) or not all(isinstance(role, str) and role for role in roles):
             raise ProtocolError("project permissions response has invalid matched roles")
-        decisions.append((permission, ProjectPermissionDecision(value["allowed"], value["reason"], tuple(roles))))
+        decisions.append(
+            (permission, ProjectPermissionDecision(value["allowed"], value["reason"], tuple(roles)))
+        )
     return ProjectPermissions(workspace_id, project_id, tuple(sorted(decisions)))
 
 
@@ -1796,9 +1818,19 @@ class Ronin:
         parameters: Mapping[str, object] | None = None,
     ) -> Mapping[str, object]:
         """Create one idempotent, audited pipeline workflow run."""
-        if not all(isinstance(value, str) and value.strip() for value in (workspace_id, project_id, pipeline_id, revision_key, runtime)):
-            raise ValueError("workspace, project, pipeline, revision_key and runtime must be non-empty")
-        if not isinstance(ir_digest, str) or len(ir_digest) != 64 or ir_digest != ir_digest.lower() or any(char not in "0123456789abcdef" for char in ir_digest):
+        if not all(
+            isinstance(value, str) and value.strip()
+            for value in (workspace_id, project_id, pipeline_id, revision_key, runtime)
+        ):
+            raise ValueError(
+                "workspace, project, pipeline, revision_key and runtime must be non-empty"
+            )
+        if (
+            not isinstance(ir_digest, str)
+            or len(ir_digest) != 64
+            or ir_digest != ir_digest.lower()
+            or any(char not in "0123456789abcdef" for char in ir_digest)
+        ):
             raise ValueError("ir_digest must be a lowercase SHA-256 digest")
         if parameters is not None and not isinstance(parameters, Mapping):
             raise ValueError("parameters must be a mapping")
@@ -1812,7 +1844,9 @@ class Ronin:
                 "runtime": runtime,
                 "parameters": dict(parameters or {}),
             },
-            headers={"Idempotency-Key": f"pipeline:{project_id}:{pipeline_id}:{revision_key}:{ir_digest}"},
+            headers={
+                "Idempotency-Key": f"pipeline:{project_id}:{pipeline_id}:{revision_key}:{ir_digest}"
+            },
         )
         if not isinstance(payload, dict) or not isinstance(payload.get("id"), str):
             raise ProtocolError("pipeline run response must contain an id")

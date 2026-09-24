@@ -24,18 +24,20 @@ class TutorialPlugin:
             self.get_tutorial,
             permission="tutorial:read",
         )
-        context.contributions.add_surface(SurfaceContribution(
-            id="tutorial.get.v1",
-            plugin_id=context.plugin_id,
-            namespace="tutorial",
-            command="get",
-            operation_id="tutorial.get.v1",
-            capability="tutorial.example",
-            permission="tutorial:read",
-            path="/v1/tutorial",
-            method="GET",
-            output_schema={"type": "object"},
-        ))
+        context.contributions.add_surface(
+            SurfaceContribution(
+                id="tutorial.get.v1",
+                plugin_id=context.plugin_id,
+                namespace="tutorial",
+                command="get",
+                operation_id="tutorial.get.v1",
+                capability="tutorial.example",
+                permission="tutorial:read",
+                path="/v1/tutorial",
+                method="GET",
+                output_schema={"type": "object"},
+            )
+        )
 
     def startup(self) -> None:
         return None

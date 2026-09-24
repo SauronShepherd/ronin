@@ -913,14 +913,20 @@ def test_connector_capabilities_and_preview_are_public_sdk_contracts() -> None:
 
 def test_project_permission_inspection_is_resource_scoped() -> None:
     transport = FakeTransport(
-        [{
-            "workspace_id": "workspace-a",
-            "project_id": "project-1",
-            "permissions": {
-                "project.read": {"allowed": True, "reason": "allowed", "matched_roles": ["viewer"]},
-                "project.write": {"allowed": False, "reason": "denied", "matched_roles": []},
-            },
-        }]
+        [
+            {
+                "workspace_id": "workspace-a",
+                "project_id": "project-1",
+                "permissions": {
+                    "project.read": {
+                        "allowed": True,
+                        "reason": "allowed",
+                        "matched_roles": ["viewer"],
+                    },
+                    "project.write": {"allowed": False, "reason": "denied", "matched_roles": []},
+                },
+            }
+        ]
     )
     permissions = Ronin(transport=transport).inspect_project_permissions("workspace-a", "project-1")
     assert permissions.decision("project.read").allowed is True
@@ -948,8 +954,13 @@ def test_connector_checkpoint_health_rejects_non_text_identity() -> None:
 def test_run_pipeline_is_audited_and_idempotent() -> None:
     transport = FakeTransport([{"id": "pipeline-run-1", "state": "queued"}])
     result = Ronin(transport=transport).run_pipeline(
-        "workspace-a", "project-1", "main", revision_key="main/working", ir_digest="a" * 64,
-        runtime="local-preview", parameters={"pipeline": {"nodes": [], "edges": []}},
+        "workspace-a",
+        "project-1",
+        "main",
+        revision_key="main/working",
+        ir_digest="a" * 64,
+        runtime="local-preview",
+        parameters={"pipeline": {"nodes": [], "edges": []}},
     )
     assert result["id"] == "pipeline-run-1"
     assert transport.calls[0][1].endswith("/pipelines/main/runs")
