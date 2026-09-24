@@ -19,6 +19,7 @@ class _GenAIService(Protocol):
     def tools(self, workspace_id: str) -> object: ...
     def get_tool(self, workspace_id: str, tool_id: str) -> object: ...
     def put_tool(self, workspace_id: str, tool: ToolContract, idempotency_key: str) -> object: ...
+    def delete_tool(self, workspace_id: str, tool_id: str, idempotency_key: str) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
     def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
     def build_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
@@ -47,6 +48,7 @@ class GenAIPlugin:
             "genai.tools.v1",
             "genai.tool.v1",
             "genai.tool.put.v1",
+            "genai.tool.delete.v1",
         ),
     )
 
@@ -104,6 +106,12 @@ class GenAIPlugin:
                 "/v1/workspaces/{workspace_id}/genai/tools/{tool_id}",
                 "tool.put",
                 self.put_tool,
+            ),
+            (
+                "DELETE",
+                "/v1/workspaces/{workspace_id}/genai/tools/{tool_id}",
+                "tool.delete",
+                self.delete_tool,
             ),
         ):
             surface_id = f"genai.{operation}.v1"
@@ -308,6 +316,27 @@ class GenAIPlugin:
             return result.to_payload() if isinstance(result, ToolContract) else result
         except Exception as exc:
             return {"error": {"code": "invalid_tool", "message": str(exc)}}
+
+    def delete_tool(
+        self,
+        *,
+        workspace_id: str = "",
+        tool_id: str = "",
+        idempotency_key: str | None = None,
+        **_kwargs: object,
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured", "deleted": False}
+        if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+            return {"error": {"code": "missing_idempotency_key"}}
+        try:
+            return {
+                "deleted": bool(
+                    self._service.delete_tool(workspace_id, tool_id, idempotency_key)
+                )
+            }
+        except Exception:
+            return {"status": "unavailable", "deleted": False}
 
 
 def factory() -> GenAIPlugin:

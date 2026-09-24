@@ -529,6 +529,24 @@ class SqliteGenAIStore:
         finally:
             connection.close()
 
+    def delete_tool(self, workspace_id: WorkspaceId, tool_id: ToolId) -> bool:
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
+            cursor = connection.execute(
+                "DELETE FROM genai_tools WHERE workspace_id=? AND tool_id=?",
+                (str(workspace_id), str(tool_id)),
+            )
+            connection.execute("COMMIT")
+            return cursor.rowcount == 1
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
     def put_agent(
         self, workspace_id: WorkspaceId, agent: AgentDefinition, *, now: Instant | str
     ) -> AgentDefinition:

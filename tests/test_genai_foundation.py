@@ -118,6 +118,9 @@ def test_agent_requires_registered_prompt_provider_and_tools(tmp_path: Path) -> 
     store.put_agent(_WS, agent, now=_NOW)
 
     assert store.get_agent(_WS, agent.id) == agent
+    assert store.delete_tool(_WS, tool.id) is True
+    assert store.get_tool(_WS, tool.id) is None
+    assert store.delete_tool(_WS, tool.id) is False
 
 
 def test_tool_registry_exposes_deterministic_contract_inventory() -> None:
