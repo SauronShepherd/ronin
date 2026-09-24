@@ -237,6 +237,10 @@ test('Data Engineering Studio visual pipeline editor synchronizes nodes, edges a
   await page.locator('#de-edge-to').selectOption('sink');
   await page.getByRole('button', { name: 'Connect nodes' }).click();
   await expect(page.locator('#de-pipeline-visual-result')).toContainText('2 node(s), 1 edge(s)');
+  await page.locator('#de-edge-from').selectOption('sink');
+  await page.locator('#de-edge-to').selectOption('source');
+  await page.getByRole('button', { name: 'Connect nodes' }).click();
+  await expect(page.locator('#de-pipeline-visual-result')).toContainText('Connection would create a pipeline cycle');
   await expect(page.locator('#de-pipeline-form textarea[name="pipeline"]')).toHaveValue(/csv\.read/);
   await page.getByRole('button', { name: 'Undo' }).click();
   await expect(page.locator('#de-pipeline-visual-result')).toContainText('2 node(s), 0 edge(s)');

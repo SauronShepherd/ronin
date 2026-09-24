@@ -55,6 +55,16 @@ function refreshPipelineEdgeSelectors() {
   const { documentValue } = pipelineDocument();
   for (const id of ['#de-edge-from', '#de-edge-to']) { const select = document.querySelector(id); if (select) select.innerHTML = documentValue.pipeline.nodes.map(node => `<option value="${node.id}">${node.id}</option>`).join(''); }
 }
+function createsCycle(edges, source, target) {
+  const next = new Map();
+  for (const edge of edges) { if (!next.has(edge.source)) next.set(edge.source, []); next.get(edge.source).push(edge.target); }
+  if (!next.has(source)) next.set(source, []);
+  next.get(source).push(target);
+  const seen = new Set();
+  const visiting = new Set();
+  function visit(node) { if (visiting.has(node)) return true; if (seen.has(node)) return false; visiting.add(node); for (const child of next.get(node) || []) if (visit(child)) return true; visiting.delete(node); seen.add(node); return false; }
+  return [...next.keys()].some(visit);
+}
 function render() {
   if (location.hash.slice(1) !== 'data') return;
   const view = document.querySelector('#view');
@@ -105,6 +115,7 @@ document.addEventListener('click', async event => {
         const port = document.querySelector('#de-edge-port').value.trim();
         if (!from || !to || !port || from === to) throw new Error('Choose two distinct nodes and a target port');
         if (documentValue.pipeline.edges.some(edge => edge.source === from && edge.target === to && edge.target_port === port)) throw new Error('Edge already exists');
+        if (createsCycle(documentValue.pipeline.edges, from, to)) throw new Error('Connection would create a pipeline cycle');
         documentValue.pipeline.edges.push({ source: from, source_port: 'out', target: to, target_port: port });
         field.value = JSON.stringify(documentValue);
       }
