@@ -252,7 +252,7 @@ pytest_add_cli_args = [
   "-o",
   "addopts=",
   "-o",
-  "pythonpath=../python ../packages/pyronin/src",
+  "pythonpath=../packages/pyronin/src",
 ]
 pytest_add_cli_args_test_selection = [
   "tests/test_contract_snapshots.py",
