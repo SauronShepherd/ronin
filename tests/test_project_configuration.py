@@ -77,6 +77,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
             "ml-studio-journey",
             "ml-features-studio",
             "workspace-journey",
+            "genai-studio",
         )
     }
     assert data_files["share/ronin/web/styles"] == [

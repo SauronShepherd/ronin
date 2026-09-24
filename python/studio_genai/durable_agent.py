@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from studio_core import WorkspaceId
 from studio_core.genai import AgentDefinition, GenAIModel, PromptAsset
-from studio_orchestrator import Instant
 from studio_storage.genai import SqliteGenAIStore
 
 from .agent import AgentRunResult, ToolRegistry, run_agent
@@ -22,7 +21,7 @@ def run_agent_durable(
     tools: ToolRegistry,
     user_input: str,
     *,
-    now: Instant | str,
+    now: object,
     timeout_seconds: float | None = None,
     allow_non_idempotent: bool = False,
     authorize_requirements: object | None = None,
