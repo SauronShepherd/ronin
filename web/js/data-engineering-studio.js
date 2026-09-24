@@ -33,7 +33,7 @@ function addPipelineEditor() {
   const panel = document.createElement('section');
   panel.id = 'de-pipeline-visual';
   panel.className = 'panel';
-  panel.innerHTML = '<h2>Pipeline visual editor</h2><p class="muted">Edit nodes and typed edges while keeping the canonical JSON representation synchronized.</p><div class="grid three"><label>Node ID<input class="field" id="de-node-id" value="node-1"></label><label>Node operator<input class="field" id="de-node-operator" value="source"></label><label>Node port<input class="field" id="de-node-port" value="out"></label></div><div class="grid three"><label>From node<select class="field" id="de-edge-from"></select></label><label>To node<select class="field" id="de-edge-to"></select></label><label>To port<input class="field" id="de-edge-port" value="in"></label></div><div class="toolbar"><button class="button" type="button" data-action="de-node-add">Add node</button><button class="button" type="button" data-action="de-edge-connect">Connect nodes</button><button class="button" type="button" data-action="de-visual-undo">Undo</button><button class="button" type="button" data-action="de-visual-redo">Redo</button><button class="button primary" type="button" data-action="de-save-revision">Save revision</button></div><div id="de-pipeline-visual-result" class="code" aria-live="polite">No visual edit requested.</div>';
+  panel.innerHTML = '<h2>Pipeline visual editor</h2><p class="muted">Edit nodes and typed edges while keeping the canonical JSON representation synchronized.</p><div class="grid three"><label>Node ID<input class="field" id="de-node-id" value="node-1"></label><label>Node operator<input class="field" id="de-node-operator" value="source"></label><label>Node port<input class="field" id="de-node-port" value="out"></label></div><div class="grid three"><label>From node<select class="field" id="de-edge-from"></select></label><label>To node<select class="field" id="de-edge-to"></select></label><label>To port<input class="field" id="de-edge-port" value="in"></label></div><div class="toolbar"><button class="button" type="button" data-action="de-node-add">Add node</button><button class="button" type="button" data-action="de-edge-connect">Connect nodes</button><button class="button" type="button" data-action="de-edge-disconnect">Disconnect nodes</button><button class="button" type="button" data-action="de-visual-undo">Undo</button><button class="button" type="button" data-action="de-visual-redo">Redo</button><button class="button primary" type="button" data-action="de-save-revision">Save revision</button></div><div id="de-pipeline-visual-result" class="code" aria-live="polite">No visual edit requested.</div>';
   view.append(panel);
   recordPipelineHistory();
   renderPipelineEditor();
@@ -88,7 +88,7 @@ document.addEventListener('click', async event => {
     } catch (error) { out.textContent = `Pipeline revision save failed: ${error.message}`; }
     return;
   }
-  if (['de-node-add', 'de-edge-connect', 'de-node-remove', 'de-visual-undo', 'de-visual-redo'].includes(action)) {
+  if (['de-node-add', 'de-edge-connect', 'de-edge-disconnect', 'de-node-remove', 'de-visual-undo', 'de-visual-redo'].includes(action)) {
     try {
       const { field, documentValue } = pipelineDocument();
       if (action === 'de-visual-undo' || action === 'de-visual-redo') {
@@ -108,6 +108,14 @@ document.addEventListener('click', async event => {
         const id = event.target.closest('[data-node-id]').dataset.nodeId;
         documentValue.pipeline.nodes = documentValue.pipeline.nodes.filter(node => node.id !== id);
         documentValue.pipeline.edges = documentValue.pipeline.edges.filter(edge => edge.from?.node !== id && edge.to?.node !== id && edge.source !== id && edge.target !== id);
+        field.value = JSON.stringify(documentValue);
+      } else if (action === 'de-edge-disconnect') {
+        const from = document.querySelector('#de-edge-from').value;
+        const to = document.querySelector('#de-edge-to').value;
+        const port = document.querySelector('#de-edge-port').value.trim();
+        const remaining = documentValue.pipeline.edges.filter(edge => !(edge.source === from && edge.target === to && (!port || edge.target_port === port)));
+        if (remaining.length === documentValue.pipeline.edges.length) throw new Error('Connection does not exist');
+        documentValue.pipeline.edges = remaining;
         field.value = JSON.stringify(documentValue);
       } else {
         const from = document.querySelector('#de-edge-from').value;
