@@ -5,7 +5,7 @@ function renderGenAI() {
   if (location.hash.slice(1) !== 'genai') return;
   const view = document.querySelector('#view');
   if (!view) return;
-  view.innerHTML = `${page('GenAI Studio', 'GENAI OPERATIONS')}<section class="panel"><form id="genai-discovery-form" class="toolbar"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Provider<input class="field" name="provider" value="default" required></label><label>Model<input class="field" name="model" value="chat" required></label><label>Agent<input class="field" name="agent" value="default" required></label><label>Run ID<input class="field" name="run" value="run-1" required></label><label>Input<input class="field" name="input" value="hello" required></label><label>Timeout seconds<input class="field" name="timeout" type="number" min="0.1" max="3600" step="0.1" value="60" required></label><button class="button primary" type="submit">Discover providers</button><button class="button" type="button" id="genai-prompts">List prompts</button><button class="button" type="button" id="genai-indexes">List vector indexes</button><button class="button" type="button" id="genai-evaluations">List RAG evaluations</button><button class="button" type="button" id="genai-agent-runs">List agent runs</button><button class="button" type="button" id="genai-run">Run agent</button><button class="button" type="button" id="genai-run-evidence">Show run evidence</button><button class="button" type="button" id="genai-qualification">Qualify provider</button><button class="button" type="button" id="genai-health">Check GenAI health</button></form><pre id="genai-result" class="code" aria-live="polite">No GenAI discovery requested.</pre></section>`;
+  view.innerHTML = `${page('GenAI Studio', 'GENAI OPERATIONS')}<section class="panel"><form id="genai-discovery-form" class="toolbar"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Provider<input class="field" name="provider" value="default" required></label><label>Model<input class="field" name="model" value="chat" required></label><label>Agent<input class="field" name="agent" value="default" required></label><label>Run ID<input class="field" name="run" value="run-1" required></label><label>Input<input class="field" name="input" value="hello" required></label><label>Timeout seconds<input class="field" name="timeout" type="number" min="0.1" max="3600" step="0.1" value="60" required></label><button class="button primary" type="submit">Discover providers</button><button class="button" type="button" id="genai-prompts">List prompts</button><button class="button" type="button" id="genai-indexes">List vector indexes</button><button class="button" type="button" id="genai-evaluations">List RAG evaluations</button><button class="button" type="button" id="genai-agent-runs">List agent runs</button><button class="button" type="button" id="genai-run">Run agent</button><button class="button" type="button" id="genai-cancel">Cancel run</button><button class="button" type="button" id="genai-run-evidence">Show run evidence</button><button class="button" type="button" id="genai-qualification">Qualify provider</button><button class="button" type="button" id="genai-health">Check GenAI health</button></form><pre id="genai-result" class="code" aria-live="polite">No GenAI discovery requested.</pre></section>`;
   document.querySelector('#genai-indexes').addEventListener('click', async () => {
     const workspace = encodeURIComponent(document.querySelector('#genai-discovery-form [name="workspace"]').value);
     const output = document.querySelector('#genai-result');
@@ -70,6 +70,19 @@ function renderGenAI() {
         timeout_seconds: Number(form.querySelector('[name="timeout"]').value),
       }));
     } catch (error) { output.textContent = `Agent run failed: ${esc(error.message)}`; }
+  });
+  document.querySelector('#genai-cancel').addEventListener('click', async () => {
+    const form = document.querySelector('#genai-discovery-form');
+    const workspace = encodeURIComponent(form.querySelector('[name="workspace"]').value);
+    const agent = encodeURIComponent(form.querySelector('[name="agent"]').value);
+    const output = document.querySelector('#genai-result');
+    try {
+      output.textContent = json(await post(`/v1/workspaces/${workspace}/genai/agents/${agent}/runs`, {
+        run_id: form.querySelector('[name="run"]').value,
+        input: form.querySelector('[name="input"]').value,
+        cancel_requested: true,
+      }));
+    } catch (error) { output.textContent = `Cancellation failed: ${esc(error.message)}`; }
   });
 }
 

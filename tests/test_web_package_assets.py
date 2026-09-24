@@ -96,6 +96,8 @@ def test_genai_studio_exposes_discovery_and_health() -> None:
         "/genai/agents/",
         "genai-run",
         "timeout_seconds",
+        "genai-cancel",
+        "cancel_requested",
         "GenAI Studio",
     ):
         assert marker in source, f"GenAI Studio integration missing: {marker}"
