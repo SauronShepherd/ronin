@@ -31,12 +31,27 @@ from .catalog import CatalogAssetNotFound, migrate_catalog
 from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound
 
-_GENAI_SCHEMA_VERSION = 1
-_GENAI_MIGRATIONS = {1: "genai_001.sql"}
+_GENAI_SCHEMA_VERSION = 2
+_GENAI_MIGRATIONS = {1: "genai_001.sql", 2: "genai_002.sql"}
 
 
 class GenAIConflict(RuntimeError):
     """Raised when a GenAI identity conflicts with durable state."""
+
+
+def _agent_run_payload(
+    run_id: str, agent_id: str, status: str, evidence: Mapping[str, object]
+) -> dict[str, object]:
+    if not run_id.strip() or not agent_id.strip() or not status.strip():
+        raise ValueError("agent run identity and status are required")
+    if "answer" in evidence or "prompt" in evidence or "input" in evidence:
+        raise ValueError("agent run evidence must not contain model content")
+    return {
+        "run_id": run_id,
+        "agent_id": agent_id,
+        "status": status,
+        "evidence": dict(evidence),
+    }
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
@@ -645,5 +660,78 @@ class SqliteGenAIStore:
             if connection.in_transaction:
                 connection.execute("ROLLBACK")
             raise
+        finally:
+            connection.close()
+
+    def put_agent_run(
+        self,
+        workspace_id: WorkspaceId,
+        run_id: str,
+        agent_id: str,
+        status: str,
+        evidence: Mapping[str, object],
+        *,
+        now: Instant | str,
+    ) -> dict[str, object]:
+        payload = _agent_run_payload(run_id, agent_id, status, evidence)
+        now = Instant(now)
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
+            encoded = encode_canonical_json(payload["evidence"]).decode("utf-8")
+            connection.execute(
+                "INSERT INTO genai_agent_runs("
+                "workspace_id,run_id,agent_id,status,evidence_json,created_at,updated_at) "
+                "VALUES (?,?,?,?,?,?,?) ON CONFLICT(workspace_id,run_id) DO UPDATE SET "
+                "status=excluded.status,evidence_json=excluded.evidence_json,"
+                "updated_at=excluded.updated_at",
+                (str(workspace_id), run_id, agent_id, status, encoded, now, now),
+            )
+            connection.execute("COMMIT")
+            return payload
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
+    def get_agent_run(self, workspace_id: WorkspaceId, run_id: str) -> dict[str, object] | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT run_id,agent_id,status,evidence_json FROM genai_agent_runs "
+                "WHERE workspace_id=? AND run_id=?",
+                (str(workspace_id), run_id),
+            ).fetchone()
+            if row is None:
+                return None
+            return {
+                "run_id": row["run_id"],
+                "agent_id": row["agent_id"],
+                "status": row["status"],
+                "evidence": decode_canonical_json(row["evidence_json"]),
+            }
+        finally:
+            connection.close()
+
+    def list_agent_runs(self, workspace_id: WorkspaceId) -> tuple[dict[str, object], ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT run_id,agent_id,status,evidence_json FROM genai_agent_runs "
+                "WHERE workspace_id=? ORDER BY run_id",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(
+                {
+                    "run_id": row["run_id"],
+                    "agent_id": row["agent_id"],
+                    "status": row["status"],
+                    "evidence": decode_canonical_json(row["evidence_json"]),
+                }
+                for row in rows
+            )
         finally:
             connection.close()

@@ -62,6 +62,20 @@ def test_provider_persists_only_secret_reference(tmp_path: Path) -> None:
     assert store.get_provider(_WS, provider.id) == provider
 
 
+def test_agent_run_evidence_is_durable_and_secret_safe(tmp_path: Path) -> None:
+    store = _store(tmp_path / "ronin.sqlite3")
+    evidence = {"schema": "ronin.genai-agent-evidence/v1", "step_count": 1}
+    store.put_agent_run(_WS, "run-1", "agent-1", "completed", evidence, now=_NOW)
+    assert store.get_agent_run(_WS, "run-1") == {
+        "run_id": "run-1",
+        "agent_id": "agent-1",
+        "status": "completed",
+        "evidence": evidence,
+    }
+    with pytest.raises(ValueError, match="must not contain"):
+        store.put_agent_run(_WS, "run-2", "agent-1", "completed", {"answer": "secret"}, now=_NOW)
+
+
 def test_prompt_version_is_immutable(tmp_path: Path) -> None:
     store = _store(tmp_path / "ronin.sqlite3")
     first = PromptAsset(
