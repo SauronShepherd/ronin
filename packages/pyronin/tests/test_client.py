@@ -188,6 +188,30 @@ def test_create_migration_session_uses_idempotency_header() -> None:
     assert transport.calls[0][3] == {"Idempotency-Key": "migration-create-1"}
 
 
+def test_list_migration_sessions_forwards_bounded_cursor() -> None:
+    transport = FakeTransport(
+        [
+            {
+                "items": [
+                    {
+                        "id": "m-1",
+                        "workspace_id": "ws-1",
+                        "project_id": "p-1",
+                        "state": "draft",
+                    }
+                ],
+                "next_cursor": "next-1",
+            }
+        ]
+    )
+    page = Ronin(transport=transport).list_migration_sessions(
+        "ws-1", "p-1", limit=1, cursor="start-1"
+    )
+    assert page.items[0].id == "m-1"
+    assert page.next_cursor == "next-1"
+    assert transport.calls[0][4] == {"limit": "1", "cursor": "start-1"}
+
+
 def test_workspace_and_project_pages_forward_and_validate_cursor() -> None:
     transport = FakeTransport(
         [

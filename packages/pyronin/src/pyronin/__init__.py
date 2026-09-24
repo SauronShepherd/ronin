@@ -284,6 +284,12 @@ class MigrationSession:
 
 
 @dataclass(frozen=True, slots=True)
+class MigrationSessionPage:
+    items: tuple[MigrationSession, ...]
+    next_cursor: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class Environment:
     id: str
     name: str
@@ -408,6 +414,15 @@ def _parse_project(payload: object) -> Project:
     if not isinstance(item.get("id"), str) or not isinstance(item.get("name"), str):
         raise ProtocolError("project response has invalid identity")
     return Project(item["id"], item["name"], item.get("version"), str(item.get("status", "active")))
+
+
+def _parse_migration_session(payload: object) -> MigrationSession:
+    if not isinstance(payload, dict):
+        raise ProtocolError("migration session must be an object")
+    values = ("id", "workspace_id", "project_id", "state")
+    if not all(isinstance(payload.get(value), str) for value in values):
+        raise ProtocolError("migration session has invalid fields")
+    return MigrationSession(*(payload[value] for value in values))
 
 
 def _parse_environment(payload: object) -> Environment:
@@ -954,6 +969,37 @@ class Ronin:
         if not all(isinstance(payload.get(value), str) for value in values):
             raise ProtocolError("migration session response has invalid fields")
         return MigrationSession(*(payload[value] for value in values))
+
+    def list_migration_sessions(
+        self,
+        workspace_id: str,
+        project_id: str,
+        *,
+        limit: int = 100,
+        cursor: str | None = None,
+    ) -> MigrationSessionPage:
+        if not workspace_id.strip() or not project_id.strip():
+            raise ValueError("workspace_id and project_id must be non-empty")
+        if not 1 <= limit <= 100:
+            raise ValueError("limit must be between 1 and 100")
+        if cursor is not None and not cursor.strip():
+            raise ValueError("cursor must be non-empty when provided")
+        query = {"limit": str(limit)}
+        if cursor is not None:
+            query["cursor"] = cursor
+        payload = self._transport.request(
+            "GET",
+            f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+            f"{quote(project_id, safe='')}/migration/sessions",
+            query=query,
+        )
+        if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+            raise ProtocolError("migration sessions response must contain an items array")
+        next_cursor = payload.get("next_cursor")
+        if next_cursor is not None and not isinstance(next_cursor, str):
+            raise ProtocolError("migration sessions response has invalid next_cursor")
+        sessions = tuple(_parse_migration_session(item) for item in payload["items"])
+        return MigrationSessionPage(sessions, next_cursor)
 
     def archive_project(self, workspace_id: str, project_id: str) -> bool:
         if not workspace_id.strip() or not project_id.strip():
