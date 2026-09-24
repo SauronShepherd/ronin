@@ -294,7 +294,6 @@ pytest_add_cli_args_test_selection = [
   "tests/test_reproducible_manifest.py",
   "tests/test_role_assignments.py",
   "tests/test_roles.py",
-  "tests/test_runner_protocol.py",
   "tests/test_scheduler_branch_state.py",
   "tests/test_scheduler_branching.py",
   "tests/test_scheduler_cancellation.py",
