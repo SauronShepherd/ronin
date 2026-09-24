@@ -129,6 +129,9 @@ def test_vector_index_and_rag_retrieve_relevant_context(tmp_path: Path) -> None:
     assert result.answer.content == "grounded answer"
     assert "alpha document" in result.rendered_prompt
     assert result.matches[0].chunk.metadata == (("source", "a"),)
+    assert store.delete_index(index.id) is True
+    assert store.list_chunks(index.id) == ()
+    assert store.delete_index(index.id) is False
 
 
 def test_vector_index_rejects_provider_model_identity_mismatch(tmp_path: Path) -> None:
