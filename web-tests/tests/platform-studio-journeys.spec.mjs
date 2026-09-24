@@ -236,6 +236,10 @@ test('Data Engineering Studio visual pipeline editor synchronizes nodes, edges a
   await page.locator('#de-node-id').fill('sink');
   await page.locator('#de-node-operator').fill('parquet.write');
   await page.getByRole('button', { name: 'Add node' }).click();
+  await page.locator('#de-node-id').fill('source');
+  await page.locator('#de-node-operator').fill('csv.read.v2');
+  await page.getByRole('button', { name: 'Configure node' }).click();
+  await expect(page.locator('#de-pipeline-form textarea[name="pipeline"]')).toHaveValue(/csv\.read\.v2/);
   await page.locator('#de-edge-from').selectOption('source');
   await page.locator('#de-edge-to').selectOption('sink');
   await page.getByRole('button', { name: 'Connect nodes', exact: true }).click();

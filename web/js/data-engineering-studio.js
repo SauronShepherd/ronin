@@ -33,7 +33,7 @@ function addPipelineEditor() {
   const panel = document.createElement('section');
   panel.id = 'de-pipeline-visual';
   panel.className = 'panel';
-  panel.innerHTML = '<h2>Pipeline visual editor</h2><p class="muted">Edit nodes and typed edges while keeping the canonical JSON representation synchronized.</p><div class="grid three"><label>Node ID<input class="field" id="de-node-id" value="node-1"></label><label>Node operator<input class="field" id="de-node-operator" value="source"></label><label>Node port<input class="field" id="de-node-port" value="out"></label></div><div class="grid three"><label>From node<select class="field" id="de-edge-from"></select></label><label>To node<select class="field" id="de-edge-to"></select></label><label>To port<input class="field" id="de-edge-port" value="in"></label></div><div class="toolbar"><button class="button" type="button" data-action="de-node-add">Add node</button><button class="button" type="button" data-action="de-edge-connect">Connect nodes</button><button class="button" type="button" data-action="de-edge-disconnect">Disconnect nodes</button><button class="button" type="button" data-action="de-visual-undo">Undo</button><button class="button" type="button" data-action="de-visual-redo">Redo</button><button class="button primary" type="button" data-action="de-save-revision">Save revision</button><button class="button" type="button" data-action="de-load-revision">Load revision</button></div><div id="de-pipeline-visual-result" class="code" aria-live="polite">No visual edit requested.</div>';
+  panel.innerHTML = '<h2>Pipeline visual editor</h2><p class="muted">Edit nodes and typed edges while keeping the canonical JSON representation synchronized.</p><div class="grid three"><label>Node ID<input class="field" id="de-node-id" value="node-1"></label><label>Node operator<input class="field" id="de-node-operator" value="source"></label><label>Node port<input class="field" id="de-node-port" value="out"></label></div><div class="grid three"><label>From node<select class="field" id="de-edge-from"></select></label><label>To node<select class="field" id="de-edge-to"></select></label><label>To port<input class="field" id="de-edge-port" value="in"></label></div><div class="toolbar"><button class="button" type="button" data-action="de-node-add">Add node</button><button class="button" type="button" data-action="de-node-update">Configure node</button><button class="button" type="button" data-action="de-edge-connect">Connect nodes</button><button class="button" type="button" data-action="de-edge-disconnect">Disconnect nodes</button><button class="button" type="button" data-action="de-visual-undo">Undo</button><button class="button" type="button" data-action="de-visual-redo">Redo</button><button class="button primary" type="button" data-action="de-save-revision">Save revision</button><button class="button" type="button" data-action="de-load-revision">Load revision</button></div><div id="de-pipeline-visual-result" class="code" aria-live="polite">No visual edit requested.</div>';
   view.append(panel);
   recordPipelineHistory();
   renderPipelineEditor();
@@ -106,7 +106,7 @@ document.addEventListener('click', async event => {
     } catch (error) { out.textContent = `Pipeline revision save failed: ${error.message}`; }
     return;
   }
-  if (['de-node-add', 'de-edge-connect', 'de-edge-disconnect', 'de-node-remove', 'de-visual-undo', 'de-visual-redo'].includes(action)) {
+  if (['de-node-add', 'de-node-update', 'de-edge-connect', 'de-edge-disconnect', 'de-node-remove', 'de-visual-undo', 'de-visual-redo'].includes(action)) {
     try {
       const { field, documentValue } = pipelineDocument();
       if (action === 'de-visual-undo' || action === 'de-visual-redo') {
@@ -121,6 +121,16 @@ document.addEventListener('click', async event => {
         if (!id || !operator || !port) throw new Error('Node ID, operator and port are required');
         if (documentValue.pipeline.nodes.some(node => node.id === id)) throw new Error(`Node already exists: ${id}`);
         documentValue.pipeline.nodes.push({ id, operator: { name: operator }, ports: [{ name: port, direction: 'output' }, { name: 'in', direction: 'input' }] });
+        field.value = JSON.stringify(documentValue);
+      } else if (action === 'de-node-update') {
+        const id = document.querySelector('#de-node-id').value.trim();
+        const operator = document.querySelector('#de-node-operator').value.trim();
+        const port = document.querySelector('#de-node-port').value.trim();
+        const node = documentValue.pipeline.nodes.find(candidate => candidate.id === id);
+        if (!node) throw new Error(`Node does not exist: ${id}`);
+        if (!operator || !port) throw new Error('Node operator and port are required');
+        node.operator = { name: operator };
+        node.ports = [{ name: port, direction: 'output' }, { name: 'in', direction: 'input' }];
         field.value = JSON.stringify(documentValue);
       } else if (action === 'de-node-remove') {
         const id = event.target.closest('[data-node-id]').dataset.nodeId;
