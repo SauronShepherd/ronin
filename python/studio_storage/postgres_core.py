@@ -30,6 +30,7 @@ from studio_core.environments import (
 )
 from studio_orchestrator import Instant
 
+from .bundle_catalog_import_port import CatalogBundleImportCommit, CatalogBundleImportConflict
 from .catalog import CatalogAssetNotFound, CatalogConflict
 from .connections import ConnectionConflict, ConnectionNotFound
 from .environments import EnvironmentConflict, EnvironmentNotFound
@@ -1018,6 +1019,107 @@ class PostgresMetadataStore:
                     )
             connection.commit()
             return edge
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def commit_catalog_import(
+        self,
+        workspace_id: WorkspaceId,
+        assets: tuple[CatalogAsset, ...],
+        revisions: tuple[AssetRevision, ...],
+        lineage: tuple[LineageEdge, ...],
+        *,
+        now: Instant | str,
+    ) -> CatalogBundleImportCommit:
+        """Atomically apply a verified catalog Bundle subgraph."""
+
+        current = Instant(now)
+        connection = self._connect()
+        assets_created = revisions_created = lineage_created = 0
+        try:
+            with connection.cursor() as cursor:
+                self._require_active_workspace(cursor, workspace_id)
+                for asset in assets:
+                    payload = asset.to_json()
+                    cursor.execute(
+                        "SELECT definition_json FROM ronin_catalog_assets "
+                        "WHERE workspace_id=%s AND asset_id=%s FOR UPDATE",
+                        (str(workspace_id), str(asset.id)),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["definition_json"] != payload:
+                        raise CatalogBundleImportConflict(
+                            f"catalog asset conflicts with existing id: {asset.id}"
+                        )
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_catalog_assets("
+                            "workspace_id,asset_id,definition_json,created_at,updated_at) "
+                            "VALUES (%s,%s,%s,%s,%s)",
+                            (str(workspace_id), str(asset.id), payload, str(current), str(current)),
+                        )
+                        assets_created += 1
+                for revision in revisions:
+                    cursor.execute(
+                        "SELECT 1 FROM ronin_catalog_assets WHERE workspace_id=%s AND asset_id=%s",
+                        (str(workspace_id), str(revision.ref.asset_id)),
+                    )
+                    if cursor.fetchone() is None:
+                        raise CatalogBundleImportConflict(
+                            f"catalog revision references missing asset: {revision.ref.asset_id}"
+                        )
+                    payload = revision.to_json()
+                    cursor.execute(
+                        "SELECT revision_json FROM ronin_catalog_revisions "
+                        "WHERE workspace_id=%s AND asset_id=%s AND version=%s FOR UPDATE",
+                        (str(workspace_id), str(revision.ref.asset_id), str(revision.ref.version)),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["revision_json"] != payload:
+                        raise CatalogBundleImportConflict("catalog revision conflicts with existing identity")
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_catalog_revisions("
+                            "workspace_id,asset_id,version,revision_json,created_at) "
+                            "VALUES (%s,%s,%s,%s,%s)",
+                            (str(workspace_id), str(revision.ref.asset_id), str(revision.ref.version), payload, str(current)),
+                        )
+                        revisions_created += 1
+                for edge in lineage:
+                    for ref in (edge.source, edge.target):
+                        cursor.execute(
+                            "SELECT 1 FROM ronin_catalog_revisions "
+                            "WHERE workspace_id=%s AND asset_id=%s AND version=%s",
+                            (str(workspace_id), str(ref.asset_id), str(ref.version)),
+                        )
+                        if cursor.fetchone() is None:
+                            raise CatalogBundleImportConflict(
+                                f"lineage references missing revision: {ref.asset_id}@{ref.version}"
+                            )
+                    payload = edge.to_json()
+                    cursor.execute(
+                        "SELECT edge_json FROM ronin_lineage_edges "
+                        "WHERE workspace_id=%s AND edge_digest=%s FOR UPDATE",
+                        (str(workspace_id), edge.digest),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["edge_json"] != payload:
+                        raise CatalogBundleImportConflict("lineage digest conflicts with existing content")
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_lineage_edges("
+                            "workspace_id,edge_digest,source_asset_id,source_version,"
+                            "target_asset_id,target_version,edge_json,created_at) "
+                            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                            (str(workspace_id), edge.digest, str(edge.source.asset_id), str(edge.source.version),
+                             str(edge.target.asset_id), str(edge.target.version), payload, str(current)),
+                        )
+                        lineage_created += 1
+            connection.commit()
+            return CatalogBundleImportCommit(assets_created, revisions_created, lineage_created)
         except Exception:
             connection.rollback()
             raise
