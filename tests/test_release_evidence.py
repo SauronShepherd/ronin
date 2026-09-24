@@ -178,3 +178,28 @@ def test_cli_profile_verdict_uses_named_gate_set(tmp_path: Path) -> None:
     )
     assert result.returncode == 0
     assert '"status": "passed"' in result.stdout
+
+
+def test_aggregate_release_evidence_requires_exact_commit(tmp_path: Path) -> None:
+    bundle = {"schema": SCHEMA, "commit": "abc123", "records": []}
+    path = tmp_path / "empty.json"
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    result = subprocess.run(  # noqa: S603
+        [
+            sys.executable,
+            "-m",
+            "tools.aggregate_release_evidence",
+            str(path),
+            "--output",
+            str(tmp_path / "merged.json"),
+            "--verdict-output",
+            str(tmp_path / "verdict.json"),
+            "--expected-commit",
+            "abc123",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "records must be a non-empty array" in result.stdout
