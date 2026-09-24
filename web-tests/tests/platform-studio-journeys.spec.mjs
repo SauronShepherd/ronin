@@ -222,6 +222,9 @@ test('Data Engineering Studio visual pipeline editor synchronizes nodes, edges a
     expect(body.pipeline_documents[0].name).toBe('main.json');
     await route.fulfill({ json: { pipeline_id: 'main', revision: 1, source_digest: 'digest-1' }, status: 201 });
   });
+  await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/pipelines/main/revisions/1', async route => {
+    await route.fulfill({ json: { pipeline_id: 'main', revision: 1, pipeline: { runtime: 'local-preview', pipeline: { nodes: [{ id: 'loaded', operator: { name: 'loaded.source' }, ports: [{ name: 'out', direction: 'output' }, { name: 'in', direction: 'input' }] }], edges: [] } } } });
+  });
   await page.route('**/v1/workspaces/default/workflow-runs/run-1', async route => {
     await route.fulfill({ json: { id: 'run-1', state: 'succeeded', evidence_digest: 'evidence-1', lineage_id: 'lineage-1' } });
   });
@@ -262,6 +265,9 @@ test('Data Engineering Studio visual pipeline editor synchronizes nodes, edges a
   await expect(page.locator('#de-pipeline-visual-result')).toContainText('2 node(s), 1 edge(s)');
   await page.getByRole('button', { name: 'Save revision' }).click();
   await expect(page.locator('#de-pipeline-visual-result')).toContainText('digest-1');
+  await page.getByRole('button', { name: 'Load revision' }).click();
+  await expect(page.locator('#de-pipeline-visual-result')).toContainText('loaded.source');
+  await expect(page.locator('#de-pipeline-visual-result')).toContainText('1 node(s), 0 edge(s)');
   await page.locator('#de-pipeline-form input[name="run_id"]').fill('run-1');
   await page.getByRole('button', { name: 'Inspect run' }).click();
   await expect(page.locator('#de-pipeline-result')).toContainText('evidence-1');
