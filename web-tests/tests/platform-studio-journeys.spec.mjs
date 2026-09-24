@@ -222,6 +222,9 @@ test('Data Engineering Studio visual pipeline editor synchronizes nodes, edges a
     expect(body.pipeline_documents[0].name).toBe('main.json');
     await route.fulfill({ json: { pipeline_id: 'main', revision: 1, source_digest: 'digest-1' }, status: 201 });
   });
+  await page.route('**/v1/workspaces/default/workflow-runs/run-1', async route => {
+    await route.fulfill({ json: { id: 'run-1', state: 'succeeded', evidence_digest: 'evidence-1', lineage_id: 'lineage-1' } });
+  });
   await page.goto('./#data');
   await expect(page.locator('#de-pipeline-visual')).toBeVisible();
   await page.locator('#de-node-id').fill('source');
@@ -241,4 +244,8 @@ test('Data Engineering Studio visual pipeline editor synchronizes nodes, edges a
   await expect(page.locator('#de-pipeline-visual-result')).toContainText('2 node(s), 1 edge(s)');
   await page.getByRole('button', { name: 'Save revision' }).click();
   await expect(page.locator('#de-pipeline-visual-result')).toContainText('digest-1');
+  await page.locator('#de-pipeline-form input[name="run_id"]').fill('run-1');
+  await page.getByRole('button', { name: 'Inspect run' }).click();
+  await expect(page.locator('#de-pipeline-result')).toContainText('evidence-1');
+  await expect(page.locator('#de-pipeline-result')).toContainText('lineage-1');
 });
