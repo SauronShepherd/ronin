@@ -152,6 +152,10 @@ MIGRATION_ROUTES = frozenset(
             "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/convert",
         ),
         (
+            "POST",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/import",
+        ),
+        (
             "GET",
             "/v1/workspaces/{workspace_id}/projects/{project_id}/migration/sessions/{session_id}/export",
         ),
@@ -461,6 +465,23 @@ class MigrationAPIRouter:
                                 {"path": item.path, "content": item.content}
                                 for item in project.files
                             ],
+                        },
+                    )
+                elif operation == "import" and method == "POST":
+                    if not isinstance(payload, dict) or not isinstance(payload.get("target"), str):
+                        raise ValueError("import requires a target string")
+                    project = self.service.generate(session_id)
+                    updated = self.service.record_import(
+                        session_id, project, target=payload["target"]
+                    )
+                    return APIResponse(
+                        200,
+                        {
+                            "status": updated.import_status,
+                            "import_digest": updated.import_digest,
+                            "project_digest": project.project_digest,
+                            "target": payload["target"],
+                            "session": updated.to_payload(),
                         },
                     )
                 elif operation == "qualify" and method == "POST":

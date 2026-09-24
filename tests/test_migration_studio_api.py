@@ -2,7 +2,12 @@ import base64
 import io
 import zipfile
 
-from studio_migration import MigrationAPIRouter, MigrationSessionService
+from studio_migration import (
+    MigrationAPIRouter,
+    MigrationSessionService,
+    MigrationUnit,
+    SourceInventory,
+)
 
 
 def test_migration_api_creates_and_lists_project_scoped_sessions() -> None:
@@ -98,6 +103,27 @@ def test_migration_api_converts_named_vendor_profile_to_workflow_and_loss_report
     assert converted.payload["workflow"]["id"] == "fabric-project-fabric-project"
     assert converted.payload["report"]["objects"][0]["status"] == "translated"
     assert len(converted.payload["report_digest"]) == 64
+
+
+def test_migration_api_records_canonical_import_evidence() -> None:
+    service = MigrationSessionService()
+    router = MigrationAPIRouter(service)
+    base = "/v1/workspaces/ws-1/projects/project-1/migration/sessions"
+    session_id = router.dispatch("POST", base, {}, authorized=True).payload["id"]
+    service.discover(
+        session_id,
+        SourceInventory(
+            "databricks", "15.4", (), (MigrationUnit("notebook:nb-1", "notebook", "nb-1", "ready"),)
+        ),
+    )
+    service.set_scope(session_id, ("notebook:nb-1",))
+    imported = router.dispatch(
+        "POST", f"{base}/{session_id}/import", {"target": "project-catalog"}, authorized=True
+    )
+    assert imported.status == 200
+    assert imported.payload["status"] == "importable"
+    assert len(imported.payload["import_digest"]) == 64
+    assert imported.payload["session"]["import_status"] == "importable"
 
 
 def test_migration_api_hides_other_project_session_and_requires_auth() -> None:
