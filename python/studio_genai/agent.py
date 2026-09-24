@@ -140,6 +140,9 @@ def run_agent(
         raise ValueError("agent timeout_seconds must be between 0.1 and 3600")
 
     started = time.perf_counter()
+    input_tokens = 0
+    output_tokens = 0
+    tokens_known = True
 
     def emit_failure(reason: str) -> None:
         if record_telemetry is not None:
@@ -176,6 +179,11 @@ def run_agent(
         except Exception:
             emit_failure("provider_error")
             raise
+        if result.input_tokens is None or result.output_tokens is None:
+            tokens_known = False
+        else:
+            input_tokens += result.input_tokens
+            output_tokens += result.output_tokens
         try:
             action = _parse_action(result.content)
         except Exception:
@@ -194,6 +202,8 @@ def run_agent(
                         "model_id": model.model_id,
                         "step_count": len(steps),
                         "latency_ms": round((time.perf_counter() - started) * 1000, 3),
+                        "input_tokens": input_tokens if tokens_known else None,
+                        "output_tokens": output_tokens if tokens_known else None,
                     }
                 )
             return result

@@ -209,6 +209,8 @@ def test_agent_calls_only_declared_tool_then_finishes() -> None:
         "agent_completed",
     ]
     assert telemetry[-1]["latency_ms"] >= 0
+    assert telemetry[-1]["input_tokens"] is None
+    assert telemetry[-1]["output_tokens"] is None
 
 
 def test_agent_blocks_non_idempotent_tool_without_explicit_authorization() -> None:
