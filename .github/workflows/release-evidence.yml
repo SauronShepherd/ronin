@@ -1,0 +1,101 @@
+name: Aggregate release evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Exact commit covered by all evidence runs
+        required: true
+        type: string
+      ci_run_id:
+        description: Successful CI run ID for the exact commit
+        required: true
+        type: string
+      security_run_id:
+        description: Successful Security run ID for the exact commit
+        required: true
+        type: string
+      docker_run_id:
+        description: Successful Docker qualification run ID for the exact commit
+        required: true
+        type: string
+      web_run_id:
+        description: Successful Web qualification run ID for the exact commit
+        required: true
+        type: string
+      release_run_id:
+        description: Successful Release qualification run ID for the exact commit
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - name: Download exact-CI evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.ci_run_id }}
+          name: ci-release-evidence
+          path: evidence/ci
+      - name: Download exact-Security evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.security_run_id }}
+          name: security-release-evidence
+          path: evidence/security
+      - name: Download exact-Docker evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.docker_run_id }}
+          name: docker-qualification-evidence
+          path: evidence/docker
+      - name: Download exact-Web evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.web_run_id }}
+          name: web-playwright-evidence
+          path: evidence/web
+      - name: Download exact-Release evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.release_run_id }}
+          name: ronin-studio-python-artifacts
+          path: evidence/release
+      - name: Aggregate release-required evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t bundles < <(find evidence -type f \( -name '*release-evidence.json' -o -name '*normalized-evidence.json' \) -print | sort)
+          test "${#bundles[@]}" -gt 0
+          python -m tools.aggregate_release_evidence \
+            "${bundles[@]}" \
+            --output release-evidence.json \
+            --verdict-output release-verdict.json \
+            --profile release_required \
+            --expected-commit "${{ inputs.commit }}"
+      - uses: actions/upload-artifact@ea165f8f65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: exact-release-verdict
+          path: |
+            release-evidence.json
+            release-verdict.json
+          if-no-files-found: error

@@ -138,6 +138,50 @@ jobs:
               if location.is_relative_to(checkout):
                   raise SystemExit(f"source-tree leakage: {package.__name__} -> {location}")
           PY
+      - name: Emit normalized installed-artifact release evidence
+        run: >-
+          python -m tools.emit_release_evidence
+          --gate-id installed-artifact
+          --commit "${{ github.sha }}"
+          --status passed
+          --fingerprint "github-actions-installed-artifact-${{ runner.os }}"
+          --command "wheel and sdist clean-install smoke"
+          --artifact dist/artifact-identity.json
+          --artifact dist/python-distributions.spdx.json
+          --artifact dist/installed-artifact-release-evidence.json
+          --artifact dist/installed-artifact-release-verdict.json
+          --output dist/installed-artifact-normalized-evidence.json
+      - name: Emit normalized SBOM release evidence
+        run: >-
+          python -m tools.emit_release_evidence
+          --gate-id sbom-provenance
+          --commit "${{ github.sha }}"
+          --status passed
+          --fingerprint "github-actions-sbom-${{ runner.os }}"
+          --command "candidate-bound SBOM and provenance qualification"
+          --artifact dist/ronin-sbom-provenance.json
+          --artifact dist/python-distributions.spdx.json
+          --output dist/sbom-release-evidence.json
+      - name: Emit normalized license release evidence
+        run: >-
+          python -m tools.emit_release_evidence
+          --gate-id license
+          --commit "${{ github.sha }}"
+          --status passed
+          --fingerprint "github-actions-license-${{ runner.os }}"
+          --command "locked dependency license qualification"
+          --artifact dist/license-qualification.txt
+          --output dist/license-release-evidence.json
+      - name: Emit normalized artifact identity evidence
+        run: >-
+          python -m tools.emit_release_evidence
+          --gate-id artifact-identity
+          --commit "${{ github.sha }}"
+          --status passed
+          --fingerprint "github-actions-artifact-identity-${{ runner.os }}"
+          --command "exact wheel and sdist artifact identity"
+          --artifact dist/artifact-identity.json
+          --output dist/artifact-identity-release-evidence.json
       - name: Upload exact build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

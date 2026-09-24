@@ -355,6 +355,7 @@ jobs:
           path: |
             mutants/mutmut-cicd-stats.json
             mutants/mutmut-results.txt
+            mutants/mutation-release-evidence.json
           if-no-files-found: error
           retention-days: 7
       - name: Mutation score gate
