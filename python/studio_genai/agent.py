@@ -140,6 +140,18 @@ def run_agent(
         raise ValueError("agent timeout_seconds must be between 0.1 and 3600")
 
     started = time.perf_counter()
+
+    def emit_failure(reason: str) -> None:
+        if record_telemetry is not None:
+            record_telemetry(
+                {
+                    "event": "agent_failed",
+                    "model_id": model.model_id,
+                    "reason": reason,
+                    "latency_ms": round((time.perf_counter() - started) * 1000, 3),
+                }
+            )
+
     if record_telemetry is not None:
         record_telemetry({"event": "agent_started", "model_id": model.model_id})
 
@@ -157,9 +169,18 @@ def run_agent(
 
     for step_index in range(1, definition.max_steps + 1):
         if timeout_seconds is not None and time.perf_counter() - started >= timeout_seconds:
+            emit_failure("timeout")
             raise TimeoutError("agent execution timed out")
-        result = provider.chat(model, tuple(messages))
-        action = _parse_action(result.content)
+        try:
+            result = provider.chat(model, tuple(messages))
+        except Exception:
+            emit_failure("provider_error")
+            raise
+        try:
+            action = _parse_action(result.content)
+        except Exception:
+            emit_failure("invalid_action")
+            raise
         if action["type"] == "final":
             answer = action["answer"]
             if not isinstance(answer, str):
@@ -195,6 +216,7 @@ def run_agent(
                 f"non-idempotent tool requires explicit execution authorization: {tool_id}"
             )
         if timeout_seconds is not None and time.perf_counter() - started >= timeout_seconds:
+            emit_failure("timeout")
             raise TimeoutError("agent execution timed out")
         try:
             output = runtime.invoke(payload)
