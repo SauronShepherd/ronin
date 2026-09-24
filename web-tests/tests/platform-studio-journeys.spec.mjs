@@ -216,6 +216,12 @@ test('Data Engineering Studio executes a bounded read-only SQL query', async ({ 
 });
 
 test('Data Engineering Studio visual pipeline editor synchronizes nodes, edges and history', async ({ page }) => {
+  await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/pipelines/main/revisions', async route => {
+    const body = route.request().postDataJSON();
+    expect(body.project_name).toBe('examples/demo');
+    expect(body.pipeline_documents[0].name).toBe('main.json');
+    await route.fulfill({ json: { pipeline_id: 'main', revision: 1, source_digest: 'digest-1' }, status: 201 });
+  });
   await page.goto('./#data');
   await expect(page.locator('#de-pipeline-visual')).toBeVisible();
   await page.locator('#de-node-id').fill('source');
@@ -233,4 +239,6 @@ test('Data Engineering Studio visual pipeline editor synchronizes nodes, edges a
   await expect(page.locator('#de-pipeline-visual-result')).toContainText('2 node(s), 0 edge(s)');
   await page.getByRole('button', { name: 'Redo' }).click();
   await expect(page.locator('#de-pipeline-visual-result')).toContainText('2 node(s), 1 edge(s)');
+  await page.getByRole('button', { name: 'Save revision' }).click();
+  await expect(page.locator('#de-pipeline-visual-result')).toContainText('digest-1');
 });

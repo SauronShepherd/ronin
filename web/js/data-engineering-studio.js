@@ -33,12 +33,13 @@ function addPipelineEditor() {
   const panel = document.createElement('section');
   panel.id = 'de-pipeline-visual';
   panel.className = 'panel';
-  panel.innerHTML = '<h2>Pipeline visual editor</h2><p class="muted">Edit nodes and typed edges while keeping the canonical JSON representation synchronized.</p><div class="grid three"><label>Node ID<input class="field" id="de-node-id" value="node-1"></label><label>Node operator<input class="field" id="de-node-operator" value="source"></label><label>Node port<input class="field" id="de-node-port" value="out"></label></div><div class="grid three"><label>From node<select class="field" id="de-edge-from"></select></label><label>To node<select class="field" id="de-edge-to"></select></label><label>To port<input class="field" id="de-edge-port" value="in"></label></div><div class="toolbar"><button class="button" type="button" data-action="de-node-add">Add node</button><button class="button" type="button" data-action="de-edge-connect">Connect nodes</button><button class="button" type="button" data-action="de-visual-undo">Undo</button><button class="button" type="button" data-action="de-visual-redo">Redo</button></div><div id="de-pipeline-visual-result" class="code" aria-live="polite">No visual edit requested.</div>';
+  panel.innerHTML = '<h2>Pipeline visual editor</h2><p class="muted">Edit nodes and typed edges while keeping the canonical JSON representation synchronized.</p><div class="grid three"><label>Node ID<input class="field" id="de-node-id" value="node-1"></label><label>Node operator<input class="field" id="de-node-operator" value="source"></label><label>Node port<input class="field" id="de-node-port" value="out"></label></div><div class="grid three"><label>From node<select class="field" id="de-edge-from"></select></label><label>To node<select class="field" id="de-edge-to"></select></label><label>To port<input class="field" id="de-edge-port" value="in"></label></div><div class="toolbar"><button class="button" type="button" data-action="de-node-add">Add node</button><button class="button" type="button" data-action="de-edge-connect">Connect nodes</button><button class="button" type="button" data-action="de-visual-undo">Undo</button><button class="button" type="button" data-action="de-visual-redo">Redo</button><button class="button primary" type="button" data-action="de-save-revision">Save revision</button></div><div id="de-pipeline-visual-result" class="code" aria-live="polite">No visual edit requested.</div>';
   view.append(panel);
   recordPipelineHistory();
   renderPipelineEditor();
   refreshPipelineEdgeSelectors();
 }
+function base64(value) { const bytes = new TextEncoder().encode(value); let binary = ''; for (const byte of bytes) binary += String.fromCharCode(byte); return btoa(binary); }
 function refreshPipelineEdgeSelectors() {
   const { documentValue } = pipelineDocument();
   for (const id of ['#de-edge-from', '#de-edge-to']) { const select = document.querySelector(id); if (select) select.innerHTML = documentValue.pipeline.nodes.map(node => `<option value="${node.id}">${node.id}</option>`).join(''); }
@@ -52,6 +53,20 @@ function render() {
 document.addEventListener('click', async event => {
   const action = event.target.closest('[data-action]')?.dataset.action;
   if (!action || !action.startsWith('de-')) return;
+  if (action === 'de-save-revision') {
+    const out = document.querySelector('#de-pipeline-visual-result');
+    try {
+      const { documentValue } = pipelineDocument();
+      const data = new FormData(document.querySelector('#de-pipeline-form'));
+      const project = String(data.get('project')).trim();
+      const pipelineId = String(data.get('pipeline_id')).trim();
+      if (!project || !pipelineId) throw new Error('Project and pipeline ID are required');
+      const result = await post(`/v1/workspaces/${encodeURIComponent(data.get('workspace'))}/projects/${encodeURIComponent(project)}/pipelines/${encodeURIComponent(pipelineId)}/revisions`, { project_name: project, project_yaml_base64: base64(`name: ${project}\n`), pipeline_documents: [{ name: `${pipelineId}.json`, content_base64: base64(JSON.stringify(documentValue)) }], expected_revision: Number(data.get('revision') || 0) });
+      if (result.revision) document.querySelector('[name="revision"]').value = result.revision;
+      out.textContent = json(result);
+    } catch (error) { out.textContent = `Pipeline revision save failed: ${error.message}`; }
+    return;
+  }
   if (['de-node-add', 'de-edge-connect', 'de-node-remove', 'de-visual-undo', 'de-visual-redo'].includes(action)) {
     try {
       const { field, documentValue } = pipelineDocument();
