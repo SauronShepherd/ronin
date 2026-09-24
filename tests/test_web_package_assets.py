@@ -74,5 +74,5 @@ def test_ai_studio_exposes_provider_health_check() -> None:
 def test_genai_studio_exposes_discovery_and_health() -> None:
     root = Path(__file__).parents[1]
     source = (root / "web/js/genai-studio.js").read_text(encoding="utf-8")
-    for marker in ("genai-discovery-form", "/genai/providers", "/genai/health", "/genai/prompts", "GenAI Studio"):
+    for marker in ("genai-discovery-form", "/genai/providers", "/genai/health", "/genai/prompts", "/genai/indexes", "GenAI Studio"):
         assert marker in source, f"GenAI Studio integration missing: {marker}"

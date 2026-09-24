@@ -14,6 +14,7 @@ class _GenAIService(Protocol):
     def health(self, workspace_id: str) -> object: ...
     def prompts(self, workspace_id: str) -> object: ...
     def put_prompt(self, workspace_id: str, prompt: PromptAsset) -> object: ...
+    def indexes(self, workspace_id: str) -> object: ...
 
 
 class GenAIPlugin:
@@ -31,6 +32,7 @@ class GenAIPlugin:
             "genai.health.v1",
             "genai.prompts.v1",
             "genai.prompt.v1",
+            "genai.indexes.v1",
         ),
     )
 
@@ -50,6 +52,7 @@ class GenAIPlugin:
                 "prompt",
                 self.put_prompt,
             ),
+            ("GET", "/v1/workspaces/{workspace_id}/genai/indexes", "indexes", self.indexes),
         ):
             surface_id = f"genai.{operation}.v1"
             context.contributions.add_route(
@@ -114,6 +117,14 @@ class GenAIPlugin:
             return result.to_payload() if isinstance(result, PromptAsset) else result
         except Exception as exc:
             return {"error": {"code": "invalid_prompt", "message": str(exc)}}
+
+    def indexes(self, *, workspace_id: str = "", **_kwargs: object) -> object:
+        if self._service is None:
+            return {"status": "not_configured", "items": []}
+        try:
+            return self._service.indexes(workspace_id)
+        except Exception:
+            return {"status": "unavailable", "items": []}
 
 
 def factory() -> GenAIPlugin:
