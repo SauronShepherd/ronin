@@ -85,6 +85,7 @@ class LocalWorkerRuntimeConfig:
     record_execution: Callable[[str, float, str], None] | None = None
     scheduler_sql_engine: SqlEngine | None = None
     scheduler_graph_adapter: object | None = None
+    scheduler_quality_adapter: object | None = None
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
@@ -255,7 +256,7 @@ class LocalWorkerRuntime:
 
     async def _execute_claim(self, claim: ClaimedRun) -> WorkerExecutionOutcome:
         loop = asyncio.get_running_loop()
-        if claim.job.target in {"sql.query", "graph.query"}:
+        if claim.job.target in {"sql.query", "graph.query", "quality.gate"}:
             if claim.job.target == "sql.query" and self.config.scheduler_sql_engine is None:
                 raise UnsupportedSchedulerWorkload(
                     "sql.query scheduler execution requires scheduler_sql_engine"
@@ -264,6 +265,10 @@ class LocalWorkerRuntime:
                 raise UnsupportedSchedulerWorkload(
                     "graph.query scheduler execution requires scheduler_graph_adapter"
                 )
+            if claim.job.target == "quality.gate" and self.config.scheduler_quality_adapter is None:
+                raise UnsupportedSchedulerWorkload(
+                    "quality.gate scheduler execution requires scheduler_quality_adapter"
+                )
             try:
                 result = await loop.run_in_executor(
                     self._preparation_executor,
@@ -271,6 +276,11 @@ class LocalWorkerRuntime:
                         claim.job,
                         sql_engine=self.config.scheduler_sql_engine,
                         graph_adapter=self.config.scheduler_graph_adapter,
+                        quality_adapter=self.config.scheduler_quality_adapter,
+                        artifact_store=self._artifact_store,
+                        workspace_id=claim.workspace_id,
+                        run_id=str(claim.run.id),
+                        now=self._now(),
                     ),
                 )
             except Exception:
@@ -278,6 +288,8 @@ class LocalWorkerRuntime:
                     "scheduler.sql.error"
                     if claim.job.target == "sql.query"
                     else "scheduler.graph.error"
+                    if claim.job.target == "graph.query"
+                    else "scheduler.quality.error"
                 )
                 await self._service.worker_complete_attempt(
                     claim.attempt_id,
