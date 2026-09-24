@@ -214,3 +214,23 @@ test('Data Engineering Studio executes a bounded read-only SQL query', async ({ 
   await expect(page.locator('#de-sql-result')).toContainText('INTEGER');
   await expect(page.locator('#de-sql-result')).toContainText('[\n    1\n  ]');
 });
+
+test('Data Engineering Studio visual pipeline editor synchronizes nodes, edges and history', async ({ page }) => {
+  await page.goto('./#data');
+  await expect(page.locator('#de-pipeline-visual')).toBeVisible();
+  await page.locator('#de-node-id').fill('source');
+  await page.locator('#de-node-operator').fill('csv.read');
+  await page.getByRole('button', { name: 'Add node' }).click();
+  await page.locator('#de-node-id').fill('sink');
+  await page.locator('#de-node-operator').fill('parquet.write');
+  await page.getByRole('button', { name: 'Add node' }).click();
+  await page.locator('#de-edge-from').selectOption('source');
+  await page.locator('#de-edge-to').selectOption('sink');
+  await page.getByRole('button', { name: 'Connect nodes' }).click();
+  await expect(page.locator('#de-pipeline-visual-result')).toContainText('2 node(s), 1 edge(s)');
+  await expect(page.locator('#de-pipeline-form textarea[name="pipeline"]')).toHaveValue(/csv\.read/);
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.locator('#de-pipeline-visual-result')).toContainText('2 node(s), 0 edge(s)');
+  await page.getByRole('button', { name: 'Redo' }).click();
+  await expect(page.locator('#de-pipeline-visual-result')).toContainText('2 node(s), 1 edge(s)');
+});

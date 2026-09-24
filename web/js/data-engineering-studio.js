@@ -2,6 +2,47 @@ import { get, post } from './api.js';
 import { json, page } from './dom.js';
 
 const sample = '{"runtime":"local-preview","pipeline":{"nodes":[],"edges":[]}}';
+const pipelineHistory = [];
+let pipelineHistoryIndex = -1;
+function pipelineDocument() {
+  const field = document.querySelector('#de-pipeline-form [name="pipeline"]');
+  if (!field) throw new Error('Pipeline editor is not available');
+  const documentValue = JSON.parse(field.value);
+  if (!documentValue.pipeline || !Array.isArray(documentValue.pipeline.nodes) || !Array.isArray(documentValue.pipeline.edges)) throw new Error('Pipeline JSON must contain pipeline.nodes and pipeline.edges');
+  return { field, documentValue };
+}
+function recordPipelineHistory() {
+  const { field } = pipelineDocument();
+  pipelineHistory.splice(pipelineHistoryIndex + 1);
+  pipelineHistory.push(field.value);
+  pipelineHistoryIndex = pipelineHistory.length - 1;
+}
+function renderPipelineEditor() {
+  const out = document.querySelector('#de-pipeline-visual-result');
+  if (!out) return;
+  try {
+    const { documentValue } = pipelineDocument();
+    const nodes = documentValue.pipeline.nodes;
+    const edges = documentValue.pipeline.edges;
+    out.innerHTML = `<strong>${nodes.length} node(s), ${edges.length} edge(s)</strong><div class="toolbar">${nodes.map(node => `<button class="button" type="button" data-action="de-node-remove" data-node-id="${node.id}">Remove ${node.id}</button>`).join(' ') || '<span class="muted">No nodes yet.</span>'}</div><pre class="code">${json({ nodes, edges })}</pre>`;
+  } catch (error) { out.textContent = `Visual editor error: ${error.message}`; }
+}
+function addPipelineEditor() {
+  const view = document.querySelector('#view');
+  if (!view || !view.querySelector('#de-pipeline-form') || view.querySelector('#de-pipeline-visual')) return;
+  const panel = document.createElement('section');
+  panel.id = 'de-pipeline-visual';
+  panel.className = 'panel';
+  panel.innerHTML = '<h2>Pipeline visual editor</h2><p class="muted">Edit nodes and typed edges while keeping the canonical JSON representation synchronized.</p><div class="grid three"><label>Node ID<input class="field" id="de-node-id" value="node-1"></label><label>Node operator<input class="field" id="de-node-operator" value="source"></label><label>Node port<input class="field" id="de-node-port" value="out"></label></div><div class="grid three"><label>From node<select class="field" id="de-edge-from"></select></label><label>To node<select class="field" id="de-edge-to"></select></label><label>To port<input class="field" id="de-edge-port" value="in"></label></div><div class="toolbar"><button class="button" type="button" data-action="de-node-add">Add node</button><button class="button" type="button" data-action="de-edge-connect">Connect nodes</button><button class="button" type="button" data-action="de-visual-undo">Undo</button><button class="button" type="button" data-action="de-visual-redo">Redo</button></div><div id="de-pipeline-visual-result" class="code" aria-live="polite">No visual edit requested.</div>';
+  view.append(panel);
+  recordPipelineHistory();
+  renderPipelineEditor();
+  refreshPipelineEdgeSelectors();
+}
+function refreshPipelineEdgeSelectors() {
+  const { documentValue } = pipelineDocument();
+  for (const id of ['#de-edge-from', '#de-edge-to']) { const select = document.querySelector(id); if (select) select.innerHTML = documentValue.pipeline.nodes.map(node => `<option value="${node.id}">${node.id}</option>`).join(''); }
+}
 function render() {
   if (location.hash.slice(1) !== 'data') return;
   const view = document.querySelector('#view');
@@ -11,6 +52,42 @@ function render() {
 document.addEventListener('click', async event => {
   const action = event.target.closest('[data-action]')?.dataset.action;
   if (!action || !action.startsWith('de-')) return;
+  if (['de-node-add', 'de-edge-connect', 'de-node-remove', 'de-visual-undo', 'de-visual-redo'].includes(action)) {
+    try {
+      const { field, documentValue } = pipelineDocument();
+      if (action === 'de-visual-undo' || action === 'de-visual-redo') {
+        const next = pipelineHistoryIndex + (action === 'de-visual-undo' ? -1 : 1);
+        if (next < 0 || next >= pipelineHistory.length) throw new Error('No visual edit available');
+        pipelineHistoryIndex = next;
+        field.value = pipelineHistory[pipelineHistoryIndex];
+      } else if (action === 'de-node-add') {
+        const id = document.querySelector('#de-node-id').value.trim();
+        const operator = document.querySelector('#de-node-operator').value.trim();
+        const port = document.querySelector('#de-node-port').value.trim();
+        if (!id || !operator || !port) throw new Error('Node ID, operator and port are required');
+        if (documentValue.pipeline.nodes.some(node => node.id === id)) throw new Error(`Node already exists: ${id}`);
+        documentValue.pipeline.nodes.push({ id, operator: { name: operator }, ports: [{ name: port, direction: 'output' }] });
+        field.value = JSON.stringify(documentValue);
+      } else if (action === 'de-node-remove') {
+        const id = event.target.closest('[data-node-id]').dataset.nodeId;
+        documentValue.pipeline.nodes = documentValue.pipeline.nodes.filter(node => node.id !== id);
+        documentValue.pipeline.edges = documentValue.pipeline.edges.filter(edge => edge.from?.node !== id && edge.to?.node !== id && edge.source !== id && edge.target !== id);
+        field.value = JSON.stringify(documentValue);
+      } else {
+        const from = document.querySelector('#de-edge-from').value;
+        const to = document.querySelector('#de-edge-to').value;
+        const port = document.querySelector('#de-edge-port').value.trim();
+        if (!from || !to || !port || from === to) throw new Error('Choose two distinct nodes and a target port');
+        if (documentValue.pipeline.edges.some(edge => edge.source === from && edge.target === to && edge.target_port === port)) throw new Error('Edge already exists');
+        documentValue.pipeline.edges.push({ source: from, source_port: 'out', target: to, target_port: port });
+        field.value = JSON.stringify(documentValue);
+      }
+      if (action !== 'de-visual-undo' && action !== 'de-visual-redo') recordPipelineHistory();
+      renderPipelineEditor();
+      refreshPipelineEdgeSelectors();
+    } catch (error) { document.querySelector('#de-pipeline-visual-result').textContent = `Visual editor error: ${error.message}`; }
+    return;
+  }
   const out = document.querySelector(action === 'de-health' || action === 'de-runtimes' ? '#de-health-result' : action.startsWith('de-sql-') ? '#de-sql-result' : '#de-pipeline-result');
   try {
     if (action === 'de-queryflux-capabilities') {
@@ -27,7 +104,7 @@ document.addEventListener('click', async event => {
     else { const body = JSON.parse(new FormData(document.querySelector('#de-pipeline-form')).get('pipeline')); const result = await post(`/v1/data-engineering/pipelines/${action === 'de-validate' ? 'validate' : 'preview'}`, body); if (action === 'de-validate' && result.ir_digest) document.querySelector('[name="ir_digest"]').value = result.ir_digest; out.textContent = json(result); }
   } catch (error) { out.textContent = `Data Engineering operation failed: ${error.message}`; }
 });
-setTimeout(() => { window.addEventListener('hashchange', render); if (location.hash.slice(1) === 'data') render(); }, 0);
+setTimeout(() => { window.addEventListener('hashchange', render); if (location.hash.slice(1) === 'data') { render(); addPipelineEditor(); } }, 0);
 
 function addQueryFluxPanel() {
   const view = document.querySelector('#view');
@@ -60,3 +137,4 @@ function addQueryTranslationPolicy() {
 }
 setTimeout(addQueryTranslationPolicy, 0);
 window.addEventListener('hashchange', addQueryTranslationPolicy);
+window.addEventListener('hashchange', addPipelineEditor);
