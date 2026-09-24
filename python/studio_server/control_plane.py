@@ -1632,7 +1632,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 and segments[5] == "permissions"
             ):
                 if query:
-                    raise ValueError("project permission inspection does not accept query parameters")
+                    raise ValueError(
+                        "project permission inspection does not accept query parameters"
+                    )
                 workspace_id = WorkspaceId(segments[2])
                 project_ref = ProjectId(segments[4])
                 if not self._authorize(
@@ -1647,11 +1649,17 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     decisions[permission] = {
                         "allowed": decision.allowed,
                         "reason": decision.reason,
-                        "matched_roles": [getattr(role, "value", str(role)) for role in decision.matched_roles],
+                        "matched_roles": [
+                            getattr(role, "value", str(role)) for role in decision.matched_roles
+                        ],
                     }
                 self._write_json(
                     HTTPStatus.OK,
-                    {"workspace_id": str(workspace_id), "project_id": str(project_ref), "permissions": decisions},
+                    {
+                        "workspace_id": str(workspace_id),
+                        "project_id": str(project_ref),
+                        "permissions": decisions,
+                    },
                 )
                 return
             if (
