@@ -213,6 +213,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     export_migration.add_argument("project", type=Path)
     export_migration.add_argument("--output", type=Path, required=True)
+    import_migration = migrate_commands.add_parser(
+        "import", help="validate a generated project and emit canonical import evidence"
+    )
+    import_migration.add_argument("project", type=Path)
+    import_migration.add_argument("--target", required=True)
+    import_migration.add_argument("--output", type=Path)
     migration_status_command = migrate_commands.add_parser(
         "status", help="show local storage migration status"
     )
@@ -1084,6 +1090,49 @@ def _plugins(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _migration_import(namespace: argparse.Namespace) -> int:
+    """Validate a generated candidate and emit deterministic import evidence."""
+    project_dir = cast(Path, namespace.project).resolve(strict=True)
+    try:
+        manifest = json.loads(
+            _read_text(project_dir / "manifest.json", "generated migration manifest")
+        )
+        files = tuple(
+            (str(path), _read_text(project_dir / str(path), "generated migration program"))
+            for path in cast(list[object], manifest["files"])
+        )
+        manifest_json = json.dumps(manifest, sort_keys=True, separators=(",", ":"))
+        project_digest = hashlib.sha256(
+            (manifest_json + "\n" + "\n".join(content for _, content in files)).encode()
+        ).hexdigest()
+    except (KeyError, TypeError, ValueError, OSError) as exc:
+        raise CliError(f"cannot import migration project: {exc}") from exc
+    target = cast(str, namespace.target)
+    if not target or target != target.strip():
+        raise CliError("import target must be non-empty and trimmed")
+    evidence = {
+        "schema": "ronin.migration.import-evidence/v1",
+        "status": "importable",
+        "target": target,
+        "project_digest": project_digest,
+        "files": [
+            {"path": path, "digest": hashlib.sha256(content.encode()).hexdigest()}
+            for path, content in files
+        ],
+    }
+    rendered = json.dumps(evidence, sort_keys=True, separators=(",", ":")) + "\n"
+    if namespace.output is None:
+        print(rendered, end="")
+    else:
+        output = cast(Path, namespace.output).resolve()
+        if output.exists():
+            raise CliError(f"refusing to overwrite import evidence: {output}")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered, encoding="utf-8", newline="\n")
+        print(f"migration import evidence written: {output}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run one bounded CLI command and return a process exit code."""
 
@@ -1139,6 +1188,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 return _migration_qualify(namespace)
             if namespace.migrate_command == "export":
                 return _migration_export(namespace)
+            if namespace.migrate_command == "import":
+                return _migration_import(namespace)
             if namespace.migrate_command == "status":
                 return _migration_status(namespace)
             raise CliError(f"unsupported migrate command: {namespace.migrate_command}")

@@ -138,6 +138,25 @@ def test_migrate_generate_and_qualify_candidate_project(tmp_path, capsys) -> Non
     assert (output / "manifest.json").is_file()
     assert main(["migrate", "qualify", str(output)]) == 0
     assert '"status":"passed"' in capsys.readouterr().out
+    evidence = tmp_path / "import-evidence.json"
+    assert (
+        main(
+            [
+                "migrate",
+                "import",
+                str(output),
+                "--target",
+                "project-catalog",
+                "--output",
+                str(evidence),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(evidence.read_text(encoding="utf-8"))
+    assert payload["status"] == "importable"
+    assert payload["target"] == "project-catalog"
+    assert len(payload["project_digest"]) == 64
 
 
 def test_migrate_promote_emits_auditable_evidence(tmp_path) -> None:
