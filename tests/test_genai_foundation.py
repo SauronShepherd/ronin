@@ -72,6 +72,14 @@ def test_agent_run_evidence_is_durable_and_secret_safe(tmp_path: Path) -> None:
         "status": "completed",
         "evidence": evidence,
     }
+    assert store.put_agent_run(_WS, "run-1", "agent-1", "completed", evidence, now=_NOW) == {
+        "run_id": "run-1",
+        "agent_id": "agent-1",
+        "status": "completed",
+        "evidence": evidence,
+    }
+    with pytest.raises(GenAIConflict, match="agent run identity"):
+        store.put_agent_run(_WS, "run-1", "agent-1", "failed", evidence, now=_NOW)
     with pytest.raises(ValueError, match="must not contain"):
         store.put_agent_run(_WS, "run-2", "agent-1", "completed", {"answer": "secret"}, now=_NOW)
 

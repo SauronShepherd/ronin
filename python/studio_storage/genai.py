@@ -680,12 +680,24 @@ class SqliteGenAIStore:
             connection.execute("BEGIN IMMEDIATE")
             self._require_active_workspace(connection, workspace_id)
             encoded = encode_canonical_json(payload["evidence"]).decode("utf-8")
+            existing = connection.execute(
+                "SELECT agent_id,status,evidence_json FROM genai_agent_runs "
+                "WHERE workspace_id=? AND run_id=?",
+                (str(workspace_id), run_id),
+            ).fetchone()
+            if existing is not None:
+                if (
+                    existing["agent_id"] != agent_id
+                    or existing["status"] != status
+                    or existing["evidence_json"] != encoded
+                ):
+                    raise GenAIConflict("agent run identity conflicts with durable state")
+                connection.execute("COMMIT")
+                return payload
             connection.execute(
                 "INSERT INTO genai_agent_runs("
                 "workspace_id,run_id,agent_id,status,evidence_json,created_at,updated_at) "
-                "VALUES (?,?,?,?,?,?,?) ON CONFLICT(workspace_id,run_id) DO UPDATE SET "
-                "status=excluded.status,evidence_json=excluded.evidence_json,"
-                "updated_at=excluded.updated_at",
+                "VALUES (?,?,?,?,?,?,?)",
                 (str(workspace_id), run_id, agent_id, status, encoded, now, now),
             )
             connection.execute("COMMIT")
