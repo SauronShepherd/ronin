@@ -31,3 +31,20 @@ def test_app_router_has_no_duplicate_function_declarations() -> None:
     names = re.findall(r"(?:^|;)function\s+([A-Za-z_$][\w$]*)\s*\(", source)
     duplicates = sorted({name for name in names if names.count(name) > 1})
     assert not duplicates, f"duplicate app router declarations: {duplicates}"
+
+
+def test_project_journey_keeps_public_lifecycle_operations() -> None:
+    root = Path(__file__).parents[1]
+    source = (root / "web/js/project-journey.js").read_text(encoding="utf-8")
+    required_controls = (
+        "project-journey-form",
+        "project-bundle-import-form",
+        "project-environment-form",
+        "project-archive",
+        "/bundle/archive",
+        "/bundle/import",
+        "/environments/",
+        "/archive",
+    )
+    missing = [control for control in required_controls if control not in source]
+    assert not missing, f"project lifecycle coverage regressed: {missing}"
