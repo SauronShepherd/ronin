@@ -436,6 +436,18 @@ def test_project_permission_inspection_is_resource_scoped() -> None:
     assert set(payload["permissions"]) == {"project.read", "project.write", "scheduler.write"}
 
 
+def test_project_permission_inspection_fails_closed_without_project_read() -> None:
+    store = _Store()
+    with _server(store, _Authorizer(allowed=set())) as address:
+        status, payload = _request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-a/projects/project-1/permissions",
+        )
+    assert status == 403
+    assert payload["error"]["code"] == "forbidden"
+
+
 def test_platform_capabilities_exposes_only_ready_plugin_capabilities() -> None:
     store = _Store()
     plugin = WorkspacesPlugin()
