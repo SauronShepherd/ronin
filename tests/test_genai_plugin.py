@@ -13,6 +13,7 @@ def test_genai_plugin_registers_discovery_surfaces() -> None:
         ("PUT", "/v1/workspaces/{workspace_id}/genai/prompts/{prompt_id}/{version}"),
         ("GET", "/v1/workspaces/{workspace_id}/genai/indexes"),
         ("DELETE", "/v1/workspaces/{workspace_id}/genai/indexes/{index_id}"),
+        ("POST", "/v1/workspaces/{workspace_id}/genai/indexes/{index_id}/query"),
     ]
     assert {item.id for item in contributions.surface_registry.items} == set(
         plugin.manifest.surface_ids
@@ -34,4 +35,8 @@ def test_genai_plugin_fails_closed_without_runtime() -> None:
     assert plugin.delete_index(workspace_id="ws", index_id="idx") == {
         "status": "not_configured",
         "deleted": False,
+    }
+    assert plugin.search_index(workspace_id="ws", index_id="idx", body={}) == {
+        "status": "not_configured",
+        "items": [],
     }

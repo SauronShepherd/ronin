@@ -16,6 +16,7 @@ class _GenAIService(Protocol):
     def put_prompt(self, workspace_id: str, prompt: PromptAsset) -> object: ...
     def indexes(self, workspace_id: str) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
+    def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
 
 
 class GenAIPlugin:
@@ -35,6 +36,7 @@ class GenAIPlugin:
             "genai.prompt.v1",
             "genai.indexes.v1",
             "genai.index.delete.v1",
+            "genai.index.query.v1",
         ),
     )
 
@@ -61,6 +63,12 @@ class GenAIPlugin:
                 "/v1/workspaces/{workspace_id}/genai/indexes/{index_id}",
                 "index.delete",
                 self.delete_index,
+            ),
+            (
+                "POST",
+                "/v1/workspaces/{workspace_id}/genai/indexes/{index_id}/query",
+                "index.query",
+                self.search_index,
             ),
         ):
             surface_id = f"genai.{operation}.v1"
@@ -145,6 +153,41 @@ class GenAIPlugin:
             return {"deleted": bool(self._service.delete_index(workspace_id, index_id))}
         except Exception:
             return {"status": "unavailable", "deleted": False}
+
+    def search_index(
+        self,
+        *,
+        workspace_id: str = "",
+        index_id: str = "",
+        body: object | None = None,
+        **_kwargs: object,
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured", "items": []}
+        if not isinstance(body, dict):
+            return {"error": {"code": "invalid_request"}}
+        try:
+            query = body.get("query_vector")
+            top_k = body.get("top_k", 5)
+            if (
+                not isinstance(query, list)
+                or not query
+                or not all(
+                    isinstance(value, (int, float)) and not isinstance(value, bool)
+                    for value in query
+                )
+                or not isinstance(top_k, int)
+                or isinstance(top_k, bool)
+                or not 1 <= top_k <= 100
+            ):
+                return {"error": {"code": "invalid_query"}}
+            return self._service.search_index(
+                workspace_id,
+                index_id,
+                {"query_vector": [float(value) for value in query], "top_k": top_k},
+            )
+        except Exception as exc:
+            return {"error": {"code": "query_failed", "message": str(exc)}}
 
 
 def factory() -> GenAIPlugin:
