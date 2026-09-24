@@ -48,7 +48,7 @@ def test_scheduler_dispatch_routes_sql_without_notebook_fallback() -> None:
 
 
 def test_scheduler_dispatch_rejects_unqualified_family() -> None:
-    with pytest.raises(UnsupportedSchedulerWorkload, match="no qualified"):
+    with pytest.raises(UnsupportedSchedulerWorkload, match="ml.run requires"):
         execute_scheduler_job(_job("ml.run"))
 
 
