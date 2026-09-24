@@ -240,6 +240,25 @@ def test_agent_blocks_non_idempotent_tool_without_explicit_authorization() -> No
         )
 
 
+def test_agent_enforces_timeout_before_provider_call() -> None:
+    prompt = PromptAsset(
+        PromptId("timeout-prompt"), PromptVersion("1"), "Handle {input}", ("input",)
+    )
+    definition = AgentDefinition(
+        AgentId("timeout-agent"), "Timeout", _PROVIDER, "chat", prompt.id, prompt.version, (), 1
+    )
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        run_agent(
+            definition,
+            prompt,
+            _CHAT,
+            _Provider(),
+            ToolRegistry(),
+            "input",
+            timeout_seconds=0.05,
+        )
+
+
 def test_agent_enforces_declared_tool_requirements() -> None:
     prompt = PromptAsset(PromptId("agent-prompt"), PromptVersion("1"), "Handle {input}", ("input",))
     definition = AgentDefinition(

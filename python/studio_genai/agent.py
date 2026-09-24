@@ -124,6 +124,7 @@ def run_agent(
     record_tool: Callable[[ToolId, str], None] | None = None,
     authorize_requirements: Callable[[tuple[Requirement, ...]], bool] | None = None,
     record_telemetry: Callable[[dict[str, object]], None] | None = None,
+    timeout_seconds: float | None = None,
 ) -> AgentRunResult:
     """Run a strict bounded tool loop without granting undeclared tool authority."""
 
@@ -135,6 +136,8 @@ def run_agent(
         raise ValueError("agent prompt does not match definition")
     if "chat" not in model.capabilities:
         raise ValueError("agent model must advertise chat capability")
+    if timeout_seconds is not None and not 0.1 <= timeout_seconds <= 3600:
+        raise ValueError("agent timeout_seconds must be between 0.1 and 3600")
 
     started = time.perf_counter()
     if record_telemetry is not None:
@@ -153,6 +156,8 @@ def run_agent(
     steps: list[AgentStep] = []
 
     for step_index in range(1, definition.max_steps + 1):
+        if timeout_seconds is not None and time.perf_counter() - started >= timeout_seconds:
+            raise TimeoutError("agent execution timed out")
         result = provider.chat(model, tuple(messages))
         action = _parse_action(result.content)
         if action["type"] == "final":
@@ -189,6 +194,8 @@ def run_agent(
             raise PermissionError(
                 f"non-idempotent tool requires explicit execution authorization: {tool_id}"
             )
+        if timeout_seconds is not None and time.perf_counter() - started >= timeout_seconds:
+            raise TimeoutError("agent execution timed out")
         try:
             output = runtime.invoke(payload)
         except Exception:
