@@ -78,7 +78,8 @@ def test_trino_transport_enforces_request_row_bound_across_pages() -> None:
     handle, uri = transport.submit(QueryRequest("SELECT 1", "trino", max_rows=1))
     status, page, next_uri = transport.poll(handle, uri)
     assert status.state == "running"
-    assert page is not None and page.rows == ((1,),)
+    assert page is not None
+    assert page.rows == ((1,),)
     with pytest.raises(QueryFailure, match="too many rows"):
         transport.poll(handle, next_uri or "")
 

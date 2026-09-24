@@ -1,5 +1,7 @@
 import pytest
 from studio_query_engine import (
+    QUERY_ENGINE_NAMESPACE,
+    QUERY_ENGINE_VERSION,
     CancellationResult,
     EngineCapabilities,
     EngineHandshake,
@@ -7,8 +9,6 @@ from studio_query_engine import (
     QueryRequest,
     QueryResultPage,
     QueryStatus,
-    QUERY_ENGINE_NAMESPACE,
-    QUERY_ENGINE_VERSION,
 )
 
 
