@@ -151,12 +151,19 @@ class IcebergTableStore:
     ) -> tuple[dict[str, object], ...]:
         if limit < 1 or limit > 100_000:
             raise ValueError("Iceberg read limit must be between 1 and 100000")
+        if columns is not None:
+            if any(not column or column != column.strip() for column in columns):
+                raise ValueError("Iceberg projection columns must be non-empty and trimmed")
+            if len(set(columns)) != len(columns):
+                raise ValueError("Iceberg projection columns must be unique")
         table = self._load(identifier)
         if version is not None:
             try:
                 snapshot_id = int(version)
             except ValueError as exc:
                 raise ValueError("Iceberg version must be a snapshot id integer string") from exc
+            if snapshot_id < 0:
+                raise ValueError("Iceberg version must be non-negative")
             scan = table.scan(
                 selected_fields=columns or ("*",),
                 snapshot_id=snapshot_id,

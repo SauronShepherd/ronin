@@ -35,3 +35,14 @@ def test_delta_delete_removes_only_a_table_inside_the_warehouse(tmp_path) -> Non
     assert not table_path.exists()
     with pytest.raises(FileNotFoundError, match="Delta table does not exist"):
         store.delete_table(identifier)
+
+
+def test_delta_store_validates_projection_and_version_before_optional_dependency_loading(
+    tmp_path,
+) -> None:
+    store = DeltaTableStore(tmp_path)
+    identifier = OpenTableIdentifier(("analytics",), "events")
+    with pytest.raises(ValueError, match="non-empty and trimmed"):
+        store.read_rows(identifier, columns=(" id",))
+    with pytest.raises(ValueError, match="non-negative"):
+        store.read_rows(identifier, version="-1")

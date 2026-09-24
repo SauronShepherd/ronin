@@ -122,9 +122,11 @@ class DeltaTableStore:
     ) -> tuple[dict[str, object], ...]:
         if limit < 1 or limit > 100_000:
             raise ValueError("Delta read limit must be between 1 and 100000")
-        if columns is not None and len(set(columns)) != len(columns):
-            raise ValueError("Delta projection columns must be unique")
-        deltalake = _deltalake()
+        if columns is not None:
+            if any(not column or column != column.strip() for column in columns):
+                raise ValueError("Delta projection columns must be non-empty and trimmed")
+            if len(set(columns)) != len(columns):
+                raise ValueError("Delta projection columns must be unique")
         path = self._path(identifier)
         kwargs: dict[str, object] = {}
         if version is not None:
@@ -132,6 +134,9 @@ class DeltaTableStore:
                 kwargs["version"] = int(version)
             except ValueError as exc:
                 raise ValueError("Delta version must be an integer string") from exc
+            if int(kwargs["version"]) < 0:
+                raise ValueError("Delta version must be non-negative")
+        deltalake = _deltalake()
         table = deltalake.DeltaTable(str(path), **kwargs)
         arrow = table.to_pyarrow_table(columns=list(columns) if columns is not None else None)
         if arrow.num_rows > limit:
