@@ -186,6 +186,7 @@ def test_agent_calls_only_declared_tool_then_finishes() -> None:
         ]
     )
     telemetry: list[dict[str, object]] = []
+    usage: list[tuple[str, int, int]] = []
     result = run_agent(
         definition,
         prompt,
@@ -194,6 +195,9 @@ def test_agent_calls_only_declared_tool_then_finishes() -> None:
         ToolRegistry((tool,)),
         "find alpha",
         record_telemetry=telemetry.append,
+        record_usage=lambda model_id, input_count, output_count: usage.append(
+            (model_id, input_count, output_count)
+        ),
     )
     assert result.answer == "done"
     assert tuple(step.kind for step in result.steps) == ("tool", "final")
@@ -211,6 +215,7 @@ def test_agent_calls_only_declared_tool_then_finishes() -> None:
     assert telemetry[-1]["latency_ms"] >= 0
     assert telemetry[-1]["input_tokens"] is None
     assert telemetry[-1]["output_tokens"] is None
+    assert usage == []
 
 
 def test_agent_blocks_non_idempotent_tool_without_explicit_authorization() -> None:

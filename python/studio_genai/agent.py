@@ -124,6 +124,7 @@ def run_agent(
     record_tool: Callable[[ToolId, str], None] | None = None,
     authorize_requirements: Callable[[tuple[Requirement, ...]], bool] | None = None,
     record_telemetry: Callable[[dict[str, object]], None] | None = None,
+    record_usage: Callable[[str, int, int], None] | None = None,
     timeout_seconds: float | None = None,
 ) -> AgentRunResult:
     """Run a strict bounded tool loop without granting undeclared tool authority."""
@@ -195,6 +196,8 @@ def run_agent(
                 raise ValueError("final agent answer must be a string")
             steps.append(AgentStep(step_index, "final"))
             result = AgentRunResult(answer, tuple(steps))
+            if record_usage is not None and tokens_known:
+                record_usage(model.model_id, input_tokens, output_tokens)
             if record_telemetry is not None:
                 record_telemetry(
                     {
