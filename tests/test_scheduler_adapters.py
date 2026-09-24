@@ -76,6 +76,29 @@ def test_scheduler_dispatch_routes_genai_run_through_injected_runner() -> None:
     assert result.evidence_payload()["genai"]["status"] == "completed"
 
 
+def test_scheduler_dispatch_routes_semantic_refresh_through_injected_runner() -> None:
+    class Runner:
+        def run(
+            self, *, model_id: str, definition_digest: str, tile_limit: int
+        ) -> dict[str, object]:
+            return {
+                "model_id": model_id,
+                "definition_digest": definition_digest,
+                "tile_limit": tile_limit,
+                "status": "refreshed",
+            }
+
+    result = execute_scheduler_job(
+        _job(
+            "semantic.refresh",
+            {"model_id": "orders", "definition_digest": "b" * 64, "tile_limit": 25},
+        ),
+        semantic_refresh_runner=Runner(),
+    )
+    assert result.family == "semantic"
+    assert result.evidence_payload()["semantic"]["status"] == "refreshed"
+
+
 def test_scheduler_dispatch_routes_graph_query() -> None:
     object_ref = SimpleNamespace(object_type="Order", key=(("id", 1),))
     graph_object = SimpleNamespace(ref=object_ref, properties=(("total", 5),))

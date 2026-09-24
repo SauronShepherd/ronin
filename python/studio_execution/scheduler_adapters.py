@@ -30,6 +30,7 @@ class SchedulerWorkloadResult:
     notification: dict[str, object] | None = None
     ml: dict[str, object] | None = None
     genai: dict[str, object] | None = None
+    semantic: dict[str, object] | None = None
 
     def evidence_payload(self) -> dict[str, Any]:
         """Return the portable, deterministic payload stored as scheduler evidence."""
@@ -61,6 +62,8 @@ class SchedulerWorkloadResult:
             return {"family": self.family, "ml": self.ml, "version": 1}
         if self.family == "genai" and self.genai is not None:
             return {"family": self.family, "genai": self.genai, "version": 1}
+        if self.family == "semantic" and self.semantic is not None:
+            return {"family": self.family, "semantic": self.semantic, "version": 1}
         raise UnsupportedSchedulerWorkload("scheduler result has no portable evidence payload")
 
 
@@ -86,6 +89,7 @@ def execute_scheduler_job(
     ml_lab: object | None = None,
     ml_rows: object | None = None,
     genai_runner: object | None = None,
+    semantic_refresh_runner: object | None = None,
     max_rows: int = 10_000,
     timeout_seconds: int | None = None,
 ) -> SchedulerWorkloadResult:
@@ -259,6 +263,37 @@ def execute_scheduler_job(
         if not isinstance(result, dict):
             raise UnsupportedSchedulerWorkload("GenAI runner returned an invalid result")
         return SchedulerWorkloadResult(family="genai", genai=result)
+    if job.target == "semantic.refresh":
+        if semantic_refresh_runner is None:
+            raise UnsupportedSchedulerWorkload(
+                "semantic.refresh requires an injected semantic_refresh_runner"
+            )
+        try:
+            payload = json.loads(job.parameters_json)
+            model_id = payload["model_id"]
+            definition_digest = payload["definition_digest"]
+            tile_limit = payload.get("tile_limit", 100)
+            if (
+                not isinstance(model_id, str)
+                or not model_id.strip()
+                or not isinstance(definition_digest, str)
+                or len(definition_digest) != 64
+                or any(char not in "0123456789abcdef" for char in definition_digest)
+                or isinstance(tile_limit, bool)
+                or not isinstance(tile_limit, int)
+                or not 1 <= tile_limit <= 10_000
+            ):
+                raise ValueError("invalid semantic refresh identifiers")
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise UnsupportedSchedulerWorkload("semantic.refresh parameters are invalid") from exc
+        result = semantic_refresh_runner.run(
+            model_id=model_id,
+            definition_digest=definition_digest,
+            tile_limit=tile_limit,
+        )
+        if not isinstance(result, dict):
+            raise UnsupportedSchedulerWorkload("semantic refresh runner returned an invalid result")
+        return SchedulerWorkloadResult(family="semantic", semantic=result)
     if job.target == "graph.query":
         if graph_adapter is None:
             raise UnsupportedSchedulerWorkload("graph.query requires an injected graph adapter")

@@ -97,6 +97,7 @@ class LocalWorkerRuntimeConfig:
     ml_lab: object | None = None
     ml_rows: object | None = None
     genai_runner: object | None = None
+    semantic_refresh_runner: object | None = None
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
@@ -275,6 +276,7 @@ class LocalWorkerRuntime:
             "notification.send",
             "ml.run",
             "genai.run",
+            "semantic.refresh",
         }:
             if claim.job.target == "sql.query" and self.config.scheduler_sql_engine is None:
                 raise UnsupportedSchedulerWorkload(
@@ -310,6 +312,13 @@ class LocalWorkerRuntime:
                 raise UnsupportedSchedulerWorkload(
                     "genai.run scheduler execution requires genai_runner"
                 )
+            if (
+                claim.job.target == "semantic.refresh"
+                and self.config.semantic_refresh_runner is None
+            ):
+                raise UnsupportedSchedulerWorkload(
+                    "semantic.refresh scheduler execution requires semantic_refresh_runner"
+                )
             try:
                 result = await loop.run_in_executor(
                     self._preparation_executor,
@@ -334,6 +343,7 @@ class LocalWorkerRuntime:
                         ml_lab=self.config.ml_lab,
                         ml_rows=self.config.ml_rows,
                         genai_runner=self.config.genai_runner,
+                        semantic_refresh_runner=self.config.semantic_refresh_runner,
                     ),
                 )
             except Exception:
@@ -351,6 +361,8 @@ class LocalWorkerRuntime:
                     else "scheduler.ml.error"
                     if claim.job.target == "ml.run"
                     else "scheduler.genai.error"
+                    if claim.job.target == "genai.run"
+                    else "scheduler.semantic.error"
                 )
                 await self._service.worker_complete_attempt(
                     claim.attempt_id,
