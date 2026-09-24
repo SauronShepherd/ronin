@@ -30,7 +30,7 @@ not Public v1 completion.
 
 ## Local verification on this snapshot
 
-On Windows, `python -m pytest -q` produced **2046 passed, 21 skipped**.
+On Windows, `python -m pytest -q` produced **2050 passed, 21 skipped**.
 Additional exact-head evidence on this snapshot includes Docker qualification
 (21 passed), real PostgreSQL integration (11 passed), the installed-wheel
 browser smoke (no console/request/CSP failures), installed-wheel accessibility
