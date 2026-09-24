@@ -74,8 +74,9 @@ def test_project_configuration_preserves_validation_contract() -> None:
             "streaming-studio",
             "synthetic-data-studio",
             "synthetic-journey",
-            "ml-studio-journey",
-            "workspace-journey",
+                "ml-studio-journey",
+                "ml-features-studio",
+                "workspace-journey",
         )
     }
     assert data_files["share/ronin/web/styles"] == [
