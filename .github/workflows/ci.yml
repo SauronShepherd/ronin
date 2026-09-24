@@ -263,6 +263,57 @@ jobs:
           source "$VERIFY_VENV/bin/activate"
           time make check
 
+  ci-evidence:
+    if: always()
+    needs:
+      - quality
+      - plugin-testkit-clean-room
+      - test-matrix
+      - test
+      - gates-negative
+      - acceptance-progress
+      - verification
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+      - name: Require every CI gate to pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          for result in \
+            "${{ needs.quality.result }}" \
+            "${{ needs.plugin-testkit-clean-room.result }}" \
+            "${{ needs.test-matrix.result }}" \
+            "${{ needs.test.result }}" \
+            "${{ needs.gates-negative.result }}" \
+            "${{ needs.acceptance-progress.result }}" \
+            "${{ needs.verification.result }}"; do
+            test "$result" = success || {
+              echo "CI gate result was $result" >&2
+              exit 1
+            }
+          done
+          printf '%s\n' "all CI jobs passed" > ci-qualification.txt
+          python -m tools.emit_release_evidence \
+            --gate-id ci \
+            --commit "${GITHUB_SHA}" \
+            --status passed \
+            --fingerprint "github-actions-ci-${RUNNER_OS}" \
+            --command "all CI workflow jobs" \
+            --artifact ci-qualification.txt \
+            --output ci-release-evidence.json
+      - uses: actions/upload-artifact@ea165f8f65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-release-evidence
+          path: |
+            ci-qualification.txt
+            ci-release-evidence.json
+          if-no-files-found: error
+          retention-days: 30
+
   mutation:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
