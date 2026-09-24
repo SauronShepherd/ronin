@@ -1072,7 +1072,13 @@ class PostgresMetadataStore:
                             "INSERT INTO ronin_connections("
                             "workspace_id,connection_id,definition_json,created_at,updated_at) "
                             "VALUES (%s,%s,%s,%s,%s)",
-                            (str(workspace_id), str(definition.id), payload, str(current), str(current)),
+                            (
+                                str(workspace_id),
+                                str(definition.id),
+                                payload,
+                                str(current),
+                                str(current),
+                            ),
                         )
                         connections_created += 1
                 for manifest in sorted(projects, key=lambda item: str(item.project.id)):
@@ -1093,10 +1099,18 @@ class PostgresMetadataStore:
                             "INSERT INTO ronin_projects("
                             "workspace_id,project_id,manifest_json,created_at,updated_at) "
                             "VALUES (%s,%s,%s,%s,%s)",
-                            (str(workspace_id), str(project_id), payload, str(current), str(current)),
+                            (
+                                str(workspace_id),
+                                str(project_id),
+                                payload,
+                                str(current),
+                                str(current),
+                            ),
                         )
                         projects_created += 1
-                for item in sorted(bindings, key=lambda value: (str(value.project_id), str(value.environment_id))):
+                for item in sorted(
+                    bindings, key=lambda value: (str(value.project_id), str(value.environment_id))
+                ):
                     cursor.execute(
                         "SELECT definition_json FROM ronin_environments "
                         "WHERE workspace_id=%s AND environment_id=%s",
@@ -1125,13 +1139,23 @@ class PostgresMetadataStore:
                     if row is None:
                         cursor.execute(
                             "INSERT INTO ronin_project_environment_bindings("
-                            "workspace_id,project_id,environment_id,bindings_json,created_at,updated_at) "
+                            "workspace_id,project_id,environment_id,bindings_json,"
+                            "created_at,updated_at) "
                             "VALUES (%s,%s,%s,%s,%s,%s)",
-                            (str(workspace_id), str(item.project_id), str(item.environment_id), payload, str(current), str(current)),
+                            (
+                                str(workspace_id),
+                                str(item.project_id),
+                                str(item.environment_id),
+                                payload,
+                                str(current),
+                                str(current),
+                            ),
                         )
                         bindings_created += 1
             connection.commit()
-            return MultiObjectBundleImportCommit(connections_created, projects_created, bindings_created)
+            return MultiObjectBundleImportCommit(
+                connections_created, projects_created, bindings_created
+            )
         except Exception:
             connection.rollback()
             raise
@@ -1192,13 +1216,21 @@ class PostgresMetadataStore:
                     )
                     row = cursor.fetchone()
                     if row is not None and row["revision_json"] != payload:
-                        raise CatalogBundleImportConflict("catalog revision conflicts with existing identity")
+                        raise CatalogBundleImportConflict(
+                            "catalog revision conflicts with existing identity"
+                        )
                     if row is None:
                         cursor.execute(
                             "INSERT INTO ronin_catalog_revisions("
                             "workspace_id,asset_id,version,revision_json,created_at) "
                             "VALUES (%s,%s,%s,%s,%s)",
-                            (str(workspace_id), str(revision.ref.asset_id), str(revision.ref.version), payload, str(current)),
+                            (
+                                str(workspace_id),
+                                str(revision.ref.asset_id),
+                                str(revision.ref.version),
+                                payload,
+                                str(current),
+                            ),
                         )
                         revisions_created += 1
                 for edge in lineage:
@@ -1220,15 +1252,25 @@ class PostgresMetadataStore:
                     )
                     row = cursor.fetchone()
                     if row is not None and row["edge_json"] != payload:
-                        raise CatalogBundleImportConflict("lineage digest conflicts with existing content")
+                        raise CatalogBundleImportConflict(
+                            "lineage digest conflicts with existing content"
+                        )
                     if row is None:
                         cursor.execute(
                             "INSERT INTO ronin_lineage_edges("
                             "workspace_id,edge_digest,source_asset_id,source_version,"
                             "target_asset_id,target_version,edge_json,created_at) "
                             "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
-                            (str(workspace_id), edge.digest, str(edge.source.asset_id), str(edge.source.version),
-                             str(edge.target.asset_id), str(edge.target.version), payload, str(current)),
+                            (
+                                str(workspace_id),
+                                edge.digest,
+                                str(edge.source.asset_id),
+                                str(edge.source.version),
+                                str(edge.target.asset_id),
+                                str(edge.target.version),
+                                payload,
+                                str(current),
+                            ),
                         )
                         lineage_created += 1
             connection.commit()
