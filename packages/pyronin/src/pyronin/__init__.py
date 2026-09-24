@@ -1116,6 +1116,41 @@ class Ronin:
             raise ProtocolError("migration validation response must contain status")
         return result
 
+    def promote_migration_session(
+        self,
+        workspace_id: str,
+        project_id: str,
+        session_id: str,
+        *,
+        candidate_id: str,
+        baseline: Mapping[str, object],
+        candidate: Mapping[str, object],
+        semantic_passed: bool,
+        quality_passed: bool,
+        max_regression_ratio: float = 0.05,
+    ) -> Mapping[str, object]:
+        if not all(value.strip() for value in (workspace_id, project_id, session_id, candidate_id)):
+            raise ValueError("workspace_id, project_id, session_id and candidate_id must be non-empty")
+        if max_regression_ratio < 0:
+            raise ValueError("max_regression_ratio must be non-negative")
+        result = self._transport.request(
+            "POST",
+            f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+            f"{quote(project_id, safe='')}/migration/sessions/"
+            f"{quote(session_id, safe='')}/promote",
+            payload={
+                "candidate_id": candidate_id,
+                "baseline": dict(baseline),
+                "candidate": dict(candidate),
+                "semantic_passed": semantic_passed,
+                "quality_passed": quality_passed,
+                "max_regression_ratio": max_regression_ratio,
+            },
+        )
+        if not isinstance(result, dict) or not isinstance(result.get("decision"), dict):
+            raise ProtocolError("migration promotion response must contain decision")
+        return result
+
     def archive_project(self, workspace_id: str, project_id: str) -> bool:
         if not workspace_id.strip() or not project_id.strip():
             raise ValueError("workspace_id and project_id must be non-empty")

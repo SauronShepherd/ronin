@@ -261,6 +261,23 @@ def test_validate_migration_session_forwards_rows_and_level() -> None:
     }
 
 
+def test_promote_migration_session_forwards_gates_and_ratio() -> None:
+    transport = FakeTransport([{"decision": {"promoted": True}, "session": {}}])
+    payload = Ronin(transport=transport).promote_migration_session(
+        "ws-1",
+        "p-1",
+        "m-1",
+        candidate_id="candidate-1",
+        baseline={"median_ms": 10},
+        candidate={"median_ms": 9},
+        semantic_passed=True,
+        quality_passed=True,
+        max_regression_ratio=0.1,
+    )
+    assert payload["decision"]["promoted"] is True
+    assert transport.calls[0][2]["max_regression_ratio"] == 0.1
+
+
 def test_workspace_and_project_pages_forward_and_validate_cursor() -> None:
     transport = FakeTransport(
         [
