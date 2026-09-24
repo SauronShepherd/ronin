@@ -5,7 +5,8 @@ from tools import studio_web_audit
 
 def test_web_audit_accepts_json_and_mjs_assets(monkeypatch, tmp_path: Path) -> None:
     (tmp_path / "index.html").write_text(
-        '<meta name="description"><script type="module"></script><div id="view"></div><main id="main"></main>',
+        '<meta name="description"><script type="module"></script>'
+        '<div id="view"></div><main id="main"></main>',
         encoding="utf-8",
     )
     scripts = tmp_path / "js"
