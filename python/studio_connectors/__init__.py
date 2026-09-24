@@ -20,7 +20,13 @@ from .ozone import OzoneJsonConnector
 from .postgres import PostgresConnector
 from .registry import ConnectorCapabilityRecord, ConnectorRegistry, builtin_connector_registry
 from .s3_json import S3JsonConnector
-from .sync import IngestionSyncDefinition, IngestionSyncPlan, IngestionSyncService, plan_sync
+from .sync import (
+    ArtifactDestinationWriter,
+    IngestionSyncDefinition,
+    IngestionSyncPlan,
+    IngestionSyncService,
+    plan_sync,
+)
 
 __all__ = (
     "Connector",
@@ -45,6 +51,7 @@ __all__ = (
     "S3JsonConnector",
     "OzoneJsonConnector",
     "IngestionSyncDefinition",
+    "ArtifactDestinationWriter",
     "IngestionSyncPlan",
     "IngestionSyncService",
     "plan_sync",

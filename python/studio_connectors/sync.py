@@ -3,12 +3,53 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass
 from typing import Protocol, cast
 
 from studio_core.canonical_json import decode, encode
 
 from .contracts import ConnectorReadResult
+
+
+class ArtifactDestinationWriter:
+    """Write connector rows as one verified content-addressed JSON artifact."""
+
+    def __init__(self, artifacts: object) -> None:
+        self._artifacts = artifacts
+
+    def write(
+        self,
+        destination_ref: str,
+        result: ConnectorReadResult,
+        *,
+        fence: int,
+    ) -> tuple[str, str]:
+        if not destination_ref or destination_ref != destination_ref.strip():
+            raise ValueError("destination_ref must be non-empty and trimmed")
+        if fence < 1:
+            raise ValueError("destination fence must be positive")
+        payload = json.dumps(
+            {
+                "schema": "ronin.connector-output/v1",
+                "destination_ref": destination_ref,
+                "fence": fence,
+                "fields": [
+                    {"name": field.name, "data_type": field.data_type, "nullable": field.nullable}
+                    for field in result.fields
+                ],
+                "rows": [dict(row) for row in result.rows],
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        ref = self._artifacts.put_bytes(
+            role="connector-output",
+            data=payload,
+            media_type="application/vnd.ronin.connector-output+json",
+        )
+        return ref.storage_ref, ref.digest
 
 
 class _CheckpointStore(Protocol):
@@ -251,4 +292,10 @@ class IngestionSyncService:
         }
 
 
-__all__ = ("IngestionSyncDefinition", "IngestionSyncPlan", "IngestionSyncService", "plan_sync")
+__all__ = (
+    "ArtifactDestinationWriter",
+    "IngestionSyncDefinition",
+    "IngestionSyncPlan",
+    "IngestionSyncService",
+    "plan_sync",
+)
