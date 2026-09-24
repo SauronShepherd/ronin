@@ -308,6 +308,17 @@ jobs:
           retention-days: 7
       - name: Mutation score gate
         run: python -m tools.mutation_gate mutants/mutmut-cicd-stats.json
+      - name: Emit normalized mutation release evidence
+        run: >-
+          python -m tools.emit_release_evidence
+          --gate-id mutation
+          --commit "${{ github.sha }}"
+          --status passed
+          --fingerprint "github-actions-mutation-${{ runner.os }}-python-3.11"
+          --command "mutmut run && python -m tools.mutation_gate mutants/mutmut-cicd-stats.json"
+          --artifact mutants/mutmut-cicd-stats.json
+          --artifact mutants/mutmut-results.txt
+          --output mutants/mutation-release-evidence.json
       - name: Cleanup mutation source alias
         if: always()
         run: rm -f src

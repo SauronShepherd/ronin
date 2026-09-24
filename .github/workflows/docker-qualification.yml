@@ -81,6 +81,25 @@ jobs:
           mkdir -p qualification-evidence
           python -m pytest -q tests/integration/test_docker_container_executor_real.py tests/integration/test_worker_runtime_real.py
 
+      - name: Emit normalized Docker release evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence=(qualification-evidence/*.json)
+          test -e "${evidence[0]}"
+          artifact_args=()
+          for path in "${evidence[@]}"; do
+            artifact_args+=(--artifact "$path")
+          done
+          python -m tools.emit_release_evidence \
+            --gate-id docker-qualification \
+            --commit "${GITHUB_SHA}" \
+            --status passed \
+            --fingerprint "github-actions-docker-${RUNNER_OS}" \
+            --command "pytest real Docker qualification" \
+            "${artifact_args[@]}" \
+            --output qualification-evidence/docker-release-evidence.json
+
       - name: Upload qualification evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
