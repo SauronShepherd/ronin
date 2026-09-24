@@ -102,7 +102,7 @@ document.addEventListener('click', async event => {
         const port = document.querySelector('#de-node-port').value.trim();
         if (!id || !operator || !port) throw new Error('Node ID, operator and port are required');
         if (documentValue.pipeline.nodes.some(node => node.id === id)) throw new Error(`Node already exists: ${id}`);
-        documentValue.pipeline.nodes.push({ id, operator: { name: operator }, ports: [{ name: port, direction: 'output' }] });
+        documentValue.pipeline.nodes.push({ id, operator: { name: operator }, ports: [{ name: port, direction: 'output' }, { name: 'in', direction: 'input' }] });
         field.value = JSON.stringify(documentValue);
       } else if (action === 'de-node-remove') {
         const id = event.target.closest('[data-node-id]').dataset.nodeId;
@@ -114,6 +114,8 @@ document.addEventListener('click', async event => {
         const to = document.querySelector('#de-edge-to').value;
         const port = document.querySelector('#de-edge-port').value.trim();
         if (!from || !to || !port || from === to) throw new Error('Choose two distinct nodes and a target port');
+        const targetNode = documentValue.pipeline.nodes.find(node => node.id === to);
+        if (!targetNode?.ports?.some(candidate => candidate.name === port && candidate.direction === 'input')) throw new Error(`Target port does not exist: ${to}.${port}`);
         if (documentValue.pipeline.edges.some(edge => edge.source === from && edge.target === to && edge.target_port === port)) throw new Error('Edge already exists');
         if (createsCycle(documentValue.pipeline.edges, from, to)) throw new Error('Connection would create a pipeline cycle');
         documentValue.pipeline.edges.push({ source: from, source_port: 'out', target: to, target_port: port });
