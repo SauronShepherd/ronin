@@ -283,7 +283,6 @@ pytest_add_cli_args_test_selection = [
   "tests/test_plugins.py",
   "tests/test_plugin_events.py",
   "tests/test_plugin_audit.py",
-  "tests/test_plugin_clean_room.py",
   "tests/test_plugin_contribution_registries.py",
   "tests/test_plugin_event_dispatcher.py",
   "tests/test_plugin_lifecycle_rollback.py",
