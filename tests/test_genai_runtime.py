@@ -185,6 +185,7 @@ def test_agent_calls_only_declared_tool_then_finishes() -> None:
             '{"type":"final","answer":"done"}',
         ]
     )
+    telemetry: list[dict[str, object]] = []
     result = run_agent(
         definition,
         prompt,
@@ -192,6 +193,7 @@ def test_agent_calls_only_declared_tool_then_finishes() -> None:
         provider,
         ToolRegistry((tool,)),
         "find alpha",
+        record_telemetry=telemetry.append,
     )
     assert result.answer == "done"
     assert tuple(step.kind for step in result.steps) == ("tool", "final")
@@ -201,6 +203,12 @@ def test_agent_calls_only_declared_tool_then_finishes() -> None:
     assert evidence["answer_sha256"] == __import__("hashlib").sha256(b"done").hexdigest()
     assert "answer" not in evidence
     assert evidence["steps"][0]["tool_id"] == "lookup"
+    assert [event["event"] for event in telemetry] == [
+        "agent_started",
+        "agent_tool",
+        "agent_completed",
+    ]
+    assert telemetry[-1]["latency_ms"] >= 0
 
 
 def test_agent_blocks_non_idempotent_tool_without_explicit_authorization() -> None:

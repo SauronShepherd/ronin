@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
@@ -122,6 +123,7 @@ def run_agent(
     allow_non_idempotent: bool = False,
     record_tool: Callable[[ToolId, str], None] | None = None,
     authorize_requirements: Callable[[tuple[Requirement, ...]], bool] | None = None,
+    record_telemetry: Callable[[dict[str, object]], None] | None = None,
 ) -> AgentRunResult:
     """Run a strict bounded tool loop without granting undeclared tool authority."""
 
@@ -133,6 +135,10 @@ def run_agent(
         raise ValueError("agent prompt does not match definition")
     if "chat" not in model.capabilities:
         raise ValueError("agent model must advertise chat capability")
+
+    started = time.perf_counter()
+    if record_telemetry is not None:
+        record_telemetry({"event": "agent_started", "model_id": model.model_id})
 
     allowed_tools = set(definition.tool_ids)
     system = (
@@ -154,7 +160,17 @@ def run_agent(
             if not isinstance(answer, str):
                 raise ValueError("final agent answer must be a string")
             steps.append(AgentStep(step_index, "final"))
-            return AgentRunResult(answer, tuple(steps))
+            result = AgentRunResult(answer, tuple(steps))
+            if record_telemetry is not None:
+                record_telemetry(
+                    {
+                        "event": "agent_completed",
+                        "model_id": model.model_id,
+                        "step_count": len(steps),
+                        "latency_ms": round((time.perf_counter() - started) * 1000, 3),
+                    }
+                )
+            return result
 
         raw_tool_id = action["tool_id"]
         payload = action["input"]
@@ -183,6 +199,10 @@ def run_agent(
             raise TypeError("tool runtime must return a mapping")
         if record_tool is not None:
             record_tool(tool_id, "succeeded")
+        if record_telemetry is not None:
+            record_telemetry(
+                {"event": "agent_tool", "tool_id": tool_id.value, "status": "succeeded"}
+            )
         steps.append(AgentStep(step_index, "tool", tool_id))
         messages.append(ChatMessage("assistant", result.content))
         messages.append(
