@@ -268,6 +268,14 @@ class ProjectPage:
 
 
 @dataclass(frozen=True, slots=True)
+class MigrationImportEvidence:
+    status: str
+    import_digest: str
+    project_digest: str
+    target: str
+
+
+@dataclass(frozen=True, slots=True)
 class Environment:
     id: str
     name: str
@@ -896,6 +904,24 @@ class Ronin:
             f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/{quote(project_id, safe='')}",
         )
         return isinstance(payload, dict) and payload.get("unregistered") is True
+
+    def import_migration_session(
+        self, workspace_id: str, project_id: str, session_id: str, *, target: str
+    ) -> MigrationImportEvidence:
+        if not all(value.strip() for value in (workspace_id, project_id, session_id, target)):
+            raise ValueError("workspace_id, project_id, session_id and target must be non-empty")
+        payload = self._transport.request(
+            "POST",
+            f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+            f"{quote(project_id, safe='')}/migration/sessions/{quote(session_id, safe='')}/import",
+            payload={"target": target},
+        )
+        if not isinstance(payload, dict):
+            raise ProtocolError("migration import response must be an object")
+        values = ("status", "import_digest", "project_digest", "target")
+        if not all(isinstance(payload.get(value), str) for value in values):
+            raise ProtocolError("migration import response has invalid evidence fields")
+        return MigrationImportEvidence(*(payload[value] for value in values))
 
     def archive_project(self, workspace_id: str, project_id: str) -> bool:
         if not workspace_id.strip() or not project_id.strip():

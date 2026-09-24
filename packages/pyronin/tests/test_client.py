@@ -150,6 +150,28 @@ def test_create_workspace_uses_idempotency_header() -> None:
     assert transport.calls[0][3] == {"Idempotency-Key": "create-ws-2"}
 
 
+def test_import_migration_session_is_typed_and_scoped() -> None:
+    transport = FakeTransport(
+        [
+            {
+                "status": "importable",
+                "import_digest": "i" * 64,
+                "project_digest": "p" * 64,
+                "target": "project-catalog",
+            }
+        ]
+    )
+    evidence = Ronin(transport=transport).import_migration_session(
+        "ws/1", "project/1", "migration/1", target="project-catalog"
+    )
+    assert evidence.status == "importable"
+    assert evidence.project_digest == "p" * 64
+    assert transport.calls[0][1] == (
+        "/v1/workspaces/ws%2F1/projects/project%2F1/"
+        "migration/sessions/migration%2F1/import"
+    )
+
+
 def test_workspace_and_project_pages_forward_and_validate_cursor() -> None:
     transport = FakeTransport(
         [
