@@ -192,4 +192,4 @@ mutation:
 	@rm -rf mutants
 	@test ! -e src && test ! -L src
 	@cp -a python src; trap 'rm -rf src' 0; PYTHONPATH=python:packages/pyronin/src mutmut run && mutmut export-cicd-stats
-	@python -m tools.mutation_gate mutants/mutmut-cicd-stats.json
+	@python3 -m tools.mutation_gate mutants/mutmut-cicd-stats.json
