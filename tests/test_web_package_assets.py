@@ -88,6 +88,9 @@ def test_genai_studio_exposes_discovery_and_health() -> None:
         "/genai/health",
         "/genai/prompts",
         "/genai/indexes",
+        "/genai/rag/evaluations",
+        "/genai/providers/",
+        "genai-qualification",
         "GenAI Studio",
     ):
         assert marker in source, f"GenAI Studio integration missing: {marker}"
