@@ -207,6 +207,7 @@ test('Data Engineering Studio executes a bounded read-only SQL query', async ({ 
     const body = route.request().postDataJSON();
     expect(body.sql).toBe('SELECT 1 AS value');
     expect(body.max_rows).toBe(1000);
+    expect(body.dialect).toBe('ansi');
     await route.fulfill({ json: { columns: [{ name: 'value', type_name: 'INTEGER' }], rows: [[1]], row_count: 1 } });
   });
   await page.goto('./#data');
