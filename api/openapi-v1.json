@@ -9,6 +9,18 @@
   "x-ronin-authorization-model": "typed-project-grants-v1",
   "security": [{"bearerAuth": []}],
   "paths": {
+    "/v1/data-engineering/queryflux/capabilities": {
+      "get": {
+        "operationId": "getQueryFluxCapabilities",
+        "description": "Return provider-neutral QueryFlux capability and health evidence without exposing cluster configuration.",
+        "responses": {
+          "200": {"description": "QueryFlux capability evidence", "content": {"application/json": {"schema": {"type": "object"}}}},
+          "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
     "/v1/platform/plugins": {
       "get": {
         "operationId": "listPlugins",

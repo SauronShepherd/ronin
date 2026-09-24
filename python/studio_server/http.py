@@ -66,6 +66,7 @@ SUPPORTED_ROUTES = (
             ("GET", "/v1/jobs/{job_id}/results"),
             ("POST", "/v1/jobs/{job_id}/cancel"),
             ("POST", "/v1/sql"),
+            ("GET", "/v1/data-engineering/queryflux/capabilities"),
         }
     )
     | MIGRATION_ROUTES
