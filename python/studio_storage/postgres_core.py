@@ -31,6 +31,7 @@ from studio_core.environments import (
 from studio_orchestrator import Instant
 
 from .bundle_catalog_import_port import CatalogBundleImportCommit, CatalogBundleImportConflict
+from .bundle_multi_import_port import MultiObjectBundleImportCommit, MultiObjectBundleImportConflict
 from .catalog import CatalogAssetNotFound, CatalogConflict
 from .connections import ConnectionConflict, ConnectionNotFound
 from .environments import EnvironmentConflict, EnvironmentNotFound
@@ -1019,6 +1020,118 @@ class PostgresMetadataStore:
                     )
             connection.commit()
             return edge
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def commit_multi_object_import(
+        self,
+        workspace_id: WorkspaceId,
+        connections: tuple[ConnectionDefinition, ...],
+        projects: tuple[ProjectManifest, ...],
+        bindings: tuple[ProjectEnvironmentBindings, ...],
+        *,
+        now: Instant | str,
+    ) -> MultiObjectBundleImportCommit:
+        """Atomically apply project, connection and environment binding metadata."""
+
+        connection_ids = [item.id for item in connections]
+        project_ids = [item.project.id for item in projects]
+        binding_keys = [(item.project_id, item.environment_id) for item in bindings]
+        if len(connection_ids) != len(set(connection_ids)):
+            raise ValueError("multi-object import connections must have unique ids")
+        if len(project_ids) != len(set(project_ids)):
+            raise ValueError("multi-object import projects must have unique ids")
+        if len(binding_keys) != len(set(binding_keys)):
+            raise ValueError("multi-object import bindings must be unique by project/environment")
+        if any(item.project_id not in set(project_ids) for item in bindings):
+            raise ValueError("multi-object import bindings must target staged projects")
+
+        current = Instant(now)
+        connection = self._connect()
+        connections_created = projects_created = bindings_created = 0
+        try:
+            with connection.cursor() as cursor:
+                self._require_active_workspace(cursor, workspace_id)
+                for definition in sorted(connections, key=lambda item: str(item.id)):
+                    payload = definition.to_json()
+                    cursor.execute(
+                        "SELECT definition_json FROM ronin_connections "
+                        "WHERE workspace_id=%s AND connection_id=%s FOR UPDATE",
+                        (str(workspace_id), str(definition.id)),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["definition_json"] != payload:
+                        raise MultiObjectBundleImportConflict(
+                            f"connection id already exists with different content: {definition.id}"
+                        )
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_connections("
+                            "workspace_id,connection_id,definition_json,created_at,updated_at) "
+                            "VALUES (%s,%s,%s,%s,%s)",
+                            (str(workspace_id), str(definition.id), payload, str(current), str(current)),
+                        )
+                        connections_created += 1
+                for manifest in sorted(projects, key=lambda item: str(item.project.id)):
+                    project_id = manifest.project.id
+                    payload = manifest.to_json()
+                    cursor.execute(
+                        "SELECT manifest_json FROM ronin_projects "
+                        "WHERE workspace_id=%s AND project_id=%s FOR UPDATE",
+                        (str(workspace_id), str(project_id)),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["manifest_json"] != payload:
+                        raise MultiObjectBundleImportConflict(
+                            f"project id already exists with different content: {project_id}"
+                        )
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_projects("
+                            "workspace_id,project_id,manifest_json,created_at,updated_at) "
+                            "VALUES (%s,%s,%s,%s,%s)",
+                            (str(workspace_id), str(project_id), payload, str(current), str(current)),
+                        )
+                        projects_created += 1
+                for item in sorted(bindings, key=lambda value: (str(value.project_id), str(value.environment_id))):
+                    cursor.execute(
+                        "SELECT definition_json FROM ronin_environments "
+                        "WHERE workspace_id=%s AND environment_id=%s",
+                        (str(workspace_id), str(item.environment_id)),
+                    )
+                    row = cursor.fetchone()
+                    if row is None:
+                        raise MultiObjectBundleImportConflict(
+                            f"target environment does not exist: {item.environment_id}"
+                        )
+                    if EnvironmentDefinition.from_json(row["definition_json"]).disabled:
+                        raise MultiObjectBundleImportConflict(
+                            f"target environment is disabled: {item.environment_id}"
+                        )
+                    payload = item.to_json()
+                    cursor.execute(
+                        "SELECT bindings_json FROM ronin_project_environment_bindings "
+                        "WHERE workspace_id=%s AND project_id=%s AND environment_id=%s FOR UPDATE",
+                        (str(workspace_id), str(item.project_id), str(item.environment_id)),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["bindings_json"] != payload:
+                        raise MultiObjectBundleImportConflict(
+                            "target environment already has different project bindings"
+                        )
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_project_environment_bindings("
+                            "workspace_id,project_id,environment_id,bindings_json,created_at,updated_at) "
+                            "VALUES (%s,%s,%s,%s,%s,%s)",
+                            (str(workspace_id), str(item.project_id), str(item.environment_id), payload, str(current), str(current)),
+                        )
+                        bindings_created += 1
+            connection.commit()
+            return MultiObjectBundleImportCommit(connections_created, projects_created, bindings_created)
         except Exception:
             connection.rollback()
             raise
