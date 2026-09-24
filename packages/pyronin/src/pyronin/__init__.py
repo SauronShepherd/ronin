@@ -1784,6 +1784,40 @@ class Ronin:
             raise ProtocolError("pipeline revision response must be an object")
         return payload
 
+    def run_pipeline(
+        self,
+        workspace_id: str,
+        project_id: str,
+        pipeline_id: str,
+        *,
+        revision_key: str,
+        ir_digest: str,
+        runtime: str,
+        parameters: Mapping[str, object] | None = None,
+    ) -> Mapping[str, object]:
+        """Create one idempotent, audited pipeline workflow run."""
+        if not all(isinstance(value, str) and value.strip() for value in (workspace_id, project_id, pipeline_id, revision_key, runtime)):
+            raise ValueError("workspace, project, pipeline, revision_key and runtime must be non-empty")
+        if not isinstance(ir_digest, str) or len(ir_digest) != 64 or ir_digest != ir_digest.lower() or any(char not in "0123456789abcdef" for char in ir_digest):
+            raise ValueError("ir_digest must be a lowercase SHA-256 digest")
+        if parameters is not None and not isinstance(parameters, Mapping):
+            raise ValueError("parameters must be a mapping")
+        payload = self._transport.request(
+            "POST",
+            f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/{quote(project_id, safe='')}"
+            f"/pipelines/{quote(pipeline_id, safe='')}/runs",
+            payload={
+                "revision_key": revision_key,
+                "ir_digest": ir_digest,
+                "runtime": runtime,
+                "parameters": dict(parameters or {}),
+            },
+            headers={"Idempotency-Key": f"pipeline:{project_id}:{pipeline_id}:{revision_key}:{ir_digest}"},
+        )
+        if not isinstance(payload, dict) or not isinstance(payload.get("id"), str):
+            raise ProtocolError("pipeline run response must contain an id")
+        return payload
+
     def compare_pipeline_revisions(
         self,
         workspace_id: str,

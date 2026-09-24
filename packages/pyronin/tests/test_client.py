@@ -945,6 +945,17 @@ def test_connector_checkpoint_health_rejects_non_text_identity() -> None:
         client.connector_checkpoint_health(None)
 
 
+def test_run_pipeline_is_audited_and_idempotent() -> None:
+    transport = FakeTransport([{"id": "pipeline-run-1", "state": "queued"}])
+    result = Ronin(transport=transport).run_pipeline(
+        "workspace-a", "project-1", "main", revision_key="main/working", ir_digest="a" * 64,
+        runtime="local-preview", parameters={"pipeline": {"nodes": [], "edges": []}},
+    )
+    assert result["id"] == "pipeline-run-1"
+    assert transport.calls[0][1].endswith("/pipelines/main/runs")
+    assert transport.calls[0][3]["Idempotency-Key"].endswith(":" + "a" * 64)
+
+
 def test_connector_plan_and_checkpoint_health_are_public_sdk_contracts() -> None:
     transport = FakeTransport(
         [
