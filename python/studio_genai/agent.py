@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -55,6 +56,24 @@ class AgentStep:
 class AgentRunResult:
     answer: str
     steps: tuple[AgentStep, ...]
+
+    def evidence_payload(self) -> dict[str, object]:
+        """Return bounded evidence metadata without persisting model/tool content."""
+
+        return {
+            "schema": "ronin.genai-agent-evidence/v1",
+            "status": "completed",
+            "answer_sha256": hashlib.sha256(self.answer.encode("utf-8")).hexdigest(),
+            "steps": [
+                {
+                    "step": item.step,
+                    "kind": item.kind,
+                    "tool_id": None if item.tool_id is None else item.tool_id.value,
+                }
+                for item in self.steps
+            ],
+            "step_count": len(self.steps),
+        }
 
 
 def _render_agent_prompt(prompt: PromptAsset, user_input: str) -> str:

@@ -196,6 +196,11 @@ def test_agent_calls_only_declared_tool_then_finishes() -> None:
     assert result.answer == "done"
     assert tuple(step.kind for step in result.steps) == ("tool", "final")
     assert tool.calls == [{"q": "alpha"}]
+    evidence = result.evidence_payload()
+    assert evidence["schema"] == "ronin.genai-agent-evidence/v1"
+    assert evidence["answer_sha256"] == __import__("hashlib").sha256(b"done").hexdigest()
+    assert "answer" not in evidence
+    assert evidence["steps"][0]["tool_id"] == "lookup"
 
 
 def test_agent_blocks_non_idempotent_tool_without_explicit_authorization() -> None:
