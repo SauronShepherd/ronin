@@ -3004,7 +3004,7 @@ class Ronin:
 
     def connector_checkpoint_health(self, checkpoint_identity: str) -> Mapping[str, object]:
         """Return durable health for a connector checkpoint identity."""
-        if not checkpoint_identity.strip():
+        if not isinstance(checkpoint_identity, str) or not checkpoint_identity.strip():
             raise ValueError("checkpoint_identity must be non-empty")
         payload = self._transport.request(
             "POST",

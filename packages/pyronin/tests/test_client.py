@@ -939,6 +939,12 @@ def test_project_permission_models_reject_invalid_decisions() -> None:
         ProjectPermissions("workspace-a", "project-1", (("project.read", object()),))
 
 
+def test_connector_checkpoint_health_rejects_non_text_identity() -> None:
+    client = Ronin(transport=FakeTransport([]))
+    with pytest.raises(ValueError, match="checkpoint_identity"):
+        client.connector_checkpoint_health(None)
+
+
 def test_connector_plan_and_checkpoint_health_are_public_sdk_contracts() -> None:
     transport = FakeTransport(
         [
