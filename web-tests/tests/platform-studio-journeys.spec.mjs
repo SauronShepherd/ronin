@@ -129,6 +129,54 @@ test('Workspace and project Studio journey covers environment, Bundle and archiv
   await expect(page.locator('#project-list')).toContainText('No active projects');
 });
 
+test('Notebook Studio edits, creates and executes a bounded notebook', async ({ page }) => {
+  let saved = false;
+  await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/notebooks', async route => {
+    if (route.request().method() === 'POST') {
+      expect(route.request().postDataJSON()).toEqual({ id: 'new-notebook', document: { schema: 'ronin.notebook/v1', cells: [] } });
+      await route.fulfill({ json: { id: 'new-notebook', revision: 1, document: { schema: 'ronin.notebook/v1', cells: [] } } });
+      return;
+    }
+    await route.fulfill({ json: { items: [{ id: 'etl', revision: saved ? 2 : 1 }] } });
+  });
+  await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/notebooks/etl', async route => {
+    if (route.request().method() === 'PUT') {
+      expect(route.request().postDataJSON().expected_revision).toBe(1);
+      saved = true;
+      await route.fulfill({ json: { id: 'etl', revision: 2, document: route.request().postDataJSON().document } });
+      return;
+    }
+    await route.fulfill({ json: { id: 'etl', revision: 1, runtime: 'local', document: { schema: 'ronin.notebook/v1', cells: [{ id: 'cell-1', source: 'SELECT 1' }] } } });
+  });
+  await page.route('**/v1/jobs', async route => {
+    expect(route.request().postDataJSON().target).toBe('notebook:etl');
+    await route.fulfill({ json: { id: 'job-notebook-1', state: 'queued' } });
+  });
+  await page.route('**/v1/jobs/job-notebook-1', async route => {
+    await route.fulfill({ json: { id: 'job-notebook-1', state: 'succeeded' } });
+  });
+  await page.route('**/v1/jobs/job-notebook-1/results', async route => {
+    await route.fulfill({ json: { items: [{ cell_id: 'cell-1', state: 'succeeded' }] } });
+  });
+
+  await page.goto('./#notebooks');
+  await page.getByRole('button', { name: 'etl (r1)' }).click();
+  const documentField = page.locator('#notebook-editor textarea[name="document"]');
+  await documentField.fill('{"schema":"ronin.notebook/v1","cells":[{"id":"cell-1","source":"SELECT 2"}]}');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.locator('#notebook-result')).toContainText('"revision": 2');
+  await page.locator('#notebook-editor input[name="id"]').fill('new-notebook');
+  await page.locator('#notebook-editor input[name="revision"]').fill('1');
+  await documentField.fill('{"schema":"ronin.notebook/v1","cells":[]}');
+  await page.getByRole('button', { name: 'Create' }).click();
+  await expect(page.locator('#notebook-result')).toContainText('new-notebook');
+  await page.locator('#notebook-editor input[name="id"]').fill('etl');
+  await page.locator('#notebook-editor input[name="revision"]').fill('2');
+  await documentField.fill('{"schema":"ronin.notebook/v1","cells":[{"id":"cell-1","source":"SELECT 2"}]}');
+  await page.getByRole('button', { name: 'Run all cells' }).click();
+  await expect(page.locator('#notebook-run')).toContainText('succeeded');
+});
+
 test('Ingestion Studio exposes sync plan and checkpoint health', async ({ page }) => {
   await page.route('**/v1/platform/connectors', async route => {
     await route.fulfill({ json: { items: [] } });
