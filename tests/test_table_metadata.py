@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 from studio_lakehouse import OpenTableField, OpenTableIdentifier, TableMetadata
+from studio_lakehouse.bundle import export_table_metadata_bundle, import_table_metadata_bundle
 
 
 def test_table_metadata_keeps_identity_independent_from_physical_location() -> None:
@@ -62,3 +63,22 @@ def test_table_metadata_rejects_empty_property_keys_or_values() -> None:
             TableMetadata(
                 identifier, "delta", "s3://warehouse/events", True, fields, (), properties
             )
+
+
+def test_table_metadata_bundle_round_trip_remaps_physical_location(tmp_path) -> None:
+    metadata = TableMetadata(
+        OpenTableIdentifier(("analytics",), "events"),
+        "iceberg",
+        "s3://source/events",
+        False,
+        (OpenTableField("id", "int", False),),
+    )
+    bundle = tmp_path / "tables.roninbundle"
+    export_table_metadata_bundle((metadata,), bundle)
+
+    imported = import_table_metadata_bundle(
+        bundle, remap_location=lambda table: f"file:///target/{table.identifier.name}"
+    )
+    assert imported[0].identifier == metadata.identifier
+    assert imported[0].location == "file:///target/events"
+    assert imported[0].format == metadata.format
