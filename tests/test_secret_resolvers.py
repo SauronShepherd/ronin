@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -38,6 +39,8 @@ def test_mounted_file_secret_resolver_reads_only_regular_files_under_root(tmp_pa
     nested.mkdir()
     secret = nested / "password"
     secret.write_bytes(b"db-password")
+    if os.name != "nt":
+        secret.chmod(0o600)
 
     resolver = MountedFileSecretResolver(root)
     material = resolver.resolve(SecretRef("secret://file/database/password"))
