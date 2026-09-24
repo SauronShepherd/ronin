@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from studio_orchestrator import Job
 from studio_sql import SqlEngine
@@ -18,6 +19,22 @@ class UnsupportedSchedulerWorkload(RuntimeError):
 class SchedulerWorkloadResult:
     family: str
     sql: SchedulerSqlResult | None = None
+
+    def evidence_payload(self) -> dict[str, Any]:
+        """Return the portable, deterministic payload stored as scheduler evidence."""
+
+        if self.family == "sql" and self.sql is not None:
+            return {
+                "family": self.family,
+                "evidence_digest": self.sql.evidence_digest,
+                "columns": [
+                    {"name": column.name, "type": column.type_name}
+                    for column in self.sql.result.columns
+                ],
+                "rows": [list(row) for row in self.sql.result.rows],
+                "version": 1,
+            }
+        raise UnsupportedSchedulerWorkload("scheduler result has no portable evidence payload")
 
 
 def execute_scheduler_job(

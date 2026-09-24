@@ -39,6 +39,8 @@ def test_scheduler_dispatch_routes_sql_without_notebook_fallback() -> None:
     assert result.family == "sql"
     assert result.sql is not None
     assert result.sql.result.rows == ((1,),)
+    assert result.evidence_payload()["evidence_digest"] == result.sql.evidence_digest
+    assert result.evidence_payload()["rows"] == [[1]]
 
 
 def test_scheduler_dispatch_rejects_unqualified_family() -> None:
