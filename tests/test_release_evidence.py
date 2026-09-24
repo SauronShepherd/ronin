@@ -6,11 +6,15 @@ from pathlib import Path
 import pytest
 
 from tools.release_evidence import (
+    GATE_PROFILES,
+    MERGE_REQUIRED_GATES,
+    RELEASE_REQUIRED_GATES,
     SCHEMA,
     EvidenceError,
     load,
     merge,
     release_verdict,
+    required_gates,
     validate_bundle,
 )
 
@@ -134,3 +138,16 @@ def test_release_verdict_rejects_stale_expected_commit() -> None:
     bundle = {"schema": SCHEMA, "commit": "abc123", "records": [record("unit")]}
     with pytest.raises(EvidenceError, match="expected commit"):
         release_verdict(bundle, {"unit"}, expected_commit="current456")
+
+
+def test_gate_profiles_keep_release_strictly_broader_than_merge() -> None:
+    assert GATE_PROFILES["merge_required"] == MERGE_REQUIRED_GATES
+    assert GATE_PROFILES["release_required"] == RELEASE_REQUIRED_GATES
+    assert MERGE_REQUIRED_GATES < RELEASE_REQUIRED_GATES
+    assert "mutation" in RELEASE_REQUIRED_GATES
+    assert "installed-artifact" in RELEASE_REQUIRED_GATES
+
+
+def test_unknown_gate_profile_fails_closed() -> None:
+    with pytest.raises(EvidenceError, match="unknown gate profile"):
+        required_gates("not-a-profile")

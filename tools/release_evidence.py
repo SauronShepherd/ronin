@@ -18,9 +18,41 @@ SCHEMA = "ronin.release-evidence/v1"
 STATUSES = {"passed", "failed", "skipped", "blocked"}
 REQUIRED = {"gate_id", "status", "commit", "environment", "command", "started_at", "ended_at"}
 
+# Gate classes are deliberately explicit.  Callers may add a narrower
+# project-specific set, but a release verdict must never silently use the
+# merge gate set as a substitute for the release gate set.
+MERGE_REQUIRED_GATES = frozenset({"ci", "security", "status-consistency"})
+RELEASE_REQUIRED_GATES = frozenset(
+    {
+        *MERGE_REQUIRED_GATES,
+        "docker-qualification",
+        "mutation",
+        "browser",
+        "a11y",
+        "installed-artifact",
+        "sbom-provenance",
+        "license",
+        "artifact-identity",
+    }
+)
+GATE_PROFILES = {
+    "merge_required": MERGE_REQUIRED_GATES,
+    "release_required": RELEASE_REQUIRED_GATES,
+}
+
 
 class EvidenceError(ValueError):
     """Raised when evidence cannot support a release claim."""
+
+
+def required_gates(profile: str) -> frozenset[str]:
+    """Return the named gate profile, rejecting unknown profiles fail-closed."""
+
+    try:
+        return GATE_PROFILES[profile]
+    except KeyError as exc:
+        available = ", ".join(sorted(GATE_PROFILES))
+        raise EvidenceError(f"unknown gate profile {profile!r}; choose from {available}") from exc
 
 
 def _text(value: Any, name: str) -> str:
