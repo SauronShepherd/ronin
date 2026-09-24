@@ -8,6 +8,8 @@ from typing import Protocol, cast
 from studio_core.genai import AgentDefinition, PromptAsset, ToolContract
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
+from .evaluation import RAGEvaluationReport
+
 
 class _GenAIService(Protocol):
     def providers(self, workspace_id: str) -> object: ...
@@ -548,7 +550,12 @@ class GenAIPlugin:
         ):
             return {"error": {"code": "invalid_evaluation"}}
         try:
-            return self._service.evaluate_rag(workspace_id, {"examples": examples})
+            result = self._service.evaluate_rag(workspace_id, {"examples": examples})
+            if isinstance(result, RAGEvaluationReport):
+                payload = result.to_payload()
+                payload["evidence_digest"] = result.evidence_digest()
+                return payload
+            return result
         except Exception as exc:
             return {"error": {"code": "evaluation_failed", "message": str(exc)}}
 
