@@ -244,6 +244,10 @@ test('Data Engineering Studio visual pipeline editor synchronizes nodes, edges a
   await page.locator('#de-edge-to').selectOption('sink');
   await page.getByRole('button', { name: 'Connect nodes', exact: true }).click();
   await expect(page.locator('#de-pipeline-visual-result')).toContainText('2 node(s), 1 edge(s)');
+  await page.locator('#de-edge-from').selectOption('source');
+  await page.locator('#de-edge-to').selectOption('sink');
+  await page.getByRole('button', { name: 'Connect nodes', exact: true }).click();
+  await expect(page.locator('#de-pipeline-visual-result')).toContainText('Edge already exists');
   await page.locator('#de-edge-from').selectOption('sink');
   await page.locator('#de-edge-to').selectOption('source');
   await page.getByRole('button', { name: 'Connect nodes', exact: true }).click();

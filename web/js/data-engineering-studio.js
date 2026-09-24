@@ -153,6 +153,7 @@ document.addEventListener('click', async event => {
         const targetNode = documentValue.pipeline.nodes.find(node => node.id === to);
         if (!targetNode?.ports?.some(candidate => candidate.name === port && candidate.direction === 'input')) throw new Error(`Target port does not exist: ${to}.${port}`);
         if (documentValue.pipeline.edges.some(edge => edge.source === from && edge.target === to && edge.target_port === port)) throw new Error('Edge already exists');
+        if (documentValue.pipeline.edges.some(edge => edge.target === to && edge.target_port === port)) throw new Error(`Target port is already connected: ${to}.${port}`);
         if (createsCycle(documentValue.pipeline.edges, from, to)) throw new Error('Connection would create a pipeline cycle');
         documentValue.pipeline.edges.push({ source: from, source_port: 'out', target: to, target_port: port });
         field.value = JSON.stringify(documentValue);
