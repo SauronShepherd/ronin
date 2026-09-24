@@ -10,6 +10,7 @@ from studio_execution import (
 )
 from studio_orchestrator import Instant, Job, JobId, JobState
 from studio_sql import SqlColumn, SqlQueryResult
+from studio_storage import LocalArtifactStore
 
 
 class Engine:
@@ -69,3 +70,32 @@ def test_scheduler_dispatch_routes_graph_query() -> None:
     )
     assert result.family == "graph"
     assert result.evidence_payload()["objects"][0]["object_type"] == "Order"
+
+
+def test_scheduler_dispatch_routes_quality_gate_through_rows_artifact(tmp_path) -> None:
+    store = LocalArtifactStore(tmp_path)
+    rows_ref = store.put_bytes(role="quality-rows", data=b'[{"id": 1}]').storage_ref
+    seen: dict[str, object] = {}
+
+    class Quality:
+        def run(self, workspace_id, payload, *, now):
+            seen.update({"workspace": workspace_id, "payload": payload, "now": now})
+            return {"run": {"status": "passed"}, "gate_passed": True}
+
+    result = execute_scheduler_job(
+        _job(
+            "quality.gate",
+            {
+                "asset_id": "orders",
+                "version": "v1",
+                "contract_digest": "a" * 64,
+                "rows_ref": rows_ref,
+            },
+        ),
+        quality_adapter=Quality(),
+        artifact_store=store,
+        workspace_id="workspace-1",
+        run_id="run-1",
+    )
+    assert result.family == "quality"
+    assert seen["payload"]["rows"] == [{"id": 1}]
