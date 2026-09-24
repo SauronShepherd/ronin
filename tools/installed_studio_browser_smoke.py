@@ -79,6 +79,8 @@ def qualify(wheel: Path) -> dict[str, object]:
         thread.start()
         base = f"http://127.0.0.1:{server.server_port}"
         console_errors: list[str] = []
+        failed_requests: list[str] = []
+        csp_violations: list[str] = []
         pages: list[dict[str, object]] = []
         try:
             with sync_playwright() as playwright:
@@ -107,6 +109,29 @@ def qualify(wheel: Path) -> dict[str, object]:
                     ),
                 )
                 page.on("pageerror", lambda error: console_errors.append(str(error)))
+                page.on(
+                    "requestfailed",
+                    lambda request: failed_requests.append(
+                        f"{request.method} {request.url}: {request.failure}"
+                    ),
+                )
+                page.on(
+                    "response",
+                    lambda response: (
+                        failed_requests.append(f"{response.status} {response.url}")
+                        if response.status >= 400
+                        else None
+                    ),
+                )
+                page.on(
+                    "console",
+                    lambda message: (
+                        csp_violations.append(message.text)
+                        if "content security policy" in message.text.lower()
+                        or "violates the following csp" in message.text.lower()
+                        else None
+                    ),
+                )
                 for route in routes:
                     page.goto(f"{base}/index.html#{route}", wait_until="networkidle")
                     contract = route_contracts[route]
@@ -148,9 +173,11 @@ def qualify(wheel: Path) -> dict[str, object]:
             "wheel": str(wheel),
             "routes": pages,
             "console_errors": console_errors,
+            "failed_requests": failed_requests,
+            "csp_violations": csp_violations,
             "failures": failures,
         }
-        if failures or console_errors:
+        if failures or console_errors or failed_requests or csp_violations:
             raise AssertionError(json.dumps(result, indent=2))
         return result
 
