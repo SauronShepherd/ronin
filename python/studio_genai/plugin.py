@@ -77,7 +77,6 @@ class GenAIPlugin:
             "genai.agent.put.v1",
             "genai.agent.delete.v1",
             "genai.agent.runs.v1",
-            "genai.agent.run.v1",
         ),
     )
 
