@@ -100,6 +100,7 @@ jobs:
           set -euo pipefail
           python -m venv /tmp/ronin-wheel-venv
           /tmp/ronin-wheel-venv/bin/python -m pip install --disable-pip-version-check --no-deps dist/*.whl
+          /tmp/ronin-wheel-venv/bin/python tools/public_import_smoke.py
           cd /tmp
           /tmp/ronin-wheel-venv/bin/python - <<'PY'
           import os
@@ -122,6 +123,7 @@ jobs:
           set -euo pipefail
           python -m venv /tmp/ronin-sdist-venv
           /tmp/ronin-sdist-venv/bin/python -m pip install --disable-pip-version-check --no-deps dist/*.tar.gz
+          /tmp/ronin-sdist-venv/bin/python tools/public_import_smoke.py
           cd /tmp
           /tmp/ronin-sdist-venv/bin/python - <<'PY'
           import os

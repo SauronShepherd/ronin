@@ -220,18 +220,7 @@ jobs:
         shell: bash
         run: |
           source "$VERIFY_VENV/bin/activate"
-          python - <<'PY'
-          import studio_cli
-          import studio_core
-          import studio_kernel
-          import studio_notebook
-          import studio_orchestrator
-          import studio_runners
-          import studio_server
-          import studio_storage
-          import studio_vcs
-          print("clean imports ok")
-          PY
+          python -m tools.public_import_smoke
       - name: Run acceptance scaffold without release claim
         shell: bash
         run: |
