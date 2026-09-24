@@ -152,6 +152,10 @@ test('Notebook Studio edits, creates and executes a bounded notebook', async ({ 
     expect(route.request().postDataJSON().target).toBe('notebook:etl');
     await route.fulfill({ json: { id: 'job-notebook-1', state: 'queued' } });
   });
+  await page.route('**/v1/jobs/job-notebook-1/cancel', async route => {
+    expect(route.request().method()).toBe('POST');
+    await route.fulfill({ json: { id: 'job-notebook-1', state: 'cancelling' } });
+  });
   await page.route('**/v1/jobs/job-notebook-1', async route => {
     await route.fulfill({ json: { id: 'job-notebook-1', state: 'succeeded' } });
   });
@@ -175,6 +179,8 @@ test('Notebook Studio edits, creates and executes a bounded notebook', async ({ 
   await documentField.fill('{"schema":"ronin.notebook/v1","cells":[{"id":"cell-1","source":"SELECT 2"}]}');
   await page.getByRole('button', { name: 'Run all cells' }).click();
   await expect(page.locator('#notebook-run')).toContainText('succeeded');
+  await page.getByRole('button', { name: 'Cancel run' }).click();
+  await expect(page.locator('#notebook-run')).toContainText('cancelling');
 });
 
 test('Ingestion Studio exposes sync plan and checkpoint health', async ({ page }) => {
