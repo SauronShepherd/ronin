@@ -57,6 +57,31 @@ def test_constraints_reject_secrets_duplicates_and_excess() -> None:
         Grant(frozenset({"read"}), ResourceScope("project", None), values)
 
 
+@pytest.mark.parametrize("action", sorted(ACTIONS))
+def test_grant_action_vocabulary_is_fail_closed(action: str) -> None:
+    grant = Grant(frozenset({action}), ResourceScope("project", "p-1"))
+    assert action in grant.actions
+    with pytest.raises(ValueError, match="unsupported authorization action"):
+        Grant(frozenset({"not-an-action"}), ResourceScope("project", "p-1"))
+
+
+def test_constraints_are_sorted_and_secret_detection_is_case_insensitive() -> None:
+    grant = Grant(
+        frozenset({"read"}),
+        ResourceScope("project", "p-1"),
+        {"zeta": "last", "alpha": "first"},
+    )
+    assert grant.constraints == (("alpha", "first"), ("zeta", "last"))
+    assert Grant.from_payload(grant.to_payload()) == grant
+    for key, value in (
+        ("Api-Key", "x"),
+        ("safe", "-----BEGIN PRIVATE KEY-----secret"),
+        ("safe", "Bearer token"),
+    ):
+        with pytest.raises(ValueError, match="credential"):
+            Grant(frozenset({"read"}), ResourceScope("project", None), {key: value})
+
+
 def test_grant_set_decisions_and_specificity_are_deterministic() -> None:
     exact = Grant(frozenset({"read"}), ResourceScope("project", "p-1"))
     wildcard = Grant(frozenset({"read"}), ResourceScope("project", None))
@@ -127,6 +152,17 @@ def test_bearer_scope_preserves_wildcard_identifier_semantics() -> None:
     requirement = parse_bearer_scope("ronin:v1:read:project:*")
     assert requirement.resource.identifier is None
     assert requirement_to_bearer_scope(requirement) == "ronin:v1:read:project:*"
+
+
+@pytest.mark.parametrize("kind", ["project", "job", "run", "evidence", "*"])
+@pytest.mark.parametrize("action", sorted(ACTIONS))
+def test_bearer_scope_round_trips_every_public_vocabulary_value(
+    action: str, kind: str
+) -> None:
+    identifier = None if kind == "*" else "tenant/a:b?c"
+    requirement = Requirement(action, ResourceScope(kind, identifier))  # type: ignore[arg-type]
+    encoded = requirement_to_bearer_scope(requirement)
+    assert parse_bearer_scope(encoded) == requirement
 
 
 def test_decision_and_evidence_invariants() -> None:
