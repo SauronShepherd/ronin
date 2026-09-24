@@ -18,7 +18,7 @@ from .provider import (
     GenAIProviderRuntime,
     OpenAICompatibleProvider,
 )
-from .qualification import ProviderQualification, qualify_provider_model
+from .qualification import ProviderQualification, qualify_model_payload, qualify_provider_model
 from .rag import RAGResult, VectorIndexBuildResult, build_vector_index, run_rag
 from .vector_store import SqliteVectorStore, VectorChunk, VectorMatch
 
@@ -33,6 +33,7 @@ __all__ = (
     "OpenAICompatibleProvider",
     "ProviderQualification",
     "qualify_provider_model",
+    "qualify_model_payload",
     "RAGResult",
     "SqliteVectorStore",
     "ToolRegistry",

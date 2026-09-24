@@ -55,4 +55,23 @@ def qualify_provider_model(provider: ModelProvider, model: GenAIModel) -> Provid
     )
 
 
-__all__ = ("ProviderQualification", "qualify_provider_model")
+def qualify_model_payload(
+    provider: ModelProvider, model_id: object, capabilities: object
+) -> ProviderQualification:
+    """Validate public model fields and apply deterministic qualification rules."""
+
+    if not isinstance(model_id, str) or not model_id.strip() or "\x00" in model_id:
+        raise ValueError("model_id must be a non-empty safe string")
+    if not isinstance(capabilities, list) or not capabilities:
+        raise ValueError("capabilities must be a non-empty list")
+    if not all(isinstance(value, str) and value.strip() for value in capabilities):
+        raise ValueError("capabilities must contain non-empty strings")
+    if len(set(capabilities)) != len(capabilities):
+        raise ValueError("capabilities must be unique")
+    return qualify_provider_model(
+        provider,
+        GenAIModel(provider.id, model_id, frozenset(capabilities)),
+    )
+
+
+__all__ = ("ProviderQualification", "qualify_model_payload", "qualify_provider_model")

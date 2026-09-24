@@ -1,5 +1,5 @@
 from studio_core.genai import GenAIModel, ModelProvider, ProviderId
-from studio_genai import qualify_provider_model
+from studio_genai import qualify_model_payload, qualify_provider_model
 
 
 def test_openai_compatible_provider_model_qualifies() -> None:
@@ -16,3 +16,9 @@ def test_provider_qualification_rejects_mismatch_and_insecure_endpoint() -> None
     result = qualify_provider_model(provider, model)
     assert result.status == "rejected"
     assert set(result.findings) == {"model_provider_mismatch", "provider_endpoint_not_secure"}
+
+
+def test_public_model_payload_is_validated_before_qualification() -> None:
+    provider = ModelProvider(ProviderId("provider"), "openai-compatible", "https://llm.test/v1")
+    result = qualify_model_payload(provider, "chat", ["chat"])
+    assert result.status == "qualified"
