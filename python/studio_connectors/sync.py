@@ -34,6 +34,26 @@ class _SyncRegistry(Protocol):
         *,
         limit: int = 100,
     ) -> ConnectorReadResult: ...
+    def read(
+        self,
+        connector_id: str,
+        connection: object,
+        asset: object,
+        secrets: object,
+        *,
+        limit: int = 10_000,
+        checkpoint: object | None = None,
+    ) -> ConnectorReadResult: ...
+
+
+class _DestinationWriter(Protocol):
+    def write(
+        self,
+        destination_ref: str,
+        result: ConnectorReadResult,
+        *,
+        fence: int,
+    ) -> tuple[str, str]: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -181,6 +201,53 @@ class IngestionSyncService:
             "rows": [dict(row) for row in result.rows],
             "row_count": len(result.rows),
             "checkpoint": health.to_payload(),
+        }
+
+    def execute(
+        self,
+        definition: IngestionSyncDefinition,
+        *,
+        connection: object,
+        asset: object,
+        secrets: object,
+        destination: _DestinationWriter,
+        limit: int = 10_000,
+    ) -> dict[str, object]:
+        """Read, durably write the destination, then advance the checkpoint."""
+
+        health = self._checkpoints.health(definition.checkpoint_identity)
+        expected = self._checkpoints.get(definition.checkpoint_identity)
+        plan = self._registry.plan_sync(definition, checkpoint_present=health.present)
+        fence = self._checkpoints.acquire(definition.checkpoint_identity)
+        result = self._registry.read(
+            definition.connector_id,
+            connection,
+            asset,
+            secrets,
+            limit=limit,
+            checkpoint=expected,
+        )
+        if result.checkpoint is None:
+            raise ValueError("connector sync execution must return a next checkpoint")
+        output_id, output_digest = destination.write(
+            definition.destination_ref,
+            result,
+            fence=fence,
+        )
+        evidence = self._checkpoints.commit_output_then_checkpoint(
+            definition.checkpoint_identity,
+            expected,
+            result.checkpoint,
+            output_id=output_id,
+            output_digest=output_digest,
+            fence=fence,
+            output_committed=True,
+        )
+        return {
+            "schema": "ronin.ingestion-sync-result/v1",
+            "plan": plan.to_payload(),
+            "rows_written": len(result.rows),
+            "checkpoint": evidence.to_payload(),
         }
 
 
