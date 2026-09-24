@@ -130,7 +130,9 @@ class AIStudioPlugin:
         if self._api is None:
             return {"status": "not_configured", "provider": "unavailable"}
         try:
-            response = self._api.dispatch("GET", "/health", body if isinstance(body, dict) else None)
+            response = self._api.dispatch(
+                "GET", "/health", body if isinstance(body, dict) else None
+            )
         except Exception:
             return {"status": "unhealthy", "provider": "unavailable"}
         return {"status": "healthy", "provider": "configured", "upstream": dict(response.body)}
