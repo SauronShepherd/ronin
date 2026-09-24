@@ -194,6 +194,14 @@ def run_agent(
         except Exception:
             if record_tool is not None:
                 record_tool(tool_id, "failed")
+            if record_telemetry is not None:
+                record_telemetry(
+                    {
+                        "event": "agent_tool",
+                        "tool_id": tool_id.value,
+                        "status": "failed",
+                    }
+                )
             raise
         if not isinstance(output, Mapping):
             raise TypeError("tool runtime must return a mapping")
