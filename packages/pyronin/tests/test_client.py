@@ -222,6 +222,18 @@ def test_discover_migration_session_encodes_document_and_validates_inventory() -
     assert transport.calls[0][2]["document_base64"] == "eyJqb2JzIjpbXX0="
 
 
+def test_convert_migration_session_requires_workflow_and_report() -> None:
+    transport = FakeTransport([{"workflow": {"id": "wf-1"}, "report": {"objects": []}}])
+    payload = Ronin(transport=transport).convert_migration_session(
+        "ws-1", "p-1", "m-1", profile="fabric", document=b"{}", source_version="2026"
+    )
+    assert payload["workflow"]["id"] == "wf-1"
+    assert transport.calls[0][0:2] == (
+        "POST",
+        "/v1/workspaces/ws-1/projects/p-1/migration/sessions/m-1/convert",
+    )
+
+
 def test_workspace_and_project_pages_forward_and_validate_cursor() -> None:
     transport = FakeTransport(
         [

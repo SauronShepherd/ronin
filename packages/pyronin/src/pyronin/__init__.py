@@ -1032,6 +1032,40 @@ class Ronin:
             raise ProtocolError("migration discovery response must contain a units array")
         return payload
 
+    def convert_migration_session(
+        self,
+        workspace_id: str,
+        project_id: str,
+        session_id: str,
+        *,
+        profile: str,
+        document: bytes,
+        source_version: str = "unknown",
+    ) -> Mapping[str, object]:
+        if not all(value.strip() for value in (workspace_id, project_id, session_id, profile)):
+            raise ValueError("workspace_id, project_id, session_id and profile must be non-empty")
+        if not isinstance(document, bytes) or not document:
+            raise ValueError("document must be non-empty bytes")
+        if not isinstance(source_version, str) or not source_version.strip():
+            raise ValueError("source_version must be non-empty")
+        payload = self._transport.request(
+            "POST",
+            f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+            f"{quote(project_id, safe='')}/migration/sessions/{quote(session_id, safe='')}/convert",
+            payload={
+                "profile": profile,
+                "document_base64": base64.b64encode(document).decode("ascii"),
+                "source_version": source_version,
+            },
+        )
+        if not isinstance(payload, dict):
+            raise ProtocolError("migration conversion response must be an object")
+        if not isinstance(payload.get("workflow"), dict) or not isinstance(
+            payload.get("report"), dict
+        ):
+            raise ProtocolError("migration conversion response must contain workflow and report")
+        return payload
+
     def archive_project(self, workspace_id: str, project_id: str) -> bool:
         if not workspace_id.strip() or not project_id.strip():
             raise ValueError("workspace_id and project_id must be non-empty")
