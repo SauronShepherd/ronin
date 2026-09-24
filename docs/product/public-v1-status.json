@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-09-24T00:00:00+00:00",
-  "observed_main_sha": "1bc954aea183800fa2d6f5b4da65e7316f7ca549",
+  "observed_main_sha": "ea0006fa59d4cbb122e6b1f0d0997f0532a2ea24",
   "observed_workspace_state": "implementation branch with tracked changes committed and pushed; generated local artifacts remain untracked",
   "release_status": "incomplete",
   "qualification_status": "blocked",
