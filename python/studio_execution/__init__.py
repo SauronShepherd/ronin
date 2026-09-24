@@ -56,6 +56,7 @@ from .git_source import GitCheckoutResult, GitSourceAdapter, GitSourceError
 from .kubernetes import KubernetesExecutionAdapter, KubernetesManifestError, render_job
 from .ontology_http import GraphStore, OntologyHTTPAdapter, OntologyStore
 from .scheduler_http import SqliteWorkflowHTTPAdapter, WorkflowStore
+from .scheduler_sql import SchedulerSqlResult, execute_scheduler_sql
 from .workspace_service import (
     ProjectService,
     WorkspaceService,
@@ -342,4 +343,6 @@ __all__ = (
     "GitSourceError",
     "diff_environments",
     "WorkerPollResult",
+    "SchedulerSqlResult",
+    "execute_scheduler_sql",
 )
