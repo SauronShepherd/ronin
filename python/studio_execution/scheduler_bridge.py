@@ -282,6 +282,15 @@ def _execution_controls(params: Mapping[str, object]) -> dict[str, object]:
         if not isinstance(evidence_ref, str) or not evidence_ref.strip():
             raise ValueError("evidence_ref must be a non-empty string")
         controls["evidence_ref"] = evidence_ref
+    timeout_seconds = params.get("timeout_seconds")
+    if timeout_seconds is not None:
+        if (
+            not isinstance(timeout_seconds, int)
+            or isinstance(timeout_seconds, bool)
+            or not 1 <= timeout_seconds <= 7 * 24 * 60 * 60
+        ):
+            raise ValueError("timeout_seconds must be an integer between 1 and 604800")
+        controls["timeout_seconds"] = timeout_seconds
     return controls
 
 

@@ -156,12 +156,14 @@ def test_adapter_controls_are_carried_into_the_durable_job(tmp_path: Path) -> No
             "parameters": {"limit": 10},
             "resource_policy": {"cpu_millis": 500, "memory_bytes": 1048576},
             "evidence_ref": "artifact://evidence/run-1",
+            "timeout_seconds": 600,
         },
     )
     plan = plan_scheduler_execution(claim, run, "project-1", now=NOW)
     payload = json.loads(plan.job.parameters_json)
     assert payload["resource_policy"] == {"cpu_millis": 500, "memory_bytes": 1048576}
     assert payload["evidence_ref"] == "artifact://evidence/run-1"
+    assert payload["timeout_seconds"] == 600
 
 
 @pytest.mark.parametrize(
@@ -171,6 +173,9 @@ def test_adapter_controls_are_carried_into_the_durable_job(tmp_path: Path) -> No
         {"resource_policy": "invalid"},
         {"evidence_ref": ""},
         {"evidence_ref": 42},
+        {"timeout_seconds": 0},
+        {"timeout_seconds": 604801},
+        {"timeout_seconds": True},
     ],
 )
 def test_adapter_controls_fail_closed(tmp_path: Path, controls: dict[str, object]) -> None:
@@ -182,7 +187,7 @@ def test_adapter_controls_fail_closed(tmp_path: Path, controls: dict[str, object
             **controls,
         },
     )
-    with pytest.raises(ValueError, match="resource_policy|evidence_ref"):
+    with pytest.raises(ValueError, match="resource_policy|evidence_ref|timeout_seconds"):
         plan_scheduler_execution(claim, run, "project-1", now=NOW)
 
 
