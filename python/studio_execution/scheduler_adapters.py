@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from studio_connectors import IngestionSyncDefinition
-from studio_orchestrator import Job
+from studio_observability import NotificationIntent
+from studio_orchestrator import Instant, Job
 from studio_quality import resolve_quality_rows
 from studio_sql import SqlEngine
 from studio_storage import ArtifactStore
@@ -26,6 +27,7 @@ class SchedulerWorkloadResult:
     graph: tuple[dict[str, object], ...] | None = None
     quality: dict[str, object] | None = None
     connector: dict[str, object] | None = None
+    notification: dict[str, object] | None = None
 
     def evidence_payload(self) -> dict[str, Any]:
         """Return the portable, deterministic payload stored as scheduler evidence."""
@@ -51,6 +53,8 @@ class SchedulerWorkloadResult:
             return {"family": self.family, "quality": self.quality, "version": 1}
         if self.family == "connector" and self.connector is not None:
             return {"family": self.family, "connector": self.connector, "version": 1}
+        if self.family == "notification" and self.notification is not None:
+            return {"family": self.family, "notification": self.notification, "version": 1}
         raise UnsupportedSchedulerWorkload("scheduler result has no portable evidence payload")
 
 
@@ -69,6 +73,9 @@ def execute_scheduler_job(
     connector_asset: object | None = None,
     connector_secrets: object | None = None,
     connector_destination: object | None = None,
+    notification_sink: object | None = None,
+    notification_artifacts: ArtifactStore | None = None,
+    notification_now: Instant | str | None = None,
     max_rows: int = 10_000,
     timeout_seconds: int | None = None,
 ) -> SchedulerWorkloadResult:
@@ -165,6 +172,53 @@ def execute_scheduler_job(
         if not isinstance(result, dict):
             raise UnsupportedSchedulerWorkload("connector sync returned an invalid result")
         return SchedulerWorkloadResult(family="connector", connector=result)
+    if job.target == "notification.send":
+        if notification_sink is None or notification_artifacts is None:
+            raise UnsupportedSchedulerWorkload(
+                "notification.send requires notification_sink and notification_artifacts"
+            )
+        try:
+            payload = json.loads(job.parameters_json)
+            notification_id = payload["notification_id"]
+            channel = payload["channel"]
+            destination_ref = payload["destination_ref"]
+            payload_ref = payload["payload_ref"]
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise UnsupportedSchedulerWorkload("notification.send parameters are invalid") from exc
+        if channel not in {"smtp", "webhook"} or not isinstance(destination_ref, str):
+            raise UnsupportedSchedulerWorkload("notification.send destination is invalid")
+        from studio_quality.artifact_rows import _REF  # noqa: PLC0415
+
+        match = _REF.fullmatch(payload_ref) if isinstance(payload_ref, str) else None
+        getter = getattr(notification_artifacts, "get_bytes_by_storage_ref", None)
+        if match is None or getter is None:
+            raise UnsupportedSchedulerWorkload("notification payload must be a verified artifact")
+        try:
+            body = json.loads(getter(payload_ref, digest=match.group(1)))
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise UnsupportedSchedulerWorkload("notification payload artifact is invalid") from exc
+        if not isinstance(body, dict) or not all(
+            isinstance(body.get(key), str) and body[key].strip()
+            for key in ("kind", "title", "body")
+        ):
+            raise UnsupportedSchedulerWorkload(
+                "notification payload requires kind, title, and body"
+            )
+        intent = NotificationIntent(
+            notification_id,
+            body["kind"],
+            body["title"],
+            body["body"],
+            Instant(notification_now or job.updated_at),
+            (("channel", channel), ("destination_ref", destination_ref)),
+        )
+        delivery_id = notification_sink.send(intent)
+        if delivery_id != intent.id:
+            raise UnsupportedSchedulerWorkload("notification sink returned a different intent id")
+        return SchedulerWorkloadResult(
+            family="notification",
+            notification={"notification_id": intent.id, "delivery_id": delivery_id},
+        )
     if job.target == "graph.query":
         if graph_adapter is None:
             raise UnsupportedSchedulerWorkload("graph.query requires an injected graph adapter")
