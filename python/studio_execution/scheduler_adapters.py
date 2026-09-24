@@ -29,6 +29,7 @@ class SchedulerWorkloadResult:
     connector: dict[str, object] | None = None
     notification: dict[str, object] | None = None
     ml: dict[str, object] | None = None
+    genai: dict[str, object] | None = None
 
     def evidence_payload(self) -> dict[str, Any]:
         """Return the portable, deterministic payload stored as scheduler evidence."""
@@ -58,6 +59,8 @@ class SchedulerWorkloadResult:
             return {"family": self.family, "notification": self.notification, "version": 1}
         if self.family == "ml" and self.ml is not None:
             return {"family": self.family, "ml": self.ml, "version": 1}
+        if self.family == "genai" and self.genai is not None:
+            return {"family": self.family, "genai": self.genai, "version": 1}
         raise UnsupportedSchedulerWorkload("scheduler result has no portable evidence payload")
 
 
@@ -82,6 +85,7 @@ def execute_scheduler_job(
     ml_runner: object | None = None,
     ml_lab: object | None = None,
     ml_rows: object | None = None,
+    genai_runner: object | None = None,
     max_rows: int = 10_000,
     timeout_seconds: int | None = None,
 ) -> SchedulerWorkloadResult:
@@ -239,6 +243,22 @@ def execute_scheduler_job(
         if not callable(to_payload):
             raise UnsupportedSchedulerWorkload("ML runner returned an invalid result")
         return SchedulerWorkloadResult(family="ml", ml=to_payload())
+    if job.target == "genai.run":
+        if genai_runner is None:
+            raise UnsupportedSchedulerWorkload("genai.run requires an injected genai_runner")
+        try:
+            payload = json.loads(job.parameters_json)
+            required = ("provider_id", "model_id", "prompt_ref")
+            if not all(
+                isinstance(payload.get(key), str) and payload[key].strip() for key in required
+            ):
+                raise ValueError("missing GenAI identifiers")
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise UnsupportedSchedulerWorkload("genai.run parameters are invalid") from exc
+        result = genai_runner.run(payload)
+        if not isinstance(result, dict):
+            raise UnsupportedSchedulerWorkload("GenAI runner returned an invalid result")
+        return SchedulerWorkloadResult(family="genai", genai=result)
     if job.target == "graph.query":
         if graph_adapter is None:
             raise UnsupportedSchedulerWorkload("graph.query requires an injected graph adapter")

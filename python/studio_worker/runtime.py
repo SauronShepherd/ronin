@@ -96,6 +96,7 @@ class LocalWorkerRuntimeConfig:
     ml_runner: object | None = None
     ml_lab: object | None = None
     ml_rows: object | None = None
+    genai_runner: object | None = None
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
@@ -273,6 +274,7 @@ class LocalWorkerRuntime:
             "connector.sync",
             "notification.send",
             "ml.run",
+            "genai.run",
         }:
             if claim.job.target == "sql.query" and self.config.scheduler_sql_engine is None:
                 raise UnsupportedSchedulerWorkload(
@@ -304,6 +306,10 @@ class LocalWorkerRuntime:
                 raise UnsupportedSchedulerWorkload(
                     "ml.run scheduler execution requires runner, lab, and rows"
                 )
+            if claim.job.target == "genai.run" and self.config.genai_runner is None:
+                raise UnsupportedSchedulerWorkload(
+                    "genai.run scheduler execution requires genai_runner"
+                )
             try:
                 result = await loop.run_in_executor(
                     self._preparation_executor,
@@ -327,6 +333,7 @@ class LocalWorkerRuntime:
                         ml_runner=self.config.ml_runner,
                         ml_lab=self.config.ml_lab,
                         ml_rows=self.config.ml_rows,
+                        genai_runner=self.config.genai_runner,
                     ),
                 )
             except Exception:
@@ -342,6 +349,8 @@ class LocalWorkerRuntime:
                     else "scheduler.notification.error"
                     if claim.job.target == "notification.send"
                     else "scheduler.ml.error"
+                    if claim.job.target == "ml.run"
+                    else "scheduler.genai.error"
                 )
                 await self._service.worker_complete_attempt(
                     claim.attempt_id,
