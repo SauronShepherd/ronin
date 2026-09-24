@@ -133,7 +133,7 @@ test('Notebook Studio edits, creates and executes a bounded notebook', async ({ 
   let saved = false;
   await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/notebooks', async route => {
     if (route.request().method() === 'POST') {
-      expect(route.request().postDataJSON()).toEqual({ id: 'new-notebook', document: { schema: 'ronin.notebook/v1', cells: [] } });
+      expect(route.request().postDataJSON()).toEqual({ id: 'new-notebook', document: { schema: 'ronin.notebook/v1', cells: [] }, source_revision: null, execution_binding: null, parameter_schema: [] });
       await route.fulfill({ json: { id: 'new-notebook', revision: 1, document: { schema: 'ronin.notebook/v1', cells: [] } } });
       return;
     }
