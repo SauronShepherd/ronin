@@ -10,6 +10,8 @@ from .contracts import (
     QueryResultPage,
     QueryState,
     QueryStatus,
+    QUERY_ENGINE_NAMESPACE,
+    QUERY_ENGINE_VERSION,
     TranslationPolicy,
 )
 from .discovery import DiscoveredEngine, DiscoveryClient, discover_engine
@@ -33,6 +35,8 @@ __all__ = [
     "LocalSqlTransport",
     "QueryState",
     "QueryStatus",
+    "QUERY_ENGINE_NAMESPACE",
+    "QUERY_ENGINE_VERSION",
     "TranslationPolicy",
     "TrinoHttpTransport",
     "discover_engine",

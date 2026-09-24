@@ -11,6 +11,11 @@ from studio_core.canonical_json import encode as encode_canonical_json
 QueryState = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 TranslationPolicy = Literal["native_only", "best_effort", "strict"]
 
+# Stable Ronin-owned boundary for optional external query providers.  Providers
+# may add fields in their own payloads, but must not replace this identity.
+QUERY_ENGINE_NAMESPACE = "ronin.query-engine"
+QUERY_ENGINE_VERSION = "v1"
+
 
 def _text(value: str, name: str, *, maximum: int = 512) -> str:
     if not isinstance(value, str) or not value or value != value.strip():
@@ -74,6 +79,7 @@ class EngineHandshake:
 
     def to_payload(self) -> dict[str, object]:
         return {
+            "contract": f"{QUERY_ENGINE_NAMESPACE}/{QUERY_ENGINE_VERSION}",
             "provider_id": self.provider_id,
             "provider_version": self.provider_version,
             "capabilities": self.capabilities.to_payload(),
@@ -237,4 +243,6 @@ __all__ = [
     "QueryState",
     "QueryStatus",
     "TranslationPolicy",
+    "QUERY_ENGINE_NAMESPACE",
+    "QUERY_ENGINE_VERSION",
 ]

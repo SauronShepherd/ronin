@@ -7,6 +7,8 @@ from studio_query_engine import (
     QueryRequest,
     QueryResultPage,
     QueryStatus,
+    QUERY_ENGINE_NAMESPACE,
+    QUERY_ENGINE_VERSION,
 )
 
 
@@ -17,6 +19,7 @@ def test_query_engine_contract_is_provider_neutral_and_canonical() -> None:
 
     assert capabilities.get("joins") is None
     assert handshake.to_payload()["provider_id"] == "local-duckdb"
+    assert handshake.to_payload()["contract"] == f"{QUERY_ENGINE_NAMESPACE}/{QUERY_ENGINE_VERSION}"
     assert request.canonical_json().startswith('{"max_rows":5')
 
 
