@@ -1085,6 +1085,36 @@ class Ronin:
             raise ProtocolError("migration qualification response has invalid fields")
         return payload
 
+    def validate_migration_session(
+        self,
+        workspace_id: str,
+        project_id: str,
+        session_id: str,
+        *,
+        expected: list[Mapping[str, object]],
+        actual: list[Mapping[str, object]],
+        asset_id: str | None = None,
+        level: str = "simple",
+    ) -> Mapping[str, object]:
+        if not workspace_id.strip() or not project_id.strip() or not session_id.strip():
+            raise ValueError("workspace_id, project_id and session_id must be non-empty")
+        if level not in {"simple", "full"}:
+            raise ValueError("level must be simple or full")
+        payload: dict[str, object] = {"expected": expected, "actual": actual, "level": level}
+        if asset_id is not None:
+            if not asset_id.strip():
+                raise ValueError("asset_id must be non-empty when provided")
+            payload["asset_id"] = asset_id
+        result = self._transport.request(
+            "POST",
+            f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+            f"{quote(project_id, safe='')}/migration/sessions/{quote(session_id, safe='')}/validate",
+            payload=payload,
+        )
+        if not isinstance(result, dict) or not isinstance(result.get("status"), str):
+            raise ProtocolError("migration validation response must contain status")
+        return result
+
     def archive_project(self, workspace_id: str, project_id: str) -> bool:
         if not workspace_id.strip() or not project_id.strip():
             raise ValueError("workspace_id and project_id must be non-empty")

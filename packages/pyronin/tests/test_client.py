@@ -241,6 +241,26 @@ def test_qualify_migration_session_validates_findings_contract() -> None:
     assert payload["files_checked"] == 2
 
 
+def test_validate_migration_session_forwards_rows_and_level() -> None:
+    transport = FakeTransport([{"status": "passed", "digest": "v" * 64}])
+    payload = Ronin(transport=transport).validate_migration_session(
+        "ws-1",
+        "p-1",
+        "m-1",
+        expected=[{"id": 1}],
+        actual=[{"id": 1}],
+        asset_id="orders",
+        level="full",
+    )
+    assert payload["status"] == "passed"
+    assert transport.calls[0][2] == {
+        "expected": [{"id": 1}],
+        "actual": [{"id": 1}],
+        "level": "full",
+        "asset_id": "orders",
+    }
+
+
 def test_workspace_and_project_pages_forward_and_validate_cursor() -> None:
     transport = FakeTransport(
         [
