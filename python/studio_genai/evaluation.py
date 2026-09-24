@@ -102,6 +102,44 @@ def summarize_rag_evaluation(
     )
 
 
+def evaluate_rag_payload(payload: object, *, max_examples: int = 1000) -> RAGEvaluationReport:
+    """Evaluate the bounded JSON dataset accepted by the public GenAI route."""
+
+    if not isinstance(payload, dict) or set(payload) != {"examples"}:
+        raise ValueError("RAG evaluation payload must contain only examples")
+    raw_examples = payload["examples"]
+    if not isinstance(raw_examples, list) or not raw_examples or len(raw_examples) > max_examples:
+        raise ValueError("RAG evaluation examples are outside the allowed bounds")
+    evaluations: list[RAGEvaluation] = []
+    required = {
+        "example_id", "expected_chunks", "retrieved_chunks", "expected_answer", "actual_answer"
+    }
+    for raw in raw_examples:
+        if not isinstance(raw, dict) or set(raw) != required:
+            raise ValueError("RAG evaluation example has invalid shape")
+        values = [raw["expected_chunks"], raw["retrieved_chunks"]]
+        if not all(
+            isinstance(value, list) and all(isinstance(item, str) for item in value)
+            for value in values
+        ):
+            raise ValueError("RAG evaluation chunks must be string lists")
+        if not all(
+            isinstance(raw[key], str)
+            for key in ("example_id", "expected_answer", "actual_answer")
+        ):
+            raise ValueError("RAG evaluation identity and answers must be strings")
+        evaluations.append(
+            evaluate_rag_example(
+                raw["example_id"],
+                expected_chunks=tuple(raw["expected_chunks"]),
+                retrieved_chunks=tuple(raw["retrieved_chunks"]),
+                expected_answer=raw["expected_answer"],
+                actual_answer=raw["actual_answer"],
+            )
+        )
+    return summarize_rag_evaluation(tuple(evaluations), max_examples=max_examples)
+
+
 def evaluate_rag_example(
     example_id: str,
     *,
@@ -143,4 +181,5 @@ __all__ = (
     "RAGEvaluationReport",
     "evaluate_rag_example",
     "summarize_rag_evaluation",
+    "evaluate_rag_payload",
 )

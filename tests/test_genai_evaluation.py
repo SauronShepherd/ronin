@@ -1,5 +1,10 @@
 import pytest
-from studio_genai import RAGEvaluation, evaluate_rag_example, summarize_rag_evaluation
+from studio_genai import (
+    RAGEvaluation,
+    evaluate_rag_example,
+    evaluate_rag_payload,
+    summarize_rag_evaluation,
+)
 
 
 def test_rag_evaluation_is_deterministic_and_serializable():
@@ -50,3 +55,22 @@ def test_rag_evaluation_report_sorts_and_averages_bounded_evidence() -> None:
 def test_rag_evaluation_rejects_non_finite_or_out_of_range_metrics() -> None:
     with pytest.raises(ValueError, match="finite metric"):
         RAGEvaluation("invalid", (), (), "a", "a", 1.1, 0.0, 1.0)
+
+
+def test_rag_payload_evaluation_is_strict_and_deterministic() -> None:
+    report = evaluate_rag_payload(
+        {
+            "examples": [
+                {
+                    "example_id": "x",
+                    "expected_chunks": ["a"],
+                    "retrieved_chunks": ["a"],
+                    "expected_answer": "42",
+                    "actual_answer": " 42 ",
+                }
+            ]
+        }
+    )
+    assert report.answer_exact_match == 1.0
+    with pytest.raises(ValueError, match="only examples"):
+        evaluate_rag_payload({"examples": [], "extra": True})

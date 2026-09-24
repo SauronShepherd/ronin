@@ -6,6 +6,7 @@ from .evaluation import (
     RAGEvaluation,
     RAGEvaluationReport,
     evaluate_rag_example,
+    evaluate_rag_payload,
     summarize_rag_evaluation,
 )
 from .plugin import GenAIPlugin
@@ -46,6 +47,7 @@ __all__ = (
     "RAGEvaluationReport",
     "evaluate_rag_example",
     "summarize_rag_evaluation",
+    "evaluate_rag_payload",
     "GenAIPlugin",
     "run_agent_durable",
 )
