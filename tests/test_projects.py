@@ -137,6 +137,18 @@ def test_repository_binding_rejects_query_and_fragment_components() -> None:
     )
 
 
+def test_repository_binding_rejects_sensitive_path_and_option_like_ref() -> None:
+    with pytest.raises(ValueError, match="credential material"):
+        RepositoryBinding("code", "https://example.test/repo/token=secret.git", role="primary")
+    with pytest.raises(ValueError, match="stable ref"):
+        RepositoryBinding(
+            "code",
+            "https://example.test/repo.git",
+            role="primary",
+            default_ref="--upload-pack=evil",
+        )
+
+
 def test_repository_subdirectory_must_stay_inside_repository() -> None:
     with pytest.raises(ValueError, match="subdirectory"):
         RepositoryBinding(
