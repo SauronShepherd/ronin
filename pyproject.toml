@@ -110,6 +110,7 @@ studio_storage = ["migrations/*.sql"]
   "web/js/i18n.js",
   "web/js/ingestion-studio.js",
   "web/js/ml-studio-journey.js",
+  "web/js/ml-features-studio.js",
   "web/js/notebook-studio.js",
   "web/js/performance-studio.js",
   "web/js/project-journey.js",
