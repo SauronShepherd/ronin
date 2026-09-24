@@ -146,12 +146,15 @@ def _operator_payload(node: Mapping[str, object]) -> tuple[str, dict[str, object
     if name == "connector.sync":
         connector_id = params.get("connector_id")
         source_ref = params.get("source_ref")
+        destination_ref = params.get("destination_ref")
         checkpoint_ref = params.get("checkpoint_ref")
         mode = params.get("mode", "incremental")
         if not isinstance(connector_id, str) or not connector_id.strip():
             raise ValueError("connector.sync connector_id must be non-empty")
         if not isinstance(source_ref, str) or not source_ref.strip():
             raise ValueError("connector.sync source_ref must be non-empty")
+        if not isinstance(destination_ref, str) or not destination_ref.strip():
+            raise ValueError("connector.sync destination_ref must be non-empty")
         if not isinstance(checkpoint_ref, str) or not checkpoint_ref.strip():
             raise ValueError("connector.sync checkpoint_ref must be non-empty")
         if mode not in {"snapshot", "incremental"}:
@@ -159,6 +162,7 @@ def _operator_payload(node: Mapping[str, object]) -> tuple[str, dict[str, object
         return "connector.sync.v1", {
             "connector_id": connector_id,
             "source_ref": source_ref,
+            "destination_ref": destination_ref,
             "checkpoint_ref": checkpoint_ref,
             "mode": mode,
         }
