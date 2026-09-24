@@ -1,5 +1,6 @@
 """Executable Data Quality runtime for Ronin Public v1."""
 
+from .artifact_rows import QualityRowsReferenceError, resolve_quality_rows
 from .bundle import (
     QualityBundleImportPlan,
     build_quality_bundle,
@@ -7,7 +8,6 @@ from .bundle import (
     export_quality_bundle,
     plan_quality_bundle_import,
 )
-from .artifact_rows import QualityRowsReferenceError, resolve_quality_rows
 from .evaluator import Row, blocking_failures, evaluate_contract, evaluate_rule
 from .http import QualityHTTPAdapter
 from .sandbox import PredicateSandboxError, evaluate_python_predicate
