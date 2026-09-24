@@ -13,7 +13,7 @@ async function load(workspace) {
   try {
     const data = await get(`/v1/workspaces/${encodeURIComponent(workspace)}/environments`);
     const items = data.items || [];
-  result.innerHTML = items.length ? `<div class="table-wrap"><table><caption class="sr-only">Environments</caption><thead><tr><th>ID</th><th>Name</th><th>Kind</th><th>State</th><th>Actions</th></tr></thead><tbody>${items.map(item => `<tr><td>${esc(item.id)}</td><td>${esc(item.name)}</td><td>${esc(item.kind)}</td><td>${esc(item.state)}</td><td><button class="button environment-edit" data-workspace="${esc(workspace)}" data-environment="${esc(item.id)}" type="button">Edit</button> <button class="button environment-disable" data-workspace="${esc(workspace)}" data-environment="${esc(item.id)}" type="button">Disable</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No environments found.</div>';
+  result.innerHTML = items.length ? `<div class="table-wrap"><table><caption class="sr-only">Environments</caption><thead><tr><th>ID</th><th>Name</th><th>Kind</th><th>State</th><th>Actions</th></tr></thead><tbody>${items.map(item => `<tr><td>${esc(item.id)}</td><td>${esc(item.name)}</td><td>${esc(item.kind)}</td><td>${esc(item.state)}</td><td><button class="button environment-edit" data-workspace="${esc(workspace)}" data-environment="${esc(item.id)}" type="button">Edit</button> <button class="button ${item.state === 'active' ? 'environment-disable' : 'environment-enable'}" data-workspace="${esc(workspace)}" data-environment="${esc(item.id)}" type="button">${item.state === 'active' ? 'Disable' : 'Enable'}</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No environments found.</div>';
   } catch (error) { result.textContent = `Environment lookup failed: ${error.message}`; }
 }
 
@@ -44,5 +44,15 @@ document.addEventListener('click', async event => {
     out.textContent = json(result);
     await load(button.dataset.workspace);
   } catch (error) { out.textContent = `Environment disable failed: ${error.message}`; }
+});
+document.addEventListener('click', async event => {
+  const button = event.target.closest?.('.environment-enable');
+  if (!button) return;
+  const out = document.querySelector('#environment-create-result');
+  try {
+    const result = await post(`/v1/workspaces/${encodeURIComponent(button.dataset.workspace)}/environments/${encodeURIComponent(button.dataset.environment)}/enable`, {});
+    out.textContent = json(result);
+    await load(button.dataset.workspace);
+  } catch (error) { out.textContent = `Environment enable failed: ${error.message}`; }
 });
 setTimeout(() => { window.addEventListener('hashchange', render); if (location.hash.slice(1) === 'environments') render(); }, 0);
