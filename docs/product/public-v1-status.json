@@ -134,7 +134,7 @@
     {
       "id": "web-studio",
       "status": "partial",
-      "summary": "Authenticated static Studio shell supports job listing, detail status, events, evidence, cancellation, navigation, packaged asset delivery, project-scoped read-only SQL, workspace creation, project creation/listing/archive, environment editing/disabling and a Monitoring & Alerts route backed by alert APIs; 75 Playwright route/accessibility/history/domain-journey checks pass; authoring editors, domain workflows, and complete Public v1 journeys remain incomplete."
+      "summary": "Authenticated static Studio shell supports job listing, detail status, events, evidence, cancellation, navigation, packaged asset delivery, project-scoped read-only SQL, workspace creation, project creation/listing/archive, environment editing/disabling and a Monitoring & Alerts route backed by alert APIs; 76 Playwright route/accessibility/history/domain-journey checks pass; authoring editors, domain workflows, and complete Public v1 journeys remain incomplete."
     },
     {
       "id": "public-v1-release-qualification",
