@@ -1,12 +1,14 @@
 """Executable GenAI, RAG and agent runtime for Ronin Public v1."""
 
 from .agent import AgentRunResult, AgentStep, ToolRegistry, ToolRuntime, run_agent
+from .durable_agent import run_agent_durable
 from .evaluation import (
     RAGEvaluation,
     RAGEvaluationReport,
     evaluate_rag_example,
     summarize_rag_evaluation,
 )
+from .plugin import GenAIPlugin
 from .provider import (
     ChatMessage,
     ChatResult,
@@ -18,7 +20,6 @@ from .provider import (
 from .qualification import ProviderQualification, qualify_provider_model
 from .rag import RAGResult, VectorIndexBuildResult, build_vector_index, run_rag
 from .vector_store import SqliteVectorStore, VectorChunk, VectorMatch
-from .plugin import GenAIPlugin
 
 __all__ = (
     "AgentRunResult",
@@ -46,4 +47,5 @@ __all__ = (
     "evaluate_rag_example",
     "summarize_rag_evaluation",
     "GenAIPlugin",
+    "run_agent_durable",
 )
