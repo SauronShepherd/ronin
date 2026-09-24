@@ -18,7 +18,7 @@ class _GenAIService(Protocol):
     def get_index(self, workspace_id: str, index_id: str) -> object: ...
     def tools(self, workspace_id: str) -> object: ...
     def get_tool(self, workspace_id: str, tool_id: str) -> object: ...
-    def put_tool(self, workspace_id: str, tool: ToolContract) -> object: ...
+    def put_tool(self, workspace_id: str, tool: ToolContract, idempotency_key: str) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
     def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
     def build_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
@@ -291,17 +291,20 @@ class GenAIPlugin:
         workspace_id: str = "",
         tool_id: str = "",
         body: object | None = None,
+        idempotency_key: str | None = None,
         **_kwargs: object,
     ) -> object:
         if self._service is None:
             return {"status": "not_configured"}
         if not isinstance(body, dict):
             return {"error": {"code": "invalid_request"}}
+        if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+            return {"error": {"code": "missing_idempotency_key"}}
         try:
             payload = dict(body)
             payload["id"] = tool_id
             tool = ToolContract.from_payload(payload)
-            result = self._service.put_tool(workspace_id, tool)
+            result = self._service.put_tool(workspace_id, tool, idempotency_key)
             return result.to_payload() if isinstance(result, ToolContract) else result
         except Exception as exc:
             return {"error": {"code": "invalid_tool", "message": str(exc)}}
