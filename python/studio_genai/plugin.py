@@ -10,6 +10,7 @@ from studio_core.plugins import PluginContext, PluginManifest, SurfaceContributi
 class _GenAIService(Protocol):
     def providers(self, workspace_id: str) -> object: ...
     def health(self, workspace_id: str) -> object: ...
+    def prompts(self, workspace_id: str) -> object: ...
 
 
 class GenAIPlugin:
@@ -22,7 +23,7 @@ class GenAIPlugin:
         capabilities=("genai.discovery",),
         permissions=("genai:read",),
         isolation="worker",
-        surface_ids=("genai.providers.v1", "genai.health.v1"),
+        surface_ids=("genai.providers.v1", "genai.health.v1", "genai.prompts.v1"),
     )
 
     def __init__(self) -> None:
@@ -34,6 +35,7 @@ class GenAIPlugin:
         for method, path, operation, handler in (
             ("GET", "/v1/workspaces/{workspace_id}/genai/providers", "providers", self.providers),
             ("GET", "/v1/workspaces/{workspace_id}/genai/health", "health", self.health),
+            ("GET", "/v1/workspaces/{workspace_id}/genai/prompts", "prompts", self.prompts),
         ):
             surface_id = f"genai.{operation}.v1"
             context.contributions.add_route(
@@ -67,6 +69,14 @@ class GenAIPlugin:
             return self._service.health(workspace_id)
         except Exception:
             return {"status": "unhealthy", "provider": "unavailable"}
+
+    def prompts(self, *, workspace_id: str = "", **_kwargs: object) -> object:
+        if self._service is None:
+            return {"status": "not_configured", "items": []}
+        try:
+            return self._service.prompts(workspace_id)
+        except Exception:
+            return {"status": "unavailable", "items": []}
 
 
 def factory() -> GenAIPlugin:
