@@ -6,7 +6,10 @@ const pipelineHistory = [];
 let pipelineHistoryIndex = -1;
 const SQL_HISTORY_KEY = 'ronin.data-engineering.sql-history.v1';
 let sqlHistory = [];
+const SQL_SAVED_KEY = 'ronin.data-engineering.saved-queries.v1';
+let savedSql = [];
 try { const stored = JSON.parse(localStorage.getItem(SQL_HISTORY_KEY) || '[]'); if (Array.isArray(stored)) sqlHistory = stored.filter(entry => entry && typeof entry.sql === 'string' && typeof entry.profile === 'string').slice(0, 10); } catch { sqlHistory = []; }
+try { const stored = JSON.parse(localStorage.getItem(SQL_SAVED_KEY) || '[]'); if (Array.isArray(stored)) savedSql = stored.filter(entry => entry && typeof entry.name === 'string' && typeof entry.sql === 'string' && typeof entry.profile === 'string').slice(0, 20); } catch { savedSql = []; }
 function pipelineDocument() {
   const field = document.querySelector('#de-pipeline-form [name="pipeline"]');
   if (!field) throw new Error('Pipeline editor is not available');
@@ -85,14 +88,18 @@ function addSqlHistoryPanel() {
   if (!form || document.querySelector('#de-sql-history')) return;
   const panel = document.createElement('div');
   panel.className = 'panel';
-  panel.innerHTML = '<h3>Query history</h3><div id="de-sql-history" class="toolbar" aria-live="polite"></div>';
+  panel.innerHTML = '<h3>Saved queries and history</h3><div class="toolbar"><input class="field" id="de-sql-save-name" placeholder="Query name"><button class="button" type="button" data-action="de-sql-save">Save current query</button></div><div id="de-sql-saved" class="toolbar" aria-live="polite"></div><div id="de-sql-history" class="toolbar" aria-live="polite"></div>';
   form.insertAdjacentElement('afterend', panel);
+  renderSavedSql();
   renderSqlHistory();
 }
+function renderSavedSql() { const out = document.querySelector('#de-sql-saved'); if (out) out.innerHTML = savedSql.map((entry, index) => `<button class="button" type="button" data-sql-saved-index="${index}">${entry.name}</button>`).join(' ') || '<span class="muted">No saved queries.</span>'; }
 document.addEventListener('click', async event => {
   const action = event.target.closest('[data-action]')?.dataset.action;
   const historyIndex = event.target.closest('[data-sql-history-index]')?.dataset.sqlHistoryIndex;
   if (historyIndex !== undefined) { const entry = sqlHistory[Number(historyIndex)]; if (entry) { const form = document.querySelector('#de-sql-form'); form.querySelector('[name="sql"]').value = entry.sql; form.querySelector('[name="profile"]').value = entry.profile; } return; }
+  const savedIndex = event.target.closest('[data-sql-saved-index]')?.dataset.sqlSavedIndex;
+  if (savedIndex !== undefined) { const entry = savedSql[Number(savedIndex)]; if (entry) { const form = document.querySelector('#de-sql-form'); form.querySelector('[name="sql"]').value = entry.sql; form.querySelector('[name="profile"]').value = entry.profile; } return; }
   if (!action || !action.startsWith('de-')) return;
   if (action === 'de-load-revision') {
     const out = document.querySelector('#de-pipeline-visual-result');
@@ -186,6 +193,7 @@ document.addEventListener('click', async event => {
   }
   const out = document.querySelector(action === 'de-health' || action === 'de-runtimes' ? '#de-health-result' : action.startsWith('de-sql-') ? '#de-sql-result' : '#de-pipeline-result');
   try {
+    if (action === 'de-sql-save') { const name = document.querySelector('#de-sql-save-name').value.trim(); const form = document.querySelector('#de-sql-form'); const sql = form.querySelector('[name="sql"]').value; const profile = form.querySelector('[name="profile"]').value; if (!name || !sql.trim()) throw new Error('Query name and SQL are required'); savedSql = [{ name, sql, profile }, ...savedSql.filter(entry => entry.name !== name)].slice(0, 20); localStorage.setItem(SQL_SAVED_KEY, JSON.stringify(savedSql)); renderSavedSql(); document.querySelector('#de-sql-result').textContent = `Saved query: ${name}`; return; }
     if (action === 'de-queryflux-capabilities') {
       const result = document.querySelector('#de-queryflux-result');
       result.textContent = json(await get('/v1/data-engineering/queryflux/capabilities'));
