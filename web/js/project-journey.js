@@ -22,6 +22,12 @@ function renderProjects() {
       <label>Bindings JSON<textarea class="field" name="bindings" rows="5">{"project_id":"","environment_id":"local","bindings":{}}</textarea></label>
       <button class="button" type="submit">Replace environment binding</button>
       <pre id="project-environment-result" class="code" aria-live="polite">No environment binding changed.</pre></form>
+    <form id="project-operation-form" class="stack"><h2>Run governed operation</h2>
+      <label>Project ID<input class="field" name="project_id" required></label>
+      <label>Pipeline ID<input class="field" name="pipeline_id" value="main" required></label>
+      <label>Operation JSON<textarea class="field" name="operation" rows="6" required>{"revision_key":"main/working","ir_digest":"","runtime":"local-preview","parameters":{"pipeline":{"config":{"name":"main"},"nodes":[],"edges":[]}}}</textarea></label>
+      <button class="button primary" type="submit">Run governed pipeline</button>
+      <pre id="project-operation-result" class="code" aria-live="polite">No governed operation submitted.</pre></form>
     <div id="project-list" class="table-wrap" aria-live="polite">Loading projects…</div></section>`;
   const form = document.querySelector('#project-journey-form');
   form.addEventListener('submit', async (event) => {
@@ -68,6 +74,19 @@ function renderProjects() {
       const result = await put(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(projectId)}/environments/${encodeURIComponent(environmentId)}/bindings`, payload);
       output.textContent = json(result);
     } catch (error) { output.textContent = `Could not bind environment: ${error.message}`; }
+  });
+  document.querySelector('#project-operation-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const output = document.querySelector('#project-operation-result');
+    const projectId = String(data.get('project_id') || '').trim();
+    const pipelineId = String(data.get('pipeline_id') || '').trim();
+    try {
+      const payload = JSON.parse(String(data.get('operation') || '{}'));
+      if (!payload.revision_key || !payload.ir_digest || !payload.runtime) throw new Error('Operation requires revision_key, ir_digest and runtime.');
+      const result = await post(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(projectId)}/pipelines/${encodeURIComponent(pipelineId)}/runs`, payload, { headers: { 'Idempotency-Key': `studio-pipeline-run-${workspaceId}-${projectId}-${pipelineId}-${payload.revision_key}` } });
+      output.textContent = json(result);
+    } catch (error) { output.textContent = `Could not run governed operation: ${error.message}`; }
   });
   loadProjects(workspaceId);
 }
