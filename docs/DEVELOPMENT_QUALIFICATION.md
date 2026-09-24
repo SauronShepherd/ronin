@@ -66,6 +66,28 @@ RONIN_UI_SLOW_MO_MS=200 make ui-e2e-headed
 
 Set `RONIN_STUDIO_AUDIT_URL` when the local server is not at the default URL.
 
+## Command target map
+
+The Make targets used by the build plan map to the following checks. Run them
+from the repository root; targets that build browser assets may require a
+network-enabled first run to install the locked JavaScript dependencies.
+
+| Target | Purpose |
+| --- | --- |
+| `make check` | Format, lint, OpenAPI, typing, architecture, route, Studio, dependency, contract, test and performance gates. |
+| `make ui-e2e` | Headless Playwright route and journey qualification from `web-tests`. |
+| `make ui-e2e-headed` | Visible Chromium Playwright run for local diagnosis. |
+| `make ui-a11y` | Installed-package browser smoke plus the 320px/768px/desktop accessibility matrix. |
+| `make ui-installed` | Installed wheel Studio smoke, including packaged assets and browser errors. |
+| `make browser-audit` | Browser audit against `RONIN_STUDIO_AUDIT_URL` (default `http://127.0.0.1:8080/studio/`). |
+| `python tools/local_spark_qualification.py ...` | Optional local Spark engine evidence; requires PySpark. |
+| `python tools/query_engine_qualification.py ...` | Local engine evidence and explicit QueryFlux configuration status. |
+| `make mutation` | Mutation qualification under the repository's fail-closed threshold. |
+
+`ui-visual` is not currently a Make target: visual checks are covered by the
+Playwright suite and installed Studio smoke, while a separate visual baseline
+must not be claimed until its reference artifacts and review policy exist.
+
 ## Release evidence
 
 The release qualification workflow creates the exact wheel/sdist identity,
