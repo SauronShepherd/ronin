@@ -1,7 +1,7 @@
 import {studioContextKeys} from './studio-context.js';
 
 const labels = Object.freeze({
-  project: 'Project', revision: 'Revision', runtime: 'Runtime',
+  workspace: 'Workspace', project: 'Project', environment: 'Environment', revision: 'Revision', runtime: 'Runtime',
   dataset: 'Dataset', run: 'Run', compare: 'Compare',
 });
 

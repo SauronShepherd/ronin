@@ -1,4 +1,4 @@
-const keys = Object.freeze(['project', 'revision', 'runtime', 'dataset', 'run', 'compare']);
+const keys = Object.freeze(['workspace', 'project', 'environment', 'revision', 'runtime', 'dataset', 'run', 'compare']);
 
 function clean(value) {
   if (value === undefined || value === null || value === '') return null;
