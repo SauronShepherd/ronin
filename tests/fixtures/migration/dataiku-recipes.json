@@ -1,0 +1,9 @@
+{
+  "id": "golden-dataiku",
+  "name": "Golden Dataiku project",
+  "recipes": [
+    {"id": "python-1", "type": "python", "source": "result = input_df"},
+    {"id": "sql-1", "type": "sql", "source": "SELECT 1"},
+    {"id": "join-1", "type": "join"}
+  ]
+}
