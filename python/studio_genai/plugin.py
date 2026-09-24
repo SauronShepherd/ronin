@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from typing import Protocol, cast
 
+from studio_core.genai import PromptAsset
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 
 
@@ -11,6 +13,7 @@ class _GenAIService(Protocol):
     def providers(self, workspace_id: str) -> object: ...
     def health(self, workspace_id: str) -> object: ...
     def prompts(self, workspace_id: str) -> object: ...
+    def put_prompt(self, workspace_id: str, prompt: PromptAsset) -> object: ...
 
 
 class GenAIPlugin:
@@ -23,7 +26,7 @@ class GenAIPlugin:
         capabilities=("genai.discovery",),
         permissions=("genai:read",),
         isolation="worker",
-        surface_ids=("genai.providers.v1", "genai.health.v1", "genai.prompts.v1"),
+        surface_ids=("genai.providers.v1", "genai.health.v1", "genai.prompts.v1", "genai.prompt.v1"),
     )
 
     def __init__(self) -> None:
@@ -36,6 +39,7 @@ class GenAIPlugin:
             ("GET", "/v1/workspaces/{workspace_id}/genai/providers", "providers", self.providers),
             ("GET", "/v1/workspaces/{workspace_id}/genai/health", "health", self.health),
             ("GET", "/v1/workspaces/{workspace_id}/genai/prompts", "prompts", self.prompts),
+            ("PUT", "/v1/workspaces/{workspace_id}/genai/prompts/{prompt_id}/{version}", "prompt", self.put_prompt),
         ):
             surface_id = f"genai.{operation}.v1"
             context.contributions.add_route(
@@ -77,6 +81,29 @@ class GenAIPlugin:
             return self._service.prompts(workspace_id)
         except Exception:
             return {"status": "unavailable", "items": []}
+
+    def put_prompt(
+        self,
+        *,
+        workspace_id: str = "",
+        prompt_id: str = "",
+        version: str = "",
+        body: object | None = None,
+        **_kwargs: object,
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured"}
+        if not isinstance(body, dict):
+            return {"error": {"code": "invalid_request"}}
+        try:
+            payload = dict(body)
+            payload["id"] = prompt_id
+            payload["version"] = version
+            prompt = PromptAsset.from_json(json.dumps(payload))
+            result = self._service.put_prompt(workspace_id, prompt)
+            return result.to_payload() if isinstance(result, PromptAsset) else result
+        except Exception as exc:
+            return {"error": {"code": "invalid_prompt", "message": str(exc)}}
 
 
 def factory() -> GenAIPlugin:

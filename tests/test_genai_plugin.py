@@ -10,6 +10,7 @@ def test_genai_plugin_registers_discovery_surfaces() -> None:
         ("GET", "/v1/workspaces/{workspace_id}/genai/providers"),
         ("GET", "/v1/workspaces/{workspace_id}/genai/health"),
         ("GET", "/v1/workspaces/{workspace_id}/genai/prompts"),
+        ("PUT", "/v1/workspaces/{workspace_id}/genai/prompts/{prompt_id}/{version}"),
     ]
     assert {item.id for item in contributions.surface_registry.items} == set(
         plugin.manifest.surface_ids
@@ -24,3 +25,6 @@ def test_genai_plugin_fails_closed_without_runtime() -> None:
         "provider": "unavailable",
     }
     assert plugin.prompts(workspace_id="ws") == {"status": "not_configured", "items": []}
+    assert plugin.put_prompt(workspace_id="ws", prompt_id="p", version="1", body={}) == {
+        "status": "not_configured"
+    }
