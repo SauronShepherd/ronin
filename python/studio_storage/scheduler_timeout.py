@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -44,7 +45,7 @@ def request_overdue_timeouts(
     try:
         connection.execute("BEGIN IMMEDIATE")
         rows = connection.execute(
-            "SELECT a.*,t.node_id,t.workflow_run_id,w.run_json,i.job_id "
+            "SELECT a.*,t.node_id,t.workflow_run_id,w.run_json,i.job_id,i.parameters_json "
             "FROM task_attempts a "
             "JOIN task_runs t ON t.workspace_id=a.workspace_id "
             "AND t.task_run_id=a.task_run_id "
@@ -67,6 +68,23 @@ def request_overdue_timeouts(
             )
             policy = run.workflow_snapshot.policy_for(NodeId(row["node_id"]))
             timeout_seconds = policy.timeout_seconds
+            parameters_json = row["parameters_json"]
+            if parameters_json is not None:
+                try:
+                    parameters = json.loads(parameters_json)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("scheduler execution parameters are invalid JSON") from exc
+                adapter_timeout = (
+                    parameters.get("timeout_seconds") if isinstance(parameters, dict) else None
+                )
+                if adapter_timeout is not None:
+                    if (
+                        not isinstance(adapter_timeout, int)
+                        or isinstance(adapter_timeout, bool)
+                        or not 1 <= adapter_timeout <= 7 * 24 * 60 * 60
+                    ):
+                        raise ValueError("scheduler adapter timeout_seconds is invalid")
+                    timeout_seconds = adapter_timeout
             if timeout_seconds is None:
                 continue
             if current < _add_seconds(Instant(row["created_at"]), timeout_seconds):

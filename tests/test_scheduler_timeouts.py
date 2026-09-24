@@ -48,7 +48,7 @@ def _manifest() -> ProjectManifest:
     )
 
 
-def _setup(tmp_path: Path, *, max_attempts: int = 1):
+def _setup(tmp_path: Path, *, max_attempts: int = 1, adapter_timeout: int | None = None):
     database = tmp_path / "ronin.db"
     workspace_id = WorkspaceId("workspace-1")
     workspace_store = SqliteWorkspaceStore(database, migration_now=NOW)
@@ -58,7 +58,11 @@ def _setup(tmp_path: Path, *, max_attempts: int = 1):
     node = Node.create(
         operator=OperatorRef("notebook.run"),
         instance_key="notebook-task",
-        params={"target": "notebooks/demo.ronin.json", "parameters": {}},
+        params={
+            "target": "notebooks/demo.ronin.json",
+            "parameters": {},
+            **({} if adapter_timeout is None else {"timeout_seconds": adapter_timeout}),
+        },
     )
     workflow = WorkflowDefinition(
         WorkflowId("workflow-1"),
@@ -177,3 +181,32 @@ def test_timeout_cancels_linked_job_then_uses_scheduler_retry_policy(tmp_path: P
     )
     assert retry is not None
     assert retry.attempt_ordinal == 2
+
+
+def test_adapter_timeout_overrides_workflow_policy_for_linked_intent(tmp_path: Path) -> None:
+    store, workspace_id, run, claim = _setup(tmp_path, adapter_timeout=10)
+    plan = plan_scheduler_execution(claim, run, "project-1", now=NOW)
+    store.put_execution_intent(
+        workspace_id,
+        claim.attempt_id,
+        job=plan.job,
+        run=plan.run,
+        owner=claim.lease_owner,
+        lease_token=claim.lease_token,
+        now=NOW,
+    )
+
+    async def scenario() -> None:
+        service = DurableExecutionService(InMemoryJobStore())
+        try:
+            result = await enforce_task_timeouts(
+                store,
+                service,
+                now=Instant(AFTER_TIMEOUT),
+            )
+            assert result.detected == 0
+        finally:
+            await service.aclose()
+
+    asyncio.run(scenario())
+    assert store.list_task_runs(workspace_id, run.id)[0].state == "running"
