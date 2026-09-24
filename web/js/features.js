@@ -11,6 +11,7 @@ import './semantic-studio.js';
 import './alerts-studio.js';
 import './project-journey.js';
 import './ml-features-studio.js';
+import './genai-studio.js';
 
 const root=()=>document.querySelector('#view');
 const current=()=>location.hash.slice(1).split('/')[0]||'home';
