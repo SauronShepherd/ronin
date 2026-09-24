@@ -344,12 +344,32 @@ class ProjectPermissionDecision:
     reason: str
     matched_roles: tuple[str, ...] = ()
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.allowed, bool) or not isinstance(self.reason, str) or not self.reason.strip():
+            raise ValueError("permission decision must contain a boolean and non-empty reason")
+        roles = tuple(self.matched_roles)
+        if any(not isinstance(role, str) or not role.strip() for role in roles):
+            raise ValueError("matched_roles must contain non-empty strings")
+        if len(set(roles)) != len(roles):
+            raise ValueError("matched_roles must be unique")
+        object.__setattr__(self, "matched_roles", tuple(sorted(roles)))
+
 
 @dataclass(frozen=True, slots=True)
 class ProjectPermissions:
     workspace_id: str
     project_id: str
     permissions: tuple[tuple[str, ProjectPermissionDecision], ...]
+
+    def __post_init__(self) -> None:
+        if not self.workspace_id.strip() or not self.project_id.strip():
+            raise ValueError("workspace_id and project_id must be non-empty")
+        entries = tuple(sorted(self.permissions))
+        if any(not isinstance(name, str) or not name.strip() or not isinstance(decision, ProjectPermissionDecision) for name, decision in entries):
+            raise ValueError("permissions must contain named decisions")
+        if len({name for name, _ in entries}) != len(entries):
+            raise ValueError("permissions must have unique names")
+        object.__setattr__(self, "permissions", entries)
 
     def decision(self, permission: str) -> ProjectPermissionDecision | None:
         return dict(self.permissions).get(permission)

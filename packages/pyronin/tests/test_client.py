@@ -928,6 +928,17 @@ def test_project_permission_inspection_is_resource_scoped() -> None:
     assert transport.calls[0][1] == "/v1/workspaces/workspace-a/projects/project-1/permissions"
 
 
+def test_project_permission_models_reject_invalid_decisions() -> None:
+    from pyronin import ProjectPermissionDecision, ProjectPermissions
+
+    with pytest.raises(ValueError, match="boolean"):
+        ProjectPermissionDecision("yes", "allowed")
+    with pytest.raises(ValueError, match="unique"):
+        ProjectPermissionDecision(True, "allowed", ("admin", "admin"))
+    with pytest.raises(ValueError, match="named decisions"):
+        ProjectPermissions("workspace-a", "project-1", (("project.read", object()),))
+
+
 def test_connector_plan_and_checkpoint_health_are_public_sdk_contracts() -> None:
     transport = FakeTransport(
         [
