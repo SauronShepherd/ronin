@@ -78,6 +78,57 @@ test('Access Studio renders workspace role scope inventory', async ({ page }) =>
   await expect(page.locator('#access-scope-table')).toContainText('admin');
 });
 
+test('Workspace and project Studio journey covers environment, Bundle and archive actions', async ({ page }) => {
+  let archived = false;
+  await page.route('**/v1/workspaces', async route => {
+    if (route.request().method() === 'POST') {
+      expect(route.request().postDataJSON()).toEqual({ id: 'workspace-journey', name: 'Journey', description: 'P1-006' });
+      await route.fulfill({ json: { id: 'workspace-journey', name: 'Journey', status: 'active' } });
+      return;
+    }
+    await route.fulfill({ json: { items: [{ id: 'workspace-journey', name: 'Journey', status: 'active' }] } });
+  });
+  await page.route('**/v1/workspaces/workspace-journey/projects', async route => {
+    if (route.request().method() === 'POST') {
+      expect(route.request().postDataJSON()).toEqual({ project: { id: 'project-journey', name: 'Project Journey' } });
+      await route.fulfill({ json: { project: { id: 'project-journey', name: 'Project Journey' } } });
+      return;
+    }
+    await route.fulfill({ json: { items: archived ? [] : [{ id: 'project-journey', name: 'Project Journey' }] } });
+  });
+  await page.route('**/v1/workspaces/workspace-journey/projects/project-journey/environments/local/bindings', async route => {
+    expect(route.request().method()).toBe('PUT');
+    expect(route.request().postDataJSON()).toEqual({ project_id: 'project-journey', environment_id: 'local', bindings: { runtime: 'local' } });
+    await route.fulfill({ json: { status: 'bound', environment_id: 'local' } });
+  });
+  await page.route('**/v1/workspaces/workspace-journey/projects/project-journey/bundle/archive', async route => {
+    await route.fulfill({ json: { media_type: 'application/vnd.ronin.bundle+zip', content_base64: 'UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==' } });
+  });
+  await page.route('**/v1/workspaces/workspace-journey/projects/project-journey/archive', async route => {
+    expect(route.request().method()).toBe('POST');
+    archived = true;
+    await route.fulfill({ json: { id: 'project-journey', status: 'archived' } });
+  });
+
+  await page.goto('./#workspaces');
+  await page.locator('#workspace-create-id').fill('workspace-journey');
+  await page.locator('#workspace-create-name').fill('Journey');
+  await page.locator('#workspace-create-description').fill('P1-006');
+  await page.getByRole('button', { name: 'Create' }).click();
+  await page.getByRole('link', { name: 'Open projects' }).click();
+  await page.locator('#project-manifest').fill('{"project":{"id":"project-journey","name":"Project Journey"}}');
+  await page.getByRole('button', { name: 'Create project' }).click();
+  await page.locator('#project-environment-form input[name="project_id"]').fill('project-journey');
+  await page.locator('#project-environment-form textarea[name="bindings"]').fill('{"bindings":{"runtime":"local"}}');
+  await page.getByRole('button', { name: 'Replace environment binding' }).click();
+  await expect(page.locator('#project-environment-result')).toContainText('bound');
+  await page.getByRole('button', { name: 'Download Bundle' }).click();
+  await expect(page.locator('#project-journey-result')).toContainText('Downloaded project-journey.roninbundle');
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Archive', exact: true }).click();
+  await expect(page.locator('#project-list')).toContainText('No active projects');
+});
+
 test('Ingestion Studio exposes sync plan and checkpoint health', async ({ page }) => {
   await page.route('**/v1/platform/connectors', async route => {
     await route.fulfill({ json: { items: [] } });
