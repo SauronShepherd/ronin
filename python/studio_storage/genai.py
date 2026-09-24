@@ -629,3 +629,21 @@ class SqliteGenAIStore:
             return tuple(_agent_from_json(row["definition_json"]) for row in rows)
         finally:
             connection.close()
+
+    def delete_agent(self, workspace_id: WorkspaceId, agent_id: AgentId) -> bool:
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
+            cursor = connection.execute(
+                "DELETE FROM genai_agents WHERE workspace_id=? AND agent_id=?",
+                (str(workspace_id), str(agent_id)),
+            )
+            connection.execute("COMMIT")
+            return cursor.rowcount == 1
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
