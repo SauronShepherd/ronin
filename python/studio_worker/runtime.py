@@ -84,6 +84,7 @@ class LocalWorkerRuntimeConfig:
     artifact_max_in_flight: int = 4
     record_execution: Callable[[str, float, str], None] | None = None
     scheduler_sql_engine: SqlEngine | None = None
+    scheduler_graph_adapter: object | None = None
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
@@ -254,10 +255,14 @@ class LocalWorkerRuntime:
 
     async def _execute_claim(self, claim: ClaimedRun) -> WorkerExecutionOutcome:
         loop = asyncio.get_running_loop()
-        if claim.job.target == "sql.query":
-            if self.config.scheduler_sql_engine is None:
+        if claim.job.target in {"sql.query", "graph.query"}:
+            if claim.job.target == "sql.query" and self.config.scheduler_sql_engine is None:
                 raise UnsupportedSchedulerWorkload(
                     "sql.query scheduler execution requires scheduler_sql_engine"
+                )
+            if claim.job.target == "graph.query" and self.config.scheduler_graph_adapter is None:
+                raise UnsupportedSchedulerWorkload(
+                    "graph.query scheduler execution requires scheduler_graph_adapter"
                 )
             try:
                 result = await loop.run_in_executor(
@@ -265,13 +270,19 @@ class LocalWorkerRuntime:
                     lambda: execute_scheduler_job(
                         claim.job,
                         sql_engine=self.config.scheduler_sql_engine,
+                        graph_adapter=self.config.scheduler_graph_adapter,
                     ),
                 )
             except Exception:
+                failure_code = (
+                    "scheduler.sql.error"
+                    if claim.job.target == "sql.query"
+                    else "scheduler.graph.error"
+                )
                 await self._service.worker_complete_attempt(
                     claim.attempt_id,
                     state=AttemptState.FAILED,
-                    failure_code="scheduler.sql.error",
+                    failure_code=failure_code,
                     owner=self.config.owner,
                     lease_token=claim.lease_token,
                     now=self._now(),
