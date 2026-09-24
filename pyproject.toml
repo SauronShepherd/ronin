@@ -25,6 +25,7 @@ logging = "studio_plugin_observability.plugins:logging_factory"
 monitoring = "studio_plugin_observability.plugins:monitoring_factory"
   govern_studio = "studio_synthetic_data.plugin:factory"
   ai_studio = "studio_ai_studio.plugin:factory"
+  genai_studio = "studio_genai.plugin:factory"
 data_science_studio = "studio_ml.plugin:factory"
 cloud_studio = "studio_cloud.plugin:factory"
 
