@@ -61,8 +61,7 @@ class MigrationSession:
             "result_digest": self.result_digest,
             "generated_manifest_digest": self.generated_manifest_digest,
             "generated_file_digests": [
-                {"path": path, "digest": digest}
-                for path, digest in self.generated_file_digests
+                {"path": path, "digest": digest} for path, digest in self.generated_file_digests
             ],
             "import_digest": self.import_digest,
             "import_status": self.import_status,
@@ -369,9 +368,15 @@ class MigrationSessionService:
         self._require(session, {"converting", "qualifying", "completed"})
         if not target or target != target.strip():
             raise ValueError("import target is required")
-        expected = generate_project(
-            inventory=session.inventory, selection=session.selection, blueprint=session.blueprint
-        ) if session.inventory is not None and session.selection is not None else None
+        expected = (
+            generate_project(
+                inventory=session.inventory,
+                selection=session.selection,
+                blueprint=session.blueprint,
+            )
+            if session.inventory is not None and session.selection is not None
+            else None
+        )
         if expected is None or expected.project_digest != project.project_digest:
             raise ValueError("generated project does not match the frozen session scope")
         evidence = json.dumps(

@@ -167,8 +167,7 @@ def test_import_migration_session_is_typed_and_scoped() -> None:
     assert evidence.status == "importable"
     assert evidence.project_digest == "p" * 64
     assert transport.calls[0][1] == (
-        "/v1/workspaces/ws%2F1/projects/project%2F1/"
-        "migration/sessions/migration%2F1/import"
+        "/v1/workspaces/ws%2F1/projects/project%2F1/migration/sessions/migration%2F1/import"
     )
 
 

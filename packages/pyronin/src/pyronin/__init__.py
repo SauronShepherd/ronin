@@ -1079,9 +1079,11 @@ class Ronin:
         )
         if not isinstance(payload, dict):
             raise ProtocolError("migration qualification response must be an object")
-        if not isinstance(payload.get("status"), str) or not isinstance(
-            payload.get("files_checked"), int
-        ) or not isinstance(payload.get("findings"), list):
+        if (
+            not isinstance(payload.get("status"), str)
+            or not isinstance(payload.get("files_checked"), int)
+            or not isinstance(payload.get("findings"), list)
+        ):
             raise ProtocolError("migration qualification response has invalid fields")
         return payload
 
@@ -1129,9 +1131,7 @@ class Ronin:
         quality_passed: bool,
         max_regression_ratio: float = 0.05,
     ) -> Mapping[str, object]:
-        if not all(
-            value.strip() for value in (workspace_id, project_id, session_id, candidate_id)
-        ):
+        if not all(value.strip() for value in (workspace_id, project_id, session_id, candidate_id)):
             raise ValueError(
                 "workspace_id, project_id, session_id and candidate_id must be non-empty"
             )

@@ -71,9 +71,7 @@ def test_migration_api_discovers_named_vendor_profiles_into_canonical_inventory(
         authorized=True,
     )
     assert discovered.status == 200
-    inventory = router.dispatch(
-        "GET", f"{base}/{session_id}/inventory", authorized=True
-    )
+    inventory = router.dispatch("GET", f"{base}/{session_id}/inventory", authorized=True)
     assert inventory.status == 200
     assert inventory.payload["adapter_id"] == "databricks"
     assert {item["key"] for item in inventory.payload["units"]} == {
