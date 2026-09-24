@@ -53,5 +53,5 @@ def test_project_journey_keeps_public_lifecycle_operations() -> None:
 def test_catalog_studio_exposes_glossary_publication() -> None:
     root = Path(__file__).parents[1]
     source = (root / "web/js/catalog-studio.js").read_text(encoding="utf-8")
-    for marker in ("glossary-form", "/glossary/terms", "Idempotency-Key", "references"):
+    for marker in ("glossary-form", "glossary-search-form", "/glossary/terms", "Idempotency-Key", "references"):
         assert marker in source, f"catalog glossary integration missing: {marker}"
