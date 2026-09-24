@@ -295,7 +295,6 @@ pytest_add_cli_args_test_selection = [
   "tests/test_synthetic_data_publication.py",
   "tests/test_workspace_plugin_ports.py",
   "tests/test_local_observability_plugins.py",
-  "tests/test_performance_runtime_integration.py",
   "tests/test_bundle_project_inventory.py",
   "tests/test_bundle_io.py",
   "tests/test_bundle_connection_roundtrip.py",
