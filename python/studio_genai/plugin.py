@@ -17,6 +17,7 @@ class _GenAIService(Protocol):
     def indexes(self, workspace_id: str) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
     def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
+    def build_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
 
 
 class GenAIPlugin:
@@ -37,6 +38,7 @@ class GenAIPlugin:
             "genai.indexes.v1",
             "genai.index.delete.v1",
             "genai.index.query.v1",
+            "genai.index.build.v1",
         ),
     )
 
@@ -69,6 +71,12 @@ class GenAIPlugin:
                 "/v1/workspaces/{workspace_id}/genai/indexes/{index_id}/query",
                 "index.query",
                 self.search_index,
+            ),
+            (
+                "POST",
+                "/v1/workspaces/{workspace_id}/genai/indexes/{index_id}/build",
+                "index.build",
+                self.build_index,
             ),
         ):
             surface_id = f"genai.{operation}.v1"
@@ -188,6 +196,37 @@ class GenAIPlugin:
             )
         except Exception as exc:
             return {"error": {"code": "query_failed", "message": str(exc)}}
+
+    def build_index(
+        self,
+        *,
+        workspace_id: str = "",
+        index_id: str = "",
+        body: object | None = None,
+        **_kwargs: object,
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured"}
+        if not isinstance(body, dict):
+            return {"error": {"code": "invalid_request"}}
+        rows = body.get("rows")
+        batch_size = body.get("batch_size", 128)
+        if (
+            not isinstance(rows, list)
+            or not all(isinstance(row, dict) for row in rows)
+            or not isinstance(batch_size, int)
+            or isinstance(batch_size, bool)
+            or not 1 <= batch_size <= 2048
+        ):
+            return {"error": {"code": "invalid_build"}}
+        try:
+            return self._service.build_index(
+                workspace_id,
+                index_id,
+                {"rows": rows, "batch_size": batch_size},
+            )
+        except Exception as exc:
+            return {"error": {"code": "build_failed", "message": str(exc)}}
 
 
 def factory() -> GenAIPlugin:
