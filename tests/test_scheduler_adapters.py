@@ -55,7 +55,7 @@ def test_scheduler_dispatch_routes_graph_query() -> None:
     object_ref = SimpleNamespace(object_type="Order", key=(("id", 1),))
     graph_object = SimpleNamespace(ref=object_ref, properties=(("total", 5),))
     adapter = SimpleNamespace(
-        query=lambda graph_id, query, *, max_limit: SimpleNamespace(objects=(graph_object,))
+        query=lambda _graph_id, _query, *, _max_limit: SimpleNamespace(objects=(graph_object,))
     )
     result = execute_scheduler_job(
         _job(
