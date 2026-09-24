@@ -54,9 +54,12 @@ def test_scheduler_dispatch_rejects_unqualified_family() -> None:
 def test_scheduler_dispatch_routes_graph_query() -> None:
     object_ref = SimpleNamespace(object_type="Order", key=(("id", 1),))
     graph_object = SimpleNamespace(ref=object_ref, properties=(("total", 5),))
-    adapter = SimpleNamespace(
-        query=lambda _graph_id, _query, *, _max_limit: SimpleNamespace(objects=(graph_object,))
-    )
+
+    def query(_graph_id: str, _query: str, *, max_limit: int) -> SimpleNamespace:
+        del max_limit
+        return SimpleNamespace(objects=(graph_object,))
+
+    adapter = SimpleNamespace(query=query)
     result = execute_scheduler_job(
         _job(
             "graph.query",
