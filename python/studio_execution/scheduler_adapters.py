@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
+from studio_connectors import IngestionSyncDefinition
 from studio_orchestrator import Job
 from studio_quality import resolve_quality_rows
 from studio_sql import SqlEngine
@@ -24,6 +25,7 @@ class SchedulerWorkloadResult:
     sql: SchedulerSqlResult | None = None
     graph: tuple[dict[str, object], ...] | None = None
     quality: dict[str, object] | None = None
+    connector: dict[str, object] | None = None
 
     def evidence_payload(self) -> dict[str, Any]:
         """Return the portable, deterministic payload stored as scheduler evidence."""
@@ -47,6 +49,8 @@ class SchedulerWorkloadResult:
             }
         if self.family == "quality" and self.quality is not None:
             return {"family": self.family, "quality": self.quality, "version": 1}
+        if self.family == "connector" and self.connector is not None:
+            return {"family": self.family, "connector": self.connector, "version": 1}
         raise UnsupportedSchedulerWorkload("scheduler result has no portable evidence payload")
 
 
@@ -60,6 +64,11 @@ def execute_scheduler_job(
     workspace_id: object | None = None,
     run_id: str | None = None,
     now: object | None = None,
+    connector_sync_service: object | None = None,
+    connector_connection: object | None = None,
+    connector_asset: object | None = None,
+    connector_secrets: object | None = None,
+    connector_destination: object | None = None,
     max_rows: int = 10_000,
     timeout_seconds: int | None = None,
 ) -> SchedulerWorkloadResult:
@@ -119,6 +128,43 @@ def execute_scheduler_job(
         if not isinstance(result, dict):
             raise UnsupportedSchedulerWorkload("quality adapter returned an invalid result")
         return SchedulerWorkloadResult(family="quality", quality=result)
+    if job.target == "connector.sync":
+        if any(
+            value is None
+            for value in (
+                connector_sync_service,
+                connector_connection,
+                connector_asset,
+                connector_secrets,
+                connector_destination,
+            )
+        ):
+            raise UnsupportedSchedulerWorkload(
+                "connector.sync requires service, source context, and destination"
+            )
+        try:
+            payload = json.loads(job.parameters_json)
+            definition = IngestionSyncDefinition(
+                id=payload["connector_id"],
+                connector_id=payload["connector_id"],
+                connection_ref=payload["source_ref"],
+                asset_ref=payload["source_ref"],
+                destination_ref=payload["destination_ref"],
+                checkpoint_identity=payload["checkpoint_ref"],
+                mode=payload.get("mode", "incremental"),
+            )
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise UnsupportedSchedulerWorkload("connector.sync parameters are invalid") from exc
+        result = connector_sync_service.execute(
+            definition,
+            connection=connector_connection,
+            asset=connector_asset,
+            secrets=connector_secrets,
+            destination=connector_destination,
+        )
+        if not isinstance(result, dict):
+            raise UnsupportedSchedulerWorkload("connector sync returned an invalid result")
+        return SchedulerWorkloadResult(family="connector", connector=result)
     if job.target == "graph.query":
         if graph_adapter is None:
             raise UnsupportedSchedulerWorkload("graph.query requires an injected graph adapter")

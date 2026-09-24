@@ -86,6 +86,11 @@ class LocalWorkerRuntimeConfig:
     scheduler_sql_engine: SqlEngine | None = None
     scheduler_graph_adapter: object | None = None
     scheduler_quality_adapter: object | None = None
+    connector_sync_service: object | None = None
+    connector_connection: object | None = None
+    connector_asset: object | None = None
+    connector_secrets: object | None = None
+    connector_destination: object | None = None
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
@@ -256,7 +261,7 @@ class LocalWorkerRuntime:
 
     async def _execute_claim(self, claim: ClaimedRun) -> WorkerExecutionOutcome:
         loop = asyncio.get_running_loop()
-        if claim.job.target in {"sql.query", "graph.query", "quality.gate"}:
+        if claim.job.target in {"sql.query", "graph.query", "quality.gate", "connector.sync"}:
             if claim.job.target == "sql.query" and self.config.scheduler_sql_engine is None:
                 raise UnsupportedSchedulerWorkload(
                     "sql.query scheduler execution requires scheduler_sql_engine"
@@ -268,6 +273,10 @@ class LocalWorkerRuntime:
             if claim.job.target == "quality.gate" and self.config.scheduler_quality_adapter is None:
                 raise UnsupportedSchedulerWorkload(
                     "quality.gate scheduler execution requires scheduler_quality_adapter"
+                )
+            if claim.job.target == "connector.sync" and self.config.connector_sync_service is None:
+                raise UnsupportedSchedulerWorkload(
+                    "connector.sync scheduler execution requires connector_sync_service"
                 )
             try:
                 result = await loop.run_in_executor(
@@ -281,6 +290,11 @@ class LocalWorkerRuntime:
                         workspace_id=claim.workspace_id,
                         run_id=str(claim.run.id),
                         now=self._now(),
+                        connector_sync_service=self.config.connector_sync_service,
+                        connector_connection=self.config.connector_connection,
+                        connector_asset=self.config.connector_asset,
+                        connector_secrets=self.config.connector_secrets,
+                        connector_destination=self.config.connector_destination,
                     ),
                 )
             except Exception:
@@ -290,6 +304,8 @@ class LocalWorkerRuntime:
                     else "scheduler.graph.error"
                     if claim.job.target == "graph.query"
                     else "scheduler.quality.error"
+                    if claim.job.target == "quality.gate"
+                    else "scheduler.connector.error"
                 )
                 await self._service.worker_complete_attempt(
                     claim.attempt_id,
