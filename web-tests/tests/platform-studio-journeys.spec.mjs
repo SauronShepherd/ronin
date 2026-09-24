@@ -217,6 +217,9 @@ test('Data Engineering Studio executes a bounded read-only SQL query', async ({ 
   await page.locator('#de-sql-form textarea[name="sql"]').fill('SELECT changed');
   await page.getByRole('button', { name: 'local: SELECT 1 AS value', exact: true }).click();
   await expect(page.locator('#de-sql-form textarea[name="sql"]')).toHaveValue('SELECT 1 AS value');
+  await page.goto('./#home');
+  await page.goto('./#data');
+  await expect(page.locator('#de-sql-history')).toContainText('local: SELECT 1 AS value');
 });
 
 test('Data Engineering Studio visual pipeline editor synchronizes nodes, edges and history', async ({ page }) => {
