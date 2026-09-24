@@ -62,3 +62,10 @@ def test_ml_studio_exposes_feature_definition_lifecycle() -> None:
     source = (root / "web/js/ml-features-studio.js").read_text(encoding="utf-8")
     for marker in ("ml-feature-form", "/v1/ml-studio/features", "ronin.ml-feature/v1", "columns"):
         assert marker in source, f"ML feature lifecycle missing: {marker}"
+
+
+def test_ai_studio_exposes_provider_health_check() -> None:
+    root = Path(__file__).parents[1]
+    source = (root / "web/js/ai-studio.js").read_text(encoding="utf-8")
+    for marker in ("ai-health", "/ai-studio/health", "Check provider health"):
+        assert marker in source, f"AI health UI missing: {marker}"
