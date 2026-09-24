@@ -33,6 +33,9 @@ class _GenAIService(Protocol):
     def get_agent_run(self, workspace_id: str, run_id: str) -> object: ...
     def evaluate_rag(self, workspace_id: str, body: dict[str, object]) -> object: ...
     def get_rag_evaluation(self, workspace_id: str, evaluation_id: str) -> object: ...
+    def qualify_provider(
+        self, workspace_id: str, provider_id: str, body: dict[str, object]
+    ) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
     def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
     def build_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
@@ -68,6 +71,7 @@ class GenAIPlugin:
             "genai.agent.run.get.v1",
             "genai.rag.evaluation.v1",
             "genai.rag.evaluation.get.v1",
+            "genai.provider.qualification.v1",
             "genai.agent.put.v1",
             "genai.agent.delete.v1",
             "genai.agent.runs.v1",
@@ -184,6 +188,12 @@ class GenAIPlugin:
                 "/v1/workspaces/{workspace_id}/genai/rag/evaluations/{evaluation_id}",
                 "rag.evaluation.get",
                 self.get_rag_evaluation,
+            ),
+            (
+                "POST",
+                "/v1/workspaces/{workspace_id}/genai/providers/{provider_id}/qualification",
+                "provider.qualification",
+                self.qualify_provider,
             ),
         ):
             surface_id = f"genai.{operation}.v1"
@@ -577,6 +587,30 @@ class GenAIPlugin:
             return {"item": result} if result is not None else {"item": None}
         except Exception:
             return {"status": "unavailable", "item": None}
+
+    def qualify_provider(
+        self,
+        *,
+        workspace_id: str = "",
+        provider_id: str = "",
+        body: object | None = None,
+        **_kwargs: object,
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured"}
+        if not isinstance(body, dict) or set(body) != {"model_id", "capabilities"}:
+            return {"error": {"code": "invalid_qualification"}}
+        if (
+            not isinstance(body["model_id"], str)
+            or not body["model_id"].strip()
+            or not isinstance(body["capabilities"], list)
+            or not all(isinstance(value, str) for value in body["capabilities"])
+        ):
+            return {"error": {"code": "invalid_qualification"}}
+        try:
+            return self._service.qualify_provider(workspace_id, provider_id, dict(body))
+        except Exception as exc:
+            return {"error": {"code": "qualification_failed", "message": str(exc)}}
 
 
 def factory() -> GenAIPlugin:
