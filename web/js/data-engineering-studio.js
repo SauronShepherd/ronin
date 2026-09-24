@@ -13,6 +13,17 @@ document.addEventListener('click', async event => {
   if (!action || !action.startsWith('de-')) return;
   const out = document.querySelector(action === 'de-health' || action === 'de-runtimes' ? '#de-health-result' : action.startsWith('de-sql-') ? '#de-sql-result' : '#de-pipeline-result');
   try {
+    if (action === 'de-queryflux-capabilities') {
+      const result = document.querySelector('#de-queryflux-result');
+      result.textContent = json({
+        profile: 'queryflux',
+        status: 'not_configured',
+        capabilities: { routing_trace: true, bounded_preview: true, cancellation: true },
+        target: 'provider-neutral query engine',
+        translation_policies: ['native_only', 'best_effort', 'strict'],
+      });
+      return;
+    }
     if (action === 'de-health') out.textContent = json(await get('/v1/data-engineering/health'));
     else if (action === 'de-sql-execute' || action === 'de-sql-export') { const data = new FormData(document.querySelector('#de-sql-form')); const workspace = encodeURIComponent(data.get('workspace')); const project = encodeURIComponent(data.get('project')); const result = await post(`/v1/workspaces/${workspace}/projects/${project}/sql/query`, { sql: data.get('sql'), max_rows: 1000, profile: data.get('profile'), translation_policy: data.get('translation_policy') }); if (action === 'de-sql-export') { const columns = (result.columns || []).map(column => typeof column === 'string' ? column : column.name); const rows = result.rows || []; out.textContent = [columns.join(','), ...rows.map(row => row.map(value => JSON.stringify(value ?? '')).join(','))].join('\n'); } else out.textContent = json(result); }
     else if (action === 'de-runtimes') out.textContent = json(await get('/v1/data-engineering/runtimes'));
@@ -23,6 +34,18 @@ document.addEventListener('click', async event => {
   } catch (error) { out.textContent = `Data Engineering operation failed: ${error.message}`; }
 });
 setTimeout(() => { window.addEventListener('hashchange', render); if (location.hash.slice(1) === 'data') render(); }, 0);
+
+function addQueryFluxPanel() {
+  const view = document.querySelector('#view');
+  if (!view || view.querySelector('#de-queryflux-result')) return;
+  const panel = document.createElement('section');
+  panel.className = 'panel';
+  panel.innerHTML = '<h2>QueryFlux</h2><p class="muted">Provider-neutral query routing evidence; raw cluster configuration is intentionally hidden.</p><div class="toolbar"><button class="button" data-action="de-queryflux-capabilities">Inspect capabilities</button></div><pre id="de-queryflux-result" class="code" aria-live="polite">No QueryFlux capability check requested.</pre>';
+  view.prepend(panel);
+}
+
+setTimeout(addQueryFluxPanel, 0);
+window.addEventListener('hashchange', addQueryFluxPanel);
 
 function addQueryTranslationPolicy() {
   const form = document.querySelector('#de-sql-form');
