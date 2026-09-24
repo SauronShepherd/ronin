@@ -15,6 +15,7 @@ class _GenAIService(Protocol):
     def prompts(self, workspace_id: str) -> object: ...
     def put_prompt(self, workspace_id: str, prompt: PromptAsset) -> object: ...
     def indexes(self, workspace_id: str) -> object: ...
+    def delete_index(self, workspace_id: str, index_id: str) -> object: ...
 
 
 class GenAIPlugin:
@@ -25,7 +26,7 @@ class GenAIPlugin:
         plugin_api="1.0",
         host_requires=">=1,<2",
         capabilities=("genai.discovery",),
-        permissions=("genai:read",),
+        permissions=("genai:read", "genai:write"),
         isolation="worker",
         surface_ids=(
             "genai.providers.v1",
@@ -33,6 +34,7 @@ class GenAIPlugin:
             "genai.prompts.v1",
             "genai.prompt.v1",
             "genai.indexes.v1",
+            "genai.index.delete.v1",
         ),
     )
 
@@ -42,6 +44,7 @@ class GenAIPlugin:
     def register(self, context: PluginContext) -> None:
         self._service = cast(_GenAIService | None, context.services.get("genai"))
         context.contributions.add_permission("genai:read", context.plugin_id)
+        context.contributions.add_permission("genai:write", context.plugin_id)
         for method, path, operation, handler in (
             ("GET", "/v1/workspaces/{workspace_id}/genai/providers", "providers", self.providers),
             ("GET", "/v1/workspaces/{workspace_id}/genai/health", "health", self.health),
@@ -53,15 +56,22 @@ class GenAIPlugin:
                 self.put_prompt,
             ),
             ("GET", "/v1/workspaces/{workspace_id}/genai/indexes", "indexes", self.indexes),
+            (
+                "DELETE",
+                "/v1/workspaces/{workspace_id}/genai/indexes/{index_id}",
+                "index.delete",
+                self.delete_index,
+            ),
         ):
             surface_id = f"genai.{operation}.v1"
+            permission = "genai:write" if method == "DELETE" or method == "PUT" else "genai:read"
             context.contributions.add_route(
-                method, path, context.plugin_id, handler, permission="genai:read"
+                method, path, context.plugin_id, handler, permission=permission
             )
             context.contributions.add_surface(SurfaceContribution(
                 id=surface_id, plugin_id=context.plugin_id, namespace="genai",
                 command=operation, operation_id=surface_id, capability="genai.discovery",
-                permission="genai:read", path=path, method=method,
+                permission=permission, path=path, method=method,
                 output_schema={"type": "object"},
             ))
 
@@ -125,6 +135,16 @@ class GenAIPlugin:
             return self._service.indexes(workspace_id)
         except Exception:
             return {"status": "unavailable", "items": []}
+
+    def delete_index(
+        self, *, workspace_id: str = "", index_id: str = "", **_kwargs: object
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured", "deleted": False}
+        try:
+            return {"deleted": bool(self._service.delete_index(workspace_id, index_id))}
+        except Exception:
+            return {"status": "unavailable", "deleted": False}
 
 
 def factory() -> GenAIPlugin:
