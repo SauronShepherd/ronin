@@ -1129,8 +1129,12 @@ class Ronin:
         quality_passed: bool,
         max_regression_ratio: float = 0.05,
     ) -> Mapping[str, object]:
-        if not all(value.strip() for value in (workspace_id, project_id, session_id, candidate_id)):
-            raise ValueError("workspace_id, project_id, session_id and candidate_id must be non-empty")
+        if not all(
+            value.strip() for value in (workspace_id, project_id, session_id, candidate_id)
+        ):
+            raise ValueError(
+                "workspace_id, project_id, session_id and candidate_id must be non-empty"
+            )
         if max_regression_ratio < 0:
             raise ValueError("max_regression_ratio must be non-negative")
         result = self._transport.request(
