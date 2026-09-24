@@ -27,7 +27,19 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
     "studio_storage": frozenset(
         {"studio_core", "studio_notebook", "studio_kernel", "studio_orchestrator"}
     ),
-    "studio_execution": frozenset({"studio_orchestrator", "studio_storage"}),
+    # Scheduler workload adapters are the composition boundary for domain
+    # runtimes.  They depend on ports exposed by these packages; the adapters
+    # do not move provider logic into the execution core.
+    "studio_execution": frozenset(
+        {
+            "studio_orchestrator",
+            "studio_storage",
+            "studio_connectors",
+            "studio_observability",
+            "studio_quality",
+            "studio_sql",
+        }
+    ),
     "studio_server": frozenset(
         {
             "studio_core",
@@ -55,6 +67,7 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_storage",
             "studio_vcs",
             "studio_execution",
+            "studio_sql",
         }
     ),
     "studio_cli": frozenset(
