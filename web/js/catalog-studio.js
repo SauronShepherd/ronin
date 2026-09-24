@@ -11,6 +11,7 @@ function render() {
   </section><section class="panel"><h2>Glossary</h2>
     <form id="glossary-form" class="stack"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Term ID<input class="field" name="id" placeholder="customer" required></label><label>Version<input class="field" name="version" value="1" required></label><label>Name<input class="field" name="name" required></label><label>Definition<textarea class="field" name="definition" required></textarea></label><label>Owner<input class="field" name="owner" required></label><label>References<input class="field" name="references" placeholder="catalog:customer"></label><button class="button primary" type="submit">Publish term</button></form>
     <form id="glossary-search-form" class="toolbar"><label>Search terms<input class="field" name="query" placeholder="name, owner or definition"></label><button class="button" type="submit">Load terms</button></form><pre id="glossary-result" class="code" aria-live="polite">No glossary term published.</pre>
+  </section><section class="panel"><h2>Lineage</h2><form id="catalog-lineage-form" class="toolbar"><label>Asset ID<input class="field" name="asset_id" required></label><label>Version<input class="field" name="version" value="1" required></label><select class="field" name="direction"><option value="upstream">Upstream</option><option value="downstream">Downstream</option></select><button class="button" type="submit">Inspect lineage</button></form><pre id="catalog-lineage-result" class="code" aria-live="polite">No lineage query executed.</pre>
   </section>`;
 }
 
@@ -29,6 +30,20 @@ document.addEventListener('submit', async event => {
     const items = payload.items || [];
     result.innerHTML = items.length ? `<div class="table-wrap"><table><caption class="sr-only">Catalog assets</caption><thead><tr><th>Name</th><th>Kind</th><th>Tags</th><th>Classifications</th></tr></thead><tbody>${items.map(item => `<tr><td>${esc(item.name)}</td><td>${esc(item.kind)}</td><td>${esc((item.tags || []).join(', '))}</td><td>${esc((item.classifications || []).join(', '))}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No governed assets matched the query.</div>';
   } catch (error) { result.textContent = `Catalog lookup failed: ${error.message}`; }
+});
+
+document.addEventListener('submit', async event => {
+  const form = event.target;
+  if (!(form instanceof HTMLFormElement) || form.id !== 'catalog-lineage-form') return;
+  event.preventDefault();
+  const data = new FormData(form);
+  const workspace = encodeURIComponent(String(document.querySelector('#glossary-form [name="workspace"]')?.value || '').trim());
+  const asset = encodeURIComponent(String(data.get('asset_id') || '').trim());
+  const version = encodeURIComponent(String(data.get('version') || '').trim());
+  const direction = encodeURIComponent(String(data.get('direction') || 'upstream'));
+  const output = document.querySelector('#catalog-lineage-result');
+  try { output.textContent = json(await get(`/v1/workspaces/${workspace}/catalog/lineage/${asset}/${version}?direction=${direction}&limit=100`)); }
+  catch (error) { output.textContent = `Lineage lookup failed: ${error.message}`; }
 });
 
 document.addEventListener('submit', async event => {
