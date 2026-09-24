@@ -14,7 +14,8 @@ from urllib.parse import unquote
 from .adapters.iics import IICS_ADAPTER_VERSION, discover_iics_zip
 from .benchmark import BenchmarkResult, decide_promotion, promotion_evidence
 from .blueprint import extract_blueprint
-from .model import SourceArtifact
+from .model import MigrationUnit, SourceArtifact, SourceInventory
+from .profiles import discover_databricks, discover_dataiku, discover_fabric, discover_foundry
 from .pyspark_codegen import export_migration_script
 from .reports import render_validation_html, render_validation_markdown
 from .session import MigrationSessionService
@@ -23,6 +24,51 @@ from .validation import CheckMode, ReportLevel
 MAX_VALIDATION_ROWS = 100_000
 MAX_VALIDATION_COLUMNS = 1_000
 MAX_SOURCE_ARTIFACT_BYTES = 512 * 1024 * 1024
+
+_PROFILE_DISCOVERERS = {
+    "databricks": discover_databricks,
+    "fabric": discover_fabric,
+    "foundry": discover_foundry,
+    "dataiku": discover_dataiku,
+}
+
+
+def _profile_inventory(profile: str, document: bytes, *, source_version: str) -> SourceInventory:
+    """Convert a vendor report into the canonical session inventory contract."""
+
+    try:
+        report = _PROFILE_DISCOVERERS[profile](document, source_version=source_version)
+    except KeyError as exc:
+        raise ValueError("migration profile is unsupported") from exc
+    states = {
+        "unsupported": "unsupported",
+        "partial": "review_required",
+        "manual_decision": "review_required",
+    }
+    units = tuple(
+        MigrationUnit(
+            key=f"{item.source_type}:{item.source_id}",
+            kind=item.source_type,
+            name=item.source_id,
+            state=states.get(item.status, "ready"),
+            source_refs=(item.source_id,),
+            notes=item.notes,
+        )
+        for item in report.objects
+    )
+    return SourceInventory(
+        adapter_id=profile,
+        adapter_version=report.importer_version,
+        artifacts=(
+            SourceArtifact(
+                f"{profile}-inventory.json",
+                hashlib.sha256(document).hexdigest(),
+                len(document),
+                "application/json",
+            ),
+        ),
+        units=units,
+    )
 
 
 def _benchmark_from_payload(value: object, label: str) -> BenchmarkResult:
@@ -166,7 +212,15 @@ class MigrationAPIRouter:
                             "adapter_id": "iics",
                             "adapter_version": IICS_ADAPTER_VERSION,
                             "capabilities": ["discover", "scope", "generate"],
-                        }
+                        },
+                        *[
+                            {
+                                "adapter_id": profile,
+                                "adapter_version": f"ronin-{profile}-0.1",
+                                "capabilities": ["discover", "inventory"],
+                            }
+                            for profile in _PROFILE_DISCOVERERS
+                        ],
                     ]
                 },
             )
@@ -299,24 +353,47 @@ class MigrationAPIRouter:
                         },
                     )
                 if operation == "discover" and method == "POST":
-                    if not isinstance(payload, dict) or not isinstance(
-                        payload.get("archives"), list
-                    ):
-                        raise ValueError("discover requires an archives array")
-                    archives: list[tuple[str, bytes]] = []
-                    for item in payload["archives"]:
+                    if isinstance(payload, dict) and "profile" in payload:
+                        profile = payload.get("profile")
+                        document_base64 = payload.get("document_base64")
+                        source_version = payload.get("source_version", "unknown")
                         if (
-                            not isinstance(item, dict)
-                            or not isinstance(item.get("name"), str)
-                            or not isinstance(item.get("content_base64"), str)
+                            not isinstance(profile, str)
+                            or not isinstance(document_base64, str)
+                            or not isinstance(source_version, str)
                         ):
-                            raise ValueError("each archive requires name and content_base64")
+                            raise ValueError(
+                                "profile discovery requires profile, document_base64 "
+                                "and source_version"
+                            )
                         try:
-                            content = base64.b64decode(item["content_base64"], validate=True)
+                            document = base64.b64decode(document_base64, validate=True)
                         except (binascii.Error, ValueError) as exc:
-                            raise ValueError("archive content_base64 is invalid") from exc
-                        archives.append((item["name"], content))
-                    updated = self.service.discover(session_id, discover_iics_zip(archives))
+                            raise ValueError("document_base64 is invalid") from exc
+                        updated = self.service.discover(
+                            session_id,
+                            _profile_inventory(profile, document, source_version=source_version),
+                        )
+                    else:
+                        if not isinstance(payload, dict) or not isinstance(
+                            payload.get("archives"), list
+                        ):
+                            raise ValueError("discover requires an archives array")
+                    archives: list[tuple[str, bytes]] = []
+                    if "profile" not in payload:
+                        for item in payload["archives"]:
+                            if (
+                                not isinstance(item, dict)
+                                or not isinstance(item.get("name"), str)
+                                or not isinstance(item.get("content_base64"), str)
+                            ):
+                                raise ValueError("each archive requires name and content_base64")
+                            try:
+                                content = base64.b64decode(item["content_base64"], validate=True)
+                            except (binascii.Error, ValueError) as exc:
+                                raise ValueError("archive content_base64 is invalid") from exc
+                            archives.append((item["name"], content))
+                        updated = self.service.discover(session_id, discover_iics_zip(archives))
                 elif operation == "scope" and method == "PUT":
                     if (
                         not isinstance(payload, dict)

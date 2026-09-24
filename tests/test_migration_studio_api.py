@@ -49,6 +49,34 @@ def test_migration_api_lists_adapters_and_ingests_source_artifact() -> None:
     assert unsafe.status == 400
 
 
+def test_migration_api_discovers_named_vendor_profiles_into_canonical_inventory() -> None:
+    router = MigrationAPIRouter(MigrationSessionService())
+    base = "/v1/workspaces/ws-1/projects/project-1/migration/sessions"
+    session_id = router.dispatch("POST", base, {}, authorized=True).payload["id"]
+    discovered = router.dispatch(
+        "POST",
+        f"{base}/{session_id}/discover",
+        {
+            "profile": "databricks",
+            "source_version": "15.4",
+            "document_base64": base64.b64encode(
+                b'{"jobs":[{"id":"job-1"}],"pipelines":[{"id":"pipe-1"}]}'
+            ).decode(),
+        },
+        authorized=True,
+    )
+    assert discovered.status == 200
+    inventory = router.dispatch(
+        "GET", f"{base}/{session_id}/inventory", authorized=True
+    )
+    assert inventory.status == 200
+    assert inventory.payload["adapter_id"] == "databricks"
+    assert {item["key"] for item in inventory.payload["units"]} == {
+        "job:job-1",
+        "pipeline:pipe-1",
+    }
+
+
 def test_migration_api_hides_other_project_session_and_requires_auth() -> None:
     router = MigrationAPIRouter(MigrationSessionService())
     path = "/v1/workspaces/ws-1/projects/project-1/migration/sessions"
