@@ -1066,6 +1066,25 @@ class Ronin:
             raise ProtocolError("migration conversion response must contain workflow and report")
         return payload
 
+    def qualify_migration_session(
+        self, workspace_id: str, project_id: str, session_id: str
+    ) -> Mapping[str, object]:
+        if not workspace_id.strip() or not project_id.strip() or not session_id.strip():
+            raise ValueError("workspace_id, project_id and session_id must be non-empty")
+        payload = self._transport.request(
+            "POST",
+            f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+            f"{quote(project_id, safe='')}/migration/sessions/{quote(session_id, safe='')}/qualify",
+            payload={},
+        )
+        if not isinstance(payload, dict):
+            raise ProtocolError("migration qualification response must be an object")
+        if not isinstance(payload.get("status"), str) or not isinstance(
+            payload.get("files_checked"), int
+        ) or not isinstance(payload.get("findings"), list):
+            raise ProtocolError("migration qualification response has invalid fields")
+        return payload
+
     def archive_project(self, workspace_id: str, project_id: str) -> bool:
         if not workspace_id.strip() or not project_id.strip():
             raise ValueError("workspace_id and project_id must be non-empty")

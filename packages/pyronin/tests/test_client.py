@@ -234,6 +234,13 @@ def test_convert_migration_session_requires_workflow_and_report() -> None:
     )
 
 
+def test_qualify_migration_session_validates_findings_contract() -> None:
+    transport = FakeTransport([{"status": "passed", "files_checked": 2, "findings": []}])
+    payload = Ronin(transport=transport).qualify_migration_session("ws-1", "p-1", "m-1")
+    assert payload["status"] == "passed"
+    assert payload["files_checked"] == 2
+
+
 def test_workspace_and_project_pages_forward_and_validate_cursor() -> None:
     transport = FakeTransport(
         [
