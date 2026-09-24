@@ -212,6 +212,16 @@ def test_list_migration_sessions_forwards_bounded_cursor() -> None:
     assert transport.calls[0][4] == {"limit": "1", "cursor": "start-1"}
 
 
+def test_discover_migration_session_encodes_document_and_validates_inventory() -> None:
+    transport = FakeTransport([{"units": [{"key": "job:j-1"}], "digest": "d" * 64}])
+    payload = Ronin(transport=transport).discover_migration_session(
+        "ws-1", "p-1", "m-1", profile="databricks", document=b'{"jobs":[]}', source_version="15.4"
+    )
+    assert payload["units"] == [{"key": "job:j-1"}]
+    assert transport.calls[0][2]["profile"] == "databricks"
+    assert transport.calls[0][2]["document_base64"] == "eyJqb2JzIjpbXX0="
+
+
 def test_workspace_and_project_pages_forward_and_validate_cursor() -> None:
     transport = FakeTransport(
         [
