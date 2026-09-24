@@ -115,6 +115,7 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("PUT", "/v1/workspaces/{workspace_id}/environments/{environment_id}"),
         ("POST", "/v1/workspaces/{workspace_id}/environments/{environment_id}/diff"),
         ("POST", "/v1/workspaces/{workspace_id}/environments/{environment_id}/disable"),
+        ("POST", "/v1/workspaces/{workspace_id}/environments/{environment_id}/enable"),
         (
             "GET",
             "/v1/workspaces/{workspace_id}/projects/{project_id}/environments/{environment_id}/bindings",
@@ -3701,7 +3702,11 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 stored = environment_service.create(workspace_id, environment, now=_now())
                 self._write_json(HTTPStatus.CREATED, stored.to_payload())
                 return
-            if len(segments) == 6 and segments[3] == "environments" and segments[5] == "disable":
+            if (
+                len(segments) == 6
+                and segments[3] == "environments"
+                and segments[5] in {"disable", "enable"}
+            ):
                 environment_service = self._server().environment_service
                 if environment_service is None:
                     self._error(
@@ -3716,19 +3721,22 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "workspace.write", resource_ref=str(environment_id)
                 ):
                     return
+                action = segments[5]
                 if self._read_json() not in ({}, None):
-                    raise ValueError("environment disable body must be empty")
+                    raise ValueError(f"environment {action} body must be empty")
                 if not self._audit_mutation(
                     actor,
-                    "environment.disable",
+                    f"environment.{action}",
                     workspace_id,
                     {"resource": str(environment_id)},
                 ):
                     return
                 self._write_json(
                     HTTPStatus.OK,
-                    environment_service.disable(
-                        workspace_id, environment_id, now=_now()
+                    (
+                        environment_service.disable(workspace_id, environment_id, now=_now())
+                        if action == "disable"
+                        else environment_service.enable(workspace_id, environment_id, now=_now())
                     ).to_payload(),
                 )
                 return

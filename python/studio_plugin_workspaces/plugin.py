@@ -54,6 +54,7 @@ class WorkspacesPlugin:
             "environments.create.v1",
             "environments.replace.v1",
             "environments.disable.v1",
+            "environments.enable.v1",
             "projects.list.v1",
             "projects.create.v1",
             "projects.get.v1",
@@ -164,6 +165,12 @@ class WorkspacesPlugin:
                 "POST",
                 "/v1/workspaces/{workspace_id}/environments/{environment_id}/disable",
                 self.disable_environment,
+                "workspaces:write",
+            ),
+            (
+                "POST",
+                "/v1/workspaces/{workspace_id}/environments/{environment_id}/enable",
+                self.enable_environment,
                 "workspaces:write",
             ),
         ):
@@ -292,6 +299,18 @@ class WorkspacesPlugin:
                 capability="workspaces.write",
                 permission="workspaces:write",
                 path="/v1/workspaces/{workspace_id}/environments/{environment_id}/disable",
+                method="POST",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="environments.enable.v1",
+                plugin_id=context.plugin_id,
+                namespace="environments",
+                command="enable",
+                operation_id="environments.enable.v1",
+                capability="workspaces.write",
+                permission="workspaces:write",
+                path="/v1/workspaces/{workspace_id}/environments/{environment_id}/enable",
                 method="POST",
                 output_schema={"type": "object"},
             ),
@@ -530,6 +549,16 @@ class WorkspacesPlugin:
         if not self.started:
             raise RuntimeError("workspaces plugin is not ready")
         item = self._environment_service_or_raise().disable(
+            WorkspaceId(workspace_id), EnvironmentId(environment_id), now="plugin"
+        )
+        return self._environment_payload(item)
+
+    def enable_environment(
+        self, workspace_id: str, environment_id: str, **_kwargs: Any
+    ) -> dict[str, object]:
+        if not self.started:
+            raise RuntimeError("workspaces plugin is not ready")
+        item = self._environment_service_or_raise().enable(
             WorkspaceId(workspace_id), EnvironmentId(environment_id), now="plugin"
         )
         return self._environment_payload(item)

@@ -24,6 +24,6 @@
   {"id":"debugger","title":"Debugger","state":"active","required_api":["/v1/data-engineering/debugger/sessions","/v1/data-engineering/debugger/sessions/{session_id}/breakpoints/{cell_id}"],"smoke_selector":"#debugger-create-form"},
   {"id":"cloud","title":"Cloud Studio","state":"active","required_api":["/v1/cloud-studio/validate","/v1/cloud-studio/plan"],"smoke_selector":"#cloud-plan-form"},
   {"id":"deployments","title":"Deployments","state":"active","required_api":["/v1/workspaces/{workspace_id}/projects/{project_id}/environments/{environment_id}/bindings"],"smoke_selector":"#deployment-bindings-form"},
-  {"id":"environments","title":"Environments","state":"active","required_api":["/v1/workspaces/{workspace_id}/environments","/v1/workspaces/{workspace_id}/environments/{environment_id}","/v1/workspaces/{workspace_id}/environments/{environment_id}/disable"],"smoke_selector":"#environment-workspace"},
+  {"id":"environments","title":"Environments","state":"active","required_api":["/v1/workspaces/{workspace_id}/environments","/v1/workspaces/{workspace_id}/environments/{environment_id}","/v1/workspaces/{workspace_id}/environments/{environment_id}/disable","/v1/workspaces/{workspace_id}/environments/{environment_id}/enable"],"smoke_selector":"#environment-workspace"},
   {"id":"settings","title":"Settings","state":"active","required_api":[],"smoke_selector":"#settings-form"}
 ]

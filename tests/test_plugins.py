@@ -47,6 +47,7 @@ def test_community_plugin_composes_and_starts() -> None:
         ("GET", "/v1/workspaces/{workspace_id}/environments/{environment_id}"),
         ("PUT", "/v1/workspaces/{workspace_id}/environments/{environment_id}"),
         ("POST", "/v1/workspaces/{workspace_id}/environments/{environment_id}/disable"),
+        ("POST", "/v1/workspaces/{workspace_id}/environments/{environment_id}/enable"),
         ("POST", "/v1/workspaces/{workspace_id}/projects"),
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
         ("PUT", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
@@ -56,6 +57,7 @@ def test_community_plugin_composes_and_starts() -> None:
     assert [item.id for item in plan.contributions.cli_registry.items] == [
         "environments.create.v1",
         "environments.disable.v1",
+        "environments.enable.v1",
         "environments.get.v1",
         "environments.list.v1",
         "environments.replace.v1",
@@ -71,6 +73,7 @@ def test_community_plugin_composes_and_starts() -> None:
     assert [item.operation_id for item in plan.contributions.client_operation_registry.items] == [
         "environments.create.v1",
         "environments.disable.v1",
+        "environments.enable.v1",
         "environments.get.v1",
         "environments.list.v1",
         "environments.replace.v1",
