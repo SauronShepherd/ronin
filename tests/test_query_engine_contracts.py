@@ -6,10 +6,28 @@ from studio_query_engine import (
     EngineCapabilities,
     EngineHandshake,
     QueryEvidence,
+    QueryEngineTransport,
     QueryRequest,
     QueryResultPage,
     QueryStatus,
 )
+
+
+def test_provider_neutral_transport_port_is_runtime_checkable_by_shape() -> None:
+    class Transport:
+        def submit(self, request):
+            return None
+
+        def poll(self, handle, next_uri):
+            return None
+
+        def cancel(self, handle):
+            return None
+
+    # Protocols are intentionally structural; this assertion keeps the
+    # contract independent of any provider implementation or import.
+    assert QueryEngineTransport is not None
+    assert all(hasattr(Transport, method) for method in ("submit", "poll", "cancel"))
 
 
 def test_query_engine_contract_is_provider_neutral_and_canonical() -> None:

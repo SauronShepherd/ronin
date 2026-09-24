@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Protocol
 
 from studio_core.canonical_json import encode as encode_canonical_json
 
@@ -232,11 +232,28 @@ class QueryEvidence:
         }
 
 
+class QueryEngineTransport(Protocol):
+    """Ronin-owned lifecycle port implemented by local and remote engines.
+
+    Implementations may use any provider-specific protocol internally, but the
+    caller only observes the stable submit/poll/cancel contract below.
+    """
+
+    def submit(self, request: QueryRequest) -> tuple[QueryHandle, str]: ...
+
+    def poll(
+        self, handle: QueryHandle, next_uri: str
+    ) -> tuple[QueryStatus, QueryResultPage | None, str | None]: ...
+
+    def cancel(self, handle: QueryHandle) -> CancellationResult: ...
+
+
 __all__ = [
     "CancellationResult",
     "EngineCapabilities",
     "EngineHandshake",
     "QueryEvidence",
+    "QueryEngineTransport",
     "QueryHandle",
     "QueryRequest",
     "QueryResultPage",
