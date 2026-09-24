@@ -64,3 +64,13 @@ def test_tag_publication_requires_exact_aggregate_release_verdict() -> None:
     ):
         assert gate in workflow
     assert "- authoritative-release-verdict" in workflow
+
+
+def test_ci_retains_changed_surface_manifest_for_review() -> None:
+    workflow = _workflow("ci.yml")
+
+    assert "Build changed-surface manifest" in workflow
+    assert "github.event.pull_request.base.sha" in workflow
+    assert 'git rev-parse "$GITHUB_SHA^"' in workflow
+    assert "tools.changed_surface" in workflow
+    assert "name: changed-surface-manifest" in workflow
