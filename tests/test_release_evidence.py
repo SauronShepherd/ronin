@@ -203,3 +203,37 @@ def test_aggregate_release_evidence_requires_exact_commit(tmp_path: Path) -> Non
     )
     assert result.returncode == 2
     assert "records must be a non-empty array" in result.stdout
+
+
+def test_emit_release_evidence_hashes_artifacts(tmp_path: Path) -> None:
+    artifact = tmp_path / "evidence.txt"
+    artifact.write_text("qualified\n", encoding="utf-8")
+    output = tmp_path / "bundle.json"
+    result = subprocess.run(  # noqa: S603
+        [
+            sys.executable,
+            "-m",
+            "tools.emit_release_evidence",
+            "--gate-id",
+            "browser",
+            "--commit",
+            "abc123",
+            "--status",
+            "passed",
+            "--fingerprint",
+            "local-browser",
+            "--command",
+            "pytest browser",
+            "--artifact",
+            str(artifact),
+            "--output",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0
+    bundle = json.loads(output.read_text(encoding="utf-8"))
+    assert len(bundle["records"]) == 1
+    assert len(bundle["records"][0]["artifact_digests"][str(artifact)]) == 64
