@@ -102,9 +102,7 @@ def test_genai_plugin_fails_closed_without_runtime() -> None:
         "status": "not_configured",
         "item": None,
     }
-    assert plugin.evaluate_rag(workspace_id="ws", body={}) == {
-        "status": "not_configured"
-    }
+    assert plugin.evaluate_rag(workspace_id="ws", body={}) == {"status": "not_configured"}
     assert plugin.get_rag_evaluation(workspace_id="ws", evaluation_id="eval") == {
         "status": "not_configured",
         "item": None,

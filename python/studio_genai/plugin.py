@@ -209,12 +209,20 @@ class GenAIPlugin:
             context.contributions.add_route(
                 method, path, context.plugin_id, handler, permission=permission
             )
-            context.contributions.add_surface(SurfaceContribution(
-                id=surface_id, plugin_id=context.plugin_id, namespace="genai",
-                command=operation, operation_id=surface_id, capability="genai.discovery",
-                permission=permission, path=path, method=method,
-                output_schema={"type": "object"},
-            ))
+            context.contributions.add_surface(
+                SurfaceContribution(
+                    id=surface_id,
+                    plugin_id=context.plugin_id,
+                    namespace="genai",
+                    command=operation,
+                    operation_id=surface_id,
+                    capability="genai.discovery",
+                    permission=permission,
+                    path=path,
+                    method=method,
+                    output_schema={"type": "object"},
+                )
+            )
 
     def startup(self) -> None:
         return None
@@ -277,9 +285,7 @@ class GenAIPlugin:
         except Exception:
             return {"status": "unavailable", "items": []}
 
-    def get_index(
-        self, *, workspace_id: str = "", index_id: str = "", **_kwargs: object
-    ) -> object:
+    def get_index(self, *, workspace_id: str = "", index_id: str = "", **_kwargs: object) -> object:
         if self._service is None:
             return {"status": "not_configured", "item": None}
         try:
@@ -372,9 +378,7 @@ class GenAIPlugin:
         except Exception:
             return {"status": "unavailable", "items": []}
 
-    def get_tool(
-        self, *, workspace_id: str = "", tool_id: str = "", **_kwargs: object
-    ) -> object:
+    def get_tool(self, *, workspace_id: str = "", tool_id: str = "", **_kwargs: object) -> object:
         if self._service is None:
             return {"status": "not_configured", "item": None}
         try:
@@ -421,9 +425,7 @@ class GenAIPlugin:
             return {"error": {"code": "missing_idempotency_key"}}
         try:
             return {
-                "deleted": bool(
-                    self._service.delete_tool(workspace_id, tool_id, idempotency_key)
-                )
+                "deleted": bool(self._service.delete_tool(workspace_id, tool_id, idempotency_key))
             }
         except Exception:
             return {"status": "unavailable", "deleted": False}
@@ -436,9 +438,7 @@ class GenAIPlugin:
         except Exception:
             return {"status": "unavailable", "items": []}
 
-    def get_agent(
-        self, *, workspace_id: str = "", agent_id: str = "", **_kwargs: object
-    ) -> object:
+    def get_agent(self, *, workspace_id: str = "", agent_id: str = "", **_kwargs: object) -> object:
         if self._service is None:
             return {"status": "not_configured", "item": None}
         try:
@@ -532,9 +532,7 @@ class GenAIPlugin:
             return {"error": {"code": "missing_idempotency_key"}}
         try:
             return {
-                "deleted": bool(
-                    self._service.delete_agent(workspace_id, agent_id, idempotency_key)
-                )
+                "deleted": bool(self._service.delete_agent(workspace_id, agent_id, idempotency_key))
             }
         except Exception:
             return {"status": "unavailable", "deleted": False}

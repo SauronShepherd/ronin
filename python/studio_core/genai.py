@@ -320,7 +320,12 @@ class ToolContract:
         if not isinstance(payload, Mapping):
             raise ValueError("tool payload must be an object")
         required = {
-            "id", "name", "input_schema_ref", "output_schema_ref", "requirements", "side_effect"
+            "id",
+            "name",
+            "input_schema_ref",
+            "output_schema_ref",
+            "requirements",
+            "side_effect",
         }
         if set(payload) != required:
             raise ValueError("tool payload has invalid shape")
@@ -384,8 +389,14 @@ class AgentDefinition:
         if not isinstance(payload, Mapping):
             raise ValueError("agent payload must be an object")
         required = {
-            "id", "name", "provider_id", "model_id", "prompt_id", "prompt_version",
-            "tool_ids", "max_steps"
+            "id",
+            "name",
+            "provider_id",
+            "model_id",
+            "prompt_id",
+            "prompt_version",
+            "tool_ids",
+            "max_steps",
         }
         if set(payload) != required:
             raise ValueError("agent payload has invalid shape")

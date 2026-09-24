@@ -810,9 +810,7 @@ class SqliteGenAIStore:
         finally:
             connection.close()
 
-    def list_rag_evaluations(
-        self, workspace_id: WorkspaceId
-    ) -> tuple[dict[str, object], ...]:
+    def list_rag_evaluations(self, workspace_id: WorkspaceId) -> tuple[dict[str, object], ...]:
         connection = self._connect()
         try:
             rows = connection.execute(

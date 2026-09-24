@@ -112,7 +112,11 @@ def evaluate_rag_payload(payload: object, *, max_examples: int = 1000) -> RAGEva
         raise ValueError("RAG evaluation examples are outside the allowed bounds")
     evaluations: list[RAGEvaluation] = []
     required = {
-        "example_id", "expected_chunks", "retrieved_chunks", "expected_answer", "actual_answer"
+        "example_id",
+        "expected_chunks",
+        "retrieved_chunks",
+        "expected_answer",
+        "actual_answer",
     }
     for raw in raw_examples:
         if not isinstance(raw, dict) or set(raw) != required:
@@ -124,8 +128,7 @@ def evaluate_rag_payload(payload: object, *, max_examples: int = 1000) -> RAGEva
         ):
             raise ValueError("RAG evaluation chunks must be string lists")
         if not all(
-            isinstance(raw[key], str)
-            for key in ("example_id", "expected_answer", "actual_answer")
+            isinstance(raw[key], str) for key in ("example_id", "expected_answer", "actual_answer")
         ):
             raise ValueError("RAG evaluation identity and answers must be strings")
         evaluations.append(
