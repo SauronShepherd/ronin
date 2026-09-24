@@ -172,6 +172,22 @@ def test_import_migration_session_is_typed_and_scoped() -> None:
     )
 
 
+def test_create_migration_session_uses_idempotency_header() -> None:
+    transport = FakeTransport(
+        [{"id": "migration-1", "workspace_id": "ws-1", "project_id": "p-1", "state": "draft"}]
+    )
+    session = Ronin(transport=transport).create_migration_session(
+        "ws-1", "p-1", idempotency_key="migration-create-1"
+    )
+    assert session.state == "draft"
+    assert transport.calls[0][0:3] == (
+        "POST",
+        "/v1/workspaces/ws-1/projects/p-1/migration/sessions",
+        {},
+    )
+    assert transport.calls[0][3] == {"Idempotency-Key": "migration-create-1"}
+
+
 def test_workspace_and_project_pages_forward_and_validate_cursor() -> None:
     transport = FakeTransport(
         [

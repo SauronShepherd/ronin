@@ -276,6 +276,14 @@ class MigrationImportEvidence:
 
 
 @dataclass(frozen=True, slots=True)
+class MigrationSession:
+    id: str
+    workspace_id: str
+    project_id: str
+    state: str
+
+
+@dataclass(frozen=True, slots=True)
 class Environment:
     id: str
     name: str
@@ -922,6 +930,30 @@ class Ronin:
         if not all(isinstance(payload.get(value), str) for value in values):
             raise ProtocolError("migration import response has invalid evidence fields")
         return MigrationImportEvidence(*(payload[value] for value in values))
+
+    def create_migration_session(
+        self,
+        workspace_id: str,
+        project_id: str,
+        *,
+        idempotency_key: str | None = None,
+    ) -> MigrationSession:
+        if not workspace_id.strip() or not project_id.strip():
+            raise ValueError("workspace_id and project_id must be non-empty")
+        headers = {"Idempotency-Key": idempotency_key} if idempotency_key else None
+        payload = self._transport.request(
+            "POST",
+            f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+            f"{quote(project_id, safe='')}/migration/sessions",
+            payload={},
+            headers=headers,
+        )
+        if not isinstance(payload, dict):
+            raise ProtocolError("migration session response must be an object")
+        values = ("id", "workspace_id", "project_id", "state")
+        if not all(isinstance(payload.get(value), str) for value in values):
+            raise ProtocolError("migration session response has invalid fields")
+        return MigrationSession(*(payload[value] for value in values))
 
     def archive_project(self, workspace_id: str, project_id: str) -> bool:
         if not workspace_id.strip() or not project_id.strip():
