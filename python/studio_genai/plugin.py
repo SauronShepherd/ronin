@@ -16,6 +16,8 @@ class _GenAIService(Protocol):
     def put_prompt(self, workspace_id: str, prompt: PromptAsset) -> object: ...
     def indexes(self, workspace_id: str) -> object: ...
     def get_index(self, workspace_id: str, index_id: str) -> object: ...
+    def tools(self, workspace_id: str) -> object: ...
+    def get_tool(self, workspace_id: str, tool_id: str) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
     def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
     def build_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
@@ -41,6 +43,8 @@ class GenAIPlugin:
             "genai.index.delete.v1",
             "genai.index.query.v1",
             "genai.index.build.v1",
+            "genai.tools.v1",
+            "genai.tool.v1",
         ),
     )
 
@@ -85,6 +89,13 @@ class GenAIPlugin:
                 "/v1/workspaces/{workspace_id}/genai/indexes/{index_id}/build",
                 "index.build",
                 self.build_index,
+            ),
+            ("GET", "/v1/workspaces/{workspace_id}/genai/tools", "tools", self.tools),
+            (
+                "GET",
+                "/v1/workspaces/{workspace_id}/genai/tools/{tool_id}",
+                "tool",
+                self.get_tool,
             ),
         ):
             surface_id = f"genai.{operation}.v1"
@@ -246,6 +257,25 @@ class GenAIPlugin:
             )
         except Exception as exc:
             return {"error": {"code": "build_failed", "message": str(exc)}}
+
+    def tools(self, *, workspace_id: str = "", **_kwargs: object) -> object:
+        if self._service is None:
+            return {"status": "not_configured", "items": []}
+        try:
+            return self._service.tools(workspace_id)
+        except Exception:
+            return {"status": "unavailable", "items": []}
+
+    def get_tool(
+        self, *, workspace_id: str = "", tool_id: str = "", **_kwargs: object
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured", "item": None}
+        try:
+            result = self._service.get_tool(workspace_id, tool_id)
+            return {"item": result} if result is not None else {"item": None}
+        except Exception:
+            return {"status": "unavailable", "item": None}
 
 
 def factory() -> GenAIPlugin:
