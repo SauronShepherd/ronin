@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import tomllib
 import re
+import tomllib
 from pathlib import Path
 
 from tools.check_web_assets import referenced_assets
@@ -53,7 +53,15 @@ def test_project_journey_keeps_public_lifecycle_operations() -> None:
 def test_catalog_studio_exposes_glossary_publication() -> None:
     root = Path(__file__).parents[1]
     source = (root / "web/js/catalog-studio.js").read_text(encoding="utf-8")
-    for marker in ("glossary-form", "glossary-search-form", "catalog-lineage-form", "/glossary/terms", "/catalog/lineage/", "Idempotency-Key", "references"):
+    for marker in (
+        "glossary-form",
+        "glossary-search-form",
+        "catalog-lineage-form",
+        "/glossary/terms",
+        "/catalog/lineage/",
+        "Idempotency-Key",
+        "references",
+    ):
         assert marker in source, f"catalog glossary integration missing: {marker}"
 
 
@@ -74,5 +82,12 @@ def test_ai_studio_exposes_provider_health_check() -> None:
 def test_genai_studio_exposes_discovery_and_health() -> None:
     root = Path(__file__).parents[1]
     source = (root / "web/js/genai-studio.js").read_text(encoding="utf-8")
-    for marker in ("genai-discovery-form", "/genai/providers", "/genai/health", "/genai/prompts", "/genai/indexes", "GenAI Studio"):
+    for marker in (
+        "genai-discovery-form",
+        "/genai/providers",
+        "/genai/health",
+        "/genai/prompts",
+        "/genai/indexes",
+        "GenAI Studio",
+    ):
         assert marker in source, f"GenAI Studio integration missing: {marker}"
