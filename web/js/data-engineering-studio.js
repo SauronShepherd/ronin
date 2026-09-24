@@ -175,3 +175,16 @@ function addQueryTranslationPolicy() {
 setTimeout(addQueryTranslationPolicy, 0);
 window.addEventListener('hashchange', addQueryTranslationPolicy);
 window.addEventListener('hashchange', addPipelineEditor);
+document.addEventListener('keydown', event => {
+  if (location.hash.slice(1) !== 'data' || !document.querySelector('#de-pipeline-visual')) return;
+  const target = event.target;
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target.isContentEditable) return;
+  if (!(event.ctrlKey || event.metaKey)) return;
+  if (event.key.toLowerCase() === 'z') {
+    event.preventDefault();
+    document.querySelector(`[data-action="de-visual-${event.shiftKey ? 'redo' : 'undo'}"]`)?.click();
+  } else if (event.key.toLowerCase() === 'y') {
+    event.preventDefault();
+    document.querySelector('[data-action="de-visual-redo"]')?.click();
+  }
+});
