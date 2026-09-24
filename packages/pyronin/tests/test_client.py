@@ -911,6 +911,23 @@ def test_connector_capabilities_and_preview_are_public_sdk_contracts() -> None:
     assert transport.calls[1][0:2] == ("POST", "/v1/platform/connectors/preview")
 
 
+def test_project_permission_inspection_is_resource_scoped() -> None:
+    transport = FakeTransport(
+        [{
+            "workspace_id": "workspace-a",
+            "project_id": "project-1",
+            "permissions": {
+                "project.read": {"allowed": True, "reason": "allowed", "matched_roles": ["viewer"]},
+                "project.write": {"allowed": False, "reason": "denied", "matched_roles": []},
+            },
+        }]
+    )
+    permissions = Ronin(transport=transport).inspect_project_permissions("workspace-a", "project-1")
+    assert permissions.decision("project.read").allowed is True
+    assert permissions.decision("project.write").allowed is False
+    assert transport.calls[0][1] == "/v1/workspaces/workspace-a/projects/project-1/permissions"
+
+
 def test_connector_plan_and_checkpoint_health_are_public_sdk_contracts() -> None:
     transport = FakeTransport(
         [

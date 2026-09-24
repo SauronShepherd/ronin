@@ -339,6 +339,23 @@ class ProjectEnvironmentBindings:
 
 
 @dataclass(frozen=True, slots=True)
+class ProjectPermissionDecision:
+    allowed: bool
+    reason: str
+    matched_roles: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class ProjectPermissions:
+    workspace_id: str
+    project_id: str
+    permissions: tuple[tuple[str, ProjectPermissionDecision], ...]
+
+    def decision(self, permission: str) -> ProjectPermissionDecision | None:
+        return dict(self.permissions).get(permission)
+
+
+@dataclass(frozen=True, slots=True)
 class Principal:
     id: str
     kind: str
@@ -371,6 +388,24 @@ def _parse_group(payload: object) -> Group:
     if not isinstance(item.get("id"), str) or not isinstance(item.get("name"), str):
         raise ProtocolError("group response has invalid identity")
     return Group(item["id"], item["name"])
+
+
+def _parse_project_permissions(payload: object) -> ProjectPermissions:
+    item = _parse_resource(payload, "project permissions")
+    workspace_id = item.get("workspace_id")
+    project_id = item.get("project_id")
+    raw = item.get("permissions")
+    if not isinstance(workspace_id, str) or not workspace_id or not isinstance(project_id, str) or not project_id or not isinstance(raw, dict):
+        raise ProtocolError("project permissions response has invalid identity")
+    decisions = []
+    for permission, value in raw.items():
+        if not isinstance(permission, str) or not isinstance(value, dict) or not isinstance(value.get("allowed"), bool) or not isinstance(value.get("reason"), str):
+            raise ProtocolError("project permissions response has invalid decision")
+        roles = value.get("matched_roles", [])
+        if not isinstance(roles, list) or not all(isinstance(role, str) and role for role in roles):
+            raise ProtocolError("project permissions response has invalid matched roles")
+        decisions.append((permission, ProjectPermissionDecision(value["allowed"], value["reason"], tuple(roles))))
+    return ProjectPermissions(workspace_id, project_id, tuple(sorted(decisions)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -844,6 +879,18 @@ class Ronin:
                 "GET",
                 f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
                 f"{quote(project_id, safe='')}",
+            )
+        )
+
+    def inspect_project_permissions(self, workspace_id: str, project_id: str) -> ProjectPermissions:
+        """Return effective, resource-scoped permission decisions for a project."""
+        if not workspace_id.strip() or not project_id.strip():
+            raise ValueError("workspace_id and project_id must be non-empty")
+        return _parse_project_permissions(
+            self._transport.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+                f"{quote(project_id, safe='')}/permissions",
             )
         )
 
@@ -3207,6 +3254,8 @@ __all__ = [
     "PluginInfo",
     "PluginSurface",
     "ProjectEnvironmentBindings",
+    "ProjectPermissionDecision",
+    "ProjectPermissions",
     "ProtocolError",
     "Ronin",
     "SqlColumn",
