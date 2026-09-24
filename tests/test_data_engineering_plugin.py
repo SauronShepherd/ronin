@@ -30,7 +30,7 @@ def test_data_enginerring_studio_manifest_and_contributions(tmp_path) -> None:
 
     assert plugin.manifest.name == "Data Enginerring Studio"
     assert "data-engineering.ir.v1" in registry.capabilities
-    assert len(registry.routes) == 11
+    assert len(registry.routes) == 12
     assert registry.job_registry.items[0].job_type == "data-engineering.pipeline-run.v1"
     assert registry.ui_registry.items[0].manifest["navigation"][0]["label"] == (
         "Data Enginerring Studio"
@@ -53,6 +53,16 @@ def test_plugin_health_reports_readiness_and_external_providers() -> None:
     health = plugin.health()
     assert health["status"] == "ready"
     assert health["runtimes"]["spark-connect"] == "external-provider"
+
+
+def test_queryflux_capabilities_are_safe_and_fail_closed() -> None:
+    plugin = DataEnginerringStudioPlugin()
+    plugin.startup()
+    capabilities = plugin.queryflux_capabilities()
+    assert capabilities["status"] == "not_configured"
+    assert capabilities["provider"] == "queryflux"
+    assert capabilities["capabilities"]["routing_trace"] is True
+    assert "endpoint" not in capabilities
 
 
 def test_pipeline_compiler_reports_validity_and_runtime() -> None:

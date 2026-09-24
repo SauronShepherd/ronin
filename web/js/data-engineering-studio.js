@@ -15,13 +15,7 @@ document.addEventListener('click', async event => {
   try {
     if (action === 'de-queryflux-capabilities') {
       const result = document.querySelector('#de-queryflux-result');
-      result.textContent = json({
-        profile: 'queryflux',
-        status: 'not_configured',
-        capabilities: { routing_trace: true, bounded_preview: true, cancellation: true },
-        target: 'provider-neutral query engine',
-        translation_policies: ['native_only', 'best_effort', 'strict'],
-      });
+      result.textContent = json(await get('/v1/data-engineering/queryflux/capabilities'));
       return;
     }
     if (action === 'de-health') out.textContent = json(await get('/v1/data-engineering/health'));

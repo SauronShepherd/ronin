@@ -96,6 +96,13 @@ class DataEnginerringStudioPlugin:
             permission="data-engineering:read",
         )
         context.contributions.add_route(
+            "GET",
+            "/v1/data-engineering/queryflux/capabilities",
+            context.plugin_id,
+            self.queryflux_capabilities,
+            permission="data-engineering:read",
+        )
+        context.contributions.add_route(
             "POST",
             "/v1/data-engineering/debugger/sessions",
             context.plugin_id,
@@ -331,6 +338,23 @@ class DataEnginerringStudioPlugin:
                     "status": "planned",
                 },
             ]
+        }
+
+    def queryflux_capabilities(self, **_kwargs: Any) -> dict[str, object]:
+        """Expose safe provider status without leaking cluster configuration."""
+
+        self._assert_ready()
+        return {
+            "profile": "queryflux",
+            "provider": "queryflux",
+            "status": "not_configured",
+            "target": "provider-neutral query engine",
+            "capabilities": {
+                "routing_trace": True,
+                "bounded_preview": True,
+                "cancellation": True,
+            },
+            "translation_policies": ["native_only", "best_effort", "strict"],
         }
 
     def health(self, **_kwargs: Any) -> dict[str, object]:
