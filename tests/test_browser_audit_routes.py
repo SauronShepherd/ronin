@@ -1,10 +1,14 @@
-from tools.browser_audit import STUDIO_ROUTES, load_routes
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from tools.browser_audit import load_routes
 
 
-def test_browser_audit_covers_every_canonical_studio_route() -> None:
-    assert load_routes() == STUDIO_ROUTES
-    assert len(STUDIO_ROUTES) == 27
-    assert len(STUDIO_ROUTES) == len(set(STUDIO_ROUTES))
-    assert STUDIO_ROUTES[0] == "home"
-    assert "settings" in STUDIO_ROUTES
-    assert "mlstudio" in STUDIO_ROUTES
+def test_every_studio_route_declares_a_unique_smoke_selector() -> None:
+    manifest = json.loads((Path("web") / "routes.json").read_text(encoding="utf-8"))
+    assert tuple(item["id"] for item in manifest) == load_routes()
+    selectors = [item.get("smoke_selector") for item in manifest]
+    assert all(isinstance(selector, str) and selector.strip() for selector in selectors)
+    assert len(selectors) == len(set(selectors))
