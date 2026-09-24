@@ -46,8 +46,8 @@ def test_tag_publication_requires_exact_aggregate_release_verdict() -> None:
     assert "authoritative-release-verdict:" in workflow
     assert "actions/workflows/release-evidence.yml/runs?head_sha=${GITHUB_SHA}" in workflow
     assert "name: exact-release-verdict" in workflow
-    assert "verdict.get(\"schema\") != \"ronin.release-verdict/v1\"" in workflow
-    assert "verdict.get(\"commit\") != os.environ[\"EXPECTED_COMMIT\"]" in workflow
+    assert 'verdict.get("schema") != "ronin.release-verdict/v1"' in workflow
+    assert 'verdict.get("commit") != os.environ["EXPECTED_COMMIT"]' in workflow
     assert 'verdict.get("status") != "passed"' in workflow
     for gate in (
         '"ci"',

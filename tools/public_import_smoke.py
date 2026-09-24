@@ -13,8 +13,10 @@ def declared_packages(pyproject: Path) -> tuple[str, ...]:
     with pyproject.open("rb") as stream:
         data = tomllib.load(stream)
     packages = data.get("tool", {}).get("mypy", {}).get("packages")
-    if not isinstance(packages, list) or not packages or not all(
-        isinstance(package, str) and package.strip() for package in packages
+    if (
+        not isinstance(packages, list)
+        or not packages
+        or not all(isinstance(package, str) and package.strip() for package in packages)
     ):
         raise ValueError("pyproject tool.mypy.packages must contain public package names")
     result = tuple(packages)
