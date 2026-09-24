@@ -28,6 +28,7 @@ class SchedulerWorkloadResult:
     quality: dict[str, object] | None = None
     connector: dict[str, object] | None = None
     notification: dict[str, object] | None = None
+    ml: dict[str, object] | None = None
 
     def evidence_payload(self) -> dict[str, Any]:
         """Return the portable, deterministic payload stored as scheduler evidence."""
@@ -55,6 +56,8 @@ class SchedulerWorkloadResult:
             return {"family": self.family, "connector": self.connector, "version": 1}
         if self.family == "notification" and self.notification is not None:
             return {"family": self.family, "notification": self.notification, "version": 1}
+        if self.family == "ml" and self.ml is not None:
+            return {"family": self.family, "ml": self.ml, "version": 1}
         raise UnsupportedSchedulerWorkload("scheduler result has no portable evidence payload")
 
 
@@ -76,6 +79,9 @@ def execute_scheduler_job(
     notification_sink: object | None = None,
     notification_artifacts: ArtifactStore | None = None,
     notification_now: Instant | str | None = None,
+    ml_runner: object | None = None,
+    ml_lab: object | None = None,
+    ml_rows: object | None = None,
     max_rows: int = 10_000,
     timeout_seconds: int | None = None,
 ) -> SchedulerWorkloadResult:
@@ -219,6 +225,20 @@ def execute_scheduler_job(
             family="notification",
             notification={"notification_id": intent.id, "delivery_id": delivery_id},
         )
+    if job.target == "ml.run":
+        if ml_runner is None or ml_lab is None or ml_rows is None:
+            raise UnsupportedSchedulerWorkload("ml.run requires runner, lab, and rows")
+        try:
+            payload = json.loads(job.parameters_json)
+            if not all(isinstance(payload.get(key), str) for key in ("lab_id", "dataset_ref")):
+                raise ValueError("missing ML identifiers")
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise UnsupportedSchedulerWorkload("ml.run parameters are invalid") from exc
+        result = ml_runner.run(ml_lab, ml_rows)
+        to_payload = getattr(result, "to_payload", None)
+        if not callable(to_payload):
+            raise UnsupportedSchedulerWorkload("ML runner returned an invalid result")
+        return SchedulerWorkloadResult(family="ml", ml=to_payload())
     if job.target == "graph.query":
         if graph_adapter is None:
             raise UnsupportedSchedulerWorkload("graph.query requires an injected graph adapter")

@@ -93,6 +93,9 @@ class LocalWorkerRuntimeConfig:
     connector_destination: object | None = None
     notification_sink: object | None = None
     notification_artifacts: ArtifactStore | None = None
+    ml_runner: object | None = None
+    ml_lab: object | None = None
+    ml_rows: object | None = None
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
@@ -269,6 +272,7 @@ class LocalWorkerRuntime:
             "quality.gate",
             "connector.sync",
             "notification.send",
+            "ml.run",
         }:
             if claim.job.target == "sql.query" and self.config.scheduler_sql_engine is None:
                 raise UnsupportedSchedulerWorkload(
@@ -292,6 +296,14 @@ class LocalWorkerRuntime:
                 raise UnsupportedSchedulerWorkload(
                     "notification.send scheduler execution requires sink and artifacts"
                 )
+            if claim.job.target == "ml.run" and (
+                self.config.ml_runner is None
+                or self.config.ml_lab is None
+                or self.config.ml_rows is None
+            ):
+                raise UnsupportedSchedulerWorkload(
+                    "ml.run scheduler execution requires runner, lab, and rows"
+                )
             try:
                 result = await loop.run_in_executor(
                     self._preparation_executor,
@@ -312,6 +324,9 @@ class LocalWorkerRuntime:
                         notification_sink=self.config.notification_sink,
                         notification_artifacts=self.config.notification_artifacts,
                         notification_now=self._now(),
+                        ml_runner=self.config.ml_runner,
+                        ml_lab=self.config.ml_lab,
+                        ml_rows=self.config.ml_rows,
                     ),
                 )
             except Exception:
@@ -325,6 +340,8 @@ class LocalWorkerRuntime:
                     else "scheduler.connector.error"
                     if claim.job.target == "connector.sync"
                     else "scheduler.notification.error"
+                    if claim.job.target == "notification.send"
+                    else "scheduler.ml.error"
                 )
                 await self._service.worker_complete_attempt(
                     claim.attempt_id,
