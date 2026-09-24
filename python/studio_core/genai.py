@@ -378,3 +378,36 @@ class AgentDefinition:
             "tool_ids": [tool.value for tool in self.tool_ids],
             "max_steps": self.max_steps,
         }
+
+    @classmethod
+    def from_payload(cls, payload: object) -> AgentDefinition:
+        if not isinstance(payload, Mapping):
+            raise ValueError("agent payload must be an object")
+        required = {
+            "id", "name", "provider_id", "model_id", "prompt_id", "prompt_version",
+            "tool_ids", "max_steps"
+        }
+        if set(payload) != required:
+            raise ValueError("agent payload has invalid shape")
+        strings = tuple(
+            payload[key]
+            for key in ("id", "name", "provider_id", "model_id", "prompt_id", "prompt_version")
+        )
+        if not all(isinstance(value, str) for value in strings):
+            raise ValueError("agent identity and model fields must be strings")
+        tool_ids = payload["tool_ids"]
+        if not isinstance(tool_ids, list) or not all(isinstance(value, str) for value in tool_ids):
+            raise ValueError("agent tool_ids must be a list of strings")
+        max_steps = payload["max_steps"]
+        if not isinstance(max_steps, int) or isinstance(max_steps, bool):
+            raise ValueError("agent max_steps must be an integer")
+        return cls(
+            AgentId(cast(str, payload["id"])),
+            cast(str, payload["name"]),
+            ProviderId(cast(str, payload["provider_id"])),
+            cast(str, payload["model_id"]),
+            PromptId(cast(str, payload["prompt_id"])),
+            PromptVersion(cast(str, payload["prompt_version"])),
+            tuple(ToolId(value) for value in tool_ids),
+            max_steps,
+        )

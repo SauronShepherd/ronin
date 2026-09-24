@@ -23,6 +23,9 @@ class _GenAIService(Protocol):
     def agents(self, workspace_id: str) -> object: ...
     def get_agent(self, workspace_id: str, agent_id: str) -> object: ...
     def run_agent(self, workspace_id: str, agent_id: str, body: dict[str, object]) -> object: ...
+    def put_agent(
+        self, workspace_id: str, agent: AgentDefinition, idempotency_key: str
+    ) -> object: ...
     def delete_index(self, workspace_id: str, index_id: str) -> object: ...
     def search_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
     def build_index(self, workspace_id: str, index_id: str, body: dict[str, object]) -> object: ...
@@ -55,6 +58,7 @@ class GenAIPlugin:
             "genai.agents.v1",
             "genai.agent.v1",
             "genai.agent.run.v1",
+            "genai.agent.put.v1",
         ),
     )
 
@@ -131,6 +135,12 @@ class GenAIPlugin:
                 "/v1/workspaces/{workspace_id}/genai/agents/{agent_id}/runs",
                 "agent.run",
                 self.run_agent,
+            ),
+            (
+                "PUT",
+                "/v1/workspaces/{workspace_id}/genai/agents/{agent_id}",
+                "agent.put",
+                self.put_agent,
             ),
         ):
             surface_id = f"genai.{operation}.v1"
@@ -417,6 +427,30 @@ class GenAIPlugin:
             return {"status": "timeout", "steps": []}
         except Exception as exc:
             return {"error": {"code": "agent_failed", "message": str(exc)}}
+
+    def put_agent(
+        self,
+        *,
+        workspace_id: str = "",
+        agent_id: str = "",
+        body: object | None = None,
+        idempotency_key: str | None = None,
+        **_kwargs: object,
+    ) -> object:
+        if self._service is None:
+            return {"status": "not_configured"}
+        if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+            return {"error": {"code": "missing_idempotency_key"}}
+        if not isinstance(body, dict):
+            return {"error": {"code": "invalid_request"}}
+        try:
+            payload = dict(body)
+            payload["id"] = agent_id
+            agent = AgentDefinition.from_payload(payload)
+            result = self._service.put_agent(workspace_id, agent, idempotency_key)
+            return result.to_payload() if isinstance(result, AgentDefinition) else result
+        except Exception as exc:
+            return {"error": {"code": "invalid_agent", "message": str(exc)}}
 
 
 def factory() -> GenAIPlugin:
