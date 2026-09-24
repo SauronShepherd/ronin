@@ -29,7 +29,7 @@ not Public v1 completion.
 
 ## Local verification on this snapshot
 
-On Python 3.13/Windows, `python -m pytest -q` produced **1910 passed, 20
+On Windows, `python -m pytest -x -q` produced **1982 passed, 20
 skipped**. Docker, PostgreSQL, Spark, symlink and POSIX-specific checks were
 skipped where their prerequisites were unavailable. No release qualification is
 claimed.
