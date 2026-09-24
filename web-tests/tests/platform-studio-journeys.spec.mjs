@@ -118,6 +118,9 @@ test('Workspace and project Studio journey covers environment, Bundle and archiv
     expect(route.request().postDataJSON()).toMatchObject({ revision_key: 'main/working', ir_digest: 'a'.repeat(64), runtime: 'local-preview' });
     await route.fulfill({ status: 201, json: { id: 'pipeline-run-1', state: 'queued' } });
   });
+  await page.route('**/v1/workspaces/workspace-journey/projects/project-journey/permissions', async route => {
+    await route.fulfill({ json: { project_id: 'project-journey', permissions: { 'project.read': { allowed: true }, 'project.write': { allowed: true } } } });
+  });
   await page.route('**/v1/workspaces/workspace-journey/projects/project-journey/bundle/archive', async route => {
     await route.fulfill({ json: { media_type: 'application/vnd.ronin.bundle+zip', content_base64: 'UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==' } });
   });
@@ -143,6 +146,9 @@ test('Workspace and project Studio journey covers environment, Bundle and archiv
   await page.locator('#project-operation-form textarea[name="operation"]').fill(JSON.stringify({ revision_key: 'main/working', ir_digest: 'a'.repeat(64), runtime: 'local-preview', parameters: { pipeline: { config: { name: 'main' }, nodes: [], edges: [] } } }));
   await page.getByRole('button', { name: 'Run governed pipeline' }).click();
   await expect(page.locator('#project-operation-result')).toContainText('pipeline-run-1');
+  await page.locator('#project-permissions-form input[name="project_id"]').fill('project-journey');
+  await page.getByRole('button', { name: 'Inspect permissions' }).click();
+  await expect(page.locator('#project-permissions-result')).toContainText('project.read');
   await page.getByRole('button', { name: 'Download Bundle' }).click();
   await expect(page.locator('#project-journey-result')).toContainText('Downloaded project-journey.roninbundle');
   page.once('dialog', dialog => dialog.accept());

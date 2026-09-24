@@ -422,6 +422,20 @@ def test_pipeline_run_materializes_workflow_and_validates_digest() -> None:
         assert payload["error"]["code"] == "invalid_request"
 
 
+def test_project_permission_inspection_is_resource_scoped() -> None:
+    store = _Store()
+    with _server(store, _Authorizer()) as address:
+        status, payload = _request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-a/projects/project-1/permissions",
+        )
+    assert status == 200
+    assert payload["workspace_id"] == "workspace-a"
+    assert payload["project_id"] == "project-1"
+    assert set(payload["permissions"]) == {"project.read", "project.write", "scheduler.write"}
+
+
 def test_platform_capabilities_exposes_only_ready_plugin_capabilities() -> None:
     store = _Store()
     plugin = WorkspacesPlugin()

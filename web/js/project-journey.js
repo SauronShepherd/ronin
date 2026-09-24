@@ -28,6 +28,10 @@ function renderProjects() {
       <label>Operation JSON<textarea class="field" name="operation" rows="6" required>{"revision_key":"main/working","ir_digest":"","runtime":"local-preview","parameters":{"pipeline":{"config":{"name":"main"},"nodes":[],"edges":[]}}}</textarea></label>
       <button class="button primary" type="submit">Run governed pipeline</button>
       <pre id="project-operation-result" class="code" aria-live="polite">No governed operation submitted.</pre></form>
+    <form id="project-permissions-form" class="stack"><h2>Inspect project permissions</h2>
+      <label>Project ID<input class="field" name="project_id" required></label>
+      <button class="button" type="submit">Inspect permissions</button>
+      <pre id="project-permissions-result" class="code" aria-live="polite">No permission inspection performed.</pre></form>
     <div id="project-list" class="table-wrap" aria-live="polite">Loading projects…</div></section>`;
   const form = document.querySelector('#project-journey-form');
   form.addEventListener('submit', async (event) => {
@@ -87,6 +91,14 @@ function renderProjects() {
       const result = await post(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(projectId)}/pipelines/${encodeURIComponent(pipelineId)}/runs`, payload, { headers: { 'Idempotency-Key': `studio-pipeline-run-${workspaceId}-${projectId}-${pipelineId}-${payload.revision_key}` } });
       output.textContent = json(result);
     } catch (error) { output.textContent = `Could not run governed operation: ${error.message}`; }
+  });
+  document.querySelector('#project-permissions-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const output = document.querySelector('#project-permissions-result');
+    const projectId = String(new FormData(event.currentTarget).get('project_id') || '').trim();
+    try {
+      output.textContent = json(await get(`/v1/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(projectId)}/permissions`));
+    } catch (error) { output.textContent = `Could not inspect project permissions: ${error.message}`; }
   });
   loadProjects(workspaceId);
 }

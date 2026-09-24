@@ -98,6 +98,7 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("GET", "/v1/workspaces/{workspace_id}/projects"),
         ("POST", "/v1/workspaces/{workspace_id}/projects"),
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
+        ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/permissions"),
         ("GET", "/v1/workspaces/{workspace_id}/quality/contracts/{asset_id}/{version}"),
         ("POST", "/v1/workspaces/{workspace_id}/quality/runs"),
         ("GET", "/v1/workspaces/{workspace_id}/quality/runs/{asset_id}/{version}"),
@@ -1622,6 +1623,35 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         ],
                         "next_cursor": next_cursor,
                     },
+                )
+                return
+            if (
+                len(segments) == 6
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "permissions"
+            ):
+                if query:
+                    raise ValueError("project permission inspection does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_ref = ProjectId(segments[4])
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=str(project_ref)
+                ):
+                    return
+                decisions = {}
+                for permission in ("project.read", "project.write", "scheduler.write"):
+                    decision = self._server().authorizer.authorize(
+                        actor, PolicyRequirement(workspace_id, permission, str(project_ref))
+                    )
+                    decisions[permission] = {
+                        "allowed": decision.allowed,
+                        "reason": decision.reason,
+                        "matched_roles": [getattr(role, "value", str(role)) for role in decision.matched_roles],
+                    }
+                self._write_json(
+                    HTTPStatus.OK,
+                    {"workspace_id": str(workspace_id), "project_id": str(project_ref), "permissions": decisions},
                 )
                 return
             if (
