@@ -36,6 +36,7 @@ test('Cloud Studio validates a target and generates a reviewable plan', async ({
 });
 
 test('Access Studio renders workspace role scope inventory', async ({ page }) => {
+  let roleAssigned = false;
   await page.route('**/v1/admin/security/principals**', async route => {
     if (route.request().method() === 'PUT') {
       expect(route.request().postDataJSON()).toEqual({ kind: 'user', display_name: 'Alice', issuer: 'oidc', subject: 'alice-sub', email: 'alice@example.test', active: true });
@@ -53,7 +54,15 @@ test('Access Studio renders workspace role scope inventory', async ({ page }) =>
     await route.fulfill({ json: { items: [] } });
   });
   await page.route('**/v1/admin/security/role-bindings', async route => {
-    await route.fulfill({ json: { items: [{ workspace_id: 'workspace-1', subject_kind: 'principal', subject_id: 'alice', role: 'admin' }] } });
+    await route.fulfill({ json: { items: [
+      { workspace_id: 'workspace-1', subject_kind: 'principal', subject_id: 'alice', role: 'admin' },
+      ...(roleAssigned ? [{ workspace_id: 'workspace-1', subject_kind: 'principal', subject_id: 'alice', role: 'viewer' }] : []),
+    ] } });
+  });
+  await page.route('**/v1/admin/security/role-bindings/principal/alice/viewer', async route => {
+    expect(route.request().method()).toBe('PUT');
+    roleAssigned = true;
+    await route.fulfill({ json: { workspace_id: 'workspace-1', subject_kind: 'principal', subject_id: 'alice', role: 'viewer' } });
   });
   await page.route('**/v1/admin/security/groups/team', async route => {
     expect(route.request().method()).toBe('PUT');
@@ -76,6 +85,10 @@ test('Access Studio renders workspace role scope inventory', async ({ page }) =>
   await expect(page.locator('#access-scope-table')).toContainText('workspace-1');
   await expect(page.locator('#access-scope-table')).toContainText('principal:alice');
   await expect(page.locator('#access-scope-table')).toContainText('admin');
+  await page.locator('#role-subject-id').fill('alice');
+  await page.locator('#role-name').selectOption('viewer');
+  await page.getByRole('button', { name: 'Assign role' }).click();
+  await expect(page.locator('#access-scope-table')).toContainText('viewer');
 });
 
 test('Workspace and project Studio journey covers environment, Bundle and archive actions', async ({ page }) => {

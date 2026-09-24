@@ -45,6 +45,22 @@ async function loadAccess() {
     <h3>Workspace scope</h3>
     <table class="data-table" id="access-scope-table"><thead><tr><th>Workspace</th><th>Subject</th><th>Role</th></tr></thead><tbody><tr><td colspan="3">Loading…</td></tr></tbody></table>
     <pre class="code" id="access-inventory-output" aria-live="polite">Loading security state…</pre>`; view.append(panel);
+  const refreshInventory = async () => {
+    const output = panel.querySelector('#access-inventory-output');
+    const rows = panel.querySelector('#access-scope-table tbody');
+    const [principals, groups, bindings] = await Promise.all([
+      get('/v1/admin/security/principals'), get('/v1/admin/security/groups'), get('/v1/admin/security/role-bindings'),
+    ]);
+    output.textContent = json({ principals, groups, bindings });
+    rows.replaceChildren(...(bindings.items || []).map((binding) => {
+      const row = document.createElement('tr');
+      for (const value of [binding.workspace_id, `${binding.subject_kind}:${binding.subject_id}`, binding.role]) {
+        const cell = document.createElement('td'); cell.textContent = value; row.append(cell);
+      }
+      return row;
+    }));
+    if (!rows.children.length) rows.innerHTML = '<tr><td colspan="3">No role bindings</td></tr>';
+  };
   panel.querySelector('#role-binding-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const output = panel.querySelector('#access-inventory-output');
@@ -54,6 +70,7 @@ async function loadAccess() {
     try {
       const binding = await put(`/v1/admin/security/role-bindings/${kind}/${subject}/${role}`, {});
       output.textContent = json(binding);
+      await refreshInventory();
     } catch (error) { output.textContent = `Role assignment failed: ${error.message}`; }
   });
   panel.querySelector('#remove-role-binding').addEventListener('click', async () => {
@@ -64,18 +81,19 @@ async function loadAccess() {
     try {
       const result = await del(`/v1/admin/security/role-bindings/${kind}/${subject}/${role}`);
       output.textContent = json(result);
+      await refreshInventory();
     } catch (error) { output.textContent = `Role removal failed: ${error.message}`; }
   });
   const membershipPath = () => `/v1/admin/security/groups/${encodeURIComponent(panel.querySelector('#membership-group-id').value.trim())}/members/${encodeURIComponent(panel.querySelector('#membership-principal-id').value.trim())}`;
   panel.querySelector('#group-membership-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const output = panel.querySelector('#access-inventory-output');
-    try { output.textContent = json(await put(membershipPath(), {})); }
+    try { output.textContent = json(await put(membershipPath(), {})); await refreshInventory(); }
     catch (error) { output.textContent = `Member add failed: ${error.message}`; }
   });
   panel.querySelector('#remove-group-member').addEventListener('click', async () => {
     const output = panel.querySelector('#access-inventory-output');
-    try { output.textContent = json(await del(membershipPath())); }
+    try { output.textContent = json(await del(membershipPath())); await refreshInventory(); }
     catch (error) { output.textContent = `Member removal failed: ${error.message}`; }
   });
   panel.querySelector('#list-group-members').addEventListener('click', async () => {
@@ -89,7 +107,7 @@ async function loadAccess() {
     const output = panel.querySelector('#access-inventory-output');
     const id = encodeURIComponent(panel.querySelector('#group-id').value.trim());
     const name = panel.querySelector('#group-name').value.trim();
-    try { output.textContent = json(await put(`/v1/admin/security/groups/${id}`, { name })); }
+    try { output.textContent = json(await put(`/v1/admin/security/groups/${id}`, { name })); await refreshInventory(); }
     catch (error) { output.textContent = `Group update failed: ${error.message}`; }
   });
   panel.querySelector('#user-principal-form').addEventListener('submit', async (event) => {
@@ -102,6 +120,7 @@ async function loadAccess() {
         issuer: panel.querySelector('#user-issuer').value.trim(), subject: panel.querySelector('#user-subject').value.trim(),
         email: panel.querySelector('#user-email').value.trim() || null, active: true,
       }));
+      await refreshInventory();
     } catch (error) { output.textContent = `User principal update failed: ${error.message}`; }
   });
   const servicePayload = (id, active = true) => ({
@@ -115,12 +134,12 @@ async function loadAccess() {
   panel.querySelector('#service-identity-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const output = panel.querySelector('#access-inventory-output');
-    try { output.textContent = json(await put(servicePath(), servicePayload(panel.querySelector('#service-id').value.trim()))); }
+    try { output.textContent = json(await put(servicePath(), servicePayload(panel.querySelector('#service-id').value.trim()))); await refreshInventory(); }
     catch (error) { output.textContent = `Service identity update failed: ${error.message}`; }
   });
   panel.querySelector('#disable-service').addEventListener('click', async () => {
     const output = panel.querySelector('#access-inventory-output');
-    try { output.textContent = json(await put(servicePath(), servicePayload(panel.querySelector('#service-id').value.trim(), false))); }
+    try { output.textContent = json(await put(servicePath(), servicePayload(panel.querySelector('#service-id').value.trim(), false))); await refreshInventory(); }
     catch (error) { output.textContent = `Service identity disable failed: ${error.message}`; }
   });
   panel.querySelector('#rotate-service').addEventListener('click', async () => {
@@ -131,22 +150,11 @@ async function loadAccess() {
       const created = await put(`/v1/admin/security/principals/${encodeURIComponent(replacement.trim())}`, servicePayload(replacement.trim()));
       const disabled = await put(servicePath(), servicePayload(panel.querySelector('#service-id').value.trim(), false));
       output.textContent = json({ replacement: created, disabled });
+      await refreshInventory();
     } catch (error) { output.textContent = `Service identity rotation failed: ${error.message}`; }
   });
   try {
-    const [principals, groups, bindings] = await Promise.all([
-      get('/v1/admin/security/principals'), get('/v1/admin/security/groups'), get('/v1/admin/security/role-bindings'),
-    ]);
-    panel.querySelector('#access-inventory-output').textContent = json({ principals, groups, bindings });
-    const rows = panel.querySelector('#access-scope-table tbody');
-    rows.replaceChildren(...(bindings.items || []).map((binding) => {
-      const row = document.createElement('tr');
-      for (const value of [binding.workspace_id, `${binding.subject_kind}:${binding.subject_id}`, binding.role]) {
-        const cell = document.createElement('td'); cell.textContent = value; row.append(cell);
-      }
-      return row;
-    }));
-    if (!rows.children.length) rows.innerHTML = '<tr><td colspan="3">No role bindings</td></tr>';
+    await refreshInventory();
   } catch (error) { panel.querySelector('#access-inventory-output').textContent = `Access inventory failed: ${error.message}`; }
 }
 
