@@ -14,7 +14,12 @@ from pathlib import Path
 from time import monotonic
 
 from studio_core import RuntimeCapability, RuntimeCatalog, RuntimeProfile
-from studio_execution import DurableExecutionService, WorkerPollResult
+from studio_execution import (
+    DurableExecutionService,
+    UnsupportedSchedulerWorkload,
+    WorkerPollResult,
+    execute_scheduler_job,
+)
 from studio_kernel import (
     ExecutionAttemptId,
     NotebookExecutionRequest,
@@ -39,6 +44,7 @@ from studio_runners import (
     DockerContainerKernelExecutor,
     LocalExecutionEvidenceStore,
 )
+from studio_sql import SqlEngine
 from studio_storage import (
     ArtifactStore,
     LocalArtifactStore,
@@ -77,6 +83,7 @@ class LocalWorkerRuntimeConfig:
     artifact_max_workers: int = 2
     artifact_max_in_flight: int = 4
     record_execution: Callable[[str, float, str], None] | None = None
+    scheduler_sql_engine: SqlEngine | None = None
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
@@ -247,6 +254,53 @@ class LocalWorkerRuntime:
 
     async def _execute_claim(self, claim: ClaimedRun) -> WorkerExecutionOutcome:
         loop = asyncio.get_running_loop()
+        if claim.job.target == "sql.query":
+            if self.config.scheduler_sql_engine is None:
+                raise UnsupportedSchedulerWorkload(
+                    "sql.query scheduler execution requires scheduler_sql_engine"
+                )
+            try:
+                result = await loop.run_in_executor(
+                    self._preparation_executor,
+                    lambda: execute_scheduler_job(
+                        claim.job,
+                        sql_engine=self.config.scheduler_sql_engine,
+                    ),
+                )
+            except Exception:
+                await self._service.worker_complete_attempt(
+                    claim.attempt_id,
+                    state=AttemptState.FAILED,
+                    failure_code="scheduler.sql.error",
+                    owner=self.config.owner,
+                    lease_token=claim.lease_token,
+                    now=self._now(),
+                )
+                raise
+            executor = DockerContainerKernelExecutor(
+                ContainerExecutorConfig(
+                    image=self.config.image,
+                    limits=self.config.limits,
+                    engine=self.config.engine,
+                ),
+                ExecutionAttemptId(str(claim.attempt_id)),
+                LocalExecutionEvidenceStore(self.config.execution_evidence_root),
+                runner=self._runner,
+                engine_path=self._engine_path,
+            )
+            worker = DurableWorkerExecution(
+                self._service,
+                self._artifact_store,
+                executor,
+                self._policy,
+                self.config.owner,
+                lease_seconds=self.config.lease_seconds,
+                heartbeat_interval_seconds=self.config.heartbeat_interval_seconds,
+                now=self._now,
+                artifact_max_workers=self.config.artifact_max_workers,
+                artifact_max_in_flight=self.config.artifact_max_in_flight,
+            )
+            return await worker.run_scheduler_result(claim, result)
         try:
             request, identities = await loop.run_in_executor(
                 self._preparation_executor,
