@@ -293,6 +293,22 @@ def test_binding_read_survives_disable_and_workspace_archive() -> None:
     assert store.calls["put_project_bindings"] == writes
 
 
+def test_environment_enable_is_idempotent_and_restores_bindability() -> None:
+    workspaces, store = _stores()
+    service = EnvironmentService(workspaces, store)
+    created = service.create(_WS, EnvironmentDefinition(_ENV, "Production"), now=_NOW)
+
+    disabled = service.disable(_WS, _ENV, now=_NOW)
+    assert disabled.disabled
+    writes = store.calls["put_environment"]
+
+    assert service.enable(_WS, _ENV, now=_NOW) == created
+    assert not service.get(_WS, _ENV).disabled
+    assert store.calls["put_environment"] == writes + 1
+    assert service.enable(_WS, _ENV, now=_NOW) == created
+    assert store.calls["put_environment"] == writes + 1
+
+
 def test_binding_missing_uses_stable_not_found() -> None:
     workspaces, store = _stores()
     EnvironmentService(workspaces, store).create(

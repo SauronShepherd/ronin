@@ -152,6 +152,20 @@ class EnvironmentService:
         disabled = replace(current, state="disabled")
         return self._environments.put_environment(workspace_id, disabled, now=now)
 
+    def enable(
+        self,
+        workspace_id: WorkspaceId,
+        environment_id: EnvironmentId,
+        *,
+        now: Instant | str,
+    ) -> EnvironmentDefinition:
+        """Re-enable a disabled environment without changing its definition."""
+        current = self._context.environment(workspace_id, environment_id, mutable=True)
+        if not current.disabled:
+            return current
+        enabled = replace(current, state="active")
+        return self._environments.put_environment(workspace_id, enabled, now=now)
+
 
 class DeploymentBindingService:
     """Application boundary for project/environment deployment bindings."""
