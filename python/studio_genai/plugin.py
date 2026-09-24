@@ -424,12 +424,16 @@ class GenAIPlugin:
         if not isinstance(body, dict):
             return {"error": {"code": "invalid_request"}}
         input_value = body.get("input")
+        run_id = body.get("run_id")
         timeout = body.get("timeout_seconds", 60)
         cancel_requested = body.get("cancel_requested", False)
         if (
             not isinstance(input_value, str)
             or not input_value.strip()
             or "\x00" in input_value
+            or not isinstance(run_id, str)
+            or not run_id.strip()
+            or "\x00" in run_id
             or not isinstance(timeout, (int, float))
             or isinstance(timeout, bool)
             or not 0.1 <= timeout <= 3600
@@ -444,6 +448,7 @@ class GenAIPlugin:
                 agent_id,
                 {
                     "input": input_value,
+                    "run_id": run_id,
                     "timeout_seconds": float(timeout),
                     "cancel_requested": False,
                 },
