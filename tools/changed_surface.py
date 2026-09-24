@@ -14,7 +14,13 @@ SUBSYSTEMS = {
     "data-engineering": ("python/studio_data_engineering", "tests/test_data_engineering"),
     "ml": ("python/studio_ml", "tests/test_ml", "python/studio_ai_studio"),
     "migration": ("python/studio_migration", "tests/test_migration"),
-    "ui": ("web/", "tools/browser", "tools/installed_studio", "package"),
+    "ui": (
+        "web/",
+        "tools/browser",
+        "tools/installed_studio",
+        "tests/test_web",
+        "package",
+    ),
     "qualification": (
         "tools/release",
         "tools/mutation",

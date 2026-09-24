@@ -39,6 +39,25 @@ jobs:
         run: mypy python tools packages/pyronin/src docker
       - name: Architecture contracts
         run: python -m tools.architecture_gate python
+      - name: Build changed-surface manifest
+        shell: bash
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          base="$PR_BASE_SHA"
+          if [ -z "$base" ]; then
+            base="$(git rev-parse "$GITHUB_SHA^" 2>/dev/null || true)"
+          fi
+          test -n "$base"
+          python -m tools.changed_surface "$base" "$GITHUB_SHA" --output changed-surface.json
+      - name: Upload changed-surface manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: changed-surface-manifest
+          path: changed-surface.json
+          if-no-files-found: error
+          retention-days: 14
 
   plugin-testkit-clean-room:
     name: third-party plugin testkit clean-room
