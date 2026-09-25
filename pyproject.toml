@@ -286,6 +286,8 @@ pytest_add_cli_args_test_selection = [
   "tests/test_graph_executor.py",
   "tests/test_openlineage_transport.py",
   "tests/test_plugins.py",
+  "tests/test_plugin_registries.py",
+  "tests/test_plugin_settings.py",
   "tests/test_plugin_events.py",
   "tests/test_plugin_audit.py",
   "tests/test_plugin_contribution_registries.py",
