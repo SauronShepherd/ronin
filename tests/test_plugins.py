@@ -5,8 +5,10 @@ from studio_core.plugins import (
     ContributionRegistry,
     PluginCompatibilityError,
     PluginDependency,
+    PluginLoadError,
     PluginManager,
     PluginManifest,
+    PluginRecord,
     PluginState,
     PluginValidationError,
     SurfaceContribution,
@@ -185,6 +187,75 @@ def test_incompatible_api_is_rejected() -> None:
     )
     with pytest.raises(PluginCompatibilityError, match="plugin API"):
         PluginManager().compose((__import_record(plugin),))
+
+
+def test_noncritical_startup_failure_is_degraded_and_manager_starts() -> None:
+    plugin = WorkspacesPlugin()
+    plugin.startup = lambda: (_ for _ in ()).throw(RuntimeError("optional unavailable"))
+    manager = PluginManager()
+    plan = manager.compose((__import_record(plugin),))
+    result = manager.start(plan)
+
+    assert result[0].state is PluginState.DEGRADED
+    assert result[0].error == "optional unavailable"
+
+
+def test_critical_startup_failure_rolls_back_previous_plugins() -> None:
+    class FirstPlugin:
+        manifest = PluginManifest("com.example.aaa", "First", "1.0.0", "1.0")
+        register = lambda self, context: None
+        startup = lambda self: None
+
+    first = FirstPlugin()
+    class CriticalPlugin:
+        manifest = PluginManifest(
+            id="com.example.critical",
+            name="Critical",
+            version="1.0.0",
+            plugin_api="1.0",
+            critical=True,
+        )
+        register = lambda self, context: None
+        shutdown = lambda self: None
+
+    second = CriticalPlugin()
+    shutdowns: list[str] = []
+    first.shutdown = lambda: shutdowns.append("first")
+    second.startup = lambda: (_ for _ in ()).throw(RuntimeError("fatal"))
+    manager = PluginManager()
+    plan = manager.compose((PluginRecord(first.manifest, first, "test"), PluginRecord(second.manifest, second, "test")))
+
+    with pytest.raises(PluginLoadError, match="critical plugin failed to start"):
+        manager.start(plan)
+    assert shutdowns == ["first"]
+
+
+def test_manager_rejects_double_start_and_stop_is_reverse_order() -> None:
+    class LifecyclePlugin:
+        def __init__(self, plugin_id: str) -> None:
+            self.manifest = PluginManifest(plugin_id, plugin_id, "1.0.0", "1.0")
+        def register(self, context) -> None:
+            return None
+        def startup(self) -> None:
+            return None
+        def shutdown(self) -> None:
+            return None
+
+    first = LifecyclePlugin("com.example.first")
+    second = LifecyclePlugin("com.example.second")
+    events: list[str] = []
+    first.startup = lambda: events.append("start:first")
+    second.startup = lambda: events.append("start:second")
+    first.shutdown = lambda: events.append("stop:first")
+    second.shutdown = lambda: events.append("stop:second")
+    manager = PluginManager()
+    plan = manager.compose((PluginRecord(first.manifest, first, "test"), PluginRecord(second.manifest, second, "test")))
+    manager.start(plan)
+
+    with pytest.raises(PluginValidationError, match="already started"):
+        manager.start(plan)
+    manager.stop(plan)
+    assert events == ["start:first", "start:second", "stop:second", "stop:first"]
 
 
 def test_discovery_loads_entry_points_in_deterministic_order(
