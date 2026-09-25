@@ -11,7 +11,16 @@ def test_named_roles_are_canonical_and_deterministic() -> None:
     assert role_names() == ("viewer", "editor", "owner")
     viewer = role_definition("viewer", resource=scope)
     assert viewer.grants.permits(Requirement("read", scope)).allowed
+    assert viewer.grants.permits(Requirement("evidence:read", scope)).allowed
+    assert not viewer.grants.permits(Requirement("events", scope)).allowed
     assert not viewer.grants.permits(Requirement("write", scope)).allowed
+    editor = role_definition("editor", resource=scope)
+    assert editor.grants.permits(Requirement("events", scope)).allowed
+    assert editor.grants.permits(Requirement("submit", scope)).allowed
+    assert not editor.grants.permits(Requirement("execute", scope)).allowed
+    owner = role_definition("owner", resource=scope)
+    assert owner.grants.permits(Requirement("execute", scope)).allowed
+    assert owner.grants.permits(Requirement("cancel", scope)).allowed
     assert (
         role_definition("owner", resource=scope).grants
         == role_definition("owner", resource=scope).grants
