@@ -195,7 +195,7 @@ def run_agent(
             if not isinstance(answer, str):
                 raise ValueError("final agent answer must be a string")
             steps.append(AgentStep(step_index, "final"))
-            result = AgentRunResult(answer, tuple(steps))
+            agent_result = AgentRunResult(answer, tuple(steps))
             if record_usage is not None and tokens_known:
                 record_usage(model.model_id, input_tokens, output_tokens)
             if record_telemetry is not None:
@@ -209,7 +209,7 @@ def run_agent(
                         "output_tokens": output_tokens if tokens_known else None,
                     }
                 )
-            return result
+            return agent_result
 
         raw_tool_id = action["tool_id"]
         payload = action["input"]
