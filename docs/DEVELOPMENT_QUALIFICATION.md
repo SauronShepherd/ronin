@@ -14,7 +14,9 @@ python tools/local_spark_qualification.py --output artifacts/local-spark-qualifi
 
 This records Spark/Python versions and a correctness digest. It is local
 PySpark evidence only; it never substitutes for external Spark Connect
-qualification, which requires `SPARK_CONNECT_ENDPOINT`.
+qualification, which requires `SPARK_CONNECT_ENDPOINT`. The local worker is
+bounded to 30 seconds by default; use `--timeout-seconds` to adjust it. A
+`timeout` result is incomplete evidence and never a pass.
 
 ## Provider-neutral query-engine evidence
 
