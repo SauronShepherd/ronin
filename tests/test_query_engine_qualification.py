@@ -22,3 +22,22 @@ def test_queryflux_qualification_is_explicitly_unconfigured_without_operator_inp
         "provider": "queryflux",
         "command_configured": False,
     }
+
+
+def test_queryflux_qualification_executes_operator_evidence(monkeypatch, tmp_path) -> None:
+    evidence = tmp_path / "emit.py"
+    evidence.write_text(
+        "import json; print(json.dumps({'provider': 'queryflux', 'status': 'qualified'}))",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("RONIN_QUERYFLUX_QUALIFICATION_COMMAND", f"python {evidence}")
+    result = qualify_external()
+    assert result["status"] == "qualified"
+    assert result["command_configured"] is True
+
+
+def test_queryflux_qualification_rejects_invalid_operator_output(monkeypatch) -> None:
+    monkeypatch.setenv("RONIN_QUERYFLUX_QUALIFICATION_COMMAND", "python -c \"print('bad')\"")
+    result = qualify_external()
+    assert result["status"] == "failed"
+    assert result["error"] == "invalid_json"

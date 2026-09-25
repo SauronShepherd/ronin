@@ -11,6 +11,8 @@ import argparse
 import hashlib
 import json
 import os
+import shlex
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -87,11 +89,50 @@ def qualify_local() -> dict[str, object]:
 
 def qualify_external() -> dict[str, object]:
     command = os.environ.get("RONIN_QUERYFLUX_QUALIFICATION_COMMAND")
-    return {
-        "status": "not_configured" if not command else "operator_command_configured",
-        "provider": "queryflux",
-        "command_configured": bool(command),
-    }
+    if not command:
+        return {"status": "not_configured", "provider": "queryflux", "command_configured": False}
+    try:
+        completed = subprocess.run(
+            shlex.split(command, posix=os.name != "nt"),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {
+            "status": "failed",
+            "provider": "queryflux",
+            "command_configured": True,
+            "error": type(exc).__name__,
+        }
+    if completed.returncode != 0:
+        return {
+            "status": "failed",
+            "provider": "queryflux",
+            "command_configured": True,
+            "returncode": completed.returncode,
+        }
+    try:
+        evidence = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return {
+            "status": "failed",
+            "provider": "queryflux",
+            "command_configured": True,
+            "error": "invalid_json",
+        }
+    if not isinstance(evidence, dict) or evidence.get("provider") != "queryflux":
+        return {
+            "status": "failed",
+            "provider": "queryflux",
+            "command_configured": True,
+            "error": "invalid_provider_evidence",
+        }
+    result = dict(evidence)
+    result["command_configured"] = True
+    result["status"] = "qualified" if result.get("status") == "qualified" else "failed"
+    return result
 
 
 def main() -> None:

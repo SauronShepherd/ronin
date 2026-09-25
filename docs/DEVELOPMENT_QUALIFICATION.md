@@ -27,8 +27,10 @@ python tools/query_engine_qualification.py --output artifacts/query-engine-quali
 
 The local DuckDB result is marked qualified only when its lifecycle, bounded
 rows, and correctness digest match. QueryFlux remains `not_configured` until
-an operator supplies `RONIN_QUERYFLUX_QUALIFICATION_COMMAND`; local evidence
-does not claim QueryFlux production qualification.
+an operator supplies `RONIN_QUERYFLUX_QUALIFICATION_COMMAND`. When configured,
+the command is executed with a bounded timeout and must emit JSON evidence with
+`provider: queryflux` and `status: qualified`; local evidence still does not
+claim QueryFlux production qualification.
 
 ## Source and contract checks
 
