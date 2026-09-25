@@ -12,6 +12,7 @@ import json
 import os
 import platform
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -26,35 +27,38 @@ def qualify() -> dict[str, Any]:
     except ImportError as exc:  # pragma: no cover - environment dependent
         return {"status": "unavailable", "reason": f"pyspark unavailable: {exc}"}
 
-    spark = (
-        SparkSession.builder.master("local[2]")
-        .appName("ronin-local-spark-qualification")
-        .config("spark.ui.enabled", "false")
-        .config("spark.sql.shuffle.partitions", "2")
-        .getOrCreate()
-    )
-    try:
-        source = [(1, "a"), (2, "b"), (3, "a")]
-        spark.createDataFrame(source, ("id", "group")).createOrReplaceTempView("events")
-        rows = [
-            tuple(row)
-            for row in spark.sql(
-                "select `group`, count(*) as n from events group by `group` order by `group`"
-            ).collect()
-        ]
-        normalized = json.dumps(rows, separators=(",", ":"), default=str)
-        return {
-            "status": "passed",
-            "provider": "pyspark-local",
-            "runtime": platform.python_version(),
-            "spark_version": spark.version,
-            "row_count": len(rows),
-            "correctness_digest": hashlib.sha256(normalized.encode()).hexdigest(),
-            "expected_digest": hashlib.sha256(b'[["a",2],["b",1]]').hexdigest(),
-            "rows": rows,
-        }
-    finally:
-        spark.stop()
+    with tempfile.TemporaryDirectory(prefix="ronin-local-spark-") as warehouse:
+        spark = (
+            SparkSession.builder.master("local[2]")
+            .appName("ronin-local-spark-qualification")
+            .config("spark.ui.enabled", "false")
+            .config("spark.sql.shuffle.partitions", "2")
+            .config("spark.sql.warehouse.dir", warehouse)
+            .config("spark.driver.bindAddress", "127.0.0.1")
+            .getOrCreate()
+        )
+        try:
+            source = [(1, "a"), (2, "b"), (3, "a")]
+            spark.createDataFrame(source, ("id", "group")).createOrReplaceTempView("events")
+            rows = [
+                tuple(row)
+                for row in spark.sql(
+                    "select `group`, count(*) as n from events group by `group` order by `group`"
+                ).collect()
+            ]
+            normalized = json.dumps(rows, separators=(",", ":"), default=str)
+            return {
+                "status": "passed",
+                "provider": "pyspark-local",
+                "runtime": platform.python_version(),
+                "spark_version": spark.version,
+                "row_count": len(rows),
+                "correctness_digest": hashlib.sha256(normalized.encode()).hexdigest(),
+                "expected_digest": hashlib.sha256(b'[["a",2],["b",1]]').hexdigest(),
+                "rows": rows,
+            }
+        finally:
+            spark.stop()
 
 
 def main() -> int:
