@@ -14,6 +14,7 @@ from pathlib import Path
 from time import monotonic
 
 from studio_core import RuntimeCapability, RuntimeCatalog, RuntimeProfile
+from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import (
     DurableExecutionService,
     UnsupportedSchedulerWorkload,
@@ -329,6 +330,12 @@ class LocalWorkerRuntime:
                     "data-engineering.pipeline-run.v1 scheduler execution requires pipeline_runner"
                 )
             try:
+                parameters = decode_canonical_json(claim.job.parameters_json)
+                workspace_id = (
+                    parameters.get("workspace_id")
+                    if isinstance(parameters, dict)
+                    else None
+                )
                 result = await loop.run_in_executor(
                     self._preparation_executor,
                     lambda: execute_scheduler_job(
@@ -337,7 +344,7 @@ class LocalWorkerRuntime:
                         graph_adapter=self.config.scheduler_graph_adapter,
                         quality_adapter=self.config.scheduler_quality_adapter,
                         artifact_store=self._artifact_store,
-                        workspace_id=claim.workspace_id,
+                        workspace_id=workspace_id,
                         run_id=str(claim.run.id),
                         now=self._now(),
                         connector_sync_service=self.config.connector_sync_service,
