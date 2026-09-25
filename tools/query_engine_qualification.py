@@ -98,7 +98,7 @@ def qualify_external() -> dict[str, object]:
             capture_output=True,
             text=True,
             timeout=300,
-        )
+        )  # noqa: S603 - explicitly operator-supplied qualification command
     except (OSError, subprocess.TimeoutExpired) as exc:
         return {
             "status": "failed",
