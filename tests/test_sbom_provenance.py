@@ -57,3 +57,19 @@ def test_sbom_verification_rejects_size_drift_even_when_digest_field_is_reused(t
     output.write_text(json.dumps(value), encoding="utf-8")
     with pytest.raises(ValueError, match="artifact digest mismatch"):
         verify_evidence(output)
+
+
+def test_sbom_verification_rejects_unknown_schema_even_with_valid_digest(tmp_path):
+    artifact = tmp_path / "ronin.whl"
+    artifact.write_bytes(b"candidate")
+    value = build_evidence(tmp_path, [artifact])
+    value["schema"] = "foreign.schema/v1"
+    value.pop("evidence_sha256")
+    value["evidence_sha256"] = hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    output = tmp_path / "evidence.json"
+    output.write_text(json.dumps(value), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unsupported SBOM/provenance evidence schema"):
+        verify_evidence(output)

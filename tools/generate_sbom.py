@@ -82,13 +82,20 @@ def build_evidence(root: Path, artifacts: list[Path]) -> dict[str, Any]:
 
 def verify_evidence(path: Path) -> None:
     value = json.loads(path.read_text(encoding="utf-8"))
+    if value.get("schema") != SCHEMA:
+        raise ValueError("unsupported SBOM/provenance evidence schema")
     digest = value.pop("evidence_sha256", None)
     if not isinstance(digest, str):
         raise ValueError("missing evidence_sha256")
     canonical = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
     if hashlib.sha256(canonical).hexdigest() != digest:
         raise ValueError("evidence_sha256 does not match canonical evidence")
-    for artifact in value.get("artifacts", []):
+    artifacts = value.get("artifacts")
+    if not isinstance(artifacts, list) or not artifacts:
+        raise ValueError("evidence must contain artifacts")
+    for artifact in artifacts:
+        if not isinstance(artifact, dict):
+            raise ValueError("artifact record must be an object")
         artifact_path = Path(artifact["path"])
         if (
             not artifact_path.is_file()
