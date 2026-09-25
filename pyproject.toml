@@ -256,6 +256,7 @@ pytest_add_cli_args = [
   "addopts=",
   "-o",
   "pythonpath=../packages/pyronin/src",
+  "--maxfail=0",
 ]
 pytest_add_cli_args_test_selection = [
   "tests/test_contract_snapshots.py",
