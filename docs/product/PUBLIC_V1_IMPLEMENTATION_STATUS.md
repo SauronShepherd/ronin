@@ -37,10 +37,10 @@ browser smoke (no console/request/CSP failures), installed-wheel accessibility
 (no violations at 320/768/1440 px), and four credential-free migration fixture
 certifications. These checks do not constitute Public v1 release qualification.
 
-The preceding exact-head WSL mutation campaign (at the immediately prior
-candidate) completed 4,210 mutants: 3,522 killed,
-681 survived, and 7 timed out. That is **83.8% killed of non-timeout mutants**
-(83.6% of all generated mutants), below the repository's 90% mutation gate.
+The latest exact-head WSL mutation campaign completed 4,211 mutants: 3,525
+killed, 681 survived, and 5 timed out. That is **83.8% killed of non-timeout
+mutants** (83.7% of all generated mutants), below the repository's 90% mutation
+gate.
 The campaign therefore remains a release blocker; its temporary workspace and
 generated reports are intentionally not part of the tracked source tree.
 

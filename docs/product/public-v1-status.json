@@ -11,12 +11,12 @@
     "result": "2089 passed, 21 skipped",
     "qualification_claimed": false,
     "mutation_campaign": {
-      "total": 4210,
-      "killed": 3522,
+      "total": 4211,
+      "killed": 3525,
       "survived": 681,
-      "timeout": 7,
+      "timeout": 5,
       "killed_percent_non_timeout": 83.8,
-      "killed_percent_all": 83.6,
+      "killed_percent_all": 83.7,
       "gate_percent": 90.0,
       "gate_status": "blocked"
     }
