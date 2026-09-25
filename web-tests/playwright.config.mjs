@@ -27,7 +27,9 @@ export default defineConfig({
     : {
         command: 'python -m http.server 8099 --directory ..',
         url: 'http://127.0.0.1:8099/web/',
-        reuseExistingServer: false,
+        // Reuse a developer's already-running static server locally, while
+        // keeping CI hermetic so a stale process cannot mask a bad build.
+        reuseExistingServer: !process.env.CI,
         timeout: 30_000,
       },
 });
