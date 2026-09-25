@@ -4,9 +4,9 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-09-24. The implementation branch is
+**Observed workspace snapshot:** 2026-09-25. The implementation branch is
 committed and pushed; generated local qualification artifacts remain untracked.
-**Observed source head:** `5a27e74787901003042d8b09b38f13d4720e0f8d` (2026-09-24).
+**Observed source head:** `2dcb84089f042d98abd6f8f0796d40c964d386b5` (2026-09-25).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
