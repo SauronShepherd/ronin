@@ -179,8 +179,10 @@ def release_verdict(
 ) -> dict[str, Any]:
     """Return an authoritative verdict; missing/skipped/stale gates fail closed."""
 
-    if not isinstance(required_gates, set) or not required_gates or any(
-        not isinstance(gate_id, str) or not gate_id.strip() for gate_id in required_gates
+    if (
+        not isinstance(required_gates, set)
+        or not required_gates
+        or any(not isinstance(gate_id, str) or not gate_id.strip() for gate_id in required_gates)
     ):
         raise EvidenceError("required_gates must be a non-empty set of names")
     validated = validate_bundle(bundle)
