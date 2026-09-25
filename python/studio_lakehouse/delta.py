@@ -131,11 +131,12 @@ class DeltaTableStore:
         kwargs: dict[str, object] = {}
         if version is not None:
             try:
-                kwargs["version"] = int(version)
+                parsed_version = int(version)
             except ValueError as exc:
                 raise ValueError("Delta version must be an integer string") from exc
-            if int(kwargs["version"]) < 0:
+            if parsed_version < 0:
                 raise ValueError("Delta version must be non-negative")
+            kwargs["version"] = parsed_version
         deltalake = _deltalake()
         table = deltalake.DeltaTable(str(path), **kwargs)
         arrow = table.to_pyarrow_table(columns=list(columns) if columns is not None else None)
