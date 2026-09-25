@@ -130,6 +130,15 @@ def test_release_verdict_fails_closed_for_missing_or_skipped_gate() -> None:
         release_verdict(skipped, {"unit"})
 
 
+def test_release_verdict_rejects_empty_or_invalid_gate_sets() -> None:
+    bundle = {"schema": SCHEMA, "commit": "abc123", "records": [record("unit")]}
+
+    with pytest.raises(EvidenceError, match="non-empty set"):
+        release_verdict(bundle, set())
+    with pytest.raises(EvidenceError, match="non-empty set"):
+        release_verdict(bundle, {" "})
+
+
 def test_release_verdict_rejects_root_commit_drift() -> None:
     bundle = {"schema": SCHEMA, "commit": "other", "records": [record("unit")]}
     with pytest.raises(EvidenceError, match="does not match"):
