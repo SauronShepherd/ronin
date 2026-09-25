@@ -17,7 +17,7 @@ test('Synthetic Studio exposes validation and cancellable async generation', asy
     calls.push('cancel');
     await route.fulfill({json: {job_id: 'job-1', status: 'cancelled'}});
   });
-  await page.goto('./#synthetic', {waitUntil: 'networkidle'});
+  await page.goto('./#synthetic', {waitUntil: 'domcontentloaded'});
   await page.locator('[data-sds-validate]').click();
   await expect(page.locator('#synthetic-studio-result')).toContainText('evidence-1');
   await page.locator('[data-sds-async]').click();

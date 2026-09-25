@@ -8,7 +8,7 @@ test('ML Studio sends the batch-score contract with model identity', async ({ pa
     requestBody = await route.request().postDataJSON();
     await route.fulfill({json: {batch_id: 'studio-batch-1', predictions: [1]}});
   });
-  await page.goto('./#mlstudio', {waitUntil: 'networkidle'});
+  await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
   const form = page.locator('[data-feature-form="ml-score"]');
   await form.locator('input[name="model_id"]').fill('model-a');
   await form.locator('input[name="version"]').fill('v1');

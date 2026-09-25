@@ -13,7 +13,7 @@ test('ML Studio exposes model card and promotion actions', async ({ page }) => {
     promoted = (await route.request().postDataJSON()).reason === 'validated in Studio';
     await route.fulfill({json: {model_id: 'model-a', version: 'v1', stage: 'champion'}});
   });
-  await page.goto('./#mlstudio', {waitUntil: 'networkidle'});
+  await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
   await expect(page.locator('#ml-models')).toContainText('model-a');
   await page.locator('[data-feature="ml-card"]').click();
   await expect(page.locator('#ml-output')).toContainText('run-1');

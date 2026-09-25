@@ -35,7 +35,7 @@ test('synthetic studio completes deterministic generation and export journey', a
     await route.fulfill({json: {format_id: 'jsonl', content: '{"id":1}\n'}});
   });
 
-  await page.goto('./#synthetic', {waitUntil: 'networkidle'});
+  await page.goto('./#synthetic', {waitUntil: 'domcontentloaded'});
   await expect(page.locator('#synthetic-studio-providers')).toContainText('Local');
   await expect(page.locator('#synthetic-studio-assets')).toContainText('customers');
 

@@ -12,7 +12,7 @@ test('ML Studio exposes quality and trial-search contracts', async ({ page }) =>
     calls.push(['search', await route.request().postDataJSON()]);
     await route.fulfill({json: {items: [{parameters: {seed: 17}, metrics: {accuracy: 0.9}}]}});
   });
-  await page.goto('./#mlstudio', {waitUntil: 'networkidle'});
+  await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
   await page.locator('#ml-quality-form button').click();
   await expect(page.locator('#ml-output')).toContainText('passed');
   await page.locator('#ml-search-form button').click();

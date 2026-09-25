@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('keyboard users can skip navigation and activate a route', async ({ page }) => {
-  await page.goto('./', { waitUntil: 'networkidle' });
+  await page.goto('./', { waitUntil: 'domcontentloaded' });
   await page.locator('.skip-link').focus();
   await expect(page.locator('.skip-link')).toBeFocused();
   await page.keyboard.press('Enter');

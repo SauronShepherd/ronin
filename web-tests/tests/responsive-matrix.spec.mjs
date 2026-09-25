@@ -7,7 +7,7 @@ for (const viewport of [
 ]) {
   test(`shell remains usable at ${viewport.name} width`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
-    await page.goto('./#home', { waitUntil: 'networkidle' });
+    await page.goto('./#home', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#rail')).toBeVisible();
     await expect(page.locator('#main')).toBeVisible();
     await expect(page.locator('#breadcrumb')).toHaveText('Overview');
