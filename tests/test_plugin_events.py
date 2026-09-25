@@ -95,6 +95,16 @@ def test_event_requires_versioned_type_and_valid_identity() -> None:
     with pytest.raises(PluginEventError, match="schema version"):
         invalid.validate()
 
+    with pytest.raises(PluginEventError, match="causation_id"):
+        replace(event, causation_id=" ").validate()
+
+
+def test_event_and_inbox_reject_non_object_payload_and_invalid_consumer() -> None:
+    with pytest.raises(PluginEventError, match="payload must be an object"):
+        replace(_event(), payload=["not", "an", "object"]).validate()
+    with pytest.raises(PluginEventError, match="consumer_id"):
+        InMemoryInbox().process_once(" ", _event(), lambda _event: None)
+
 
 def test_event_schema_registry_validates_payload_contract() -> None:
     schemas = PluginEventSchemaRegistry()

@@ -85,6 +85,12 @@ class PluginEvent:
             self.occurred_at,
         ):
             raise PluginEventError("occurred_at must be RFC-3339")
+        if not isinstance(self.payload, dict):
+            raise PluginEventError("event payload must be an object")
+        if self.causation_id is not None and (
+            not self.causation_id or self.causation_id != self.causation_id.strip()
+        ):
+            raise PluginEventError("causation_id must be non-empty and trimmed")
 
     def digest(self) -> str:
         self.validate()
@@ -164,6 +170,8 @@ class InMemoryInbox:
         handler: Callable[[PluginEvent], None],
     ) -> bool:
         event.validate()
+        if not consumer_id or consumer_id != consumer_id.strip():
+            raise PluginEventError("consumer_id must be non-empty and trimmed")
         key = (consumer_id, event.event_id)
         if key in self._processed:
             return False
