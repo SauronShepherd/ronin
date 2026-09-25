@@ -5,20 +5,22 @@ from __future__ import annotations
 import signal
 from pathlib import Path
 from threading import Event
+from typing import cast
 
-from test_workspace_project_http_api import _ACTOR, _Authorizer, _Store
+from test_workspace_project_http_api import _ACTOR, _Authorizer, _Store  # type: ignore[import-not-found]
 
 from studio_core.plugins import PluginManager, PluginRecord
 from studio_data_engineering import DataEnginerringStudioPlugin
 from studio_execution import ProjectService, WorkspaceService
 from studio_plugin_workspaces import WorkspacesPlugin
 from studio_runtime import PluginHost
+from studio_security.contracts import Actor
 from studio_server import WorkspaceProjectHTTPServer
 
 
 class _DevelopmentAuthenticator:
-    def authenticate(self, _authorization):
-        return _ACTOR
+    def authenticate(self, _authorization: str | None) -> Actor | None:
+        return cast(Actor, _ACTOR)
 
 
 def main() -> None:
