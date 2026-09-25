@@ -8,6 +8,7 @@ import json
 import os
 from importlib import import_module
 from pathlib import Path
+from typing import cast
 
 
 def load_routes(path: Path = Path("web/routes.json")) -> tuple[str, ...]:
@@ -23,7 +24,7 @@ def load_routes(path: Path = Path("web/routes.json")) -> tuple[str, ...]:
         raise RuntimeError("Studio route manifest contains an invalid route")
     if len(set(routes)) != len(routes):
         raise RuntimeError("Studio route manifest contains duplicate routes")
-    return routes
+    return cast(tuple[str, ...], routes)
 
 
 STUDIO_ROUTES = load_routes()
