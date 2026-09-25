@@ -40,3 +40,18 @@ def test_release_acceptance_runs_on_tag_commit_without_cross_workflow_artifact_a
     assert "python -m tools.v01_acceptance_gate" in workflow
     assert "docker-qualification-${{ github.sha }}" not in workflow
     assert "v01-acceptance-provenance.json" not in workflow
+
+
+def test_dockerhub_publisher_restricts_mutable_aliases() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "publish-dockerhub.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'type: choice' in workflow
+    assert "options:" in workflow
+    assert "          - dev" in workflow
+    assert "          - edge" in workflow
+    assert 'case "$ALIAS" in' in workflow
+    assert "dev|edge" in workflow
+    assert "Refusing non-development Docker alias" in workflow
+    assert "${{ inputs.alias }}" in workflow
