@@ -58,16 +58,26 @@ def validate(
     if not sboms:
         raise SupplyChainEvidenceError("at least one SBOM is required")
     sbom_digests: dict[str, str] = {}
+    sbom_subjects: set[str] = set()
     for path in sboms:
         document = _load(path)
-        if not (
-            isinstance(document.get("spdxVersion"), str)
-            and isinstance(document.get("packages"), list)
-            or isinstance(document.get("bomFormat"), str)
-            and isinstance(document.get("components"), list)
-        ):
+        packages = document.get("packages")
+        components = document.get("components")
+        if isinstance(document.get("spdxVersion"), str) and isinstance(packages, list):
+            records = packages
+        elif isinstance(document.get("bomFormat"), str) and isinstance(components, list):
+            records = components
+        else:
             raise SupplyChainEvidenceError(f"SBOM is neither SPDX nor CycloneDX: {path}")
+        for record in records:
+            if isinstance(record, dict) and isinstance(record.get("name"), str):
+                sbom_subjects.add(record["name"])
         sbom_digests[str(path)] = _sha256(path)
+    missing_subjects = sorted(set(subjects) - sbom_subjects)
+    if missing_subjects:
+        raise SupplyChainEvidenceError(
+            "SBOM does not describe artifact subjects: " + ", ".join(missing_subjects)
+        )
     if provenance is None:
         raise SupplyChainEvidenceError("provenance evidence is required")
     statement = _load(provenance)

@@ -41,3 +41,14 @@ def test_supply_chain_evidence_rejects_stale_candidate(tmp_path: Path) -> None:
     identity, sbom, _ = _fixtures(tmp_path)
     with pytest.raises(SupplyChainEvidenceError, match="commit"):
         validate(commit="def", artifact_identity=identity, sboms=[sbom])
+
+
+def test_supply_chain_evidence_rejects_unrelated_sbom_subject(tmp_path: Path) -> None:
+    identity, sbom, provenance = _fixtures(tmp_path)
+    sbom.write_text(
+        json.dumps({"spdxVersion": "SPDX-2.3", "packages": [{"name": "other.whl"}]}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SupplyChainEvidenceError, match="artifact subjects"):
+        validate(commit="abc", artifact_identity=identity, sboms=[sbom], provenance=provenance)
