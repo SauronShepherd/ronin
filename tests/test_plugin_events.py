@@ -38,6 +38,18 @@ def test_outbox_append_is_idempotent_and_conflicts_fail_closed() -> None:
     assert outbox.pending() == ()
 
 
+def test_outbox_rejects_invalid_limits_and_unknown_publication() -> None:
+    with pytest.raises(ValueError, match="max_events"):
+        InMemoryOutbox(max_events=0)
+    outbox = InMemoryOutbox()
+    with pytest.raises(ValueError, match="between 1 and 1000"):
+        outbox.pending(limit=0)
+    with pytest.raises(ValueError, match="between 1 and 1000"):
+        outbox.pending(limit=1001)
+    with pytest.raises(KeyError):
+        outbox.mark_published("missing")
+
+
 def test_inbox_applies_duplicate_event_only_once() -> None:
     inbox = InMemoryInbox()
     seen: list[str] = []
@@ -91,3 +103,17 @@ def test_event_schema_registry_validates_payload_contract() -> None:
 
     with pytest.raises(PluginEventError, match="missing fields"):
         schemas.validate(_event({"name": "missing-id"}))
+
+
+def test_event_schema_registry_rejects_invalid_duplicates_and_sorts_items() -> None:
+    schemas = PluginEventSchemaRegistry()
+    with pytest.raises(PluginEventError, match="duplicate"):
+        schemas.register(PluginEventSchema("projects.created.v1", 1, ("id", "id")))
+    schemas.register(PluginEventSchema("z.last.v1", 1))
+    schemas.register(PluginEventSchema("a.first.v1", 1))
+    with pytest.raises(PluginEventError, match="collision"):
+        schemas.register(PluginEventSchema("a.first.v1", 1))
+    assert tuple(schema.event_type for schema in schemas.items) == (
+        "a.first.v1",
+        "z.last.v1",
+    )
