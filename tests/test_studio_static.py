@@ -148,3 +148,12 @@ def test_studio_index_has_one_valid_document_shell() -> None:
     assert parser.starts.count("body") == 1
     assert parser.starts.count("main") == 1
     assert parser.module_scripts >= 1
+
+
+def test_alerts_studio_rejects_invalid_operations_fail_closed() -> None:
+    source = (Path(__file__).parents[1] / "web" / "js" / "alerts-studio.js").read_text(
+        encoding="utf-8"
+    )
+    assert "Workspace is required" in source
+    assert "Unsupported alert operation" in source
+    assert "['list', 'instances', 'evaluate', 'acknowledge']" in source

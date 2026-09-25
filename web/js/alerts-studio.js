@@ -13,13 +13,18 @@ document.addEventListener('submit', async event => {
   if (!(form instanceof HTMLFormElement) || form.id !== 'alerts-form') return;
   event.preventDefault();
   const data = new FormData(form);
-  const workspace = encodeURIComponent(String(data.get('workspace')));
+  const workspaceValue = String(data.get('workspace') || '').trim();
   const result = document.querySelector('#alerts-result');
   try {
+    if (!workspaceValue) throw new Error('Workspace is required');
+    const workspace = encodeURIComponent(workspaceValue);
     const action = String(data.get('action'));
     const evaluating = action === 'evaluate';
     const acknowledging = action === 'acknowledge';
     const instances = action === 'instances';
+    if (!['list', 'instances', 'evaluate', 'acknowledge'].includes(action)) {
+      throw new Error('Unsupported alert operation');
+    }
     const payload = evaluating
       ? await post(`/v1/workspaces/${workspace}/alerts/evaluate`, { rule_id: String(data.get('rule_id')) })
       : acknowledging
