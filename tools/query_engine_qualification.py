@@ -92,13 +92,13 @@ def qualify_external() -> dict[str, object]:
     if not command:
         return {"status": "not_configured", "provider": "queryflux", "command_configured": False}
     try:
-        completed = subprocess.run(
+        completed = subprocess.run(  # noqa: S603 - operator-supplied qualification command
             shlex.split(command, posix=os.name != "nt"),
             check=False,
             capture_output=True,
             text=True,
             timeout=300,
-        )  # noqa: S603 - explicitly operator-supplied qualification command
+        )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return {
             "status": "failed",
