@@ -152,6 +152,8 @@ class InMemoryInbox:
     """Consumer idempotency store: one event effect per consumer/event pair."""
 
     def __init__(self, *, max_events: int = 100_000) -> None:
+        if max_events < 1:
+            raise ValueError("max_events must be positive")
         self._max_events = max_events
         self._processed: set[tuple[str, str]] = set()
 

@@ -48,6 +48,34 @@ def test_inbox_applies_duplicate_event_only_once() -> None:
     assert seen == ["event-1"]
 
 
+def test_inbox_retries_after_handler_failure() -> None:
+    inbox = InMemoryInbox()
+    attempts = 0
+
+    def handler(_event) -> None:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise RuntimeError("transient")
+
+    with pytest.raises(RuntimeError, match="transient"):
+        inbox.process_once("consumer", _event(), handler)
+
+    assert inbox.process_once("consumer", _event(), handler)
+    assert attempts == 2
+
+
+def test_inbox_rejects_invalid_capacity_and_enforces_limit() -> None:
+    with pytest.raises(ValueError, match="max_events"):
+        InMemoryInbox(max_events=0)
+
+    inbox = InMemoryInbox(max_events=1)
+    assert inbox.process_once("consumer", _event(), lambda _event: None)
+    second = replace(_event(), event_id="event-2")
+    with pytest.raises(PluginEventError, match="capacity"):
+        inbox.process_once("consumer", second, lambda _event: None)
+
+
 def test_event_requires_versioned_type_and_valid_identity() -> None:
     event = _event()
     invalid = replace(event, event_type="projects.created")
