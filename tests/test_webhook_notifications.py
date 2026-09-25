@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from studio_observability import (
     NotificationIntent,
     WebhookNotificationError,

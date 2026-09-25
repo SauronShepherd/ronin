@@ -1,4 +1,5 @@
 import pytest
+
 from studio_data_engineering import IdeCell, IdeSession, execute_ide_session
 
 

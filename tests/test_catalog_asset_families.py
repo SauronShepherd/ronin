@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from studio_core import ASSET_KINDS, AssetId, CatalogAsset, Workspace, WorkspaceId
 from studio_orchestrator import Instant
 from studio_storage.catalog import SqliteCatalogStore

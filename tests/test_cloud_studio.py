@@ -1,4 +1,5 @@
 import pytest
+
 from studio_cloud import (
     CloudEmulator,
     CloudResource,

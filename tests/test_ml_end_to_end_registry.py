@@ -18,7 +18,6 @@ from studio_ml import (
     train_register_tabular,
 )
 from studio_storage import LocalArtifactStore
-
 from tests.test_ml_foundation import _stores
 
 

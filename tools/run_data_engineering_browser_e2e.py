@@ -6,13 +6,14 @@ import signal
 from pathlib import Path
 from threading import Event
 
+from test_workspace_project_http_api import _ACTOR, _Authorizer, _Store
+
 from studio_core.plugins import PluginManager, PluginRecord
 from studio_data_engineering import DataEnginerringStudioPlugin
 from studio_execution import ProjectService, WorkspaceService
 from studio_plugin_workspaces import WorkspacesPlugin
 from studio_runtime import PluginHost
 from studio_server import WorkspaceProjectHTTPServer
-from test_workspace_project_http_api import _ACTOR, _Authorizer, _Store
 
 
 class _DevelopmentAuthenticator:

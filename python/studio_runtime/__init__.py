@@ -19,7 +19,6 @@ from studio_core.plugins import (
     RouteContribution,
 )
 from studio_core.workspaces import WorkspaceId
-
 from studio_runtime.events import DispatchResult, PluginEventDispatcher
 from studio_runtime.lockfile import PluginLock, PluginLockError
 from studio_runtime.settings import (

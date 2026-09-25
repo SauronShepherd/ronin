@@ -9,12 +9,12 @@ from pathlib import Path
 from threading import Thread
 
 import pytest
+
 from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant
 from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
-
 from tools.check_web_assets import referenced_assets
 
 _GRANTS = GrantSet(

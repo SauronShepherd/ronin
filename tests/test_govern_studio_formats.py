@@ -1,6 +1,7 @@
 import json
 
 import pytest
+
 from studio_synthetic_data import (
     DeclarativeTableProvider,
     ExporterRegistry,

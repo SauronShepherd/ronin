@@ -1,6 +1,7 @@
 import sqlite3
 
 import pytest
+
 from studio_storage.backup import (
     backup_deployment,
     backup_sqlite,

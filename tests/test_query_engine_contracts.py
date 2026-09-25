@@ -1,12 +1,13 @@
 import pytest
+
 from studio_query_engine import (
     QUERY_ENGINE_NAMESPACE,
     QUERY_ENGINE_VERSION,
     CancellationResult,
     EngineCapabilities,
     EngineHandshake,
-    QueryEvidence,
     QueryEngineTransport,
+    QueryEvidence,
     QueryRequest,
     QueryResultPage,
     QueryStatus,
@@ -15,13 +16,13 @@ from studio_query_engine import (
 
 def test_provider_neutral_transport_port_is_runtime_checkable_by_shape() -> None:
     class Transport:
-        def submit(self, request):
+        def submit(self, _request):
             return None
 
-        def poll(self, handle, next_uri):
+        def poll(self, _handle, _next_uri):
             return None
 
-        def cancel(self, handle):
+        def cancel(self, _handle):
             return None
 
     # Protocols are intentionally structural; this assertion keeps the

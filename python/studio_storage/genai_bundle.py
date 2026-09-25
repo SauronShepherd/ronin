@@ -19,7 +19,6 @@ from studio_core.genai import (
     PromptAsset,
 )
 from studio_core.portability import RoninBundleManifest
-
 from studio_storage.bundle import BundleFile, write_bundle
 from studio_storage.bundle_payload import read_bundle_payload
 

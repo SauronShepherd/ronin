@@ -6,7 +6,6 @@ from typing import Any, cast
 from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 from studio_storage.catalog import SqliteCatalogStore
-
 from studio_synthetic_data.application import GovernStudioService, plan_from_payload
 from studio_synthetic_data.async_generation import LocalGenerationJobs
 from studio_synthetic_data.engine import GenerationPlan, ValidationReport, assess_privacy

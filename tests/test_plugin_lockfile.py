@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from studio_core.plugins import PluginManager, PluginRecord
 from studio_plugin_workspaces import WorkspacesPlugin
 from studio_runtime import PluginHost, PluginLock, PluginLockError

@@ -4,6 +4,7 @@ import asyncio
 from pathlib import Path
 
 import pytest
+
 from studio_core import Workspace, WorkspaceId
 from studio_execution import DurableExecutionService
 from studio_execution.scheduler_leadership import LeaderFencedSchedulerController

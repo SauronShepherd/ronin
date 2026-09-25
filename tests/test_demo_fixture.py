@@ -3,10 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from examples.demo.build_fixture import build
 from studio_core import ProjectManifest
 from studio_notebook import NotebookDocument, analyze_notebook_dependencies
-
-from examples.demo.build_fixture import build
 
 
 def test_demo_fixture_is_regenerable() -> None:

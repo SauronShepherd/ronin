@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import MappingProxyType
 
 import pytest
+
 from studio_runtime import (
     PluginSettingsError,
     PluginSettingsRegistry,

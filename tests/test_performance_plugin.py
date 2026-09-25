@@ -2,6 +2,7 @@ from importlib.resources import files
 
 from ronin_plugin_performance.analyzer import analyze_run
 from ronin_plugin_performance.plugin import PLUGIN_ID, PerformancePlugin
+
 from studio_core.plugins import ContributionRegistry, PluginContext
 
 

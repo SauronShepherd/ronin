@@ -3,6 +3,7 @@ from threading import Thread
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
+
 from studio_connectors import (
     ConnectorRegistry,
     HttpJsonConnector,

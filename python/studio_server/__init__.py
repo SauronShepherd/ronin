@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from studio_execution import DurableExecutionService, WorkerPollResult
 from studio_quality import QualityHTTPAdapter
-
 from studio_server.composition import LocalServerComposition
 from studio_server.control_plane import (
     CONTROL_PLANE_ROUTES,

@@ -11,6 +11,7 @@ import os
 from urllib.parse import urlsplit
 
 import pytest
+
 from studio_connectors.postgres import PostgresConnector
 from studio_core import ConnectionDefinition, ConnectionId, SecretRef
 from studio_storage import EnvironmentSecretResolver

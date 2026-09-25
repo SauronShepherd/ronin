@@ -4,6 +4,7 @@ import json
 from types import SimpleNamespace
 
 import pytest
+
 from studio_execution import (
     UnsupportedSchedulerWorkload,
     execute_scheduler_job,

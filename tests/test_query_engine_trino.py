@@ -1,4 +1,5 @@
 import pytest
+
 from studio_query_engine import QueryFailure, QueryRequest, TrinoHttpTransport
 
 

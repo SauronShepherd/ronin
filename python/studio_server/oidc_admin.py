@@ -24,7 +24,6 @@ from studio_security import (
     SubjectKind,
     WorkspaceRole,
 )
-
 from studio_server.oidc_http import (
     AuthorizationAuditError,
     AuthorizationAuditStore,

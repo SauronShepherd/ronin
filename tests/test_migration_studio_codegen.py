@@ -1,6 +1,7 @@
 import ast
 
 import pytest
+
 from studio_migration import (
     MigrationUnit,
     ScopeSelection,

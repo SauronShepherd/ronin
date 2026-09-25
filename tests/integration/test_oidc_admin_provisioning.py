@@ -8,6 +8,7 @@ from threading import Thread
 
 import pytest
 from pyronin import APIError, HTTPTransport, Ronin
+
 from studio_core import (
     ExecutionProfile,
     Project,

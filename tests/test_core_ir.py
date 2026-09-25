@@ -4,6 +4,7 @@ from dataclasses import FrozenInstanceError
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+
 from studio_core import (
     Edge,
     FrozenList,

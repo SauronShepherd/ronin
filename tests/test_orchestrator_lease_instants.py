@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from studio_orchestrator import Lease, LeaseToken
 
 ACQUIRED = "2026-09-06T09:00:00.000000Z"

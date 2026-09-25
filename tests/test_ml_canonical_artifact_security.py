@@ -4,6 +4,7 @@ import hashlib
 import pickle
 
 import pytest
+
 from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.canonical_json import encode as encode_canonical_json

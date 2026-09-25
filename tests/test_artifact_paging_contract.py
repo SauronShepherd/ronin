@@ -8,6 +8,7 @@ def test_artifact_paging_capability_is_explicit(tmp_path) -> None:
 
 def test_artifact_page_rejects_invalid_digest_or_cursor_shape() -> None:
     import pytest
+
     from studio_storage import ArtifactPage
 
     with pytest.raises(ValueError, match="invalid SHA-256"):

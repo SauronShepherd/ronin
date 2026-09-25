@@ -8,6 +8,7 @@ from pathlib import Path
 from threading import Event
 
 import pytest
+
 import studio_worker.runtime as worker_runtime_module
 from studio_kernel import CancellationSignal
 from studio_orchestrator import (

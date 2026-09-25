@@ -35,10 +35,9 @@ from studio_security import (
     authorization_audit_event,
     mutation_audit_event,
 )
-from studio_storage import sqlite_ready
-
 from studio_server.http import DurableHTTPApplication, _Handler
 from studio_server.transport_policy import is_loopback_host
+from studio_storage import sqlite_ready
 
 _BIND_POLICY_ENV = "RONIN_BIND_POLICY"
 

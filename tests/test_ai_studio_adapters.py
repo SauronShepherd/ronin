@@ -1,4 +1,5 @@
 import pytest
+
 from studio_ai_studio.adapters import AdapterError, LlamaCppAdapter, OpenAICompatibleAdapter
 from studio_ai_studio.contracts import AdapterKind, EndpointConfig, EndpointId, PublicModelName
 

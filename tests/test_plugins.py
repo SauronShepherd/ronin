@@ -151,7 +151,7 @@ def test_missing_dependency_is_rejected() -> None:
 
 
 @pytest.mark.parametrize(
-    "changes, message",
+    ("changes", "message"),
     [
         ({"id": "Bad.Plugin"}, "invalid plugin id"),
         ({"name": ""}, "incomplete manifest"),
@@ -200,7 +200,7 @@ def test_incompatible_api_is_rejected() -> None:
 
 
 @pytest.mark.parametrize(
-    "specifier, host, expected",
+    ("specifier", "host", "expected"),
     [
         ("", "1.0.0", True),
         ("*", "1.0.0", True),
@@ -238,8 +238,12 @@ def test_noncritical_startup_failure_is_degraded_and_manager_starts() -> None:
 def test_critical_startup_failure_rolls_back_previous_plugins() -> None:
     class FirstPlugin:
         manifest = PluginManifest("com.example.aaa", "First", "1.0.0", "1.0")
-        register = lambda self, context: None
-        startup = lambda self: None
+
+        def register(self, _context) -> None:
+            return None
+
+        def startup(self) -> None:
+            return None
 
     first = FirstPlugin()
 
@@ -251,8 +255,12 @@ def test_critical_startup_failure_rolls_back_previous_plugins() -> None:
             plugin_api="1.0",
             critical=True,
         )
-        register = lambda self, context: None
-        shutdown = lambda self: None
+
+        def register(self, _context) -> None:
+            return None
+
+        def shutdown(self) -> None:
+            return None
 
     second = CriticalPlugin()
     shutdowns: list[str] = []
@@ -273,7 +281,7 @@ def test_manager_rejects_double_start_and_stop_is_reverse_order() -> None:
         def __init__(self, plugin_id: str) -> None:
             self.manifest = PluginManifest(plugin_id, plugin_id, "1.0.0", "1.0")
 
-        def register(self, context) -> None:
+        def register(self, _context) -> None:
             return None
 
         def startup(self) -> None:

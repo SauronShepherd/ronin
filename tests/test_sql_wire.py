@@ -3,6 +3,7 @@ from decimal import Decimal
 from uuid import UUID
 
 import pytest
+
 from studio_sql.wire import sql_wire_value
 
 

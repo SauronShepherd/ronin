@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from studio_data_engineering.debugger import DebuggerService
 from studio_data_engineering.ide import IdeCell
 

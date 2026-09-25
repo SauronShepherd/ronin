@@ -4,6 +4,7 @@ import io
 import zipfile
 
 import pytest
+
 from studio_migration import MigrationUnit, SourceInventory, discover_iics_zip, select_scope
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from studio_core.plugin_events import (
     PluginEventError,
     PluginEventSchema,

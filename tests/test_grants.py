@@ -5,6 +5,7 @@ from itertools import permutations
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+
 from studio_core.grants import (
     ACTIONS,
     MAX_CONSTRAINTS,

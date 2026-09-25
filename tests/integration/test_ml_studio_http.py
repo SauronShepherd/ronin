@@ -5,6 +5,8 @@ import http.client
 import json
 from pathlib import Path
 
+from test_workspace_project_http_api import _Authorizer, _server, _Store
+
 from studio_core.plugins import PluginManager, PluginRecord
 from studio_ml import FeatureDefinitionService
 from studio_ml.plugin import MachineLearningStudioPlugin
@@ -12,7 +14,6 @@ from studio_ml.sqlite import SqliteMLLabStore
 from studio_orchestrator import Instant
 from studio_plugin_workspaces import WorkspacesPlugin
 from studio_runtime import PluginHost
-from test_workspace_project_http_api import _Authorizer, _server, _Store
 
 
 def _request(

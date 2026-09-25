@@ -1,6 +1,7 @@
 """ML Studio run observability contract tests."""
 
 import pytest
+
 from studio_ml.plugin import MachineLearningStudioPlugin
 
 

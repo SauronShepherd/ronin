@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from studio_cli.local_composed import build_local_composed_from_env
 from studio_server import LocalServerComposition
 

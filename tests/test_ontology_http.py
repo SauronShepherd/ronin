@@ -1,4 +1,5 @@
 import pytest
+
 from studio_core import ActionType, KnowledgeGraph, KnowledgeObject, KnowledgeObjectRef
 from studio_execution import OntologyHTTPAdapter
 from studio_storage import SqliteKnowledgeGraphStore

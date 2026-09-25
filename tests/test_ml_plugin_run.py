@@ -2,6 +2,7 @@
 # ruff: noqa: E501
 
 import pytest
+
 from studio_core import WorkspaceId
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_ml.domain import FeatureSpec, Lab

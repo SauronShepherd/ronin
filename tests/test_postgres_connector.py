@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
+
 from studio_connectors.postgres import PostgresConnector
 from studio_core import AssetHandle, ConnectionDefinition, ConnectionId, SecretRef, SourceCheckpoint
 from studio_storage import EnvironmentSecretResolver, PostgresMetadataStore

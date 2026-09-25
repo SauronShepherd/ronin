@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from studio_quality import QualityRowsReferenceError, resolve_quality_rows
 from studio_storage import LocalArtifactStore
 

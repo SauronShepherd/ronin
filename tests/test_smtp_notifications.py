@@ -1,4 +1,5 @@
 import pytest
+
 from studio_observability import NotificationIntent, SmtpNotificationError, SmtpNotificationSink
 
 

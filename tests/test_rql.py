@@ -1,4 +1,5 @@
 import pytest
+
 from studio_core import (
     KnowledgeGraph,
     KnowledgeObject,

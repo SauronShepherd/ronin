@@ -24,7 +24,6 @@ from studio_orchestrator import (
     StoredEvidenceRef,
     StoredExecutionEvent,
 )
-
 from studio_storage.memory import IdempotencyConflict
 
 _SCHEMA_VERSION = 3

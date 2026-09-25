@@ -1,6 +1,7 @@
 import threading
 
 import pytest
+
 from studio_ai_studio.contracts import (
     AdapterKind,
     Capability,

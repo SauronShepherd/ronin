@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from studio_connectors import ConnectorCapabilityRecord, ConnectorRegistry
 from studio_core import ConnectorCapabilities, ConnectorDescriptor
 

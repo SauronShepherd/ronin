@@ -18,6 +18,7 @@ from pathlib import Path
 def qualify_local() -> dict[str, object]:
     import pyarrow as pa
     import pyarrow.parquet as pq
+
     from studio_data_engineering import QueryEngineRuntimeProvider
     from studio_query_engine import (
         DiscoveredEngine,

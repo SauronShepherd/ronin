@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from studio_lakehouse import OpenTableField, OpenTableIdentifier, TableMetadata
 from studio_lakehouse.bundle import export_table_metadata_bundle, import_table_metadata_bundle
 

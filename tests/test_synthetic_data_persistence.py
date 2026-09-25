@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from studio_synthetic_data.persistence import SqliteSyntheticRunStore, canonical_plan_json
 
 

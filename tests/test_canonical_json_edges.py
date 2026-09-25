@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from studio_core.canonical_json import decode, encode
 
 

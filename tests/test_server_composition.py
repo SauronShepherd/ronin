@@ -1,6 +1,7 @@
 from threading import Event
 
 import pytest
+
 from studio_server.composition import LocalServerComposition
 
 

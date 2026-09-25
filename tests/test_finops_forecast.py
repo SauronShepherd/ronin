@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 import pytest
+
 from studio_finops import forecast_cost
 
 

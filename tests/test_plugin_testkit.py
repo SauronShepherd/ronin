@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from studio_plugin_sdk import PluginManifest
 from studio_plugin_testkit import assert_plugin_ready, validate_plugin
 
