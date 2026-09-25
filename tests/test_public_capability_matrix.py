@@ -40,3 +40,11 @@ def test_matrix_does_not_claim_release_qualification_while_ledger_is_incomplete(
     ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
     assert ledger["release_status"] != "complete"
     assert all(row[3] == "No" for row in _rows())
+
+
+def test_matrix_observed_candidate_matches_status_ledger() -> None:
+    ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
+    marker = "**Observed candidate:** `"
+    line = next(line for line in MATRIX.read_text(encoding="utf-8").splitlines() if marker in line)
+    candidate = line.split(marker, 1)[1].split("`", 1)[0]
+    assert candidate == ledger["observed_main_sha"]
