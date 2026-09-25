@@ -90,12 +90,14 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         if not record["environment"].get("fingerprint"):
             raise EvidenceError(f"passed evidence requires environment.fingerprint: {gate_id}")
         artifacts = record.get("artifacts")
-        if (
-            not isinstance(artifacts, list)
-            or not artifacts
-            or not all(isinstance(item, str) and item.strip() for item in artifacts)
-        ):
-            raise EvidenceError(f"passed evidence requires artifacts: {gate_id}")
+            if (
+                not isinstance(artifacts, list)
+                or not artifacts
+                or not all(isinstance(item, str) and item.strip() for item in artifacts)
+            ):
+                raise EvidenceError(f"passed evidence requires artifacts: {gate_id}")
+            if len(set(artifacts)) != len(artifacts):
+                raise EvidenceError(f"passed evidence contains duplicate artifacts: {gate_id}")
         digests = record.get("artifact_digests")
         if not isinstance(digests, dict) or not digests:
             raise EvidenceError(f"passed evidence requires artifact_digests: {gate_id}")
