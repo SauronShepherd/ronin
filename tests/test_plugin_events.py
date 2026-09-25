@@ -38,6 +38,27 @@ def test_outbox_append_is_idempotent_and_conflicts_fail_closed() -> None:
     assert outbox.pending() == ()
 
 
+def test_outbox_pending_is_bounded_in_insertion_order_and_publish_is_idempotent() -> None:
+    outbox = InMemoryOutbox(max_events=3)
+    first = _event()
+    second = replace(first, event_id="event-2")
+    third = replace(first, event_id="event-3")
+    outbox.append(first)
+    outbox.append(second)
+    outbox.append(third)
+
+    assert tuple(item.event.event_id for item in outbox.pending(limit=2)) == (
+        "event-1",
+        "event-2",
+    )
+    outbox.mark_published("event-1")
+    outbox.mark_published("event-1")
+    assert tuple(item.event.event_id for item in outbox.pending()) == (
+        "event-2",
+        "event-3",
+    )
+
+
 def test_outbox_rejects_invalid_limits_and_unknown_publication() -> None:
     with pytest.raises(ValueError, match="max_events"):
         InMemoryOutbox(max_events=0)
@@ -77,6 +98,27 @@ def test_inbox_retries_after_handler_failure() -> None:
     assert attempts == 2
 
 
+def test_inbox_does_not_consume_capacity_or_mark_event_on_handler_failure() -> None:
+    inbox = InMemoryInbox(max_events=1)
+
+    def fail(_event) -> None:
+        raise RuntimeError("failed")
+
+    with pytest.raises(RuntimeError, match="failed"):
+        inbox.process_once("consumer", _event(), fail)
+
+    assert inbox.process_once("consumer", _event(), lambda _event: None)
+
+
+def test_inbox_deduplicates_per_consumer_not_globally() -> None:
+    inbox = InMemoryInbox()
+    seen: list[str] = []
+
+    assert inbox.process_once("consumer-a", _event(), lambda _event: seen.append("a"))
+    assert inbox.process_once("consumer-b", _event(), lambda _event: seen.append("b"))
+    assert seen == ["a", "b"]
+
+
 def test_inbox_rejects_invalid_capacity_and_enforces_limit() -> None:
     with pytest.raises(ValueError, match="max_events"):
         InMemoryInbox(max_events=0)
@@ -113,6 +155,19 @@ def test_event_schema_registry_validates_payload_contract() -> None:
 
     with pytest.raises(PluginEventError, match="missing fields"):
         schemas.validate(_event({"name": "missing-id"}))
+
+    with pytest.raises(PluginEventError, match="version mismatch"):
+        schemas.validate(replace(_event(), schema_version=2))
+
+
+def test_event_schema_registry_rejects_unknown_event_type_and_empty_payload() -> None:
+    schemas = PluginEventSchemaRegistry()
+    schemas.register(PluginEventSchema("projects.created.v1", 1, ("project_id",)))
+
+    with pytest.raises(PluginEventError, match="unknown event schema"):
+        schemas.validate(replace(_event(), event_type="unknown.v1"))
+    with pytest.raises(PluginEventError, match="missing fields"):
+        schemas.validate(replace(_event(), payload={}))
 
 
 def test_event_schema_registry_rejects_invalid_duplicates_and_sorts_items() -> None:
