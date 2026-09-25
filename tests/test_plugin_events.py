@@ -141,6 +141,22 @@ def test_event_requires_versioned_type_and_valid_identity() -> None:
         replace(event, causation_id=" ").validate()
 
 
+def test_new_event_preserves_causation_and_digest_binds_it() -> None:
+    event = new_event(
+        event_id="event-2",
+        event_type="projects.created.v1",
+        producer="example",
+        tenant_id="tenant-1",
+        correlation_id="correlation-1",
+        occurred_at="2026-01-01T00:00:00Z",
+        causation_id="event-1",
+        payload={"project_id": "project-1"},
+    )
+
+    assert event.causation_id == "event-1"
+    assert event.digest() != replace(event, causation_id=None).digest()
+
+
 def test_event_and_inbox_reject_non_object_payload_and_invalid_consumer() -> None:
     with pytest.raises(PluginEventError, match="payload must be an object"):
         replace(_event(), payload=["not", "an", "object"]).validate()
