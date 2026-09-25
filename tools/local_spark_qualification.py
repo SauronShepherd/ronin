@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import platform
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -64,8 +65,42 @@ def qualify() -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--timeout-seconds", type=float, default=30.0)
+    parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
-    result = qualify()
+    if args.worker:
+        result = qualify()
+    else:
+        try:
+            completed = subprocess.run(  # noqa: S603 - repository-local qualification worker
+                [sys.executable, str(Path(__file__).resolve()), "--worker"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=args.timeout_seconds,
+            )
+            if completed.returncode:
+                result = {
+                    "status": "failed",
+                    "provider": "pyspark-local",
+                    "returncode": completed.returncode,
+                }
+            else:
+                result = json.loads(completed.stdout)
+                if not isinstance(result, dict):
+                    raise ValueError("qualification output must be an object")
+        except subprocess.TimeoutExpired:
+            result = {
+                "status": "timeout",
+                "provider": "pyspark-local",
+                "timeout_seconds": args.timeout_seconds,
+            }
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            result = {
+                "status": "failed",
+                "provider": "pyspark-local",
+                "error": type(exc).__name__,
+            }
     payload = json.dumps(result, indent=2, sort_keys=True, default=str)
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
