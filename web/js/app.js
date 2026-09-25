@@ -1,4 +1,4 @@
-import routesManifest from '../routes.json' with {type: 'json'};import {get,post,put,setConfig} from './api.js';import {esc,fmt,json,page,status} from './dom.js';import {machineLearningStudio} from './features.js';import {openCommandPalette} from './command-palette.js';import {decodeStudioContext} from './studio-context.js';import './context-bar.js';import './debugger-studio.js';import './cloud-studio.js';import {renderPerformance} from './performance-studio.js';
+import routesManifest from '../routes.json' with {type: 'json'};import {get,post,put,setConfig} from './api.js';import {esc,fmt,json,page,status} from './dom.js';import {machineLearningStudio} from './features.js';import {alertsStudio} from './alerts-studio.js';import {openCommandPalette} from './command-palette.js';import {decodeStudioContext} from './studio-context.js';import './context-bar.js';import './debugger-studio.js';import './cloud-studio.js';import {renderPerformance} from './performance-studio.js';
 const studioContext=decodeStudioContext(location.search);window.roninStudioContext=studioContext;
 import {t} from './i18n.js';
 import {qualityStudio,loadQualityState} from './quality-studio.js';import {finopsStudio} from './finops-studio.js';import {notebookStudio} from './notebook-studio.js';import {schedulerStudio} from './scheduler-studio.js';
@@ -79,4 +79,5 @@ import './scheduler-studio.js';
 import './access-studio.js';
 import './a11y.js';
 import {ingestionStudio} from './ingestion-studio.js';
-window.addEventListener('hashchange',()=>{if(location.hash==='#workflows')setTimeout(schedulerStudio,0);if(location.hash==='#notebooks')setTimeout(notebookStudio,0);if(location.hash==='#ingestion')setTimeout(ingestionStudio,0)});
+window.addEventListener('hashchange',()=>{if(location.hash==='#workflows')setTimeout(schedulerStudio,0);if(location.hash==='#notebooks')setTimeout(notebookStudio,0);if(location.hash==='#ingestion')setTimeout(ingestionStudio,0);if(location.hash==='#alerts')setTimeout(alertsStudio,0)});
+if(location.hash==='#alerts')setTimeout(alertsStudio,0);
