@@ -159,7 +159,15 @@ def test_missing_dependency_is_rejected() -> None:
         ({"capabilities": ("same", "same")}, "duplicate capability"),
         ({"permissions": ("same:read", "same:read")}, "duplicate permission"),
         ({"permissions": ("missing-namespace",)}, "permissions must use namespace:name"),
-        ({"dependencies": (PluginDependency("com.example.dep"), PluginDependency("com.example.dep"))}, "duplicate dependency"),
+        (
+            {
+                "dependencies": (
+                    PluginDependency("com.example.dep"),
+                    PluginDependency("com.example.dep"),
+                )
+            },
+            "duplicate dependency",
+        ),
         ({"job_types": ("job", "job")}, "duplicate job type"),
     ],
 )
@@ -233,6 +241,7 @@ def test_critical_startup_failure_rolls_back_previous_plugins() -> None:
         startup = lambda self: None
 
     first = FirstPlugin()
+
     class CriticalPlugin:
         manifest = PluginManifest(
             id="com.example.critical",
@@ -249,7 +258,9 @@ def test_critical_startup_failure_rolls_back_previous_plugins() -> None:
     first.shutdown = lambda: shutdowns.append("first")
     second.startup = lambda: (_ for _ in ()).throw(RuntimeError("fatal"))
     manager = PluginManager()
-    plan = manager.compose((PluginRecord(first.manifest, first, "test"), PluginRecord(second.manifest, second, "test")))
+    plan = manager.compose(
+        (PluginRecord(first.manifest, first, "test"), PluginRecord(second.manifest, second, "test"))
+    )
 
     with pytest.raises(PluginLoadError, match="critical plugin failed to start"):
         manager.start(plan)
@@ -260,10 +271,13 @@ def test_manager_rejects_double_start_and_stop_is_reverse_order() -> None:
     class LifecyclePlugin:
         def __init__(self, plugin_id: str) -> None:
             self.manifest = PluginManifest(plugin_id, plugin_id, "1.0.0", "1.0")
+
         def register(self, context) -> None:
             return None
+
         def startup(self) -> None:
             return None
+
         def shutdown(self) -> None:
             return None
 
@@ -275,7 +289,9 @@ def test_manager_rejects_double_start_and_stop_is_reverse_order() -> None:
     first.shutdown = lambda: events.append("stop:first")
     second.shutdown = lambda: events.append("stop:second")
     manager = PluginManager()
-    plan = manager.compose((PluginRecord(first.manifest, first, "test"), PluginRecord(second.manifest, second, "test")))
+    plan = manager.compose(
+        (PluginRecord(first.manifest, first, "test"), PluginRecord(second.manifest, second, "test"))
+    )
     manager.start(plan)
 
     with pytest.raises(PluginValidationError, match="already started"):
