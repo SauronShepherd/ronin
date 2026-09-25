@@ -1644,7 +1644,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 decisions = {}
                 for permission in ("project.read", "project.write", "scheduler.write"):
                     decision = self._server().authorizer.authorize(
-                        actor, PolicyRequirement(workspace_id, permission, str(project_ref))
+                        actor,
+                        PolicyRequirement(workspace_id, cast(Permission, permission), str(project_ref)),
                     )
                     decisions[permission] = {
                         "allowed": decision.allowed,
