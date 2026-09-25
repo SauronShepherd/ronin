@@ -14,6 +14,7 @@ from studio_core.plugins import (
     SurfaceContribution,
     SurfaceContributionRegistry,
     SurfaceOption,
+    _satisfies_host,
 )
 from studio_plugin_workspaces import WorkspacesPlugin
 from studio_runtime import discover_plugins
@@ -187,6 +188,31 @@ def test_incompatible_api_is_rejected() -> None:
     )
     with pytest.raises(PluginCompatibilityError, match="plugin API"):
         PluginManager().compose((__import_record(plugin),))
+
+
+@pytest.mark.parametrize(
+    "specifier, host, expected",
+    [
+        ("", "1.0.0", True),
+        ("*", "1.0.0", True),
+        (">=1,<2", "1.5.0", True),
+        (">=2", "1.5.0", False),
+        ("<1", "1.0.0", False),
+        ("==1.0.0", "1.0.0", True),
+        ("==1.0.0", "1.0.1", False),
+    ],
+)
+def test_host_requirement_subset_is_evaluated_fail_closed(
+    specifier: str, host: str, expected: bool
+) -> None:
+    assert _satisfies_host(specifier, host) is expected
+
+
+def test_host_requirement_rejects_invalid_versions_and_specifiers() -> None:
+    with pytest.raises(PluginCompatibilityError, match="invalid host version"):
+        _satisfies_host(">=1", "unknown")
+    with pytest.raises(PluginCompatibilityError, match="unsupported host requirement"):
+        _satisfies_host("~=1.0", "1.0.0")
 
 
 def test_noncritical_startup_failure_is_degraded_and_manager_starts() -> None:
