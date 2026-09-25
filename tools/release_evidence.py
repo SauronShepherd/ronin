@@ -105,6 +105,12 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
                 f"passed evidence is missing artifact digests for {gate_id}: "
                 + ", ".join(missing_digests)
             )
+        extra_digests = sorted(set(digests) - set(artifacts))
+        if extra_digests:
+            raise EvidenceError(
+                f"passed evidence has digests for undeclared artifacts for {gate_id}: "
+                + ", ".join(extra_digests)
+            )
         for artifact, digest in digests.items():
             if not isinstance(artifact, str) or not artifact.strip():
                 raise EvidenceError(f"artifact_digests contains an invalid name: {gate_id}")
