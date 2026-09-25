@@ -1,6 +1,7 @@
 import sqlite3
 
 import pytest
+
 from studio_storage.migration_registry import (
     STORAGE_MIGRATION_DOMAINS,
     MigrationDomain,
@@ -47,7 +48,7 @@ def test_migration_status_is_read_only_and_reports_uninitialized_domains() -> No
     assert migration_status(connection)[0] == {
         "domain": "workspaces",
         "current": 0,
-        "supported": 1,
+        "supported": 2,
         "state": "pending",
     }
     assert (
@@ -66,7 +67,7 @@ def test_migration_status_wraps_corrupt_schema_errors() -> None:
 def test_migration_status_marks_ahead_schema_incompatible() -> None:
     connection = sqlite3.connect(":memory:")
     connection.execute("CREATE TABLE workspace_schema_migrations (version INTEGER NOT NULL)")
-    connection.execute("INSERT INTO workspace_schema_migrations VALUES (2)")
+    connection.execute("INSERT INTO workspace_schema_migrations VALUES (3)")
 
     assert migration_status(connection)[0]["state"] == "incompatible"
 

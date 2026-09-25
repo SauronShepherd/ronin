@@ -4,25 +4,37 @@ import http.client
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
+from pathlib import Path
 from threading import Thread
 
 from studio_core import (
+    AssetId,
+    CatalogAsset,
     ExecutionProfile,
+    GlossaryTerm,
+    GlossaryTermId,
+    OwnershipMetadata,
     Project,
     ProjectId,
     ProjectManifest,
     RepositoryBinding,
     RuntimeProfileRef,
+    SensitivityMetadata,
     Workspace,
     WorkspaceId,
 )
+from studio_core.plugins import PluginManager, PluginRecord
 from studio_execution import ProjectService, WorkspaceService
+from studio_plugin_observability import LocalObservabilityBuffer, LoggingPlugin, MonitoringPlugin
+from studio_plugin_workspaces import WorkspacesPlugin
+from studio_runtime import PluginHost
 from studio_security import Actor, PolicyDecision, Principal, PrincipalId
 from studio_server import (
     CONTROL_PLANE_ROUTES,
     ControlPlaneUnavailable,
     WorkspaceProjectHTTPServer,
 )
+from studio_synthetic_data.plugin import SyntheticDataStudioPlugin
 
 _WS_A = WorkspaceId("workspace-a")
 _WS_B = WorkspaceId("workspace-b")
@@ -112,6 +124,12 @@ class _TaskRun:
 
 
 class _Scheduler:
+    def put_workflow(self, workspace_id, workflow):
+        assert workspace_id == _WS_A
+        assert workflow.id.value == "pipeline:project-1:main"
+        self.pipeline_workflow = workflow
+        return workflow
+
     def list_workflows(self, workspace_id):
         assert workspace_id == _WS_A
         return (_Workflow("workflow-1"),)
@@ -127,6 +145,10 @@ class _Scheduler:
 
     def create_workflow_run(self, workspace_id, workflow_id, trigger, *, idempotency_key):
         assert workspace_id == _WS_A
+        if workflow_id.value.startswith("pipeline:"):
+            assert trigger.kind == "api"
+            assert idempotency_key == "pipeline:project-1:main:main/working:" + "a" * 64
+            return _WorkflowRun("pipeline-run-1")
         assert workflow_id.value == "workflow-1"
         assert trigger.kind == "api"
         assert idempotency_key == "request-1"
@@ -136,6 +158,80 @@ class _Scheduler:
         assert workspace_id == _WS_A
         assert run_id.value == "run-1"
         return 2
+
+
+class _Glossary:
+    def __init__(self) -> None:
+        self.terms = {}
+
+    def put(self, workspace_id, term, *, now):
+        del now
+        self.terms[(workspace_id, str(term.id), term.version)] = term
+        return term
+
+    def list_all(self, workspace_id):
+        return tuple(term for (found, _, _), term in self.terms.items() if found == workspace_id)
+
+    def list_latest(self, workspace_id):
+        return self.list_all(workspace_id)
+
+    def search(self, workspace_id, query, *, limit=100):
+        del query
+        return self.list_all(workspace_id)[:limit]
+
+    def get(self, workspace_id, term_id, version):
+        return self.terms.get((workspace_id, str(term_id), version))
+
+
+class _CatalogGovernance:
+    def __init__(self) -> None:
+        self.sensitivity = {}
+        self.ownership = {}
+        self.assets = {}
+
+    def list_assets(self, workspace_id):
+        del workspace_id
+        return ()
+
+    def search_assets(self, workspace_id, query, *, limit=100):
+        del workspace_id, query, limit
+        return ()
+
+    def put_sensitivity(self, workspace_id, asset_id, metadata, *, now):
+        del now
+        self.sensitivity[(workspace_id, asset_id, metadata.version)] = metadata
+        return metadata
+
+    def put_ownership(self, workspace_id, asset_id, metadata, *, now):
+        del now
+        self.ownership[(workspace_id, asset_id, metadata.version)] = metadata
+        return metadata
+
+    def create_asset(self, workspace_id, asset, *, now):
+        del now
+        self.assets[(workspace_id, asset.id)] = asset
+        return asset
+
+    def replace_asset(self, workspace_id, asset, *, now):
+        del now
+        self.assets[(workspace_id, asset.id)] = asset
+        return asset
+
+    def upstream(self, workspace_id, ref):
+        del workspace_id
+        return (_LineagePayload({"direction": "upstream", "asset_id": str(ref.asset_id)}),)
+
+    def downstream(self, workspace_id, ref):
+        del workspace_id
+        return (_LineagePayload({"direction": "downstream", "asset_id": str(ref.asset_id)}),)
+
+
+class _LineagePayload:
+    def __init__(self, payload):
+        self.payload = payload
+
+    def to_payload(self):
+        return self.payload
 
 
 _ACTOR = Actor(
@@ -196,6 +292,13 @@ def _server(
     store: _Store,
     authorizer: _Authorizer,
     scheduler: _Scheduler | None = None,
+    plugin_host: PluginHost | None = None,
+    plugin_routes_enabled: bool = False,
+    studio_root: Path | None = None,
+    audit_mutation=None,
+    glossary_reader=None,
+    catalog_reader=None,
+    feature_definition_service=None,
 ) -> Iterator[tuple[str, int]]:
     server = WorkspaceProjectHTTPServer(
         ("127.0.0.1", 0),
@@ -206,6 +309,13 @@ def _server(
         workflow_reader=scheduler,
         workflow_runner=scheduler,
         workflow_canceller=scheduler,
+        plugin_host=plugin_host,
+        plugin_routes_enabled=plugin_routes_enabled,
+        studio_root=studio_root,
+        audit_mutation=audit_mutation,
+        glossary_reader=glossary_reader,
+        catalog_reader=catalog_reader,
+        feature_definition_service=feature_definition_service,
         request_timeout_seconds=1.0,
     )
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -246,6 +356,382 @@ def _json_body(value: object) -> bytes:
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
 
 
+def test_plugin_project_route_dispatches_after_authorization() -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    store.projects[(_WS_A, _PROJECT)] = _manifest()
+    plugin = WorkspacesPlugin()
+    manager = PluginManager()
+    plan = manager.compose(
+        (PluginRecord(plugin.manifest, plugin, "test"),),
+        services={
+            "workspace_service": WorkspaceService(store),
+            "project_service": ProjectService(store),
+        },
+    )
+    host = PluginHost(manager, plan)
+    manager.start(plan)
+    try:
+        with _server(
+            store,
+            _Authorizer(),
+            plugin_host=host,
+            plugin_routes_enabled=True,
+        ) as address:
+            status, payload = _request(
+                address,
+                "GET",
+                f"/v1/workspaces/{_WS_A}/projects?limit=1",
+            )
+        assert status == 200
+        assert payload["items"][0]["project"]["id"] == str(_PROJECT)
+        assert payload["next_cursor"] is None
+    finally:
+        manager.stop(plan)
+
+
+def test_pipeline_run_materializes_workflow_and_validates_digest() -> None:
+    store = _Store()
+    authorizer = _Authorizer()
+    scheduler = _Scheduler()
+    with _server(store, authorizer, scheduler=scheduler) as address:
+        body = {
+            "revision_key": "main/working",
+            "ir_digest": "a" * 64,
+            "runtime": "local-preview",
+            "parameters": {"pipeline": {"config": {"name": "main"}, "nodes": [], "edges": []}},
+        }
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-a/projects/project-1/pipelines/main/runs",
+            body=_json_body(body),
+        )
+        assert status == 201
+        assert payload["id"] == "pipeline-run-1"
+        assert scheduler.pipeline_workflow.id.value == "pipeline:project-1:main"
+        invalid = dict(body)
+        invalid["ir_digest"] = "bad"
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-a/projects/project-1/pipelines/main/runs",
+            body=_json_body(invalid),
+        )
+        assert status == 400
+        assert payload["error"]["code"] == "invalid_request"
+
+
+def test_project_permission_inspection_is_resource_scoped() -> None:
+    store = _Store()
+    with _server(store, _Authorizer()) as address:
+        status, payload = _request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-a/projects/project-1/permissions",
+        )
+    assert status == 200
+    assert payload["workspace_id"] == "workspace-a"
+    assert payload["project_id"] == "project-1"
+    assert set(payload["permissions"]) == {"project.read", "project.write", "scheduler.write"}
+
+
+def test_project_permission_inspection_fails_closed_without_project_read() -> None:
+    store = _Store()
+    with _server(store, _Authorizer(allowed=set())) as address:
+        status, payload = _request(
+            address,
+            "GET",
+            "/v1/workspaces/workspace-a/projects/project-1/permissions",
+        )
+    assert status == 403
+    assert payload["error"]["code"] == "forbidden"
+
+
+def test_platform_capabilities_exposes_only_ready_plugin_capabilities() -> None:
+    store = _Store()
+    plugin = WorkspacesPlugin()
+    manager = PluginManager()
+    plan = manager.compose((PluginRecord(plugin.manifest, plugin, "test"),))
+    host = PluginHost(manager, plan)
+    host.start()
+    try:
+        with _server(store, _Authorizer(), plugin_host=host, plugin_routes_enabled=True) as address:
+            status, payload = _request(address, "GET", "/v1/platform/capabilities")
+        assert status == 200
+        assert payload["workspaces.read"] == plugin.manifest.id
+    finally:
+        host.stop()
+
+
+def test_platform_ui_manifest_exposes_ready_plugin_navigation() -> None:
+    store = _Store()
+    plugin = WorkspacesPlugin()
+    manager = PluginManager()
+    plan = manager.compose((PluginRecord(plugin.manifest, plugin, "test"),))
+    host = PluginHost(manager, plan)
+    host.start()
+    try:
+        with _server(store, _Authorizer(), plugin_host=host) as address:
+            status, payload = _request(address, "GET", "/v1/platform/ui-manifest")
+        assert status == 200
+        assert payload["items"][0]["plugin_id"] == plugin.manifest.id
+        assert payload["items"][0]["manifest"]["navigation"][0]["id"] == "workspaces"
+    finally:
+        host.stop()
+
+
+def test_local_observability_plugins_are_readable_over_control_plane() -> None:
+    store = _Store()
+    buffer = LocalObservabilityBuffer()
+    logging_plugin = LoggingPlugin(buffer)
+    monitoring_plugin = MonitoringPlugin(buffer)
+    manager = PluginManager()
+    plan = manager.compose(
+        (
+            PluginRecord(logging_plugin.manifest, logging_plugin, "test"),
+            PluginRecord(monitoring_plugin.manifest, monitoring_plugin, "test"),
+        ),
+        services={"observability_buffer": buffer},
+    )
+    host = PluginHost(manager, plan)
+    host.start()
+    buffer.log("info", "local event", logging_plugin.manifest.id, {"token": "secret"})
+    buffer.metric("ronin.test.requests", 1, monitoring_plugin.manifest.id)
+    try:
+        with _server(store, _Authorizer(), plugin_host=host, plugin_routes_enabled=True) as address:
+            logs_status, logs = _request(address, "GET", "/v1/platform/logs")
+            metrics_status, metrics = _request(address, "GET", "/v1/platform/metrics")
+        assert logs_status == 200
+        assert metrics_status == 200
+        redacted_token = logs["items"][0]["attributes"]["token"]
+        assert redacted_token == "[REDACTED]"  # noqa: S105
+        assert metrics["items"][0]["name"] == "ronin.test.requests"
+    finally:
+        host.stop()
+
+
+def test_plugin_project_create_requires_idempotency_and_registers_via_port() -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    plugin = WorkspacesPlugin()
+    manager = PluginManager()
+    plan = manager.compose(
+        (PluginRecord(plugin.manifest, plugin, "test"),),
+        services={
+            "workspace_service": WorkspaceService(store),
+            "project_service": ProjectService(store),
+        },
+    )
+    host = PluginHost(manager, plan)
+    manager.start(plan)
+    try:
+        with _server(
+            store,
+            _Authorizer(),
+            plugin_host=host,
+            plugin_routes_enabled=True,
+        ) as address:
+            status, payload = _request(
+                address,
+                "POST",
+                f"/v1/workspaces/{_WS_A}/projects",
+                body=_json_body(_manifest().to_data()),
+                headers={"Idempotency-Key": "project-create-1"},
+            )
+        assert status == 200
+        assert payload["project"]["id"] == str(_PROJECT)
+        assert store.calls["register_project"] == 1
+    finally:
+        manager.stop(plan)
+
+
+def test_plugin_project_mutation_fails_closed_when_audit_hook_is_unavailable() -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    plugin = WorkspacesPlugin()
+    manager = PluginManager()
+    plan = manager.compose(
+        (PluginRecord(plugin.manifest, plugin, "test"),),
+        services={
+            "workspace_service": WorkspaceService(store),
+            "project_service": ProjectService(store),
+        },
+    )
+    host = PluginHost(manager, plan)
+    manager.start(plan)
+    try:
+
+        def fail_audit(actor, action, workspace_id, metadata):
+            del actor, action, workspace_id, metadata
+            raise RuntimeError("audit store unavailable")
+
+        with _server(
+            store,
+            _Authorizer(),
+            plugin_host=host,
+            plugin_routes_enabled=True,
+            audit_mutation=fail_audit,
+        ) as address:
+            status, payload = _request(
+                address,
+                "POST",
+                f"/v1/workspaces/{_WS_A}/projects",
+                body=_json_body(_manifest().to_data()),
+                headers={"Idempotency-Key": "audit-fail-1"},
+            )
+        assert status == 503
+        assert payload["error"]["code"] == "mutation_audit_unavailable"
+        assert store.calls.get("register_project", 0) == 0
+    finally:
+        manager.stop(plan)
+
+
+def test_glossary_term_can_be_published_through_authenticated_route() -> None:
+    store = _Store()
+    glossary = _Glossary()
+    term = GlossaryTerm(
+        GlossaryTermId("customer"),
+        "1",
+        "Customer",
+        "A customer account",
+        "data-governance",
+    )
+    with _server(store, _Authorizer(), glossary_reader=glossary) as address:
+        status, payload = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/glossary/terms",
+            body=_json_body(term.to_payload()),
+        )
+        assert status == 201, payload
+        assert payload == term.to_payload()
+        status, payload = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/glossary/terms/customer/1",
+        )
+    assert status == 200
+    assert payload == term.to_payload()
+
+
+def test_catalog_governance_metadata_can_be_published_through_authenticated_routes() -> None:
+    store = _Store()
+    catalog = _CatalogGovernance()
+    sensitivity = SensitivityMetadata(1, explicit=("pii",))
+    ownership = OwnershipMetadata(1, "group/data", ("user/steward",), "sales", "active")
+    with _server(store, _Authorizer(), catalog_reader=catalog) as address:
+        for suffix, metadata in (("sensitivity", sensitivity), ("ownership", ownership)):
+            status, payload = _request(
+                address,
+                "POST",
+                f"/v1/workspaces/{_WS_A}/catalog/assets/asset-1/{suffix}",
+                body=_json_body(metadata.to_payload()),
+            )
+            assert status == 201
+            assert payload == metadata.to_payload()
+    assert catalog.sensitivity[(_WS_A, AssetId("asset-1"), 1)] == sensitivity
+    assert catalog.ownership[(_WS_A, AssetId("asset-1"), 1)] == ownership
+
+
+def test_catalog_asset_create_and_replace_routes_validate_path_identity() -> None:
+    store = _Store()
+    catalog = _CatalogGovernance()
+    asset = CatalogAsset(AssetId("asset-1"), "dataset", "Customers")
+    replacement = CatalogAsset(AssetId("asset-1"), "dataset", "Customers v2")
+    with _server(store, _Authorizer(), catalog_reader=catalog) as address:
+        status, payload = _request(
+            address,
+            "POST",
+            f"/v1/workspaces/{_WS_A}/catalog/assets",
+            body=_json_body(asset.to_payload()),
+        )
+        assert status == 201
+        assert payload == asset.to_payload()
+        status, payload = _request(
+            address,
+            "PUT",
+            f"/v1/workspaces/{_WS_A}/catalog/assets/asset-1",
+            body=_json_body(replacement.to_payload()),
+        )
+        assert status == 200
+        assert payload == replacement.to_payload()
+        status, payload = _request(
+            address,
+            "PUT",
+            f"/v1/workspaces/{_WS_A}/catalog/assets/other",
+            body=_json_body(replacement.to_payload()),
+        )
+    assert status == 400
+    assert payload["error"]["code"] == "invalid_request"
+
+
+def test_catalog_lineage_route_requires_explicit_supported_direction() -> None:
+    store = _Store()
+    catalog = _CatalogGovernance()
+    with _server(store, _Authorizer(), catalog_reader=catalog) as address:
+        status, payload = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/catalog/lineage/asset-1/v1?direction=downstream",
+        )
+        assert status == 200
+        assert payload == {"items": [{"direction": "downstream", "asset_id": "asset-1"}]}
+        status, payload = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/catalog/lineage/asset-1/v1?direction=sideways",
+        )
+    assert status == 400
+    assert payload["error"]["code"] == "invalid_request"
+
+
+def test_plugin_project_read_replace_delete_routes_use_project_port() -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    store.projects[(_WS_A, _PROJECT)] = _manifest()
+    plugin = WorkspacesPlugin()
+    manager = PluginManager()
+    plan = manager.compose(
+        (PluginRecord(plugin.manifest, plugin, "test"),),
+        services={
+            "workspace_service": WorkspaceService(store),
+            "project_service": ProjectService(store),
+        },
+    )
+    host = PluginHost(manager, plan)
+    manager.start(plan)
+    try:
+        with _server(
+            store,
+            _Authorizer(),
+            plugin_host=host,
+            plugin_routes_enabled=True,
+        ) as address:
+            status, payload = _request(
+                address, "GET", f"/v1/workspaces/{_WS_A}/projects/{_PROJECT}"
+            )
+            assert status == 200
+            assert payload["project"]["id"] == str(_PROJECT)
+
+            status, payload = _request(
+                address,
+                "PUT",
+                f"/v1/workspaces/{_WS_A}/projects/{_PROJECT}",
+                body=_json_body(_manifest("Updated").to_data()),
+            )
+            assert status == 200
+            assert payload["project"]["name"] == "Updated"
+
+            status, payload = _request(
+                address, "DELETE", f"/v1/workspaces/{_WS_A}/projects/{_PROJECT}"
+            )
+            assert status == 200
+            assert payload == {"unregistered": True, "project_id": str(_PROJECT)}
+    finally:
+        manager.stop(plan)
+
+
 def test_workflow_routes_fail_closed_when_scheduler_is_not_configured() -> None:
     assert {
         ("GET", "/v1/workspaces/{workspace_id}/workflows"),
@@ -259,6 +745,14 @@ def test_workflow_routes_fail_closed_when_scheduler_is_not_configured() -> None:
         status, payload = _request(address, "GET", "/v1/workspaces/workspace-a/workflows")
         assert status == 503
         assert payload["error"]["code"] == "scheduler_unavailable"
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-a/projects/project-1/sql/query",
+            body=_json_body({"sql": "SELECT 1"}),
+        )
+        assert status == 503
+        assert payload["error"]["code"] == "sql_unavailable"
         status, payload = _request(
             address,
             "POST",
@@ -331,6 +825,24 @@ def test_scheduler_route_with_unsupported_method_is_not_method_not_found() -> No
         )
         assert status == 405
         assert payload["error"]["code"] == "method_not_allowed"
+
+
+def test_workflow_cancellation_fails_closed_when_audit_is_unavailable() -> None:
+    store = _Store()
+    scheduler = _Scheduler()
+
+    def fail_audit(actor, action, workspace_id, metadata):
+        del actor, action, workspace_id, metadata
+        raise RuntimeError("audit unavailable")
+
+    with _server(store, _Authorizer(), scheduler, audit_mutation=fail_audit) as address:
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/workspaces/workspace-a/workflow-runs/run-1/cancel",
+        )
+    assert status == 503
+    assert payload["error"]["code"] == "mutation_audit_unavailable"
 
 
 def test_authentication_and_denial_are_stable_json() -> None:
@@ -564,3 +1076,56 @@ def test_missing_and_archived_project_mutations_map_to_stable_errors() -> None:
         assert status == 409
         assert payload["error"]["code"] == "conflict"
         assert store.calls.get("register_project", 0) == 0
+
+
+def test_govern_studio_routes_execute_through_real_http_server() -> None:
+    store = _Store()
+    plugin = SyntheticDataStudioPlugin()
+    manager = PluginManager()
+    plan = manager.compose((PluginRecord(plugin.manifest, plugin, "test"),))
+    host = PluginHost(manager, plan)
+    manager.start(plan)
+    body = _json_body(
+        {
+            "plan": {
+                "seed": 7,
+                "tables": [
+                    {
+                        "name": "customers",
+                        "rows": 2,
+                        "primary_key": "id",
+                        "columns": [{"name": "id", "kind": "integer", "nullable": False}],
+                    }
+                ],
+            }
+        }
+    )
+    try:
+        with _server(store, _Authorizer(), plugin_host=host, plugin_routes_enabled=True) as address:
+            status, generated = _request(
+                address,
+                "POST",
+                "/v1/synthetic-data-studio/generate?workspace_id=workspace-a",
+                body=body,
+            )
+            assert status == 200
+            assert generated["status"] == "generated"
+            run_id = generated["run_id"]
+            status, validated = _request(
+                address,
+                "POST",
+                "/v1/synthetic-data-studio/validate?workspace_id=workspace-a",
+                body=_json_body({"plan": json.loads(body)["plan"], "run_id": run_id}),
+            )
+            assert status == 200
+            assert validated["status"] == "validated"
+            status, exported = _request(
+                address,
+                "POST",
+                "/v1/synthetic-data-studio/export?workspace_id=workspace-a",
+                body=_json_body({"run_id": run_id, "format_id": "jsonl", "table": "customers"}),
+            )
+            assert status == 200
+            assert exported["contract"] == "synthetic-data-studio/export/v1"
+    finally:
+        manager.stop(plan)

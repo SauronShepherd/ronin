@@ -87,6 +87,12 @@ GitHub Actions and automated qualification are active for the current constructi
 
 The Public v1 gate is intentionally much broader than the earlier 15-step local execution journey. A missing mandatory capability family means Public v1 is incomplete regardless of how mature the foundation is.
 
+The current checkout is an uncommitted workspace snapshot (the local `master`
+branch has no commits). Therefore any SHA, CI run, Docker result or release
+qualification mentioned in historical documents is evidence for that historical
+candidate only. The source-of-truth status ledger is
+[`docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md`](docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md).
+
 ## Documentation
 
 Start at [`docs/README.md`](docs/README.md).

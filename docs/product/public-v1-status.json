@@ -1,9 +1,26 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-19T06:05:00Z",
-  "observed_main_sha": "11944d6bbcc3b3a7499b965d329fe9ec99f659fb",
+  "observed_at": "2026-09-25T00:00:00+02:00",
+  "observed_main_sha": "3774bf43b8b9fb1b546d779a874725d1ab8d6923",
+  "observed_workspace_state": "implementation branch with tracked changes committed and pushed; generated local artifacts remain untracked",
   "release_status": "incomplete",
   "qualification_status": "blocked",
+  "local_verification": {
+    "observed_at": "2026-09-24",
+    "command": "python -m pytest -q",
+    "result": "2098 passed, 21 skipped",
+    "qualification_claimed": false,
+    "mutation_campaign": {
+      "total": 4211,
+      "killed": 3525,
+      "survived": 681,
+      "timeout": 5,
+      "killed_percent_non_timeout": 83.8,
+      "killed_percent_all": 83.7,
+      "gate_percent": 90.0,
+      "gate_status": "blocked"
+    }
+  },
   "status_vocabulary": [
     "implemented",
     "partial",
@@ -22,87 +39,87 @@
     {
       "id": "p1-workspace-project-source-control",
       "status": "partial",
-      "summary": "Workspace/project persistence, project manifests, Git identity, environments and deployment bindings exist; Public v1 API/UI, complete source-control lifecycle and multi-user membership remain incomplete."
+      "summary": "Workspace/project persistence, authenticated create/read/update/archive workspace and project lifecycles with idempotency, audit and active-project filtering, project manifests, reproducible secret-free deployment manifest with canonical identity, Git identity, validated source URIs, detached checkout, dirty-worktree policy, safe revision evidence, local branch create/delete, remote fetch/update adapter, environments and deployment bindings exist; Studio and pyronin SDK cover project lifecycle, environment binding, Bundle actions, audited/idempotent governed pipeline execution and resource-scoped permission inspection; remote-provider qualification, complete Public v1 UI and multi-user membership remain incomplete."
     },
     {
       "id": "p2-connectors-ingestion",
       "status": "partial",
-      "summary": "Provider-neutral connection/discovery/checkpoint contracts, governed local CSV/JSONL ingestion, bounded HTTP/REST and PostgreSQL snapshot reads, S3-compatible/Azure Blob JSON/JSONL sources, Apache Ozone S3 Gateway JSON/JSONL support with path-style SigV4 addressing, and a fail-closed generic JDBC bridge profile with explicit watermark incremental reads, snapshot suppression, and content-addressed artifacts exist; production driver qualification and broader incremental source coverage remain incomplete."
+      "summary": "Provider-neutral connection/discovery/checkpoint contracts, governed local CSV/JSONL ingestion, bounded HTTP/REST and PostgreSQL snapshot reads, S3-compatible/Azure Blob JSON/JSONL sources, Apache Ozone S3 Gateway JSON/JSONL support with path-style SigV4 addressing, a fail-closed generic JDBC bridge profile with explicit watermark incremental reads, snapshot suppression, and content-addressed artifacts, plus public connector capability/plan/preview/checkpoint-health API, Studio actions, and SDK parity exist; production driver qualification and broader incremental source coverage remain incomplete."
     },
     {
       "id": "p3-lakehouse-sql",
       "status": "partial",
-      "summary": "Bounded Arrow/Parquet open-data and streaming publication paths exist; complete Iceberg/Delta table lifecycle and public SQL service remain incomplete."
+      "summary": "Bounded Arrow/Parquet open-data and streaming publication paths, provider-neutral SQL/table contracts, optional local DuckDB engine with bounded relation lifecycle, shared query lifecycle adapter, provider-neutral query-engine contracts with discovery, local transport and Trino HTTP submit/poll/cancel transport, bounded project-scoped fail-closed read-only SQL HTTP adapter/route, and optional Iceberg/Delta create-append-overwrite-read-inspect-delete adapters exist; QueryFlux integration/qualification, remote/catalog qualification, full format features, and broader SQL service remain incomplete."
     },
     {
       "id": "p4-data-engineering-studio",
       "status": "partial",
-      "summary": "Notebook execution and pipeline IR foundations exist; bounded read-only SQL over registered Parquet is exposed through HTTP/OpenAPI/SDK/Studio; notebook/SQL/pipeline CRUD and broader authoring surfaces remain incomplete."
+      "summary": "Notebook execution and pipeline IR foundations, durable SQL editor revisions/history/bounded export, parameter schemas, deterministic project pipeline inventory, pipeline revision comparison/archive, authenticated pipeline revision import/list/detail/compare/archive exposed through an injected HTTP/OpenAPI/SDK port, and an authenticated pipeline-revision-to-workflow-run creation route with deterministic idempotency exist; bounded read-only SQL over registered Parquet is exposed through HTTP/OpenAPI/SDK/Studio, while worker/evidence lineage, PostgreSQL runtime qualification, complete notebook/SQL/pipeline public CRUD and broader authoring surfaces remain incomplete."
     },
     {
       "id": "p5-durable-dag-scheduler",
       "status": "partial",
-      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, group backfill cancellation, bounded fail-closed conditional branches, and a workspace-scoped authenticated workflow list/run/read/cancel HTTP foundation exist; durable branch-state integration, notifications, broad operator execution, schedules/events public routes, Web Studio authoring, process/deployment wiring and PostgreSQL multi-node HA qualification remain incomplete."
+      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook adapters, and durable notification retry/error recording exist; notification provider qualification, broader operator execution, crash-restart/deployment qualification and PostgreSQL multi-node HA qualification remain incomplete."
     },
     {
       "id": "p6-catalog-lineage",
       "status": "partial",
-      "summary": "Governed assets/revisions, bounded project-scoped catalog search across identity and governance metadata, declared/observed lineage persistence, deterministic dependency-free OpenLineage-style event export, and explicit selected-subgraph Bundle export/planning/atomic import exist; glossary/classification authoring, event transport/standard certification, and complete asset-family integration remain incomplete."
+      "summary": "Governed asset CRUD/revisions, versioned sensitivity and ownership metadata, glossary term authoring, bounded project-scoped catalog search, declared/observed lineage persistence with HTTP navigation, OpenLineage export plus bounded HTTP transport, and explicit selected-subgraph Bundle export/planning/atomic import exist; event standard certification and complete asset-family integration remain incomplete."
     },
     {
       "id": "p6-ontology-knowledge-graph",
       "status": "partial",
-      "summary": "Ontology object/property/link/action schemas and persistence, bounded stable-key object-instance materialization, deterministic declared-link resolution with cardinality checks, bounded object-type/neighbor graph queries, SQLite graph persistence, and authorized injected action dispatch with optional idempotent replay callbacks exist; durable action replay storage, public interfaces and production qualification remain incomplete."
+      "summary": "Ontology object/property/link/action schemas and persistence, bounded stable-key object-instance materialization, deterministic declared-link resolution with cardinality checks, bounded object-type/neighbor graph queries, SQLite graph persistence, durable idempotent action replay with conflict detection, authorized injected action dispatch, and authenticated public graph query/object/neighbor/action routes exist; provider production qualification remains incomplete."
     },
     {
       "id": "graph-intelligence-rql",
       "status": "partial",
-      "summary": "A bounded, read-only RQL SELECT parser/executor now supports ontology-type filtering, equality predicates, and explicit result limits over materialized KnowledgeGraph views; traversal, joins, planning, provider execution, and public API exposure remain incomplete."
+      "summary": "A bounded, read-only RQL SELECT parser/executor now supports ontology-type filtering, equality predicates, explicit result limits, bounded multi-hop typed traversal, and typed property joins over materialized KnowledgeGraph views, with authenticated public query/object/neighbor routes; provider execution and production qualification remain incomplete."
     },
     {
       "id": "p7-data-quality-contracts",
       "status": "partial",
-      "summary": "Versioned contracts/rules/results and persistence exist; built-in null, unique, range, domain, row-count, freshness, referential, and explicitly injected sandboxed SQL/Python predicate execution plus provider-neutral scheduler-facing quality_gate release decisions and controller release-policy enforcement exist; alerts and UI remain incomplete."
+      "summary": "Versioned contracts/rules/results and persistence exist; built-in null, unique, range, domain, row-count, freshness, referential, and explicitly injected sandboxed SQL/Python predicate execution plus provider-neutral scheduler-facing quality_gate release decisions, controller release-policy enforcement, quality-to-common-alert transition evaluation, authenticated alert rule-list/evaluation APIs, pyronin SDK parity, and an accessible Monitoring & Alerts rules/evaluation Studio surface exist; provider production qualification remains incomplete."
     },
     {
       "id": "p8-ai-ml-mlops",
       "status": "partial",
-      "summary": "Experiment/run/model/evaluation metadata, provenance persistence, deterministic tabular training, digest-verified registered inference, and champion-model serving resolution exist; feature engineering, broader algorithms, MLflow interoperability, network serving APIs and production qualification remain incomplete."
+      "summary": "Experiment/run/model/evaluation metadata, provenance persistence, deterministic tabular training, digest-verified registered inference, champion-model serving resolution, deterministic trial comparison, bounded numeric drift summaries, explicit feature-level drift threshold assessments, versioned feature definitions with dataset snapshots, workspace-scoped feature-definition HTTP routes, and pyronin SDK parity exist; broader feature engineering, algorithms, MLflow interoperability, network serving APIs and production qualification remain incomplete."
     },
     {
       "id": "p9-genai-rag-agents",
       "status": "partial",
-      "summary": "Provider/prompt/vector/RAG/tool/agent contracts and persistence, OpenAI-compatible chat/embedding execution with optional token-usage callback, deterministic vector indexing/retrieval, bounded RAG execution, and bounded declared-tool agent loops with non-idempotent authorization plus optional tool telemetry callbacks exist; evaluation and production provider qualification remain incomplete."
+      "summary": "Provider/prompt/vector/RAG/tool/agent contracts and persistence, OpenAI-compatible chat/embedding execution with optional token-usage callback, deterministic vector indexing/retrieval, bounded RAG execution, deterministic per-example RAG scoring plus bounded aggregate reports, bounded declared-tool agent loops with non-idempotent authorization plus optional tool telemetry callbacks, and GenAI definition Bundle export/import exist; judge-provider evaluation, ML run/model Bundle portability and production qualification remain incomplete."
     },
     {
       "id": "p10-semantic-models-dashboards",
       "status": "partial",
-      "summary": "Safe semantic-model contracts, canonical model/query/tile/dashboard serialization, project-scoped SQLite model and dashboard persistence, parameterized metric compiler, SQL-backed metric runtime, and dashboard tile execution exist; relationships, joins, calculated metrics, dashboard APIs/UI and production qualification remain incomplete."
+      "summary": "Safe semantic-model contracts, canonical model/query/tile/dashboard serialization, project-scoped SQLite model and dashboard persistence, parameterized metric compiler, calculated metrics, bounded provider-neutral multi-join planning/runtime/HTTP execution, SQL-backed metric runtime, dashboard CRUD/execution APIs, Studio UI and native semantic Bundle portability exist; export/import qualification and production qualification remain incomplete."
     },
     {
       "id": "p11-streaming-real-time",
       "status": "partial",
-      "summary": "Kafka JSON polling with Ronin-owned offsets, durable SQLite compare-and-set checkpoints, checkpoint-safe micro-batch processing, identity transforms, idempotent Parquet sinks, bounded deterministic event-time windows with watermark/late-record classification, idempotent durable SQLite stream-table storage, and deterministic stream-record to scheduler-event inbox integration exist; production qualification remains incomplete."
+      "summary": "Kafka JSON polling with Ronin-owned offsets, durable SQLite compare-and-set checkpoints, checkpoint-safe micro-batch processing, identity transforms, idempotent Parquet sinks, bounded deterministic event-time windows with watermark/late-record classification, idempotent durable SQLite stream-table storage, deterministic stream-record to scheduler-event inbox integration, and project-scoped bounded health/lag projection including unseen partitions exist; production qualification remains incomplete."
     },
     {
       "id": "p12-observability-alerts-finops",
       "status": "partial",
-      "summary": "Durable normalized metrics/events, threshold alert state transitions, deterministic alert and budget notification intents, bounded HTTPS webhook delivery, dependency-free deterministic Prometheus text export, reusable execution instrumentation, LocalWorkerRuntime instrumentation callbacks in one-shot and continuous loops, usage pricing, cost records, budget evaluation, and deny-new-work budget_gate decisions exist; broader service adoption and production qualification remain incomplete."
+      "summary": "Durable normalized metrics/events, configurable pending/firing/open/resolved alert state transitions with cooldown and acknowledgement persistence, deterministic alert and budget notification intents with durable delivery attempts/errors/backoff, bounded SMTP and HTTPS webhook delivery, dependency-free deterministic Prometheus text export, reusable execution instrumentation, LocalWorkerRuntime instrumentation callbacks in one-shot and continuous loops, usage pricing, actual-versus-estimated cost records, non-ledger forecast projections, budget evaluation, deny-new-work budget_gate decisions, and bounded explainable anomaly hooks exist; authenticated alert-rule/evaluation APIs, SDK parity and the Monitoring & Alerts Studio route are covered by static and Playwright smoke evidence; broader service adoption and production qualification remain incomplete."
     },
     {
       "id": "p13-multi-user-security-audit",
       "status": "partial",
-      "summary": "Typed grants, bearer authorization, transport policy, fail-closed OIDC JWT validation, provisioned principals/groups, composed authenticated-actor hydration, authoritative group checks, append-only audit foundations, and security reporting policy exist; role administration, automatic audit instrumentation and production secret backends remain incomplete."
+      "summary": "Typed grants, bearer authorization, transport policy, fail-closed OIDC JWT validation, provisioned principals/groups, composed authenticated-actor hydration, authoritative group checks, authenticated principal/group/member/role-binding administration with individual reads, SQLite/PostgreSQL parity, public SDK mutation/read parity, explicit create/disable/rotate service-identity lifecycle, fail-closed classification-aware policy actions, fail-closed audit instrumentation across control-plane mutations, secure mounted-file secret backend plus injected external secret-provider ports, append-only audit foundations, security reporting policy, and a Studio access inventory exist; external provider qualification and broader production certification remain incomplete."
     },
     {
       "id": "p14-deployment-operations",
       "status": "partial",
-      "summary": "Local/container/Compose foundation, PostgreSQL metadata adapter with transactional migration and healthcheck, wired PostgreSQL JobStore, single-node real-PostgreSQL lifecycle qualification, SQLite online backup/restore primitives, S3-compatible artifact adapter, and a constrained single-replica SQLite Helm reference chart exist. PostgreSQL multi-node/HA, Kubernetes production qualification, scheduler HA and production backup qualification remain incomplete."
+      "summary": "Local/container/Compose foundation, PostgreSQL metadata adapter with transactional migration and healthcheck, wired PostgreSQL JobStore, single-node real-PostgreSQL lifecycle qualification, SQLite online backup/restore with path-bound artifact-tree manifests, PostgreSQL dump backup with checksum sidecar verification, S3-compatible artifact adapter with retries and corruption checks, Kubernetes Job submit/status/cancel/log lifecycle adapter, forward-only migration qualification, explicit upgrade/failure recovery runbooks, multi-user Helm wiring and scheduler HA fencing profile exist. PostgreSQL multi-node/HA and external production qualification remain incomplete."
     },
     {
       "id": "ronin-bundle",
       "status": "partial",
-      "summary": "Deterministic verified archive IO, semantic inventory, native project/connection round-trips with explicit runtime/secret remapping, atomic multi-object project+connection commit, and explicit catalog asset/revision/lineage selected-subgraph export/planning/atomic commit exist; workflow/quality/ontology/ML/GenAI/data/semantic assets, PostgreSQL bundle adapters, certification and public API surfaces remain incomplete."
+      "summary": "Deterministic verified archive IO, semantic inventory, native project/connection round-trips with explicit runtime/secret remapping, atomic multi-object project+connection commit, workflow/schedule round-trips, quality-contract portability, governed ontology-definition portability, semantic model/dashboard portability, ML lab/pipeline and experiment/run/registered-model metadata portability, GenAI definition export/import, lakehouse table-metadata portability, and explicit catalog asset/revision/lineage selected-subgraph export/planning/atomic commit exist; PostgreSQL bundle adapters, full native certification and public API surfaces remain incomplete."
     },
     {
       "id": "migration-microsoft-fabric",
@@ -127,12 +144,12 @@
     {
       "id": "web-studio",
       "status": "partial",
-      "summary": "Authenticated static Studio shell supports job listing, detail status, events, evidence, cancellation, navigation, packaged asset delivery, and a project-scoped read-only SQL workflow; authoring editors, domain workflows, and complete Public v1 journeys remain incomplete."
+      "summary": "Authenticated static Studio shell supports job listing, detail status, events, evidence, cancellation, navigation, packaged asset delivery, project-scoped read-only SQL, workspace creation, project creation/listing/archive, environment binding/editing, resource-scoped project permission inspection, Bundle actions, governed pipeline execution and a Monitoring & Alerts route backed by alert APIs; 77 Playwright route/accessibility/history/domain-journey checks pass; authoring editors, domain workflows, and complete Public v1 journeys remain incomplete."
     },
     {
       "id": "public-v1-release-qualification",
       "status": "blocked",
-      "summary": "Exact-head CI, security, Docker, status-consistency and release-packaging workflows are active and have passed on the current published construction SHA; main is protected with required PR approval, strict checks and no force-push/deletion. Product, provider-certification and legal/release evidence still requires incomplete or human-owned work."
+      "summary": "Exact-head CI, security, Docker, status-consistency and release-packaging workflows are active; release qualification now generates and verifies candidate-bound SBOM/provenance evidence for wheel and sdist artifacts, alongside installed Studio smoke and accessibility checks. Main is protected with required PR approval, strict checks and no force-push/deletion. Product, provider-certification and legal/release evidence still requires incomplete or human-owned work."
     }
   ],
   "human_decisions": [

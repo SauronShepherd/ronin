@@ -1,0 +1,8 @@
+{
+  "id": "golden-fabric",
+  "name": "Golden Fabric project",
+  "items": [
+    {"id": "notebook-1", "type": "notebook", "path": "/Jobs/transform"},
+    {"id": "report-1", "type": "report"}
+  ]
+}

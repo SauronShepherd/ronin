@@ -95,6 +95,27 @@ def test_freshness_uses_contract_default() -> None:
     assert run.status == "passed"
 
 
+def test_custom_python_expression_uses_bounded_sandbox() -> None:
+    contract = DataContract(
+        _REF,
+        "exact",
+        (
+            QualityRule(
+                QualityRuleId("safe-python"),
+                "custom_python",
+                "positive amounts",
+                parameters=(("expression", "all(row['amount'] > 0 for row in rows)"),),
+            ),
+        ),
+    )
+    run = evaluate_contract(
+        contract,
+        ({"amount": 1}, {"amount": 2}),
+        run_id=QualityRunId("quality-python"),
+    )
+    assert run.status == "passed"
+
+
 def test_custom_execution_kinds_fail_explicitly_not_silently() -> None:
     contract = DataContract(
         _REF,

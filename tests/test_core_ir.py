@@ -4,6 +4,7 @@ from dataclasses import FrozenInstanceError
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+
 from studio_core import (
     Edge,
     FrozenList,
@@ -292,6 +293,52 @@ def test_from_data_rejects_invalid_top_level_shapes() -> None:
             Pipeline.from_data(payload)  # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("operator", None, "operator"),
+        ("params", None, "params"),
+        ("inputs", None, "inputs"),
+        ("outputs", None, "outputs"),
+        ("origin", None, "origin"),
+        ("ownership", None, "ownership"),
+        ("instance_key", None, "instance_key"),
+        ("id", None, "id"),
+    ],
+)
+def test_from_data_rejects_missing_required_node_fields(
+    field: str, value: object, message: str
+) -> None:
+    data = _serialized_node()
+    node = data["nodes"][0]  # type: ignore[index]
+    node[field] = value  # type: ignore[index]
+    with pytest.raises((TypeError, ValueError), match=message):
+        Pipeline.from_data(data)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("operator", [], "operator"),
+        ("params", [], "params"),
+        ("inputs", "bad", "inputs"),
+        ("outputs", "bad", "outputs"),
+        ("origin", [], "origin"),
+        ("ownership", 1, "ownership"),
+        ("instance_key", 1, "instance_key"),
+        ("id", 1, "id"),
+    ],
+)
+def test_from_data_rejects_invalid_required_node_field_shapes(
+    field: str, value: object, message: str
+) -> None:
+    data = _serialized_node()
+    node = data["nodes"][0]  # type: ignore[index]
+    node[field] = value  # type: ignore[index]
+    with pytest.raises((TypeError, ValueError), match=message):
+        Pipeline.from_data(data)
+
+
 def test_from_data_rejects_invalid_node_enums_and_metadata_types() -> None:
     for field, value, error, match in (
         ("ownership", "INVALID", ValueError, "ownership"),
@@ -346,6 +393,48 @@ def test_from_data_rejects_invalid_operator_port_and_schema_types() -> None:
     output = node["outputs"][0]  # type: ignore[index]
     output["schema"] = []  # type: ignore[index]
     with pytest.raises(TypeError, match="schema"):
+        Pipeline.from_data(data)
+
+
+@pytest.mark.parametrize("ownership", ["GRAPH", "USER", "RECONCILED"])
+@pytest.mark.parametrize("origin_view", ["graph", "notebook", "imported", "system"])
+def test_from_data_accepts_every_declared_node_metadata_variant(
+    ownership: str, origin_view: str
+) -> None:
+    node = Node.create(
+        operator=OperatorRef("source.table", 1),
+        instance_key=f"{ownership}-{origin_view}",
+        params={},
+        origin=Origin(origin_view, None),  # type: ignore[arg-type]
+        ownership=ownership,  # type: ignore[arg-type]
+        label=None,
+    )
+    restored = Pipeline.from_data(Pipeline((node,)).to_data())
+    assert restored.nodes == (node,)
+
+
+def test_from_data_preserves_optional_schema_and_frozen_parameters() -> None:
+    node = Node.create(
+        operator=OperatorRef("transform.identity", 2),
+        instance_key="optional-schema",
+        params={"nested": {"enabled": True, "values": [1, 2]}},
+        inputs=(Port("in", "batch"),),
+        outputs=(Port("out", "stream"),),
+        origin=Origin("notebook", "cell-1"),
+        ownership="USER",
+        label="optional",
+    )
+    restored = Pipeline.from_data(Pipeline((node,)).to_data()).nodes[0]
+    assert restored.params == node.params
+    assert restored.inputs[0].schema is None
+    assert restored.outputs[0].schema is None
+
+
+def test_from_data_rejects_semantic_id_mismatch() -> None:
+    data = _serialized_node()
+    node = data["nodes"][0]  # type: ignore[index]
+    node["id"] = "wrong-id"  # type: ignore[index]
+    with pytest.raises(ValueError, match="semantic content"):
         Pipeline.from_data(data)
 
 

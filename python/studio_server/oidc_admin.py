@@ -10,6 +10,7 @@ from urllib.parse import unquote, urlsplit
 from studio_core import WorkspaceId
 from studio_execution import DurableExecutionService
 from studio_security import (
+    Actor,
     Group,
     GroupId,
     IdentityConflict,
@@ -23,7 +24,6 @@ from studio_security import (
     SubjectKind,
     WorkspaceRole,
 )
-
 from studio_server.oidc_http import (
     AuthorizationAuditError,
     AuthorizationAuditStore,
@@ -43,6 +43,12 @@ OIDC_ADMIN_ROUTES = frozenset(
         ("PUT", "/v1/admin/security/role-bindings/{subject_kind}/{subject_id}/{role}"),
         ("DELETE", "/v1/admin/security/groups/{group_id}/members/{principal_id}"),
         ("DELETE", "/v1/admin/security/role-bindings/{subject_kind}/{subject_id}/{role}"),
+        ("GET", "/v1/admin/security/principals"),
+        ("GET", "/v1/admin/security/principals/{principal_id}"),
+        ("GET", "/v1/admin/security/groups"),
+        ("GET", "/v1/admin/security/groups/{group_id}"),
+        ("GET", "/v1/admin/security/groups/{group_id}/members"),
+        ("GET", "/v1/admin/security/role-bindings"),
     }
 )
 
@@ -53,7 +59,15 @@ class SecurityAdminStore(OidcPrincipalStore, RbacStore, Protocol):
 
     def get_principal(self, principal_id: PrincipalId) -> Principal | None: ...
 
+    def list_principals(self) -> tuple[Principal, ...]: ...
+
     def put_group(self, group: Group) -> Group: ...
+
+    def list_groups(self) -> tuple[Group, ...]: ...
+
+    def get_group(self, group_id: GroupId) -> Group | None: ...
+
+    def members_for_group(self, group_id: GroupId) -> tuple[Principal, ...]: ...
 
     def add_group_member(self, group_id: GroupId, principal_id: PrincipalId) -> None: ...
 
@@ -62,6 +76,8 @@ class SecurityAdminStore(OidcPrincipalStore, RbacStore, Protocol):
     def put_role_binding(self, binding: RoleBinding) -> RoleBinding: ...
 
     def delete_role_binding(self, binding: RoleBinding) -> bool: ...
+
+    def list_role_bindings(self, workspace_id: WorkspaceId) -> tuple[RoleBinding, ...]: ...
 
 
 def _segment(value: str, name: str) -> str:
@@ -207,6 +223,13 @@ class _OidcAdminHandler(_OidcHandler):
             )
             existed = self._admin_server().admin_store.get_principal(principal_id) is not None
             stored = self._admin_server().admin_store.put_principal(principal)
+            self._admin_server().audit_mutation(
+                cast(Actor, self._actor),
+                action="security.principal.put",
+                resource_ref=f"security:principal:{principal_id.value}",
+                metadata={"kind": principal.kind, "active": principal.active},
+                request_id=self._request_id,
+            )
         except IdentityConflict:
             self._error(
                 HTTPStatus.CONFLICT,
@@ -233,6 +256,12 @@ class _OidcAdminHandler(_OidcHandler):
             if not isinstance(name, str):
                 raise ValueError("group name must be a string")
             stored = self._admin_server().admin_store.put_group(Group(group_id, name))
+            self._admin_server().audit_mutation(
+                cast(Actor, self._actor),
+                action="security.group.put",
+                resource_ref=f"security:group:{group_id.value}",
+                request_id=self._request_id,
+            )
         except ValueError as exc:
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
             return
@@ -252,6 +281,12 @@ class _OidcAdminHandler(_OidcHandler):
                 self._error(HTTPStatus.NOT_FOUND, "principal_not_found", "principal does not exist")
                 return
             self._admin_server().admin_store.add_group_member(group_id, principal_id)
+            self._admin_server().audit_mutation(
+                cast(Actor, self._actor),
+                action="security.group.member.add",
+                resource_ref=f"security:group:{group_id.value}:member:{principal_id.value}",
+                request_id=self._request_id,
+            )
         except sqlite3.IntegrityError:
             self._error(HTTPStatus.NOT_FOUND, "group_not_found", "group does not exist")
             return
@@ -274,6 +309,13 @@ class _OidcAdminHandler(_OidcHandler):
             if not self._empty_body_required():
                 return
             removed = self._admin_server().admin_store.remove_group_member(group_id, principal_id)
+            self._admin_server().audit_mutation(
+                cast(Actor, self._actor),
+                action="security.group.member.remove",
+                resource_ref=f"security:group:{group_id.value}:member:{principal_id.value}",
+                metadata={"removed": removed},
+                request_id=self._request_id,
+            )
         except ValueError as exc:
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
             return
@@ -308,6 +350,12 @@ class _OidcAdminHandler(_OidcHandler):
             if not self._empty_body_required():
                 return
             stored = self._admin_server().admin_store.put_role_binding(binding)
+            self._admin_server().audit_mutation(
+                cast(Actor, self._actor),
+                action="security.role_binding.put",
+                resource_ref=f"security:role-binding:{binding.subject_kind}:{binding.subject_id}:{binding.role}",
+                request_id=self._request_id,
+            )
         except KeyError:
             self._error(
                 HTTPStatus.NOT_FOUND,
@@ -330,6 +378,13 @@ class _OidcAdminHandler(_OidcHandler):
             if not self._empty_body_required():
                 return
             removed = self._admin_server().admin_store.delete_role_binding(binding)
+            self._admin_server().audit_mutation(
+                cast(Actor, self._actor),
+                action="security.role_binding.delete",
+                resource_ref=f"security:role-binding:{binding.subject_kind}:{binding.subject_id}:{binding.role}",
+                metadata={"removed": removed},
+                request_id=self._request_id,
+            )
         except ValueError as exc:
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
             return
@@ -356,7 +411,7 @@ class _OidcAdminHandler(_OidcHandler):
         if len(path) == 4 and path[0] == "role-bindings":
             self._put_binding(path[1], path[2], path[3])
             return
-        self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
+        self._method_not_allowed()
 
     def _authenticated_delete(self) -> None:
         path = self._admin_path()
@@ -372,6 +427,91 @@ class _OidcAdminHandler(_OidcHandler):
             self._delete_binding(path[1], path[2], path[3])
             return
         self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
+
+    def _authenticated_get(self) -> None:
+        path = self._admin_path()
+        if path is None:
+            _OidcHandler._authenticated_get(self)
+            return
+        if path == ("principals",):
+            if not self._require_admin("security:principals"):
+                return
+            self._write_json(
+                HTTPStatus.OK,
+                {
+                    "items": [
+                        _principal_payload(item)
+                        for item in self._admin_server().admin_store.list_principals()
+                    ]
+                },
+            )
+            return
+        if len(path) == 2 and path[0] == "principals":
+            principal_id = PrincipalId(_segment(path[1], "principal id"))
+            if not self._require_admin(f"security:principal:{principal_id.value}"):
+                return
+            principal = self._admin_server().admin_store.get_principal(principal_id)
+            if principal is None:
+                self._error(HTTPStatus.NOT_FOUND, "principal_not_found", "principal does not exist")
+                return
+            self._write_json(HTTPStatus.OK, _principal_payload(principal))
+            return
+        if path == ("groups",):
+            if not self._require_admin("security:groups"):
+                return
+            self._write_json(
+                HTTPStatus.OK,
+                {
+                    "items": [
+                        _group_payload(item)
+                        for item in self._admin_server().admin_store.list_groups()
+                    ]
+                },
+            )
+            return
+        if len(path) == 2 and path[0] == "groups":
+            group_id = GroupId(_segment(path[1], "group id"))
+            if not self._require_admin(f"security:group:{group_id.value}"):
+                return
+            group = self._admin_server().admin_store.get_group(group_id)
+            if group is None:
+                self._error(HTTPStatus.NOT_FOUND, "group_not_found", "group does not exist")
+                return
+            self._write_json(HTTPStatus.OK, _group_payload(group))
+            return
+        if path == ("role-bindings",):
+            if not self._require_admin("security:role-bindings"):
+                return
+            self._write_json(
+                HTTPStatus.OK,
+                {
+                    "items": [
+                        _binding_payload(item)
+                        for item in self._admin_server().admin_store.list_role_bindings(
+                            self._admin_server().workspace_id
+                        )
+                    ]
+                },
+            )
+            return
+        if len(path) == 3 and path[0] == "groups" and path[2] == "members":
+            group_id = GroupId(_segment(path[1], "group id"))
+            if not self._require_admin(f"security:group:{group_id.value}:members"):
+                return
+            if self._admin_server().admin_store.get_group(group_id) is None:
+                self._error(HTTPStatus.NOT_FOUND, "group_not_found", "group does not exist")
+                return
+            self._write_json(
+                HTTPStatus.OK,
+                {
+                    "items": [
+                        _principal_payload(item)
+                        for item in self._admin_server().admin_store.members_for_group(group_id)
+                    ]
+                },
+            )
+            return
+        self._method_not_allowed()
 
     def _method_not_allowed(self) -> None:
         self._error(
@@ -400,7 +540,7 @@ class _OidcAdminHandler(_OidcHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         if urlsplit(self.path).path.startswith(_ADMIN_PREFIX):
-            self._dispatch_authenticated(self._method_not_allowed)
+            self._dispatch_authenticated(self._authenticated_get)
             return
         super().do_GET()
 

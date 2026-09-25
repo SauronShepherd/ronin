@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
+
 from studio_core import SecretRef
 from studio_storage import (
     CompositeSecretResolver,
@@ -38,6 +40,8 @@ def test_mounted_file_secret_resolver_reads_only_regular_files_under_root(tmp_pa
     nested.mkdir()
     secret = nested / "password"
     secret.write_bytes(b"db-password")
+    if os.name != "nt":
+        secret.chmod(0o600)
 
     resolver = MountedFileSecretResolver(root)
     material = resolver.resolve(SecretRef("secret://file/database/password"))
@@ -74,6 +78,20 @@ def test_composite_resolver_dispatches_only_configured_backends() -> None:
 
     with pytest.raises(SecretResolutionError, match="not configured"):
         composite.resolve(SecretRef("secret://file/unavailable"))
+
+
+def test_composite_resolver_supports_injected_external_backend_without_listing() -> None:
+    class ExternalResolver:
+        def resolve(self, reference: SecretRef) -> SecretMaterial:
+            assert reference.uri == "secret://vault/app/token"
+            return SecretMaterial(b"external-value")
+
+    composite = CompositeSecretResolver(backends={"vault": ExternalResolver()})
+    assert (
+        composite.resolve(SecretRef("secret://vault/app/token")).reveal_text() == "external-value"
+    )
+    with pytest.raises(ValueError, match="reserved"):
+        CompositeSecretResolver(backends={"env": ExternalResolver()})
 
 
 def test_secret_material_rejects_empty_values() -> None:

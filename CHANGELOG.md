@@ -4,6 +4,13 @@ All notable user-visible changes to Ronin are recorded here. Ronin is currently 
 
 ## Unreleased
 
+### Documentation
+
+- Reconciled the Public v1 implementation ledger, documentation index and
+  README with the 2026-09-20 workspace snapshot. The checkout is currently
+  uncommitted, so historical SHA and CI qualification records are explicitly
+  separated from current source state.
+
 ### Breaking / compatibility tightening
 
 - Public `POST /v1/jobs` request parsing now rejects duplicate JSON object members and non-finite numbers through the shared canonical JSON v1 decoder. Valid v1 canonical bytes and idempotency request digests remain unchanged.

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
@@ -38,6 +40,11 @@ class ToolRegistry:
         except KeyError as exc:
             raise KeyError(f"tool runtime is not registered: {tool_id}") from exc
 
+    def list_contracts(self) -> tuple[ToolContract, ...]:
+        """Return a deterministic, read-only view of registered tool contracts."""
+
+        return tuple(self._tools[key].contract for key in sorted(self._tools, key=str))
+
 
 @dataclass(frozen=True, slots=True)
 class AgentStep:
@@ -50,6 +57,24 @@ class AgentStep:
 class AgentRunResult:
     answer: str
     steps: tuple[AgentStep, ...]
+
+    def evidence_payload(self) -> dict[str, object]:
+        """Return bounded evidence metadata without persisting model/tool content."""
+
+        return {
+            "schema": "ronin.genai-agent-evidence/v1",
+            "status": "completed",
+            "answer_sha256": hashlib.sha256(self.answer.encode("utf-8")).hexdigest(),
+            "steps": [
+                {
+                    "step": item.step,
+                    "kind": item.kind,
+                    "tool_id": None if item.tool_id is None else item.tool_id.value,
+                }
+                for item in self.steps
+            ],
+            "step_count": len(self.steps),
+        }
 
 
 def _render_agent_prompt(prompt: PromptAsset, user_input: str) -> str:
@@ -98,10 +123,13 @@ def run_agent(
     allow_non_idempotent: bool = False,
     record_tool: Callable[[ToolId, str], None] | None = None,
     authorize_requirements: Callable[[tuple[Requirement, ...]], bool] | None = None,
+    record_telemetry: Callable[[dict[str, object]], None] | None = None,
+    record_usage: Callable[[str, int, int], None] | None = None,
+    timeout_seconds: float | None = None,
 ) -> AgentRunResult:
     """Run a strict bounded tool loop without granting undeclared tool authority."""
 
-    if not user_input or "\x00" in user_input:
+    if not isinstance(user_input, str) or not user_input.strip() or "\x00" in user_input:
         raise ValueError("agent input must be non-empty")
     if definition.provider_id != model.provider_id or definition.model_id != model.model_id:
         raise ValueError("agent model does not match definition")
@@ -109,6 +137,27 @@ def run_agent(
         raise ValueError("agent prompt does not match definition")
     if "chat" not in model.capabilities:
         raise ValueError("agent model must advertise chat capability")
+    if timeout_seconds is not None and not 0.1 <= timeout_seconds <= 3600:
+        raise ValueError("agent timeout_seconds must be between 0.1 and 3600")
+
+    started = time.perf_counter()
+    input_tokens = 0
+    output_tokens = 0
+    tokens_known = True
+
+    def emit_failure(reason: str) -> None:
+        if record_telemetry is not None:
+            record_telemetry(
+                {
+                    "event": "agent_failed",
+                    "model_id": model.model_id,
+                    "reason": reason,
+                    "latency_ms": round((time.perf_counter() - started) * 1000, 3),
+                }
+            )
+
+    if record_telemetry is not None:
+        record_telemetry({"event": "agent_started", "model_id": model.model_id})
 
     allowed_tools = set(definition.tool_ids)
     system = (
@@ -123,14 +172,44 @@ def run_agent(
     steps: list[AgentStep] = []
 
     for step_index in range(1, definition.max_steps + 1):
-        result = provider.chat(model, tuple(messages))
-        action = _parse_action(result.content)
+        if timeout_seconds is not None and time.perf_counter() - started >= timeout_seconds:
+            emit_failure("timeout")
+            raise TimeoutError("agent execution timed out")
+        try:
+            result = provider.chat(model, tuple(messages))
+        except Exception:
+            emit_failure("provider_error")
+            raise
+        if result.input_tokens is None or result.output_tokens is None:
+            tokens_known = False
+        else:
+            input_tokens += result.input_tokens
+            output_tokens += result.output_tokens
+        try:
+            action = _parse_action(result.content)
+        except Exception:
+            emit_failure("invalid_action")
+            raise
         if action["type"] == "final":
             answer = action["answer"]
             if not isinstance(answer, str):
                 raise ValueError("final agent answer must be a string")
             steps.append(AgentStep(step_index, "final"))
-            return AgentRunResult(answer, tuple(steps))
+            agent_result = AgentRunResult(answer, tuple(steps))
+            if record_usage is not None and tokens_known:
+                record_usage(model.model_id, input_tokens, output_tokens)
+            if record_telemetry is not None:
+                record_telemetry(
+                    {
+                        "event": "agent_completed",
+                        "model_id": model.model_id,
+                        "step_count": len(steps),
+                        "latency_ms": round((time.perf_counter() - started) * 1000, 3),
+                        "input_tokens": input_tokens if tokens_known else None,
+                        "output_tokens": output_tokens if tokens_known else None,
+                    }
+                )
+            return agent_result
 
         raw_tool_id = action["tool_id"]
         payload = action["input"]
@@ -149,16 +228,31 @@ def run_agent(
             raise PermissionError(
                 f"non-idempotent tool requires explicit execution authorization: {tool_id}"
             )
+        if timeout_seconds is not None and time.perf_counter() - started >= timeout_seconds:
+            emit_failure("timeout")
+            raise TimeoutError("agent execution timed out")
         try:
             output = runtime.invoke(payload)
         except Exception:
             if record_tool is not None:
                 record_tool(tool_id, "failed")
+            if record_telemetry is not None:
+                record_telemetry(
+                    {
+                        "event": "agent_tool",
+                        "tool_id": tool_id.value,
+                        "status": "failed",
+                    }
+                )
             raise
         if not isinstance(output, Mapping):
             raise TypeError("tool runtime must return a mapping")
         if record_tool is not None:
             record_tool(tool_id, "succeeded")
+        if record_telemetry is not None:
+            record_telemetry(
+                {"event": "agent_tool", "tool_id": tool_id.value, "status": "succeeded"}
+            )
         steps.append(AgentStep(step_index, "tool", tool_id))
         messages.append(ChatMessage("assistant", result.content))
         messages.append(

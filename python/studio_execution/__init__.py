@@ -25,14 +25,43 @@ from studio_orchestrator import (
 )
 from studio_storage import BoundedAsyncJobStore
 
+from .backend import (
+    BackendCapabilities,
+    ExecutionBackend,
+    ExecutionEvidence,
+    InMemoryExecutionBackend,
+    LogBatch,
+    ResourceLimits,
+    WorkloadHandle,
+    WorkloadSpec,
+    WorkloadState,
+    WorkloadStatus,
+)
+from .branch_state import (
+    BranchDecisionStore,
+    BranchStateConflict,
+    PersistedBranchDecision,
+    SqliteBranchDecisionStore,
+)
 from .environment_service import (
     DeploymentBindingService,
+    EnvironmentDiff,
     EnvironmentService,
     EnvironmentServiceConflict,
     EnvironmentServiceError,
     EnvironmentServiceNotFound,
+    diff_environments,
+)
+from .git_source import GitCheckoutResult, GitSourceAdapter, GitSourceError
+from .kubernetes import KubernetesExecutionAdapter, KubernetesManifestError, render_job
+from .ontology_http import GraphStore, OntologyHTTPAdapter, OntologyStore
+from .scheduler_adapters import (
+    SchedulerWorkloadResult,
+    UnsupportedSchedulerWorkload,
+    execute_scheduler_job,
 )
 from .scheduler_http import SqliteWorkflowHTTPAdapter, WorkflowStore
+from .scheduler_sql import SchedulerSqlResult, execute_scheduler_sql
 from .workspace_service import (
     ProjectService,
     WorkspaceService,
@@ -136,6 +165,13 @@ class DurableExecutionService:
         if run_id is None:
             return None
         return await self._store.read_evidence(run_id)
+
+    async def cell_results(self, job_id: JobId) -> tuple[StoredCellResult, ...] | None:
+        """Read durable per-cell checkpoints for the latest Run of a Job."""
+        run_id = await self._store.get_run_id_for_job(job_id)
+        if run_id is None:
+            return None
+        return await self._store.read_cell_results(run_id)
 
     async def cancel(self, job_id: JobId, *, now: Instant) -> Job:
         """Request cancellation through the same bounded store boundary."""
@@ -272,6 +308,19 @@ class DurableExecutionService:
 
 
 __all__ = (
+    "BackendCapabilities",
+    "ExecutionBackend",
+    "ExecutionEvidence",
+    "InMemoryExecutionBackend",
+    "LogBatch",
+    "ResourceLimits",
+    "WorkloadHandle",
+    "WorkloadSpec",
+    "WorkloadState",
+    "WorkloadStatus",
+    "KubernetesManifestError",
+    "KubernetesExecutionAdapter",
+    "render_job",
     "DurableExecutionService",
     "ProjectService",
     "SqliteWorkflowHTTPAdapter",
@@ -281,10 +330,27 @@ __all__ = (
     "WorkspaceServiceError",
     "WorkspaceServiceNotFound",
     "WorkflowStore",
+    "GraphStore",
+    "OntologyHTTPAdapter",
+    "OntologyStore",
     "DeploymentBindingService",
+    "BranchDecisionStore",
+    "BranchStateConflict",
+    "PersistedBranchDecision",
+    "SqliteBranchDecisionStore",
+    "EnvironmentDiff",
     "EnvironmentService",
     "EnvironmentServiceConflict",
     "EnvironmentServiceError",
     "EnvironmentServiceNotFound",
+    "GitCheckoutResult",
+    "GitSourceAdapter",
+    "GitSourceError",
+    "diff_environments",
     "WorkerPollResult",
+    "SchedulerSqlResult",
+    "execute_scheduler_sql",
+    "SchedulerWorkloadResult",
+    "UnsupportedSchedulerWorkload",
+    "execute_scheduler_job",
 )

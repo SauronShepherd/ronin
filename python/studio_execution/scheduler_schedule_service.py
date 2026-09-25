@@ -44,6 +44,31 @@ class SchedulerScheduleService:
         if self._authority_check is not None:
             await self._authority_check(now)
 
+    @staticmethod
+    def preview_next_runs(
+        schedule: Schedule,
+        *,
+        after: Instant | str,
+        count: int = 10,
+        max_scan_minutes: int = 100_000,
+    ) -> tuple[Instant, ...]:
+        """Preview future fire times without touching durable cursor state."""
+        if count < 1 or count > 1000:
+            raise ValueError("preview count must be between 1 and 1000")
+        if max_scan_minutes < count or max_scan_minutes > 1_000_000:
+            raise ValueError("preview max_scan_minutes is outside the configured bound")
+        cursor = Instant(after)
+        # Scan one bounded minute at a time; cron matching remains the sole
+        # authority for timezone and DST semantics.
+        from datetime import datetime, timedelta
+
+        start = datetime.fromisoformat(str(cursor)[:-1])
+        candidates = tuple(
+            Instant((start + timedelta(minutes=offset)).isoformat(timespec="microseconds") + "Z")
+            for offset in range(1, max_scan_minutes + 1)
+        )
+        return tuple(minute for minute in candidates if schedule_matches(schedule, minute))[:count]
+
     async def tick(
         self,
         workspace_id: WorkspaceId,

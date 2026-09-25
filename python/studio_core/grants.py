@@ -17,6 +17,7 @@ Action: TypeAlias = Literal[
     "list",
     "events",
     "submit",
+    "write",
     "execute",
     "cancel",
     "evidence:read",
@@ -31,7 +32,7 @@ DecisionReason: TypeAlias = Literal[
 GRANT_SCHEMA_VERSION = 1
 RESOURCE_KINDS: frozenset[str] = frozenset({"project", "job", "run", "evidence", "*"})
 ACTIONS: frozenset[str] = frozenset(
-    {"read", "list", "events", "submit", "execute", "cancel", "evidence:read"}
+    {"read", "list", "events", "submit", "write", "execute", "cancel", "evidence:read"}
 )
 MAX_GRANTS = 128
 MAX_ACTIONS_PER_GRANT = len(ACTIONS)
@@ -53,6 +54,8 @@ _SENSITIVE_CONSTRAINT_TERMS = (
 
 
 def _require_text(value: str, name: str, *, maximum: int = _MAX_TEXT_LENGTH) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{name} must be text")
     if not value or value != value.strip() or "\n" in value or "\r" in value or "\x00" in value:
         raise ValueError(f"{name} must be non-empty, trimmed, and single-line")
     if len(value) > maximum:
@@ -442,7 +445,12 @@ def parse_bearer_scope(value: str) -> Requirement:
         raise ValueError("bearer scope must use ronin:v1:<action>:<resource-kind>:<identifier>")
     action = _require_action(_decode_scope_component(parts[2], "action"))
     kind = _require_resource_kind(_decode_scope_component(parts[3], "resource kind"))
-    identifier = None if parts[4] == "*" else _decode_scope_component(parts[4], "identifier")
+    if parts[4] == "*":
+        identifier = None
+    else:
+        identifier = _decode_scope_component(parts[4], "identifier")
+        if identifier == "*":
+            raise ValueError("bearer scope identifier cannot encode the wildcard")
     requirement = Requirement(action, ResourceScope(kind, identifier))
     if requirement_to_bearer_scope(requirement) != value:
         raise ValueError("bearer scope must use canonical v1 encoding")

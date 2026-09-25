@@ -61,6 +61,26 @@ class DuckDbSqlEngine:
         relation = self._connection.from_parquet(str(resolved))
         relation.create_view(name, replace=True)
 
+    def list_relations(self) -> tuple[str, ...]:
+        self._require_open()
+        rows = self._connection.execute(
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_schema = 'main' ORDER BY table_name"
+        ).fetchall()
+        return tuple(str(row[0]) for row in rows)
+
+    def drop_relation(self, name: str) -> None:
+        self._require_open()
+        if not _IDENTIFIER.fullmatch(name):
+            raise ValueError("SQL relation name must be a simple identifier")
+        if name not in self.list_relations():
+            raise SqlRelationUnavailableError("requested SQL relation is unavailable")
+        quoted = '"' + name.replace('"', '""') + '"'
+        try:
+            self._connection.execute(f"DROP VIEW {quoted}")
+        except Exception as exc:
+            raise SqlExecutionError("SQL relation removal failed") from exc
+
     def execute(
         self,
         sql: str,
@@ -125,6 +145,12 @@ class ProjectScopedDuckDbSqlEngine:
 
     def register_parquet(self, project: str, name: str, path: str) -> None:
         self._engine(project).register_parquet(name, path)
+
+    def list_relations(self, project: str) -> tuple[str, ...]:
+        return self._engine(project).list_relations()
+
+    def drop_relation(self, project: str, name: str) -> None:
+        self._engine(project).drop_relation(name)
 
     def execute(
         self,

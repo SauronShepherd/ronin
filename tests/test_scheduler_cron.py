@@ -4,6 +4,7 @@ import asyncio
 from pathlib import Path
 
 import pytest
+
 from studio_core import (
     Node,
     OperatorRef,
@@ -77,6 +78,19 @@ def test_schedule_matches_iana_timezone() -> None:
     assert not schedule_matches(schedule, Instant("2026-09-12T08:00:00.000000Z"))
 
 
+def test_schedule_rejects_unknown_timezone_during_evaluation() -> None:
+    with pytest.raises(ValueError, match="unknown schedule timezone"):
+        schedule_matches(
+            Schedule(
+                ScheduleId("invalid-zone"),
+                WorkflowId("workflow-1"),
+                "0 9 * * *",
+                timezone="Mars/Olympus",
+            ),
+            Instant("2026-09-12T07:00:00.000000Z"),
+        )
+
+
 def test_evaluated_minutes_catches_up_and_fails_closed_on_large_gap() -> None:
     cursor = Instant("2026-09-12T10:00:00.000000Z")
     minutes = evaluated_minutes(
@@ -130,6 +144,22 @@ def test_schedule_service_fires_once_and_catches_up_missed_minutes(tmp_path: Pat
         assert len(store.list_schedule_fires(workspace_id, schedule.id)) == 4
 
     asyncio.run(scenario())
+
+
+def test_schedule_preview_next_runs_is_bounded_and_non_mutating(tmp_path: Path) -> None:
+    store, _workspace_id, workflow = _store(tmp_path)
+    service = SchedulerScheduleService(store)
+    schedule = Schedule(ScheduleId("preview"), workflow.id, "*/15 * * * *", timezone="UTC")
+    runs = service.preview_next_runs(
+        schedule, after=Instant("2026-09-12T20:01:00.000000Z"), count=3
+    )
+    assert tuple(str(item) for item in runs) == (
+        "2026-09-12T20:15:00.000000Z",
+        "2026-09-12T20:30:00.000000Z",
+        "2026-09-12T20:45:00.000000Z",
+    )
+    with pytest.raises(ValueError, match="preview count"):
+        service.preview_next_runs(schedule, after=NOW, count=0)
 
 
 def test_disabled_schedule_advances_cursor_without_backfilling_disabled_minute(

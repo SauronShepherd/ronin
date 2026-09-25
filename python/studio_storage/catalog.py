@@ -2,17 +2,32 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 
-from studio_core import AssetId, AssetRef, AssetRevision, CatalogAsset, LineageEdge, WorkspaceId
+from studio_core import (
+    AssetId,
+    AssetRef,
+    AssetRevision,
+    CatalogAsset,
+    LineageEdge,
+    OwnershipMetadata,
+    SensitivityMetadata,
+    WorkspaceId,
+)
 from studio_orchestrator import Instant
 
 from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
 
-_CATALOG_SCHEMA_VERSION = 1
-_CATALOG_MIGRATIONS = {1: "catalog_001.sql"}
+_CATALOG_SCHEMA_VERSION = 4
+_CATALOG_MIGRATIONS = {
+    1: "catalog_001.sql",
+    2: "catalog_002.sql",
+    3: "catalog_003.sql",
+    4: "catalog_004.sql",
+}
 
 
 class CatalogConflict(RuntimeError):
@@ -158,6 +173,168 @@ class SqliteCatalogStore:
         finally:
             connection.close()
 
+    def put_sensitivity(
+        self,
+        workspace_id: WorkspaceId,
+        asset_id: AssetId,
+        metadata: SensitivityMetadata,
+        *,
+        now: Instant | str,
+    ) -> SensitivityMetadata:
+        """Persist an immutable sensitivity revision idempotently."""
+        now = Instant(now)
+        payload = metadata.to_json()
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_workspace(connection, workspace_id)
+            asset = connection.execute(
+                "SELECT 1 FROM catalog_assets WHERE workspace_id=? AND asset_id=?",
+                (str(workspace_id), str(asset_id)),
+            ).fetchone()
+            if asset is None:
+                raise CatalogAssetNotFound(str(asset_id))
+            existing = connection.execute(
+                "SELECT metadata_json FROM catalog_asset_sensitivity "
+                "WHERE workspace_id=? AND asset_id=? AND version=?",
+                (str(workspace_id), str(asset_id), metadata.version),
+            ).fetchone()
+            if existing is not None:
+                if existing["metadata_json"] == payload:
+                    connection.execute("COMMIT")
+                    return metadata
+                raise CatalogConflict("sensitivity version already exists with different metadata")
+            connection.execute(
+                "INSERT INTO catalog_asset_sensitivity "
+                "(workspace_id,asset_id,version,metadata_json,created_at) VALUES (?,?,?,?,?)",
+                (str(workspace_id), str(asset_id), metadata.version, payload, now),
+            )
+            connection.execute("COMMIT")
+            return metadata
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
+    def get_sensitivity(
+        self, workspace_id: WorkspaceId, asset_id: AssetId, *, version: int | None = None
+    ) -> SensitivityMetadata | None:
+        connection = self._connect()
+        try:
+            if version is None:
+                row = connection.execute(
+                    "SELECT metadata_json FROM catalog_asset_sensitivity "
+                    "WHERE workspace_id=? AND asset_id=? ORDER BY version DESC LIMIT 1",
+                    (str(workspace_id), str(asset_id)),
+                ).fetchone()
+            else:
+                row = connection.execute(
+                    "SELECT metadata_json FROM catalog_asset_sensitivity "
+                    "WHERE workspace_id=? AND asset_id=? AND version=?",
+                    (str(workspace_id), str(asset_id), version),
+                ).fetchone()
+            return None if row is None else SensitivityMetadata.from_json(row["metadata_json"])
+        finally:
+            connection.close()
+
+    def list_sensitivity_versions(
+        self, workspace_id: WorkspaceId, asset_id: AssetId
+    ) -> tuple[SensitivityMetadata, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT metadata_json FROM catalog_asset_sensitivity "
+                "WHERE workspace_id=? AND asset_id=? ORDER BY version",
+                (str(workspace_id), str(asset_id)),
+            ).fetchall()
+            return tuple(SensitivityMetadata.from_json(row["metadata_json"]) for row in rows)
+        finally:
+            connection.close()
+
+    def put_ownership(
+        self,
+        workspace_id: WorkspaceId,
+        asset_id: AssetId,
+        metadata: OwnershipMetadata,
+        *,
+        now: Instant | str,
+    ) -> OwnershipMetadata:
+        now = Instant(now)
+        payload = metadata.to_json()
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_workspace(connection, workspace_id)
+            if (
+                connection.execute(
+                    "SELECT 1 FROM catalog_assets WHERE workspace_id=? AND asset_id=?",
+                    (str(workspace_id), str(asset_id)),
+                ).fetchone()
+                is None
+            ):
+                raise CatalogAssetNotFound(str(asset_id))
+            existing = connection.execute(
+                "SELECT metadata_json FROM catalog_asset_ownership "
+                "WHERE workspace_id=? AND asset_id=? AND version=?",
+                (str(workspace_id), str(asset_id), metadata.version),
+            ).fetchone()
+            if existing is not None:
+                if existing["metadata_json"] == payload:
+                    connection.execute("COMMIT")
+                    return metadata
+                raise CatalogConflict("ownership version already exists with different metadata")
+            connection.execute(
+                "INSERT INTO catalog_asset_ownership "
+                "(workspace_id,asset_id,version,metadata_json,created_at) VALUES (?,?,?,?,?)",
+                (str(workspace_id), str(asset_id), metadata.version, payload, now),
+            )
+            connection.execute("COMMIT")
+            return metadata
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
+    def get_ownership(
+        self, workspace_id: WorkspaceId, asset_id: AssetId, *, version: int | None = None
+    ) -> OwnershipMetadata | None:
+        connection = self._connect()
+        try:
+            query = (
+                "SELECT metadata_json FROM catalog_asset_ownership "
+                "WHERE workspace_id=? AND asset_id=? ORDER BY version DESC LIMIT 1"
+                if version is None
+                else "SELECT metadata_json FROM catalog_asset_ownership "
+                "WHERE workspace_id=? AND asset_id=? AND version=?"
+            )
+            args = (
+                (str(workspace_id), str(asset_id))
+                if version is None
+                else (str(workspace_id), str(asset_id), version)
+            )
+            row = connection.execute(query, args).fetchone()
+            return None if row is None else OwnershipMetadata.from_json(row["metadata_json"])
+        finally:
+            connection.close()
+
+    def list_ownership_versions(
+        self, workspace_id: WorkspaceId, asset_id: AssetId
+    ) -> tuple[OwnershipMetadata, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT metadata_json FROM catalog_asset_ownership "
+                "WHERE workspace_id=? AND asset_id=? ORDER BY version",
+                (str(workspace_id), str(asset_id)),
+            ).fetchall()
+            return tuple(OwnershipMetadata.from_json(row["metadata_json"]) for row in rows)
+        finally:
+            connection.close()
+
     def list_assets(self, workspace_id: WorkspaceId) -> tuple[CatalogAsset, ...]:
         connection = self._connect()
         try:
@@ -250,6 +427,81 @@ class SqliteCatalogStore:
         finally:
             connection.close()
 
+    def register_namespace(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        provider_id: str,
+        identifier: str,
+        namespace: dict[str, str],
+        now: Instant | str,
+    ) -> dict[str, object]:
+        if not provider_id.strip() or not identifier.strip() or not namespace:
+            raise ValueError("provider_id, identifier and namespace are required")
+        now = Instant(now)
+        payload = json.dumps(namespace, sort_keys=True, separators=(",", ":"))
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_workspace(connection, workspace_id)
+            connection.execute(
+                "INSERT INTO catalog_namespace_bindings(workspace_id,provider_id,identifier,namespace_json,created_at,updated_at) "
+                "VALUES (?,?,?,?,?,?) ON CONFLICT(workspace_id,provider_id,identifier) DO UPDATE SET namespace_json=excluded.namespace_json,updated_at=excluded.updated_at",
+                (str(workspace_id), provider_id, identifier, payload, now, now),
+            )
+            connection.execute("COMMIT")
+            return {
+                "provider_id": provider_id,
+                "identifier": identifier,
+                "namespace": dict(namespace),
+            }
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
+    def list_namespaces(
+        self, workspace_id: WorkspaceId, *, provider_id: str | None = None
+    ) -> tuple[dict[str, object], ...]:
+        connection = self._connect()
+        try:
+            if provider_id:
+                rows = connection.execute(
+                    "SELECT provider_id,identifier,namespace_json FROM catalog_namespace_bindings WHERE workspace_id=? AND provider_id=? ORDER BY identifier",
+                    (str(workspace_id), provider_id),
+                ).fetchall()
+            else:
+                rows = connection.execute(
+                    "SELECT provider_id,identifier,namespace_json FROM catalog_namespace_bindings WHERE workspace_id=? ORDER BY provider_id,identifier",
+                    (str(workspace_id),),
+                ).fetchall()
+            return tuple(
+                {
+                    "provider_id": row["provider_id"],
+                    "identifier": row["identifier"],
+                    "namespace": json.loads(row["namespace_json"]),
+                }
+                for row in rows
+            )
+        finally:
+            connection.close()
+
+    def list_revisions(
+        self, workspace_id: WorkspaceId, asset_id: AssetId
+    ) -> tuple[AssetRevision, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT revision_json FROM catalog_asset_revisions "
+                "WHERE workspace_id=? AND asset_id=? ORDER BY version",
+                (str(workspace_id), str(asset_id)),
+            ).fetchall()
+            return tuple(AssetRevision.from_json(row["revision_json"]) for row in rows)
+        finally:
+            connection.close()
+
     def put_lineage(
         self, workspace_id: WorkspaceId, edge: LineageEdge, *, now: Instant | str
     ) -> LineageEdge:
@@ -320,6 +572,23 @@ class SqliteCatalogStore:
                 "SELECT edge_json FROM lineage_edges WHERE workspace_id=? "
                 "AND source_asset_id=? AND source_version=? ORDER BY edge_digest",
                 (str(workspace_id), str(ref.asset_id), str(ref.version)),
+            ).fetchall()
+            return tuple(LineageEdge.from_json(row["edge_json"]) for row in rows)
+        finally:
+            connection.close()
+
+    def list_lineage(
+        self, workspace_id: WorkspaceId, *, limit: int = 1000
+    ) -> tuple[LineageEdge, ...]:
+        """Return committed lineage edges in deterministic digest order."""
+        if limit < 1 or limit > 10_000:
+            raise ValueError("lineage limit must be between 1 and 10000")
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT edge_json FROM lineage_edges WHERE workspace_id=? "
+                "ORDER BY edge_digest LIMIT ?",
+                (str(workspace_id), limit),
             ).fetchall()
             return tuple(LineageEdge.from_json(row["edge_json"]) for row in rows)
         finally:

@@ -21,7 +21,20 @@ def _quote(identifier: str) -> str:
     return '"' + identifier.replace('"', '""') + '"'
 
 
-def _measure_sql(measure: SemanticMeasure) -> str:
+def _measure_sql(measure: SemanticMeasure, measures: dict[str, SemanticMeasure]) -> str:
+    if measure.expression is not None:
+        tokens = measure.expression.split()
+        rendered: list[str] = []
+        for token in tokens:
+            if token in {"+", "-", "*", "/"}:
+                rendered.append(token)
+                continue
+            referenced = measures.get(token)
+            if referenced is None or referenced is measure or referenced.expression is not None:
+                raise SemanticQueryError(f"unknown or cyclic calculated measure: {token}")
+            sql = _measure_sql(referenced, measures).removesuffix(f" AS {_quote(referenced.name)}")
+            rendered.append(f"({sql})")
+        return f"({''.join(rendered)}) AS {_quote(measure.name)}"
     if measure.aggregation == "count":
         expression = "COUNT(*)" if measure.column is None else f"COUNT({_quote(measure.column)})"
     elif measure.aggregation == "distinct_count":
@@ -55,7 +68,7 @@ def compile_metric_query(model: SemanticModel, query: MetricQuery) -> CompiledMe
     select_parts = [
         f"{_quote(dimensions[name].column)} AS {_quote(name)}" for name in query.dimensions
     ]
-    select_parts.extend(_measure_sql(measures[name]) for name in query.measures)
+    select_parts.extend(_measure_sql(measures[name], measures) for name in query.measures)
 
     parameters: list[object] = []
     predicates: list[str] = []

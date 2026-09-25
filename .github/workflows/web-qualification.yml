@@ -1,0 +1,95 @@
+name: Web qualification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "web/**"
+      - "web-tests/**"
+      - "tools/check_web_assets.py"
+      - "tools/installed_studio_browser_smoke.py"
+      - "tools/installed_studio_a11y.py"
+      - "pyproject.toml"
+      - ".github/workflows/web-qualification.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.14.0"
+          cache: npm
+          cache-dependency-path: web-tests/package-lock.json
+      - name: Check web asset graph
+        run: python tools/check_web_assets.py
+      - name: Install Playwright dependencies
+        run: npm --prefix web-tests ci
+      - name: Install Chromium
+        run: npx --prefix web-tests playwright install --with-deps chromium
+      - name: Start static Studio server
+        run: python -m http.server 8080 --directory web &
+      - name: Run route traversal and accessibility tests
+        env:
+          RONIN_STUDIO_E2E_URL: http://127.0.0.1:8080/
+        run: npm --prefix web-tests test
+      - name: Build installable Studio wheel
+        run: |
+          python -m pip install --disable-pip-version-check build
+          python -m build --wheel --outdir dist-web-qualification
+      - name: Qualify installed Studio wheel
+        run: |
+          python tools/installed_studio_browser_smoke.py "$(find dist-web-qualification -name '*.whl' -print -quit)"
+          python tools/installed_studio_a11y.py "$(find dist-web-qualification -name '*.whl' -print -quit)"
+      - name: Emit normalized browser release evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheel="$(find dist-web-qualification -name '*.whl' -print -quit)"
+          test -n "$wheel"
+          python -m tools.emit_release_evidence \
+            --gate-id browser \
+            --commit "${GITHUB_SHA}" \
+            --status passed \
+            --fingerprint "github-actions-web-${RUNNER_OS}-chromium" \
+            --command "Playwright route, installed-wheel browser and a11y qualification" \
+            --artifact "$wheel" \
+            --output web-tests/web-release-evidence.json
+      - name: Emit normalized accessibility release evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheel="$(find dist-web-qualification -name '*.whl' -print -quit)"
+          test -n "$wheel"
+          python -m tools.emit_release_evidence \
+            --gate-id a11y \
+            --commit "${GITHUB_SHA}" \
+            --status passed \
+            --fingerprint "github-actions-web-${RUNNER_OS}-chromium" \
+            --command "Installed-wheel accessibility qualification" \
+            --artifact "$wheel" \
+            --output web-tests/a11y-release-evidence.json
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: web-playwright-evidence
+          path: |
+            web-tests/test-results
+            web-tests/playwright-report
+            web-tests/web-release-evidence.json
+            web-tests/a11y-release-evidence.json
+          if-no-files-found: ignore

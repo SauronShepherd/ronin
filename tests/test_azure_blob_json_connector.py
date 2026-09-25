@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from studio_connectors import AzureBlobJsonConnector
 from studio_core import AssetHandle, ConnectionDefinition, ConnectionId, SourceCheckpoint
 from studio_storage import EnvironmentSecretResolver
@@ -54,4 +55,18 @@ def test_azure_blob_json_rejects_cursor_checkpoint() -> None:
             AssetHandle(ConnectionId("azure"), ("raw",), "events.json"),
             EnvironmentSecretResolver({}),
             checkpoint=SourceCheckpoint("cursor", "x"),
+        )
+
+
+def test_azure_blob_rejects_persisted_credential_and_requires_secret_ref() -> None:
+    with pytest.raises(ValueError, match="secret_refs"):
+        ConnectionDefinition(
+            ConnectionId("azure"),
+            "Azure",
+            "azure.blob.json",
+            options=(
+                ("container", "data"),
+                ("account_url", "https://account.blob.core.windows.net"),
+                ("credential", "plaintext-secret"),
+            ),
         )

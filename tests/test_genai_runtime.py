@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from studio_core import AssetId, AssetRef, AssetVersion, Requirement, ResourceScope
 from studio_core.genai import (
     AgentDefinition,
@@ -129,6 +130,9 @@ def test_vector_index_and_rag_retrieve_relevant_context(tmp_path: Path) -> None:
     assert result.answer.content == "grounded answer"
     assert "alpha document" in result.rendered_prompt
     assert result.matches[0].chunk.metadata == (("source", "a"),)
+    assert store.delete_index(index.id) is True
+    assert store.list_chunks(index.id) == ()
+    assert store.delete_index(index.id) is False
 
 
 def test_vector_index_rejects_provider_model_identity_mismatch(tmp_path: Path) -> None:
@@ -182,6 +186,8 @@ def test_agent_calls_only_declared_tool_then_finishes() -> None:
             '{"type":"final","answer":"done"}',
         ]
     )
+    telemetry: list[dict[str, object]] = []
+    usage: list[tuple[str, int, int]] = []
     result = run_agent(
         definition,
         prompt,
@@ -189,10 +195,28 @@ def test_agent_calls_only_declared_tool_then_finishes() -> None:
         provider,
         ToolRegistry((tool,)),
         "find alpha",
+        record_telemetry=telemetry.append,
+        record_usage=lambda model_id, input_count, output_count: usage.append(
+            (model_id, input_count, output_count)
+        ),
     )
     assert result.answer == "done"
     assert tuple(step.kind for step in result.steps) == ("tool", "final")
     assert tool.calls == [{"q": "alpha"}]
+    evidence = result.evidence_payload()
+    assert evidence["schema"] == "ronin.genai-agent-evidence/v1"
+    assert evidence["answer_sha256"] == __import__("hashlib").sha256(b"done").hexdigest()
+    assert "answer" not in evidence
+    assert evidence["steps"][0]["tool_id"] == "lookup"
+    assert [event["event"] for event in telemetry] == [
+        "agent_started",
+        "agent_tool",
+        "agent_completed",
+    ]
+    assert telemetry[-1]["latency_ms"] >= 0
+    assert telemetry[-1]["input_tokens"] is None
+    assert telemetry[-1]["output_tokens"] is None
+    assert usage == []
 
 
 def test_agent_blocks_non_idempotent_tool_without_explicit_authorization() -> None:
@@ -221,6 +245,25 @@ def test_agent_blocks_non_idempotent_tool_without_explicit_authorization() -> No
             provider,
             ToolRegistry((_Tool("non_idempotent"),)),
             "do something",
+        )
+
+
+def test_agent_enforces_timeout_before_provider_call() -> None:
+    prompt = PromptAsset(
+        PromptId("timeout-prompt"), PromptVersion("1"), "Handle {input}", ("input",)
+    )
+    definition = AgentDefinition(
+        AgentId("timeout-agent"), "Timeout", _PROVIDER, "chat", prompt.id, prompt.version, (), 1
+    )
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        run_agent(
+            definition,
+            prompt,
+            _CHAT,
+            _Provider(),
+            ToolRegistry(),
+            "input",
+            timeout_seconds=0.05,
         )
 
 

@@ -1,0 +1,8 @@
+{
+  "id": "golden-foundry",
+  "name": "Golden Foundry project",
+  "functions": [
+    {"id": "function-1", "source": "def transform(row):\n    return row"},
+    {"id": "function-2"}
+  ]
+}

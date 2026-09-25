@@ -14,7 +14,13 @@ from pathlib import Path
 from time import monotonic
 
 from studio_core import RuntimeCapability, RuntimeCatalog, RuntimeProfile
-from studio_execution import DurableExecutionService, WorkerPollResult
+from studio_core.canonical_json import decode as decode_canonical_json
+from studio_execution import (
+    DurableExecutionService,
+    UnsupportedSchedulerWorkload,
+    WorkerPollResult,
+    execute_scheduler_job,
+)
 from studio_kernel import (
     ExecutionAttemptId,
     NotebookExecutionRequest,
@@ -39,7 +45,14 @@ from studio_runners import (
     DockerContainerKernelExecutor,
     LocalExecutionEvidenceStore,
 )
-from studio_storage import ArtifactStore, LocalArtifactStore, S3ArtifactStore, SqliteJobStore
+from studio_sql import SqlEngine
+from studio_storage import (
+    ArtifactStore,
+    LocalArtifactStore,
+    PostgresJobReadPort,
+    S3ArtifactStore,
+    SqliteJobStore,
+)
 
 from .execution import DurableWorkerExecution, WorkerExecutionOutcome, utc_now
 from .preparation import (
@@ -54,7 +67,7 @@ from .preparation import (
 
 @dataclass(frozen=True, slots=True)
 class LocalWorkerRuntimeConfig:
-    """Process-local configuration for one durable SQLite/Docker worker."""
+    """Process-local configuration for one durable database/Docker worker."""
 
     paths: WorkerPaths
     owner: str
@@ -62,6 +75,7 @@ class LocalWorkerRuntimeConfig:
     engine: str = "docker"
     limits: ContainerExecutionLimits = field(default_factory=ContainerExecutionLimits)
     database_name: str = "ronin.sqlite3"
+    postgres_dsn: str | None = None
     lease_seconds: int = 30
     heartbeat_interval_seconds: float = 10.0
     poll_seconds: float = 1.0
@@ -70,12 +84,32 @@ class LocalWorkerRuntimeConfig:
     artifact_max_workers: int = 2
     artifact_max_in_flight: int = 4
     record_execution: Callable[[str, float, str], None] | None = None
+    scheduler_sql_engine: SqlEngine | None = None
+    scheduler_graph_adapter: object | None = None
+    scheduler_quality_adapter: object | None = None
+    connector_sync_service: object | None = None
+    connector_connection: object | None = None
+    connector_asset: object | None = None
+    connector_secrets: object | None = None
+    connector_destination: object | None = None
+    notification_sink: object | None = None
+    notification_artifacts: ArtifactStore | None = None
+    ml_runner: object | None = None
+    ml_lab: object | None = None
+    ml_rows: object | None = None
+    genai_runner: object | None = None
+    semantic_refresh_runner: object | None = None
+    pipeline_runner: object | None = None
 
     def __post_init__(self) -> None:
         if not self.owner or self.owner != self.owner.strip():
             raise ValueError("worker owner must be non-empty and trimmed")
         if not self.database_name or Path(self.database_name).name != self.database_name:
             raise ValueError("worker database name must be one local filename")
+        if self.postgres_dsn is not None and (
+            not self.postgres_dsn or self.postgres_dsn != self.postgres_dsn.strip()
+        ):
+            raise ValueError("postgres_dsn must be non-empty and trimmed")
         if self.lease_seconds < 2:
             raise ValueError("lease_seconds must be at least 2")
         if not 0 < self.heartbeat_interval_seconds < self.lease_seconds:
@@ -166,7 +200,11 @@ class LocalWorkerRuntime:
         self._engine_path = engine_path
         self._artifact_store = artifact_store or artifact_store_from_environment(config)
         config.paths.data_dir.mkdir(parents=True, exist_ok=True)
-        store = SqliteJobStore(config.database_path, migration_now=migration_now)
+        store = (
+            PostgresJobReadPort(config.postgres_dsn, application_name="ronin-worker")
+            if config.postgres_dsn is not None
+            else SqliteJobStore(config.database_path, migration_now=migration_now)
+        )
         self._service = DurableExecutionService(
             store,
             max_workers=config.store_max_workers,
@@ -232,6 +270,150 @@ class LocalWorkerRuntime:
 
     async def _execute_claim(self, claim: ClaimedRun) -> WorkerExecutionOutcome:
         loop = asyncio.get_running_loop()
+        if claim.job.target in {
+            "sql.query",
+            "graph.query",
+            "quality.gate",
+            "connector.sync",
+            "notification.send",
+            "ml.run",
+            "genai.run",
+            "semantic.refresh",
+            "data-engineering.pipeline-run.v1",
+        }:
+            if claim.job.target == "sql.query" and self.config.scheduler_sql_engine is None:
+                raise UnsupportedSchedulerWorkload(
+                    "sql.query scheduler execution requires scheduler_sql_engine"
+                )
+            if claim.job.target == "graph.query" and self.config.scheduler_graph_adapter is None:
+                raise UnsupportedSchedulerWorkload(
+                    "graph.query scheduler execution requires scheduler_graph_adapter"
+                )
+            if claim.job.target == "quality.gate" and self.config.scheduler_quality_adapter is None:
+                raise UnsupportedSchedulerWorkload(
+                    "quality.gate scheduler execution requires scheduler_quality_adapter"
+                )
+            if claim.job.target == "connector.sync" and self.config.connector_sync_service is None:
+                raise UnsupportedSchedulerWorkload(
+                    "connector.sync scheduler execution requires connector_sync_service"
+                )
+            if claim.job.target == "notification.send" and (
+                self.config.notification_sink is None or self.config.notification_artifacts is None
+            ):
+                raise UnsupportedSchedulerWorkload(
+                    "notification.send scheduler execution requires sink and artifacts"
+                )
+            if claim.job.target == "ml.run" and (
+                self.config.ml_runner is None
+                or self.config.ml_lab is None
+                or self.config.ml_rows is None
+            ):
+                raise UnsupportedSchedulerWorkload(
+                    "ml.run scheduler execution requires runner, lab, and rows"
+                )
+            if claim.job.target == "genai.run" and self.config.genai_runner is None:
+                raise UnsupportedSchedulerWorkload(
+                    "genai.run scheduler execution requires genai_runner"
+                )
+            if (
+                claim.job.target == "semantic.refresh"
+                and self.config.semantic_refresh_runner is None
+            ):
+                raise UnsupportedSchedulerWorkload(
+                    "semantic.refresh scheduler execution requires semantic_refresh_runner"
+                )
+            if (
+                claim.job.target == "data-engineering.pipeline-run.v1"
+                and self.config.pipeline_runner is None
+            ):
+                raise UnsupportedSchedulerWorkload(
+                    "data-engineering.pipeline-run.v1 scheduler execution requires pipeline_runner"
+                )
+            try:
+                parameters = decode_canonical_json(claim.job.parameters_json)
+                workspace_id = (
+                    parameters.get("workspace_id") if isinstance(parameters, dict) else None
+                )
+                result = await loop.run_in_executor(
+                    self._preparation_executor,
+                    lambda: execute_scheduler_job(
+                        claim.job,
+                        sql_engine=self.config.scheduler_sql_engine,
+                        graph_adapter=self.config.scheduler_graph_adapter,
+                        quality_adapter=self.config.scheduler_quality_adapter,
+                        artifact_store=self._artifact_store,
+                        workspace_id=workspace_id,
+                        run_id=str(claim.run.id),
+                        now=self._now(),
+                        connector_sync_service=self.config.connector_sync_service,
+                        connector_connection=self.config.connector_connection,
+                        connector_asset=self.config.connector_asset,
+                        connector_secrets=self.config.connector_secrets,
+                        connector_destination=self.config.connector_destination,
+                        notification_sink=self.config.notification_sink,
+                        notification_artifacts=self.config.notification_artifacts,
+                        notification_now=self._now(),
+                        ml_runner=self.config.ml_runner,
+                        ml_lab=self.config.ml_lab,
+                        ml_rows=self.config.ml_rows,
+                        genai_runner=self.config.genai_runner,
+                        semantic_refresh_runner=self.config.semantic_refresh_runner,
+                        pipeline_runner=self.config.pipeline_runner,
+                    ),
+                )
+            except Exception:
+                failure_code = (
+                    "scheduler.sql.error"
+                    if claim.job.target == "sql.query"
+                    else "scheduler.graph.error"
+                    if claim.job.target == "graph.query"
+                    else "scheduler.quality.error"
+                    if claim.job.target == "quality.gate"
+                    else "scheduler.connector.error"
+                    if claim.job.target == "connector.sync"
+                    else "scheduler.notification.error"
+                    if claim.job.target == "notification.send"
+                    else "scheduler.ml.error"
+                    if claim.job.target == "ml.run"
+                    else "scheduler.genai.error"
+                    if claim.job.target == "genai.run"
+                    else "scheduler.semantic.error"
+                    if claim.job.target == "semantic.refresh"
+                    else "scheduler.pipeline.error"
+                )
+                await self._service.worker_complete_attempt(
+                    claim.attempt_id,
+                    state=AttemptState.FAILED,
+                    failure_code=failure_code,
+                    owner=self.config.owner,
+                    lease_token=claim.lease_token,
+                    now=self._now(),
+                )
+                raise
+            executor = DockerContainerKernelExecutor(
+                ContainerExecutorConfig(
+                    image=self.config.image,
+                    limits=self.config.limits,
+                    engine=self.config.engine,
+                ),
+                ExecutionAttemptId(str(claim.attempt_id)),
+                LocalExecutionEvidenceStore(self.config.execution_evidence_root),
+                runner=self._runner,
+                engine_path=self._engine_path,
+            )
+            worker = DurableWorkerExecution(
+                self._service,
+                self._artifact_store,
+                executor,
+                self._policy,
+                self.config.owner,
+                lease_seconds=self.config.lease_seconds,
+                heartbeat_interval_seconds=self.config.heartbeat_interval_seconds,
+                now=self._now,
+                artifact_max_workers=self.config.artifact_max_workers,
+                artifact_max_in_flight=self.config.artifact_max_in_flight,
+            )
+            return await worker.run_scheduler_result(claim, result)
         try:
             request, identities = await loop.run_in_executor(
                 self._preparation_executor,

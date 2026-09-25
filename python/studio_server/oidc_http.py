@@ -19,6 +19,7 @@ from studio_core.transport_policy import (
     parse_bind_policy,
 )
 from studio_execution import DurableExecutionService
+from studio_migration import MigrationAPIRouter
 from studio_orchestrator import Instant, Job
 from studio_security import (
     Actor,
@@ -32,11 +33,11 @@ from studio_security import (
     RbacStore,
     actor_context,
     authorization_audit_event,
+    mutation_audit_event,
 )
-from studio_storage import sqlite_ready
-
 from studio_server.http import DurableHTTPApplication, _Handler
 from studio_server.transport_policy import is_loopback_host
+from studio_storage import sqlite_ready
 
 _BIND_POLICY_ENV = "RONIN_BIND_POLICY"
 
@@ -228,6 +229,7 @@ class OidcRoninHTTPServer(ThreadingHTTPServer):
         rbac_store: RbacStore,
         workspace_store: OidcWorkspaceStore,
         audit_store: AuthorizationAuditStore,
+        migration_router: MigrationAPIRouter | None = None,
     ) -> None:
         host, _port = server_address
         policy = parse_bind_policy(os.environ.get(_BIND_POLICY_ENV))
@@ -243,6 +245,8 @@ class OidcRoninHTTPServer(ThreadingHTTPServer):
         self._authorizer = RbacAuthorizer(rbac_store)
         self._workspace_store = workspace_store
         self._audit_store = audit_store
+        self.migration_router = migration_router
+        self.migration_router = migration_router
         self._readiness_database = _readiness_database_from_env()
         try:
             super().__init__(server_address, _OidcHandler)
@@ -284,6 +288,29 @@ class OidcRoninHTTPServer(ThreadingHTTPServer):
         except Exception as exc:
             raise AuthorizationAuditError("authorization audit persistence failed") from exc
         return decision
+
+    def audit_mutation(
+        self,
+        actor: Actor,
+        *,
+        action: str,
+        resource_ref: str,
+        metadata: dict[str, object] | None = None,
+        request_id: str | None,
+    ) -> None:
+        event = mutation_audit_event(
+            actor,
+            workspace_id=self._workspace_id.value,
+            action=action,
+            resource_ref=resource_ref,
+            metadata=metadata,
+            now=_now(),
+            request_id=request_id,
+        )
+        try:
+            self._audit_store.append(self._workspace_id, event)
+        except Exception as exc:
+            raise AuthorizationAuditError("mutation audit persistence failed") from exc
 
     def ready(self) -> bool:
         return sqlite_ready(self._readiness_database)

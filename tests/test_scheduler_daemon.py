@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import signal
 from pathlib import Path
 
 from studio_core import (
@@ -15,7 +16,13 @@ from studio_core import (
     WorkspaceId,
 )
 from studio_execution import DurableExecutionService
-from studio_execution.scheduler_daemon import SchedulerDaemon, SchedulerDaemonWork
+from studio_execution.scheduler_daemon import (
+    SchedulerDaemon,
+    SchedulerDaemonWork,
+    install_scheduler_stop_signals,
+)
+from studio_observability import NotificationDispatcher, scheduler_notification
+from studio_observability.dispatcher import SqliteNotificationIntentStore
 from studio_orchestrator import Instant, LeaseToken
 from studio_storage import InMemoryJobStore
 from studio_storage.scheduler_backfill_runtime import SchedulerBackfillRuntimeStore
@@ -29,6 +36,110 @@ _T0 = Instant("2026-09-13T08:50:00.000000Z")
 _T10 = Instant("2026-09-13T08:50:10.000000Z")
 _T31 = Instant("2026-09-13T08:50:31.000000Z")
 _WS = WorkspaceId("workspace-1")
+
+
+def test_scheduler_stop_signals_request_stop_and_restore() -> None:
+    requested: list[bool] = []
+    restore = install_scheduler_stop_signals(lambda: requested.append(True))
+    try:
+        handler = signal.getsignal(signal.SIGTERM)
+        assert callable(handler)
+        handler(signal.SIGTERM, None)
+        assert requested == [True]
+    finally:
+        restore()
+
+
+def test_daemon_process_entrypoint_stops_on_sigterm_and_releases_lease(tmp_path: Path) -> None:
+    leadership, schedules, events, backfills = _stores(tmp_path)
+    daemon = _daemon(
+        leadership_store=leadership,
+        schedule_store=schedules,
+        event_store=events,
+        backfill_store=backfills,
+        service=DurableExecutionService(InMemoryJobStore()),
+        owner="scheduler-process",
+        clock=MutableClock(_T0),
+        token="process-token",  # noqa: S106
+    )
+    previous = signal.getsignal(signal.SIGTERM)
+    calls = 0
+
+    async def sleep(_seconds: float) -> None:
+        nonlocal calls
+        calls += 1
+        handler = signal.getsignal(signal.SIGTERM)
+        assert callable(handler)
+        handler(signal.SIGTERM, None)
+
+    async def scenario() -> None:
+        await daemon.run_until_signalled(work_provider=lambda: SchedulerDaemonWork(), sleep=sleep)
+
+    asyncio.run(scenario())
+    assert calls == 1
+    assert daemon.lease is None
+    assert signal.getsignal(signal.SIGTERM) is previous
+
+
+def test_scheduler_health_and_readiness_do_not_expose_lease_secrets(tmp_path: Path) -> None:
+    leadership, schedules, events, backfills = _stores(tmp_path)
+    daemon = _daemon(
+        leadership_store=leadership,
+        schedule_store=schedules,
+        event_store=events,
+        backfill_store=backfills,
+        service=DurableExecutionService(InMemoryJobStore()),
+        owner="scheduler-a",
+        clock=MutableClock(_T0),
+        token="secret-token",  # noqa: S106
+    )
+    assert daemon.health() == {
+        "status": "ok",
+        "owner": "scheduler-a",
+        "leader": False,
+        "generation": None,
+    }
+    assert daemon.readiness() is False
+
+
+def test_scheduler_daemon_dispatches_durable_notifications_when_configured(tmp_path: Path) -> None:
+    leadership, schedules, events, backfills = _stores(tmp_path)
+    intent_store = SqliteNotificationIntentStore(tmp_path / "notifications.sqlite")
+    intent = scheduler_notification(
+        workflow_run_id="run-1",
+        workflow_id="workflow-1",
+        state="succeeded",
+        now=_T0,
+    )
+    assert intent is not None
+    assert intent_store.enqueue(intent)
+    sent: list[str] = []
+
+    class Sink:
+        def send(self, value):
+            sent.append(value.id)
+            return value.id
+
+    daemon = _daemon(
+        leadership_store=leadership,
+        schedule_store=schedules,
+        event_store=events,
+        backfill_store=backfills,
+        service=DurableExecutionService(InMemoryJobStore()),
+        owner="scheduler-a",
+        clock=MutableClock(_T0),
+        token="leader-a",  # noqa: S106
+        notification_dispatcher=NotificationDispatcher(
+            intent_store, Sink(), clock=lambda: str(_T0)
+        ),
+    )
+
+    async def scenario() -> None:
+        cycle = await daemon.run_once(SchedulerDaemonWork())
+        assert cycle.notification_deliveries == 1
+
+    asyncio.run(scenario())
+    assert sent == [intent.id]
 
 
 class MutableClock:
@@ -68,6 +179,7 @@ def _daemon(
     owner: str,
     clock: MutableClock,
     token: str,
+    notification_dispatcher: NotificationDispatcher | None = None,
 ) -> SchedulerDaemon:
     return SchedulerDaemon(
         leadership_store=leadership_store,
@@ -80,6 +192,7 @@ def _daemon(
         leader_token_factory=lambda: LeaseToken(token),
         task_attempt_factory=lambda: TaskAttemptId(f"attempt-{owner}"),
         task_lease_token_factory=lambda: LeaseToken(f"task-{owner}"),
+        notification_dispatcher=notification_dispatcher,
         leader_lease_seconds=30,
         task_lease_seconds=30,
     )

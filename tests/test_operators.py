@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from studio_core import (
     Node,
     OperatorCatalog,
@@ -9,6 +10,7 @@ from studio_core import (
     OperatorParameter,
     OperatorPort,
     OperatorRef,
+    OperatorViolation,
     Port,
     builtin_operator_catalog,
     operator_parameter_value,
@@ -152,6 +154,39 @@ def test_builtin_operator_catalog_matches_golden_seed_and_is_portable() -> None:
     assert "fabric" not in catalog.to_json().lower()
 
 
+def test_operator_catalog_serializes_port_and_parameter_contract_fields() -> None:
+    contract = OperatorContract(
+        OperatorRef("serialization"),
+        "Serialization",
+        "test",
+        inputs=(OperatorPort("input", "record", "many", optional=True),),
+        outputs=(OperatorPort("output", "record"),),
+        parameters=(OperatorParameter("limit", "integer", required=True),),
+        modes=("batch",),
+        required_capabilities=("engine.sql",),
+        forbidden_capabilities=("network.external",),
+        documentation_key="operator.serialization",
+        allow_extra_parameters=True,
+    )
+    assert contract.to_data() == {
+        "ref": {"name": "serialization", "version": 1},
+        "title": "Serialization",
+        "category": "test",
+        "inputs": [
+            {"name": "input", "data_kind": "record", "cardinality": "many", "optional": True}
+        ],
+        "outputs": [
+            {"name": "output", "data_kind": "record", "cardinality": "one", "optional": False}
+        ],
+        "parameters": [{"name": "limit", "kind": "integer", "required": True}],
+        "modes": ["batch"],
+        "required_capabilities": ["engine.sql"],
+        "forbidden_capabilities": ["network.external"],
+        "documentation_key": "operator.serialization",
+        "allow_extra_parameters": True,
+    }
+
+
 def test_node_validation_reports_missing_unknown_and_bad_parameters() -> None:
     contract = OperatorContract(
         OperatorRef("transform.contract"),
@@ -201,6 +236,14 @@ def test_node_validation_checks_ports_and_modes() -> None:
     assert codes.count("RONIN-OP-005") == 3
     assert codes.count("RONIN-OP-006") == 2
     assert codes.count("RONIN-OP-007") == 1
+    assert {item.message for item in violations} == {
+        "node inputs contain duplicate port: extra",
+        "node inputs contain undeclared port: extra",
+        "node inputs are missing required port: required",
+        "node outputs contain undeclared port: wrong",
+        "node outputs are missing required port: out",
+        "operator does not support stream ports",
+    }
 
 
 def test_node_validation_accepts_all_parameter_kinds_and_extra_policy() -> None:
@@ -253,3 +296,43 @@ def test_node_validation_distinguishes_boolean_from_integer_and_number() -> None
     node = _node(contract.ref, params={"integer": True, "number": False})
     violations = validate_operator_node(node, OperatorCatalog((contract,)))
     assert [item.path for item in violations] == ["params.integer", "params.number"]
+
+
+def test_node_validation_treats_empty_required_and_optional_values_as_missing() -> None:
+    contract = OperatorContract(
+        OperatorRef("missing-values"),
+        "Missing values",
+        "test",
+        inputs=(OperatorPort("required"), OperatorPort("optional", optional=True)),
+        parameters=(
+            OperatorParameter("required", "string", required=True),
+            OperatorParameter("optional", "integer"),
+        ),
+    )
+
+    violations = validate_operator_node(
+        _node(
+            contract.ref,
+            params={"required": "", "optional": ""},
+            inputs=(Port("required"),),
+        ),
+        OperatorCatalog((contract,)),
+    )
+
+    assert violations == (
+        OperatorViolation(
+            "RONIN-OP-002",
+            "required operator parameter is missing: required",
+            "params.required",
+        ),
+    )
+
+    valid = validate_operator_node(
+        _node(
+            contract.ref,
+            params={"required": "present"},
+            inputs=(Port("required"),),
+        ),
+        OperatorCatalog((contract,)),
+    )
+    assert not any(item.path == "params.required" for item in valid)

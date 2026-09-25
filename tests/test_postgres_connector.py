@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
+
 from studio_connectors.postgres import PostgresConnector
 from studio_core import AssetHandle, ConnectionDefinition, ConnectionId, SecretRef, SourceCheckpoint
 from studio_storage import EnvironmentSecretResolver, PostgresMetadataStore
@@ -116,6 +117,13 @@ def test_postgres_rejects_non_snapshot_checkpoint() -> None:
             EnvironmentSecretResolver({"PGUSER": "ronin", "PGPASSWORD": "secret"}),
             checkpoint=SourceCheckpoint("cursor", "x"),
         )
+
+
+def test_postgres_descriptor_advertises_schema_discovery() -> None:
+    capabilities = PostgresConnector.descriptor.capabilities
+    assert capabilities.discover is True
+    assert capabilities.schema is True
+    assert capabilities.incremental is False
 
 
 def test_postgres_metadata_readiness_is_fail_closed(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -115,6 +115,22 @@ class SqliteVectorStore:
         finally:
             connection.close()
 
+    def delete_index(self, index_id: VectorIndexId) -> bool:
+        """Delete all materialized chunks for one index and report whether it existed."""
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            cursor = connection.execute(
+                "DELETE FROM vector_chunks WHERE index_id=?", (str(index_id),)
+            )
+            connection.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
     @staticmethod
     def _cosine(left: tuple[float, ...], right: tuple[float, ...]) -> float:
         if len(left) != len(right):

@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from studio_kernel import (
     CellExecutionRequest,
     ExecutionAttemptId,

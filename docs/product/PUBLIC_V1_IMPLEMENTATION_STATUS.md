@@ -2,10 +2,49 @@
 
 **Status authority:** `docs/product/PUBLIC_V1_SCOPE.md` defines the product/release target.  
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
-**Observed source head:** `11944d6bbcc3b3a7499b965d329fe9ec99f659fb` (2026-09-19).
+**Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
+**Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
+**Observed workspace snapshot:** 2026-09-25. The implementation branch is
+committed and pushed; generated local qualification artifacts remain untracked.
+**Observed source head:** `3774bf43b8b9fb1b546d779a874725d1ab8d6923` (2026-09-25).
+This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
+
+## Reading this snapshot
+
+The source tree is the authority for implementation presence. The status ledger
+is intentionally conservative: a capability is `partial` until its mandatory
+Public v1 path is complete end to end. Historical CI/evidence files retain the
+candidate SHA they were generated for. They are not current-head evidence for
+this uncommitted workspace.
+
+The current workspace includes the implementation families listed in the
+package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
+`studio_migration`, `studio_ml`, `studio_streaming`, `studio_synthetic_data`,
+and the shared runtime/storage/server packages). It also includes the current
+ML, migration, Cloud Studio, PostgreSQL and synthetic-data contracts under
+`docs/`; those documents describe implemented slices and remaining boundaries,
+not Public v1 completion.
+
+## Local verification on this snapshot
+
+On Windows, `python -m pytest -q` produced **2098 passed, 21 skipped** in
+19m52s. The skips are environment-gated Docker/PostgreSQL/Spark/provider
+qualification checks, not test failures.
+Additional exact-head evidence on this snapshot includes Docker qualification
+(21 passed), real PostgreSQL integration (11 passed), the installed-wheel
+browser smoke (no console/request/CSP failures), installed-wheel accessibility
+(no violations at 320/768/1440 px), and four credential-free migration fixture
+certifications. These checks do not constitute Public v1 release qualification.
+
+The latest exact-head WSL mutation campaign completed 4,211 mutants: 3,525
+killed, 681 survived, and 5 timed out. That is **83.8% killed of non-timeout
+mutants** (83.7% of all generated mutants), below the repository's 90% mutation
+gate.
+The campaign therefore remains a release blocker; its temporary workspace and
+generated reports are intentionally not part of the tracked source tree.
 
 ## Status vocabulary
 
@@ -21,35 +60,35 @@ This document records implementation state only. It does not claim test executio
 | Capability | Status | Current source truth |
 | --- | --- | --- |
 | Durable execution foundation | implemented | Job/Run/Attempt, SQLite durability, leases/heartbeat/fencing/reclaim/resume, cancellation, evidence, local/container worker, HTTP/CLI/SDK foundation |
-| Workspace/project/source control | partial | workspace/project persistence, project manifest/Git identity, environment/deployment bindings; full Public v1 APIs/UI/membership remain |
-| Connectors/ingestion | partial | connection/discovery/checkpoint contracts, governed local CSV/JSONL, bounded HTTP/PostgreSQL, S3-compatible including Apache Ozone, Azure Blob and JDBC profiles; production driver qualification and broader incremental coverage remain |
-| Lakehouse/SQL | partial | bounded Arrow/Parquet open-data and streaming publication paths exist; complete Iceberg/Delta lifecycle and public SQL service remain |
-| Data Engineering Studio | partial | notebook/pipeline execution foundations exist; authoring APIs and Web Studio remain |
-| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded cron/event/backfill/controller services, bounded and continuous daemon orchestration, group backfill cancellation, bounded fail-closed conditional branches, and a workspace-scoped authenticated workflow list/run/read/cancel HTTP foundation exist; durable branch-state integration, branching/skipped persistence, broad operator execution, durable notifications, schedules/events public routes, Web Studio authoring, process/signal/deployment wiring and PostgreSQL multi-node HA qualification remain |
-| Catalog/lineage | partial | governed assets/revisions, bounded search, declared/observed lineage, deterministic OpenLineage-style export, and selected-subgraph Bundle export/planning/atomic import exist; glossary/classification, transport certification and complete asset integration remain |
+| Workspace/project/source control | partial | workspace/project persistence, authenticated create/read/update/archive workspace and project lifecycles with idempotency, audit and active-project filtering, project manifest, reproducible secret-free deployment manifest with canonical identity, Git identity, environment/deployment bindings, Studio and SDK journeys covering project creation, environment binding, Bundle export/archive, audited/idempotent governed pipeline execution and project-scoped permission inspection; full Public v1 APIs/UI and membership remain |
+| Connectors/ingestion | partial | connection/discovery/checkpoint contracts, governed local CSV/JSONL, bounded HTTP/PostgreSQL, S3-compatible including Apache Ozone, Azure Blob and JDBC profiles, public capability/plan/preview/checkpoint-health API, Studio actions and SDK parity; production driver qualification and broader incremental coverage remain |
+| Lakehouse/SQL | partial | bounded Arrow/Parquet open-data and streaming publication paths, provider-neutral SQL/table contracts, optional local DuckDB engine with bounded relation lifecycle, shared query lifecycle adapter, provider-neutral query-engine contracts/discovery/local transport/Trino HTTP transport, bounded project-scoped fail-closed read-only SQL HTTP adapter/route, and optional Iceberg/Delta adapters exist; QueryFlux and remote/catalog qualification, full format features, and broader SQL service remain |
+| Data Engineering Studio | partial | notebook/pipeline execution foundations, durable SQL editor revisions/history/bounded export, parameter schemas, pipeline revision comparison/archive, and an authenticated pipeline-revision-to-workflow-run creation route with deterministic idempotency exist; worker/evidence lineage, complete CRUD and complete Web Studio remain |
+| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded cron/event/backfill/controller services, bounded and continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook notification adapters, and durable retry/error recording exist; broader operator execution, notification provider qualification, crash-restart/deployment qualification and PostgreSQL multi-node HA qualification remain |
+| Catalog/lineage | partial | governed asset CRUD/revisions, versioned sensitivity/ownership, glossary authoring, bounded search, lineage HTTP navigation, OpenLineage export/HTTP transport and selected-subgraph Bundle portability exist; event certification and complete asset integration remain |
 | Ontology/KG | partial | object/property/link/action schema and persistence, instance materialization, link resolution, bounded graph queries and authorized actions exist; durable replay and public interfaces remain |
-| Graph intelligence/RQL | partial | bounded read-only RQL SELECT filtering over materialized KnowledgeGraph views exists; traversal, joins, planning, provider execution and public API exposure remain |
-| Data quality/contracts | partial | versioned definitions/results, all built-in checks, injected SQL/Python/referential checks, quality gates and scheduler release enforcement exist; alerts and UI remain |
-| AI/ML/MLOps | partial | experiment/run/model/evaluation provenance, deterministic tabular training, digest-verified inference and champion serving resolution exist; features, broader algorithms, MLflow and network serving remain |
-| GenAI/RAG/agents | partial | provider/prompt/vector/RAG/tool/agent contracts, OpenAI-compatible runtime, deterministic retrieval, bounded agents and telemetry callbacks exist; evaluation and production qualification remain |
-| Semantic models/dashboards | partial | safe semantic contracts, canonical persistence, parameterized metric compiler, SQL metric runtime and dashboard tile execution exist; joins, calculated metrics and public surfaces remain |
-| Streaming/real-time | partial | Kafka polling, durable CAS checkpoints, micro-batch processing, Parquet sinks, event-time windows, stream tables and scheduler integration exist; production qualification remains |
-| Observability/alerts/FinOps | partial | durable metrics/events, threshold alerts, webhook intents, Prometheus export, instrumentation, usage pricing, costs and budget gates exist; broader service adoption and production qualification remain |
-| Multi-user security/audit | partial | typed grants, bearer auth, transport policy, secret resolver and append-only audit foundation exist; OIDC/users/groups/service identities/role administration/full instrumentation remain |
-| Local/Compose/Kubernetes | partial | local/Compose foundation, PostgreSQL metadata healthcheck, PostgreSQL JobStore adapter wired to the server, single-node real-PostgreSQL lifecycle qualification, SQLite backup/restore, S3-compatible artifacts and constrained single-replica Helm chart exist; PostgreSQL HA, multi-node and production qualification remain |
-| Ronin Bundle | partial | deterministic verified archive IO, project/connection/catalog/workflow/schedule inventories, export, verified planning and atomic commits exist; quality/ontology/ML/GenAI/data/semantic assets, PostgreSQL adapters, certification and public surfaces remain |
+| Graph intelligence/RQL | partial | bounded read-only RQL SELECT filtering, one-hop typed traversal, and typed property joins over materialized KnowledgeGraph views exist; planning, provider execution and public API exposure remain |
+| Data quality/contracts | partial | versioned definitions/results, all built-in checks, injected SQL/Python/referential checks, quality gates, scheduler release enforcement, quality-to-common-alert transition evaluation, authenticated alert rule-list/evaluation APIs, and pyronin SDK parity exist; alert UI and provider qualification remain |
+| AI/ML/MLOps | partial | experiment/run/model/evaluation provenance, deterministic tabular training, digest-verified inference, champion serving resolution, deterministic trial comparison, bounded numeric drift summaries, explicit feature-level threshold assessments, versioned feature definitions with dataset snapshots, workspace-scoped HTTP routes and pyronin SDK parity exist; broader feature engineering, algorithms, MLflow and network serving remain |
+| GenAI/RAG/agents | partial | provider/prompt/vector/RAG/tool/agent contracts, OpenAI-compatible runtime, deterministic retrieval, bounded agents, deterministic per-example RAG scoring, aggregate reports, telemetry callbacks and GenAI definition Bundle export/import exist; judge-provider evaluation and production qualification remain |
+| Semantic models/dashboards | partial | safe semantic contracts, canonical persistence, parameterized metric compiler, calculated metrics, SQL metric runtime, bounded declared-column two-model JOIN execution, dashboard CRUD/execution, Studio and native semantic Bundle round-trips exist; multi-join planning, export/import API qualification and production surfaces remain |
+| Streaming/real-time | partial | Kafka polling, durable CAS checkpoints, micro-batch processing, Parquet sinks, event-time windows, stream tables, scheduler integration and bounded health/lag projection including unseen partitions exist; production qualification remains |
+| Observability/alerts/FinOps | partial | durable metrics/events, threshold alerts, SMTP/webhook notification adapters, durable delivery intents with retry/backoff, Prometheus export, instrumentation, usage pricing, actual-versus-estimated costs, non-ledger forecasts, anomaly hooks and budget gates exist; authenticated alert-rule/evaluation APIs, SDK parity, fail-closed alert operation validation and the Monitoring & Alerts Studio route are covered by static and Playwright smoke evidence; broader service adoption and production qualification remain |
+| Multi-user security/audit | partial | typed grants, bearer auth, transport policy, fail-closed classification-aware policy actions, secret resolver with injected external backends, OIDC users/groups/service identities, authenticated principal/group reads and role-binding administration with SQLite/PostgreSQL parity, public SDK parity, broad fail-closed mutation audit and append-only audit foundation exist; external provider qualification and production certification remain |
+| Local/Compose/Kubernetes | partial | local/Compose foundation, PostgreSQL metadata healthcheck, PostgreSQL JobStore adapter wired to the server, single-node real-PostgreSQL lifecycle qualification, SQLite backup/restore with path-bound artifact-tree manifests, PostgreSQL dump backup with checksum sidecar verification, S3 artifacts with retry/corruption checks, Kubernetes Job submit/status/cancel/log adapter, constrained single-replica Helm chart, and forward-only upgrade/failure recovery runbooks exist; PostgreSQL HA, multi-node and production qualification remain |
+| Ronin Bundle | partial | deterministic verified archive IO, project/connection/catalog/workflow/schedule/quality/ontology/semantic inventories, export, verified planning and atomic commits, plus GenAI definitions and ML experiment/run/registered-model metadata export/import exist; ML artifacts/data assets, PostgreSQL adapters, certification and public surfaces remain |
 | Fabric migration | qualification pending | deterministic fixture discovery and fail-closed notebook-item translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
 | Databricks migration | qualification pending | deterministic fixture discovery and fail-closed notebook-job translation with dependency/schedule mapping and CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
 | Palantir Foundry/AIP migration | qualification pending | deterministic fixture discovery and fail-closed Python-function translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
 | Dataiku DSS migration | qualification pending | deterministic fixture discovery and fail-closed Python/SQL recipe translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
-| Web Studio | partial | authenticated static Studio shell supports job/evidence/event workflows and project-scoped read-only SQL; authoring editors, domain workflows and complete Public v1 journeys remain |
-| Public v1 release qualification | blocked | exact-head CI, security, Docker and release-packaging workflows are active and have passed on the latest published construction candidate; main is protected with required PR approval, strict checks and no force-push/deletion; Public v1 remains blocked by incomplete mandatory product capabilities, provider certification and legal/release decisions |
+| Web Studio | partial | authenticated static Studio shell supports job/evidence/event workflows, project-scoped read-only SQL, project/environment/Bundle/governed-pipeline journeys, resource-scoped project permission inspection and a Monitoring & Alerts route; 77 Playwright route/accessibility/history/domain-journey checks pass; authoring editors, domain workflows and complete Public v1 journeys remain |
+| Public v1 release qualification | blocked | exact-head CI, security, Docker and release-packaging workflows are active; release qualification now generates and verifies candidate-bound SBOM/provenance evidence for wheel and sdist artifacts, alongside installed Studio smoke and accessibility checks; main is protected with required PR approval, strict checks and no force-push/deletion; Public v1 remains blocked by incomplete mandatory product capabilities, provider certification and legal/release decisions |
 
 ## Public v1 source work merged in the current construction sequence
 
 PRs **#242–#288** moved Public v1 from planning into source implementation. Scheduler foundations include deterministic task→Job identity/linking (#259), execution outbox/reconciliation (#260), deployment-aware controller (#262), cron/events (#263/#264), cancellation/timeouts (#265/#267), snapshot-safe backfill (#268), pools (#270), leader fencing (#271/#273), daemon orchestration (#274/#275), and group backfill cancellation (#276). Native Bundle portability added project semantic inventory/export (#278), project import planning (#279), runtime remapping plus atomic project/environment-binding commit (#280), connection round-trip with explicit secret-reference remapping (#282), deterministic dependency-ordered multi-object staging (#283), atomic project+connection commit (#285), explicit selected catalog subgraph export/planning (#287), and atomic catalog asset/revision/lineage commit (#288). PR #266 made Public v1 the active construction authority while preserving the historical v0.1 planning files verbatim.
 
-These merges do **not** imply that their parent capability families are complete. The scheduler still lacks broad task adapters, branching/skipped semantics, durable notifications, public scheduler APIs/UI, production process/signal/deployment wiring and PostgreSQL multi-node HA qualification. Bundle support now covers project, connection, and an explicitly selected catalog subgraph, but workflow/quality/ontology/ML/GenAI and later data/semantic assets remain outside it. Catalog export intentionally does not invent whole-catalog revision discovery because the current catalog port does not expose it. PostgreSQL does not yet implement the Bundle atomic commit ports.
+These merges do **not** imply that their parent capability families are complete. The scheduler still lacks broad task adapters, branching/skipped semantics, durable notification integration, public scheduler APIs/UI, production process/signal/deployment wiring and PostgreSQL multi-node HA qualification. Bundle support now covers project, connection, workflow/schedule, quality contracts, ontology definitions, semantic models/dashboards, and an explicitly selected catalog subgraph; ML/GenAI/data assets remain outside it. Catalog export intentionally does not invent whole-catalog revision discovery because the current catalog port does not expose it. PostgreSQL does not yet implement the Bundle atomic commit ports.
 
 ## Invariants that remain mandatory
 

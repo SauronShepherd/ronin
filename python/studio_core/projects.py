@@ -17,6 +17,7 @@ _ORDERED_OPERATORS = (">=", "<=", ">", "<")
 _ALL_OPERATORS = (">=", "<=", "==", "!=", ">", "<")
 _VERSION_PREFIX = re.compile(r"^\d+(?:\.\d+)*")
 _WINDOWS_ABSOLUTE = re.compile(r"^[A-Za-z]:/")
+_SENSITIVE_URI_TERMS = ("password=", "token=", "secret=", "access_token=", "-----begin ")
 
 
 def _require_text(value: str, field_name: str) -> None:
@@ -73,6 +74,8 @@ class RepositoryBinding:
         _require_text(self.alias, "repository alias")
         _require_text(self.uri, "repository uri")
         _require_text(self.default_ref, "repository default ref")
+        if self.default_ref.startswith("-") or any(char.isspace() for char in self.default_ref):
+            raise ValueError("repository default ref must be a stable ref")
         _require_text(self.adapter_id, "repository adapter id")
         if self.role not in {"primary", "supporting"}:
             raise ValueError("repository role must be primary or supporting")
@@ -88,6 +91,8 @@ class RepositoryBinding:
             raise ValueError("repository uri must not embed credentials")
         if parsed.query or parsed.fragment:
             raise ValueError("repository uri must not include query or fragment components")
+        if any(term in self.uri.casefold() for term in _SENSITIVE_URI_TERMS):
+            raise ValueError("repository uri must not contain credential material")
 
         if self.subdirectory is not None:
             _require_text(self.subdirectory, "repository subdirectory")

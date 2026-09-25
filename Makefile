@@ -1,10 +1,40 @@
-.PHONY: check format lint typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget browser-audit test \
+.PHONY: check format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget browser-audit ui-installed ui-a11y ui-e2e-headed test \
 	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-storage-files-full coverage-tools mutation performance \
 	canonical-json-check runner-protocol-check dependency-surfaces-check
 
+ui-e2e:
+	npm --prefix web-tests ci
+	npm --prefix web-tests test
+
+ui-e2e-headed:
+	npm --prefix web-tests ci
+	npm --prefix web-tests run test:headed
+
+ui-e2e-debug:
+	npm --prefix web-tests ci
+	npm --prefix web-tests run test:debug
+
+release-evidence-validate:
+	python -m tools.release_evidence validate $(BUNDLE)
+
+release-evidence-merge:
+	python -m tools.release_evidence merge $(OUTPUT) $(BUNDLES)
+
+release-evidence-verdict:
+	python -m tools.release_evidence verdict $(BUNDLE) $(REQUIRED_GATES)
+
+cloud-studio-floci:
+	python -m tools.cloud_studio_floci_qualification $(ARGS)
+
+capability-status-check:
+	python -m tools.capability_status docs/product/public-v1-status.json
+
 CODE_PATHS := python tests tools packages docker
 
-check: format lint typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget canonical-json-check runner-protocol-check test performance
+check: format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget canonical-json-check runner-protocol-check capability-status-check test performance
+
+lint-openapi:
+	python -m tools.openapi_snapshot
 
 route-consistency:
 	PYTHONPATH=python python -m tools.route_consistency
@@ -21,6 +51,15 @@ web-budget:
 browser-audit:
 	@python -c "import playwright" 2>NUL || (echo Playwright is required for browser-audit && exit /b 1)
 	python tools/browser_audit.py $${RONIN_STUDIO_AUDIT_URL:-http://127.0.0.1:8080/studio/}
+
+ui-installed:
+	python -m build --wheel --outdir .tmp-govern-wheel
+	python tools/installed_studio_browser_smoke.py .tmp-govern-wheel/*.whl
+
+ui-a11y:
+	npm ci
+	python -m build --wheel --outdir .tmp-govern-wheel
+	python -m tools.installed_studio_a11y .tmp-govern-wheel/*.whl
 
 format:
 	ruff format --check $(CODE_PATHS)
@@ -152,5 +191,5 @@ coverage-storage-files-full:
 mutation:
 	@rm -rf mutants
 	@test ! -e src && test ! -L src
-	@ln -s python src; trap 'rm -f src' 0; PYTHONPATH=python:packages/pyronin/src mutmut run && mutmut export-cicd-stats
-	@python -m tools.mutation_gate mutants/mutmut-cicd-stats.json
+	@cp -a python src; trap 'rm -rf src' 0; PYTHONPATH=python:packages/pyronin/src mutmut run && mutmut export-cicd-stats
+	@python3 -m tools.mutation_gate mutants/mutmut-cicd-stats.json

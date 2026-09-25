@@ -59,6 +59,10 @@ def _normalize(document: str | bytes, collections: tuple[str, ...]) -> str:
                     "id": identity,
                 }
             )
+    if not objects:
+        identity = payload.get("id", payload.get("job_id", payload.get("project_id")))
+        if isinstance(identity, str) and identity.strip():
+            objects.append({"type": "export", "id": identity})
     return json.dumps({"objects": objects}, separators=(",", ":"))
 
 

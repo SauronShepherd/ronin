@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
-from typing import TypeAlias
+from typing import TypeAlias, cast
 
 from studio_core import (
     DataContract,
@@ -14,6 +14,8 @@ from studio_core import (
     QualityRun,
     QualityRunId,
 )
+
+from .sandbox import evaluate_python_predicate
 
 Row: TypeAlias = Mapping[str, object]
 
@@ -256,11 +258,16 @@ def evaluate_rule(
                 else _failed(rule, custom_observed, "custom SQL predicate failed")
             )
         if rule.kind == "custom_python":
-            if custom_python is None:
+            expression = _parameters(rule).get("expression")
+            if custom_python is None and expression is None:
                 return _error(
                     rule, "custom_python execution is not enabled in the built-in evaluator"
                 )
-            passed = custom_python(rule, rows)
+            passed = (
+                evaluate_python_predicate(cast(str, expression), rows)
+                if custom_python is None
+                else custom_python(rule, rows)
+            )
             python_observed: tuple[tuple[str, str], ...] = (
                 ("predicate_passed", str(bool(passed)).lower()),
             )

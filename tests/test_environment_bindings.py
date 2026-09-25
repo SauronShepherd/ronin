@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from studio_core import (
     ExecutionProfile,
     Project,
@@ -59,6 +60,12 @@ def test_environment_and_bindings_round_trip_without_changing_project_manifest()
     assert ProjectEnvironmentBindings.from_json(bindings.to_json()) == bindings
     assert bindings.resolve("secret", "warehouse-password") == "secret://env/WAREHOUSE_PASSWORD"
     assert "WAREHOUSE_PASSWORD" not in manifest.to_json()
+
+
+@pytest.mark.parametrize("description", ["line one\nline two", "line one\rline two"])
+def test_environment_description_is_single_line(description: str) -> None:
+    with pytest.raises(ValueError, match="single-line"):
+        EnvironmentDefinition(EnvironmentId("prod"), "Production", description)
 
 
 def test_binding_targets_require_kind_specific_reference_schemes() -> None:

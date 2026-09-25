@@ -24,7 +24,6 @@ from studio_orchestrator import (
     StoredEvidenceRef,
     StoredExecutionEvent,
 )
-
 from studio_storage.limits import MAX_EVIDENCE_REFS_PER_RUN
 from studio_storage.pagination import (
     decode_event_cursor,

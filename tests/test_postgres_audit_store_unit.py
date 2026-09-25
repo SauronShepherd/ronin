@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
+
 from studio_core import WorkspaceId
 from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource
 from studio_orchestrator import Instant

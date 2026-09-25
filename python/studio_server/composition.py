@@ -15,6 +15,12 @@ class StoppableServer(Protocol):
     def server_close(self) -> None: ...
 
 
+class PluginLifecycle(Protocol):
+    def start(self) -> object: ...
+
+    def stop(self) -> None: ...
+
+
 class LocalServerComposition:
     """Start and stop job and control-plane servers as one local unit."""
 
@@ -24,10 +30,12 @@ class LocalServerComposition:
         control_plane_server: StoppableServer,
         *,
         thread_factory: Callable[..., Thread] = Thread,
+        plugin_host: PluginLifecycle | None = None,
     ) -> None:
         self.job_server = job_server
         self.control_plane_server = control_plane_server
         self._thread_factory = thread_factory
+        self.plugin_host = plugin_host
         self._threads: tuple[Thread, Thread] | None = None
 
     @property
@@ -37,6 +45,8 @@ class LocalServerComposition:
     def start(self) -> None:
         if self._threads is not None:
             raise RuntimeError("local server composition is already started")
+        if self.plugin_host is not None:
+            self.plugin_host.start()
         threads = (
             self._thread_factory(
                 target=self.job_server.serve_forever, name="ronin-jobs", daemon=True
@@ -55,13 +65,17 @@ class LocalServerComposition:
         threads = self._threads
         if threads is None:
             return
-        self.job_server.shutdown()
-        self.control_plane_server.shutdown()
-        for thread in threads:
-            thread.join(timeout=10.0)
-        self.job_server.server_close()
-        self.control_plane_server.server_close()
-        self._threads = None
+        try:
+            self.job_server.shutdown()
+            self.control_plane_server.shutdown()
+            for thread in threads:
+                thread.join(timeout=10.0)
+            self.job_server.server_close()
+            self.control_plane_server.server_close()
+        finally:
+            if self.plugin_host is not None:
+                self.plugin_host.stop()
+            self._threads = None
 
 
-__all__ = ("LocalServerComposition", "StoppableServer")
+__all__ = ("LocalServerComposition", "PluginLifecycle", "StoppableServer")

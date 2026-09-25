@@ -6,6 +6,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 import pytest
+
 from studio_core import ProjectManifest, RuntimeCatalog
 from studio_kernel import (
     CancellationSignal,

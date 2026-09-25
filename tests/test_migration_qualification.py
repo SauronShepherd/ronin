@@ -1,17 +1,16 @@
-from __future__ import annotations
-
 import pytest
-from studio_migration import discover_databricks, qualify_fixture
+
+from tools.migration_qualification import MigrationQualificationError, qualify_migrations
 
 
-def test_qualification_requires_complete_report_and_is_deterministic() -> None:
-    source = '{"resources":{"jobs":[{"id":"job-1"}]}}'
-    first = qualify_fixture(source, discover_databricks, required_source_ids=("job-1",))
-    second = qualify_fixture(source, discover_databricks, required_source_ids=("job-1",))
-    assert first == second
-    assert first.unsupported_objects == 1
+def test_repository_migrations_are_forward_only():
+    names = qualify_migrations(__import__("pathlib").Path("python/studio_storage/migrations"))
+    assert names
+    assert all("rollback" not in name for name in names)
 
 
-def test_qualification_rejects_omitted_objects() -> None:
-    with pytest.raises(ValueError, match="omits source objects"):
-        qualify_fixture('{"objects":[]}', discover_databricks, required_source_ids=("job-1",))
+def test_reverse_migration_is_rejected(tmp_path):
+    (tmp_path / "jobs_001_create.sql").write_text("CREATE TABLE jobs(id TEXT);", encoding="utf-8")
+    (tmp_path / "jobs_002_rollback.sql").write_text("DROP TABLE jobs;", encoding="utf-8")
+    with pytest.raises(MigrationQualificationError, match="reverse"):
+        qualify_migrations(tmp_path)

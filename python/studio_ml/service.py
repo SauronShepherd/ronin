@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from collections.abc import Callable, Mapping, Sequence
 from typing import Protocol, runtime_checkable
 
 from studio_core import AssetRef, WorkspaceId
 from studio_core.ml import (
+    Experiment,
     ExperimentId,
     MetricValue,
     MLRunId,
@@ -21,11 +23,18 @@ from studio_core.ml import (
 from studio_orchestrator import Instant
 from studio_storage.ports import ArtifactStore
 
+from .domain import Lab
+from .runner import ClusteringResult, ExperimentResult
 from .runtime import TrainingSpec, predict_tabular, train_tabular
 
 
 @runtime_checkable
 class MLRegistryStore(Protocol):
+    def get_run(self, workspace_id: WorkspaceId, run_id: MLRunId) -> MLRunRecord | None: ...
+
+    def put_experiment(
+        self, workspace_id: WorkspaceId, experiment: Experiment, *, now: Instant | str
+    ) -> Experiment: ...
     def record_evaluation(
         self, workspace_id: WorkspaceId, evaluation: ModelEvaluation, *, now: Instant | str
     ) -> ModelEvaluation: ...
@@ -79,6 +88,120 @@ class MLModelNotFound(KeyError):
     """Raised when inference references a model version absent from registry."""
 
 
+def persist_experiment_result(
+    registry: MLRegistryStore,
+    workspace_id: WorkspaceId,
+    lab: Lab,
+    result: ExperimentResult,
+    *,
+    run_id: MLRunId,
+    execution_ref: str,
+    source_revision: str,
+    now: Instant | str,
+) -> MLRunRecord:
+    """Persist the experiment identity and its immutable run provenance."""
+    from .provenance import run_record
+
+    registry.put_experiment(
+        workspace_id,
+        Experiment(ExperimentId(lab.id), lab.name, lab.project_id),
+        now=now,
+    )
+    record = run_record(
+        lab,
+        result,
+        run_id=run_id.value,
+        execution_ref=execution_ref,
+        source_revision=source_revision,
+    )
+    return registry.record_run(workspace_id, record, now=now)
+
+
+def persist_clustering_result(
+    registry: MLRegistryStore,
+    artifacts: ArtifactStore,
+    workspace_id: WorkspaceId,
+    lab: Lab,
+    result: ClusteringResult,
+    *,
+    run_id: MLRunId,
+    execution_ref: str,
+    source_revision: str,
+    now: Instant | str,
+) -> MLRunRecord:
+    """Persist a K-Means artifact and immutable clustering run provenance."""
+    artifact_bytes = json.dumps(
+        result.model.to_artifact(), sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    artifact = artifacts.put_bytes(
+        role="model",
+        data=artifact_bytes,
+        media_type="application/vnd.ronin.ml-kmeans+json",
+    )
+    registry.put_experiment(
+        workspace_id,
+        Experiment(ExperimentId(lab.id), lab.name, lab.project_id),
+        now=now,
+    )
+    record = MLRunRecord(
+        id=run_id,
+        experiment_id=ExperimentId(lab.id),
+        execution_ref=execution_ref,
+        source_revision=source_revision,
+        datasets=(lab.dataset,),
+        parameters=(
+            ("algorithm", "kmeans"),
+            ("backend_id", result.backend_id),
+            ("task", "clustering"),
+            ("features", ",".join(result.features)),
+            ("iterations", str(result.model.iterations)),
+        ),
+        metrics=(MetricValue("inertia", result.inertia),),
+        artifact_refs=(artifact.storage_ref,),
+    )
+    return registry.record_run(workspace_id, record, now=now)
+
+
+def register_clustering_model(
+    registry: MLRegistryStore,
+    artifacts: ArtifactStore,
+    workspace_id: WorkspaceId,
+    lab: Lab,
+    result: ClusteringResult,
+    *,
+    run_id: MLRunId,
+    model_id: ModelId,
+    model_version: ModelVersion,
+    now: Instant | str,
+) -> RegisteredModelVersion:
+    """Register a persisted K-Means artifact as a candidate model version."""
+    del lab
+    artifact_bytes = json.dumps(
+        result.model.to_artifact(), sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    artifact = artifacts.put_bytes(
+        role="model", data=artifact_bytes, media_type="application/vnd.ronin.ml-kmeans+json"
+    )
+    signature = ModelSignature(
+        _input_signature([dict.fromkeys(result.features, 0.0)], result.features),
+        (("cluster", "int64"),),
+    )
+    return registry.register_model(
+        workspace_id,
+        RegisteredModelVersion(
+            model_id,
+            model_version,
+            run_id,
+            artifact.storage_ref,
+            artifact.digest,
+            "ronin-kmeans",
+            signature,
+            "candidate",
+        ),
+        now=now,
+    )
+
+
 def promote_registered_model(
     registry: MLRegistryStore,
     workspace_id: WorkspaceId,
@@ -124,6 +247,32 @@ def list_model_evaluations(
     """List evaluation evidence for one registered model version."""
 
     return registry.list_evaluations(workspace_id, model_id, model_version)
+
+
+def compare_model_evaluations(
+    evaluations: Sequence[ModelEvaluation],
+    *,
+    metric: str,
+    higher_is_better: bool = True,
+) -> tuple[ModelEvaluation, ...]:
+    """Return deterministic evaluation ranking without inventing missing metrics."""
+    if not metric.strip():
+        raise ValueError("metric must be non-empty")
+    selected: list[tuple[ModelEvaluation, float]] = []
+    for evaluation in evaluations:
+        values = [item.value for item in evaluation.metrics if item.name == metric]
+        if not values:
+            continue
+        selected.append((evaluation, values[-1]))
+    selected.sort(
+        key=lambda item: (
+            -item[1] if higher_is_better else item[1],
+            item[0].model_id.value,
+            item[0].version.value,
+            item[0].execution_ref,
+        )
+    )
+    return tuple(item[0] for item in selected)
 
 
 def list_registered_models(
@@ -238,17 +387,31 @@ def predict_registered_tabular(
     model = registry.get_model(workspace_id, model_id, model_version)
     if model is None:
         raise MLModelNotFound(f"{model_id}@{model_version}")
-    if model.framework != "sklearn":
+    if model.framework not in {"sklearn", "ronin-kmeans"}:
         raise ValueError(f"unsupported local inference framework: {model.framework}")
     digest = hashlib.sha256(artifact_bytes).hexdigest()
     if digest != model.artifact_digest:
         raise ValueError("model artifact digest does not match registered model")
     expected_features = tuple(name for name, _ in model.signature.inputs)
-    return predict_tabular(
-        artifact_bytes,
-        rows,
-        expected_features=expected_features,
-    )
+    try:
+        payload = json.loads(artifact_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        payload = None
+    if isinstance(payload, dict) and payload.get("schema") == "ronin.ml-kmeans/v1":
+        centroids = payload.get("centroids")
+        if not isinstance(centroids, list) or not centroids:
+            raise ValueError("K-Means artifact has invalid centroids")
+        from .clustering import KMeansModel
+
+        try:
+            model_kmeans = KMeansModel(
+                tuple(tuple(float(value) for value in centroid) for centroid in centroids),
+                int(payload.get("iterations", 0)),
+            )
+        except (TypeError, ValueError):
+            raise ValueError("K-Means artifact has invalid centroids") from None
+        return tuple(model_kmeans.predict(rows, expected_features))
+    return predict_tabular(artifact_bytes, rows, expected_features=expected_features)
 
 
 def predict_champion_tabular(
@@ -281,6 +444,7 @@ __all__ = (
     "list_registered_models",
     "record_model_evaluation",
     "list_model_evaluations",
+    "compare_model_evaluations",
     "predict_registered_tabular",
     "predict_champion_tabular",
     "train_register_tabular",
