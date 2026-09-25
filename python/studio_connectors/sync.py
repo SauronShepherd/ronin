@@ -15,7 +15,7 @@ from .contracts import ConnectorReadResult
 class ArtifactDestinationWriter:
     """Write connector rows as one verified content-addressed JSON artifact."""
 
-    def __init__(self, artifacts: object) -> None:
+    def __init__(self, artifacts: _ArtifactStore) -> None:
         self._artifacts = artifacts
 
     def write(
@@ -54,6 +54,35 @@ class ArtifactDestinationWriter:
 
 class _CheckpointStore(Protocol):
     def health(self, identity: str) -> _Health: ...
+
+    def get(self, identity: str) -> object | None: ...
+
+    def acquire(self, identity: str) -> int: ...
+
+    def commit_output_then_checkpoint(
+        self,
+        identity: str,
+        expected: object | None,
+        next_checkpoint: object,
+        *,
+        output_id: str,
+        output_digest: str,
+        fence: int,
+        output_committed: bool,
+    ) -> _Evidence: ...
+
+
+class _ArtifactRef(Protocol):
+    storage_ref: str
+    digest: str
+
+
+class _ArtifactStore(Protocol):
+    def put_bytes(self, *, role: str, data: bytes, media_type: str) -> _ArtifactRef: ...
+
+
+class _Evidence(Protocol):
+    def to_payload(self) -> dict[str, object]: ...
 
 
 class _Health(Protocol):

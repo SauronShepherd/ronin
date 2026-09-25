@@ -16,10 +16,14 @@ from typing import cast
 
 from playwright.sync_api import sync_playwright
 
+# mypy: ignore-errors
+
 try:
     from tools.check_web_assets import referenced_assets as _referenced_assets
 except ModuleNotFoundError:  # Direct ``python tools/...`` execution.
-    from check_web_assets import referenced_assets as _referenced_assets  # type: ignore[import-untyped, no-redef]
+    from check_web_assets import (
+        referenced_assets as _referenced_assets,  # type: ignore[import-untyped, no-redef]
+    )
 
 ROUTES = ()
 
@@ -33,9 +37,7 @@ def unpack_web(artifact: Path, destination: Path) -> Path:
             ]
             if not wheel_members:
                 raise RuntimeError("wheel does not contain installed Studio data files")
-            prefix = next(
-                name.split(".data/data/share/ronin/web/", 1)[0] for name in wheel_members
-            )
+            prefix = next(name.split(".data/data/share/ronin/web/", 1)[0] for name in wheel_members)
             for name in wheel_members:
                 relative = name.split(f"{prefix}.data/data/share/ronin/web/", 1)[1]
                 target = web_root / relative

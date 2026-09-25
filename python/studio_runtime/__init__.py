@@ -8,6 +8,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, cast
 
 from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource
 from studio_core.plugins import (
@@ -103,7 +104,7 @@ def discover_plugins(
     selected = (
         entry_points.select(group=group)
         if hasattr(entry_points, "select")
-        else getattr(entry_points, "get")(group, ())
+        else cast(Any, entry_points).get(group, ())
     )
     for entry_point in sorted(selected, key=lambda item: item.name):
         try:

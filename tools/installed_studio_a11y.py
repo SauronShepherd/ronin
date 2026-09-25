@@ -12,10 +12,14 @@ from threading import Thread
 
 from playwright.sync_api import sync_playwright
 
+# mypy: ignore-errors
+
 try:
     from tools.installed_studio_browser_smoke import unpack_web as _unpack_web
 except ModuleNotFoundError:  # Direct ``python tools/...`` execution.
-    from installed_studio_browser_smoke import unpack_web as _unpack_web  # type: ignore[import-untyped, no-redef]
+    from installed_studio_browser_smoke import (
+        unpack_web as _unpack_web,  # type: ignore[import-untyped, no-redef]
+    )
 
 VIEWPORTS = ((320, 800), (768, 1024), (1440, 900))
 

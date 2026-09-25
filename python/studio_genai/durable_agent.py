@@ -42,7 +42,7 @@ def run_agent_durable(
             provider,
             tools,
             user_input,
-            **kwargs,
+            **kwargs,  # type: ignore[arg-type]
         )
     except TimeoutError:
         store.put_agent_run(
@@ -51,7 +51,7 @@ def run_agent_durable(
             definition.id.value,
             "timeout",
             {"schema": "ronin.genai-agent-evidence/v1", "step_count": 0},
-            now=now,
+            now=now,  # type: ignore[arg-type]
         )
         raise
     except Exception:
@@ -61,7 +61,7 @@ def run_agent_durable(
             definition.id.value,
             "failed",
             {"schema": "ronin.genai-agent-evidence/v1", "step_count": 0},
-            now=now,
+            now=now,  # type: ignore[arg-type]
         )
         raise
     store.put_agent_run(
@@ -70,7 +70,7 @@ def run_agent_durable(
         definition.id.value,
         "completed",
         result.evidence_payload(),
-        now=now,
+        now=now,  # type: ignore[arg-type]
     )
     return result
 

@@ -7,7 +7,11 @@ from pathlib import Path
 from threading import Event
 from typing import cast
 
-from test_workspace_project_http_api import _ACTOR, _Authorizer, _Store  # type: ignore[import-not-found]
+from test_workspace_project_http_api import (  # type: ignore[import-not-found]
+    _ACTOR,
+    _Authorizer,
+    _Store,
+)
 
 from studio_core.plugins import PluginManager, PluginRecord
 from studio_data_engineering import DataEnginerringStudioPlugin

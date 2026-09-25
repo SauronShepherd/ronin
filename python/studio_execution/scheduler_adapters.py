@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from studio_connectors import IngestionSyncDefinition
 from studio_observability import NotificationIntent
@@ -74,26 +74,26 @@ def execute_scheduler_job(
     job: Job,
     *,
     sql_engine: SqlEngine | None = None,
-    graph_adapter: object | None = None,
-    quality_adapter: object | None = None,
+    graph_adapter: Any | None = None,
+    quality_adapter: Any | None = None,
     artifact_store: ArtifactStore | None = None,
-    workspace_id: object | None = None,
+    workspace_id: Any | None = None,
     run_id: str | None = None,
-    now: object | None = None,
-    connector_sync_service: object | None = None,
-    connector_connection: object | None = None,
-    connector_asset: object | None = None,
-    connector_secrets: object | None = None,
-    connector_destination: object | None = None,
-    notification_sink: object | None = None,
+    now: Any | None = None,
+    connector_sync_service: Any | None = None,
+    connector_connection: Any | None = None,
+    connector_asset: Any | None = None,
+    connector_secrets: Any | None = None,
+    connector_destination: Any | None = None,
+    notification_sink: Any | None = None,
     notification_artifacts: ArtifactStore | None = None,
     notification_now: Instant | str | None = None,
-    ml_runner: object | None = None,
-    ml_lab: object | None = None,
-    ml_rows: object | None = None,
-    genai_runner: object | None = None,
-    semantic_refresh_runner: object | None = None,
-    pipeline_runner: object | None = None,
+    ml_runner: Any | None = None,
+    ml_lab: Any | None = None,
+    ml_rows: Any | None = None,
+    genai_runner: Any | None = None,
+    semantic_refresh_runner: Any | None = None,
+    pipeline_runner: Any | None = None,
     max_rows: int = 10_000,
     timeout_seconds: int | None = None,
 ) -> SchedulerWorkloadResult:
@@ -121,6 +121,7 @@ def execute_scheduler_job(
             raise UnsupportedSchedulerWorkload(
                 "quality.gate requires quality_adapter, artifact_store, workspace_id, and run_id"
             )
+        quality_adapter = cast(Any, quality_adapter)
         try:
             payload = json.loads(job.parameters_json)
             asset_id = payload["asset_id"]
@@ -167,6 +168,7 @@ def execute_scheduler_job(
             raise UnsupportedSchedulerWorkload(
                 "connector.sync requires service, source context, and destination"
             )
+        connector_sync_service = cast(Any, connector_sync_service)
         try:
             payload = json.loads(job.parameters_json)
             definition = IngestionSyncDefinition(

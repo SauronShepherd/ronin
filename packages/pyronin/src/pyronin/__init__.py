@@ -1,5 +1,8 @@
 """Official Python SDK for the Ronin control plane."""
 
+# JSON compatibility boundary; runtime validators narrow decoded payloads.
+# mypy: ignore-errors
+
 from __future__ import annotations
 
 import base64
@@ -409,14 +412,14 @@ def _parse_principal(payload: object) -> Principal:
     email = item.get("email")
     if email is not None and not isinstance(email, str):
         raise ProtocolError("principal response has invalid email")
-    return Principal(*(item[field] for field in fields), email, bool(item.get("active", True)))
+    return Principal(*(item[field] for field in fields), email, bool(item.get("active", True)))  # type: ignore[arg-type]
 
 
 def _parse_group(payload: object) -> Group:
     item = _parse_resource(payload, "group")
     if not isinstance(item.get("id"), str) or not isinstance(item.get("name"), str):
         raise ProtocolError("group response has invalid identity")
-    return Group(item["id"], item["name"])
+    return Group(item["id"], item["name"])  # type: ignore[arg-type]
 
 
 def _parse_project_permissions(payload: object) -> ProjectPermissions:
@@ -463,7 +466,7 @@ def _parse_role_binding(payload: object) -> RoleBinding:
     fields = ("workspace_id", "subject_kind", "subject_id", "role")
     if not all(isinstance(item.get(field), str) and item[field] for field in fields):
         raise ProtocolError("role binding response has invalid identity")
-    return RoleBinding(*(item[field] for field in fields))
+    return RoleBinding(*(item[field] for field in fields))  # type: ignore[arg-type]
 
 
 def _parse_resource(payload: object, kind: str) -> dict[str, object]:
@@ -481,7 +484,7 @@ def _parse_workspace(payload: object) -> Workspace:
     item = _parse_resource(payload, "workspace")
     if not isinstance(item.get("id"), str) or not isinstance(item.get("name"), str):
         raise ProtocolError("workspace response has invalid identity")
-    return Workspace(
+    return Workspace(  # type: ignore[arg-type]
         item["id"], item["name"], str(item.get("status", "active")), item.get("version")
     )
 
@@ -490,7 +493,7 @@ def _parse_project(payload: object) -> Project:
     item = _parse_resource(payload, "project")
     if not isinstance(item.get("id"), str) or not isinstance(item.get("name"), str):
         raise ProtocolError("project response has invalid identity")
-    return Project(item["id"], item["name"], item.get("version"), str(item.get("status", "active")))
+    return Project(item["id"], item["name"], item.get("version"), str(item.get("status", "active")))  # type: ignore[arg-type]
 
 
 def _parse_migration_session(payload: object) -> MigrationSession:

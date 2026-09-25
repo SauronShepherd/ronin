@@ -32,7 +32,10 @@ from studio_storage.bundle_workflow_import import SqliteWorkflowBundleImportStor
 try:
     from tools.migration_certification import STATUSES, validate
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
-    from migration_certification import STATUSES, validate
+    from migration_certification import (  # type: ignore[import-not-found, no-redef]
+        STATUSES,
+        validate,
+    )
 
 ROOT = Path(__file__).parents[1] / "tests" / "fixtures" / "migration"
 NOW = "2026-09-24T00:00:00.000000Z"

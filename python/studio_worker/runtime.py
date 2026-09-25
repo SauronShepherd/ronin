@@ -332,9 +332,7 @@ class LocalWorkerRuntime:
             try:
                 parameters = decode_canonical_json(claim.job.parameters_json)
                 workspace_id = (
-                    parameters.get("workspace_id")
-                    if isinstance(parameters, dict)
-                    else None
+                    parameters.get("workspace_id") if isinstance(parameters, dict) else None
                 )
                 result = await loop.run_in_executor(
                     self._preparation_executor,
