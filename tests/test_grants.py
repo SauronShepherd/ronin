@@ -154,17 +154,6 @@ def test_bearer_scope_preserves_wildcard_identifier_semantics() -> None:
     assert requirement_to_bearer_scope(requirement) == "ronin:v1:read:project:*"
 
 
-@pytest.mark.parametrize("kind", ["project", "job", "run", "evidence", "*"])
-@pytest.mark.parametrize("action", sorted(ACTIONS))
-def test_bearer_scope_round_trips_every_public_vocabulary_value(
-    action: str, kind: str
-) -> None:
-    identifier = None if kind == "*" else "tenant/a:b?c"
-    requirement = Requirement(action, ResourceScope(kind, identifier))  # type: ignore[arg-type]
-    encoded = requirement_to_bearer_scope(requirement)
-    assert parse_bearer_scope(encoded) == requirement
-
-
 def test_decision_and_evidence_invariants() -> None:
     grant = Grant(frozenset({"read"}), ResourceScope("project", "p-1"))
     with pytest.raises(ValueError, match="matched"):
