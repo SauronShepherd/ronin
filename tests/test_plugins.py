@@ -146,6 +146,35 @@ def test_missing_dependency_is_rejected() -> None:
         PluginManager().compose((__import_record(plugin),))
 
 
+@pytest.mark.parametrize(
+    "changes, message",
+    [
+        ({"id": "Bad.Plugin"}, "invalid plugin id"),
+        ({"name": ""}, "incomplete manifest"),
+        ({"edition": "enterprise"}, "invalid edition"),
+        ({"isolation": "remote"}, "invalid isolation"),
+        ({"capabilities": ("same", "same")}, "duplicate capability"),
+        ({"permissions": ("same:read", "same:read")}, "duplicate permission"),
+        ({"permissions": ("missing-namespace",)}, "permissions must use namespace:name"),
+        ({"dependencies": (PluginDependency("com.example.dep"), PluginDependency("com.example.dep"))}, "duplicate dependency"),
+        ({"job_types": ("job", "job")}, "duplicate job type"),
+    ],
+)
+def test_manifest_validation_rejects_invalid_contracts(
+    changes: dict[str, object], message: str
+) -> None:
+    manifest = PluginManifest(
+        id="com.example.plugin",
+        name="Example",
+        version="1.0.0",
+        plugin_api="1.0",
+    )
+    updated = {field: getattr(manifest, field) for field in manifest.__dataclass_fields__}
+    updated.update(changes)
+    with pytest.raises(PluginValidationError, match=message):
+        PluginManifest(**updated).validate()
+
+
 def test_incompatible_api_is_rejected() -> None:
     plugin = WorkspacesPlugin()
     plugin.manifest = PluginManifest(
