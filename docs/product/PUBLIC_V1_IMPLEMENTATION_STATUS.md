@@ -30,7 +30,9 @@ not Public v1 completion.
 
 ## Local verification on this snapshot
 
-On Windows, `python -m pytest -q` produced **2089 passed, 21 skipped**.
+On Windows, `python -m pytest -q` produced **2098 passed, 21 skipped** in
+19m52s. The skips are environment-gated Docker/PostgreSQL/Spark/provider
+qualification checks, not test failures.
 Additional exact-head evidence on this snapshot includes Docker qualification
 (21 passed), real PostgreSQL integration (11 passed), the installed-wheel
 browser smoke (no console/request/CSP failures), installed-wheel accessibility
