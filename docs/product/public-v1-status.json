@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-09-25T00:00:00+02:00",
-  "observed_main_sha": "5ef0d34c8cbba25239b379f6ac6e099c30704808",
+  "observed_main_sha": "37a75a8cd66600f4a4aa3b9d8db012aedc9801f4",
   "observed_workspace_state": "implementation branch with tracked changes committed and pushed; generated local artifacts remain untracked",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -9,7 +9,17 @@
     "observed_at": "2026-09-24",
     "command": "python -m pytest -q",
     "result": "2089 passed, 21 skipped",
-    "qualification_claimed": false
+    "qualification_claimed": false,
+    "mutation_campaign": {
+      "total": 4210,
+      "killed": 3522,
+      "survived": 681,
+      "timeout": 7,
+      "killed_percent_non_timeout": 83.8,
+      "killed_percent_all": 83.6,
+      "gate_percent": 90.0,
+      "gate_status": "blocked"
+    }
   },
   "status_vocabulary": [
     "implemented",

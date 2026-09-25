@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-09-25. The implementation branch is
 committed and pushed; generated local qualification artifacts remain untracked.
-**Observed source head:** `5ef0d34c8cbba25239b379f6ac6e099c30704808` (2026-09-25).
+**Observed source head:** `37a75a8cd66600f4a4aa3b9d8db012aedc9801f4` (2026-09-25).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -36,6 +36,12 @@ Additional exact-head evidence on this snapshot includes Docker qualification
 browser smoke (no console/request/CSP failures), installed-wheel accessibility
 (no violations at 320/768/1440 px), and four credential-free migration fixture
 certifications. These checks do not constitute Public v1 release qualification.
+
+The exact-head WSL mutation campaign completed 4,210 mutants: 3,522 killed,
+681 survived, and 7 timed out. That is **83.8% killed of non-timeout mutants**
+(83.6% of all generated mutants), below the repository's 90% mutation gate.
+The campaign therefore remains a release blocker; its temporary workspace and
+generated reports are intentionally not part of the tracked source tree.
 
 ## Status vocabulary
 
