@@ -99,10 +99,7 @@ def main() -> int:
     parser.add_argument("--timeout-seconds", type=float, default=30.0)
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
-    if args.worker:
-        result = qualify()
-    else:
-        result = run_bounded(args.timeout_seconds)
+    result = qualify() if args.worker else run_bounded(args.timeout_seconds)
     payload = json.dumps(result, indent=2, sort_keys=True, default=str)
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
