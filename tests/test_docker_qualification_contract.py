@@ -47,7 +47,7 @@ def test_dockerhub_publisher_restricts_mutable_aliases() -> None:
         encoding="utf-8"
     )
 
-    assert 'type: choice' in workflow
+    assert "type: choice" in workflow
     assert "options:" in workflow
     assert "          - dev" in workflow
     assert "          - edge" in workflow
