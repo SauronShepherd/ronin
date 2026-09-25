@@ -8,7 +8,7 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass
-from typing import cast
+from typing import Any, cast
 from urllib.parse import unquote
 
 from .adapters.iics import IICS_ADAPTER_VERSION, discover_iics_zip
@@ -18,7 +18,7 @@ from .databricks import translate_notebook_job
 from .dataiku import translate_code_recipes
 from .fabric import translate_notebook_items
 from .foundry import translate_python_functions
-from .model import MigrationUnit, SourceArtifact, SourceInventory
+from .model import MigrationUnit, ObjectState, SourceArtifact, SourceInventory
 from .profiles import discover_databricks, discover_dataiku, discover_fabric, discover_foundry
 from .pyspark_codegen import export_migration_script
 from .reports import render_validation_html, render_validation_markdown
@@ -50,7 +50,7 @@ def _profile_inventory(profile: str, document: bytes, *, source_version: str) ->
         report = _PROFILE_DISCOVERERS[profile](document, source_version=source_version)
     except KeyError as exc:
         raise ValueError("migration profile is unsupported") from exc
-    states = {
+    states: dict[str, ObjectState] = {
         "unsupported": "unsupported",
         "partial": "review_required",
         "manual_decision": "review_required",
@@ -442,7 +442,7 @@ class MigrationAPIRouter:
                             translator = _PROFILE_TRANSLATORS[profile]
                         except KeyError as exc:
                             raise ValueError("migration profile is unsupported") from exc
-                        translation = translator(document, source_version=source_version)
+                        translation = cast(Any, translator(document, source_version=source_version))
                         return APIResponse(
                             200,
                             {
