@@ -83,9 +83,9 @@ def build_bundle(
     commit: str, artifact_identity: Path, sbom: Path | None = None
 ) -> dict[str, object]:
     now = datetime.now(UTC).isoformat()
-    artifacts = [str(artifact_identity)]
     artifact_digests = _artifact_digests(artifact_identity, commit)
     artifact_digests[str(artifact_identity)] = _sha256(artifact_identity)
+    artifacts = list(artifact_digests)
     if sbom is not None:
         _validate_sbom(sbom)
         artifacts.append(str(sbom))
