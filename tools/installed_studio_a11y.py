@@ -13,9 +13,9 @@ from threading import Thread
 from playwright.sync_api import sync_playwright
 
 try:
-    from tools.installed_studio_browser_smoke import unpack_web
+    from tools.installed_studio_browser_smoke import unpack_web as _unpack_web
 except ModuleNotFoundError:  # Direct ``python tools/...`` execution.
-    from installed_studio_browser_smoke import unpack_web
+    from installed_studio_browser_smoke import unpack_web as _unpack_web  # type: ignore[import-untyped, no-redef]
 
 VIEWPORTS = ((320, 800), (768, 1024), (1440, 900))
 
@@ -39,7 +39,7 @@ def main() -> int:
         raise SystemExit("run npm ci before the accessibility audit")
 
     with tempfile.TemporaryDirectory(prefix="ronin-installed-a11y-") as temporary:
-        web_root = unpack_web(args.wheel, Path(temporary))
+        web_root = _unpack_web(args.wheel, Path(temporary))
         manifest = json.loads((web_root / "routes.json").read_text(encoding="utf-8"))
         routes = tuple(item["id"] for item in manifest)
 

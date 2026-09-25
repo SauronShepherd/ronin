@@ -12,13 +12,14 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
+from typing import cast
 
 from playwright.sync_api import sync_playwright
 
 try:
-    from tools.check_web_assets import referenced_assets
+    from tools.check_web_assets import referenced_assets as _referenced_assets
 except ModuleNotFoundError:  # Direct ``python tools/...`` execution.
-    from check_web_assets import referenced_assets
+    from check_web_assets import referenced_assets as _referenced_assets  # type: ignore[import-untyped, no-redef]
 
 ROUTES = ()
 
@@ -27,26 +28,30 @@ def unpack_web(artifact: Path, destination: Path) -> Path:
     web_root = destination / "web"
     if artifact.name.endswith(".whl"):
         with zipfile.ZipFile(artifact) as archive:
-            members = [name for name in archive.namelist() if ".data/data/share/ronin/web/" in name]
-            if not members:
+            wheel_members = [
+                name for name in archive.namelist() if ".data/data/share/ronin/web/" in name
+            ]
+            if not wheel_members:
                 raise RuntimeError("wheel does not contain installed Studio data files")
-            prefix = next(name.split(".data/data/share/ronin/web/", 1)[0] for name in members)
-            for name in members:
+            prefix = next(
+                name.split(".data/data/share/ronin/web/", 1)[0] for name in wheel_members
+            )
+            for name in wheel_members:
                 relative = name.split(f"{prefix}.data/data/share/ronin/web/", 1)[1]
                 target = web_root / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(archive.read(name))
     else:
         with tarfile.open(artifact, mode="r:gz") as archive:
-            members = [
+            sdist_members: list[tarfile.TarInfo] = [
                 member
                 for member in archive.getmembers()
                 if "/web/" in member.name and member.isfile()
             ]
-            if not members:
+            if not sdist_members:
                 raise RuntimeError("sdist does not contain Studio data files")
-            marker = next(member.name.index("/web/") for member in members)
-            for member in members:
+            marker = next(member.name.index("/web/") for member in sdist_members)
+            for member in sdist_members:
                 source = archive.extractfile(member)
                 if source is None:
                     raise RuntimeError(f"cannot read sdist member: {member.name}")
@@ -59,7 +64,7 @@ def unpack_web(artifact: Path, destination: Path) -> Path:
 def qualify(wheel: Path) -> dict[str, object]:
     with tempfile.TemporaryDirectory(prefix="ronin-installed-studio-") as temporary:
         web_root = unpack_web(wheel, Path(temporary))
-        missing = sorted(path for path in referenced_assets(web_root) if not path.is_file())
+        missing = sorted(path for path in _referenced_assets(web_root) if not path.is_file())
         if missing:
             raise AssertionError(
                 "installed Studio import graph references missing assets: "
@@ -162,14 +167,14 @@ def qualify(wheel: Path) -> dict[str, object]:
         failures = [
             page
             for page in pages
-            if page["status"] != 1
-            or page["h1"] != 1
-            or page["main"] != 1
-            or page["nav"] != 1
-            or page["overflow"]
-            or page["smoke_selector_count"] < 1
+            if cast(int, page["status"]) != 1
+            or cast(int, page["h1"]) != 1
+            or cast(int, page["main"]) != 1
+            or cast(int, page["nav"]) != 1
+            or cast(bool, page["overflow"])
+            or cast(int, page["smoke_selector_count"]) < 1
         ]
-        result = {
+        result: dict[str, object] = {
             "wheel": str(wheel),
             "routes": pages,
             "console_errors": console_errors,
