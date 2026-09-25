@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-09-25. The implementation branch is
 committed and pushed; generated local qualification artifacts remain untracked.
-**Observed source head:** `e8169a8d8d14f40e220ce4f46c6755de3ad3f67f` (2026-09-25).
+**Observed source head:** `6873a9a` (2026-09-25).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
