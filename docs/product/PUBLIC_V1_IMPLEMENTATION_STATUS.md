@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-09-25. The implementation branch is
 committed and pushed; generated local qualification artifacts remain untracked.
-**Observed source head:** `2dcb84089f042d98abd6f8f0796d40c964d386b5` (2026-09-25).
+**Observed source head:** `863bdd5c4d0d748bbecb6ebbb5d25a7a3ea79e32` (2026-09-25).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -30,7 +30,7 @@ not Public v1 completion.
 
 ## Local verification on this snapshot
 
-On Windows, `python -m pytest -q` produced **2050 passed, 21 skipped**.
+On Windows, `python -m pytest -q` produced **2089 passed, 21 skipped**.
 Additional exact-head evidence on this snapshot includes Docker qualification
 (21 passed), real PostgreSQL integration (11 passed), the installed-wheel
 browser smoke (no console/request/CSP failures), installed-wheel accessibility
