@@ -103,7 +103,7 @@ def discover_plugins(
     selected = (
         entry_points.select(group=group)
         if hasattr(entry_points, "select")
-        else entry_points.get(group, ())
+        else getattr(entry_points, "get")(group, ())
     )
     for entry_point in sorted(selected, key=lambda item: item.name):
         try:
