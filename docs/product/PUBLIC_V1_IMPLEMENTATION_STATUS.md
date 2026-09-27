@@ -42,8 +42,8 @@ browser smoke (no console/request/CSP failures), installed-wheel accessibility
 (no violations at 320/768/1440 px), and four credential-free migration fixture
 certifications. These checks do not constitute Public v1 release qualification.
 
-The latest recorded WSL mutation campaign completed 4,211 mutants: 3,524
-killed, 679 survived, and 8 timed out. That is **83.7% killed of all mutants**,
+The latest recorded WSL mutation campaign completed 4,211 mutants: 3,537
+killed, 674 survived, and 0 timed out. That is **83.99% killed of all mutants**,
 below the repository's 90% mutation gate. The campaign must be regenerated for
 the final candidate before release evidence is accepted.
 The campaign therefore remains a release blocker; its temporary workspace and

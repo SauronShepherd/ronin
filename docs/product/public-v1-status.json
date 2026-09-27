@@ -12,11 +12,11 @@
     "qualification_claimed": false,
     "mutation_campaign": {
       "total": 4211,
-      "killed": 3524,
-      "survived": 679,
-      "timeout": 8,
-      "killed_percent_non_timeout": 83.69,
-      "killed_percent_all": 83.69,
+      "killed": 3537,
+      "survived": 674,
+      "timeout": 0,
+      "killed_percent_non_timeout": 83.99,
+      "killed_percent_all": 83.99,
       "gate_percent": 90.0,
       "gate_status": "blocked"
     }
