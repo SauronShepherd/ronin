@@ -82,7 +82,7 @@ def test_freeze_value_rejects_non_string_mapping_keys_unsupported_and_nonfinite_
         with pytest.raises(TypeError, match="unsupported"):
             freeze_value(value)
     for value in (float("nan"), float("inf"), float("-inf")):
-        with pytest.raises(ValueError, match="finite"):
+        with pytest.raises(ValueError, match=r"^IR float values must be finite$"):
             freeze_value(value)
 
 
@@ -203,36 +203,36 @@ def test_empty_pipeline_round_trips() -> None:
 
 def test_pipeline_rejects_duplicate_node_ids() -> None:
     node = _node("duplicate")
-    with pytest.raises(ValueError, match="duplicate"):
+    with pytest.raises(ValueError, match=r"^duplicate node id$"):
         Pipeline((node, node))
 
 
 def test_pipeline_rejects_edge_to_unknown_node() -> None:
     source = _node("source", outputs=(BATCH_OUT,))
-    with pytest.raises(ValueError, match="unknown node"):
+    with pytest.raises(ValueError, match=r"^edge references unknown node$"):
         Pipeline((source,), (Edge(source.id, "out", NodeId("missing"), "in"),))
-    with pytest.raises(ValueError, match="unknown node"):
+    with pytest.raises(ValueError, match=r"^edge references unknown node$"):
         Pipeline((source,), (Edge(NodeId("missing"), "out", source.id, "in"),))
 
 
 def test_pipeline_rejects_missing_or_duplicate_port_name() -> None:
     source = _node("source", outputs=(BATCH_OUT, BATCH_OUT))
     sink = _node("sink", inputs=(BATCH_IN,))
-    with pytest.raises(ValueError, match="exactly once"):
+    with pytest.raises(ValueError, match=r"^port 'out' does not exist exactly once$"):
         Pipeline((source, sink), (Edge(source.id, "out", sink.id, "in"),))
 
 
 def test_pipeline_rejects_port_kind_mismatch() -> None:
     source = _node("source", outputs=(STREAM_OUT,))
     sink = _node("sink", inputs=(BATCH_IN,))
-    with pytest.raises(ValueError, match="port kinds"):
+    with pytest.raises(ValueError, match=r"^edge connects incompatible port kinds$"):
         Pipeline((source, sink), (Edge(source.id, "out", sink.id, "in"),))
 
 
 def test_pipeline_rejects_schema_mismatch() -> None:
     source = _node("source", outputs=(Port("out", "batch", SchemaRef("a")),))
     sink = _node("sink", inputs=(Port("in", "batch", SchemaRef("b")),))
-    with pytest.raises(ValueError, match="schemas"):
+    with pytest.raises(ValueError, match=r"^edge connects incompatible schemas$"):
         Pipeline((source, sink), (Edge(source.id, "out", sink.id, "in"),))
 
 
@@ -257,7 +257,7 @@ def test_pipeline_rejects_cycle() -> None:
         Edge(left.id, "out", right.id, "in"),
         Edge(right.id, "out", left.id, "in"),
     )
-    with pytest.raises(ValueError, match="cycle"):
+    with pytest.raises(ValueError, match=r"^pipeline contains a cycle$"):
         Pipeline((left, right), edges)
 
 

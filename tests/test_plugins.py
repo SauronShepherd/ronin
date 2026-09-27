@@ -117,7 +117,7 @@ def test_duplicate_routes_are_rejected() -> None:
         "GET", "/v1/workspaces", context.plugin_id, lambda: [], permission="other:read"
     )
     second = __import_record(second_plugin)
-    with pytest.raises(PluginValidationError, match="route collision"):
+    with pytest.raises(PluginValidationError, match=r"^route collision:"):
         PluginManager().compose((first, second))
 
 
@@ -132,7 +132,7 @@ def test_route_requires_manifest_permission() -> None:
         )
 
     plugin.register = register_without_permission
-    with pytest.raises(PluginValidationError, match="not declared"):
+    with pytest.raises(PluginValidationError, match=r"^route permission '.*' is not declared by "):
         PluginManager().compose((__import_record(plugin),))
 
 
@@ -146,7 +146,7 @@ def test_missing_dependency_is_rejected() -> None:
         host_requires=plugin.manifest.host_requires,
         dependencies=(PluginDependency("com.example.missing"),),
     )
-    with pytest.raises(PluginValidationError, match="missing plugin dependencies"):
+    with pytest.raises(PluginValidationError, match=r"^missing plugin dependencies:"):
         PluginManager().compose((__import_record(plugin),))
 
 

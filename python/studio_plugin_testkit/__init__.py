@@ -31,15 +31,21 @@ def validate_plugin(
     manager = PluginManager(host_version=host_version, plugin_api=plugin_api)
     plan = manager.compose((PluginRecord(plugin.manifest, plugin, "testkit"),), services=services)
     states = manager.start(plan)
+    ui_surfaces = tuple(
+        sorted(
+            str(item.get("id"))
+            for contribution in plan.contributions.ui_registry.items
+            for item in contribution.manifest.get("navigation", ())
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        )
+    )
     try:
         return PluginContractReport(
             plugin_id=plugin.manifest.id,
             capabilities=tuple(sorted(plan.contributions.capabilities)),
             permissions=tuple(sorted(plan.contributions.permissions)),
             routes=tuple((item.method, item.path) for item in plan.contributions.routes),
-            ui_surfaces=tuple(
-                sorted(item.plugin_id for item in plan.contributions.ui_registry.items)
-            ),
+            ui_surfaces=ui_surfaces,
             settings_schema=plugin.manifest.config_schema,
             isolation=plugin.manifest.isolation,
             states=tuple(item.state.value for item in states),

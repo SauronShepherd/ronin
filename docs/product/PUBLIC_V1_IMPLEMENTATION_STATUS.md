@@ -4,9 +4,11 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-09-25. The implementation branch is
-committed and pushed; generated local qualification artifacts remain untracked.
-**Observed source head:** `3774bf43b8b9fb1b546d779a874725d1ab8d6923` (2026-09-25).
+**Observed workspace snapshot:** 2026-09-27. The implementation branch contains
+four local test/testkit changes; generated local qualification artifacts are
+ignored and are not release evidence.
+**Observed source head:** the candidate SHA must be captured after committing
+the current changes; historical SHA evidence is not current-head evidence.
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -30,8 +32,9 @@ not Public v1 completion.
 
 ## Local verification on this snapshot
 
-On Windows, `python -m pytest -q` produced **2098 passed, 21 skipped** in
-19m52s. The skips are environment-gated Docker/PostgreSQL/Spark/provider
+On Windows, the latest affected-test verification produced **95 passed** and
+the full `python -m pytest -q` verification produced **2103 passed, 21 skipped**.
+The skips are environment-gated Docker/PostgreSQL/Spark/provider
 qualification checks, not test failures.
 Additional exact-head evidence on this snapshot includes Docker qualification
 (21 passed), real PostgreSQL integration (11 passed), the installed-wheel
@@ -39,10 +42,10 @@ browser smoke (no console/request/CSP failures), installed-wheel accessibility
 (no violations at 320/768/1440 px), and four credential-free migration fixture
 certifications. These checks do not constitute Public v1 release qualification.
 
-The latest exact-head WSL mutation campaign completed 4,211 mutants: 3,525
-killed, 681 survived, and 5 timed out. That is **83.8% killed of non-timeout
-mutants** (83.7% of all generated mutants), below the repository's 90% mutation
-gate.
+The latest recorded WSL mutation campaign completed 4,211 mutants: 3,524
+killed, 679 survived, and 8 timed out. That is **83.7% killed of all mutants**,
+below the repository's 90% mutation gate. The campaign must be regenerated for
+the final candidate before release evidence is accepted.
 The campaign therefore remains a release blocker; its temporary workspace and
 generated reports are intentionally not part of the tracked source tree.
 

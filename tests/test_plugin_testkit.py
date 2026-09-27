@@ -37,6 +37,25 @@ class _Plugin:
         return {"status": "ok"}
 
 
+class _UiPlugin(_Plugin):
+    manifest = PluginManifest(
+        id="com.example.ui",
+        name="Example UI",
+        version="1.0.0",
+        plugin_api="1.0",
+        capabilities=("example.read",),
+        permissions=("example:read",),
+        ui_entry="example.ui:MANIFEST",
+    )
+
+    def register(self, context) -> None:
+        super().register(context)
+        context.contributions.add_ui(
+            context.plugin_id,
+            {"navigation": [{"id": "example-home"}, {"id": "example-settings"}]},
+        )
+
+
 def test_external_plugin_testkit_validates_contract() -> None:
     plugin = _Plugin()
     report = assert_plugin_ready(plugin)
@@ -58,3 +77,8 @@ def test_testkit_reports_degraded_optional_plugin() -> None:
     with pytest.raises(AssertionError, match="did not become ready"):
         assert_plugin_ready(plugin)
     assert plugin.started is False
+
+
+def test_external_plugin_testkit_reports_declared_ui_surface_ids() -> None:
+    report = assert_plugin_ready(_UiPlugin())
+    assert report.ui_surfaces == ("example-home", "example-settings")
