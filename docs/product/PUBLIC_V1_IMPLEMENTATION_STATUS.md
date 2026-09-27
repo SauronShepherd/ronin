@@ -7,8 +7,7 @@
 **Observed workspace snapshot:** 2026-09-27. The implementation branch contains
 four local test/testkit changes; generated local qualification artifacts are
 ignored and are not release evidence.
-**Observed source head:** the candidate SHA must be captured after committing
-the current changes; historical SHA evidence is not current-head evidence.
+**Observed source head:** `b812e4bff078b7e61f0ebba0127b2664cf2a66dd` (2026-09-27).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
