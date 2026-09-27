@@ -22,6 +22,7 @@ def test_third_party_tutorial_builds_and_discovers_from_wheel(tmp_path: Path) ->
             "wheel",
             str(source),
             "--no-deps",
+            "--no-build-isolation",
             "--wheel-dir",
             str(wheelhouse),
         ],
