@@ -2,6 +2,7 @@ import json
 from dataclasses import FrozenInstanceError
 
 import pytest
+
 from studio_core import (
     PROJECT_MANIFEST_PATH,
     PROJECT_MANIFEST_SCHEMA,

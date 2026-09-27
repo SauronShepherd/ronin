@@ -1,6 +1,6 @@
 {
   "lock_file": "requirements-dev.lock",
-  "lock_sha256": "976a3d8148eb5d89ced8f6f34eb9e7d24719f5817ec30d85e1820c74ca416a30",
+  "lock_sha256": "8c5cc077a7c1362179d76696f53f33427aed2193c263505e766a6a19388ce62b",
   "packages": [
     {
       "declared_license": "BSD-3-Clause",
@@ -74,6 +74,23 @@
       "package": "hypothesis",
       "source": "https://hypothesis.works",
       "version": "6.167.1"
+    },
+    {
+      "declared_license": "Apache-2.0",
+      "declared_license_files": [
+        "LICENSE"
+      ],
+      "direct": true,
+      "evidence_sha256": "2ee1bcb3cf9f28abb980bdfefd35031f214ba67fb60987530070c7baaf4b77a1",
+      "license_files": [
+        {
+          "path": "pytest_asyncio-1.4.0.dist-info/licenses/LICENSE",
+          "sha256": "a8ad31b1c3f40dca5a84119351b8fa8ddc868edd77fad8a8ebf6d8f2d16fa4ae"
+        }
+      ],
+      "package": "pytest-asyncio",
+      "source": "https://github.com/pytest-dev/pytest-asyncio",
+      "version": "1.4.0"
     },
     {
       "declared_license": "MIT",

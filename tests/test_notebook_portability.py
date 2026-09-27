@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 import pytest
+
 from studio_notebook import (
     NOTEBOOK_DOCUMENT_SCHEMA,
     CellId,

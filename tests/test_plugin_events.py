@@ -1,0 +1,211 @@
+from __future__ import annotations
+
+from dataclasses import replace
+
+import pytest
+
+from studio_core.plugin_events import (
+    InMemoryInbox,
+    InMemoryOutbox,
+    PluginEventError,
+    PluginEventSchema,
+    PluginEventSchemaRegistry,
+    new_event,
+)
+
+
+def _event(payload: dict[str, object] | None = None):
+    return new_event(
+        event_id="event-1",
+        event_type="projects.created.v1",
+        producer="example",
+        tenant_id="tenant-1",
+        correlation_id="correlation-1",
+        occurred_at="2026-01-01T00:00:00Z",
+        payload=payload or {"project_id": "project-1"},
+    )
+
+
+def test_outbox_append_is_idempotent_and_conflicts_fail_closed() -> None:
+    outbox = InMemoryOutbox(max_events=2)
+    first = outbox.append(_event())
+
+    assert outbox.append(first.event) == first
+    with pytest.raises(PluginEventError, match="conflict"):
+        outbox.append(_event({"project_id": "different"}))
+    assert outbox.pending()[0].event.event_id == "event-1"
+    outbox.mark_published("event-1")
+    assert outbox.pending() == ()
+
+
+def test_outbox_pending_is_bounded_in_insertion_order_and_publish_is_idempotent() -> None:
+    outbox = InMemoryOutbox(max_events=3)
+    first = _event()
+    second = replace(first, event_id="event-2")
+    third = replace(first, event_id="event-3")
+    outbox.append(first)
+    outbox.append(second)
+    outbox.append(third)
+
+    assert tuple(item.event.event_id for item in outbox.pending(limit=2)) == (
+        "event-1",
+        "event-2",
+    )
+    outbox.mark_published("event-1")
+    outbox.mark_published("event-1")
+    assert tuple(item.event.event_id for item in outbox.pending()) == (
+        "event-2",
+        "event-3",
+    )
+
+
+def test_outbox_rejects_invalid_limits_and_unknown_publication() -> None:
+    with pytest.raises(ValueError, match="max_events"):
+        InMemoryOutbox(max_events=0)
+    outbox = InMemoryOutbox()
+    with pytest.raises(ValueError, match="between 1 and 1000"):
+        outbox.pending(limit=0)
+    with pytest.raises(ValueError, match="between 1 and 1000"):
+        outbox.pending(limit=1001)
+    with pytest.raises(KeyError):
+        outbox.mark_published("missing")
+
+
+def test_inbox_applies_duplicate_event_only_once() -> None:
+    inbox = InMemoryInbox()
+    seen: list[str] = []
+
+    event = _event()
+    assert inbox.process_once("consumer", event, lambda item: seen.append(item.event_id))
+    assert not inbox.process_once("consumer", event, lambda item: seen.append(item.event_id))
+    assert seen == ["event-1"]
+
+
+def test_inbox_retries_after_handler_failure() -> None:
+    inbox = InMemoryInbox()
+    attempts = 0
+
+    def handler(_event) -> None:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise RuntimeError("transient")
+
+    with pytest.raises(RuntimeError, match="transient"):
+        inbox.process_once("consumer", _event(), handler)
+
+    assert inbox.process_once("consumer", _event(), handler)
+    assert attempts == 2
+
+
+def test_inbox_does_not_consume_capacity_or_mark_event_on_handler_failure() -> None:
+    inbox = InMemoryInbox(max_events=1)
+
+    def fail(_event) -> None:
+        raise RuntimeError("failed")
+
+    with pytest.raises(RuntimeError, match="failed"):
+        inbox.process_once("consumer", _event(), fail)
+
+    assert inbox.process_once("consumer", _event(), lambda _event: None)
+
+
+def test_inbox_deduplicates_per_consumer_not_globally() -> None:
+    inbox = InMemoryInbox()
+    seen: list[str] = []
+
+    assert inbox.process_once("consumer-a", _event(), lambda _event: seen.append("a"))
+    assert inbox.process_once("consumer-b", _event(), lambda _event: seen.append("b"))
+    assert seen == ["a", "b"]
+
+
+def test_inbox_rejects_invalid_capacity_and_enforces_limit() -> None:
+    with pytest.raises(ValueError, match="max_events"):
+        InMemoryInbox(max_events=0)
+
+    inbox = InMemoryInbox(max_events=1)
+    assert inbox.process_once("consumer", _event(), lambda _event: None)
+    second = replace(_event(), event_id="event-2")
+    with pytest.raises(PluginEventError, match="capacity"):
+        inbox.process_once("consumer", second, lambda _event: None)
+
+
+def test_event_requires_versioned_type_and_valid_identity() -> None:
+    event = _event()
+    invalid = replace(event, event_type="projects.created")
+
+    with pytest.raises(PluginEventError, match="schema version"):
+        invalid.validate()
+
+    with pytest.raises(PluginEventError, match="causation_id"):
+        replace(event, causation_id=" ").validate()
+
+    with pytest.raises(PluginEventError, match="identity fields"):
+        replace(event, producer=" example").validate()
+    with pytest.raises(PluginEventError, match="RFC-3339"):
+        replace(event, occurred_at="2026-01-01T00:00:00+00:00").validate()
+    with pytest.raises(PluginEventError, match="schema_version"):
+        replace(event, schema_version=0).validate()
+
+
+def test_new_event_preserves_causation_and_digest_binds_it() -> None:
+    event = new_event(
+        event_id="event-2",
+        event_type="projects.created.v1",
+        producer="example",
+        tenant_id="tenant-1",
+        correlation_id="correlation-1",
+        occurred_at="2026-01-01T00:00:00Z",
+        causation_id="event-1",
+        payload={"project_id": "project-1"},
+    )
+
+    assert event.causation_id == "event-1"
+    assert event.digest() != replace(event, causation_id=None).digest()
+
+
+def test_event_and_inbox_reject_non_object_payload_and_invalid_consumer() -> None:
+    with pytest.raises(PluginEventError, match="payload must be an object"):
+        replace(_event(), payload=["not", "an", "object"]).validate()
+    with pytest.raises(PluginEventError, match="consumer_id"):
+        InMemoryInbox().process_once(" ", _event(), lambda _event: None)
+
+
+def test_event_schema_registry_validates_payload_contract() -> None:
+    schemas = PluginEventSchemaRegistry()
+    schemas.register(PluginEventSchema("projects.created.v1", 1, ("project_id",)))
+    schemas.validate(_event())
+
+    with pytest.raises(PluginEventError, match="missing fields"):
+        schemas.validate(_event({"name": "missing-id"}))
+
+    with pytest.raises(PluginEventError, match="version mismatch"):
+        schemas.validate(replace(_event(), schema_version=2))
+
+
+def test_event_schema_registry_rejects_unknown_event_type_and_empty_payload() -> None:
+    schemas = PluginEventSchemaRegistry()
+    schemas.register(PluginEventSchema("projects.created.v1", 1, ("project_id",)))
+
+    with pytest.raises(PluginEventError, match="unknown event schema"):
+        schemas.validate(replace(_event(), event_type="unknown.v1"))
+    with pytest.raises(PluginEventError, match="missing fields"):
+        schemas.validate(replace(_event(), payload={}))
+
+
+def test_event_schema_registry_rejects_invalid_duplicates_and_sorts_items() -> None:
+    schemas = PluginEventSchemaRegistry()
+    with pytest.raises(PluginEventError, match="duplicate"):
+        schemas.register(PluginEventSchema("projects.created.v1", 1, ("id", "id")))
+    schemas.register(PluginEventSchema("z.last.v1", 1))
+    schemas.register(PluginEventSchema("a.first.v1", 1))
+    with pytest.raises(PluginEventError, match="collision"):
+        schemas.register(PluginEventSchema("a.first.v1", 1))
+    with pytest.raises(PluginEventError, match="positive versioned"):
+        schemas.register(PluginEventSchema("broken.v0", 0))
+    with pytest.raises(PluginEventError, match="positive versioned"):
+        schemas.register(PluginEventSchema("broken.v1", 2))
+    assert tuple(schema.event_type for schema in schemas.items) == (
+        "a.first.v1",
+        "z.last.v1",
+    )

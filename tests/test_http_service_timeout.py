@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+
 from studio_server.http import ServiceTimeoutError, _ServiceLoop
 
 

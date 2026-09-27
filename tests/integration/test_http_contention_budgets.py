@@ -12,12 +12,12 @@ from threading import Event, Thread
 
 import pytest
 from pyronin import HTTPTransport, Ronin
+
 from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant, Job, JobId
 from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
-
 from tools.performance_artifact import build_artifact
 
 _MIGRATION_NOW = Instant("2026-09-07T07:30:00.000000Z")

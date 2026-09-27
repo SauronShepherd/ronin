@@ -1,4 +1,5 @@
 import pytest
+
 from studio_observability import MetricPoint, TelemetryEvent, instrument_execution
 from studio_orchestrator import Instant
 

@@ -143,6 +143,13 @@
       "attribution_required": false,
       "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
     },
+    "pytest-asyncio==1.4.0": {
+      "decision": "allow",
+      "evidence_sha256": "2ee1bcb3cf9f28abb980bdfefd35031f214ba67fb60987530070c7baaf4b77a1",
+      "notice_required": false,
+      "attribution_required": false,
+      "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
+    },
     "pytest-cov==6.3.0": {
       "decision": "allow",
       "evidence_sha256": "0ac1c8b37720c93c3692d4d950375353593394825ca3f395c1be56b589da98c7",

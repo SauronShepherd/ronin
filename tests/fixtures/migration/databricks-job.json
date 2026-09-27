@@ -1,0 +1,16 @@
+{
+  "id": "golden-databricks",
+  "name": "Golden Databricks job",
+  "tasks": [
+    {
+      "task_key": "extract",
+      "notebook_task": {"notebook_path": "/Shared/extract", "base_parameters": {"date": "2026-01-01"}}
+    },
+    {
+      "task_key": "publish",
+      "depends_on": [{"task_key": "extract"}],
+      "notebook_task": {"notebook_path": "/Shared/publish"}
+    }
+  ],
+  "schedule": {"cron": "0 0 * * *"}
+}

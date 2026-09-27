@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import sqlite3
+from collections.abc import Mapping
 from pathlib import Path
 from typing import cast
 
@@ -21,14 +22,15 @@ from studio_core import (
     WorkflowRunId,
     WorkspaceId,
 )
+from studio_core.branching import BranchDecision, Scalar, evaluate_branch
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_orchestrator import Instant
 
 from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
 
-_SCHEDULER_SCHEMA_VERSION = 1
-_SCHEDULER_MIGRATIONS = {1: "scheduler_001.sql"}
+_SCHEDULER_SCHEMA_VERSION = 2
+_SCHEDULER_MIGRATIONS = {1: "scheduler_001.sql", 2: "scheduler_002_branch_state.sql"}
 
 
 class WorkflowConflict(RuntimeError):
@@ -343,7 +345,7 @@ class SqliteSchedulerStore:
         connection = self._connect()
         try:
             rows = connection.execute(
-                "SELECT * FROM task_runs "
+                "SELECT task_run_id,workflow_run_id,node_id,state,attempt_count FROM task_runs "
                 "WHERE workspace_id=? AND workflow_run_id=? ORDER BY node_id",
                 (str(workspace_id), str(run_id)),
             ).fetchall()
@@ -357,5 +359,71 @@ class SqliteSchedulerStore:
                 )
                 for row in rows
             )
+        finally:
+            connection.close()
+
+    def apply_branch_decision(
+        self,
+        workspace_id: WorkspaceId,
+        run_id: WorkflowRunId,
+        node_id: NodeId,
+        expression: object,
+        context: Mapping[str, object],
+        *,
+        now: Instant | str,
+    ) -> BranchDecision:
+        """Evaluate and durably persist one replay-safe branch decision."""
+        now = Instant(now)
+        decision = evaluate_branch(expression, cast(Mapping[str, Scalar], context))
+        task_id = _task_run_id(run_id, node_id.value)
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT state,branch_decision_json FROM task_runs "
+                "WHERE workspace_id=? AND workflow_run_id=? AND node_id=?",
+                (str(workspace_id), str(run_id), node_id.value),
+            ).fetchone()
+            if row is None:
+                raise WorkflowNotFound(f"task run for node {node_id} does not exist")
+            payload = decision.to_json()
+            if row["branch_decision_json"] is not None and row["branch_decision_json"] != payload:
+                raise WorkflowRunConflict(
+                    "branch decision already persisted with different content"
+                )
+            if row["branch_decision_json"] is None:
+                connection.execute(
+                    "UPDATE task_runs SET state=?,branch_decision_json=?,updated_at=? "
+                    "WHERE workspace_id=? AND task_run_id=?",
+                    (
+                        "pending" if decision.should_run else "blocked",
+                        payload,
+                        now,
+                        str(workspace_id),
+                        str(task_id),
+                    ),
+                )
+            connection.execute("COMMIT")
+            return decision
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
+    def get_branch_decision(
+        self, workspace_id: WorkspaceId, run_id: WorkflowRunId, node_id: NodeId
+    ) -> BranchDecision | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT branch_decision_json FROM task_runs "
+                "WHERE workspace_id=? AND workflow_run_id=? AND node_id=?",
+                (str(workspace_id), str(run_id), node_id.value),
+            ).fetchone()
+            if row is None or row["branch_decision_json"] is None:
+                return None
+            return BranchDecision.from_json(row["branch_decision_json"])
         finally:
             connection.close()

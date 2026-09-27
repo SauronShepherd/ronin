@@ -106,11 +106,16 @@ def main() -> int:
         )
         database = Path(_env("RONIN_DB", ".ronin/ronin.sqlite3")).expanduser().resolve()
         workspace = Path(_env("RONIN_WORKSPACE", ".")).expanduser().resolve()
+        storage_backend = _env("RONIN_STORAGE_BACKEND", "sqlite").casefold()
+        if storage_backend not in {"sqlite", "postgres"}:
+            raise ValueError("RONIN_STORAGE_BACKEND must be sqlite or postgres")
+        postgres_dsn = _env("RONIN_POSTGRES_DSN") if storage_backend == "postgres" else None
         config = LocalWorkerRuntimeConfig(
             paths=WorkerPaths(workspace, database.parent),
             owner=_env("RONIN_WORKER_OWNER", f"worker-{os.getpid()}"),
             image=image,
             database_name=database.name,
+            postgres_dsn=postgres_dsn,
         )
         broker = BrokerExecutorConfig(
             broker_url,

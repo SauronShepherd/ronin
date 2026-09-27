@@ -4,6 +4,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+
 from studio_storage import (
     BUNDLE_MANIFEST_PATH,
     BundleFile,

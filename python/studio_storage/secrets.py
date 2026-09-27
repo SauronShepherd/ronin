@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import stat
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -116,6 +118,10 @@ class MountedFileSecretResolver:
             raise SecretResolutionError("secret file is unavailable") from exc
         if not candidate.is_file():
             raise SecretResolutionError("secret file reference must resolve to a regular file")
+        if os.name != "nt" and stat_result.st_mode & (
+            stat.S_IRGRP | stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH
+        ):
+            raise SecretResolutionError("secret file permissions are too broad")
         if stat_result.st_size <= 0:
             raise SecretResolutionError("resolved secret is empty")
         if stat_result.st_size > self._max_secret_bytes:
@@ -134,9 +140,20 @@ class CompositeSecretResolver:
         *,
         environment: EnvironmentSecretResolver | None = None,
         mounted_file: MountedFileSecretResolver | None = None,
+        backends: Mapping[str, SecretResolver] | None = None,
     ) -> None:
         self._environment = environment
         self._mounted_file = mounted_file
+        configured = dict(backends or {})
+        if any(
+            not name
+            or name != name.strip()
+            or any(char in name for char in "/:\\\x00\r\n")
+            or name in {"env", "file"}
+            for name in configured
+        ):
+            raise ValueError("custom secret backend names are invalid or reserved")
+        self._backends = configured
 
     def resolve(self, reference: SecretRef) -> SecretMaterial:
         backend = urlsplit(reference.uri).netloc
@@ -144,6 +161,9 @@ class CompositeSecretResolver:
             return self._environment.resolve(reference)
         if backend == "file" and self._mounted_file is not None:
             return self._mounted_file.resolve(reference)
+        resolver = self._backends.get(backend)
+        if resolver is not None:
+            return resolver.resolve(reference)
         raise SecretResolutionError("secret backend is not configured")
 
 

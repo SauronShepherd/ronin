@@ -6,7 +6,6 @@ from dataclasses import dataclass, replace
 from enum import StrEnum
 
 from studio_core.canonical_json import decode as decode_canonical_json
-
 from studio_orchestrator.instants import Instant
 
 

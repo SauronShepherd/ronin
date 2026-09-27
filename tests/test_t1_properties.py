@@ -5,6 +5,7 @@ import json
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+
 from studio_core import Edge, Node, OperatorRef, Pipeline, Port, freeze_value
 
 _JSON_SCALARS = st.one_of(

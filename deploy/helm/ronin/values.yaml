@@ -12,3 +12,9 @@ server:
   replicas: 1
   token: ""
   tokenScopes: '{}'
+  profile: single-node
+  multiUser:
+    enabled: false
+    postgresDsnSecret:
+      name: ""
+      key: dsn

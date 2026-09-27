@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import signal
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from typing import Protocol
 
 from studio_core import WorkspaceId
 from studio_orchestrator import Instant, LeaseToken
@@ -26,6 +28,11 @@ from .scheduler_event_service import SchedulerEventService
 from .scheduler_leadership import LeaderFencedSchedulerController, SchedulerLeadershipGuard
 from .scheduler_schedule_service import SchedulerScheduleService
 
+
+class NotificationDispatcher(Protocol):
+    def dispatch_once(self) -> object: ...
+
+
 Clock = Callable[[], Instant]
 LeaderTokenFactory = Callable[[], LeaseToken]
 TaskAttemptFactory = Callable[[], TaskAttemptId]
@@ -33,6 +40,30 @@ TaskLeaseTokenFactory = Callable[[], LeaseToken]
 WorkProvider = Callable[[], "SchedulerDaemonWork"]
 StopRequested = Callable[[], bool]
 AsyncSleep = Callable[[float], Awaitable[None]]
+
+
+def install_scheduler_stop_signals(stop: Callable[[], None]) -> Callable[[], None]:
+    """Install SIGINT/SIGTERM handlers and return a restore callback.
+
+    The callback only records a stop request; the daemon loop remains
+    responsible for releasing its fenced leadership lease in ``finally``.
+    """
+
+    if not callable(stop):
+        raise TypeError("scheduler stop handler must be callable")
+    previous = {signum: signal.getsignal(signum) for signum in (signal.SIGINT, signal.SIGTERM)}
+
+    def handle(_signum: int, _frame: object) -> None:
+        stop()
+
+    for signum in previous:
+        signal.signal(signum, handle)
+
+    def restore() -> None:
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
+
+    return restore
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +86,7 @@ class SchedulerDaemonCycle:
     leader_generation: int | None
     schedule_fires: int = 0
     event_deliveries: int = 0
+    notification_deliveries: int = 0
     backfill_runs: int = 0
     controller_cycles: tuple[SchedulerControllerCycle, ...] = ()
 
@@ -81,6 +113,7 @@ class SchedulerDaemon:
         leader_token_factory: LeaderTokenFactory,
         task_attempt_factory: TaskAttemptFactory,
         task_lease_token_factory: TaskLeaseTokenFactory,
+        notification_dispatcher: NotificationDispatcher | None = None,
         leader_lease_seconds: int = 30,
         task_lease_seconds: int = 30,
     ) -> None:
@@ -100,6 +133,7 @@ class SchedulerDaemon:
         self._leader_token_factory = leader_token_factory
         self._task_attempt_factory = task_attempt_factory
         self._task_lease_token_factory = task_lease_token_factory
+        self._notification_dispatcher = notification_dispatcher
         self._leader_lease_seconds = leader_lease_seconds
         self._task_lease_seconds = task_lease_seconds
         self._lease: SchedulerLeaderLease | None = None
@@ -107,6 +141,20 @@ class SchedulerDaemon:
     @property
     def lease(self) -> SchedulerLeaderLease | None:
         return self._lease
+
+    def health(self) -> dict[str, object]:
+        """Return a bounded liveness snapshot without exposing lease secrets."""
+        lease = self._lease
+        return {
+            "status": "ok",
+            "owner": self._owner,
+            "leader": lease is not None,
+            "generation": None if lease is None else lease.generation,
+        }
+
+    def readiness(self) -> bool:
+        """Whether this instance currently owns scheduler authority."""
+        return self._lease is not None
 
     async def _acquire_or_renew(self) -> SchedulerLeaderLease | None:
         now = self._clock()
@@ -169,6 +217,11 @@ class SchedulerDaemon:
             event_result = await event_service.process_pending(workspace_id, now=now)
             event_deliveries += len(event_result.delivered)
 
+        notification_deliveries = 0
+        if self._notification_dispatcher is not None:
+            result = self._notification_dispatcher.dispatch_once()
+            notification_deliveries = int(getattr(result, "delivered", 0))
+
         backfill_runs = 0
         for target in work.backfills:
             now = self._clock()
@@ -206,6 +259,7 @@ class SchedulerDaemon:
             durable.generation,
             schedule_fires,
             event_deliveries,
+            notification_deliveries,
             backfill_runs,
             tuple(controller_cycles),
         )
@@ -240,6 +294,37 @@ class SchedulerDaemon:
             await self.release()
         return SchedulerDaemonLoopResult(cycles, leader_cycles)
 
+    async def run_until_signalled(
+        self,
+        *,
+        work_provider: WorkProvider,
+        interval_seconds: float = 1.0,
+        sleep: AsyncSleep = asyncio.sleep,
+    ) -> SchedulerDaemonLoopResult:
+        """Run the daemon as a process entrypoint with graceful signal shutdown.
+
+        Signal handlers only flip an in-process stop flag.  ``run_forever``
+        remains responsible for the final fenced lease release, and handlers
+        are restored when an embedding process exits this scope.
+        """
+
+        stopped = False
+
+        def request_stop() -> None:
+            nonlocal stopped
+            stopped = True
+
+        restore = install_scheduler_stop_signals(request_stop)
+        try:
+            return await self.run_forever(
+                work_provider=work_provider,
+                stop_requested=lambda: stopped,
+                interval_seconds=interval_seconds,
+                sleep=sleep,
+            )
+        finally:
+            restore()
+
     async def release(self) -> None:
         if self._lease is None:
             return
@@ -269,4 +354,5 @@ __all__ = (
     "TaskAttemptFactory",
     "TaskLeaseTokenFactory",
     "WorkProvider",
+    "install_scheduler_stop_signals",
 )

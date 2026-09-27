@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol, runtime_checkable
@@ -117,6 +118,7 @@ class OpenAICompatibleProvider:
         secrets: SecretResolver,
         *,
         record_usage: Callable[[str, str, int, int], None] | None = None,
+        record_telemetry: Callable[[dict[str, object]], None] | None = None,
     ) -> None:
         if provider.adapter not in {"openai-compatible", "openai_compatible"}:
             raise ValueError("provider metadata does not target the OpenAI-compatible adapter")
@@ -143,6 +145,7 @@ class OpenAICompatibleProvider:
             raise ValueError("provider timeout_seconds must be in (0, 600]")
         self._timeout = timeout
         self._record_usage = record_usage
+        self._record_telemetry = record_telemetry
 
     def _headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -161,6 +164,7 @@ class OpenAICompatibleProvider:
         self._require_model(model, "chat")
         if not messages:
             raise ValueError("chat requires at least one message")
+        started = time.perf_counter()
         httpx = _httpx()
         payload = {
             "model": model.model_id,
@@ -211,6 +215,18 @@ class OpenAICompatibleProvider:
             and result.output_tokens is not None
         ):
             self._record_usage(model.model_id, "chat", result.input_tokens, result.output_tokens)
+        if self._record_telemetry is not None:
+            self._record_telemetry(
+                {
+                    "provider_id": self._provider.id,
+                    "model_id": result.model_id,
+                    "operation": "chat",
+                    "input_tokens": result.input_tokens,
+                    "output_tokens": result.output_tokens,
+                    "latency_ms": round((time.perf_counter() - started) * 1000, 3),
+                    "cost": None,
+                }
+            )
         return result
 
     def embed(self, model: GenAIModel, texts: Sequence[str]) -> EmbeddingResult:
@@ -220,6 +236,7 @@ class OpenAICompatibleProvider:
         normalized = tuple(text for text in texts if text and "\x00" not in text)
         if len(normalized) != len(texts):
             raise ValueError("embedding texts must be non-empty and contain no NUL")
+        started = time.perf_counter()
         httpx = _httpx()
         with (
             httpx.Client(follow_redirects=False, timeout=self._timeout) as client,
@@ -252,10 +269,23 @@ class OpenAICompatibleProvider:
         if len(ordered) != len(normalized):
             raise ValueError("embedding provider returned unexpected vector count")
         returned_model = body.get("model")
-        return EmbeddingResult(
+        result = EmbeddingResult(
             tuple(vector for _, vector in ordered),
             returned_model if isinstance(returned_model, str) else model.model_id,
         )
+        if self._record_telemetry is not None:
+            self._record_telemetry(
+                {
+                    "provider_id": self._provider.id,
+                    "model_id": result.model_id,
+                    "operation": "embedding",
+                    "input_tokens": None,
+                    "output_tokens": None,
+                    "latency_ms": round((time.perf_counter() - started) * 1000, 3),
+                    "cost": None,
+                }
+            )
+        return result
 
 
 __all__ = (

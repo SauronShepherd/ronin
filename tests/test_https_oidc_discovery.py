@@ -6,6 +6,7 @@ from urllib.error import URLError
 from urllib.request import OpenerDirector
 
 import pytest
+
 from studio_security import HttpsOidcJwksProvider, OidcDiscoveryError
 
 _ISSUER = "https://issuer.example/tenant"

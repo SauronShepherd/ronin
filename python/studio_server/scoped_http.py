@@ -19,12 +19,12 @@ from studio_core.transport_policy import (
     parse_bind_policy,
 )
 from studio_execution import DurableExecutionService
-from studio_sql import SqlEngine
-from studio_storage import sqlite_ready
-
+from studio_migration import MigrationAPIRouter
 from studio_server.http import RoninHTTPServer as _RoninHTTPServer
 from studio_server.http import _Handler, _single_query_values
 from studio_server.transport_policy import is_loopback_host
+from studio_sql import SqlEngine
+from studio_storage import sqlite_ready
 
 _BIND_POLICY_ENV = "RONIN_BIND_POLICY"
 _REQUEST_TIMEOUT_ENV = "RONIN_HTTP_REQUEST_TIMEOUT_SECONDS"
@@ -159,6 +159,7 @@ class RoninHTTPServer(_RoninHTTPServer):
         grants: GrantSet,
         sql_engine: SqlEngine | None = None,
         readiness_probe: Callable[[], bool] | None = None,
+        migration_router: MigrationAPIRouter | None = None,
     ) -> None:
         host, _port = server_address
         policy = _bind_policy_from_env()
@@ -185,6 +186,7 @@ class RoninHTTPServer(_RoninHTTPServer):
             token=token,
             grants=grants,
             sql_engine=sql_engine,
+            migration_router=migration_router,
         )
         original_loop = self.application._loop
         cast(Any, self.application)._loop = _BoundedServiceLoop(

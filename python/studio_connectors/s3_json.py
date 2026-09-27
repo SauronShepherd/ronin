@@ -52,6 +52,9 @@ class S3JsonConnector:
             raise ValueError("S3 bucket must be a non-empty bucket name")
         if ".." in prefix.split("/"):
             raise ValueError("S3 prefix contains unsafe path components")
+        addressing_style = options.get("addressing_style", "auto")
+        if addressing_style not in {"auto", "path", "virtual"}:
+            raise ValueError("S3 addressing_style must be auto, path, or virtual")
         return bucket, prefix
 
     def _client_for(self, connection: ConnectionDefinition) -> Any:
@@ -59,6 +62,14 @@ class S3JsonConnector:
             return self._client
         options = dict(connection.options)
         kwargs = {key: options[key] for key in ("endpoint_url", "region_name") if options.get(key)}
+        try:
+            config_module = __import__("botocore.config", fromlist=["Config"])
+            kwargs["config"] = config_module.Config(
+                retries={"mode": "standard", "max_attempts": 3},
+                s3={"addressing_style": options.get("addressing_style", "auto")},
+            )
+        except ImportError:  # pragma: no cover - boto3 normally brings botocore
+            pass
         return _boto3().client("s3", **kwargs)
 
     def discover(

@@ -301,6 +301,57 @@ class RegisteredModelVersion:
     def to_json(self) -> str:
         return encode_canonical_json(self.to_payload()).decode("utf-8")
 
+    @classmethod
+    def from_payload(cls, payload: object) -> RegisteredModelVersion:
+        expected = {
+            "model_id",
+            "version",
+            "source_run_id",
+            "artifact_ref",
+            "artifact_digest",
+            "framework",
+            "signature",
+            "stage",
+        }
+        if not isinstance(payload, Mapping) or set(payload) != expected:
+            raise ValueError("registered model version has invalid shape")
+        text_fields = (
+            "model_id",
+            "version",
+            "source_run_id",
+            "artifact_ref",
+            "artifact_digest",
+            "framework",
+            "stage",
+        )
+        if not all(isinstance(payload[field], str) for field in text_fields):
+            raise ValueError("registered model version fields must be strings")
+        signature = payload["signature"]
+        if not isinstance(signature, Mapping):
+            raise ValueError("registered model signature must be an object")
+        inputs, outputs = signature.get("inputs"), signature.get("outputs")
+        if not isinstance(inputs, Mapping) or not isinstance(outputs, Mapping):
+            raise ValueError("registered model signature inputs/outputs must be objects")
+        if not all(
+            isinstance(key, str) and isinstance(value, str)
+            for key, value in (*inputs.items(), *outputs.items())
+        ):
+            raise ValueError("registered model signature entries must be strings")
+        return cls(
+            ModelId(payload["model_id"]),
+            ModelVersion(payload["version"]),
+            MLRunId(payload["source_run_id"]),
+            payload["artifact_ref"],
+            payload["artifact_digest"],
+            payload["framework"],
+            ModelSignature(tuple(inputs.items()), tuple(outputs.items())),
+            cast(ModelStage, payload["stage"]),
+        )
+
+    @classmethod
+    def from_json(cls, payload: str) -> RegisteredModelVersion:
+        return cls.from_payload(decode_canonical_json(payload))
+
 
 @dataclass(frozen=True, slots=True)
 class ModelEvaluation:
@@ -332,3 +383,42 @@ class ModelEvaluation:
 
     def to_json(self) -> str:
         return encode_canonical_json(self.to_payload()).decode("utf-8")
+
+    @classmethod
+    def from_payload(cls, payload: object) -> ModelEvaluation:
+        expected = {"model_id", "version", "dataset", "status", "metrics", "execution_ref"}
+        if not isinstance(payload, Mapping) or set(payload) != expected:
+            raise ValueError("model evaluation has invalid shape")
+        if not all(
+            isinstance(payload[field], str)
+            for field in ("model_id", "version", "status", "execution_ref")
+        ):
+            raise ValueError("model evaluation identity fields must be strings")
+        raw_metrics = payload["metrics"]
+        if not isinstance(raw_metrics, list):
+            raise ValueError("model evaluation metrics must be an array")
+        metrics: list[MetricValue] = []
+        for item in raw_metrics:
+            if not isinstance(item, Mapping) or set(item) != {"name", "value", "step"}:
+                raise ValueError("model evaluation metric has invalid shape")
+            if (
+                not isinstance(item["name"], str)
+                or not isinstance(item["value"], (int, float))
+                or isinstance(item["value"], bool)
+                or not isinstance(item["step"], int)
+                or isinstance(item["step"], bool)
+            ):
+                raise ValueError("model evaluation metric has invalid types")
+            metrics.append(MetricValue(item["name"], float(item["value"]), item["step"]))
+        return cls(
+            ModelId(payload["model_id"]),
+            ModelVersion(payload["version"]),
+            AssetRef.from_payload(payload["dataset"]),
+            cast(EvaluationStatus, payload["status"]),
+            tuple(metrics),
+            payload["execution_ref"],
+        )
+
+    @classmethod
+    def from_json(cls, payload: str) -> ModelEvaluation:
+        return cls.from_payload(decode_canonical_json(payload))

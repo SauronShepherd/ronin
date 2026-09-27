@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from studio_core import (
     AssetId,
     AssetRef,
@@ -24,7 +25,13 @@ from studio_core.ml import (
     ModelVersion,
     RegisteredModelVersion,
 )
-from studio_ml import list_registered_models, resolve_champion_model
+from studio_ml import (
+    commit_ml_registry_bundle_import,
+    export_ml_registry_bundle,
+    list_registered_models,
+    plan_ml_registry_bundle_import,
+    resolve_champion_model,
+)
 from studio_orchestrator import Instant
 from studio_storage.catalog import SqliteCatalogStore
 from studio_storage.ml import MLConflict, SqliteMLStore
@@ -33,6 +40,28 @@ from studio_storage.workspaces import SqliteWorkspaceStore
 _NOW = Instant("2026-09-12T00:00:00.000000Z")
 _WS = WorkspaceId("ws-1")
 _DATA = AssetRef(AssetId("dataset-1"), AssetVersion("v1"))
+
+
+def test_model_registry_contracts_round_trip_canonically() -> None:
+    model = RegisteredModelVersion(
+        ModelId("model-1"),
+        ModelVersion("1"),
+        MLRunId("run-1"),
+        "artifact://model-1",
+        "sha256:model",
+        "sklearn",
+        ModelSignature((("x", "float64"),), (("prediction", "float64"),)),
+    )
+    assert RegisteredModelVersion.from_json(model.to_json()) == model
+    evaluation = ModelEvaluation(
+        ModelId("model-1"),
+        ModelVersion("1"),
+        _DATA,
+        "passed",
+        (MetricValue("accuracy", 0.9),),
+        "execution-1",
+    )
+    assert ModelEvaluation.from_json(evaluation.to_json()) == evaluation
 
 
 def _stores(path: Path) -> tuple[SqliteMLStore, SqliteCatalogStore]:
@@ -78,6 +107,39 @@ def test_training_run_and_model_registry_preserve_provenance(tmp_path: Path) -> 
     assert store.get_experiment(_WS, experiment.id) == experiment
     assert store.get_run(_WS, run.id) == run
     assert store.get_model(_WS, model.model_id, model.version) == model
+
+
+def test_ml_registry_bundle_round_trip_preserves_experiments_runs_and_models(
+    tmp_path: Path,
+) -> None:
+    source, _catalog = _stores(tmp_path / "source.sqlite3")
+    experiment = Experiment(ExperimentId("exp-1"), "Baseline")
+    source.put_experiment(_WS, experiment, now=_NOW)
+    run = _run()
+    source.record_run(_WS, run, now=_NOW)
+    model = RegisteredModelVersion(
+        ModelId("model-1"),
+        ModelVersion("1"),
+        run.id,
+        "artifact://model-1",
+        "sha256:model",
+        "sklearn",
+        ModelSignature((("x", "float64"),), (("prediction", "float64"),)),
+    )
+    source.register_model(_WS, model, now=_NOW)
+
+    bundle = tmp_path / "ml-registry.roninbundle"
+    export_ml_registry_bundle(_WS, source, bundle)
+    plan = plan_ml_registry_bundle_import(bundle)
+    assert plan.experiments == (experiment,)
+    assert plan.runs == (run,)
+    assert plan.models == (model,)
+
+    target, _catalog = _stores(tmp_path / "target.sqlite3")
+    commit_ml_registry_bundle_import(bundle, _WS, target, now=_NOW)
+    assert target.list_experiments(_WS) == (experiment,)
+    assert target.list_runs(_WS) == (run,)
+    assert target.list_models(_WS) == (model,)
 
 
 def test_ml_run_id_reuse_with_different_content_fails_closed(tmp_path: Path) -> None:

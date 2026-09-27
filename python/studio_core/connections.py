@@ -83,12 +83,33 @@ class ConnectorCapabilities:
     incremental: bool = False
     stream: bool = False
     transactional_write: bool = False
+    schema: bool = False
+    predicate_pushdown: bool = False
+    watermark_types: tuple[str, ...] = ()
+    auth_modes: tuple[str, ...] = ()
+    lineage: bool = False
+    max_page_size: int | None = None
+    max_batch_size: int | None = None
 
     def __post_init__(self) -> None:
         if self.incremental and not self.read:
             raise ValueError("incremental capability requires read capability")
         if self.transactional_write and not self.write:
             raise ValueError("transactional_write capability requires write capability")
+        if any(not value or value != value.strip() for value in self.watermark_types):
+            raise ValueError("watermark types must be non-empty trimmed text")
+        if any(not value or value != value.strip() for value in self.auth_modes):
+            raise ValueError("auth modes must be non-empty trimmed text")
+        if len(set(self.watermark_types)) != len(self.watermark_types):
+            raise ValueError("watermark types must be unique")
+        if len(set(self.auth_modes)) != len(self.auth_modes):
+            raise ValueError("auth modes must be unique")
+        for name, value in (
+            ("max_page_size", self.max_page_size),
+            ("max_batch_size", self.max_batch_size),
+        ):
+            if value is not None and value < 1:
+                raise ValueError(f"{name} must be positive when provided")
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +181,12 @@ class SourceCheckpoint:
         if self.strategy not in {"cursor", "watermark", "snapshot"}:
             raise ValueError("unsupported checkpoint strategy")
         _require_text(self.value, "checkpoint value")
+
+    @property
+    def digest(self) -> str:
+        import hashlib
+
+        return hashlib.sha256(f"{self.strategy}:{self.value}".encode()).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)

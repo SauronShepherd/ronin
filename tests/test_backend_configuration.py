@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from studio_cli import CliError, _serve, _sql_engine_from_environment
 
 
@@ -12,6 +13,14 @@ def test_server_reports_postgres_initialization_failure_instead_of_fallback(
     monkeypatch.setenv("RONIN_POSTGRES_DSN", "postgresql://example.invalid/ronin")
 
     with pytest.raises(CliError, match="PostgreSQL backend initialization failed"):
+        _serve()
+
+
+def test_postgres_backend_requires_an_explicit_dsn(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RONIN_STORAGE_BACKEND", "postgres")
+    monkeypatch.delenv("RONIN_POSTGRES_DSN", raising=False)
+
+    with pytest.raises(CliError, match="RONIN_POSTGRES_DSN is required"):
         _serve()
 
 

@@ -62,6 +62,7 @@ class SemanticMeasure:
     name: str
     aggregation: Aggregation
     column: str | None = None
+    expression: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", _identifier(self.name, "measure name"))
@@ -71,13 +72,28 @@ class SemanticMeasure:
             object.__setattr__(self, "column", _identifier(self.column, "measure column"))
         if self.aggregation != "count" and self.column is None:
             raise ValueError("non-count measure requires a column")
+        if self.expression is not None:
+            _text(self.expression, "measure expression")
+            if not re.fullmatch(
+                r"[A-Za-z_][A-Za-z0-9_]*(?:\s*[+\-*/]\s*[A-Za-z_][A-Za-z0-9_]*)*", self.expression
+            ):
+                raise ValueError("measure expression contains unsupported syntax")
 
     def to_payload(self) -> dict[str, object]:
-        return {"name": self.name, "aggregation": self.aggregation, "column": self.column}
+        payload: dict[str, object] = {
+            "name": self.name,
+            "aggregation": self.aggregation,
+            "column": self.column,
+        }
+        if self.expression is not None:
+            payload["expression"] = self.expression
+        return payload
 
     @classmethod
     def from_payload(cls, payload: object) -> SemanticMeasure:
-        if not isinstance(payload, Mapping) or set(payload) != {"name", "aggregation", "column"}:
+        if not isinstance(payload, Mapping) or not {"name", "aggregation", "column"}.issubset(
+            payload
+        ):
             raise ValueError("semantic measure has invalid shape")
         name = payload["name"]
         aggregation = payload["aggregation"]
@@ -86,9 +102,12 @@ class SemanticMeasure:
             raise ValueError("semantic measure identity fields must be strings")
         if column is not None and not isinstance(column, str):
             raise ValueError("semantic measure column must be string or null")
+        expression = payload.get("expression")
+        if expression is not None and not isinstance(expression, str):
+            raise ValueError("semantic measure expression must be string or null")
         if aggregation not in {"sum", "count", "avg", "min", "max", "distinct_count"}:
             raise ValueError("unsupported semantic aggregation")
-        return cls(name, cast(Aggregation, aggregation), column)
+        return cls(name, cast(Aggregation, aggregation), column, expression)
 
 
 @dataclass(frozen=True, slots=True)

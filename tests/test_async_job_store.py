@@ -5,6 +5,7 @@ from threading import Event, get_ident
 from typing import cast
 
 import pytest
+
 from studio_orchestrator import AttemptId, Instant, JobId, JobStore, LeaseToken
 from studio_storage.async_store import BoundedAsyncJobStore, StorageBackpressureError
 

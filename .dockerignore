@@ -7,6 +7,7 @@ htmlcov
 *.egg-info
 dist
 build
+python/python
 .pytest_cache
 .mypy_cache
 .ruff_cache

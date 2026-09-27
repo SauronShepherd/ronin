@@ -7,7 +7,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from studio_core import WorkspaceId
+from studio_core import Schedule, WorkspaceId
 from studio_orchestrator import Instant
 from studio_storage.scheduler_backfill import BackfillId, BackfillRun
 from studio_storage.scheduler_backfill_runtime import (
@@ -25,6 +25,31 @@ class BackfillTickResult:
     fires: tuple[BackfillRun, ...]
     active_runs: int
     generation_complete: bool
+
+
+def preview_backfill(
+    schedule: Schedule,
+    *,
+    start_at: Instant | str,
+    end_at: Instant | str,
+    max_runs: int = 1000,
+) -> tuple[Instant, ...]:
+    """Return bounded matching fire times without touching durable state."""
+    start = Instant(start_at)
+    end = Instant(end_at)
+    if end < start:
+        raise ValueError("backfill end_at must not precede start_at")
+    if max_runs < 1 or max_runs > 10000:
+        raise ValueError("max_runs must be between 1 and 10000")
+    minutes = evaluated_minutes(
+        cursor=_previous_minute(start),
+        through=end,
+        max_scan_minutes=1_000_000,
+    )
+    matches = tuple(minute for minute in minutes if schedule_matches(schedule, minute))
+    if len(matches) > max_runs:
+        raise ValueError("backfill preview exceeds max_runs")
+    return matches
 
 
 def _instant_datetime(value: Instant | str) -> datetime:
@@ -180,4 +205,9 @@ class SchedulerBackfillService:
         return BackfillTickResult(tuple(created), active, plan.generation_complete)
 
 
-__all__ = ("AuthorityCheck", "BackfillTickResult", "SchedulerBackfillService")
+__all__ = (
+    "AuthorityCheck",
+    "BackfillTickResult",
+    "SchedulerBackfillService",
+    "preview_backfill",
+)

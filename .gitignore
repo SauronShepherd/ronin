@@ -5,6 +5,29 @@
 # Runtime qualification evidence is retained locally but is not source input.
 /artifacts/
 
+# Local qualification, mutation, browser and packaging outputs
+/.artifacts*/
+/.mutation-*/
+/.tmp-*
+/.ronin/
+/src/
+/qualification-evidence/
+/dist-*/
+/build-artifacts-*/
+/build-local*.log
+/a11y-result.json
+/ronin_studio-*/
+/ronin-cli-client-source.zip
+/mutants*/
+/e2e-*/
+/node_modules/
+/web-tests/node_modules/
+/web-tests/playwright-report/
+/web-tests/test-results/
+/packages/*/build/
+/packages/*/dist-*/
+/examples/*/build/
+
 # Python bytecode and test caches
 __pycache__/
 *.py[cod]

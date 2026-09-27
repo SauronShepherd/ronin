@@ -1,6 +1,7 @@
 import math
 
 import pytest
+
 from studio_core import FrozenList, FrozenMap, Node, NodeId, OperatorRef, Port, SchemaRef
 from studio_core.ir import _canonical_json, _frozen_comparison_key, _port_sort_key
 

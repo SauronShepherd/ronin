@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import pytest
+
 from studio_core import ResolvedRuntimeSnapshot, RuntimeProfile, RuntimeProfileRef
 from studio_kernel import (
     CellExecutionResult,

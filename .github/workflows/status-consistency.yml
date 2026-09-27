@@ -31,3 +31,22 @@ jobs:
         run: python tools/generate_public_v1_status.py --check
       - name: Validate machine ledger JSON
         run: python -m json.tool docs/product/public-v1-status.json >/dev/null
+      - name: Emit normalized status-consistency release evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.emit_release_evidence \
+            --gate-id status-consistency \
+            --commit "${GITHUB_SHA}" \
+            --status passed \
+            --fingerprint "github-actions-status-${RUNNER_OS}-python-3.11" \
+            --command "Public v1 status ledger consistency checks" \
+            --artifact docs/product/public-v1-status.json \
+            --output status-consistency-release-evidence.json
+      - name: Upload status-consistency evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: status-consistency-release-evidence
+          path: status-consistency-release-evidence.json
+          if-no-files-found: ignore

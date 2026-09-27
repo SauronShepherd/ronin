@@ -22,6 +22,7 @@ from studio_core import Action, GrantSet, Requirement, ResourceScope
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_execution import DurableExecutionService
+from studio_migration import MIGRATION_ROUTES, MigrationAPIRouter
 from studio_orchestrator import (
     EventPage,
     Instant,
@@ -32,6 +33,7 @@ from studio_orchestrator import (
     Run,
     RunId,
     RunState,
+    StoredCellResult,
     StoredEvidenceRef,
 )
 from studio_sql import (
@@ -46,22 +48,28 @@ from studio_sql.wire import sql_wire_value
 from studio_storage import IdempotencyConflict, StorageBackpressureError
 
 _MAX_REQUEST_BYTES = 1024 * 1024
+_MAX_MIGRATION_ARTIFACT_BYTES = 512 * 1024 * 1024
 _MAX_CURSOR_BYTES = 4096
 _MAX_LIST_LIMIT = 100
 _DEFAULT_LIST_LIMIT = 50
 _DEFAULT_SERVICE_TIMEOUT_SECONDS = 30.0
 _REQUEST_READ_TIMEOUT_SECONDS = 30.0
 _STUDIO_EXTENSIONS = frozenset({".html", ".css", ".js", ".png", ".webp", ".svg"})
-SUPPORTED_ROUTES = frozenset(
-    {
-        ("POST", "/v1/jobs"),
-        ("GET", "/v1/jobs"),
-        ("GET", "/v1/jobs/{job_id}"),
-        ("GET", "/v1/jobs/{job_id}/events"),
-        ("GET", "/v1/jobs/{job_id}/evidence"),
-        ("POST", "/v1/jobs/{job_id}/cancel"),
-        ("POST", "/v1/sql"),
-    }
+SUPPORTED_ROUTES = (
+    frozenset(
+        {
+            ("POST", "/v1/jobs"),
+            ("GET", "/v1/jobs"),
+            ("GET", "/v1/jobs/{job_id}"),
+            ("GET", "/v1/jobs/{job_id}/events"),
+            ("GET", "/v1/jobs/{job_id}/evidence"),
+            ("GET", "/v1/jobs/{job_id}/results"),
+            ("POST", "/v1/jobs/{job_id}/cancel"),
+            ("POST", "/v1/sql"),
+            ("GET", "/v1/data-engineering/queryflux/capabilities"),
+        }
+    )
+    | MIGRATION_ROUTES
 )
 
 
@@ -116,6 +124,22 @@ def _event_page_payload(page: EventPage) -> dict[str, object]:
 
 def _evidence_payload(refs: tuple[StoredEvidenceRef, ...]) -> dict[str, object]:
     return {"items": [ref.public_payload() for ref in refs]}
+
+
+def _cell_results_payload(results: tuple[StoredCellResult, ...]) -> dict[str, object]:
+    return {
+        "items": [
+            {
+                "cell_id": result.cell_id,
+                "state": result.state,
+                "result_json": result.result_json,
+                "updated_at": str(result.updated_at),
+                "source_digest": result.source_digest,
+                "execution_identity_digest": result.execution_identity_digest,
+            }
+            for result in results
+        ]
+    }
 
 
 def _single_query_values(query: str, *, allowed: frozenset[str]) -> dict[str, str]:
@@ -331,6 +355,13 @@ class DurableHTTPApplication:
         )
         return None if refs is None else _evidence_payload(refs)
 
+    def cell_results(self, job_id: str) -> dict[str, object] | None:
+        results = cast(
+            tuple[StoredCellResult, ...] | None,
+            self._loop.call(self._service.cell_results(JobId(job_id))),
+        )
+        return None if results is None else _cell_results_payload(results)
+
     def cancel(self, job_id: str) -> dict[str, object]:
         job = cast(Job, self._loop.call(self._service.cancel(JobId(job_id), now=_now())))
         return _job_payload(job)
@@ -343,16 +374,28 @@ class DurableHTTPApplication:
             "sql",
             "parameters",
             "max_rows",
+            "profile",
+            "translation_policy",
         }:
             raise ValueError("SQL request contains unknown fields")
         sql = payload.get("sql")
         project = payload.get("project")
         parameters = payload.get("parameters", [])
         max_rows = payload.get("max_rows", 10_000)
+        profile = payload.get("profile", "local")
+        translation_policy = payload.get("translation_policy", "native_only")
         if not isinstance(sql, str) or not sql.strip() or sql != sql.strip():
             raise ValueError("sql must be non-empty and trimmed")
         if not isinstance(project, str) or not project.strip() or project != project.strip():
             raise ValueError("project must be non-empty and trimmed")
+        if profile not in {"local", "queryflux"}:
+            raise ValueError("profile is unsupported")
+        if translation_policy not in {"native_only", "best_effort", "strict"}:
+            raise ValueError("translation_policy is unsupported")
+        if profile != "local":
+            raise LookupError("requested query engine profile is not configured")
+        if translation_policy != "native_only":
+            raise LookupError("requested translation policy is not qualified")
         if not isinstance(parameters, list):
             raise ValueError("parameters must be a JSON array")
         if not all(
@@ -395,12 +438,14 @@ class RoninHTTPServer(ThreadingHTTPServer):
         token: str,
         grants: GrantSet,
         sql_engine: SqlEngine | None = None,
+        migration_router: MigrationAPIRouter | None = None,
     ) -> None:
         if not token or token != token.strip() or "\n" in token or "\r" in token:
             raise ValueError("token must be non-empty, trimmed, and single-line")
         if not grants.grants:
             raise ValueError("bearer token requires at least one typed authorization grant")
         self.application = DurableHTTPApplication(service, sql_engine=sql_engine)
+        self.migration_router = migration_router
         self._token = token
         self._grants = grants
         try:
@@ -536,6 +581,44 @@ class _Handler(BaseHTTPRequestHandler):
         self._error(HTTPStatus.UNAUTHORIZED, "unauthorized", "valid bearer authorization required")
         return False
 
+    def _dispatch_migration(self, method: str, path: str) -> bool:
+        router = self._ronin_server().migration_router
+        if (
+            router is None
+            or not path.startswith("/v1/workspaces/")
+            or "/migration/sessions" not in path
+        ):
+            return False
+        segments = tuple(unquote(part) for part in path.split("/") if part)
+        if len(segments) < 7 or segments[1] != "workspaces" or segments[3] != "projects":
+            return False
+        required_action = cast(Action, "read" if method == "GET" else "submit")
+        if not self._ronin_server().permits_project(required_action, segments[4]):
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "forbidden",
+                "required authorization scope is not granted",
+            )
+            return True
+        payload: object | None = None
+        if method in {"POST", "PUT"}:
+            try:
+                if (
+                    method == "PUT"
+                    and "/source-artifacts/" in path
+                    and self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+                    not in {"", "application/json"}
+                ):
+                    payload = self._read_bytes(max_bytes=_MAX_MIGRATION_ARTIFACT_BYTES)
+                else:
+                    payload = self._read_json()
+            except (RequestReadTimeoutError, ValueError) as exc:
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
+                return True
+        response = router.dispatch(method, path, payload, authorized=True)
+        self._write_json(HTTPStatus(response.status), response.payload)
+        return True
+
     def _require_project(self, action: Action, project_id: str) -> bool:
         if self._ronin_server().permits_project(action, project_id):
             return True
@@ -571,11 +654,31 @@ class _Handler(BaseHTTPRequestHandler):
         except (UnicodeDecodeError, ValueError) as exc:
             raise ValueError("request body must be valid canonical UTF-8 JSON") from exc
 
+    def _read_bytes(self, *, max_bytes: int) -> bytes:
+        length_header = self.headers.get("Content-Length")
+        if length_header is None:
+            raise ValueError("Content-Length is required")
+        try:
+            length = int(length_header)
+        except ValueError as exc:
+            raise ValueError("Content-Length must be an integer") from exc
+        if length < 0 or length > max_bytes:
+            raise ValueError("request body exceeds configured byte limit")
+        try:
+            body = self.rfile.read(length)
+        except TimeoutError as exc:
+            raise RequestReadTimeoutError("request body read timed out") from exc
+        if len(body) != length:
+            raise ValueError("request body ended before Content-Length")
+        return body
+
     def do_POST(self) -> None:  # noqa: N802
         if not self._require_auth():
             return
         split = urlsplit(self.path)
         path = split.path
+        if self._dispatch_migration("POST", path):
+            return
         if path == "/v1/sql":
             if split.query:
                 self._error(HTTPStatus.BAD_REQUEST, "invalid_request", "SQL does not accept query")
@@ -695,6 +798,14 @@ class _Handler(BaseHTTPRequestHandler):
             return
         self._write_json(HTTPStatus.OK, payload)
 
+    def do_PUT(self) -> None:  # noqa: N802
+        if not self._require_auth():
+            return
+        path = urlsplit(self.path).path
+        if self._dispatch_migration("PUT", path):
+            return
+        self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
+
     def do_GET(self) -> None:  # noqa: N802
         if urlsplit(self.path).path == "/healthz":
             self._write_json(HTTPStatus.OK, {"status": "ok"})
@@ -705,6 +816,8 @@ class _Handler(BaseHTTPRequestHandler):
             return
         split = urlsplit(self.path)
         path = split.path
+        if self._dispatch_migration("GET", path):
+            return
         if path == "/v1/jobs":
             try:
                 query = _single_query_values(
@@ -804,6 +917,30 @@ class _Handler(BaseHTTPRequestHandler):
                 self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
                 return
             self._write_json(HTTPStatus.OK, evidence_payload)
+            return
+
+        results_suffix = "/results"
+        if path.startswith(prefix) and path.endswith(results_suffix):
+            encoded_job_id = path[len(prefix) : -len(results_suffix)]
+            if not encoded_job_id or "/" in encoded_job_id or split.query:
+                self._error(HTTPStatus.NOT_FOUND, "not_found", "route not found")
+                return
+            try:
+                job_id = unquote(encoded_job_id, errors="strict")
+                job = self._ronin_server().application.get_job(job_id)
+                if self._require_visible_job("evidence:read", job) is None:
+                    return
+                results_payload = self._ronin_server().application.cell_results(job_id)
+            except (ServiceTimeoutError, StorageBackpressureError) as exc:
+                self._error(HTTPStatus.SERVICE_UNAVAILABLE, "service_unavailable", str(exc))
+                return
+            except (UnicodeError, ValueError):
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_job_id", "job id is invalid")
+                return
+            if results_payload is None:
+                self._error(HTTPStatus.NOT_FOUND, "job_not_found", "job does not exist")
+                return
+            self._write_json(HTTPStatus.OK, results_payload)
             return
 
         if not path.startswith(prefix) or path == prefix:

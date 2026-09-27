@@ -30,6 +30,8 @@ from studio_core.environments import (
 )
 from studio_orchestrator import Instant
 
+from .bundle_catalog_import_port import CatalogBundleImportCommit, CatalogBundleImportConflict
+from .bundle_multi_import_port import MultiObjectBundleImportCommit, MultiObjectBundleImportConflict
 from .catalog import CatalogAssetNotFound, CatalogConflict
 from .connections import ConnectionConflict, ConnectionNotFound
 from .environments import EnvironmentConflict, EnvironmentNotFound
@@ -71,6 +73,7 @@ CREATE TABLE IF NOT EXISTS ronin_projects (
     manifest_json TEXT NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
+    archived_at TEXT,
     row_version BIGINT NOT NULL DEFAULT 1,
     PRIMARY KEY(workspace_id, project_id)
 );
@@ -230,6 +233,25 @@ CREATE INDEX IF NOT EXISTS ronin_runs_job_idx
     ON ronin_runs(job_id, ordinal);
 CREATE INDEX IF NOT EXISTS ronin_attempts_run_idx
     ON ronin_attempts(run_id, ordinal);
+CREATE TABLE IF NOT EXISTS ronin_workflows (
+    workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
+    workflow_id TEXT NOT NULL,
+    definition_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY(workspace_id, workflow_id)
+);
+CREATE TABLE IF NOT EXISTS ronin_schedules (
+    workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
+    schedule_id TEXT NOT NULL,
+    workflow_id TEXT NOT NULL,
+    schedule_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY(workspace_id, schedule_id),
+    FOREIGN KEY(workspace_id, workflow_id)
+        REFERENCES ronin_workflows(workspace_id, workflow_id) ON DELETE CASCADE
+);
 """
 
 
@@ -259,6 +281,9 @@ class PostgresMetadataStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(_SCHEMA)
+                cursor.execute(
+                    "ALTER TABLE ronin_projects ADD COLUMN IF NOT EXISTS archived_at TEXT"
+                )
             connection.commit()
         except Exception:
             connection.rollback()
@@ -472,12 +497,34 @@ class PostgresMetadataStore:
             with connection.cursor() as cursor:
                 cursor.execute(
                     "SELECT manifest_json FROM ronin_projects "
-                    "WHERE workspace_id=%s ORDER BY project_id",
+                    "WHERE workspace_id=%s AND archived_at IS NULL ORDER BY project_id",
                     (str(workspace_id),),
                 )
                 return tuple(
                     ProjectManifest.from_json(row["manifest_json"]) for row in cursor.fetchall()
                 )
+        finally:
+            connection.close()
+
+    def archive_project(
+        self, workspace_id: WorkspaceId, project_id: ProjectId, *, now: Instant | str
+    ) -> bool:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                self._require_active_workspace(cursor, workspace_id)
+                cursor.execute(
+                    "UPDATE ronin_projects SET archived_at=%s,updated_at=%s,"
+                    "row_version=row_version+1 "
+                    "WHERE workspace_id=%s AND project_id=%s AND archived_at IS NULL",
+                    (str(Instant(now)), str(Instant(now)), str(workspace_id), str(project_id)),
+                )
+                archived = bool(cursor.rowcount == 1)
+            connection.commit()
+            return archived
+        except Exception:
+            connection.rollback()
+            raise
         finally:
             connection.close()
 
@@ -973,6 +1020,261 @@ class PostgresMetadataStore:
                     )
             connection.commit()
             return edge
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def commit_multi_object_import(
+        self,
+        workspace_id: WorkspaceId,
+        connections: tuple[ConnectionDefinition, ...],
+        projects: tuple[ProjectManifest, ...],
+        bindings: tuple[ProjectEnvironmentBindings, ...],
+        *,
+        now: Instant | str,
+    ) -> MultiObjectBundleImportCommit:
+        """Atomically apply project, connection and environment binding metadata."""
+
+        connection_ids = [item.id for item in connections]
+        project_ids = [item.project.id for item in projects]
+        binding_keys = [(item.project_id, item.environment_id) for item in bindings]
+        if len(connection_ids) != len(set(connection_ids)):
+            raise ValueError("multi-object import connections must have unique ids")
+        if len(project_ids) != len(set(project_ids)):
+            raise ValueError("multi-object import projects must have unique ids")
+        if len(binding_keys) != len(set(binding_keys)):
+            raise ValueError("multi-object import bindings must be unique by project/environment")
+        if any(item.project_id not in set(project_ids) for item in bindings):
+            raise ValueError("multi-object import bindings must target staged projects")
+
+        current = Instant(now)
+        connection = self._connect()
+        connections_created = projects_created = bindings_created = 0
+        try:
+            with connection.cursor() as cursor:
+                self._require_active_workspace(cursor, workspace_id)
+                for definition in sorted(connections, key=lambda item: str(item.id)):
+                    payload = definition.to_json()
+                    cursor.execute(
+                        "SELECT definition_json FROM ronin_connections "
+                        "WHERE workspace_id=%s AND connection_id=%s FOR UPDATE",
+                        (str(workspace_id), str(definition.id)),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["definition_json"] != payload:
+                        raise MultiObjectBundleImportConflict(
+                            f"connection id already exists with different content: {definition.id}"
+                        )
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_connections("
+                            "workspace_id,connection_id,definition_json,created_at,updated_at) "
+                            "VALUES (%s,%s,%s,%s,%s)",
+                            (
+                                str(workspace_id),
+                                str(definition.id),
+                                payload,
+                                str(current),
+                                str(current),
+                            ),
+                        )
+                        connections_created += 1
+                for manifest in sorted(projects, key=lambda item: str(item.project.id)):
+                    project_id = manifest.project.id
+                    payload = manifest.to_json()
+                    cursor.execute(
+                        "SELECT manifest_json FROM ronin_projects "
+                        "WHERE workspace_id=%s AND project_id=%s FOR UPDATE",
+                        (str(workspace_id), str(project_id)),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["manifest_json"] != payload:
+                        raise MultiObjectBundleImportConflict(
+                            f"project id already exists with different content: {project_id}"
+                        )
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_projects("
+                            "workspace_id,project_id,manifest_json,created_at,updated_at) "
+                            "VALUES (%s,%s,%s,%s,%s)",
+                            (
+                                str(workspace_id),
+                                str(project_id),
+                                payload,
+                                str(current),
+                                str(current),
+                            ),
+                        )
+                        projects_created += 1
+                for item in sorted(
+                    bindings, key=lambda value: (str(value.project_id), str(value.environment_id))
+                ):
+                    cursor.execute(
+                        "SELECT definition_json FROM ronin_environments "
+                        "WHERE workspace_id=%s AND environment_id=%s",
+                        (str(workspace_id), str(item.environment_id)),
+                    )
+                    row = cursor.fetchone()
+                    if row is None:
+                        raise MultiObjectBundleImportConflict(
+                            f"target environment does not exist: {item.environment_id}"
+                        )
+                    if EnvironmentDefinition.from_json(row["definition_json"]).disabled:
+                        raise MultiObjectBundleImportConflict(
+                            f"target environment is disabled: {item.environment_id}"
+                        )
+                    payload = item.to_json()
+                    cursor.execute(
+                        "SELECT bindings_json FROM ronin_project_environment_bindings "
+                        "WHERE workspace_id=%s AND project_id=%s AND environment_id=%s FOR UPDATE",
+                        (str(workspace_id), str(item.project_id), str(item.environment_id)),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["bindings_json"] != payload:
+                        raise MultiObjectBundleImportConflict(
+                            "target environment already has different project bindings"
+                        )
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_project_environment_bindings("
+                            "workspace_id,project_id,environment_id,bindings_json,"
+                            "created_at,updated_at) "
+                            "VALUES (%s,%s,%s,%s,%s,%s)",
+                            (
+                                str(workspace_id),
+                                str(item.project_id),
+                                str(item.environment_id),
+                                payload,
+                                str(current),
+                                str(current),
+                            ),
+                        )
+                        bindings_created += 1
+            connection.commit()
+            return MultiObjectBundleImportCommit(
+                connections_created, projects_created, bindings_created
+            )
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def commit_catalog_import(
+        self,
+        workspace_id: WorkspaceId,
+        assets: tuple[CatalogAsset, ...],
+        revisions: tuple[AssetRevision, ...],
+        lineage: tuple[LineageEdge, ...],
+        *,
+        now: Instant | str,
+    ) -> CatalogBundleImportCommit:
+        """Atomically apply a verified catalog Bundle subgraph."""
+
+        current = Instant(now)
+        connection = self._connect()
+        assets_created = revisions_created = lineage_created = 0
+        try:
+            with connection.cursor() as cursor:
+                self._require_active_workspace(cursor, workspace_id)
+                for asset in assets:
+                    payload = asset.to_json()
+                    cursor.execute(
+                        "SELECT definition_json FROM ronin_catalog_assets "
+                        "WHERE workspace_id=%s AND asset_id=%s FOR UPDATE",
+                        (str(workspace_id), str(asset.id)),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["definition_json"] != payload:
+                        raise CatalogBundleImportConflict(
+                            f"catalog asset conflicts with existing id: {asset.id}"
+                        )
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_catalog_assets("
+                            "workspace_id,asset_id,definition_json,created_at,updated_at) "
+                            "VALUES (%s,%s,%s,%s,%s)",
+                            (str(workspace_id), str(asset.id), payload, str(current), str(current)),
+                        )
+                        assets_created += 1
+                for revision in revisions:
+                    cursor.execute(
+                        "SELECT 1 FROM ronin_catalog_assets WHERE workspace_id=%s AND asset_id=%s",
+                        (str(workspace_id), str(revision.ref.asset_id)),
+                    )
+                    if cursor.fetchone() is None:
+                        raise CatalogBundleImportConflict(
+                            f"catalog revision references missing asset: {revision.ref.asset_id}"
+                        )
+                    payload = revision.to_json()
+                    cursor.execute(
+                        "SELECT revision_json FROM ronin_catalog_revisions "
+                        "WHERE workspace_id=%s AND asset_id=%s AND version=%s FOR UPDATE",
+                        (str(workspace_id), str(revision.ref.asset_id), str(revision.ref.version)),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["revision_json"] != payload:
+                        raise CatalogBundleImportConflict(
+                            "catalog revision conflicts with existing identity"
+                        )
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_catalog_revisions("
+                            "workspace_id,asset_id,version,revision_json,created_at) "
+                            "VALUES (%s,%s,%s,%s,%s)",
+                            (
+                                str(workspace_id),
+                                str(revision.ref.asset_id),
+                                str(revision.ref.version),
+                                payload,
+                                str(current),
+                            ),
+                        )
+                        revisions_created += 1
+                for edge in lineage:
+                    for ref in (edge.source, edge.target):
+                        cursor.execute(
+                            "SELECT 1 FROM ronin_catalog_revisions "
+                            "WHERE workspace_id=%s AND asset_id=%s AND version=%s",
+                            (str(workspace_id), str(ref.asset_id), str(ref.version)),
+                        )
+                        if cursor.fetchone() is None:
+                            raise CatalogBundleImportConflict(
+                                f"lineage references missing revision: {ref.asset_id}@{ref.version}"
+                            )
+                    payload = edge.to_json()
+                    cursor.execute(
+                        "SELECT edge_json FROM ronin_lineage_edges "
+                        "WHERE workspace_id=%s AND edge_digest=%s FOR UPDATE",
+                        (str(workspace_id), edge.digest),
+                    )
+                    row = cursor.fetchone()
+                    if row is not None and row["edge_json"] != payload:
+                        raise CatalogBundleImportConflict(
+                            "lineage digest conflicts with existing content"
+                        )
+                    if row is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_lineage_edges("
+                            "workspace_id,edge_digest,source_asset_id,source_version,"
+                            "target_asset_id,target_version,edge_json,created_at) "
+                            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                            (
+                                str(workspace_id),
+                                edge.digest,
+                                str(edge.source.asset_id),
+                                str(edge.source.version),
+                                str(edge.target.asset_id),
+                                str(edge.target.version),
+                                payload,
+                                str(current),
+                            ),
+                        )
+                        lineage_created += 1
+            connection.commit()
+            return CatalogBundleImportCommit(assets_created, revisions_created, lineage_created)
         except Exception:
             connection.rollback()
             raise

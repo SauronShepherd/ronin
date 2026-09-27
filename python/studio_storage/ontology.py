@@ -159,3 +159,15 @@ class SqliteOntologyStore:
             return tuple(OntologyDefinition.from_json(row["definition_json"]) for row in rows)
         finally:
             connection.close()
+
+    def list_all(self, workspace_id: WorkspaceId) -> tuple[OntologyDefinition, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT definition_json FROM ontologies WHERE workspace_id=? "
+                "ORDER BY ontology_id, version",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(OntologyDefinition.from_json(row["definition_json"]) for row in rows)
+        finally:
+            connection.close()

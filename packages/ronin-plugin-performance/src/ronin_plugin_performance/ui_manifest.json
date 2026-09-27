@@ -1,0 +1,11 @@
+{
+  "ui_api": "1.0",
+  "product": "Performance Studio",
+  "routes": [
+    {"id": "performance", "path": "/performance", "label": "Performance Studio"},
+    {"id": "performance-run", "path": "/performance/runs/:runId", "label": "Run analysis"}
+  ],
+  "views": ["overview", "stage-timeline", "asset-health", "runtime-health", "regression", "recommendations"],
+  "charts": ["stage-duration", "shuffle-spill", "asset-file-size", "runtime-method-hotspots"],
+  "finding_severities": ["high", "medium", "low"]
+}

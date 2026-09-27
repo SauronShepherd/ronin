@@ -2,10 +2,29 @@ name: ronin
 
 x-ronin-environment: &ronin-environment
   RONIN_DB: /var/lib/ronin/ronin.sqlite3
+  RONIN_POSTGRES_DSN: postgresql://${POSTGRES_USER:-ronin}:${POSTGRES_PASSWORD:-ronin}@postgres:5432/${POSTGRES_DB:-ronin}
   RONIN_TOKEN: ${RONIN_TOKEN:?set RONIN_TOKEN before starting Ronin}
   RONIN_TOKEN_SCOPES: '{"version":1,"grants":[{"version":1,"actions":["read","list","events","submit","execute","cancel","evidence:read"],"resource":{"kind":"project","identifier":"examples/demo"},"constraints":{}}]}'
 
 services:
+  postgres:
+    image: postgres:16.4-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ronin}
+      POSTGRES_USER: ${POSTGRES_USER:-ronin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ronin}
+    volumes:
+      - ronin-postgres:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${RONIN_POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    restart: unless-stopped
+
   server:
     image: ${RONIN_IMAGE_REF:-ronin:local}
     build:
@@ -20,6 +39,7 @@ services:
       RONIN_PORT: "8080"
       RONIN_BIND_POLICY: container-internal
       RONIN_SQL_PARQUET_ROOT: ${RONIN_SQL_PARQUET_ROOT:-}
+      RONIN_STORAGE_BACKEND: postgres
     volumes:
       - ronin-data:/var/lib/ronin
     ports:
@@ -30,6 +50,9 @@ services:
       timeout: 3s
       retries: 25
       start_period: 2s
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   runner-broker:
@@ -73,6 +96,7 @@ services:
       RONIN_BIND_POLICY: container-internal
       RONIN_IMAGE_REF: ${RONIN_IMAGE_REF:-ronin:local}
       RONIN_ARTIFACT_BACKEND: ${RONIN_ARTIFACT_BACKEND:-local}
+      RONIN_STORAGE_BACKEND: postgres
       RONIN_S3_BUCKET: ${RONIN_S3_BUCKET:-}
       RONIN_S3_PREFIX: ${RONIN_S3_PREFIX:-ronin/artifacts}
       RONIN_S3_ENDPOINT_URL: ${RONIN_S3_ENDPOINT_URL:-}
@@ -102,5 +126,47 @@ services:
         condition: service_healthy
     restart: "no"
 
+  ai-ollama:
+    image: ollama/ollama:latest
+    profiles: ["ai-ollama"]
+    volumes:
+      - ronin-ollama:/root/.ollama
+    expose: ["11434"]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  ai-llama-cpp:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    profiles: ["ai-llama-cpp"]
+    command: ["--host", "0.0.0.0", "--port", "8080", "-m", "/models/model.gguf"]
+    volumes:
+      - ${RONIN_AI_MODEL_DIR:?set RONIN_AI_MODEL_DIR}:/models:ro
+    expose: ["8080"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health | grep -q ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  ai-vllm:
+    image: vllm/vllm-openai:latest
+    profiles: ["ai-vllm"]
+    command: ["--host", "0.0.0.0", "--model", "${RONIN_AI_VLLM_MODEL:?set RONIN_AI_VLLM_MODEL}"]
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - ${HF_HOME:-./.cache/huggingface}:/root/.cache/huggingface
+    expose: ["8000"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/v1/models >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+
 volumes:
   ronin-data:
+  ronin-postgres:
+  ronin-ollama:

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+
 from studio_kernel import (
     CancellationToken,
     CellExecutionRequest,

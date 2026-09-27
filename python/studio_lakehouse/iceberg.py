@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from contextlib import suppress
+from dataclasses import dataclass
 from importlib import import_module
 from typing import Any
 
@@ -16,6 +17,26 @@ class IcebergDependencyError(RuntimeError):
 
 class IcebergCapabilityError(RuntimeError):
     """Raised when the configured Iceberg runtime lacks a requested capability."""
+
+
+@dataclass(frozen=True, slots=True)
+class IcebergCompatibilityProfile:
+    """Declared reference boundary for the optional PyIceberg adapter."""
+
+    spec_version: str = "1.4"
+    capabilities: tuple[str, ...] = (
+        "create",
+        "append",
+        "overwrite",
+        "delete",
+        "snapshot-read",
+        "partition-spec",
+    )
+    unsupported_features: tuple[str, ...] = (
+        "schema-evolution",
+        "metadata-cleanup-policy",
+        "catalog-agnostic-certification",
+    )
 
 
 def _pyiceberg_catalog() -> Any:
@@ -58,6 +79,7 @@ class IcebergTableStore:
     """Iceberg lifecycle through one explicitly configured PyIceberg catalog."""
 
     format = "iceberg"
+    compatibility = IcebergCompatibilityProfile()
 
     def __init__(
         self,
@@ -129,12 +151,19 @@ class IcebergTableStore:
     ) -> tuple[dict[str, object], ...]:
         if limit < 1 or limit > 100_000:
             raise ValueError("Iceberg read limit must be between 1 and 100000")
+        if columns is not None:
+            if any(not column or column != column.strip() for column in columns):
+                raise ValueError("Iceberg projection columns must be non-empty and trimmed")
+            if len(set(columns)) != len(columns):
+                raise ValueError("Iceberg projection columns must be unique")
         table = self._load(identifier)
         if version is not None:
             try:
                 snapshot_id = int(version)
             except ValueError as exc:
                 raise ValueError("Iceberg version must be a snapshot id integer string") from exc
+            if snapshot_id < 0:
+                raise ValueError("Iceberg version must be non-negative")
             scan = table.scan(
                 selected_fields=columns or ("*",),
                 snapshot_id=snapshot_id,
@@ -165,6 +194,22 @@ class IcebergTableStore:
             _field_state(schema),
             tuple(sorted((str(key), str(value)) for key, value in properties.items())),
         )
+
+    def delete_table(self, identifier: OpenTableIdentifier) -> None:
+        """Drop a table from the configured catalog, including data when supported."""
+        drop_table = getattr(self._catalog, "drop_table", None)
+        if not callable(drop_table):
+            raise IcebergCapabilityError(
+                "configured PyIceberg catalog does not expose table deletion"
+            )
+        try:
+            drop_table(self._identifier(identifier), purge=True)
+        except TypeError:
+            drop_table(self._identifier(identifier))
+        except Exception as exc:
+            raise FileNotFoundError(
+                f"Iceberg table does not exist: {identifier.qualified_name}"
+            ) from exc
 
 
 __all__ = ("IcebergCapabilityError", "IcebergDependencyError", "IcebergTableStore")

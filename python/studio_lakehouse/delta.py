@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from importlib import import_module
 from pathlib import Path
+from shutil import rmtree
 from typing import Any
 
 from .tables import OpenTableField, OpenTableIdentifier, OpenTableState, TableWriteMode
@@ -12,6 +14,24 @@ from .tables import OpenTableField, OpenTableIdentifier, OpenTableState, TableWr
 
 class DeltaDependencyError(RuntimeError):
     """Raised when the optional Delta dependency is unavailable."""
+
+
+@dataclass(frozen=True, slots=True)
+class DeltaCompatibilityProfile:
+    """Explicit interoperability boundary for the optional Delta adapter."""
+
+    protocol_version: int = 1
+    reader_features: tuple[str, ...] = ("append", "create", "overwrite", "versioned-read")
+    writer_features: tuple[str, ...] = ("append", "create", "overwrite", "delete")
+    unsupported_features: tuple[str, ...] = (
+        "schema-evolution",
+        "deletion-vectors",
+        "change-data-feed",
+        "generated-columns",
+    )
+
+    def supports_write(self, mode: str) -> bool:
+        return mode in self.writer_features
 
 
 def _deltalake() -> Any:
@@ -55,6 +75,7 @@ class DeltaTableStore:
     """Local/object-store Delta lifecycle over an explicit table root."""
 
     format = "delta"
+    compatibility = DeltaCompatibilityProfile()
 
     def __init__(self, warehouse: Path | str) -> None:
         root = Path(warehouse).expanduser()
@@ -101,14 +122,22 @@ class DeltaTableStore:
     ) -> tuple[dict[str, object], ...]:
         if limit < 1 or limit > 100_000:
             raise ValueError("Delta read limit must be between 1 and 100000")
-        deltalake = _deltalake()
+        if columns is not None:
+            if any(not column or column != column.strip() for column in columns):
+                raise ValueError("Delta projection columns must be non-empty and trimmed")
+            if len(set(columns)) != len(columns):
+                raise ValueError("Delta projection columns must be unique")
         path = self._path(identifier)
         kwargs: dict[str, object] = {}
         if version is not None:
             try:
-                kwargs["version"] = int(version)
+                parsed_version = int(version)
             except ValueError as exc:
                 raise ValueError("Delta version must be an integer string") from exc
+            if parsed_version < 0:
+                raise ValueError("Delta version must be non-negative")
+            kwargs["version"] = parsed_version
+        deltalake = _deltalake()
         table = deltalake.DeltaTable(str(path), **kwargs)
         arrow = table.to_pyarrow_table(columns=list(columns) if columns is not None else None)
         if arrow.num_rows > limit:
@@ -131,5 +160,12 @@ class DeltaTableStore:
             tuple(sorted((str(key), str(value)) for key, value in configuration.items())),
         )
 
+    def delete_table(self, identifier: OpenTableIdentifier) -> None:
+        """Delete the table root and transaction log from this managed warehouse."""
+        path = self._path(identifier)
+        if not path.joinpath("_delta_log").is_dir():
+            raise FileNotFoundError(f"Delta table does not exist: {identifier.qualified_name}")
+        rmtree(path)
 
-__all__ = ("DeltaDependencyError", "DeltaTableStore")
+
+__all__ = ("DeltaCompatibilityProfile", "DeltaDependencyError", "DeltaTableStore")

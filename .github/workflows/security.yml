@@ -217,3 +217,36 @@ jobs:
           --requirement "$RUNNER_TEMP/ronin-runtime-requirements.txt"
       - name: Audit pyronin dependency surface
         run: python -m pip_audit --strict --progress-spinner=off packages/pyronin
+
+  security-evidence:
+    needs: [secrets, dependencies]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - name: Emit normalized security release evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\n' \
+            "secrets job: passed" \
+            "dependency audit job: passed" \
+            "commit: ${GITHUB_SHA}" > security-qualification.txt
+          python -m tools.emit_release_evidence \
+            --gate-id security \
+            --commit "${GITHUB_SHA}" \
+            --status passed \
+            --fingerprint "github-actions-security-${RUNNER_OS}" \
+            --command "gitleaks and pip-audit security qualification" \
+            --artifact security-qualification.txt \
+            --output security-release-evidence.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: security-release-evidence
+          path: |
+            security-qualification.txt
+            security-release-evidence.json
+          if-no-files-found: error
+          retention-days: 30

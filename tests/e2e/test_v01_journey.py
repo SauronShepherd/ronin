@@ -22,6 +22,7 @@ from threading import Thread
 
 import pytest
 from pyronin import HTTPTransport, Ronin
+
 from studio_cli import main as cli_main
 from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService

@@ -11,6 +11,7 @@ from .contracts import (
     StreamSinkCommit,
     StreamSource,
 )
+from .health import stream_health
 from .kafka import KafkaDependencyError, KafkaJsonSource
 from .parquet_sink import ParquetMicroBatchSink
 from .processor import (
@@ -45,4 +46,5 @@ __all__ = (
     "WindowedBatch",
     "window_records",
     "SqliteStreamTable",
+    "stream_health",
 )

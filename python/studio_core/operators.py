@@ -336,6 +336,14 @@ def builtin_operator_catalog() -> OperatorCatalog:
                 documentation_key="operator.source.file",
             ),
             OperatorContract(
+                OperatorRef("source.fixture"),
+                "Fixture",
+                "sources",
+                outputs=unary_output,
+                parameters=(OperatorParameter("fixture", "string", required=True),),
+                documentation_key="operator.source.fixture",
+            ),
+            OperatorContract(
                 OperatorRef("transform.filter"),
                 "Filter",
                 "transforms",

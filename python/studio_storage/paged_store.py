@@ -17,7 +17,6 @@ from studio_orchestrator import (
     StoredEvidenceRef,
     StoredExecutionEvent,
 )
-
 from studio_storage.async_store import BoundedAsyncJobStore as _BoundedAsyncJobStore
 from studio_storage.limits import MAX_EVIDENCE_REFS_PER_RUN
 from studio_storage.memory import InMemoryJobStore as _InMemoryJobStore

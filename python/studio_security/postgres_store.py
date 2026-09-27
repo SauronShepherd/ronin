@@ -13,6 +13,8 @@ from .contracts import (
     PrincipalId,
     PrincipalKind,
     RoleBinding,
+    SubjectKind,
+    WorkspaceRole,
 )
 from .store import IdentityConflict
 
@@ -329,6 +331,29 @@ class PostgresIdentityStore:
         except Exception:
             connection.rollback()
             raise
+        finally:
+            connection.close()
+
+    def list_role_bindings(self, workspace_id: WorkspaceId) -> tuple[RoleBinding, ...]:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT workspace_id,subject_kind,subject_id,role "
+                    "FROM ronin_security_role_bindings WHERE workspace_id=%s "
+                    "ORDER BY subject_kind,subject_id,role",
+                    (workspace_id.value,),
+                )
+                rows = cursor.fetchall()
+            return tuple(
+                RoleBinding(
+                    WorkspaceId(str(row["workspace_id"])),
+                    cast(SubjectKind, str(row["subject_kind"])),
+                    str(row["subject_id"]),
+                    cast(WorkspaceRole, str(row["role"])),
+                )
+                for row in rows
+            )
         finally:
             connection.close()
 
