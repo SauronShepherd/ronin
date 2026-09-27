@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import os
 import re
 from collections import Counter
 from dataclasses import asdict, dataclass
@@ -18,6 +19,7 @@ from typing import Any, cast
 
 _ROUTE_DECORATORS = {"get", "post", "put", "patch", "delete", "route", "api_route"}
 _CLI_MARKERS = {"click", "typer", "argparse", "console_scripts"}
+_GENERATED_DIRS = {".git", ".venv", "build", "dist"}
 _TEXT_MARKERS = {
     "jobs": ("Job", "job", "schedule", "worker", "task"),
     "events": ("event", "publish(", "subscribe(", "event_type"),
@@ -156,10 +158,27 @@ def _entry_points(pyproject: Path) -> dict[str, dict[str, str]]:
 def build_inventory(root: Path) -> dict[str, Any]:
     source_root = root / "python"
     tests_root = root / "tests"
+    def python_files() -> list[Path]:
+        discovered: list[Path] = []
+        for scan_root in (source_root, tests_root):
+            if not scan_root.is_dir():
+                continue
+            for directory, directories, filenames in os.walk(scan_root):
+                directories[:] = [
+                    name
+                    for name in directories
+                    if name not in _GENERATED_DIRS
+                    and not name.startswith("mutants")
+                    and not name.startswith(".mutation")
+                ]
+                discovered.extend(
+                    Path(directory) / name for name in filenames if name.endswith(".py")
+                )
+        return sorted(discovered)
+
     files = [
         inspect_python_file(path, source_root, tests_root)
-        for path in sorted(root.rglob("*.py"))
-        if ".venv" not in path.parts and "build" not in path.parts and "dist" not in path.parts
+        for path in python_files()
     ]
     package_counts = Counter(item.package for item in files if item.package)
     routes = [
