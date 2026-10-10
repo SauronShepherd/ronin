@@ -1,16 +1,17 @@
 {
   "schema_version": 1,
   "observed_at": "2026-10-10T00:00:00+00:00",
-  "observed_main_sha": "cc6d71d282c2c40a8ac5e21cc616b8e6507b5116",
+  "observed_main_sha": "8052b113e2bb75e3c9cbea2d451e1a5c6cbfc1cf",
   "observed_workspace_state": "committed implementation branch with one local generated qualification directory; generated artifacts are not release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "local_verification": {
     "observed_at": "2026-10-10",
     "command": "python -m pytest -q",
-    "result": "2204 passed, 21 skipped",
+    "result": "2221 passed, 21 skipped",
     "qualification_claimed": false,
     "mutation_campaign": {
+      "candidate_sha": "cc6d71d282c2c40a8ac5e21cc616b8e6507b5116",
       "total": 4255,
       "killed": 3603,
       "survived": 652,

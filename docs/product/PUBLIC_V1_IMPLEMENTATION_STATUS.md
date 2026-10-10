@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-10. The implementation branch contains
 one local generated qualification directory; it is not release evidence.
-**Observed source head:** `cc6d71d282c2c40a8ac5e21cc616b8e6507b5116` (2026-10-10).
+**Observed source head:** `8052b113e2bb75e3c9cbea2d451e1a5c6cbfc1cf` (2026-10-10).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -31,7 +31,7 @@ not Public v1 completion.
 ## Local verification on this snapshot
 
 On Windows, the latest focused contract verification produced **144 passed**
-and the full `python -m pytest -q` verification produced **2204 passed, 21 skipped**.
+and the full `python -m pytest -q` verification produced **2221 passed, 21 skipped**.
 The skips are environment-gated Docker/PostgreSQL/Spark/provider
 qualification checks, not test failures.
 Additional exact-head evidence on this snapshot includes Docker qualification
@@ -40,8 +40,8 @@ browser smoke (no console/request/CSP failures), installed-wheel accessibility
 (no violations at 320/768/1440 px), and four credential-free migration fixture
 certifications. These checks do not constitute Public v1 release qualification.
 
-The latest recorded WSL mutation campaign on this exact source head completed
-4,255 mutants: 3,603 killed, 652 survived, and 0 timed out after two audit
+The latest recorded WSL mutation campaign on the preceding exact candidate
+`cc6d71d282c2c40a8ac5e21cc616b8e6507b5116` completed 4,255 mutants: 3,603 killed, 652 survived, and 0 timed out after two audit
 mutants were rerun serially. That is **84.68% killed of all mutants**, below
 the repository's 90% mutation gate. The campaign is exact-head evidence, but
 the gate remains blocked until the surviving behavior is covered or justified.
