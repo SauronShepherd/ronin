@@ -52,6 +52,21 @@ def test_scheduler_dispatch_rejects_unqualified_family() -> None:
         execute_scheduler_job(_job("ml.run"))
 
 
+@pytest.mark.parametrize("identifier", ["", " ", "\t"])
+def test_scheduler_dispatch_rejects_blank_ml_identifiers(identifier: str) -> None:
+    class Runner:
+        def run(self, _lab, _rows):
+            return SimpleNamespace(to_payload=lambda: {})
+
+    with pytest.raises(UnsupportedSchedulerWorkload, match="ML runner, lab, and rows|parameters"):
+        execute_scheduler_job(
+            _job("ml.run", {"lab_id": identifier, "dataset_ref": "dataset-1"}),
+            ml_runner=Runner(),
+            ml_lab=object(),
+            ml_rows=(),
+        )
+
+
 def test_scheduler_dispatch_routes_genai_run_through_injected_runner() -> None:
     seen: dict[str, object] = {}
 

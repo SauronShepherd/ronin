@@ -244,7 +244,10 @@ def execute_scheduler_job(
             raise UnsupportedSchedulerWorkload("ml.run requires runner, lab, and rows")
         try:
             payload = json.loads(job.parameters_json)
-            if not all(isinstance(payload.get(key), str) for key in ("lab_id", "dataset_ref")):
+            if not all(
+                isinstance(payload.get(key), str) and payload[key].strip()
+                for key in ("lab_id", "dataset_ref")
+            ):
                 raise ValueError("missing ML identifiers")
         except (TypeError, ValueError, json.JSONDecodeError) as exc:
             raise UnsupportedSchedulerWorkload("ml.run parameters are invalid") from exc
