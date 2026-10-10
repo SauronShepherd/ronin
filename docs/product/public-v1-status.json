@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-10-10T00:00:00+00:00",
-  "observed_main_sha": "32d02ff801d757cc598df0944e14bf54c4246adb",
+  "observed_main_sha": "350c3fe59308ea4076a92c9fe5d735b1bece344d",
   "observed_workspace_state": "clean committed implementation branch; generated local qualification artifacts are ignored and not release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -49,7 +49,7 @@
     {
       "id": "p3-lakehouse-sql",
       "status": "partial",
-      "summary": "Bounded Arrow/Parquet open-data and streaming publication paths, provider-neutral SQL/table contracts, optional local DuckDB engine with bounded relation lifecycle, shared query lifecycle adapter, provider-neutral query-engine contracts with discovery, local transport and Trino HTTP submit/poll/cancel transport, bounded project-scoped fail-closed read-only SQL HTTP adapter/route, and optional Iceberg/Delta create-append-overwrite-read-inspect-delete adapters exist; QueryFlux integration/qualification, remote/catalog qualification, full format features, and broader SQL service remain incomplete."
+      "summary": "Bounded Arrow/Parquet open-data and streaming publication paths, provider-neutral SQL/table contracts, optional local DuckDB engine with bounded relation lifecycle, shared query lifecycle adapter, provider-neutral query-engine contracts with discovery, local transport and Trino HTTP submit/poll/cancel transport, QueryFlux discovery and QueryFlux-to-Trino lifecycle adapters, bounded project-scoped fail-closed read-only SQL HTTP adapter/route, and optional Iceberg/Delta create-append-overwrite-read-inspect-delete adapters exist; external QueryFlux qualification, remote/catalog qualification, full format features, and broader SQL service remain incomplete."
     },
     {
       "id": "p4-data-engineering-studio",
