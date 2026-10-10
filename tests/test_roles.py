@@ -61,5 +61,5 @@ def test_named_roles_expose_the_exact_public_contract() -> None:
 
 
 def test_unknown_role_names_fail_closed_at_runtime() -> None:
-    with pytest.raises(ValueError, match="unsupported role name"):
+    with pytest.raises(ValueError, match="^unsupported role name$"):
         role_definition("administrator", resource=ResourceScope("project", "orders"))  # type: ignore[arg-type]
