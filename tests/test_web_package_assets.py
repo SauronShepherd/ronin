@@ -86,6 +86,13 @@ def test_data_engineering_query_surface_renders_routing_evidence() -> None:
         assert marker in source, f"query routing evidence UI missing: {marker}"
 
 
+def test_environment_studio_exposes_deterministic_diff_preview() -> None:
+    root = Path(__file__).parents[1]
+    source = (root / "web/js/environment-studio.js").read_text(encoding="utf-8")
+    for marker in ("environment-diff", "/diff`, definition", "JSON.parse"):
+        assert marker in source, f"environment diff UI missing: {marker}"
+
+
 def test_genai_studio_exposes_discovery_and_health() -> None:
     root = Path(__file__).parents[1]
     source = (root / "web/js/genai-studio.js").read_text(encoding="utf-8")

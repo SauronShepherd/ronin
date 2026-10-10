@@ -5,7 +5,7 @@ function render() {
   if (location.hash.slice(1) !== 'environments') return;
   const view = document.querySelector('#view');
   if (!view) return;
-  view.innerHTML = `${page('Environments', 'DEPLOYMENT')}<section class="panel"><form id="environment-list-form" class="toolbar"><label>Workspace<input class="field" name="workspace" value="default" required></label><button class="button" type="submit">Refresh</button></form><div id="environment-result" class="loading">No environments loaded.</div></section><section class="panel"><h2>Create environment</h2><form id="environment-create-form"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Environment JSON<textarea class="field sql-editor" name="definition" rows="7">{"id":"local","name":"Local","kind":"local","state":"active"}</textarea></label><button class="button primary" type="submit">Create</button></form><pre id="environment-create-result" class="code" aria-live="polite">No environment created.</pre></section>`;
+  view.innerHTML = `${page('Environments', 'DEPLOYMENT')}<section class="panel"><form id="environment-list-form" class="toolbar"><label>Workspace<input class="field" name="workspace" value="default" required></label><button class="button" type="submit">Refresh</button></form><div id="environment-result" class="loading">No environments loaded.</div></section><section class="panel"><h2>Create environment</h2><form id="environment-create-form"><label>Workspace<input class="field" name="workspace" value="default" required></label><label>Environment JSON<textarea class="field sql-editor" name="definition" rows="7">{"id":"local","name":"Local","description":"","state":"active"}</textarea></label><div class="toolbar"><button class="button primary" type="submit">Create</button><button class="button" data-action="environment-diff" type="button">Preview diff</button></div></form><pre id="environment-create-result" class="code" aria-live="polite">No environment created.</pre></section>`;
 }
 
 async function load(workspace) {
@@ -29,6 +29,18 @@ document.addEventListener('submit', async event => {
   }
 });
 document.addEventListener('click', async event => {
+  const diff = event.target.closest?.('[data-action="environment-diff"]');
+  if (diff) {
+    const form = document.querySelector('#environment-create-form');
+    const out = document.querySelector('#environment-create-result');
+    try {
+      const workspace = String(form.elements.workspace.value).trim();
+      const definition = JSON.parse(String(form.elements.definition.value));
+      if (!definition.id) throw new Error('Environment definition must include id');
+      out.textContent = json(await post(`/v1/workspaces/${encodeURIComponent(workspace)}/environments/${encodeURIComponent(definition.id)}/diff`, definition));
+    } catch (error) { out.textContent = `Environment diff failed: ${error.message}`; }
+    return;
+  }
   const edit = event.target.closest?.('.environment-edit');
   if (edit) {
     const form = document.querySelector('#environment-create-form');
