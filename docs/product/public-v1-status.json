@@ -1,22 +1,22 @@
 {
   "schema_version": 1,
   "observed_at": "2026-10-10T00:00:00+00:00",
-  "observed_main_sha": "50fb06ddce8b429153f2d980b46b297c1077889b",
-  "observed_workspace_state": "clean committed implementation branch; generated local qualification artifacts are ignored and not release evidence",
+  "observed_main_sha": "1860d7284b0cf2c29f5dd493be212c0b87aee56d",
+  "observed_workspace_state": "committed implementation branch with one local generated qualification directory; generated artifacts are not release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "local_verification": {
     "observed_at": "2026-10-10",
     "command": "python -m pytest -q",
-    "result": "2166 passed, 21 skipped",
+    "result": "2204 passed, 21 skipped",
     "qualification_claimed": false,
     "mutation_campaign": {
-      "total": 4216,
-      "killed": 3544,
-      "survived": 672,
+      "total": 4222,
+      "killed": 3585,
+      "survived": 637,
       "timeout": 0,
-      "killed_percent_non_timeout": 84.06,
-      "killed_percent_all": 84.06,
+      "killed_percent_non_timeout": 84.91,
+      "killed_percent_all": 84.91,
       "gate_percent": 90.0,
       "gate_status": "blocked"
     }
