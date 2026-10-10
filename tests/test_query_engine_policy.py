@@ -1,5 +1,4 @@
 import pytest
-
 from studio_query_engine import EngineCapabilities, QueryExecutionPolicy, QueryRequest
 
 
@@ -52,3 +51,9 @@ def test_query_policy_fails_closed(
 def test_query_policy_rejects_ambiguous_profile_identifiers(value: str) -> None:
     with pytest.raises(ValueError, match="query profile"):
         QueryExecutionPolicy(((value, ("duckdb",)),))
+
+
+@pytest.mark.parametrize("value", [1, True, object()])
+def test_query_policy_rejects_non_text_required_capability(value: object) -> None:
+    with pytest.raises(ValueError, match="required capability"):
+        QueryExecutionPolicy((("local", ("duckdb",)),), required_capability=value)  # type: ignore[arg-type]

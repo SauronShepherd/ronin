@@ -32,9 +32,12 @@ class QueryExecutionPolicy:
                 raise ValueError("query profile allowlists must be non-empty and unique")
             for engine in engines:
                 _identifier(engine, "query engine")
-        if self.required_capability is not None and not self.required_capability.strip():
-            raise ValueError("required capability must be non-empty")
         if self.required_capability is not None:
+            if (
+                not isinstance(self.required_capability, str)
+                or not self.required_capability.strip()
+            ):
+                raise ValueError("required capability must be non-empty")
             _identifier(self.required_capability, "required capability")
         object.__setattr__(self, "profile_engines", profiles)
 
