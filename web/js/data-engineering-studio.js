@@ -57,6 +57,19 @@ function showPipelineRunEvidence(out, runId, data) {
   details.textContent = json(data);
   out.append(heading, evidence, details);
 }
+function showQueryEvidence(out, data) {
+  const evidence = data?.query_evidence;
+  if (!evidence || typeof evidence !== 'object') { out.textContent = json(data); return; }
+  out.textContent = '';
+  const heading = document.createElement('strong');
+  heading.textContent = `Query target: ${evidence.selected_engine || 'unknown engine'} · ${evidence.provider_id || 'unknown provider'}`;
+  const details = document.createElement('p');
+  details.textContent = `Provider version: ${evidence.provider_version || 'unknown'} · Translation: ${evidence.translation_policy || 'unknown'}`;
+  const trace = document.createElement('pre');
+  trace.className = 'code';
+  trace.textContent = json({ routing_trace: evidence.routing_trace || {} });
+  out.append(heading, details, trace);
+}
 function refreshPipelineEdgeSelectors() {
   const { documentValue } = pipelineDocument();
   for (const id of ['#de-edge-from', '#de-edge-to']) { const select = document.querySelector(id); if (select) select.innerHTML = documentValue.pipeline.nodes.map(node => `<option value="${node.id}">${node.id}</option>`).join(''); }
@@ -200,7 +213,7 @@ document.addEventListener('click', async event => {
       return;
     }
     if (action === 'de-health') out.textContent = json(await get('/v1/data-engineering/health'));
-    else if (action === 'de-sql-execute' || action === 'de-sql-export') { const data = new FormData(document.querySelector('#de-sql-form')); const workspace = encodeURIComponent(data.get('workspace')); const project = encodeURIComponent(data.get('project')); const result = await post(`/v1/workspaces/${workspace}/projects/${project}/sql/query`, { sql: data.get('sql'), max_rows: 1000, profile: data.get('profile'), translation_policy: data.get('translation_policy'), dialect: data.get('dialect') }); sqlHistory = [{ sql: String(data.get('sql')), profile: String(data.get('profile')) }, ...sqlHistory.filter(entry => entry.sql !== String(data.get('sql')) || entry.profile !== String(data.get('profile'))) ].slice(0, 10); localStorage.setItem(SQL_HISTORY_KEY, JSON.stringify(sqlHistory)); renderSqlHistory(); if (action === 'de-sql-export') { const columns = (result.columns || []).map(column => typeof column === 'string' ? column : column.name); const rows = result.rows || []; out.textContent = [columns.join(','), ...rows.map(row => row.map(value => JSON.stringify(value ?? '')).join(','))].join('\n'); } else out.textContent = json(result); }
+    else if (action === 'de-sql-execute' || action === 'de-sql-export') { const data = new FormData(document.querySelector('#de-sql-form')); const workspace = encodeURIComponent(data.get('workspace')); const project = encodeURIComponent(data.get('project')); const result = await post(`/v1/workspaces/${workspace}/projects/${project}/sql/query`, { sql: data.get('sql'), max_rows: 1000, profile: data.get('profile'), translation_policy: data.get('translation_policy'), dialect: data.get('dialect') }); sqlHistory = [{ sql: String(data.get('sql')), profile: String(data.get('profile')) }, ...sqlHistory.filter(entry => entry.sql !== String(data.get('sql')) || entry.profile !== String(data.get('profile'))) ].slice(0, 10); localStorage.setItem(SQL_HISTORY_KEY, JSON.stringify(sqlHistory)); renderSqlHistory(); if (action === 'de-sql-export') { const columns = (result.columns || []).map(column => typeof column === 'string' ? column : column.name); const rows = result.rows || []; out.textContent = [columns.join(','), ...rows.map(row => row.map(value => JSON.stringify(value ?? '')).join('\n'))].join('\n'); } else showQueryEvidence(out, result); }
     else if (action === 'de-runtimes') out.textContent = json(await get('/v1/data-engineering/runtimes'));
     else if (action === 'de-run' || action === 'de-run-inspect') { const data = new FormData(document.querySelector('#de-pipeline-form')); const workspace = encodeURIComponent(data.get('workspace')); const project = encodeURIComponent(data.get('project')); const pipeline = encodeURIComponent(data.get('pipeline_id')); if (action === 'de-run') { const parameters = JSON.parse(data.get('pipeline')); const result = await post(`/v1/workspaces/${workspace}/projects/${project}/pipelines/${pipeline}/runs`, { revision_key: data.get('revision_key'), ir_digest: data.get('ir_digest'), runtime: data.get('runtime'), parameters: { pipeline: parameters } }); if (result.id) document.querySelector('[name="run_id"]').value = result.id; out.textContent = json(result); } else { const runId = String(data.get('run_id') || '').trim(); if (!runId) throw new Error('Enter a workflow run ID'); showPipelineRunEvidence(out, runId, await get(`/v1/workspaces/${workspace}/workflow-runs/${encodeURIComponent(runId)}`)); } }
     else if (action === 'de-archive') { const data = new FormData(document.querySelector('#de-pipeline-form')); if (!confirm(`Archive pipeline ${data.get('pipeline_id')}?`)) return; out.textContent = json(await post(`/v1/workspaces/${encodeURIComponent(data.get('workspace'))}/projects/${encodeURIComponent(data.get('project'))}/pipelines/${encodeURIComponent(data.get('pipeline_id'))}/archive`, {})); }

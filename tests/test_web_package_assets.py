@@ -79,6 +79,13 @@ def test_ai_studio_exposes_provider_health_check() -> None:
         assert marker in source, f"AI health UI missing: {marker}"
 
 
+def test_data_engineering_query_surface_renders_routing_evidence() -> None:
+    root = Path(__file__).parents[1]
+    source = (root / "web/js/data-engineering-studio.js").read_text(encoding="utf-8")
+    for marker in ("showQueryEvidence", "selected_engine", "routing_trace", "provider_version"):
+        assert marker in source, f"query routing evidence UI missing: {marker}"
+
+
 def test_genai_studio_exposes_discovery_and_health() -> None:
     root = Path(__file__).parents[1]
     source = (root / "web/js/genai-studio.js").read_text(encoding="utf-8")
