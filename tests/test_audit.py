@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from studio_core import Workspace, WorkspaceId
 from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource, _metadata
 from studio_orchestrator import Instant
@@ -87,6 +86,51 @@ def test_audit_metadata_is_sorted_and_does_not_alias_input() -> None:
     result = _metadata(tuple(values))
     values.reverse()
     assert result == (("a-key", "first"), ("z-key", "last"))
+
+
+def test_audit_event_round_trip_preserves_canonical_payload_and_digest() -> None:
+    event = AuditEvent(
+        id=AuditEventId("audit-round-trip"),
+        occurred_at=str(_NOW),
+        actor=AuditActor("service", "svc-1"),
+        action="workspace.update",
+        resource=AuditResource("workspace", "ws-1"),
+        outcome="allowed",
+        request_id="request-round-trip",
+        metadata=(("z-key", "last"), ("a-key", "first")),
+    )
+
+    restored = AuditEvent.from_json(event.to_json())
+
+    assert restored == event
+    assert restored.to_json() == event.to_json()
+    assert restored.digest == event.digest
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"kind": "local"},
+        {"kind": "local", "ref": 1},
+        {"kind": "unknown", "ref": "operator"},
+    ],
+)
+def test_audit_actor_payload_validation_is_fail_closed(payload: dict[str, object]) -> None:
+    with pytest.raises(ValueError, match="audit actor|unsupported"):
+        AuditActor.from_payload(payload)
+
+
+@pytest.mark.parametrize("occurred_at", ["2026-09-12", "2026-09-12T00:00:00+00:00", " "])
+def test_audit_event_timestamp_validation_is_fail_closed(occurred_at: str) -> None:
+    with pytest.raises(ValueError, match="audit occurred_at"):
+        AuditEvent(
+            id=AuditEventId("audit-invalid-time"),
+            occurred_at=occurred_at,
+            actor=AuditActor("local", "local-operator"),
+            action="workspace.create",
+            resource=AuditResource("workspace", "ws-1"),
+            outcome="succeeded",
+        )
 
 
 def test_list_for_resource_is_scoped(tmp_path: Path) -> None:
