@@ -4,10 +4,10 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-09-27. The implementation branch contains
+**Observed workspace snapshot:** 2026-10-10. The implementation branch contains
 four local test/testkit changes; generated local qualification artifacts are
 ignored and are not release evidence.
-**Observed source head:** `b812e4bff078b7e61f0ebba0127b2664cf2a66dd` (2026-09-27).
+**Observed source head:** `4a10243bd651458a9e75ee58ae22df676900f81d` (2026-10-10).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -32,7 +32,7 @@ not Public v1 completion.
 ## Local verification on this snapshot
 
 On Windows, the latest affected-test verification produced **95 passed** and
-the full `python -m pytest -q` verification produced **2103 passed, 21 skipped**.
+the full `python -m pytest -q` verification produced **2104 passed, 21 skipped**.
 The skips are environment-gated Docker/PostgreSQL/Spark/provider
 qualification checks, not test failures.
 Additional exact-head evidence on this snapshot includes Docker qualification
