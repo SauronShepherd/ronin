@@ -36,7 +36,10 @@ def test_resource_and_requirement_validation_is_closed() -> None:
         Requirement("read", ResourceScope("project", None), version=2)
 
 
-@pytest.mark.parametrize("value", ["", " p", "p ", "p\n", "p\r", "p\x00"])
+@pytest.mark.parametrize(
+    "value",
+    ["", " p", "p ", "p\n", "p\r", "p\x00", "p\nq", "p\rq", "p\x00q"],
+)
 def test_text_and_constraint_validation_fails_closed(value: str) -> None:
     with pytest.raises(ValueError, match="non-empty"):
         ResourceScope("project", value)
@@ -55,6 +58,11 @@ def test_constraints_reject_secrets_duplicates_and_excess() -> None:
     values = {f"k{i}": "v" for i in range(MAX_CONSTRAINTS + 1)}
     with pytest.raises(ValueError, match="at most"):
         Grant(frozenset({"read"}), ResourceScope("project", None), values)
+    boundary = {f"k{i}": "v" for i in range(MAX_CONSTRAINTS)}
+    assert (
+        len(Grant(frozenset({"read"}), ResourceScope("project", None), boundary).constraints)
+        == MAX_CONSTRAINTS
+    )
 
 
 @pytest.mark.parametrize("action", sorted(ACTIONS))
