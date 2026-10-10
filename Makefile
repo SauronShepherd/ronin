@@ -15,51 +15,60 @@ ui-e2e-debug:
 	npm --prefix web-tests run test:debug
 
 release-evidence-validate:
-	python -m tools.release_evidence validate $(BUNDLE)
+	$(PYTHON) -m tools.release_evidence validate $(BUNDLE)
 
 release-evidence-merge:
-	python -m tools.release_evidence merge $(OUTPUT) $(BUNDLES)
+	$(PYTHON) -m tools.release_evidence merge $(OUTPUT) $(BUNDLES)
 
 release-evidence-verdict:
-	python -m tools.release_evidence verdict $(BUNDLE) $(REQUIRED_GATES)
+	$(PYTHON) -m tools.release_evidence verdict $(BUNDLE) $(REQUIRED_GATES)
 
 cloud-studio-floci:
-	python -m tools.cloud_studio_floci_qualification $(ARGS)
+	$(PYTHON) -m tools.cloud_studio_floci_qualification $(ARGS)
 
 capability-status-check:
-	python -m tools.capability_status docs/product/public-v1-status.json
+	$(PYTHON) -m tools.capability_status docs/product/public-v1-status.json
 
 CODE_PATHS := python tests tools packages docker
+
+# Unix installations commonly expose only ``python3`` while Windows Python
+# installations conventionally expose ``python``. Callers may override this
+# with ``make PYTHON=/path/to/python <target>``.
+ifeq ($(OS),Windows_NT)
+PYTHON ?= python
+else
+PYTHON ?= python3
+endif
 
 check: format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget canonical-json-check runner-protocol-check capability-status-check test performance
 
 lint-openapi:
-	python -m tools.openapi_snapshot
+	$(PYTHON) -m tools.openapi_snapshot
 
 route-consistency:
-	PYTHONPATH=python python -m tools.route_consistency
+	PYTHONPATH=python $(PYTHON) -m tools.route_consistency
 
 studio-surface:
-	python -m tools.studio_surface
+	$(PYTHON) -m tools.studio_surface
 
 web-lint:
-	python -m tools.studio_web_audit
+	$(PYTHON) -m tools.studio_web_audit
 
 web-budget:
-	python -m tools.studio_budget --check
+	$(PYTHON) -m tools.studio_budget --check
 
 browser-audit:
-	@python -c "import playwright" 2>NUL || (echo Playwright is required for browser-audit && exit /b 1)
-	python tools/browser_audit.py $${RONIN_STUDIO_AUDIT_URL:-http://127.0.0.1:8080/studio/}
+	@$(PYTHON) -c "import playwright" 2>NUL || (echo Playwright is required for browser-audit && exit /b 1)
+	$(PYTHON) tools/browser_audit.py $${RONIN_STUDIO_AUDIT_URL:-http://127.0.0.1:8080/studio/}
 
 ui-installed:
-	python -m build --wheel --outdir .tmp-govern-wheel
-	python tools/installed_studio_browser_smoke.py .tmp-govern-wheel/*.whl
+	$(PYTHON) -m build --wheel --outdir .tmp-govern-wheel
+	$(PYTHON) tools/installed_studio_browser_smoke.py .tmp-govern-wheel/*.whl
 
 ui-a11y:
 	npm ci
-	python -m build --wheel --outdir .tmp-govern-wheel
-	python -m tools.installed_studio_a11y .tmp-govern-wheel/*.whl
+	$(PYTHON) -m build --wheel --outdir .tmp-govern-wheel
+	$(PYTHON) -m tools.installed_studio_a11y .tmp-govern-wheel/*.whl
 
 format:
 	ruff format --check $(CODE_PATHS)
@@ -68,31 +77,31 @@ lint:
 	ruff check $(CODE_PATHS)
 
 typecheck:
-	mypy python tools packages/pyronin/src docker
+	$(PYTHON) -m mypy python tools packages/pyronin/src docker
 
 architecture:
-	python -m tools.architecture_gate python
+	$(PYTHON) -m tools.architecture_gate python
 
 gates-negative:
-	python -m tools.gates_negative
+	$(PYTHON) -m tools.gates_negative
 
 canonical-json-check:
 	@command -v go >/dev/null 2>&1 || { echo "go toolchain required for canonical JSON cross-language check"; exit 1; }
 	go run tools/canonical_json_check.go tests/golden/canonical_json_v1.json
 
 dependency-surfaces-check:
-	python -m tools.dependency_surfaces
+	$(PYTHON) -m tools.dependency_surfaces
 
 runner-protocol-check:
 	@command -v go >/dev/null 2>&1 || { echo "go toolchain required for runner protocol check"; exit 1; }
 	go run tools/runner_protocol_check.go tests/golden/runner_protocol_v1.json
 
 test:
-	python -m pytest --ignore=tests/perf --cov --cov-branch --cov-report=
+	$(PYTHON) -m pytest --ignore=tests/perf --cov --cov-branch --cov-report=
 	$(MAKE) coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-tools
 
 performance:
-	python -m pytest tests/perf -q
+	$(PYTHON) -m pytest tests/perf -q
 
 coverage-t1:
 	# Core contracts currently qualify at 82%; keep an explicit regression margin.
@@ -123,7 +132,7 @@ coverage-tools:
 
 coverage-storage-files:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
-	python -m tools.coverage_file_gate coverage-storage.json python/studio_storage \
+	$(PYTHON) -m tools.coverage_file_gate coverage-storage.json python/studio_storage \
 		--exclude=postgres_core.py \
 		--exclude=postgres_jobs.py \
 		--threshold=80 \
@@ -156,7 +165,7 @@ coverage-storage-files:
 
 coverage-storage-files-full:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
-	python -m tools.coverage_file_gate coverage-storage.json python/studio_storage \
+	$(PYTHON) -m tools.coverage_file_gate coverage-storage.json python/studio_storage \
 		--threshold=80 \
 		--ratchet-margin=2 \
 		--baseline=artifacts.py=77.30 \
@@ -192,4 +201,4 @@ mutation:
 	@rm -rf mutants
 	@test ! -e src && test ! -L src
 	@cp -a python src; trap 'rm -rf src' 0; PYTHONPATH=python:packages/pyronin/src mutmut run && mutmut export-cicd-stats && mutmut results --all true > mutants/mutmut-results.txt
-	@python3 -m tools.mutation_gate mutants/mutmut-cicd-stats.json
+	@$(PYTHON) -m tools.mutation_gate mutants/mutmut-cicd-stats.json
