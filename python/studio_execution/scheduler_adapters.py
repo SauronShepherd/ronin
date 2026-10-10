@@ -355,7 +355,14 @@ def execute_scheduler_job(
             or not 1 <= limit <= 10_000
         ):
             raise UnsupportedSchedulerWorkload("graph.query parameters are invalid")
-        objects = graph_adapter.query(graph_id, query, max_limit=limit).objects
+        try:
+            objects = tuple(graph_adapter.query(graph_id, query, max_limit=limit).objects)
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise UnsupportedSchedulerWorkload(
+                "graph.query adapter returned an invalid result"
+            ) from exc
+        if len(objects) > limit:
+            raise UnsupportedSchedulerWorkload("graph.query adapter exceeded max_limit")
         return SchedulerWorkloadResult(
             family="graph",
             graph=tuple(

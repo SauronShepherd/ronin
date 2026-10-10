@@ -167,6 +167,23 @@ def test_scheduler_dispatch_rejects_invalid_graph_query_limits(limit: object) ->
         )
 
 
+def test_scheduler_dispatch_rejects_graph_adapter_result_over_limit() -> None:
+    object_ref = SimpleNamespace(object_type="Order", key=(("id", 1),))
+    graph_object = SimpleNamespace(ref=object_ref, properties=())
+    adapter = SimpleNamespace(
+        query=lambda *_args, **_kwargs: SimpleNamespace(objects=(graph_object, graph_object))
+    )
+
+    with pytest.raises(UnsupportedSchedulerWorkload, match="exceeded max_limit"):
+        execute_scheduler_job(
+            _job(
+                "graph.query",
+                {"graph_id": "orders", "query": "SELECT o FROM Order o", "limit": 1},
+            ),
+            graph_adapter=adapter,
+        )
+
+
 def test_scheduler_dispatch_routes_quality_gate_through_rows_artifact(tmp_path) -> None:
     store = LocalArtifactStore(tmp_path)
     rows_ref = store.put_bytes(role="quality-rows", data=b'[{"id": 1}]').storage_ref
