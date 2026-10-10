@@ -149,6 +149,7 @@ class SqlColumn:
 class SqlResult:
     columns: tuple[SqlColumn, ...]
     rows: tuple[tuple[object, ...], ...]
+    query_evidence: Mapping[str, object] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -3200,8 +3201,11 @@ def _parse_job(payload: object) -> Job:
 
 
 def _parse_sql_result(payload: object) -> SqlResult:
-    if not isinstance(payload, dict) or set(payload) != {"columns", "rows"}:
-        raise ProtocolError("SQL result must contain exactly columns and rows")
+    if not isinstance(payload, dict) or not {"columns", "rows"} <= set(payload):
+        raise ProtocolError("SQL result must contain columns and rows")
+    unknown = set(payload) - {"columns", "rows", "query_evidence"}
+    if unknown:
+        raise ProtocolError("SQL result contains unknown fields")
     columns = payload["columns"]
     rows = payload["rows"]
     if not isinstance(columns, list) or not isinstance(rows, list):
@@ -3220,7 +3224,12 @@ def _parse_sql_result(payload: object) -> SqlResult:
         if not isinstance(row, list) or len(row) != width:
             raise ProtocolError("SQL result row width does not match columns")
         parsed_rows.append(tuple(row))
-    return SqlResult(tuple(parsed_columns), tuple(parsed_rows))
+    evidence = payload.get("query_evidence")
+    if evidence is not None and (
+        not isinstance(evidence, dict) or not all(isinstance(key, str) for key in evidence)
+    ):
+        raise ProtocolError("SQL result query_evidence must be an object")
+    return SqlResult(tuple(parsed_columns), tuple(parsed_rows), evidence)
 
 
 def _parse_job_page(payload: object) -> JobPage:

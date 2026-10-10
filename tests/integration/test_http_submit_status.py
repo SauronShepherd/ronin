@@ -8,7 +8,6 @@ from urllib.request import urlopen
 import pytest
 from pyronin import APIError, HTTPTransport, Ronin
 from pyronin import JobState as SDKJobState
-
 from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_lakehouse import write_parquet_rows
@@ -339,6 +338,13 @@ def test_http_sql_route_requires_project_read_and_returns_bounded_result(tmp_pat
         )
         assert tuple(column.name for column in result.columns) == ("total",)
         assert result.rows == ((7,),)
+        assert result.query_evidence == {
+            "provider_id": "ronin-local-sql",
+            "provider_version": "1",
+            "selected_engine": "duckdb",
+            "routing_trace": {"profile": "local", "selected_engine": "duckdb"},
+            "translation_policy": "native_only",
+        }
         with pytest.raises(APIError) as invalid_sql:
             Ronin(transport=transport).execute_sql(
                 project="examples/demo", sql="SELECT missing_column FROM events"

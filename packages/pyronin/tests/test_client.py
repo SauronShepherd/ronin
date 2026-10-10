@@ -1104,6 +1104,10 @@ def test_execute_sql_parses_result_and_sends_bounded_request() -> None:
             {
                 "columns": [{"name": "total", "type": "BIGINT"}],
                 "rows": [[7]],
+                "query_evidence": {
+                    "provider_id": "ronin-local-sql",
+                    "selected_engine": "duckdb",
+                },
             }
         ]
     )
@@ -1114,6 +1118,7 @@ def test_execute_sql_parses_result_and_sends_bounded_request() -> None:
         parameters=("events",),
         max_rows=25,
     )
+    assert result.query_evidence is not None
     assert result.columns[0].name == "total"
     assert result.rows == ((7,),)
     assert transport.calls[0][0:3] == (

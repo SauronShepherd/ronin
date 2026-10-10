@@ -422,6 +422,16 @@ class DurableHTTPApplication:
                 {"name": column.name, "type": column.type_name} for column in result.columns
             ],
             "rows": [[sql_wire_value(value) for value in row] for row in result.rows],
+            "query_evidence": {
+                "provider_id": "ronin-local-sql",
+                "provider_version": "1",
+                "selected_engine": "duckdb",
+                "routing_trace": {
+                    "profile": profile,
+                    "selected_engine": "duckdb",
+                },
+                "translation_policy": translation_policy,
+            },
         }
 
 
