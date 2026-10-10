@@ -56,6 +56,7 @@ def _ontology() -> OntologyDefinition:
 class _QualityStore:
     def __init__(self, contracts: tuple[DataContract, ...] = ()) -> None:
         self.contracts = list(contracts)
+        self.batch_calls = 0
 
     def list_contracts(self, workspace_id: WorkspaceId) -> tuple[DataContract, ...]:
         assert workspace_id == _WORKSPACE
@@ -68,6 +69,18 @@ class _QualityStore:
         assert Instant(now) == _NOW
         self.contracts.append(contract)
         return contract
+
+    def put_contracts(
+        self,
+        workspace_id: WorkspaceId,
+        contracts: tuple[DataContract, ...],
+        *,
+        now: Instant | str,
+    ) -> tuple[DataContract, ...]:
+        self.batch_calls += 1
+        for contract in contracts:
+            self.put_contract(workspace_id, contract, now=now)
+        return contracts
 
 
 class _OntologyStore:
@@ -98,6 +111,7 @@ def test_quality_bundle_round_trip_preserves_contract_identity(tmp_path: Path) -
 
     assert imported.contracts == plan.contracts
     assert target.contracts == [_contract()]
+    assert target.batch_calls == 1
     verify_bundle(bundle)
 
 
