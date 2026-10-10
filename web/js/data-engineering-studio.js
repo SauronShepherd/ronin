@@ -230,8 +230,7 @@ document.addEventListener('click', async event => {
   try {
     if (action === 'de-sql-save') { const name = document.querySelector('#de-sql-save-name').value.trim(); const form = document.querySelector('#de-sql-form'); const sql = form.querySelector('[name="sql"]').value; const profile = form.querySelector('[name="profile"]').value; const dialect = form.querySelector('[name="dialect"]').value; const translation_policy = form.querySelector('[name="translation_policy"]').value; if (!name || !sql.trim()) throw new Error('Query name and SQL are required'); savedSql = [{ name, sql, profile, dialect, translation_policy }, ...savedSql.filter(entry => entry.name !== name)].slice(0, 20); localStorage.setItem(SQL_SAVED_KEY, JSON.stringify(savedSql)); renderSavedSql(); document.querySelector('#de-sql-result').textContent = `Saved query: ${name}`; return; }
     if (action === 'de-queryflux-capabilities') {
-      const result = document.querySelector('#de-queryflux-result');
-      result.textContent = json(await get('/v1/data-engineering/queryflux/capabilities'));
+      await loadQueryFluxCapabilities();
       return;
     }
     if (action === 'de-health') out.textContent = json(await get('/v1/data-engineering/health'));
@@ -250,8 +249,33 @@ function addQueryFluxPanel() {
   if (!view || view.querySelector('#de-queryflux-result')) return;
   const panel = document.createElement('section');
   panel.className = 'panel';
-  panel.innerHTML = '<h2>QueryFlux</h2><p class="muted">Provider-neutral query routing evidence; raw cluster configuration is intentionally hidden.</p><div class="toolbar"><button class="button" data-action="de-queryflux-capabilities">Inspect capabilities</button></div><pre id="de-queryflux-result" class="code" aria-live="polite">No QueryFlux capability check requested.</pre>';
+  panel.innerHTML = '<h2>QueryFlux</h2><p class="muted">Provider-neutral query routing evidence; raw cluster configuration is intentionally hidden.</p><div class="toolbar"><button class="button" data-action="de-queryflux-capabilities">Refresh capabilities</button></div><p id="de-queryflux-status" class="status" aria-live="polite">Loading QueryFlux health…</p><pre id="de-queryflux-result" class="code" aria-live="polite">No capability response yet.</pre>';
   view.prepend(panel);
+  loadQueryFluxCapabilities();
+}
+
+async function loadQueryFluxCapabilities() {
+  const result = document.querySelector('#de-queryflux-result');
+  const status = document.querySelector('#de-queryflux-status');
+  if (!result || !status) return;
+  try {
+    const payload = await get('/v1/data-engineering/queryflux/capabilities');
+    const state = payload.status || (payload.healthy === true ? 'ready' : 'degraded');
+    const capabilities = Object.entries(payload.capabilities || {})
+      .filter(([, enabled]) => enabled === true)
+      .map(([name]) => name)
+      .sort();
+    status.textContent = `QueryFlux: ${state}${capabilities.length ? ` · ${capabilities.length} capabilities` : ''}`;
+    result.textContent = json({
+      provider: payload.provider || 'queryflux',
+      status: state,
+      capabilities,
+      translation_policy: ['native_only', 'best_effort', 'strict'],
+    });
+  } catch (error) {
+    status.textContent = 'QueryFlux: degraded';
+    result.textContent = `QueryFlux capability check failed: ${error.message}`;
+  }
 }
 
 setTimeout(addQueryFluxPanel, 0);

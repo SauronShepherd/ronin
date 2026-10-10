@@ -185,3 +185,17 @@ def test_access_studio_exposes_project_permission_scope_inspection() -> None:
         "/v1/workspaces/${encodeURIComponent(workspace)}/projects/${encodeURIComponent(project)}/permissions",
     ):
         assert marker in source
+
+
+def test_data_engineering_studio_exposes_queryflux_health_and_capabilities() -> None:
+    source = (Path(__file__).parents[1] / "web" / "js" / "data-engineering-studio.js").read_text(
+        encoding="utf-8"
+    )
+    for marker in (
+        "loadQueryFluxCapabilities",
+        'id=\"de-queryflux-status\"',
+        "QueryFlux: degraded",
+        "translation_policy: ['native_only', 'best_effort', 'strict']",
+        "raw cluster configuration is intentionally hidden",
+    ):
+        assert marker in source
