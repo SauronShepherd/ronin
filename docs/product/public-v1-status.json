@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-10T00:00:00+02:00",
-  "observed_main_sha": "4a10243bd651458a9e75ee58ae22df676900f81d",
+  "observed_at": "2026-10-10T00:00:00Z",
+  "observed_main_sha": "7cce78d08d457b21f62a6032705e8977d236c9cc",
   "observed_workspace_state": "implementation branch with four tracked test/testkit changes; generated local qualification artifacts are ignored and not release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
