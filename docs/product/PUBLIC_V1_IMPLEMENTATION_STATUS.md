@@ -7,7 +7,7 @@
 **Observed workspace snapshot:** 2026-10-10. The implementation branch contains
 four local test/testkit changes; generated local qualification artifacts are
 ignored and are not release evidence.
-**Observed source head:** `14b111af929223c13c08103fa18ec80b9f75f7ac` (2026-10-10).
+**Observed source head:** `bab2a38d737d492ffc65680d8f6c15ea222b193d` (2026-10-10).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
