@@ -3,7 +3,6 @@ from threading import Thread
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
-
 from studio_connectors import (
     ConnectorRegistry,
     HttpJsonConnector,
@@ -11,7 +10,7 @@ from studio_connectors import (
     S3JsonConnector,
     builtin_connector_registry,
 )
-from studio_connectors.http_json import _validate_endpoint_host
+from studio_connectors.http_json import _validate_endpoint_host, _validate_request_url
 from studio_core import AssetHandle, ConnectionDefinition, ConnectionId
 from studio_storage import EnvironmentSecretResolver
 
@@ -81,6 +80,13 @@ def test_http_connector_rejects_private_endpoint_without_explicit_opt_in() -> No
     with pytest.raises(ValueError, match="private or reserved"):
         _validate_endpoint_host("127.0.0.1", allow_private=False)
     _validate_endpoint_host("127.0.0.1", allow_private=True)
+
+
+def test_http_connector_revalidates_pagination_urls() -> None:
+    with pytest.raises(ValueError, match="private or reserved"):
+        _validate_request_url("http://127.0.0.1:8080/next", allow_http=True, allow_private=False)
+    with pytest.raises(ValueError, match="disallowed scheme"):
+        _validate_request_url("http://example.test/next", allow_http=False, allow_private=True)
 
 
 def test_http_connector_paginates_and_retries_transient_responses() -> None:

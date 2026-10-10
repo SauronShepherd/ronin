@@ -110,6 +110,18 @@ def _validate_endpoint_host(hostname: str, *, allow_private: bool) -> None:
         raise ValueError("HTTP base_url resolves to a private or reserved network")
 
 
+def _validate_request_url(url: str, *, allow_http: bool, allow_private: bool) -> None:
+    parsed = urlsplit(url)
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("HTTP request URL must not embed credentials")
+    allowed_schemes = {"https", "http"} if allow_http else {"https"}
+    if parsed.scheme not in allowed_schemes:
+        raise ValueError("HTTP request URL uses a disallowed scheme")
+    if not parsed.hostname:
+        raise ValueError("HTTP request URL requires a hostname")
+    _validate_endpoint_host(parsed.hostname, allow_private=allow_private)
+
+
 class HttpJsonConnector:
     """Read bounded JSON records from one base URL without implicit redirect trust."""
 
@@ -168,6 +180,8 @@ class HttpJsonConnector:
             parsed_base_url.hostname or "",
             allow_private=options.get("allow_private_network", "false").casefold() == "true",
         )
+        allow_private = options.get("allow_private_network", "false").casefold() == "true"
+        allow_http = options.get("allow_http", "false").casefold() == "true"
         components = (*asset.namespace, asset.name)
         if any(not part or part in {".", ".."} or "://" in part for part in components):
             raise ValueError("HTTP asset path contains an unsafe component")
@@ -219,11 +233,16 @@ class HttpJsonConnector:
                 if page_param and next_field is None:
                     separator = "&" if "?" in request_url else "?"
                     request_url = f"{request_url}{separator}{quote(page_param)}={page + 1}"
+                _validate_request_url(
+                    request_url, allow_http=allow_http, allow_private=allow_private
+                )
                 body = b""
                 for attempt in range(retries + 1):
                     try:
                         with client.stream("GET", request_url, headers=headers) as response:
                             status = response.status_code
+                            if 300 <= status < 400:
+                                raise ValueError("HTTP redirects are disabled")
                             if (status == 429 or 500 <= status <= 599) and attempt < retries:
                                 retry_after = response.headers.get("retry-after")
                                 delay = (
@@ -295,6 +314,9 @@ class HttpJsonConnector:
                         ("https://", "http://")
                     ):
                         raise ValueError("HTTP next_url_field must contain an absolute URL")
+                    _validate_request_url(
+                        candidate, allow_http=allow_http, allow_private=allow_private
+                    )
                     next_url = candidate
         rows = tuple(rows_list)
         fields = _infer_fields(rows)
