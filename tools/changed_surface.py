@@ -8,18 +8,77 @@ import subprocess
 from pathlib import Path
 
 SUBSYSTEMS = {
-    "packaging": ("pyproject.toml", "requirements", "package.json", "package-lock.json"),
-    "runtime": ("python/studio_runtime", "python/studio_worker", "python/studio_kernel"),
-    "plugin": ("python/studio_plugin", "python/studio_core/plugins.py", "packages/"),
-    "data-engineering": ("python/studio_data_engineering", "tests/test_data_engineering"),
-    "ml": ("python/studio_ml", "tests/test_ml", "python/studio_ai_studio"),
-    "migration": ("python/studio_migration", "tests/test_migration"),
+    "packaging": (
+        ".dockerignore",
+        ".env.example",
+        ".gitignore",
+        ".ruff-global.txt",
+        "Makefile",
+        "pyproject.toml",
+        "requirements",
+        "package.json",
+        "package-lock.json",
+    ),
+    "runtime": (
+        "python/studio_runtime",
+        "python/studio_worker",
+        "python/studio_kernel",
+        "python/studio_core",
+        "python/studio_execution",
+        "python/studio_storage",
+        "python/studio_orchestrator",
+        "python/studio_runners",
+        "python/studio_runner_broker",
+        "python/studio_vcs",
+        "python/studio_notebook",
+        "python/studio_server",
+        "python/studio_sql",
+        "python/studio_semantic",
+        "python/studio_quality",
+        "python/studio_lakehouse",
+        "python/studio_connectors",
+        "python/studio_streaming",
+        "python/studio_synthetic_data",
+        "python/studio_observability",
+        "python/studio_finops",
+    ),
+    "plugin": (
+        "python/studio_plugin",
+        "python/studio_plugin_observability",
+        "python/studio_plugin_sdk",
+        "python/studio_plugin_testkit",
+        "python/studio_plugin_workspaces",
+        "packages/",
+    ),
+    "data-engineering": (
+        "python/studio_data_engineering",
+        "tests/test_data_engineering",
+        "tests/integration/test_data_engineering",
+        "tools/data_engineering",
+    ),
+    "ml": (
+        "python/studio_ml",
+        "tests/test_ml",
+        "tests/integration/test_ml",
+        "python/studio_ai_studio",
+        "tests/test_ai_studio",
+        "tests/integration/test_ai_studio",
+    ),
+    "migration": (
+        "python/studio_migration",
+        "tests/test_migration",
+        "tests/integration/test_migration",
+        "tools/migration",
+    ),
     "ui": (
         "web/",
         "tools/browser",
         "tools/installed_studio",
         "tests/test_web",
-        "package",
+        "tests/test_studio",
+        "tests/test_browser",
+        "tests/integration/test_studio",
+        "web-tests/",
     ),
     "qualification": (
         "tools/release",
@@ -29,6 +88,13 @@ SUBSYSTEMS = {
         "tests/test_release",
         "tests/test_docker",
         ".github/workflows",
+        "api/",
+        "compose.yaml",
+        "config/",
+        "deploy/",
+        "docker/",
+        "examples/",
+        "third_party/",
     ),
     "documentation": ("docs/", ".md"),
 }
@@ -41,7 +107,16 @@ def classify(path: str) -> str | None:
         for name, prefixes in SUBSYSTEMS.items()
         if any(normalized == prefix or normalized.startswith(prefix) for prefix in prefixes)
     ]
-    if normalized.endswith(".md") and "documentation" not in matches:
+    # Broad fallbacks are deliberately applied only after all product-specific
+    # prefixes.  This keeps the manifest total for repository configuration and
+    # tests while retaining the narrower gate for product code.
+    if not matches and normalized.startswith("python/"):
+        matches = ["runtime"]
+    if not matches and normalized.startswith("tests/"):
+        matches = ["qualification"]
+    if not matches and normalized.startswith("tools/"):
+        matches = ["qualification"]
+    if not matches and normalized.endswith(".md"):
         matches.append("documentation")
     if len(matches) != 1:
         return matches[0] if len(matches) == 1 else None

@@ -16,3 +16,12 @@ def test_changed_surface_fails_closed_for_ambiguous_or_unknown_paths() -> None:
     assert classify("python/studio_ml/plugin.py") == "ml"
     with pytest.raises(ValueError, match="unclassified"):
         build_manifest(["unknown/file.bin"], base="base", head="head")
+
+
+def test_changed_surface_classifies_current_candidate_without_unassigned_paths() -> None:
+    from tools.changed_surface import changed_files
+
+    paths = changed_files("origin/main", "HEAD")
+    manifest = build_manifest(paths, base="origin/main", head="HEAD")
+    assert manifest["files"] == len(paths)
+    assert manifest["subsystems"]
