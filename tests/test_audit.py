@@ -88,6 +88,41 @@ def test_audit_metadata_is_sorted_and_does_not_alias_input() -> None:
     assert result == (("a-key", "first"), ("z-key", "last"))
 
 
+@pytest.mark.parametrize(
+    "value",
+    ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00byte"],
+)
+def test_audit_identity_and_resource_text_reject_unportable_values(value: str) -> None:
+    with pytest.raises(ValueError, match="non-empty|single-line"):
+        AuditEventId(value)
+    with pytest.raises(ValueError, match="non-empty|single-line"):
+        AuditActor("local", value)
+    with pytest.raises(ValueError, match="non-empty|single-line"):
+        AuditResource("workspace", value)
+    with pytest.raises(ValueError, match="non-empty|single-line"):
+        AuditResource(value, "ws-1")
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["action", "request_id"],
+)
+@pytest.mark.parametrize("value", ["", " leading", "trailing ", "line\nfeed", "nul\x00byte"])
+def test_audit_event_text_fields_reject_unportable_values(field: str, value: str) -> None:
+    values: dict[str, object] = {"action": "connection.test", "request_id": "request-1"}
+    values[field] = value
+    with pytest.raises(ValueError, match="non-empty|single-line"):
+        AuditEvent(
+            id=AuditEventId("audit-invalid-text"),
+            occurred_at=str(_NOW),
+            actor=AuditActor("local", "local-operator"),
+            action=values["action"],
+            resource=AuditResource("connection", "c1"),
+            outcome="succeeded",
+            request_id=values["request_id"],
+        )
+
+
 def test_audit_event_round_trip_preserves_canonical_payload_and_digest() -> None:
     event = AuditEvent(
         id=AuditEventId("audit-round-trip"),
