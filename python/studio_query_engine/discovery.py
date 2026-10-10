@@ -23,13 +23,19 @@ class DiscoveredEngine:
 
     def __post_init__(self) -> None:
         if not self.engines or any(
-            not isinstance(value, str) or not value.strip() for value in self.engines
+            not isinstance(value, str) or not value.strip() or value != value.strip()
+            for value in self.engines
         ):
             raise ValueError("engine registry must contain non-empty names")
         if len(set(self.engines)) != len(self.engines):
             raise ValueError("engine registry names must be unique")
-        if not isinstance(self.cluster_state, str) or not self.cluster_state.strip():
+        if (
+            not isinstance(self.cluster_state, str)
+            or not self.cluster_state.strip()
+            or self.cluster_state != self.cluster_state.strip()
+        ):
             raise ValueError("cluster state must be non-empty text")
+        object.__setattr__(self, "engines", tuple(sorted(self.engines)))
 
 
 def _mapping(value: object, name: str) -> Mapping[str, object]:
@@ -71,10 +77,12 @@ def discover_engine(
     if not isinstance(raw_engines, list) or not raw_engines:
         raise ValueError("discovery registry must contain a non-empty engines array")
     engines = tuple(raw_engines)
-    if not all(isinstance(value, str) and value.strip() for value in engines):
-        raise ValueError("discovery engine names must be non-empty strings")
+    if not all(
+        isinstance(value, str) and value.strip() and value == value.strip() for value in engines
+    ):
+        raise ValueError("discovery registry engine names must be non-empty strings")
     state = cluster.get("state")
-    if not isinstance(state, str) or not state.strip():
+    if not isinstance(state, str) or not state.strip() or state != state.strip():
         raise ValueError("discovery cluster must declare a non-empty state")
 
     cluster_id = cluster.get("id")
@@ -87,7 +95,7 @@ def discover_engine(
         healthy,
         cluster_id=cluster_id,
     )
-    return DiscoveredEngine(handshake, engines, state)
+    return DiscoveredEngine(handshake, tuple(sorted(engines)), state)
 
 
 __all__ = ("DiscoveredEngine", "DiscoveryClient", "discover_engine")

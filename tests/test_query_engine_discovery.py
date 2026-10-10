@@ -1,5 +1,4 @@
 import pytest
-
 from studio_query_engine import discover_engine
 
 
@@ -19,7 +18,7 @@ def _client() -> _Client:
                 "version": "provider-1",
                 "capabilities": {"cancel": True, "joins": None},
             },
-            "/engines": {"engines": ["duckdb", "trino"]},
+            "/engines": {"engines": ["trino", "duckdb"]},
             "/cluster": {"id": "cluster-1", "state": "ready"},
         }
     )
@@ -57,4 +56,20 @@ def test_discovery_rejects_missing_registry_and_cluster_state() -> None:
     client = _client()
     client.responses["/cluster"] = {"state": ""}
     with pytest.raises(ValueError, match="cluster"):
+        discover_engine(client, provider_id="provider")
+
+
+@pytest.mark.parametrize(
+    ("path", "value", "message"),
+    [
+        ("/engines", {"engines": [" duckdb"]}, "registry"),
+        ("/cluster", {"state": " ready"}, "cluster"),
+    ],
+)
+def test_discovery_rejects_noncanonical_identity_text(
+    path: str, value: dict[str, object], message: str
+) -> None:
+    client = _client()
+    client.responses[path] = value
+    with pytest.raises(ValueError, match=message):
         discover_engine(client, provider_id="provider")
