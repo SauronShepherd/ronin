@@ -126,9 +126,11 @@ class TrinoHttpTransport:
         )
         uri = _safe_uri(uri, base_url=self._base_url, name="cancel URI")
         response = self._client.request("DELETE", uri)
-        cancelled = response.get("cancelled", True)
+        cancelled = response.get("cancelled")
         if not isinstance(cancelled, bool):
-            raise QueryFailure("invalid_provider_response", "cancelled must be boolean")
+            raise QueryFailure(
+                "invalid_provider_response", "cancel response must declare boolean cancelled"
+            )
         return CancellationResult(cancelled, "cancelled" if cancelled else "running")
 
     @staticmethod

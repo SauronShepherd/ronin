@@ -1,5 +1,4 @@
 import pytest
-
 from studio_query_engine import QueryFailure, QueryRequest, TrinoHttpTransport
 
 
@@ -83,6 +82,20 @@ def test_trino_transport_enforces_request_row_bound_across_pages() -> None:
     assert page.rows == ((1,),)
     with pytest.raises(QueryFailure, match="too many rows"):
         transport.poll(handle, next_uri or "")
+
+
+def test_trino_transport_rejects_cancel_response_without_explicit_boolean() -> None:
+    client = _Client(
+        [
+            {"id": "q-1", "nextUri": "http://engine/q-1"},
+            {},
+        ]
+    )
+    transport = TrinoHttpTransport(client, base_url="http://engine/")
+    handle, _ = transport.submit(QueryRequest("SELECT 1", "trino"))
+
+    with pytest.raises(QueryFailure, match="cancel response must declare boolean"):
+        transport.cancel(handle)
 
 
 @pytest.mark.parametrize("unsafe_uri", ["http://other/q-1", "http://user:pass@engine/q-1"])
