@@ -149,6 +149,26 @@ def test_missing_dependency_is_rejected() -> None:
         PluginManager().compose((__import_record(plugin),))
 
 
+def test_failed_composition_is_atomic_and_can_be_retried() -> None:
+    valid = __import_record(WorkspacesPlugin())
+    invalid_plugin = WorkspacesPlugin()
+    invalid_plugin.manifest = PluginManifest(
+        id="com.example.invalid",
+        name=invalid_plugin.manifest.name,
+        version=invalid_plugin.manifest.version,
+        plugin_api=invalid_plugin.manifest.plugin_api,
+        dependencies=(PluginDependency("com.example.missing"),),
+    )
+    manager = PluginManager()
+
+    with pytest.raises(PluginValidationError, match=r"^missing plugin dependencies:"):
+        manager.compose((valid, __import_record(invalid_plugin)))
+
+    assert manager._records == {}
+    plan = manager.compose((valid,))
+    assert [record.manifest.id for record in plan.records] == [valid.manifest.id]
+
+
 @pytest.mark.parametrize(
     ("changes", "message"),
     [

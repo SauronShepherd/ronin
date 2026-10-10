@@ -584,6 +584,7 @@ class PluginManager:
     ) -> CompositionPlan:
         if self._records:
             raise PluginValidationError("plugins have already been composed")
+        records: dict[str, PluginRecord] = {}
         for record in plugins:
             manifest = record.manifest
             # Validate the complete public manifest before mutating manager
@@ -591,7 +592,7 @@ class PluginManager:
             # points too, but callers may compose records directly (including
             # the public testkit and server composition roots).
             manifest.validate()
-            if manifest.id in self._records:
+            if manifest.id in records:
                 raise PluginValidationError(f"duplicate plugin id: {manifest.id}")
             if manifest.plugin_api != self.plugin_api:
                 raise PluginCompatibilityError(
@@ -602,7 +603,7 @@ class PluginManager:
                 raise PluginCompatibilityError(
                     f"{manifest.id} is incompatible with host {self.host_version}"
                 )
-            self._records[manifest.id] = record
+            records[manifest.id] = record
         graph = {
             item.manifest.id: {dependency.plugin_id for dependency in item.manifest.dependencies}
             for item in plugins
@@ -633,7 +634,7 @@ class PluginManager:
         registry = ContributionRegistry()
         composed: list[PluginRecord] = []
         for plugin_id in order:
-            record = self._records[plugin_id]
+            record = records[plugin_id]
             for capability in record.manifest.capabilities:
                 registry.add_capability(capability, plugin_id)
             for permission in record.manifest.permissions:
@@ -660,6 +661,7 @@ class PluginManager:
                 )
             )
         registry.freeze()
+        self._records = records
         return CompositionPlan(tuple(composed), registry)
 
     def start(self, plan: CompositionPlan) -> tuple[PluginRecord, ...]:
