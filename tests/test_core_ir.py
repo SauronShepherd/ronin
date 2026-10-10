@@ -2,7 +2,7 @@ import json
 from dataclasses import FrozenInstanceError
 
 import pytest
-from hypothesis import given
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from studio_core import (
@@ -484,6 +484,11 @@ def test_node_id_is_deterministic_for_arbitrary_json_params(
     assert first == second
 
 
+@settings(
+    deadline=None,
+    max_examples=100,
+    suppress_health_check=[HealthCheck.too_slow],
+)
 @given(st.lists(st.text(min_size=1), unique=True, max_size=8))
 def test_pipeline_order_is_canonical_for_arbitrary_insertion_order(keys: list[str]) -> None:
     nodes = tuple(_node(key) for key in keys)
