@@ -102,6 +102,15 @@ def commit_ml_bundle_import(
     path: Path, workspace_id: WorkspaceId, store: MLBundleStore
 ) -> MLBundleImportPlan:
     plan = plan_ml_bundle_import(path)
+    imported_lab_ids = {lab.id for lab in plan.labs}
+    orphaned_pipelines = sorted(
+        lab_id for lab_id, _pipeline in plan.pipelines if lab_id not in imported_lab_ids
+    )
+    if orphaned_pipelines:
+        raise ValueError(
+            "ML Bundle contains pipelines without their imported lab: "
+            + ", ".join(orphaned_pipelines)
+        )
     existing = {lab.id: lab for lab in store.list_labs(workspace_id)}
     for lab in plan.labs:
         if lab.id in existing and existing[lab.id] != lab:
