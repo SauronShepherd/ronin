@@ -61,7 +61,11 @@ def export_genai_bundle(
     objects: list[BundleInventoryObject] = []
     files: list[BundleFile] = []
     for kind, items in values:
-        for item in items:
+        ordered_items = sorted(
+            items,
+            key=lambda item: str(getattr(item, "id", getattr(item, "version", ""))),
+        )
+        for item in ordered_items:
             identifier = str(getattr(item, "id", getattr(item, "version", "item")))
             ref = f"genai-{kind}:{workspace_id}/{identifier}"
             p = _path(kind, ref)
@@ -91,6 +95,8 @@ def import_genai_bundle(
         if payload.manifest != inventory_file.manifest:
             raise ValueError("GenAI Bundle integrity mismatch")
         kind = item.kind.removeprefix("genai_")
+        if kind not in MEDIA or payload.file.media_type != MEDIA[kind]:
+            raise ValueError("GenAI Bundle object has unsupported media type")
         raw = payload.file.data.decode()
         parsers: dict[str, Callable[[str], Any]] = {
             "provider": _provider_from_json,
