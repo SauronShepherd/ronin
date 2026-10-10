@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_connectors import (
     CheckpointFenceConflict,
     SqliteConnectorCheckpointStore,
@@ -179,6 +178,19 @@ def test_checkpoint_health_reports_output_commit(tmp_path):
     assert not store.health(identity).present
     fence = store.acquire(identity)
     health = store.health(identity)
-    assert health.present
+    assert not health.present
     assert health.fence == fence
     assert not health.output_committed
+
+
+def test_checkpoint_fence_placeholder_is_not_an_incremental_checkpoint(tmp_path):
+    store = SqliteConnectorCheckpointStore(tmp_path / "checkpoint.sqlite")
+    identity = "source/table"
+    fence = store.acquire(identity)
+
+    assert store.get(identity) is None
+    health = store.health(identity)
+    assert not health.present
+    assert not health.output_committed
+    assert health.fence == fence
+    assert health.checkpoint_digest is None

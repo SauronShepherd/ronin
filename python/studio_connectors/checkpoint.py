@@ -104,8 +104,9 @@ class SqliteConnectorCheckpointStore:
             ).fetchone()
         if row is None:
             return CheckpointHealth(identity, False, None, None, False, None)
+        committed = row[2] is not None
         return CheckpointHealth(
-            identity, True, int(row[1]), str(row[0]), row[2] is not None, row[2]
+            identity, committed, int(row[1]), str(row[0]) if committed else None, committed, row[2]
         )
 
     def acquire(self, identity: str) -> int:
@@ -216,9 +217,10 @@ class SqliteConnectorCheckpointStore:
         self._validate_identity(identity)
         with sqlite3.connect(self._path) as connection:
             row = connection.execute(
-                "SELECT strategy,value FROM connector_checkpoints WHERE identity=?", (identity,)
+                "SELECT strategy,value,output_digest FROM connector_checkpoints WHERE identity=?",
+                (identity,),
             ).fetchone()
-            return None if row is None else (str(row[0]), str(row[1]))
+            return None if row is None or row[2] is None else (str(row[0]), str(row[1]))
 
     @staticmethod
     def _validate_identity(identity: str) -> None:
