@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-10. The implementation branch contains
 one local generated qualification directory; it is not release evidence.
-**Observed source head:** `1860d7284b0cf2c29f5dd493be212c0b87aee56d` (2026-10-10).
+**Observed source head:** `cc6d71d282c2c40a8ac5e21cc616b8e6507b5116` (2026-10-10).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -40,10 +40,11 @@ browser smoke (no console/request/CSP failures), installed-wheel accessibility
 (no violations at 320/768/1440 px), and four credential-free migration fixture
 certifications. These checks do not constitute Public v1 release qualification.
 
-The latest recorded WSL mutation campaign completed 4,222 mutants: 3,585
-killed, 637 survived, and 0 timed out. That is **84.91% killed of all mutants**,
-below the repository's 90% mutation gate. The campaign must be regenerated for
-the final candidate before release evidence is accepted.
+The latest recorded WSL mutation campaign on this exact source head completed
+4,255 mutants: 3,603 killed, 652 survived, and 0 timed out after two audit
+mutants were rerun serially. That is **84.68% killed of all mutants**, below
+the repository's 90% mutation gate. The campaign is exact-head evidence, but
+the gate remains blocked until the surviving behavior is covered or justified.
 The campaign therefore remains a release blocker; its temporary workspace and
 generated reports are intentionally not part of the tracked source tree.
 
