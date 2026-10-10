@@ -1,4 +1,4 @@
-import {get, post} from './api.js';
+import {get, post, put} from './api.js';
 import {esc, page, status} from './dom.js';
 
 export function qualityStudio() {
@@ -40,6 +40,10 @@ document.addEventListener('click', async event => {
     if (action === 'contract') {
       const data = await get(`/v1/workspaces/${values.workspace}/quality/contracts/${values.asset}/${values.version}`);
       result.textContent = JSON.stringify(data, null, 2);
+    } else if (action === 'save-contract') {
+      const contract = JSON.parse(document.querySelector('#quality-contract').value || '{}');
+      const data = await put(`/v1/workspaces/${values.workspace}/quality/contracts/${values.asset}/${values.version}`, contract);
+      result.textContent = JSON.stringify(data, null, 2);
     } else {
       const rows = JSON.parse(document.querySelector('#quality-rows').value || '[]');
       const data = await post(`/v1/workspaces/${values.workspace}/quality/runs`, {
@@ -59,5 +63,5 @@ document.addEventListener('click', async event => {
 setInterval(() => {
   const form = document.querySelector('#quality-form');
   if (!form || form.querySelector('[data-quality-action]')) return;
-  form.insertAdjacentHTML('beforeend', '<button class="button" type="button" data-quality-action="contract">Load contract</button><button class="button" type="button" data-quality-action="run">Dry-run rows</button><input class="field" id="quality-execution-ref" placeholder="Execution ref (optional)"><label class="checkbox"><input type="checkbox" id="quality-enforce-blocking"> Enforce blocking policy</label><textarea class="field" id="quality-rows" rows="1" placeholder="Rows JSON, e.g. [{&quot;id&quot;:1}]"></textarea>');
+  form.insertAdjacentHTML('beforeend', '<button class="button" type="button" data-quality-action="contract">Load contract</button><button class="button" type="button" data-quality-action="save-contract">Save contract</button><button class="button" type="button" data-quality-action="run">Dry-run rows</button><input class="field" id="quality-execution-ref" placeholder="Execution ref (optional)"><label class="checkbox"><input type="checkbox" id="quality-enforce-blocking"> Enforce blocking policy</label><textarea class="field" id="quality-contract" rows="4" placeholder="Contract JSON"></textarea><textarea class="field" id="quality-rows" rows="1" placeholder="Rows JSON, e.g. [{&quot;id&quot;:1}]"></textarea>');
 }, 100);

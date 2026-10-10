@@ -30,6 +30,11 @@ class Store:
     def get_contract(self, _workspace, _asset):
         return self.contract
 
+    def put_contract(self, _workspace, contract, *, now):
+        del now
+        self.contract = contract
+        return contract
+
     def record_run(self, _workspace, run, *, now):
         del now
         self.runs.append(run)
@@ -71,3 +76,12 @@ def test_quality_http_rejects_ambiguous_boolean_and_identifiers() -> None:
             {"asset": asset, "rows": [], "run_id": 1},
             now="2026-09-21T00:00:00Z",
         )
+
+
+def test_quality_http_persists_contract() -> None:
+    store = Store()
+    adapter = QualityHTTPAdapter(store)
+    payload = store.contract.to_payload()
+    result = adapter.put_contract(WorkspaceId("ws"), payload, now="2026-09-21T00:00:00Z")
+    assert result == payload
+    assert store.contract.to_payload() == payload

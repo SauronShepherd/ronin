@@ -21,6 +21,7 @@ from studio_core import (
     AssetRevision,
     AssetVersion,
     CatalogAsset,
+    DataContract,
     GlossaryTerm,
     GlossaryTermId,
     KnowledgeObject,
@@ -100,6 +101,7 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}"),
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/permissions"),
         ("GET", "/v1/workspaces/{workspace_id}/quality/contracts/{asset_id}/{version}"),
+        ("PUT", "/v1/workspaces/{workspace_id}/quality/contracts/{asset_id}/{version}"),
         ("POST", "/v1/workspaces/{workspace_id}/quality/runs"),
         ("GET", "/v1/workspaces/{workspace_id}/quality/runs/{asset_id}/{version}"),
         ("GET", "/v1/workspaces/{workspace_id}/quality/state/{asset_id}/{version}"),
@@ -3615,6 +3617,49 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         "changed": diff_result.changed,
                         "changed_fields": list(diff_result.changed_fields),
                     },
+                )
+                return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "quality"
+                and segments[4] == "contracts"
+            ):
+                quality_reader = self._server().quality_reader
+                if quality_reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "quality_unavailable",
+                        "quality service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError(
+                        "quality contract replacement does not accept query parameters"
+                    )
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=segments[5]
+                ):
+                    return
+                body = self._read_json()
+                if not isinstance(body, dict):
+                    raise ValueError("quality contract body must be an object")
+                contract = DataContract.from_payload(body)
+                if (
+                    str(contract.asset.asset_id) != segments[5]
+                    or str(contract.asset.version) != segments[6]
+                ):
+                    raise ValueError("quality contract asset must match the request path")
+                if not self._audit_mutation(
+                    actor,
+                    "quality.contract.replace",
+                    workspace_id,
+                    {"resource": f"{segments[5]}@{segments[6]}"},
+                ):
+                    return
+                self._write_json(
+                    HTTPStatus.OK, quality_reader.put_contract(workspace_id, body, now=_now())
                 )
                 return
             if (

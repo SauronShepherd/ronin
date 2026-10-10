@@ -30,6 +30,15 @@ class QualityHTTPAdapter:
             raise KeyError(f"quality contract not found: {asset}")
         return contract
 
+    def put_contract(
+        self, workspace_id: WorkspaceId, payload: Mapping[str, object], *, now: Instant | str
+    ) -> dict[str, object]:
+        contract = DataContract.from_payload(payload)
+        writer = getattr(self._store, "put_contract", None)
+        if not callable(writer):
+            raise RuntimeError("quality contract persistence is not configured")
+        return writer(workspace_id, contract, now=now).to_payload()
+
     def run(
         self, workspace_id: WorkspaceId, payload: Mapping[str, object], *, now: Instant | str
     ) -> dict[str, object]:
