@@ -259,6 +259,7 @@ pytest_add_cli_args = [
   "--maxfail=0",
 ]
 pytest_add_cli_args_test_selection = [
+  "tests/test_core_contract_boundaries.py",
   "tests/test_contract_snapshots.py",
   "tests/test_core_ir.py",
   "tests/test_core_ir_invariant_edges.py",
