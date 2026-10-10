@@ -32,6 +32,33 @@ def test_sbom_verification_rejects_mutated_artifact(tmp_path):
         verify_evidence(output)
 
 
+def test_sbom_verification_rejects_wrong_candidate_revision(tmp_path):
+    artifact = tmp_path / "ronin.whl"
+    artifact.write_bytes(b"candidate")
+    evidence = build_evidence(tmp_path, [artifact])
+    output = tmp_path / "evidence.json"
+    output.write_text(json.dumps(evidence), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="does not match expected revision"):
+        verify_evidence(output, expected_revision="wrong-candidate")
+
+
+def test_sbom_verification_rejects_unknown_source_revision(tmp_path):
+    artifact = tmp_path / "ronin.whl"
+    artifact.write_bytes(b"candidate")
+    evidence = build_evidence(tmp_path, [artifact])
+    evidence["source"]["revision"] = "unknown"
+    evidence.pop("evidence_sha256")
+    evidence["evidence_sha256"] = hashlib.sha256(
+        json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    output = tmp_path / "evidence.json"
+    output.write_text(json.dumps(evidence), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="does not match expected revision"):
+        verify_evidence(output, expected_revision="candidate")
+
+
 def test_sbom_verification_rejects_mutated_evidence(tmp_path):
     artifact = tmp_path / "ronin.whl"
     artifact.write_bytes(b"candidate")

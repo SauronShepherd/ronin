@@ -76,8 +76,9 @@ jobs:
         run: >-
           python tools/generate_sbom.py
           --verify
+          --expected-commit "${{ github.sha }}"
           --output dist/ronin-sbom-provenance.json
-          dist/*.whl
+          dist/*.whl dist/*.tar.gz
       - name: Generate Python distribution SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:

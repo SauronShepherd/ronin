@@ -80,7 +80,7 @@ def build_evidence(root: Path, artifacts: list[Path]) -> dict[str, Any]:
     return evidence
 
 
-def verify_evidence(path: Path) -> None:
+def verify_evidence(path: Path, *, expected_revision: str | None = None) -> None:
     value = json.loads(path.read_text(encoding="utf-8"))
     if value.get("schema") != SCHEMA:
         raise ValueError("unsupported SBOM/provenance evidence schema")
@@ -90,6 +90,15 @@ def verify_evidence(path: Path) -> None:
     canonical = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
     if hashlib.sha256(canonical).hexdigest() != digest:
         raise ValueError("evidence_sha256 does not match canonical evidence")
+    source = value.get("source")
+    revision = source.get("revision") if isinstance(source, dict) else None
+    if not isinstance(revision, str) or not revision.strip():
+        raise ValueError("evidence source revision is missing")
+    if expected_revision is not None and (revision == "unknown" or revision != expected_revision):
+        raise ValueError(
+            f"evidence source revision {revision!r} does not match expected revision "
+            f"{expected_revision!r}"
+        )
     artifacts = value.get("artifacts")
     if not isinstance(artifacts, list) or not artifacts:
         raise ValueError("evidence must contain artifacts")
@@ -112,9 +121,13 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--verify", action="store_true")
+    parser.add_argument(
+        "--expected-commit",
+        help="require verified evidence to target this exact source revision",
+    )
     args = parser.parse_args()
     if args.verify:
-        verify_evidence(args.output)
+        verify_evidence(args.output, expected_revision=args.expected_commit)
     else:
         args.output.write_text(
             json.dumps(build_evidence(args.root, args.artifacts), indent=2, sort_keys=True) + "\n",
