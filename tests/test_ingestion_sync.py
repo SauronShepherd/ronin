@@ -1,9 +1,9 @@
 import pytest
-
 from studio_connectors import (
     ConnectorRegistry,
     IngestionHTTPAdapter,
     IngestionSyncDefinition,
+    SqliteConnectorCheckpointStore,
     plan_sync,
 )
 from studio_core import ConnectorCapabilities, ConnectorDescriptor
@@ -47,6 +47,19 @@ def test_incremental_sync_plan_requires_capability_and_checkpoint() -> None:
     assert plan_sync(
         definition, incremental_capable=True, checkpoint_present=True
     ).requires_checkpoint
+
+
+def test_incremental_plan_rejects_checkpoint_fence_without_durable_output(tmp_path) -> None:
+    registry = ConnectorRegistry((_Connector("postgres", True),))
+    store = SqliteConnectorCheckpointStore(tmp_path / "checkpoints.sqlite")
+    identity = "project/source/table"
+    store.acquire(identity)
+    definition = IngestionSyncDefinition(
+        "sync/a", "postgres", "conn/a", "asset/a", "artifact/a", identity, "incremental"
+    )
+
+    with pytest.raises(ValueError, match="existing checkpoint"):
+        registry.plan_sync(definition, checkpoint_present=store.health(identity).present)
 
 
 def test_registry_derives_incremental_capability_from_descriptor() -> None:
