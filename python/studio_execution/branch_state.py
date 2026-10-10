@@ -40,16 +40,29 @@ class BranchDecisionStore:
         skipped_tasks: tuple[str, ...] = (),
     ) -> PersistedBranchDecision:
         if (
-            not workflow_id
+            not isinstance(workflow_id, str)
+            or not workflow_id
             or workflow_id != workflow_id.strip()
+            or not isinstance(task_id, str)
             or not task_id
             or task_id != task_id.strip()
         ):
             raise ValueError("workflow_id and task_id must be non-empty and trimmed")
-        if workflow_revision < 1 or snapshot_generation < 1:
+        if (
+            isinstance(workflow_revision, bool)
+            or not isinstance(workflow_revision, int)
+            or isinstance(snapshot_generation, bool)
+            or not isinstance(snapshot_generation, int)
+            or workflow_revision < 1
+            or snapshot_generation < 1
+        ):
             raise ValueError("workflow revision and snapshot generation must be positive")
+        if not isinstance(decision, BranchDecision):
+            raise TypeError("decision must be a BranchDecision")
         normalized = tuple(sorted(set(skipped_tasks)))
-        if any(not item or item != item.strip() for item in normalized):
+        if any(
+            not isinstance(item, str) or not item or item != item.strip() for item in normalized
+        ):
             raise ValueError("skipped task ids must be non-empty and trimmed")
         item = PersistedBranchDecision(
             workflow_id, workflow_revision, task_id, snapshot_generation, decision, normalized
@@ -66,6 +79,10 @@ class BranchDecisionStore:
     def get(
         self, workflow_id: str, workflow_revision: int, task_id: str
     ) -> PersistedBranchDecision | None:
+        if not isinstance(workflow_id, str) or not isinstance(task_id, str):
+            raise ValueError("workflow_id and task_id must be text")
+        if isinstance(workflow_revision, bool) or not isinstance(workflow_revision, int):
+            raise ValueError("workflow revision must be an integer")
         return self._items.get((workflow_id, workflow_revision, task_id))
 
 

@@ -1,5 +1,4 @@
 import pytest
-
 from studio_execution import (
     BranchDecisionStore,
     BranchStateConflict,
@@ -48,3 +47,13 @@ def test_sqlite_branch_decision_store_survives_reopen_and_rejects_conflicts(tmp_
     assert reopened.record("workflow", 3, "gate", 7, decision, ("task-a",)).decision == decision
     with pytest.raises(BranchStateConflict):
         reopened.record("workflow", 3, "gate", 7, BranchDecision(True, "predicate_true"))
+
+
+def test_branch_decision_store_rejects_invalid_types_before_persistence() -> None:
+    store = BranchDecisionStore()
+    with pytest.raises(ValueError, match="revision"):
+        store.record("workflow", True, "gate", 7, BranchDecision(True, "predicate_true"))
+    with pytest.raises(TypeError, match="BranchDecision"):
+        store.record("workflow", 3, "gate", 7, object())  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="skipped task"):
+        store.record("workflow", 3, "gate", 7, BranchDecision(True, "predicate_true"), (1,))
