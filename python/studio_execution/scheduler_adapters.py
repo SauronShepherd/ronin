@@ -205,7 +205,11 @@ def execute_scheduler_job(
             payload_ref = payload["payload_ref"]
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise UnsupportedSchedulerWorkload("notification.send parameters are invalid") from exc
-        if channel not in {"smtp", "webhook"} or not isinstance(destination_ref, str):
+        if (
+            channel not in {"smtp", "webhook"}
+            or not isinstance(destination_ref, str)
+            or not destination_ref.strip()
+        ):
             raise UnsupportedSchedulerWorkload("notification.send destination is invalid")
         from studio_quality.artifact_rows import _REF  # noqa: PLC0415
 

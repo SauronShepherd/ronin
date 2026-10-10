@@ -67,6 +67,28 @@ def test_scheduler_dispatch_rejects_blank_ml_identifiers(identifier: str) -> Non
         )
 
 
+@pytest.mark.parametrize("destination_ref", ["", " ", "\t"])
+def test_scheduler_dispatch_rejects_blank_notification_destination(destination_ref: str) -> None:
+    payload = b'{"kind":"alert","title":"t","body":"b"}'
+
+    with pytest.raises(UnsupportedSchedulerWorkload, match="destination is invalid"):
+        execute_scheduler_job(
+            _job(
+                "notification.send",
+                {
+                    "notification_id": "notification-1",
+                    "channel": "webhook",
+                    "destination_ref": destination_ref,
+                    "payload_ref": "artifact://sha256/" + "a" * 64,
+                },
+            ),
+            notification_sink=SimpleNamespace(send=lambda _intent: "notification-1"),
+            notification_artifacts=SimpleNamespace(
+                get_bytes_by_storage_ref=lambda *_args, **_kwargs: payload
+            ),
+        )
+
+
 def test_scheduler_dispatch_routes_genai_run_through_injected_runner() -> None:
     seen: dict[str, object] = {}
 
