@@ -16,11 +16,35 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+QUALIFICATION_CASES = (
+    "queryflux_duckdb",
+    "queryflux_trino",
+    "backend_unavailable",
+    "queue_capacity",
+    "timeout",
+    "cancellation",
+    "bounded_preview",
+    "invalid_profile",
+    "unauthorized_engine",
+    "provider_restart",
+)
+
+
+def _validate_matrix(value: object) -> dict[str, str] | None:
+    if not isinstance(value, dict) or set(value) != set(QUALIFICATION_CASES):
+        return None
+    matrix = dict(value)
+    if any(
+        status not in {"qualified", "rejected", "not_configured", "unsupported"}
+        for status in matrix.values()
+    ):
+        return None
+    return matrix
+
 
 def qualify_local() -> dict[str, object]:
     import pyarrow as pa  # type: ignore[import-untyped]
     import pyarrow.parquet as pq  # type: ignore[import-untyped]
-
     from studio_data_engineering import QueryEngineRuntimeProvider
     from studio_query_engine import (
         DiscoveredEngine,
@@ -84,6 +108,18 @@ def qualify_local() -> dict[str, object]:
                 "correctness_digest": digest,
                 "expected_digest": expected_digest,
                 "negative_cases": {"unauthorized_profile": unauthorized_profile},
+                "matrix": {
+                    "queryflux_duckdb": "not_configured",
+                    "queryflux_trino": "not_configured",
+                    "backend_unavailable": "not_configured",
+                    "queue_capacity": "unsupported",
+                    "timeout": "unsupported",
+                    "cancellation": "unsupported",
+                    "bounded_preview": "qualified",
+                    "invalid_profile": "rejected",
+                    "unauthorized_engine": unauthorized_profile,
+                    "provider_restart": "unsupported",
+                },
             }
 
 
@@ -129,7 +165,16 @@ def qualify_external() -> dict[str, object]:
             "command_configured": True,
             "error": "invalid_provider_evidence",
         }
+    matrix = _validate_matrix(evidence.get("matrix"))
+    if matrix is None:
+        return {
+            "status": "failed",
+            "provider": "queryflux",
+            "command_configured": True,
+            "error": "invalid_qualification_matrix",
+        }
     result = dict(evidence)
+    result["matrix"] = matrix
     result["command_configured"] = True
     result["status"] = "qualified" if result.get("status") == "qualified" else "failed"
     return result

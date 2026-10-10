@@ -10,6 +10,8 @@ def test_local_query_engine_qualification_is_bounded_and_deterministic() -> None
     assert result["correctness_digest"] == result["expected_digest"]
     assert result["row_count"] == 2
     assert result["negative_cases"] == {"unauthorized_profile": "rejected"}
+    assert result["matrix"]["bounded_preview"] == "qualified"
+    assert result["matrix"]["unauthorized_engine"] == "rejected"
 
 
 def test_queryflux_qualification_is_explicitly_unconfigured_without_operator_input(
@@ -27,7 +29,12 @@ def test_queryflux_qualification_is_explicitly_unconfigured_without_operator_inp
 def test_queryflux_qualification_executes_operator_evidence(monkeypatch, tmp_path) -> None:
     evidence = tmp_path / "emit.py"
     evidence.write_text(
-        "import json; print(json.dumps({'provider': 'queryflux', 'status': 'qualified'}))",
+        "import json; print(json.dumps({'provider': 'queryflux', 'status': 'qualified', 'matrix': {"
+        "'queryflux_duckdb': 'qualified', 'queryflux_trino': 'qualified', "
+        "'backend_unavailable': 'rejected', 'queue_capacity': 'qualified', "
+        "'timeout': 'qualified', 'cancellation': 'qualified', "
+        "'bounded_preview': 'qualified', 'invalid_profile': 'rejected', "
+        "'unauthorized_engine': 'rejected', 'provider_restart': 'unsupported'}}))",
         encoding="utf-8",
     )
     monkeypatch.setenv("RONIN_QUERYFLUX_QUALIFICATION_COMMAND", f"python {evidence}")
@@ -41,3 +48,18 @@ def test_queryflux_qualification_rejects_invalid_operator_output(monkeypatch) ->
     result = qualify_external()
     assert result["status"] == "failed"
     assert result["error"] == "invalid_json"
+
+
+def test_queryflux_qualification_rejects_incomplete_matrix(monkeypatch, tmp_path) -> None:
+    evidence = tmp_path / "emit.py"
+    evidence.write_text(
+        "import json; print(json.dumps({'provider': 'queryflux', 'status': 'qualified'}))",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv(
+        "RONIN_QUERYFLUX_QUALIFICATION_COMMAND",
+        f"python {evidence}",
+    )
+    result = qualify_external()
+    assert result["status"] == "failed"
+    assert result["error"] == "invalid_qualification_matrix"
