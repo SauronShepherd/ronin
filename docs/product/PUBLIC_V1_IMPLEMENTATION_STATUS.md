@@ -4,10 +4,9 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-10. The implementation branch contains
-four local test/testkit changes; generated local qualification artifacts are
-ignored and are not release evidence.
-**Observed source head:** `bab2a38d737d492ffc65680d8f6c15ea222b193d` (2026-10-10).
+**Observed workspace snapshot:** 2026-10-10. The implementation branch is clean;
+generated local qualification artifacts are ignored and are not release evidence.
+**Observed source head:** `32d02ff801d757cc598df0944e14bf54c4246adb` (2026-10-10).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -31,8 +30,8 @@ not Public v1 completion.
 
 ## Local verification on this snapshot
 
-On Windows, the latest affected-test verification produced **95 passed** and
-the full `python -m pytest -q` verification produced **2104 passed, 21 skipped**.
+On Windows, the latest affected-test verification produced **35 passed** and
+the full `python -m pytest -q` verification produced **2166 passed, 21 skipped**.
 The skips are environment-gated Docker/PostgreSQL/Spark/provider
 qualification checks, not test failures.
 Additional exact-head evidence on this snapshot includes Docker qualification
@@ -41,8 +40,8 @@ browser smoke (no console/request/CSP failures), installed-wheel accessibility
 (no violations at 320/768/1440 px), and four credential-free migration fixture
 certifications. These checks do not constitute Public v1 release qualification.
 
-The latest recorded WSL mutation campaign completed 4,211 mutants: 3,537
-killed, 674 survived, and 0 timed out. That is **83.99% killed of all mutants**,
+The latest recorded WSL mutation campaign completed 4,216 mutants: 3,544
+killed, 672 survived, and 0 timed out. That is **84.06% killed of all mutants**,
 below the repository's 90% mutation gate. The campaign must be regenerated for
 the final candidate before release evidence is accepted.
 The campaign therefore remains a release blocker; its temporary workspace and
