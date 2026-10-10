@@ -82,6 +82,8 @@ def import_genai_bundle(
     path: Path, workspace_id: WorkspaceId, store: SqliteGenAIStore, *, now: str
 ) -> tuple[tuple[str, Any], ...]:
     inventory_file = read_bundle_payload(path, BUNDLE_INVENTORY_PATH)
+    if inventory_file.file.media_type != INVENTORY_MEDIA_TYPE:
+        raise ValueError("GenAI Bundle inventory has unsupported media type")
     inventory = BundleInventory.from_payload(json.loads(inventory_file.file.data))
     parsed: list[tuple[str, Any]] = []
     for item in inventory.objects:

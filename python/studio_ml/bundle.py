@@ -79,6 +79,8 @@ def export_ml_bundle(
 
 def plan_ml_bundle_import(path: Path) -> MLBundleImportPlan:
     inventory_payload = read_bundle_payload(path, BUNDLE_INVENTORY_PATH)
+    if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
+        raise ValueError("ML Bundle inventory has unsupported media type")
     inventory = BundleInventory.from_payload(json.loads(inventory_payload.file.data))
     labs: list[Lab] = []
     pipelines: list[tuple[str, PipelineIR]] = []

@@ -47,6 +47,8 @@ def import_table_metadata_bundle(
     path: Path, *, remap_location: Callable[[TableMetadata], str] | None = None
 ) -> tuple[TableMetadata, ...]:
     inventory_file = read_bundle_payload(path, BUNDLE_INVENTORY_PATH)
+    if inventory_file.file.media_type != INVENTORY_MEDIA_TYPE:
+        raise ValueError("lakehouse Bundle inventory has unsupported media type")
     inventory = BundleInventory.from_payload(json.loads(inventory_file.file.data))
     tables = []
     for item in inventory.objects:
