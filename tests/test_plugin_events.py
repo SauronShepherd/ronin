@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import replace
 
 import pytest
-
 from studio_core.plugin_events import (
     InMemoryInbox,
     InMemoryOutbox,
@@ -209,3 +208,69 @@ def test_event_schema_registry_rejects_invalid_duplicates_and_sorts_items() -> N
         "a.first.v1",
         "z.last.v1",
     )
+
+
+def test_outbox_capacity_is_checked_only_for_new_event_ids() -> None:
+    outbox = InMemoryOutbox(max_events=1)
+    event = _event()
+    first = outbox.append(event)
+
+    assert outbox.append(event) is first
+    with pytest.raises(PluginEventError, match="capacity"):
+        outbox.append(replace(event, event_id="event-2"))
+
+
+@pytest.mark.parametrize("limit", [1, 1000])
+def test_outbox_accepts_inclusive_pending_limit_boundaries(limit: int) -> None:
+    outbox = InMemoryOutbox()
+    outbox.append(_event())
+    assert len(outbox.pending(limit=limit)) == 1
+
+
+def test_outbox_published_record_is_replaced_without_changing_digest() -> None:
+    outbox = InMemoryOutbox()
+    event = _event()
+    before = outbox.append(event)
+
+    outbox.mark_published(event.event_id)
+
+    assert outbox.pending() == ()
+    assert before.digest == event.digest()
+
+
+def test_inbox_capacity_is_checked_after_duplicate_detection() -> None:
+    inbox = InMemoryInbox(max_events=1)
+    event = _event()
+    assert inbox.process_once("consumer", event, lambda _event: None)
+
+    assert not inbox.process_once("consumer", event, lambda _event: pytest.fail("duplicate"))
+
+
+def test_inbox_validates_event_before_invoking_handler_or_consuming_capacity() -> None:
+    inbox = InMemoryInbox(max_events=1)
+    invalid = replace(_event(), event_type="projects.created")
+
+    with pytest.raises(PluginEventError, match="schema version"):
+        inbox.process_once("consumer", invalid, lambda _event: pytest.fail("invalid"))
+
+    assert inbox.process_once("consumer", _event(), lambda _event: None)
+
+
+def test_schema_registry_requires_matching_event_type_and_schema_version() -> None:
+    schemas = PluginEventSchemaRegistry()
+    schemas.register(PluginEventSchema("projects.created.v1", 1))
+
+    with pytest.raises(PluginEventError, match="version mismatch"):
+        schemas.validate(replace(_event(), schema_version=2))
+
+
+def test_event_digest_changes_when_each_identity_field_changes() -> None:
+    event = _event()
+    fields = ("event_id", "event_type", "producer", "occurred_at", "tenant_id", "correlation_id")
+    for field in fields:
+        value = {
+            "event_type": "changed.v1",
+            "occurred_at": "2026-01-01T00:00:01Z",
+        }.get(field, f"changed-{field}")
+        changed = replace(event, **{field: value})
+        assert changed.digest() != event.digest(), field
