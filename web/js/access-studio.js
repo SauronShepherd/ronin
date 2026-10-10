@@ -44,6 +44,12 @@ async function loadAccess() {
     </form>
     <h3>Workspace scope</h3>
     <table class="data-table" id="access-scope-table"><thead><tr><th>Workspace</th><th>Subject</th><th>Role</th></tr></thead><tbody><tr><td colspan="3">Loading…</td></tr></tbody></table>
+    <form id="project-scope-form" class="toolbar">
+      <label>Workspace ID<input id="project-scope-workspace" class="field" value="default" required></label>
+      <label>Project ID<input id="project-scope-project" class="field" required></label>
+      <button class="button" type="submit">Inspect project permissions</button>
+    </form>
+    <pre class="code" id="project-scope-output" aria-live="polite">No project permission inspection requested.</pre>
     <pre class="code" id="access-inventory-output" aria-live="polite">Loading security state…</pre>`; view.append(panel);
   const refreshInventory = async () => {
     const output = panel.querySelector('#access-inventory-output');
@@ -152,6 +158,15 @@ async function loadAccess() {
       output.textContent = json({ replacement: created, disabled });
       await refreshInventory();
     } catch (error) { output.textContent = `Service identity rotation failed: ${error.message}`; }
+  });
+  panel.querySelector('#project-scope-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const output = panel.querySelector('#project-scope-output');
+    const workspace = panel.querySelector('#project-scope-workspace').value.trim();
+    const project = panel.querySelector('#project-scope-project').value.trim();
+    try {
+      output.textContent = json(await get(`/v1/workspaces/${encodeURIComponent(workspace)}/projects/${encodeURIComponent(project)}/permissions`));
+    } catch (error) { output.textContent = `Project permission inspection failed: ${error.message}`; }
   });
   try {
     await refreshInventory();

@@ -171,3 +171,17 @@ def test_quality_studio_exposes_contract_authoring_and_dry_run_controls() -> Non
         "enforce_blocking",
     ):
         assert marker in source
+
+
+def test_access_studio_exposes_project_permission_scope_inspection() -> None:
+    source = (Path(__file__).parents[1] / "web" / "js" / "access-studio.js").read_text(
+        encoding="utf-8"
+    )
+    for marker in (
+        'id="project-scope-form"',
+        'id="project-scope-workspace"',
+        'id="project-scope-project"',
+        "Inspect project permissions",
+        "/v1/workspaces/${encodeURIComponent(workspace)}/projects/${encodeURIComponent(project)}/permissions",
+    ):
+        assert marker in source
