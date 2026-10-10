@@ -5,7 +5,6 @@ from itertools import permutations
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-
 from studio_core.grants import (
     ACTIONS,
     MAX_CONSTRAINTS,
@@ -171,3 +170,48 @@ def test_decision_and_evidence_invariants() -> None:
 
 def test_action_vocabulary_is_nonempty() -> None:
     assert ACTIONS
+
+
+def test_grant_requirements_are_lossless_and_canonical() -> None:
+    grant = Grant(
+        frozenset({"write", "read"}),
+        ResourceScope("project", "p-1"),
+    )
+    assert grant.requirements() == (
+        Requirement("read", ResourceScope("project", "p-1")),
+        Requirement("write", ResourceScope("project", "p-1")),
+    )
+    assert GrantSet((grant,)).requirements() == grant.requirements()
+    constrained = Grant(
+        frozenset({"read"}),
+        ResourceScope("project", "p-1"),
+        {"tenant": "t-1"},
+    )
+    with pytest.raises(ValueError, match="constrained grants"):
+        constrained.requirements()
+
+
+def test_exact_resource_ids_excludes_constraints_and_preserves_wildcards() -> None:
+    exact = Grant(frozenset({"read"}), ResourceScope("project", "p-2"))
+    constrained = Grant(
+        frozenset({"read"}),
+        ResourceScope("project", "p-1"),
+        {"tenant": "t-1"},
+    )
+    wildcard = Grant(frozenset({"read"}), ResourceScope("project", None))
+    grants = GrantSet((exact, constrained))
+    assert grants.exact_resource_ids("read", kind="project") == ("p-2",)
+    assert grants.exact_resource_ids("write", kind="project") == ()
+    assert GrantSet((exact, wildcard)).exact_resource_ids("read", kind="project") is None
+
+
+def test_grant_payload_defaults_constraints_and_rejects_boolean_versions() -> None:
+    payload = {
+        "version": 1,
+        "actions": ["read"],
+        "resource": {"kind": "project", "identifier": "p-1"},
+    }
+    assert Grant.from_payload(payload).constraints == ()
+    invalid = dict(payload, version=True)
+    with pytest.raises(ValueError, match="version must be an integer"):
+        Grant.from_payload(invalid)
