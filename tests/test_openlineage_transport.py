@@ -1,5 +1,4 @@
 import pytest
-
 from studio_core import (
     OpenLineageTransport,
     OpenLineageTransportError,
@@ -57,6 +56,64 @@ def test_schema_validator_rejects_incompatible_events() -> None:
 
 def test_schema_validator_accepts_supported_explicit_version() -> None:
     validate_openlineage_event({**EVENT, "schemaVersion": "1.0"})
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("eventType", None, "required fields"),
+        ("eventTime", None, "required fields"),
+        ("run", None, "required fields"),
+        ("job", None, "required fields"),
+        ("producer", None, "required fields"),
+    ],
+)
+def test_schema_validator_requires_every_top_level_contract_field(
+    field: str, value: object, message: str
+) -> None:
+    del value
+    event = dict(EVENT)
+    event.pop(field)
+    with pytest.raises(ValueError, match=message):
+        validate_openlineage_event(event)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("eventType", "UNKNOWN", "event type"),
+        ("eventTime", "2026-09-21T00:00:00+00:00", "eventTime"),
+        ("eventTime", 123, "eventTime"),
+        ("run", [], "run and job"),
+        ("job", [], "run and job"),
+        ("run", {"runId": ""}, "run.runId"),
+        ("run", {"runId": 123}, "run.runId"),
+        ("job", {"namespace": "", "name": "job"}, "namespace and name"),
+        ("job", {"namespace": "ns", "name": ""}, "namespace and name"),
+        ("job", {"namespace": "ns", "name": 123}, "namespace and name"),
+    ],
+)
+def test_schema_validator_rejects_invalid_event_shapes(
+    field: str, value: object, message: str
+) -> None:
+    event = dict(EVENT)
+    event[field] = value
+    with pytest.raises(ValueError, match=message):
+        validate_openlineage_event(event)
+
+
+def test_transport_rejects_invalid_attempt_bounds() -> None:
+    with pytest.raises(ValueError, match="between 1 and 10"):
+        OpenLineageTransport(Sink(), max_attempts=0)
+    with pytest.raises(ValueError, match="between 1 and 10"):
+        OpenLineageTransport(Sink(), max_attempts=11)
+
+
+def test_transport_preserves_last_sink_error_as_cause() -> None:
+    transport = OpenLineageTransport(Sink(2), max_attempts=2)
+    with pytest.raises(OpenLineageTransportError) as raised:
+        transport.publish(EVENT)
+    assert isinstance(raised.value.__cause__, RuntimeError)
 
 
 def test_http_sink_posts_canonical_json_with_bounded_configuration() -> None:
