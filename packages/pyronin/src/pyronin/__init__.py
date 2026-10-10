@@ -2471,6 +2471,25 @@ class Ronin:
             workspace_id, f"contracts/{quote(asset_id, safe='')}/{quote(version, safe='')}"
         )
 
+    def put_quality_contract(
+        self,
+        workspace_id: str,
+        asset_id: str,
+        version: str,
+        contract: Mapping[str, object],
+    ) -> Mapping[str, object]:
+        if not workspace_id.strip() or not asset_id.strip() or not version.strip():
+            raise ValueError("workspace_id, asset_id, and version must be non-empty")
+        if not isinstance(contract, Mapping):
+            raise ValueError("quality contract must be a mapping")
+        payload = self._transport.request(
+            "PUT",
+            f"/v1/workspaces/{quote(workspace_id, safe='')}/quality/contracts/"
+            f"{quote(asset_id, safe='')}/{quote(version, safe='')}",
+            payload=dict(contract),
+        )
+        return self._quality_object(payload, "quality contract")
+
     def run_quality(self, workspace_id: str, request: Mapping[str, object]) -> Mapping[str, object]:
         if not workspace_id.strip() or not isinstance(request, Mapping):
             raise ValueError("workspace_id and quality request are required")

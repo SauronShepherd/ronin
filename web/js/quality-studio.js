@@ -39,6 +39,8 @@ document.addEventListener('click', async event => {
   try {
     if (action === 'contract') {
       const data = await get(`/v1/workspaces/${values.workspace}/quality/contracts/${values.asset}/${values.version}`);
+      const editor = document.querySelector('#quality-contract');
+      if (editor) editor.value = JSON.stringify(data, null, 2);
       result.textContent = JSON.stringify(data, null, 2);
     } else if (action === 'save-contract') {
       const contract = JSON.parse(document.querySelector('#quality-contract').value || '{}');

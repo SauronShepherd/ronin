@@ -9,12 +9,12 @@ from pathlib import Path
 from threading import Thread
 
 import pytest
-
 from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant
 from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
+
 from tools.check_web_assets import referenced_assets
 
 _GRANTS = GrantSet(
@@ -157,3 +157,17 @@ def test_alerts_studio_rejects_invalid_operations_fail_closed() -> None:
     assert "Workspace is required" in source
     assert "Unsupported alert operation" in source
     assert "['list', 'instances', 'evaluate', 'acknowledge']" in source
+
+
+def test_quality_studio_exposes_contract_authoring_and_dry_run_controls() -> None:
+    source = (Path(__file__).parents[1] / "web" / "js" / "quality-studio.js").read_text(
+        encoding="utf-8"
+    )
+    for marker in (
+        "put(`/v1/workspaces/${values.workspace}/quality/contracts/",
+        'data-quality-action="save-contract"',
+        'id="quality-contract"',
+        "JSON.stringify(data, null, 2)",
+        "enforce_blocking",
+    ):
+        assert marker in source

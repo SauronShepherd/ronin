@@ -79,7 +79,7 @@
     {
       "id": "p7-data-quality-contracts",
       "status": "partial",
-      "summary": "Versioned contracts/rules/results and persistence exist; built-in null, unique, range, domain, row-count, freshness, referential, and explicitly injected sandboxed SQL/Python predicate execution plus provider-neutral scheduler-facing quality_gate release decisions, controller release-policy enforcement, quality-to-common-alert transition evaluation, authenticated alert rule-list/evaluation APIs, pyronin SDK parity, and an accessible Monitoring & Alerts rules/evaluation Studio surface exist; provider production qualification remains incomplete."
+      "summary": "Versioned contracts/rules/results and persistence exist; built-in null, unique, range, domain, row-count, freshness, referential, and explicitly injected sandboxed SQL/Python predicate execution plus provider-neutral scheduler-facing quality_gate release decisions, controller release-policy enforcement, quality-to-common-alert transition evaluation, authenticated contract read/replace and run/history/state APIs, pyronin SDK parity including contract authoring, and an accessible Quality Studio contract authoring, validation, dry-run, evidence/history and blocking-policy surface exist; provider production qualification remains incomplete."
     },
     {
       "id": "p8-ai-ml-mlops",

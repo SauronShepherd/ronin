@@ -762,6 +762,7 @@ def test_quality_public_operations_validate_and_preserve_payloads() -> None:
     transport = FakeTransport(
         [
             {"asset": {"asset_id": "orders", "version": "v1"}},
+            {"asset": {"asset_id": "orders", "version": "v1"}, "rules": []},
             {"run_id": "run-1", "gate_passed": True},
             {"items": [{"run_id": "run-1"}]},
             {"latest_status": "passed"},
@@ -769,6 +770,17 @@ def test_quality_public_operations_validate_and_preserve_payloads() -> None:
     )
     client = Ronin(transport=transport)
     assert client.get_quality_contract("workspace/1", "orders", "v1")["asset"]
+    contract = client.put_quality_contract(
+        "workspace/1",
+        "orders",
+        "v1",
+        {"asset": {"asset_id": "orders", "version": "v1"}, "rules": []},
+    )
+    assert contract["asset"]
+    assert transport.calls[1][0:2] == (
+        "PUT",
+        "/v1/workspaces/workspace%2F1/quality/contracts/orders/v1",
+    )
     assert client.run_quality("workspace/1", {"run_id": "run-1"})["gate_passed"] is True
     assert client.list_quality_runs("workspace/1", "orders", "v1")[0]["run_id"] == "run-1"
     assert client.get_quality_state("workspace/1", "orders", "v1")["latest_status"] == "passed"
