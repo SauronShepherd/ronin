@@ -13,8 +13,26 @@ from studio_query_engine import (
     EngineCapabilities,
     EngineHandshake,
     QueryExecutionPolicy,
+    QueryHandle,
+    QueryResultPage,
+    QueryStatus,
 )
 from studio_storage import LocalArtifactStore
+
+
+class _QueryFluxTransport:
+    def submit(self, _request):
+        return QueryHandle("q-1", "queryflux", "provider-q-1"), "next-1"
+
+    def poll(self, _handle, _next_uri):
+        return (
+            QueryStatus("succeeded", provider_query_id="provider-q-1"),
+            QueryResultPage(("value",), ((1,),)),
+            None,
+        )
+
+    def cancel(self, _handle):
+        return type("Cancellation", (), {"cancelled": True})()
 
 
 def test_data_enginerring_studio_manifest_and_contributions(tmp_path) -> None:
@@ -37,7 +55,7 @@ def test_data_enginerring_studio_manifest_and_contributions(tmp_path) -> None:
 
     assert plugin.manifest.name == "Data Enginerring Studio"
     assert "data-engineering.ir.v1" in registry.capabilities
-    assert len(registry.routes) == 12
+    assert len(registry.routes) == 13
     assert registry.job_registry.items[0].job_type == "data-engineering.pipeline-run.v1"
     assert registry.ui_registry.items[0].manifest["navigation"][0]["label"] == (
         "Data Enginerring Studio"
@@ -139,6 +157,49 @@ def test_unhealthy_queryflux_handshake_is_reported_as_degraded(tmp_path) -> None
     )
     plugin.startup()
     assert plugin.queryflux_capabilities()["status"] == "degraded"
+
+
+def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) -> None:
+    plugin = DataEnginerringStudioPlugin()
+    registry = ContributionRegistry()
+    for capability in plugin.manifest.capabilities:
+        registry.add_capability(capability, plugin.manifest.id)
+    for permission in plugin.manifest.permissions:
+        registry.add_permission(permission, plugin.manifest.id)
+    provider = QueryEngineRuntimeProvider(
+        DiscoveredEngine(
+            EngineHandshake("queryflux", "qf-1.2", EngineCapabilities((("cancel", True),)), True),
+            ("duckdb",),
+            "ready",
+        ),
+        QueryExecutionPolicy((("queryflux", ("duckdb",)),), required_capability="cancel"),
+    )
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    plugin.register(
+        PluginContext(
+            plugin.manifest.id,
+            registry,
+            {
+                "artifact_store": store,
+                "queryflux_runtime_provider": provider,
+                "queryflux_transport": _QueryFluxTransport(),
+            },
+        )
+    )
+    plugin.startup()
+    result = plugin.queryflux_execute(
+        body={
+            "sql": "SELECT 1",
+            "profile": "queryflux",
+            "engine": "duckdb",
+            "project_id": "project-1",
+            "run_id": "run-1",
+            "attempt_id": "attempt-1",
+        }
+    )
+    assert result["status"] == "succeeded"
+    assert result["rows"] == [[1]]
+    assert result["evidence"]["digest"]
 
 
 def test_pipeline_compiler_reports_validity_and_runtime() -> None:

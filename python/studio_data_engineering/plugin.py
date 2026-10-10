@@ -13,6 +13,7 @@ from studio_core.plugins import (
     PluginManifest,
     SurfaceContribution,
 )
+from studio_query_engine import QueryRequest
 
 from .compilations import SqliteCompilationStore
 from .compiler import compile_pipeline
@@ -20,6 +21,7 @@ from .debugger import DebuggerService
 from .execution import plan_pipeline_execution
 from .ide import IdeCell
 from .previews import preview_pipeline
+from .query_execution import QueryTransport, execute_query
 from .revisions import RevisionApplication, RevisionArtifactStore, RevisionRecordStore
 from .runtimes import QueryEngineRuntimeProvider
 from .sdp_adapter import SdpProjectSource
@@ -78,6 +80,8 @@ class DataEnginerringStudioPlugin:
         self._compilations: SqliteCompilationStore | None = None
         self._debugger = DebuggerService()
         self._queryflux_runtime: QueryEngineRuntimeProvider | None = None
+        self._queryflux_transport: QueryTransport | None = None
+        self._queryflux_evidence_store: Any | None = None
 
     def register(self, context: PluginContext) -> None:
         self.context = context
@@ -87,7 +91,16 @@ class DataEnginerringStudioPlugin:
         ):
             raise TypeError("queryflux_runtime_provider must use the query-engine runtime adapter")
         self._queryflux_runtime = cast(QueryEngineRuntimeProvider | None, configured_queryflux)
+        configured_transport = context.services.get("queryflux_transport")
+        if configured_transport is not None and not all(
+            hasattr(configured_transport, method) for method in ("submit", "poll", "cancel")
+        ):
+            raise TypeError("queryflux_transport must implement submit, poll, and cancel")
+        self._queryflux_transport = cast(QueryTransport | None, configured_transport)
         artifact_store = context.services.get("artifact_store")
+        self._queryflux_evidence_store = context.services.get(
+            "queryflux_evidence_store", artifact_store
+        )
         if artifact_store is not None:
             self._revisions = RevisionApplication(
                 cast(RevisionArtifactStore, artifact_store),
@@ -109,6 +122,13 @@ class DataEnginerringStudioPlugin:
             context.plugin_id,
             self.queryflux_capabilities,
             permission="data-engineering:read",
+        )
+        context.contributions.add_route(
+            "POST",
+            "/v1/data-engineering/queryflux/execute",
+            context.plugin_id,
+            self.queryflux_execute,
+            permission="data-engineering:execute",
         )
         context.contributions.add_route(
             "POST",
@@ -378,6 +398,68 @@ class DataEnginerringStudioPlugin:
             "target": "provider-neutral query engine",
             "capabilities": dict(capability_values),
             "translation_policies": translation_policies,
+        }
+
+    def queryflux_execute(self, *, body: object | None = None, **_kwargs: Any) -> dict[str, object]:
+        """Execute one authorized QueryFlux query and persist durable evidence."""
+
+        self._assert_ready()
+        if (
+            self._queryflux_runtime is None
+            or self._queryflux_transport is None
+            or self._queryflux_evidence_store is None
+        ):
+            raise LookupError("queryflux execution is not configured")
+        if not isinstance(body, dict):
+            raise ValueError("queryflux execution body must be an object")
+        allowed = {
+            "sql",
+            "profile",
+            "translation_policy",
+            "max_rows",
+            "engine",
+            "project_id",
+            "run_id",
+            "attempt_id",
+        }
+        if set(body) - allowed:
+            raise ValueError("queryflux execution body contains unknown fields")
+        required = ("sql", "profile", "engine", "project_id", "run_id", "attempt_id")
+        if any(
+            not isinstance(body.get(name), str) or not str(body[name]).strip()
+            for name in required
+        ):
+            raise ValueError("queryflux execution requires non-empty text fields")
+        max_rows = body.get("max_rows", 1_000)
+        if isinstance(max_rows, bool) or not isinstance(max_rows, int):
+            raise ValueError("max_rows must be an integer")
+        request = QueryRequest(
+            cast(str, body["sql"]),
+            cast(str, body["profile"]),
+            cast(str, body.get("translation_policy", "native_only")),
+            max_rows,
+        )
+        result = execute_query(
+            self._queryflux_runtime,
+            self._queryflux_transport,
+            cast(Any, self._queryflux_evidence_store),
+            request,
+            engine=cast(str, body["engine"]),
+            project_id=cast(str, body["project_id"]),
+            run_id=cast(str, body["run_id"]),
+            attempt_id=cast(str, body["attempt_id"]),
+        )
+        return {
+            "status": result.status.state,
+            "message": result.status.message,
+            "selected_engine": result.selected_engine,
+            "columns": list(result.page.columns) if result.page is not None else [],
+            "rows": [list(row) for row in result.page.rows] if result.page is not None else [],
+            "evidence": {
+                "role": result.evidence_artifact.role,
+                "digest": result.evidence_artifact.digest,
+                "storage_ref": result.evidence_artifact.storage_ref,
+            },
         }
 
     def health(self, **_kwargs: Any) -> dict[str, object]:
