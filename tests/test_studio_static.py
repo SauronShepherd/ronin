@@ -195,7 +195,7 @@ def test_data_engineering_studio_exposes_queryflux_health_and_capabilities() -> 
         "loadQueryFluxCapabilities",
         'id=\"de-queryflux-status\"',
         "QueryFlux: degraded",
-        "translation_policy: ['native_only', 'best_effort', 'strict']",
+        "translation_policies: payload.translation_policies || ['native_only', 'best_effort']",
         "raw cluster configuration is intentionally hidden",
     ):
         assert marker in source

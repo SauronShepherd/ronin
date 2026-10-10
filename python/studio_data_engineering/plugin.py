@@ -21,6 +21,7 @@ from .execution import plan_pipeline_execution
 from .ide import IdeCell
 from .previews import preview_pipeline
 from .revisions import RevisionApplication, RevisionArtifactStore, RevisionRecordStore
+from .runtimes import QueryEngineRuntimeProvider
 from .sdp_adapter import SdpProjectSource
 from .worker import PipelineExecutionError, execute_pipeline_job
 
@@ -76,9 +77,16 @@ class DataEnginerringStudioPlugin:
         self._revisions: RevisionApplication | None = None
         self._compilations: SqliteCompilationStore | None = None
         self._debugger = DebuggerService()
+        self._queryflux_runtime: QueryEngineRuntimeProvider | None = None
 
     def register(self, context: PluginContext) -> None:
         self.context = context
+        configured_queryflux = context.services.get("queryflux_runtime_provider")
+        if configured_queryflux is not None and not isinstance(
+            configured_queryflux, QueryEngineRuntimeProvider
+        ):
+            raise TypeError("queryflux_runtime_provider must use the query-engine runtime adapter")
+        self._queryflux_runtime = cast(QueryEngineRuntimeProvider | None, configured_queryflux)
         artifact_store = context.services.get("artifact_store")
         if artifact_store is not None:
             self._revisions = RevisionApplication(
@@ -344,17 +352,32 @@ class DataEnginerringStudioPlugin:
         """Expose safe provider status without leaking cluster configuration."""
 
         self._assert_ready()
+        if self._queryflux_runtime is None:
+            return {
+                "profile": "queryflux",
+                "provider": "queryflux",
+                "status": "not_configured",
+                "target": "provider-neutral query engine",
+                "capabilities": {
+                    "routing_trace": True,
+                    "bounded_preview": True,
+                    "cancellation": True,
+                },
+                "translation_policies": ["native_only", "best_effort"],
+            }
+        handshake = self._queryflux_runtime.handshake()
+        capability_values = self._queryflux_runtime.capability_values()
+        translation_policies = ["native_only", "best_effort"]
+        if capability_values.get("strict_translation") is True:
+            translation_policies.append("strict")
         return {
             "profile": "queryflux",
-            "provider": "queryflux",
-            "status": "not_configured",
+            "provider": handshake.provider,
+            "provider_version": handshake.version,
+            "status": "ready" if self._queryflux_runtime.is_healthy() else "degraded",
             "target": "provider-neutral query engine",
-            "capabilities": {
-                "routing_trace": True,
-                "bounded_preview": True,
-                "cancellation": True,
-            },
-            "translation_policies": ["native_only", "best_effort", "strict"],
+            "capabilities": dict(capability_values),
+            "translation_policies": translation_policies,
         }
 
     def health(self, **_kwargs: Any) -> dict[str, object]:

@@ -1,12 +1,18 @@
 import pytest
-
 from studio_core.operators import builtin_operator_catalog
 from studio_core.plugins import ContributionRegistry, PluginContext
 from studio_data_engineering import (
     DataEnginerringStudioPlugin,
+    QueryEngineRuntimeProvider,
     SqliteCompilationStore,
     compile_pipeline,
     preview_pipeline,
+)
+from studio_query_engine import (
+    DiscoveredEngine,
+    EngineCapabilities,
+    EngineHandshake,
+    QueryExecutionPolicy,
 )
 from studio_storage import LocalArtifactStore
 
@@ -64,6 +70,75 @@ def test_queryflux_capabilities_are_safe_and_fail_closed() -> None:
     assert capabilities["provider"] == "queryflux"
     assert capabilities["capabilities"]["routing_trace"] is True
     assert "endpoint" not in capabilities
+    assert capabilities["translation_policies"] == ["native_only", "best_effort"]
+
+
+def test_configured_queryflux_capabilities_are_handshake_bound(tmp_path) -> None:
+    plugin = DataEnginerringStudioPlugin()
+    registry = ContributionRegistry()
+    for capability in plugin.manifest.capabilities:
+        registry.add_capability(capability, plugin.manifest.id)
+    for permission in plugin.manifest.permissions:
+        registry.add_permission(permission, plugin.manifest.id)
+    provider = QueryEngineRuntimeProvider(
+        DiscoveredEngine(
+            EngineHandshake(
+                "queryflux",
+                "qf-1.2",
+                EngineCapabilities((("cancel", True), ("strict_translation", False))),
+                True,
+                cluster_id="cluster-1",
+            ),
+            ("duckdb",),
+            "ready",
+        ),
+        QueryExecutionPolicy((("queryflux", ("duckdb",)),)),
+    )
+    plugin.register(
+        PluginContext(
+            plugin.manifest.id,
+            registry,
+            {
+                "artifact_store": LocalArtifactStore(tmp_path / "artifacts"),
+                "queryflux_runtime_provider": provider,
+            },
+        )
+    )
+    plugin.startup()
+    capabilities = plugin.queryflux_capabilities()
+    assert capabilities["status"] == "ready"
+    assert capabilities["provider_version"] == "qf-1.2"
+    assert capabilities["translation_policies"] == ["native_only", "best_effort"]
+    assert capabilities["capabilities"]["strict_translation"] is False
+
+
+def test_unhealthy_queryflux_handshake_is_reported_as_degraded(tmp_path) -> None:
+    plugin = DataEnginerringStudioPlugin()
+    registry = ContributionRegistry()
+    for capability in plugin.manifest.capabilities:
+        registry.add_capability(capability, plugin.manifest.id)
+    for permission in plugin.manifest.permissions:
+        registry.add_permission(permission, plugin.manifest.id)
+    provider = QueryEngineRuntimeProvider(
+        DiscoveredEngine(
+            EngineHandshake("queryflux", "qf-1.2", EngineCapabilities(()), False),
+            ("duckdb",),
+            "offline",
+        ),
+        QueryExecutionPolicy((("queryflux", ("duckdb",)),)),
+    )
+    plugin.register(
+        PluginContext(
+            plugin.manifest.id,
+            registry,
+            {
+                "artifact_store": LocalArtifactStore(tmp_path / "artifacts"),
+                "queryflux_runtime_provider": provider,
+            },
+        )
+    )
+    plugin.startup()
+    assert plugin.queryflux_capabilities()["status"] == "degraded"
 
 
 def test_pipeline_compiler_reports_validity_and_runtime() -> None:

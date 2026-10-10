@@ -51,6 +51,16 @@ class QueryEngineRuntimeProvider:
         handshake = self._discovered.handshake
         return handshake.provider_version, handshake.cluster_id
 
+    def capability_values(self) -> dict[str, bool | None]:
+        """Expose the provider handshake without leaking provider objects."""
+
+        return dict(self._discovered.handshake.capabilities.values)
+
+    def is_healthy(self) -> bool:
+        """Return the provider health observed during discovery."""
+
+        return self._discovered.handshake.healthy
+
     def authorize(self, request: QueryRequest, *, engine: str) -> str:
         """Authorize the selected engine before a DE execution intent is emitted."""
 

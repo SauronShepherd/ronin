@@ -270,7 +270,7 @@ async function loadQueryFluxCapabilities() {
       provider: payload.provider || 'queryflux',
       status: state,
       capabilities,
-      translation_policy: ['native_only', 'best_effort', 'strict'],
+      translation_policies: payload.translation_policies || ['native_only', 'best_effort'],
     });
   } catch (error) {
     status.textContent = 'QueryFlux: degraded';
