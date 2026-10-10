@@ -1,5 +1,5 @@
 import pytest
-from studio_query_engine import discover_engine
+from studio_query_engine import QueryFluxDiscovery, discover_engine
 
 
 class _Client:
@@ -31,6 +31,25 @@ def test_discovery_preserves_unknown_capabilities_and_metadata() -> None:
     assert discovered.handshake.capabilities.get("joins") is None
     assert discovered.engines == ("duckdb", "trino")
     assert discovered.cluster_state == "ready"
+
+
+def test_queryflux_discovery_uses_ronin_provider_identity_and_configured_paths() -> None:
+    client = _client()
+    discovered = QueryFluxDiscovery(
+        client,
+        health_path="/qf/health",
+        registry_path="/qf/engines",
+        cluster_path="/qf/cluster",
+    )
+    client.responses = {
+        "/qf/health": client.responses["/health"],
+        "/qf/engines": client.responses["/engines"],
+        "/qf/cluster": client.responses["/cluster"],
+    }
+    result = discovered.discover()
+    assert result.handshake.provider_id == "queryflux"
+    assert result.handshake.cluster_id == "cluster-1"
+    assert result.handshake.capabilities.get("joins") is None
 
 
 @pytest.mark.parametrize(

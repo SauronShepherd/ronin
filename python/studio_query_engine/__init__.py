@@ -18,6 +18,7 @@ from .contracts import (
 from .discovery import DiscoveredEngine, DiscoveryClient, discover_engine
 from .local import LocalSqlTransport
 from .policy import QueryExecutionPolicy
+from .queryflux import QueryFluxDiscovery, QueryFluxTrinoTransport
 from .trino import HttpClient, QueryFailure, TrinoHttpTransport
 
 __all__ = [
@@ -34,6 +35,8 @@ __all__ = [
     "QueryResultPage",
     "QueryFailure",
     "QueryExecutionPolicy",
+    "QueryFluxDiscovery",
+    "QueryFluxTrinoTransport",
     "LocalSqlTransport",
     "QueryState",
     "QueryStatus",

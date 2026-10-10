@@ -1,5 +1,10 @@
 import pytest
-from studio_query_engine import QueryFailure, QueryRequest, TrinoHttpTransport
+from studio_query_engine import (
+    QueryFailure,
+    QueryFluxTrinoTransport,
+    QueryRequest,
+    TrinoHttpTransport,
+)
 
 
 class _Client:
@@ -35,6 +40,22 @@ def test_trino_transport_submits_polls_pages_and_cancels() -> None:
     assert final_page.rows == ((2,),)
     assert cancellation.cancelled
     assert client.calls[0][0:2] == ("POST", "http://engine/v1/statement")
+
+
+def test_queryflux_trino_transport_preserves_lifecycle_and_provider_identity() -> None:
+    client = _Client(
+        [
+            {"id": "qf-1", "nextUri": "http://engine/qf-1"},
+            {"columns": [{"name": "value"}], "data": [[1]]},
+        ]
+    )
+    transport = QueryFluxTrinoTransport(client, base_url="http://engine/")
+    handle, uri = transport.submit(QueryRequest("SELECT 1", "queryflux"))
+    status, page, _ = transport.poll(handle, uri)
+    assert handle.provider_id == "queryflux"
+    assert status.state == "succeeded"
+    assert page is not None
+    assert page.rows == ((1,),)
 
 
 def test_trino_transport_normalizes_provider_errors_and_provider_mismatch() -> None:
