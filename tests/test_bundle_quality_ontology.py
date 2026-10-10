@@ -15,13 +15,14 @@ from studio_core import (
     QualityRuleId,
     WorkspaceId,
 )
+from studio_core.bundle_inventory import BUNDLE_INVENTORY_PATH
 from studio_execution.bundle_ontology import export_ontology_bundle, import_ontology_bundle
+from studio_orchestrator import Instant
 from studio_quality import (
     commit_quality_bundle_import,
     export_quality_bundle,
     plan_quality_bundle_import,
 )
-from studio_orchestrator import Instant
 from studio_storage.bundle import verify_bundle
 
 _WORKSPACE = WorkspaceId("workspace-bundle")
@@ -111,3 +112,32 @@ def test_ontology_bundle_round_trip_preserves_definition_identity(tmp_path: Path
     assert imported == (_ontology(),)
     assert target.values == [_ontology()]
     verify_bundle(bundle)
+
+
+def test_ontology_bundle_rejects_inventory_media_type_drift(tmp_path: Path) -> None:
+    source = _OntologyStore((_ontology(),))
+    bundle = tmp_path / "ontology.roninbundle"
+    export_ontology_bundle(_WORKSPACE, source, bundle)
+
+    # The archive remains structurally valid, but the inventory contract is
+    # no longer the ontology Bundle contract and must fail closed.
+    from studio_storage.bundle import BundleFile, write_bundle
+    from studio_storage.bundle_payload import read_bundle_payload
+
+    inventory = read_bundle_payload(bundle, BUNDLE_INVENTORY_PATH)
+    replacement = BundleFile(
+        BUNDLE_INVENTORY_PATH,
+        "application/json",
+        inventory.file.data,
+    )
+    files = [replacement]
+    for item in inventory.manifest.entries:
+        if item.path != BUNDLE_INVENTORY_PATH:
+            payload = read_bundle_payload(bundle, item.path)
+            files.append(payload.file)
+    write_bundle(bundle, tuple(files))
+
+    import pytest
+
+    with pytest.raises(ValueError, match="unsupported media type"):
+        import_ontology_bundle(bundle, _WORKSPACE, _OntologyStore(), now=_NOW)

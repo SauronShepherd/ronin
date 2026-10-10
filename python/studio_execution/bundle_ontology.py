@@ -39,7 +39,10 @@ def export_ontology_bundle(
 ) -> RoninBundleManifest:
     objects: list[BundleInventoryObject] = []
     files: list[BundleFile] = []
-    for ontology in store.list_all(workspace_id):
+    ontologies = sorted(
+        store.list_all(workspace_id), key=lambda item: (item.id.value, item.version)
+    )
+    for ontology in ontologies:
         ref = f"ontology:{workspace_id}/{ontology.id}@{ontology.version}"
         object_path = _path(ref)
         objects.append(BundleInventoryObject("ontology", ref, object_path))
@@ -61,6 +64,8 @@ def import_ontology_bundle(
     path: Path, workspace_id: WorkspaceId, store: OntologyBundleStore, *, now: Instant | str
 ) -> tuple[OntologyDefinition, ...]:
     inventory_payload = read_bundle_payload(path, BUNDLE_INVENTORY_PATH)
+    if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
+        raise ValueError("ontology Bundle inventory has unsupported media type")
     inventory = BundleInventory.from_payload(json.loads(inventory_payload.file.data))
     values: list[OntologyDefinition] = []
     for item in inventory.objects:
