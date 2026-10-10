@@ -63,7 +63,7 @@ Public-v1 capability state is maintained in `docs/product/PUBLIC_V1_IMPLEMENTATI
 - **Project+connection multi-object path (#283/#285):** deterministic topological staging, aggregate binding resolution, provider-neutral commit port and one SQLite transaction across resolved connections/projects/environment bindings.
 - **Catalog path (#287/#288):** caller-selected revision subgraph export containing exact assets/revisions and lineage only when both endpoints are selected; verified dependency-aware planning; provider-neutral atomic commit; one SQLite transaction across assets/revisions/lineage with full rollback on late conflicts.
 
-These cover only currently implemented metadata families. Catalog export remains explicit rather than whole-catalog because the provider-neutral catalog port lacks complete revision discovery. Workflow/quality/ontology/ML/GenAI and later data/semantic objects remain outside the native Bundle path. PostgreSQL has not implemented the Bundle commit ports. No provider certification is claimed until the corresponding authenticated fixtures, target execution and exact-head evidence exist.
+These cover only currently implemented metadata families. Catalog export remains explicit rather than whole-catalog because the provider-neutral catalog port lacks complete revision discovery. Workflow/schedule definitions now have a provider-neutral inventory/export/import path with SQLite and PostgreSQL atomic commit adapters; quality/ontology/ML/GenAI and later data/semantic objects remain only partially covered. No provider certification is claimed until the corresponding authenticated fixtures, target execution and exact-head evidence exist.
 
 ## Blocked and human-decision work
 
