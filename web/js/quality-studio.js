@@ -43,6 +43,8 @@ document.addEventListener('click', async event => {
       const data = await post(`/v1/workspaces/${values.workspace}/quality/runs`, {
         asset: {asset_id: decodeURIComponent(values.asset), version: decodeURIComponent(values.version)},
         rows, run_id: `studio-${Date.now()}`,
+        execution_ref: document.querySelector('#quality-execution-ref').value.trim() || null,
+        enforce_blocking: document.querySelector('#quality-enforce-blocking').checked,
       });
       result.textContent = JSON.stringify(data, null, 2);
       await loadQualityState();
@@ -55,5 +57,5 @@ document.addEventListener('click', async event => {
 setInterval(() => {
   const form = document.querySelector('#quality-form');
   if (!form || form.querySelector('[data-quality-action]')) return;
-  form.insertAdjacentHTML('beforeend', '<button class="button" type="button" data-quality-action="contract">Load contract</button><button class="button" type="button" data-quality-action="run">Dry-run rows</button><textarea class="field" id="quality-rows" rows="1" placeholder="Rows JSON, e.g. [{&quot;id&quot;:1}]"></textarea>');
+  form.insertAdjacentHTML('beforeend', '<button class="button" type="button" data-quality-action="contract">Load contract</button><button class="button" type="button" data-quality-action="run">Dry-run rows</button><input class="field" id="quality-execution-ref" placeholder="Execution ref (optional)"><label class="checkbox"><input type="checkbox" id="quality-enforce-blocking"> Enforce blocking policy</label><textarea class="field" id="quality-rows" rows="1" placeholder="Rows JSON, e.g. [{&quot;id&quot;:1}]"></textarea>');
 }, 100);
