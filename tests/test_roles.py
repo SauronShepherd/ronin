@@ -1,3 +1,4 @@
+import pytest
 from studio_core import (
     Requirement,
     ResourceScope,
@@ -31,3 +32,34 @@ def test_role_grants_remain_scoped_to_the_assigned_resource() -> None:
     editor = role_definition("editor", resource=ResourceScope("project", "orders"))
     other = ResourceScope("project", "billing")
     assert not editor.grants.permits(Requirement("write", other)).allowed
+
+
+def test_named_roles_expose_the_exact_public_contract() -> None:
+    scope = ResourceScope("project", "analytics")
+    expected = {
+        "viewer": (
+            "Read and inspect the scoped resource.",
+            frozenset({"read", "list", "evidence:read"}),
+        ),
+        "editor": (
+            "Read and modify the scoped resource without administration.",
+            frozenset({"read", "list", "events", "write", "submit", "evidence:read"}),
+        ),
+        "owner": (
+            "Full operational control of the scoped resource.",
+            frozenset(
+                {"read", "list", "events", "write", "submit", "execute", "cancel", "evidence:read"}
+            ),
+        ),
+    }
+    for name, (description, actions) in expected.items():
+        role = role_definition(name, resource=scope)  # type: ignore[arg-type]
+        assert role.name == name
+        assert role.description == description
+        assert role.grants.grants[0].actions == actions
+        assert role.grants.grants[0].resource == scope
+
+
+def test_unknown_role_names_fail_closed_at_runtime() -> None:
+    with pytest.raises(ValueError, match="unsupported role name"):
+        role_definition("administrator", resource=ResourceScope("project", "orders"))  # type: ignore[arg-type]
