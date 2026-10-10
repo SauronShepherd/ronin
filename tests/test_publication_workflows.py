@@ -66,6 +66,15 @@ def test_tag_publication_requires_exact_aggregate_release_verdict() -> None:
     assert "- authoritative-release-verdict" in workflow
 
 
+def test_release_evidence_requires_and_downloads_exact_mutation_run() -> None:
+    workflow = _workflow("release-evidence.yml")
+
+    assert "mutation_run_id:" in workflow
+    assert "run-id: ${{ inputs.mutation_run_id }}" in workflow
+    assert "name: mutation-evidence" in workflow
+    assert "path: evidence/mutation" in workflow
+
+
 def test_ci_retains_changed_surface_manifest_for_review() -> None:
     workflow = _workflow("ci.yml")
 
