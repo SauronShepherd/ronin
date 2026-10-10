@@ -78,6 +78,7 @@ def quality_state_summary(runs: tuple[QualityRun, ...]) -> dict[str, object]:
     return {
         "latest_run_id": latest.id.value if latest is not None else None,
         "latest_status": latest.status if latest is not None else "unknown",
+        "latest_run": None if latest is None else latest.to_payload(),
         "run_count": len(ordered),
         "history": [
             {"run_id": run.id.value, "status": run.status, "asset": run.asset.to_payload()}

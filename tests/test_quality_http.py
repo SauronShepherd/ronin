@@ -1,5 +1,4 @@
 import pytest
-
 from studio_core import (
     AssetId,
     AssetRef,
@@ -50,7 +49,9 @@ def test_quality_http_runs_and_lists_evidence() -> None:
     result = adapter.run(WorkspaceId("ws"), body, now="2026-09-21T00:00:00Z")
     assert result["gate_passed"] is True
     assert len(adapter.history(WorkspaceId("ws"), body["asset"])) == 1
-    assert adapter.state(WorkspaceId("ws"), body["asset"])["latest_status"] == "passed"
+    state = adapter.state(WorkspaceId("ws"), body["asset"])
+    assert state["latest_status"] == "passed"
+    assert state["latest_run"]["results"][0]["rule_id"] == "rows"
 
 
 def test_quality_http_rejects_ambiguous_boolean_and_identifiers() -> None:
