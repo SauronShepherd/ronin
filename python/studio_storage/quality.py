@@ -110,54 +110,65 @@ class SqliteQualityStore:
     def put_contract(
         self, workspace_id: WorkspaceId, contract: DataContract, *, now: Instant | str
     ) -> DataContract:
+        self.put_contracts(workspace_id, (contract,), now=now)
+        return contract
+
+    def put_contracts(
+        self,
+        workspace_id: WorkspaceId,
+        contracts: tuple[DataContract, ...],
+        *,
+        now: Instant | str,
+    ) -> tuple[DataContract, ...]:
+        """Persist a quality Bundle's contracts in one SQLite transaction."""
+
         now = Instant(now)
-        payload = contract.to_json()
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
             self._require_active_workspace(connection, workspace_id)
-            self._require_revision(connection, workspace_id, contract.asset)
-            existing = connection.execute(
-                "SELECT contract_json FROM data_contracts "
-                "WHERE workspace_id=? AND asset_id=? AND asset_version=?",
-                (
-                    str(workspace_id),
-                    str(contract.asset.asset_id),
-                    str(contract.asset.version),
-                ),
-            ).fetchone()
-            if existing is not None:
-                if existing["contract_json"] == payload:
-                    connection.execute("COMMIT")
-                    return contract
-                connection.execute(
-                    "UPDATE data_contracts SET contract_json=?,updated_at=?, "
-                    "row_version=row_version+1 "
+            for contract in contracts:
+                self._require_revision(connection, workspace_id, contract.asset)
+                payload = contract.to_json()
+                existing = connection.execute(
+                    "SELECT contract_json FROM data_contracts "
                     "WHERE workspace_id=? AND asset_id=? AND asset_version=?",
                     (
-                        payload,
-                        now,
                         str(workspace_id),
                         str(contract.asset.asset_id),
                         str(contract.asset.version),
                     ),
+                ).fetchone()
+                if existing is not None:
+                    if existing["contract_json"] == payload:
+                        continue
+                    connection.execute(
+                        "UPDATE data_contracts SET contract_json=?,updated_at=?, "
+                        "row_version=row_version+1 "
+                        "WHERE workspace_id=? AND asset_id=? AND asset_version=?",
+                        (
+                            payload,
+                            now,
+                            str(workspace_id),
+                            str(contract.asset.asset_id),
+                            str(contract.asset.version),
+                        ),
+                    )
+                    continue
+                connection.execute(
+                    "INSERT INTO data_contracts(workspace_id,asset_id,asset_version,contract_json,"
+                    "created_at,updated_at) VALUES (?,?,?,?,?,?)",
+                    (
+                        str(workspace_id),
+                        str(contract.asset.asset_id),
+                        str(contract.asset.version),
+                        payload,
+                        now,
+                        now,
+                    ),
                 )
-                connection.execute("COMMIT")
-                return contract
-            connection.execute(
-                "INSERT INTO data_contracts(workspace_id,asset_id,asset_version,contract_json,"
-                "created_at,updated_at) VALUES (?,?,?,?,?,?)",
-                (
-                    str(workspace_id),
-                    str(contract.asset.asset_id),
-                    str(contract.asset.version),
-                    payload,
-                    now,
-                    now,
-                ),
-            )
             connection.execute("COMMIT")
-            return contract
+            return contracts
         except Exception:
             if connection.in_transaction:
                 connection.execute("ROLLBACK")

@@ -101,8 +101,12 @@ def commit_quality_bundle_import(
             raise ValueError(
                 f"quality contract conflicts with existing definition: {contract.asset}"
             )
-    for contract in plan.contracts:
-        store.put_contract(workspace_id, contract, now=now)
+    batch_writer = getattr(store, "put_contracts", None)
+    if callable(batch_writer):
+        batch_writer(workspace_id, plan.contracts, now=now)
+    else:
+        for contract in plan.contracts:
+            store.put_contract(workspace_id, contract, now=now)
     return plan
 
 
