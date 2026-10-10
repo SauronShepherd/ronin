@@ -333,6 +333,37 @@ def test_manager_rejects_double_start_and_stop_is_reverse_order() -> None:
     assert events == ["start:first", "start:second", "stop:second", "stop:first"]
 
 
+def test_manager_shutdown_attempts_all_plugins_before_reporting_failure() -> None:
+    shutdowns: list[str] = []
+
+    class FailingPlugin:
+        def __init__(self, plugin_id: str) -> None:
+            self.manifest = PluginManifest(plugin_id, plugin_id, "1.0.0", "1.0")
+
+        def register(self, _context) -> None:
+            return None
+
+        def startup(self) -> None:
+            return None
+
+        def shutdown(self) -> None:
+            shutdowns.append(self.manifest.id)
+            raise RuntimeError(self.manifest.id)
+
+    first = FailingPlugin("com.example.first")
+    second = FailingPlugin("com.example.second")
+    manager = PluginManager()
+    plan = manager.compose(
+        (PluginRecord(first.manifest, first, "test"), PluginRecord(second.manifest, second, "test"))
+    )
+    manager.start(plan)
+
+    with pytest.raises(PluginLoadError, match="plugin shutdown failed: com.example.second"):
+        manager.stop(plan)
+    assert shutdowns == ["com.example.second", "com.example.first"]
+    assert manager._started is False
+
+
 def test_discovery_loads_entry_points_in_deterministic_order(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

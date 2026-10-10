@@ -709,9 +709,16 @@ class PluginManager:
         return tuple(started)
 
     def stop(self, plan: CompositionPlan) -> None:
+        failures: list[tuple[str, Exception]] = []
         for record in reversed(plan.records):
-            record.plugin.shutdown()
+            try:
+                record.plugin.shutdown()
+            except Exception as exc:  # noqa: BLE001 - cleanup must continue for every plugin
+                failures.append((record.manifest.id, exc))
         self._started = False
+        if failures:
+            plugin_id, failure = failures[0]
+            raise PluginLoadError(f"plugin shutdown failed: {plugin_id}") from failure
 
 
 __all__ = (
