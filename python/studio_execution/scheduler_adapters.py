@@ -345,8 +345,16 @@ def execute_scheduler_job(
             limit = payload.get("limit", 100)
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise UnsupportedSchedulerWorkload("graph.query parameters are invalid") from exc
-        if not isinstance(graph_id, str) or not isinstance(query, str):
-            raise UnsupportedSchedulerWorkload("graph.query requires graph_id and query")
+        if (
+            not isinstance(graph_id, str)
+            or not graph_id.strip()
+            or not isinstance(query, str)
+            or not query.strip()
+            or isinstance(limit, bool)
+            or not isinstance(limit, int)
+            or not 1 <= limit <= 10_000
+        ):
+            raise UnsupportedSchedulerWorkload("graph.query parameters are invalid")
         objects = graph_adapter.query(graph_id, query, max_limit=limit).objects
         return SchedulerWorkloadResult(
             family="graph",

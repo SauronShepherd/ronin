@@ -4,7 +4,6 @@ import json
 from types import SimpleNamespace
 
 import pytest
-
 from studio_execution import (
     UnsupportedSchedulerWorkload,
     execute_scheduler_job,
@@ -152,6 +151,20 @@ def test_scheduler_dispatch_routes_graph_query() -> None:
     )
     assert result.family == "graph"
     assert result.evidence_payload()["objects"][0]["object_type"] == "Order"
+
+
+@pytest.mark.parametrize("limit", [0, -1, 10_001, True, "10"])
+def test_scheduler_dispatch_rejects_invalid_graph_query_limits(limit: object) -> None:
+    adapter = SimpleNamespace(query=lambda *_args, **_kwargs: SimpleNamespace(objects=()))
+
+    with pytest.raises(UnsupportedSchedulerWorkload, match="graph.query parameters are invalid"):
+        execute_scheduler_job(
+            _job(
+                "graph.query",
+                {"graph_id": "orders", "query": "SELECT o FROM Order o", "limit": limit},
+            ),
+            graph_adapter=adapter,
+        )
 
 
 def test_scheduler_dispatch_routes_quality_gate_through_rows_artifact(tmp_path) -> None:
