@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from studio_data_engineering import QueryEngineRuntimeProvider, execute_query
 from studio_query_engine import (
     DiscoveredEngine,
@@ -47,6 +48,11 @@ class _PagedTransport(_Transport):
         return status, next(self.pages), "next-2" if status.state == "running" else None
 
 
+class _MismatchedTransport(_Transport):
+    def submit(self, _request: QueryRequest) -> tuple[QueryHandle, str]:
+        return QueryHandle("ronin-q-1", "other-provider", "other-q-1"), "next-1"
+
+
 def _provider() -> QueryEngineRuntimeProvider:
     return QueryEngineRuntimeProvider(
         DiscoveredEngine(
@@ -77,6 +83,22 @@ def test_execute_query_persists_final_attempt_evidence(tmp_path: Path) -> None:
     assert result.page.rows == ((1,),)
     assert payload["attempt_id"] == "attempt-1"
     assert payload["output"]["row_count"] == 1
+
+
+def test_execute_query_rejects_transport_provider_mismatch(tmp_path: Path) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+
+    with pytest.raises(RuntimeError, match="does not match authorized runtime provider"):
+        execute_query(
+            _provider(),
+            _MismatchedTransport([]),
+            store,
+            QueryRequest("SELECT 1", "local"),
+            engine="duckdb",
+            project_id="project-1",
+            run_id="run-1",
+            attempt_id="attempt-1",
+        )
 
 
 def test_execute_query_cancels_when_poll_budget_is_exhausted(tmp_path: Path) -> None:

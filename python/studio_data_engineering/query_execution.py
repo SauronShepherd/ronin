@@ -62,6 +62,9 @@ def execute_query(
     request_digest = hashlib.sha256(request.canonical_json().encode("utf-8")).hexdigest()
     authorized = clock()
     handle, next_uri = transport.submit(request)
+    expected_provider = provider.handshake().provider
+    if handle.provider_id != expected_provider:
+        raise RuntimeError("query transport provider does not match authorized runtime provider")
     submitted = clock()
     status = QueryStatus("queued", provider_query_id=handle.provider_query_id)
     columns: tuple[str, ...] | None = None
