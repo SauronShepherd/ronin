@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "observed_at": "2026-10-10T00:00:00+00:00",
-  "observed_main_sha": "8052b113e2bb75e3c9cbea2d451e1a5c6cbfc1cf",
+  "observed_main_sha": "3cbc465aa2ca01727b75a2ac947206360c83dba0",
   "observed_workspace_state": "committed implementation branch with one local generated qualification directory; generated artifacts are not release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -11,13 +11,13 @@
     "result": "2221 passed, 21 skipped",
     "qualification_claimed": false,
     "mutation_campaign": {
-      "candidate_sha": "cc6d71d282c2c40a8ac5e21cc616b8e6507b5116",
-      "total": 4255,
-      "killed": 3603,
-      "survived": 652,
+      "candidate_sha": "3cbc465aa2ca01727b75a2ac947206360c83dba0",
+      "total": 4258,
+      "killed": 3620,
+      "survived": 638,
       "timeout": 0,
-      "killed_percent_non_timeout": 84.68,
-      "killed_percent_all": 84.68,
+      "killed_percent_non_timeout": 85.02,
+      "killed_percent_all": 85.02,
       "gate_percent": 90.0,
       "gate_status": "blocked"
     }
