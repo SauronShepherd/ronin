@@ -158,6 +158,7 @@ def _entry_points(pyproject: Path) -> dict[str, dict[str, str]]:
 def build_inventory(root: Path) -> dict[str, Any]:
     source_root = root / "python"
     tests_root = root / "tests"
+
     def python_files() -> list[Path]:
         discovered: list[Path] = []
         for scan_root in (source_root, tests_root):
@@ -176,10 +177,7 @@ def build_inventory(root: Path) -> dict[str, Any]:
                 )
         return sorted(discovered)
 
-    files = [
-        inspect_python_file(path, source_root, tests_root)
-        for path in python_files()
-    ]
+    files = [inspect_python_file(path, source_root, tests_root) for path in python_files()]
     package_counts = Counter(item.package for item in files if item.package)
     routes = [
         route | {"file": item.path, "package": cast(str, item.package)}
