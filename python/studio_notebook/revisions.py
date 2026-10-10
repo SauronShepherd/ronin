@@ -166,6 +166,7 @@ class NotebookRevisionStore:
         if current.revision != expected_revision:
             raise NotebookRevisionConflict("stale notebook revision")
         del self._items[notebook_id]
+        del self._history[notebook_id]
 
     def list(self, *, include_archived: bool = False) -> tuple[NotebookRevision, ...]:
         return tuple(

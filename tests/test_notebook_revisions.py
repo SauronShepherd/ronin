@@ -8,6 +8,7 @@ from studio_notebook import (
     NotebookDocument,
     NotebookHTTPAdapter,
     NotebookRevisionConflict,
+    NotebookRevisionNotFound,
     NotebookRevisionStore,
     ProjectNotebookHTTPAdapter,
     allocate_cell_ids,
@@ -54,6 +55,8 @@ def test_notebook_revision_crud_and_optimistic_conflict() -> None:
         store.save("nb-1", _document("x = 4"), expected_revision=3)
     store.delete("nb-1", expected_revision=3)
     assert store.list(include_archived=True) == ()
+    with pytest.raises(NotebookRevisionNotFound):
+        store.list_revisions("nb-1")
 
 
 def test_notebook_revision_metadata_is_single_line_and_trimmed() -> None:
