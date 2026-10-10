@@ -1,5 +1,4 @@
 import pytest
-
 from studio_query_engine import (
     QUERY_ENGINE_NAMESPACE,
     QUERY_ENGINE_VERSION,
@@ -66,6 +65,36 @@ def test_query_evidence_rejects_boolean_numeric_evidence() -> None:
         QueryEvidence("a" * 64, "provider", None, None, (("queue", True),))
     with pytest.raises(ValueError, match="engine_stats"):
         QueryEvidence("a" * 64, "provider", None, None, engine_stats=(("rows", False),))
+
+
+def test_query_evidence_preserves_provider_and_routing_identity() -> None:
+    evidence = QueryEvidence(
+        "a" * 64,
+        "provider",
+        "provider-query",
+        "duckdb",
+        provider_version="build-1",
+        cluster_id="cluster-1",
+        routing_trace=(("cluster", "cluster-1"), ("engine", "duckdb")),
+    )
+
+    assert evidence.to_payload()["provider_version"] == "build-1"
+    assert evidence.to_payload()["cluster_id"] == "cluster-1"
+    assert evidence.to_payload()["routing_trace"] == {
+        "cluster": "cluster-1",
+        "engine": "duckdb",
+    }
+
+
+def test_query_evidence_rejects_duplicate_routing_trace_keys() -> None:
+    with pytest.raises(ValueError, match="routing_trace"):
+        QueryEvidence(
+            "a" * 64,
+            "provider",
+            None,
+            None,
+            routing_trace=(("engine", "duckdb"), ("engine", "trino")),
+        )
 
 
 @pytest.mark.parametrize("digest", ["digest", "A" * 64, "0" * 63])

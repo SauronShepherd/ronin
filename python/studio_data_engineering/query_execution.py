@@ -97,6 +97,7 @@ def execute_query(
     result_page = QueryResultPage(columns or (), tuple(rows)) if columns is not None else None
     finished = clock()
 
+    provider_version, cluster_id = provider.evidence_context()
     evidence = QueryEvidence(
         request_digest,
         handle.provider_id,
@@ -109,6 +110,9 @@ def execute_query(
         ),
         cancelled=status.state == "cancelled",
         engine_stats=(("rows_returned", len(rows)),),
+        provider_version=provider_version,
+        cluster_id=cluster_id,
+        routing_trace=(("selected_engine", selected),),
     )
     artifact = persist_query_engine_evidence(
         store,

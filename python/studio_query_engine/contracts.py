@@ -186,6 +186,9 @@ class QueryEvidence:
     translated_sql_digest: str | None = None
     cancelled: bool = False
     engine_stats: tuple[tuple[str, int], ...] = ()
+    provider_version: str | None = None
+    cluster_id: str | None = None
+    routing_trace: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         _digest(self.request_digest, "request_digest")
@@ -194,6 +197,10 @@ class QueryEvidence:
             _text(self.provider_query_id, "provider_query_id")
         if self.selected_engine is not None:
             _text(self.selected_engine, "selected_engine")
+        if self.provider_version is not None:
+            _text(self.provider_version, "provider_version")
+        if self.cluster_id is not None:
+            _text(self.cluster_id, "cluster_id")
         if self.translated_sql_digest is not None:
             _digest(self.translated_sql_digest, "translated_sql_digest")
         timings = tuple(sorted(self.timings_ms))
@@ -208,6 +215,16 @@ class QueryEvidence:
         object.__setattr__(self, "timings_ms", timings)
         if not isinstance(self.cancelled, bool):
             raise ValueError("cancelled must be boolean")
+        routing_trace = tuple(self.routing_trace)
+        if any(not isinstance(item, tuple) or len(item) != 2 for item in routing_trace):
+            raise ValueError("routing_trace must contain key/value pairs")
+        routing_trace = tuple(sorted(routing_trace))
+        if len({key for key, _ in routing_trace}) != len(routing_trace) or any(
+            not _text(key, "routing trace key") or not _text(value, "routing trace value")
+            for key, value in routing_trace
+        ):
+            raise ValueError("routing_trace must contain unique non-empty text values")
+        object.__setattr__(self, "routing_trace", routing_trace)
         stats = tuple(sorted(self.engine_stats))
         if len({key for key, _ in stats}) != len(stats) or any(
             not _text(key, "engine stat name")
@@ -229,6 +246,9 @@ class QueryEvidence:
             "translated_sql_digest": self.translated_sql_digest,
             "cancelled": self.cancelled,
             "engine_stats": dict(self.engine_stats),
+            "provider_version": self.provider_version,
+            "cluster_id": self.cluster_id,
+            "routing_trace": dict(self.routing_trace),
         }
 
 

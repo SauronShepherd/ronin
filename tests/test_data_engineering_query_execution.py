@@ -158,3 +158,6 @@ def test_execute_query_persists_monotonic_lifecycle_timings(tmp_path: Path) -> N
         "submission": 2,
         "total": 20,
     }
+    assert payload["query_evidence"]["provider_version"] == "1"
+    assert payload["query_evidence"]["cluster_id"] is None
+    assert payload["query_evidence"]["routing_trace"] == {"selected_engine": "duckdb"}

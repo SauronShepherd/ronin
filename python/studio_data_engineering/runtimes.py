@@ -45,6 +45,12 @@ class QueryEngineRuntimeProvider:
             capabilities,
         )
 
+    def evidence_context(self) -> tuple[str, str | None]:
+        """Return provider build and cluster identity for durable query evidence."""
+
+        handshake = self._discovered.handshake
+        return handshake.provider_version, handshake.cluster_id
+
     def authorize(self, request: QueryRequest, *, engine: str) -> str:
         """Authorize the selected engine before a DE execution intent is emitted."""
 
