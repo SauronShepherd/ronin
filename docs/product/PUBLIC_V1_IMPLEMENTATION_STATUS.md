@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-10. The implementation branch is clean;
 generated local qualification artifacts are ignored and are not release evidence.
-**Observed source head:** `350c3fe59308ea4076a92c9fe5d735b1bece344d` (2026-10-10).
+**Observed source head:** `50fb06ddce8b429153f2d980b46b297c1077889b` (2026-10-10).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
