@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_notebook import (
     CellIdentityAnchor,
     Notebook,
@@ -42,10 +41,13 @@ def test_notebook_revision_crud_and_optimistic_conflict() -> None:
         parameter_schema=(("limit", "integer"),),
     )
     assert second.revision == 2
+    assert store.get_revision("nb-1", 1).document == _document("x = 1")
+    assert tuple(item.revision for item in store.list_revisions("nb-1")) == (1, 2)
     with pytest.raises(NotebookRevisionConflict, match="stale"):
         store.save("nb-1", _document("x = 3"), expected_revision=1)
     archived = store.archive("nb-1", expected_revision=2)
     assert archived.archived is True
+    assert tuple(item.revision for item in store.list_revisions("nb-1")) == (1, 2, 3)
     assert store.list() == ()
     assert len(store.list(include_archived=True)) == 1
     with pytest.raises(NotebookRevisionConflict, match="archived"):
@@ -79,6 +81,7 @@ def test_notebook_http_adapter_preserves_revision_contract() -> None:
     with pytest.raises(NotebookRevisionConflict):
         adapter.save("nb-http", {"expected_revision": 1, "document": document})
     assert adapter.list()["items"][0]["id"] == "nb-http"
+    assert [item["revision"] for item in adapter.history("nb-http")["items"]] == [1, 2]
 
 
 def test_project_notebook_adapter_isolates_revision_namespaces() -> None:

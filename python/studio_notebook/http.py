@@ -65,6 +65,9 @@ class NotebookHTTPAdapter:
     def get(self, notebook_id: str) -> dict[str, object]:
         return _output(self._store.get(notebook_id))
 
+    def history(self, notebook_id: str) -> dict[str, object]:
+        return {"items": [_output(item) for item in self._store.list_revisions(notebook_id)]}
+
     def create(self, payload: Mapping[str, object]) -> dict[str, object]:
         notebook_id = payload.get("id")
         if not isinstance(notebook_id, str):
@@ -122,6 +125,9 @@ class ProjectNotebookHTTPAdapter:
 
     def get(self, *, project_id: str, notebook_id: str) -> dict[str, object]:
         return self.for_project(project_id).get(notebook_id)
+
+    def history(self, *, project_id: str, notebook_id: str) -> dict[str, object]:
+        return self.for_project(project_id).history(notebook_id)
 
     def create(self, *, project_id: str, payload: Mapping[str, object]) -> dict[str, object]:
         return self.for_project(project_id).create(payload)

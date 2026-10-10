@@ -62,6 +62,7 @@ class NotebookRevisionStore:
 
     def __init__(self) -> None:
         self._items: dict[str, NotebookRevision] = {}
+        self._history: dict[str, dict[int, NotebookRevision]] = {}
 
     def create(
         self,
@@ -89,6 +90,7 @@ class NotebookRevisionStore:
             _parameters(parameter_schema),
         )
         self._items[notebook_id] = result
+        self._history[notebook_id] = {result.revision: result}
         return result
 
     def get(self, notebook_id: str) -> NotebookRevision:
@@ -96,6 +98,24 @@ class NotebookRevisionStore:
             return self._items[notebook_id]
         except KeyError as exc:
             raise NotebookRevisionNotFound(notebook_id) from exc
+
+    def get_revision(self, notebook_id: str, revision: int) -> NotebookRevision:
+        if isinstance(revision, bool) or not isinstance(revision, int) or revision < 1:
+            raise ValueError("revision must be a positive integer")
+        try:
+            return self._history[notebook_id][revision]
+        except KeyError as exc:
+            raise NotebookRevisionNotFound(
+                f"notebook revision does not exist: {notebook_id}@{revision}"
+            ) from exc
+
+    def list_revisions(self, notebook_id: str) -> tuple[NotebookRevision, ...]:
+        self._validate_id(notebook_id)
+        try:
+            history = self._history[notebook_id]
+        except KeyError as exc:
+            raise NotebookRevisionNotFound(notebook_id) from exc
+        return tuple(history[revision] for revision in sorted(history))
 
     def save(
         self,
@@ -129,6 +149,7 @@ class NotebookRevisionStore:
             parameter_schema=_parameters(parameter_schema),
         )
         self._items[notebook_id] = result
+        self._history[notebook_id][result.revision] = result
         return result
 
     def archive(self, notebook_id: str, *, expected_revision: int) -> NotebookRevision:
@@ -137,6 +158,7 @@ class NotebookRevisionStore:
             raise NotebookRevisionConflict("stale notebook revision")
         result = replace(current, revision=current.revision + 1, archived=True)
         self._items[notebook_id] = result
+        self._history[notebook_id][result.revision] = result
         return result
 
     def delete(self, notebook_id: str, *, expected_revision: int) -> None:

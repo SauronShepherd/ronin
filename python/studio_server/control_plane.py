@@ -161,6 +161,10 @@ CONTROL_PLANE_ROUTES = frozenset(
         ),
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks"),
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks/{notebook_id}"),
+        (
+            "GET",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks/{notebook_id}/revisions",
+        ),
         ("POST", "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks"),
         ("PUT", "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks/{notebook_id}"),
         (
@@ -447,6 +451,7 @@ class DataEngineeringRevisionReader(Protocol):
 class NotebookReader(Protocol):
     def list(self, *, project_id: str, include_archived: bool = False) -> object: ...
     def get(self, *, project_id: str, notebook_id: str) -> object: ...
+    def history(self, *, project_id: str, notebook_id: str) -> object: ...
     def create(self, *, project_id: str, payload: dict[str, object]) -> object: ...
     def save(self, *, project_id: str, notebook_id: str, payload: dict[str, object]) -> object: ...
     def archive(self, *, project_id: str, notebook_id: str, expected_revision: int) -> object: ...
@@ -1365,6 +1370,33 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         "size_bytes": len(archive),
                         "content_base64": base64.b64encode(archive).decode("ascii"),
                     },
+                )
+                return
+            if (
+                len(segments) == 8
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5:] == ("notebooks", segments[6], "revisions")
+            ):
+                notebook_reader = self._server().notebook_reader
+                if notebook_reader is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "notebook_unavailable",
+                        "Notebook service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                project_id = segments[4]
+                if not self._authorize(
+                    actor, workspace_id, "project.read", resource_ref=project_id
+                ):
+                    return
+                if query:
+                    raise ValueError("notebook revision history does not accept query parameters")
+                self._write_json(
+                    HTTPStatus.OK,
+                    notebook_reader.history(project_id=project_id, notebook_id=segments[6]),
                 )
                 return
             if (
