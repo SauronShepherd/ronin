@@ -586,6 +586,11 @@ class PluginManager:
             raise PluginValidationError("plugins have already been composed")
         for record in plugins:
             manifest = record.manifest
+            # Validate the complete public manifest before mutating manager
+            # state or invoking third-party code.  Discovery validates entry
+            # points too, but callers may compose records directly (including
+            # the public testkit and server composition roots).
+            manifest.validate()
             if manifest.id in self._records:
                 raise PluginValidationError(f"duplicate plugin id: {manifest.id}")
             if manifest.plugin_api != self.plugin_api:

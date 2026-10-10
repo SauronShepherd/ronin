@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_core.plugins import (
     ContributionRegistry,
     PluginCompatibilityError,
@@ -197,6 +196,31 @@ def test_incompatible_api_is_rejected() -> None:
     )
     with pytest.raises(PluginCompatibilityError, match="plugin API"):
         PluginManager().compose((__import_record(plugin),))
+
+
+def test_manager_validates_directly_composed_manifest_before_registration() -> None:
+    class InvalidPlugin:
+        manifest = PluginManifest(
+            id="Bad.Plugin",
+            name="Invalid",
+            version="1.0.0",
+            plugin_api="1.0",
+        )
+        registered = False
+
+        def register(self, _context) -> None:
+            self.registered = True
+
+        def startup(self) -> None:
+            return None
+
+        def shutdown(self) -> None:
+            return None
+
+    plugin = InvalidPlugin()
+    with pytest.raises(PluginValidationError, match="invalid plugin id"):
+        PluginManager().compose((__import_record(plugin),))
+    assert plugin.registered is False
 
 
 @pytest.mark.parametrize(
