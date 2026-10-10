@@ -54,7 +54,19 @@ function showPipelineRunEvidence(out, runId, data) {
   evidence.textContent = `Evidence: ${data.evidence_digest || data.evidence?.digest || 'not available yet'} · Lineage: ${data.lineage_id || data.lineage?.id || 'not available yet'}`;
   const details = document.createElement('pre');
   details.className = 'code';
-  details.textContent = json(data);
+  details.textContent = json({
+    run_id: data.run_id || data.id || runId,
+    attempt: data.attempt || data.attempt_id || null,
+    input_asset_refs: data.input_asset_refs || data.inputs || [],
+    output_asset_refs: data.output_asset_refs || data.outputs || [],
+    ir_digest: data.ir_digest || null,
+    runtime: data.runtime || null,
+    provider: data.provider || data.provider_id || null,
+    qualification: data.qualification || data.qualification_status || null,
+    artifact_evidence: data.artifact_evidence || data.artifacts || [],
+    evidence_digest: data.evidence_digest || data.evidence?.digest || null,
+    lineage_id: data.lineage_id || data.lineage?.id || null,
+  });
   out.append(heading, evidence, details);
 }
 function showQueryEvidence(out, data) {
