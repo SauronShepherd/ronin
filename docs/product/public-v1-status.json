@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-11T00:00:00+00:00",
-  "observed_main_sha": "444f7bbb6afa47b6b215f13dc689a628fa1a3655",
+  "observed_at": "2026-10-11T08:22:00+00:00",
+  "observed_main_sha": "ee7d0ac6218fdf72c556a068167a27afce17f5e4",
   "observed_workspace_state": "committed implementation branch with one local generated qualification directory; generated artifacts are not release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -224,4 +224,3 @@
     "Keep exact-head CI/release qualification active, identify every claim by SHA, and do not claim Public v1 release readiness before all mandatory capabilities and human-owned evidence exist."
   ]
 }
-

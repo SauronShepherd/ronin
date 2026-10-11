@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-10. The implementation branch contains
 one local generated qualification directory; it is not release evidence.
-**Observed source head:** `444f7bbb6afa47b6b215f13dc689a628fa1a3655` (2026-10-11).
+**Observed source head:** `ee7d0ac6218fdf72c556a068167a27afce17f5e4` (2026-10-11).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -39,6 +39,11 @@ Additional exact-head evidence on this snapshot includes Docker qualification
 browser smoke (no console/request/CSP failures), installed-wheel accessibility
 (no violations at 320/768/1440 px), and four credential-free migration fixture
 certifications. These checks do not constitute Public v1 release qualification.
+
+Current-head local checks additionally pass Ruff format/lint across all 881
+Python files, the public import smoke for 32 packages, 11 Data Engineering
+async tests, and installed-wheel plus installed-sdist Studio Chromium and
+accessibility qualification (zero console/request/CSP, axe, or layout failures).
 
 The latest recorded WSL mutation campaign on exact core candidate
 `444f7bbb6afa47b6b215f13dc689a628fa1a3655` completed 3,963 mutants: 3,390 killed, 573 survived, and 0 timed out. The recorded score is **85.54% killed of all mutants**, below
