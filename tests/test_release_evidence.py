@@ -67,6 +67,11 @@ def test_validate_requires_exact_artifact_digests_for_passed_gate() -> None:
     with pytest.raises(EvidenceError, match="duplicate artifacts"):
         validate_bundle({"schema": SCHEMA, "commit": "abc123", "records": [value]})
 
+    value = record("local-tests")
+    value["artifact_digests"] = {None: "a" * 64}  # type: ignore[dict-item]
+    with pytest.raises(EvidenceError, match="invalid name"):
+        validate_bundle({"schema": SCHEMA, "commit": "abc123", "records": [value]})
+
 
 def test_validate_requires_root_commit() -> None:
     with pytest.raises(EvidenceError, match="bundle commit is required"):
