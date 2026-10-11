@@ -63,3 +63,36 @@ def test_artifact_identity_rejects_duplicate_or_non_hex_entries(tmp_path: Path) 
     )
     with pytest.raises(ValueError, match="invalid SHA-256"):
         _artifact_digests(identity, "abc123")
+
+
+def test_artifact_identity_binds_names_to_existing_content(tmp_path: Path) -> None:
+    identity = tmp_path / "artifact-identity.json"
+    wheel = tmp_path / "ronin.whl"
+    wheel.write_bytes(b"wheel")
+    manifest = build_manifest([wheel], commit="abc123")
+    identity.write_text(json.dumps(manifest), encoding="utf-8")
+
+    wheel.write_bytes(b"tampered")
+    with pytest.raises(ValueError, match="does not match artifact"):
+        _artifact_digests(identity, "abc123")
+
+    manifest["artifacts"] = [{"name": "missing.whl", "sha256": "a" * 64}]
+    identity.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="missing artifact"):
+        _artifact_digests(identity, "abc123")
+
+
+def test_artifact_identity_rejects_path_traversal_names(tmp_path: Path) -> None:
+    identity = tmp_path / "artifact-identity.json"
+    identity.write_text(
+        json.dumps(
+            {
+                "schema": "ronin.artifact-identity/v1",
+                "commit": "abc123",
+                "artifacts": [{"name": "../outside.whl", "sha256": "a" * 64}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="invalid artifact name"):
+        _artifact_digests(identity, "abc123")

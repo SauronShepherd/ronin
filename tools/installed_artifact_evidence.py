@@ -43,13 +43,23 @@ def _artifact_digests(path: Path, commit: str) -> dict[str, str]:
     artifacts = manifest.get("artifacts")
     if not isinstance(artifacts, list) or not artifacts:
         raise ValueError("artifact identity must contain artifacts")
+    declared_names: set[str] = set()
+    for item in artifacts:
+        if not isinstance(item, dict) or not isinstance(item.get("name"), str):
+            raise ValueError("artifact identity contains an invalid artifact")
+        name = item["name"].strip()
+        artifact_name = Path(name)
+        if not name or artifact_name.name != name or name in {".", ".."}:
+            raise ValueError("artifact identity contains an invalid artifact name")
+        if name in declared_names:
+            raise ValueError("artifact identity contains a duplicate artifact")
+        declared_names.add(name)
     result: dict[str, str] = {}
     for item in artifacts:
         if not isinstance(item, dict) or not isinstance(item.get("name"), str):
             raise ValueError("artifact identity contains an invalid artifact")
         name = item["name"].strip()
-        if not name or name in result:
-            raise ValueError("artifact identity contains a duplicate artifact")
+        artifact_name = Path(name)
         sha256 = item.get("sha256")
         if (
             not isinstance(sha256, str)
@@ -57,6 +67,11 @@ def _artifact_digests(path: Path, commit: str) -> dict[str, str]:
             or any(character not in "0123456789abcdef" for character in sha256)
         ):
             raise ValueError("artifact identity contains an invalid SHA-256")
+        artifact_path = path.parent / artifact_name
+        if not artifact_path.is_file():
+            raise ValueError(f"artifact identity references a missing artifact: {name}")
+        if _sha256(artifact_path) != sha256:
+            raise ValueError(f"artifact identity digest does not match artifact: {name}")
         result[name] = sha256
     return result
 
