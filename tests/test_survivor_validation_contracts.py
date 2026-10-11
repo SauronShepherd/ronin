@@ -4,8 +4,21 @@ from __future__ import annotations
 
 import pytest
 
-from studio_core import bundle_inventory, grants, ml, ontology, operators, portability, quality
-from studio_core import project_manifest, source_control
+from studio_core import (
+    audit,
+    bundle_inventory,
+    catalog,
+    connections,
+    environments,
+    grants,
+    ml,
+    ontology,
+    operators,
+    portability,
+    project_manifest,
+    quality,
+    source_control,
+)
 
 
 @pytest.mark.parametrize(
@@ -43,6 +56,34 @@ def test_core_text_validators_reject_empty_values(validator, args) -> None:
 def test_core_text_validators_reject_non_strings(validator, args) -> None:
     with pytest.raises((TypeError, ValueError, AttributeError)):
         validator(*args)
+
+
+@pytest.mark.parametrize(
+    ("validator", "value"),
+    [
+        (ontology._require_text, " value"),
+        (ontology._require_text, "value "),
+        (ontology._require_text, "value\nother"),
+        (grants._require_text, " value"),
+        (grants._require_text, "value\nother"),
+        (quality._require_text, " value"),
+        (ml._text, "value\rother"),
+        (portability._require_text, " value"),
+        (bundle_inventory._require_text, "value\nother"),
+        (source_control._text, "value\rother"),
+        (catalog._require_text, " value"),
+        (connections._require_text, "value\nother"),
+        (audit._require_text, " value"),
+    ],
+)
+def test_core_text_validators_reject_untrimmed_or_multiline_values(validator, value) -> None:
+    with pytest.raises((TypeError, ValueError, AttributeError)):
+        validator(value, "field")
+
+
+def test_grants_text_validator_enforces_its_length_limit() -> None:
+    with pytest.raises(ValueError):
+        grants._require_text("x" * 257, "field")
 
 
 @pytest.mark.parametrize("value", ["../secret", "/absolute", "a/../../b", ""])
