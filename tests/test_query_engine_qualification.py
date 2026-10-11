@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from tools.query_engine_qualification import qualify_external, qualify_local
 
 
@@ -37,14 +39,17 @@ def test_queryflux_qualification_executes_operator_evidence(monkeypatch, tmp_pat
         "'unauthorized_engine': 'rejected', 'provider_restart': 'unsupported'}}))",
         encoding="utf-8",
     )
-    monkeypatch.setenv("RONIN_QUERYFLUX_QUALIFICATION_COMMAND", f"python {evidence}")
+    monkeypatch.setenv("RONIN_QUERYFLUX_QUALIFICATION_COMMAND", f"{sys.executable} {evidence}")
     result = qualify_external()
     assert result["status"] == "qualified"
     assert result["command_configured"] is True
 
 
 def test_queryflux_qualification_rejects_invalid_operator_output(monkeypatch) -> None:
-    monkeypatch.setenv("RONIN_QUERYFLUX_QUALIFICATION_COMMAND", "python -c \"print('bad')\"")
+    monkeypatch.setenv(
+        "RONIN_QUERYFLUX_QUALIFICATION_COMMAND",
+        f"{sys.executable} -c \"print('bad')\"",
+    )
     result = qualify_external()
     assert result["status"] == "failed"
     assert result["error"] == "invalid_json"
@@ -58,7 +63,7 @@ def test_queryflux_qualification_rejects_incomplete_matrix(monkeypatch, tmp_path
     )
     monkeypatch.setenv(
         "RONIN_QUERYFLUX_QUALIFICATION_COMMAND",
-        f"python {evidence}",
+        f"{sys.executable} {evidence}",
     )
     result = qualify_external()
     assert result["status"] == "failed"

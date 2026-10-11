@@ -127,7 +127,7 @@ def test_trino_transport_rejects_provider_uri_escape(unsafe_uri: str) -> None:
         transport.submit(QueryRequest("SELECT 1", "trino"))
 
 
-@pytest.mark.parametrize("base_url", ["engine/", "ftp://engine/", "http://user:pass@engine/"])
-def test_trino_transport_rejects_unsafe_base_url(base_url: str) -> None:
+@pytest.mark.parametrize("candidate_url", ["engine/", "ftp://engine/", "http://user:pass@engine/"])
+def test_trino_transport_rejects_unsafe_base_url(candidate_url: str) -> None:
     with pytest.raises(ValueError, match="URL|credentials"):
-        TrinoHttpTransport(_Client([]), base_url=base_url)
+        TrinoHttpTransport(_Client([]), base_url=candidate_url)
