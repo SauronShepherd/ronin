@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-10. The implementation branch contains
 one local generated qualification directory; it is not release evidence.
-**Observed source head:** `c0d1057f8d0e5aef4e53770c93a7e7748fba8e5c` (2026-10-11).
+**Observed source head:** `934156d27fce0a274f0f1d8deebf815b095b63bb` (2026-10-11).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -129,3 +129,4 @@ These merges do **not** imply that their parent capability families are complete
 ## Historical v0.1 planning documents
 
 The earlier v0.1 construction plan and backlog are preserved verbatim under `docs/automation/history/`. They remain useful evidence for the execution foundation and historical qualification baseline, but they are not current feature-selection authority. Active `docs/automation/CONSTRUCTION_PLAN.md` and `BACKLOG.md` derive scope from `PUBLIC_V1_SCOPE.md` rather than the superseded v0.1 feature freeze.
+
