@@ -58,6 +58,11 @@ def test_schema_validator_accepts_supported_explicit_version() -> None:
     validate_openlineage_event({**EVENT, "schemaVersion": "1.0"})
 
 
+@pytest.mark.parametrize("event_type", ["START", "RUNNING", "COMPLETE", "ABORT", "FAIL", "OTHER"])
+def test_schema_validator_accepts_every_supported_event_type(event_type: str) -> None:
+    validate_openlineage_event({**EVENT, "eventType": event_type})
+
+
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
