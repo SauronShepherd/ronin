@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-11T08:42:00+00:00",
-  "observed_main_sha": "dfdb1045de2e997caa191ba81a8ec640c1dd04bd",
+  "observed_at": "2026-10-11T09:14:00+00:00",
+  "observed_main_sha": "38980c46ce122294bb8f63f2f55a68f4fe0d49af",
   "observed_workspace_state": "committed implementation branch with one local generated qualification directory; generated artifacts are not release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -11,7 +11,7 @@
     "result": "2266 passed, 15 skipped",
     "qualification_claimed": false,
     "mutation_campaign": {
-      "candidate_sha": "444f7bbb6afa47b6b215f13dc689a628fa1a3655",
+      "candidate_sha": "38980c46ce122294bb8f63f2f55a68f4fe0d49af",
       "total": 3963,
       "killed": 3390,
       "survived": 573,

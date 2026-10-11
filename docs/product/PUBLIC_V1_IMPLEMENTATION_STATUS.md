@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-10. The implementation branch contains
 one local generated qualification directory; it is not release evidence.
-**Observed source head:** `dfdb1045de2e997caa191ba81a8ec640c1dd04bd` (2026-10-11).
+**Observed source head:** `38980c46ce122294bb8f63f2f55a68f4fe0d49af` (2026-10-11).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -36,7 +36,7 @@ environment-gated Docker/PostgreSQL/Spark/provider qualification checks, not
 test failures.
 The latest focused contract verification produced **144 passed**.
 Additional exact-head evidence on this snapshot includes Docker qualification
-(21 passed), real PostgreSQL integration (11 passed), the installed-wheel
+(21 historical CI checks plus 5 current real-Docker tests), real PostgreSQL integration (11 passed), the installed-wheel
 browser smoke (no console/request/CSP failures), installed-wheel accessibility
 (no violations at 320/768/1440 px), and four credential-free migration fixture
 certifications. These checks do not constitute Public v1 release qualification.
@@ -47,7 +47,7 @@ async tests, and installed-wheel plus installed-sdist Studio Chromium and
 accessibility qualification (zero console/request/CSP, axe, or layout failures).
 
 The latest recorded WSL mutation campaign on exact core candidate
-`444f7bbb6afa47b6b215f13dc689a628fa1a3655` completed 3,963 mutants: 3,390 killed, 573 survived, and 0 timed out. The recorded score is **85.54% killed of all mutants**, below
+`38980c46ce122294bb8f63f2f55a68f4fe0d49af` completed 3,963 mutants: 3,390 killed, 573 survived, and 0 timed out. The recorded score is **85.54% killed of all mutants**, below
 the repository's 90% mutation gate. The gate remains blocked until the surviving
 behavior is covered or explicitly justified.
 The campaign therefore remains a release blocker; its temporary workspace and
