@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-10. The implementation branch contains
 one local generated qualification directory; it is not release evidence.
-**Observed source head:** `934156d27fce0a274f0f1d8deebf815b095b63bb` (2026-10-11).
+**Observed source head:** `444f7bbb6afa47b6b215f13dc689a628fa1a3655` (2026-10-11).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -41,7 +41,7 @@ browser smoke (no console/request/CSP failures), installed-wheel accessibility
 certifications. These checks do not constitute Public v1 release qualification.
 
 The latest recorded WSL mutation campaign on exact core candidate
-`f6cf213c9f4a4f7b31c5f4f1b4e3cc4c13a3d4ef` completed 3,963 mutants: 3,379 killed, 584 survived, and 0 timed out. The recorded score is **85.26% killed of all mutants**, below
+`444f7bbb6afa47b6b215f13dc689a628fa1a3655` completed 3,963 mutants: 3,390 killed, 573 survived, and 0 timed out. The recorded score is **85.54% killed of all mutants**, below
 the repository's 90% mutation gate. The gate remains blocked until the surviving
 behavior is covered or explicitly justified.
 The campaign therefore remains a release blocker; its temporary workspace and
