@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-10. The implementation branch contains
 one local generated qualification directory; it is not release evidence.
-**Observed source head:** `ee7d0ac6218fdf72c556a068167a27afce17f5e4` (2026-10-11).
+**Observed source head:** `dfdb1045de2e997caa191ba81a8ec640c1dd04bd` (2026-10-11).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
@@ -30,10 +30,11 @@ not Public v1 completion.
 
 ## Local verification on this snapshot
 
-On Windows, the latest focused contract verification produced **144 passed**
-and the full `python -m pytest -q` verification produced **2224 passed, 21 skipped**.
-The skips are environment-gated Docker/PostgreSQL/Spark/provider
-qualification checks, not test failures.
+On the current candidate, the full `python -m pytest -q` verification produced
+**2266 passed, 15 skipped** with zero failures or errors. The skips are
+environment-gated Docker/PostgreSQL/Spark/provider qualification checks, not
+test failures.
+The latest focused contract verification produced **144 passed**.
 Additional exact-head evidence on this snapshot includes Docker qualification
 (21 passed), real PostgreSQL integration (11 passed), the installed-wheel
 browser smoke (no console/request/CSP failures), installed-wheel accessibility
