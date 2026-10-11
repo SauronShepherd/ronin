@@ -193,7 +193,7 @@ def test_data_engineering_studio_exposes_queryflux_health_and_capabilities() -> 
     )
     for marker in (
         "loadQueryFluxCapabilities",
-        'id=\"de-queryflux-status\"',
+        'id="de-queryflux-status"',
         "QueryFlux: degraded",
         "translation_policies: payload.translation_policies || ['native_only', 'best_effort']",
         "raw cluster configuration is intentionally hidden",

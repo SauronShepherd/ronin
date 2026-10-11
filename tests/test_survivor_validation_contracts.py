@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_core import (
     audit,
     bundle_inventory,
     catalog,
     connections,
-    environments,
     grants,
     ml,
     ontology,
@@ -82,7 +80,7 @@ def test_core_text_validators_reject_untrimmed_or_multiline_values(validator, va
 
 
 def test_grants_text_validator_enforces_its_length_limit() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="at most 256 characters"):
         grants._require_text("x" * 257, "field")
 
 
@@ -99,4 +97,3 @@ def test_pair_validators_reject_duplicate_keys_and_empty_text() -> None:
         quality._pairs((("a", "1"), ("a", "2")), name="pairs")
     with pytest.raises((TypeError, ValueError)):
         ml._pairs((("", "1"),), "pairs")
-

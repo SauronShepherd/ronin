@@ -426,8 +426,7 @@ class DataEnginerringStudioPlugin:
             raise ValueError("queryflux execution body contains unknown fields")
         required = ("sql", "profile", "engine", "project_id", "run_id", "attempt_id")
         if any(
-            not isinstance(body.get(name), str) or not str(body[name]).strip()
-            for name in required
+            not isinstance(body.get(name), str) or not str(body[name]).strip() for name in required
         ):
             raise ValueError("queryflux execution requires non-empty text fields")
         max_rows = body.get("max_rows", 1_000)

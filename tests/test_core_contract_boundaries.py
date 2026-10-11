@@ -3,14 +3,12 @@ from __future__ import annotations
 from dataclasses import replace
 
 import pytest
-
 from studio_core.graph_executor import LocalGraphQueryExecutor
 from studio_core.ontology import KnowledgeGraph
 from studio_core.openlineage_transport import validate_openlineage_event
 from studio_core.plugin_events import InMemoryInbox, InMemoryOutbox, PluginEventError, new_event
 from studio_core.plugins import (
     CapabilityRegistry,
-    ContributionRegistry,
     EventSubscriptionRegistry,
     JobRegistry,
     MigrationRegistry,
@@ -71,7 +69,10 @@ def test_router_normalizes_methods_and_detects_collisions() -> None:
     permissions = PermissionRegistry()
     permissions.add("plugin:read", "plugin")
     registry = RouterRegistry(permissions)
-    handler = lambda: None
+
+    def handler() -> None:
+        return None
+
     registry.add("get", "/v1/items", "plugin", handler, permission="plugin:read")
     assert registry.items[0].method == "GET"
     with pytest.raises(PluginValidationError, match="route collision"):
@@ -138,7 +139,10 @@ def test_manager_rejects_recomposition_and_dependency_cycles() -> None:
     )
     with pytest.raises(PluginValidationError, match="dependency cycle"):
         PluginManager().compose(
-            (PluginRecord(a_manifest, Plugin(a_manifest), "test"), PluginRecord(b_manifest, Plugin(b_manifest), "test"))
+            (
+                PluginRecord(a_manifest, Plugin(a_manifest), "test"),
+                PluginRecord(b_manifest, Plugin(b_manifest), "test"),
+            )
         )
 
 
@@ -153,7 +157,7 @@ def test_openlineage_validator_rejects_each_structural_boundary() -> None:
     for field in ("eventType", "eventTime", "run", "job", "producer"):
         invalid = dict(event)
         invalid.pop(field)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="OpenLineage event"):
             validate_openlineage_event(invalid)
     for invalid in (
         {**event, "eventType": "UNKNOWN"},
@@ -164,7 +168,7 @@ def test_openlineage_validator_rejects_each_structural_boundary() -> None:
         {**event, "job": {"namespace": "", "name": "job"}},
         {**event, "job": {"namespace": "ns", "name": " "}},
     ):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="OpenLineage (event|run|job)"):
             validate_openlineage_event(invalid)
 
 
@@ -178,9 +182,9 @@ def test_graph_executor_rejects_ast_type_and_limit_boundaries() -> None:
 
 
 def test_event_stores_reject_capacity_and_invalid_consumer_without_side_effects() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="max_events must be positive"):
         InMemoryOutbox(max_events=0)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="max_events must be positive"):
         InMemoryInbox(max_events=0)
     inbox = InMemoryInbox()
     event = new_event(
