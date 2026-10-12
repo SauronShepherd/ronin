@@ -283,11 +283,7 @@ def _manifest_data() -> dict[str, object]:
     project = Project(
         ProjectId("orders"),
         "Orders",
-        (
-            RepositoryBinding(
-                "code", "https://example.test/orders.git", role="primary"
-            ),
-        ),
+        (RepositoryBinding("code", "https://example.test/orders.git", role="primary"),),
         ExecutionProfile(
             RuntimeProfileRef("python", "3.13"), (CapabilityRequirement("python"),), "strict"
         ),
@@ -350,3 +346,51 @@ def test_project_manifest_private_shape_helpers_distinguish_mapping_sequence_and
 def test_project_manifest_exact_keys_reports_both_missing_and_extra_keys() -> None:
     with pytest.raises(ValueError, match=r"^value keys mismatch; missing=\['b'\], extra=\['c'\]$"):
         project_manifest._require_exact_keys({"a": 1, "c": 2}, {"a", "b"}, "value")
+
+
+@pytest.mark.parametrize("field", ["alias", "uri", "default_ref", "adapter_id"])
+def test_project_manifest_repository_requires_each_text_field(field: str) -> None:
+    data = _manifest_data()
+    repository = data["project"]["repositories"][0]  # type: ignore[index]
+    repository[field] = 1  # type: ignore[index]
+    with pytest.raises(TypeError, match=rf"repository\.{field} must be a string"):
+        ProjectManifest.from_data(data)
+
+
+def test_project_manifest_execution_requires_array_runtime_and_valid_resolution_shapes() -> None:
+    data = _manifest_data()
+    execution = data["project"]["execution"]  # type: ignore[index]
+    execution["requirements"] = "not-an-array"  # type: ignore[index]
+    with pytest.raises(TypeError, match="execution.requirements must be an array"):
+        ProjectManifest.from_data(data)
+    data = _manifest_data()
+    execution = data["project"]["execution"]  # type: ignore[index]
+    execution["runtime"] = "not-an-object"  # type: ignore[index]
+    with pytest.raises(TypeError, match="execution.runtime must be an object"):
+        ProjectManifest.from_data(data)
+    data = _manifest_data()
+    execution = data["project"]["execution"]  # type: ignore[index]
+    execution["resolution"] = 1  # type: ignore[index]
+    with pytest.raises(TypeError, match="execution.resolution must be a string"):
+        ProjectManifest.from_data(data)
+
+
+@pytest.mark.parametrize("field", ["name", "level"])
+def test_project_manifest_requirement_requires_text_fields_and_supported_level(field: str) -> None:
+    data = _manifest_data()
+    requirement = data["project"]["execution"]["requirements"][0]  # type: ignore[index]
+    requirement[field] = 1  # type: ignore[index]
+    with pytest.raises(TypeError, match=rf"requirement\.{field} must be a string"):
+        ProjectManifest.from_data(data)
+    data = _manifest_data()
+    requirement = data["project"]["execution"]["requirements"][0]  # type: ignore[index]
+    requirement["level"] = "optional"  # type: ignore[index]
+    with pytest.raises(ValueError, match="requirement.level"):
+        ProjectManifest.from_data(data)
+
+
+def test_project_manifest_runtime_payload_round_trips_all_optional_fields() -> None:
+    data = _manifest_data()
+    restored = ProjectManifest.from_data(data)
+    encoded = restored.to_json()
+    assert ProjectManifest.from_json(encoded) == restored
