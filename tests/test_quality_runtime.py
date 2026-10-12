@@ -221,3 +221,29 @@ def test_quality_contract_rejects_duplicate_or_invalid_sensitive_parameters() ->
         DataContract(_REF, "exact", freshness_seconds=0)
     with pytest.raises(ValueError, match="quality result message"):
         QualityResult(QualityRuleId("bad"), "error", message=" bad ")
+
+
+@pytest.mark.parametrize("credential_key", ["password", "secret", "token", "credential", "api_key"])
+def test_quality_parameters_reject_each_credential_marker_case_insensitively(
+    credential_key: str,
+) -> None:
+    with pytest.raises(ValueError, match="credential-bearing"):
+        QualityRule(
+            QualityRuleId("credential-marker"),
+            "custom_python",
+            "credential marker",
+            parameters=((credential_key.upper(), "redacted"),),
+        )
+
+
+@pytest.mark.parametrize("invalid", ["bad\rvalue", "bad\x00value"])
+def test_quality_text_rejects_carriage_returns_and_nul_bytes(invalid: str) -> None:
+    with pytest.raises(ValueError, match="single-line"):
+        QualityRule(QualityRuleId(invalid), "null", "valid name")
+
+    with pytest.raises(ValueError, match="single-line"):
+        QualityRule(
+            QualityRuleId("valid-id"),
+            "null",
+            invalid,
+        )
