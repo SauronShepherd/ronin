@@ -90,6 +90,22 @@ def test_constraints_are_sorted_and_secret_detection_is_case_insensitive() -> No
             Grant(frozenset({"read"}), ResourceScope("project", None), {key: value})
 
 
+@pytest.mark.parametrize(
+    ("constraints", "message"),
+    [
+        ({" ": "value"}, "non-empty, trimmed, and single-line"),
+        ({"key": " value"}, "non-empty, trimmed, and single-line"),
+        ({"key\nname": "value"}, "non-empty, trimmed, and single-line"),
+        ({"key": "value\x00"}, "non-empty, trimmed, and single-line"),
+        ({"k" * 65: "value"}, "at most 64 characters"),
+        ({"k": "v" * 257}, "at most 256 characters"),
+    ],
+)
+def test_constraint_text_boundaries_are_enforced(constraints: dict[str, str], message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        Grant(frozenset({"read"}), ResourceScope("project", None), constraints)
+
+
 def test_grant_set_decisions_and_specificity_are_deterministic() -> None:
     exact = Grant(frozenset({"read"}), ResourceScope("project", "p-1"))
     wildcard = Grant(frozenset({"read"}), ResourceScope("project", None))
@@ -106,6 +122,19 @@ def test_grant_set_decisions_and_specificity_are_deterministic() -> None:
             GrantSet(order).permits(_requirement()).to_payload()
             == GrantSet((exact, wildcard, global_grant)).permits(_requirement()).to_payload()
         )
+
+
+def test_grant_set_matching_rejects_kind_mismatches_and_detects_ambiguity() -> None:
+    project = Grant(frozenset({"read"}), ResourceScope("project", "p-1"))
+    job = Grant(frozenset({"read"}), ResourceScope("job", "p-1"))
+    assert (
+        GrantSet((project,)).permits(Requirement("read", ResourceScope("job", "p-1"))).reason
+        == "no_matching_grant"
+    )
+    assert GrantSet((project, job)).permits(_requirement()).reason == "allowed"
+
+    broad_actions = Grant(frozenset({"read", "write"}), ResourceScope("project", "p-1"))
+    assert GrantSet((project, broad_actions)).permits(_requirement()).reason == "ambiguous"
 
 
 @given(st.permutations(("read", "list", "events")))
@@ -189,6 +218,21 @@ def test_bearer_scope_rejects_invalid_or_noncanonical_percent_encoding(value: st
 )
 def test_bearer_scope_requires_exact_canonical_shape(value: str) -> None:
     with pytest.raises(ValueError, match="scope"):
+        parse_bearer_scope(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "ronin:v1:read:project:",
+        "ronin:v1:read:project:%20p-1",
+        "ronin:v1:evidence%3aread:project:p-1",
+        "ronin:v1:read:project:p%2f1",
+        "ronin:v1:read:project:p-1:extra",
+    ],
+)
+def test_bearer_scope_rejects_empty_decoded_and_noncanonical_components(value: str) -> None:
+    with pytest.raises(ValueError, match="scope|canonical|identifier"):
         parse_bearer_scope(value)
 
 
