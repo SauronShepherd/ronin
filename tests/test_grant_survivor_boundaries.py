@@ -222,3 +222,52 @@ def test_bearer_scope_percent_encoding_is_round_trip_and_canonical(identifier: s
 def test_bearer_scope_parser_rejects_noncanonical_forms(value: str) -> None:
     with pytest.raises(ValueError, match="."):
         parse_bearer_scope(value)
+
+
+@pytest.mark.parametrize("action", sorted(ACTIONS))
+@pytest.mark.parametrize("kind", ["project", "job", "run", "evidence", "*"])
+def test_bearer_scope_round_trips_every_action_and_global_resource_kind(
+    action: str, kind: str
+) -> None:
+    requirement = _requirement(action, kind, None)
+    encoded = requirement_to_bearer_scope(requirement)
+    assert encoded.endswith(":*")
+    assert parse_bearer_scope(encoded) == requirement
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "ronin:v1:read%ZZ:project:p-1",
+        "ronin:v1:read:project%ZZ:p-1",
+        "ronin:v1:read:project:%2f1",
+        "ronin:v1:read:project:p+1",
+        "ronin:v1:read:project:p%20-1",
+    ],
+)
+def test_bearer_scope_parser_rejects_noncanonical_component_encoding(value: str) -> None:
+    with pytest.raises(ValueError, match="."):
+        parse_bearer_scope(value)
+
+
+def test_grant_set_json_parser_rejects_invalid_json_and_preserves_payload_defaults() -> None:
+    with pytest.raises(ValueError, match="must be valid JSON"):
+        GrantSet.from_json("not-json")
+    grant = Grant(frozenset({"read"}), ResourceScope("project", "p-1"))
+    restored = GrantSet.from_json(GrantSet((grant,)).to_json())
+    assert restored.requirements() == grant.requirements()
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        None,
+        {},
+        {"version": 1, "actions": "read", "resource": {"kind": "project", "identifier": None}},
+        {"version": 1, "actions": ["read"], "resource": []},
+        {"version": 1, "actions": ["read"], "resource": {"kind": "project", "identifier": None}, "constraints": []},
+    ],
+)
+def test_grant_payload_parser_rejects_each_invalid_top_level_shape(payload: object) -> None:
+    with pytest.raises(ValueError, match="authorization grant"):
+        Grant.from_payload(payload)
