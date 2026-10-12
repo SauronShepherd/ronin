@@ -268,7 +268,7 @@ def test_materialization_enforces_limits_and_preserves_properties() -> None:
 def test_link_resolution_enforces_type_limits_and_cardinality() -> None:
     source = _objects("Source", ({"id": "s1", "label": "x"},))
     target = _objects("Target", ({"id": "t1", "label": "x"}, {"id": "t2", "label": "x"}))
-    link = LinkType("link", "Source", "Target", "one-to-many", ("label",), ("label",))
+    link = LinkType("link", "Source", "Target", "many-to-many", ("label",), ("label",))
     assert len(resolve_link_type(link, source, target)) == 2
     with pytest.raises(ValueError, match="max_links"):
         resolve_link_type(link, source, target, max_links=0)

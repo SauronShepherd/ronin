@@ -541,11 +541,11 @@ def resolve_link_type(
                     raise ValueError("ontology link resolution exceeds configured limit")
     source_counts = {ref: sum(pair[0] == ref for pair in links) for ref, _ in links}
     target_counts = {ref: sum(pair[1] == ref for pair in links) for _, ref in links}
-    if link.cardinality in {"one-to-one", "many-to-one"} and any(
+    if link.cardinality in {"one-to-one", "one-to-many"} and any(
         count > 1 for count in source_counts.values()
     ):
         raise ValueError("resolved links violate source-side cardinality")
-    if link.cardinality in {"one-to-one", "one-to-many"} and any(
+    if link.cardinality in {"one-to-one", "many-to-one"} and any(
         count > 1 for count in target_counts.values()
     ):
         raise ValueError("resolved links violate target-side cardinality")
