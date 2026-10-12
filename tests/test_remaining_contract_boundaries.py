@@ -6,7 +6,9 @@ from studio_core import (
     connections,
     diagnostics,
     environments,
+    quality,
     reproducible_manifest,
+    runtime_profiles,
     scheduler_events,
     scheduler_resources,
 )
@@ -72,3 +74,29 @@ def test_diagnostic_matcher_has_distinct_equals_contains_and_prefix_semantics() 
     assert not diagnostics._matches(
         diagnostics.DiagnosticPredicate("message", "equals", "quota"), fact
     )
+
+
+@pytest.mark.parametrize("validator", [quality._require_text, runtime_profiles._require_text])
+@pytest.mark.parametrize("value", [123, "value\x00tail", " value", "value\nnext"])
+def test_quality_and_runtime_text_validators_fail_closed(validator, value: object) -> None:
+    with pytest.raises(ValueError, match="."):
+        validator(value, "field")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("value", "constraint", "expected"),
+    [
+        ("3.12", ">=3.11", True),
+        ("3.10", ">=3.11", False),
+        ("3.11", "<=3.11", True),
+        ("3.12", "<3.11", False),
+        ("stable", "==stable", True),
+        ("stable", "!=preview", True),
+        ("opaque", "opaque", True),
+        ("vendor-build", ">=3.11", False),
+    ],
+)
+def test_runtime_constraint_matching_preserves_each_operator_boundary(
+    value: str, constraint: str, expected: bool
+) -> None:
+    assert runtime_profiles._matches_constraint(value, constraint)[0] is expected
