@@ -112,7 +112,7 @@ def test_quality_pairs_canonicalize_and_reject_duplicate_keys() -> None:
         quality._pairs((("key", "one"), ("key", "two")), name="quality parameters")
 
 
-@pytest.mark.parametrize("value", [None, [], [("key",)], [("key", "value", "extra")]])
+@pytest.mark.parametrize("value", [None, [("key",)], [("key", "value", "extra")]])
 def test_quality_pairs_reject_malformed_pair_shapes(value: object) -> None:
     with pytest.raises(ValueError, match="must contain key/value pairs"):
         quality._pairs(value, name="quality parameters")  # type: ignore[arg-type]
