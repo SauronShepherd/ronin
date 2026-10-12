@@ -380,6 +380,103 @@ def test_manifest_accepts_preferred_requirement_and_runtime_without_auth() -> No
     assert manifest.project.execution.requirements[0].level == "preferred"
 
 
+@pytest.mark.parametrize(
+    ("path", "value", "message"),
+    [
+        (("project", "id"), 1, "project.id must be a string"),
+        (("project", "name"), None, "project.name must be a string"),
+        (("project", "repositories", 0, "alias"), 1, "repository.alias must be a string"),
+        (("project", "repositories", 0, "uri"), [], "repository.uri must be a string"),
+        (
+            ("project", "repositories", 0, "default_ref"),
+            {},
+            "repository.default_ref must be a string",
+        ),
+        (
+            ("project", "repositories", 0, "adapter_id"),
+            1,
+            "repository.adapter_id must be a string",
+        ),
+        (
+            ("project", "repositories", 0, "subdirectory"),
+            1,
+            "repository.subdirectory must be a string or null",
+        ),
+        (
+            ("project", "execution", "runtime", "adapter_id"),
+            1,
+            "execution.runtime.adapter_id must be a string",
+        ),
+        (
+            ("project", "execution", "runtime", "profile_id"),
+            None,
+            "execution.runtime.profile_id must be a string",
+        ),
+        (
+            ("project", "execution", "requirements", 0, "name"),
+            1,
+            "requirement.name must be a string",
+        ),
+        (
+            ("project", "execution", "requirements", 0, "constraint"),
+            1,
+            "requirement.constraint must be a string or null",
+        ),
+    ],
+)
+def test_manifest_required_field_errors_are_stable(
+    path: tuple[object, ...], value: object, message: str
+) -> None:
+    data = _portable_data()
+    cursor: object = data
+    for key in path[:-1]:
+        assert isinstance(cursor, (dict, list))
+        cursor = cursor[key]  # type: ignore[index]
+    assert isinstance(cursor, (dict, list))
+    cursor[path[-1]] = value  # type: ignore[index]
+    with pytest.raises(TypeError, match=f"^{message}$"):
+        ProjectManifest.from_data(data)
+
+
+@pytest.mark.parametrize(
+    ("path", "value", "message"),
+    [
+        (
+            ("project", "repositories", 0, "role"),
+            "owner",
+            "repository.role must be primary or supporting",
+        ),
+        (
+            ("project", "repositories", 0, "sync_policy"),
+            "merge",
+            "repository.sync_policy must be manual, fetch, or fast-forward",
+        ),
+        (
+            ("project", "execution", "resolution"),
+            "best-effort",
+            "execution.resolution must be strict or compatible",
+        ),
+        (
+            ("project", "execution", "requirements", 0, "level"),
+            "optional",
+            "requirement.level must be required or preferred",
+        ),
+    ],
+)
+def test_manifest_enum_errors_are_stable(
+    path: tuple[object, ...], value: object, message: str
+) -> None:
+    data = _portable_data()
+    cursor: object = data
+    for key in path[:-1]:
+        assert isinstance(cursor, (dict, list))
+        cursor = cursor[key]  # type: ignore[index]
+    assert isinstance(cursor, (dict, list))
+    cursor[path[-1]] = value  # type: ignore[index]
+    with pytest.raises(ValueError, match=f"^{message}$"):
+        ProjectManifest.from_data(data)
+
+
 def test_repository_binding_validates_adapter_and_sync_policy() -> None:
     repository = RepositoryBinding(
         "code",
