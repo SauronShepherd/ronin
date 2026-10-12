@@ -118,8 +118,16 @@ def test_rql_rejects_unsupported_or_unbounded_limit() -> None:
 
 
 def test_rql_rejects_non_text_query() -> None:
-    with pytest.raises(ValueError, match="non-empty"):
-        parse_rql(123)  # type: ignore[arg-type]
+    for value in (None, 123, [], {}):
+        with pytest.raises(ValueError, match="non-empty"):
+            parse_rql(value)  # type: ignore[arg-type]
+
+
+def test_rql_rejects_empty_and_overlong_queries() -> None:
+    with pytest.raises(ValueError, match="unsupported|non-empty"):
+        parse_rql("   ")
+    with pytest.raises(ValueError, match="at most 2000"):
+        parse_rql("SELECT Customer " + ("x" * 2000))
 
 
 def test_rql_ast_rejects_non_identifier_fields() -> None:
@@ -127,6 +135,24 @@ def test_rql_ast_rejects_non_identifier_fields() -> None:
     invalid = query.to_data()
     invalid["source_type"] = "Customer Type"
     with pytest.raises(ValueError, match="identifier"):
+        type(query).from_data(invalid)
+
+
+def test_rql_ast_mapping_and_text_helpers_reject_wrong_shapes() -> None:
+    query = parse_rql("SELECT Customer WHERE region = 'EU'")
+    invalid = query.to_data()
+    invalid["where"] = {1: "EU"}
+    with pytest.raises(TypeError, match="where must be an object"):
+        type(query).from_data(invalid)
+
+    invalid = query.to_data()
+    invalid["where"] = {"field": "region", "value": 1}
+    with pytest.raises(ValueError, match="where.value"):
+        type(query).from_data(invalid)
+
+    invalid = query.to_data()
+    invalid["source_type"] = 1
+    with pytest.raises(ValueError, match="source_type"):
         type(query).from_data(invalid)
 
 
@@ -201,6 +227,28 @@ def test_rql_execution_honors_default_max_limit_and_join_no_match() -> None:
     graph = KnowledgeGraph(customers + orders)
     assert len(execute_rql("SELECT Customer", graph, max_limit=2).objects) == 2
     assert execute_rql("SELECT Customer JOIN Order ON account = customer", graph).objects == ()
+
+
+def test_rql_execution_applies_where_before_traversal_and_join() -> None:
+    customer_eu = KnowledgeObjectRef("Customer", (("id", "1"),))
+    customer_us = KnowledgeObjectRef("Customer", (("id", "2"),))
+    order_eu = KnowledgeObjectRef("Order", (("id", "10"),))
+    order_us = KnowledgeObjectRef("Order", (("id", "11"),))
+    graph = KnowledgeGraph(
+        (
+            KnowledgeObject(customer_eu, (("region", "EU"), ("account", "a"))),
+            KnowledgeObject(customer_us, (("region", "US"), ("account", "b"))),
+            KnowledgeObject(order_eu, (("account", "a"),)),
+            KnowledgeObject(order_us, (("account", "b"),)),
+        ),
+        ((customer_eu, order_eu), (customer_us, order_us)),
+    )
+    assert execute_rql("SELECT Customer WHERE region = 'EU' TRAVERSE Order", graph).objects == (
+        graph.objects[2],
+    )
+    assert execute_rql(
+        "SELECT Customer WHERE region = 'EU' JOIN Order ON account = account", graph
+    ).objects == (graph.objects[2],)
 
 
 def test_rql_parser_preserves_all_clauses_and_canonical_ast() -> None:
