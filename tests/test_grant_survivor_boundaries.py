@@ -41,6 +41,14 @@ def test_requirement_version_and_action_are_fail_closed() -> None:
         Requirement("admin", ResourceScope("project", None))  # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize("value", [None, 1, [], {}])
+def test_grant_vocabularies_reject_non_text_values_with_value_error(value: object) -> None:
+    with pytest.raises(ValueError, match="unsupported authorization action"):
+        Requirement(value, ResourceScope("project", None))  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="unsupported authorization resource kind"):
+        ResourceScope(value, None)  # type: ignore[arg-type]
+
+
 @pytest.mark.parametrize("action", sorted(ACTIONS))
 def test_every_authorization_action_round_trips(action: str) -> None:
     requirement = _requirement(action)
@@ -173,6 +181,18 @@ def test_exact_resource_ids_filters_action_kind_and_constraints() -> None:
     assert grants.exact_resource_ids("read", kind="project") == ("a", "z")
     assert grants.exact_resource_ids("write", kind="project") == ("ignored",)
     assert grants.exact_resource_ids("read", kind="evidence") == ()
+
+
+def test_exact_resource_ids_returns_canonical_ids_and_wildcard_precedence() -> None:
+    grants = GrantSet(
+        (
+            Grant(frozenset({"read"}), ResourceScope("project", "z")),
+            Grant(frozenset({"read"}), ResourceScope("project", "a")),
+            Grant(frozenset({"read"}), ResourceScope("project", None)),
+        )
+    )
+    assert grants.exact_resource_ids("read", kind="project") is None
+    assert grants.exact_resource_ids("write", kind="project") == ()
 
 
 @pytest.mark.parametrize(

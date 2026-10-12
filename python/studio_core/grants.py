@@ -64,13 +64,13 @@ def _require_text(value: str, name: str, *, maximum: int = _MAX_TEXT_LENGTH) -> 
 
 
 def _require_action(value: str) -> Action:
-    if value not in ACTIONS:
+    if not isinstance(value, str) or value not in ACTIONS:
         raise ValueError("unsupported authorization action")
     return cast(Action, value)
 
 
 def _require_resource_kind(value: str) -> ResourceKind:
-    if value not in RESOURCE_KINDS:
+    if not isinstance(value, str) or value not in RESOURCE_KINDS:
         raise ValueError("unsupported authorization resource kind")
     return cast(ResourceKind, value)
 
