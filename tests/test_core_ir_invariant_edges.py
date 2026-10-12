@@ -170,6 +170,16 @@ def test_schema_parser_errors_are_stable(value: object, message: str) -> None:
     assert str(error.value) == message
 
 
+def test_schema_and_port_parser_diagnostics_are_not_generic() -> None:
+    with pytest.raises(TypeError) as schema_error:
+        _schema_from_data({"name": "orders", "version": 1})
+    assert str(schema_error.value) == "schema.version must be a string or null"
+
+    with pytest.raises(TypeError) as port_error:
+        _port_from_data({"name": None, "kind": "batch", "schema": None})
+    assert str(port_error.value) == "port.name must be a string"
+
+
 @pytest.mark.parametrize(
     ("value", "error_type", "message"),
     [
@@ -241,6 +251,21 @@ def test_edge_parser_required_field_messages_are_stable(field: str, message: str
     assert str(error.value) == message
 
 
+def test_edge_parser_diagnostics_name_each_required_field() -> None:
+    value: dict[str, object] = {
+        "source": "source",
+        "source_port": "out",
+        "target": "target",
+        "target_port": "in",
+    }
+    for field in value:
+        invalid = dict(value)
+        invalid[field] = None
+        with pytest.raises(TypeError) as error:
+            _edge_from_data(invalid)
+        assert str(error.value) == f"edge.{field} must be a string"
+
+
 @pytest.mark.parametrize("key", ["source", "source_port", "target", "target_port"])
 def test_edge_parser_requires_each_declared_field(key: str) -> None:
     value: dict[str, object] = {
@@ -255,8 +280,12 @@ def test_edge_parser_requires_each_declared_field(key: str) -> None:
 
 
 def test_ir_shape_helpers_accept_tuples_and_reject_non_array_collections() -> None:
-    assert _require_mapping({"name": "value"}, "mapping") == {"name": "value"}
-    assert _require_sequence(("a", "b"), "sequence") == ("a", "b")
+    mapping = {"name": "value"}
+    sequence = ("a", "b")
+    assert _require_mapping(mapping, "mapping") == mapping
+    assert _require_mapping(mapping, "mapping") is mapping
+    assert _require_sequence(sequence, "sequence") == sequence
+    assert _require_sequence(sequence, "sequence") is sequence
     for value in (set(), frozenset(), iter(("a",))):
         with pytest.raises(TypeError, match="array"):
             _require_sequence(value, "sequence")

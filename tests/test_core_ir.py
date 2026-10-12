@@ -82,8 +82,13 @@ def test_freeze_value_rejects_non_string_mapping_keys_unsupported_and_nonfinite_
         with pytest.raises(TypeError, match="unsupported"):
             freeze_value(value)
     for value in (float("nan"), float("inf"), float("-inf")):
-        with pytest.raises(ValueError, match=r"^IR float values must be finite$"):
+        with pytest.raises(ValueError, match=r"^IR float values must be finite$") as error:
             freeze_value(value)
+        assert str(error.value) == "IR float values must be finite"
+
+    with pytest.raises(TypeError) as error:
+        freeze_value({1: "invalid"})
+    assert str(error.value) == "IR mapping keys must be strings"
 
 
 def test_node_identity_ignores_label_but_uses_stable_instance_key() -> None:
@@ -179,6 +184,21 @@ def test_node_identity_includes_every_semantic_component() -> None:
         ),
     )
     assert all(variant.id != base.id for variant in variants)
+
+
+def test_node_semantic_payload_names_every_identity_component() -> None:
+    payload = ir._node_semantic_payload(
+        OperatorRef("transform.identity", 2),
+        (("threshold", 3),),
+        (Port("input", "batch"),),
+        (Port("output", "stream"),),
+    )
+    assert payload == (
+        '{"inputs":[{"kind":"batch","name":"input","schema":null}],'
+        '"operator":{"name":"transform.identity","version":2},'
+        '"outputs":[{"kind":"stream","name":"output","schema":null}],'
+        '"params":{"threshold":3}}'
+    )
 
 
 def test_node_direct_constructor_rejects_mismatched_identity() -> None:
