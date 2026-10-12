@@ -195,3 +195,47 @@ def test_http_sink_rejects_insecure_remote_endpoint_and_sanitizes_failure() -> N
         HttpOpenLineageSink("https://lineage.example.test/events", opener=failing_opener).publish(
             EVENT
         )
+
+
+def test_openlineage_validation_messages_are_stable() -> None:
+    cases = (
+        ({**EVENT, "producer": "other"}, "OpenLineage producer is unsupported"),
+        ({**EVENT, "schemaVersion": "2.0"}, "OpenLineage schemaVersion is unsupported"),
+        ({**EVENT, "eventType": "UNKNOWN"}, "OpenLineage event type is unsupported"),
+        (
+            {**EVENT, "eventTime": "2026-09-21T00:00:00+00:00"},
+            "OpenLineage eventTime must be a UTC timestamp",
+        ),
+        ({**EVENT, "run": []}, "OpenLineage run and job must be objects"),
+        ({**EVENT, "run": {}}, "OpenLineage run.runId is required"),
+        (
+            {**EVENT, "job": {"namespace": "", "name": "job"}},
+            "OpenLineage job namespace and name are required",
+        ),
+    )
+    for event, message in cases:
+        with pytest.raises(ValueError, match=".") as error:
+            validate_openlineage_event(event)
+        assert str(error.value) == message
+
+
+def test_transport_attempt_bounds_are_inclusive_and_message_is_stable() -> None:
+    assert OpenLineageTransport(Sink(), max_attempts=1).publish(EVENT).attempts == 1
+    assert OpenLineageTransport(Sink(), max_attempts=10).publish(EVENT).attempts == 1
+    for value in (0, 11):
+        with pytest.raises(ValueError, match=".") as error:
+            OpenLineageTransport(Sink(), max_attempts=value)
+        assert str(error.value) == "max_attempts must be between 1 and 10"
+
+
+def test_transport_deduplicates_only_after_successful_publish() -> None:
+    sink = Sink(1)
+    transport = OpenLineageTransport(sink, max_attempts=1)
+    with pytest.raises(OpenLineageTransportError):
+        transport.publish(EVENT)
+    sink.failures = 0
+    receipt = transport.publish(EVENT)
+    assert receipt.deduplicated is False
+    assert receipt.attempts == 1
+    assert len(sink.events) == 1
+    assert transport.publish(EVENT).deduplicated is True
