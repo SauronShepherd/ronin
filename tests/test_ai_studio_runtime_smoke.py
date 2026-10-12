@@ -5,17 +5,18 @@ from tools.ai_studio_runtime_smoke import run
 
 
 class Handler(BaseHTTPRequestHandler):
-    def do_GET(self):  # noqa: N802
+    def _write_json(self, body: bytes) -> None:
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(b'{"data":[{"id":"smoke"}]}')
+        self.wfile.write(body)
+
+    def do_GET(self):  # noqa: N802
+        self._write_json(b'{"data":[{"id":"smoke"}]}')
 
     def do_POST(self):  # noqa: N802
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-        self.wfile.write(b'{"choices":[{"message":{"content":"ok"}}]}')
+        self._write_json(b'{"choices":[{"message":{"content":"ok"}}]}')
 
     def log_message(self, *_args):
         return
