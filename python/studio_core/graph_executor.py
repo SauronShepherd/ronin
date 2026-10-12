@@ -31,7 +31,7 @@ class LocalGraphQueryExecutor:
             raise TypeError("graph executor requires an RqlQuery AST")
         if max_limit < 1 or max_limit > 100_000:
             raise ValueError("graph max_limit must be between 1 and 100000")
-        limit = query.limit or max_limit
+        limit = query.limit if query.limit is not None else max_limit
         if limit > max_limit:
             raise ValueError("RQL limit is outside the executor bound")
         return execute_rql(_render_query(query), self._graph, max_limit=max_limit)

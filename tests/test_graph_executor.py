@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_core import (
     KnowledgeGraph,
     KnowledgeObject,
     KnowledgeObjectRef,
     LocalGraphQueryExecutor,
+    RqlQuery,
     parse_rql,
 )
 
@@ -24,3 +24,9 @@ def test_local_graph_executor_enforces_provider_neutral_limits() -> None:
     executor = LocalGraphQueryExecutor(KnowledgeGraph(()))
     with pytest.raises(ValueError, match="executor bound"):
         executor.execute(parse_rql("SELECT Customer LIMIT 3"), max_limit=2)
+
+
+def test_local_graph_executor_rejects_zero_query_limit() -> None:
+    executor = LocalGraphQueryExecutor(KnowledgeGraph(()))
+    with pytest.raises(ValueError, match="configured bound"):
+        executor.execute(RqlQuery("Customer", limit=0))

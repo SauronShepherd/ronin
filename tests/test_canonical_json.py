@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from studio_core.canonical_json import decode, encode
 
 GOLDEN = Path(__file__).parent / "golden" / "canonical_json_v1.json"
@@ -56,6 +55,20 @@ def test_decode_rejects_duplicate_and_nonfinite_numbers() -> None:
 def test_rejects_integers_outside_exact_cross_language_range() -> None:
     with pytest.raises(ValueError, match="exact cross-language"):
         encode({"x": 2**53})
+
+
+def test_canonical_json_accepts_sequences_and_binary_input() -> None:
+    encoded = encode(("a", 1))
+    assert encoded == b'["a",1]'
+    assert decode(encoded) == ["a", 1]
+    assert decode(bytearray(encoded)) == ["a", 1]
+
+
+def test_canonical_json_rejects_unsupported_binary_values_and_malformed_json() -> None:
+    with pytest.raises(TypeError, match="unsupported"):
+        encode({"x": b"bytes"})
+    with pytest.raises(ValueError, match="canonical JSON payload is invalid"):
+        decode('{"x":')
 
 
 def test_published_golden_vectors() -> None:
