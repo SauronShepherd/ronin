@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_core.plugins import (
     ContributionRegistry,
     PluginManager,
@@ -48,6 +47,25 @@ def test_non_http_registries_reject_collisions_and_freeze() -> None:
     registry.freeze()
     with pytest.raises(PluginValidationError, match="frozen"):
         registry.add_job("later", "plugin-a", handler)
+
+
+def test_all_contribution_registries_are_frozen_together() -> None:
+    registry = ContributionRegistry()
+
+    def handler(**_: object) -> None:
+        return None
+
+    registry.add_capability("example.read", "plugin-a")
+    registry.add_permission("example:read", "plugin-a")
+    registry.add_route("get", "/v1/example", "plugin-a", handler, permission="example:read")
+    registry.freeze()
+
+    with pytest.raises(PluginValidationError, match="frozen"):
+        registry.add_capability("example.write", "plugin-a")
+    with pytest.raises(PluginValidationError, match="frozen"):
+        registry.add_permission("example:write", "plugin-a")
+    with pytest.raises(PluginValidationError, match="frozen"):
+        registry.add_route("GET", "/v1/other", "plugin-a", handler, permission="example:read")
 
 
 def test_plugin_manifest_must_declare_non_http_contributions() -> None:

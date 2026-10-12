@@ -239,3 +239,41 @@ def test_transport_deduplicates_only_after_successful_publish() -> None:
     assert receipt.attempts == 1
     assert len(sink.events) == 1
     assert transport.publish(EVENT).deduplicated is True
+
+
+def test_transport_receipt_is_stable_and_digest_changes_with_event_content() -> None:
+    first_sink = Sink()
+    second_sink = Sink()
+    first = OpenLineageTransport(first_sink).publish(EVENT)
+    changed = OpenLineageTransport(second_sink).publish({**EVENT, "eventType": "START"})
+
+    assert first.attempts == 1
+    assert first.deduplicated is False
+    assert len(first.event_digest) == 64
+    assert first.event_digest != changed.event_digest
+    assert first_sink.events == [EVENT]
+    assert second_sink.events == [{**EVENT, "eventType": "START"}]
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("eventTime", "2026-09-21T00:00:00+00:00", "OpenLineage eventTime must be a UTC timestamp"),
+        ("run", [], "OpenLineage run and job must be objects"),
+        ("job", [], "OpenLineage run and job must be objects"),
+        ("run", {"runId": "  "}, "OpenLineage run.runId is required"),
+        (
+            "job",
+            {"namespace": "ns", "name": "  "},
+            "OpenLineage job namespace and name are required",
+        ),
+    ],
+)
+def test_openlineage_invalid_shape_messages_are_exact(
+    field: str, value: object, message: str
+) -> None:
+    event = dict(EVENT)
+    event[field] = value
+    with pytest.raises(ValueError, match=".") as error:
+        validate_openlineage_event(event)
+    assert str(error.value) == message

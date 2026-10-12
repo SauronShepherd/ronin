@@ -654,3 +654,41 @@ def __import_record(plugin: WorkspacesPlugin, *, plugin_id: str | None = None):
             permissions=manifest.permissions,
         )
     return PluginRecord(plugin.manifest, plugin, "test")
+
+
+def test_plugin_manager_forwards_services_and_plugin_settings() -> None:
+    captured: dict[str, object] = {}
+
+    class Plugin:
+        manifest = PluginManifest(
+            id="example.context",
+            name="Context",
+            version="1.0.0",
+            plugin_api="1.0",
+        )
+
+        def register(self, context) -> None:
+            captured["services"] = context.services
+            captured["settings"] = context.settings
+            captured["plugin_id"] = context.plugin_id
+
+        def startup(self) -> None:
+            return None
+
+        def shutdown(self) -> None:
+            return None
+
+    services = {"store": object()}
+    settings = {"enabled": True}
+    plan = PluginManager().compose(
+        (PluginRecord(Plugin.manifest, Plugin(), "test"),),
+        services=services,
+        settings={"example.context": settings},
+    )
+
+    assert captured == {
+        "services": services,
+        "settings": settings,
+        "plugin_id": "example.context",
+    }
+    assert plan.records[0].state is PluginState.REGISTERED
