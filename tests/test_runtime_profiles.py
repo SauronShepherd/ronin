@@ -28,6 +28,8 @@ def test_runtime_capability_validates_and_profile_canonicalizes() -> None:
         RuntimeCapability("")
     with pytest.raises(ValueError, match="line breaks"):
         RuntimeCapability("bad\nname")
+    with pytest.raises(ValueError, match="line breaks"):
+        RuntimeCapability("bad\rname")
     with pytest.raises(ValueError, match="capability value"):
         RuntimeCapability("engine.spark", " ")
     with pytest.raises(ValueError, match="line breaks"):
@@ -347,6 +349,62 @@ def test_unavailable_requested_profile_is_not_selected() -> None:
     assert result.status == "no_match"
     assert result.requested_profile_found is True
     assert result.exact_profile_selected is False
+
+
+def test_resolution_evidence_is_preserved_for_no_match_and_ambiguity() -> None:
+    profile = _profile("runtime", "offline", available=False)
+    no_match = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("gpu"),)),
+        RuntimeCatalog((profile,)),
+    )
+    assert no_match.status == "no_match"
+    assert no_match.requested_profile_found is True
+    assert no_match.exact_profile_selected is False
+    assert len(no_match.evaluations) == 1
+    assert no_match.evaluations[0].compatible is False
+
+    alpha = _profile("a", "default", RuntimeCapability("engine"))
+    beta = _profile("b", "default", RuntimeCapability("engine"))
+    ambiguous = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("engine"),)),
+        RuntimeCatalog((alpha, beta)),
+    )
+    assert ambiguous.status == "ambiguous"
+    assert ambiguous.requested_profile_found is True
+    assert len(ambiguous.evaluations) == 2
+
+
+def test_unconstrained_capability_evidence_keeps_its_advertised_value() -> None:
+    profile = _profile("runtime", "default", RuntimeCapability("engine", "spark"))
+    result = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("engine"),)),
+        RuntimeCatalog((profile,)),
+    )
+
+    assert result.evaluations[0].checks[0].advertised_value == "spark"
+    assert result.evaluations[0].checks[0].reason == "capability is advertised"
+
+
+@pytest.mark.parametrize(
+    ("advertised", "constraint", "satisfied"),
+    [
+        ("4.1", "<=4.0", False),
+        ("4.1", ">4.0", True),
+        ("4.0", ">4.0", False),
+        ("4.0", "<4.0", False),
+        ("4.1", "!=4.0", True),
+    ],
+)
+def test_runtime_constraint_boundaries_do_not_include_equal_or_greater_versions(
+    advertised: str, constraint: str, satisfied: bool
+) -> None:
+    profile = _profile("runtime", "boundaries", RuntimeCapability("version", advertised))
+    result = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("version", constraint),)),
+        RuntimeCatalog((profile,)),
+    )
+
+    assert result.evaluations[0].checks[0].satisfied is satisfied
 
 
 @pytest.mark.parametrize(
