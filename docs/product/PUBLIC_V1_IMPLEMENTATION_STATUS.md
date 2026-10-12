@@ -6,7 +6,7 @@
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-10. The implementation branch contains
 one local generated qualification directory; it is not release evidence.
-**Observed source head:** `0aadea6489a26411e5b23fe2ee38f31f15564aac` (2026-10-12).
+**Observed source head:** `1c86895987a75704f4dc8692d8fa7a288f3a007a` (2026-10-12).
 This is the exact source identity used for the current local verification.
 **Release status:** **INCOMPLETE**.
 
