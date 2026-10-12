@@ -82,3 +82,44 @@ def test_published_golden_vectors() -> None:
     for rejection in fixture["rejections"]:
         with pytest.raises(ValueError, match="canonical JSON"):
             decode(rejection["source_json"])
+
+
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        (
+            2**53,
+            "canonical JSON integers must fit the exact cross-language range",
+        ),
+        (
+            float("nan"),
+            "canonical JSON numbers must be finite: Out of range float values",
+        ),
+        (
+            {1: "x"},
+            "canonical JSON object keys must be strings",
+        ),
+        (
+            {"x": {1, 2}},
+            "unsupported canonical JSON value type: set",
+        ),
+    ],
+)
+def test_encode_validation_messages_are_stable(value: object, message: str) -> None:
+    with pytest.raises((TypeError, ValueError)) as error:
+        encode(value)
+    assert str(error.value) == message
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ('{"x":1,"x":2}', "duplicate canonical JSON object member: x"),
+        ('{"x":NaN}', "non-finite canonical JSON number is not allowed: NaN"),
+        ("{not-json}", "canonical JSON payload is invalid"),
+    ],
+)
+def test_decode_validation_messages_are_stable(payload: str, message: str) -> None:
+    with pytest.raises(ValueError, match=".") as error:
+        decode(payload)
+    assert str(error.value) == message
