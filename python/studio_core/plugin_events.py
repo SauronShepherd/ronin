@@ -74,7 +74,15 @@ class PluginEvent:
             "tenant_id": self.tenant_id,
             "correlation_id": self.correlation_id,
         }
-        if any(not value or value != value.strip() for value in values.values()):
+        if any(
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            or "\n" in value
+            or "\r" in value
+            or "\x00" in value
+            for value in values.values()
+        ):
             raise PluginEventError("event identity fields must be non-empty and trimmed")
         if self.schema_version < 1:
             raise PluginEventError("event schema_version must be positive")
@@ -88,7 +96,12 @@ class PluginEvent:
         if not isinstance(self.payload, dict):
             raise PluginEventError("event payload must be an object")
         if self.causation_id is not None and (
-            not self.causation_id or self.causation_id != self.causation_id.strip()
+            not isinstance(self.causation_id, str)
+            or not self.causation_id
+            or self.causation_id != self.causation_id.strip()
+            or "\n" in self.causation_id
+            or "\r" in self.causation_id
+            or "\x00" in self.causation_id
         ):
             raise PluginEventError("causation_id must be non-empty and trimmed")
 
@@ -170,7 +183,14 @@ class InMemoryInbox:
         handler: Callable[[PluginEvent], None],
     ) -> bool:
         event.validate()
-        if not consumer_id or consumer_id != consumer_id.strip():
+        if (
+            not isinstance(consumer_id, str)
+            or not consumer_id
+            or consumer_id != consumer_id.strip()
+            or "\n" in consumer_id
+            or "\r" in consumer_id
+            or "\x00" in consumer_id
+        ):
             raise PluginEventError("consumer_id must be non-empty and trimmed")
         key = (consumer_id, event.event_id)
         if key in self._processed:
