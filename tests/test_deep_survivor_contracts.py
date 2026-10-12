@@ -283,7 +283,11 @@ def _manifest_data() -> dict[str, object]:
     project = Project(
         ProjectId("orders"),
         "Orders",
-        (RepositoryBinding("code", "https://example.test/orders.git"),),
+        (
+            RepositoryBinding(
+                "code", "https://example.test/orders.git", role="primary"
+            ),
+        ),
         ExecutionProfile(
             RuntimeProfileRef("python", "3.13"), (CapabilityRequirement("python"),), "strict"
         ),
@@ -311,7 +315,7 @@ def test_project_manifest_repository_enum_fields_fail_closed(field: str) -> None
     data = _manifest_data()
     repository = data["project"]["repositories"][0]  # type: ignore[index]
     repository[field] = "unsupported"  # type: ignore[index]
-    with pytest.raises(ValueError, match=f"repository\.{field}"):
+    with pytest.raises(ValueError, match=rf"repository\.{field}"):
         ProjectManifest.from_data(data)
 
 

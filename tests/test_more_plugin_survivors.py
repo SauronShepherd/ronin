@@ -134,7 +134,7 @@ def test_critical_plugin_start_failure_rolls_back_previous_plugins() -> None:
     events: list[str] = []
 
     class Healthy:
-        manifest = PluginManifest("healthy", "Healthy", "1.0.0", "1.0")
+        manifest = PluginManifest("a-healthy", "Healthy", "1.0.0", "1.0")
 
         def register(self, _context) -> None:
             return None
@@ -146,7 +146,7 @@ def test_critical_plugin_start_failure_rolls_back_previous_plugins() -> None:
             events.append("healthy-stop")
 
     class Broken:
-        manifest = PluginManifest("broken", "Broken", "1.0.0", "1.0", critical=True)
+        manifest = PluginManifest("z-broken", "Broken", "1.0.0", "1.0", critical=True)
 
         def register(self, _context) -> None:
             return None

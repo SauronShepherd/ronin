@@ -555,10 +555,15 @@ def _satisfies_host(specifier: str, host_version: str) -> bool:
     except ValueError as exc:
         raise PluginCompatibilityError(f"invalid host version: {host_version}") from exc
     for part in parts:
-        if part.startswith(">=") and int(part[2:].split(".", 1)[0]) > host_major:
-            return False
-        if part.startswith("<") and int(part[1:].split(".", 1)[0]) <= host_major:
-            return False
+        try:
+            if part.startswith(">=") and int(part[2:].split(".", 1)[0]) > host_major:
+                return False
+            if part.startswith("<") and int(part[1:].split(".", 1)[0]) <= host_major:
+                return False
+        except ValueError as exc:
+            raise PluginCompatibilityError(
+                f"unsupported host requirement: {specifier}"
+            ) from exc
         if part.startswith("==") and part[2:] != host_version:
             return False
         if not part.startswith((">=", "<", "==")):
