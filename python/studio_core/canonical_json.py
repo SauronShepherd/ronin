@@ -65,6 +65,8 @@ def _reject_constant(value: str) -> object:
 def decode(payload: str | bytes | bytearray) -> JSONValue:
     """Parse canonical-boundary JSON while rejecting duplicate and non-finite numbers."""
 
+    if not isinstance(payload, (str, bytes, bytearray)):
+        raise ValueError("canonical JSON payload must be text or bytes")
     try:
         value = json.loads(
             payload,

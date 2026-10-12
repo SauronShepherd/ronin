@@ -41,3 +41,9 @@ def test_canonical_decode_requires_duplicate_detection_and_validation() -> None:
     with pytest.raises(ValueError, match=".") as nonfinite_error:
         canonical_json.decode("{\"x\":NaN}")
     assert str(nonfinite_error.value) == "non-finite canonical JSON number is not allowed: NaN"
+
+
+@pytest.mark.parametrize("payload", [None, 1, object(), memoryview(b"{}")])
+def test_canonical_decode_rejects_non_text_or_bytes_payloads(payload: object) -> None:
+    with pytest.raises(ValueError, match="payload must be text or bytes"):
+        canonical_json.decode(payload)  # type: ignore[arg-type]
