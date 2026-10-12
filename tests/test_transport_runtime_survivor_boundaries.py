@@ -54,6 +54,12 @@ def test_openlineage_validation_rejects_boundary_values(
         validate_openlineage_event(event)
 
 
+@pytest.mark.parametrize("event", [None, [], "event"])
+def test_openlineage_validation_rejects_non_object_payloads(event: object) -> None:
+    with pytest.raises(ValueError, match="event must be an object"):
+        validate_openlineage_event(event)  # type: ignore[arg-type]
+
+
 def test_openlineage_validation_allows_extra_fields_and_omitted_schema_version() -> None:
     validate_openlineage_event({**EVENT, "custom": {"value": True}})
 
@@ -73,6 +79,14 @@ def test_openlineage_transport_does_not_publish_invalid_events() -> None:
     with pytest.raises(ValueError, match="producer"):
         OpenLineageTransport(sink).publish({**EVENT, "producer": "other"})
     assert sink.events == []
+
+
+@pytest.mark.parametrize("max_attempts", [True, False, 1.5, "3", None])
+def test_openlineage_transport_requires_integer_attempt_bounds(
+    max_attempts: object,
+) -> None:
+    with pytest.raises(ValueError, match="max_attempts"):
+        OpenLineageTransport(_Sink(), max_attempts=max_attempts)  # type: ignore[arg-type]
 
 
 def _profile(

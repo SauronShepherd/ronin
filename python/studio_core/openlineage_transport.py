@@ -31,6 +31,8 @@ class PublishReceipt:
 
 def validate_openlineage_event(event: Mapping[str, JsonValue]) -> None:
     """Validate the bounded, supported OpenLineage event subset."""
+    if not isinstance(event, Mapping):
+        raise ValueError("OpenLineage event must be an object")
     required = {"eventType", "eventTime", "run", "job", "producer"}
     if not required <= set(event):
         raise ValueError("OpenLineage event is missing required fields")
@@ -67,7 +69,12 @@ class OpenLineageTransport:
     """Retrying, idempotent transport wrapper around a provider sink."""
 
     def __init__(self, sink: OpenLineageSink, *, max_attempts: int = 3) -> None:
-        if max_attempts < 1 or max_attempts > 10:
+        if (
+            not isinstance(max_attempts, int)
+            or isinstance(max_attempts, bool)
+            or max_attempts < 1
+            or max_attempts > 10
+        ):
             raise ValueError("max_attempts must be between 1 and 10")
         self._sink = sink
         self._max_attempts = max_attempts
