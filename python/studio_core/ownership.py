@@ -10,6 +10,8 @@ from .canonical_json import encode as encode_canonical_json
 
 
 def _refs(values: tuple[str, ...], field: str) -> tuple[str, ...]:
+    if not all(isinstance(value, str) for value in values):
+        raise ValueError(f"{field} must contain unique non-empty references")
     result = tuple(sorted(value.strip() for value in values))
     if any(not value for value in result) or len(result) != len(set(result)):
         raise ValueError(f"{field} must contain unique non-empty references")

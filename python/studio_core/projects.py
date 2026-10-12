@@ -21,9 +21,9 @@ _SENSITIVE_URI_TERMS = ("password=", "token=", "secret=", "access_token=", "----
 
 
 def _require_text(value: str, field_name: str) -> None:
-    if not value or value.strip() != value:
+    if not isinstance(value, str) or not value or value.strip() != value:
         raise ValueError(f"{field_name} must be non-empty and trimmed")
-    if "\n" in value or "\r" in value:
+    if "\n" in value or "\r" in value or "\x00" in value:
         raise ValueError(f"{field_name} must not contain line breaks")
 
 

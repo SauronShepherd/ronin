@@ -12,6 +12,8 @@ _LEVELS = {"public", "internal", "confidential", "restricted"}
 
 
 def _labels(values: tuple[str, ...], field: str) -> tuple[str, ...]:
+    if not all(isinstance(value, str) for value in values):
+        raise ValueError(f"{field} must contain non-empty labels")
     result = tuple(sorted(value.strip().casefold() for value in values))
     if any(not value or value != value.strip() for value in result):
         raise ValueError(f"{field} must contain non-empty labels")
