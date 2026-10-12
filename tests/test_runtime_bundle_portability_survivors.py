@@ -59,6 +59,19 @@ def test_bundle_and_portability_text_contracts_reject_each_noncanonical_shape(va
             validator(value, name)
 
 
+@pytest.mark.parametrize("value", [None, 0, [], {}])
+def test_bundle_and_portability_text_contracts_fail_closed_for_non_strings(value: object) -> None:
+    for validator, name in (
+        (bundle_inventory._require_text, "bundle field"),
+        (portability._require_text, "bundle field"),
+    ):
+        with pytest.raises(
+            ValueError,
+            match="^bundle field must be non-empty, trimmed, and single-line$",
+        ):
+            validator(value, name)  # type: ignore[arg-type]
+
+
 @pytest.mark.parametrize("path", ["", " ", ".", "..", "a//b", "a/./b", "a/../b", "/a", "a\\b"])
 def test_bundle_and_portability_paths_reject_empty_absolute_and_traversal_components(
     path: str,
