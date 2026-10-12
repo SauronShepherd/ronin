@@ -19,6 +19,7 @@ from studio_core.plugins import (
     SurfaceContribution,
     SurfaceContributionRegistry,
     SurfaceOption,
+    RouterRegistry,
     UiContributionRegistry,
     _satisfies_host,
 )
@@ -118,6 +119,55 @@ def test_each_contribution_registry_is_frozen_and_freeze_is_idempotent(registry:
     else:
         with pytest.raises(PluginValidationError, match="plugin registry is frozen"):
             registry.add("plugin", {})
+
+
+def test_capability_and_permission_registries_are_idempotent_for_same_owner() -> None:
+    capabilities = CapabilityRegistry()
+    capabilities.add("example.read", "example")
+    capabilities.add("example.read", "example")
+    assert capabilities.items == {"example.read": "example"}
+    with pytest.raises(PluginValidationError, match="already provided"):
+        capabilities.add("example.read", "other")
+
+    permissions = PermissionRegistry()
+    permissions.add("example:read", "example")
+    permissions.add("example:read", "example")
+    assert permissions.items == {"example:read": "example"}
+    with pytest.raises(PluginValidationError, match="already owned"):
+        permissions.add("example:read", "other")
+
+
+def test_job_event_and_migration_registries_enforce_their_distinct_collision_keys() -> None:
+    jobs = JobRegistry()
+    handler = object()
+    jobs.add("run", "example", handler)
+    with pytest.raises(PluginValidationError, match="job type collision"):
+        jobs.add("run", "other", object())
+
+    events = EventSubscriptionRegistry()
+    events.add("run.completed", "example", handler)
+    events.add("run.completed", "example", object())
+    assert len(events.items) == 2
+    with pytest.raises(PluginValidationError, match="event subscription collision"):
+        events.add("run.completed", "example", handler)
+
+    migrations = MigrationRegistry()
+    migrations.add("v1", "example")
+    with pytest.raises(PluginValidationError, match="migration collision"):
+        migrations.add("v1", "other")
+
+
+def test_router_registry_normalizes_methods_but_keeps_paths_exact() -> None:
+    permissions = PermissionRegistry()
+    permissions.add("example:read", "example")
+    router = RouterRegistry(permissions)
+    handler = object()
+    router.add("get", "/v1/items", "example", handler, permission="example:read")
+    assert router.items[0].method == "GET"
+    with pytest.raises(PluginValidationError, match="route collision"):
+        router.add("GET", "/v1/items", "example", object(), permission="example:read")
+    with pytest.raises(PluginValidationError, match="route permission"):
+        router.add("POST", "/v1/items", "other", object(), permission="example:read")
 
 
 def test_contribution_registry_projects_all_owned_contributions_and_ui_requirement() -> None:
