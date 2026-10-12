@@ -133,6 +133,54 @@ def test_node_identity_distinguishes_python_numeric_types_consistently() -> None
     assert zero.id != negative_zero.id
 
 
+def test_node_identity_includes_every_semantic_component() -> None:
+    base = Node.create(
+        operator=OperatorRef("transform.identity", 1),
+        instance_key="semantic",
+        params={"x": 1},
+        inputs=(Port("in", "batch", SchemaRef("input", "v1")),),
+        outputs=(Port("out", "batch", SchemaRef("output", "v1")),),
+    )
+    variants = (
+        Node.create(
+            operator=OperatorRef("transform.other", 1),
+            instance_key="semantic",
+            params={"x": 1},
+            inputs=base.inputs,
+            outputs=base.outputs,
+        ),
+        Node.create(
+            operator=OperatorRef("transform.identity", 2),
+            instance_key="semantic",
+            params={"x": 1},
+            inputs=base.inputs,
+            outputs=base.outputs,
+        ),
+        Node.create(
+            operator=base.operator,
+            instance_key="semantic",
+            params={"x": 2},
+            inputs=base.inputs,
+            outputs=base.outputs,
+        ),
+        Node.create(
+            operator=base.operator,
+            instance_key="semantic",
+            params={"x": 1},
+            inputs=(Port("changed", "batch", SchemaRef("input", "v1")),),
+            outputs=base.outputs,
+        ),
+        Node.create(
+            operator=base.operator,
+            instance_key="semantic",
+            params={"x": 1},
+            inputs=base.inputs,
+            outputs=(Port("out", "stream", SchemaRef("output", "v1")),),
+        ),
+    )
+    assert all(variant.id != base.id for variant in variants)
+
+
 def test_node_direct_constructor_rejects_mismatched_identity() -> None:
     with pytest.raises(ValueError, match="node id"):
         Node(NodeId("deadbeef"), "k", OperatorRef("transform.identity"))

@@ -204,3 +204,35 @@ def test_ontology_action_error_messages_and_write_contract_are_exact() -> None:
         with pytest.raises((ValueError, PermissionError)) as error:
             invoke()
         assert str(error.value) == message
+
+
+def test_ontology_action_forwards_requirement_target_inputs_and_idempotency() -> None:
+    requirement = Requirement("execute", ResourceScope("job", "order-1"))
+    action = ActionType(
+        "approve",
+        "Order",
+        ("reason",),
+        requirements=(requirement,),
+        idempotent=True,
+    )
+    target = KnowledgeObjectRef("Order", (("id", "1"),))
+    authorized: list[Requirement] = []
+    writes: list[tuple[ActionType, KnowledgeObjectRef, dict[str, object]]] = []
+    recorded: list[object] = []
+
+    result = execute_ontology_action(
+        action,
+        target,
+        {"reason": "valid"},
+        authorize=lambda value: authorized.append(value) or True,
+        write=lambda definition, ref, inputs: (
+            writes.append((definition, ref, dict(inputs))) or {"status": "approved"}
+        ),
+        idempotency_key="request-1",
+        record_idempotent=recorded.append,
+    )
+
+    assert authorized == [requirement]
+    assert writes == [(action, target, {"reason": "valid"})]
+    assert recorded == [result]
+    assert result.idempotency_key == "request-1"
