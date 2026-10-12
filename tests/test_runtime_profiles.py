@@ -428,3 +428,28 @@ def test_runtime_constraint_operators_are_evaluated_independently(
         RuntimeCatalog((profile,)),
     )
     assert result.evaluations[0].checks[0].satisfied is satisfied
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["", " leading", "trailing ", "line\nfeed", "line\rfeed"],
+)
+def test_runtime_text_contract_rejects_unportable_values(value: str) -> None:
+    with pytest.raises(ValueError, match="runtime capability"):
+        RuntimeCapability(value)
+    with pytest.raises(ValueError, match="runtime capability"):
+        RuntimeCapability("engine", value)
+
+
+def test_runtime_namespace_lookup_is_exact_and_capabilities_are_canonical() -> None:
+    profile = _profile(
+        "runtime",
+        "namespaces",
+        RuntimeCapability("engine", "spark", "adapter.one/v1"),
+        RuntimeCapability("engine", "local", "adapter.two/v1"),
+    )
+
+    assert profile.capabilities[0].namespace == "adapter.one/v1"
+    assert profile.capability("engine", "adapter.one/v1").value == "spark"
+    assert profile.capability("engine", "adapter.two/v1").value == "local"
+    assert profile.capability("engine") is None

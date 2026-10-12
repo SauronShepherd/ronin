@@ -247,3 +247,34 @@ def test_quality_text_rejects_carriage_returns_and_nul_bytes(invalid: str) -> No
             "null",
             invalid,
         )
+
+
+@pytest.mark.parametrize(
+    "credential_key",
+    ["password", "secret", "token", "credential", "api_key"],
+)
+def test_quality_observed_values_reject_sensitive_keys_case_insensitively(
+    credential_key: str,
+) -> None:
+    from studio_core import QualityResult
+
+    with pytest.raises(
+        ValueError,
+        match="^quality observed values must not contain credential-bearing keys$",
+    ):
+        QualityResult(
+            QualityRuleId("observed-sensitive"),
+            "passed",
+            ((credential_key.upper(), "redacted"),),
+        )
+
+
+def test_quality_pair_contract_sorts_and_preserves_distinct_keys() -> None:
+    from studio_core import QualityResult
+
+    result = QualityResult(
+        QualityRuleId("observed"),
+        "passed",
+        (("zeta", "last"), ("alpha", "first")),
+    )
+    assert result.observed == (("alpha", "first"), ("zeta", "last"))
