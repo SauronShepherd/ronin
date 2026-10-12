@@ -110,6 +110,7 @@ def _repository_to_data(repository: RepositoryBinding) -> dict[str, object]:
 
 
 def _repository_from_data(value: Mapping[str, object]) -> RepositoryBinding:
+    value = _require_mapping(value, "repository")
     _require_exact_keys(
         value,
         {"adapter_id", "alias", "default_ref", "role", "subdirectory", "sync_policy", "uri"},
@@ -153,6 +154,7 @@ def _execution_to_data(execution: ExecutionProfile) -> dict[str, object]:
 
 
 def _execution_from_data(value: Mapping[str, object]) -> ExecutionProfile:
+    value = _require_mapping(value, "execution")
     _require_exact_keys(value, {"requirements", "resolution", "runtime"}, "execution")
     resolution = _require_str(value.get("resolution"), "execution.resolution")
     if resolution not in {"strict", "compatible"}:
@@ -182,6 +184,7 @@ def _execution_from_data(value: Mapping[str, object]) -> ExecutionProfile:
 
 
 def _requirement_from_data(value: Mapping[str, object]) -> CapabilityRequirement:
+    value = _require_mapping(value, "requirement")
     _require_exact_keys(value, {"constraint", "level", "name"}, "requirement")
     level = _require_str(value.get("level"), "requirement.level")
     constraint = value.get("constraint")

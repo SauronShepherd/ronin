@@ -34,6 +34,19 @@ def _requirement(action: str = "read", kind: str = "project", identifier: str | 
 
 
 @pytest.mark.parametrize(
+    ("decoder", "value", "name"),
+    [
+        (project_manifest._repository_from_data, [], "repository"),
+        (project_manifest._execution_from_data, "invalid", "execution"),
+        (project_manifest._requirement_from_data, None, "requirement"),
+    ],
+)
+def test_manifest_nested_decoders_fail_closed_on_non_objects(decoder, value, name) -> None:
+    with pytest.raises(TypeError, match=rf"^{name} must be an object with string keys$"):
+        decoder(value)
+
+
+@pytest.mark.parametrize(
     "value",
     [None, 1, "", " ", " leading", "trailing ", "line\nvalue", "line\rvalue", "nul\x00value"],
 )
