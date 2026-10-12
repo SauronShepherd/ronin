@@ -9,6 +9,7 @@ from studio_core import (
     KnowledgeObject,
     KnowledgeObjectRef,
     Node,
+    NodeId,
     OpenLineageTransport,
     OpenLineageTransportError,
     OperatorRef,
@@ -36,7 +37,8 @@ def test_ir_freeze_value_preserves_sequence_and_mapping_boundaries(value: object
             ir.freeze_value(value)
         return
     frozen = ir.freeze_value(value)
-    assert ir.thaw_value(frozen) == value
+    expected = list(value) if isinstance(value, tuple) else value
+    assert ir.thaw_value(frozen) == expected
 
 
 def test_ir_freeze_value_rejects_nonfinite_numbers_and_nonstring_mapping_keys() -> None:
@@ -69,19 +71,19 @@ def test_ir_shape_helpers_reject_non_object_and_non_array_boundaries(value: obje
 
 def test_ir_node_payload_rejects_invalid_origin_ownership_optional_types() -> None:
     node = Node.create(operator=OperatorRef("source"), instance_key="node")
-    data = node.to_data()
+    data = ir._node_to_data(node)
     data["origin"] = {"view": "invalid", "reference": None}
     with pytest.raises(ValueError, match="origin view"):
         ir._node_from_data(data)
-    data = node.to_data()
+    data = ir._node_to_data(node)
     data["ownership"] = "invalid"
     with pytest.raises(ValueError, match="ownership"):
         ir._node_from_data(data)
-    data = node.to_data()
+    data = ir._node_to_data(node)
     data["label"] = 1
     with pytest.raises(TypeError, match="label"):
         ir._node_from_data(data)
-    data = node.to_data()
+    data = ir._node_to_data(node)
     data["origin"] = {"view": "system", "reference": 1}
     with pytest.raises(TypeError, match="origin.reference"):
         ir._node_from_data(data)
@@ -89,7 +91,9 @@ def test_ir_node_payload_rejects_invalid_origin_ownership_optional_types() -> No
 
 def test_ir_pipeline_rejects_incompatible_ports_schemas_unknown_nodes_and_cycles() -> None:
     source = Node.create(
-        operator=OperatorRef("source"), instance_key="source", outputs=(Port("out", "batch"),)
+        operator=OperatorRef("source"),
+        instance_key="source",
+        outputs=(Port("out", "batch", SchemaRef("source", "v1")),),
     )
     target = Node.create(
         operator=OperatorRef("target"), instance_key="target", inputs=(Port("in", "stream"),)
@@ -105,7 +109,7 @@ def test_ir_pipeline_rejects_incompatible_ports_schemas_unknown_nodes_and_cycles
     with pytest.raises(ValueError, match="schemas"):
         Pipeline((source, target), (Edge(source.id, "out", target.id, "in"),))
     with pytest.raises(ValueError, match="unknown node"):
-        Pipeline((source,), (Edge(source.id, "out", source.id, "missing"),))
+        Pipeline((source,), (Edge(NodeId("missing"), "out", source.id, "out"),))
 
 
 def test_rql_helpers_enforce_text_identifier_and_typed_path_contracts() -> None:

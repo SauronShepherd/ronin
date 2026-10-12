@@ -72,7 +72,11 @@ class RqlQuery:
         }
         if set(value) != expected:
             raise ValueError("RQL AST keys do not match version 1")
-        if value["version"] != 1:
+        if (
+            not isinstance(value["version"], int)
+            or isinstance(value["version"], bool)
+            or value["version"] != 1
+        ):
             raise ValueError("unsupported RQL AST version")
         source_type = _identifier(value["source_type"], "RQL AST source_type")
         where_value = value["where"]
