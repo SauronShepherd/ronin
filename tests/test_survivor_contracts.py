@@ -94,6 +94,16 @@ def test_environment_text_and_safe_ref_diagnostics_are_exact() -> None:
         environments._safe_ref("Bearer opaque-token", "binding source_ref")
 
 
+def test_genai_text_and_pairs_contracts_are_exact() -> None:
+    with pytest.raises(ValueError, match=r"^field must be non-empty, trimmed, and single-line$"):
+        genai._text("", "field")
+    assert genai._pairs((("model", "gpt"),), "provider properties") == (("model", "gpt"),)
+    with pytest.raises(
+        ValueError, match=r"^provider properties must not contain credential-bearing keys$"
+    ):
+        genai._pairs((("API_KEY", "redacted"),), "provider properties")
+
+
 @pytest.mark.parametrize(
     "validator",
     [
