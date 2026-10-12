@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from studio_core import (
     Node,
     OperatorCatalog,
@@ -296,6 +295,46 @@ def test_node_validation_distinguishes_boolean_from_integer_and_number() -> None
     node = _node(contract.ref, params={"integer": True, "number": False})
     violations = validate_operator_node(node, OperatorCatalog((contract,)))
     assert [item.path for item in violations] == ["params.integer", "params.number"]
+
+
+def test_node_validation_keeps_parameter_and_mode_diagnostics_exact() -> None:
+    contract = OperatorContract(
+        OperatorRef("diagnostics"),
+        "Diagnostics",
+        "test",
+        outputs=(OperatorPort("out"),),
+        parameters=(OperatorParameter("limit", "integer"),),
+        modes=("batch",),
+    )
+    node = _node(
+        contract.ref,
+        params={"limit": "not-an-integer"},
+        outputs=(Port("out", "stream"),),
+    )
+
+    assert validate_operator_node(node, OperatorCatalog((contract,))) == (
+        OperatorViolation(
+            "RONIN-OP-003",
+            "operator parameter has incompatible type: limit",
+            "params.limit",
+        ),
+        OperatorViolation(
+            "RONIN-OP-007",
+            "operator does not support stream ports",
+            "ports",
+        ),
+    )
+
+
+def test_node_validation_keeps_unknown_operator_diagnostic_exact() -> None:
+    violations = validate_operator_node(_node(OperatorRef("missing", 2)), OperatorCatalog(()))
+
+    assert violations == (
+        OperatorViolation(
+            "RONIN-OP-001",
+            "operator contract is not available: missing@2",
+        ),
+    )
 
 
 def test_node_validation_treats_empty_required_and_optional_values_as_missing() -> None:
