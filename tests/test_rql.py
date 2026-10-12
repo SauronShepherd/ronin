@@ -201,3 +201,30 @@ def test_rql_execution_honors_default_max_limit_and_join_no_match() -> None:
     graph = KnowledgeGraph(customers + orders)
     assert len(execute_rql("SELECT Customer", graph, max_limit=2).objects) == 2
     assert execute_rql("SELECT Customer JOIN Order ON account = customer", graph).objects == ()
+
+
+def test_rql_parser_preserves_all_clauses_and_canonical_ast() -> None:
+    query = parse_rql(
+        "SELECT Customer WHERE region = 'EU' TRAVERSE Order->Item "
+        "JOIN Purchase ON account = customer LIMIT 7"
+    )
+
+    assert query.source_type == "Customer"
+    assert query.where_field == "region"
+    assert query.where_value == "EU"
+    assert query.traverse_type == "Order->Item"
+    assert query.join_type == "Purchase"
+    assert query.join_left == "account"
+    assert query.join_right == "customer"
+    assert query.limit == 7
+    assert type(query).from_data(query.to_data()) == query
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["", " leading", "trailing ", "bad name", "bad/name", "bad->"],
+)
+def test_rql_ast_rejects_unportable_identifier_and_text_values(value: str) -> None:
+    query = parse_rql("SELECT Customer")
+    with pytest.raises((TypeError, ValueError)):
+        type(query).from_data({**query.to_data(), "source_type": value})

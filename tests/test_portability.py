@@ -108,3 +108,30 @@ def test_required_binding_keeps_report_unresolved() -> None:
 
     assert report.requires_manual_decision is True
     assert report.unresolved_bindings == (BindingRequest("connection", "source-connection"),)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "bearer opaque-token",
+        "-----begin private key-----",
+        "password=hunter2",
+    ],
+)
+def test_credential_rejection_is_case_insensitive(value: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^binding source_ref must not contain credential material$",
+    ):
+        portability._reject_credential_material(value, "binding source_ref")
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00byte"],
+)
+def test_bundle_text_contract_rejects_unportable_values(value: str) -> None:
+    with pytest.raises(
+        ValueError, match="^bundle path must be non-empty, trimmed, and single-line$"
+    ):
+        portability._require_text(value, "bundle path")
