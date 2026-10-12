@@ -253,3 +253,74 @@ def test_grant_payload_defaults_constraints_and_rejects_boolean_versions() -> No
     invalid = dict(payload, version=True)
     with pytest.raises(ValueError, match="version must be an integer"):
         Grant.from_payload(invalid)
+
+
+@pytest.mark.parametrize(
+    ("factory", "message"),
+    [
+        (lambda: ResourceScope("unknown", None), "unsupported authorization resource kind"),
+        (
+            lambda: Requirement("unknown", ResourceScope("project", None)),
+            "unsupported authorization action",
+        ),
+        (
+            lambda: ResourceScope("project", " "),
+            "authorization resource identifier must be non-empty, trimmed, and single-line",
+        ),
+        (
+            lambda: Grant(frozenset({"read"}), ResourceScope("project", None), {"x": 1}),
+            "authorization constraint keys and values must be strings",
+        ),
+        (
+            lambda: Grant(frozenset({"read"}), ResourceScope("project", None), {"Api-Key": "x"}),
+            "authorization constraints must not contain credential material",
+        ),
+    ],
+)
+def test_grant_validation_messages_are_stable(factory, message: str) -> None:
+    with pytest.raises(ValueError, match=".") as error:
+        factory()
+    assert str(error.value) == message
+
+
+def test_constraint_limit_and_duplicate_messages_are_stable() -> None:
+    values = {f"k{i}": "v" for i in range(MAX_CONSTRAINTS + 1)}
+    with pytest.raises(ValueError, match=".") as too_many:
+        Grant(frozenset({"read"}), ResourceScope("project", None), values)
+    assert str(too_many.value) == (
+        f"authorization constraints must contain at most {MAX_CONSTRAINTS} entries"
+    )
+
+    with pytest.raises(ValueError, match=".") as duplicate:
+        Grant(
+            frozenset({"read"}),
+            ResourceScope("project", None),
+            (("x", "1"), ("x", "2")),
+        )
+    assert str(duplicate.value) == "authorization constraint keys must be unique"
+
+
+def test_bearer_scope_encoding_is_exact_and_percent_canonical() -> None:
+    requirement = Requirement("evidence:read", ResourceScope("project", "a/b"))
+    assert requirement_to_bearer_scope(requirement) == "ronin:v1:evidence%3Aread:project:a%2Fb"
+    assert parse_bearer_scope("ronin:v1:evidence%3Aread:project:a%2Fb") == requirement
+
+
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        (None, "bearer scope must be text"),
+        (
+            "ronin:v2:read:project:p-1",
+            "bearer scope must use ronin:v1:<action>:<resource-kind>:<identifier>",
+        ),
+        ("ronin:v1:unknown:project:p-1", "unsupported authorization action"),
+        ("ronin:v1:read:unknown:p-1", "unsupported authorization resource kind"),
+        ("ronin:v1:read:project:%ZZ", "bearer scope identifier contains invalid percent encoding"),
+        ("ronin:v1:read:project:%2A", "bearer scope identifier cannot encode the wildcard"),
+    ],
+)
+def test_bearer_scope_parser_messages_are_stable(value: object, message: str) -> None:
+    with pytest.raises(ValueError, match=".") as error:
+        parse_bearer_scope(value)  # type: ignore[arg-type]
+    assert str(error.value) == message
