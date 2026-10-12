@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+import studio_core.grants as grants
 from studio_core.grants import (
     ACTIONS,
     MAX_CONSTRAINTS,
@@ -39,6 +40,25 @@ def test_requirement_version_and_action_are_fail_closed() -> None:
         Requirement("read", ResourceScope("project", None), version=2)
     with pytest.raises(ValueError, match="unsupported authorization action"):
         Requirement("admin", ResourceScope("project", None))  # type: ignore[arg-type]
+
+
+def test_authorization_vocabularies_return_exact_declared_values() -> None:
+    assert grants._require_action("evidence:read") == "evidence:read"
+    assert grants._require_resource_kind("evidence") == "evidence"
+    with pytest.raises(ValueError, match="^unsupported authorization action$") as action_error:
+        grants._require_action("admin")
+    assert str(action_error.value) == "unsupported authorization action"
+    with pytest.raises(
+        ValueError, match="^unsupported authorization resource kind$"
+    ) as kind_error:
+        grants._require_resource_kind("dataset")
+    assert str(kind_error.value) == "unsupported authorization resource kind"
+
+
+def test_authorization_text_limit_is_inclusive() -> None:
+    assert grants._require_text("x" * 256, "field", maximum=256) == "x" * 256
+    with pytest.raises(ValueError, match="at most 256 characters"):
+        grants._require_text("x" * 257, "field", maximum=256)
 
 
 @pytest.mark.parametrize("value", [None, 1, [], {}])
@@ -164,6 +184,28 @@ def test_resource_coverage_boundaries(
     assert GrantSet((grant,)).permits(Requirement("read", requirement_scope)).allowed is covered
 
 
+@pytest.mark.parametrize(
+    ("grant", "requirement", "expected"),
+    [
+        (ResourceScope("*", None), ResourceScope("project", "p"), True),
+        (ResourceScope("project", None), ResourceScope("project", None), True),
+        (ResourceScope("project", None), ResourceScope("project", "p"), True),
+        (ResourceScope("project", "p"), ResourceScope("project", "p"), True),
+        (ResourceScope("project", "p"), ResourceScope("project", "q"), False),
+    ],
+)
+def test_resource_coverage_helper_preserves_wildcard_kind_and_identifier_rules(
+    grant: ResourceScope, requirement: ResourceScope, expected: bool
+) -> None:
+    assert grants._resource_covers(grant, requirement) is expected
+
+
+def test_resource_specificity_orders_global_kind_wildcard_and_exact_identifier() -> None:
+    assert grants._specificity(ResourceScope("*", None)) == 0
+    assert grants._specificity(ResourceScope("project", None)) == 1
+    assert grants._specificity(ResourceScope("project", "p")) == 2
+
+
 def test_exact_resource_ids_filters_action_kind_and_constraints() -> None:
     grants = GrantSet(
         (
@@ -222,6 +264,20 @@ def test_bearer_scope_percent_encoding_is_round_trip_and_canonical(identifier: s
 def test_bearer_scope_parser_rejects_noncanonical_forms(value: str) -> None:
     with pytest.raises(ValueError, match="."):
         parse_bearer_scope(value)
+
+
+def test_bearer_scope_parser_diagnostics_are_stable() -> None:
+    cases = (
+        ("ronin:v1:read:project", "bearer scope must use ronin:v1:"),
+        ("other:v1:read:project:p-1", "bearer scope must use ronin:v1:"),
+        ("ronin:v1:admin:project:p-1", "unsupported authorization action"),
+        ("ronin:v1:read:dataset:p-1", "unsupported authorization resource kind"),
+        ("ronin:v1:read:project:%2A", "identifier cannot encode the wildcard"),
+    )
+    for value, message in cases:
+        with pytest.raises(ValueError, match=".") as error:
+            parse_bearer_scope(value)
+        assert message in str(error.value)
 
 
 @pytest.mark.parametrize("action", sorted(ACTIONS))
