@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-
-from test_workspace_project_http_api import _Authorizer, _server, _Store
+from types import SimpleNamespace
 
 from studio_core.ir import Node, OperatorRef, Port
 from studio_core.plugins import PluginManager, PluginRecord
 from studio_data_engineering import DataEnginerringStudioPlugin
 from studio_plugin_workspaces import WorkspacesPlugin
 from studio_runtime import PluginHost
+from test_workspace_project_http_api import _Authorizer, _server, _Store
 
 
 def _request(
@@ -29,6 +29,22 @@ def _request(
     status = response.status
     connection.close()
     return status, value
+
+
+class _PipelineWriter:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def import_sdp(self, **kwargs: object) -> object:
+        self.calls.append(kwargs)
+        source = kwargs["source"]
+        return SimpleNamespace(
+            project_id=kwargs["project_id"],
+            pipeline_id=kwargs["pipeline_id"],
+            revision=1,
+            source_digest=source.source_digest,
+            metadata_artifact=SimpleNamespace(storage_ref="artifact://metadata"),
+        )
 
 
 def test_data_engineering_routes_execute_through_real_control_plane() -> None:
@@ -113,3 +129,32 @@ def test_data_engineering_routes_execute_through_real_control_plane() -> None:
         assert preview["status"] == "completed"
     finally:
         host.stop()
+
+
+def test_pipeline_save_route_persists_canonical_document_with_revision_fence() -> None:
+    writer = _PipelineWriter()
+    with _server(
+        _Store(),
+        _Authorizer(),
+        data_engineering_reader=writer,
+    ) as address:
+        status, payload = _request(
+            address,
+            "PUT",
+            "/v1/workspaces/workspace-a/projects/project-1/pipelines/main",
+            {
+                "pipeline": {"version": 1, "nodes": [], "edges": []},
+                "expected_revision": 0,
+            },
+        )
+
+    assert status == 200
+    assert payload["revision"] == 1
+    assert len(writer.calls) == 1
+    source = writer.calls[0]["source"]
+    assert source.pipeline_documents[0][0] == "main.json"
+    assert json.loads(source.pipeline_documents[0][1]) == {
+        "edges": [],
+        "nodes": [],
+        "version": 1,
+    }

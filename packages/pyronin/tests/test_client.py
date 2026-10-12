@@ -673,6 +673,27 @@ def test_compare_pipeline_revisions_uses_structured_query() -> None:
     assert transport.calls[0][4] == {"left_revision": "3", "right_revision": "7"}
 
 
+def test_save_pipeline_uses_canonical_put_and_revision_fence() -> None:
+    transport = FakeTransport([{"project_id": "project/1", "pipeline_id": "main", "revision": 2}])
+
+    result = Ronin(transport=transport).save_pipeline(
+        "workspace/1",
+        "project/1",
+        "main",
+        {"version": 1, "nodes": [], "edges": []},
+        expected_revision=1,
+    )
+
+    assert result["revision"] == 2
+    method, path, payload, _headers, _query = transport.calls[0]
+    assert method == "PUT"
+    assert path.endswith("/projects/project%2F1/pipelines/main")
+    assert payload == {
+        "pipeline": {"version": 1, "nodes": [], "edges": []},
+        "expected_revision": 1,
+    }
+
+
 def test_glossary_terms_round_trip_and_encode_identity() -> None:
     term = {
         "id": "customer/id",

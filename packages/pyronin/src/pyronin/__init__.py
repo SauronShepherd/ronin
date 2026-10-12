@@ -1944,6 +1944,35 @@ class Ronin:
             raise ProtocolError("pipeline revision import response has invalid shape")
         return payload
 
+    def save_pipeline(
+        self,
+        workspace_id: str,
+        project_id: str,
+        pipeline_id: str,
+        pipeline: Mapping[str, object],
+        *,
+        expected_revision: int = 0,
+    ) -> Mapping[str, object]:
+        """Save one canonical pipeline document as the next immutable revision."""
+        if not all(
+            isinstance(value, str) and value.strip()
+            for value in (workspace_id, project_id, pipeline_id)
+        ):
+            raise ValueError("workspace_id, project_id, and pipeline_id must be non-empty")
+        if not isinstance(pipeline, Mapping) or not pipeline:
+            raise ValueError("pipeline must be a non-empty mapping")
+        if isinstance(expected_revision, bool) or expected_revision < 0:
+            raise ValueError("expected_revision must be a non-negative integer")
+        payload = self._transport.request(
+            "PUT",
+            f"/v1/workspaces/{quote(workspace_id, safe='')}/projects/"
+            f"{quote(project_id, safe='')}/pipelines/{quote(pipeline_id, safe='')}",
+            payload={"pipeline": dict(pipeline), "expected_revision": expected_revision},
+        )
+        if not isinstance(payload, dict) or not isinstance(payload.get("revision"), int):
+            raise ProtocolError("pipeline save response has invalid shape")
+        return payload
+
     def list_environments(self, workspace_id: str) -> tuple[Environment, ...]:
         if not workspace_id.strip():
             raise ValueError("workspace_id must be non-empty")

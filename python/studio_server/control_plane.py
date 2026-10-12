@@ -161,6 +161,10 @@ CONTROL_PLANE_ROUTES = frozenset(
             "POST",
             "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}/revisions",
         ),
+        (
+            "PUT",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/pipelines/{pipeline_id}",
+        ),
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks"),
         ("GET", "/v1/workspaces/{workspace_id}/projects/{project_id}/notebooks/{notebook_id}"),
         (
@@ -3912,6 +3916,83 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         )
                         self._write_json(HTTPStatus.OK, payload)
                         return
+            if (
+                len(segments) == 7
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "projects"
+                and segments[5] == "pipelines"
+            ):
+                de_writer = self._server().data_engineering_reader
+                if de_writer is None or not callable(getattr(de_writer, "import_sdp", None)):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "data_engineering_unavailable",
+                        "Data Engineering service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("pipeline replacement does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                project_id = unquote(segments[4])
+                pipeline_id = unquote(segments[6])
+                if not self._authorize(
+                    actor, workspace_id, "project.write", resource_ref=project_id
+                ):
+                    return
+                payload = self._read_json()
+                if not isinstance(payload, dict) or set(payload) - {
+                    "pipeline",
+                    "expected_revision",
+                }:
+                    raise ValueError(
+                        "pipeline replacement body must contain only pipeline and expected_revision"
+                    )
+                pipeline = payload.get("pipeline")
+                expected_revision = payload.get("expected_revision", 0)
+                if not isinstance(pipeline, dict) or not pipeline:
+                    raise ValueError("pipeline replacement requires a non-empty pipeline object")
+                if (
+                    isinstance(expected_revision, bool)
+                    or not isinstance(expected_revision, int)
+                    or expected_revision < 0
+                ):
+                    raise ValueError("expected_revision must be a non-negative integer")
+                source = SdpProjectSource(
+                    project_id,
+                    f"name: {project_id}\n".encode(),
+                    (
+                        (
+                            f"{pipeline_id}.json",
+                            json.dumps(
+                                pipeline, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                            ).encode("utf-8"),
+                        ),
+                    ),
+                )
+                if not self._audit_mutation(
+                    actor,
+                    "pipeline.replace",
+                    workspace_id,
+                    {"resource": f"{project_id}/{pipeline_id}"},
+                ):
+                    return
+                record = de_writer.import_sdp(
+                    project_id=project_id,
+                    pipeline_id=pipeline_id,
+                    source=source,
+                    expected_revision=expected_revision,
+                )
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "project_id": record.project_id,
+                        "pipeline_id": record.pipeline_id,
+                        "revision": record.revision,
+                        "source_digest": record.source_digest,
+                        "metadata_artifact": record.metadata_artifact.storage_ref,
+                    },
+                )
+                return
             if (
                 len(segments) == 8
                 and segments[:2] == ("v1", "workspaces")

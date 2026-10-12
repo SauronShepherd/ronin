@@ -299,6 +299,7 @@ def _server(
     glossary_reader=None,
     catalog_reader=None,
     feature_definition_service=None,
+    data_engineering_reader=None,
 ) -> Iterator[tuple[str, int]]:
     server = WorkspaceProjectHTTPServer(
         ("127.0.0.1", 0),
@@ -316,6 +317,7 @@ def _server(
         glossary_reader=glossary_reader,
         catalog_reader=catalog_reader,
         feature_definition_service=feature_definition_service,
+        data_engineering_reader=data_engineering_reader,
         request_timeout_seconds=1.0,
     )
     thread = Thread(target=server.serve_forever, daemon=True)
