@@ -46,6 +46,80 @@ def test_manifest_nested_decoders_fail_closed_on_non_objects(decoder, value, nam
         decoder(value)
 
 
+def test_manifest_repository_decoder_accepts_all_declared_optional_shapes() -> None:
+    value = {
+        "adapter_id": "git",
+        "alias": "source",
+        "default_ref": "main",
+        "role": "supporting",
+        "subdirectory": None,
+        "sync_policy": "manual",
+        "uri": "https://example.test/repo.git",
+    }
+    repository = project_manifest._repository_from_data(value)
+    assert repository.alias == "source"
+    assert repository.subdirectory is None
+    value["subdirectory"] = "src"
+    assert project_manifest._repository_from_data(value).subdirectory == "src"
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("role", "invalid", "repository.role must be primary or supporting"),
+        ("sync_policy", "invalid", "repository.sync_policy must be manual, fetch, or fast-forward"),
+        ("subdirectory", 1, "repository.subdirectory must be a string or null"),
+    ],
+)
+def test_manifest_repository_decoder_rejects_invalid_policy_fields(
+    field: str, value: object, message: str
+) -> None:
+    data: dict[str, object] = {
+        "adapter_id": "git",
+        "alias": "source",
+        "default_ref": "main",
+        "role": "primary",
+        "subdirectory": None,
+        "sync_policy": "fetch",
+        "uri": "https://example.test/repo.git",
+    }
+    data[field] = value
+    with pytest.raises(ValueError if field != "subdirectory" else TypeError, match=message):
+        project_manifest._repository_from_data(data)
+
+
+def test_manifest_execution_decoder_accepts_runtime_and_both_requirement_levels() -> None:
+    value = {
+        "requirements": [
+            {"constraint": None, "level": "required", "name": "python"},
+            {"constraint": ">=3.11", "level": "preferred", "name": "cuda"},
+        ],
+        "resolution": "compatible",
+        "runtime": {"adapter_id": "python", "profile_id": "3.11"},
+    }
+    execution = project_manifest._execution_from_data(value)
+    assert execution.resolution == "compatible"
+    assert execution.runtime == RuntimeProfileRef("python", "3.11")
+    assert {item.level for item in execution.requirements} == {"required", "preferred"}
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("level", "optional", "requirement.level must be required or preferred"),
+        ("constraint", 1, "requirement.constraint must be a string or null"),
+        ("name", None, "requirement.name must be a string"),
+    ],
+)
+def test_manifest_requirement_decoder_rejects_invalid_fields(
+    field: str, value: object, message: str
+) -> None:
+    data: dict[str, object] = {"constraint": None, "level": "required", "name": "python"}
+    data[field] = value
+    with pytest.raises((TypeError, ValueError), match=message):
+        project_manifest._requirement_from_data(data)
+
+
 @pytest.mark.parametrize(
     "value",
     [None, 1, "", " ", " leading", "trailing ", "line\nvalue", "line\rvalue", "nul\x00value"],
