@@ -16,10 +16,10 @@ from studio_core.plugins import (
     PluginRecord,
     PluginState,
     PluginValidationError,
+    RouterRegistry,
     SurfaceContribution,
     SurfaceContributionRegistry,
     SurfaceOption,
-    RouterRegistry,
     UiContributionRegistry,
     _satisfies_host,
 )
