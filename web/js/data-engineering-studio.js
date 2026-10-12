@@ -162,7 +162,12 @@ document.addEventListener('click', async event => {
       const project = String(data.get('project')).trim();
       const pipelineId = String(data.get('pipeline_id')).trim();
       if (!project || !pipelineId) throw new Error('Project and pipeline ID are required');
-      const result = await put(`/v1/workspaces/${encodeURIComponent(data.get('workspace'))}/projects/${encodeURIComponent(project)}/pipelines/${encodeURIComponent(pipelineId)}`, { pipeline: documentValue, expected_revision: Number(data.get('revision') || 0) });
+      const result = await post(`/v1/workspaces/${encodeURIComponent(data.get('workspace'))}/projects/${encodeURIComponent(project)}/pipelines/${encodeURIComponent(pipelineId)}/revisions`, {
+        project_name: project,
+        project_yaml_base64: base64(`name: ${project}\n`),
+        pipeline_documents: [{ name: `${pipelineId}.json`, content_base64: base64(JSON.stringify(documentValue)) }],
+        expected_revision: Number(data.get('revision') || 0),
+      });
       if (result.revision) document.querySelector('[name="revision"]').value = result.revision;
       out.textContent = json(result);
     } catch (error) { out.textContent = `Pipeline revision save failed: ${error.message}`; }

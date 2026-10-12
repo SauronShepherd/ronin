@@ -312,9 +312,7 @@ def test_compose_orders_dependencies_before_dependents() -> None:
             events.append(f"stop:{self.manifest.id}")
 
     dependency = Plugin("com.example.dependency")
-    dependent = Plugin(
-        "com.example.dependent", (PluginDependency("com.example.dependency"),)
-    )
+    dependent = Plugin("com.example.dependent", (PluginDependency("com.example.dependency"),))
     manager = PluginManager()
     plan = manager.compose(
         (
@@ -352,9 +350,7 @@ def test_critical_start_failure_ignores_shutdown_failure_and_resets_manager() ->
             raise RuntimeError("cleanup failed")
 
     class Critical:
-        manifest = PluginManifest(
-            "com.example.critical", "Critical", "1.0.0", "1.0", critical=True
-        )
+        manifest = PluginManifest("com.example.critical", "Critical", "1.0.0", "1.0", critical=True)
 
         def register(self, _context) -> None:
             return None

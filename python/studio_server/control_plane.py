@@ -21,6 +21,8 @@ from studio_core import (
     AssetRevision,
     AssetVersion,
     CatalogAsset,
+    ConnectionDefinition,
+    ConnectionId,
     DataContract,
     GlossaryTerm,
     GlossaryTermId,
@@ -55,6 +57,9 @@ from studio_core.ontology import KnowledgeObjectRef
 from studio_core.scheduler_events import EventTriggerDefinition, SchedulerEventId
 from studio_data_engineering import PipelineRevisionRecord, SdpProjectSource
 from studio_execution import (
+    ConnectionService,
+    ConnectionServiceConflict,
+    ConnectionServiceNotFound,
     DeploymentBindingService,
     EnvironmentService,
     EnvironmentServiceConflict,
@@ -119,6 +124,11 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("POST", "/v1/workspaces/{workspace_id}/environments/{environment_id}/diff"),
         ("POST", "/v1/workspaces/{workspace_id}/environments/{environment_id}/disable"),
         ("POST", "/v1/workspaces/{workspace_id}/environments/{environment_id}/enable"),
+        ("GET", "/v1/workspaces/{workspace_id}/connections"),
+        ("POST", "/v1/workspaces/{workspace_id}/connections"),
+        ("GET", "/v1/workspaces/{workspace_id}/connections/{connection_id}"),
+        ("PUT", "/v1/workspaces/{workspace_id}/connections/{connection_id}"),
+        ("DELETE", "/v1/workspaces/{workspace_id}/connections/{connection_id}"),
         (
             "GET",
             "/v1/workspaces/{workspace_id}/projects/{project_id}/environments/{environment_id}/bindings",
@@ -728,6 +738,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         feature_definition_service: FeatureDefinitionServicePort | None = None,
         finops_reader: FinOpsReader | None = None,
         environment_service: EnvironmentService | None = None,
+        connection_service: ConnectionService | None = None,
         binding_service: DeploymentBindingService | None = None,
         plugin_host: PluginDiagnostics | None = None,
         connector_registry: ConnectorCapabilityPort | None = None,
@@ -761,6 +772,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.feature_definition_service = feature_definition_service
         self.finops_reader = finops_reader
         self.environment_service = environment_service
+        self.connection_service = connection_service
         self.binding_service = binding_service
         self.plugin_host = plugin_host
         self.connector_registry = connector_registry
@@ -953,9 +965,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         return True
 
     def _handle_failure(self, exc: Exception) -> None:
-        if isinstance(exc, (WorkspaceServiceNotFound, EnvironmentServiceNotFound)):
+        if isinstance(
+            exc,
+            (WorkspaceServiceNotFound, EnvironmentServiceNotFound, ConnectionServiceNotFound),
+        ):
             self._error(HTTPStatus.NOT_FOUND, "not_found", "requested resource does not exist")
-        elif isinstance(exc, (WorkspaceServiceConflict, EnvironmentServiceConflict)):
+        elif isinstance(
+            exc,
+            (WorkspaceServiceConflict, EnvironmentServiceConflict, ConnectionServiceConflict),
+        ):
             self._error(HTTPStatus.CONFLICT, "conflict", str(exc))
         elif isinstance(exc, TimeoutError):
             self._error(
@@ -2365,6 +2383,46 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 )
                 return
             if (
+                len(segments) in {4, 5}
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "connections"
+            ):
+                connection_service = self._server().connection_service
+                if connection_service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "connections_unavailable",
+                        "connection service is not configured",
+                    )
+                    return
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.read"):
+                    return
+                if len(segments) == 4:
+                    limit, offset = _list_query(query)
+                    connection_items, next_cursor = _page(
+                        list(connection_service.list(workspace_id)), limit=limit, offset=offset
+                    )
+                    self._write_json(
+                        HTTPStatus.OK,
+                        {
+                            "items": [item.to_payload() for item in connection_items],
+                            "next_cursor": next_cursor,
+                        },
+                    )
+                    return
+                if query:
+                    raise ValueError("connection read does not accept query parameters")
+                connection_id = ConnectionId(unquote(segments[4]))
+                if not self._authorize(
+                    actor, workspace_id, "workspace.read", resource_ref=str(connection_id)
+                ):
+                    return
+                self._write_json(
+                    HTTPStatus.OK, connection_service.get(workspace_id, connection_id).to_payload()
+                )
+                return
+            if (
                 len(segments) == 4
                 and segments[:2] == ("v1", "workspaces")
                 and segments[3] == "environments"
@@ -2676,6 +2734,37 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if (
+                len(segments) == 4
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "connections"
+            ):
+                connection_service = self._server().connection_service
+                if connection_service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "connections_unavailable",
+                        "connection service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("connection creation does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                if not self._authorize(actor, workspace_id, "workspace.write"):
+                    return
+                connection_definition = ConnectionDefinition.from_payload(self._read_json())
+                if not self._audit_mutation(
+                    actor,
+                    "connection.create",
+                    workspace_id,
+                    {"resource": str(connection_definition.id)},
+                ):
+                    return
+                connection_stored = connection_service.create(
+                    workspace_id, connection_definition, now=_now()
+                )
+                self._write_json(HTTPStatus.CREATED, connection_stored.to_payload())
+                return
             if segments == ("v1", "ml-studio", "features"):
                 service = self._server().feature_definition_service
                 if service is None:
@@ -3872,6 +3961,42 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "connections"
+            ):
+                connection_service = self._server().connection_service
+                if connection_service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "connections_unavailable",
+                        "connection service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("connection replacement does not accept query parameters")
+                workspace_id = WorkspaceId(segments[2])
+                connection_id = ConnectionId(unquote(segments[4]))
+                if not self._authorize(
+                    actor, workspace_id, "workspace.write", resource_ref=str(connection_id)
+                ):
+                    return
+                connection_definition = ConnectionDefinition.from_payload(self._read_json())
+                if connection_definition.id != connection_id:
+                    raise ValueError("connection id must match the request path")
+                if not self._audit_mutation(
+                    actor,
+                    "connection.replace",
+                    workspace_id,
+                    {"resource": str(connection_id)},
+                ):
+                    return
+                connection_stored = connection_service.replace(
+                    workspace_id, connection_definition, now=_now()
+                )
+                self._write_json(HTTPStatus.OK, connection_stored.to_payload())
+                return
             if self._server().plugin_routes_enabled:
                 plugin_host = self._server().plugin_host
                 if isinstance(plugin_host, PluginRouter):
@@ -4269,6 +4394,42 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             return
         try:
             segments, query = self._split()
+            if (
+                len(segments) == 5
+                and segments[:2] == ("v1", "workspaces")
+                and segments[3] == "connections"
+            ):
+                connection_service = self._server().connection_service
+                if connection_service is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "connections_unavailable",
+                        "connection service is not configured",
+                    )
+                    return
+                if query:
+                    raise ValueError("connection deletion does not accept query parameters")
+                if self._read_json() not in ({}, None):
+                    raise ValueError("connection deletion body must be empty")
+                workspace_id = WorkspaceId(segments[2])
+                connection_id = ConnectionId(unquote(segments[4]))
+                if not self._authorize(
+                    actor, workspace_id, "workspace.write", resource_ref=str(connection_id)
+                ):
+                    return
+                if not self._audit_mutation(
+                    actor,
+                    "connection.delete",
+                    workspace_id,
+                    {"resource": str(connection_id)},
+                ):
+                    return
+                connection_service.delete(workspace_id, connection_id)
+                self._write_json(
+                    HTTPStatus.OK,
+                    {"deleted": True, "id": str(connection_id)},
+                )
+                return
             if self._server().plugin_routes_enabled:
                 plugin_host = self._server().plugin_host
                 if isinstance(plugin_host, PluginRouter):

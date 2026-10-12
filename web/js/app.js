@@ -79,5 +79,6 @@ import './scheduler-studio.js';
 import './access-studio.js';
 import './a11y.js';
 import {ingestionStudio} from './ingestion-studio.js';
+import './connections-studio.js';
 window.addEventListener('hashchange',()=>{if(location.hash==='#workflows')setTimeout(schedulerStudio,0);if(location.hash==='#notebooks')setTimeout(notebookStudio,0);if(location.hash==='#ingestion')setTimeout(ingestionStudio,0);if(location.hash==='#alerts')setTimeout(alertsStudio,0)});
 if(location.hash==='#alerts')setTimeout(alertsStudio,0);

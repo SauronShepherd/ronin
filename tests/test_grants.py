@@ -188,7 +188,7 @@ def test_bearer_scope_rejects_invalid_or_noncanonical_percent_encoding(value: st
     ],
 )
 def test_bearer_scope_requires_exact_canonical_shape(value: str) -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="scope"):
         parse_bearer_scope(value)
 
 

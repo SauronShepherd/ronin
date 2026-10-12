@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import cast
 
 from studio_core import AssetRef, DataContract, QualityRunId, WorkspaceId
 from studio_orchestrator import Instant
@@ -37,7 +38,7 @@ class QualityHTTPAdapter:
         writer = getattr(self._store, "put_contract", None)
         if not callable(writer):
             raise RuntimeError("quality contract persistence is not configured")
-        return writer(workspace_id, contract, now=now).to_payload()
+        return cast(dict[str, object], writer(workspace_id, contract, now=now).to_payload())
 
     def run(
         self, workspace_id: WorkspaceId, payload: Mapping[str, object], *, now: Instant | str

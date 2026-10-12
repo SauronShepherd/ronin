@@ -13,6 +13,7 @@ from studio_data_engineering import (
     SqliteRevisionStore,
 )
 from studio_execution import (
+    ConnectionService,
     DeploymentBindingService,
     DurableExecutionService,
     EnvironmentService,
@@ -46,6 +47,7 @@ from studio_storage import (
     PostgresWorkflowBundleImportStore,
     SqliteAuditStore,
     SqliteCatalogStore,
+    SqliteConnectionStore,
     SqliteEnvironmentStore,
     SqliteJobStore,
     SqliteKnowledgeGraphStore,
@@ -245,6 +247,10 @@ def build_local_composed_from_env() -> LocalServerComposition:
         if environment_store is not None
         else None
     )
+    connection_store = (
+        SqliteConnectionStore(database, migration_now=now) if postgres_dsn is None else scheduler
+    )
+    connection_service = ConnectionService(scheduler, cast(Any, connection_store))
     quality_reader = (
         QualityHTTPAdapter(SqliteQualityStore(database, migration_now=now))
         if postgres_dsn is None
@@ -270,6 +276,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         catalog_reader=catalog_reader,
         semantic_reader=semantic_reader,
         environment_service=environment_service,
+        connection_service=connection_service,
         binding_service=binding_service,
         quality_reader=quality_reader,
         finops_reader=finops_reader,

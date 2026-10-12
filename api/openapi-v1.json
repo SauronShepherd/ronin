@@ -394,6 +394,15 @@
     "/v1/workspaces/{workspace_id}/environments/{environment_id}/disable": {"post": {"operationId": "disableEnvironment", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "environment_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Disabled environment", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnvironmentDefinition"}}}}}}},
     "/v1/workspaces/{workspace_id}/environments/{environment_id}/enable": {"post": {"operationId": "enableEnvironment", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "environment_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Enabled environment", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnvironmentDefinition"}}}}}}},
     "/v1/workspaces/{workspace_id}/environments/{environment_id}/diff": {"post": {"operationId": "diffEnvironment", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "environment_id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EnvironmentDefinition"}}}}, "responses": {"200": {"description": "Environment diff", "content": {"application/json": {"schema": {"type": "object"}}}}}}},
+    "/v1/workspaces/{workspace_id}/connections": {
+      "get": {"operationId": "listConnections", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}], "responses": {"200": {"description": "Workspace connection metadata", "content": {"application/json": {"schema": {"type": "object"}}}}}},
+      "post": {"operationId": "createConnection", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ConnectionDefinition"}}}}, "responses": {"201": {"description": "Created connection", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ConnectionDefinition"}}}}}}
+    },
+    "/v1/workspaces/{workspace_id}/connections/{connection_id}": {
+      "get": {"operationId": "getConnection", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "connection_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Connection metadata", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ConnectionDefinition"}}}}}},
+      "put": {"operationId": "replaceConnection", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "connection_id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ConnectionDefinition"}}}}, "responses": {"200": {"description": "Replaced connection", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ConnectionDefinition"}}}}}},
+      "delete": {"operationId": "deleteConnection", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"name": "connection_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Deleted connection", "content": {"application/json": {"schema": {"type": "object"}}}}}}
+    },
     "/v1/workspaces/{workspace_id}/projects/{project_id}/environments/{environment_id}/bindings": {
       "get": {"operationId": "getDeploymentBindings", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "environment_id", "in": "path", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Deployment bindings", "content": {"application/json": {"schema": {"type": "object"}}}}}},
       "put": {"operationId": "putDeploymentBindings", "parameters": [{"$ref": "#/components/parameters/WorkspaceId"}, {"$ref": "#/components/parameters/ProjectId"}, {"name": "environment_id", "in": "path", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}}, "responses": {"200": {"description": "Deployment bindings", "content": {"application/json": {"schema": {"type": "object"}}}}}}
@@ -970,6 +979,16 @@
       "EnvironmentDefinition": {
         "type": "object", "additionalProperties": false, "required": ["id", "name", "description", "state"],
         "properties": {"id": {"type": "string"}, "name": {"type": "string"}, "description": {"type": "string"}, "state": {"type": "string", "enum": ["active", "disabled"]}}
+      },
+      "ConnectionDefinition": {
+        "type": "object", "additionalProperties": false, "required": ["id", "name", "connector_id", "options", "secret_refs"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "name": {"type": "string", "minLength": 1},
+          "connector_id": {"type": "string", "minLength": 1},
+          "options": {"type": "object", "additionalProperties": {"type": "string"}},
+          "secret_refs": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^secret://"}}
+        }
       },
       "PluginDiagnosticsPage": {
         "type": "object", "additionalProperties": false, "required": ["items", "surfaces", "cli", "client_operations"],

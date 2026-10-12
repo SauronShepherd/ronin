@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from studio_core.operators import builtin_operator_catalog
 from studio_core.plugins import (
@@ -435,7 +435,10 @@ class DataEnginerringStudioPlugin:
         request = QueryRequest(
             cast(str, body["sql"]),
             cast(str, body["profile"]),
-            cast(str, body.get("translation_policy", "native_only")),
+            cast(
+                Literal["native_only", "best_effort", "strict"],
+                str(body.get("translation_policy", "native_only")),
+            ),
             max_rows,
         )
         result = execute_query(

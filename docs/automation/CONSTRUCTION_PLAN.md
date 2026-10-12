@@ -1,6 +1,6 @@
 # Ronin Public v1 construction plan
 
-_Last synchronized: 2026-09-13 from main `b7e861f11a1399553fba0292f2b86760cc04d747` after PR #288. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`. Portability authority: `docs/product/PLATFORM_PORTABILITY_V1.md`._
+_Last synchronized: 2026-10-12 from construction-plan reconciliation on branch `codex/final-main-audit`. Scope authority: `docs/product/PUBLIC_V1_SCOPE.md`. Portability authority: `docs/product/PLATFORM_PORTABILITY_V1.md`._
 
 Ronin Public v1 is **incomplete** until every mandatory capability family has an end-to-end supported path. This document is the active autonomous construction plan. The prior v0.1 plan is preserved verbatim at `docs/automation/history/V01_CONSTRUCTION_PLAN.md` and remains historical evidence only; its feature-freeze language does not override Public v1 scope.
 
@@ -28,6 +28,17 @@ GitHub Actions and automated qualification are active for the current constructi
 Implemented foundations include durable Job/Run/Attempt execution; SQLite durability; leases, heartbeat, fencing, reclaim/resume and cancellation; content-addressed evidence/artifacts; canonical JSON/identity; workspace/project/environment foundations; typed grants; deployment-local secret resolution; deterministic Ronin Bundle archive IO; native project and connection semantic round-trips with explicit runtime/secret remapping; atomic project+connection multi-object commit; explicit selected catalog asset/revision/lineage subgraph export/planning and atomic commit; initial provider-neutral metadata ports; persistent catalog/lineage primitives; quality/ontology/audit/ML/GenAI domain persistence; local/Compose operation; and an advanced durable scheduler foundation.
 
 Public-v1 capability state is maintained in `docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md` and `docs/product/public-v1-status.json`. Those ledgers are implementation-status records, not release qualification.
+
+### Construction update — 2026-10-12
+
+The workspace/project control-plane slice now exposes the previously unconnected connection
+application service through authenticated, audited HTTP routes: list, create, read, replace and
+delete. The SQLite and shared PostgreSQL metadata profiles are both wired through the same
+provider-neutral `ConnectionService`; plaintext credentials remain rejected and only `secret://`
+references cross the API boundary. OpenAPI, the local Studio Data surface and package data are
+updated together. Final verification for this slice is complete: the Python suite passed with
+2381 passed and 21 skipped, the web suite passed 77/77, and the static gates are green. Mutation
+testing is intentionally not part of routine verification and was not rerun.
 
 ## Active critical path
 

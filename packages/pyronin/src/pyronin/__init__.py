@@ -302,6 +302,15 @@ class Environment:
 
 
 @dataclass(frozen=True, slots=True)
+class Connection:
+    id: str
+    name: str
+    connector_id: str
+    options: Mapping[str, str]
+    secret_refs: Mapping[str, str]
+
+
+@dataclass(frozen=True, slots=True)
 class DeploymentBinding:
     kind: str
     source_ref: str
@@ -516,6 +525,25 @@ def _parse_environment(payload: object) -> Environment:
         str(item.get("state", item.get("status", "active"))),
         item.get("description") if isinstance(item.get("description"), str) else None,
     )
+
+
+def _parse_connection(payload: object) -> Connection:
+    item = _parse_resource(payload, "connection")
+    values = (item.get("id"), item.get("name"), item.get("connector_id"))
+    options = item.get("options")
+    secret_refs = item.get("secret_refs")
+    if not all(isinstance(value, str) and value.strip() for value in values):
+        raise ProtocolError("connection response has invalid identity")
+    if not isinstance(options, dict) or not all(
+        isinstance(key, str) and isinstance(value, str) for key, value in options.items()
+    ):
+        raise ProtocolError("connection response has invalid options")
+    if not isinstance(secret_refs, dict) or not all(
+        isinstance(key, str) and isinstance(value, str) and value.startswith("secret://")
+        for key, value in secret_refs.items()
+    ):
+        raise ProtocolError("connection response has invalid secret references")
+    return Connection(values[0], values[1], values[2], dict(options), dict(secret_refs))
 
 
 def _parse_bindings(payload: object) -> ProjectEnvironmentBindings:
@@ -1983,6 +2011,64 @@ class Ronin:
             raise ProtocolError("environments response must contain an items array")
         return tuple(_parse_environment(item) for item in payload["items"])
 
+    def list_connections(self, workspace_id: str) -> tuple[Connection, ...]:
+        if not workspace_id.strip():
+            raise ValueError("workspace_id must be non-empty")
+        payload = self._transport.request(
+            "GET", f"/v1/workspaces/{quote(workspace_id, safe='')}/connections"
+        )
+        if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+            raise ProtocolError("connections response must contain an items array")
+        return tuple(_parse_connection(item) for item in payload["items"])
+
+    def get_connection(self, workspace_id: str, connection_id: str) -> Connection:
+        if not workspace_id.strip() or not connection_id.strip():
+            raise ValueError("workspace_id and connection_id must be non-empty")
+        return _parse_connection(
+            self._transport.request(
+                "GET",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/connections/"
+                f"{quote(connection_id, safe='')}",
+            )
+        )
+
+    def create_connection(self, workspace_id: str, definition: Mapping[str, object]) -> Connection:
+        if not workspace_id.strip():
+            raise ValueError("workspace_id must be non-empty")
+        return _parse_connection(
+            self._transport.request(
+                "POST",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/connections",
+                payload=dict(definition),
+            )
+        )
+
+    def update_connection(
+        self, workspace_id: str, connection_id: str, definition: Mapping[str, object]
+    ) -> Connection:
+        if not workspace_id.strip() or not connection_id.strip():
+            raise ValueError("workspace_id and connection_id must be non-empty")
+        return _parse_connection(
+            self._transport.request(
+                "PUT",
+                f"/v1/workspaces/{quote(workspace_id, safe='')}/connections/"
+                f"{quote(connection_id, safe='')}",
+                payload=dict(definition),
+            )
+        )
+
+    def delete_connection(self, workspace_id: str, connection_id: str) -> None:
+        if not workspace_id.strip() or not connection_id.strip():
+            raise ValueError("workspace_id and connection_id must be non-empty")
+        payload = self._transport.request(
+            "DELETE",
+            f"/v1/workspaces/{quote(workspace_id, safe='')}/connections/"
+            f"{quote(connection_id, safe='')}",
+            payload={},
+        )
+        if not isinstance(payload, dict) or payload.get("deleted") is not True:
+            raise ProtocolError("connection deletion response is invalid")
+
     def get_environment(self, workspace_id: str, environment_id: str) -> Environment:
         if not workspace_id.strip() or not environment_id.strip():
             raise ValueError("workspace_id and environment_id must be non-empty")
@@ -3382,6 +3468,7 @@ def _parse_evidence(payload: object) -> EvidenceReference:
 __all__ = [
     "APIError",
     "CatalogAsset",
+    "Connection",
     "CatalogLineageEdge",
     "DeploymentBinding",
     "GlossaryTerm",

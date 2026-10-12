@@ -6,7 +6,7 @@
 
 ## Scope
 
-This surface exposes lifecycle operations for already-existing workspaces and their registered portable project manifests. It does not define workspace bootstrap/creation, IAM administration, environment/deployment APIs, or Web Studio.
+This surface exposes lifecycle operations for workspaces, registered portable project manifests, and workspace-scoped connection metadata. It does not define workspace bootstrap/creation, IAM administration, environment/deployment APIs, or Web Studio.
 
 Workspace creation is deliberately excluded because the current security contract defines workspace-scoped permissions but no global `workspace.create` authority. A bootstrap/control-plane policy must be designed before exposing that mutation.
 
@@ -23,6 +23,11 @@ Workspace creation is deliberately excluded because the current security contrac
 | `GET` | `/v1/workspaces/{workspace_id}/projects/{project_id}` | `project.read` |
 | `PUT` | `/v1/workspaces/{workspace_id}/projects/{project_id}` | `project.write` |
 | `DELETE` | `/v1/workspaces/{workspace_id}/projects/{project_id}` | `project.write` |
+| `GET` | `/v1/workspaces/{workspace_id}/connections` | `workspace.read` |
+| `POST` | `/v1/workspaces/{workspace_id}/connections` | `workspace.write` |
+| `GET` | `/v1/workspaces/{workspace_id}/connections/{connection_id}` | `workspace.read` |
+| `PUT` | `/v1/workspaces/{workspace_id}/connections/{connection_id}` | `workspace.write` |
+| `DELETE` | `/v1/workspaces/{workspace_id}/connections/{connection_id}` | `workspace.write` |
 
 The workspace list is authorization-filtered before pagination so workspace identifiers without `workspace.read` are not returned.
 
@@ -31,6 +36,8 @@ The workspace list is authorization-filtered before pagination so workspace iden
 Workspace responses contain `id`, `name`, `description`, and `state`. Workspace `PATCH` accepts exactly `name` and `description`; archival is a separate idempotent action and accepts no body.
 
 Project request/response bodies are the canonical `ronin.project/v1` `ProjectManifest` representation. Project replacement requires the manifest project id to equal the id in the request path. Portable manifests cannot embed repository authentication references.
+
+Connection request/response bodies contain `id`, `name`, `connector_id`, non-secret string `options`, and opaque `secret_refs` using `secret://` URIs. Plaintext credentials and credential-bearing option keys are rejected by the canonical `ConnectionDefinition` contract. Connection replacement requires the definition id to match the request path; deletion is idempotent at the application boundary and returns the deleted id.
 
 List routes accept only `limit` and `cursor`, with a maximum page size of 100. Cursors are opaque transport values and callers must not interpret their contents.
 

@@ -2,7 +2,6 @@ import json
 from dataclasses import FrozenInstanceError
 
 import pytest
-
 from studio_core import (
     PROJECT_MANIFEST_PATH,
     PROJECT_MANIFEST_SCHEMA,
@@ -375,9 +374,7 @@ def test_manifest_accepts_preferred_requirement_and_runtime_without_auth() -> No
     execution = project["execution"]
     assert isinstance(execution, dict)
     execution["resolution"] = "strict"
-    execution["requirements"] = [
-        {"name": "gpu", "constraint": "true", "level": "preferred"}
-    ]
+    execution["requirements"] = [{"name": "gpu", "constraint": "true", "level": "preferred"}]
     manifest = ProjectManifest.from_data(data)
     assert manifest.project.execution.resolution == "strict"
     assert manifest.project.execution.requirements[0].level == "preferred"

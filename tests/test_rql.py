@@ -143,9 +143,7 @@ def test_rql_ast_rejects_non_identifier_fields() -> None:
         ("limit", True, "positive integer"),
     ],
 )
-def test_rql_ast_rejects_invalid_nested_contracts(
-    field: str, value: object, message: str
-) -> None:
+def test_rql_ast_rejects_invalid_nested_contracts(field: str, value: object, message: str) -> None:
     data = parse_rql("SELECT Customer").to_data()
     data[field] = value
     with pytest.raises((TypeError, ValueError), match=message):

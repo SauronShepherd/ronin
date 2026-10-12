@@ -43,6 +43,12 @@ from .branch_state import (
     PersistedBranchDecision,
     SqliteBranchDecisionStore,
 )
+from .connection_service import (
+    ConnectionService,
+    ConnectionServiceConflict,
+    ConnectionServiceError,
+    ConnectionServiceNotFound,
+)
 from .environment_service import (
     DeploymentBindingService,
     EnvironmentDiff,
@@ -343,6 +349,10 @@ __all__ = (
     "EnvironmentServiceConflict",
     "EnvironmentServiceError",
     "EnvironmentServiceNotFound",
+    "ConnectionService",
+    "ConnectionServiceConflict",
+    "ConnectionServiceError",
+    "ConnectionServiceNotFound",
     "GitCheckoutResult",
     "GitSourceAdapter",
     "GitSourceError",
