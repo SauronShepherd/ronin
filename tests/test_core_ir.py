@@ -296,14 +296,14 @@ def test_from_data_rejects_invalid_top_level_shapes() -> None:
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
-        ("operator", None, "operator"),
-        ("params", None, "params"),
-        ("inputs", None, "inputs"),
-        ("outputs", None, "outputs"),
-        ("origin", None, "origin"),
-        ("ownership", None, "ownership"),
-        ("instance_key", None, "instance_key"),
-        ("id", None, "id"),
+        ("operator", None, "operator must be an object with string keys"),
+        ("params", None, "params must be an object with string keys"),
+        ("inputs", None, "inputs must be an array"),
+        ("outputs", None, "outputs must be an array"),
+        ("origin", None, "origin must be an object with string keys"),
+        ("ownership", None, "ownership must be a string"),
+        ("instance_key", None, "instance_key must be a string"),
+        ("id", None, "id must be a string"),
     ],
 )
 def test_from_data_rejects_missing_required_node_fields(
@@ -319,14 +319,14 @@ def test_from_data_rejects_missing_required_node_fields(
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
-        ("operator", [], "operator"),
-        ("params", [], "params"),
-        ("inputs", "bad", "inputs"),
-        ("outputs", "bad", "outputs"),
-        ("origin", [], "origin"),
-        ("ownership", 1, "ownership"),
-        ("instance_key", 1, "instance_key"),
-        ("id", 1, "id"),
+        ("operator", [], "operator must be an object with string keys"),
+        ("params", [], "params must be an object with string keys"),
+        ("inputs", "bad", "inputs must be an array"),
+        ("outputs", "bad", "outputs must be an array"),
+        ("origin", [], "origin must be an object with string keys"),
+        ("ownership", 1, "ownership must be a string"),
+        ("instance_key", 1, "instance_key must be a string"),
+        ("id", 1, "id must be a string"),
     ],
 )
 def test_from_data_rejects_invalid_required_node_field_shapes(
@@ -341,8 +341,8 @@ def test_from_data_rejects_invalid_required_node_field_shapes(
 
 def test_from_data_rejects_invalid_node_enums_and_metadata_types() -> None:
     for field, value, error, match in (
-        ("ownership", "INVALID", ValueError, "ownership"),
-        ("label", 7, TypeError, "label"),
+        ("ownership", "INVALID", ValueError, "invalid ownership"),
+        ("label", 7, TypeError, "label must be a string or null"),
     ):
         data = _serialized_node()
         node = data["nodes"][0]  # type: ignore[index]
@@ -354,14 +354,14 @@ def test_from_data_rejects_invalid_node_enums_and_metadata_types() -> None:
     node = data["nodes"][0]  # type: ignore[index]
     origin = node["origin"]  # type: ignore[index]
     origin["view"] = "INVALID"  # type: ignore[index]
-    with pytest.raises(ValueError, match="origin view"):
+    with pytest.raises(ValueError, match="invalid origin view"):
         Pipeline.from_data(data)
 
     data = _serialized_node()
     node = data["nodes"][0]  # type: ignore[index]
     origin = node["origin"]  # type: ignore[index]
     origin["reference"] = 9  # type: ignore[index]
-    with pytest.raises(TypeError, match="origin.reference"):
+    with pytest.raises(TypeError, match="origin.reference must be a string or null"):
         Pipeline.from_data(data)
 
 
@@ -370,14 +370,14 @@ def test_from_data_rejects_invalid_operator_port_and_schema_types() -> None:
     node = data["nodes"][0]  # type: ignore[index]
     operator = node["operator"]  # type: ignore[index]
     operator["version"] = True  # type: ignore[index]
-    with pytest.raises(TypeError, match="integer"):
+    with pytest.raises(TypeError, match="operator.version must be an integer"):
         Pipeline.from_data(data)
 
     data = _serialized_node()
     node = data["nodes"][0]  # type: ignore[index]
     output = node["outputs"][0]  # type: ignore[index]
     output["kind"] = "invalid"  # type: ignore[index]
-    with pytest.raises(ValueError, match="port.kind"):
+    with pytest.raises(ValueError, match="port.kind must be batch or stream"):
         Pipeline.from_data(data)
 
     data = _serialized_node()
@@ -385,14 +385,47 @@ def test_from_data_rejects_invalid_operator_port_and_schema_types() -> None:
     output = node["outputs"][0]  # type: ignore[index]
     schema = output["schema"]  # type: ignore[index]
     schema["version"] = 1  # type: ignore[index]
-    with pytest.raises(TypeError, match="schema.version"):
+    with pytest.raises(TypeError, match="schema.version must be a string or null"):
         Pipeline.from_data(data)
 
     data = _serialized_node()
     node = data["nodes"][0]  # type: ignore[index]
     output = node["outputs"][0]  # type: ignore[index]
     output["schema"] = []  # type: ignore[index]
-    with pytest.raises(TypeError, match="schema"):
+    with pytest.raises(TypeError, match="schema must be an object with string keys"):
+        Pipeline.from_data(data)
+
+
+def test_from_data_binds_nested_error_context_and_required_operator_fields() -> None:
+    node = Node.create(
+        operator=OperatorRef("transform.identity", 2),
+        instance_key="nested-errors",
+        inputs=(Port("in"),),
+        outputs=(Port("out"),),
+    )
+    data = Pipeline((node,)).to_data()
+    node_data = data["nodes"][0]  # type: ignore[index]
+
+    for field, value, message in (
+        ("name", None, "operator.name must be a string"),
+        ("version", None, "operator.version must be an integer"),
+    ):
+        mutated = Pipeline((node,)).to_data()
+        operator = mutated["nodes"][0]["operator"]  # type: ignore[index]
+        operator[field] = value  # type: ignore[index]
+        with pytest.raises(TypeError, match=message):
+            Pipeline.from_data(mutated)
+
+    for field, message in (("inputs", "input"), ("outputs", "output")):
+        mutated = Pipeline((node,)).to_data()
+        mutated["nodes"][0][field] = [None]  # type: ignore[index]
+        with pytest.raises(TypeError, match=f"{message} must be an object with string keys"):
+            Pipeline.from_data(mutated)
+
+    node_data["id"] = "wrong-id"  # type: ignore[index]
+    with pytest.raises(
+        ValueError, match="^node id does not match semantic content and instance_key$"
+    ):
         Pipeline.from_data(data)
 
 
