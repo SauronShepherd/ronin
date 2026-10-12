@@ -1,5 +1,4 @@
 import pytest
-
 from studio_core import (
     KnowledgeGraph,
     KnowledgeObject,
@@ -129,3 +128,34 @@ def test_rql_ast_rejects_non_identifier_fields() -> None:
     invalid["source_type"] = "Customer Type"
     with pytest.raises(ValueError, match="identifier"):
         type(query).from_data(invalid)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("where", [], "where must be an object"),
+        ("where", {"field": "x"}, "where keys"),
+        ("where", {"field": "x", "value": " "}, "where.value"),
+        ("join", [], "join must be an object"),
+        ("join", {"type": "Order"}, "join keys"),
+        ("traverse_type", "Customer->", "typed path"),
+        ("limit", 0, "positive integer"),
+        ("limit", True, "positive integer"),
+    ],
+)
+def test_rql_ast_rejects_invalid_nested_contracts(
+    field: str, value: object, message: str
+) -> None:
+    data = parse_rql("SELECT Customer").to_data()
+    data[field] = value
+    with pytest.raises((TypeError, ValueError), match=message):
+        type(parse_rql("SELECT Customer")).from_data(data)
+
+
+def test_rql_enforces_positive_execution_limits_and_preserves_empty_results() -> None:
+    graph = KnowledgeGraph(())
+    with pytest.raises(ValueError, match="configured bound"):
+        execute_rql("SELECT Customer LIMIT 0", graph)
+    with pytest.raises(ValueError, match="configured bound"):
+        execute_rql("SELECT Customer", graph, max_limit=0)
+    assert execute_rql("SELECT Customer", graph).objects == ()

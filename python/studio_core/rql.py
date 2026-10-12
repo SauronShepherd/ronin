@@ -166,7 +166,7 @@ def parse_rql(query: str) -> RqlQuery:
 def execute_rql(query: str, graph: KnowledgeGraph, *, max_limit: int = 10_000) -> RqlResult:
     """Execute the supported read-only SELECT subset with strict bounds."""
     parsed = parse_rql(query)
-    limit = parsed.limit or max_limit
+    limit = parsed.limit if parsed.limit is not None else max_limit
     if limit < 1 or limit > max_limit:
         raise ValueError("RQL limit is outside the configured bound")
     field, value = parsed.where_field, parsed.where_value

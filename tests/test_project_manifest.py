@@ -346,6 +346,43 @@ def test_manifest_rejects_non_mapping_repository_and_runtime_items() -> None:
         ProjectManifest.from_data(data)
 
 
+@pytest.mark.parametrize("role", ["primary", "supporting"])
+@pytest.mark.parametrize("sync_policy", ["manual", "fetch", "fast-forward"])
+def test_manifest_accepts_each_declared_repository_policy_variant(
+    role: str, sync_policy: str
+) -> None:
+    data = _portable_data()
+    project = data["project"]
+    assert isinstance(project, dict)
+    repositories = project["repositories"]
+    assert isinstance(repositories, list)
+    repository = repositories[0]
+    assert isinstance(repository, dict)
+    repository["role"] = role
+    repository["sync_policy"] = sync_policy
+    other = repositories[1]
+    assert isinstance(other, dict)
+    other["role"] = "supporting" if role == "primary" else "primary"
+    restored = ProjectManifest.from_data(data)
+    assert restored.project.repositories[0].role == role
+    assert restored.project.repositories[0].sync_policy == sync_policy
+
+
+def test_manifest_accepts_preferred_requirement_and_runtime_without_auth() -> None:
+    data = _portable_data()
+    project = data["project"]
+    assert isinstance(project, dict)
+    execution = project["execution"]
+    assert isinstance(execution, dict)
+    execution["resolution"] = "strict"
+    execution["requirements"] = [
+        {"name": "gpu", "constraint": "true", "level": "preferred"}
+    ]
+    manifest = ProjectManifest.from_data(data)
+    assert manifest.project.execution.resolution == "strict"
+    assert manifest.project.execution.requirements[0].level == "preferred"
+
+
 def test_repository_binding_validates_adapter_and_sync_policy() -> None:
     repository = RepositoryBinding(
         "code",

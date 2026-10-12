@@ -1,5 +1,4 @@
 import pytest
-
 from studio_core import (
     CapabilityRequirement,
     ExecutionProfile,
@@ -329,3 +328,45 @@ def test_noncomparable_advertised_version_is_evidence_not_exception() -> None:
     check = result.evaluations[0].checks[0]
     assert check.satisfied is False
     assert check.reason == "ordered constraint requires comparable advertised release"
+
+
+def test_unavailable_requested_profile_is_not_selected() -> None:
+    profile = _profile(
+        "runtime",
+        "offline",
+        RuntimeCapability("engine.spark"),
+        available=False,
+    )
+    result = resolve_runtime(
+        ExecutionProfile(
+            runtime=profile.ref,
+            requirements=(CapabilityRequirement("engine.spark"),),
+        ),
+        RuntimeCatalog((profile,)),
+    )
+    assert result.status == "no_match"
+    assert result.requested_profile_found is True
+    assert result.exact_profile_selected is False
+
+
+@pytest.mark.parametrize(
+    ("value", "constraint", "satisfied"),
+    [
+        ("4.0", "<=4.0", True),
+        ("4.0", "<4.0", False),
+        ("4.0", ">4.0", False),
+        ("4.0", "!=4.0", False),
+        ("4.0", "!=3.0", True),
+        ("4.0", "4.0", True),
+        ("4.0", "4.1", False),
+    ],
+)
+def test_runtime_constraint_operators_are_evaluated_independently(
+    value: str, constraint: str, satisfied: bool
+) -> None:
+    profile = _profile("runtime", "constraints", RuntimeCapability("version", value))
+    result = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("version", constraint),)),
+        RuntimeCatalog((profile,)),
+    )
+    assert result.evaluations[0].checks[0].satisfied is satisfied

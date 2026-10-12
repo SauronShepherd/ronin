@@ -283,6 +283,100 @@ def test_host_requirement_parser_rejects_malformed_requirement_components(specif
         _satisfies_host(specifier, "1.0.0")
 
 
+def test_host_requirement_checks_all_comma_separated_bounds() -> None:
+    assert _satisfies_host(">=1,<2,==1.5.0", "1.5.0")
+    assert not _satisfies_host(">=2,<3", "1.5.0")
+    assert not _satisfies_host(">=1,<1", "1.5.0")
+
+
+def test_compose_orders_dependencies_before_dependents() -> None:
+    events: list[str] = []
+
+    class Plugin:
+        def __init__(self, plugin_id: str, dependencies: tuple[PluginDependency, ...] = ()) -> None:
+            self.manifest = PluginManifest(
+                id=plugin_id,
+                name=plugin_id,
+                version="1.0.0",
+                plugin_api="1.0",
+                dependencies=dependencies,
+            )
+
+        def register(self, _context) -> None:
+            events.append(f"register:{self.manifest.id}")
+
+        def startup(self) -> None:
+            events.append(f"start:{self.manifest.id}")
+
+        def shutdown(self) -> None:
+            events.append(f"stop:{self.manifest.id}")
+
+    dependency = Plugin("com.example.dependency")
+    dependent = Plugin(
+        "com.example.dependent", (PluginDependency("com.example.dependency"),)
+    )
+    manager = PluginManager()
+    plan = manager.compose(
+        (
+            PluginRecord(dependent.manifest, dependent, "test"),
+            PluginRecord(dependency.manifest, dependency, "test"),
+        )
+    )
+    assert [record.manifest.id for record in plan.records] == [
+        "com.example.dependency",
+        "com.example.dependent",
+    ]
+    manager.start(plan)
+    manager.stop(plan)
+    assert events == [
+        "register:com.example.dependency",
+        "register:com.example.dependent",
+        "start:com.example.dependency",
+        "start:com.example.dependent",
+        "stop:com.example.dependent",
+        "stop:com.example.dependency",
+    ]
+
+
+def test_critical_start_failure_ignores_shutdown_failure_and_resets_manager() -> None:
+    class First:
+        manifest = PluginManifest("com.example.first", "First", "1.0.0", "1.0")
+
+        def register(self, _context) -> None:
+            return None
+
+        def startup(self) -> None:
+            return None
+
+        def shutdown(self) -> None:
+            raise RuntimeError("cleanup failed")
+
+    class Critical:
+        manifest = PluginManifest(
+            "com.example.critical", "Critical", "1.0.0", "1.0", critical=True
+        )
+
+        def register(self, _context) -> None:
+            return None
+
+        def startup(self) -> None:
+            raise RuntimeError("startup failed")
+
+        def shutdown(self) -> None:
+            return None
+
+    manager = PluginManager()
+    plan = manager.compose(
+        (
+            PluginRecord(First.manifest, First(), "test"),
+            PluginRecord(Critical.manifest, Critical(), "test"),
+        )
+    )
+    with pytest.raises(PluginLoadError, match="critical plugin failed to start"):
+        manager.start(plan)
+    assert manager._started is False
+
+
 def test_noncritical_startup_failure_is_degraded_and_manager_starts() -> None:
     plugin = WorkspacesPlugin()
     plugin.startup = lambda: (_ for _ in ()).throw(RuntimeError("optional unavailable"))

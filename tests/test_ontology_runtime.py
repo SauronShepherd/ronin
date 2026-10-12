@@ -228,6 +228,40 @@ def test_resolve_link_type_enforces_target_side_many_to_one_cardinality() -> Non
         resolve_link_type(link, sources, targets)
 
 
+def test_resolve_link_type_returns_empty_for_nonmatching_values_and_honors_exact_limit() -> None:
+    source = materialize_object_type(_object_type(), ({"customer_id": 7, "name": "Ada"},))
+    target_type = ObjectType(
+        "Order",
+        AssetRef(AssetId("orders"), AssetVersion("1")),
+        ("order_id",),
+        (
+            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("order_id", "string", "order_id", True),
+        ),
+    )
+    targets = materialize_object_type(target_type, ({"customer_id": 8, "order_id": "o1"},))
+    link = LinkType(
+        "orders", "Customer", "Order", "many-to-many", ("customer_id",), ("customer_id",)
+    )
+    assert resolve_link_type(link, source, targets, max_links=1) == ()
+
+
+def test_resolve_link_type_rejects_target_objects_with_wrong_declared_type() -> None:
+    source = materialize_object_type(_object_type(), ({"customer_id": 7, "name": "Ada"},))
+    wrong_type = ObjectType(
+        "Invoice",
+        AssetRef(AssetId("invoices"), AssetVersion("1")),
+        ("customer_id",),
+        (PropertyDefinition("customer_id", "string", "customer_id", True),),
+    )
+    targets = materialize_object_type(wrong_type, ({"customer_id": 7},))
+    link = LinkType(
+        "orders", "Customer", "Order", "many-to-many", ("customer_id",), ("customer_id",)
+    )
+    with pytest.raises(ValueError, match="target objects"):
+        resolve_link_type(link, source, targets)
+
+
 def test_knowledge_graph_limits_apply_to_object_and_neighbor_queries() -> None:
     source = materialize_object_type(_object_type(), ({"customer_id": 1}, {"customer_id": 2}))
     graph = KnowledgeGraph(source, ((source[0].ref, source[1].ref),))
