@@ -85,6 +85,15 @@ def test_connection_text_and_option_key_diagnostics_are_exact() -> None:
         connections._require_safe_option_key("PASSWORD")
 
 
+def test_environment_text_and_safe_ref_diagnostics_are_exact() -> None:
+    with pytest.raises(ValueError, match=r"^field must be non-empty, trimmed, and single-line$"):
+        environments._require_text("", "field")
+    with pytest.raises(
+        ValueError, match=r"^binding source_ref must not contain credential material$"
+    ):
+        environments._safe_ref("Bearer opaque-token", "binding source_ref")
+
+
 @pytest.mark.parametrize(
     "validator",
     [
