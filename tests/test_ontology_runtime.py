@@ -275,3 +275,52 @@ def test_knowledge_graph_limits_apply_to_object_and_neighbor_queries() -> None:
             query(argument, limit=0)
         with pytest.raises(ValueError, match="between 1 and"):
             query(argument, limit=1_000_001)
+
+
+def test_ontology_materialization_and_link_limits_have_exact_contracts() -> None:
+    object_type = _object_type()
+    with pytest.raises(ValueError, match=".") as error:
+        materialize_object_type(object_type, (), max_objects=0)
+    assert str(error.value) == "ontology max_objects must be between 1 and 1000000"
+
+    with pytest.raises(ValueError, match=".") as error:
+        materialize_object_type(object_type, ({"name": "Ada"},))
+    assert str(error.value) == "ontology row 0 is missing required fields: ['customer_id']"
+
+    with pytest.raises(ValueError, match=".") as error:
+        materialize_object_type(object_type, ({"customer_id": None},))
+    assert str(error.value) == "ontology row 0 has missing/null key field: customer_id"
+
+    with pytest.raises(ValueError, match=".") as error:
+        materialize_object_type(object_type, ({"customer_id": 7}, {"customer_id": 7}))
+    assert "ontology object key is duplicated" in str(error.value)
+
+    source = materialize_object_type(object_type, ({"customer_id": 7},))
+    target_type = ObjectType(
+        "Order",
+        AssetRef(AssetId("orders"), AssetVersion("1")),
+        ("customer_id",),
+        (PropertyDefinition("customer_id", "string", "customer_id", True),),
+    )
+    targets = materialize_object_type(target_type, ({"customer_id": 7},))
+    link = LinkType(
+        "orders", "Customer", "Order", "many-to-many", ("customer_id",), ("customer_id",)
+    )
+    with pytest.raises(ValueError, match=".") as error:
+        resolve_link_type(link, source, targets, max_links=0)
+    assert str(error.value) == "ontology max_links must be between 1 and 10000000"
+
+
+def test_ontology_link_resolution_returns_no_match() -> None:
+    source = materialize_object_type(_object_type(), ({"customer_id": 7},))
+    target_type = ObjectType(
+        "Order",
+        AssetRef(AssetId("orders"), AssetVersion("1")),
+        ("customer_id",),
+        (PropertyDefinition("customer_id", "string", "customer_id", True),),
+    )
+    targets = materialize_object_type(target_type, ({"customer_id": 8},))
+    link = LinkType(
+        "orders", "Customer", "Order", "many-to-many", ("customer_id",), ("customer_id",)
+    )
+    assert resolve_link_type(link, source, targets) == ()

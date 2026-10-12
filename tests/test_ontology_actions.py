@@ -132,3 +132,75 @@ def test_ontology_action_rejects_blank_idempotency_and_mismatched_replay() -> No
             idempotency_key="request-1",
             load_idempotent=lambda _key: replay,
         )
+
+
+def test_ontology_action_error_messages_and_write_contract_are_exact() -> None:
+    action = ActionType(
+        "approve",
+        "Order",
+        ("reason",),
+        requirements=(Requirement("execute", ResourceScope("job", "order-1")),),
+        idempotent=True,
+    )
+    target = KnowledgeObjectRef("Order", (("id", "1"),))
+
+    cases = (
+        (
+            lambda: execute_ontology_action(
+                action,
+                KnowledgeObjectRef("Customer", (("id", "1"),)),
+                {"reason": "ok"},
+                authorize=lambda _: True,
+                write=lambda *_: {},
+                idempotency_key="x",
+            ),
+            "ontology action target type does not match action definition",
+        ),
+        (
+            lambda: execute_ontology_action(
+                action,
+                target,
+                {},
+                authorize=lambda _: True,
+                write=lambda *_: {},
+                idempotency_key="x",
+            ),
+            "ontology action inputs must exactly match declared input_fields",
+        ),
+        (
+            lambda: execute_ontology_action(
+                action,
+                target,
+                {"reason": "ok"},
+                authorize=lambda _: True,
+                write=lambda *_: {},
+            ),
+            "idempotent ontology actions require an idempotency_key",
+        ),
+        (
+            lambda: execute_ontology_action(
+                action,
+                target,
+                {"reason": "ok"},
+                authorize=lambda _: False,
+                write=lambda *_: {},
+                idempotency_key="x",
+            ),
+            "ontology action authorization requirement was denied",
+        ),
+        (
+            lambda: execute_ontology_action(
+                action,
+                target,
+                {"reason": "ok"},
+                authorize=lambda _: True,
+                write=lambda *_: [],
+                idempotency_key="x",
+            ),
+            "ontology action write executor must return an object mapping",
+        ),
+    )
+    for invoke, message in cases:
+        with pytest.raises((ValueError, PermissionError)) as error:
+            invoke()
+        assert str(error.value) == message
