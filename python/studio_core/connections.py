@@ -27,7 +27,14 @@ _SENSITIVE_KEY_TERMS = (
 
 
 def _require_text(value: str, field_name: str) -> str:
-    if not value or value.strip() != value or "\n" in value or "\r" in value or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value.strip() != value
+        or "\n" in value
+        or "\r" in value
+        or "\x00" in value
+    ):
         raise ValueError(f"{field_name} must be non-empty, trimmed, and single-line")
     return value
 
