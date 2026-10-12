@@ -4,7 +4,10 @@ import pytest
 from studio_core import FrozenList, FrozenMap, Node, NodeId, OperatorRef, Port, SchemaRef
 from studio_core.ir import (
     _canonical_json,
+    _edge_from_data,
     _frozen_comparison_key,
+    _node_from_data,
+    _node_semantic_payload,
     _port_from_data,
     _port_sort_key,
     _schema_from_data,
@@ -119,3 +122,102 @@ def test_port_from_data_rejects_missing_name_and_invalid_kind() -> None:
         _port_from_data({"kind": "batch", "schema": None})
     with pytest.raises(ValueError, match="port.kind"):
         _port_from_data({"name": "port", "kind": "row", "schema": None})
+
+
+def test_node_semantic_payload_is_explicit_and_identity_bearing() -> None:
+    payload = _node_semantic_payload(
+        OperatorRef("transform.identity", 2),
+        (("table", "orders"), ("limit", 10)),
+        (Port("in", "batch", SchemaRef("orders", "v1")),),
+        (Port("out", "stream"),),
+    )
+    assert payload == (
+        '{"inputs":[{"kind":"batch","name":"in","schema":{"name":"orders",'
+        '"version":"v1"}}],"operator":{"name":"transform.identity","version":2},'
+        '"outputs":[{"kind":"stream","name":"out","schema":null}],'
+        '"params":{"limit":10,"table":"orders"}}'
+    )
+
+
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        ({"version": "v1"}, "schema.name must be a string"),
+        ({"name": "orders", "version": 1}, "schema.version must be a string or null"),
+    ],
+)
+def test_schema_parser_errors_are_stable(value: object, message: str) -> None:
+    with pytest.raises(TypeError) as error:
+        _schema_from_data(value)
+    assert str(error.value) == message
+
+
+@pytest.mark.parametrize(
+    ("value", "error_type", "message"),
+    [
+        ({"kind": "batch", "schema": None}, TypeError, "port.name must be a string"),
+        (
+            {"name": "p", "kind": "row", "schema": None},
+            ValueError,
+            "port.kind must be batch or stream",
+        ),
+    ],
+)
+def test_port_parser_errors_are_stable(
+    value: object, error_type: type[Exception], message: str
+) -> None:
+    with pytest.raises(error_type) as error:
+        _port_from_data(value)  # type: ignore[arg-type]
+    assert str(error.value) == message
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("ownership", "INVALID", "invalid ownership"),
+        ("origin", {"view": "invalid", "reference": None}, "invalid origin view"),
+        ("origin", {"view": "graph", "reference": 1}, "origin.reference must be a string or null"),
+        ("label", 1, "label must be a string or null"),
+    ],
+)
+def test_node_parser_rejects_invalid_metadata_with_stable_messages(
+    field: str, value: object, message: str
+) -> None:
+    node = Node.create(operator=OperatorRef("source.table"), instance_key="node")
+    data = {
+        "id": node.id.value,
+        "instance_key": node.instance_key,
+        "operator": {"name": node.operator.name, "version": node.operator.version},
+        "params": {},
+        "inputs": [],
+        "outputs": [],
+        "origin": {"view": "system", "reference": None},
+        "ownership": "GRAPH",
+        "label": None,
+    }
+    data[field] = value
+    with pytest.raises((TypeError, ValueError)) as error:
+        _node_from_data(data)
+    assert str(error.value) == message
+
+
+@pytest.mark.parametrize(
+    ("field", "message"),
+    [
+        ("source", "edge.source must be a string"),
+        ("source_port", "edge.source_port must be a string"),
+        ("target", "edge.target must be a string"),
+        ("target_port", "edge.target_port must be a string"),
+    ],
+)
+def test_edge_parser_required_field_messages_are_stable(field: str, message: str) -> None:
+    value: dict[str, object] = {
+        "source": "source",
+        "source_port": "out",
+        "target": "target",
+        "target_port": "in",
+    }
+    value[field] = None
+    with pytest.raises(TypeError) as error:
+        _edge_from_data(value)
+    assert str(error.value) == message
