@@ -120,6 +120,23 @@ def test_operator_contract_canonicalizes_and_rejects_conflicts() -> None:
         )
 
 
+@pytest.mark.parametrize("field", ["required_capabilities", "forbidden_capabilities"])
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [("", "non-empty"), ("engine.sql\nextra", "line breaks")],
+)
+def test_operator_contract_rejects_invalid_capability_text(
+    field: str, value: str, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        OperatorContract(
+            OperatorRef("bad.capability"),
+            "Bad Capability",
+            "test",
+            **{field: (value,)},
+        )
+
+
 def test_catalog_is_version_aware_canonical_and_serializable() -> None:
     v1 = OperatorContract(OperatorRef("x", 1), "X1", "test")
     v2 = OperatorContract(OperatorRef("x", 2), "X2", "test")

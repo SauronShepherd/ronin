@@ -147,6 +147,31 @@ def test_bundle_inventory_rejects_unsafe_object_paths(path: str) -> None:
         BundleInventoryObject("project", "project:1", path)
 
 
+@pytest.mark.parametrize(
+    ("path", "message"),
+    [
+        ("objects//project.json", "unsafe components"),
+        ("objects/./project.json", "unsafe components"),
+        ("objects/../project.json", "unsafe components"),
+        ("objects\\project.json", "relative and use forward slashes"),
+        ("/objects/project.json", "relative and use forward slashes"),
+        ("ronin-inventory.json", "must not reuse the inventory path"),
+    ],
+)
+def test_bundle_inventory_reports_each_unsafe_path_reason(path: str, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        BundleInventoryObject("project", "project:1", path)
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["", " ", " project", "project ", "project\njson", "project\rjson", "project\x00json"],
+)
+def test_bundle_inventory_rejects_non_canonical_identity_text(value: str) -> None:
+    with pytest.raises(ValueError, match="non-empty, trimmed, and single-line"):
+        BundleInventoryObject(value, "project:1", "objects/project.json")
+
+
 def test_bundle_inventory_rejects_duplicate_dependencies_and_reserved_inventory_path() -> None:
     with pytest.raises(ValueError, match="dependencies must be unique"):
         BundleInventoryObject(
