@@ -158,3 +158,37 @@ def test_bundle_text_contract_rejects_unportable_values(value: str) -> None:
         ValueError, match="^bundle path must be non-empty, trimmed, and single-line$"
     ):
         portability._require_text(value, "bundle path")
+
+
+@pytest.mark.parametrize("value", ["line\nfeed", "line\rfeed", "nul\x00byte"])
+def test_bundle_text_rejects_each_control_character_independently(value: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^bundle path must be non-empty, trimmed, and single-line$",
+    ):
+        portability._require_text(value, "bundle path")
+
+
+def test_bundle_path_keeps_validation_context_and_exact_diagnostics() -> None:
+    with pytest.raises(
+        ValueError,
+        match="^bundle path must be relative and use forward slashes$",
+    ):
+        portability._require_safe_path("folder\\file.json")
+    with pytest.raises(
+        ValueError,
+        match="^bundle path contains unsafe path components$",
+    ):
+        portability._require_safe_path("folder/../file.json")
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["bearer token", "-----begin private key-----", "password=secret"],
+)
+def test_credential_filter_rejects_each_marker_without_other_markers(value: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^binding source_ref must not contain credential material$",
+    ):
+        portability._reject_credential_material(value, "binding source_ref")
