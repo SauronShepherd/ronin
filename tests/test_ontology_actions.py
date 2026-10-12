@@ -52,6 +52,15 @@ def test_ontology_action_fails_closed_on_auth_and_input_contracts() -> None:
         execute_ontology_action(
             action, target, {}, authorize=lambda _: True, write=lambda *_: {}, idempotency_key="x"
         )
+    with pytest.raises(ValueError, match="exactly"):
+        execute_ontology_action(
+            action,
+            target,
+            {"reason": "x", "unexpected": True},
+            authorize=lambda _: True,
+            write=lambda *_: {},
+            idempotency_key="x",
+        )
 
 
 def test_idempotent_ontology_action_replays_without_repeating_write() -> None:
@@ -85,6 +94,38 @@ def test_idempotent_ontology_action_replays_without_repeating_write() -> None:
     )
     assert first == second
     assert writes == 1
+
+
+def test_idempotent_replay_requires_same_target_and_skips_authorization() -> None:
+    action = ActionType("approve", "Order", (), idempotent=True)
+    original = KnowledgeObjectRef("Order", (("id", "1"),))
+    different_target = KnowledgeObjectRef("Order", (("id", "2"),))
+    replay = execute_ontology_action(
+        action,
+        original,
+        {},
+        authorize=lambda _: True,
+        write=lambda *_: {"status": "approved"},
+        idempotency_key="request-1",
+    )
+    authorized = 0
+
+    def authorize(_requirement: Requirement) -> bool:
+        nonlocal authorized
+        authorized += 1
+        return True
+
+    with pytest.raises(ValueError, match="different ontology action"):
+        execute_ontology_action(
+            action,
+            different_target,
+            {},
+            authorize=authorize,
+            write=lambda *_: {},
+            idempotency_key="request-1",
+            load_idempotent=lambda _key: replay,
+        )
+    assert authorized == 0
 
 
 def test_ontology_action_rejects_target_key_reuse_and_invalid_write_result() -> None:
