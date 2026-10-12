@@ -62,6 +62,15 @@ def test_runtime_capability_validates_and_profile_canonicalizes() -> None:
         )
 
 
+def test_runtime_profile_and_catalog_reject_invalid_member_types() -> None:
+    with pytest.raises(ValueError, match="capabilities must be RuntimeCapability"):
+        RuntimeProfile(RuntimeProfileRef("local", "bad"), capabilities=(object(),))  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="availability must be a boolean"):
+        RuntimeProfile(RuntimeProfileRef("local", "bad"), available=1)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="profiles must be RuntimeProfile"):
+        RuntimeCatalog((object(),))  # type: ignore[arg-type]
+
+
 def test_runtime_catalog_is_canonical_and_rejects_duplicate_refs() -> None:
     alpha = _profile("adapter-a", "alpha")
     beta = _profile("adapter-b", "beta")
@@ -432,7 +441,7 @@ def test_runtime_constraint_operators_are_evaluated_independently(
 
 @pytest.mark.parametrize(
     "value",
-    ["", " leading", "trailing ", "line\nfeed", "line\rfeed"],
+    ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00value"],
 )
 def test_runtime_text_contract_rejects_unportable_values(value: str) -> None:
     with pytest.raises(ValueError, match="runtime capability"):

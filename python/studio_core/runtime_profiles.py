@@ -43,6 +43,10 @@ class RuntimeProfile:
     available: bool = True
 
     def __post_init__(self) -> None:
+        if any(not isinstance(capability, RuntimeCapability) for capability in self.capabilities):
+            raise ValueError("runtime profile capabilities must be RuntimeCapability values")
+        if not isinstance(self.available, bool):
+            raise ValueError("runtime profile availability must be a boolean")
         canonical = tuple(
             sorted(
                 self.capabilities,
@@ -84,6 +88,8 @@ class RuntimeCatalog:
     profiles: tuple[RuntimeProfile, ...] = ()
 
     def __post_init__(self) -> None:
+        if any(not isinstance(profile, RuntimeProfile) for profile in self.profiles):
+            raise ValueError("runtime catalog profiles must be RuntimeProfile values")
         canonical = tuple(
             sorted(
                 self.profiles,
