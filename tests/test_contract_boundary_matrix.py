@@ -5,7 +5,15 @@ from __future__ import annotations
 import math
 
 import pytest
-from studio_core import bundle_inventory, canonical_json, portability, quality
+from studio_core import (
+    AssetId,
+    AssetRef,
+    AssetVersion,
+    bundle_inventory,
+    canonical_json,
+    portability,
+    quality,
+)
 
 
 @pytest.mark.parametrize("value", [None, True, "text", 1, -1, 1.5, [], {}, {"nested": [1, False]}])
@@ -102,3 +110,26 @@ def test_quality_pairs_canonicalize_and_reject_duplicate_keys() -> None:
     )
     with pytest.raises(ValueError, match="keys must be unique"):
         quality._pairs((("key", "one"), ("key", "two")), name="quality parameters")
+
+
+@pytest.mark.parametrize("value", [None, [], [("key",)], [("key", "value", "extra")]])
+def test_quality_pairs_reject_malformed_pair_shapes(value: object) -> None:
+    with pytest.raises(ValueError, match="must contain key/value pairs"):
+        quality._pairs(value, name="quality parameters")  # type: ignore[arg-type]
+
+
+def test_quality_models_fail_closed_for_noncanonical_enum_and_scalar_types() -> None:
+    rule_id = quality.QualityRuleId("rule")
+    with pytest.raises(ValueError, match="unsupported quality rule kind"):
+        quality.QualityRule(rule_id, [], "Rule")  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="quality severity"):
+        quality.QualityRule(rule_id, "null", "Rule", severity=[])  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="quality blocking"):
+        quality.QualityRule(rule_id, "null", "Rule", blocking=1)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="unsupported schema compatibility"):
+        quality.DataContract(
+            AssetRef(AssetId("asset"), AssetVersion("1")),
+            [],  # type: ignore[arg-type]
+        )
+    with pytest.raises(ValueError, match="unsupported quality status"):
+        quality.QualityResult(rule_id, [])  # type: ignore[arg-type]
