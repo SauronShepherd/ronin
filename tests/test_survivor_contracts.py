@@ -74,6 +74,17 @@ def test_role_text_rejects_empty_and_non_string_values_with_stable_diagnostics()
         role_assignments._text(123, "field")
 
 
+def test_connection_text_and_option_key_diagnostics_are_exact() -> None:
+    with pytest.raises(ValueError, match=r"^field must be non-empty, trimmed, and single-line$"):
+        connections._require_text("", "field")
+    with pytest.raises(ValueError, match=r"^field must be non-empty, trimmed, and single-line$"):
+        connections._require_text("value\x00other", "field")
+    with pytest.raises(
+        ValueError, match=r"^secret-bearing connection settings must use secret_refs$"
+    ):
+        connections._require_safe_option_key("PASSWORD")
+
+
 @pytest.mark.parametrize(
     "validator",
     [
