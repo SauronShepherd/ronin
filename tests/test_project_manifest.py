@@ -597,3 +597,87 @@ def test_manifest_required_field_diagnostics_are_exact(
     with pytest.raises(TypeError) as error:
         ProjectManifest.from_data(data)
     assert str(error.value) == message
+
+
+@pytest.mark.parametrize(
+    ("container", "key", "message"),
+    [
+        ("repository", key, "repository")
+        for key in (
+            "adapter_id",
+            "alias",
+            "default_ref",
+            "role",
+            "subdirectory",
+            "sync_policy",
+            "uri",
+        )
+    ]
+    + [("execution", key, "execution") for key in ("requirements", "resolution", "runtime")]
+    + [("runtime", key, "execution.runtime") for key in ("adapter_id", "profile_id")]
+    + [("requirement", key, "requirement") for key in ("constraint", "level", "name")],
+)
+def test_manifest_rejects_each_missing_nested_key(container: str, key: str, message: str) -> None:
+    data = _portable_data()
+    project = data["project"]
+    assert isinstance(project, dict)
+    if container == "repository":
+        repositories = project["repositories"]
+        assert isinstance(repositories, list)
+        target = repositories[0]
+    elif container == "execution":
+        target = project["execution"]
+    elif container == "runtime":
+        execution = project["execution"]
+        assert isinstance(execution, dict)
+        target = execution["runtime"]
+    else:
+        execution = project["execution"]
+        assert isinstance(execution, dict)
+        requirements = execution["requirements"]
+        assert isinstance(requirements, list)
+        target = requirements[0]
+    assert isinstance(target, dict)
+    del target[key]
+    with pytest.raises(ValueError, match=f"^{message} keys mismatch"):
+        ProjectManifest.from_data(data)
+
+
+def test_manifest_round_trip_preserves_all_nested_optional_and_enum_values() -> None:
+    data = _portable_data()
+    project = data["project"]
+    assert isinstance(project, dict)
+    repositories = project["repositories"]
+    assert isinstance(repositories, list)
+    first = repositories[0]
+    assert isinstance(first, dict)
+    first.update(
+        {
+            "adapter_id": "custom",
+            "alias": "source",
+            "default_ref": "release/2026",
+            "role": "primary",
+            "subdirectory": "nested/path",
+            "sync_policy": "manual",
+            "uri": "ssh://git.example.test/source",
+        }
+    )
+    execution = project["execution"]
+    assert isinstance(execution, dict)
+    execution["resolution"] = "strict"
+    execution["runtime"] = {"adapter_id": "local", "profile_id": "python-3.13"}
+    execution["requirements"] = [
+        {"constraint": ">=1", "level": "required", "name": "engine"},
+        {"constraint": None, "level": "preferred", "name": "gpu"},
+    ]
+
+    restored = ProjectManifest.from_data(data)
+    assert [item.alias for item in restored.project.repositories] == ["docs", "source"]
+    assert restored.project.repositories[1].uri == "ssh://git.example.test/source"
+    assert restored.project.repositories[1].subdirectory == "nested/path"
+    assert restored.project.execution.resolution == "strict"
+    assert restored.project.execution.runtime == RuntimeProfileRef("local", "python-3.13")
+    assert restored.project.execution.requirements == (
+        CapabilityRequirement("engine", ">=1"),
+        CapabilityRequirement("gpu", None, "preferred"),
+    )
