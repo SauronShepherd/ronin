@@ -264,7 +264,12 @@ def test_grant_set_json_parser_rejects_invalid_json_and_preserves_payload_defaul
         {},
         {"version": 1, "actions": "read", "resource": {"kind": "project", "identifier": None}},
         {"version": 1, "actions": ["read"], "resource": []},
-        {"version": 1, "actions": ["read"], "resource": {"kind": "project", "identifier": None}, "constraints": []},
+        {
+            "version": 1,
+            "actions": ["read"],
+            "resource": {"kind": "project", "identifier": None},
+            "constraints": [],
+        },
     ],
 )
 def test_grant_payload_parser_rejects_each_invalid_top_level_shape(payload: object) -> None:
