@@ -87,6 +87,14 @@ def test_surface_registry_rejects_mutation_after_freeze() -> None:
         registry.add(_surface())
 
 
+def test_frozen_registry_diagnostic_is_stable() -> None:
+    registry = CapabilityRegistry()
+    registry.freeze()
+    with pytest.raises(PluginValidationError) as error:
+        registry.add("example.read", "example")
+    assert str(error.value) == "plugin registry is frozen"
+
+
 @pytest.mark.parametrize(
     "registry",
     [
@@ -141,6 +149,7 @@ def test_job_event_and_migration_registries_enforce_their_distinct_collision_key
     jobs = JobRegistry()
     handler = object()
     jobs.add("run", "example", handler)
+    assert jobs.items == (type(jobs.items[0])("run", "example", handler),)
     with pytest.raises(PluginValidationError, match="job type collision"):
         jobs.add("run", "other", object())
 
@@ -148,13 +157,42 @@ def test_job_event_and_migration_registries_enforce_their_distinct_collision_key
     events.add("run.completed", "example", handler)
     events.add("run.completed", "example", object())
     assert len(events.items) == 2
+    assert events.items[0].event_type == "run.completed"
+    assert events.items[0].plugin_id == "example"
+    assert events.items[0].handler is handler
     with pytest.raises(PluginValidationError, match="event subscription collision"):
         events.add("run.completed", "example", handler)
 
     migrations = MigrationRegistry()
     migrations.add("v1", "example")
+    assert migrations.items[0].migration_id == "v1"
+    assert migrations.items[0].plugin_id == "example"
     with pytest.raises(PluginValidationError, match="migration collision"):
         migrations.add("v1", "other")
+
+
+def test_owner_registries_preserve_first_owner_and_idempotent_values() -> None:
+    capabilities = CapabilityRegistry()
+    capabilities.add("example.read", "example")
+    assert capabilities.items["example.read"] == "example"
+    capabilities.add("example.read", "example")
+    assert capabilities.items == {"example.read": "example"}
+
+    permissions = PermissionRegistry()
+    permissions.add("example:read", "example")
+    assert permissions.items["example:read"] == "example"
+    permissions.add("example:read", "example")
+    assert permissions.owns("example:read", "example")
+
+
+def test_surface_registry_preserves_command_and_operation_indexes() -> None:
+    registry = SurfaceContributionRegistry()
+    contribution = _surface()
+    registry.add(contribution)
+    assert registry.items == (contribution,)
+    with pytest.raises(PluginValidationError) as command_error:
+        registry.add(_surface(id="example.other", command="inspect-other"))
+    assert str(command_error.value) == "surface operation collision: example.inspect.v1"
 
 
 def test_router_registry_normalizes_methods_but_keeps_paths_exact() -> None:
