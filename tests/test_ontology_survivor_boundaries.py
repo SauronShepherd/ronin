@@ -109,6 +109,12 @@ def test_materialization_accepts_limit_boundary_and_stringifies_key_values() -> 
     assert result[0].ref == KnowledgeObjectRef("Customer", (("customer_id", "7"),))
 
 
+@pytest.mark.parametrize("row", [None, [], {1: "customer"}])
+def test_materialization_rejects_non_object_rows(row: object) -> None:
+    with pytest.raises(ValueError, match="must be an object with string keys"):
+        materialize_object_type(_customer(), (row,))  # type: ignore[arg-type]
+
+
 def test_action_execution_without_idempotency_does_not_load_or_record_replay() -> None:
     action = ActionType("approve", "Order")
     target = KnowledgeObjectRef("Order", (("id", "o1"),))
@@ -126,6 +132,34 @@ def test_action_execution_without_idempotency_does_not_load_or_record_replay() -
     assert result.idempotency_key is None
     assert loaded == []
     assert recorded == []
+
+
+@pytest.mark.parametrize("inputs", [None, [], {1: "reason"}])
+def test_action_execution_rejects_non_object_or_non_string_input_keys(inputs: object) -> None:
+    action = ActionType("approve", "Order")
+    target = KnowledgeObjectRef("Order", (("id", "o1"),))
+    with pytest.raises(ValueError, match="inputs must be an object with string keys"):
+        execute_ontology_action(
+            action,
+            target,
+            inputs,  # type: ignore[arg-type]
+            authorize=lambda _: True,
+            write=lambda *_: {},
+        )
+
+
+def test_action_execution_rejects_non_string_idempotency_key() -> None:
+    action = ActionType("approve", "Order", idempotent=True)
+    target = KnowledgeObjectRef("Order", (("id", "o1"),))
+    with pytest.raises(ValueError, match="idempotency_key must be a string or null"):
+        execute_ontology_action(
+            action,
+            target,
+            {},
+            authorize=lambda _: True,
+            write=lambda *_: {},
+            idempotency_key=1,  # type: ignore[arg-type]
+        )
 
 
 def test_action_replay_returns_saved_result_before_authorization_or_write() -> None:
