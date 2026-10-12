@@ -157,3 +157,47 @@ def test_rql_enforces_positive_execution_limits_and_preserves_empty_results() ->
     with pytest.raises(ValueError, match="configured bound"):
         execute_rql("SELECT Customer", graph, max_limit=0)
     assert execute_rql("SELECT Customer", graph).objects == ()
+
+
+def test_rql_parser_and_ast_diagnostics_are_exact() -> None:
+    cases = (
+        (
+            lambda: parse_rql(123),
+            "RQL query must be non-empty and at most 2000 characters",
+        ),
+        (
+            lambda: parse_rql("DELETE Customer"),
+            "unsupported RQL; expected SELECT Type [WHERE field = 'value'] "
+            "[TRAVERSE TargetType] [JOIN Type ON field = field] [LIMIT n]",
+        ),
+        (
+            lambda: type(parse_rql("SELECT Customer")).from_data(
+                {**parse_rql("SELECT Customer").to_data(), "source_type": "Customer Type"}
+            ),
+            "RQL AST source_type must be a portable identifier",
+        ),
+        (
+            lambda: type(parse_rql("SELECT Customer")).from_data(
+                {**parse_rql("SELECT Customer").to_data(), "limit": 0}
+            ),
+            "RQL AST limit must be a positive integer or null",
+        ),
+    )
+    for invoke, message in cases:
+        with pytest.raises(ValueError, match=".") as error:
+            invoke()
+        assert str(error.value) == message
+
+
+def test_rql_execution_honors_default_max_limit_and_join_no_match() -> None:
+    customers = tuple(
+        KnowledgeObject(
+            KnowledgeObjectRef("Customer", (("id", str(index)),)),
+            (("account", str(index)),),
+        )
+        for index in range(3)
+    )
+    orders = (KnowledgeObject(KnowledgeObjectRef("Order", (("id", "10"),)), (("customer", "99"),)),)
+    graph = KnowledgeGraph(customers + orders)
+    assert len(execute_rql("SELECT Customer", graph, max_limit=2).objects) == 2
+    assert execute_rql("SELECT Customer JOIN Order ON account = customer", graph).objects == ()
