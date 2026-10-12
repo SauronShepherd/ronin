@@ -62,6 +62,7 @@ class RqlQuery:
 
     @classmethod
     def from_data(cls, value: Mapping[str, object]) -> RqlQuery:
+        value = _as_mapping(value, "RQL AST")
         expected = {
             "version",
             "source_type",
@@ -169,6 +170,8 @@ def parse_rql(query: str) -> RqlQuery:
 
 def execute_rql(query: str, graph: KnowledgeGraph, *, max_limit: int = 10_000) -> RqlResult:
     """Execute the supported read-only SELECT subset with strict bounds."""
+    if not isinstance(max_limit, int) or isinstance(max_limit, bool):
+        raise ValueError("RQL max_limit must be a positive integer")
     parsed = parse_rql(query)
     limit = parsed.limit if parsed.limit is not None else max_limit
     if limit < 1 or limit > max_limit:

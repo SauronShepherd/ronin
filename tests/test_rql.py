@@ -185,6 +185,12 @@ def test_rql_enforces_positive_execution_limits_and_preserves_empty_results() ->
     assert execute_rql("SELECT Customer", graph).objects == ()
 
 
+@pytest.mark.parametrize("max_limit", [True, False, 1.5, "10", None])
+def test_rql_rejects_non_integer_execution_limit_configuration(max_limit: object) -> None:
+    with pytest.raises(ValueError, match="max_limit must be a positive integer"):
+        execute_rql("SELECT Customer", KnowledgeGraph(()), max_limit=max_limit)  # type: ignore[arg-type]
+
+
 def test_rql_parser_and_ast_diagnostics_are_exact() -> None:
     cases = (
         (

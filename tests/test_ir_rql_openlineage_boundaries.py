@@ -152,6 +152,12 @@ def test_rql_ast_round_trip_preserves_null_optional_clauses_and_rejects_type_err
         rql.RqlQuery.from_data(invalid)
 
 
+@pytest.mark.parametrize("value", [None, [], "ast", 1])
+def test_rql_ast_requires_object_payload(value: object) -> None:
+    with pytest.raises(TypeError, match="RQL AST must be an object"):
+        rql.RqlQuery.from_data(value)  # type: ignore[arg-type]
+
+
 def test_rql_execution_applies_limit_after_traversal_and_join() -> None:
     customer = KnowledgeObjectRef("Customer", (("id", "1"),))
     first = KnowledgeObjectRef("Order", (("id", "1"),))
