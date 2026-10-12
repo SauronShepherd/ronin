@@ -298,6 +298,54 @@ def test_manifest_rejects_non_array_requirements_and_invalid_runtime_shape() -> 
         ProjectManifest.from_data(data)
 
 
+@pytest.mark.parametrize(
+    ("path", "value", "message"),
+    [
+        (("project", "id"), 1, "project.id"),
+        (("project", "name"), None, "project.name"),
+        (("project", "repositories", 0, "alias"), 1, "repository.alias"),
+        (("project", "repositories", 0, "uri"), [], "repository.uri"),
+        (("project", "repositories", 0, "default_ref"), {}, "repository.default_ref"),
+        (("project", "repositories", 0, "adapter_id"), 1, "repository.adapter_id"),
+        (("project", "execution", "runtime", "adapter_id"), 1, "execution.runtime.adapter_id"),
+        (("project", "execution", "runtime", "profile_id"), None, "execution.runtime.profile_id"),
+        (("project", "execution", "requirements", 0, "name"), 1, "requirement.name"),
+    ],
+)
+def test_manifest_rejects_non_string_required_fields(
+    path: tuple[object, ...], value: object, message: str
+) -> None:
+    data = _portable_data()
+    cursor: object = data
+    for key in path[:-1]:
+        assert isinstance(cursor, (dict, list))
+        cursor = cursor[key]  # type: ignore[index]
+    assert isinstance(cursor, (dict, list))
+    cursor[path[-1]] = value  # type: ignore[index]
+    with pytest.raises(TypeError, match=message):
+        ProjectManifest.from_data(data)
+
+
+def test_manifest_rejects_non_mapping_repository_and_runtime_items() -> None:
+    data = _portable_data()
+    project = data["project"]
+    assert isinstance(project, dict)
+    repositories = project["repositories"]
+    assert isinstance(repositories, list)
+    repositories[0] = {1: "not-a-string-key"}
+    with pytest.raises(TypeError, match="repository must be an object"):
+        ProjectManifest.from_data(data)
+
+    data = _portable_data()
+    project = data["project"]
+    assert isinstance(project, dict)
+    execution = project["execution"]
+    assert isinstance(execution, dict)
+    execution["runtime"] = {1: "not-a-string-key"}
+    with pytest.raises(TypeError, match="execution.runtime must be an object"):
+        ProjectManifest.from_data(data)
+
+
 def test_repository_binding_validates_adapter_and_sync_policy() -> None:
     repository = RepositoryBinding(
         "code",

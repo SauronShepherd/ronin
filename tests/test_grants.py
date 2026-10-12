@@ -162,6 +162,36 @@ def test_bearer_scope_preserves_wildcard_identifier_semantics() -> None:
     assert requirement_to_bearer_scope(requirement) == "ronin:v1:read:project:*"
 
 
+@pytest.mark.parametrize(
+    "value",
+    [
+        "ronin:v1:read:project:%",
+        "ronin:v1:read:project:%0",
+        "ronin:v1:read:project:%GG",
+        "ronin:v1:read:project:%2A",
+        "ronin:v1:read:project:%20p",
+    ],
+)
+def test_bearer_scope_rejects_invalid_or_noncanonical_percent_encoding(value: str) -> None:
+    with pytest.raises(ValueError, match="percent|canonical|identifier"):
+        parse_bearer_scope(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "ronin:v1:read:project:p-1:",
+        "ronin:v1:read:project:p-1:extra",
+        "ronin:v1:read:project:p-1\n",
+        "ronin:v1:read:project:p-1\r",
+        "ronin:v1:read:project: p-1",
+    ],
+)
+def test_bearer_scope_requires_exact_canonical_shape(value: str) -> None:
+    with pytest.raises(ValueError):
+        parse_bearer_scope(value)
+
+
 def test_decision_and_evidence_invariants() -> None:
     grant = Grant(frozenset({"read"}), ResourceScope("project", "p-1"))
     with pytest.raises(ValueError, match="matched"):

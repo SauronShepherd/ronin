@@ -268,6 +268,21 @@ def test_host_requirement_rejects_invalid_versions_and_specifiers() -> None:
         _satisfies_host("~=1.0", "1.0.0")
 
 
+@pytest.mark.parametrize("host", ["", "x.0.0", "1"])
+def test_host_requirement_parser_rejects_malformed_host_versions(host: str) -> None:
+    if host == "1":
+        assert _satisfies_host(">=1", host)
+    else:
+        with pytest.raises(PluginCompatibilityError, match="invalid host version"):
+            _satisfies_host(">=1", host)
+
+
+@pytest.mark.parametrize("specifier", [">=x", "<x", "!="])
+def test_host_requirement_parser_rejects_malformed_requirement_components(specifier: str) -> None:
+    with pytest.raises((PluginCompatibilityError, ValueError)):
+        _satisfies_host(specifier, "1.0.0")
+
+
 def test_noncritical_startup_failure_is_degraded_and_manager_starts() -> None:
     plugin = WorkspacesPlugin()
     plugin.startup = lambda: (_ for _ in ()).throw(RuntimeError("optional unavailable"))

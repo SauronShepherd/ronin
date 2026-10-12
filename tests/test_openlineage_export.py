@@ -37,6 +37,43 @@ def test_declared_edge_uses_other_event_and_digest_run_id() -> None:
     assert event["run"]["runId"] == edge.digest
 
 
+def test_lineage_event_defaults_job_to_operation_and_omits_empty_column_lineage() -> None:
+    edge = LineageEdge(
+        source=AssetRef(AssetId("a"), AssetVersion("1")),
+        target=AssetRef(AssetId("b"), AssetVersion("1")),
+        operation="write",
+        mode="observed",
+    )
+    event = lineage_event_payload(edge, namespace="n", event_time="2026-01-01T00:00:00Z")
+    assert event["job"] == {"namespace": "n", "name": "write"}
+    assert "columnLineage" not in event
+
+
+def test_lineage_event_renders_all_column_mapping_fields() -> None:
+    edge = LineageEdge(
+        source=AssetRef(AssetId("a"), AssetVersion("1")),
+        target=AssetRef(AssetId("b"), AssetVersion("1")),
+        operation="transform",
+        mode="observed",
+        column_mappings=(
+            ColumnMapping("total", ("amount", "tax")),
+            ColumnMapping("customer", ("customer_id",)),
+        ),
+    )
+    event = lineage_event_payload(edge, namespace="n", event_time="2026-01-01T00:00:00Z")
+    assert event["columnLineage"] == {
+        "fields": {
+            "total": {
+                "inputFields": [
+                    {"namespace": "n", "name": "amount"},
+                    {"namespace": "n", "name": "tax"},
+                ]
+            },
+            "customer": {"inputFields": [{"namespace": "n", "name": "customer_id"}]},
+        }
+    }
+
+
 @pytest.mark.parametrize(
     "namespace", ["", " workspace", "workspace ", "workspace\nline", "workspace\rline"]
 )
