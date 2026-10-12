@@ -420,8 +420,12 @@ def test_project_manifest_parser_validates_optional_and_required_nested_types() 
 
 
 def test_project_manifest_private_shape_helpers_distinguish_mapping_sequence_and_string() -> None:
-    assert project_manifest._require_mapping({"x": 1}, "value")["x"] == 1
-    assert project_manifest._require_sequence([1, 2], "value") == [1, 2]
+    mapping = {"x": 1}
+    sequence = [1, 2]
+    assert project_manifest._require_mapping(mapping, "value")["x"] == 1
+    assert project_manifest._require_mapping(mapping, "value") is mapping
+    assert project_manifest._require_sequence(sequence, "value") == sequence
+    assert project_manifest._require_sequence(sequence, "value") is sequence
     with pytest.raises(TypeError, match="value must be an object"):
         project_manifest._require_mapping({1: "bad"}, "value")
     with pytest.raises(TypeError, match="value must be an array"):
@@ -442,6 +446,38 @@ def test_project_manifest_repository_requires_each_text_field(field: str) -> Non
     repository[field] = 1  # type: ignore[index]
     with pytest.raises(TypeError, match=rf"repository\.{field} must be a string"):
         ProjectManifest.from_data(data)
+
+
+def test_project_manifest_repository_text_diagnostics_are_exact() -> None:
+    expected = {
+        "alias": "repository.alias must be a string",
+        "uri": "repository.uri must be a string",
+        "default_ref": "repository.default_ref must be a string",
+        "adapter_id": "repository.adapter_id must be a string",
+    }
+    for field, message in expected.items():
+        data = _manifest_data()
+        repository = data["project"]["repositories"][0]  # type: ignore[index]
+        repository[field] = None  # type: ignore[index]
+        with pytest.raises(TypeError) as error:
+            ProjectManifest.from_data(data)
+        assert str(error.value) == message
+
+
+def test_project_manifest_nested_diagnostics_are_exact() -> None:
+    data = _manifest_data()
+    execution = data["project"]["execution"]  # type: ignore[index]
+    execution["resolution"] = None  # type: ignore[index]
+    with pytest.raises(TypeError) as resolution_error:
+        ProjectManifest.from_data(data)
+    assert str(resolution_error.value) == "execution.resolution must be a string"
+
+    data = _manifest_data()
+    requirement = data["project"]["execution"]["requirements"][0]  # type: ignore[index]
+    requirement["name"] = None  # type: ignore[index]
+    with pytest.raises(TypeError) as requirement_error:
+        ProjectManifest.from_data(data)
+    assert str(requirement_error.value) == "requirement.name must be a string"
 
 
 def test_project_manifest_execution_requires_array_runtime_and_valid_resolution_shapes() -> None:
