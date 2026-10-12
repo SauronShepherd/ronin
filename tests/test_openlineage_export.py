@@ -103,3 +103,23 @@ def test_lineage_event_rejects_invalid_event_time(event_time: str) -> None:
         match="^event_time must be a non-empty UTC timestamp ending in Z$",
     ):
         lineage_event_payload(edge, namespace="n", event_time=event_time)
+
+
+def test_lineage_event_uses_digest_fallback_and_operation_for_blank_job_name() -> None:
+    edge = LineageEdge(
+        source=AssetRef(AssetId("a"), AssetVersion("1")),
+        target=AssetRef(AssetId("b"), AssetVersion("1")),
+        operation="write",
+        mode="declared",
+    )
+    event = lineage_event_payload(
+        edge,
+        namespace="n",
+        job_name="",
+        event_time="2026-01-01T00:00:00Z",
+    )
+    assert event["run"] == {
+        "runId": edge.digest,
+        "facets": {"ronin_lineage": {"mode": "declared"}},
+    }
+    assert event["job"] == {"namespace": "n", "name": "write"}

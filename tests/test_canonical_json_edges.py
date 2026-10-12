@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_core.canonical_json import decode, encode
 
 
@@ -50,3 +49,20 @@ def test_canonical_json_preserves_unicode_and_nested_sequence_order() -> None:
 def test_canonical_json_rejects_non_string_keys_even_when_key_is_bool() -> None:
     with pytest.raises(TypeError, match="object keys must be strings"):
         encode({True: "not-json"})
+
+
+def test_canonical_json_preserves_scalar_types_and_nested_map_order() -> None:
+    payload = {
+        "bool": True,
+        "integer": 1,
+        "float": 1.0,
+        "nested": ({"z": False, "a": None},),
+    }
+    encoded = encode(payload)
+    assert encoded == (b'{"bool":true,"float":1.0,"integer":1,"nested":[{"a":null,"z":false}]}')
+    assert decode(encoded) == {
+        "bool": True,
+        "integer": 1,
+        "float": 1.0,
+        "nested": [{"z": False, "a": None}],
+    }
