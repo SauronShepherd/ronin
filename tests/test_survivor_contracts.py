@@ -67,6 +67,13 @@ def test_shared_text_contracts_report_the_field_and_reject_empty_values(
         validator("", "field")
 
 
+def test_role_text_rejects_empty_and_non_string_values_with_stable_diagnostics() -> None:
+    with pytest.raises(ValueError, match=r"^field must be non-empty trimmed text$"):
+        role_assignments._text("", "field")
+    with pytest.raises(ValueError, match=r"^field must be non-empty trimmed text$"):
+        role_assignments._text(123, "field")
+
+
 @pytest.mark.parametrize(
     "validator",
     [
