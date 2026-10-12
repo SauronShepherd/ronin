@@ -20,6 +20,8 @@ def test_lineage_event_is_standard_shaped_and_deterministic() -> None:
     assert event["run"] == {"runId": "run-42", "facets": {"ronin_lineage": {"mode": "observed"}}}
     assert event["job"] == {"namespace": "workspace", "name": "daily-orders"}
     assert event["inputs"] == [{"namespace": "workspace", "name": "orders@v1"}]
+    assert event["outputs"] == [{"namespace": "workspace", "name": "daily_orders@v2"}]
+    assert event["producer"] == "ronin"
     assert event["columnLineage"] == {
         "fields": {"total": {"inputFields": [{"namespace": "workspace", "name": "amount"}]}}
     }
@@ -84,7 +86,7 @@ def test_lineage_event_rejects_invalid_namespace(namespace: str) -> None:
         operation="write",
         mode="declared",
     )
-    with pytest.raises(ValueError, match="namespace"):
+    with pytest.raises(ValueError, match="^namespace must be non-empty and single-line$"):
         lineage_event_payload(edge, namespace=namespace, event_time="2026-01-01T00:00:00Z")
 
 
@@ -96,5 +98,8 @@ def test_lineage_event_rejects_invalid_event_time(event_time: str) -> None:
         operation="write",
         mode="declared",
     )
-    with pytest.raises(ValueError, match="event_time"):
+    with pytest.raises(
+        ValueError,
+        match="^event_time must be a non-empty UTC timestamp ending in Z$",
+    ):
         lineage_event_payload(edge, namespace="n", event_time=event_time)
