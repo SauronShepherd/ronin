@@ -50,7 +50,17 @@ def test_audit_event_id_conflict_fails_closed(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     "key",
-    ["api_key", "authorization", "cookie", "private_key", "client_secret", "password"],
+    [
+        "password",
+        "secret",
+        "token",
+        "credential",
+        "api_key",
+        "authorization",
+        "cookie",
+        "private_key",
+        "client_secret",
+    ],
 )
 def test_audit_metadata_rejects_secret_keys(key: str) -> None:
     with pytest.raises(ValueError, match="credential-bearing"):
@@ -66,6 +76,28 @@ def test_audit_metadata_rejects_secret_keys(key: str) -> None:
 
 
 @pytest.mark.parametrize(
+    "key",
+    [
+        "PASSWORD",
+        "SeCrEt",
+        "TOKEN",
+        "Credential",
+        "API_KEY",
+        "Authorization",
+        "COOKIE",
+        "Private_Key",
+        "CLIENT_SECRET",
+    ],
+)
+def test_audit_metadata_rejects_secret_keys_case_insensitively(key: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^audit metadata must not contain credential-bearing keys$",
+    ):
+        _metadata(((key, "not-allowed"),))
+
+
+@pytest.mark.parametrize(
     "value", ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00byte"]
 )
 def test_audit_metadata_rejects_unportable_values(value: str) -> None:
@@ -75,7 +107,10 @@ def test_audit_metadata_rejects_unportable_values(value: str) -> None:
 
 def test_audit_metadata_rejects_credential_material_and_duplicate_keys() -> None:
     for value in ("Bearer abc123", "-----BEGIN PRIVATE KEY-----"):
-        with pytest.raises(ValueError, match="credential material"):
+        with pytest.raises(
+            ValueError,
+            match="^audit metadata must not contain credential material$",
+        ):
             _metadata((("source", value),))
     with pytest.raises(ValueError, match="keys must be unique"):
         _metadata((("source", "one"), ("source", "two")))
