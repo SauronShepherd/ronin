@@ -49,6 +49,58 @@ def test_non_http_registries_reject_collisions_and_freeze() -> None:
         registry.add_job("later", "plugin-a", handler)
 
 
+def test_contribution_registries_preserve_same_owner_and_reject_cross_owner_conflicts() -> None:
+    registry = ContributionRegistry()
+
+    def handler() -> None:
+        return None
+
+    registry.add_capability("example.read", "plugin-a")
+    registry.add_capability("example.read", "plugin-a")
+    assert registry.capabilities == {"example.read": "plugin-a"}
+    with pytest.raises(PluginValidationError, match="capability .* already provided"):
+        registry.add_capability("example.read", "plugin-b")
+
+    registry.add_permission("example:read", "plugin-a")
+    registry.add_permission("example:read", "plugin-a")
+    assert registry.permissions == {"example:read": "plugin-a"}
+    with pytest.raises(PluginValidationError, match="permission .* already owned"):
+        registry.add_permission("example:read", "plugin-b")
+
+    registry.add_route("get", "/v1/example", "plugin-a", handler, permission="example:read")
+    with pytest.raises(PluginValidationError, match="route collision: GET /v1/example"):
+        registry.add_route("GET", "/v1/example", "plugin-a", handler, permission="example:read")
+
+
+def test_contribution_registries_detect_event_and_surface_collisions() -> None:
+    registry = ContributionRegistry()
+
+    def handler() -> None:
+        return None
+
+    registry.add_event_subscription("example.created", "plugin-a", handler)
+    with pytest.raises(PluginValidationError, match="event subscription collision"):
+        registry.add_event_subscription("example.created", "plugin-a", handler)
+
+    registry.add_capability("example.read", "plugin-a")
+    registry.add_permission("example:read", "plugin-a")
+    contribution = {
+        "id": "plugin-a.inspect",
+        "plugin_id": "plugin-a",
+        "namespace": "example",
+        "command": "inspect",
+        "operation_id": "example.inspect.v1",
+        "capability": "example.read",
+        "permission": "example:read",
+        "path": "/v1/example/inspect",
+    }
+    from studio_core.plugins import SurfaceContribution
+
+    registry.add_surface(SurfaceContribution(**contribution))
+    with pytest.raises(PluginValidationError, match="surface contribution collision"):
+        registry.add_surface(SurfaceContribution(**contribution))
+
+
 def test_all_contribution_registries_are_frozen_together() -> None:
     registry = ContributionRegistry()
 

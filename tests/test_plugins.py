@@ -336,6 +336,42 @@ def test_compose_orders_dependencies_before_dependents() -> None:
     ]
 
 
+def test_compose_rejects_duplicate_ids_and_dependency_cycles() -> None:
+    class Plugin:
+        def __init__(self, plugin_id: str, dependencies=()) -> None:
+            self.manifest = PluginManifest(
+                plugin_id, plugin_id, "1.0.0", "1.0", dependencies=dependencies
+            )
+
+        def register(self, _context) -> None:
+            return None
+
+        def startup(self) -> None:
+            return None
+
+        def shutdown(self) -> None:
+            return None
+
+    first = Plugin("com.example.same")
+    with pytest.raises(PluginValidationError, match="duplicate plugin id"):
+        PluginManager().compose(
+            (
+                PluginRecord(first.manifest, first, "test"),
+                PluginRecord(first.manifest, first, "test"),
+            )
+        )
+
+    left = Plugin("com.example.left", (PluginDependency("com.example.right"),))
+    right = Plugin("com.example.right", (PluginDependency("com.example.left"),))
+    with pytest.raises(PluginValidationError, match="dependency cycle"):
+        PluginManager().compose(
+            (
+                PluginRecord(left.manifest, left, "test"),
+                PluginRecord(right.manifest, right, "test"),
+            )
+        )
+
+
 def test_critical_start_failure_ignores_shutdown_failure_and_resets_manager() -> None:
     class First:
         manifest = PluginManifest("com.example.first", "First", "1.0.0", "1.0")
