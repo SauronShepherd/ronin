@@ -17,6 +17,7 @@ def _text(value: str, name: str) -> str:
         or value != value.strip()
         or "\n" in value
         or "\r" in value
+        or "\x00" in value
     ):
         raise ValueError(f"{name} must be non-empty and single-line")
     return value
