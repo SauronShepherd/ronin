@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_core import (
     ActionType,
     KnowledgeObjectRef,
@@ -86,3 +85,50 @@ def test_idempotent_ontology_action_replays_without_repeating_write() -> None:
     )
     assert first == second
     assert writes == 1
+
+
+def test_ontology_action_rejects_target_key_reuse_and_invalid_write_result() -> None:
+    action = ActionType("approve", "Order", (), idempotent=False)
+    target = KnowledgeObjectRef("Order", (("id", "1"),))
+    with pytest.raises(ValueError, match="target type"):
+        execute_ontology_action(
+            action,
+            KnowledgeObjectRef("Customer", (("id", "1"),)),
+            {},
+            authorize=lambda _: True,
+            write=lambda *_: {},
+        )
+    with pytest.raises(ValueError, match="mapping"):
+        execute_ontology_action(
+            action,
+            target,
+            {},
+            authorize=lambda _: True,
+            write=lambda *_: [],
+        )
+
+
+def test_ontology_action_rejects_blank_idempotency_and_mismatched_replay() -> None:
+    action = ActionType("approve", "Order", (), idempotent=True)
+    target = KnowledgeObjectRef("Order", (("id", "1"),))
+    with pytest.raises(ValueError, match="idempotency_key"):
+        execute_ontology_action(
+            action, target, {}, authorize=lambda _: True, write=lambda *_: {}, idempotency_key="  "
+        )
+    replay = execute_ontology_action(
+        ActionType("different", "Order", (), idempotent=False),
+        target,
+        {},
+        authorize=lambda _: True,
+        write=lambda *_: {"status": "old"},
+    )
+    with pytest.raises(ValueError, match="different"):
+        execute_ontology_action(
+            action,
+            target,
+            {},
+            authorize=lambda _: True,
+            write=lambda *_: {},
+            idempotency_key="request-1",
+            load_idempotent=lambda _key: replay,
+        )

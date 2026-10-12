@@ -11,6 +11,19 @@ from studio_core.ir import (
 )
 
 
+def test_node_param_lookup_does_not_return_neighbouring_sorted_parameter() -> None:
+    node = Node.create(
+        operator=OperatorRef("transform.identity"),
+        instance_key="lookup-boundaries",
+        params={"alpha": 1, "omega": 2},
+    )
+
+    assert node.param("alpha") == 1
+    assert node.param("omega") == 2
+    for missing in ("", "aardvark", "middle", "zzzz"):
+        assert node.param(missing) is None
+
+
 def test_node_comparison_and_hash_cover_null_and_string_values() -> None:
     first = Node.create(
         operator=OperatorRef("transform.identity"),

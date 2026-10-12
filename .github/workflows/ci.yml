@@ -348,7 +348,7 @@ jobs:
           test ! -L src
           ln -s python src
       - name: Run mutation tests
-        run: mutmut run
+        run: mutmut run --max-children 8
       - name: Export mutation evidence
         run: mutmut export-cicd-stats
       - name: Report mutation evidence

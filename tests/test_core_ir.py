@@ -2,6 +2,7 @@ import json
 from dataclasses import FrozenInstanceError
 
 import pytest
+import studio_core.ir as ir
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from studio_core import (
@@ -496,3 +497,127 @@ def test_pipeline_order_is_canonical_for_arbitrary_insertion_order(keys: list[st
 
 def test_node_id_string_representation_is_value() -> None:
     assert str(NodeId("abc")) == "abc"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (None, None),
+        ({"name": "orders"}, SchemaRef("orders")),
+        ({"name": "orders", "version": "v1"}, SchemaRef("orders", "v1")),
+    ],
+)
+def test_ir_schema_parser_handles_optional_version_and_null_schema(
+    value: object, expected: SchemaRef | None
+) -> None:
+    assert ir._schema_from_data(value) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        ({"name": None}, "schema.name"),
+        ({"name": "orders", "version": 1}, "schema.version"),
+        ([], "schema"),
+    ],
+)
+def test_ir_schema_parser_rejects_invalid_shapes(value: object, message: str) -> None:
+    with pytest.raises((TypeError, ValueError), match=message):
+        ir._schema_from_data(value)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ({"name": "in", "kind": "batch", "schema": None}, Port("in")),
+        (
+            {"name": "events", "kind": "stream", "schema": {"name": "event", "version": "v1"}},
+            Port("events", "stream", SchemaRef("event", "v1")),
+        ),
+    ],
+)
+def test_ir_port_parser_preserves_kind_and_schema(value: object, expected: Port) -> None:
+    assert ir._port_from_data(value) == expected  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        {"name": None, "kind": "batch", "schema": None},
+        {"name": "out", "kind": "batch", "schema": 1},
+        {"name": "out", "kind": "invalid", "schema": None},
+        {"name": "out", "kind": None, "schema": None},
+    ],
+)
+def test_ir_port_parser_rejects_invalid_name_kind_and_schema(value: object) -> None:
+    with pytest.raises((TypeError, ValueError)):
+        ir._port_from_data(value)  # type: ignore[arg-type]
+
+
+def test_ir_edge_parser_reads_all_fields_and_rejects_each_wrong_type() -> None:
+    edge_data = {
+        "source": "source",
+        "source_port": "out",
+        "target": "target",
+        "target_port": "in",
+    }
+    edge = ir._edge_from_data(edge_data)
+    assert edge == Edge(NodeId("source"), "out", NodeId("target"), "in")
+    for field in edge_data:
+        invalid = dict(edge_data)
+        invalid[field] = None
+        with pytest.raises(TypeError, match=f"edge.{field}"):
+            ir._edge_from_data(invalid)
+
+
+def test_ir_node_parser_preserves_all_optional_and_semantic_fields() -> None:
+    node = Node.create(
+        operator=OperatorRef("source.table", 3),
+        instance_key="node-parser",
+        params={"table": "orders", "flags": {"enabled": True}},
+        inputs=(Port("in", "batch", SchemaRef("orders", "v1")),),
+        outputs=(Port("out", "stream"),),
+        origin=Origin("notebook", "cell-7"),
+        ownership="USER",
+        label="Orders",
+    )
+    restored = ir._node_from_data(Pipeline((node,)).to_data()["nodes"][0])  # type: ignore[arg-type]
+    assert restored == node
+    assert restored.operator == OperatorRef("source.table", 3)
+    assert restored.origin == Origin("notebook", "cell-7")
+    assert restored.ownership == "USER"
+    assert restored.label == "Orders"
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("operator", {"name": "source.table", "version": True}),
+        ("operator", {"name": None, "version": 1}),
+        ("params", []),
+        ("inputs", [None]),
+        ("outputs", [None]),
+        ("origin", {"view": "notebook", "reference": 1}),
+        ("ownership", "invalid"),
+        ("instance_key", ""),
+    ],
+)
+def test_ir_node_parser_rejects_semantic_field_mutations(field: str, value: object) -> None:
+    data = _serialized_node()
+    node_data = data["nodes"][0]  # type: ignore[index]
+    node_data[field] = value  # type: ignore[index]
+    with pytest.raises((TypeError, ValueError)):
+        ir._node_from_data(node_data)  # type: ignore[arg-type]
+
+
+def test_ir_require_helpers_distinguish_mapping_sequence_string_and_bytes() -> None:
+    mapping = {"key": "value"}
+    sequence = ["a", "b"]
+    assert ir._require_mapping(mapping, "mapping") == mapping
+    assert ir._require_sequence(sequence, "sequence") == sequence
+    for value in (None, [], {1: "value"}, "text", b"bytes", bytearray(b"bytes")):
+        with pytest.raises(TypeError):
+            ir._require_mapping(value, "mapping")
+    for value in (None, {}, "text", b"bytes", bytearray(b"bytes")):
+        with pytest.raises(TypeError):
+            ir._require_sequence(value, "sequence")

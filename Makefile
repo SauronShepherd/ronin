@@ -197,8 +197,10 @@ coverage-storage-files-full:
 		--baseline=workspaces.py=61.62
 	@rm -f coverage-storage.json
 
+MUTMUT_MAX_CHILDREN ?= 8
+
 mutation:
 	@rm -rf mutants
 	@test ! -e src && test ! -L src
-	@cp -a python src; trap 'rm -rf src' 0; PYTHONPATH=python:packages/pyronin/src mutmut run && mutmut export-cicd-stats && mutmut results --all true > mutants/mutmut-results.txt
+	@cp -a python src; trap 'rm -rf src' 0; PYTHONPATH=python:packages/pyronin/src mutmut run --max-children $(MUTMUT_MAX_CHILDREN) && mutmut export-cicd-stats && mutmut results --all true > mutants/mutmut-results.txt
 	@$(PYTHON) -m tools.mutation_gate mutants/mutmut-cicd-stats.json
