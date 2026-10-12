@@ -300,6 +300,42 @@ def test_constraint_limit_and_duplicate_messages_are_stable() -> None:
     assert str(duplicate.value) == "authorization constraint keys must be unique"
 
 
+@pytest.mark.parametrize(
+    "key",
+    [
+        "password",
+        "secret",
+        "token",
+        "credential",
+        "api_key",
+        "api-key",
+        "private_key",
+        "private-key",
+        "access_key",
+        "access-key",
+        "SeCrEt",
+    ],
+)
+def test_every_sensitive_constraint_key_is_rejected_case_insensitively(key: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^authorization constraints must not contain credential material$",
+    ):
+        Grant(frozenset({"read"}), ResourceScope("project", None), {key: "safe"})
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["BEARER abc", "-----BEGIN PRIVATE KEY-----", "-----begin private key-----secret"],
+)
+def test_credential_material_detection_is_case_insensitive_and_exact(value: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^authorization constraints must not contain credential material$",
+    ):
+        Grant(frozenset({"read"}), ResourceScope("project", None), {"safe": value})
+
+
 def test_bearer_scope_encoding_is_exact_and_percent_canonical() -> None:
     requirement = Requirement("evidence:read", ResourceScope("project", "a/b"))
     assert requirement_to_bearer_scope(requirement) == "ronin:v1:evidence%3Aread:project:a%2Fb"
