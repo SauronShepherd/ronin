@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+import pytest
 from studio_core import (
     AssetId,
     AssetRef,
@@ -182,3 +183,41 @@ def test_custom_python_rule_uses_injected_sandboxed_predicate() -> None:
         rule, [{"id": 1}], contract=contract, custom_python=lambda _rule, rows: rows[0]["id"] == 1
     )
     assert result.status == "passed"
+
+
+def test_quality_contract_and_result_round_trip_preserves_sorted_pairs() -> None:
+    from studio_core import QualityResult
+
+    rule = QualityRule(
+        QualityRuleId("parameters"),
+        "custom_python",
+        "safe rule",
+        parameters=(("z", "last"), ("a", "first")),
+    )
+    contract = DataContract(_REF, "full", rules=(rule,), freshness_seconds=60)
+    assert DataContract.from_json(contract.to_json()) == contract
+    result = QualityResult(QualityRuleId("parameters"), "passed", (("z", "last"), ("a", "first")))
+    assert QualityResult.from_payload(result.to_payload()) == result
+
+
+def test_quality_contract_rejects_duplicate_or_invalid_sensitive_parameters() -> None:
+    from studio_core import QualityResult
+
+    with pytest.raises(ValueError, match="unique"):
+        QualityRule(
+            QualityRuleId("duplicate"),
+            "domain",
+            "duplicate",
+            parameters=(("x", "1"), ("x", "2")),
+        )
+    with pytest.raises(ValueError, match="credential-bearing"):
+        QualityRule(
+            QualityRuleId("secret"),
+            "domain",
+            "secret",
+            parameters=(("Api_Token", "secret"),),
+        )
+    with pytest.raises(ValueError, match="freshness_seconds"):
+        DataContract(_REF, "exact", freshness_seconds=0)
+    with pytest.raises(ValueError, match="quality result message"):
+        QualityResult(QualityRuleId("bad"), "error", message=" bad ")

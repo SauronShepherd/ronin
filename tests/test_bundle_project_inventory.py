@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from studio_core import (
     ExecutionProfile,
     Project,
@@ -130,3 +129,42 @@ def test_bundle_inventory_round_trip_preserves_semantic_digest() -> None:
     restored = BundleInventory.from_json(inventory.to_json())
     assert restored == inventory
     assert restored.digest == inventory.digest
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "",
+        ".",
+        "./objects.json",
+        "objects/../project.json",
+        "objects\\project.json",
+        "/objects.json",
+    ],
+)
+def test_bundle_inventory_rejects_unsafe_object_paths(path: str) -> None:
+    with pytest.raises(ValueError, match="bundle inventory path"):
+        BundleInventoryObject("project", "project:1", path)
+
+
+def test_bundle_inventory_rejects_duplicate_dependencies_and_reserved_inventory_path() -> None:
+    with pytest.raises(ValueError, match="dependencies must be unique"):
+        BundleInventoryObject(
+            "project", "project:1", "objects/project.json", dependencies=("x:1", "x:1")
+        )
+    with pytest.raises(ValueError, match="must not reuse"):
+        BundleInventoryObject("project", "project:1", "ronin-inventory.json")
+
+
+def test_bundle_inventory_unresolved_bindings_are_unique_and_sorted() -> None:
+    from studio_core.portability import BindingRequest
+
+    first = BindingRequest("runtime", "runtime:python", True, "python")
+    second = BindingRequest("secret", "secret:git", False, "git")
+    inventory = BundleInventory(
+        (
+            BundleInventoryObject("a", "a:1", "objects/a.json", binding_requests=(second, first)),
+            BundleInventoryObject("b", "b:1", "objects/b.json", binding_requests=(first,)),
+        )
+    )
+    assert inventory.unresolved_bindings == tuple(sorted((first, second)))

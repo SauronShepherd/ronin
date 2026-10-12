@@ -121,6 +121,44 @@ def test_transport_preserves_last_sink_error_as_cause() -> None:
     assert isinstance(raised.value.__cause__, RuntimeError)
 
 
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("eventTime", "", "eventTime"),
+        ("eventTime", "not-a-timestamp", "eventTime"),
+        ("run", {"runId": "  "}, "run.runId"),
+        ("job", {"namespace": "ns", "name": "  "}, "namespace and name"),
+    ],
+)
+def test_schema_validator_rejects_empty_required_values(
+    field: str, value: object, message: str
+) -> None:
+    event = dict(EVENT)
+    event[field] = value
+    with pytest.raises(ValueError, match=message):
+        validate_openlineage_event(event)
+
+
+def test_transport_digest_is_canonical_and_invalid_events_are_not_published() -> None:
+    sink = Sink()
+    transport = OpenLineageTransport(sink)
+    reordered = {
+        "producer": "ronin",
+        "job": {"name": "job", "namespace": "ns"},
+        "run": {"runId": "run-1"},
+        "eventTime": "2026-09-21T00:00:00Z",
+        "eventType": "COMPLETE",
+    }
+    first = transport.publish(EVENT)
+    second = transport.publish(reordered)
+    assert first.event_digest == second.event_digest
+    assert second.deduplicated
+    assert len(sink.events) == 1
+    with pytest.raises(ValueError, match="producer"):
+        transport.publish({**EVENT, "producer": "other"})
+    assert len(sink.events) == 1
+
+
 def test_http_sink_posts_canonical_json_with_bounded_configuration() -> None:
     calls = []
 
