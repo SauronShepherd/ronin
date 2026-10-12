@@ -255,6 +255,14 @@ def test_pipeline_rejects_duplicate_node_ids() -> None:
         Pipeline((node, node))
 
 
+def test_pipeline_rejects_duplicate_edges() -> None:
+    source = _node("source", outputs=(BATCH_OUT,))
+    sink = _node("sink", inputs=(BATCH_IN,))
+    edge = Edge(source.id, "out", sink.id, "in")
+    with pytest.raises(ValueError, match=r"^duplicate edge$"):
+        Pipeline((source, sink), (edge, edge))
+
+
 def test_pipeline_rejects_edge_to_unknown_node() -> None:
     source = _node("source", outputs=(BATCH_OUT,))
     with pytest.raises(ValueError, match=r"^edge references unknown node$"):

@@ -10,6 +10,8 @@ from studio_core.ir import (
     _node_semantic_payload,
     _port_from_data,
     _port_sort_key,
+    _require_mapping,
+    _require_sequence,
     _schema_from_data,
 )
 
@@ -109,6 +111,14 @@ def test_schema_from_data_preserves_null_and_string_versions() -> None:
     assert _schema_from_data({"name": "orders", "version": "v1"}).version == "v1"
 
 
+@pytest.mark.parametrize("key", ["name"])
+def test_schema_from_data_requires_each_declared_field(key: str) -> None:
+    value: dict[str, object] = {"name": "orders", "version": "v1"}
+    del value[key]
+    with pytest.raises(TypeError, match=f"schema.{key}"):
+        _schema_from_data(value)
+
+
 @pytest.mark.parametrize("kind", ["batch", "stream"])
 def test_port_from_data_accepts_declared_kinds_and_optional_schema(kind: str) -> None:
     port = _port_from_data({"name": "port", "kind": kind, "schema": None})
@@ -122,6 +132,14 @@ def test_port_from_data_rejects_missing_name_and_invalid_kind() -> None:
         _port_from_data({"kind": "batch", "schema": None})
     with pytest.raises(ValueError, match="port.kind"):
         _port_from_data({"name": "port", "kind": "row", "schema": None})
+
+
+@pytest.mark.parametrize("key", ["name", "kind"])
+def test_port_from_data_requires_each_declared_field(key: str) -> None:
+    value: dict[str, object] = {"name": "port", "kind": "batch", "schema": None}
+    del value[key]
+    with pytest.raises((TypeError, ValueError), match=f"port.{key}|schema"):
+        _port_from_data(value)
 
 
 def test_node_semantic_payload_is_explicit_and_identity_bearing() -> None:
@@ -221,3 +239,24 @@ def test_edge_parser_required_field_messages_are_stable(field: str, message: str
     with pytest.raises(TypeError) as error:
         _edge_from_data(value)
     assert str(error.value) == message
+
+
+@pytest.mark.parametrize("key", ["source", "source_port", "target", "target_port"])
+def test_edge_parser_requires_each_declared_field(key: str) -> None:
+    value: dict[str, object] = {
+        "source": "source",
+        "source_port": "out",
+        "target": "target",
+        "target_port": "in",
+    }
+    del value[key]
+    with pytest.raises(TypeError, match=f"edge.{key}"):
+        _edge_from_data(value)
+
+
+def test_ir_shape_helpers_accept_tuples_and_reject_non_array_collections() -> None:
+    assert _require_mapping({"name": "value"}, "mapping") == {"name": "value"}
+    assert _require_sequence(("a", "b"), "sequence") == ("a", "b")
+    for value in (set(), frozenset(), iter(("a",))):
+        with pytest.raises(TypeError, match="array"):
+            _require_sequence(value, "sequence")
