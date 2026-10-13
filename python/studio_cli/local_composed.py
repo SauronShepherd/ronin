@@ -6,7 +6,12 @@ import os
 from pathlib import Path
 from typing import Any, cast
 
-from studio_core import GrantSet, WorkspaceId
+from studio_core import AssetHandle, ConnectionId, GrantSet, WorkspaceId
+from studio_connectors import (
+    IngestionHTTPAdapter,
+    SqliteConnectorCheckpointStore,
+    builtin_connector_registry,
+)
 from studio_data_engineering import (
     PostgresRevisionStore,
     RevisionApplication,
@@ -48,6 +53,8 @@ from studio_storage import (
     SqliteAuditStore,
     SqliteCatalogStore,
     SqliteConnectionStore,
+    EnvironmentSecretResolver,
+    CompositeSecretResolver,
     SqliteEnvironmentStore,
     SqliteJobStore,
     SqliteKnowledgeGraphStore,
@@ -251,6 +258,33 @@ def build_local_composed_from_env() -> LocalServerComposition:
         SqliteConnectionStore(database, migration_now=now) if postgres_dsn is None else scheduler
     )
     connection_service = ConnectionService(scheduler, cast(Any, connection_store))
+    connector_registry = builtin_connector_registry()
+    ingestion_adapter = None
+    if postgres_dsn is None:
+        checkpoint_store = SqliteConnectorCheckpointStore(database)
+        secrets_resolver = CompositeSecretResolver(environment=EnvironmentSecretResolver())
+
+        def resolve_connection(reference: str) -> object:
+            return connection_service.get(workspace_id, ConnectionId(reference))
+
+        def resolve_asset(reference: str) -> AssetHandle:
+            if "::" not in reference:
+                raise ValueError(
+                    "asset_ref must use connection_id::qualified_asset_name in the local profile"
+                )
+            connection_ref, qualified_name = reference.split("::", 1)
+            parts = tuple(qualified_name.split("."))
+            if not connection_ref or not parts or any(not part for part in parts):
+                raise ValueError("asset_ref must contain a connection id and qualified asset name")
+            return AssetHandle(ConnectionId(connection_ref), parts[:-1], parts[-1])
+
+        ingestion_adapter = IngestionHTTPAdapter(
+            connector_registry,
+            checkpoint_store,
+            resolve_connection,
+            resolve_asset,
+            lambda _reference: secrets_resolver,
+        )
     quality_reader = (
         QualityHTTPAdapter(SqliteQualityStore(database, migration_now=now))
         if postgres_dsn is None
@@ -281,6 +315,8 @@ def build_local_composed_from_env() -> LocalServerComposition:
         quality_reader=quality_reader,
         finops_reader=finops_reader,
         data_engineering_reader=data_engineering_reader,
+        connector_registry=connector_registry,
+        ingestion_adapter=ingestion_adapter,
         plugin_host=plugin_host,
         plugin_routes_enabled=plugin_routes_enabled,
     )
