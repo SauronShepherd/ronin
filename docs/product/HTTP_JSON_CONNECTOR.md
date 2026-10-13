@@ -4,6 +4,23 @@
 only non-secret options and `secret_refs`; bearer material is resolved at read
 time and is never included in definitions, checkpoints, logs, or evidence.
 
+The local control-plane CLI exposes the same public connector contract:
+
+```text
+RONIN_CONTROL_PLANE_URL=http://127.0.0.1:8081 \
+  ronin connectors capabilities
+ronin connectors preview --connector-id http.json \
+  --connection-ref conn-1 --asset-ref conn-1::orders \
+  --destination-ref local/orders --checkpoint-identity orders-v1 --mode snapshot
+ronin connectors plan --connector-id http.json \
+  --connection-ref conn-1 --asset-ref conn-1::orders \
+  --destination-ref local/orders --checkpoint-identity orders-v1 --mode snapshot
+ronin connectors checkpoint-health --checkpoint-identity orders-v1
+```
+
+`RONIN_CONTROL_PLANE_URL` defaults to `http://127.0.0.1:8081`; the job API
+continues to use `RONIN_URL` (default `http://127.0.0.1:8080`).
+
 ## Safety defaults
 
 - `base_url` must use HTTPS unless `allow_http=true` is explicitly selected.
