@@ -24,7 +24,7 @@ The machine-readable output is retained in `mutants/mutmut-cicd-stats.json` in t
 After the frozen campaign, the surviving-mutant inventory was reviewed and
 implemented as ordinary product-contract tests and, where the input contract
 was too permissive, fail-closed production validation. The remediation is
-tracked on the current branch head `293aba897896ce9c4e36f84fc910f578bf0655e4`.
+tracked by the survivor-boundary and validation commits on this branch.
 
 - The normal suite completed with `3488 passed, 22 skipped`.
 - The public v1 status ledger consistency check passed.
