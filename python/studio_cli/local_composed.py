@@ -141,7 +141,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
     control_token = _env("RONIN_CONTROL_PLANE_TOKEN")
     raw_permissions = _env(
         "RONIN_CONTROL_PLANE_PERMISSIONS",
-        "scheduler.read,scheduler.write,workspace.read,project.read",
+        "scheduler.read,scheduler.write,workspace.read,workspace.write,project.read",
     )
     permissions = frozenset(
         cast(Permission, item.strip()) for item in raw_permissions.split(",") if item.strip()
