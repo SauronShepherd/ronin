@@ -97,6 +97,26 @@ def test_connection_safe_option_key_rejects_each_sensitive_marker(term: str) -> 
 
 
 @pytest.mark.parametrize(
+    "value", ["", " leading", "trailing ", "line\nvalue", "line\rvalue", "nul\x00value"]
+)
+def test_connection_text_validator_preserves_exact_context(value: str) -> None:
+    with pytest.raises(ValueError, match=".") as error:
+        connections._require_text(value, "connection option key")
+    assert str(error.value) == (
+        "connection option key must be non-empty, trimmed, and single-line"
+    )
+
+
+def test_connection_safe_option_key_preserves_exact_context() -> None:
+    with pytest.raises(ValueError, match=".") as error:
+        connections._require_safe_option_key(" ")
+    assert str(error.value) == (
+        "connection option key must be non-empty, trimmed, and single-line"
+    )
+    assert connections._require_safe_option_key("XXXX") == "XXXX"
+
+
+@pytest.mark.parametrize(
     "term",
     [
         "password=",
