@@ -35,6 +35,25 @@ def test_scheduler_pool_name_validator_rejects_noncanonical_values() -> None:
             scheduler_resources._require_pool_name(value)  # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize(
+    "value", ["", " leading", "trailing ", "line\nvalue", "line\rvalue", "nul\x00value"]
+)
+def test_scheduler_pool_name_validator_rejects_each_boundary_exactly(value: str) -> None:
+    with pytest.raises(ValueError, match=".") as error:
+        scheduler_resources._require_pool_name(value)
+    assert str(error.value) == (
+        "resource pool name must be non-empty, trimmed, and single-line"
+    )
+
+
+def test_scheduler_pool_name_validator_preserves_inclusive_length_boundary() -> None:
+    assert scheduler_resources._require_pool_name("X" * 256) == "X" * 256
+    assert scheduler_resources._require_pool_name("XXXX") == "XXXX"
+    with pytest.raises(ValueError, match=".") as error:
+        scheduler_resources._require_pool_name("X" * 257)
+    assert str(error.value) == "resource pool name must be at most 256 characters"
+
+
 def test_reproducible_manifest_text_map_sorts_and_validates_keys_and_values() -> None:
     assert reproducible_manifest._text_map(
         {"z": "last", "a": "first"}, "configuration"
