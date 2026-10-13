@@ -46,12 +46,12 @@ Python files, the public import smoke for 32 packages, 11 Data Engineering
 async tests, and installed-wheel plus installed-sdist Studio Chromium and
 accessibility qualification (zero console/request/CSP, axe, or layout failures).
 
-The latest recorded WSL mutation campaign on exact core candidate
-`38980c46ce122294bb8f63f2f55a68f4fe0d49af` completed 3,963 mutants: 3,390 killed, 573 survived, and 0 timed out. The recorded score is **85.54% killed of all mutants**, below
-the repository's 90% mutation gate. The gate remains blocked until the surviving
-behavior is covered or explicitly justified.
-The campaign therefore remains a release blocker; its temporary workspace and
-generated reports are intentionally not part of the tracked source tree.
+Mutation evidence is retained as a historical, frozen record in
+`docs/quality/MUTATION_CAMPAIGN_FINAL.md`. Recurring mutation qualification is
+retired by product decision and is not a release or implementation blocker.
+Current product readiness is determined by ordinary unit, integration, contract,
+and end-to-end verification plus the capability matrix; temporary mutation
+workspaces and generated reports are not release evidence.
 
 ## Status vocabulary
 

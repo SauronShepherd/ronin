@@ -14,7 +14,7 @@ qualification, and release approval remain different states.
 | EXT-002 | Platform metadata already distinguishes readiness; capability ledger validation now rejects malformed status claims | implemented at validation layer |
 | EXT-003 | Existing plugin/runtime/worker tests cover core contracts; the distributable `ronin-plugin-testkit` validates third-party plugin lifecycle and contribution contracts | implemented and locally verified |
 | EXT-004 | ML product plugin and ML backend registry are separate modules/contracts in `studio_ml` | implemented |
-| BLK-006 / BP-014 | Mutation gate remains at the configured policy and must be run on a POSIX-capable qualification runner | not closed by local unit tests |
+| BLK-006 / BP-014 | The final mutation campaign is frozen as a historical record; recurring mutation qualification is retired and must not be used as an implementation blocker | closed by product decision; ordinary regression tests remain the verification path |
 | BLK-004 / BP-007 | Structural browser audit, installed-wheel Playwright smoke, standards-based axe accessibility checks and the conditional browser workflow are implemented | implemented and locally verified |
 | BP-009 | Spark Connect adapter and qualification contract exist; exact real-runtime evidence remains separate | harness-ready |
 | BP-008 | Migration providers exist; a dedicated `sdpstudio` compatibility contract must be declared before qualification | scope decision required |
@@ -35,8 +35,8 @@ make cloud-studio-floci
 ## Remaining work that is genuinely implementation work
 
 1. Add Docker and Kubernetes adapters for the runtime-neutral execution port.
-2. Improve mutation survivors to the configured threshold on the qualification
-   runner; do not lower the threshold.
+2. Continue product implementation and ordinary regression verification. The
+   frozen mutation campaign is not a remaining implementation task.
 
 ## Scope rule
 

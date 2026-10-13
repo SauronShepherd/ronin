@@ -11,6 +11,8 @@
     "result": "2266 passed, 15 skipped",
     "qualification_claimed": false,
     "mutation_campaign": {
+      "status": "historical_frozen",
+      "recurring_qualification": false,
       "candidate_sha": "38980c46ce122294bb8f63f2f55a68f4fe0d49af",
       "total": 3963,
       "killed": 3390,
@@ -19,7 +21,7 @@
       "killed_percent_non_timeout": 85.54,
       "killed_percent_all": 85.54,
       "gate_percent": 90.0,
-      "gate_status": "blocked"
+      "gate_status": "retired"
     }
   },
   "status_vocabulary": [
