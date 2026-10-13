@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import inspect
+
 import pytest
 from studio_core import catalog, plugin_events, transport_policy
 
@@ -57,6 +59,53 @@ def test_plugin_event_inbox_runs_handler_once_and_enforces_capacity() -> None:
         inbox.process_once("other", _event(event_id="event-2"), lambda _value: None)
     with pytest.raises(plugin_events.PluginEventError, match="consumer_id"):
         inbox.process_once(123, event, lambda _value: None)  # type: ignore[arg-type]
+
+
+def test_plugin_event_outbox_capacity_pending_and_publish_contracts_are_exact() -> None:
+    event = _event()
+    second = _event(event_id="event-2")
+    outbox = plugin_events.InMemoryOutbox(max_events=1)
+    record = outbox.append(event)
+    assert outbox.pending(limit=1) == (record,)
+    with pytest.raises(
+        plugin_events.PluginEventError, match=r"^outbox capacity exceeded$"
+    ):
+        outbox.append(second)
+    for limit in (0, 1001):
+        with pytest.raises(
+            ValueError, match=r"^pending limit must be between 1 and 1000$"
+        ):
+            outbox.pending(limit=limit)
+    outbox.mark_published(event.event_id)
+    assert outbox._records[event.event_id] == plugin_events.OutboxRecord(  # noqa: SLF001
+        event, record.digest, True
+    )
+    with pytest.raises(KeyError) as missing:
+        outbox.mark_published("missing")
+    assert missing.value.args == ("missing",)
+    assert (
+        inspect.signature(plugin_events.InMemoryOutbox.pending).parameters["limit"].default
+        == 100
+    )
+
+
+def test_plugin_event_inbox_capacity_and_diagnostics_are_exact() -> None:
+    event = _event()
+    inbox = plugin_events.InMemoryInbox(max_events=1)
+    inbox.process_once("consumer", event, lambda _value: None)
+    with pytest.raises(
+        plugin_events.PluginEventError, match=r"^inbox capacity exceeded$"
+    ):
+        inbox.process_once("other", _event(event_id="event-2"), lambda _value: None)
+    with pytest.raises(
+        plugin_events.PluginEventError,
+        match=r"^consumer_id must be non-empty and trimmed$",
+    ):
+        plugin_events.InMemoryInbox().process_once(" ", event, lambda _value: None)
+    assert (
+        inspect.signature(plugin_events.InMemoryInbox).parameters["max_events"].default
+        == 100_000
+    )
 
 
 def test_transport_policy_closed_vocabulary_and_plaintext_decision_are_distinct() -> None:
