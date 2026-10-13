@@ -123,6 +123,49 @@ def test_audit_metadata_is_sorted_and_does_not_alias_input() -> None:
     assert result == (("a-key", "first"), ("z-key", "last"))
 
 
+def test_audit_metadata_preserves_exact_context_for_invalid_key_and_value() -> None:
+    with pytest.raises(ValueError, match=".") as key_error:
+        _metadata((("bad\nkey", "value"),))
+    assert str(key_error.value) == "audit metadata key must be non-empty, trimmed, and single-line"
+
+    with pytest.raises(ValueError, match=".") as value_error:
+        _metadata((("key", "bad\rvalue"),))
+    assert str(value_error.value) == (
+        "audit metadata value must be non-empty, trimmed, and single-line"
+    )
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "prefix-PASSWORD-suffix",
+        "prefix-SECRET-suffix",
+        "prefix-TOKEN-suffix",
+        "prefix-CREDENTIAL-suffix",
+        "prefix-API_KEY-suffix",
+        "prefix-AUTHORIZATION-suffix",
+        "prefix-COOKIE-suffix",
+        "prefix-PRIVATE_KEY-suffix",
+        "prefix-CLIENT_SECRET-suffix",
+    ],
+)
+def test_audit_metadata_rejects_sensitive_markers_inside_keys(key: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^audit metadata must not contain credential-bearing keys$",
+    ):
+        _metadata(((key, "public-value"),))
+
+
+@pytest.mark.parametrize("value", ["bearer token", "-----begin private key-----"])
+def test_audit_metadata_rejects_each_credential_material_marker(value: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^audit metadata must not contain credential material$",
+    ):
+        _metadata((("source", value),))
+
+
 @pytest.mark.parametrize(
     "value",
     ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00byte"],
