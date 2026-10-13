@@ -142,6 +142,15 @@ def test_environment_safe_ref_rejects_each_credential_marker(term: str) -> None:
     )
 
 
+def test_environment_safe_ref_preserves_exact_context_and_safe_values() -> None:
+    with pytest.raises(ValueError, match=".") as error:
+        environments._safe_ref(" ", "binding source_ref")
+    assert str(error.value) == (
+        "binding source_ref must be non-empty, trimmed, and single-line"
+    )
+    assert environments._safe_ref("XXXX", "binding source_ref") == "XXXX"
+
+
 @pytest.mark.parametrize("kind", ["equals", "contains", "prefix"])
 @pytest.mark.parametrize("case_sensitive", [False, True])
 def test_diagnostic_matches_enforces_exact_kind_semantics(kind: str, case_sensitive: bool) -> None:
