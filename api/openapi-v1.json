@@ -60,8 +60,8 @@
     "/v1/platform/connectors/preview": {
       "post": {
         "operationId": "previewConnectorIngestion",
-        "description": "Preview a bounded connector read and return its sync plan and checkpoint health.",
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+        "description": "Preview a bounded connector read and return its sync plan and checkpoint health. In the local SQLite profile, asset_ref uses connection_id::qualified_asset_name (for example conn-1::public.orders).",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["connector_id", "connection_ref", "asset_ref", "destination_ref", "checkpoint_identity", "mode"], "properties": {"connector_id": {"type": "string", "minLength": 1}, "connection_ref": {"type": "string", "minLength": 1}, "asset_ref": {"type": "string", "minLength": 1}, "destination_ref": {"type": "string", "minLength": 1}, "checkpoint_identity": {"type": "string", "minLength": 1}, "mode": {"type": "string", "enum": ["snapshot", "incremental"]}}}}}},
         "responses": {
           "200": {"description": "Bounded ingestion preview", "content": {"application/json": {"schema": {"type": "object"}}}},
           "400": {"$ref": "#/components/responses/Error"},
@@ -73,8 +73,8 @@
     "/v1/platform/connectors/plan": {
       "post": {
         "operationId": "planConnectorIngestion",
-        "description": "Validate and plan a bounded connector sync without reading source data.",
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+        "description": "Validate and plan a bounded connector sync without reading source data. In the local SQLite profile, asset_ref uses connection_id::qualified_asset_name (for example conn-1::public.orders).",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["connector_id", "connection_ref", "asset_ref", "destination_ref", "checkpoint_identity", "mode"], "properties": {"connector_id": {"type": "string", "minLength": 1}, "connection_ref": {"type": "string", "minLength": 1}, "asset_ref": {"type": "string", "minLength": 1}, "destination_ref": {"type": "string", "minLength": 1}, "checkpoint_identity": {"type": "string", "minLength": 1}, "mode": {"type": "string", "enum": ["snapshot", "incremental"]}}}}}},
         "responses": {
           "200": {"description": "Connector sync plan and checkpoint health", "content": {"application/json": {"schema": {"type": "object"}}}},
           "400": {"$ref": "#/components/responses/Error"},
