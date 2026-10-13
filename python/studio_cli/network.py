@@ -260,6 +260,15 @@ class ControlPlaneClient:
             raise ControlPlaneError("Ronin connector capabilities response violated the protocol")
         return payload
 
+    def connector_discover(self, connector_id: str, connection_ref: str) -> dict[str, object]:
+        return _connector_result(
+            self.request(
+                "POST",
+                "/v1/platform/connectors/discover",
+                payload={"connector_id": connector_id, "connection_ref": connection_ref},
+            )
+        )
+
     def connector_preview(self, payload: dict[str, object]) -> dict[str, object]:
         return _connector_result(
             self.request("POST", "/v1/platform/connectors/preview", payload=payload)

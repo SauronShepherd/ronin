@@ -57,7 +57,7 @@ The current source tree already provides reusable platform primitives:
 - OpenAPI 3.1 and `pyronin`;
 - typed least-privilege grants;
 - public portable execution evidence;
-- CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, `jobs`, `cancel`, connector ingestion inspection/planning via `connectors`, and bounded migration inventory reports via `migrate inventory`;
+- CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, `jobs`, `cancel`, connector discovery/ingestion inspection/planning via `connectors`, and bounded migration inventory reports via `migrate inventory`;
 - local Git revision identity;
 - real-Docker worker execution;
 - production local image/Compose topology;

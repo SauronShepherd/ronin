@@ -89,6 +89,7 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("GET", "/v1/platform/plugins"),
         ("GET", "/v1/platform/capabilities"),
         ("GET", "/v1/platform/connectors"),
+        ("POST", "/v1/platform/connectors/discover"),
         ("POST", "/v1/platform/connectors/preview"),
         ("POST", "/v1/platform/connectors/plan"),
         ("POST", "/v1/platform/connectors/checkpoint-health"),
@@ -2787,6 +2788,20 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     self._error(HTTPStatus.CONFLICT, "feature_conflict", str(exc))
                     return
                 self._write_json(HTTPStatus.CREATED, stored.to_payload())
+                return
+            if segments == ("v1", "platform", "connectors", "discover"):
+                if query:
+                    raise ValueError("connector discovery does not accept query parameters")
+                adapter = self._server().ingestion_adapter
+                discover = getattr(adapter, "discover", None) if adapter is not None else None
+                if not callable(discover):
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "connectors_unavailable",
+                        "connector discovery is not configured",
+                    )
+                    return
+                self._write_json(HTTPStatus.OK, discover(self._read_json()))
                 return
             if segments == ("v1", "platform", "connectors", "preview"):
                 if query:

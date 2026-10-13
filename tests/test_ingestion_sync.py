@@ -6,13 +6,32 @@ from studio_connectors import (
     SqliteConnectorCheckpointStore,
     plan_sync,
 )
-from studio_core import ConnectorCapabilities, ConnectorDescriptor
+from studio_core import (
+    AssetHandle,
+    ConnectionId,
+    ConnectorCapabilities,
+    ConnectorDescriptor,
+    DiscoveredAsset,
+    FieldSchema,
+)
 
 
 class _Connector:
     def __init__(self, connector_id: str, incremental: bool) -> None:
         self.descriptor = ConnectorDescriptor(
             connector_id, 1, ConnectorCapabilities(read=True, incremental=incremental)
+        )
+
+
+class _DiscoveringConnector(_Connector):
+    def discover(self, connection, secrets):
+        del secrets
+        return (
+            DiscoveredAsset(
+                AssetHandle(ConnectionId(connection.id), ("public",), "orders"),
+                "table",
+                (FieldSchema("id", "integer", False),),
+            ),
         )
 
 
@@ -105,3 +124,26 @@ def test_ingestion_http_adapter_validates_and_delegates_preview() -> None:
     assert adapter.preview(body)["resolved"] == ["conn/a", "asset/a", "conn/a"]
     with pytest.raises(ValueError, match="invalid fields"):
         adapter.preview({**body, "extra": True})
+
+
+def test_ingestion_http_adapter_discovers_bounded_assets() -> None:
+    registry = ConnectorRegistry((_DiscoveringConnector("postgres", False),))
+    adapter = IngestionHTTPAdapter(
+        registry,
+        object(),
+        lambda _ref: type("Connection", (), {"id": "conn/a", "connector_id": "postgres"})(),
+        lambda ref: ref,
+        lambda ref: ref,
+    )
+
+    result = adapter.discover({"connector_id": "postgres", "connection_ref": "conn/a"})
+
+    assert result["schema"] == "ronin.connector-discovery/v1"
+    assert result["count"] == 1
+    assert result["items"] == [
+        {
+            "asset_ref": "conn/a::public.orders",
+            "kind": "table",
+            "fields": [{"name": "id", "data_type": "integer", "nullable": False}],
+        }
+    ]

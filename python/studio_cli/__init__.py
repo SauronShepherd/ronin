@@ -81,7 +81,8 @@ def _parser() -> argparse.ArgumentParser:
     commands.add_parser("worker", help="run the local durable Docker worker")
     connectors = commands.add_parser("connectors", help="inspect and plan connector ingestion")
     connectors.add_argument(
-        "connectors_command", choices=("capabilities", "preview", "plan", "checkpoint-health")
+        "connectors_command",
+        choices=("capabilities", "discover", "preview", "plan", "checkpoint-health"),
     )
     connectors.add_argument("--connector-id")
     connectors.add_argument("--connection-ref")
@@ -518,6 +519,12 @@ def _connectors(namespace: argparse.Namespace) -> int:
     command = cast(str, namespace.connectors_command)
     if command == "capabilities":
         result = client.connector_capabilities()
+    elif command == "discover":
+        connector_id = cast(str | None, namespace.connector_id)
+        connection_ref = cast(str | None, namespace.connection_ref)
+        if connector_id is None or connection_ref is None:
+            raise CliError("connectors discover requires --connector-id and --connection-ref")
+        result = client.connector_discover(connector_id, connection_ref)
     elif command == "checkpoint-health":
         identity = cast(str | None, namespace.checkpoint_identity)
         if identity is None:

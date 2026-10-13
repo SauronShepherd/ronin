@@ -40,6 +40,37 @@ class IngestionHTTPAdapter:
     def capabilities(self) -> dict[str, object]:
         return self._registry.capability_payload()
 
+    def discover(self, body: object) -> dict[str, object]:
+        if not isinstance(body, Mapping) or set(body) != {"connector_id", "connection_ref"}:
+            raise ValueError(
+                "connector discovery body must contain connector_id and connection_ref"
+            )
+        connector_id = body["connector_id"]
+        connection_ref = body["connection_ref"]
+        if not isinstance(connector_id, str) or not connector_id.strip():
+            raise ValueError("connector_id must be non-empty text")
+        if not isinstance(connection_ref, str) or not connection_ref.strip():
+            raise ValueError("connection_ref must be non-empty text")
+        connector = self._registry.require(connector_id)
+        connection = self._connection(connection_ref)
+        if getattr(connection, "connector_id", connector_id) != connector_id:
+            raise ValueError("connection connector_id does not match connector_id")
+        assets = connector.discover(connection, self._secrets(connection_ref))
+        items = [
+            {
+                "asset_ref": (
+                    f"{asset.handle.connection_id}::{asset.handle.qualified_name}"
+                ),
+                "kind": asset.kind,
+                "fields": [
+                    {"name": field.name, "data_type": field.data_type, "nullable": field.nullable}
+                    for field in asset.fields
+                ],
+            }
+            for asset in assets
+        ]
+        return {"schema": "ronin.connector-discovery/v1", "items": items, "count": len(items)}
+
     def preview(self, body: object) -> dict[str, object]:
         definition = self._definition(body)
         return self._service.preview(

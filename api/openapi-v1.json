@@ -57,6 +57,19 @@
         }
       }
     },
+    "/v1/platform/connectors/discover": {
+      "post": {
+        "operationId": "discoverConnectorAssets",
+        "description": "Discover bounded source assets for a configured connection.",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["connector_id", "connection_ref"], "properties": {"connector_id": {"type": "string", "minLength": 1}, "connection_ref": {"type": "string", "minLength": 1}}}}}},
+        "responses": {
+          "200": {"description": "Discovered connector assets", "content": {"application/json": {"schema": {"type": "object"}}}},
+          "400": {"$ref": "#/components/responses/Error"},
+          "401": {"$ref": "#/components/responses/Error"},
+          "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
     "/v1/platform/connectors/preview": {
       "post": {
         "operationId": "previewConnectorIngestion",
