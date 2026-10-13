@@ -19,6 +19,22 @@ This repository records one final mutation-testing campaign. Mutation testing is
 
 The machine-readable output is retained in `mutants/mutmut-cicd-stats.json` in the local campaign workspace. The command completed all 4,306 mutants; the non-zero exit status came from the quality gate, not from an interrupted run.
 
+## Post-campaign remediation evidence
+
+After the frozen campaign, the surviving-mutant inventory was reviewed and
+implemented as ordinary product-contract tests and, where the input contract
+was too permissive, fail-closed production validation. The remediation is
+tracked on the current branch head `293aba897896ce9c4e36f84fc910f578bf0655e4`.
+
+- The normal suite completed with `3488 passed, 22 skipped`.
+- The public v1 status ledger consistency check passed.
+- The directed survivor-boundary tests and Ruff checks passed.
+- No mutation campaign was rerun, so no post-remediation mutation percentage
+  is claimed. The historical `86.88%` remains the only measured score.
+
+This evidence demonstrates regression coverage for the reviewed survivors; it
+does not manufacture a new mutation score after the campaign was closed.
+
 ## Permanent decision
 
 This campaign is closed. Do not run `make mutation`, `mutmut run`, or an equivalent mutation campaign again. Future work must use ordinary unit, integration, contract, and end-to-end tests. If mutation testing is ever reconsidered, it requires an explicit product decision and a new campaign plan; it is not an automatic follow-up or CI job.
