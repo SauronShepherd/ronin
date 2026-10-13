@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from studio_cli import main
 
 
@@ -46,6 +45,27 @@ def test_doctor_core_succeeds_without_docker_but_reports_verdict(monkeypatch, ca
     assert "git: ok (/usr/bin/git)" in output.out
     assert "docker: fail (not found)" in output.out
     assert "doctor: required core checks passed" in output.out
+
+
+def test_connectors_capabilities_uses_control_plane_client(monkeypatch, capsys) -> None:
+    class _Client:
+        def connector_capabilities(self):
+            return {"items": [{"connector_id": "http.json"}], "count": 1}
+
+    monkeypatch.setattr("studio_cli._control_plane_client", lambda: _Client())
+
+    assert main(["connectors", "capabilities"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "items": [{"connector_id": "http.json"}],
+        "count": 1,
+    }
+
+
+def test_connectors_plan_requires_complete_definition(monkeypatch, capsys) -> None:
+    monkeypatch.setattr("studio_cli._control_plane_client", lambda: object())
+
+    assert main(["connectors", "plan", "--connector-id", "http.json"]) == 2
+    assert "requires --connection-ref" in capsys.readouterr().err
 
 
 def test_doctor_all_still_requires_docker(monkeypatch, capsys) -> None:

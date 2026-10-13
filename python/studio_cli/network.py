@@ -254,6 +254,39 @@ class ControlPlaneClient:
     def cancel(self, job_id: str) -> dict[str, object]:
         return _job(self.request("POST", f"/v1/jobs/{quote(job_id, safe='')}/cancel"))
 
+    def connector_capabilities(self) -> dict[str, object]:
+        payload = self.request("GET", "/v1/platform/connectors")
+        if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+            raise ControlPlaneError("Ronin connector capabilities response violated the protocol")
+        return payload
+
+    def connector_preview(self, payload: dict[str, object]) -> dict[str, object]:
+        return _connector_result(
+            self.request("POST", "/v1/platform/connectors/preview", payload=payload)
+        )
+
+    def connector_plan(self, payload: dict[str, object]) -> dict[str, object]:
+        return _connector_result(
+            self.request("POST", "/v1/platform/connectors/plan", payload=payload)
+        )
+
+    def connector_checkpoint_health(self, identity: str) -> dict[str, object]:
+        if not identity or identity != identity.strip():
+            raise ValueError("checkpoint identity must be non-empty and trimmed")
+        return _connector_result(
+            self.request(
+                "POST",
+                "/v1/platform/connectors/checkpoint-health",
+                payload={"checkpoint_identity": identity},
+            )
+        )
+
+
+def _connector_result(payload: object) -> dict[str, object]:
+    if not isinstance(payload, dict):
+        raise ControlPlaneError("Ronin connector response must be a JSON object")
+    return payload
+
 
 def _job(payload: object) -> dict[str, object]:
     if not isinstance(payload, dict) or set(payload) != _JOB_FIELDS:

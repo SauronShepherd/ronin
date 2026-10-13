@@ -79,6 +79,16 @@ def _parser() -> argparse.ArgumentParser:
     plan.add_argument("-t", "--target", required=True)
     commands.add_parser("serve", help="run the local Ronin HTTP control plane")
     commands.add_parser("worker", help="run the local durable Docker worker")
+    connectors = commands.add_parser("connectors", help="inspect and plan connector ingestion")
+    connectors.add_argument(
+        "connectors_command", choices=("capabilities", "preview", "plan", "checkpoint-health")
+    )
+    connectors.add_argument("--connector-id")
+    connectors.add_argument("--connection-ref")
+    connectors.add_argument("--asset-ref")
+    connectors.add_argument("--destination-ref")
+    connectors.add_argument("--checkpoint-identity")
+    connectors.add_argument("--mode", choices=("snapshot", "incremental"), default="snapshot")
     plugins = commands.add_parser("plugins", help="inspect installed Ronin plugins")
     plugins.add_argument(
         "plugins_command", choices=("list", "surfaces", "validate", "lock", "rollback")
@@ -384,6 +394,12 @@ def _client() -> ControlPlaneClient:
     return ControlPlaneClient(_env("RONIN_URL", "http://127.0.0.1:8080"), _token())
 
 
+def _control_plane_client() -> ControlPlaneClient:
+    return ControlPlaneClient(
+        _env("RONIN_CONTROL_PLANE_URL", "http://127.0.0.1:8081"), _token()
+    )
+
+
 def _parse_params(values: Sequence[str]) -> dict[str, object]:
     result: dict[str, object] = {}
     for value in values:
@@ -494,6 +510,38 @@ def _jobs(namespace: argparse.Namespace) -> int:
 def _cancel(namespace: argparse.Namespace) -> int:
     job = _client().cancel(cast(str, namespace.job_id))
     _emit_job(job, as_json=cast(bool, namespace.json))
+    return 0
+
+
+def _connectors(namespace: argparse.Namespace) -> int:
+    client = _control_plane_client()
+    command = cast(str, namespace.connectors_command)
+    if command == "capabilities":
+        result = client.connector_capabilities()
+    elif command == "checkpoint-health":
+        identity = cast(str | None, namespace.checkpoint_identity)
+        if identity is None:
+            raise CliError("connectors checkpoint-health requires --checkpoint-identity")
+        result = client.connector_checkpoint_health(identity)
+    else:
+        names = (
+            "connector_id",
+            "connection_ref",
+            "asset_ref",
+            "destination_ref",
+            "checkpoint_identity",
+        )
+        values = {name: getattr(namespace, name) for name in names}
+        missing = [f"--{name.replace('_', '-')}" for name, value in values.items() if value is None]
+        if missing:
+            raise CliError(f"connectors {command} requires {', '.join(missing)}")
+        payload = {**values, "mode": cast(str, namespace.mode)}
+        result = (
+            client.connector_preview(payload)
+            if command == "preview"
+            else client.connector_plan(payload)
+        )
+    print(json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
     return 0
 
 
@@ -1163,6 +1211,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _jobs(namespace)
         if command == "cancel":
             return _cancel(namespace)
+        if command == "connectors":
+            return _connectors(namespace)
         if command == "migrate":
             if namespace.migrate_command == "inventory":
                 return _migration_inventory(namespace)
