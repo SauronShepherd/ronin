@@ -33,3 +33,23 @@ def test_safe_checkout_path_reports_exact_escape_diagnostic(tmp_path: Path) -> N
     with pytest.raises(ValueError, match=".") as error:
         source_control.safe_checkout_path(root, "../outside")
     assert str(error.value) == "checkout subdirectory escapes the worktree"
+
+
+def test_safe_checkout_path_preserves_literal_components_and_windows_separators(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "worktree"
+    root.mkdir()
+    assert source_control.safe_checkout_path(root, "XXXX/leaf") == root / "XXXX" / "leaf"
+    assert source_control.safe_checkout_path(root, "nested\\leaf") == root / "nested" / "leaf"
+
+
+def test_safe_checkout_path_reports_symlink_traversal_exactly(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "worktree"
+    root.mkdir()
+    monkeypatch.setattr(Path, "is_symlink", lambda path: path.name == "linked")
+    with pytest.raises(ValueError, match=".") as error:
+        source_control.safe_checkout_path(root, "linked/child")
+    assert str(error.value) == "checkout subdirectory must not traverse a symlink"
