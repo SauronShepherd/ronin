@@ -218,3 +218,16 @@ def test_diagnostic_finding_sort_key_uses_empty_defaults_for_optional_fields() -
         "docs",
         "fix",
     )
+
+
+def test_diagnostic_matcher_distinguishes_exact_equals_from_prefix_and_contains() -> None:
+    fact = DiagnosticFact("category", message="Error details")
+    assert diagnostics._matches(
+        DiagnosticPredicate("message", "equals", "Error"), fact
+    ) is False
+    assert diagnostics._matches(
+        DiagnosticPredicate("message", "contains", "missing"), fact
+    ) is False
+    assert diagnostics._matches(
+        DiagnosticPredicate("message", "prefix", "Error"), fact
+    ) is True
