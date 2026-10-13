@@ -97,3 +97,70 @@ def test_validate_operator_node_keeps_all_parameter_and_port_contract_fields() -
             "ports",
         ),
     )
+
+
+def test_validate_operator_node_keeps_exact_parameter_and_mode_diagnostics() -> None:
+    ref = OperatorRef("diagnostics.exact")
+    contract = OperatorContract(
+        ref,
+        "Diagnostics",
+        "test",
+        inputs=(OperatorPort("input"),),
+        parameters=(OperatorParameter("limit", "integer"),),
+        modes=("batch",),
+    )
+    node = Node.create(
+        operator=ref,
+        instance_key="exact",
+        params={"limit": "not-an-integer", "extra": True},
+        inputs=(Port("input", "stream"),),
+    )
+
+    assert validate_operator_node(node, OperatorCatalog((contract,))) == (
+        OperatorViolation(
+            "RONIN-OP-003",
+            "operator parameter has incompatible type: limit",
+            "params.limit",
+        ),
+        OperatorViolation(
+            "RONIN-OP-004",
+            "operator parameter is not declared by the contract: extra",
+            "params.extra",
+        ),
+        OperatorViolation(
+            "RONIN-OP-007",
+            "operator does not support stream ports",
+            "ports",
+        ),
+    )
+
+
+def test_validate_ports_keeps_each_diagnostic_code_and_path_exact() -> None:
+    violations = operators._validate_ports(
+        (Port("duplicate"), Port("duplicate"), Port("unknown")),
+        (OperatorPort("required"),),
+        "outputs",
+    )
+
+    assert violations == [
+        OperatorViolation(
+            "RONIN-OP-005",
+            "node outputs contain duplicate port: duplicate",
+            "outputs.duplicate",
+        ),
+        OperatorViolation(
+            "RONIN-OP-006",
+            "node outputs contain undeclared port: duplicate",
+            "outputs.duplicate",
+        ),
+        OperatorViolation(
+            "RONIN-OP-006",
+            "node outputs contain undeclared port: unknown",
+            "outputs.unknown",
+        ),
+        OperatorViolation(
+            "RONIN-OP-005",
+            "node outputs are missing required port: required",
+            "outputs.required",
+        ),
+    ]
