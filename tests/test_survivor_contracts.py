@@ -104,6 +104,23 @@ def test_genai_text_and_pairs_contracts_are_exact() -> None:
         genai._pairs((("API_KEY", "redacted"),), "provider properties")
 
 
+@pytest.mark.parametrize("value", ["line\nvalue", "line\rvalue", "nul\x00value"])
+def test_genai_text_rejects_each_control_character_with_exact_diagnostic(value: str) -> None:
+    with pytest.raises(ValueError, match=".") as error:
+        genai._text(value, "provider field")
+    assert str(error.value) == "provider field must be non-empty, trimmed, and single-line"
+
+
+def test_genai_pairs_preserves_sorted_values_and_duplicate_diagnostic() -> None:
+    assert genai._pairs((("z", "last"), ("a", "first")), "provider properties") == (
+        ("a", "first"),
+        ("z", "last"),
+    )
+    with pytest.raises(ValueError, match=".") as error:
+        genai._pairs((("key", "one"), ("key", "two")), "provider properties")
+    assert str(error.value) == "provider properties keys must be unique"
+
+
 @pytest.mark.parametrize(
     "validator",
     [
