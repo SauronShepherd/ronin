@@ -36,6 +36,24 @@ def test_catalog_canonical_pairs_validate_context_sensitive_keys_and_values() ->
         catalog._canonical_pairs((("key", "one"), ("key", "two")), name="properties")
 
 
+def test_catalog_canonical_pairs_preserves_default_policy_and_exact_context() -> None:
+    assert catalog._canonical_pairs((("password", "redacted"),), name="properties") == (
+        ("password", "redacted"),
+    )
+    with pytest.raises(ValueError, match=".") as key_error:
+        catalog._canonical_pairs(((" ", "value"),), name="properties")
+    assert str(key_error.value) == (
+        "properties key must be non-empty, trimmed, and single-line"
+    )
+    with pytest.raises(ValueError, match=".") as value_error:
+        catalog._canonical_pairs((("key", " "),), name="properties")
+    assert str(value_error.value) == (
+        "properties value must be non-empty, trimmed, and single-line"
+    )
+    with pytest.raises(ValueError, match="^properties keys must be unique$"):
+        catalog._canonical_pairs((("key", "one"), ("key", "two")), name="properties")
+
+
 @pytest.mark.parametrize(
     "term",
     [
