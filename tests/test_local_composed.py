@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_cli.local_composed import build_local_composed_from_env
+from studio_core import WorkspaceId
 from studio_server import LocalServerComposition
 
 
@@ -36,6 +36,8 @@ def test_build_local_composed_from_env_creates_two_surface_composition(
     assert composition.control_plane_server.data_engineering_reader is not None
     assert composition.control_plane_server.connector_registry is not None
     assert composition.control_plane_server.ingestion_adapter is not None
+    workspace = composition.control_plane_server.workspace_service.get(WorkspaceId("workspace-1"))
+    assert workspace.name == "Local workspace"
     assert composition.control_plane_server.plugin_routes_enabled
     composition.stop()
 
@@ -69,6 +71,20 @@ def test_build_local_composed_accepts_explicit_legacy_plugin_rollout(
     composition = build_local_composed_from_env()
 
     assert not composition.control_plane_server.plugin_routes_enabled
+    composition.stop()
+
+
+def test_build_local_composed_accepts_workspace_write_permission(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    _environment(monkeypatch, tmp_path)
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS", "workspace.read,workspace.write,project.read"
+    )
+
+    composition = build_local_composed_from_env()
+
+    assert composition.control_plane_server is not None
     composition.stop()
 
 

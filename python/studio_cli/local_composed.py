@@ -6,12 +6,12 @@ import os
 from pathlib import Path
 from typing import Any, cast
 
-from studio_core import AssetHandle, ConnectionId, GrantSet, WorkspaceId
 from studio_connectors import (
     IngestionHTTPAdapter,
     SqliteConnectorCheckpointStore,
     builtin_connector_registry,
 )
+from studio_core import AssetHandle, ConnectionId, GrantSet, Workspace, WorkspaceId
 from studio_data_engineering import (
     PostgresRevisionStore,
     RevisionApplication,
@@ -45,6 +45,8 @@ from studio_server import (
 )
 from studio_sql import ProjectScopedDuckDbSqlEngine
 from studio_storage import (
+    CompositeSecretResolver,
+    EnvironmentSecretResolver,
     LocalArtifactStore,
     PostgresAuditStore,
     PostgresJobReadPort,
@@ -53,8 +55,6 @@ from studio_storage import (
     SqliteAuditStore,
     SqliteCatalogStore,
     SqliteConnectionStore,
-    EnvironmentSecretResolver,
-    CompositeSecretResolver,
     SqliteEnvironmentStore,
     SqliteJobStore,
     SqliteKnowledgeGraphStore,
@@ -150,6 +150,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         "scheduler.read",
         "scheduler.write",
         "workspace.read",
+        "workspace.write",
         "workspace.admin",
         "project.read",
         "project.write",
@@ -182,6 +183,13 @@ def build_local_composed_from_env() -> LocalServerComposition:
     )
     workspace_service = WorkspaceService(scheduler)
     project_service = ProjectService(scheduler)
+    try:
+        workspace_service.get(workspace_id)
+    except KeyError:
+        workspace_service.create(
+            Workspace(workspace_id, "Local workspace", "Workspace managed by the local profile"),
+            now=now,
+        )
     audit_store = (
         PostgresAuditStore(postgres_dsn, application_name="ronin-composed-audit")
         if postgres_dsn is not None
