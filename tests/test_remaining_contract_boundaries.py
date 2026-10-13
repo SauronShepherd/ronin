@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import inspect
+
 import pytest
 from studio_core import (
     canonical_json,
@@ -52,6 +54,25 @@ def test_scheduler_pool_name_validator_preserves_inclusive_length_boundary() -> 
     with pytest.raises(ValueError, match=".") as error:
         scheduler_resources._require_pool_name("X" * 257)
     assert str(error.value) == "resource pool name must be at most 256 characters"
+
+
+@pytest.mark.parametrize(
+    "value", ["", " leading", "trailing ", "line\nvalue", "line\rvalue", "nul\x00value"]
+)
+def test_scheduler_event_text_validator_rejects_each_boundary_exactly(value: str) -> None:
+    with pytest.raises(ValueError, match=".") as error:
+        scheduler_events._require_text(value, "event field")
+    assert str(error.value) == "event field must be non-empty, trimmed, and single-line"
+
+
+def test_scheduler_event_text_validator_preserves_inclusive_length_boundary() -> None:
+    assert scheduler_events._require_text("X" * 512, "event field") == "X" * 512
+    with pytest.raises(ValueError, match=".") as error:
+        scheduler_events._require_text("X" * 513, "event field")
+    assert str(error.value) == "event field must be at most 512 characters"
+    assert (
+        inspect.signature(scheduler_events._require_text).parameters["maximum"].default == 512
+    )
 
 
 def test_reproducible_manifest_text_map_sorts_and_validates_keys_and_values() -> None:
