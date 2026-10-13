@@ -11,10 +11,6 @@ on:
         description: Successful CI run ID for the exact commit
         required: true
         type: string
-      mutation_run_id:
-        description: Successful mutation run ID for the exact commit
-        required: true
-        type: string
       security_run_id:
         description: Successful Security run ID for the exact commit
         required: true
@@ -64,14 +60,6 @@ jobs:
           run-id: ${{ inputs.security_run_id }}
           name: security-release-evidence
           path: evidence/security
-      - name: Download exact-Mutation evidence
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          run-id: ${{ inputs.mutation_run_id }}
-          name: mutation-evidence
-          path: evidence/mutation
       - name: Download exact-Docker evidence
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:

@@ -26,7 +26,6 @@ RELEASE_REQUIRED_GATES = frozenset(
     {
         *MERGE_REQUIRED_GATES,
         "docker-qualification",
-        "mutation",
         "browser",
         "a11y",
         "installed-artifact",

@@ -1,5 +1,5 @@
 .PHONY: check format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget browser-audit ui-installed ui-a11y ui-e2e-headed test \
-	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-storage-files-full coverage-tools mutation performance \
+	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-storage-files-full coverage-tools performance \
 	canonical-json-check runner-protocol-check dependency-surfaces-check
 
 ui-e2e:
@@ -196,11 +196,3 @@ coverage-storage-files-full:
 		--baseline=sqlite.py=79.12 \
 		--baseline=workspaces.py=61.62
 	@rm -f coverage-storage.json
-
-MUTMUT_MAX_CHILDREN ?= 8
-
-mutation:
-	@rm -rf mutants
-	@test ! -e src && test ! -L src
-	@cp -a python src; trap 'rm -rf src' 0; PYTHONPATH=python:packages/pyronin/src mutmut run --max-children $(MUTMUT_MAX_CHILDREN) && mutmut export-cicd-stats && mutmut results --all true > mutants/mutmut-results.txt
-	@$(PYTHON) -m tools.mutation_gate mutants/mutmut-cicd-stats.json

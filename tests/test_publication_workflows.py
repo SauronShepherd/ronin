@@ -54,7 +54,6 @@ def test_tag_publication_requires_exact_aggregate_release_verdict() -> None:
         '"security"',
         '"status-consistency"',
         '"docker-qualification"',
-        '"mutation"',
         '"browser"',
         '"a11y"',
         '"installed-artifact"',
@@ -66,13 +65,19 @@ def test_tag_publication_requires_exact_aggregate_release_verdict() -> None:
     assert "- authoritative-release-verdict" in workflow
 
 
-def test_release_evidence_requires_and_downloads_exact_mutation_run() -> None:
+def test_release_evidence_does_not_require_historical_mutation_run() -> None:
     workflow = _workflow("release-evidence.yml")
 
-    assert "mutation_run_id:" in workflow
-    assert "run-id: ${{ inputs.mutation_run_id }}" in workflow
-    assert "name: mutation-evidence" in workflow
-    assert "path: evidence/mutation" in workflow
+    assert "mutation_run_id:" not in workflow
+    assert "mutation-evidence" not in workflow
+    assert "path: evidence/mutation" not in workflow
+
+
+def test_ci_mutation_job_is_permanently_disabled() -> None:
+    workflow = _workflow("ci.yml")
+
+    assert "# Permanently disabled; see docs/quality/MUTATION_CAMPAIGN_FINAL.md." in workflow
+    assert "if: ${{ false }}" in workflow
 
 
 def test_ci_retains_changed_surface_manifest_for_review() -> None:

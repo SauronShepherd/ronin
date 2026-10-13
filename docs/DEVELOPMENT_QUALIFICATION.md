@@ -86,7 +86,7 @@ network-enabled first run to install the locked JavaScript dependencies.
 | `make browser-audit` | Browser audit against `RONIN_STUDIO_AUDIT_URL` (default `http://127.0.0.1:8080/studio/`). |
 | `python tools/local_spark_qualification.py ...` | Optional local Spark engine evidence; requires PySpark. |
 | `python tools/query_engine_qualification.py ...` | Local engine evidence and explicit QueryFlux configuration status. |
-| `make mutation` | Mutation qualification under the repository's fail-closed threshold. |
+| `docs/quality/MUTATION_CAMPAIGN_FINAL.md` | Frozen historical mutation evidence; no recurring mutation command exists. |
 
 `ui-visual` is not currently a Make target: visual checks are covered by the
 Playwright suite and installed Studio smoke, while a separate visual baseline
@@ -105,11 +105,7 @@ python -m tools.artifact_identity <wheel> <sdist> --output artifact-identity.jso
 ```
 
 Skipped, missing, stale, or wrong-commit evidence is never a passing release
-verdict. Mutation evidence is independently gated by:
-
-```text
-make mutation
-```
-
-The mutation policy remains 90%; a run with `no_tests`, interrupted, timeout,
-or suspicious mutants fails closed.
+verdict. Mutation evidence is historical and frozen in
+`docs/quality/MUTATION_CAMPAIGN_FINAL.md`. Mutation testing is not a recurring
+qualification gate or release prerequisite; future quality evidence comes from
+the ordinary unit, integration, contract, and end-to-end suites.

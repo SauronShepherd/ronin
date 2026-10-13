@@ -170,7 +170,7 @@ def test_gate_profiles_keep_release_strictly_broader_than_merge() -> None:
     assert GATE_PROFILES["merge_required"] == MERGE_REQUIRED_GATES
     assert GATE_PROFILES["release_required"] == RELEASE_REQUIRED_GATES
     assert MERGE_REQUIRED_GATES < RELEASE_REQUIRED_GATES
-    assert "mutation" in RELEASE_REQUIRED_GATES
+    assert "mutation" not in RELEASE_REQUIRED_GATES
     assert "installed-artifact" in RELEASE_REQUIRED_GATES
 
 

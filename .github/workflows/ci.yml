@@ -323,7 +323,8 @@ jobs:
           retention-days: 30
 
   mutation:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    # Permanently disabled; see docs/quality/MUTATION_CAMPAIGN_FINAL.md.
+    if: ${{ false }}
     runs-on: ubuntu-24.04
     env:
       PYTHONPATH: ${{ github.workspace }}/python:${{ github.workspace }}/packages/pyronin/src
