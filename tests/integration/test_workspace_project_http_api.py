@@ -99,6 +99,16 @@ class _Store:
         return self.projects.pop((workspace_id, project_id), None) is not None
 
 
+class _DiscoveryAdapter:
+    def discover(self, body: object) -> dict[str, object]:
+        assert body == {"connector_id": "http.json", "connection_ref": "conn-1"}
+        return {
+            "schema": "ronin.connector-discovery/v1",
+            "items": [{"asset_ref": "conn-1::orders", "kind": "json", "fields": []}],
+            "count": 1,
+        }
+
+
 class _Workflow:
     def __init__(self, workflow_id: str) -> None:
         self.id = workflow_id
@@ -300,6 +310,7 @@ def _server(
     catalog_reader=None,
     feature_definition_service=None,
     data_engineering_reader=None,
+    ingestion_adapter=None,
 ) -> Iterator[tuple[str, int]]:
     server = WorkspaceProjectHTTPServer(
         ("127.0.0.1", 0),
@@ -318,6 +329,7 @@ def _server(
         catalog_reader=catalog_reader,
         feature_definition_service=feature_definition_service,
         data_engineering_reader=data_engineering_reader,
+        ingestion_adapter=ingestion_adapter,
         request_timeout_seconds=1.0,
     )
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -464,6 +476,22 @@ def test_platform_capabilities_exposes_only_ready_plugin_capabilities() -> None:
         assert payload["workspaces.read"] == plugin.manifest.id
     finally:
         host.stop()
+
+
+def test_connector_discovery_route_delegates_through_authenticated_control_plane() -> None:
+    store = _Store()
+    body = _json_body({"connector_id": "http.json", "connection_ref": "conn-1"})
+    with _server(store, _Authorizer(), ingestion_adapter=_DiscoveryAdapter()) as address:
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/platform/connectors/discover",
+            body=body,
+            headers={"Content-Type": "application/json"},
+        )
+    assert status == 200
+    assert payload["schema"] == "ronin.connector-discovery/v1"
+    assert payload["items"][0]["asset_ref"] == "conn-1::orders"
 
 
 def test_platform_ui_manifest_exposes_ready_plugin_navigation() -> None:
