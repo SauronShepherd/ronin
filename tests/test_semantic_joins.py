@@ -1,5 +1,4 @@
 import pytest
-
 from studio_semantic import (
     SemanticDimension,
     SemanticJoin,

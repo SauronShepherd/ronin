@@ -1,5 +1,4 @@
 import pytest
-
 from studio_migration import MigrationSessionService, SQLiteMigrationSessionStore
 
 

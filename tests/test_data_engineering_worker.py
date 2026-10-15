@@ -1,5 +1,4 @@
 import pytest
-
 from studio_data_engineering import (
     PipelineExecutionError,
     execute_pipeline_job,

@@ -1,5 +1,4 @@
 from ronin_plugin_performance.plugin import PerformancePlugin
-
 from studio_core.plugins import PluginManager, PluginRecord
 from studio_runtime import PluginHost
 

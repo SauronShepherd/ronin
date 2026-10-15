@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from studio_core import SecretRef
 from studio_storage import (
     CompositeSecretResolver,

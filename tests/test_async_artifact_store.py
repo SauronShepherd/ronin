@@ -5,7 +5,6 @@ from threading import Event, get_ident
 from typing import cast
 
 import pytest
-
 from studio_storage import (
     ArtifactRef,
     BoundedAsyncArtifactStore,

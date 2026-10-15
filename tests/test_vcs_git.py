@@ -7,7 +7,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from studio_vcs import (
     GitCaptureError,
     GitRevision,

@@ -4,7 +4,6 @@ import json
 import time
 
 import pytest
-
 from studio_execution import SchedulerSqlResult, execute_scheduler_sql
 from studio_orchestrator import Instant, Job, JobId, JobState
 from studio_sql import SqlColumn, SqlQueryResult, SqlTimeoutError, SqlValidationError

@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from studio_vcs import SourcePolicyError, validate_repository_uri
 
 

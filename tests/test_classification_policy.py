@@ -1,5 +1,4 @@
 import pytest
-
 from studio_security import ClassificationPolicy, evaluate_classification_policy
 
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_server.http import _submit_project
 
 

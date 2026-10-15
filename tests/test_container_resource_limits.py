@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from studio_kernel import ExecutionAttemptId
 from studio_runners.container import (
     ContainerExecutionLimits,

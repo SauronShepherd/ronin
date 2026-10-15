@@ -3,7 +3,6 @@ import shutil
 import subprocess
 
 import pytest
-
 from studio_data_engineering import (
     SdpProjectSource,
     SdpStudioProvider,

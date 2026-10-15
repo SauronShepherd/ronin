@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.runner_protocol import (
     PROTOCOL,

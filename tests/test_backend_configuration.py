@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from studio_cli import CliError, _serve, _sql_engine_from_environment
 
 

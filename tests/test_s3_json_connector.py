@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_connectors import S3JsonConnector
 from studio_core import AssetHandle, ConnectionDefinition, ConnectionId, SourceCheckpoint
 from studio_storage import EnvironmentSecretResolver

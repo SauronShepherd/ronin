@@ -6,6 +6,7 @@ import hashlib
 from dataclasses import dataclass
 
 from studio_core.canonical_json import encode as encode_canonical_json
+
 from studio_orchestrator.lifecycle import RunId
 
 

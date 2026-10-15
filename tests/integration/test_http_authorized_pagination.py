@@ -5,7 +5,6 @@ from threading import Thread
 
 import pytest
 from pyronin import APIError, HTTPTransport
-
 from studio_core.grants import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_orchestrator import Instant

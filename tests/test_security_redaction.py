@@ -1,5 +1,4 @@
 import pytest
-
 from studio_security import redact
 
 

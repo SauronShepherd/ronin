@@ -212,6 +212,13 @@
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
     },
+    "setuptools==84.0.0": {
+      "attribution_required": false,
+      "decision": "allow",
+      "evidence_sha256": "415f36a02b698cc3bc5473c9e7fd26111316d1fbdfd74dd3e97ffd6d98d866ac",
+      "notice_required": false,
+      "rationale": "Reviewed exact Linux wheel license file: upstream declares MIT; locked as the build backend for development and clean-room package tests."
+    },
     "sortedcontainers==2.4.0": {
       "attribution_required": false,
       "decision": "allow",

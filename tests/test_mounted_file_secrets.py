@@ -1,7 +1,6 @@
 import os
 
 import pytest
-
 from studio_core import SecretRef
 from studio_storage import MountedFileSecretResolver, SecretResolutionError
 

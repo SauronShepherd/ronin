@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from studio_core import GlossaryTerm, GlossaryTermId, Workspace, WorkspaceId
 from studio_storage import GlossaryConflict, SqliteGlossaryStore, SqliteWorkspaceStore
 

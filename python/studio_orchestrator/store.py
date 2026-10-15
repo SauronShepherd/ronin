@@ -8,6 +8,7 @@ from enum import StrEnum
 from typing import Protocol
 
 from studio_kernel import ExecutionEvidenceReference
+
 from studio_orchestrator.instants import Instant
 from studio_orchestrator.lifecycle import (
     AttemptId,

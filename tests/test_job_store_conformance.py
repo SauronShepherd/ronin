@@ -5,7 +5,6 @@ from pathlib import Path
 from threading import Barrier
 
 import pytest
-
 from studio_orchestrator import (
     AttemptId,
     AttemptState,

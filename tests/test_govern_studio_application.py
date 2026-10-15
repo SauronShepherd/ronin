@@ -1,7 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
-
 from studio_synthetic_data import (
     GovernStudioService,
     RunStatus,

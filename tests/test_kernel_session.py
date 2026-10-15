@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-
 from studio_core import ResolvedRuntimeSnapshot, RuntimeProfile, RuntimeProfileRef
 from studio_kernel import (
     CancellationSignal,

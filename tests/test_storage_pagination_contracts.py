@@ -4,7 +4,6 @@ import asyncio
 from pathlib import Path
 
 import pytest
-
 from studio_orchestrator import (
     AttemptId,
     Instant,

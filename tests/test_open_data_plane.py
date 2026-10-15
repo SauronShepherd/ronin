@@ -3,7 +3,6 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
-
 from studio_core import AssetId, Workspace, WorkspaceId
 from studio_execution.lakehouse import write_governed_parquet
 from studio_lakehouse import inspect_parquet, read_parquet_rows, write_parquet_rows

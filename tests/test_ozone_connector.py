@@ -1,5 +1,4 @@
 import pytest
-
 from studio_connectors import OzoneJsonConnector
 from studio_core import ConnectionDefinition, ConnectionId
 

@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
-
 from studio_kernel import CancellationSignal
 from studio_orchestrator import (
     AttemptId,

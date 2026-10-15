@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_migration import inventory_json_document
 
 

@@ -2,7 +2,6 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
-
 from studio_finops import AllocationSlice, allocate_costs
 
 

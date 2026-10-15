@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import FrozenInstanceError
 
 import pytest
-
 from studio_orchestrator import (
     Attempt,
     AttemptId,

@@ -1,7 +1,6 @@
 import hashlib
 
 import pytest
-
 from studio_core import (
     DiagnosticPredicate,
     OperatorPort,

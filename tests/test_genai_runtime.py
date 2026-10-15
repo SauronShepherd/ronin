@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from studio_core import AssetId, AssetRef, AssetVersion, Requirement, ResourceScope
 from studio_core.genai import (
     AgentDefinition,

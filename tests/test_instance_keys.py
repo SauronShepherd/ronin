@@ -1,7 +1,6 @@
 from dataclasses import FrozenInstanceError
 
 import pytest
-
 from studio_core import (
     Edge,
     InstanceAnchor,

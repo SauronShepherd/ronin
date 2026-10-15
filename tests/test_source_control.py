@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from studio_core import SourceRepository, safe_checkout_path
 
 

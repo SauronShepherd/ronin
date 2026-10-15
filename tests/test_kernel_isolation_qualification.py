@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-
 from studio_kernel import ExecutorIsolation, SessionPolicy
 from studio_kernel.session import IsolationQualification
 

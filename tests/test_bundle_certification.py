@@ -1,5 +1,4 @@
 import pytest
-
 from studio_core.bundle_inventory import BundleInventory, BundleInventoryObject
 from studio_storage import (
     BundleRoundTripError,

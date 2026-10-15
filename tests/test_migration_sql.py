@@ -3,7 +3,6 @@ from __future__ import annotations
 import sqlite3
 
 import pytest
-
 from studio_storage.sqlite import execute_migration_script
 
 

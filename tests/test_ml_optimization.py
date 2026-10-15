@@ -2,7 +2,6 @@
 # ruff: noqa: E501
 
 import pytest
-
 from studio_ml.optimization import (
     BayesianStopPolicy,
     SearchSpec,

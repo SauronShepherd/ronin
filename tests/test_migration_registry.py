@@ -1,7 +1,6 @@
 import sqlite3
 
 import pytest
-
 from studio_storage.migration_registry import (
     STORAGE_MIGRATION_DOMAINS,
     MigrationDomain,

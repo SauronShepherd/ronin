@@ -1,5 +1,4 @@
 import pytest
-
 from studio_streaming import StreamCheckpoint, StreamPosition, stream_health
 
 

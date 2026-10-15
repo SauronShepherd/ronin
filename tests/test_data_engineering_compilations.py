@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from studio_data_engineering import (
     CompilationReport,
     SqliteCompilationStore,

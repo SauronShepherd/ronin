@@ -1,5 +1,4 @@
 import pytest
-
 from studio_core import WorkspaceId
 from studio_security import PolicyRequirement
 from studio_server import StaticControlPlaneAuthenticator, StaticControlPlaneAuthorizer

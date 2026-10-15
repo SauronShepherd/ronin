@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from studio_storage import ArtifactIntegrityError, ArtifactStore, S3ArtifactStore
 
 

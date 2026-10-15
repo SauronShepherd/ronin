@@ -1,5 +1,4 @@
 import pytest
-
 from studio_ml.remote import urllib_json_transport
 
 

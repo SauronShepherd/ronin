@@ -4,7 +4,6 @@ import os
 from uuid import uuid4
 
 import pytest
-
 from studio_core import (
     ConnectionDefinition,
     ConnectionId,
