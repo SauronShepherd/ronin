@@ -1,5 +1,4 @@
 import pytest
-
 from studio_ai_studio.streaming import (
     BoundedEventQueue,
     StreamLimitExceeded,

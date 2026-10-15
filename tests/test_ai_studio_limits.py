@@ -1,5 +1,4 @@
 import pytest
-
 from studio_ai_studio.limits import BucketPolicy, RateLimitExceeded, TokenBucketLimiter
 
 
