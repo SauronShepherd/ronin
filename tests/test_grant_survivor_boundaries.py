@@ -48,9 +48,7 @@ def test_authorization_vocabularies_return_exact_declared_values() -> None:
     with pytest.raises(ValueError, match="^unsupported authorization action$") as action_error:
         grants._require_action("admin")
     assert str(action_error.value) == "unsupported authorization action"
-    with pytest.raises(
-        ValueError, match="^unsupported authorization resource kind$"
-    ) as kind_error:
+    with pytest.raises(ValueError, match="^unsupported authorization resource kind$") as kind_error:
         grants._require_resource_kind("dataset")
     assert str(kind_error.value) == "unsupported authorization resource kind"
 

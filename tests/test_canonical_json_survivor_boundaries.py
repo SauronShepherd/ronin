@@ -39,7 +39,7 @@ def test_canonical_decode_requires_duplicate_detection_and_validation() -> None:
     assert str(duplicate_error.value) == "duplicate canonical JSON object member: x"
 
     with pytest.raises(ValueError, match=".") as nonfinite_error:
-        canonical_json.decode("{\"x\":NaN}")
+        canonical_json.decode('{"x":NaN}')
     assert str(nonfinite_error.value) == "non-finite canonical JSON number is not allowed: NaN"
 
 

@@ -43,9 +43,7 @@ def test_scheduler_pool_name_validator_rejects_noncanonical_values() -> None:
 def test_scheduler_pool_name_validator_rejects_each_boundary_exactly(value: str) -> None:
     with pytest.raises(ValueError, match=".") as error:
         scheduler_resources._require_pool_name(value)
-    assert str(error.value) == (
-        "resource pool name must be non-empty, trimmed, and single-line"
-    )
+    assert str(error.value) == ("resource pool name must be non-empty, trimmed, and single-line")
 
 
 def test_scheduler_pool_name_validator_preserves_inclusive_length_boundary() -> None:
@@ -70,15 +68,14 @@ def test_scheduler_event_text_validator_preserves_inclusive_length_boundary() ->
     with pytest.raises(ValueError, match=".") as error:
         scheduler_events._require_text("X" * 513, "event field")
     assert str(error.value) == "event field must be at most 512 characters"
-    assert (
-        inspect.signature(scheduler_events._require_text).parameters["maximum"].default == 512
-    )
+    assert inspect.signature(scheduler_events._require_text).parameters["maximum"].default == 512
 
 
 def test_reproducible_manifest_text_map_sorts_and_validates_keys_and_values() -> None:
-    assert reproducible_manifest._text_map(
-        {"z": "last", "a": "first"}, "configuration"
-    ) == (("a", "first"), ("z", "last"))
+    assert reproducible_manifest._text_map({"z": "last", "a": "first"}, "configuration") == (
+        ("a", "first"),
+        ("z", "last"),
+    )
     with pytest.raises(ValueError, match="configuration key"):
         reproducible_manifest._text_map({"": "value"}, "configuration")
     with pytest.raises(ValueError, match="configuration.bad"):
@@ -90,7 +87,7 @@ def test_reproducible_manifest_text_map_sorts_and_validates_keys_and_values() ->
 def test_canonical_json_boundary_accepts_all_exact_numeric_edges() -> None:
     assert canonical_json.encode(-(2**53 - 1)) == b"-9007199254740991"
     assert canonical_json.encode(-0.0) == b"-0.0"
-    assert canonical_json.decode(b"[1,2.5,false,null,\"text\"]") == [
+    assert canonical_json.decode(b'[1,2.5,false,null,"text"]') == [
         1,
         2.5,
         False,

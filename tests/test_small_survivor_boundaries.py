@@ -56,8 +56,7 @@ def test_bind_policy_error_lists_the_exact_closed_vocabulary() -> None:
     with pytest.raises(ValueError, match=".") as error:
         parse_bind_policy("invalid")
     assert str(error.value) == (
-        "RONIN_BIND_POLICY must be one of: loopback, container-internal, "
-        "insecure-plaintext-network"
+        "RONIN_BIND_POLICY must be one of: loopback, container-internal, insecure-plaintext-network"
     )
 
 

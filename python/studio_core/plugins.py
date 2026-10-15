@@ -561,9 +561,7 @@ def _satisfies_host(specifier: str, host_version: str) -> bool:
             if part.startswith("<") and int(part[1:].split(".", 1)[0]) <= host_major:
                 return False
         except ValueError as exc:
-            raise PluginCompatibilityError(
-                f"unsupported host requirement: {specifier}"
-            ) from exc
+            raise PluginCompatibilityError(f"unsupported host requirement: {specifier}") from exc
         if part.startswith("==") and part[2:] != host_version:
             return False
         if not part.startswith((">=", "<", "==")):

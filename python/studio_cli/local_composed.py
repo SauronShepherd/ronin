@@ -11,7 +11,14 @@ from studio_connectors import (
     SqliteConnectorCheckpointStore,
     builtin_connector_registry,
 )
-from studio_core import AssetHandle, ConnectionId, GrantSet, Workspace, WorkspaceId
+from studio_core import (
+    AssetHandle,
+    ConnectionDefinition,
+    ConnectionId,
+    GrantSet,
+    Workspace,
+    WorkspaceId,
+)
 from studio_data_engineering import (
     PostgresRevisionStore,
     RevisionApplication,
@@ -272,7 +279,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         checkpoint_store = SqliteConnectorCheckpointStore(database)
         secrets_resolver = CompositeSecretResolver(environment=EnvironmentSecretResolver())
 
-        def resolve_connection(scoped_workspace_id: str, reference: str) -> object:
+        def resolve_connection(scoped_workspace_id: str, reference: str) -> ConnectionDefinition:
             return connection_service.get(WorkspaceId(scoped_workspace_id), ConnectionId(reference))
 
         def resolve_asset(reference: str) -> AssetHandle:

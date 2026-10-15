@@ -16,9 +16,7 @@ def test_project_workspace_text_validators_reject_blank_and_untrimmed(
 
 @pytest.mark.parametrize("validator", [projects._require_text, workspaces._require_text])
 @pytest.mark.parametrize("value", ["line\nfeed", "carriage\rreturn"])
-def test_project_workspace_text_validators_reject_each_line_break(
-    validator, value: str
-) -> None:
+def test_project_workspace_text_validators_reject_each_line_break(validator, value: str) -> None:
     with pytest.raises(ValueError, match=".") as error:
         validator(value, "identity")
     assert str(error.value) == "identity must not contain line breaks"

@@ -65,9 +65,10 @@ def safe_checkout_path(worktree: Any, subdirectory: str = "") -> Any:
     """Resolve a repository-relative checkout path without symlink/path escape."""
 
     root = worktree.resolve()
-    raw = root / subdirectory
+    normalized = subdirectory.replace("\\", "/")
+    raw = root / normalized
     current = root
-    for part in subdirectory.replace("\\", "/").split("/"):
+    for part in normalized.split("/"):
         if part in {"", "."}:
             continue
         current = current / part

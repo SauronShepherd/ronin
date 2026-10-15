@@ -2800,8 +2800,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 self._write_json(HTTPStatus.CREATED, stored.to_payload())
                 return
             if segments == ("v1", "platform", "connectors", "discover"):
-                workspace_id = self._connector_workspace(actor, query)
-                if workspace_id is None:
+                connector_workspace_id = self._connector_workspace(actor, query)
+                if connector_workspace_id is None:
                     return
                 adapter = self._server().ingestion_adapter
                 discover = getattr(adapter, "discover", None) if adapter is not None else None
@@ -2814,12 +2814,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 self._write_json(
                     HTTPStatus.OK,
-                    discover(self._read_json(), workspace_id=str(workspace_id)),
+                    discover(self._read_json(), workspace_id=str(connector_workspace_id)),
                 )
                 return
             if segments == ("v1", "platform", "connectors", "preview"):
-                workspace_id = self._connector_workspace(actor, query)
-                if workspace_id is None:
+                connector_workspace_id = self._connector_workspace(actor, query)
+                if connector_workspace_id is None:
                     return
                 adapter = self._server().ingestion_adapter
                 preview = getattr(adapter, "preview", None) if adapter is not None else None
@@ -2832,15 +2832,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 self._write_json(
                     HTTPStatus.OK,
-                    preview(self._read_json(), workspace_id=str(workspace_id)),
+                    preview(self._read_json(), workspace_id=str(connector_workspace_id)),
                 )
                 return
             if segments in {
                 ("v1", "platform", "connectors", "plan"),
                 ("v1", "platform", "connectors", "checkpoint-health"),
             }:
-                workspace_id = self._connector_workspace(actor, query)
-                if workspace_id is None:
+                connector_workspace_id = self._connector_workspace(actor, query)
+                if connector_workspace_id is None:
                     return
                 adapter = self._server().ingestion_adapter
                 method_name = "plan" if segments[-1] == "plan" else "checkpoint_health"
@@ -2854,7 +2854,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     return
                 self._write_json(
                     HTTPStatus.OK,
-                    operation(self._read_json(), workspace_id=str(workspace_id)),
+                    operation(self._read_json(), workspace_id=str(connector_workspace_id)),
                 )
                 return
             if self._server().plugin_routes_enabled:

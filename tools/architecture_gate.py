@@ -91,6 +91,7 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_ml",
             "studio_semantic",
             "studio_data_engineering",
+            "studio_connectors",
         }
     ),
 }

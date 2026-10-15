@@ -42,9 +42,7 @@ def test_catalog_canonical_pairs_preserves_default_policy_and_exact_context() ->
     )
     with pytest.raises(ValueError, match=".") as key_error:
         catalog._canonical_pairs(((" ", "value"),), name="properties")
-    assert str(key_error.value) == (
-        "properties key must be non-empty, trimmed, and single-line"
-    )
+    assert str(key_error.value) == ("properties key must be non-empty, trimmed, and single-line")
     with pytest.raises(ValueError, match=".") as value_error:
         catalog._canonical_pairs((("key", " "),), name="properties")
     assert str(value_error.value) == (
@@ -120,17 +118,13 @@ def test_connection_safe_option_key_rejects_each_sensitive_marker(term: str) -> 
 def test_connection_text_validator_preserves_exact_context(value: str) -> None:
     with pytest.raises(ValueError, match=".") as error:
         connections._require_text(value, "connection option key")
-    assert str(error.value) == (
-        "connection option key must be non-empty, trimmed, and single-line"
-    )
+    assert str(error.value) == ("connection option key must be non-empty, trimmed, and single-line")
 
 
 def test_connection_safe_option_key_preserves_exact_context() -> None:
     with pytest.raises(ValueError, match=".") as error:
         connections._require_safe_option_key(" ")
-    assert str(error.value) == (
-        "connection option key must be non-empty, trimmed, and single-line"
-    )
+    assert str(error.value) == ("connection option key must be non-empty, trimmed, and single-line")
     assert connections._require_safe_option_key("XXXX") == "XXXX"
 
 
@@ -163,9 +157,7 @@ def test_environment_safe_ref_rejects_each_credential_marker(term: str) -> None:
 def test_environment_safe_ref_preserves_exact_context_and_safe_values() -> None:
     with pytest.raises(ValueError, match=".") as error:
         environments._safe_ref(" ", "binding source_ref")
-    assert str(error.value) == (
-        "binding source_ref must be non-empty, trimmed, and single-line"
-    )
+    assert str(error.value) == ("binding source_ref must be non-empty, trimmed, and single-line")
     assert environments._safe_ref("XXXX", "binding source_ref") == "XXXX"
 
 
@@ -222,12 +214,8 @@ def test_diagnostic_finding_sort_key_uses_empty_defaults_for_optional_fields() -
 
 def test_diagnostic_matcher_distinguishes_exact_equals_from_prefix_and_contains() -> None:
     fact = DiagnosticFact("category", message="Error details")
-    assert diagnostics._matches(
-        DiagnosticPredicate("message", "equals", "Error"), fact
-    ) is False
-    assert diagnostics._matches(
-        DiagnosticPredicate("message", "contains", "missing"), fact
-    ) is False
-    assert diagnostics._matches(
-        DiagnosticPredicate("message", "prefix", "Error"), fact
-    ) is True
+    assert diagnostics._matches(DiagnosticPredicate("message", "equals", "Error"), fact) is False
+    assert (
+        diagnostics._matches(DiagnosticPredicate("message", "contains", "missing"), fact) is False
+    )
+    assert diagnostics._matches(DiagnosticPredicate("message", "prefix", "Error"), fact) is True

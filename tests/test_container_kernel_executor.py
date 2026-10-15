@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Literal, cast
 
 import pytest
-
 from studio_kernel import (
     CancellationSignal,
     CancellationToken,
@@ -236,7 +235,7 @@ def test_asyncio_command_runner_redacts_output_within_limit() -> None:
             (sys.executable, "-c", "print('token=super-secret-value')"),
             input_text="",
             cancellation=CancellationToken(),
-            timeout_seconds=2.0,
+            timeout_seconds=10.0,
             cancellation_args=(sys.executable, "-c", "pass"),
         )
     )

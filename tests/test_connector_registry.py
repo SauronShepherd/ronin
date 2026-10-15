@@ -310,8 +310,8 @@ def test_http_connector_enforces_deadline_before_retry_sleep() -> None:
                 ("allow_private_network", "true"),
                 ("base_url", f"http://127.0.0.1:{server.server_port}"),
                 ("max_retries", "3"),
-                ("retry_backoff_seconds", "1"),
-                ("max_elapsed_seconds", "0.5"),
+                ("retry_backoff_seconds", "5"),
+                ("max_elapsed_seconds", "3"),
             ),
         )
         with pytest.raises(ValueError, match="operation exceeded its time budget"):

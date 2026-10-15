@@ -36,6 +36,8 @@ jobs:
           cache-dependency-path: web-tests/package-lock.json
       - name: Check web asset graph
         run: python tools/check_web_assets.py
+      - name: Install hash-locked Python browser tooling
+        run: python -m pip install --require-hashes -r requirements-dev.lock
       - name: Install Playwright dependencies
         run: npm --prefix web-tests ci
       - name: Install Chromium

@@ -67,14 +67,10 @@ def test_plugin_event_outbox_capacity_pending_and_publish_contracts_are_exact() 
     outbox = plugin_events.InMemoryOutbox(max_events=1)
     record = outbox.append(event)
     assert outbox.pending(limit=1) == (record,)
-    with pytest.raises(
-        plugin_events.PluginEventError, match=r"^outbox capacity exceeded$"
-    ):
+    with pytest.raises(plugin_events.PluginEventError, match=r"^outbox capacity exceeded$"):
         outbox.append(second)
     for limit in (0, 1001):
-        with pytest.raises(
-            ValueError, match=r"^pending limit must be between 1 and 1000$"
-        ):
+        with pytest.raises(ValueError, match=r"^pending limit must be between 1 and 1000$"):
             outbox.pending(limit=limit)
     outbox.mark_published(event.event_id)
     assert outbox._records[event.event_id] == plugin_events.OutboxRecord(  # noqa: SLF001
@@ -84,8 +80,7 @@ def test_plugin_event_outbox_capacity_pending_and_publish_contracts_are_exact() 
         outbox.mark_published("missing")
     assert missing.value.args == ("missing",)
     assert (
-        inspect.signature(plugin_events.InMemoryOutbox.pending).parameters["limit"].default
-        == 100
+        inspect.signature(plugin_events.InMemoryOutbox.pending).parameters["limit"].default == 100
     )
 
 
@@ -93,9 +88,7 @@ def test_plugin_event_inbox_capacity_and_diagnostics_are_exact() -> None:
     event = _event()
     inbox = plugin_events.InMemoryInbox(max_events=1)
     inbox.process_once("consumer", event, lambda _value: None)
-    with pytest.raises(
-        plugin_events.PluginEventError, match=r"^inbox capacity exceeded$"
-    ):
+    with pytest.raises(plugin_events.PluginEventError, match=r"^inbox capacity exceeded$"):
         inbox.process_once("other", _event(event_id="event-2"), lambda _value: None)
     with pytest.raises(
         plugin_events.PluginEventError,
@@ -103,8 +96,7 @@ def test_plugin_event_inbox_capacity_and_diagnostics_are_exact() -> None:
     ):
         plugin_events.InMemoryInbox().process_once(" ", event, lambda _value: None)
     assert (
-        inspect.signature(plugin_events.InMemoryInbox).parameters["max_events"].default
-        == 100_000
+        inspect.signature(plugin_events.InMemoryInbox).parameters["max_events"].default == 100_000
     )
 
 
