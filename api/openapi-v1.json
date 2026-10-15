@@ -60,12 +60,14 @@
     "/v1/platform/connectors/discover": {
       "post": {
         "operationId": "discoverConnectorAssets",
-        "description": "Discover bounded source assets for a configured connection.",
+        "description": "Discover bounded source assets for a configured connection after workspace authorization.",
+        "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
         "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["connector_id", "connection_ref"], "properties": {"connector_id": {"type": "string", "minLength": 1}, "connection_ref": {"type": "string", "minLength": 1}}}}}},
         "responses": {
           "200": {"description": "Discovered connector assets", "content": {"application/json": {"schema": {"type": "object"}}}},
           "400": {"$ref": "#/components/responses/Error"},
           "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
           "503": {"$ref": "#/components/responses/Error"}
         }
       }
@@ -74,11 +76,13 @@
       "post": {
         "operationId": "previewConnectorIngestion",
         "description": "Preview a bounded connector read and return its sync plan and checkpoint health. In the local SQLite profile, asset_ref uses connection_id::qualified_asset_name (for example conn-1::public.orders).",
+        "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
         "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["connector_id", "connection_ref", "asset_ref", "destination_ref", "checkpoint_identity", "mode"], "properties": {"connector_id": {"type": "string", "minLength": 1}, "connection_ref": {"type": "string", "minLength": 1}, "asset_ref": {"type": "string", "minLength": 1}, "destination_ref": {"type": "string", "minLength": 1}, "checkpoint_identity": {"type": "string", "minLength": 1}, "mode": {"type": "string", "enum": ["snapshot", "incremental"]}}}}}},
         "responses": {
           "200": {"description": "Bounded ingestion preview", "content": {"application/json": {"schema": {"type": "object"}}}},
           "400": {"$ref": "#/components/responses/Error"},
           "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
           "503": {"$ref": "#/components/responses/Error"}
         }
       }
@@ -87,11 +91,13 @@
       "post": {
         "operationId": "planConnectorIngestion",
         "description": "Validate and plan a bounded connector sync without reading source data. In the local SQLite profile, asset_ref uses connection_id::qualified_asset_name (for example conn-1::public.orders).",
+        "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
         "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["connector_id", "connection_ref", "asset_ref", "destination_ref", "checkpoint_identity", "mode"], "properties": {"connector_id": {"type": "string", "minLength": 1}, "connection_ref": {"type": "string", "minLength": 1}, "asset_ref": {"type": "string", "minLength": 1}, "destination_ref": {"type": "string", "minLength": 1}, "checkpoint_identity": {"type": "string", "minLength": 1}, "mode": {"type": "string", "enum": ["snapshot", "incremental"]}}}}}},
         "responses": {
           "200": {"description": "Connector sync plan and checkpoint health", "content": {"application/json": {"schema": {"type": "object"}}}},
           "400": {"$ref": "#/components/responses/Error"},
           "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
           "503": {"$ref": "#/components/responses/Error"}
         }
       }
@@ -100,11 +106,13 @@
       "post": {
         "operationId": "getConnectorCheckpointHealth",
         "description": "Read durable checkpoint health for one ingestion identity.",
+        "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
         "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["checkpoint_identity"]}}}},
         "responses": {
           "200": {"description": "Checkpoint health", "content": {"application/json": {"schema": {"type": "object"}}}},
           "400": {"$ref": "#/components/responses/Error"},
           "401": {"$ref": "#/components/responses/Error"},
+          "403": {"$ref": "#/components/responses/Error"},
           "503": {"$ref": "#/components/responses/Error"}
         }
       }

@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from studio_synthetic_data import (
     DeclarativeTableProvider,
     ExporterRegistry,
@@ -54,7 +53,17 @@ def test_json_exporter_is_explicitly_file_family() -> None:
     assert JsonExporter.manifest.family == "file"
 
 
-def test_format_availability_does_not_claim_uninstalled_table_writers() -> None:
+def test_format_availability_does_not_claim_uninstalled_table_writers(monkeypatch) -> None:
+    from studio_synthetic_data import formats
+
+    find_spec = formats.importlib.util.find_spec
+
+    def controlled_find_spec(name: str, *args, **kwargs):
+        if name == "deltalake":
+            return None
+        return find_spec(name, *args, **kwargs)
+
+    monkeypatch.setattr(formats.importlib.util, "find_spec", controlled_find_spec)
     availability = {item.format_id: item for item in format_availability()}
     assert availability["csv"].status == "ready"
     assert availability["jsonl"].status == "ready"

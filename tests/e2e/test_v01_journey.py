@@ -10,11 +10,14 @@ import asyncio
 import hashlib
 import json
 import os
+import secrets
 import shutil
+import socket
 import sqlite3
 import subprocess
 import sys
 import time
+import uuid
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -22,7 +25,6 @@ from threading import Thread
 
 import pytest
 from pyronin import HTTPTransport, Ronin
-
 from studio_cli import main as cli_main
 from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
@@ -686,9 +688,91 @@ def worker_cancel_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str,
 
 
 @pytest.mark.skipif(
-    _DOCKER is None, reason="Compose qualification requires an available Docker daemon"
+    _DOCKER is None or _IMAGE is None,
+    reason="Compose qualification requires Docker and a built qualification image",
 )
-def test_step_01_compose_reaches_healthy_within_60s() -> None: ...
+def test_step_01_compose_reaches_healthy_within_60s() -> None:
+    assert _DOCKER is not None
+    assert _IMAGE is not None
+    project = f"ronin-v01-{uuid.uuid4().hex[:12]}"
+
+    def free_port() -> str:
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            return str(listener.getsockname()[1])
+
+    environment = os.environ.copy()
+    environment.update(
+        {
+            "RONIN_IMAGE_REF": _IMAGE,
+            "RONIN_TOKEN": secrets.token_urlsafe(32),
+            "RONIN_RUNNER_BROKER_TOKEN": secrets.token_urlsafe(32),
+            "RONIN_PORT": free_port(),
+            "RONIN_POSTGRES_PORT": free_port(),
+            # Compose interpolates inactive AI profiles while resolving the whole file.
+            "RONIN_AI_MODEL_DIR": str(Path(__file__).resolve().parents[2]),
+            "RONIN_AI_VLLM_MODEL": "qualification-unused",
+        }
+    )
+    prefix = [_DOCKER, "compose", "-p", project, "-f", "compose.yaml"]
+    started = time.monotonic()
+    try:
+        up = subprocess.run(  # noqa: S603 - docker path comes from shutil.which
+            [*prefix, "up", "--no-build", "-d", "postgres", "server", "runner-broker"],
+            cwd=Path(__file__).resolve().parents[2],
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=20,
+        )
+        assert up.returncode == 0, f"Compose up failed:\n{up.stdout}\n{up.stderr}"
+        while time.monotonic() - started < 60:
+            status = subprocess.run(  # noqa: S603 - docker path comes from shutil.which
+                [*prefix, "ps", "--all", "--format", "{{.Service}} {{.State}} {{.Health}}"],
+                cwd=Path(__file__).resolve().parents[2],
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+            assert status.returncode == 0, status.stderr
+            services = {
+                line.split(maxsplit=1)[0]: line.lower()
+                for line in status.stdout.splitlines()
+                if line.strip()
+            }
+            required = {"postgres", "server", "runner-broker"}
+            if required <= services.keys() and all(
+                "running" in services[name] and "healthy" in services[name] for name in required
+            ):
+                assert time.monotonic() - started <= 60
+                return
+            time.sleep(1)
+        logs = subprocess.run(  # noqa: S603 - docker path comes from shutil.which
+            [*prefix, "logs", "--no-color"],
+            cwd=Path(__file__).resolve().parents[2],
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+        pytest.fail(
+            "Compose services did not become healthy within 60 seconds.\n"
+            f"ps:\n{status.stdout}\nlogs:\n{logs.stdout}\n{logs.stderr}"
+        )
+    finally:
+        subprocess.run(  # noqa: S603 - docker path comes from shutil.which
+            [*prefix, "down", "--volumes", "--remove-orphans"],
+            cwd=Path(__file__).resolve().parents[2],
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=30,
+        )
 
 
 def test_step_02_doctor_reports_all_checks_passing() -> None:

@@ -254,12 +254,18 @@ class IngestionSyncService:
         asset: object,
         secrets: object,
         limit: int = 100,
+        checkpoint_identity: str | None = None,
     ) -> dict[str, object]:
-        health = self._checkpoints.health(definition.checkpoint_identity)
+        scoped_identity = (
+            definition.checkpoint_identity if checkpoint_identity is None else checkpoint_identity
+        )
+        health = self._checkpoints.health(scoped_identity)
         plan = self._registry.plan_sync(definition, checkpoint_present=health.present)
         result = self._registry.preview(
             definition.connector_id, connection, asset, secrets, limit=limit
         )
+        checkpoint = health.to_payload()
+        checkpoint["identity"] = definition.checkpoint_identity
         return {
             "schema": "ronin.ingestion-preview/v1",
             "plan": plan.to_payload(),
@@ -270,7 +276,7 @@ class IngestionSyncService:
             ],
             "rows": [dict(row) for row in result.rows],
             "row_count": len(result.rows),
-            "checkpoint": health.to_payload(),
+            "checkpoint": checkpoint,
         }
 
     def execute(

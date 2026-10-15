@@ -260,32 +260,46 @@ class ControlPlaneClient:
             raise ControlPlaneError("Ronin connector capabilities response violated the protocol")
         return payload
 
-    def connector_discover(self, connector_id: str, connection_ref: str) -> dict[str, object]:
+    def connector_discover(
+        self, workspace_id: str, connector_id: str, connection_ref: str
+    ) -> dict[str, object]:
         return _connector_result(
             self.request(
                 "POST",
                 "/v1/platform/connectors/discover",
+                query={"workspace_id": workspace_id},
                 payload={"connector_id": connector_id, "connection_ref": connection_ref},
             )
         )
 
-    def connector_preview(self, payload: dict[str, object]) -> dict[str, object]:
+    def connector_preview(self, workspace_id: str, payload: dict[str, object]) -> dict[str, object]:
         return _connector_result(
-            self.request("POST", "/v1/platform/connectors/preview", payload=payload)
+            self.request(
+                "POST",
+                "/v1/platform/connectors/preview",
+                query={"workspace_id": workspace_id},
+                payload=payload,
+            )
         )
 
-    def connector_plan(self, payload: dict[str, object]) -> dict[str, object]:
+    def connector_plan(self, workspace_id: str, payload: dict[str, object]) -> dict[str, object]:
         return _connector_result(
-            self.request("POST", "/v1/platform/connectors/plan", payload=payload)
+            self.request(
+                "POST",
+                "/v1/platform/connectors/plan",
+                query={"workspace_id": workspace_id},
+                payload=payload,
+            )
         )
 
-    def connector_checkpoint_health(self, identity: str) -> dict[str, object]:
+    def connector_checkpoint_health(self, workspace_id: str, identity: str) -> dict[str, object]:
         if not identity or identity != identity.strip():
             raise ValueError("checkpoint identity must be non-empty and trimmed")
         return _connector_result(
             self.request(
                 "POST",
                 "/v1/platform/connectors/checkpoint-health",
+                query={"workspace_id": workspace_id},
                 payload={"checkpoint_identity": identity},
             )
         )

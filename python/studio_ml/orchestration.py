@@ -118,10 +118,16 @@ class LocalExecutionCoordinator:
 
     def cancel(self, run_id: str) -> ExecutionSnapshot:
         with self._lock:
-            snapshot = self.status(run_id)
+            snapshot = self._snapshots.get(run_id)
+            if snapshot is None:
+                snapshot = self._store.get(run_id)
+                if snapshot is None:
+                    raise KeyError(run_id)
+                self._snapshots[run_id] = snapshot
             if snapshot.state in {"queued", "running"}:
-                future = self._futures[run_id]
-                future.cancel()
+                future = self._futures.get(run_id)
+                if future is not None:
+                    future.cancel()
                 self._snapshots[run_id] = ExecutionSnapshot(run_id, "cancelled")
                 self._store.put(self._snapshots[run_id])
             return self._snapshots[run_id]

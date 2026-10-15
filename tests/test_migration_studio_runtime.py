@@ -3,7 +3,7 @@ from studio_migration import check_spark_python_runtime, qualify_spark_runtime
 
 def test_spark_runtime_preflight_rejects_known_python_version_mismatch(monkeypatch) -> None:
     monkeypatch.setenv("PYSPARK_PYTHON", "python311.exe")
-    monkeypatch.setenv("RONIN_PYSPARK_WORKER_VERSION", "3.11")
+    monkeypatch.setenv("RONIN_PYSPARK_WORKER_VERSION", "99.99")
     result = check_spark_python_runtime()
     assert result.compatible is False
     assert "differs" in result.message

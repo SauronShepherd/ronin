@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import json
+import math
 import socket
 import time
 from collections.abc import Mapping
@@ -122,6 +123,16 @@ def _validate_request_url(url: str, *, allow_http: bool, allow_private: bool) ->
     _validate_endpoint_host(parsed.hostname, allow_private=allow_private)
 
 
+def _origin(url: str) -> tuple[str, str, int | None]:
+    parsed = urlsplit(url)
+    scheme = parsed.scheme.casefold()
+    host = (parsed.hostname or "").casefold().rstrip(".")
+    port = parsed.port
+    if port == (443 if scheme == "https" else 80):
+        port = None
+    return scheme, host, port
+
+
 class HttpJsonConnector:
     """Read bounded JSON records from one base URL without implicit redirect trust."""
 
@@ -192,6 +203,8 @@ class HttpJsonConnector:
         refs = _secret_refs(connection)
         bearer = refs.get("bearer_token")
         if bearer is not None:
+            if parsed_base_url.scheme != "https":
+                raise ValueError("Bearer credentials require an HTTPS base_url")
             material = secrets.resolve(bearer)
             headers["Authorization"] = f"Bearer {material.reveal_text()}"
 
@@ -205,6 +218,19 @@ class HttpJsonConnector:
             raise ValueError("HTTP max_response_bytes must be an integer") from exc
         if max_response_bytes < 1 or max_response_bytes > 100 * 1024 * 1024:
             raise ValueError("HTTP max_response_bytes must be between 1 and 104857600")
+        try:
+            max_total_bytes = int(options.get("max_total_bytes", "52428800"))
+            max_elapsed_seconds = float(options.get("max_elapsed_seconds", "300"))
+        except ValueError as exc:
+            raise ValueError("HTTP operation budgets must be numeric") from exc
+        if max_total_bytes < 1 or max_total_bytes > 100 * 1024 * 1024:
+            raise ValueError("HTTP max_total_bytes must be between 1 and 104857600")
+        if (
+            not math.isfinite(max_elapsed_seconds)
+            or max_elapsed_seconds <= 0
+            or max_elapsed_seconds > 3600
+        ):
+            raise ValueError("HTTP max_elapsed_seconds must be in (0, 3600]")
         records_key = options.get("records_key")
         try:
             retries = int(options.get("max_retries", "0"))
@@ -218,17 +244,30 @@ class HttpJsonConnector:
             ) from exc
         if retries < 0 or retries > 10 or max_pages < 1 or max_pages > 1000:
             raise ValueError("HTTP max_retries must be 0..10 and max_pages must be 1..1000")
-        if page_size < 1 or page_size > limit or backoff < 0 or rate_limit < 0:
+        if (
+            page_size < 1
+            or page_size > limit
+            or not math.isfinite(backoff)
+            or not math.isfinite(rate_limit)
+            or backoff < 0
+            or rate_limit < 0
+        ):
             raise ValueError("HTTP page_size/backoff/rate-limit options are out of bounds")
         page_param = options.get("page_param")
         next_field = options.get("next_url_field")
         rows_list: list[dict[str, object]] = []
-        bodies: list[bytes] = []
+        total_bytes = 0
+        deadline = time.monotonic() + max_elapsed_seconds
+        digest = hashlib.sha256()
         next_url = url
         with httpx.Client(follow_redirects=False, timeout=timeout_seconds) as client:
             for page in range(max_pages):
                 if page and rate_limit:
+                    if time.monotonic() + rate_limit > deadline:
+                        raise ValueError("HTTP JSON operation exceeded its time budget")
                     time.sleep(rate_limit)
+                if time.monotonic() >= deadline:
+                    raise ValueError("HTTP JSON operation exceeded its time budget")
                 request_url = next_url
                 if page_param and next_field is None:
                     separator = "&" if "?" in request_url else "?"
@@ -236,10 +275,17 @@ class HttpJsonConnector:
                 _validate_request_url(
                     request_url, allow_http=allow_http, allow_private=allow_private
                 )
+                if _origin(request_url) != _origin(base_url):
+                    raise ValueError("HTTP pagination URL must remain on the base_url origin")
                 body = b""
                 for attempt in range(retries + 1):
                     try:
-                        with client.stream("GET", request_url, headers=headers) as response:
+                        request_timeout = max(
+                            0.001, min(timeout_seconds, deadline - time.monotonic())
+                        )
+                        with client.stream(
+                            "GET", request_url, headers=headers, timeout=request_timeout
+                        ) as response:
                             status = response.status_code
                             if 300 <= status < 400:
                                 raise ValueError("HTTP redirects are disabled")
@@ -249,7 +295,12 @@ class HttpJsonConnector:
                                     float(retry_after) if retry_after else backoff * (2**attempt)
                                 )
                                 if delay > 0:
-                                    time.sleep(min(delay, 60.0))
+                                    delay = min(delay, 60.0)
+                                    if time.monotonic() + delay > deadline:
+                                        raise ValueError(
+                                            "HTTP JSON operation exceeded its time budget"
+                                        )
+                                    time.sleep(delay)
                                 continue
                             response.raise_for_status()
                             content_type = (
@@ -271,23 +322,38 @@ class HttpJsonConnector:
                             chunks: list[bytes] = []
                             size = 0
                             for chunk in response.iter_bytes():
+                                if time.monotonic() >= deadline:
+                                    raise ValueError("HTTP JSON operation exceeded its time budget")
                                 size += len(chunk)
-                                if size > max_response_bytes:
+                                if (
+                                    size > max_response_bytes
+                                    or total_bytes + size > max_total_bytes
+                                ):
                                     raise ValueError(
-                                        "HTTP JSON response exceeds configured byte limit"
+                                        "HTTP JSON operation exceeds configured byte budget"
                                     )
                                 chunks.append(chunk)
                             body = b"".join(chunks)
+                            total_bytes += size
                         break
-                    except (httpx.TimeoutException, httpx.NetworkError):
+                    except (httpx.TimeoutException, httpx.NetworkError) as exc:
+                        if time.monotonic() >= deadline:
+                            raise ValueError(
+                                "HTTP JSON operation exceeded its time budget"
+                            ) from exc
                         if attempt >= retries:
                             raise
-                        time.sleep(min(backoff * (2**attempt), 60.0))
+                        delay = min(backoff * (2**attempt), 60.0)
+                        if time.monotonic() + delay > deadline:
+                            raise ValueError(
+                                "HTTP JSON operation exceeded its time budget"
+                            ) from exc
+                        time.sleep(delay)
                 try:
                     payload = json.loads(body)
                 except (UnicodeDecodeError, json.JSONDecodeError) as exc:
                     raise ValueError("HTTP response body must be valid JSON") from exc
-                bodies.append(body)
+                digest.update(body)
                 if records_key is not None:
                     if not isinstance(payload, Mapping):
                         raise ValueError("HTTP records_key requires a JSON object response")
@@ -317,10 +383,12 @@ class HttpJsonConnector:
                     _validate_request_url(
                         candidate, allow_http=allow_http, allow_private=allow_private
                     )
+                    if _origin(candidate) != _origin(base_url):
+                        raise ValueError("HTTP pagination URL must remain on the base_url origin")
                     next_url = candidate
         rows = tuple(rows_list)
         fields = _infer_fields(rows)
-        checkpoint_value = hashlib.sha256(b"".join(bodies)).hexdigest()
+        checkpoint_value = digest.hexdigest()
         if checkpoint is not None and checkpoint.value == checkpoint_value:
             rows = ()
         return ConnectorReadResult(

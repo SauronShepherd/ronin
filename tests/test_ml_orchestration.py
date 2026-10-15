@@ -3,6 +3,7 @@
 
 import os
 import time
+from threading import Thread
 
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_ml.domain import FeatureSpec, Lab
@@ -61,5 +62,41 @@ def test_local_coordinator_executes_clustering_lab() -> None:
 
             time.sleep(0.01)
         raise AssertionError("clustering execution did not finish")
+    finally:
+        coordinator.close()
+
+
+def test_local_coordinator_cancel_does_not_deadlock() -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    coordinator = LocalExecutionCoordinator()
+    try:
+        coordinator.submit("run-cancel", lab, [{"x": n, "target": n % 2} for n in range(1, 21)])
+        outcome: list[object] = []
+
+        def cancel() -> None:
+            try:
+                outcome.append(coordinator.cancel("run-cancel"))
+            except Exception as exc:  # pragma: no cover - surfaced by the assertion below
+                outcome.append(exc)
+
+        thread = Thread(target=cancel, daemon=True)
+        thread.start()
+        thread.join(timeout=5)
+        assert not thread.is_alive(), "cancel deadlocked while reading its own status"
+        assert len(outcome) == 1
+        assert not isinstance(outcome[0], Exception), outcome[0]
+        assert coordinator.status("run-cancel").state in {
+            "cancelled",
+            "succeeded",
+            "failed",
+        }
     finally:
         coordinator.close()

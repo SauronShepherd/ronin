@@ -63,7 +63,8 @@ def test_connectors_capabilities_uses_control_plane_client(monkeypatch, capsys) 
 
 def test_connectors_discover_emits_assets(monkeypatch, capsys) -> None:
     class _Client:
-        def connector_discover(self, connector_id, connection_ref):
+        def connector_discover(self, workspace_id, connector_id, connection_ref):
+            assert workspace_id == "workspace-a"
             assert connector_id == "http.json"
             assert connection_ref == "conn-1"
             return {
@@ -74,20 +75,26 @@ def test_connectors_discover_emits_assets(monkeypatch, capsys) -> None:
 
     monkeypatch.setattr("studio_cli._control_plane_client", lambda: _Client())
 
-    assert main(
-        [
-            "connectors",
-            "discover",
-            "--connector-id",
-            "http.json",
-            "--connection-ref",
-            "conn-1",
-        ]
-    ) == 0
+    assert (
+        main(
+            [
+                "connectors",
+                "discover",
+                "--workspace-id",
+                "workspace-a",
+                "--connector-id",
+                "http.json",
+                "--connection-ref",
+                "conn-1",
+            ]
+        )
+        == 0
+    )
     assert json.loads(capsys.readouterr().out)["items"][0]["asset_ref"] == "conn-1::orders"
 
 
 def test_connectors_plan_requires_complete_definition(monkeypatch, capsys) -> None:
+    monkeypatch.setenv("RONIN_WORKSPACE_ID", "workspace-a")
     monkeypatch.setattr("studio_cli._control_plane_client", lambda: object())
 
     assert main(["connectors", "plan", "--connector-id", "http.json"]) == 2

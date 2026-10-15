@@ -313,7 +313,7 @@ jobs:
             --command "all CI workflow jobs" \
             --artifact ci-qualification.txt \
             --output ci-release-evidence.json
-      - uses: actions/upload-artifact@ea165f8f65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ci-release-evidence
           path: |

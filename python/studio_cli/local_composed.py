@@ -272,8 +272,8 @@ def build_local_composed_from_env() -> LocalServerComposition:
         checkpoint_store = SqliteConnectorCheckpointStore(database)
         secrets_resolver = CompositeSecretResolver(environment=EnvironmentSecretResolver())
 
-        def resolve_connection(reference: str) -> object:
-            return connection_service.get(workspace_id, ConnectionId(reference))
+        def resolve_connection(scoped_workspace_id: str, reference: str) -> object:
+            return connection_service.get(WorkspaceId(scoped_workspace_id), ConnectionId(reference))
 
         def resolve_asset(reference: str) -> AssetHandle:
             if "::" not in reference:

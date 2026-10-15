@@ -892,6 +892,16 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         )
         return False
 
+    def _connector_workspace(self, actor: Actor, query: str | None) -> WorkspaceId | None:
+        params = parse_qs(query or "", keep_blank_values=True)
+        workspace_values = params.pop("workspace_id", [])
+        if len(workspace_values) != 1 or params or not workspace_values[0].strip():
+            raise ValueError("connector requests require only workspace_id")
+        workspace_id = WorkspaceId(workspace_values[0])
+        if not self._authorize(actor, workspace_id, "workspace.read"):
+            return None
+        return workspace_id
+
     def _audit_mutation(
         self,
         actor: Actor,
@@ -2790,8 +2800,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 self._write_json(HTTPStatus.CREATED, stored.to_payload())
                 return
             if segments == ("v1", "platform", "connectors", "discover"):
-                if query:
-                    raise ValueError("connector discovery does not accept query parameters")
+                workspace_id = self._connector_workspace(actor, query)
+                if workspace_id is None:
+                    return
                 adapter = self._server().ingestion_adapter
                 discover = getattr(adapter, "discover", None) if adapter is not None else None
                 if not callable(discover):
@@ -2801,11 +2812,15 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         "connector discovery is not configured",
                     )
                     return
-                self._write_json(HTTPStatus.OK, discover(self._read_json()))
+                self._write_json(
+                    HTTPStatus.OK,
+                    discover(self._read_json(), workspace_id=str(workspace_id)),
+                )
                 return
             if segments == ("v1", "platform", "connectors", "preview"):
-                if query:
-                    raise ValueError("connector preview does not accept query parameters")
+                workspace_id = self._connector_workspace(actor, query)
+                if workspace_id is None:
+                    return
                 adapter = self._server().ingestion_adapter
                 preview = getattr(adapter, "preview", None) if adapter is not None else None
                 if not callable(preview):
@@ -2815,14 +2830,18 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         "ingestion preview is not configured",
                     )
                     return
-                self._write_json(HTTPStatus.OK, preview(self._read_json()))
+                self._write_json(
+                    HTTPStatus.OK,
+                    preview(self._read_json(), workspace_id=str(workspace_id)),
+                )
                 return
             if segments in {
                 ("v1", "platform", "connectors", "plan"),
                 ("v1", "platform", "connectors", "checkpoint-health"),
             }:
-                if query:
-                    raise ValueError("connector operation does not accept query parameters")
+                workspace_id = self._connector_workspace(actor, query)
+                if workspace_id is None:
+                    return
                 adapter = self._server().ingestion_adapter
                 method_name = "plan" if segments[-1] == "plan" else "checkpoint_health"
                 operation = getattr(adapter, method_name, None) if adapter is not None else None
@@ -2833,7 +2852,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         f"connector {method_name} is not configured",
                     )
                     return
-                self._write_json(HTTPStatus.OK, operation(self._read_json()))
+                self._write_json(
+                    HTTPStatus.OK,
+                    operation(self._read_json(), workspace_id=str(workspace_id)),
+                )
                 return
             if self._server().plugin_routes_enabled:
                 plugin_host = self._server().plugin_host

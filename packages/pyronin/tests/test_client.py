@@ -939,9 +939,10 @@ def test_connector_capabilities_and_preview_are_public_sdk_contracts() -> None:
     )
     client = Ronin(transport=transport)
     assert client.platform_connectors()["http-json"]["read"] is True
-    result = client.preview_connector({"id": "p", "mode": "snapshot"})
+    result = client.preview_connector("workspace-a", {"id": "p", "mode": "snapshot"})
     assert result["rows"] == [{"id": "1"}]
     assert transport.calls[1][0:2] == ("POST", "/v1/platform/connectors/preview")
+    assert transport.calls[1][4] == {"workspace_id": "workspace-a"}
 
 
 def test_project_permission_inspection_is_resource_scoped() -> None:
@@ -981,7 +982,7 @@ def test_project_permission_models_reject_invalid_decisions() -> None:
 def test_connector_checkpoint_health_rejects_non_text_identity() -> None:
     client = Ronin(transport=FakeTransport([]))
     with pytest.raises(ValueError, match="checkpoint_identity"):
-        client.connector_checkpoint_health(None)
+        client.connector_checkpoint_health("workspace-a", None)
 
 
 def test_run_pipeline_is_audited_and_idempotent() -> None:
@@ -1008,9 +1009,10 @@ def test_connector_plan_and_checkpoint_health_are_public_sdk_contracts() -> None
         ]
     )
     client = Ronin(transport=transport)
-    assert client.plan_connector({"id": "sync-1"})["plan"]["mode"] == "snapshot"
-    assert client.connector_checkpoint_health("sync-1")["present"] is False
+    assert client.plan_connector("workspace-a", {"id": "sync-1"})["plan"]["mode"] == "snapshot"
+    assert client.connector_checkpoint_health("workspace-a", "sync-1")["present"] is False
     assert transport.calls[0][1] == "/v1/platform/connectors/plan"
+    assert transport.calls[0][4] == {"workspace_id": "workspace-a"}
     assert transport.calls[1][2] == {"checkpoint_identity": "sync-1"}
 
 

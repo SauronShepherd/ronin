@@ -90,6 +90,7 @@ def _parser() -> argparse.ArgumentParser:
     connectors.add_argument("--destination-ref")
     connectors.add_argument("--checkpoint-identity")
     connectors.add_argument("--mode", choices=("snapshot", "incremental"), default="snapshot")
+    connectors.add_argument("--workspace-id", default=os.environ.get("RONIN_WORKSPACE_ID"))
     plugins = commands.add_parser("plugins", help="inspect installed Ronin plugins")
     plugins.add_argument(
         "plugins_command", choices=("list", "surfaces", "validate", "lock", "rollback")
@@ -396,9 +397,7 @@ def _client() -> ControlPlaneClient:
 
 
 def _control_plane_client() -> ControlPlaneClient:
-    return ControlPlaneClient(
-        _env("RONIN_CONTROL_PLANE_URL", "http://127.0.0.1:8081"), _token()
-    )
+    return ControlPlaneClient(_env("RONIN_CONTROL_PLANE_URL", "http://127.0.0.1:8081"), _token())
 
 
 def _parse_params(values: Sequence[str]) -> dict[str, object]:
@@ -517,20 +516,24 @@ def _cancel(namespace: argparse.Namespace) -> int:
 def _connectors(namespace: argparse.Namespace) -> int:
     client = _control_plane_client()
     command = cast(str, namespace.connectors_command)
+    workspace_id = cast(str | None, namespace.workspace_id)
     if command == "capabilities":
         result = client.connector_capabilities()
-    elif command == "discover":
+    else:
+        if workspace_id is None or not workspace_id.strip():
+            raise CliError(f"connectors {command} requires --workspace-id or RONIN_WORKSPACE_ID")
+    if command == "discover":
         connector_id = cast(str | None, namespace.connector_id)
         connection_ref = cast(str | None, namespace.connection_ref)
         if connector_id is None or connection_ref is None:
             raise CliError("connectors discover requires --connector-id and --connection-ref")
-        result = client.connector_discover(connector_id, connection_ref)
+        result = client.connector_discover(cast(str, workspace_id), connector_id, connection_ref)
     elif command == "checkpoint-health":
         identity = cast(str | None, namespace.checkpoint_identity)
         if identity is None:
             raise CliError("connectors checkpoint-health requires --checkpoint-identity")
-        result = client.connector_checkpoint_health(identity)
-    else:
+        result = client.connector_checkpoint_health(cast(str, workspace_id), identity)
+    elif command in {"preview", "plan"}:
         names = (
             "connector_id",
             "connection_ref",
@@ -544,9 +547,9 @@ def _connectors(namespace: argparse.Namespace) -> int:
             raise CliError(f"connectors {command} requires {', '.join(missing)}")
         payload = {**values, "mode": cast(str, namespace.mode)}
         result = (
-            client.connector_preview(payload)
+            client.connector_preview(cast(str, workspace_id), payload)
             if command == "preview"
-            else client.connector_plan(payload)
+            else client.connector_plan(cast(str, workspace_id), payload)
         )
     print(json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
     return 0

@@ -3184,12 +3184,39 @@ class Ronin:
             raise ProtocolError("platform connectors response must be an object")
         return payload
 
-    def preview_connector(self, definition: Mapping[str, object]) -> Mapping[str, object]:
+    @staticmethod
+    def _connector_workspace(workspace_id: str) -> str:
+        if not isinstance(workspace_id, str) or not workspace_id.strip():
+            raise ValueError("workspace_id must be non-empty")
+        return workspace_id
+
+    def discover_connector(
+        self, workspace_id: str, connector_id: str, connection_ref: str
+    ) -> Mapping[str, object]:
+        """Discover bounded source assets within an authorized workspace."""
+        workspace = self._connector_workspace(workspace_id)
+        payload = self._transport.request(
+            "POST",
+            "/v1/platform/connectors/discover",
+            query={"workspace_id": workspace},
+            payload={"connector_id": connector_id, "connection_ref": connection_ref},
+        )
+        if not isinstance(payload, dict) or payload.get("schema") != "ronin.connector-discovery/v1":
+            raise ProtocolError("connector discovery response has an invalid schema")
+        return payload
+
+    def preview_connector(
+        self, workspace_id: str, definition: Mapping[str, object]
+    ) -> Mapping[str, object]:
         """Return a bounded connector preview and its checkpoint/sync evidence."""
+        workspace = self._connector_workspace(workspace_id)
         if not isinstance(definition, Mapping) or not definition:
             raise ValueError("definition must be a non-empty mapping")
         payload = self._transport.request(
-            "POST", "/v1/platform/connectors/preview", payload=dict(definition)
+            "POST",
+            "/v1/platform/connectors/preview",
+            query={"workspace_id": workspace},
+            payload=dict(definition),
         )
         if not isinstance(payload, dict) or payload.get("schema") != "ronin.ingestion-preview/v1":
             raise ProtocolError("connector preview response has an invalid schema")
@@ -3197,24 +3224,34 @@ class Ronin:
             raise ProtocolError("connector preview response must contain rows and plan")
         return payload
 
-    def plan_connector(self, definition: Mapping[str, object]) -> Mapping[str, object]:
+    def plan_connector(
+        self, workspace_id: str, definition: Mapping[str, object]
+    ) -> Mapping[str, object]:
         """Validate a connector sync definition without reading source data."""
+        workspace = self._connector_workspace(workspace_id)
         if not isinstance(definition, Mapping) or not definition:
             raise ValueError("definition must be a non-empty mapping")
         payload = self._transport.request(
-            "POST", "/v1/platform/connectors/plan", payload=dict(definition)
+            "POST",
+            "/v1/platform/connectors/plan",
+            query={"workspace_id": workspace},
+            payload=dict(definition),
         )
         if not isinstance(payload, dict) or not isinstance(payload.get("plan"), dict):
             raise ProtocolError("connector plan response must contain a plan")
         return payload
 
-    def connector_checkpoint_health(self, checkpoint_identity: str) -> Mapping[str, object]:
+    def connector_checkpoint_health(
+        self, workspace_id: str, checkpoint_identity: str
+    ) -> Mapping[str, object]:
         """Return durable health for a connector checkpoint identity."""
+        workspace = self._connector_workspace(workspace_id)
         if not isinstance(checkpoint_identity, str) or not checkpoint_identity.strip():
             raise ValueError("checkpoint_identity must be non-empty")
         payload = self._transport.request(
             "POST",
             "/v1/platform/connectors/checkpoint-health",
+            query={"workspace_id": workspace},
             payload={"checkpoint_identity": checkpoint_identity},
         )
         if not isinstance(payload, dict) or payload.get("identity") != checkpoint_identity:

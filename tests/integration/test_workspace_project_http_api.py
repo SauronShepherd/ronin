@@ -100,7 +100,12 @@ class _Store:
 
 
 class _DiscoveryAdapter:
-    def discover(self, body: object) -> dict[str, object]:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def discover(self, body: object, *, workspace_id: str) -> dict[str, object]:
+        self.calls += 1
+        assert workspace_id == "workspace-a"
         assert body == {"connector_id": "http.json", "connection_ref": "conn-1"}
         return {
             "schema": "ronin.connector-discovery/v1",
@@ -481,17 +486,39 @@ def test_platform_capabilities_exposes_only_ready_plugin_capabilities() -> None:
 def test_connector_discovery_route_delegates_through_authenticated_control_plane() -> None:
     store = _Store()
     body = _json_body({"connector_id": "http.json", "connection_ref": "conn-1"})
-    with _server(store, _Authorizer(), ingestion_adapter=_DiscoveryAdapter()) as address:
+    adapter = _DiscoveryAdapter()
+    authorizer = _Authorizer()
+    with _server(store, authorizer, ingestion_adapter=adapter) as address:
         status, payload = _request(
             address,
             "POST",
-            "/v1/platform/connectors/discover",
+            "/v1/platform/connectors/discover?workspace_id=workspace-a",
             body=body,
             headers={"Content-Type": "application/json"},
         )
     assert status == 200
+    assert adapter.calls == 1
+    assert authorizer.requirements[-1].permission == "workspace.read"
+    assert str(authorizer.requirements[-1].workspace_id) == "workspace-a"
     assert payload["schema"] == "ronin.connector-discovery/v1"
     assert payload["items"][0]["asset_ref"] == "conn-1::orders"
+
+
+def test_connector_discovery_is_denied_before_adapter_side_effect() -> None:
+    store = _Store()
+    body = _json_body({"connector_id": "http.json", "connection_ref": "conn-1"})
+    adapter = _DiscoveryAdapter()
+    with _server(store, _Authorizer(allowed=set()), ingestion_adapter=adapter) as address:
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/platform/connectors/discover?workspace_id=workspace-a",
+            body=body,
+            headers={"Content-Type": "application/json"},
+        )
+    assert status == 403
+    assert payload["error"]["code"] == "forbidden"
+    assert adapter.calls == 0
 
 
 def test_platform_ui_manifest_exposes_ready_plugin_navigation() -> None:
