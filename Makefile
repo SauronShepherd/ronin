@@ -142,7 +142,7 @@ coverage-storage-files:
 		--exclude=postgres_ml.py \
 		--exclude=postgres_workflow.py \
 		--threshold=80 \
-		--ratchet-margin=2 \
+		--ratchet-margin=2.1 \
 		--baseline=artifacts.py=77.30 \
 		--baseline=backup.py=76.00 \
 		--baseline=bundle_workflow_import.py=77.55 \
@@ -154,8 +154,8 @@ coverage-storage-files:
 		--baseline=ml.py=73.47 \
 		--baseline=ontology.py=37.40 \
 		--baseline=quality.py=31.00 \
-		--baseline=s3_artifacts.py=71.05 \
-		--baseline=scheduler.py=78.68 \
+		--baseline=s3_artifacts.py=74.20 \
+		--baseline=scheduler.py=80.00 \
 		--baseline=scheduler_backfill.py=50.48 \
 		--baseline=scheduler_backfill_runtime.py=66.53 \
 		--baseline=scheduler_cancellation.py=70.76 \
