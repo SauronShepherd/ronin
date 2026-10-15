@@ -114,6 +114,36 @@ def test_s3_store_retries_transient_provider_failures() -> None:
     assert client.failures == 0
 
 
+def test_s3_storage_ref_reads_content_and_rejects_invalid_references() -> None:
+    client = _Client()
+    store = S3ArtifactStore("ronin-test", client=client)
+    ref = store.put_bytes(role="model", data=b"portable model")
+    assert store.get_bytes_by_storage_ref(ref.storage_ref, digest=ref.digest) == b"portable model"
+    with pytest.raises(ValueError, match="does not match"):
+        store.get_bytes_by_storage_ref("s3://wrong/sha256/" + ref.digest, digest=ref.digest)
+    with pytest.raises(ValueError, match="lowercase sha256"):
+        store.get_bytes_by_storage_ref(ref.storage_ref, digest="not-a-digest")
+
+
+def test_s3_store_bounds_retry_configuration_and_stops_on_permanent_errors() -> None:
+    for kwargs, message in (
+        ({"max_attempts": 0}, "max_attempts"),
+        ({"max_attempts": 11}, "max_attempts"),
+        ({"retry_delay_seconds": -1}, "retry delay"),
+        ({"retry_delay_seconds": 6}, "retry delay"),
+    ):
+        with pytest.raises(ValueError, match=message):
+            S3ArtifactStore("ronin-test", client=_Client(), **kwargs)
+
+    class PermanentFailure(_Client):
+        def put_object(self, **_kwargs: object) -> None:
+            raise RuntimeError("permanent")
+
+    store = S3ArtifactStore("ronin-test", client=PermanentFailure(), retry_delay_seconds=0)
+    with pytest.raises(RuntimeError, match="permanent"):
+        store.put_bytes(role="model", data=b"model")
+
+
 def test_s3_artifact_page_accepts_numeric_only_sha256_digest() -> None:
     client = _Client()
     store = S3ArtifactStore("ronin-test", client=client)

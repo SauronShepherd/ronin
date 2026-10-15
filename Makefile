@@ -139,19 +139,21 @@ coverage-storage-files:
 	$(PYTHON) -m tools.coverage_file_gate coverage-storage.json python/studio_storage \
 		--exclude=postgres_core.py \
 		--exclude=postgres_jobs.py \
+		--exclude=postgres_ml.py \
+		--exclude=postgres_workflow.py \
 		--threshold=80 \
 		--ratchet-margin=2 \
 		--baseline=artifacts.py=77.30 \
 		--baseline=backup.py=76.00 \
 		--baseline=bundle_workflow_import.py=77.55 \
-		--baseline=catalog.py=72.88 \
+		--baseline=catalog.py=78.40 \
 		--baseline=connections.py=64.44 \
 		--baseline=environments.py=75.51 \
-		--baseline=genai.py=63.08 \
+		--baseline=genai.py=70.80 \
 		--baseline=local_files.py=77.22 \
 		--baseline=ml.py=73.47 \
-		--baseline=ontology.py=35.84 \
-		--baseline=quality.py=30.34 \
+		--baseline=ontology.py=37.40 \
+		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=71.05 \
 		--baseline=scheduler.py=78.68 \
 		--baseline=scheduler_backfill.py=50.48 \

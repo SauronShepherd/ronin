@@ -2,6 +2,8 @@ import sqlite3
 
 import pytest
 from studio_storage.backup import (
+    BackupManifest,
+    artifact_tree_sha256,
     backup_deployment,
     backup_sqlite,
     restore_deployment,
@@ -57,3 +59,23 @@ def test_deployment_restore_binds_artifact_digest_to_logical_path(tmp_path) -> N
     (bundle / "artifacts" / "b.json").write_text("a", encoding="utf-8")
     with pytest.raises(ValueError, match="^deployment artifact tree digest mismatch$"):
         restore_deployment(bundle, tmp_path / "restored.sqlite", tmp_path / "restored-artifacts")
+
+
+def test_backup_manifest_schema_and_artifact_tree_hash_are_deterministic(tmp_path) -> None:
+    manifest = BackupManifest("a" * 64, ("b" * 64,))
+    assert BackupManifest.from_json(manifest.to_json()) == manifest
+    with pytest.raises(ValueError, match="unsupported backup manifest"):
+        BackupManifest.from_json('{"schema":"unknown","artifact_sha256":[]}')
+    with pytest.raises(ValueError, match="artifact_tree_sha256 must be a string"):
+        BackupManifest.from_json(
+            '{"schema":"ronin.backup-manifest/v2","database_sha256":"'
+            + "a" * 64
+            + '","artifact_sha256":[]}'
+        )
+
+    artifacts = tmp_path / "tree"
+    artifacts.mkdir()
+    (artifacts / "a.txt").write_text("a", encoding="utf-8")
+    first = artifact_tree_sha256(artifacts)
+    (artifacts / "a.txt").rename(artifacts / "b.txt")
+    assert artifact_tree_sha256(artifacts) != first
