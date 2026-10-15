@@ -24,7 +24,7 @@ def qualify() -> dict[str, Any]:
     os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
     os.environ.setdefault("PYSPARK_DRIVER_PYTHON", sys.executable)
     try:
-        from pyspark.sql import SparkSession
+        from pyspark.sql import SparkSession  # type: ignore[import-not-found]
     except ImportError as exc:  # pragma: no cover - environment dependent
         return {"status": "unavailable", "reason": f"pyspark unavailable: {exc}"}
 

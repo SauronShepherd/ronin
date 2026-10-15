@@ -61,7 +61,7 @@ class SparkConnectProvider:
         if self._session_factory is not None:
             return self._session_factory(self.endpoint)
         try:
-            from pyspark.sql import SparkSession
+            from pyspark.sql import SparkSession  # type: ignore[import-not-found]
         except ImportError as exc:
             raise SparkConnectUnavailable(
                 "pyspark is not installed; install the Spark Connect runtime extra"
