@@ -43,6 +43,7 @@ def test_matrix_contains_exactly_the_v01_packages() -> None:
         "studio_worker",
         "studio_cli",
         "studio_connectors",
+        "studio_graph",
         "studio_finops",
         "studio_genai",
         "studio_lakehouse",

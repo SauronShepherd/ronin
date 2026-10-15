@@ -103,6 +103,7 @@ PROJECT_DEPENDENCIES.update(
         "studio_connectors": frozenset({"studio_core", "studio_storage"}),
         "studio_finops": frozenset({"studio_core", "studio_orchestrator", "studio_observability"}),
         "studio_genai": frozenset({"studio_core", "studio_storage"}),
+        "studio_graph": frozenset({"studio_core"}),
         "studio_lakehouse": frozenset({"studio_core", "studio_storage"}),
         "studio_migration": frozenset({"studio_core"}),
         "studio_ml": frozenset({"studio_core", "studio_orchestrator", "studio_storage"}),
