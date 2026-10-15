@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+import pytest
 from studio_core import (
     AssetId,
     AssetRef,
@@ -95,6 +96,27 @@ def test_freshness_uses_contract_default() -> None:
     assert run.status == "passed"
 
 
+def test_custom_python_expression_uses_bounded_sandbox() -> None:
+    contract = DataContract(
+        _REF,
+        "exact",
+        (
+            QualityRule(
+                QualityRuleId("safe-python"),
+                "custom_python",
+                "positive amounts",
+                parameters=(("expression", "all(row['amount'] > 0 for row in rows)"),),
+            ),
+        ),
+    )
+    run = evaluate_contract(
+        contract,
+        ({"amount": 1}, {"amount": 2}),
+        run_id=QualityRunId("quality-python"),
+    )
+    assert run.status == "passed"
+
+
 def test_custom_execution_kinds_fail_explicitly_not_silently() -> None:
     contract = DataContract(
         _REF,
@@ -161,3 +183,98 @@ def test_custom_python_rule_uses_injected_sandboxed_predicate() -> None:
         rule, [{"id": 1}], contract=contract, custom_python=lambda _rule, rows: rows[0]["id"] == 1
     )
     assert result.status == "passed"
+
+
+def test_quality_contract_and_result_round_trip_preserves_sorted_pairs() -> None:
+    from studio_core import QualityResult
+
+    rule = QualityRule(
+        QualityRuleId("parameters"),
+        "custom_python",
+        "safe rule",
+        parameters=(("z", "last"), ("a", "first")),
+    )
+    contract = DataContract(_REF, "full", rules=(rule,), freshness_seconds=60)
+    assert DataContract.from_json(contract.to_json()) == contract
+    result = QualityResult(QualityRuleId("parameters"), "passed", (("z", "last"), ("a", "first")))
+    assert QualityResult.from_payload(result.to_payload()) == result
+
+
+def test_quality_contract_rejects_duplicate_or_invalid_sensitive_parameters() -> None:
+    from studio_core import QualityResult
+
+    with pytest.raises(ValueError, match="unique"):
+        QualityRule(
+            QualityRuleId("duplicate"),
+            "domain",
+            "duplicate",
+            parameters=(("x", "1"), ("x", "2")),
+        )
+    with pytest.raises(ValueError, match="credential-bearing"):
+        QualityRule(
+            QualityRuleId("secret"),
+            "domain",
+            "secret",
+            parameters=(("Api_Token", "secret"),),
+        )
+    with pytest.raises(ValueError, match="freshness_seconds"):
+        DataContract(_REF, "exact", freshness_seconds=0)
+    with pytest.raises(ValueError, match="quality result message"):
+        QualityResult(QualityRuleId("bad"), "error", message=" bad ")
+
+
+@pytest.mark.parametrize("credential_key", ["password", "secret", "token", "credential", "api_key"])
+def test_quality_parameters_reject_each_credential_marker_case_insensitively(
+    credential_key: str,
+) -> None:
+    with pytest.raises(ValueError, match="credential-bearing"):
+        QualityRule(
+            QualityRuleId("credential-marker"),
+            "custom_python",
+            "credential marker",
+            parameters=((credential_key.upper(), "redacted"),),
+        )
+
+
+@pytest.mark.parametrize("invalid", ["bad\rvalue", "bad\x00value"])
+def test_quality_text_rejects_carriage_returns_and_nul_bytes(invalid: str) -> None:
+    with pytest.raises(ValueError, match="single-line"):
+        QualityRule(QualityRuleId(invalid), "null", "valid name")
+
+    with pytest.raises(ValueError, match="single-line"):
+        QualityRule(
+            QualityRuleId("valid-id"),
+            "null",
+            invalid,
+        )
+
+
+@pytest.mark.parametrize(
+    "credential_key",
+    ["password", "secret", "token", "credential", "api_key"],
+)
+def test_quality_observed_values_reject_sensitive_keys_case_insensitively(
+    credential_key: str,
+) -> None:
+    from studio_core import QualityResult
+
+    with pytest.raises(
+        ValueError,
+        match="^quality observed values must not contain credential-bearing keys$",
+    ):
+        QualityResult(
+            QualityRuleId("observed-sensitive"),
+            "passed",
+            ((credential_key.upper(), "redacted"),),
+        )
+
+
+def test_quality_pair_contract_sorts_and_preserves_distinct_keys() -> None:
+    from studio_core import QualityResult
+
+    result = QualityResult(
+        QualityRuleId("observed"),
+        "passed",
+        (("zeta", "last"), ("alpha", "first")),
+    )
+    assert result.observed == (("alpha", "first"), ("zeta", "last"))

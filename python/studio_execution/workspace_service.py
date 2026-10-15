@@ -127,6 +127,16 @@ class ProjectService:
             return existing
         return self._store.replace_project(workspace_id, manifest, now=now)
 
+    def archive(
+        self, workspace_id: WorkspaceId, project_id: ProjectId, *, now: Instant | str
+    ) -> bool:
+        self._workspace(workspace_id, mutable=True)
+        if self._store.get_project(workspace_id, project_id) is None:
+            raise WorkspaceServiceNotFound(f"project not found: {workspace_id}/{project_id}")
+        if not self._store.archive_project(workspace_id, project_id, now=now):
+            raise WorkspaceServiceNotFound(f"project not found: {workspace_id}/{project_id}")
+        return True
+
     def unregister(self, workspace_id: WorkspaceId, project_id: ProjectId) -> None:
         self._workspace(workspace_id, mutable=True)
         if self._store.get_project(workspace_id, project_id) is None:

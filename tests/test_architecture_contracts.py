@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import tempfile
 from pathlib import Path
 
@@ -18,6 +19,16 @@ def test_current_project_respects_architecture_contracts() -> None:
     assert inspect_roots([Path("python")]) == []
 
 
+def test_public_v1_packages_import_cleanly() -> None:
+    packages = tuple(PROJECT_DEPENDENCIES) + (
+        "studio_ai_studio",
+        "studio_data_engineering",
+        "studio_query_engine",
+    )
+    for package in packages:
+        assert importlib.import_module(package).__name__ == package
+
+
 def test_matrix_contains_exactly_the_v01_packages() -> None:
     assert set(PROJECT_DEPENDENCIES) == {
         "studio_core",
@@ -32,6 +43,7 @@ def test_matrix_contains_exactly_the_v01_packages() -> None:
         "studio_worker",
         "studio_cli",
         "studio_connectors",
+        "studio_graph",
         "studio_finops",
         "studio_genai",
         "studio_lakehouse",
@@ -43,6 +55,13 @@ def test_matrix_contains_exactly_the_v01_packages() -> None:
         "studio_semantic",
         "studio_sql",
         "studio_streaming",
+        "studio_runtime",
+        "studio_plugin_workspaces",
+        "studio_plugin_observability",
+        "studio_plugin_sdk",
+        "studio_plugin_testkit",
+        "studio_cloud",
+        "studio_synthetic_data",
     }
 
 

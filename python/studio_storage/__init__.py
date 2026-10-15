@@ -10,7 +10,15 @@ from studio_storage.artifacts import (
 )
 from studio_storage.async_artifacts import BoundedAsyncArtifactStore
 from studio_storage.async_store import StorageBackpressureError
-from studio_storage.backup import backup_sqlite, restore_sqlite
+from studio_storage.audit import SqliteAuditStore
+from studio_storage.backup import (
+    BackupManifest,
+    backup_deployment,
+    backup_sqlite,
+    restore_deployment,
+    restore_sqlite,
+    sha256_file,
+)
 from studio_storage.bundle import (
     BUNDLE_MANIFEST_PATH,
     BundleFile,
@@ -19,6 +27,12 @@ from studio_storage.bundle import (
     extract_bundle,
     verify_bundle,
     write_bundle,
+)
+from studio_storage.bundle_certification import (
+    BundleRoundTripComparison,
+    BundleRoundTripError,
+    assert_lossless_bundle_round_trip,
+    compare_bundle_inventories,
 )
 from studio_storage.catalog import (
     CatalogAssetNotFound,
@@ -42,6 +56,7 @@ from studio_storage.environments import (
     migrate_environments,
 )
 from studio_storage.fenced_sqlite import SqliteJobStore
+from studio_storage.glossary import GlossaryConflict, SqliteGlossaryStore
 from studio_storage.memory import IdempotencyConflict
 from studio_storage.ontology import (
     OntologyConflict,
@@ -62,6 +77,8 @@ from studio_storage.ports import (
 from studio_storage.postgres_audit import PostgresAuditStore
 from studio_storage.postgres_core import PostgresDependencyError, PostgresMetadataStore
 from studio_storage.postgres_jobs import PostgresJobReadPort
+from studio_storage.postgres_ml import PostgresMLStore
+from studio_storage.postgres_workflow import PostgresWorkflowBundleImportStore
 from studio_storage.quality import (
     DataContractConflict,
     DataContractNotFound,
@@ -105,10 +122,17 @@ from studio_storage.workspaces import (
 )
 
 __all__ = (
+    "GlossaryConflict",
+    "SqliteGlossaryStore",
     "ArtifactIntegrityError",
     "ArtifactRef",
+    "BundleRoundTripComparison",
+    "BundleRoundTripError",
+    "assert_lossless_bundle_round_trip",
+    "compare_bundle_inventories",
     "ArtifactPage",
     "backup_sqlite",
+    "BackupManifest",
     "ArtifactStore",
     "PagedArtifactStore",
     "BUNDLE_MANIFEST_PATH",
@@ -134,15 +158,21 @@ __all__ = (
     "InMemoryJobStore",
     "LocalArtifactStore",
     "restore_sqlite",
+    "sha256_file",
+    "backup_deployment",
+    "restore_deployment",
     "S3ArtifactStore",
     "S3DependencyError",
     "collect_unreferenced",
     "MountedFileSecretResolver",
     "OntologyConflict",
     "PostgresAuditStore",
+    "SqliteAuditStore",
     "PostgresDependencyError",
     "PostgresMetadataStore",
+    "PostgresWorkflowBundleImportStore",
     "PostgresJobReadPort",
+    "PostgresMLStore",
     "KnowledgeGraphConflict",
     "SqliteKnowledgeGraphStore",
     "ProjectRegistrationConflict",

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from decimal import Decimal
 from typing import Protocol, runtime_checkable
 
@@ -14,6 +15,41 @@ from .contracts import BudgetEvaluation, BudgetPolicy, CostRecord, RateCard, Usa
 
 class RateCardNotFound(KeyError):
     """Raised when usage cannot be priced without fabricating a rate."""
+
+
+@dataclass(frozen=True, slots=True)
+class AllocationSlice:
+    dimensions: tuple[tuple[str, str], ...]
+    currency: str
+    actual: Decimal
+    estimated: Decimal
+
+    @property
+    def total(self) -> Decimal:
+        return self.actual + self.estimated
+
+
+@dataclass(frozen=True, slots=True)
+class CostForecast:
+    """An estimate derived from observed cost, never an actual ledger entry."""
+
+    schema: str
+    source_ref: str
+    currency: str
+    observed_cost: Decimal
+    elapsed_fraction: Decimal
+    projected_cost: Decimal
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "source_ref": self.source_ref,
+            "currency": self.currency,
+            "observed_cost": str(self.observed_cost),
+            "elapsed_fraction": str(self.elapsed_fraction),
+            "projected_cost": str(self.projected_cost),
+            "provenance": "estimated",
+        }
 
 
 @runtime_checkable
@@ -70,6 +106,70 @@ def price_usage(store: FinOpsStore, usage: UsageRecord) -> CostRecord:
         rate.id,
     )
     return store.record_cost(cost)
+
+
+def allocate_costs(
+    store: FinOpsStore,
+    workspace_id: WorkspaceId,
+    *,
+    period_start: Instant | str,
+    period_end: Instant | str,
+    dimensions: tuple[str, ...] = ("project", "team"),
+) -> tuple[AllocationSlice, ...]:
+    """Allocate costs from durable usage labels without inventing metadata."""
+    if not dimensions or len(dimensions) > 16 or len(set(dimensions)) != len(dimensions):
+        raise ValueError("allocation dimensions must be unique and bounded")
+    if any(not key or key != key.strip() or "\x00" in key for key in dimensions):
+        raise ValueError("allocation dimensions must be trimmed")
+    usage = {
+        item.id: item
+        for item in store.list_usage(workspace_id, period_start=period_start, period_end=period_end)
+    }
+    costs = store.list_costs(workspace_id, period_start=period_start, period_end=period_end)
+    currencies = {cost.currency for cost in costs}
+    if len(currencies) > 1:
+        raise ValueError("allocation cannot aggregate multiple currencies")
+    grouped: dict[tuple[tuple[str, str], ...], list[Decimal]] = {}
+    for cost in costs:
+        labels = dict(usage[cost.usage_id].labels) if cost.usage_id in usage else {}
+        key = tuple((dimension, labels.get(dimension, "unknown")) for dimension in dimensions)
+        bucket = grouped.setdefault(key, [Decimal("0"), Decimal("0")])
+        bucket[0 if cost.provenance == "actual" else 1] += cost.amount
+    currency = next(iter(currencies), "UNKNOWN")
+    return tuple(
+        AllocationSlice(key, currency, values[0], values[1])
+        for key, values in sorted(grouped.items())
+    )
+
+
+def forecast_cost(
+    *,
+    source_ref: str,
+    currency: str,
+    observed_cost: Decimal,
+    elapsed_fraction: Decimal,
+) -> CostForecast:
+    """Project observed spend to a period end without changing the ledger."""
+    if not source_ref or source_ref != source_ref.strip() or "\x00" in source_ref:
+        raise ValueError("forecast source_ref must be non-empty and trimmed")
+    if (
+        not currency
+        or len(currency.strip()) != 3
+        or not currency.isascii()
+        or not currency.isalpha()
+    ):
+        raise ValueError("forecast currency must be a three-letter code")
+    if observed_cost < 0 or elapsed_fraction <= 0 or elapsed_fraction > 1:
+        raise ValueError("forecast values are outside their allowed bounds")
+    projected = observed_cost / elapsed_fraction
+    return CostForecast(
+        "ronin.finops.forecast/v1",
+        source_ref,
+        currency.upper(),
+        observed_cost,
+        elapsed_fraction,
+        projected,
+    )
 
 
 def _labels_match(
@@ -160,10 +260,14 @@ def budget_gate(evaluation: BudgetEvaluation) -> bool:
 
 
 __all__ = (
+    "AllocationSlice",
+    "CostForecast",
     "FinOpsStore",
     "RateCardNotFound",
     "evaluate_budget",
     "budget_notification",
     "budget_gate",
     "price_usage",
+    "allocate_costs",
+    "forecast_cost",
 )

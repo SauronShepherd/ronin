@@ -26,7 +26,7 @@ RUN set -eux; \
 
 COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 COPY --from=wheel /wheels /tmp/wheels
-RUN python -m pip install --no-cache-dir /tmp/wheels/*.whl && rm -rf /tmp/wheels
+RUN python -m pip install --no-cache-dir /tmp/wheels/*.whl "psycopg[binary]>=3.2,<4" && rm -rf /tmp/wheels
 
 COPY docker/container-entrypoint.sh /usr/local/bin/ronin-container-entrypoint
 COPY docker/healthcheck.py /usr/local/lib/ronin/healthcheck.py

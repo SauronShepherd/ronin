@@ -11,7 +11,14 @@ from .scheduler import WorkflowId
 
 
 def _require_text(value: str, name: str, *, maximum: int = 512) -> str:
-    if not value or value != value.strip() or "\n" in value or "\r" in value or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or "\n" in value
+        or "\r" in value
+        or "\x00" in value
+    ):
         raise ValueError(f"{name} must be non-empty, trimmed, and single-line")
     if len(value) > maximum:
         raise ValueError(f"{name} must be at most {maximum} characters")

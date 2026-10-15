@@ -5,12 +5,14 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
 from studio_orchestrator import Instant
 
 from .contracts import AlertInstance, AlertRule, MetricKind, MetricPoint, TelemetryEvent
+from .notifications import NotificationIntent
 
 
 class SqliteTelemetryStore:
@@ -56,14 +58,150 @@ class SqliteTelemetryStore:
                     state_json TEXT NOT NULL,
                     PRIMARY KEY(rule_id, fingerprint)
                 );
+                CREATE TABLE IF NOT EXISTS notification_intents (
+                    notification_id TEXT PRIMARY KEY,
+                    intent_json TEXT NOT NULL,
+                    delivered_at TEXT,
+                    attempt_count INTEGER NOT NULL DEFAULT 0,
+                    last_error TEXT,
+                    next_attempt_at TEXT
+                );
                 """
             )
+            for statement in (
+                "ALTER TABLE notification_intents ADD COLUMN attempt_count "
+                "INTEGER NOT NULL DEFAULT 0",
+                "ALTER TABLE notification_intents ADD COLUMN last_error TEXT",
+                "ALTER TABLE notification_intents ADD COLUMN next_attempt_at TEXT",
+            ):
+                try:
+                    connection.execute(statement)
+                except sqlite3.OperationalError as exc:
+                    if "duplicate column name" not in str(exc).lower():
+                        raise
             connection.commit()
         finally:
             connection.close()
 
     def _connect(self) -> sqlite3.Connection:
         return sqlite3.connect(self._path)
+
+    def put_notification_intent(self, intent: NotificationIntent) -> NotificationIntent:
+        payload = json.dumps(
+            {
+                "id": intent.id,
+                "kind": intent.kind,
+                "title": intent.title,
+                "body": intent.body,
+                "created_at": str(intent.created_at),
+                "attributes": list(intent.attributes),
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        connection = self._connect()
+        try:
+            connection.execute(
+                "INSERT INTO notification_intents(notification_id,intent_json) VALUES (?,?) "
+                "ON CONFLICT(notification_id) DO NOTHING",
+                (intent.id, payload),
+            )
+            connection.commit()
+            return intent
+        finally:
+            connection.close()
+
+    def list_pending_notification_intents(
+        self, *, limit: int = 100, now: Instant | str | None = None
+    ) -> tuple[NotificationIntent, ...]:
+        if not 1 <= limit <= 1000:
+            raise ValueError("notification limit must be between 1 and 1000")
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT intent_json FROM notification_intents WHERE delivered_at IS NULL "
+                "AND (next_attempt_at IS NULL OR next_attempt_at <= ?) "
+                "ORDER BY notification_id LIMIT ?",
+                (
+                    (
+                        str(Instant(now))
+                        if now is not None
+                        else datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                    ),
+                    limit,
+                ),
+            ).fetchall()
+            return tuple(self._notification_from_json(row[0]) for row in rows)
+        finally:
+            connection.close()
+
+    def mark_notification_delivered(
+        self, notification_id: str, *, delivered_at: Instant | str
+    ) -> bool:
+        connection = self._connect()
+        try:
+            cursor = connection.execute(
+                "UPDATE notification_intents SET delivered_at=? "
+                "WHERE notification_id=? AND delivered_at IS NULL",
+                (str(Instant(delivered_at)), notification_id),
+            )
+            connection.commit()
+            return cursor.rowcount == 1
+        finally:
+            connection.close()
+
+    def record_notification_failure(
+        self,
+        notification_id: str,
+        *,
+        error: str,
+        retry_at: Instant | str,
+    ) -> bool:
+        if not error or error != error.strip() or "\x00" in error:
+            raise ValueError("notification error must be non-empty and trimmed")
+        connection = self._connect()
+        try:
+            cursor = connection.execute(
+                "UPDATE notification_intents SET attempt_count=attempt_count+1, "
+                "last_error=?, next_attempt_at=? "
+                "WHERE notification_id=? AND delivered_at IS NULL",
+                (error, str(Instant(retry_at)), notification_id),
+            )
+            connection.commit()
+            return cursor.rowcount == 1
+        finally:
+            connection.close()
+
+    def notification_delivery_state(self, notification_id: str) -> dict[str, object] | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT delivered_at,attempt_count,last_error,next_attempt_at "
+                "FROM notification_intents WHERE notification_id=?",
+                (notification_id,),
+            ).fetchone()
+        finally:
+            connection.close()
+        if row is None:
+            return None
+        return {
+            "delivered_at": row[0],
+            "attempt_count": int(row[1]),
+            "last_error": row[2],
+            "next_attempt_at": row[3],
+        }
+
+    @staticmethod
+    def _notification_from_json(payload: str) -> NotificationIntent:
+        value = json.loads(payload)
+        return NotificationIntent(
+            value["id"],
+            value["kind"],
+            value["title"],
+            value["body"],
+            Instant(value["created_at"]),
+            tuple(tuple(item) for item in value["attributes"]),
+        )
 
     @staticmethod
     def _attributes_json(attributes: tuple[tuple[str, str], ...]) -> str:
@@ -175,7 +313,7 @@ class SqliteTelemetryStore:
         try:
             rows = connection.execute(
                 "SELECT value,unit,kind,observed_at,attributes_json FROM telemetry_metrics "
-                "WHERE name=? ORDER BY observed_at DESC, metric_id DESC LIMIT 1",
+                "WHERE name=? ORDER BY observed_at DESC, metric_id DESC LIMIT 10000",
                 (name,),
             ).fetchall()
             filters = dict(attribute_filters)
@@ -208,6 +346,8 @@ class SqliteTelemetryStore:
                 "threshold": rule.threshold,
                 "attribute_filters": dict(rule.attribute_filters),
                 "enabled": rule.enabled,
+                "cooldown_seconds": rule.cooldown_seconds,
+                "pending_seconds": rule.pending_seconds,
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -243,6 +383,8 @@ class SqliteTelemetryStore:
                         float(value["threshold"]),
                         tuple(sorted((str(key), str(val)) for key, val in filters.items())),
                         bool(value["enabled"]),
+                        int(value.get("cooldown_seconds", 0)),
+                        int(value.get("pending_seconds", 0)),
                     )
                 )
             return tuple(result)
@@ -260,6 +402,7 @@ class SqliteTelemetryStore:
                 return None
             value = json.loads(row[0])
             resolved = value["resolved_at"]
+            acknowledged = value.get("acknowledged_at")
             return AlertInstance(
                 value["rule_id"],
                 value["fingerprint"],
@@ -268,9 +411,29 @@ class SqliteTelemetryStore:
                 Instant(value["opened_at"]),
                 Instant(value["updated_at"]),
                 None if resolved is None else Instant(resolved),
+                None if acknowledged is None else Instant(acknowledged),
             )
         finally:
             connection.close()
+
+    def list_alert_instances(self, *, limit: int = 100) -> tuple[AlertInstance, ...]:
+        """Return a bounded deterministic inventory of persisted alert states."""
+        if not 1 <= limit <= 1000:
+            raise ValueError("alert instance limit must be between 1 and 1000")
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT rule_id,fingerprint FROM alert_instances "
+                "ORDER BY rule_id,fingerprint LIMIT ?",
+                (limit,),
+            ).fetchall()
+        finally:
+            connection.close()
+        return tuple(
+            instance
+            for rule_id, fingerprint in rows
+            if (instance := self.get_alert_instance(rule_id, fingerprint)) is not None
+        )
 
     def put_alert_instance(self, instance: AlertInstance) -> AlertInstance:
         payload = json.dumps(
@@ -282,6 +445,9 @@ class SqliteTelemetryStore:
                 "opened_at": str(instance.opened_at),
                 "updated_at": str(instance.updated_at),
                 "resolved_at": None if instance.resolved_at is None else str(instance.resolved_at),
+                "acknowledged_at": (
+                    None if instance.acknowledged_at is None else str(instance.acknowledged_at)
+                ),
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -295,6 +461,32 @@ class SqliteTelemetryStore:
             )
             connection.commit()
             return instance
+        finally:
+            connection.close()
+
+    def acknowledge_alert(
+        self, rule_id: str, fingerprint: str, *, acknowledged_at: Instant | str
+    ) -> AlertInstance | None:
+        """Persist an idempotent acknowledgement for an active alert."""
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT state_json FROM alert_instances WHERE rule_id=? AND fingerprint=?",
+                (rule_id, fingerprint),
+            ).fetchone()
+            if row is None:
+                return None
+            value = json.loads(row[0])
+            if value["status"] == "resolved":
+                return self.get_alert_instance(rule_id, fingerprint)
+            value["acknowledged_at"] = str(Instant(acknowledged_at))
+            payload = json.dumps(value, sort_keys=True, separators=(",", ":"))
+            connection.execute(
+                "UPDATE alert_instances SET state_json=? WHERE rule_id=? AND fingerprint=?",
+                (payload, rule_id, fingerprint),
+            )
+            connection.commit()
+            return self.get_alert_instance(rule_id, fingerprint)
         finally:
             connection.close()
 

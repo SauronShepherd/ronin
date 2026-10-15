@@ -1,5 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
+{{- if or (and (gt (.Values.server.replicas | int) 1) (ne .Values.server.profile "multi-user")) (and (eq .Values.server.profile "multi-user") (not .Values.server.multiUser.enabled)) }}
+{{- fail "multi-user profile or replicas > 1 requires multiUser.enabled=true and PostgreSQL-backed storage" }}
+{{- end }}
 metadata:
   name: {{ include "ronin.fullname" . }}
 spec:
@@ -42,6 +45,15 @@ spec:
                   key: token
             - name: RONIN_TOKEN_SCOPES
               value: {{ .Values.server.tokenScopes | quote }}
+            {{- if .Values.server.multiUser.enabled }}
+            - name: RONIN_STORAGE_BACKEND
+              value: postgres
+            - name: RONIN_POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "server.multiUser.postgresDsnSecret.name is required" .Values.server.multiUser.postgresDsnSecret.name }}
+                  key: {{ .Values.server.multiUser.postgresDsnSecret.key }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 8080

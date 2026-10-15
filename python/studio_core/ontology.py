@@ -451,8 +451,12 @@ def execute_ontology_action(
 
     if target.object_type != action.target_type:
         raise ValueError("ontology action target type does not match action definition")
+    if not isinstance(inputs, Mapping) or not all(isinstance(key, str) for key in inputs):
+        raise ValueError("ontology action inputs must be an object with string keys")
     if set(inputs) != set(action.input_fields):
         raise ValueError("ontology action inputs must exactly match declared input_fields")
+    if idempotency_key is not None and not isinstance(idempotency_key, str):
+        raise ValueError("idempotency_key must be a string or null")
     if action.idempotent and (idempotency_key is None or not idempotency_key.strip()):
         raise ValueError("idempotent ontology actions require an idempotency_key")
     if idempotency_key is not None and load_idempotent is not None:
@@ -487,6 +491,8 @@ def materialize_object_type(
     seen: set[KnowledgeObjectRef] = set()
     fields = tuple(object_type.properties)
     for index, row in enumerate(rows):
+        if not isinstance(row, Mapping) or not all(isinstance(key, str) for key in row):
+            raise ValueError(f"ontology row {index} must be an object with string keys")
         if index >= max_objects:
             raise ValueError("ontology object materialization exceeds configured limit")
         missing = [

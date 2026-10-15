@@ -80,4 +80,35 @@ def alert_notification(
     )
 
 
-__all__ = ("NotificationIntent", "NotificationSink", "alert_notification")
+def scheduler_notification(
+    *,
+    workflow_run_id: str,
+    workflow_id: str,
+    state: str,
+    now: Instant | str,
+    reason: str | None = None,
+) -> NotificationIntent | None:
+    """Create one idempotent intent for a terminal scheduler run."""
+    if state not in {"succeeded", "failed", "cancelled"}:
+        return None
+    suffix = reason or state
+    return NotificationIntent(
+        f"scheduler:{workflow_run_id}:{state}",
+        "scheduler",
+        f"Workflow {workflow_id}: {state}",
+        f"Workflow run {workflow_run_id} finished with state {state}: {suffix}.",
+        Instant(now),
+        (
+            ("workflow_id", workflow_id),
+            ("workflow_run_id", workflow_run_id),
+            ("state", state),
+        ),
+    )
+
+
+__all__ = (
+    "NotificationIntent",
+    "NotificationSink",
+    "alert_notification",
+    "scheduler_notification",
+)

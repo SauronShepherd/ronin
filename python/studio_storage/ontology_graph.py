@@ -6,7 +6,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-from studio_core import KnowledgeGraph, KnowledgeObject, KnowledgeObjectRef
+from studio_core import ActionExecution, KnowledgeGraph, KnowledgeObject, KnowledgeObjectRef
 
 
 class KnowledgeGraphConflict(RuntimeError):
@@ -21,6 +21,11 @@ class SqliteKnowledgeGraphStore:
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS knowledge_graphs ("
                 "graph_id TEXT PRIMARY KEY, graph_json TEXT NOT NULL)"
+            )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS ontology_action_replays ("
+                "idempotency_key TEXT PRIMARY KEY, action_name TEXT NOT NULL, "
+                "target_json TEXT NOT NULL, execution_json TEXT NOT NULL)"
             )
 
     @staticmethod
@@ -88,6 +93,56 @@ class SqliteKnowledgeGraphStore:
                 "SELECT graph_json FROM knowledge_graphs WHERE graph_id=?", (graph_id,)
             ).fetchone()
         return None if row is None else self._graph(str(row[0]))
+
+    def get_action_replay(self, idempotency_key: str) -> ActionExecution | None:
+        with sqlite3.connect(self._path) as connection:
+            row = connection.execute(
+                "SELECT execution_json FROM ontology_action_replays WHERE idempotency_key=?",
+                (idempotency_key,),
+            ).fetchone()
+        if row is None:
+            return None
+        value = json.loads(row[0])
+        return ActionExecution(
+            value["action"],
+            KnowledgeObjectRef(
+                value["target"]["object_type"],
+                tuple(tuple(item) for item in value["target"]["key"]),
+            ),
+            idempotency_key,
+            value["output"],
+        )
+
+    def record_action_replay(self, execution: ActionExecution) -> None:
+        if execution.idempotency_key is None:
+            raise ValueError("action replay requires an idempotency key")
+        target = self._ref(execution.target)
+        payload = json.dumps(
+            {"action": execution.action, "target": target, "output": dict(execution.output)},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        with sqlite3.connect(self._path) as connection:
+            existing = connection.execute(
+                "SELECT action_name,target_json,execution_json "
+                "FROM ontology_action_replays WHERE idempotency_key=?",
+                (execution.idempotency_key,),
+            ).fetchone()
+            if existing is not None:
+                if existing[2] != payload:
+                    raise KnowledgeGraphConflict("action idempotency key has conflicting content")
+                return
+            connection.execute(
+                "INSERT INTO ontology_action_replays("
+                "idempotency_key,action_name,target_json,execution_json) "
+                "VALUES (?,?,?,?)",
+                (
+                    execution.idempotency_key,
+                    execution.action,
+                    json.dumps(target, sort_keys=True),
+                    payload,
+                ),
+            )
 
 
 __all__ = ("KnowledgeGraphConflict", "SqliteKnowledgeGraphStore")

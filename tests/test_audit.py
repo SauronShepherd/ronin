@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 from studio_core import Workspace, WorkspaceId
-from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource
+from studio_core.audit import AuditActor, AuditEvent, AuditEventId, AuditResource, _metadata
 from studio_orchestrator import Instant
 from studio_storage.audit import AuditConflict, SqliteAuditStore
 from studio_storage.workspaces import SqliteWorkspaceStore
@@ -48,7 +48,21 @@ def test_audit_event_id_conflict_fails_closed(tmp_path: Path) -> None:
         store.append(WorkspaceId("ws-1"), _event(action="workspace.delete"))
 
 
-def test_audit_metadata_rejects_secret_keys() -> None:
+@pytest.mark.parametrize(
+    "key",
+    [
+        "password",
+        "secret",
+        "token",
+        "credential",
+        "api_key",
+        "authorization",
+        "cookie",
+        "private_key",
+        "client_secret",
+    ],
+)
+def test_audit_metadata_rejects_secret_keys(key: str) -> None:
     with pytest.raises(ValueError, match="credential-bearing"):
         AuditEvent(
             id=AuditEventId("audit-1"),
@@ -57,7 +71,178 @@ def test_audit_metadata_rejects_secret_keys() -> None:
             action="connection.test",
             resource=AuditResource("connection", "c1"),
             outcome="succeeded",
-            metadata=(("api_key", "not-allowed"),),
+            metadata=((key, "not-allowed"),),
+        )
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "PASSWORD",
+        "SeCrEt",
+        "TOKEN",
+        "Credential",
+        "API_KEY",
+        "Authorization",
+        "COOKIE",
+        "Private_Key",
+        "CLIENT_SECRET",
+    ],
+)
+def test_audit_metadata_rejects_secret_keys_case_insensitively(key: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^audit metadata must not contain credential-bearing keys$",
+    ):
+        _metadata(((key, "not-allowed"),))
+
+
+@pytest.mark.parametrize(
+    "value", ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00byte"]
+)
+def test_audit_metadata_rejects_unportable_values(value: str) -> None:
+    with pytest.raises(ValueError, match="non-empty, trimmed"):
+        _metadata((("source", value),))
+
+
+def test_audit_metadata_rejects_credential_material_and_duplicate_keys() -> None:
+    for value in ("Bearer abc123", "-----BEGIN PRIVATE KEY-----"):
+        with pytest.raises(
+            ValueError,
+            match="^audit metadata must not contain credential material$",
+        ):
+            _metadata((("source", value),))
+    with pytest.raises(ValueError, match="keys must be unique"):
+        _metadata((("source", "one"), ("source", "two")))
+
+
+def test_audit_metadata_is_sorted_and_does_not_alias_input() -> None:
+    values = [("z-key", "last"), ("a-key", "first")]
+    result = _metadata(tuple(values))
+    values.reverse()
+    assert result == (("a-key", "first"), ("z-key", "last"))
+
+
+def test_audit_metadata_preserves_exact_context_for_invalid_key_and_value() -> None:
+    with pytest.raises(ValueError, match=".") as key_error:
+        _metadata((("bad\nkey", "value"),))
+    assert str(key_error.value) == "audit metadata key must be non-empty, trimmed, and single-line"
+
+    with pytest.raises(ValueError, match=".") as value_error:
+        _metadata((("key", "bad\rvalue"),))
+    assert str(value_error.value) == (
+        "audit metadata value must be non-empty, trimmed, and single-line"
+    )
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "prefix-PASSWORD-suffix",
+        "prefix-SECRET-suffix",
+        "prefix-TOKEN-suffix",
+        "prefix-CREDENTIAL-suffix",
+        "prefix-API_KEY-suffix",
+        "prefix-AUTHORIZATION-suffix",
+        "prefix-COOKIE-suffix",
+        "prefix-PRIVATE_KEY-suffix",
+        "prefix-CLIENT_SECRET-suffix",
+    ],
+)
+def test_audit_metadata_rejects_sensitive_markers_inside_keys(key: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^audit metadata must not contain credential-bearing keys$",
+    ):
+        _metadata(((key, "public-value"),))
+
+
+@pytest.mark.parametrize("value", ["bearer token", "-----begin private key-----"])
+def test_audit_metadata_rejects_each_credential_material_marker(value: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^audit metadata must not contain credential material$",
+    ):
+        _metadata((("source", value),))
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00byte"],
+)
+def test_audit_identity_and_resource_text_reject_unportable_values(value: str) -> None:
+    with pytest.raises(ValueError, match="non-empty|single-line"):
+        AuditEventId(value)
+    with pytest.raises(ValueError, match="non-empty|single-line"):
+        AuditActor("local", value)
+    with pytest.raises(ValueError, match="non-empty|single-line"):
+        AuditResource("workspace", value)
+    with pytest.raises(ValueError, match="non-empty|single-line"):
+        AuditResource(value, "ws-1")
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["action", "request_id"],
+)
+@pytest.mark.parametrize("value", ["", " leading", "trailing ", "line\nfeed", "nul\x00byte"])
+def test_audit_event_text_fields_reject_unportable_values(field: str, value: str) -> None:
+    values: dict[str, object] = {"action": "connection.test", "request_id": "request-1"}
+    values[field] = value
+    with pytest.raises(ValueError, match="non-empty|single-line"):
+        AuditEvent(
+            id=AuditEventId("audit-invalid-text"),
+            occurred_at=str(_NOW),
+            actor=AuditActor("local", "local-operator"),
+            action=values["action"],
+            resource=AuditResource("connection", "c1"),
+            outcome="succeeded",
+            request_id=values["request_id"],
+        )
+
+
+def test_audit_event_round_trip_preserves_canonical_payload_and_digest() -> None:
+    event = AuditEvent(
+        id=AuditEventId("audit-round-trip"),
+        occurred_at=str(_NOW),
+        actor=AuditActor("service", "svc-1"),
+        action="workspace.update",
+        resource=AuditResource("workspace", "ws-1"),
+        outcome="allowed",
+        request_id="request-round-trip",
+        metadata=(("z-key", "last"), ("a-key", "first")),
+    )
+
+    restored = AuditEvent.from_json(event.to_json())
+
+    assert restored == event
+    assert restored.to_json() == event.to_json()
+    assert restored.digest == event.digest
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"kind": "local"},
+        {"kind": "local", "ref": 1},
+        {"kind": "unknown", "ref": "operator"},
+    ],
+)
+def test_audit_actor_payload_validation_is_fail_closed(payload: dict[str, object]) -> None:
+    with pytest.raises(ValueError, match="audit actor|unsupported"):
+        AuditActor.from_payload(payload)
+
+
+@pytest.mark.parametrize("occurred_at", ["2026-09-12", "2026-09-12T00:00:00+00:00", " "])
+def test_audit_event_timestamp_validation_is_fail_closed(occurred_at: str) -> None:
+    with pytest.raises(ValueError, match="audit occurred_at"):
+        AuditEvent(
+            id=AuditEventId("audit-invalid-time"),
+            occurred_at=occurred_at,
+            actor=AuditActor("local", "local-operator"),
+            action="workspace.create",
+            resource=AuditResource("workspace", "ws-1"),
+            outcome="succeeded",
         )
 
 

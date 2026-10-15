@@ -30,6 +30,8 @@ class ComparableRelease:
 
 def parse_comparable_release(value: str) -> ComparableRelease | None:
     """Parse the leading numeric release and recognized prerelease marker."""
+    if not isinstance(value, str):
+        return None
     match = _RELEASE.match(value)
     if match is None:
         return None

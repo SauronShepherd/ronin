@@ -1,3 +1,5 @@
+from datetime import UTC, date, datetime
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -25,7 +27,6 @@ def test_parquet_round_trip_and_content_metadata(tmp_path: Path) -> None:
         {"id": 2, "group": "a", "value": 3.5},
         {"id": 3, "group": "b", "value": 9.0},
     )
-
     written = write_parquet_rows(path, rows)
     inspected = inspect_parquet(path)
     assert inspected == written
@@ -36,6 +37,47 @@ def test_parquet_round_trip_and_content_metadata(tmp_path: Path) -> None:
         {"id": 1, "group": "a"},
         {"id": 2, "group": "a"},
     )
+
+
+def test_parquet_round_trip_preserves_temporal_decimal_nested_and_null_values(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "typed.parquet"
+    rows = (
+        {
+            "day": date(2026, 9, 22),
+            "instant": datetime(2026, 9, 22, 12, 30, tzinfo=UTC),
+            "amount": Decimal("12.34"),
+            "tags": ["a", "b"],
+            "metadata": {"source": "test"},
+            "optional": None,
+        },
+    )
+    write_parquet_rows(path, rows)
+    restored = read_parquet_rows(path)
+    assert restored == rows
+
+
+def test_parquet_write_atomically_replaces_existing_file(tmp_path: Path) -> None:
+    path = tmp_path / "data" / "events.parquet"
+    write_parquet_rows(path, ({"id": 1},))
+    first_digest = inspect_parquet(path).sha256
+    write_parquet_rows(path, ({"id": 2},))
+    second = inspect_parquet(path)
+    assert second.sha256 != first_digest
+    assert read_parquet_rows(path) == ({"id": 2},)
+    assert not list(path.parent.glob(f".{path.name}.*.tmp"))
+
+
+def test_parquet_reads_enforce_bounds_and_projection_shape(tmp_path: Path) -> None:
+    path = tmp_path / "events.parquet"
+    write_parquet_rows(path, ({"id": 1},))
+    with pytest.raises(ValueError, match="between 0 and 100000"):
+        read_parquet_rows(path, limit=100_001)
+    with pytest.raises(ValueError, match="non-empty"):
+        read_parquet_rows(path, columns=("",))
+    with pytest.raises(ValueError, match="unique"):
+        read_parquet_rows(path, columns=("id", "id"))
 
 
 def test_duckdb_reference_engine_queries_registered_parquet(tmp_path: Path) -> None:

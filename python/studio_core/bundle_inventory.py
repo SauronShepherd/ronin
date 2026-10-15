@@ -16,7 +16,14 @@ BUNDLE_INVENTORY_PATH = "ronin-inventory.json"
 
 
 def _require_text(value: str, name: str) -> str:
-    if not value or value != value.strip() or "\n" in value or "\r" in value or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or "\n" in value
+        or "\r" in value
+        or "\x00" in value
+    ):
         raise ValueError(f"{name} must be non-empty, trimmed, and single-line")
     return value
 

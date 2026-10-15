@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
+import math
+import socket
+import time
 from collections.abc import Mapping
 from typing import Any
 from urllib.parse import quote, urlsplit
@@ -81,6 +85,54 @@ def _infer_fields(rows: tuple[dict[str, object], ...]) -> tuple[FieldSchema, ...
     return tuple(fields)
 
 
+def _validate_endpoint_host(hostname: str, *, allow_private: bool) -> None:
+    """Reject DNS/IP targets that can turn a connector into an SSRF primitive."""
+    if allow_private:
+        return
+    try:
+        addresses = {ipaddress.ip_address(hostname)}
+    except ValueError:
+        try:
+            addresses = {
+                ipaddress.ip_address(info[4][0])
+                for info in socket.getaddrinfo(hostname, None, type=socket.SOCK_STREAM)
+            }
+        except OSError as exc:
+            raise ValueError("HTTP base_url hostname could not be resolved safely") from exc
+    if not addresses or any(
+        address.is_private
+        or address.is_loopback
+        or address.is_link_local
+        or address.is_reserved
+        or address.is_multicast
+        or address.is_unspecified
+        for address in addresses
+    ):
+        raise ValueError("HTTP base_url resolves to a private or reserved network")
+
+
+def _validate_request_url(url: str, *, allow_http: bool, allow_private: bool) -> None:
+    parsed = urlsplit(url)
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("HTTP request URL must not embed credentials")
+    allowed_schemes = {"https", "http"} if allow_http else {"https"}
+    if parsed.scheme not in allowed_schemes:
+        raise ValueError("HTTP request URL uses a disallowed scheme")
+    if not parsed.hostname:
+        raise ValueError("HTTP request URL requires a hostname")
+    _validate_endpoint_host(parsed.hostname, allow_private=allow_private)
+
+
+def _origin(url: str) -> tuple[str, str, int | None]:
+    parsed = urlsplit(url)
+    scheme = parsed.scheme.casefold()
+    host = (parsed.hostname or "").casefold().rstrip(".")
+    port = parsed.port
+    if port == (443 if scheme == "https" else 80):
+        port = None
+    return scheme, host, port
+
+
 class HttpJsonConnector:
     """Read bounded JSON records from one base URL without implicit redirect trust."""
 
@@ -134,6 +186,13 @@ class HttpJsonConnector:
         if asset.connection_id != connection.id:
             raise ValueError("HTTP asset handle belongs to a different connection")
         base_url, options = self._validate(connection)
+        parsed_base_url = urlsplit(base_url)
+        _validate_endpoint_host(
+            parsed_base_url.hostname or "",
+            allow_private=options.get("allow_private_network", "false").casefold() == "true",
+        )
+        allow_private = options.get("allow_private_network", "false").casefold() == "true"
+        allow_http = options.get("allow_http", "false").casefold() == "true"
         components = (*asset.namespace, asset.name)
         if any(not part or part in {".", ".."} or "://" in part for part in components):
             raise ValueError("HTTP asset path contains an unsafe component")
@@ -144,6 +203,8 @@ class HttpJsonConnector:
         refs = _secret_refs(connection)
         bearer = refs.get("bearer_token")
         if bearer is not None:
+            if parsed_base_url.scheme != "https":
+                raise ValueError("Bearer credentials require an HTTPS base_url")
             material = secrets.resolve(bearer)
             headers["Authorization"] = f"Bearer {material.reveal_text()}"
 
@@ -157,48 +218,177 @@ class HttpJsonConnector:
             raise ValueError("HTTP max_response_bytes must be an integer") from exc
         if max_response_bytes < 1 or max_response_bytes > 100 * 1024 * 1024:
             raise ValueError("HTTP max_response_bytes must be between 1 and 104857600")
-        with (
-            httpx.Client(follow_redirects=False, timeout=timeout_seconds) as client,
-            client.stream("GET", url, headers=headers) as response,
-        ):
-            response.raise_for_status()
-            content_length = response.headers.get("content-length")
-            if content_length is not None:
-                try:
-                    declared_size = int(content_length)
-                except ValueError as exc:
-                    raise ValueError("HTTP response content-length must be an integer") from exc
-                if declared_size < 0:
-                    raise ValueError("HTTP response content-length must not be negative")
-                if declared_size > max_response_bytes:
-                    raise ValueError("HTTP JSON response exceeds configured byte limit")
-            chunks: list[bytes] = []
-            size = 0
-            for chunk in response.iter_bytes():
-                size += len(chunk)
-                if size > max_response_bytes:
-                    raise ValueError("HTTP JSON response exceeds configured byte limit")
-                chunks.append(chunk)
-            body = b"".join(chunks)
         try:
-            payload = json.loads(body)
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise ValueError("HTTP response body must be valid JSON") from exc
-
+            max_total_bytes = int(options.get("max_total_bytes", "52428800"))
+            max_elapsed_seconds = float(options.get("max_elapsed_seconds", "300"))
+        except ValueError as exc:
+            raise ValueError("HTTP operation budgets must be numeric") from exc
+        if max_total_bytes < 1 or max_total_bytes > 100 * 1024 * 1024:
+            raise ValueError("HTTP max_total_bytes must be between 1 and 104857600")
+        if (
+            not math.isfinite(max_elapsed_seconds)
+            or max_elapsed_seconds <= 0
+            or max_elapsed_seconds > 3600
+        ):
+            raise ValueError("HTTP max_elapsed_seconds must be in (0, 3600]")
         records_key = options.get("records_key")
-        if records_key is not None:
-            if not isinstance(payload, Mapping):
-                raise ValueError("HTTP records_key requires a JSON object response")
-            payload = payload.get(records_key)
-        if not isinstance(payload, list):
-            raise ValueError("HTTP JSON response must resolve to an array of records")
-        if len(payload) > limit:
-            raise ValueError("HTTP JSON response exceeds requested row limit")
-        if not all(isinstance(item, Mapping) for item in payload):
-            raise ValueError("HTTP JSON records must be objects")
-        rows = tuple(dict(item) for item in payload)
+        try:
+            retries = int(options.get("max_retries", "0"))
+            max_pages = int(options.get("max_pages", "1"))
+            page_size = int(options.get("page_size", str(limit)))
+            backoff = float(options.get("retry_backoff_seconds", "0.25"))
+            rate_limit = float(options.get("rate_limit_seconds", "0"))
+        except ValueError as exc:
+            raise ValueError(
+                "HTTP retry, pagination and rate-limit options must be numeric"
+            ) from exc
+        if retries < 0 or retries > 10 or max_pages < 1 or max_pages > 1000:
+            raise ValueError("HTTP max_retries must be 0..10 and max_pages must be 1..1000")
+        if (
+            page_size < 1
+            or page_size > limit
+            or not math.isfinite(backoff)
+            or not math.isfinite(rate_limit)
+            or backoff < 0
+            or rate_limit < 0
+        ):
+            raise ValueError("HTTP page_size/backoff/rate-limit options are out of bounds")
+        page_param = options.get("page_param")
+        next_field = options.get("next_url_field")
+        rows_list: list[dict[str, object]] = []
+        total_bytes = 0
+        deadline = time.monotonic() + max_elapsed_seconds
+        digest = hashlib.sha256()
+        next_url = url
+        with httpx.Client(follow_redirects=False, timeout=timeout_seconds) as client:
+            for page in range(max_pages):
+                if page and rate_limit:
+                    if time.monotonic() + rate_limit > deadline:
+                        raise ValueError("HTTP JSON operation exceeded its time budget")
+                    time.sleep(rate_limit)
+                if time.monotonic() >= deadline:
+                    raise ValueError("HTTP JSON operation exceeded its time budget")
+                request_url = next_url
+                if page_param and next_field is None:
+                    separator = "&" if "?" in request_url else "?"
+                    request_url = f"{request_url}{separator}{quote(page_param)}={page + 1}"
+                _validate_request_url(
+                    request_url, allow_http=allow_http, allow_private=allow_private
+                )
+                if _origin(request_url) != _origin(base_url):
+                    raise ValueError("HTTP pagination URL must remain on the base_url origin")
+                body = b""
+                for attempt in range(retries + 1):
+                    try:
+                        request_timeout = max(
+                            0.001, min(timeout_seconds, deadline - time.monotonic())
+                        )
+                        with client.stream(
+                            "GET", request_url, headers=headers, timeout=request_timeout
+                        ) as response:
+                            status = response.status_code
+                            if 300 <= status < 400:
+                                raise ValueError("HTTP redirects are disabled")
+                            if (status == 429 or 500 <= status <= 599) and attempt < retries:
+                                retry_after = response.headers.get("retry-after")
+                                delay = (
+                                    float(retry_after) if retry_after else backoff * (2**attempt)
+                                )
+                                if delay > 0:
+                                    delay = min(delay, 60.0)
+                                    if time.monotonic() + delay > deadline:
+                                        raise ValueError(
+                                            "HTTP JSON operation exceeded its time budget"
+                                        )
+                                    time.sleep(delay)
+                                continue
+                            response.raise_for_status()
+                            content_type = (
+                                response.headers.get("content-type", "")
+                                .split(";", 1)[0]
+                                .strip()
+                                .lower()
+                            )
+                            if content_type not in {"application/json", "application/problem+json"}:
+                                raise ValueError(
+                                    "HTTP response content-type must be application/json"
+                                )
+                            content_length = response.headers.get("content-length")
+                            if (
+                                content_length is not None
+                                and int(content_length) > max_response_bytes
+                            ):
+                                raise ValueError("HTTP JSON response exceeds configured byte limit")
+                            chunks: list[bytes] = []
+                            size = 0
+                            for chunk in response.iter_bytes():
+                                if time.monotonic() >= deadline:
+                                    raise ValueError("HTTP JSON operation exceeded its time budget")
+                                size += len(chunk)
+                                if (
+                                    size > max_response_bytes
+                                    or total_bytes + size > max_total_bytes
+                                ):
+                                    raise ValueError(
+                                        "HTTP JSON operation exceeds configured byte budget"
+                                    )
+                                chunks.append(chunk)
+                            body = b"".join(chunks)
+                            total_bytes += size
+                        break
+                    except (httpx.TimeoutException, httpx.NetworkError) as exc:
+                        if time.monotonic() >= deadline:
+                            raise ValueError(
+                                "HTTP JSON operation exceeded its time budget"
+                            ) from exc
+                        if attempt >= retries:
+                            raise
+                        delay = min(backoff * (2**attempt), 60.0)
+                        if time.monotonic() + delay > deadline:
+                            raise ValueError(
+                                "HTTP JSON operation exceeded its time budget"
+                            ) from exc
+                        time.sleep(delay)
+                try:
+                    payload = json.loads(body)
+                except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                    raise ValueError("HTTP response body must be valid JSON") from exc
+                digest.update(body)
+                if records_key is not None:
+                    if not isinstance(payload, Mapping):
+                        raise ValueError("HTTP records_key requires a JSON object response")
+                    page_records = payload.get(records_key)
+                else:
+                    page_records = payload
+                if not isinstance(page_records, list) or not all(
+                    isinstance(item, Mapping) for item in page_records
+                ):
+                    raise ValueError("HTTP JSON response must resolve to an array of records")
+                rows_list.extend(dict(item) for item in page_records)
+                if len(rows_list) > limit:
+                    raise ValueError("HTTP JSON response exceeds requested row limit")
+                if next_field is None:
+                    if not page_param or len(page_records) < page_size:
+                        break
+                else:
+                    if not isinstance(payload, Mapping):
+                        raise ValueError("HTTP next_url_field requires a JSON object response")
+                    candidate = payload.get(next_field)
+                    if not candidate:
+                        break
+                    if not isinstance(candidate, str) or not candidate.startswith(
+                        ("https://", "http://")
+                    ):
+                        raise ValueError("HTTP next_url_field must contain an absolute URL")
+                    _validate_request_url(
+                        candidate, allow_http=allow_http, allow_private=allow_private
+                    )
+                    if _origin(candidate) != _origin(base_url):
+                        raise ValueError("HTTP pagination URL must remain on the base_url origin")
+                    next_url = candidate
+        rows = tuple(rows_list)
         fields = _infer_fields(rows)
-        checkpoint_value = hashlib.sha256(body).hexdigest()
+        checkpoint_value = digest.hexdigest()
         if checkpoint is not None and checkpoint.value == checkpoint_value:
             rows = ()
         return ConnectorReadResult(

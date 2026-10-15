@@ -30,6 +30,22 @@ class JdbcDependencyError(RuntimeError):
 
 
 @dataclass(frozen=True, slots=True)
+class JdbcBridgeProvenance:
+    """Identity of the deployment-local bridge and its selected driver."""
+
+    bridge_version: str
+    driver_name: str
+    driver_version: str
+
+    def __post_init__(self) -> None:
+        if not all(
+            isinstance(value, str) and value.strip()
+            for value in (self.bridge_version, self.driver_name, self.driver_version)
+        ):
+            raise ValueError("JDBC bridge provenance fields must be non-empty")
+
+
+@dataclass(frozen=True, slots=True)
 class JdbcIncrementalCheckpointV2:
     """Typed, deterministic JDBC cursor including a composite tie-breaker."""
 
@@ -118,9 +134,19 @@ class JdbcConnector:
     )
 
     def __init__(
-        self, *, connect: Callable[[ConnectionDefinition, SecretResolver], Any] | None = None
+        self,
+        *,
+        connect: Callable[[ConnectionDefinition, SecretResolver], Any] | None = None,
+        provenance: JdbcBridgeProvenance | None = None,
     ) -> None:
         self._connect = connect
+        self._provenance = provenance
+
+    def bridge_provenance(self) -> JdbcBridgeProvenance:
+        """Return explicit driver provenance; never infer it from a URL."""
+        if self._connect is None or self._provenance is None:
+            raise JdbcDependencyError("JDBC bridge provenance is not configured")
+        return self._provenance
 
     def _options(self, connection: ConnectionDefinition) -> dict[str, str]:
         if connection.connector_id != self.descriptor.connector_id:
@@ -341,4 +367,9 @@ class JdbcConnector:
         return ConnectorReadResult(fields, rows, next_checkpoint)
 
 
-__all__ = ("JdbcConnector", "JdbcDependencyError", "JdbcIncrementalCheckpointV2")
+__all__ = (
+    "JdbcBridgeProvenance",
+    "JdbcConnector",
+    "JdbcDependencyError",
+    "JdbcIncrementalCheckpointV2",
+)

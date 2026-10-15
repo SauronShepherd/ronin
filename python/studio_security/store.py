@@ -4,10 +4,19 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from typing import cast
 
 from studio_core import WorkspaceId
 
-from .contracts import Group, GroupId, Principal, PrincipalId, RoleBinding
+from .contracts import (
+    Group,
+    GroupId,
+    Principal,
+    PrincipalId,
+    RoleBinding,
+    SubjectKind,
+    WorkspaceRole,
+)
 
 
 class IdentityConflict(RuntimeError):
@@ -184,6 +193,17 @@ class SqliteIdentityStore:
         finally:
             connection.close()
 
+    def list_principals(self) -> tuple[Principal, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT principal_id,kind,display_name,issuer,subject,email,active "
+                "FROM security_principals ORDER BY principal_id"
+            ).fetchall()
+            return tuple(self._principal(tuple(row)) for row in rows)
+        finally:
+            connection.close()
+
     def find_principal(self, issuer: str, subject: str) -> Principal | None:
         connection = self._connect()
         try:
@@ -209,6 +229,16 @@ class SqliteIdentityStore:
         finally:
             connection.close()
 
+    def list_groups(self) -> tuple[Group, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT group_id,name FROM security_groups ORDER BY group_id"
+            ).fetchall()
+            return tuple(Group(GroupId(str(row[0])), str(row[1])) for row in rows)
+        finally:
+            connection.close()
+
     def add_group_member(self, group_id: GroupId, principal_id: PrincipalId) -> None:
         connection = self._connect()
         try:
@@ -217,6 +247,30 @@ class SqliteIdentityStore:
                 (group_id.value, principal_id.value),
             )
             connection.commit()
+        finally:
+            connection.close()
+
+    def get_group(self, group_id: GroupId) -> Group | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT group_id,name FROM security_groups WHERE group_id=?",
+                (group_id.value,),
+            ).fetchone()
+            return None if row is None else Group(GroupId(str(row[0])), str(row[1]))
+        finally:
+            connection.close()
+
+    def members_for_group(self, group_id: GroupId) -> tuple[Principal, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT p.principal_id,p.kind,p.display_name,p.issuer,p.subject,p.email,p.active "
+                "FROM security_principals p JOIN security_group_members m "
+                "ON m.principal_id=p.principal_id WHERE m.group_id=? ORDER BY p.principal_id",
+                (group_id.value,),
+            ).fetchall()
+            return tuple(self._principal(tuple(row)) for row in rows)
         finally:
             connection.close()
 
@@ -289,6 +343,27 @@ class SqliteIdentityStore:
             )
             connection.commit()
             return cursor.rowcount == 1
+        finally:
+            connection.close()
+
+    def list_role_bindings(self, workspace_id: WorkspaceId) -> tuple[RoleBinding, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT workspace_id,subject_kind,subject_id,role "
+                "FROM security_role_bindings WHERE workspace_id=? "
+                "ORDER BY subject_kind,subject_id,role",
+                (workspace_id.value,),
+            ).fetchall()
+            return tuple(
+                RoleBinding(
+                    WorkspaceId(str(row[0])),
+                    cast(SubjectKind, str(row[1])),
+                    str(row[2]),
+                    cast(WorkspaceRole, str(row[3])),
+                )
+                for row in rows
+            )
         finally:
             connection.close()
 

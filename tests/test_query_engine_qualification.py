@@ -1,0 +1,70 @@
+from __future__ import annotations
+
+import sys
+
+from tools.query_engine_qualification import qualify_external, qualify_local
+
+
+def test_local_query_engine_qualification_is_bounded_and_deterministic() -> None:
+    result = qualify_local()
+    assert result["status"] == "qualified"
+    assert result["query_state"] == "succeeded"
+    assert result["correctness_digest"] == result["expected_digest"]
+    assert result["row_count"] == 2
+    assert result["negative_cases"] == {"unauthorized_profile": "rejected"}
+    assert result["matrix"]["bounded_preview"] == "qualified"
+    assert result["matrix"]["unauthorized_engine"] == "rejected"
+
+
+def test_queryflux_qualification_is_explicitly_unconfigured_without_operator_input(
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("RONIN_QUERYFLUX_QUALIFICATION_COMMAND", raising=False)
+    result = qualify_external()
+    assert result == {
+        "status": "not_configured",
+        "provider": "queryflux",
+        "command_configured": False,
+    }
+
+
+def test_queryflux_qualification_executes_operator_evidence(monkeypatch, tmp_path) -> None:
+    evidence = tmp_path / "emit.py"
+    evidence.write_text(
+        "import json; print(json.dumps({'provider': 'queryflux', 'status': 'qualified', 'matrix': {"
+        "'queryflux_duckdb': 'qualified', 'queryflux_trino': 'qualified', "
+        "'backend_unavailable': 'rejected', 'queue_capacity': 'qualified', "
+        "'timeout': 'qualified', 'cancellation': 'qualified', "
+        "'bounded_preview': 'qualified', 'invalid_profile': 'rejected', "
+        "'unauthorized_engine': 'rejected', 'provider_restart': 'unsupported'}}))",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("RONIN_QUERYFLUX_QUALIFICATION_COMMAND", f"{sys.executable} {evidence}")
+    result = qualify_external()
+    assert result["status"] == "qualified"
+    assert result["command_configured"] is True
+
+
+def test_queryflux_qualification_rejects_invalid_operator_output(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "RONIN_QUERYFLUX_QUALIFICATION_COMMAND",
+        f"{sys.executable} -c \"print('bad')\"",
+    )
+    result = qualify_external()
+    assert result["status"] == "failed"
+    assert result["error"] == "invalid_json"
+
+
+def test_queryflux_qualification_rejects_incomplete_matrix(monkeypatch, tmp_path) -> None:
+    evidence = tmp_path / "emit.py"
+    evidence.write_text(
+        "import json; print(json.dumps({'provider': 'queryflux', 'status': 'qualified'}))",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv(
+        "RONIN_QUERYFLUX_QUALIFICATION_COMMAND",
+        f"{sys.executable} {evidence}",
+    )
+    result = qualify_external()
+    assert result["status"] == "failed"
+    assert result["error"] == "invalid_qualification_matrix"

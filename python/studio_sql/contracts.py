@@ -51,6 +51,10 @@ class SqlEngine(Protocol):
 
     def register_parquet(self, name: str, path: str) -> None: ...
 
+    def list_relations(self) -> tuple[str, ...]: ...
+
+    def drop_relation(self, name: str) -> None: ...
+
     def execute(
         self,
         sql: str,

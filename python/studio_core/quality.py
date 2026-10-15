@@ -41,15 +41,27 @@ QUALITY_RULE_KINDS: frozenset[str] = frozenset(
 
 
 def _require_text(value: str, name: str) -> str:
-    if not value or value != value.strip() or "\n" in value or "\r" in value or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or "\n" in value
+        or "\r" in value
+        or "\x00" in value
+    ):
         raise ValueError(f"{name} must be non-empty, trimmed, and single-line")
     return value
 
 
 def _pairs(values: tuple[tuple[str, str], ...], *, name: str) -> tuple[tuple[str, str], ...]:
+    if not isinstance(values, (tuple, list)):
+        raise ValueError(f"{name} must contain key/value pairs")
     result: list[tuple[str, str]] = []
     seen: set[str] = set()
-    for key, value in values:
+    for item in values:
+        if not isinstance(item, tuple) or len(item) != 2:
+            raise ValueError(f"{name} must contain key/value pairs")
+        key, value = item
         key = _require_text(key, f"{name} key")
         value = _require_text(value, f"{name} value")
         folded = key.casefold()
@@ -84,11 +96,17 @@ class QualityRule:
     parameters: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
-        if self.kind not in QUALITY_RULE_KINDS:
+        if not isinstance(self.kind, str) or self.kind not in QUALITY_RULE_KINDS:
             raise ValueError("unsupported quality rule kind")
         _require_text(self.name, "quality rule name")
-        if self.severity not in {"info", "warning", "error"}:
+        if not isinstance(self.severity, str) or self.severity not in {
+            "info",
+            "warning",
+            "error",
+        }:
             raise ValueError("quality severity must be info, warning, or error")
+        if not isinstance(self.blocking, bool):
+            raise ValueError("quality blocking must be boolean")
         if self.field is not None:
             _require_text(self.field, "quality rule field")
         object.__setattr__(self, "parameters", _pairs(self.parameters, name="quality parameters"))
@@ -155,9 +173,18 @@ class DataContract:
     freshness_seconds: int | None = None
 
     def __post_init__(self) -> None:
-        if self.compatibility not in {"exact", "backward", "forward", "full"}:
+        if not isinstance(self.compatibility, str) or self.compatibility not in {
+            "exact",
+            "backward",
+            "forward",
+            "full",
+        }:
             raise ValueError("unsupported schema compatibility mode")
-        if self.freshness_seconds is not None and self.freshness_seconds < 1:
+        if self.freshness_seconds is not None and (
+            not isinstance(self.freshness_seconds, int)
+            or isinstance(self.freshness_seconds, bool)
+            or self.freshness_seconds < 1
+        ):
             raise ValueError("freshness_seconds must be positive")
         rules = tuple(sorted(self.rules, key=lambda rule: rule.id.value))
         identifiers = [rule.id for rule in rules]
@@ -232,7 +259,12 @@ class QualityResult:
     message: str | None = None
 
     def __post_init__(self) -> None:
-        if self.status not in {"passed", "failed", "error", "unknown"}:
+        if not isinstance(self.status, str) or self.status not in {
+            "passed",
+            "failed",
+            "error",
+            "unknown",
+        }:
             raise ValueError("unsupported quality status")
         if self.message is not None:
             _require_text(self.message, "quality result message")

@@ -78,7 +78,7 @@ class PostgresConnector:
     descriptor = ConnectorDescriptor(
         "postgresql",
         1,
-        ConnectorCapabilities(discover=True, read=True),
+        ConnectorCapabilities(discover=True, read=True, schema=True),
     )
 
     def _validate(self, connection: ConnectionDefinition) -> dict[str, str]:

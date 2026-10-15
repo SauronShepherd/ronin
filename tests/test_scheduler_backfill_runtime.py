@@ -14,7 +14,7 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
-from studio_execution.scheduler_backfill import SchedulerBackfillService
+from studio_execution.scheduler_backfill import SchedulerBackfillService, preview_backfill
 from studio_orchestrator import Instant, LeaseToken
 from studio_storage.scheduler_backfill import BackfillId, BackfillRequest
 from studio_storage.scheduler_backfill_runtime import SchedulerBackfillRuntimeStore
@@ -156,3 +156,18 @@ def test_backfill_runs_use_workflow_snapshot_from_plan_creation(tmp_path: Path) 
     run = store.get_run(_WS, result.fires[0].workflow_run_id)
     assert run is not None
     assert run.workflow_snapshot.name == "Original"
+
+
+def test_backfill_preview_is_pure_and_bounded() -> None:
+    schedule = Schedule(ScheduleId("schedule-1"), WorkflowId("workflow-1"), "* * * * *")
+    values = preview_backfill(
+        schedule,
+        start_at="2026-09-13T00:00:00.000000Z",
+        end_at="2026-09-13T00:02:00.000000Z",
+        max_runs=3,
+    )
+    assert tuple(map(str, values)) == (
+        "2026-09-13T00:00:00.000000Z",
+        "2026-09-13T00:01:00.000000Z",
+        "2026-09-13T00:02:00.000000Z",
+    )

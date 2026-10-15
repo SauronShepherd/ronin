@@ -1,0 +1,14 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3,lambda,sqs,dynamodb
+      AWS_DEFAULT_REGION: us-east-1
+      # Supply LOCALSTACK_AUTH_TOKEN outside source control when required.
+      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:-}
+    volumes:
+      - localstack-data:/var/lib/localstack
+volumes:
+  localstack-data:

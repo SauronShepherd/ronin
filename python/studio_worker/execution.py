@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
 from studio_core.canonical_json import encode as encode_canonical_json
-from studio_execution import DurableExecutionService
+from studio_execution import DurableExecutionService, SchedulerWorkloadResult
 from studio_kernel import (
     CancellationToken,
     CellExecutionRequest,
@@ -340,6 +340,44 @@ class DurableWorkerExecution:
             lease_token=claim.lease_token,
             now=self.now(),
         )
+
+    async def run_scheduler_result(
+        self,
+        claim: ClaimedRun,
+        result: SchedulerWorkloadResult,
+    ) -> WorkerExecutionOutcome:
+        """Commit one non-notebook scheduler result as durable run evidence."""
+
+        payload = encode_canonical_json(result.evidence_payload())
+        async with BoundedAsyncArtifactStore(
+            self.artifact_store,
+            max_workers=self.artifact_max_workers,
+            max_in_flight=self.artifact_max_in_flight,
+        ) as artifacts:
+            artifact = await artifacts.put_bytes(
+                role="scheduler-result",
+                data=payload,
+                media_type="application/vnd.ronin.scheduler-result+json",
+            )
+        now = self.now()
+        await self.service.worker_put_evidence(
+            claim.attempt_id,
+            StoredEvidenceRef(
+                run_id=claim.run.id,
+                cell_id=None,
+                role=artifact.role,
+                digest_algorithm=artifact.digest_algorithm,
+                digest=artifact.digest,
+                media_type=artifact.media_type,
+                size_bytes=artifact.size_bytes,
+                storage_ref=artifact.storage_ref,
+            ),
+            owner=self.owner,
+            lease_token=claim.lease_token,
+            now=now,
+        )
+        await self._complete(claim, AttemptState.SUCCEEDED, None)
+        return WorkerExecutionOutcome(AttemptState.SUCCEEDED, (), ())
 
     async def run(
         self,

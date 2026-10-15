@@ -28,7 +28,7 @@ from studio_kernel import (
     RepositoryRevision,
     prepare_notebook_execution,
 )
-from studio_notebook import NotebookCell, NotebookDocument
+from studio_notebook import Notebook, NotebookCell, NotebookDocument
 from studio_orchestrator import AttemptId, CellExecutionIdentity, Job, RunId
 from studio_vcs import capture_revision
 
@@ -52,6 +52,8 @@ class LoadedProject:
     document: NotebookDocument
     revision: RepositoryRevision
     project_dir: Path
+    execution_mode: str = "all"
+    selected_cell_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,14 +106,40 @@ def load_project(paths: WorkerPaths, job: Job) -> LoadedProject:
     manifest = ProjectManifest.from_json(_read_text(manifest_path, "project manifest"))
     if not job.target:
         raise WorkerPreparationError("job target is required for worker execution")
-    target_path = _contained_path(project_dir, job.target, "notebook target")
-    document = NotebookDocument.from_json(_read_text(target_path, "notebook target"))
+    execution_mode = "all"
+    selected_cell_id: str | None = None
+    if job.target == "notebook:inline" or job.target.startswith("notebook:"):
+        try:
+            parameters = decode_canonical_json(job.parameters_json)
+        except (TypeError, ValueError) as exc:
+            raise WorkerPreparationError(
+                "inline notebook parameters are not canonical JSON"
+            ) from exc
+        if not isinstance(parameters, dict) or parameters.get("mode") not in {"all", "cell"}:
+            raise WorkerPreparationError("inline notebook execution requires mode=all or mode=cell")
+        document_payload = parameters.get("document")
+        if not isinstance(document_payload, dict):
+            raise WorkerPreparationError("inline notebook document must be an object")
+        execution_mode = str(parameters.get("mode", "all"))
+        raw_cell_id = parameters.get("cell_id")
+        selected_cell_id = raw_cell_id if isinstance(raw_cell_id, str) else None
+        if parameters.get("mode") == "cell" and not isinstance(selected_cell_id, str):
+            raise WorkerPreparationError("cell execution requires a string cell_id")
+        try:
+            document = NotebookDocument.from_data(document_payload)
+        except (TypeError, ValueError) as exc:
+            raise WorkerPreparationError("inline notebook document is invalid") from exc
+    else:
+        target_path = _contained_path(project_dir, job.target, "notebook target")
+        document = NotebookDocument.from_json(_read_text(target_path, "notebook target"))
     revision = capture_revision(project_dir)
     return LoadedProject(
         manifest=manifest,
         document=document,
         revision=RepositoryRevision(revision.commit, revision.dirty_patch_sha256),
         project_dir=project_dir,
+        execution_mode=execution_mode,
+        selected_cell_id=selected_cell_id,
     )
 
 
@@ -135,8 +163,23 @@ def build_request(
 ) -> NotebookExecutionRequest:
     """Build the immutable kernel request consumed by a concrete executor."""
 
+    document = loaded.document
+    if loaded.execution_mode == "cell":
+        selected = tuple(
+            (cell, identity)
+            for cell, identity in zip(
+                document.notebook.cells, document.cell_identities, strict=True
+            )
+            if str(cell.id) == loaded.selected_cell_id
+        )
+        if not selected:
+            raise WorkerPreparationError("selected notebook cell does not exist")
+        document = NotebookDocument(
+            Notebook(cells=(selected[0][0],)),
+            (selected[0][1],),
+        )
     return prepare_notebook_execution(
-        loaded.document,
+        document,
         runtime,
         loaded.revision,
         PythonCellAdapter(),

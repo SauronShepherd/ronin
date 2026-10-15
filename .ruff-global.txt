@@ -1,0 +1,63 @@
+packages\ronin-plugin-performance\build\lib\ronin_plugin_performance\ui_manifest.py:1:1: B018 Found useless expression. Either assign it to a variable or remove it.
+packages\ronin-plugin-performance\build\lib\ronin_plugin_performance\ui_manifest.py:1:101: E501 Line too long (446 > 100)
+python\studio_storage\catalog.py:272:101: E501 Line too long (131 > 100)
+python\studio_storage\catalog.py:273:101: E501 Line too long (172 > 100)
+python\studio_storage\catalog.py:277:101: E501 Line too long (103 > 100)
+python\studio_storage\catalog.py:292:101: E501 Line too long (158 > 100)
+python\studio_storage\catalog.py:297:101: E501 Line too long (152 > 100)
+python\studio_storage\catalog.py:300:101: E501 Line too long (158 > 100)
+python\studio_storage\catalog.py:304:101: E501 Line too long (104 > 100)
+python\studio_synthetic_data\application.py:307:21: B904 Within an `except` clause, raise exceptions with `raise ... from err` or `raise ... from None` to distinguish them from errors in exception handling
+python\studio_synthetic_data\async_generation.py:25:101: E501 Line too long (110 > 100)
+python\studio_synthetic_data\async_generation.py:34:101: E501 Line too long (238 > 100)
+python\studio_synthetic_data\async_generation.py:35:101: E501 Line too long (168 > 100)
+python\studio_synthetic_data\async_generation.py:36:17: SIM105 Use `contextlib.suppress(sqlite3.OperationalError)` instead of `try`-`except`-`pass`
+python\studio_synthetic_data\async_generation.py:41:101: E501 Line too long (149 > 100)
+python\studio_synthetic_data\async_generation.py:43:101: E501 Line too long (134 > 100)
+python\studio_synthetic_data\async_generation.py:52:101: E501 Line too long (211 > 100)
+python\studio_synthetic_data\async_generation.py:61:101: E501 Line too long (195 > 100)
+python\studio_synthetic_data\async_generation.py:78:101: E501 Line too long (118 > 100)
+python\studio_synthetic_data\async_generation.py:84:101: E501 Line too long (125 > 100)
+python\studio_synthetic_data\async_generation.py:101:101: E501 Line too long (110 > 100)
+python\studio_synthetic_data\engine.py:120:101: E501 Line too long (155 > 100)
+python\studio_synthetic_data\engine.py:338:101: E501 Line too long (137 > 100)
+python\studio_synthetic_data\engine.py:342:101: E501 Line too long (141 > 100)
+python\studio_synthetic_data\engine.py:343:101: E501 Line too long (138 > 100)
+python\studio_synthetic_data\engine.py:344:101: E501 Line too long (122 > 100)
+python\studio_synthetic_data\engine.py:345:101: E501 Line too long (182 > 100)
+python\studio_synthetic_data\local_catalogs.py:27:101: E501 Line too long (146 > 100)
+python\studio_synthetic_data\local_catalogs.py:28:101: E501 Line too long (183 > 100)
+python\studio_synthetic_data\local_catalogs.py:29:101: E501 Line too long (179 > 100)
+python\studio_synthetic_data\local_catalogs.py:39:101: E501 Line too long (102 > 100)
+python\studio_synthetic_data\plugin.py:87:101: E501 Line too long (163 > 100)
+python\studio_synthetic_data\plugin.py:88:101: E501 Line too long (162 > 100)
+python\studio_synthetic_data\plugin.py:89:101: E501 Line too long (176 > 100)
+python\studio_synthetic_data\plugin.py:235:101: E501 Line too long (101 > 100)
+python\studio_synthetic_data\plugin.py:240:101: E501 Line too long (107 > 100)
+python\studio_synthetic_data\plugin.py:241:101: E501 Line too long (126 > 100)
+python\studio_synthetic_data\plugin.py:245:101: E501 Line too long (101 > 100)
+python\studio_synthetic_data\plugin.py:249:101: E501 Line too long (101 > 100)
+python\studio_synthetic_data\plugin.py:326:101: E501 Line too long (120 > 100)
+python\studio_synthetic_data\plugin.py:349:101: E501 Line too long (109 > 100)
+python\studio_synthetic_data\plugin.py:356:101: E501 Line too long (133 > 100)
+python\studio_synthetic_data\plugin.py:358:101: E501 Line too long (132 > 100)
+python\studio_synthetic_data\plugin.py:361:101: E501 Line too long (163 > 100)
+python\studio_synthetic_data\plugin.py:363:101: E501 Line too long (109 > 100)
+python\studio_synthetic_data\plugin.py:365:101: E501 Line too long (180 > 100)
+python\studio_synthetic_data\plugin.py:368:101: E501 Line too long (104 > 100)
+python\studio_synthetic_data\plugin.py:370:101: E501 Line too long (173 > 100)
+python\studio_synthetic_data\plugin.py:372:101: E501 Line too long (133 > 100)
+python\studio_synthetic_data\plugin.py:379:101: E501 Line too long (135 > 100)
+python\studio_synthetic_data\plugin.py:394:101: E501 Line too long (138 > 100)
+python\studio_synthetic_data\plugin.py:398:101: E501 Line too long (115 > 100)
+python\studio_synthetic_data\plugin.py:401:101: E501 Line too long (120 > 100)
+python\studio_synthetic_data\plugin.py:438:101: E501 Line too long (118 > 100)
+python\studio_synthetic_data\publication.py:69:101: E501 Line too long (101 > 100)
+tools\cloud_studio_e2e.py:13:5: S101 Use of `assert` detected
+tools\cloud_studio_e2e.py:16:5: S101 Use of `assert` detected
+tools\cloud_studio_e2e.py:19:5: S101 Use of `assert` detected
+tools\cloud_studio_e2e.py:22:5: S101 Use of `assert` detected
+tools\cloud_studio_e2e.py:25:5: S101 Use of `assert` detected
+tools\cloud_studio_e2e.py:29:5: S101 Use of `assert` detected
+Found 61 errors.
+No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).

@@ -47,6 +47,60 @@ def test_doctor_core_succeeds_without_docker_but_reports_verdict(monkeypatch, ca
     assert "doctor: required core checks passed" in output.out
 
 
+def test_connectors_capabilities_uses_control_plane_client(monkeypatch, capsys) -> None:
+    class _Client:
+        def connector_capabilities(self):
+            return {"items": [{"connector_id": "http.json"}], "count": 1}
+
+    monkeypatch.setattr("studio_cli._control_plane_client", lambda: _Client())
+
+    assert main(["connectors", "capabilities"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "items": [{"connector_id": "http.json"}],
+        "count": 1,
+    }
+
+
+def test_connectors_discover_emits_assets(monkeypatch, capsys) -> None:
+    class _Client:
+        def connector_discover(self, workspace_id, connector_id, connection_ref):
+            assert workspace_id == "workspace-a"
+            assert connector_id == "http.json"
+            assert connection_ref == "conn-1"
+            return {
+                "schema": "ronin.connector-discovery/v1",
+                "items": [{"asset_ref": "conn-1::orders"}],
+                "count": 1,
+            }
+
+    monkeypatch.setattr("studio_cli._control_plane_client", lambda: _Client())
+
+    assert (
+        main(
+            [
+                "connectors",
+                "discover",
+                "--workspace-id",
+                "workspace-a",
+                "--connector-id",
+                "http.json",
+                "--connection-ref",
+                "conn-1",
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out)["items"][0]["asset_ref"] == "conn-1::orders"
+
+
+def test_connectors_plan_requires_complete_definition(monkeypatch, capsys) -> None:
+    monkeypatch.setenv("RONIN_WORKSPACE_ID", "workspace-a")
+    monkeypatch.setattr("studio_cli._control_plane_client", lambda: object())
+
+    assert main(["connectors", "plan", "--connector-id", "http.json"]) == 2
+    assert "requires --connection-ref" in capsys.readouterr().err
+
+
 def test_doctor_all_still_requires_docker(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         "studio_cli.shutil.which",

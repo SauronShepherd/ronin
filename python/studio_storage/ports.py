@@ -100,6 +100,10 @@ class WorkspaceStore(Protocol):
 
     def list_projects(self, workspace_id: WorkspaceId) -> tuple[ProjectManifest, ...]: ...
 
+    def archive_project(
+        self, workspace_id: WorkspaceId, project_id: ProjectId, *, now: Instant | str
+    ) -> bool: ...
+
     def unregister_project(self, workspace_id: WorkspaceId, project_id: ProjectId) -> bool: ...
 
 

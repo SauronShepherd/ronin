@@ -9,6 +9,7 @@ from studio_core import (
     DiagnosticPredicate,
     DiagnosticRule,
     builtin_diagnostic_catalog,
+    diagnostics,
 )
 
 
@@ -149,6 +150,41 @@ def test_matcher_supports_bounded_non_regex_predicates_and_all_semantics() -> No
     assert findings[0].documentation_key == "diagnostic.quota"
     assert findings[0].to_data()["fact_code"] == "ERR-42"
     assert DiagnosticCatalog((sensitive,)).match(DiagnosticFact("x", code="err-42")) == ()
+
+
+@pytest.mark.parametrize("kind", ["equals", "contains", "prefix"])
+def test_matcher_preserves_case_sensitive_boundary_for_each_match_kind(kind: str) -> None:
+    predicate = DiagnosticPredicate("message", kind, "Error", case_sensitive=True)  # type: ignore[arg-type]
+    fact = DiagnosticFact("test", message="error while reading")
+
+    assert diagnostics._matches(predicate, fact) is False
+
+
+def test_finding_sort_key_preserves_optional_fields_and_checks() -> None:
+    finding = DiagnosticFinding(
+        rule_id="rule",
+        severity="warning",
+        message="message",
+        fact_category="category",
+        fact_code="code",
+        fact_source="source",
+        documentation_key="docs.rule",
+        remediation="remediate",
+        checks=("check-a", "check-b"),
+    )
+
+    assert diagnostics._finding_sort_key(finding) == (
+        "rule",
+        "warning",
+        "message",
+        "category",
+        "code",
+        "source",
+        "docs.rule",
+        "remediate",
+        "check-a",
+        "check-b",
+    )
 
 
 def test_matching_order_does_not_compare_optional_fields() -> None:

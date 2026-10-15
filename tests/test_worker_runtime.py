@@ -117,6 +117,8 @@ def test_runtime_config_and_catalog_fail_closed(tmp_path: Path) -> None:
         LocalWorkerRuntimeConfig(paths, "worker", "python:3.11-slim")
     with pytest.raises(ValueError, match="poll_seconds"):
         LocalWorkerRuntimeConfig(paths, "worker", IMAGE, poll_seconds=0.0)
+    with pytest.raises(ValueError, match="postgres_dsn"):
+        LocalWorkerRuntimeConfig(paths, "worker", IMAGE, postgres_dsn=" ")
 
     catalog = runtime_catalog_for_image(IMAGE)
     profile = catalog.profiles[0]

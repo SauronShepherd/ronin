@@ -33,9 +33,9 @@ Cardinality: TypeAlias = Literal["one", "many"]
 
 
 def _require_text(value: str, field_name: str, *, max_length: int = 500) -> None:
-    if not value.strip():
+    if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} must be non-empty")
-    if "\n" in value or "\r" in value:
+    if "\n" in value or "\r" in value or "\x00" in value:
         raise ValueError(f"{field_name} must not contain line breaks")
     if len(value) > max_length:
         raise ValueError(f"{field_name} must be at most {max_length} characters")
@@ -334,6 +334,14 @@ def builtin_operator_catalog() -> OperatorCatalog:
                     OperatorParameter("path", "string", required=True),
                 ),
                 documentation_key="operator.source.file",
+            ),
+            OperatorContract(
+                OperatorRef("source.fixture"),
+                "Fixture",
+                "sources",
+                outputs=unary_output,
+                parameters=(OperatorParameter("fixture", "string", required=True),),
+                documentation_key="operator.source.fixture",
             ),
             OperatorContract(
                 OperatorRef("transform.filter"),

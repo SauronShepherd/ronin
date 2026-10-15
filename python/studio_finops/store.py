@@ -6,6 +6,7 @@ import json
 import sqlite3
 from decimal import Decimal
 from pathlib import Path
+from typing import Literal, cast
 
 from studio_core import WorkspaceId
 from studio_orchestrator import Instant
@@ -318,6 +319,30 @@ class SqliteFinOpsStore:
                     str(row[2]),
                     str(row[3]),  # type: ignore[arg-type]
                     str(row[4]),
+                )
+                for row in rows
+            )
+        finally:
+            connection.close()
+
+    def list_budgets(self, workspace_id: WorkspaceId) -> tuple[BudgetPolicy, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT budget_id,currency,limit_amount,period_start,period_end,action,labels_json "
+                "FROM finops_budgets WHERE workspace_id=? ORDER BY budget_id",
+                (workspace_id.value,),
+            ).fetchall()
+            return tuple(
+                BudgetPolicy(
+                    str(row[0]),
+                    workspace_id,
+                    str(row[1]),
+                    Decimal(str(row[2])),
+                    Instant(row[3]),
+                    Instant(row[4]),
+                    cast(Literal["notify", "deny_new_work"], str(row[5])),
+                    tuple(sorted((str(k), str(v)) for k, v in json.loads(row[6]).items())),
                 )
                 for row in rows
             )

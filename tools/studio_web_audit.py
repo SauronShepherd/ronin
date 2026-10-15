@@ -8,12 +8,13 @@ from pathlib import Path
 
 WEB = Path("web")
 MAX_LINES = 400
-ALLOWED = {".html", ".css", ".js", ".png", ".webp", ".svg"}
+ALLOWED = {".html", ".css", ".js", ".mjs", ".json", ".png", ".webp", ".svg"}
+TEXT_EXTENSIONS = {".html", ".css", ".js", ".mjs", ".json"}
 
 
 def audit() -> dict[str, object]:
     files = [path for path in WEB.rglob("*") if path.is_file()]
-    text_files = [path for path in files if path.suffix in {".html", ".css", ".js"}]
+    text_files = [path for path in files if path.suffix in TEXT_EXTENSIONS]
     failures: list[str] = []
     for path in files:
         if path.suffix not in ALLOWED and path.name != "README.md":
@@ -29,7 +30,11 @@ def audit() -> dict[str, object]:
     for marker in required:
         if marker not in index:
             failures.append(f"index.html missing {marker}")
-    js = "\n".join(path.read_text(encoding="utf-8") for path in (WEB / "js").rglob("*.js"))
+    js = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (WEB / "js").rglob("*")
+        if path.is_file() and path.suffix in {".js", ".mjs"}
+    )
     for forbidden in ("providerCandidates", "Neo4j", "PuppyGraph", "GraphFrames"):
         if forbidden in js:
             failures.append(f"invented provider data remains: {forbidden}")
@@ -37,7 +42,13 @@ def audit() -> dict[str, object]:
         "files": len(files),
         "text_bytes": sum(path.stat().st_size for path in text_files),
         "asset_bytes": sum(path.stat().st_size for path in files),
-        "module_count": len(list((WEB / "js").rglob("*.js"))),
+        "module_count": len(
+            [
+                path
+                for path in (WEB / "js").rglob("*")
+                if path.is_file() and path.suffix in {".js", ".mjs"}
+            ]
+        ),
         "route_invocations": len(re.findall(r"/v1/", js)),
         "failures": failures,
     }

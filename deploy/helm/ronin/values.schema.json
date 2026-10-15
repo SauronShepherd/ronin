@@ -2,6 +2,34 @@
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
   "required": ["image", "service", "storage", "server"],
+  "allOf": [
+    {
+      "if": {"properties": {"server": {"properties": {"multiUser": {"properties": {"enabled": {"const": true}}}}}}},
+      "then": {
+        "properties": {
+          "server": {
+            "properties": {
+              "profile": {"const": "multi-user"},
+              "multiUser": {"properties": {"postgresDsnSecret": {"properties": {"name": {"minLength": 1}}}}}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"server": {"properties": {"replicas": {"minimum": 2}}}}},
+      "then": {
+        "properties": {
+          "server": {
+            "properties": {
+              "profile": {"const": "multi-user"},
+              "multiUser": {"properties": {"enabled": {"const": true}}}
+            }
+          }
+        }
+      }
+    }
+  ],
   "properties": {
     "image": {
       "type": "object",
@@ -35,6 +63,19 @@
         "replicas": {"type": "integer", "minimum": 1},
         "token": {"type": "string", "minLength": 1},
         "tokenScopes": {"type": "string", "minLength": 3, "not": {"const": "{}"}}
+        ,"profile": {"type": "string", "enum": ["single-node", "multi-user"]},
+        "multiUser": {
+          "type": "object",
+          "required": ["enabled", "postgresDsnSecret"],
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "postgresDsnSecret": {
+              "type": "object",
+              "required": ["name", "key"],
+              "properties": {"name": {"type": "string"}, "key": {"type": "string", "minLength": 1}}
+            }
+          }
+        }
       }
     }
   }

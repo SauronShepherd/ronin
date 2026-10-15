@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from studio_core import portability
 from studio_core.portability import (
     BindingRequest,
     BundleEntry,
@@ -64,14 +65,43 @@ def test_manual_decision_requires_explanation() -> None:
 
 
 def test_bundle_paths_fail_closed() -> None:
-    for path in ("/absolute.json", "../escape.json", "a/../escape.json", "a\\b.json"):
-        with pytest.raises(ValueError, match="path"):
-            BundleEntry(path, "application/json", "sha256", "00", 1)
+    with pytest.raises(ValueError, match="^bundle path must be relative and use forward slashes$"):
+        portability._require_safe_path("/absolute.json")
+    with pytest.raises(ValueError, match="^bundle path must be relative and use forward slashes$"):
+        portability._require_safe_path("a\\b.json")
+    with pytest.raises(
+        ValueError, match="^bundle path must be non-empty, trimmed, and single-line$"
+    ):
+        portability._require_safe_path("")
+    for path in (
+        ".",
+        "..",
+        "../escape.json",
+        "a/../escape.json",
+        "a/./escape.json",
+        "a//escape.json",
+    ):
+        with pytest.raises(ValueError, match="^bundle path contains unsafe path components$"):
+            portability._require_safe_path(path)
+    assert portability._require_safe_path("a/b.json") == "a/b.json"
 
 
 def test_binding_request_rejects_obvious_plaintext_credentials() -> None:
     with pytest.raises(ValueError, match="credential material"):
         BindingRequest("secret", "password=hunter2")
+    with pytest.raises(ValueError, match="credential material"):
+        BindingRequest("connection", "connection://safe", suggested_target_ref="Bearer token")
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["Bearer opaque-token", "-----BEGIN PRIVATE KEY-----", "PASSWORD=hunter2"],
+)
+def test_binding_request_rejects_each_credential_material_form(value: str) -> None:
+    with pytest.raises(
+        ValueError, match="^binding source_ref must not contain credential material$"
+    ):
+        portability._reject_credential_material(value, "binding source_ref")
 
 
 def test_required_binding_keeps_report_unresolved() -> None:
@@ -91,3 +121,74 @@ def test_required_binding_keeps_report_unresolved() -> None:
 
     assert report.requires_manual_decision is True
     assert report.unresolved_bindings == (BindingRequest("connection", "source-connection"),)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "bearer opaque-token",
+        "-----begin private key-----",
+        "password=hunter2",
+    ],
+)
+def test_credential_rejection_is_case_insensitive(value: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^binding source_ref must not contain credential material$",
+    ):
+        portability._reject_credential_material(value, "binding source_ref")
+
+
+def test_migration_notes_reject_credential_material() -> None:
+    with pytest.raises(ValueError, match="credential material"):
+        MigrationObjectReport(
+            source_type="connection",
+            source_id="c1",
+            status="manual_decision",
+            notes=("password=hunter2",),
+        )
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00byte"],
+)
+def test_bundle_text_contract_rejects_unportable_values(value: str) -> None:
+    with pytest.raises(
+        ValueError, match="^bundle path must be non-empty, trimmed, and single-line$"
+    ):
+        portability._require_text(value, "bundle path")
+
+
+@pytest.mark.parametrize("value", ["line\nfeed", "line\rfeed", "nul\x00byte"])
+def test_bundle_text_rejects_each_control_character_independently(value: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^bundle path must be non-empty, trimmed, and single-line$",
+    ):
+        portability._require_text(value, "bundle path")
+
+
+def test_bundle_path_keeps_validation_context_and_exact_diagnostics() -> None:
+    with pytest.raises(
+        ValueError,
+        match="^bundle path must be relative and use forward slashes$",
+    ):
+        portability._require_safe_path("folder\\file.json")
+    with pytest.raises(
+        ValueError,
+        match="^bundle path contains unsafe path components$",
+    ):
+        portability._require_safe_path("folder/../file.json")
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["bearer token", "-----begin private key-----", "password=secret"],
+)
+def test_credential_filter_rejects_each_marker_without_other_markers(value: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="^binding source_ref must not contain credential material$",
+    ):
+        portability._reject_credential_material(value, "binding source_ref")

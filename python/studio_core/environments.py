@@ -40,7 +40,14 @@ _SENSITIVE_TERMS = (
 
 
 def _require_text(value: str, name: str) -> str:
-    if not value or value != value.strip() or "\n" in value or "\r" in value or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or "\n" in value
+        or "\r" in value
+        or "\x00" in value
+    ):
         raise ValueError(f"{name} must be non-empty, trimmed, and single-line")
     return value
 
@@ -74,9 +81,14 @@ class EnvironmentDefinition:
     def __post_init__(self) -> None:
         _require_text(self.name, "environment name")
         if self.description and (
-            self.description != self.description.strip() or "\x00" in self.description
+            self.description != self.description.strip()
+            or "\n" in self.description
+            or "\r" in self.description
+            or "\x00" in self.description
         ):
-            raise ValueError("environment description must be trimmed and contain no NUL")
+            raise ValueError(
+                "environment description must be trimmed, single-line, and contain no NUL"
+            )
         if self.state not in _ALLOWED_STATES:
             raise ValueError("environment state must be active or disabled")
 

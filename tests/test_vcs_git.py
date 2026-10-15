@@ -7,7 +7,15 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from studio_vcs import GitCaptureError, GitRevision, capture_revision
+from studio_vcs import (
+    GitCaptureError,
+    GitRevision,
+    capture_revision,
+    checkout_detached,
+    create_branch,
+    delete_branch,
+    fetch_updates,
+)
 from studio_vcs.git import _normalized_untracked_mode
 
 
@@ -93,3 +101,59 @@ def test_revision_value_contract_rejects_invalid_hex() -> None:
         GitRevision("xyz")
     with pytest.raises(ValueError, match="dirty"):
         GitRevision("a" * 40, "z" * 64)
+
+
+def test_checkout_detached_resolves_exact_commit_and_rejects_dirty_tree(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    first = _git(root, "rev-parse", "HEAD")
+    (root / "tracked.txt").write_text("two\n", encoding="utf-8")
+    _git(root, "add", "tracked.txt")
+    _git(root, "commit", "-qm", "second")
+    second = _git(root, "rev-parse", "HEAD")
+
+    result = checkout_detached(root, first)
+    assert result.commit == first
+    assert (root / "tracked.txt").read_text(encoding="utf-8") == "one\n"
+    assert _git(root, "rev-parse", "HEAD") == first
+
+    (root / "dirty.txt").write_text("unsafe", encoding="utf-8")
+    with pytest.raises(GitCaptureError, match="dirty worktree"):
+        checkout_detached(root, second)
+
+
+def test_create_branch_validates_name_and_starts_at_requested_commit(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    commit = _git(root, "rev-parse", "HEAD")
+    result = create_branch(root, "feature/one", start_commit=commit)
+    assert result.commit == commit
+    assert _git(root, "rev-parse", "refs/heads/feature/one") == commit
+    with pytest.raises(GitCaptureError, match="invalid"):
+        create_branch(root, "bad name")
+
+
+def test_delete_branch_is_safe_and_requires_merged_branch(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    create_branch(root, "feature/one")
+    delete_branch(root, "feature/one")
+    with pytest.raises(subprocess.CalledProcessError):
+        _git(root, "rev-parse", "refs/heads/feature/one")
+    with pytest.raises(GitCaptureError, match="current"):
+        delete_branch(root, "master")
+
+
+def test_fetch_updates_refreshes_remote_refs_without_checkout(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    remote = tmp_path / "remote.git"
+    _git(tmp_path, "init", "--bare", "-q", str(remote))
+    _git(root, "remote", "add", "origin", str(remote))
+    _git(root, "push", "-q", "origin", "HEAD:refs/heads/main")
+    before = _git(root, "rev-parse", "HEAD")
+    result = fetch_updates(root)
+    assert result.commit == before
+    assert _git(root, "rev-parse", "HEAD") == before
+
+
+def test_fetch_updates_rejects_unsafe_remote_name(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    with pytest.raises(GitCaptureError, match="remote name"):
+        fetch_updates(root, remote="origin/../unsafe")

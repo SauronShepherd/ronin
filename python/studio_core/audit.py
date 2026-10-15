@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal, TypeAlias, cast
@@ -27,7 +28,20 @@ def _metadata(values: tuple[tuple[str, str], ...]) -> tuple[tuple[str, str], ...
         key = _require_text(key, "audit metadata key")
         value = _require_text(value, "audit metadata value")
         folded = key.casefold()
-        if any(term in folded for term in ("password", "secret", "token", "credential", "api_key")):
+        if any(
+            term in folded
+            for term in (
+                "password",
+                "secret",
+                "token",
+                "credential",
+                "api_key",
+                "authorization",
+                "cookie",
+                "private_key",
+                "client_secret",
+            )
+        ):
             raise ValueError("audit metadata must not contain credential-bearing keys")
         folded_value = value.casefold()
         if folded_value.startswith("bearer ") or "-----begin " in folded_value:
@@ -112,6 +126,10 @@ class AuditEvent:
 
     def __post_init__(self) -> None:
         _require_text(self.occurred_at, "audit occurred_at")
+        if not self.occurred_at.endswith("Z"):
+            raise ValueError("audit occurred_at must be a UTC timestamp")
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z", self.occurred_at):
+            raise ValueError("audit occurred_at must be ISO-8601")
         _require_text(self.action, "audit action")
         if self.outcome not in {"succeeded", "failed", "allowed", "denied"}:
             raise ValueError("unsupported audit outcome")

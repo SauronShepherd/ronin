@@ -7,7 +7,9 @@ stays small. Callers get a typed error when the data-plane extra is unavailable.
 from __future__ import annotations
 
 import hashlib
+import tempfile
 from collections.abc import Iterable, Mapping
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -103,7 +105,22 @@ def write_parquet_rows(
     destination = path.resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
     table = pa.Table.from_pylist(materialized)
-    pq.write_table(table, destination, compression=compression)
+    temporary_name: str | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=destination.parent,
+            prefix=f".{destination.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary:
+            temporary_name = temporary.name
+        pq.write_table(table, temporary_name, compression=compression)
+        Path(temporary_name).replace(destination)
+        temporary_name = None
+    finally:
+        if temporary_name is not None:
+            with suppress(FileNotFoundError):
+                Path(temporary_name).unlink()
     return inspect_parquet(destination)
 
 
@@ -115,8 +132,12 @@ def read_parquet_rows(
 ) -> tuple[dict[str, object], ...]:
     """Read local Parquet rows with optional projection and result bound."""
 
-    if limit is not None and limit < 0:
-        raise ValueError("Parquet read limit must be non-negative")
+    if limit is not None and not 0 <= limit <= 100_000:
+        raise ValueError("Parquet read limit must be between 0 and 100000")
+    if columns is not None and any(not column or column != column.strip() for column in columns):
+        raise ValueError("Parquet projection columns must be non-empty and trimmed")
+    if columns is not None and len(set(columns)) != len(columns):
+        raise ValueError("Parquet projection columns must be unique")
     _, pq = _pyarrow()
     resolved = path.resolve(strict=True)
     selected_columns = list(columns) if columns else None

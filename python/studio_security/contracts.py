@@ -12,6 +12,7 @@ SubjectKind: TypeAlias = Literal["principal", "group"]
 WorkspaceRole: TypeAlias = Literal["admin", "operator", "editor", "viewer"]
 Permission: TypeAlias = Literal[
     "workspace.read",
+    "workspace.write",
     "workspace.admin",
     "project.read",
     "project.write",
@@ -46,6 +47,7 @@ Permission: TypeAlias = Literal[
 PERMISSIONS: frozenset[str] = frozenset(
     {
         "workspace.read",
+        "workspace.write",
         "workspace.admin",
         "project.read",
         "project.write",

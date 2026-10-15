@@ -28,6 +28,8 @@ def test_runtime_capability_validates_and_profile_canonicalizes() -> None:
         RuntimeCapability("")
     with pytest.raises(ValueError, match="line breaks"):
         RuntimeCapability("bad\nname")
+    with pytest.raises(ValueError, match="line breaks"):
+        RuntimeCapability("bad\rname")
     with pytest.raises(ValueError, match="capability value"):
         RuntimeCapability("engine.spark", " ")
     with pytest.raises(ValueError, match="line breaks"):
@@ -58,6 +60,15 @@ def test_runtime_capability_validates_and_profile_canonicalizes() -> None:
             RuntimeCapability("spark.version", "4.0"),
             RuntimeCapability("spark.version", "3.5"),
         )
+
+
+def test_runtime_profile_and_catalog_reject_invalid_member_types() -> None:
+    with pytest.raises(ValueError, match="capabilities must be RuntimeCapability"):
+        RuntimeProfile(RuntimeProfileRef("local", "bad"), capabilities=(object(),))  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="availability must be a boolean"):
+        RuntimeProfile(RuntimeProfileRef("local", "bad"), available=1)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="profiles must be RuntimeProfile"):
+        RuntimeCatalog((object(),))  # type: ignore[arg-type]
 
 
 def test_runtime_catalog_is_canonical_and_rejects_duplicate_refs() -> None:
@@ -328,3 +339,126 @@ def test_noncomparable_advertised_version_is_evidence_not_exception() -> None:
     check = result.evaluations[0].checks[0]
     assert check.satisfied is False
     assert check.reason == "ordered constraint requires comparable advertised release"
+
+
+def test_unavailable_requested_profile_is_not_selected() -> None:
+    profile = _profile(
+        "runtime",
+        "offline",
+        RuntimeCapability("engine.spark"),
+        available=False,
+    )
+    result = resolve_runtime(
+        ExecutionProfile(
+            runtime=profile.ref,
+            requirements=(CapabilityRequirement("engine.spark"),),
+        ),
+        RuntimeCatalog((profile,)),
+    )
+    assert result.status == "no_match"
+    assert result.requested_profile_found is True
+    assert result.exact_profile_selected is False
+
+
+def test_resolution_evidence_is_preserved_for_no_match_and_ambiguity() -> None:
+    profile = _profile("runtime", "offline", available=False)
+    no_match = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("gpu"),)),
+        RuntimeCatalog((profile,)),
+    )
+    assert no_match.status == "no_match"
+    assert no_match.requested_profile_found is True
+    assert no_match.exact_profile_selected is False
+    assert len(no_match.evaluations) == 1
+    assert no_match.evaluations[0].compatible is False
+
+    alpha = _profile("a", "default", RuntimeCapability("engine"))
+    beta = _profile("b", "default", RuntimeCapability("engine"))
+    ambiguous = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("engine"),)),
+        RuntimeCatalog((alpha, beta)),
+    )
+    assert ambiguous.status == "ambiguous"
+    assert ambiguous.requested_profile_found is True
+    assert len(ambiguous.evaluations) == 2
+
+
+def test_unconstrained_capability_evidence_keeps_its_advertised_value() -> None:
+    profile = _profile("runtime", "default", RuntimeCapability("engine", "spark"))
+    result = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("engine"),)),
+        RuntimeCatalog((profile,)),
+    )
+
+    assert result.evaluations[0].checks[0].advertised_value == "spark"
+    assert result.evaluations[0].checks[0].reason == "capability is advertised"
+
+
+@pytest.mark.parametrize(
+    ("advertised", "constraint", "satisfied"),
+    [
+        ("4.1", "<=4.0", False),
+        ("4.1", ">4.0", True),
+        ("4.0", ">4.0", False),
+        ("4.0", "<4.0", False),
+        ("4.1", "!=4.0", True),
+    ],
+)
+def test_runtime_constraint_boundaries_do_not_include_equal_or_greater_versions(
+    advertised: str, constraint: str, satisfied: bool
+) -> None:
+    profile = _profile("runtime", "boundaries", RuntimeCapability("version", advertised))
+    result = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("version", constraint),)),
+        RuntimeCatalog((profile,)),
+    )
+
+    assert result.evaluations[0].checks[0].satisfied is satisfied
+
+
+@pytest.mark.parametrize(
+    ("value", "constraint", "satisfied"),
+    [
+        ("4.0", "<=4.0", True),
+        ("4.0", "<4.0", False),
+        ("4.0", ">4.0", False),
+        ("4.0", "!=4.0", False),
+        ("4.0", "!=3.0", True),
+        ("4.0", "4.0", True),
+        ("4.0", "4.1", False),
+    ],
+)
+def test_runtime_constraint_operators_are_evaluated_independently(
+    value: str, constraint: str, satisfied: bool
+) -> None:
+    profile = _profile("runtime", "constraints", RuntimeCapability("version", value))
+    result = resolve_runtime(
+        ExecutionProfile(requirements=(CapabilityRequirement("version", constraint),)),
+        RuntimeCatalog((profile,)),
+    )
+    assert result.evaluations[0].checks[0].satisfied is satisfied
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["", " leading", "trailing ", "line\nfeed", "line\rfeed", "nul\x00value"],
+)
+def test_runtime_text_contract_rejects_unportable_values(value: str) -> None:
+    with pytest.raises(ValueError, match="runtime capability"):
+        RuntimeCapability(value)
+    with pytest.raises(ValueError, match="runtime capability"):
+        RuntimeCapability("engine", value)
+
+
+def test_runtime_namespace_lookup_is_exact_and_capabilities_are_canonical() -> None:
+    profile = _profile(
+        "runtime",
+        "namespaces",
+        RuntimeCapability("engine", "spark", "adapter.one/v1"),
+        RuntimeCapability("engine", "local", "adapter.two/v1"),
+    )
+
+    assert profile.capabilities[0].namespace == "adapter.one/v1"
+    assert profile.capability("engine", "adapter.one/v1").value == "spark"
+    assert profile.capability("engine", "adapter.two/v1").value == "local"
+    assert profile.capability("engine") is None

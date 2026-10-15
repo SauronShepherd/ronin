@@ -61,6 +61,12 @@ def test_environment_and_bindings_round_trip_without_changing_project_manifest()
     assert "WAREHOUSE_PASSWORD" not in manifest.to_json()
 
 
+@pytest.mark.parametrize("description", ["line one\nline two", "line one\rline two"])
+def test_environment_description_is_single_line(description: str) -> None:
+    with pytest.raises(ValueError, match="single-line"):
+        EnvironmentDefinition(EnvironmentId("prod"), "Production", description)
+
+
 def test_binding_targets_require_kind_specific_reference_schemes() -> None:
     with pytest.raises(ValueError, match="secret://"):
         DeploymentBinding("secret", "password", "connection://wrong-kind")

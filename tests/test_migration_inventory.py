@@ -30,3 +30,13 @@ def test_inventory_rejects_duplicates_and_malformed_documents() -> None:
         inventory_json_document(
             "{}", source_platform="fabric", source_version="1", importer_version="test"
         )
+
+
+def test_inventory_rejects_undeclared_classification() -> None:
+    with pytest.raises(ValueError, match="unsupported migration status"):
+        inventory_json_document(
+            '{"objects":[{"type":"job","id":"j","status":"green"}]}',
+            source_platform="fabric",
+            source_version="1",
+            importer_version="test",
+        )

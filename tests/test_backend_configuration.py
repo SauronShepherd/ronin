@@ -15,6 +15,14 @@ def test_server_reports_postgres_initialization_failure_instead_of_fallback(
         _serve()
 
 
+def test_postgres_backend_requires_an_explicit_dsn(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RONIN_STORAGE_BACKEND", "postgres")
+    monkeypatch.delenv("RONIN_POSTGRES_DSN", raising=False)
+
+    with pytest.raises(CliError, match="RONIN_POSTGRES_DSN is required"):
+        _serve()
+
+
 def test_sql_parquet_root_is_optional_and_directory_bound(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

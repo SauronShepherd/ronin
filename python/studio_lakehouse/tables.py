@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal, Protocol, TypeAlias, runtime_checkable
+from typing import Literal, Protocol, TypeAlias, cast, runtime_checkable
+
+from studio_core.canonical_json import decode as decode_canonical_json
+from studio_core.canonical_json import encode as encode_canonical_json
 
 TableFormat: TypeAlias = Literal["iceberg", "delta"]
 TableWriteMode: TypeAlias = Literal["create", "append", "overwrite"]
@@ -86,6 +90,133 @@ class OpenTableState:
         object.__setattr__(self, "properties", properties)
 
 
+@dataclass(frozen=True, slots=True)
+class TableMetadata:
+    """Portable table registration keeping logical identity separate from location."""
+
+    identifier: OpenTableIdentifier
+    format: TableFormat
+    location: str
+    managed: bool
+    schema: tuple[OpenTableField, ...]
+    partition_spec: tuple[str, ...] = ()
+    properties: tuple[tuple[str, str], ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.location or self.location != self.location.strip():
+            raise ValueError("table metadata location must be non-empty and trimmed")
+        if self.format not in {"iceberg", "delta"}:
+            raise ValueError("unsupported table metadata format")
+        if not isinstance(self.managed, bool):
+            raise TypeError("table metadata managed must be boolean")
+        fields = tuple(self.schema)
+        if len({field.name for field in fields}) != len(fields):
+            raise ValueError("table metadata schema fields must be unique")
+        if len(set(self.partition_spec)) != len(self.partition_spec):
+            raise ValueError("table metadata partition fields must be unique")
+        field_names = {field.name for field in fields}
+        if any(field not in field_names for field in self.partition_spec):
+            raise ValueError("table metadata partition field must exist in schema")
+        properties = tuple(sorted(self.properties))
+        if len({key for key, _ in properties}) != len(properties):
+            raise ValueError("table metadata properties must be unique")
+        if any(
+            not isinstance(key, str)
+            or not key
+            or key != key.strip()
+            or not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            for key, value in properties
+        ):
+            raise ValueError("table metadata properties must be non-empty trimmed strings")
+        object.__setattr__(self, "schema", fields)
+        object.__setattr__(self, "partition_spec", tuple(self.partition_spec))
+        object.__setattr__(self, "properties", properties)
+
+    def to_data(self) -> dict[str, object]:
+        return {
+            "identifier": self.identifier.qualified_name,
+            "format": self.format,
+            "location": self.location,
+            "managed": self.managed,
+            "schema": [
+                {"name": field.name, "data_type": field.data_type, "nullable": field.nullable}
+                for field in self.schema
+            ],
+            "partition_spec": list(self.partition_spec),
+            "properties": dict(self.properties),
+        }
+
+    def to_json(self) -> str:
+        return encode_canonical_json(self.to_data()).decode()
+
+    @classmethod
+    def from_data(cls, value: object) -> TableMetadata:
+        if not isinstance(value, Mapping):
+            raise TypeError("table metadata must be an object")
+        expected = {
+            "identifier",
+            "format",
+            "location",
+            "managed",
+            "schema",
+            "partition_spec",
+            "properties",
+        }
+        if set(value) != expected:
+            raise ValueError("table metadata has invalid shape")
+        identifier_text = value["identifier"]
+        if not isinstance(identifier_text, str) or identifier_text.count(".") < 1:
+            raise ValueError("table metadata identifier must be qualified")
+        namespace = tuple(identifier_text.split("."))
+        fields = value["schema"]
+        if not isinstance(fields, list):
+            raise TypeError("table metadata schema must be an array")
+        parsed_fields: list[OpenTableField] = []
+        for field in fields:
+            if not isinstance(field, Mapping) or set(field) != {"name", "data_type", "nullable"}:
+                raise ValueError("table metadata field has invalid shape")
+            if not isinstance(field["name"], str) or not isinstance(field["data_type"], str):
+                raise TypeError("table metadata field names/types must be strings")
+            if not isinstance(field["nullable"], bool):
+                raise TypeError("table metadata field nullable must be boolean")
+            parsed_fields.append(
+                OpenTableField(field["name"], field["data_type"], field["nullable"])
+            )
+        partitions = value["partition_spec"]
+        properties = value["properties"]
+        if not isinstance(partitions, list) or not all(
+            isinstance(item, str) for item in partitions
+        ):
+            raise TypeError("table metadata partition_spec must be an array of strings")
+        if not isinstance(properties, Mapping) or not all(
+            isinstance(key, str) and isinstance(item, str) for key, item in properties.items()
+        ):
+            raise TypeError("table metadata properties must be a string object")
+        if not isinstance(value["format"], str) or not isinstance(value["location"], str):
+            raise TypeError("table metadata format/location must be strings")
+        if not isinstance(value["managed"], bool):
+            raise TypeError("table metadata managed must be boolean")
+        return cls(
+            OpenTableIdentifier(namespace[:-1], namespace[-1]),
+            cast(TableFormat, value["format"]),
+            value["location"],
+            value["managed"],
+            tuple(parsed_fields),
+            tuple(partitions),
+            tuple(sorted(properties.items())),
+        )
+
+    @classmethod
+    def from_json(cls, payload: str) -> TableMetadata:
+        return cls.from_data(decode_canonical_json(payload))
+
+    @property
+    def identity(self) -> str:
+        return hashlib.sha256(encode_canonical_json(self.to_data())).hexdigest()
+
+
 @runtime_checkable
 class OpenTableStore(Protocol):
     """Minimal executable table lifecycle shared by reference and production adapters."""
@@ -111,11 +242,14 @@ class OpenTableStore(Protocol):
 
     def inspect(self, identifier: OpenTableIdentifier) -> OpenTableState: ...
 
+    def delete_table(self, identifier: OpenTableIdentifier) -> None: ...
+
 
 __all__ = (
     "OpenTableField",
     "OpenTableIdentifier",
     "OpenTableState",
+    "TableMetadata",
     "OpenTableStore",
     "TableFormat",
     "TableWriteMode",

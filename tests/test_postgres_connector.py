@@ -118,6 +118,13 @@ def test_postgres_rejects_non_snapshot_checkpoint() -> None:
         )
 
 
+def test_postgres_descriptor_advertises_schema_discovery() -> None:
+    capabilities = PostgresConnector.descriptor.capabilities
+    assert capabilities.discover is True
+    assert capabilities.schema is True
+    assert capabilities.incremental is False
+
+
 def test_postgres_metadata_readiness_is_fail_closed(monkeypatch: pytest.MonkeyPatch) -> None:
     store = PostgresMetadataStore.__new__(PostgresMetadataStore)
     database = _ReadyDatabase()

@@ -57,7 +57,7 @@ The current source tree already provides reusable platform primitives:
 - OpenAPI 3.1 and `pyronin`;
 - typed least-privilege grants;
 - public portable execution evidence;
-- CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, `jobs`, `cancel`, and bounded migration inventory reports via `migrate inventory`;
+- CLI commands including `serve`, `worker`, `submit`, `status`, `logs`, `evidence`, `jobs`, `cancel`, connector discovery/ingestion inspection/planning via `connectors`, and bounded migration inventory reports via `migrate inventory`;
 - local Git revision identity;
 - real-Docker worker execution;
 - production local image/Compose topology;
@@ -86,6 +86,12 @@ The command also accepts `fabric`, `dataiku`, and `foundry`. It inventories sour
 GitHub Actions and automated qualification are active for the current construction branch. The exact-head workflows cover CI, security, Docker, status consistency and release packaging; a green workflow run is evidence for that SHA only and does not by itself make Public v1 release-ready.
 
 The Public v1 gate is intentionally much broader than the earlier 15-step local execution journey. A missing mandatory capability family means Public v1 is incomplete regardless of how mature the foundation is.
+
+The current checkout is an uncommitted workspace snapshot (the local `master`
+branch has no commits). Therefore any SHA, CI run, Docker result or release
+qualification mentioned in historical documents is evidence for that historical
+candidate only. The source-of-truth status ledger is
+[`docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md`](docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md).
 
 ## Documentation
 

@@ -13,9 +13,9 @@ ResolutionStatus = Literal["selected", "no_match", "ambiguous"]
 
 
 def _require_text(value: str, field_name: str) -> None:
-    if not value or value.strip() != value:
+    if not isinstance(value, str) or not value or value.strip() != value:
         raise ValueError(f"{field_name} must be non-empty and trimmed")
-    if "\n" in value or "\r" in value:
+    if "\n" in value or "\r" in value or "\x00" in value:
         raise ValueError(f"{field_name} must not contain line breaks")
 
 
@@ -43,6 +43,10 @@ class RuntimeProfile:
     available: bool = True
 
     def __post_init__(self) -> None:
+        if any(not isinstance(capability, RuntimeCapability) for capability in self.capabilities):
+            raise ValueError("runtime profile capabilities must be RuntimeCapability values")
+        if not isinstance(self.available, bool):
+            raise ValueError("runtime profile availability must be a boolean")
         canonical = tuple(
             sorted(
                 self.capabilities,
@@ -84,6 +88,8 @@ class RuntimeCatalog:
     profiles: tuple[RuntimeProfile, ...] = ()
 
     def __post_init__(self) -> None:
+        if any(not isinstance(profile, RuntimeProfile) for profile in self.profiles):
+            raise ValueError("runtime catalog profiles must be RuntimeProfile values")
         canonical = tuple(
             sorted(
                 self.profiles,

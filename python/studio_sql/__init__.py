@@ -14,15 +14,18 @@ from .duckdb_engine import (
     DuckDbSqlEngine,
     ProjectScopedDuckDbSqlEngine,
 )
+from .http import SqlHTTPAdapter, SqlQueryEngine
 
 __all__ = (
     "DuckDbDependencyError",
     "DuckDbSqlEngine",
     "ProjectScopedDuckDbSqlEngine",
     "SqlColumn",
+    "SqlHTTPAdapter",
     "SqlEngine",
     "SqlExecutionError",
     "SqlQueryResult",
+    "SqlQueryEngine",
     "SqlRelationUnavailableError",
     "SqlTimeoutError",
     "SqlValidationError",

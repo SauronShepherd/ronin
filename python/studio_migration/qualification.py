@@ -7,6 +7,9 @@ from dataclasses import dataclass
 
 from studio_core.portability import MigrationReport
 
+from .analysis import Finding, analyze_pyspark
+from .pyspark_codegen import GeneratedProject
+
 
 @dataclass(frozen=True, slots=True)
 class TranslationQualification:
@@ -14,6 +17,33 @@ class TranslationQualification:
     report_digest: str
     translated_objects: int
     unsupported_objects: int
+
+
+@dataclass(frozen=True, slots=True)
+class GeneratedQualification:
+    project_digest: str
+    files_checked: int
+    findings: tuple[Finding, ...]
+    status: str
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "project_digest": self.project_digest,
+            "files_checked": self.files_checked,
+            "status": self.status,
+            "findings": [finding.to_payload() for finding in self.findings],
+        }
+
+
+def qualify_generated_project(project: GeneratedProject) -> GeneratedQualification:
+    """Run credential-free syntax/static qualification over every generated file."""
+    findings = tuple(
+        finding for program in project.files for finding in analyze_pyspark(program.content)
+    )
+    status = "failed" if any(item.severity == "error" for item in findings) else "review_required"
+    if not findings:
+        status = "passed"
+    return GeneratedQualification(project.project_digest, len(project.files), findings, status)
 
 
 def qualify_fixture(
@@ -33,6 +63,8 @@ def qualify_fixture(
     missing = set(required_source_ids) - ids
     if missing:
         raise ValueError(f"migration fixture report omits source objects: {sorted(missing)}")
+    if not report.objects:
+        raise ValueError("migration fixture report contains no source objects")
     for item in report.objects:
         for note in item.notes:
             folded = note.casefold()
@@ -45,4 +77,9 @@ def qualify_fixture(
     return TranslationQualification(source_digest, report.digest, translated, unsupported)
 
 
-__all__ = ("TranslationQualification", "qualify_fixture")
+__all__ = (
+    "GeneratedQualification",
+    "TranslationQualification",
+    "qualify_fixture",
+    "qualify_generated_project",
+)

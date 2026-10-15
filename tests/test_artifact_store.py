@@ -42,6 +42,18 @@ def test_corrupted_artifact_fails_closed_and_same_content_repairs_it(tmp_path: P
     assert store.get_bytes(repaired) == b"hello"
 
 
+def test_artifact_can_be_read_from_an_authorized_storage_reference(tmp_path: Path) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    ref = store.put_bytes(role="stdout", data=b"portable payload", media_type="text/plain")
+
+    assert store.get_bytes_by_storage_ref(ref.storage_ref, digest=ref.digest) == b"portable payload"
+    with pytest.raises(ValueError, match="does not match"):
+        store.get_bytes_by_storage_ref("artifact://sha256/" + "0" * 64, digest=ref.digest)
+    (tmp_path / "artifacts" / "sha256" / ref.digest[:2] / ref.digest).write_bytes(b"tampered")
+    with pytest.raises(ArtifactIntegrityError):
+        store.get_bytes_by_storage_ref(ref.storage_ref, digest=ref.digest)
+
+
 def test_invalid_reference_cannot_escape_store(tmp_path: Path) -> None:
     store = LocalArtifactStore(tmp_path / "artifacts")
     ref = ArtifactRef(

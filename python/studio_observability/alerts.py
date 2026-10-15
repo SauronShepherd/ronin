@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Protocol, runtime_checkable
 
 from studio_orchestrator import Instant
@@ -13,6 +14,8 @@ from .contracts import AlertInstance, AlertRule, MetricPoint
 
 @runtime_checkable
 class AlertTelemetryStore(Protocol):
+    def record_metric(self, point: MetricPoint) -> MetricPoint: ...
+
     def latest_metric(
         self,
         name: str,
@@ -61,6 +64,15 @@ def _fingerprint(rule: AlertRule) -> str:
     return hashlib.sha256(source.encode("utf-8")).hexdigest()
 
 
+def _elapsed_seconds(start: Instant, end: Instant) -> float:
+    elapsed = (
+        datetime.fromisoformat(end[:-1]) - datetime.fromisoformat(start[:-1])
+    ).total_seconds()
+    if elapsed < 0:
+        raise ValueError("alert evaluation time must not precede previous resolution")
+    return elapsed
+
+
 def evaluate_alert(
     store: AlertTelemetryStore,
     rule: AlertRule,
@@ -84,32 +96,46 @@ def evaluate_alert(
 
     firing = _matches(rule, metric.value)
     if firing:
+        if (
+            previous is not None
+            and previous.status == "resolved"
+            and previous.resolved_at is not None
+            and _elapsed_seconds(previous.resolved_at, current_time) < rule.cooldown_seconds
+        ):
+            return AlertTransition(rule, metric, previous, previous, False)
         if previous is None or previous.status == "resolved":
             opened_at = current_time
             current = AlertInstance(
                 rule.id,
                 fingerprint,
-                "open",
+                "pending" if rule.pending_seconds else "open",
                 metric.value,
                 opened_at,
                 current_time,
             )
             store.put_alert_instance(current)
             return AlertTransition(rule, metric, previous, current, True)
+        status = previous.status
+        if (
+            previous.status == "pending"
+            and _elapsed_seconds(previous.opened_at, current_time) >= rule.pending_seconds
+        ):
+            status = "firing"
         current = AlertInstance(
             rule.id,
             fingerprint,
-            "open",
+            status,
             metric.value,
             previous.opened_at,
             current_time,
+            acknowledged_at=previous.acknowledged_at,
         )
-        changed = current.value != previous.value
+        changed = current.value != previous.value or current.status != previous.status
         if changed:
             store.put_alert_instance(current)
         return AlertTransition(rule, metric, previous, current, changed)
 
-    if previous is not None and previous.status == "open":
+    if previous is not None and previous.is_active:
         current = AlertInstance(
             rule.id,
             fingerprint,

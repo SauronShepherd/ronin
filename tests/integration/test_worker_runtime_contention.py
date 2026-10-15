@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -26,6 +27,11 @@ from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPa
 
 OLD_NOW = Instant("2026-09-06T20:00:00.000000Z")
 IMAGE = "sha256:" + "1" * 64
+# Windows CI/desktop runners can spend several seconds starting the bounded
+# executor while the full suite is active. Keep the stress semantics unchanged
+# but avoid treating scheduler contention as a false functional failure.
+STRESS_WAIT_TIMEOUT = 30.0 if os.name == "nt" else 10.0
+STRESS_COMPLETION_TIMEOUT = 15.0 if os.name == "nt" else 5.0
 
 
 def _job() -> Job:
@@ -228,7 +234,7 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
                     lease_token=LeaseToken("lease-contention-live"),
                 )
             )
-            assert await asyncio.to_thread(slow_store.started.wait, 10.0)
+            assert await asyncio.to_thread(slow_store.started.wait, STRESS_WAIT_TIMEOUT)
             first_heartbeat, first_expiry = _lease_state(config.database_path, attempt_id)
             second_heartbeat, second_expiry = await _wait_for_durable_heartbeat(
                 config.database_path,
@@ -238,9 +244,9 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
             )
             slow_store.release.set()
 
-            await asyncio.wait_for(artifacts_created.wait(), timeout=10.0)
+            await asyncio.wait_for(artifacts_created.wait(), timeout=STRESS_WAIT_TIMEOUT)
             assert slow_artifacts is not None
-            assert await asyncio.to_thread(slow_artifacts.started.wait, 10.0)
+            assert await asyncio.to_thread(slow_artifacts.started.wait, STRESS_WAIT_TIMEOUT)
             await _wait_for_durable_heartbeat(
                 config.database_path,
                 attempt_id,
@@ -248,7 +254,7 @@ def test_runtime_heartbeat_renews_during_real_sqlite_and_artifact_write_contenti
                 second_expiry,
             )
             slow_artifacts.release.set()
-            outcome = await asyncio.wait_for(task, timeout=5.0)
+            outcome = await asyncio.wait_for(task, timeout=STRESS_COMPLETION_TIMEOUT)
 
         assert outcome.execution is not None
         assert outcome.execution.state.value == "succeeded"
@@ -278,7 +284,7 @@ def test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verif
                 lease_token=LeaseToken("lease-contention-old"),
             )
         )
-        await asyncio.wait_for(first_runner.started.wait(), timeout=10.0)
+        await asyncio.wait_for(first_runner.started.wait(), timeout=STRESS_WAIT_TIMEOUT)
         first_task.cancel()
         with pytest.raises(asyncio.CancelledError):
             await first_task
@@ -310,9 +316,9 @@ def test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verif
                     lease_token=LeaseToken("lease-contention-replacement"),
                 )
             )
-            await asyncio.wait_for(artifacts_created.wait(), timeout=10.0)
+            await asyncio.wait_for(artifacts_created.wait(), timeout=STRESS_WAIT_TIMEOUT)
             assert slow_artifacts is not None
-            assert await asyncio.to_thread(slow_artifacts.started.wait, 10.0)
+            assert await asyncio.to_thread(slow_artifacts.started.wait, STRESS_WAIT_TIMEOUT)
             first_heartbeat, first_expiry = _lease_state(config.database_path, attempt_id)
             await _wait_for_durable_heartbeat(
                 config.database_path,
@@ -321,7 +327,7 @@ def test_runtime_reclaims_expired_attempt_and_renews_lease_during_artifact_verif
                 first_expiry,
             )
             slow_artifacts.release.set()
-            outcome = await asyncio.wait_for(task, timeout=5.0)
+            outcome = await asyncio.wait_for(task, timeout=STRESS_COMPLETION_TIMEOUT)
 
         assert outcome.reclaimed_run_ids == (RunId("run-contention"),)
         assert outcome.attempt_id == attempt_id

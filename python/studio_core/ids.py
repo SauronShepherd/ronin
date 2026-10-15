@@ -20,9 +20,13 @@ class InstanceAnchor:
     def __post_init__(self) -> None:
         if self.boundary not in {"authoring", "import"}:
             raise ValueError("instance anchor boundary must be authoring or import")
-        if not self.reference or self.reference.strip() != self.reference:
+        if (
+            not isinstance(self.reference, str)
+            or not self.reference
+            or self.reference.strip() != self.reference
+        ):
             raise ValueError("instance anchor reference must be non-empty and trimmed")
-        if "\n" in self.reference or "\r" in self.reference:
+        if "\n" in self.reference or "\r" in self.reference or "\x00" in self.reference:
             raise ValueError("instance anchor reference must be single-line")
 
     def instance_key(self) -> str:

@@ -170,7 +170,11 @@ def test_admin_provisions_identity_group_membership_and_role_with_audit(
             },
         )
         assert created["id"] == "member"
+        read_principal = transport.request("GET", "/v1/admin/security/principals/member")
+        assert read_principal["subject"] == "member-sub"
         transport.request("PUT", "/v1/admin/security/groups/team", payload={"name": "Team"})
+        read_group = transport.request("GET", "/v1/admin/security/groups/team")
+        assert read_group == {"id": "team", "name": "Team"}
         transport.request("PUT", "/v1/admin/security/groups/team/members/member")
         transport.request("PUT", "/v1/admin/security/role-bindings/group/team/editor")
 
@@ -187,10 +191,12 @@ def test_admin_provisions_identity_group_membership_and_role_with_audit(
             resource_kind="workspace_resource",
             resource_ref=f"{_WS}/security:principal:member",
         )
-        assert len(events) == 1
-        assert events[0].action == "authorize:workspace.admin"
-        assert events[0].outcome == "allowed"
-        assert events[0].actor.ref == admin.id.value
+        assert len(events) == 3
+        assert {event.action for event in events} == {
+            "authorize:workspace.admin",
+            "security.principal.put",
+        }
+        assert all(event.actor.ref == admin.id.value for event in events)
     finally:
         _close(server, thread)
 
@@ -287,8 +293,8 @@ def test_admin_errors_are_stable_and_identity_rebinding_conflicts(
 
         with pytest.raises(APIError) as method:
             transport.request("GET", "/v1/admin/security/groups/team")
-        assert method.value.status_code == 405
-        assert method.value.code == "method_not_allowed"
+        assert method.value.status_code == 404
+        assert method.value.code == "group_not_found"
     finally:
         _close(server, thread)
 

@@ -10,17 +10,23 @@ from .contracts import (
     UsageRecord,
 )
 from .service import (
+    AllocationSlice,
+    CostForecast,
     FinOpsStore,
     RateCardNotFound,
+    allocate_costs,
     budget_gate,
     budget_notification,
     evaluate_budget,
+    forecast_cost,
     price_usage,
 )
 from .store import FinOpsConflict, SqliteFinOpsStore
 
 __all__ = (
     "BudgetAction",
+    "AllocationSlice",
+    "CostForecast",
     "BudgetEvaluation",
     "BudgetPolicy",
     "CostRecord",
@@ -35,4 +41,6 @@ __all__ = (
     "budget_notification",
     "budget_gate",
     "price_usage",
+    "allocate_costs",
+    "forecast_cost",
 )
