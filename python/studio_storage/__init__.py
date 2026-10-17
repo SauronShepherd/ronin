@@ -79,6 +79,7 @@ from studio_storage.postgres_core import PostgresDependencyError, PostgresMetada
 from studio_storage.postgres_jobs import PostgresJobReadPort
 from studio_storage.postgres_ml import PostgresMLStore
 from studio_storage.postgres_scheduler import PostgresSchedulerSnapshotStore
+from studio_storage.postgres_scheduler_leadership import PostgresSchedulerLeadershipStore
 from studio_storage.postgres_workflow import PostgresWorkflowBundleImportStore
 from studio_storage.quality import (
     DataContractConflict,
@@ -175,6 +176,7 @@ __all__ = (
     "PostgresJobReadPort",
     "PostgresMLStore",
     "PostgresSchedulerSnapshotStore",
+    "PostgresSchedulerLeadershipStore",
     "KnowledgeGraphConflict",
     "SqliteKnowledgeGraphStore",
     "ProjectRegistrationConflict",

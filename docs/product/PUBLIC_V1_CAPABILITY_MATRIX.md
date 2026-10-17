@@ -3,7 +3,7 @@
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed candidate:** `46f98056b9c501a374fe0f33a1548110f3cbf17f` (`main`, 2026-10-17).
+**Observed candidate:** `2a7d0c9ef697d3de131f04d0973b49bfb2e1c780` (`main`, 2026-10-17).
 
 This matrix is a conservative release view of P1–P14. `implemented` means
 that the repository contains the described source path. `qualified` means
@@ -12,13 +12,18 @@ is `release-qualified` only when its complete mandatory Public v1 journey,
 provider evidence, security evidence and exact-candidate release evidence are
 all present. No P1–P14 family is release-qualified in the current snapshot.
 
+**Verified release progress: 0% (0/14 families release-qualified).** The
+percentage counts only complete mandatory Public v1 journeys with applicable
+provider, security and exact-candidate evidence. Partial implementation and
+isolated green tests do not close a family.
+
 | Capability | Implemented | Qualified | Release-qualified | Known limitations | Required optional dependency | Supported deployment profile |
 | --- | --- | --- | --- | --- | --- | --- |
 | P1 Workspace, projects and source control | Partial | Partial | No | Membership, complete authoring journeys and remote-provider certification remain incomplete. | Git executable; OIDC/secret provider for production identity flows. | Local SQLite; Compose/PostgreSQL reference profile. |
 | P2 Connectors and ingestion | Partial | Partial | No | Production driver qualification and broad incremental-source coverage remain incomplete. | PostgreSQL, S3/Azure/JDBC drivers; provider credentials. | Local bounded files/HTTP; Compose/PostgreSQL; configured object storage. |
 | P3 Lakehouse and SQL | Partial | Partial | No | QueryFlux, remote/catalog qualification and full format/service coverage remain incomplete. | DuckDB locally; Iceberg/Delta libraries; Trino/QueryFlux for remote paths. | Local bounded Parquet/DuckDB; Compose; configured remote engine. |
 | P4 Data Engineering Studio | Partial | Partial | No | Worker/evidence lineage, complete CRUD and full authoring surfaces remain incomplete. | Notebook/runtime dependencies; PostgreSQL for runtime qualification. | Local/Compose reference profile. |
-| P5 Durable DAG scheduler | Partial | Partial | No | Focused tests cover SQLite outbox recovery, durable Job replay after store reopen, and forced termination of a separate dispatcher process after Job submission. PostgreSQL on main now stores workflow/task snapshots with atomic creation and trigger idempotency; scheduler HTTP routes stay unavailable on that backend until the complete run/event/backfill/task-evidence store is implemented and qualified. Actual daemon-crash recovery, notification-provider qualification and broader operator conformance remain incomplete. General production HA is outside the Public v1 contract. | SMTP/HTTPS notification endpoints; PostgreSQL for the complete shared scheduler store. | Local SQLite single leader; Compose currently uses PostgreSQL metadata/snapshots and does not expose scheduler HTTP routes. |
+| P5 Durable DAG scheduler | Partial | Partial | No | Focused tests cover SQLite outbox recovery, durable Job replay after store reopen, and forced termination of a separate dispatcher process after Job submission. PostgreSQL on main stores workflow/task snapshots and replay-safe branch decisions; the working tree adds generation-fenced scheduler leadership. Task-attempt leases, dispatch, events, backfills and task evidence remain incomplete, so scheduler HTTP routes stay unavailable on that backend. Actual daemon-crash recovery, notification-provider qualification and broader operator conformance remain incomplete. General production HA is outside the Public v1 contract. | SMTP/HTTPS notification endpoints; PostgreSQL for the complete shared scheduler store. | Local SQLite single leader; Compose currently uses PostgreSQL metadata/snapshots and does not expose scheduler HTTP routes. |
 | P6 Catalog and lineage | Partial | Partial | No | Event-standard certification and complete asset-family integration remain incomplete. | OpenLineage HTTP endpoint for remote export. | Local SQLite; Compose/PostgreSQL reference profile. |
 | P7 Data quality and contracts | Partial | Partial | No | Provider qualification and complete alert/product surfaces remain incomplete. | Optional SQL/Python execution runtimes; SMTP/HTTPS delivery. | Local/Compose reference profile. |
 | P8 AI/ML/MLOps | Partial | Partial | No | Feature engineering, broader algorithms, MLflow/network serving and production qualification remain incomplete. | Numerical Python stack; MLflow or serving provider for interoperability paths. | Local deterministic training/inference; Compose reference profile. |

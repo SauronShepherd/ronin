@@ -19,14 +19,16 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
-from studio_orchestrator import Instant
+from studio_orchestrator import Instant, LeaseToken
 from studio_storage import (
     PostgresMetadataStore,
+    PostgresSchedulerLeadershipStore,
     PostgresSchedulerSnapshotStore,
     PostgresWorkflowBundleImportStore,
 )
 from studio_storage.bundle_workflow_import_port import WorkflowBundleImportConflict
 from studio_storage.scheduler import WorkflowNotFound, WorkflowRunConflict
+from studio_storage.scheduler_leadership import SchedulerLeadershipLost
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
@@ -241,3 +243,98 @@ def test_postgres_scheduler_run_and_task_snapshots_are_atomic_and_idempotent() -
     assert len(reopened_tasks) == len(tasks)
     assert next(item for item in reopened_tasks if item.node_id == branch_node).state == "blocked"
     assert reopened.get_branch_decision(workspace_id, run_id, branch_node) == decision
+
+
+def test_postgres_scheduler_leadership_is_generation_fenced_and_persistent() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerLeadershipStore(dsn)
+    assert store.get_scheduler_leader() is None
+    first_token = LeaseToken(f"leader-token-{uuid4().hex}")
+    first = store.acquire_scheduler_leadership(
+        owner="leader-one",
+        lease_token=first_token,
+        lease_seconds=10,
+        now=NOW,
+    )
+    assert first is not None
+    assert first.generation == 1
+    assert store.get_scheduler_leader() == first
+    assert (
+        store.acquire_scheduler_leadership(
+            owner="leader-one",
+            lease_token=first_token,
+            lease_seconds=10,
+            now=NOW,
+        )
+        == first
+    )
+    assert (
+        store.acquire_scheduler_leadership(
+            owner="leader-two",
+            lease_token=LeaseToken(f"leader-token-{uuid4().hex}"),
+            lease_seconds=10,
+            now=NOW,
+        )
+        is None
+    )
+    assert (
+        store.assert_scheduler_leadership(first, now=Instant("2026-10-15T00:00:05.000000Z"))
+        == first
+    )
+    renewed = store.heartbeat_scheduler_leadership(
+        first,
+        lease_seconds=10,
+        now=Instant("2026-10-15T00:00:05.000000Z"),
+    )
+    assert renewed.generation == first.generation
+    assert renewed.lease_expires_at == Instant("2026-10-15T00:00:15.000000Z")
+
+    replacement = store.acquire_scheduler_leadership(
+        owner="leader-two",
+        lease_token=LeaseToken(f"leader-token-{uuid4().hex}"),
+        lease_seconds=10,
+        now=Instant("2026-10-15T00:00:15.000000Z"),
+    )
+    assert replacement is not None
+    assert replacement.generation == 2
+    with pytest.raises(SchedulerLeadershipLost, match="lost"):
+        store.assert_scheduler_leadership(renewed, now=Instant("2026-10-15T00:00:16.000000Z"))
+    with pytest.raises(SchedulerLeadershipLost, match="lost"):
+        store.heartbeat_scheduler_leadership(
+            renewed,
+            lease_seconds=10,
+            now=Instant("2026-10-15T00:00:16.000000Z"),
+        )
+    with pytest.raises(SchedulerLeadershipLost, match="lost"):
+        store.release_scheduler_leadership(renewed, now=Instant("2026-10-15T00:00:16.000000Z"))
+
+    reopened = PostgresSchedulerLeadershipStore(dsn)
+    assert reopened.get_scheduler_leader() == replacement
+    reopened.release_scheduler_leadership(
+        replacement,
+        now=Instant("2026-10-15T00:00:16.000000Z"),
+    )
+    with pytest.raises(SchedulerLeadershipLost, match="lost"):
+        reopened.assert_scheduler_leadership(
+            replacement,
+            now=Instant("2026-10-15T00:00:16.000000Z"),
+        )
+    contenders = (
+        ("concurrent-one", LeaseToken(f"leader-token-{uuid4().hex}")),
+        ("concurrent-two", LeaseToken(f"leader-token-{uuid4().hex}")),
+    )
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        acquired = tuple(
+            executor.map(
+                lambda contender: reopened.acquire_scheduler_leadership(
+                    owner=contender[0],
+                    lease_token=contender[1],
+                    lease_seconds=10,
+                    now=Instant("2026-10-15T00:00:16.000000Z"),
+                ),
+                contenders,
+            )
+        )
+    winners = tuple(item for item in acquired if item is not None)
+    assert len(winners) == 1
+    assert winners[0].generation == replacement.generation + 1
