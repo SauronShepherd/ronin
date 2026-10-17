@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import cast
 
@@ -17,6 +18,7 @@ from studio_core import (
     WorkflowRunId,
     WorkspaceId,
 )
+from studio_core.branching import BranchDecision, Scalar, evaluate_branch
 from studio_orchestrator import Instant
 
 from .postgres_workflow import PostgresWorkflowBundleImportStore
@@ -26,7 +28,7 @@ from .scheduler import (
     _task_run_id,
 )
 
-_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = 2
 _SCHEMA = """
 CREATE TABLE ronin_workflow_runs (
     workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
@@ -108,7 +110,22 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
                         "INSERT INTO ronin_scheduler_schema_migrations(version,applied_at) "
                         "VALUES (%s,%s)",
                         (
-                            _SCHEMA_VERSION,
+                            1,
+                            datetime.now(UTC)
+                            .isoformat(timespec="microseconds")
+                            .replace("+00:00", "Z"),
+                        ),
+                    )
+                    current = 1
+                if current == 1:
+                    cursor.execute(
+                        "ALTER TABLE ronin_task_runs ADD COLUMN branch_decision_json TEXT"
+                    )
+                    cursor.execute(
+                        "INSERT INTO ronin_scheduler_schema_migrations(version,applied_at) "
+                        "VALUES (%s,%s)",
+                        (
+                            2,
                             datetime.now(UTC)
                             .isoformat(timespec="microseconds")
                             .replace("+00:00", "Z"),
@@ -249,6 +266,81 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
                 )
                 for row in rows
             )
+        finally:
+            connection.close()
+
+    def apply_branch_decision(
+        self,
+        workspace_id: WorkspaceId,
+        run_id: WorkflowRunId,
+        node_id: NodeId,
+        expression: object,
+        context: Mapping[str, object],
+        *,
+        now: Instant | str,
+    ) -> BranchDecision:
+        """Persist one replay-safe branch decision for a task run."""
+        current = Instant(now)
+        decision = evaluate_branch(expression, cast(Mapping[str, Scalar], context))
+        task_id = _task_run_id(run_id, node_id.value)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT state,branch_decision_json FROM ronin_task_runs "
+                    "WHERE workspace_id=%s AND workflow_run_id=%s AND node_id=%s FOR UPDATE",
+                    (str(workspace_id), str(run_id), node_id.value),
+                )
+                row = cursor.fetchone()
+                if row is None:
+                    raise WorkflowNotFound(f"task run for node {node_id} does not exist")
+                payload = decision.to_json()
+                if (
+                    row["branch_decision_json"] is not None
+                    and row["branch_decision_json"] != payload
+                ):
+                    raise WorkflowRunConflict(
+                        "branch decision already persisted with different content"
+                    )
+                if row["branch_decision_json"] is None:
+                    cursor.execute(
+                        "UPDATE ronin_task_runs SET state=%s,branch_decision_json=%s,"
+                        "updated_at=%s,row_version=row_version+1 "
+                        "WHERE workspace_id=%s AND task_run_id=%s",
+                        (
+                            "pending" if decision.should_run else "blocked",
+                            payload,
+                            str(current),
+                            str(workspace_id),
+                            str(task_id),
+                        ),
+                    )
+            connection.commit()
+            return decision
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def get_branch_decision(
+        self,
+        workspace_id: WorkspaceId,
+        run_id: WorkflowRunId,
+        node_id: NodeId,
+    ) -> BranchDecision | None:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT branch_decision_json FROM ronin_task_runs "
+                    "WHERE workspace_id=%s AND workflow_run_id=%s AND node_id=%s",
+                    (str(workspace_id), str(run_id), node_id.value),
+                )
+                row = cursor.fetchone()
+            if row is None or row["branch_decision_json"] is None:
+                return None
+            return BranchDecision.from_json(row["branch_decision_json"])
         finally:
             connection.close()
 

@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 from studio_core import (
     Node,
+    NodeId,
     OperatorRef,
     Pipeline,
     Schedule,
@@ -119,6 +120,57 @@ def test_postgres_scheduler_run_and_task_snapshots_are_atomic_and_idempotent() -
     assert store.get_run(WorkspaceId(f"other-{workspace_id}"), run_id) is None
     assert store.list_task_runs(WorkspaceId(f"other-{workspace_id}"), run_id) == ()
 
+    branch_node = tasks[0].node_id
+    expression = {"op": "equals", "field": "environment", "value": "prod"}
+    context = {"environment": "dev"}
+    decision = store.apply_branch_decision(
+        workspace_id,
+        run_id,
+        branch_node,
+        expression,
+        context,
+        now=NOW,
+    )
+    assert not decision.should_run
+    assert store.get_branch_decision(workspace_id, run_id, branch_node) == decision
+    assert (
+        store.apply_branch_decision(
+            workspace_id,
+            run_id,
+            branch_node,
+            expression,
+            context,
+            now=NOW,
+        )
+        == decision
+    )
+    assert (
+        next(
+            item
+            for item in store.list_task_runs(workspace_id, run_id)
+            if item.node_id == branch_node
+        ).state
+        == "blocked"
+    )
+    with pytest.raises(WorkflowRunConflict, match="different content"):
+        store.apply_branch_decision(
+            workspace_id,
+            run_id,
+            branch_node,
+            expression,
+            {"environment": "prod"},
+            now=NOW,
+        )
+    with pytest.raises(WorkflowNotFound, match="does not exist"):
+        store.apply_branch_decision(
+            workspace_id,
+            run_id,
+            NodeId("missing-node"),
+            expression,
+            context,
+            now=NOW,
+        )
+
     updated_workflow = WorkflowDefinition(workflow.id, "Updated workflow", workflow.pipeline)
     store.put_workflow(workspace_id, updated_workflow, now=NOW)
     assert store.get_workflow(workspace_id, workflow.id) == updated_workflow
@@ -185,4 +237,7 @@ def test_postgres_scheduler_run_and_task_snapshots_are_atomic_and_idempotent() -
         application_name="ronin-scheduler-snapshot-reopen-qualification",
     )
     assert reopened.get_run(workspace_id, run_id) == run
-    assert reopened.list_task_runs(workspace_id, run_id) == tasks
+    reopened_tasks = reopened.list_task_runs(workspace_id, run_id)
+    assert len(reopened_tasks) == len(tasks)
+    assert next(item for item in reopened_tasks if item.node_id == branch_node).state == "blocked"
+    assert reopened.get_branch_decision(workspace_id, run_id, branch_node) == decision
