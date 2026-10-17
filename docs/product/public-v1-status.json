@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-17T12:55:40Z",
-  "observed_main_sha": "fa8cc731f4af11120328b25aa207cb39897503d5",
-  "observed_workspace_state": "observed main SHA; working tree adds PostgreSQL scheduler run/task snapshot store, backed by real PostgreSQL Docker tests; generated outputs are excluded from release evidence",
+  "observed_at": "2026-10-17T13:20:17Z",
+  "observed_main_sha": "46f98056b9c501a374fe0f33a1548110f3cbf17f",
+  "observed_workspace_state": "observed main SHA; working tree adds replay-safe PostgreSQL branch decisions using schema migration v2; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "local_verification": {
@@ -73,7 +73,7 @@
     {
       "id": "p5-durable-dag-scheduler",
       "status": "partial",
-      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook adapters, and durable notification retry/error recording exist. Crash-restart recovery, notification provider qualification, and broader operator conformance remain incomplete. The PostgreSQL profile stores workflow/schedule bundle metadata only and does not expose scheduler HTTP routes until durable run/event/backfill/task storage is implemented."
+      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook adapters, and durable notification retry/error recording exist. Crash-restart recovery, notification provider qualification, and broader operator conformance remain incomplete. PostgreSQL now stores atomic workflow run/task snapshots with trigger idempotency; scheduler HTTP routes remain unavailable until complete run/event/backfill/task-evidence storage is implemented and qualified."
     },
     {
       "id": "p6-catalog-lineage",
