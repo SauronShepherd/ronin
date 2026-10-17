@@ -1,4 +1,4 @@
-"""PostgreSQL scheduler run/task snapshot persistence."""
+"""PostgreSQL scheduler persistence adapters."""
 
 from __future__ import annotations
 
@@ -21,6 +21,10 @@ from studio_core import (
     WorkspaceId,
 )
 from studio_core.branching import BranchDecision, Scalar, evaluate_branch
+from studio_core.scheduler_events import (
+    EventTriggerDefinition,
+    SchedulerEventId,
+)
 from studio_core.scheduler_resources import ResourcePoolDefinition
 from studio_orchestrator import (
     Instant,
@@ -37,6 +41,14 @@ from .scheduler import (
     WorkflowRunConflict,
     _task_run_id,
 )
+from .scheduler_events import (
+    EventDelivery,
+    SchedulerEventConflict,
+    SchedulerEventRecord,
+    _delivery_from_row,
+    _event_from_row,
+    _event_run_id,
+)
 from .scheduler_execution import (
     TaskExecutionIntent,
     TaskExecutionLink,
@@ -45,7 +57,7 @@ from .scheduler_execution import (
 )
 from .scheduler_fencing import ClaimedTask, TaskAttemptId
 
-_SCHEMA_VERSION = 4
+_SCHEMA_VERSION = 5
 _SCHEMA = """
 CREATE TABLE ronin_workflow_runs (
     workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
@@ -89,10 +101,11 @@ CREATE INDEX ronin_task_runs_state_idx
 
 
 class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
-    """PostgreSQL workflow/run/task persistence with leases and execution intents.
+    """PostgreSQL workflow/task, execution and event persistence.
 
     This intentionally does not claim complete scheduler adapter conformance:
-    event delivery, backfills and task evidence remain separate work.
+    backfills, task evidence, API wiring and full restart/operator qualification
+    remain separate work.
     """
 
     def __init__(self, dsn: str, *, application_name: str = "ronin-scheduler-snapshots") -> None:
@@ -230,6 +243,58 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
                         ),
                     )
                     current = 4
+                if current == 4:
+                    cursor.execute(
+                        "CREATE TABLE ronin_event_triggers ("
+                        "workspace_id TEXT NOT NULL, event_trigger_id TEXT NOT NULL,"
+                        "workflow_id TEXT NOT NULL,definition_json TEXT NOT NULL,"
+                        "created_at TEXT NOT NULL,updated_at TEXT NOT NULL,"
+                        "row_version BIGINT NOT NULL DEFAULT 0,"
+                        "PRIMARY KEY(workspace_id,event_trigger_id),"
+                        "FOREIGN KEY(workspace_id,workflow_id) REFERENCES "
+                        "ronin_workflows(workspace_id,workflow_id) ON DELETE CASCADE)"
+                    )
+                    cursor.execute(
+                        "CREATE INDEX ronin_event_triggers_match_idx "
+                        "ON ronin_event_triggers(workspace_id,workflow_id,event_trigger_id)"
+                    )
+                    cursor.execute(
+                        "CREATE TABLE ronin_scheduler_events ("
+                        "workspace_id TEXT NOT NULL,event_id TEXT NOT NULL,"
+                        "event_type TEXT NOT NULL,"
+                        "source_ref TEXT,subject_ref TEXT,payload_digest TEXT NOT NULL,"
+                        "occurred_at TEXT NOT NULL,received_at TEXT NOT NULL,"
+                        "PRIMARY KEY(workspace_id,event_id))"
+                    )
+                    cursor.execute(
+                        "CREATE TABLE ronin_scheduler_event_deliveries ("
+                        "workspace_id TEXT NOT NULL,event_id TEXT NOT NULL,"
+                        "event_trigger_id TEXT NOT NULL,workflow_id TEXT NOT NULL,"
+                        "trigger_snapshot_json TEXT NOT NULL,workflow_run_id TEXT,"
+                        "state TEXT NOT NULL CHECK (state IN ('pending','delivered')),"
+                        "created_at TEXT NOT NULL,updated_at TEXT NOT NULL,"
+                        "PRIMARY KEY(workspace_id,event_id,event_trigger_id),"
+                        "FOREIGN KEY(workspace_id,event_id) REFERENCES "
+                        "ronin_scheduler_events(workspace_id,event_id) ON DELETE CASCADE,"
+                        "FOREIGN KEY(workspace_id,workflow_id) REFERENCES "
+                        "ronin_workflows(workspace_id,workflow_id) ON DELETE CASCADE)"
+                    )
+                    cursor.execute(
+                        "CREATE INDEX ronin_scheduler_event_deliveries_pending_idx "
+                        "ON ronin_scheduler_event_deliveries"
+                        "(workspace_id,state,created_at,event_id,event_trigger_id)"
+                    )
+                    cursor.execute(
+                        "INSERT INTO ronin_scheduler_schema_migrations(version,applied_at) "
+                        "VALUES (%s,%s)",
+                        (
+                            5,
+                            datetime.now(UTC)
+                            .isoformat(timespec="microseconds")
+                            .replace("+00:00", "Z"),
+                        ),
+                    )
+                    current = 5
             connection.commit()
         except Exception:
             connection.rollback()
@@ -1002,6 +1067,273 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
                     )
             connection.commit()
             return True
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    @staticmethod
+    def _lock_event_workspace(cursor: Any, workspace_id: WorkspaceId) -> None:
+        cursor.execute(
+            "SELECT pg_advisory_xact_lock(hashtext(%s),hashtext(%s))",
+            (str(workspace_id), "ronin:scheduler-events"),
+        )
+
+    def put_event_trigger(
+        self,
+        workspace_id: WorkspaceId,
+        definition: EventTriggerDefinition,
+        *,
+        now: Instant | str,
+    ) -> EventTriggerDefinition:
+        current = Instant(now)
+        payload = definition.to_json()
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                self._require_active_workspace(cursor, workspace_id)
+                self._lock_event_workspace(cursor, workspace_id)
+                cursor.execute(
+                    "SELECT 1 FROM ronin_workflows WHERE workspace_id=%s AND workflow_id=%s",
+                    (str(workspace_id), str(definition.workflow_id)),
+                )
+                if cursor.fetchone() is None:
+                    raise SchedulerEventConflict("event trigger workflow does not exist")
+                cursor.execute(
+                    "SELECT definition_json FROM ronin_event_triggers "
+                    "WHERE workspace_id=%s AND event_trigger_id=%s FOR UPDATE",
+                    (str(workspace_id), str(definition.id)),
+                )
+                existing = cursor.fetchone()
+                if existing is None:
+                    cursor.execute(
+                        "INSERT INTO ronin_event_triggers"
+                        "(workspace_id,event_trigger_id,workflow_id,definition_json,"
+                        "created_at,updated_at) VALUES (%s,%s,%s,%s,%s,%s)",
+                        (
+                            str(workspace_id),
+                            str(definition.id),
+                            str(definition.workflow_id),
+                            payload,
+                            str(current),
+                            str(current),
+                        ),
+                    )
+                elif existing["definition_json"] != payload:
+                    cursor.execute(
+                        "UPDATE ronin_event_triggers SET workflow_id=%s,definition_json=%s,"
+                        "updated_at=%s,row_version=row_version+1 "
+                        "WHERE workspace_id=%s AND event_trigger_id=%s",
+                        (
+                            str(definition.workflow_id),
+                            payload,
+                            str(current),
+                            str(workspace_id),
+                            str(definition.id),
+                        ),
+                    )
+            connection.commit()
+            return definition
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def list_event_triggers(self, workspace_id: WorkspaceId) -> tuple[EventTriggerDefinition, ...]:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT definition_json FROM ronin_event_triggers "
+                    "WHERE workspace_id=%s ORDER BY event_trigger_id",
+                    (str(workspace_id),),
+                )
+                rows = cursor.fetchall()
+            connection.commit()
+            return tuple(EventTriggerDefinition.from_json(row["definition_json"]) for row in rows)
+        finally:
+            connection.close()
+
+    def ingest_event(self, event: SchedulerEventRecord) -> tuple[EventDelivery, ...]:
+        """Persist an event and freeze matching trigger snapshots exactly once."""
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                self._require_active_workspace(cursor, event.workspace_id)
+                self._lock_event_workspace(cursor, event.workspace_id)
+                cursor.execute(
+                    "SELECT * FROM ronin_scheduler_events "
+                    "WHERE workspace_id=%s AND event_id=%s FOR UPDATE",
+                    (str(event.workspace_id), str(event.id)),
+                )
+                existing = cursor.fetchone()
+                if existing is not None:
+                    if _event_from_row(existing) != event:
+                        raise SchedulerEventConflict("scheduler event id has conflicting content")
+                    cursor.execute(
+                        "SELECT * FROM ronin_scheduler_event_deliveries "
+                        "WHERE workspace_id=%s AND event_id=%s "
+                        "ORDER BY event_trigger_id",
+                        (str(event.workspace_id), str(event.id)),
+                    )
+                    rows = cursor.fetchall()
+                    connection.commit()
+                    return tuple(_delivery_from_row(row) for row in rows)
+                cursor.execute(
+                    "INSERT INTO ronin_scheduler_events"
+                    "(workspace_id,event_id,event_type,source_ref,subject_ref,payload_digest,"
+                    "occurred_at,received_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (
+                        str(event.workspace_id),
+                        str(event.id),
+                        event.event_type,
+                        event.source_ref,
+                        event.subject_ref,
+                        event.payload_digest,
+                        str(event.occurred_at),
+                        str(event.received_at),
+                    ),
+                )
+                cursor.execute(
+                    "SELECT definition_json FROM ronin_event_triggers "
+                    "WHERE workspace_id=%s ORDER BY event_trigger_id",
+                    (str(event.workspace_id),),
+                )
+                trigger_rows = cursor.fetchall()
+                deliveries: list[EventDelivery] = []
+                for row in trigger_rows:
+                    definition = EventTriggerDefinition.from_json(row["definition_json"])
+                    if not definition.matches(
+                        event_type=event.event_type,
+                        source_ref=event.source_ref,
+                        subject_ref=event.subject_ref,
+                    ):
+                        continue
+                    cursor.execute(
+                        "INSERT INTO ronin_scheduler_event_deliveries"
+                        "(workspace_id,event_id,event_trigger_id,workflow_id,"
+                        "trigger_snapshot_json,workflow_run_id,state,created_at,updated_at) "
+                        "VALUES (%s,%s,%s,%s,%s,NULL,'pending',%s,%s)",
+                        (
+                            str(event.workspace_id),
+                            str(event.id),
+                            str(definition.id),
+                            str(definition.workflow_id),
+                            definition.to_json(),
+                            str(event.received_at),
+                            str(event.received_at),
+                        ),
+                    )
+                    deliveries.append(EventDelivery(event.workspace_id, event.id, definition))
+            connection.commit()
+            return tuple(deliveries)
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def get_event(
+        self, workspace_id: WorkspaceId, event_id: SchedulerEventId
+    ) -> SchedulerEventRecord | None:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM ronin_scheduler_events WHERE workspace_id=%s AND event_id=%s",
+                    (str(workspace_id), str(event_id)),
+                )
+                row = cursor.fetchone()
+            connection.commit()
+            return None if row is None else _event_from_row(row)
+        finally:
+            connection.close()
+
+    def list_pending_deliveries(
+        self, workspace_id: WorkspaceId, *, limit: int = 100
+    ) -> tuple[EventDelivery, ...]:
+        if not 1 <= limit <= 1000:
+            raise ValueError("event delivery limit must be between 1 and 1000")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM ronin_scheduler_event_deliveries "
+                    "WHERE workspace_id=%s AND state='pending' "
+                    "ORDER BY created_at,event_id,event_trigger_id LIMIT %s",
+                    (str(workspace_id), limit),
+                )
+                rows = cursor.fetchall()
+            connection.commit()
+            return tuple(_delivery_from_row(row) for row in rows)
+        finally:
+            connection.close()
+
+    def deliver_event(self, delivery: EventDelivery, *, now: Instant | str) -> EventDelivery:
+        if delivery.state != "pending" or delivery.workflow_run_id is not None:
+            raise ValueError("only pending event deliveries can be delivered")
+        event = self.get_event(delivery.workspace_id, delivery.event_id)
+        if event is None:
+            raise KeyError(str(delivery.event_id))
+        trigger = Trigger(
+            "event",
+            f"event:{delivery.event_id}:{delivery.trigger.id}",
+            source_ref=event.source_ref or f"event-type:{event.event_type}",
+        )
+        run = self.create_run(
+            delivery.workspace_id,
+            _event_run_id(delivery.workspace_id, delivery.event_id, delivery.trigger.id),
+            delivery.trigger.workflow_id,
+            trigger,
+            now=now,
+        )
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                self._lock_event_workspace(cursor, delivery.workspace_id)
+                cursor.execute(
+                    "SELECT * FROM ronin_scheduler_event_deliveries "
+                    "WHERE workspace_id=%s AND event_id=%s AND event_trigger_id=%s "
+                    "FOR UPDATE",
+                    (
+                        str(delivery.workspace_id),
+                        str(delivery.event_id),
+                        str(delivery.trigger.id),
+                    ),
+                )
+                row = cursor.fetchone()
+                if row is None:
+                    raise KeyError(str(delivery.trigger.id))
+                if row["state"] == "delivered":
+                    existing = _delivery_from_row(row)
+                    if existing.workflow_run_id != run.id:
+                        raise SchedulerEventConflict(
+                            "event delivery maps to conflicting workflow run"
+                        )
+                    connection.commit()
+                    return existing
+                cursor.execute(
+                    "UPDATE ronin_scheduler_event_deliveries SET state='delivered',"
+                    "workflow_run_id=%s,updated_at=%s WHERE workspace_id=%s AND event_id=%s "
+                    "AND event_trigger_id=%s",
+                    (
+                        str(run.id),
+                        str(Instant(now)),
+                        str(delivery.workspace_id),
+                        str(delivery.event_id),
+                        str(delivery.trigger.id),
+                    ),
+                )
+            connection.commit()
+            return EventDelivery(
+                delivery.workspace_id,
+                delivery.event_id,
+                delivery.trigger,
+                run.id,
+                "delivered",
+            )
         except Exception:
             connection.rollback()
             raise
