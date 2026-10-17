@@ -137,7 +137,7 @@ These merges do **not** imply that their parent capability families are complete
 
 - **License/NOTICE/attribution and release approval:** tooling may inventory facts; maintainers/legal review own conclusions.
 - **Provider certifications:** real vendor qualification still needs authorized environments and credentials; fixture-only migration evidence is not certification.
-- **#102:** `main` now enforces a 90% line floor on the strict v0.1 acceptance gate and exact-candidate release aggregator. The artifact qualification tool remains below that floor; the next implementation slice adds tests and a dedicated 90% target. License, SBOM/supply-chain and related tooling still need their own coverage policies; the finding stays open.
+- **#102:** `main` enforces a 90% line floor on the strict v0.1 acceptance gate and exact-candidate release aggregator. This worktree measures artifact qualification at 96%, license qualification at 97%, SBOM generation at 96%, and supply-chain evidence at 97%; the proposed `coverage-release-gates` target covers all six release-decision modules at a 90% floor. Other release-decision tools still need explicit policies; the finding stays open.
 - **#63:** current GitHub API evidence shows protected `main` with eight required checks, admin enforcement, no force pushes or deletion, and an active `v*` tag ruleset. Reconcile the open issue's checklist with this evidence before claiming the issue is fully satisfied.
 - **#199, #57, #96, #202:** automated qualification is active and exact-head runs pass on the recorded candidate. The strict 15-step Docker/release gate for #96 landed in #389; keep the broader journey and product/provider/legal criteria open.
 - **Mutation:** the campaign is permanently frozen and the score gate retired by product decision. Do not rerun; reopen only through a new explicit product decision and campaign plan.
@@ -154,6 +154,6 @@ These merges do **not** imply that their parent capability families are complete
 8. Complete quality runtime, ontology/KG actions/query, RQL, ML, GenAI, semantic/dashboard, streaming, observability/alerts/FinOps and multi-user identity.
 9. Add Kubernetes/Helm after the server metadata/object-store/identity profile is real.
 10. Build the four vendor migration profiles only against executable canonical target capabilities and certify them with exhaustive migration reports.
-11. Continue #102 coverage work: the v0.1 strict gate and exact-candidate aggregator now have a 90% line floor; raise artifact qualification next, then add explicit high-risk coverage policies for license, SBOM/supply-chain and other release-decision tooling.
+11. Continue #102 coverage work: the strict gate, exact-candidate aggregator, artifact and license qualification, SBOM generation, and supply-chain evidence now have a 90% line floor; add explicit high-risk coverage policies for remaining release-decision tooling.
 12. Maintain exact-candidate qualification; the strict Docker/release acceptance gate must pass on its exact candidate. Public v1 remains incomplete until every mandatory family has its supported end-to-end path and the human-owned evidence is approved.
 

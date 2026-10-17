@@ -135,8 +135,8 @@ coverage-tools:
 	coverage report --fail-under=60 --include="*/tools/*.py"
 
 coverage-release-gates:
-	# Keep the frozen-journey, artifact, and exact-candidate decisions at the T2 90% floor.
-	coverage report --fail-under=90 --include="*/tools/v01_acceptance_gate.py,*/tools/aggregate_release_evidence.py,*/tools/artifact_qualification.py"
+	# Keep release, license, SBOM, and provenance decisions above the T2 90% line-coverage floor.
+	coverage report --fail-under=90 --include="*/tools/v01_acceptance_gate.py,*/tools/aggregate_release_evidence.py,*/tools/artifact_qualification.py,*/tools/license_qualification.py,*/tools/generate_sbom.py,*/tools/supply_chain_evidence.py"
 
 coverage-storage-files:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
