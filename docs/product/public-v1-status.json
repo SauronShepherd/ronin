@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-15T08:51:00+00:00",
-  "observed_main_sha": "2551f60095373f011d238e658724e037605a4a71",
+  "observed_at": "2026-10-17T12:00:00+00:00",
+  "observed_main_sha": "5d598b903541f1c8aeaf2040896f2a4e6ae7ba45",
   "observed_workspace_state": "committed implementation branch with one local generated qualification directory; generated artifacts are not release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
