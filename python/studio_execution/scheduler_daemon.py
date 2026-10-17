@@ -11,7 +11,7 @@ from typing import Protocol
 from studio_core import WorkspaceId
 from studio_orchestrator import Instant, LeaseToken
 from studio_storage.scheduler_backfill import BackfillId
-from studio_storage.scheduler_backfill_runtime import SchedulerBackfillRuntimeStore
+from studio_storage.scheduler_backfill_runtime import SchedulerBackfillRuntimePort
 from studio_storage.scheduler_events import SchedulerEventStore
 from studio_storage.scheduler_fencing import TaskAttemptId
 from studio_storage.scheduler_leadership import (
@@ -106,7 +106,7 @@ class SchedulerDaemon:
         leadership_store: SchedulerLeadershipStore,
         schedule_store: SchedulerScheduleStore,
         event_store: SchedulerEventStore,
-        backfill_store: SchedulerBackfillRuntimeStore,
+        backfill_store: SchedulerBackfillRuntimePort,
         job_service: DurableJobService,
         owner: str,
         clock: Clock,

@@ -419,13 +419,16 @@ class SchedulerBackfillStore(SchedulerEventStore):
             request = _request_from_row(row)
             if request.state == "cancelled":
                 raise BackfillConflict("cancelled backfill cannot be completed")
-            reserved = connection.execute(
-                "SELECT COUNT(*) AS count FROM scheduler_backfill_runs "
-                "WHERE workspace_id=? AND backfill_id=? AND state='reserved'",
+            active = connection.execute(
+                "SELECT COUNT(*) AS count FROM scheduler_backfill_runs r "
+                "LEFT JOIN workflow_runs w ON w.workspace_id=r.workspace_id "
+                "AND w.workflow_run_id=r.workflow_run_id "
+                "WHERE r.workspace_id=? AND r.backfill_id=? "
+                "AND (r.state='reserved' OR w.state IN ('pending','running','cancelling'))",
                 (str(workspace_id), str(backfill_id)),
             ).fetchone()
-            if reserved is None or int(reserved["count"]) != 0:
-                raise BackfillConflict("backfill still has reserved runs awaiting creation")
+            if active is None or int(active["count"]) != 0:
+                raise BackfillConflict("backfill still has active runs")
             if request.state != "completed":
                 connection.execute(
                     "UPDATE scheduler_backfills SET state='completed',updated_at=?,"

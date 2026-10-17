@@ -35,6 +35,7 @@ from studio_orchestrator import (
     Run,
 )
 
+from .postgres_scheduler_backfills import PostgresSchedulerBackfillMixin
 from .postgres_workflow import PostgresWorkflowBundleImportStore
 from .scheduler import (
     WorkflowNotFound,
@@ -57,7 +58,7 @@ from .scheduler_execution import (
 )
 from .scheduler_fencing import ClaimedTask, TaskAttemptId
 
-_SCHEMA_VERSION = 5
+_SCHEMA_VERSION = 6
 _SCHEMA = """
 CREATE TABLE ronin_workflow_runs (
     workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
@@ -100,12 +101,14 @@ CREATE INDEX ronin_task_runs_state_idx
 """
 
 
-class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
+class PostgresSchedulerSnapshotStore(
+    PostgresSchedulerBackfillMixin, PostgresWorkflowBundleImportStore
+):
     """PostgreSQL workflow/task, execution and event persistence.
 
     This intentionally does not claim complete scheduler adapter conformance:
-    backfills, task evidence, API wiring and full restart/operator qualification
-    remain separate work.
+    cron cursors, task evidence, API wiring and full restart/operator
+    qualification remain separate work.
     """
 
     def __init__(self, dsn: str, *, application_name: str = "ronin-scheduler-snapshots") -> None:
@@ -295,6 +298,66 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
                         ),
                     )
                     current = 5
+                if current == 5:
+                    cursor.execute(
+                        "CREATE TABLE ronin_scheduler_backfills ("
+                        "workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) "
+                        "ON DELETE CASCADE,backfill_id TEXT NOT NULL,schedule_id TEXT NOT NULL,"
+                        "start_at TEXT NOT NULL,end_at TEXT NOT NULL,state TEXT NOT NULL CHECK "
+                        "(state IN ('pending','running','completed','cancelled')),"
+                        "created_at TEXT NOT NULL,updated_at TEXT NOT NULL,"
+                        "row_version BIGINT NOT NULL DEFAULT 0,"
+                        "PRIMARY KEY(workspace_id,backfill_id),"
+                        "FOREIGN KEY(workspace_id,schedule_id) REFERENCES "
+                        "ronin_schedules(workspace_id,schedule_id))"
+                    )
+                    cursor.execute(
+                        "CREATE INDEX ronin_scheduler_backfills_state_idx "
+                        "ON ronin_scheduler_backfills(workspace_id,state,created_at,backfill_id)"
+                    )
+                    cursor.execute(
+                        "CREATE TABLE ronin_scheduler_backfill_plans ("
+                        "workspace_id TEXT NOT NULL,backfill_id TEXT NOT NULL,"
+                        "schedule_json TEXT NOT NULL,workflow_json TEXT NOT NULL,cursor_at TEXT,"
+                        "max_concurrency INTEGER NOT NULL CHECK(max_concurrency >= 1),"
+                        "generation_complete BOOLEAN NOT NULL DEFAULT FALSE,"
+                        "created_at TEXT NOT NULL,updated_at TEXT NOT NULL,"
+                        "PRIMARY KEY(workspace_id,backfill_id),"
+                        "FOREIGN KEY(workspace_id,backfill_id) REFERENCES "
+                        "ronin_scheduler_backfills(workspace_id,backfill_id) ON DELETE CASCADE)"
+                    )
+                    cursor.execute(
+                        "CREATE INDEX ronin_scheduler_backfill_plans_generation_idx "
+                        "ON ronin_scheduler_backfill_plans"
+                        "(workspace_id,generation_complete,updated_at,backfill_id)"
+                    )
+                    cursor.execute(
+                        "CREATE TABLE ronin_scheduler_backfill_runs ("
+                        "workspace_id TEXT NOT NULL,backfill_id TEXT NOT NULL,"
+                        "logical_time TEXT NOT NULL,workflow_run_id TEXT NOT NULL,"
+                        "state TEXT NOT NULL CHECK(state IN ('reserved','created')),"
+                        "created_at TEXT NOT NULL,updated_at TEXT NOT NULL,"
+                        "PRIMARY KEY(workspace_id,backfill_id,logical_time),"
+                        "UNIQUE(workspace_id,workflow_run_id),"
+                        "FOREIGN KEY(workspace_id,backfill_id) REFERENCES "
+                        "ronin_scheduler_backfills(workspace_id,backfill_id) ON DELETE CASCADE)"
+                    )
+                    cursor.execute(
+                        "CREATE INDEX ronin_scheduler_backfill_runs_state_idx "
+                        "ON ronin_scheduler_backfill_runs"
+                        "(workspace_id,backfill_id,state,logical_time)"
+                    )
+                    cursor.execute(
+                        "INSERT INTO ronin_scheduler_schema_migrations(version,applied_at) "
+                        "VALUES (%s,%s)",
+                        (
+                            6,
+                            datetime.now(UTC)
+                            .isoformat(timespec="microseconds")
+                            .replace("+00:00", "Z"),
+                        ),
+                    )
+                    current = 6
             connection.commit()
         except Exception:
             connection.rollback()

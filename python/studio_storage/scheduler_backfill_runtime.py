@@ -5,9 +5,11 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Protocol
 
 from studio_core import (
     Schedule,
+    ScheduleId,
     Trigger,
     WorkflowDefinition,
     WorkflowRun,
@@ -44,6 +46,49 @@ class BackfillPlan:
     cursor_at: Instant | None
     max_concurrency: int
     generation_complete: bool
+
+
+class SchedulerBackfillRuntimePort(Protocol):
+    """Storage contract consumed by the backfill generation service."""
+
+    def get_backfill_plan(
+        self, workspace_id: WorkspaceId, backfill_id: BackfillId
+    ) -> BackfillPlan | None: ...
+
+    def count_active_backfill_runs(
+        self, workspace_id: WorkspaceId, backfill_id: BackfillId
+    ) -> int: ...
+
+    def list_backfill_runs(
+        self, workspace_id: WorkspaceId, backfill_id: BackfillId
+    ) -> tuple[BackfillRun, ...]: ...
+
+    def create_snapshot_backfill_run(
+        self,
+        workspace_id: WorkspaceId,
+        backfill_id: BackfillId,
+        *,
+        logical_time: Instant | str,
+        now: Instant | str,
+    ) -> BackfillRun: ...
+
+    def advance_backfill_cursor(
+        self,
+        workspace_id: WorkspaceId,
+        backfill_id: BackfillId,
+        *,
+        through: Instant | str,
+        generation_complete: bool,
+        now: Instant | str,
+    ) -> BackfillPlan: ...
+
+    def complete_backfill(
+        self,
+        workspace_id: WorkspaceId,
+        backfill_id: BackfillId,
+        *,
+        now: Instant | str,
+    ) -> BackfillRequest: ...
 
 
 def _execute_script_in_transaction(connection: sqlite3.Connection, script: str) -> None:
@@ -116,6 +161,8 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
         max_concurrency: int,
         now: Instant | str,
     ) -> BackfillPlan:
+        if request.state != "pending":
+            raise ValueError("new backfill requests must start pending")
         if max_concurrency < 1:
             raise ValueError("backfill max_concurrency must be positive")
         existing = self.get_backfill_plan(workspace_id, request.id)
@@ -131,19 +178,82 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
                 raise BackfillConflict("backfill plan already exists with different content")
             return existing
 
-        schedule = self.get_schedule(workspace_id, request.schedule_id)
-        if schedule is None:
-            raise BackfillConflict("backfill schedule does not exist")
-        workflow = self.get_workflow(workspace_id, schedule.workflow_id)
-        if workflow is None:
-            raise BackfillConflict("backfill workflow does not exist")
-        self.create_backfill(workspace_id, request, now=now)
-
         current = Instant(now)
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
             self._require_active_workspace(connection, workspace_id)
+            schedule_row = connection.execute(
+                "SELECT schedule_json FROM schedules WHERE workspace_id=? AND schedule_id=?",
+                (str(workspace_id), str(request.schedule_id)),
+            ).fetchone()
+            if schedule_row is None:
+                raise BackfillConflict("backfill schedule does not exist")
+            schedule = Schedule.from_json(schedule_row["schedule_json"])
+            workflow_row = connection.execute(
+                "SELECT definition_json FROM workflows WHERE workspace_id=? AND workflow_id=?",
+                (str(workspace_id), str(schedule.workflow_id)),
+            ).fetchone()
+            if workflow_row is None:
+                raise BackfillConflict("backfill workflow does not exist")
+            workflow = WorkflowDefinition.from_json(workflow_row["definition_json"])
+            backfill_row = connection.execute(
+                "SELECT * FROM scheduler_backfills WHERE workspace_id=? AND backfill_id=?",
+                (str(workspace_id), str(request.id)),
+            ).fetchone()
+            if backfill_row is None:
+                connection.execute(
+                    "INSERT INTO scheduler_backfills(workspace_id,backfill_id,schedule_id,"
+                    "start_at,end_at,state,created_at,updated_at) "
+                    "VALUES (?,?,?,?,?,'pending',?,?)",
+                    (
+                        str(workspace_id),
+                        str(request.id),
+                        str(request.schedule_id),
+                        str(request.start_at),
+                        str(request.end_at),
+                        current,
+                        current,
+                    ),
+                )
+                stored_request = request
+            else:
+                stored_request = BackfillRequest(
+                    BackfillId(backfill_row["backfill_id"]),
+                    ScheduleId(backfill_row["schedule_id"]),
+                    Instant(backfill_row["start_at"]),
+                    Instant(backfill_row["end_at"]),
+                    backfill_row["state"],
+                )
+                if stored_request.state in {"completed", "cancelled"}:
+                    raise BackfillConflict(
+                        f"cannot create a plan for {stored_request.state} backfill"
+                    )
+                if (
+                    stored_request.schedule_id != request.schedule_id
+                    or stored_request.start_at != request.start_at
+                    or stored_request.end_at != request.end_at
+                ):
+                    raise BackfillConflict("backfill id already exists with different content")
+            existing_plan = connection.execute(
+                "SELECT * FROM scheduler_backfill_plans WHERE workspace_id=? AND backfill_id=?",
+                (str(workspace_id), str(request.id)),
+            ).fetchone()
+            if existing_plan is not None:
+                plan = BackfillPlan(
+                    stored_request,
+                    Schedule.from_json(existing_plan["schedule_json"]),
+                    WorkflowDefinition.from_json(existing_plan["workflow_json"]),
+                    None
+                    if existing_plan["cursor_at"] is None
+                    else Instant(existing_plan["cursor_at"]),
+                    int(existing_plan["max_concurrency"]),
+                    bool(existing_plan["generation_complete"]),
+                )
+                if plan.max_concurrency != max_concurrency:
+                    raise BackfillConflict("backfill plan already exists with different content")
+                connection.execute("COMMIT")
+                return plan
             connection.execute(
                 "INSERT INTO scheduler_backfill_plans("
                 "workspace_id,backfill_id,schedule_json,workflow_json,cursor_at,"
@@ -243,6 +353,10 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
             raise ValueError("backfill cursor must remain inside requested range")
         if plan.cursor_at is not None and logical < plan.cursor_at:
             raise ValueError("backfill cursor must not move backwards")
+        if plan.request.state in {"completed", "cancelled"}:
+            raise BackfillConflict(f"cannot advance cursor for {plan.request.state} backfill")
+        if plan.generation_complete and not generation_complete:
+            raise BackfillConflict("completed backfill generation cannot be reopened")
         if generation_complete and logical != plan.request.end_at:
             raise ValueError("backfill generation can complete only at end_at")
 
@@ -250,6 +364,30 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
         try:
             connection.execute("BEGIN IMMEDIATE")
             self._require_active_workspace(connection, workspace_id)
+            current_plan = connection.execute(
+                "SELECT b.start_at,b.end_at,b.state,p.cursor_at,p.generation_complete "
+                "FROM scheduler_backfills b JOIN scheduler_backfill_plans p "
+                "ON p.workspace_id=b.workspace_id "
+                "AND p.backfill_id=b.backfill_id "
+                "WHERE b.workspace_id=? AND b.backfill_id=?",
+                (str(workspace_id), str(backfill_id)),
+            ).fetchone()
+            if current_plan is None:
+                raise KeyError(str(backfill_id))
+            if current_plan["state"] in {"completed", "cancelled"}:
+                raise BackfillConflict(
+                    f"cannot advance cursor for {current_plan['state']} backfill"
+                )
+            if not Instant(current_plan["start_at"]) <= logical <= Instant(current_plan["end_at"]):
+                raise ValueError("backfill cursor must remain inside requested range")
+            if current_plan["cursor_at"] is not None and logical < Instant(
+                current_plan["cursor_at"]
+            ):
+                raise ValueError("backfill cursor must not move backwards")
+            if current_plan["generation_complete"] and not generation_complete:
+                raise BackfillConflict("completed backfill generation cannot be reopened")
+            if generation_complete and logical != Instant(current_plan["end_at"]):
+                raise ValueError("backfill generation can complete only at end_at")
             connection.execute(
                 "UPDATE scheduler_backfill_plans SET cursor_at=?,generation_complete=?,"
                 "updated_at=? WHERE workspace_id=? AND backfill_id=?",
@@ -273,6 +411,20 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
             raise AssertionError("backfill plan disappeared after cursor update")
         return updated
 
+    def complete_backfill(
+        self,
+        workspace_id: WorkspaceId,
+        backfill_id: BackfillId,
+        *,
+        now: Instant | str,
+    ) -> BackfillRequest:
+        plan = self.get_backfill_plan(workspace_id, backfill_id)
+        if plan is None:
+            raise KeyError(str(backfill_id))
+        if not plan.generation_complete:
+            raise BackfillConflict("backfill generation is not complete")
+        return super().complete_backfill(workspace_id, backfill_id, now=now)
+
     def _reserve_snapshot_backfill_run(
         self,
         workspace_id: WorkspaceId,
@@ -288,7 +440,8 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
             connection.execute("BEGIN IMMEDIATE")
             self._require_active_workspace(connection, workspace_id)
             row = connection.execute(
-                "SELECT b.*,p.max_concurrency,p.schedule_json FROM scheduler_backfills b "
+                "SELECT b.*,p.max_concurrency,p.schedule_json,p.generation_complete "
+                "FROM scheduler_backfills b "
                 "JOIN scheduler_backfill_plans p ON p.workspace_id=b.workspace_id "
                 "AND p.backfill_id=b.backfill_id "
                 "WHERE b.workspace_id=? AND b.backfill_id=?",
@@ -320,6 +473,9 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
                     raise BackfillConflict("backfill logical time maps to conflicting workflow run")
                 connection.execute("COMMIT")
                 return reserved
+
+            if row["generation_complete"]:
+                raise BackfillConflict("completed backfill generation cannot add runs")
 
             active = connection.execute(
                 "SELECT COUNT(*) AS count FROM scheduler_backfill_runs r "
@@ -465,6 +621,7 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
 __all__ = (
     "BackfillCapacityExhausted",
     "BackfillPlan",
+    "SchedulerBackfillRuntimePort",
     "SchedulerBackfillRuntimeStore",
     "migrate_scheduler_backfill_runtime",
     "scheduler_backfill_runtime_schema_version",

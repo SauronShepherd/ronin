@@ -12,7 +12,7 @@ from studio_orchestrator import Instant
 from studio_storage.scheduler_backfill import BackfillId, BackfillRun
 from studio_storage.scheduler_backfill_runtime import (
     BackfillCapacityExhausted,
-    SchedulerBackfillRuntimeStore,
+    SchedulerBackfillRuntimePort,
 )
 
 from .scheduler_cron import evaluated_minutes, schedule_matches
@@ -74,7 +74,7 @@ class SchedulerBackfillService:
 
     def __init__(
         self,
-        store: SchedulerBackfillRuntimeStore,
+        store: SchedulerBackfillRuntimePort,
         *,
         authority_check: AuthorityCheck | None = None,
     ) -> None:

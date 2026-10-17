@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
@@ -28,6 +29,7 @@ from studio_core.scheduler_events import (
     EventTriggerId,
     SchedulerEventId,
 )
+from studio_execution.scheduler_backfill import BackfillTickResult, SchedulerBackfillService
 from studio_execution.scheduler_bridge import plan_scheduler_execution
 from studio_orchestrator import Instant, JobState, LeaseToken
 from studio_storage import (
@@ -38,6 +40,8 @@ from studio_storage import (
 )
 from studio_storage.bundle_workflow_import_port import WorkflowBundleImportConflict
 from studio_storage.scheduler import WorkflowNotFound, WorkflowRunConflict
+from studio_storage.scheduler_backfill import BackfillConflict, BackfillId, BackfillRequest
+from studio_storage.scheduler_backfill_runtime import BackfillCapacityExhausted
 from studio_storage.scheduler_events import (
     EventDelivery,
     SchedulerEventConflict,
@@ -448,6 +452,9 @@ def test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
+            cursor.execute("DROP TABLE ronin_scheduler_backfill_plans")
+            cursor.execute("DROP TABLE ronin_scheduler_backfills")
             cursor.execute("DROP TABLE ronin_scheduler_event_deliveries")
             cursor.execute("DROP TABLE ronin_scheduler_events")
             cursor.execute("DROP TABLE ronin_event_triggers")
@@ -592,10 +599,13 @@ def test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
+            cursor.execute("DROP TABLE ronin_scheduler_backfill_plans")
+            cursor.execute("DROP TABLE ronin_scheduler_backfills")
             cursor.execute("DROP TABLE ronin_scheduler_event_deliveries")
             cursor.execute("DROP TABLE ronin_scheduler_events")
             cursor.execute("DROP TABLE ronin_event_triggers")
-            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version=5")
+            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version>=5")
         connection.commit()
     except Exception:
         connection.rollback()
@@ -781,3 +791,217 @@ def test_postgres_scheduler_leadership_is_generation_fenced_and_persistent() -> 
     winners = tuple(item for item in acquired if item is not None)
     assert len(winners) == 1
     assert winners[0].generation == replacement.generation + 1
+
+
+def test_postgres_scheduler_backfill_runs_through_the_service_and_survives_reopen() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerSnapshotStore(dsn, application_name="ronin-scheduler-backfill")
+    workspace_id = WorkspaceId(f"scheduler-backfill-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Scheduler backfill"), now=NOW)
+    workflow = _workflow(f"scheduler-backfill-workflow-{uuid4().hex}")
+    schedule = Schedule(
+        ScheduleId(f"scheduler-backfill-schedule-{uuid4().hex}"), workflow.id, "* * * * *"
+    )
+    store.commit_workflow_import(workspace_id, (workflow,), (schedule,), now=NOW)
+    start = Instant("2026-10-15T00:01:00.000000Z")
+    end = Instant("2026-10-15T00:02:00.000000Z")
+    backfill = BackfillRequest(
+        BackfillId(f"scheduler-backfill-{uuid4().hex}"), schedule.id, start, end
+    )
+    plan = store.create_backfill_plan(workspace_id, backfill, max_concurrency=1, now=NOW)
+    assert store.create_backfill_plan(workspace_id, backfill, max_concurrency=1, now=NOW) == plan
+    with pytest.raises(BackfillConflict, match="generation is not complete"):
+        store.complete_backfill(workspace_id, backfill.id, now=NOW)
+    with pytest.raises(BackfillConflict, match="different content"):
+        store.create_backfill_plan(workspace_id, backfill, max_concurrency=2, now=NOW)
+    with pytest.raises(ValueError, match="max_concurrency must be positive"):
+        store.create_backfill_plan(workspace_id, backfill, max_concurrency=0, now=NOW)
+
+    standalone = BackfillRequest(
+        BackfillId(f"scheduler-backfill-standalone-{uuid4().hex}"), schedule.id, start, end
+    )
+    assert store.create_backfill(workspace_id, standalone, now=NOW) == standalone
+    assert store.create_backfill(workspace_id, standalone, now=NOW) == standalone
+    assert store.get_backfill(workspace_id, standalone.id) == standalone
+    assert store.get_backfill(workspace_id, BackfillId("missing-backfill")) is None
+    with pytest.raises(BackfillConflict, match="different content"):
+        store.create_backfill(
+            workspace_id,
+            replace(standalone, end_at=Instant("2026-10-15T00:03:00.000000Z")),
+            now=NOW,
+        )
+    with pytest.raises(ValueError, match="start pending"):
+        store.create_backfill(workspace_id, replace(standalone, state="running"), now=NOW)
+    with pytest.raises(BackfillConflict, match="schedule does not exist"):
+        store.create_backfill(
+            workspace_id,
+            replace(
+                standalone,
+                id=BackfillId(f"missing-schedule-{uuid4().hex}"),
+                schedule_id=ScheduleId("missing"),
+            ),
+            now=NOW,
+        )
+
+    # Workflow edits after plan creation must not alter the historical snapshot.
+    updated_workflow = WorkflowDefinition(workflow.id, "Updated", workflow.pipeline)
+    store.put_workflow(workspace_id, updated_workflow, now=NOW)
+    service = SchedulerBackfillService(store)
+    reservation = store._reserve_snapshot_backfill_run(workspace_id, backfill.id, start, now=NOW)
+    assert reservation.state == "reserved"
+
+    async def generate_first_fire() -> tuple[BackfillTickResult, BackfillTickResult]:
+        return await asyncio.gather(
+            service.tick(workspace_id, backfill.id, now=NOW, max_new_runs=1),
+            service.tick(workspace_id, backfill.id, now=NOW, max_new_runs=1),
+        )
+
+    first_results = asyncio.run(generate_first_fire())
+    assert all(result.active_runs == 1 for result in first_results)
+    first_runs = store.list_backfill_runs(workspace_id, backfill.id)
+    assert len(first_runs) == 1
+    assert first_runs[0].state == "created"
+    first_id = first_runs[0].workflow_run_id
+    stored_first = store.get_run(workspace_id, first_id)
+    assert stored_first is not None
+    assert stored_first.workflow_snapshot.name == workflow.name
+    assert store.count_active_backfill_runs(workspace_id, backfill.id) == 1
+    assert len(store.list_task_runs(workspace_id, first_id)) == len(workflow.pipeline.nodes)
+
+    # A new logical slot is throttled until the previous workflow is terminal.
+    with pytest.raises(BackfillCapacityExhausted):
+        store.create_snapshot_backfill_run(workspace_id, backfill.id, logical_time=end, now=NOW)
+    connection = store._connect()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE ronin_workflow_runs SET state='succeeded' "
+                "WHERE workspace_id=%s AND workflow_run_id=%s",
+                (str(workspace_id), str(first_id)),
+            )
+        connection.commit()
+    finally:
+        connection.close()
+    assert store.count_active_backfill_runs(workspace_id, backfill.id) == 0
+
+    second_result = asyncio.run(service.tick(workspace_id, backfill.id, now=NOW))
+    assert len(second_result.fires) == 1
+    assert second_result.fires[0].logical_time == end
+    assert second_result.generation_complete
+    assert len(store.list_backfill_runs(workspace_id, backfill.id)) == 2
+    with pytest.raises(BackfillConflict, match="still has active runs"):
+        store.complete_backfill(workspace_id, backfill.id, now=NOW)
+    with pytest.raises(BackfillConflict, match="cannot be reopened"):
+        store.advance_backfill_cursor(
+            workspace_id,
+            backfill.id,
+            through=end,
+            generation_complete=False,
+            now=NOW,
+        )
+    with pytest.raises(ValueError, match="must not move backwards"):
+        store.advance_backfill_cursor(
+            workspace_id,
+            backfill.id,
+            through=start,
+            generation_complete=False,
+            now=NOW,
+        )
+
+    second_id = second_result.fires[0].workflow_run_id
+    connection = store._connect()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE ronin_workflow_runs SET state='succeeded' "
+                "WHERE workspace_id=%s AND workflow_run_id=%s",
+                (str(workspace_id), str(second_id)),
+            )
+        connection.commit()
+    finally:
+        connection.close()
+    final_result = asyncio.run(service.tick(workspace_id, backfill.id, now=NOW))
+    assert final_result.generation_complete
+    assert store.get_backfill(workspace_id, backfill.id) == replace(backfill, state="completed")
+    with pytest.raises(BackfillConflict, match="completed backfill cannot be cancelled"):
+        store.cancel_backfill(workspace_id, backfill.id, now=NOW)
+
+    cancelled = BackfillRequest(
+        BackfillId(f"scheduler-backfill-cancelled-{uuid4().hex}"), schedule.id, start, end
+    )
+    store.create_backfill_plan(workspace_id, cancelled, max_concurrency=1, now=NOW)
+    assert store.cancel_backfill(workspace_id, cancelled.id, now=NOW) == replace(
+        cancelled, state="cancelled"
+    )
+    assert store.cancel_backfill(workspace_id, cancelled.id, now=NOW) == replace(
+        cancelled, state="cancelled"
+    )
+    with pytest.raises(KeyError, match="missing-backfill"):
+        store.cancel_backfill(workspace_id, BackfillId("missing-backfill"), now=NOW)
+    with pytest.raises(BackfillConflict, match="cannot reserve run for cancelled backfill"):
+        store.create_snapshot_backfill_run(workspace_id, cancelled.id, logical_time=start, now=NOW)
+    with pytest.raises(BackfillConflict, match="cancelled backfill cannot be completed"):
+        store.complete_backfill(workspace_id, cancelled.id, now=NOW)
+    reopened = PostgresSchedulerSnapshotStore(dsn, application_name="ronin-scheduler-backfill")
+    assert reopened.list_backfill_runs(workspace_id, backfill.id) == store.list_backfill_runs(
+        workspace_id, backfill.id
+    )
+
+
+def test_postgres_scheduler_backfill_migrates_schema_five_to_six(
+    request: pytest.FixtureRequest,
+) -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    from studio_storage.postgres_core import _psycopg
+
+    psycopg, _ = _psycopg()
+    schema = f"scheduler_backfill_migration_{uuid4().hex}"
+    connection = psycopg.connect(dsn)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"CREATE SCHEMA {schema}")
+        connection.commit()
+    finally:
+        connection.close()
+    schema_dsn = psycopg.conninfo.make_conninfo(dsn, options=f"-c search_path={schema},public")
+
+    def drop_schema() -> None:
+        cleanup = psycopg.connect(dsn)
+        try:
+            with cleanup.cursor() as cursor:
+                cursor.execute(f"DROP SCHEMA {schema} CASCADE")
+            cleanup.commit()
+        finally:
+            cleanup.close()
+
+    request.addfinalizer(drop_schema)
+    store = PostgresSchedulerSnapshotStore(schema_dsn, application_name="ronin-backfill-migration")
+    connection = store._connect()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
+            cursor.execute("DROP TABLE ronin_scheduler_backfill_plans")
+            cursor.execute("DROP TABLE ronin_scheduler_backfills")
+            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version=6")
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+    PostgresSchedulerSnapshotStore(schema_dsn, application_name="ronin-backfill-migration")
+    connection = psycopg.connect(schema_dsn)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT version FROM ronin_scheduler_schema_migrations ORDER BY version")
+            assert [int(row[0]) for row in cursor.fetchall()] == [1, 2, 3, 4, 5, 6]
+            for table in (
+                "ronin_scheduler_backfills",
+                "ronin_scheduler_backfill_plans",
+                "ronin_scheduler_backfill_runs",
+            ):
+                cursor.execute("SELECT to_regclass(%s) AS table_name", (table,))
+                assert cursor.fetchone()[0] == table
+    finally:
+        connection.close()
