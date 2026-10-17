@@ -796,8 +796,7 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
                 )
                 link = cursor.fetchone()
                 if link is not None and (
-                    link["job_id"] != str(job.id)
-                    or link["request_digest"] != job.request_digest
+                    link["job_id"] != str(job.id) or link["request_digest"] != job.request_digest
                 ):
                     raise TaskExecutionLinkConflict(
                         "task attempt is already bound to different execution identity"
@@ -949,9 +948,7 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
                     raise KeyError(f"execution intent does not exist: {workspace_id}/{attempt_id}")
                 intent = _intent_from_row(intent_row)
                 if intent.job.id != job.id or intent.job.request_digest != job.request_digest:
-                    raise TaskExecutionLinkConflict(
-                        "terminal job does not match execution intent"
-                    )
+                    raise TaskExecutionLinkConflict("terminal job does not match execution intent")
                 cursor.execute(
                     "SELECT * FROM ronin_task_runs "
                     "WHERE workspace_id=%s AND task_run_id=%s FOR UPDATE",
