@@ -265,13 +265,24 @@ class DurableWorkerExecution:
             while True:
                 await asyncio.sleep(self.heartbeat_interval_seconds)
                 now = self.now()
-                owned = await self.service.worker_heartbeat(
-                    claim.attempt_id,
-                    owner=self.owner,
-                    lease_token=claim.lease_token,
-                    expires_at=_plus_seconds(now, self.lease_seconds),
-                    now=now,
+                heartbeat_call = asyncio.create_task(
+                    self.service.worker_heartbeat(
+                        claim.attempt_id,
+                        owner=self.owner,
+                        lease_token=claim.lease_token,
+                        expires_at=_plus_seconds(now, self.lease_seconds),
+                        now=now,
+                    )
                 )
+                try:
+                    # The bounded async store shields its synchronous operation from
+                    # cancellation. Keep that operation joined before letting worker
+                    # shutdown return, so no late heartbeat can outlive this task.
+                    owned = await asyncio.shield(heartbeat_call)
+                except asyncio.CancelledError:
+                    with suppress(BaseException):
+                        await heartbeat_call
+                    raise
                 if not owned:
                     cancellation.cancel()
                     lease_lost.set()

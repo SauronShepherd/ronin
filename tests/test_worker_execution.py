@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from contextlib import suppress
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -220,6 +221,35 @@ class _CountingHeartbeatStore(InMemoryJobStore):
         expires_at: Instant | str,
         now: Instant | str,
     ) -> bool:
+        self.heartbeat_calls += 1
+        return super().heartbeat(
+            attempt_id,
+            owner=owner,
+            lease_token=lease_token,
+            expires_at=expires_at,
+            now=now,
+        )
+
+
+class _BlockingHeartbeatStore(InMemoryJobStore):
+    def __init__(self) -> None:
+        super().__init__()
+        self.heartbeat_started = threading.Event()
+        self.release_heartbeat = threading.Event()
+        self.heartbeat_calls = 0
+
+    def heartbeat(
+        self,
+        attempt_id: AttemptId,
+        *,
+        owner: str,
+        lease_token: LeaseToken,
+        expires_at: Instant | str,
+        now: Instant | str,
+    ) -> bool:
+        self.heartbeat_started.set()
+        if not self.release_heartbeat.wait(timeout=5):
+            raise TimeoutError("test heartbeat was not released")
         self.heartbeat_calls += 1
         return super().heartbeat(
             attempt_id,
@@ -495,6 +525,36 @@ def test_heartbeat_task_is_cancelled_and_awaited_on_success(tmp_path: Path) -> N
             assert count >= 1
             await asyncio.sleep(0.02)
             assert store.heartbeat_calls == count
+
+    asyncio.run(scenario())
+
+
+def test_worker_waits_for_in_flight_heartbeat_before_returning(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        store = _BlockingHeartbeatStore()
+        async with DurableExecutionService(store) as service:
+            await service.submit(_job(), _run())
+            claim = await _claim(service, "attempt-1", "lease-1")
+            request, identities = _prepared(AttemptId("attempt-1"), cells=1)
+            worker = DurableWorkerExecution(
+                service,
+                LocalArtifactStore(tmp_path / "artifacts"),
+                _SuccessExecutor(delay=0.02),
+                POLICY,
+                "worker-1",
+                heartbeat_interval_seconds=0.005,
+                now=lambda: NOW,
+            )
+            task = asyncio.create_task(worker.run(claim, request, identities))
+            try:
+                assert await asyncio.to_thread(store.heartbeat_started.wait, 1)
+                await asyncio.sleep(0.05)
+                assert not task.done()
+            finally:
+                store.release_heartbeat.set()
+            outcome = await task
+            assert outcome.state is AttemptState.SUCCEEDED
+            assert store.heartbeat_calls >= 1
 
     asyncio.run(scenario())
 
