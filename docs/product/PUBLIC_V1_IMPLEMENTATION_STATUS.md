@@ -5,9 +5,9 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-17. The tracked source is based on
-`main@e3ca935`; untracked qualification output directories are not release
+`main@5868014`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `e3ca935055968460ba4a0cc3063617c42383b45f` (2026-10-17).
+**Observed source head:** `586801468a6b1cdc0f28d72d0da585ceb3ca2fd1` (2026-10-17).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -84,13 +84,20 @@ The prior `main@2a7d0c9ef697d3de131f04d0973b49bfb2e1c780` passed
 [Security](https://github.com/SauronShepherd/ronin/actions/runs/39036976428),
 [Release](https://github.com/SauronShepherd/ronin/actions/runs/39036976444),
 and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39036976413).
-The current `main@e3ca935055968460ba4a0cc3063617c42383b45f` passed
+The prior `main@e3ca935055968460ba4a0cc3063617c42383b45f` passed
 [CI](https://github.com/SauronShepherd/ronin/actions/runs/39039830705),
 [Docker](https://github.com/SauronShepherd/ronin/actions/runs/39039830679),
 [Web](https://github.com/SauronShepherd/ronin/actions/runs/39039830690),
 [Security](https://github.com/SauronShepherd/ronin/actions/runs/39039830694),
 [Release](https://github.com/SauronShepherd/ronin/actions/runs/39039830715),
 and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39039830750).
+The current `main@586801468a6b1cdc0f28d72d0da585ceb3ca2fd1` passed
+[CI](https://github.com/SauronShepherd/ronin/actions/runs/39041024109),
+[Docker](https://github.com/SauronShepherd/ronin/actions/runs/39041024090),
+[Web](https://github.com/SauronShepherd/ronin/actions/runs/39041024085),
+[Security](https://github.com/SauronShepherd/ronin/actions/runs/39041024151),
+[Release](https://github.com/SauronShepherd/ronin/actions/runs/39041024086),
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39041024136).
 PostgreSQL snapshots, replay-safe branch decisions and generation-fenced
 leadership persist in main. The real PostgreSQL integration passed 4 tests
 with 87% leadership-adapter coverage, including repeat execution against the
@@ -102,6 +109,16 @@ excludes PostgreSQL-only adapters from its no-service coverage gate; Docker
 runs the full per-file coverage gate against PostgreSQL. PostgreSQL scheduler
 HTTP routes remain unavailable until task execution state and the remaining
 scheduler stores are qualified.
+
+The audit for PR #401 found that a branch decision arriving after task completion
+could overwrite the terminal task state. The fix rejects late decisions in both
+SQLite and PostgreSQL under their transaction locks, increments SQLite
+`row_version` for a persisted decision, and tests that a rejected update leaves
+state and version unchanged. CI and Docker passed on code candidate
+`a5ae71629589b5d722c4ba29c50492661fe94728`; Docker passed PostgreSQL storage
+coverage, real container qualification, and strict v0.1 acceptance. The 0% release
+progress remains unchanged because P5 and all other mandatory capability families
+remain partial.
 
 The current workspace includes the implementation families listed in the
 package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
