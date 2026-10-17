@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import os
+import subprocess
+import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -29,10 +33,16 @@ from studio_core.scheduler_events import (
     EventTriggerId,
     SchedulerEventId,
 )
+from studio_execution import DurableExecutionService
 from studio_execution.scheduler_backfill import BackfillTickResult, SchedulerBackfillService
 from studio_execution.scheduler_bridge import plan_scheduler_execution
+from studio_execution.scheduler_dispatch import (
+    dispatch_execution_intent,
+    reconcile_execution_intent,
+)
 from studio_orchestrator import (
     AttemptId,
+    AttemptState,
     Instant,
     JobState,
     LeaseToken,
@@ -435,6 +445,7 @@ def test_postgres_scheduler_attempt_leases_fence_workers_and_reclaim_expiry() ->
 
 def test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles(
     request: pytest.FixtureRequest,
+    tmp_path: Path,
 ) -> None:
     dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
     from studio_storage.postgres_core import _psycopg
@@ -533,8 +544,100 @@ def test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles(
     assert store.get_execution_intent(workspace_id, claim.attempt_id) == intent
     assert intent in store.list_execution_intents()
 
+    expired_at = Instant("2026-10-15T00:00:31.000000Z")
+    assert store.reclaim_expired(now=expired_at) == 0
+    assert (
+        store.claim_next_task(
+            owner="outbox-worker-restarted",
+            lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+            attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+            lease_seconds=30,
+            now=expired_at,
+            workspace_id=workspace_id,
+        )
+        is None
+    )
+
+    ready = tmp_path / "postgres-dispatcher-ready"
+    child_script = """
+import asyncio
+import sys
+import time
+from pathlib import Path
+from studio_core import WorkspaceId
+from studio_execution import DurableExecutionService
+from studio_execution.scheduler_dispatch import dispatch_execution_intent
+from studio_storage import PostgresJobReadPort, PostgresSchedulerSnapshotStore
+from studio_storage.scheduler_fencing import TaskAttemptId
+
+dsn, workspace_value, attempt_value, ready_value = sys.argv[1:]
+workspace_id = WorkspaceId(workspace_value)
+attempt_id = TaskAttemptId(attempt_value)
+ready = Path(ready_value)
+
+async def dispatch_once():
+    scheduler = PostgresSchedulerSnapshotStore(
+        dsn, application_name="ronin-postgres-dispatcher-child"
+    )
+    intent = scheduler.get_execution_intent(workspace_id, attempt_id)
+    assert intent is not None
+    service = DurableExecutionService(
+        PostgresJobReadPort(dsn, application_name="ronin-postgres-dispatcher-child")
+    )
+    try:
+        submitted = await dispatch_execution_intent(intent, service)
+        assert submitted.id == intent.job.id
+        assert submitted.request_digest == intent.job.request_digest
+    finally:
+        await service.aclose()
+
+asyncio.run(dispatch_once())
+ready.write_text("durable PostgreSQL submit complete", encoding="utf-8")
+while True:
+    time.sleep(1)
+"""
+    process = subprocess.Popen(  # noqa: S603 - explicit Python executable and argument list
+        [
+            sys.executable,
+            "-c",
+            child_script,
+            schema_dsn,
+            str(workspace_id),
+            str(claim.attempt_id),
+            str(ready),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        deadline = time.monotonic() + 30
+        while process.poll() is None and not ready.exists() and time.monotonic() < deadline:
+            time.sleep(0.05)
+        if not ready.exists():
+            stdout, stderr = process.communicate(timeout=5)
+            raise AssertionError(
+                f"PostgreSQL dispatcher did not commit Job before exit; stdout={stdout!r}, "
+                f"stderr={stderr!r}"
+            )
+        process.kill()
+        process.wait(timeout=5)
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=5)
+
+    store = PostgresSchedulerSnapshotStore(
+        schema_dsn, application_name="ronin-postgres-dispatcher-restart"
+    )
+    recovered = store.get_execution_intent(workspace_id, claim.attempt_id)
+    assert recovered == intent
     job_store = PostgresJobReadPort(schema_dsn, application_name="ronin-scheduler-task-evidence")
-    job_store.create_job(plan.job, plan.run)
+    service = DurableExecutionService(job_store)
+    replayed = asyncio.run(dispatch_execution_intent(recovered, service))
+    assert replayed.id == intent.job.id
+    assert replayed.request_digest == intent.job.request_digest
     worker_claim = job_store.claim_next_run(
         owner="task-evidence-worker",
         lease_token=LeaseToken(f"lease-{uuid4().hex}"),
@@ -560,36 +663,20 @@ def test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles(
         lease_token=worker_claim.lease_token,
         now=NOW,
     )
+    job_store.complete_attempt(
+        worker_claim.attempt_id,
+        state=AttemptState.SUCCEEDED,
+        failure_code=None,
+        owner="task-evidence-worker",
+        lease_token=worker_claim.lease_token,
+        now=NOW,
+    )
     assert store.read_task_evidence(workspace_id, claim.attempt_id) == (evidence,)
     assert store.read_task_evidence(WorkspaceId(f"other-{workspace_id}"), claim.attempt_id) == ()
     assert store.read_task_evidence(workspace_id, TaskAttemptId(f"missing-{uuid4().hex}")) == ()
 
-    expired_at = Instant("2026-10-15T00:00:31.000000Z")
-    store.reclaim_expired(now=expired_at)
-    connection = store._connect()
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT state FROM ronin_task_attempts "
-                "WHERE workspace_id=%s AND task_attempt_id=%s",
-                (str(workspace_id), str(claim.attempt_id)),
-            )
-            attempt_state = cursor.fetchone()["state"]
-        connection.commit()
-    finally:
-        connection.close()
-    assert attempt_state == "running"
-    assert (
-        store.claim_next_task(
-            owner="outbox-worker-restarted",
-            lease_token=LeaseToken(f"lease-{uuid4().hex}"),
-            attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
-            lease_seconds=30,
-            now=expired_at,
-            workspace_id=workspace_id,
-        )
-        is None
-    )
+    assert asyncio.run(reconcile_execution_intent(recovered, service, store, now=NOW))
+    asyncio.run(service.aclose())
 
     terminal = replace(
         plan.job,
