@@ -245,6 +245,46 @@ def test_postgres_scheduler_run_and_task_snapshots_are_atomic_and_idempotent() -
     assert reopened.get_branch_decision(workspace_id, run_id, branch_node) == decision
 
 
+def test_postgres_scheduler_rejects_late_branch_decision_without_mutating_terminal_task() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerSnapshotStore(dsn)
+    workspace_id = WorkspaceId(f"scheduler-late-branch-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Late branch"), now=NOW)
+    workflow = _workflow(f"scheduler-late-branch-workflow-{uuid4().hex}")
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    run_id = WorkflowRunId(f"scheduler-late-branch-run-{uuid4().hex}")
+    store.create_run(workspace_id, run_id, workflow.id, Trigger("manual", "late"), now=NOW)
+    node = workflow.pipeline.nodes[0]
+
+    connection = store._connect()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE ronin_task_runs SET state='succeeded' "
+                "WHERE workspace_id=%s AND workflow_run_id=%s",
+                (str(workspace_id), str(run_id)),
+            )
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+    with pytest.raises(WorkflowRunConflict, match="after task execution has started"):
+        store.apply_branch_decision(
+            workspace_id,
+            run_id,
+            node.id,
+            {"op": "equals", "field": "environment", "value": "prod"},
+            {"environment": "dev"},
+            now=NOW,
+        )
+
+    assert store.list_task_runs(workspace_id, run_id)[0].state == "succeeded"
+    assert store.get_branch_decision(workspace_id, run_id, node.id) is None
+
+
 def test_postgres_scheduler_leadership_is_generation_fenced_and_persistent() -> None:
     dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
     store = PostgresSchedulerLeadershipStore(dsn)

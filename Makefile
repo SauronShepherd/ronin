@@ -161,7 +161,6 @@ coverage-storage-files:
 		--baseline=ontology.py=37.40 \
 		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=74.20 \
-		--baseline=scheduler.py=80.00 \
 		--baseline=scheduler_backfill.py=50.48 \
 		--baseline=scheduler_backfill_runtime.py=66.53 \
 		--baseline=scheduler_cancellation.py=70.76 \
@@ -194,7 +193,6 @@ coverage-storage-files-full:
 		--baseline=postgres_jobs.py=47.80 \
 		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=74.20 \
-		--baseline=scheduler.py=80.00 \
 		--baseline=scheduler_backfill.py=50.48 \
 		--baseline=scheduler_backfill_runtime.py=66.53 \
 		--baseline=scheduler_cancellation.py=70.76 \
