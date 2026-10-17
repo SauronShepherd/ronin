@@ -22,7 +22,14 @@ from studio_core import (
 )
 from studio_core.branching import BranchDecision, Scalar, evaluate_branch
 from studio_core.scheduler_resources import ResourcePoolDefinition
-from studio_orchestrator import Instant, LeaseToken
+from studio_orchestrator import (
+    Instant,
+    Job,
+    JobId,
+    JobState,
+    LeaseToken,
+    Run,
+)
 
 from .postgres_workflow import PostgresWorkflowBundleImportStore
 from .scheduler import (
@@ -30,9 +37,15 @@ from .scheduler import (
     WorkflowRunConflict,
     _task_run_id,
 )
+from .scheduler_execution import (
+    TaskExecutionIntent,
+    TaskExecutionLink,
+    TaskExecutionLinkConflict,
+    _intent_from_row,
+)
 from .scheduler_fencing import ClaimedTask, TaskAttemptId
 
-_SCHEMA_VERSION = 3
+_SCHEMA_VERSION = 4
 _SCHEMA = """
 CREATE TABLE ronin_workflow_runs (
     workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
@@ -76,10 +89,10 @@ CREATE INDEX ronin_task_runs_state_idx
 
 
 class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
-    """PostgreSQL workflow/run/task persistence with lease-fenced task attempts.
+    """PostgreSQL workflow/run/task persistence with leases and execution intents.
 
     This intentionally does not claim complete scheduler adapter conformance:
-    execution outbox, events, backfills and task evidence remain separate work.
+    event delivery, backfills and task evidence remain separate work.
     """
 
     def __init__(self, dsn: str, *, application_name: str = "ronin-scheduler-snapshots") -> None:
@@ -179,6 +192,44 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
                             .replace("+00:00", "Z"),
                         ),
                     )
+                    current = 3
+                if current == 3:
+                    cursor.execute(
+                        "CREATE TABLE ronin_task_execution_links ("
+                        "workspace_id TEXT NOT NULL,task_attempt_id TEXT NOT NULL,"
+                        "job_id TEXT NOT NULL,request_digest TEXT NOT NULL,"
+                        "created_at TEXT NOT NULL,"
+                        "PRIMARY KEY(workspace_id,task_attempt_id),UNIQUE(job_id),"
+                        "FOREIGN KEY(workspace_id,task_attempt_id) REFERENCES "
+                        "ronin_task_attempts(workspace_id,task_attempt_id) ON DELETE CASCADE)"
+                    )
+                    cursor.execute(
+                        "CREATE TABLE ronin_task_execution_intents ("
+                        "workspace_id TEXT NOT NULL,task_attempt_id TEXT NOT NULL,"
+                        "job_id TEXT NOT NULL,run_id TEXT NOT NULL,project_id TEXT NOT NULL,"
+                        "idempotency_key TEXT NOT NULL,request_digest TEXT NOT NULL,"
+                        "target TEXT NOT NULL,parameters_json TEXT NOT NULL,"
+                        "created_at TEXT NOT NULL,not_before TEXT NOT NULL,"
+                        "PRIMARY KEY(workspace_id,task_attempt_id),UNIQUE(job_id),"
+                        "FOREIGN KEY(workspace_id,task_attempt_id) REFERENCES "
+                        "ronin_task_execution_links(workspace_id,task_attempt_id) "
+                        "ON DELETE CASCADE)"
+                    )
+                    cursor.execute(
+                        "CREATE INDEX ronin_task_execution_intents_order_idx "
+                        "ON ronin_task_execution_intents(created_at,task_attempt_id)"
+                    )
+                    cursor.execute(
+                        "INSERT INTO ronin_scheduler_schema_migrations(version,applied_at) "
+                        "VALUES (%s,%s)",
+                        (
+                            4,
+                            datetime.now(UTC)
+                            .isoformat(timespec="microseconds")
+                            .replace("+00:00", "Z"),
+                        ),
+                    )
+                    current = 4
             connection.commit()
         except Exception:
             connection.rollback()
@@ -363,6 +414,15 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
         reclaimed = 0
         for attempt in attempts:
             workspace_id = WorkspaceId(attempt["workspace_id"])
+            cursor.execute(
+                "SELECT 1 FROM ronin_task_execution_intents "
+                "WHERE workspace_id=%s AND task_attempt_id=%s",
+                (str(workspace_id), attempt["task_attempt_id"]),
+            )
+            if cursor.fetchone() is not None:
+                # The durable intent is the outbox record. A dispatcher can replay it
+                # with the same Job id after restart, so this attempt must not be retried.
+                continue
             cursor.execute(
                 "SELECT workflow_run_id,node_id FROM ronin_task_runs "
                 "WHERE workspace_id=%s AND task_run_id=%s FOR UPDATE",
@@ -698,6 +758,250 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
                         now=current,
                     )
             connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def put_execution_intent(
+        self,
+        workspace_id: WorkspaceId,
+        attempt_id: TaskAttemptId,
+        *,
+        job: Job,
+        run: Run,
+        owner: str,
+        lease_token: LeaseToken,
+        now: Instant | str,
+    ) -> TaskExecutionIntent:
+        """Persist a replayable execution outbox intent under the task lease fence."""
+        current = Instant(now)
+        intent = TaskExecutionIntent(workspace_id, attempt_id, job, run)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                self._active_attempt(
+                    cursor,
+                    workspace_id,
+                    attempt_id,
+                    owner=owner,
+                    lease_token=lease_token,
+                    now=current,
+                )
+                cursor.execute(
+                    "SELECT job_id,request_digest FROM ronin_task_execution_links "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s FOR UPDATE",
+                    (str(workspace_id), str(attempt_id)),
+                )
+                link = cursor.fetchone()
+                if link is not None and (
+                    link["job_id"] != str(job.id) or link["request_digest"] != job.request_digest
+                ):
+                    raise TaskExecutionLinkConflict(
+                        "task attempt is already bound to different execution identity"
+                    )
+                if link is None:
+                    cursor.execute(
+                        "INSERT INTO ronin_task_execution_links"
+                        "(workspace_id,task_attempt_id,job_id,request_digest,created_at) "
+                        "VALUES (%s,%s,%s,%s,%s)",
+                        (
+                            str(workspace_id),
+                            str(attempt_id),
+                            str(job.id),
+                            job.request_digest,
+                            str(current),
+                        ),
+                    )
+                cursor.execute(
+                    "SELECT * FROM ronin_task_execution_intents "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s FOR UPDATE",
+                    (str(workspace_id), str(attempt_id)),
+                )
+                existing = cursor.fetchone()
+                if existing is not None:
+                    found = _intent_from_row(existing)
+                    if found != intent:
+                        raise TaskExecutionLinkConflict(
+                            "task attempt already has a different execution intent"
+                        )
+                    connection.commit()
+                    return found
+                cursor.execute(
+                    "INSERT INTO ronin_task_execution_intents"
+                    "(workspace_id,task_attempt_id,job_id,run_id,project_id,idempotency_key,"
+                    "request_digest,target,parameters_json,created_at,not_before) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (
+                        str(workspace_id),
+                        str(attempt_id),
+                        str(job.id),
+                        str(run.id),
+                        job.project_id,
+                        job.idempotency_key,
+                        job.request_digest,
+                        job.target,
+                        job.parameters_json,
+                        str(job.created_at),
+                        str(run.not_before),
+                    ),
+                )
+            connection.commit()
+            return intent
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def get_execution_link(
+        self, workspace_id: WorkspaceId, attempt_id: TaskAttemptId
+    ) -> TaskExecutionLink | None:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT job_id,request_digest FROM ronin_task_execution_links "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s",
+                    (str(workspace_id), str(attempt_id)),
+                )
+                row = cursor.fetchone()
+            connection.commit()
+            return (
+                None
+                if row is None
+                else TaskExecutionLink(
+                    workspace_id,
+                    attempt_id,
+                    JobId(row["job_id"]),
+                    row["request_digest"],
+                )
+            )
+        finally:
+            connection.close()
+
+    def get_execution_intent(
+        self, workspace_id: WorkspaceId, attempt_id: TaskAttemptId
+    ) -> TaskExecutionIntent | None:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM ronin_task_execution_intents "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s",
+                    (str(workspace_id), str(attempt_id)),
+                )
+                row = cursor.fetchone()
+            connection.commit()
+            return None if row is None else _intent_from_row(row)
+        finally:
+            connection.close()
+
+    def list_execution_intents(self, *, limit: int = 100) -> tuple[TaskExecutionIntent, ...]:
+        if not 1 <= limit <= 1000:
+            raise ValueError("execution intent limit must be between 1 and 1000")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM ronin_task_execution_intents "
+                    "ORDER BY created_at,task_attempt_id LIMIT %s",
+                    (limit,),
+                )
+                rows = cursor.fetchall()
+            connection.commit()
+            return tuple(_intent_from_row(row) for row in rows)
+        finally:
+            connection.close()
+
+    def reconcile_execution(
+        self,
+        workspace_id: WorkspaceId,
+        attempt_id: TaskAttemptId,
+        job: Job,
+        *,
+        now: Instant | str,
+    ) -> bool:
+        """Project a matching terminal Job result into the scheduler task state."""
+        if job.state not in {JobState.SUCCEEDED, JobState.FAILED}:
+            return False
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM ronin_task_attempts "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s FOR UPDATE",
+                    (str(workspace_id), str(attempt_id)),
+                )
+                attempt = cursor.fetchone()
+                if attempt is None:
+                    raise KeyError(str(attempt_id))
+                cursor.execute(
+                    "SELECT * FROM ronin_task_execution_intents "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s FOR UPDATE",
+                    (str(workspace_id), str(attempt_id)),
+                )
+                intent_row = cursor.fetchone()
+                if intent_row is None:
+                    raise KeyError(f"execution intent does not exist: {workspace_id}/{attempt_id}")
+                intent = _intent_from_row(intent_row)
+                if intent.job.id != job.id or intent.job.request_digest != job.request_digest:
+                    raise TaskExecutionLinkConflict("terminal job does not match execution intent")
+                cursor.execute(
+                    "SELECT * FROM ronin_task_runs "
+                    "WHERE workspace_id=%s AND task_run_id=%s FOR UPDATE",
+                    (str(workspace_id), attempt["task_run_id"]),
+                )
+                task = cursor.fetchone()
+                if task is None:
+                    raise AssertionError("task attempt references missing task run")
+                if task["state"] in {"succeeded", "failed"}:
+                    connection.commit()
+                    return True
+                workflow = self._workflow_state(
+                    cursor, workspace_id, WorkflowRunId(task["workflow_run_id"])
+                )
+                if job.state is JobState.SUCCEEDED:
+                    cursor.execute(
+                        "UPDATE ronin_task_attempts SET state='succeeded',failure_code=NULL,"
+                        "updated_at=%s WHERE workspace_id=%s AND task_attempt_id=%s",
+                        (str(current), str(workspace_id), str(attempt_id)),
+                    )
+                    cursor.execute(
+                        "UPDATE ronin_task_runs SET state='succeeded',next_eligible_at=NULL,"
+                        "updated_at=%s,row_version=row_version+1 "
+                        "WHERE workspace_id=%s AND task_run_id=%s",
+                        (str(current), str(workspace_id), task["task_run_id"]),
+                    )
+                    cursor.execute(
+                        "SELECT COUNT(*) AS count FROM ronin_task_runs "
+                        "WHERE workspace_id=%s AND workflow_run_id=%s AND state!='succeeded'",
+                        (str(workspace_id), workflow.id.value),
+                    )
+                    if int(cursor.fetchone()["count"]) == 0:
+                        self._write_workflow_state(
+                            cursor, workspace_id, workflow, "succeeded", current
+                        )
+                else:
+                    failure_code = job.failure_code or "execution_failed"
+                    cursor.execute(
+                        "UPDATE ronin_task_attempts SET state='failed',failure_code=%s,"
+                        "updated_at=%s WHERE workspace_id=%s AND task_attempt_id=%s",
+                        (failure_code, str(current), str(workspace_id), str(attempt_id)),
+                    )
+                    self._mark_failure_or_retry(
+                        cursor,
+                        workspace_id,
+                        workflow,
+                        task_run_id=TaskRunId(task["task_run_id"]),
+                        node_id=NodeId(task["node_id"]),
+                        attempt_ordinal=int(attempt["ordinal"]),
+                        now=current,
+                    )
+            connection.commit()
+            return True
         except Exception:
             connection.rollback()
             raise

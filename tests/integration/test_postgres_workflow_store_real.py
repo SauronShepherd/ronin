@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from uuid import uuid4
 
 import pytest
@@ -22,7 +23,8 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
-from studio_orchestrator import Instant, LeaseToken
+from studio_execution.scheduler_bridge import plan_scheduler_execution
+from studio_orchestrator import Instant, JobState, LeaseToken
 from studio_storage import (
     PostgresMetadataStore,
     PostgresSchedulerLeadershipStore,
@@ -403,6 +405,147 @@ def test_postgres_scheduler_attempt_leases_fence_workers_and_reclaim_expiry() ->
     )
     assert store.get_run(workspace_id, run_id).state == "succeeded"  # type: ignore[union-attr]
     assert store.resource_pool_usage(workspace_id, pool.name) == 0
+
+
+def test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles(
+    request: pytest.FixtureRequest,
+) -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    from studio_storage.postgres_core import _psycopg
+
+    psycopg, _ = _psycopg()
+    schema = f"scheduler_outbox_{uuid4().hex}"
+    connection = psycopg.connect(dsn)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"CREATE SCHEMA {schema}")
+        connection.commit()
+    finally:
+        connection.close()
+    schema_dsn = psycopg.conninfo.make_conninfo(dsn, options=f"-c search_path={schema},public")
+
+    def drop_schema() -> None:
+        cleanup = psycopg.connect(dsn)
+        try:
+            with cleanup.cursor() as cursor:
+                cursor.execute(f"DROP SCHEMA {schema} CASCADE")
+            cleanup.commit()
+        finally:
+            cleanup.close()
+
+    request.addfinalizer(drop_schema)
+    store = PostgresSchedulerSnapshotStore(schema_dsn, application_name="ronin-scheduler-outbox")
+    connection = store._connect()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_task_execution_intents")
+            cursor.execute("DROP TABLE ronin_task_execution_links")
+            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version=4")
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+    # Exercise the production upgrade path from the current schema-3 main branch.
+    store = PostgresSchedulerSnapshotStore(schema_dsn, application_name="ronin-scheduler-outbox")
+    workspace_id = WorkspaceId(f"scheduler-outbox-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Scheduler outbox"), now=NOW)
+    workflow_id = WorkflowId(f"scheduler-outbox-workflow-{uuid4().hex}")
+    node = Node.create(
+        operator=OperatorRef("notebook.run"),
+        instance_key=f"task-{uuid4().hex}",
+        params={"target": "notebooks/demo.ronin.json", "parameters": {}},
+    )
+    workflow = WorkflowDefinition(workflow_id, "Scheduler outbox", Pipeline((node,)))
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    run = store.create_run(
+        workspace_id,
+        WorkflowRunId(f"scheduler-outbox-run-{uuid4().hex}"),
+        workflow.id,
+        Trigger("manual", f"outbox-{uuid4().hex}"),
+        now=NOW,
+    )
+    claim = store.claim_next_task(
+        owner="outbox-worker",
+        lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+        attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+        lease_seconds=30,
+        now=NOW,
+        workspace_id=workspace_id,
+    )
+    assert claim is not None
+    plan = plan_scheduler_execution(claim, run, "postgres-outbox-project", now=NOW)
+    intent = store.put_execution_intent(
+        workspace_id,
+        claim.attempt_id,
+        job=plan.job,
+        run=plan.run,
+        owner=claim.lease_owner,
+        lease_token=claim.lease_token,
+        now=NOW,
+    )
+    assert (
+        store.put_execution_intent(
+            workspace_id,
+            claim.attempt_id,
+            job=plan.job,
+            run=plan.run,
+            owner=claim.lease_owner,
+            lease_token=claim.lease_token,
+            now=NOW,
+        )
+        == intent
+    )
+    assert store.get_execution_link(workspace_id, claim.attempt_id) == intent.link
+    assert store.get_execution_intent(workspace_id, claim.attempt_id) == intent
+    assert intent in store.list_execution_intents()
+
+    expired_at = Instant("2026-10-15T00:00:31.000000Z")
+    store.reclaim_expired(now=expired_at)
+    connection = store._connect()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT state FROM ronin_task_attempts "
+                "WHERE workspace_id=%s AND task_attempt_id=%s",
+                (str(workspace_id), str(claim.attempt_id)),
+            )
+            attempt_state = cursor.fetchone()["state"]
+        connection.commit()
+    finally:
+        connection.close()
+    assert attempt_state == "running"
+    assert (
+        store.claim_next_task(
+            owner="outbox-worker-restarted",
+            lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+            attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+            lease_seconds=30,
+            now=expired_at,
+            workspace_id=workspace_id,
+        )
+        is None
+    )
+
+    terminal = replace(
+        plan.job,
+        state=JobState.SUCCEEDED,
+        updated_at=expired_at,
+    )
+    assert store.reconcile_execution(
+        workspace_id,
+        claim.attempt_id,
+        terminal,
+        now=expired_at,
+    )
+    assert store.get_run(workspace_id, run.id).state == "succeeded"  # type: ignore[union-attr]
+    assert store.reconcile_execution(
+        workspace_id,
+        claim.attempt_id,
+        terminal,
+        now=expired_at,
+    )
 
 
 def test_postgres_scheduler_leadership_is_generation_fenced_and_persistent() -> None:
