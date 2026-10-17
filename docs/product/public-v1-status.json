@@ -1,27 +1,38 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-17T12:00:00+00:00",
-  "observed_main_sha": "5d598b903541f1c8aeaf2040896f2a4e6ae7ba45",
-  "observed_workspace_state": "committed implementation branch with one local generated qualification directory; generated artifacts are not release evidence",
+  "observed_at": "2026-10-17T10:00:03Z",
+  "observed_main_sha": "4daf8a164d729a6e91121849390233e66e68dfc7",
+  "observed_workspace_state": "tracked sources reconciled against main; local generated qualification outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "local_verification": {
     "observed_at": "2026-10-11",
+    "candidate_sha": "dfdb1045de2e997caa191ba81a8ec640c1dd04bd",
     "command": "python -m pytest -q",
     "result": "2266 passed, 15 skipped",
     "qualification_claimed": false,
     "mutation_campaign": {
       "status": "historical_frozen",
       "recurring_qualification": false,
-      "candidate_sha": "38980c46ce122294bb8f63f2f55a68f4fe0d49af",
-      "total": 3963,
-      "killed": 3390,
-      "survived": 573,
+      "candidate_sha": "868d4913e5105100a7f31dd26ce2166b65a609d3",
+      "total": 4306,
+      "killed": 3741,
+      "survived": 565,
       "timeout": 0,
-      "killed_percent_non_timeout": 85.54,
-      "killed_percent_all": 85.54,
+      "no_tests": 0,
+      "suspicious": 0,
+      "killed_percent_non_timeout": 86.88,
+      "killed_percent_all": 86.88,
       "gate_percent": 90.0,
-      "gate_status": "retired"
+      "gate_status": "retired",
+      "superseded_ledger_snapshot": {
+        "candidate_sha": "38980c46ce122294bb8f63f2f55a68f4fe0d49af",
+        "total": 3963,
+        "killed": 3390,
+        "survived": 573,
+        "timeout": 0,
+        "killed_percent": 85.54
+      }
     }
   },
   "status_vocabulary": [
@@ -157,11 +168,10 @@
   ],
   "human_decisions": [
     {
-      "issue": 50,
-      "summary": "Runtime capability namespace, value semantics and ambiguity policy."
+      "summary": "License/NOTICE/attribution conclusions and release approval remain human review decisions."
     },
     {
-      "summary": "License/NOTICE/attribution conclusions and release approval remain human review decisions."
+      "summary": "Mutation qualification remains retired; a new campaign requires an explicit product decision and plan."
     }
   ],
   "recent_public_v1_merges": [

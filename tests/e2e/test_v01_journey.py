@@ -47,6 +47,8 @@ from studio_server import RoninHTTPServer
 from studio_storage import SqliteJobStore
 from studio_worker import LocalWorkerRuntimeConfig, WorkerPaths
 
+from tools.v01_acceptance_gate import EXPECTED_STEP_NAMES
+
 pytestmark = pytest.mark.e2e
 
 _IMAGE = os.environ.get("RONIN_DOCKER_QUALIFICATION_IMAGE")
@@ -911,12 +913,7 @@ def test_step_15_sdk_round_trip_matches_cli(operator_journey: dict[str, object])
     assert sdk_result.state.value == status["state"]
 
 
-def test_journey_progress_is_reported(record_property) -> None:
-    """Emit how many acceptance steps are live without gating on that count."""
-    steps = [value for name, value in globals().items() if name.startswith("test_step_")]
-    skipped = sum(
-        1 for step in steps if any(mark.name == "skip" for mark in getattr(step, "pytestmark", []))
-    )
-    record_property("acceptance_steps_live", len(steps) - skipped)
-    record_property("acceptance_steps_total", len(steps))
-    assert len(steps) == 15
+def test_journey_declares_exactly_the_frozen_acceptance_steps() -> None:
+    """Keep the executable step inventory aligned with the strict acceptance gate."""
+    actual = {name for name in globals() if name.startswith("test_step_")}
+    assert actual == set(EXPECTED_STEP_NAMES)
