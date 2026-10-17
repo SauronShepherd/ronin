@@ -37,21 +37,25 @@ test('Cloud Studio validates a target and generates a reviewable plan', async ({
 
 test('Access Studio renders workspace role scope inventory', async ({ page }) => {
   let roleAssigned = false;
+  let principal;
+  let group;
   await page.route('**/v1/admin/security/principals**', async route => {
     if (route.request().method() === 'PUT') {
       expect(route.request().postDataJSON()).toEqual({ kind: 'user', display_name: 'Alice', issuer: 'oidc', subject: 'alice-sub', email: 'alice@example.test', active: true });
-      await route.fulfill({ json: { id: 'alice', kind: 'user' } });
+      principal = { id: 'alice', kind: 'user', display_name: 'Alice' };
+      await route.fulfill({ json: principal });
       return;
     }
-    await route.fulfill({ json: { items: [] } });
+    await route.fulfill({ json: { items: principal ? [principal] : [] } });
   });
   await page.route('**/v1/admin/security/principals/alice', async route => {
     expect(route.request().method()).toBe('PUT');
     expect(route.request().postDataJSON()).toEqual({ kind: 'user', display_name: 'Alice', issuer: 'oidc', subject: 'alice-sub', email: 'alice@example.test', active: true });
-    await route.fulfill({ json: { id: 'alice', kind: 'user' } });
+    principal = { id: 'alice', kind: 'user', display_name: 'Alice' };
+    await route.fulfill({ json: principal });
   });
   await page.route('**/v1/admin/security/groups', async route => {
-    await route.fulfill({ json: { items: [] } });
+    await route.fulfill({ json: { items: group ? [group] : [] } });
   });
   await page.route('**/v1/admin/security/role-bindings', async route => {
     await route.fulfill({ json: { items: [
@@ -67,7 +71,8 @@ test('Access Studio renders workspace role scope inventory', async ({ page }) =>
   await page.route('**/v1/admin/security/groups/team', async route => {
     expect(route.request().method()).toBe('PUT');
     expect(route.request().postDataJSON()).toEqual({ name: 'Data Team' });
-    await route.fulfill({ json: { id: 'team', name: 'Data Team' } });
+    group = { id: 'team', name: 'Data Team' };
+    await route.fulfill({ json: group });
   });
   await page.goto('./#access');
   await expect(page.locator('#role-name option')).toHaveCount(4);
@@ -136,6 +141,7 @@ test('Workspace and project Studio journey covers environment, Bundle and archiv
   await page.locator('#workspace-create-description').fill('P1-006');
   await page.getByRole('button', { name: 'Create' }).click();
   await page.getByRole('link', { name: 'Open projects' }).click();
+  await expect(page.locator('#project-list')).toContainText('project-journey');
   await page.locator('#project-manifest').fill('{"project":{"id":"project-journey","name":"Project Journey"}}');
   await page.getByRole('button', { name: 'Create project' }).click();
   await page.locator('#project-environment-form input[name="project_id"]').fill('project-journey');
