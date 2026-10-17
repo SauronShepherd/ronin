@@ -27,12 +27,15 @@ from studio_core.scheduler_events import (
 )
 from studio_core.scheduler_resources import ResourcePoolDefinition
 from studio_orchestrator import (
+    EvidenceAvailability,
     Instant,
     Job,
     JobId,
     JobState,
     LeaseToken,
     Run,
+    RunId,
+    StoredEvidenceRef,
 )
 
 from .postgres_scheduler_backfills import PostgresSchedulerBackfillMixin
@@ -1023,6 +1026,46 @@ class PostgresSchedulerSnapshotStore(
                 row = cursor.fetchone()
             connection.commit()
             return None if row is None else _intent_from_row(row)
+        finally:
+            connection.close()
+
+    def read_task_evidence(
+        self, workspace_id: WorkspaceId, attempt_id: TaskAttemptId
+    ) -> tuple[StoredEvidenceRef, ...]:
+        """Read Job evidence linked to one workspace-scoped scheduler attempt."""
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT e.* FROM ronin_task_execution_intents i "
+                    "JOIN ronin_evidence_refs e ON e.run_id=i.run_id "
+                    "WHERE i.workspace_id=%s AND i.task_attempt_id=%s "
+                    "ORDER BY e.cell_id NULLS FIRST,e.role,e.availability,e.digest",
+                    (str(workspace_id), str(attempt_id)),
+                )
+                rows = cursor.fetchall()
+            connection.commit()
+            return tuple(
+                StoredEvidenceRef(
+                    run_id=RunId(str(row["run_id"])),
+                    cell_id=None if row["cell_id"] is None else str(row["cell_id"]),
+                    role=str(row["role"]),
+                    digest_algorithm=(
+                        None if row["digest_algorithm"] is None else str(row["digest_algorithm"])
+                    ),
+                    digest=None if row["digest"] is None else str(row["digest"]),
+                    media_type=None if row["media_type"] is None else str(row["media_type"]),
+                    size_bytes=None if row["size_bytes"] is None else int(row["size_bytes"]),
+                    storage_ref=None if row["storage_ref"] is None else str(row["storage_ref"]),
+                    availability=EvidenceAvailability(str(row["availability"])),
+                    unavailable_reason=(
+                        None
+                        if row["unavailable_reason"] is None
+                        else str(row["unavailable_reason"])
+                    ),
+                )
+                for row in rows
+            )
         finally:
             connection.close()
 
