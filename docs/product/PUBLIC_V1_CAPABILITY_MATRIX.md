@@ -3,7 +3,7 @@
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed candidate:** `25d0c440729161dc3b3116580fcd894ae5e0cc10` (`main`, 2026-10-17).
+**Observed candidate:** `d45a7fb605ca4393e25c3aaec52e6dd1fbfac449` (`main`, 2026-10-17). The exact application-code qualification evidence is recorded against `25d0c44`; `d45a7fb` is the subsequent docs-only reconciliation commit.
 
 This matrix is a conservative release view of P1–P14. `implemented` means
 that the repository contains the described source path. `qualified` means
