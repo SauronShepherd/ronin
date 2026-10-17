@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-17T13:41:07Z",
-  "observed_main_sha": "2a7d0c9ef697d3de131f04d0973b49bfb2e1c780",
-  "observed_workspace_state": "observed main SHA; working tree adds PostgreSQL scheduler-leadership persistence; generated outputs are excluded from release evidence",
+  "observed_at": "2026-10-17T14:20:32Z",
+  "observed_main_sha": "e3ca935055968460ba4a0cc3063617c42383b45f",
+  "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "progress": {
@@ -81,7 +81,7 @@
     {
       "id": "p5-durable-dag-scheduler",
       "status": "partial",
-      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook adapters, and durable notification retry/error recording exist. Crash-restart recovery, notification provider qualification, and broader operator conformance remain incomplete. PostgreSQL stores atomic workflow run/task snapshots and replay-safe branch decisions. The working tree adds PostgreSQL generation-fenced scheduler leadership. PostgreSQL task-attempt leases and complete run/event/backfill/task-evidence storage remain incomplete; scheduler HTTP routes remain unavailable until these are implemented and qualified."
+      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook adapters, and durable notification retry/error recording exist. Crash-restart recovery, notification provider qualification, and broader operator conformance remain incomplete. PostgreSQL stores atomic workflow run/task snapshots, replay-safe branch decisions, and generation-fenced scheduler leadership. PostgreSQL task-attempt leases and complete run/event/backfill/task-evidence storage remain incomplete; scheduler HTTP routes remain unavailable until these are implemented and qualified."
     },
     {
       "id": "p6-catalog-lineage",
