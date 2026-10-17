@@ -7,7 +7,7 @@
 **Observed workspace snapshot:** 2026-10-17. The tracked source was reconciled
 against `main`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `4daf8a164d729a6e91121849390233e66e68dfc7` (2026-10-17).
+**Observed source head:** `25d0c440729161dc3b3116580fcd894ae5e0cc10` (2026-10-17).
 This is the exact source identity used by the main-branch CI, Docker, Web,
 Security, Release and Status consistency runs recorded below.
 **Release status:** **INCOMPLETE**.
@@ -24,17 +24,23 @@ evidence.
 
 ## Exact-head qualification snapshot
 
-On `main@4daf8a164d729a6e91121849390233e66e68dfc7` (2026-10-17), GitHub
-reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39018190123)
-(Python 3.11/3.12), [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39018190124),
-[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39018190116),
-[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39018190148),
-[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39018190102)
-and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39018190101).
-CI's `mutation` job was skipped; skipped is not pass. This is exact-head
-automation evidence only. The Public v1 release remains **INCOMPLETE**, and
-product qualification remains **blocked** by incomplete capability journeys
-and external/human-owned evidence.
+On `main@25d0c440729161dc3b3116580fcd894ae5e0cc10` (2026-10-17), GitHub
+reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39024767459)
+(Python 3.11/3.12), [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39024767432),
+[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39024767421),
+[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39024767422),
+[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39024767438)
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39024767522).
+Docker included PostgreSQL storage coverage, real container qualification, and
+strict frozen v0.1 acceptance (15 passed, zero skips/failures/errors). CI's
+`mutation` job was skipped; skipped is not pass. This is exact-head automation
+evidence only. The Public v1 release remains **INCOMPLETE**, and product
+qualification remains **blocked** by incomplete capability journeys and
+external/human-owned evidence.
+
+The local Docker qualification on this same source SHA also completed with 21
+passed in 112.16 seconds and strict v0.1 acceptance at 15/15, with no skips,
+failures, or errors.
 
 The current workspace includes the implementation families listed in the
 package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
