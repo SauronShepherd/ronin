@@ -226,7 +226,7 @@
   ],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
-    "Continue #102: strict v0.1 gate, exact-candidate aggregator, artifact qualification (96%), license qualification (97%), SBOM generation (96%), supply-chain evidence (97%), and mutation-policy parser (97%) now have a 90% line floor; add policy for remaining release-decision tooling.",
+    "Continue #102: coverage-release-gates applies a 90% line floor to 11 release-decision modules: strict gate (94%), aggregator (100%), artifact identity (96%), release evidence (91%), evidence emission (100%), installed-artifact evidence (96%), artifact qualification (96%), license qualification (97%), SBOM generation (96%), supply-chain evidence (97%), and mutation policy (97%). Review future decision modules against the policy.",
     "Complete scheduler broad task adapters, branching/notifications, public scheduler APIs/UI, process/deployment wiring and PostgreSQL HA semantics/qualification.",
     "Extend native Bundle support to the next executable canonical metadata family, preferring workflow/pipeline persistence if its canonical snapshot/store contracts preserve identity without deployment locators; then quality/ontology/ML/GenAI as their contracts permit.",
     "Finish storage ports for remaining domains, then qualify the wired PostgreSQL JobStore and the existing S3-compatible artifact adapter.",

@@ -50,6 +50,9 @@ def build_manifest(paths: list[Path], *, commit: str) -> dict[str, object]:
         artifacts.append({"name": path.name, "kind": kind, "sha256": sha256, "size": size})
     if not artifacts:
         raise ValueError("at least one artifact is required")
+    names = [artifact["name"] for artifact in artifacts]
+    if len(names) != len(set(names)):
+        raise ValueError("artifact names must be unique")
     return {
         "schema": SCHEMA,
         "commit": commit,

@@ -36,6 +36,8 @@ def _artifact_digests(path: Path, commit: str) -> dict[str, str]:
         manifest = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"cannot read artifact identity: {path}") from exc
+    if not isinstance(manifest, dict):
+        raise ValueError("artifact identity must be a JSON object")
     if manifest.get("schema") != "ronin.artifact-identity/v1":
         raise ValueError("artifact identity schema is invalid")
     if manifest.get("commit") != commit:

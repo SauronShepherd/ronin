@@ -135,8 +135,8 @@ coverage-tools:
 	coverage report --fail-under=60 --include="*/tools/*.py"
 
 coverage-release-gates:
-	# Keep release, mutation-policy, license, SBOM, and provenance decisions at the T2 90% floor.
-	coverage report --fail-under=90 --include="*/tools/v01_acceptance_gate.py,*/tools/aggregate_release_evidence.py,*/tools/artifact_qualification.py,*/tools/license_qualification.py,*/tools/generate_sbom.py,*/tools/supply_chain_evidence.py,*/tools/mutation_gate.py"
+	# Keep all release-decision and candidate-evidence tools at the T2 90% line-coverage floor.
+	coverage report --fail-under=90 --include="*/tools/v01_acceptance_gate.py,*/tools/aggregate_release_evidence.py,*/tools/artifact_qualification.py,*/tools/license_qualification.py,*/tools/generate_sbom.py,*/tools/supply_chain_evidence.py,*/tools/mutation_gate.py,*/tools/release_evidence.py,*/tools/emit_release_evidence.py,*/tools/installed_artifact_evidence.py,*/tools/artifact_identity.py"
 
 coverage-storage-files:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
