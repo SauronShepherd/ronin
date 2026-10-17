@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-17T12:07:00Z",
-  "observed_main_sha": "106ec8ebf02f9a5f0e0a757593bf3fb91501169b",
+  "observed_at": "2026-10-17T12:24:49Z",
+  "observed_main_sha": "db9c81d7e8a5e809c61c4f5c4dffb455aad69ad3",
   "observed_workspace_state": "observed main SHA; working tree adds SQLite scheduler outbox reopen/replay evidence; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
