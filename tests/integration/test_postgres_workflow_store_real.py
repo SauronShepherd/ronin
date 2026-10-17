@@ -45,6 +45,7 @@ from studio_core.scheduler_events import (
 from studio_execution import DurableExecutionService
 from studio_execution.scheduler_backfill import BackfillTickResult, SchedulerBackfillService
 from studio_execution.scheduler_bridge import plan_scheduler_execution
+from studio_execution.scheduler_cancellation import cancel_workflow_run
 from studio_execution.scheduler_dispatch import (
     dispatch_execution_intent,
     reconcile_execution_intent,
@@ -58,6 +59,7 @@ from studio_orchestrator import (
     StoredEvidenceRef,
 )
 from studio_storage import (
+    InMemoryJobStore,
     PostgresJobReadPort,
     PostgresMetadataStore,
     PostgresSchedulerLeadershipStore,
@@ -74,7 +76,10 @@ from studio_storage.scheduler_backfill import (
     BackfillRun,
 )
 from studio_storage.scheduler_backfill_runtime import BackfillCapacityExhausted
-from studio_storage.scheduler_cancellation import execution_intent_dispatch_allowed
+from studio_storage.scheduler_cancellation import (
+    execution_intent_dispatch_allowed,
+    request_workflow_cancellation,
+)
 from studio_storage.scheduler_events import (
     EventDelivery,
     SchedulerEventConflict,
@@ -331,6 +336,249 @@ def test_postgres_scheduler_timeout_requests_and_dispatch_authority_are_durable(
     assert finalize_timed_out_attempt(store, cancelled_request, now=timeout_at)
     assert store.get_run(workspace_id, cancelled_run_id).state == "cancelled"  # type: ignore[union-attr]
     assert store.list_task_runs(workspace_id, cancelled_run_id)[0].state == "cancelled"
+
+
+def test_postgres_workflow_cancellation_reconciles_durable_job_and_outbox() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerSnapshotStore(dsn, application_name="ronin-scheduler-cancellation")
+    workspace_id = WorkspaceId(f"cancel-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Cancellation qualification"), now=NOW)
+    node = Node.create(
+        operator=OperatorRef("notebook.run"),
+        instance_key=f"cancel-task-{uuid4().hex}",
+        params={"target": "notebooks/demo.ronin.json", "parameters": {}},
+    )
+    workflow = WorkflowDefinition(
+        WorkflowId(f"cancel-workflow-{uuid4().hex}"),
+        "Cancellation qualification",
+        Pipeline((node,)),
+    )
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    workflow_run_id = WorkflowRunId(f"cancel-run-{uuid4().hex}")
+    store.create_run(
+        workspace_id,
+        workflow_run_id,
+        workflow.id,
+        Trigger("manual", f"cancel-{uuid4().hex}"),
+        now=NOW,
+    )
+    claim = store.claim_next_task(
+        owner="cancel-worker",
+        lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+        attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+        lease_seconds=30,
+        now=NOW,
+        workspace_id=workspace_id,
+    )
+    assert claim is not None
+    workflow_run = store.get_run(workspace_id, workflow_run_id)
+    assert workflow_run is not None
+    plan = plan_scheduler_execution(claim, workflow_run, "cancel-project", now=NOW)
+    intent = store.put_execution_intent(
+        workspace_id,
+        claim.attempt_id,
+        job=plan.job,
+        run=plan.run,
+        owner=claim.lease_owner,
+        lease_token=claim.lease_token,
+        now=NOW,
+    )
+
+    async def scenario() -> None:
+        service = DurableExecutionService(InMemoryJobStore())
+        try:
+            await dispatch_execution_intent(intent, service)
+            assert (
+                await cancel_workflow_run(store, service, workspace_id, workflow_run_id, now=NOW)
+                == 1
+            )
+            cancelled_job = await service.status(intent.job.id)
+            assert cancelled_job is not None
+            assert cancelled_job.state is JobState.CANCELLED
+            assert await reconcile_execution_intent(intent, service, store, now=NOW)
+        finally:
+            await service.aclose()
+
+    asyncio.run(scenario())
+    assert store.get_run(workspace_id, workflow_run_id).state == "cancelled"  # type: ignore[union-attr]
+    assert store.list_task_runs(workspace_id, workflow_run_id)[0].state == "cancelled"
+
+
+def test_postgres_workflow_cancellation_retires_unsubmitted_outbox() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerSnapshotStore(dsn, application_name="ronin-scheduler-cancel-outbox")
+    workspace_id = WorkspaceId(f"cancel-outbox-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Cancellation outbox qualification"), now=NOW)
+    node = Node.create(
+        operator=OperatorRef("notebook.run"),
+        instance_key=f"cancel-outbox-task-{uuid4().hex}",
+        params={"target": "notebooks/demo.ronin.json", "parameters": {}},
+    )
+    workflow = WorkflowDefinition(
+        WorkflowId(f"cancel-outbox-workflow-{uuid4().hex}"),
+        "Cancellation outbox qualification",
+        Pipeline((node,)),
+    )
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    workflow_run_id = WorkflowRunId(f"cancel-outbox-run-{uuid4().hex}")
+    store.create_run(
+        workspace_id,
+        workflow_run_id,
+        workflow.id,
+        Trigger("manual", f"cancel-outbox-{uuid4().hex}"),
+        now=NOW,
+    )
+    claim = store.claim_next_task(
+        owner="cancel-outbox-worker",
+        lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+        attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+        lease_seconds=30,
+        now=NOW,
+        workspace_id=workspace_id,
+    )
+    assert claim is not None
+    workflow_run = store.get_run(workspace_id, workflow_run_id)
+    assert workflow_run is not None
+    plan = plan_scheduler_execution(claim, workflow_run, "cancel-project", now=NOW)
+    store.put_execution_intent(
+        workspace_id,
+        claim.attempt_id,
+        job=plan.job,
+        run=plan.run,
+        owner=claim.lease_owner,
+        lease_token=claim.lease_token,
+        now=NOW,
+    )
+
+    async def scenario() -> None:
+        service = DurableExecutionService(InMemoryJobStore())
+        try:
+            assert (
+                await cancel_workflow_run(store, service, workspace_id, workflow_run_id, now=NOW)
+                == 0
+            )
+        finally:
+            await service.aclose()
+
+    asyncio.run(scenario())
+    assert store.get_execution_intent(workspace_id, claim.attempt_id) is None
+    assert store.get_run(workspace_id, workflow_run_id).state == "cancelled"  # type: ignore[union-attr]
+    assert store.list_task_runs(workspace_id, workflow_run_id)[0].state == "cancelled"
+
+
+def test_postgres_workflow_cancellation_fences_claim_before_intent() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerSnapshotStore(dsn, application_name="ronin-scheduler-cancel-claim")
+    workspace_id = WorkspaceId(f"cancel-claim-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Cancellation claim qualification"), now=NOW)
+    node = Node.create(
+        operator=OperatorRef("notebook.run"),
+        instance_key=f"cancel-claim-task-{uuid4().hex}",
+        params={"target": "notebooks/demo.ronin.json", "parameters": {}},
+    )
+    workflow = WorkflowDefinition(
+        WorkflowId(f"cancel-claim-workflow-{uuid4().hex}"),
+        "Cancellation claim qualification",
+        Pipeline((node,)),
+    )
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    workflow_run_id = WorkflowRunId(f"cancel-claim-run-{uuid4().hex}")
+    store.create_run(
+        workspace_id,
+        workflow_run_id,
+        workflow.id,
+        Trigger("manual", f"cancel-claim-{uuid4().hex}"),
+        now=NOW,
+    )
+    claim = store.claim_next_task(
+        owner="cancel-claim-worker",
+        lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+        attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+        lease_seconds=30,
+        now=NOW,
+        workspace_id=workspace_id,
+    )
+    assert claim is not None
+    workflow_run = store.get_run(workspace_id, workflow_run_id)
+    assert workflow_run is not None
+    plan = plan_scheduler_execution(claim, workflow_run, "cancel-project", now=NOW)
+
+    assert request_workflow_cancellation(store, workspace_id, workflow_run_id, now=NOW) == ()
+    with pytest.raises(ValueError, match="lease ownership lost"):
+        store.put_execution_intent(
+            workspace_id,
+            claim.attempt_id,
+            job=plan.job,
+            run=plan.run,
+            owner=claim.lease_owner,
+            lease_token=claim.lease_token,
+            now=NOW,
+        )
+    assert store.get_run(workspace_id, workflow_run_id).state == "cancelled"  # type: ignore[union-attr]
+    assert store.list_task_runs(workspace_id, workflow_run_id)[0].state == "cancelled"
+
+
+def test_postgres_workflow_cancellation_persists_authority_before_waiting_on_tasks() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerSnapshotStore(dsn, application_name="ronin-cancel-lock-order")
+    workspace_id = WorkspaceId(f"cancel-lock-ws-{uuid4().hex}")
+    store.create_workspace(
+        Workspace(workspace_id, "Cancellation lock-order qualification"), now=NOW
+    )
+    node = Node.create(
+        operator=OperatorRef("notebook.run"),
+        instance_key=f"cancel-lock-task-{uuid4().hex}",
+        params={"target": "notebooks/demo.ronin.json", "parameters": {}},
+    )
+    workflow = WorkflowDefinition(
+        WorkflowId(f"cancel-lock-workflow-{uuid4().hex}"),
+        "Cancellation lock-order qualification",
+        Pipeline((node,)),
+    )
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    workflow_run_id = WorkflowRunId(f"cancel-lock-run-{uuid4().hex}")
+    store.create_run(
+        workspace_id,
+        workflow_run_id,
+        workflow.id,
+        Trigger("manual", f"cancel-lock-{uuid4().hex}"),
+        now=NOW,
+    )
+    task_run = store.list_task_runs(workspace_id, workflow_run_id)[0]
+
+    lock_connection = store._connect()
+    with lock_connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT task_run_id FROM ronin_task_runs "
+            "WHERE workspace_id=%s AND task_run_id=%s FOR UPDATE",
+            (str(workspace_id), str(task_run.id)),
+        )
+        assert cursor.fetchone() is not None
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(
+            request_workflow_cancellation,
+            store,
+            workspace_id,
+            workflow_run_id,
+            now=NOW,
+        )
+        try:
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline:
+                workflow_run = store.get_run(workspace_id, workflow_run_id)
+                if workflow_run is not None and workflow_run.state == "cancelling":
+                    break
+                time.sleep(0.01)
+            else:
+                raise AssertionError(
+                    "workflow cancellation waited for a task lock before persisting authority loss"
+                )
+        finally:
+            lock_connection.rollback()
+            lock_connection.close()
+
+        assert future.result(timeout=5) == ()
+    assert store.get_run(workspace_id, workflow_run_id).state == "cancelled"  # type: ignore[union-attr]
 
 
 def test_postgres_workflow_and_schedule_bundle_import_is_atomic_and_idempotent() -> None:

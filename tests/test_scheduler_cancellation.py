@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from studio_core import (
@@ -28,10 +29,12 @@ from studio_execution.scheduler_dispatch import (
     dispatch_execution_intent,
     reconcile_execution_intent,
 )
-from studio_orchestrator import Instant, JobState, LeaseToken
+from studio_orchestrator import Instant, JobId, JobState, LeaseToken
 from studio_storage import InMemoryJobStore
 from studio_storage.scheduler_cancellation import (
+    cancel_unsubmitted_execution,
     execution_intent_dispatch_allowed,
+    reconcile_cancelled_execution,
     request_workflow_cancellation,
 )
 from studio_storage.scheduler_execution import SchedulerExecutionLinkStore
@@ -51,6 +54,39 @@ def test_dispatch_authority_helper_delegates_to_postgres_adapter(allowed: bool) 
 
     sentinel = object()
     assert execution_intent_dispatch_allowed(PostgresDispatchAdapter(), sentinel) is allowed
+
+
+def test_cancellation_helpers_delegate_to_postgres_adapter() -> None:
+    workspace_id = WorkspaceId("workspace-1")
+    workflow_run_id = WorkflowRunId("workflow-run-1")
+    job_id = JobId("job-1")
+    attempt_id = TaskAttemptId("attempt-1")
+    cancelled_job = SimpleNamespace(id=job_id, request_digest="digest", state=JobState.CANCELLED)
+
+    class PostgresCancellationAdapter:
+        def postgres_request_workflow_cancellation(self, workspace, run, *, now):
+            assert (workspace, run, now) == (workspace_id, workflow_run_id, LATER)
+            return (job_id,)
+
+        def postgres_cancel_unsubmitted_execution(self, workspace, job, *, now):
+            assert (workspace, job, now) == (workspace_id, job_id, LATER)
+            return True
+
+        def postgres_reconcile_cancelled_execution(self, workspace, attempt, job, *, now):
+            assert (workspace, attempt, job, now) == (
+                workspace_id,
+                attempt_id,
+                cancelled_job,
+                LATER,
+            )
+            return True
+
+    store = PostgresCancellationAdapter()
+    assert request_workflow_cancellation(store, workspace_id, workflow_run_id, now=LATER) == (
+        job_id,
+    )
+    assert cancel_unsubmitted_execution(store, workspace_id, job_id, now=LATER)
+    assert reconcile_cancelled_execution(store, workspace_id, attempt_id, cancelled_job, now=LATER)
 
 
 def _manifest() -> ProjectManifest:
