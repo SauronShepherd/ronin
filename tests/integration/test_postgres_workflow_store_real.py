@@ -248,6 +248,17 @@ def test_postgres_scheduler_run_and_task_snapshots_are_atomic_and_idempotent() -
 def test_postgres_scheduler_leadership_is_generation_fenced_and_persistent() -> None:
     dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
     store = PostgresSchedulerLeadershipStore(dsn)
+    # Docker qualification runs this suite more than once against one database.
+    connection = store._connect()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM ronin_scheduler_leader_lease WHERE scope='scheduler'")
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
     assert store.get_scheduler_leader() is None
     first_token = LeaseToken(f"leader-token-{uuid4().hex}")
     first = store.acquire_scheduler_leadership(
