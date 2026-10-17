@@ -31,8 +31,15 @@ from studio_core.scheduler_events import (
 )
 from studio_execution.scheduler_backfill import BackfillTickResult, SchedulerBackfillService
 from studio_execution.scheduler_bridge import plan_scheduler_execution
-from studio_orchestrator import Instant, JobState, LeaseToken
+from studio_orchestrator import (
+    AttemptId,
+    Instant,
+    JobState,
+    LeaseToken,
+    StoredEvidenceRef,
+)
 from studio_storage import (
+    PostgresJobReadPort,
     PostgresMetadataStore,
     PostgresSchedulerLeadershipStore,
     PostgresSchedulerSnapshotStore,
@@ -525,6 +532,37 @@ def test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles(
     assert store.get_execution_link(workspace_id, claim.attempt_id) == intent.link
     assert store.get_execution_intent(workspace_id, claim.attempt_id) == intent
     assert intent in store.list_execution_intents()
+
+    job_store = PostgresJobReadPort(schema_dsn, application_name="ronin-scheduler-task-evidence")
+    job_store.create_job(plan.job, plan.run)
+    worker_claim = job_store.claim_next_run(
+        owner="task-evidence-worker",
+        lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+        attempt_id=AttemptId(f"attempt-{uuid4().hex}"),
+        lease_seconds=30,
+        now=NOW,
+    )
+    assert worker_claim is not None
+    evidence = StoredEvidenceRef(
+        plan.run.id,
+        "cell-1",
+        "stdout",
+        "sha256",
+        "a" * 64,
+        "text/plain",
+        2,
+        "local://task-evidence",
+    )
+    job_store.put_evidence(
+        worker_claim.attempt_id,
+        evidence,
+        owner="task-evidence-worker",
+        lease_token=worker_claim.lease_token,
+        now=NOW,
+    )
+    assert store.read_task_evidence(workspace_id, claim.attempt_id) == (evidence,)
+    assert store.read_task_evidence(WorkspaceId(f"other-{workspace_id}"), claim.attempt_id) == ()
+    assert store.read_task_evidence(workspace_id, TaskAttemptId(f"missing-{uuid4().hex}")) == ()
 
     expired_at = Instant("2026-10-15T00:00:31.000000Z")
     store.reclaim_expired(now=expired_at)
