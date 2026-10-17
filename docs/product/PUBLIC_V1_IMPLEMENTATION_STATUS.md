@@ -5,10 +5,9 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-17. The tracked source is based on
-`main@2a7d0c9`; the working tree adds PostgreSQL scheduler-leadership
-persistence. Untracked qualification output directories are not release
+`main@e3ca935`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `2a7d0c9ef697d3de131f04d0973b49bfb2e1c780` (2026-10-17).
+**Observed source head:** `e3ca935055968460ba4a0cc3063617c42383b45f` (2026-10-17).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -78,20 +77,27 @@ consistency, quality, dependencies and negative gates. Docker passed
 PostgreSQL storage coverage, real container qualification, and strict frozen
 v0.1 acceptance; `mutation` was skipped.
 
-The current `main@2a7d0c9ef697d3de131f04d0973b49bfb2e1c780` passed
+The prior `main@2a7d0c9ef697d3de131f04d0973b49bfb2e1c780` passed
 [CI](https://github.com/SauronShepherd/ronin/actions/runs/39036976451),
 [Docker](https://github.com/SauronShepherd/ronin/actions/runs/39036976461),
 [Web](https://github.com/SauronShepherd/ronin/actions/runs/39036976408),
 [Security](https://github.com/SauronShepherd/ronin/actions/runs/39036976428),
 [Release](https://github.com/SauronShepherd/ronin/actions/runs/39036976444),
 and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39036976413).
-PostgreSQL snapshots and replay-safe branch decisions persist in main. The
-working tree adds a PostgreSQL generation-fenced leadership store; its real
-PostgreSQL integration passed 4 tests with 87% adapter coverage. The local
-scheduler/workflow suite passed 115 tests. Ruff, formatting, architecture,
-focused mypy for the new adapter, and status generator checks passed. The
-repository-wide mypy command reports three existing unused-ignore errors in
-unrelated files. Standard CI
+The current `main@e3ca935055968460ba4a0cc3063617c42383b45f` passed
+[CI](https://github.com/SauronShepherd/ronin/actions/runs/39039830705),
+[Docker](https://github.com/SauronShepherd/ronin/actions/runs/39039830679),
+[Web](https://github.com/SauronShepherd/ronin/actions/runs/39039830690),
+[Security](https://github.com/SauronShepherd/ronin/actions/runs/39039830694),
+[Release](https://github.com/SauronShepherd/ronin/actions/runs/39039830715),
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39039830750).
+PostgreSQL snapshots, replay-safe branch decisions and generation-fenced
+leadership persist in main. The real PostgreSQL integration passed 4 tests
+with 87% leadership-adapter coverage, including repeat execution against the
+same database. The local scheduler/workflow suite passed 115 tests. Ruff,
+formatting, architecture, focused mypy for the adapter, and status generator
+checks passed. The repository-wide mypy command reports three existing
+unused-ignore errors in unrelated files. Standard CI
 excludes PostgreSQL-only adapters from its no-service coverage gate; Docker
 runs the full per-file coverage gate against PostgreSQL. PostgreSQL scheduler
 HTTP routes remain unavailable until task execution state and the remaining
