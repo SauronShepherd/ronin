@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@25d0c440729161dc3b3116580fcd894ae5e0cc10` (2026-10-17 10:32 UTC). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@d45a7fb605ca4393e25c3aaec52e6dd1fbfac449` (2026-10-17 10:49 UTC). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Propósito y límites
 
@@ -104,7 +104,7 @@ Como cambio acotado de hardening, se añadió validación de timeout finito y ac
 
 La base actual es `main@25d0c440729161dc3b3116580fcd894ae5e0cc10`. En ese SHA terminaron correctamente [CI](https://github.com/SauronShepherd/ronin/actions/runs/39024767459), [Docker](https://github.com/SauronShepherd/ronin/actions/runs/39024767432), [Web](https://github.com/SauronShepherd/ronin/actions/runs/39024767421), [Security](https://github.com/SauronShepherd/ronin/actions/runs/39024767422), [Release](https://github.com/SauronShepherd/ronin/actions/runs/39024767438) y [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39024767522) (17 de octubre de 2026). CI pasó en Python 3.11 y 3.12; Docker ejecutó la suite PostgreSQL, las pruebas reales de contenedor y la aceptación v0.1 estricta; Release, Web, Security y Status consistency pasaron sus gates. La tarea `mutation` quedó **skipped**, por lo que no se cuenta como aprobada. Los resultados acreditan los gates ejecutados en este candidato, no que las familias P1–P14 tengan journeys completos ni que el producto esté listo para release. `release_status` permanece `incomplete` y `qualification_status` permanece `blocked`.
 
-El PR [#389](https://github.com/SauronShepherd/ronin/pull/389) conectó el gate estricto al job Docker y al job de aceptación de tags: cada uno construye y fija la identidad de la imagen Ronin y falla ante cualquier skip, fallo, error o paso ausente. En el workflow de progreso de CI, `--progress-only` sigue siendo informativo y no sustituye esta puerta.
+El PR [#389](https://github.com/SauronShepherd/ronin/pull/389) conectó el gate estricto al job Docker y al job de aceptación de tags: cada uno construye y fija la identidad de la imagen Ronin y falla ante cualquier skip, fallo, error o paso ausente. En el workflow de progreso de CI, `--progress-only` sigue siendo informativo y no sustituye esta puerta. El PR #390 sólo actualizó ledgers; por ello la evidencia de código sigue ligada al candidato probado `25d0c44`.
 
 El ledger anterior citaba `5d598b903541f1c8aeaf2040896f2a4e6ae7ba45`; se reconcilió primero contra `4daf8a1` y ahora contra el HEAD real `25d0c44` de `main`. También se reconciliaron las campañas de mutation con el único registro final congelado, sin volver a ejecutar la campaña retirada. El plan detallado aportado sigue siendo un índice de alcance histórico: sus conteos y estados no se promueven automáticamente; cada elemento RPV1 y VER debe revisarse contra este código y evidencia vigente antes de cerrarse.
 
