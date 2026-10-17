@@ -186,32 +186,12 @@ class HttpJsonConnector:
         if asset.connection_id != connection.id:
             raise ValueError("HTTP asset handle belongs to a different connection")
         base_url, options = self._validate(connection)
-        parsed_base_url = urlsplit(base_url)
-        _validate_endpoint_host(
-            parsed_base_url.hostname or "",
-            allow_private=options.get("allow_private_network", "false").casefold() == "true",
-        )
-        allow_private = options.get("allow_private_network", "false").casefold() == "true"
-        allow_http = options.get("allow_http", "false").casefold() == "true"
-        components = (*asset.namespace, asset.name)
-        if any(not part or part in {".", ".."} or "://" in part for part in components):
-            raise ValueError("HTTP asset path contains an unsafe component")
-        path = "/".join(quote(part, safe="-._~") for part in components)
-        url = f"{base_url}/{path}"
-
-        headers = {"Accept": "application/json"}
-        refs = _secret_refs(connection)
-        bearer = refs.get("bearer_token")
-        if bearer is not None:
-            if parsed_base_url.scheme != "https":
-                raise ValueError("Bearer credentials require an HTTPS base_url")
-            material = secrets.resolve(bearer)
-            headers["Authorization"] = f"Bearer {material.reveal_text()}"
-
-        httpx = _httpx()
-        timeout_seconds = float(options.get("timeout_seconds", "30"))
-        if timeout_seconds <= 0 or timeout_seconds > 300:
-            raise ValueError("HTTP timeout_seconds must be in (0, 300]")
+        try:
+            timeout_seconds = float(options.get("timeout_seconds", "30"))
+        except ValueError as exc:
+            raise ValueError("HTTP timeout_seconds must be numeric") from exc
+        if not math.isfinite(timeout_seconds) or timeout_seconds <= 0 or timeout_seconds > 300:
+            raise ValueError("HTTP timeout_seconds must be finite and in (0, 300]")
         try:
             max_response_bytes = int(options.get("max_response_bytes", "10485760"))
         except ValueError as exc:
@@ -253,6 +233,29 @@ class HttpJsonConnector:
             or rate_limit < 0
         ):
             raise ValueError("HTTP page_size/backoff/rate-limit options are out of bounds")
+        parsed_base_url = urlsplit(base_url)
+        _validate_endpoint_host(
+            parsed_base_url.hostname or "",
+            allow_private=options.get("allow_private_network", "false").casefold() == "true",
+        )
+        allow_private = options.get("allow_private_network", "false").casefold() == "true"
+        allow_http = options.get("allow_http", "false").casefold() == "true"
+        components = (*asset.namespace, asset.name)
+        if any(not part or part in {".", ".."} or "://" in part for part in components):
+            raise ValueError("HTTP asset path contains an unsafe component")
+        path = "/".join(quote(part, safe="-._~") for part in components)
+        url = f"{base_url}/{path}"
+
+        headers = {"Accept": "application/json"}
+        refs = _secret_refs(connection)
+        bearer = refs.get("bearer_token")
+        if bearer is not None:
+            if parsed_base_url.scheme != "https":
+                raise ValueError("Bearer credentials require an HTTPS base_url")
+            material = secrets.resolve(bearer)
+            headers["Authorization"] = f"Bearer {material.reveal_text()}"
+
+        httpx = _httpx()
         page_param = options.get("page_param")
         next_field = options.get("next_url_field")
         rows_list: list[dict[str, object]] = []
