@@ -398,7 +398,7 @@ class SqliteSchedulerStore:
                     )
                 connection.execute(
                     "UPDATE task_runs SET state=?,branch_decision_json=?,updated_at=? "
-                    "WHERE workspace_id=? AND task_run_id=?",
+                    ",row_version=row_version+1 WHERE workspace_id=? AND task_run_id=?",
                     (
                         "pending" if decision.should_run else "blocked",
                         payload,

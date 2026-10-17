@@ -45,6 +45,16 @@ def test_scheduler_persists_branch_decisions_idempotently_and_rejects_conflicts(
         == decision
     )
 
+    connection = store._connect()
+    try:
+        version = connection.execute(
+            "SELECT row_version FROM task_runs WHERE workspace_id=? AND workflow_run_id=?",
+            (str(workspace_id), str(run_id)),
+        ).fetchone()["row_version"]
+    finally:
+        connection.close()
+    assert version == 1
+
     with pytest.raises(WorkflowRunConflict, match="different content"):
         store.apply_branch_decision(
             workspace_id,
@@ -95,3 +105,12 @@ def test_scheduler_rejects_late_branch_decision_without_mutating_terminal_task(t
     task = store.list_task_runs(workspace_id, run_id)[0]
     assert task.state == "succeeded"
     assert store.get_branch_decision(workspace_id, run_id, node.id) is None
+    connection = store._connect()
+    try:
+        version = connection.execute(
+            "SELECT row_version FROM task_runs WHERE workspace_id=? AND workflow_run_id=?",
+            (str(workspace_id), str(run_id)),
+        ).fetchone()["row_version"]
+    finally:
+        connection.close()
+    assert version == 0
