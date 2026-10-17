@@ -5,11 +5,17 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-17. The tracked source is based on
-`main@46f9805`; the working tree adds replay-safe PostgreSQL branch-decision
+`main@2a7d0c9`; the working tree adds PostgreSQL scheduler-leadership
 persistence. Untracked qualification output directories are not release
 evidence.
-**Observed source head:** `46f98056b9c501a374fe0f33a1548110f3cbf17f` (2026-10-17).
+**Observed source head:** `2a7d0c9ef697d3de131f04d0973b49bfb2e1c780` (2026-10-17).
 **Release status:** **INCOMPLETE**.
+
+**Verified release progress:** **0% (0/14 P1–P14 capability families are
+release-qualified).** A family counts only after its mandatory Public v1
+journey and applicable provider, security and exact-head evidence are complete.
+All 14 remain partial; this is a release-completion metric, not a measure of
+code already implemented.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
 
@@ -58,25 +64,38 @@ The snapshot store
 does not implement dispatch, fencing, events, backfills or task evidence, and
 does not exercise daemon shutdown/restart or close the broader Public v1 paths.
 
-The current `main@46f98056b9c501a374fe0f33a1548110f3cbf17f` passed
+The prior `main@46f98056b9c501a374fe0f33a1548110f3cbf17f` passed
 [CI](https://github.com/SauronShepherd/ronin/actions/runs/39035748927),
 [Docker](https://github.com/SauronShepherd/ronin/actions/runs/39035748910),
 [Web](https://github.com/SauronShepherd/ronin/actions/runs/39035748905),
 [Security](https://github.com/SauronShepherd/ronin/actions/runs/39035748879),
 [Release](https://github.com/SauronShepherd/ronin/actions/runs/39035748917),
 and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39035748936).
-The merged PR #397 exact
-commit `b1b4574...` passed CI (Python 3.11/3.12), Docker, Web, Security,
-Release, Status consistency, quality, dependencies and negative gates. Docker
-passed PostgreSQL storage coverage, real container qualification, and strict
-frozen v0.1 acceptance; `mutation` was skipped. Its PostgreSQL run/task snapshot
-integration passed 3/3 with 95% adapter coverage. The follow-up branch-decision
-candidate passes 3/3 real PostgreSQL tests with 95% adapter coverage and the
-scheduler/API suite (151 tests), plus Ruff, architecture and mypy. Standard CI
-excludes this PostgreSQL-only module from its no-service coverage gate; Docker
-runs the full per-file coverage gate against PostgreSQL. PostgreSQL snapshot
-persistence does not yet implement dispatch, fencing, events, backfills or task
-evidence, and scheduler HTTP routes remain unavailable on that backend.
+The merged PR #397 exact commit `b1b4574d336b1d16cd4b2975e0f996563a8042a1`
+and PR #398 exact commit `53f4cc8d6c827e0caa6a8624dff3543d1d6dd4ed`
+passed CI (Python 3.11/3.12), Docker, Web, Security, Release, Status
+consistency, quality, dependencies and negative gates. Docker passed
+PostgreSQL storage coverage, real container qualification, and strict frozen
+v0.1 acceptance; `mutation` was skipped.
+
+The current `main@2a7d0c9ef697d3de131f04d0973b49bfb2e1c780` passed
+[CI](https://github.com/SauronShepherd/ronin/actions/runs/39036976451),
+[Docker](https://github.com/SauronShepherd/ronin/actions/runs/39036976461),
+[Web](https://github.com/SauronShepherd/ronin/actions/runs/39036976408),
+[Security](https://github.com/SauronShepherd/ronin/actions/runs/39036976428),
+[Release](https://github.com/SauronShepherd/ronin/actions/runs/39036976444),
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39036976413).
+PostgreSQL snapshots and replay-safe branch decisions persist in main. The
+working tree adds a PostgreSQL generation-fenced leadership store; its real
+PostgreSQL integration passed 4 tests with 87% adapter coverage. The local
+scheduler/workflow suite passed 115 tests. Ruff, formatting, architecture,
+focused mypy for the new adapter, and status generator checks passed. The
+repository-wide mypy command reports three existing unused-ignore errors in
+unrelated files. Standard CI
+excludes PostgreSQL-only adapters from its no-service coverage gate; Docker
+runs the full per-file coverage gate against PostgreSQL. PostgreSQL scheduler
+HTTP routes remain unavailable until task execution state and the remaining
+scheduler stores are qualified.
 
 The current workspace includes the implementation families listed in the
 package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
