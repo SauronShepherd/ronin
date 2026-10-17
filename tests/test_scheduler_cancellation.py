@@ -30,13 +30,27 @@ from studio_execution.scheduler_dispatch import (
 )
 from studio_orchestrator import Instant, JobState, LeaseToken
 from studio_storage import InMemoryJobStore
-from studio_storage.scheduler_cancellation import request_workflow_cancellation
+from studio_storage.scheduler_cancellation import (
+    execution_intent_dispatch_allowed,
+    request_workflow_cancellation,
+)
 from studio_storage.scheduler_execution import SchedulerExecutionLinkStore
 from studio_storage.scheduler_fencing import TaskAttemptId
 from studio_storage.workspaces import SqliteWorkspaceStore
 
 NOW = "2026-09-13T05:00:00.000000Z"
 LATER = "2026-09-13T05:01:00.000000Z"
+
+
+@pytest.mark.parametrize("allowed", [True, False])
+def test_dispatch_authority_helper_delegates_to_postgres_adapter(allowed: bool) -> None:
+    class PostgresDispatchAdapter:
+        def postgres_execution_intent_dispatch_allowed(self, intent: object) -> bool:
+            assert intent is sentinel
+            return allowed
+
+    sentinel = object()
+    assert execution_intent_dispatch_allowed(PostgresDispatchAdapter(), sentinel) is allowed
 
 
 def _manifest() -> ProjectManifest:

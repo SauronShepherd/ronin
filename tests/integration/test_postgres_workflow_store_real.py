@@ -74,6 +74,7 @@ from studio_storage.scheduler_backfill import (
     BackfillRun,
 )
 from studio_storage.scheduler_backfill_runtime import BackfillCapacityExhausted
+from studio_storage.scheduler_cancellation import execution_intent_dispatch_allowed
 from studio_storage.scheduler_events import (
     EventDelivery,
     SchedulerEventConflict,
@@ -81,6 +82,12 @@ from studio_storage.scheduler_events import (
 )
 from studio_storage.scheduler_fencing import TaskAttemptId
 from studio_storage.scheduler_leadership import SchedulerLeadershipLost
+from studio_storage.scheduler_timeout import (
+    finalize_timed_out_attempt,
+    list_timeout_requests,
+    request_overdue_timeouts,
+    timeout_requested,
+)
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
@@ -148,7 +155,7 @@ def test_postgres_scheduler_deployment_binding_is_workspace_scoped_and_runnable(
     assert store.get_runnable_workflow_deployment(workspace_id, workflow.id) is None
 
 
-def test_postgres_scheduler_migrates_schema_six_to_seven(
+def test_postgres_scheduler_migrates_schema_six_to_nine(
     request: pytest.FixtureRequest,
 ) -> None:
     dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
@@ -179,8 +186,9 @@ def test_postgres_scheduler_migrates_schema_six_to_seven(
     connection = psycopg.connect(schema_dsn)
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_task_timeout_requests")
             cursor.execute("DROP TABLE ronin_workflow_deployments")
-            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version=7")
+            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version>=7")
         connection.commit()
     finally:
         connection.close()
@@ -189,12 +197,140 @@ def test_postgres_scheduler_migrates_schema_six_to_seven(
     connection = psycopg.connect(schema_dsn)
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT version FROM ronin_scheduler_schema_migrations WHERE version=7")
-            assert cursor.fetchone() is not None
+            cursor.execute("SELECT MAX(version) FROM ronin_scheduler_schema_migrations")
+            assert cursor.fetchone()[0] == 9
             cursor.execute("SELECT to_regclass('ronin_workflow_deployments') AS table_name")
             assert cursor.fetchone()[0] == "ronin_workflow_deployments"
+            cursor.execute("SELECT to_regclass('ronin_task_timeout_requests') AS table_name")
+            assert cursor.fetchone()[0] == "ronin_task_timeout_requests"
     finally:
         connection.close()
+
+
+def test_postgres_scheduler_timeout_requests_and_dispatch_authority_are_durable() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerSnapshotStore(dsn, application_name="ronin-scheduler-timeouts")
+    workspace_id = WorkspaceId(f"timeout-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Timeout qualification"), now=NOW)
+    node = Node.create(
+        operator=OperatorRef("notebook.run"),
+        instance_key=f"timeout-task-{uuid4().hex}",
+        params={"target": "notebooks/demo.ronin.json", "parameters": {}},
+    )
+    workflow = WorkflowDefinition(
+        WorkflowId(f"timeout-workflow-{uuid4().hex}"),
+        "Timeout qualification",
+        Pipeline((node,)),
+        (TaskPolicy(node.id, timeout_seconds=5),),
+    )
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    workflow_run_id = WorkflowRunId(f"timeout-run-{uuid4().hex}")
+    store.create_run(
+        workspace_id,
+        workflow_run_id,
+        workflow.id,
+        Trigger("manual", f"timeout-{uuid4().hex}"),
+        now=NOW,
+    )
+    claim = store.claim_next_task(
+        owner="timeout-worker",
+        lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+        attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+        lease_seconds=30,
+        now=NOW,
+        workspace_id=workspace_id,
+    )
+    assert claim is not None
+    run = store.get_run(workspace_id, workflow_run_id)
+    assert run is not None
+    plan = plan_scheduler_execution(claim, run, "timeout-project", now=NOW)
+    intent = store.put_execution_intent(
+        workspace_id,
+        claim.attempt_id,
+        job=plan.job,
+        run=plan.run,
+        owner=claim.lease_owner,
+        lease_token=claim.lease_token,
+        now=NOW,
+    )
+
+    assert execution_intent_dispatch_allowed(store, intent)
+    assert not timeout_requested(store, workspace_id, claim.attempt_id)
+    timeout_at = Instant("2026-10-15T00:00:06.000000Z")
+    requests = request_overdue_timeouts(store, now=timeout_at)
+    assert len(requests) == 1
+    assert requests[0].job_id == intent.job.id
+    assert request_overdue_timeouts(store, now=timeout_at) == ()
+    assert list_timeout_requests(store) == requests
+    assert timeout_requested(store, workspace_id, claim.attempt_id)
+
+    assert finalize_timed_out_attempt(store, requests[0], now=timeout_at)
+    assert not finalize_timed_out_attempt(store, requests[0], now=timeout_at)
+    assert not timeout_requested(store, workspace_id, claim.attempt_id)
+    assert list_timeout_requests(store) == ()
+    assert store.get_execution_intent(workspace_id, claim.attempt_id) is None
+    assert not execution_intent_dispatch_allowed(store, intent)
+
+    cancelled_node = Node.create(
+        operator=OperatorRef("notebook.run"),
+        instance_key=f"cancelled-timeout-task-{uuid4().hex}",
+        params={"target": "notebooks/demo.ronin.json", "parameters": {}},
+    )
+    cancelled_workflow = WorkflowDefinition(
+        WorkflowId(f"cancelled-timeout-workflow-{uuid4().hex}"),
+        "Cancelled timeout qualification",
+        Pipeline((cancelled_node,)),
+        (TaskPolicy(cancelled_node.id, timeout_seconds=5),),
+    )
+    store.put_workflow(workspace_id, cancelled_workflow, now=NOW)
+    cancelled_run_id = WorkflowRunId(f"cancelled-timeout-run-{uuid4().hex}")
+    store.create_run(
+        workspace_id,
+        cancelled_run_id,
+        cancelled_workflow.id,
+        Trigger("manual", f"cancelled-timeout-{uuid4().hex}"),
+        now=NOW,
+    )
+    cancelled_claim = store.claim_next_task(
+        owner="cancelled-timeout-worker",
+        lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+        attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+        lease_seconds=30,
+        now=NOW,
+        workspace_id=workspace_id,
+    )
+    assert cancelled_claim is not None
+    cancelled_run = store.get_run(workspace_id, cancelled_run_id)
+    assert cancelled_run is not None
+    cancelled_plan = plan_scheduler_execution(
+        cancelled_claim, cancelled_run, "timeout-project", now=NOW
+    )
+    cancelled_intent = store.put_execution_intent(
+        workspace_id,
+        cancelled_claim.attempt_id,
+        job=cancelled_plan.job,
+        run=cancelled_plan.run,
+        owner=cancelled_claim.lease_owner,
+        lease_token=cancelled_claim.lease_token,
+        now=NOW,
+    )
+    cancelled_request = request_overdue_timeouts(store, now=timeout_at)[0]
+    connection = store._connect()
+    try:
+        with connection.cursor() as cursor:
+            current_run = store._workflow_state(cursor, workspace_id, cancelled_run_id)
+            store._write_workflow_state(cursor, workspace_id, current_run, "cancelling", timeout_at)
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+    assert not execution_intent_dispatch_allowed(store, cancelled_intent)
+    assert finalize_timed_out_attempt(store, cancelled_request, now=timeout_at)
+    assert store.get_run(workspace_id, cancelled_run_id).state == "cancelled"  # type: ignore[union-attr]
+    assert store.list_task_runs(workspace_id, cancelled_run_id)[0].state == "cancelled"
 
 
 def test_postgres_workflow_and_schedule_bundle_import_is_atomic_and_idempotent() -> None:
@@ -587,6 +723,7 @@ def test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_task_timeout_requests")
             cursor.execute("DROP TABLE ronin_workflow_deployments")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_plans")
@@ -842,6 +979,7 @@ def test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_task_timeout_requests")
             cursor.execute("DROP TABLE ronin_workflow_deployments")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_plans")
@@ -1253,6 +1391,7 @@ def test_postgres_scheduler_backfill_migrates_schema_five_to_six(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_task_timeout_requests")
             cursor.execute("DROP TABLE ronin_workflow_deployments")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_plans")
@@ -1270,12 +1409,13 @@ def test_postgres_scheduler_backfill_migrates_schema_five_to_six(
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT version FROM ronin_scheduler_schema_migrations ORDER BY version")
-            assert [int(row[0]) for row in cursor.fetchall()] == [1, 2, 3, 4, 5, 6, 7]
+            assert [int(row[0]) for row in cursor.fetchall()] == [1, 2, 3, 4, 5, 6, 7, 8, 9]
             for table in (
                 "ronin_scheduler_backfills",
                 "ronin_scheduler_backfill_plans",
                 "ronin_scheduler_backfill_runs",
                 "ronin_workflow_deployments",
+                "ronin_task_timeout_requests",
             ):
                 cursor.execute("SELECT to_regclass(%s) AS table_name", (table,))
                 assert cursor.fetchone()[0] == table

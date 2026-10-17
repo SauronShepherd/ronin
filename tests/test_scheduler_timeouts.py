@@ -30,11 +30,63 @@ from studio_orchestrator import Instant, JobState, LeaseToken
 from studio_storage import InMemoryJobStore
 from studio_storage.scheduler_controller import SchedulerControllerStore
 from studio_storage.scheduler_fencing import TaskAttemptId
+from studio_storage.scheduler_timeout import (
+    TaskTimeoutRequest,
+    clear_timeout_request,
+    finalize_timed_out_attempt,
+    list_timeout_requests,
+    request_overdue_timeouts,
+    timeout_requested,
+)
 from studio_storage.workspaces import SqliteWorkspaceStore
 
 NOW = "2026-09-13T06:00:00.000000Z"
 BEFORE_TIMEOUT = "2026-09-13T06:00:04.000000Z"
 AFTER_TIMEOUT = "2026-09-13T06:00:06.000000Z"
+
+
+def test_timeout_storage_helpers_delegate_to_postgres_adapter() -> None:
+    request = TaskTimeoutRequest(
+        WorkspaceId("workspace"),
+        TaskAttemptId("attempt"),
+        None,
+        Instant(NOW),
+    )
+
+    class PostgresTimeoutAdapter:
+        cleared: tuple[WorkspaceId, TaskAttemptId] | None = None
+
+        def postgres_request_overdue_timeouts(self, *, now: Instant | str, limit: int):
+            assert now == NOW
+            assert limit == 5
+            return (request,)
+
+        def postgres_list_timeout_requests(self, *, limit: int):
+            assert limit == 5
+            return (request,)
+
+        def postgres_timeout_requested(
+            self, workspace_id: WorkspaceId, attempt_id: TaskAttemptId
+        ) -> bool:
+            return (workspace_id, attempt_id) == (request.workspace_id, request.task_attempt_id)
+
+        def postgres_clear_timeout_request(
+            self, workspace_id: WorkspaceId, attempt_id: TaskAttemptId
+        ) -> None:
+            self.cleared = (workspace_id, attempt_id)
+
+        def postgres_finalize_timed_out_attempt(
+            self, found_request: TaskTimeoutRequest, *, now: Instant | str
+        ) -> bool:
+            return found_request == request and now == NOW
+
+    store = PostgresTimeoutAdapter()
+    assert request_overdue_timeouts(store, now=NOW, limit=5) == (request,)
+    assert list_timeout_requests(store, limit=5) == (request,)
+    assert timeout_requested(store, request.workspace_id, request.task_attempt_id)
+    clear_timeout_request(store, request.workspace_id, request.task_attempt_id)
+    assert store.cleared == (request.workspace_id, request.task_attempt_id)
+    assert finalize_timed_out_attempt(store, request, now=NOW)
 
 
 def _manifest() -> ProjectManifest:
