@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from tools.aggregate_release_evidence import main as aggregate_release_evidence_main
 from tools.release_evidence import (
     GATE_PROFILES,
     MERGE_REQUIRED_GATES,
@@ -227,6 +228,70 @@ def test_aggregate_release_evidence_requires_exact_commit(tmp_path: Path) -> Non
     )
     assert result.returncode == 2
     assert "records must be a non-empty array" in result.stdout
+
+
+def test_aggregate_release_evidence_cli_writes_exact_candidate_verdict(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "release.json"
+    records = [record(gate) for gate in sorted(RELEASE_REQUIRED_GATES)]
+    path.write_text(
+        json.dumps({"schema": SCHEMA, "commit": "abc123", "records": records}),
+        encoding="utf-8",
+    )
+    merged_path = tmp_path / "merged.json"
+    verdict_path = tmp_path / "verdict.json"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "aggregate-release-evidence",
+            str(path),
+            "--output",
+            str(merged_path),
+            "--verdict-output",
+            str(verdict_path),
+            "--expected-commit",
+            "abc123",
+        ],
+    )
+
+    assert aggregate_release_evidence_main() == 0
+
+    merged = json.loads(merged_path.read_text(encoding="utf-8"))
+    verdict = json.loads(verdict_path.read_text(encoding="utf-8"))
+    assert merged["commit"] == "abc123"
+    assert verdict["status"] == "passed"
+    assert verdict["required_gates"] == sorted(RELEASE_REQUIRED_GATES)
+    assert '"status": "passed"' in capsys.readouterr().out
+
+
+def test_aggregate_release_evidence_cli_rejects_mismatched_expected_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "release.json"
+    records = [record(gate) for gate in sorted(RELEASE_REQUIRED_GATES)]
+    path.write_text(
+        json.dumps({"schema": SCHEMA, "commit": "abc123", "records": records}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "aggregate-release-evidence",
+            str(path),
+            "--output",
+            str(tmp_path / "merged.json"),
+            "--verdict-output",
+            str(tmp_path / "verdict.json"),
+            "--expected-commit",
+            "other-commit",
+        ],
+    )
+
+    assert aggregate_release_evidence_main() == 2
+    assert "does not match expected commit" in capsys.readouterr().out
 
 
 def test_emit_release_evidence_hashes_artifacts(tmp_path: Path) -> None:

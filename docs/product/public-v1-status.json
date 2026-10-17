@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-17T10:32:05Z",
-  "observed_main_sha": "25d0c440729161dc3b3116580fcd894ae5e0cc10",
+  "observed_at": "2026-10-17T10:49:34Z",
+  "observed_main_sha": "d45a7fb605ca4393e25c3aaec52e6dd1fbfac449",
   "observed_workspace_state": "tracked sources on clean main; local generated qualification outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -226,6 +226,7 @@
   ],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
+    "Continue #102: extend explicit high-risk coverage policy to artifact, license, SBOM/supply-chain and remaining release-decision tooling; strict v0.1 gate and exact-candidate aggregator now have a 90% line floor.",
     "Complete scheduler broad task adapters, branching/notifications, public scheduler APIs/UI, process/deployment wiring and PostgreSQL HA semantics/qualification.",
     "Extend native Bundle support to the next executable canonical metadata family, preferring workflow/pipeline persistence if its canonical snapshot/store contracts preserve identity without deployment locators; then quality/ontology/ML/GenAI as their contracts permit.",
     "Finish storage ports for remaining domains, then qualify the wired PostgreSQL JobStore and the existing S3-compatible artifact adapter.",

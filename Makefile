@@ -1,5 +1,5 @@
 .PHONY: check format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget browser-audit ui-installed ui-a11y ui-e2e-headed test \
-	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-storage-files-full coverage-tools performance \
+	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-storage-files-full coverage-tools coverage-v01-release-gates performance \
 	canonical-json-check runner-protocol-check dependency-surfaces-check
 
 ui-e2e:
@@ -98,7 +98,7 @@ runner-protocol-check:
 
 test:
 	$(PYTHON) -m pytest --ignore=tests/perf --cov --cov-branch --cov-report=
-	$(MAKE) coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-tools
+	$(MAKE) coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-tools coverage-v01-release-gates
 
 performance:
 	$(PYTHON) -m pytest tests/perf -q
@@ -133,6 +133,10 @@ coverage-broker:
 coverage-tools:
 	# Release and qualification tools are measured separately from product tiers.
 	coverage report --fail-under=60 --include="*/tools/*.py"
+
+coverage-v01-release-gates:
+	# Keep the frozen-journey and exact-candidate release decisions at the T2 90% floor.
+	coverage report --fail-under=90 --include="*/tools/v01_acceptance_gate.py,*/tools/aggregate_release_evidence.py"
 
 coverage-storage-files:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -9,6 +11,7 @@ from tools.v01_acceptance_gate import (
     AcceptanceGateError,
     _parse_allowed_steps,
     evaluate_junit,
+    main,
     require_exact_allowed_skips,
     require_strict_success,
 )
@@ -152,3 +155,79 @@ def test_strict_gate_rejects_invalid_report(tmp_path: Path) -> None:
 
     with pytest.raises(AcceptanceGateError, match="missing or invalid"):
         evaluate_junit(report)
+
+
+def test_cli_strict_success_writes_machine_readable_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    report = _write_report(
+        tmp_path / "passing.xml",
+        [_case(name) for name in EXPECTED_STEP_NAMES],
+    )
+    evidence = tmp_path / "evidence.json"
+    monkeypatch.setattr(
+        sys, "argv", ["v01_acceptance_gate", str(report), f"--evidence-json={evidence}"]
+    )
+
+    assert main() == 0
+
+    recorded = json.loads(evidence.read_text(encoding="utf-8"))
+    assert recorded["strict_success"] is True
+    assert recorded["passed"] == len(EXPECTED_STEP_NAMES)
+    assert "strict_success=true" in capsys.readouterr().out
+
+
+def test_cli_progress_only_reports_incomplete_steps_without_failing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cases = [_case(name) for name in EXPECTED_STEP_NAMES]
+    cases[0] = _case(EXPECTED_STEP_NAMES[0], '<skipped message="not available"/>')
+    report = _write_report(tmp_path / "progress.xml", cases)
+    monkeypatch.setattr(sys, "argv", ["v01_acceptance_gate", str(report), "--progress-only"])
+
+    assert main() == 0
+
+
+@pytest.mark.parametrize(
+    ("extra_args", "message"),
+    [
+        (("--progress-only", "--allow-skipped=01"), "cannot be combined"),
+        (("--allow-skipped=01",), "non-empty reason"),
+        (("--allow-skipped=01", "--allow-skipped-reason=waived"), "stale allowances"),
+    ],
+)
+def test_cli_rejects_invalid_or_stale_qualification_modes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    extra_args: tuple[str, ...],
+    message: str,
+) -> None:
+    report = _write_report(
+        tmp_path / "passing.xml",
+        [_case(name) for name in EXPECTED_STEP_NAMES],
+    )
+    monkeypatch.setattr(sys, "argv", ["v01_acceptance_gate", str(report), *extra_args])
+
+    assert main() == 1
+    assert message in capsys.readouterr().out
+
+
+def test_cli_accepts_exact_named_skip_only_with_reason(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cases = [_case(name) for name in EXPECTED_STEP_NAMES]
+    cases[0] = _case(EXPECTED_STEP_NAMES[0], '<skipped message="environment gated"/>')
+    report = _write_report(tmp_path / "allowed.xml", cases)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "v01_acceptance_gate",
+            str(report),
+            "--allow-skipped=01",
+            "--allow-skipped-reason=local fixture",
+        ],
+    )
+
+    assert main() == 0

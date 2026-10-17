@@ -7,9 +7,10 @@
 **Observed workspace snapshot:** 2026-10-17. The tracked source was reconciled
 against `main`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `25d0c440729161dc3b3116580fcd894ae5e0cc10` (2026-10-17).
-This is the exact source identity used by the main-branch CI, Docker, Web,
-Security, Release and Status consistency runs recorded below.
+**Observed source head:** `d45a7fb605ca4393e25c3aaec52e6dd1fbfac449` (2026-10-17).
+The latest application-source qualification below is for `25d0c440729161dc3b3116580fcd894ae5e0cc10`;
+`d45a7fb` adds only the documentation reconciliation, validated by its own
+Status consistency workflow.
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
@@ -137,8 +138,9 @@ These merges do **not** imply that their parent capability families are complete
 
 - **License/NOTICE/attribution and release approval:** tooling may inventory facts; maintainers/legal review own conclusions.
 - **Provider certifications:** real vendor qualification still needs authorized environments and credentials; fixture-only migration evidence is not certification.
+- **#102:** this change raises the strict v0.1 acceptance gate and exact-candidate release aggregator to at least 90% line coverage. The remaining release tooling (artifact, license, SBOM/supply-chain and related gates) still needs an explicit per-module coverage policy and targeted tests; the finding stays open.
 - **#63:** current GitHub API evidence shows protected `main` with eight required checks, admin enforcement, no force pushes or deletion, and an active `v*` tag ruleset. Reconcile the open issue's checklist with this evidence before claiming the issue is fully satisfied.
-- **#199, #57, #96, #202:** automated qualification is active. The exact `main` candidate passed current CI/Docker/Web/Security/Release/Status workflows; the Docker acceptance change in this branch adds strict 15-step execution to the Docker and tag-release gates. Keep release status blocked until the new exact-head gate and all mandatory product/provider/legal criteria pass.
+- **#199, #57, #96, #202:** automated qualification is active and exact-head runs pass on the recorded candidate. The strict 15-step Docker/release gate for #96 landed in #389; keep the broader journey and product/provider/legal criteria open.
 - **Mutation:** the campaign is permanently frozen and the score gate retired by product decision. Do not rerun; reopen only through a new explicit product decision and campaign plan.
 
 ## Updated critical path
@@ -153,5 +155,6 @@ These merges do **not** imply that their parent capability families are complete
 8. Complete quality runtime, ontology/KG actions/query, RQL, ML, GenAI, semantic/dashboard, streaming, observability/alerts/FinOps and multi-user identity.
 9. Add Kubernetes/Helm after the server metadata/object-store/identity profile is real.
 10. Build the four vendor migration profiles only against executable canonical target capabilities and certify them with exhaustive migration reports.
-11. Maintain exact-candidate qualification; the new strict Docker/release acceptance gate must pass on its exact candidate. Public v1 remains incomplete until every mandatory family has its supported end-to-end path and the human-owned evidence is approved.
+11. Continue #102 coverage work: the v0.1 strict gate and exact-candidate aggregator now have a 90% line floor; add explicit high-risk coverage policies for artifact, license, SBOM/supply-chain and other release-decision tooling.
+12. Maintain exact-candidate qualification; the strict Docker/release acceptance gate must pass on its exact candidate. Public v1 remains incomplete until every mandatory family has its supported end-to-end path and the human-owned evidence is approved.
 
