@@ -78,6 +78,7 @@ from studio_storage.postgres_audit import PostgresAuditStore
 from studio_storage.postgres_core import PostgresDependencyError, PostgresMetadataStore
 from studio_storage.postgres_jobs import PostgresJobReadPort
 from studio_storage.postgres_ml import PostgresMLStore
+from studio_storage.postgres_scheduler import PostgresSchedulerSnapshotStore
 from studio_storage.postgres_workflow import PostgresWorkflowBundleImportStore
 from studio_storage.quality import (
     DataContractConflict,
@@ -173,6 +174,7 @@ __all__ = (
     "PostgresWorkflowBundleImportStore",
     "PostgresJobReadPort",
     "PostgresMLStore",
+    "PostgresSchedulerSnapshotStore",
     "KnowledgeGraphConflict",
     "SqliteKnowledgeGraphStore",
     "ProjectRegistrationConflict",

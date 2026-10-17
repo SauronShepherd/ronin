@@ -4,10 +4,10 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-17. The tracked source was reconciled
-against `main`; untracked qualification output directories are not release
-evidence.
-**Observed source head:** `41a2024fde3de508d29c2fc3f9960b611f075edd` (2026-10-17).
+**Observed workspace snapshot:** 2026-10-17. The tracked source is based on
+`main@fa8cc73`; this candidate adds an unmerged PostgreSQL scheduler snapshot
+store. Untracked qualification output directories are not release evidence.
+**Observed source head:** `fa8cc731f4af11120328b25aa207cb39897503d5` (2026-10-17).
 This is the exact source identity used by the latest main-branch CI, Docker,
 Web, Security, Release and Status consistency runs recorded below.
 **Release status:** **INCOMPLETE**.
@@ -38,20 +38,26 @@ evidence only. The Public v1 release remains **INCOMPLETE**, and product
 qualification remains **blocked** by incomplete capability journeys and
 external/human-owned evidence.
 
-On the current `main@41a2024fde3de508d29c2fc3f9960b611f075edd` snapshot,
-GitHub reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39033061650),
-[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39033061624),
-[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39033061744),
-[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39033061598),
-[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39033061631)
-and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39033061612).
+On the prior `main@41a2024fde3de508d29c2fc3f9960b611f075edd` snapshot,
+GitHub reported success for CI, Docker, Web, Security, Release and Status
+consistency. The current `main@fa8cc731f4af11120328b25aa207cb39897503d5`
+snapshot also passed [CI](https://github.com/SauronShepherd/ronin/actions/runs/39034134947),
+[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39034134890),
+[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39034134789),
+[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39034135001),
+[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39034134870)
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39034134902).
 Docker passed PostgreSQL storage coverage, real container qualification, and
-strict frozen v0.1 acceptance. PR #395's SQLite outbox test also verifies replay
-after reopening both stores. The current process-termination candidate passed
-the scheduler/API suite (151 tests), Ruff, and local image qualification
-(21 passed; strict acceptance 15/15); it force-terminates a separate dispatcher
-process after its durable submit. This does not exercise daemon shutdown/restart
-or close the broader Public v1 journeys.
+strict frozen v0.1 acceptance. PR #396's isolated dispatcher termination test
+passed the scheduler/API suite (151 tests), Ruff, and local image qualification
+(21 passed; strict acceptance 15/15). This candidate additionally implements
+the first PostgreSQL run/task snapshot store; its real PostgreSQL Docker
+integration passed 3/3 with 95% adapter coverage, plus Ruff, architecture and
+mypy. Standard CI excludes this PostgreSQL-only module from its no-service
+coverage gate; Docker runs the full per-file coverage gate against PostgreSQL.
+The snapshot store
+does not implement dispatch, fencing, events, backfills or task evidence, and
+does not exercise daemon shutdown/restart or close the broader Public v1 paths.
 
 The current workspace includes the implementation families listed in the
 package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
