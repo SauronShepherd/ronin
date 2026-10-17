@@ -166,7 +166,7 @@ coverage-storage-files:
 		--baseline=s3_artifacts.py=74.20 \
 		--baseline=scheduler_backfill.py=65.91 \
 		--baseline=scheduler_backfill_runtime.py=69.11 \
-		--baseline=scheduler_cancellation.py=70.76 \
+		--baseline=scheduler_cancellation.py=71.72 \
 		--baseline=scheduler_controller.py=73.94 \
 		--baseline=scheduler_events.py=75.30 \
 		--baseline=scheduler_execution.py=70.49 \
@@ -198,7 +198,7 @@ coverage-storage-files-full:
 		--baseline=s3_artifacts.py=74.20 \
 		--baseline=scheduler_backfill.py=65.91 \
 		--baseline=scheduler_backfill_runtime.py=69.11 \
-		--baseline=scheduler_cancellation.py=70.76 \
+		--baseline=scheduler_cancellation.py=71.72 \
 		--baseline=scheduler_controller.py=73.94 \
 		--baseline=scheduler_events.py=75.30 \
 		--baseline=scheduler_execution.py=70.49 \
