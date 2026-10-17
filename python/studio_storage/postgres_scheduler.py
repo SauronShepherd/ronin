@@ -1274,18 +1274,41 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
     def deliver_event(self, delivery: EventDelivery, *, now: Instant | str) -> EventDelivery:
         if delivery.state != "pending" or delivery.workflow_run_id is not None:
             raise ValueError("only pending event deliveries can be delivered")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM ronin_scheduler_event_deliveries "
+                    "WHERE workspace_id=%s AND event_id=%s AND event_trigger_id=%s",
+                    (
+                        str(delivery.workspace_id),
+                        str(delivery.event_id),
+                        str(delivery.trigger.id),
+                    ),
+                )
+                row = cursor.fetchone()
+            connection.commit()
+        finally:
+            connection.close()
+        if row is None:
+            raise KeyError(str(delivery.trigger.id))
+        stored = _delivery_from_row(row)
+        if stored.trigger != delivery.trigger:
+            raise SchedulerEventConflict("event delivery trigger differs from frozen snapshot")
+        if stored.state == "delivered":
+            return stored
         event = self.get_event(delivery.workspace_id, delivery.event_id)
         if event is None:
             raise KeyError(str(delivery.event_id))
         trigger = Trigger(
             "event",
-            f"event:{delivery.event_id}:{delivery.trigger.id}",
+            f"event:{delivery.event_id}:{stored.trigger.id}",
             source_ref=event.source_ref or f"event-type:{event.event_type}",
         )
         run = self.create_run(
             delivery.workspace_id,
-            _event_run_id(delivery.workspace_id, delivery.event_id, delivery.trigger.id),
-            delivery.trigger.workflow_id,
+            _event_run_id(delivery.workspace_id, delivery.event_id, stored.trigger.id),
+            stored.trigger.workflow_id,
             trigger,
             now=now,
         )
@@ -1305,9 +1328,13 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
                 )
                 row = cursor.fetchone()
                 if row is None:
-                    raise KeyError(str(delivery.trigger.id))
+                    raise KeyError(str(stored.trigger.id))
                 if row["state"] == "delivered":
                     existing = _delivery_from_row(row)
+                    if existing.trigger != stored.trigger:
+                        raise SchedulerEventConflict(
+                            "event delivery trigger differs from frozen snapshot"
+                        )
                     if existing.workflow_run_id != run.id:
                         raise SchedulerEventConflict(
                             "event delivery maps to conflicting workflow run"
@@ -1323,14 +1350,14 @@ class PostgresSchedulerSnapshotStore(PostgresWorkflowBundleImportStore):
                         str(Instant(now)),
                         str(delivery.workspace_id),
                         str(delivery.event_id),
-                        str(delivery.trigger.id),
+                        str(stored.trigger.id),
                     ),
                 )
             connection.commit()
             return EventDelivery(
                 delivery.workspace_id,
                 delivery.event_id,
-                delivery.trigger,
+                stored.trigger,
                 run.id,
                 "delivered",
             )

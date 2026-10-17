@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -127,6 +128,15 @@ def test_event_delivery_creates_deterministic_workflow_run_once(tmp_path: Path) 
     event = _event(workspace_id)
     pending = store.ingest_event(event)
     assert len(pending) == 1
+    alternate_workflow = _workflow("workflow-2")
+    store.put_workflow(workspace_id, alternate_workflow, now=NOW)
+    forged = replace(
+        pending[0],
+        trigger=replace(definition, workflow_id=alternate_workflow.id),
+    )
+    with pytest.raises(SchedulerEventConflict, match="frozen snapshot"):
+        store.deliver_event(forged, now=NOW)
+    assert store.list_pending_deliveries(workspace_id) == pending
 
     delivered = store.deliver_event(pending[0], now=NOW)
     assert delivered.state == "delivered"

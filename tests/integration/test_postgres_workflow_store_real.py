@@ -643,6 +643,15 @@ def test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries(
     store.put_event_trigger(workspace_id, updated, now=NOW)
     assert store.ingest_event(event) == deliveries
     assert store.list_pending_deliveries(workspace_id) == deliveries
+    alternate_workflow = _workflow(f"scheduler-events-alternate-{uuid4().hex}")
+    store.put_workflow(workspace_id, alternate_workflow, now=NOW)
+    forged = replace(
+        deliveries[0],
+        trigger=replace(definition, workflow_id=alternate_workflow.id),
+    )
+    with pytest.raises(SchedulerEventConflict, match="frozen snapshot"):
+        store.deliver_event(forged, now=NOW)
+    assert store.list_pending_deliveries(workspace_id) == deliveries
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         delivered_results = tuple(
