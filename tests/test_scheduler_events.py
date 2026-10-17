@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,7 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
+from studio_core.scheduler import WorkflowRunId
 from studio_core.scheduler_events import (
     EventTriggerDefinition,
     EventTriggerId,
@@ -20,7 +22,9 @@ from studio_core.scheduler_events import (
 )
 from studio_execution.scheduler_event_service import SchedulerEventService
 from studio_orchestrator import Instant
+from studio_storage.scheduler_controller import WorkflowDeploymentConflict
 from studio_storage.scheduler_events import (
+    EventDelivery,
     SchedulerEventConflict,
     SchedulerEventRecord,
     SchedulerEventStore,
@@ -127,6 +131,15 @@ def test_event_delivery_creates_deterministic_workflow_run_once(tmp_path: Path) 
     event = _event(workspace_id)
     pending = store.ingest_event(event)
     assert len(pending) == 1
+    alternate_workflow = _workflow("workflow-2")
+    store.put_workflow(workspace_id, alternate_workflow, now=NOW)
+    forged = replace(
+        pending[0],
+        trigger=replace(definition, workflow_id=alternate_workflow.id),
+    )
+    with pytest.raises(SchedulerEventConflict, match="frozen snapshot"):
+        store.deliver_event(forged, now=NOW)
+    assert store.list_pending_deliveries(workspace_id) == pending
 
     delivered = store.deliver_event(pending[0], now=NOW)
     assert delivered.state == "delivered"
@@ -140,6 +153,95 @@ def test_event_delivery_creates_deterministic_workflow_run_once(tmp_path: Path) 
     assert run is not None
     assert run.trigger.kind == "event"
     assert run.trigger.key == "event:event-1:trigger-1"
+
+
+def test_event_delivery_rejects_unknown_and_non_pending_deliveries(tmp_path: Path) -> None:
+    store, workspace_id, workflow = _store(tmp_path)
+    definition = EventTriggerDefinition(
+        EventTriggerId("trigger-1"), workflow.id, "dataset.snapshot.committed"
+    )
+    store.put_event_trigger(workspace_id, definition, now=NOW)
+    pending = store.ingest_event(_event(workspace_id))[0]
+
+    unknown = replace(pending, trigger=replace(definition, id=EventTriggerId("missing")))
+    with pytest.raises(KeyError, match="missing"):
+        store.deliver_event(unknown, now=NOW)
+
+    terminal = EventDelivery(
+        pending.workspace_id,
+        pending.event_id,
+        pending.trigger,
+        workflow_run_id=WorkflowRunId("already-delivered"),
+        state="delivered",
+    )
+    with pytest.raises(ValueError, match="only pending"):
+        store.deliver_event(terminal, now=NOW)
+    assert store.list_pending_deliveries(workspace_id) == (pending,)
+
+
+def test_event_delivery_failure_for_archived_workspace_keeps_delivery_pending(
+    tmp_path: Path,
+) -> None:
+    store, workspace_id, workflow = _store(tmp_path)
+    store.put_event_trigger(
+        workspace_id,
+        EventTriggerDefinition(
+            EventTriggerId("trigger-1"), workflow.id, "dataset.snapshot.committed"
+        ),
+        now=NOW,
+    )
+    pending = store.ingest_event(_event(workspace_id))[0]
+    connection = store._connect()
+    try:
+        connection.execute(
+            "UPDATE workspaces SET archived_at=? WHERE workspace_id=?",
+            (str(NOW), str(workspace_id)),
+        )
+    finally:
+        connection.close()
+
+    with pytest.raises(WorkflowDeploymentConflict, match="archived workspace"):
+        store.deliver_event(pending, now=NOW)
+    assert store.list_pending_deliveries(workspace_id) == (pending,)
+
+
+def test_event_delivery_reconciles_concurrent_idempotent_delivery(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, workspace_id, workflow = _store(tmp_path)
+    store.put_event_trigger(
+        workspace_id,
+        EventTriggerDefinition(
+            EventTriggerId("trigger-1"), workflow.id, "dataset.snapshot.committed"
+        ),
+        now=NOW,
+    )
+    pending = store.ingest_event(_event(workspace_id))[0]
+    create_run = store.create_run
+
+    def concurrently_deliver(*args: object, **kwargs: object) -> object:
+        run = create_run(*args, **kwargs)  # type: ignore[arg-type]
+        connection = store._connect()
+        try:
+            connection.execute(
+                "UPDATE scheduler_event_deliveries SET state='delivered',workflow_run_id=? "
+                "WHERE workspace_id=? AND event_id=? AND event_trigger_id=?",
+                (
+                    str(run.id),
+                    str(pending.workspace_id),
+                    str(pending.event_id),
+                    str(pending.trigger.id),
+                ),
+            )
+        finally:
+            connection.close()
+        return run
+
+    monkeypatch.setattr(store, "create_run", concurrently_deliver)
+    delivered = store.deliver_event(pending, now=NOW)
+    assert delivered.state == "delivered"
+    assert delivered.workflow_run_id is not None
+    assert store.list_pending_deliveries(workspace_id) == ()
 
 
 def test_event_service_processes_pending_deliveries(tmp_path: Path) -> None:

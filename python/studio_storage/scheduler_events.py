@@ -371,18 +371,38 @@ class SchedulerEventStore(SchedulerScheduleStore):
     ) -> EventDelivery:
         if delivery.state != "pending" or delivery.workflow_run_id is not None:
             raise ValueError("only pending event deliveries can be delivered")
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT * FROM scheduler_event_deliveries "
+                "WHERE workspace_id=? AND event_id=? AND event_trigger_id=?",
+                (
+                    str(delivery.workspace_id),
+                    str(delivery.event_id),
+                    str(delivery.trigger.id),
+                ),
+            ).fetchone()
+        finally:
+            connection.close()
+        if row is None:
+            raise KeyError(str(delivery.trigger.id))
+        stored = _delivery_from_row(row)
+        if stored.trigger != delivery.trigger:
+            raise SchedulerEventConflict("event delivery trigger differs from frozen snapshot")
+        if stored.state == "delivered":
+            return stored
         event = self.get_event(delivery.workspace_id, delivery.event_id)
         if event is None:
             raise KeyError(str(delivery.event_id))
         trigger = Trigger(
             "event",
-            f"event:{delivery.event_id}:{delivery.trigger.id}",
+            f"event:{delivery.event_id}:{stored.trigger.id}",
             source_ref=event.source_ref or f"event-type:{event.event_type}",
         )
         run = self.create_run(
             delivery.workspace_id,
-            _event_run_id(delivery.workspace_id, delivery.event_id, delivery.trigger.id),
-            delivery.trigger.workflow_id,
+            _event_run_id(delivery.workspace_id, delivery.event_id, stored.trigger.id),
+            stored.trigger.workflow_id,
             trigger,
             now=now,
         )
@@ -399,9 +419,13 @@ class SchedulerEventStore(SchedulerScheduleStore):
                 ),
             ).fetchone()
             if row is None:
-                raise KeyError(str(delivery.trigger.id))
+                raise KeyError(str(stored.trigger.id))
             if row["state"] == "delivered":
                 existing = _delivery_from_row(row)
+                if existing.trigger != stored.trigger:
+                    raise SchedulerEventConflict(
+                        "event delivery trigger differs from frozen snapshot"
+                    )
                 if existing.workflow_run_id != run.id:
                     raise SchedulerEventConflict("event delivery maps to conflicting workflow run")
                 connection.execute("COMMIT")
@@ -414,14 +438,14 @@ class SchedulerEventStore(SchedulerScheduleStore):
                     Instant(now),
                     str(delivery.workspace_id),
                     str(delivery.event_id),
-                    str(delivery.trigger.id),
+                    str(stored.trigger.id),
                 ),
             )
             connection.execute("COMMIT")
             return EventDelivery(
                 delivery.workspace_id,
                 delivery.event_id,
-                delivery.trigger,
+                stored.trigger,
                 run.id,
                 "delivered",
             )

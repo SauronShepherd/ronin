@@ -23,6 +23,11 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
+from studio_core.scheduler_events import (
+    EventTriggerDefinition,
+    EventTriggerId,
+    SchedulerEventId,
+)
 from studio_execution.scheduler_bridge import plan_scheduler_execution
 from studio_orchestrator import Instant, JobState, LeaseToken
 from studio_storage import (
@@ -33,6 +38,11 @@ from studio_storage import (
 )
 from studio_storage.bundle_workflow_import_port import WorkflowBundleImportConflict
 from studio_storage.scheduler import WorkflowNotFound, WorkflowRunConflict
+from studio_storage.scheduler_events import (
+    EventDelivery,
+    SchedulerEventConflict,
+    SchedulerEventRecord,
+)
 from studio_storage.scheduler_fencing import TaskAttemptId
 from studio_storage.scheduler_leadership import SchedulerLeadershipLost
 
@@ -438,9 +448,12 @@ def test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_scheduler_event_deliveries")
+            cursor.execute("DROP TABLE ronin_scheduler_events")
+            cursor.execute("DROP TABLE ronin_event_triggers")
             cursor.execute("DROP TABLE ronin_task_execution_intents")
             cursor.execute("DROP TABLE ronin_task_execution_links")
-            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version=4")
+            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version>=4")
         connection.commit()
     except Exception:
         connection.rollback()
@@ -546,6 +559,122 @@ def test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles(
         terminal,
         now=expired_at,
     )
+
+
+def test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries(
+    request: pytest.FixtureRequest,
+) -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    from studio_storage.postgres_core import _psycopg
+
+    psycopg, _ = _psycopg()
+    schema = f"scheduler_events_{uuid4().hex}"
+    connection = psycopg.connect(dsn)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"CREATE SCHEMA {schema}")
+        connection.commit()
+    finally:
+        connection.close()
+    schema_dsn = psycopg.conninfo.make_conninfo(dsn, options=f"-c search_path={schema},public")
+
+    def drop_schema() -> None:
+        cleanup = psycopg.connect(dsn)
+        try:
+            with cleanup.cursor() as cursor:
+                cursor.execute(f"DROP SCHEMA {schema} CASCADE")
+            cleanup.commit()
+        finally:
+            cleanup.close()
+
+    request.addfinalizer(drop_schema)
+    store = PostgresSchedulerSnapshotStore(schema_dsn, application_name="ronin-scheduler-events")
+    connection = store._connect()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_scheduler_event_deliveries")
+            cursor.execute("DROP TABLE ronin_scheduler_events")
+            cursor.execute("DROP TABLE ronin_event_triggers")
+            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version=5")
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+    # Exercise the production upgrade path from the current schema-4 main branch.
+    store = PostgresSchedulerSnapshotStore(schema_dsn, application_name="ronin-scheduler-events")
+
+    workspace_id = WorkspaceId(f"scheduler-events-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Scheduler events"), now=NOW)
+    workflow = _workflow(f"scheduler-events-workflow-{uuid4().hex}")
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    definition = EventTriggerDefinition(
+        EventTriggerId(f"trigger-{uuid4().hex}"),
+        workflow.id,
+        "asset.updated",
+        source_ref="catalog",
+        subject_ref="asset-1",
+    )
+    assert store.put_event_trigger(workspace_id, definition, now=NOW) == definition
+    assert store.put_event_trigger(workspace_id, definition, now=NOW) == definition
+    assert store.list_event_triggers(workspace_id) == (definition,)
+
+    event = SchedulerEventRecord(
+        workspace_id,
+        SchedulerEventId(f"event-{uuid4().hex}"),
+        "asset.updated",
+        "catalog",
+        "asset-1",
+        "a" * 64,
+        NOW,
+        NOW,
+    )
+    deliveries = store.ingest_event(event)
+    assert deliveries == (EventDelivery(workspace_id, event.id, definition),)
+    assert store.get_event(workspace_id, event.id) == event
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        replayed = tuple(executor.map(lambda _index: store.ingest_event(event), range(2)))
+    assert replayed == (deliveries, deliveries)
+    with pytest.raises(SchedulerEventConflict, match="conflicting content"):
+        store.ingest_event(replace(event, payload_digest="b" * 64))
+
+    updated = replace(definition, event_type="asset.deleted")
+    store.put_event_trigger(workspace_id, updated, now=NOW)
+    assert store.ingest_event(event) == deliveries
+    assert store.list_pending_deliveries(workspace_id) == deliveries
+    alternate_workflow = _workflow(f"scheduler-events-alternate-{uuid4().hex}")
+    store.put_workflow(workspace_id, alternate_workflow, now=NOW)
+    forged = replace(
+        deliveries[0],
+        trigger=replace(definition, workflow_id=alternate_workflow.id),
+    )
+    with pytest.raises(SchedulerEventConflict, match="frozen snapshot"):
+        store.deliver_event(forged, now=NOW)
+    assert store.list_pending_deliveries(workspace_id) == deliveries
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        delivered_results = tuple(
+            executor.map(
+                lambda _index: store.deliver_event(deliveries[0], now=NOW),
+                range(2),
+            )
+        )
+    delivered = delivered_results[0]
+    assert delivered.state == "delivered"
+    assert delivered.workflow_run_id is not None
+    assert delivered_results == (delivered, delivered)
+    assert store.deliver_event(deliveries[0], now=NOW) == delivered
+    assert store.list_pending_deliveries(workspace_id) == ()
+    assert store.get_run(workspace_id, delivered.workflow_run_id) is not None
+
+    unmatched = replace(
+        event,
+        id=SchedulerEventId(f"event-{uuid4().hex}"),
+        event_type="asset.updated",
+        subject_ref="asset-2",
+    )
+    assert store.ingest_event(unmatched) == ()
 
 
 def test_postgres_scheduler_leadership_is_generation_fenced_and_persistent() -> None:
