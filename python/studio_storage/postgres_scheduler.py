@@ -606,6 +606,278 @@ class PostgresSchedulerSnapshotStore(
         finally:
             connection.close()
 
+    def postgres_request_workflow_cancellation(
+        self,
+        workspace_id: WorkspaceId,
+        workflow_run_id: WorkflowRunId,
+        *,
+        now: Instant | str,
+    ) -> tuple[JobId, ...]:
+        """Persist cancellation authority loss before returning linked Jobs."""
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                # Commit authority loss first so a task claimant holding a task
+                # lock cannot deadlock against cancellation while both wait for
+                # the workflow row.
+                workflow = self._workflow_state(cursor, workspace_id, workflow_run_id)
+                if workflow.state in {"succeeded", "failed", "cancelled"}:
+                    connection.commit()
+                    return ()
+                if workflow.state != "cancelling":
+                    self._write_workflow_state(
+                        cursor, workspace_id, workflow, "cancelling", current
+                    )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                # Existing attempts are then locked before their tasks, matching
+                # the order used by lease fencing and timeout finalization.
+                cursor.execute(
+                    "SELECT a.task_run_id,a.task_attempt_id FROM ronin_task_attempts a "
+                    "JOIN ronin_task_runs t ON t.workspace_id=a.workspace_id "
+                    "AND t.task_run_id=a.task_run_id "
+                    "WHERE a.workspace_id=%s AND t.workflow_run_id=%s AND a.state='running' "
+                    "ORDER BY a.task_attempt_id FOR UPDATE OF a",
+                    (str(workspace_id), str(workflow_run_id)),
+                )
+                attempts_by_task = {
+                    row["task_run_id"]: row["task_attempt_id"] for row in cursor.fetchall()
+                }
+                cursor.execute(
+                    "SELECT task_run_id,state FROM ronin_task_runs "
+                    "WHERE workspace_id=%s AND workflow_run_id=%s "
+                    "ORDER BY task_run_id FOR UPDATE",
+                    (str(workspace_id), str(workflow_run_id)),
+                )
+                tasks = cursor.fetchall()
+                workflow = self._workflow_state(cursor, workspace_id, workflow_run_id)
+                outstanding: list[JobId] = []
+                for task in tasks:
+                    state = task["state"]
+                    if state in {"succeeded", "failed", "cancelled"}:
+                        continue
+                    if state in {"pending", "retry_wait", "blocked"}:
+                        cursor.execute(
+                            "UPDATE ronin_task_runs SET state='cancelled',next_eligible_at=NULL,"
+                            "updated_at=%s,row_version=row_version+1 "
+                            "WHERE workspace_id=%s AND task_run_id=%s",
+                            (str(current), str(workspace_id), task["task_run_id"]),
+                        )
+                        continue
+                    if state != "running":
+                        raise AssertionError(f"unsupported cancellable task state: {state}")
+
+                    attempt_id = attempts_by_task.get(task["task_run_id"])
+                    if attempt_id is None:
+                        raise AssertionError("running task has no running task attempt")
+                    cursor.execute(
+                        "SELECT job_id FROM ronin_task_execution_intents "
+                        "WHERE workspace_id=%s AND task_attempt_id=%s",
+                        (str(workspace_id), attempt_id),
+                    )
+                    intent = cursor.fetchone()
+                    if intent is not None:
+                        outstanding.append(JobId(intent["job_id"]))
+                        continue
+
+                    cursor.execute(
+                        "UPDATE ronin_task_attempts SET state='cancelled',failure_code=NULL,"
+                        "updated_at=%s WHERE workspace_id=%s AND task_attempt_id=%s "
+                        "AND state='running'",
+                        (str(current), str(workspace_id), attempt_id),
+                    )
+                    cursor.execute(
+                        "UPDATE ronin_task_runs SET state='cancelled',next_eligible_at=NULL,"
+                        "updated_at=%s,row_version=row_version+1 WHERE workspace_id=%s "
+                        "AND task_run_id=%s AND state='running'",
+                        (str(current), str(workspace_id), task["task_run_id"]),
+                    )
+
+                cursor.execute(
+                    "SELECT COUNT(*) AS count FROM ronin_task_runs WHERE workspace_id=%s "
+                    "AND workflow_run_id=%s AND state NOT IN ('succeeded','failed','cancelled')",
+                    (str(workspace_id), str(workflow_run_id)),
+                )
+                if int(cursor.fetchone()["count"]) == 0:
+                    workflow = self._workflow_state(cursor, workspace_id, workflow_run_id)
+                    if workflow.state == "cancelling":
+                        self._write_workflow_state(
+                            cursor, workspace_id, workflow, "cancelled", current
+                        )
+            connection.commit()
+            return tuple(outstanding)
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def postgres_cancel_unsubmitted_execution(
+        self,
+        workspace_id: WorkspaceId,
+        job_id: JobId,
+        *,
+        now: Instant | str,
+    ) -> bool:
+        """Retire an outbox intent whose Job was never durably submitted."""
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT task_attempt_id FROM ronin_task_execution_intents "
+                    "WHERE workspace_id=%s AND job_id=%s FOR UPDATE",
+                    (str(workspace_id), str(job_id)),
+                )
+                intent = cursor.fetchone()
+                if intent is None:
+                    connection.commit()
+                    return False
+                attempt_id = intent["task_attempt_id"]
+                cursor.execute(
+                    "SELECT task_run_id FROM ronin_task_attempts "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s FOR UPDATE",
+                    (str(workspace_id), attempt_id),
+                )
+                attempt = cursor.fetchone()
+                if attempt is None:
+                    raise AssertionError("execution intent references missing task attempt")
+                cursor.execute(
+                    "SELECT workflow_run_id,state FROM ronin_task_runs "
+                    "WHERE workspace_id=%s AND task_run_id=%s FOR UPDATE",
+                    (str(workspace_id), attempt["task_run_id"]),
+                )
+                task = cursor.fetchone()
+                if task is None:
+                    raise AssertionError("task attempt references missing task run")
+                workflow_run_id = WorkflowRunId(task["workflow_run_id"])
+                workflow = self._workflow_state(cursor, workspace_id, workflow_run_id)
+                if workflow.state not in {"cancelling", "cancelled"}:
+                    raise RuntimeError(
+                        "cannot cancel unsubmitted execution without workflow cancellation"
+                    )
+                cursor.execute(
+                    "UPDATE ronin_task_attempts SET state='cancelled',failure_code=NULL,"
+                    "updated_at=%s WHERE workspace_id=%s AND task_attempt_id=%s "
+                    "AND state='running'",
+                    (str(current), str(workspace_id), attempt_id),
+                )
+                cursor.execute(
+                    "UPDATE ronin_task_runs SET state='cancelled',next_eligible_at=NULL,"
+                    "updated_at=%s,row_version=row_version+1 WHERE workspace_id=%s "
+                    "AND task_run_id=%s AND state NOT IN ('succeeded','failed','cancelled')",
+                    (str(current), str(workspace_id), attempt["task_run_id"]),
+                )
+                cursor.execute(
+                    "DELETE FROM ronin_task_execution_intents "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s",
+                    (str(workspace_id), attempt_id),
+                )
+                cursor.execute(
+                    "DELETE FROM ronin_task_timeout_requests "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s",
+                    (str(workspace_id), attempt_id),
+                )
+                cursor.execute(
+                    "SELECT COUNT(*) AS count FROM ronin_task_runs WHERE workspace_id=%s "
+                    "AND workflow_run_id=%s AND state NOT IN ('succeeded','failed','cancelled')",
+                    (str(workspace_id), str(workflow_run_id)),
+                )
+                if int(cursor.fetchone()["count"]) == 0 and workflow.state == "cancelling":
+                    self._write_workflow_state(cursor, workspace_id, workflow, "cancelled", current)
+            connection.commit()
+            return True
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def postgres_reconcile_cancelled_execution(
+        self,
+        workspace_id: WorkspaceId,
+        attempt_id: TaskAttemptId,
+        job: Job,
+        *,
+        now: Instant | str,
+    ) -> bool:
+        """Project a verified terminal Job cancellation into scheduler state."""
+        if job.state is not JobState.CANCELLED:
+            return False
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT job_id,request_digest FROM ronin_task_execution_intents "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s FOR UPDATE",
+                    (str(workspace_id), str(attempt_id)),
+                )
+                intent = cursor.fetchone()
+                if intent is None:
+                    connection.commit()
+                    return False
+                if (
+                    intent["job_id"] != str(job.id)
+                    or intent["request_digest"] != job.request_digest
+                ):
+                    raise TaskExecutionLinkConflict("cancelled job does not match execution intent")
+                cursor.execute(
+                    "SELECT task_run_id FROM ronin_task_attempts "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s FOR UPDATE",
+                    (str(workspace_id), str(attempt_id)),
+                )
+                attempt = cursor.fetchone()
+                if attempt is None:
+                    raise KeyError(str(attempt_id))
+                cursor.execute(
+                    "SELECT workflow_run_id,state FROM ronin_task_runs "
+                    "WHERE workspace_id=%s AND task_run_id=%s FOR UPDATE",
+                    (str(workspace_id), attempt["task_run_id"]),
+                )
+                task = cursor.fetchone()
+                if task is None:
+                    raise AssertionError("task attempt references missing task run")
+                if task["state"] in {"succeeded", "failed", "cancelled"}:
+                    connection.commit()
+                    return True
+                workflow_run_id = WorkflowRunId(task["workflow_run_id"])
+                workflow = self._workflow_state(cursor, workspace_id, workflow_run_id)
+                cursor.execute(
+                    "UPDATE ronin_task_attempts SET state='cancelled',failure_code=NULL,"
+                    "updated_at=%s WHERE workspace_id=%s AND task_attempt_id=%s",
+                    (str(current), str(workspace_id), str(attempt_id)),
+                )
+                cursor.execute(
+                    "UPDATE ronin_task_runs SET state='cancelled',next_eligible_at=NULL,"
+                    "updated_at=%s,row_version=row_version+1 WHERE workspace_id=%s "
+                    "AND task_run_id=%s",
+                    (str(current), str(workspace_id), attempt["task_run_id"]),
+                )
+                cursor.execute(
+                    "SELECT COUNT(*) AS count FROM ronin_task_runs WHERE workspace_id=%s "
+                    "AND workflow_run_id=%s AND state NOT IN ('succeeded','failed','cancelled')",
+                    (str(workspace_id), str(workflow_run_id)),
+                )
+                if int(cursor.fetchone()["count"]) == 0 and workflow.state == "cancelling":
+                    self._write_workflow_state(cursor, workspace_id, workflow, "cancelled", current)
+            connection.commit()
+            return True
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
     def postgres_request_overdue_timeouts(
         self,
         *,
