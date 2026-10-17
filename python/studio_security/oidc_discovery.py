@@ -59,9 +59,7 @@ class HttpsOidcJwksProvider:
         opener: OpenerDirector | None = None,
     ) -> None:
         if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (int, float)):
-            raise ValueError(
-                "OIDC discovery timeout_seconds must be finite and in (0, 300]"
-            )
+            raise ValueError("OIDC discovery timeout_seconds must be finite and in (0, 300]")
         try:
             bounded_timeout = float(timeout_seconds)
         except OverflowError as exc:
@@ -73,9 +71,7 @@ class HttpsOidcJwksProvider:
             or bounded_timeout <= 0
             or bounded_timeout > _MAX_TIMEOUT_SECONDS
         ):
-            raise ValueError(
-                "OIDC discovery timeout_seconds must be finite and in (0, 300]"
-            )
+            raise ValueError("OIDC discovery timeout_seconds must be finite and in (0, 300]")
         self._issuer = _issuer_url(issuer)
         if not 1 <= max_response_bytes <= _MAX_RESPONSE_BYTES:
             raise ValueError(

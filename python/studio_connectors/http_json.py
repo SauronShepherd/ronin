@@ -190,11 +190,7 @@ class HttpJsonConnector:
             timeout_seconds = float(options.get("timeout_seconds", "30"))
         except ValueError as exc:
             raise ValueError("HTTP timeout_seconds must be numeric") from exc
-        if (
-            not math.isfinite(timeout_seconds)
-            or timeout_seconds <= 0
-            or timeout_seconds > 300
-        ):
+        if not math.isfinite(timeout_seconds) or timeout_seconds <= 0 or timeout_seconds > 300:
             raise ValueError("HTTP timeout_seconds must be finite and in (0, 300]")
         try:
             max_response_bytes = int(options.get("max_response_bytes", "10485760"))
