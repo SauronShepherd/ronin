@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-17T11:51:21Z",
-  "observed_main_sha": "58876c2a759fdb2d6dd93ba354ca6b5ce75ffbff",
-  "observed_workspace_state": "observed main SHA; current worktree has an unmerged fail-closed PostgreSQL scheduler route guard and scope reconciliation; generated outputs are excluded from release evidence",
+  "observed_at": "2026-10-17T12:07:00Z",
+  "observed_main_sha": "106ec8ebf02f9a5f0e0a757593bf3fb91501169b",
+  "observed_workspace_state": "observed main SHA; working tree adds SQLite scheduler outbox reopen/replay evidence; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "local_verification": {

@@ -7,7 +7,7 @@
 **Observed workspace snapshot:** 2026-10-17. The tracked source was reconciled
 against `main`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `58876c2a759fdb2d6dd93ba354ca6b5ce75ffbff` (2026-10-17).
+**Observed source head:** `106ec8ebf02f9a5f0e0a757593bf3fb91501169b` (2026-10-17).
 This is the exact source identity used by the latest main-branch CI, Docker,
 Web, Security, Release and Status consistency runs recorded below.
 **Release status:** **INCOMPLETE**.
@@ -24,8 +24,8 @@ evidence.
 
 ## Exact-head qualification snapshot
 
-On `main@58876c2a759fdb2d6dd93ba354ca6b5ce75ffbff` (2026-10-17), GitHub
-reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39029783787)
+On the prior `main@58876c2a759fdb2d6dd93ba354ca6b5ce75ffbff` snapshot
+(2026-10-17), GitHub reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39029783787)
 (Python 3.11/3.12), [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39029783816),
 [Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39029783792),
 [Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39029783786),
@@ -38,9 +38,18 @@ evidence only. The Public v1 release remains **INCOMPLETE**, and product
 qualification remains **blocked** by incomplete capability journeys and
 external/human-owned evidence.
 
-The previous local Docker run on `25d0c44` completed with 21 passed in 112.16
-seconds and strict v0.1 acceptance at 15/15. The current `58876c2` candidate
-has its own successful full Docker workflow, including the strict gate.
+On the current `main@106ec8ebf02f9a5f0e0a757593bf3fb91501169b` snapshot,
+GitHub reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39030809044),
+[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39030808999),
+[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39030809029),
+[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39030809028),
+[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39030809065)
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39030809001).
+Docker passed PostgreSQL storage coverage, real container qualification, and
+strict frozen v0.1 acceptance. A local image run on the current scheduler
+outbox test candidate completed with 21 passed and strict acceptance at 15/15.
+The scheduler/API suite passed 151 tests with Ruff clean. These checks do not
+simulate process termination or close the broader Public v1 journeys.
 
 The current workspace includes the implementation families listed in the
 package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
@@ -95,7 +104,7 @@ workspaces and generated reports are not release evidence.
 | Connectors/ingestion | partial | connection/discovery/checkpoint contracts, governed local CSV/JSONL, bounded HTTP/PostgreSQL, S3-compatible including Apache Ozone, Azure Blob and JDBC profiles, public capability/plan/preview/checkpoint-health API, Studio actions and SDK parity; production driver qualification and broader incremental coverage remain |
 | Lakehouse/SQL | partial | bounded Arrow/Parquet open-data and streaming publication paths, provider-neutral SQL/table contracts, optional local DuckDB engine with bounded relation lifecycle, shared query lifecycle adapter, provider-neutral query-engine contracts/discovery/local transport/Trino HTTP transport, QueryFlux discovery and QueryFlux-to-Trino lifecycle adapters, bounded project-scoped fail-closed read-only SQL HTTP adapter/route, and optional Iceberg/Delta adapters exist; external QueryFlux and remote/catalog qualification, full format features, and broader SQL service remain |
 | Data Engineering Studio | partial | notebook/pipeline execution foundations, durable SQL editor revisions/history/bounded export, parameter schemas, pipeline revision comparison/archive, and an authenticated pipeline-revision-to-workflow-run creation route with deterministic idempotency exist; worker/evidence lineage, complete CRUD and complete Web Studio remain |
-| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded cron/event/backfill/controller services, bounded and continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook notification adapters, and durable retry/error recording exist; crash-restart/recovery evidence, notification-provider qualification, broader operator conformance, and the complete PostgreSQL run/event/backfill/task evidence store remain |
+| Durable DAG scheduler | partial | durable snapshots/task runs, fenced attempts/retries/dependencies, deterministic task→Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware durable cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded cron/event/backfill/controller services, bounded and continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook notification adapters, and durable retry/error recording exist; SQLite store-reopen/outbox replay/reconciliation has focused test evidence, while process-kill recovery, notification-provider qualification, broader operator conformance, and the complete PostgreSQL run/event/backfill/task evidence store remain |
 | Catalog/lineage | partial | governed asset CRUD/revisions, versioned sensitivity/ownership, glossary authoring, bounded search, lineage HTTP navigation, OpenLineage export/HTTP transport and selected-subgraph Bundle portability exist; event certification and complete asset integration remain |
 | Ontology/KG | partial | object/property/link/action schema and persistence, instance materialization, link resolution, bounded graph queries and authorized actions exist; durable replay and public interfaces remain |
 | Graph intelligence/RQL | partial | bounded read-only RQL SELECT filtering, one-hop typed traversal, and typed property joins over materialized KnowledgeGraph views exist; planning, provider execution and public API exposure remain |
