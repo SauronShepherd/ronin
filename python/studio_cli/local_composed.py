@@ -134,6 +134,20 @@ def _port(name: str, default: str) -> int:
     return value
 
 
+def _workflow_reader_for_backend(
+    scheduler: Any, *, now: Instant, postgres_dsn: str | None
+) -> Any | None:
+    """Expose scheduler HTTP routes only when the selected store supports the full contract.
+
+    The current PostgreSQL adapter persists portable workflow/schedule metadata, but does not
+    implement executions, events, backfills, or task-run reads. Wrapping it in the SQLite HTTP
+    adapter would publish routes that fail at runtime when those methods are called.
+    """
+    if postgres_dsn is not None:
+        return None
+    return SqliteWorkflowHTTPAdapter(cast(Any, scheduler), now=now)
+
+
 def build_local_composed_from_env() -> LocalServerComposition:
     """Build, but do not start, the opt-in two-surface local profile."""
 
@@ -319,7 +333,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         project_service,
         authenticator=StaticControlPlaneAuthenticator(control_token),
         authorizer=StaticControlPlaneAuthorizer(workspace_id, permissions),
-        workflow_reader=cast(Any, SqliteWorkflowHTTPAdapter(cast(Any, scheduler), now=now)),
+        workflow_reader=_workflow_reader_for_backend(scheduler, now=now, postgres_dsn=postgres_dsn),
         graph_query_reader=cast(Any, graph_adapter),
         ontology_reader=graph_adapter,
         catalog_reader=catalog_reader,

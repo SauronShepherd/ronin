@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import pytest
-from studio_cli.local_composed import build_local_composed_from_env
+from studio_cli.local_composed import _workflow_reader_for_backend, build_local_composed_from_env
 from studio_core import WorkspaceId
+from studio_execution import SqliteWorkflowHTTPAdapter
+from studio_orchestrator import Instant
 from studio_server import LocalServerComposition
 
 
@@ -20,6 +22,29 @@ def _environment(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
         ),
     )
     monkeypatch.setenv("RONIN_TOKEN", "job-token")
+
+
+def test_workflow_routes_are_not_mounted_for_incomplete_postgres_scheduler_store() -> None:
+    assert (
+        _workflow_reader_for_backend(
+            object(),
+            now=Instant("2026-10-17T00:00:00.000000Z"),
+            postgres_dsn="postgresql://localhost/ronin",
+        )
+        is None
+    )
+
+
+def test_workflow_routes_use_the_complete_sqlite_scheduler_contract(tmp_path) -> None:
+    from studio_storage.bundle_workflow_import import SqliteWorkflowBundleImportStore
+
+    store = SqliteWorkflowBundleImportStore(
+        tmp_path / "scheduler.sqlite3", migration_now="2026-10-17T00:00:00.000000Z"
+    )
+    reader = _workflow_reader_for_backend(
+        store, now=Instant("2026-10-17T00:00:00.000000Z"), postgres_dsn=None
+    )
+    assert isinstance(reader, SqliteWorkflowHTTPAdapter)
 
 
 def test_build_local_composed_from_env_creates_two_surface_composition(
