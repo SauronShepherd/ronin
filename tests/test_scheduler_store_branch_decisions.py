@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sqlite3
+
 import pytest
 from studio_core import (
     Node,
@@ -18,6 +20,24 @@ from studio_storage.scheduler import SqliteSchedulerStore, WorkflowNotFound, Wor
 from studio_storage.workspaces import SqliteWorkspaceStore
 
 NOW = Instant("2026-10-15T00:00:00.000000Z")
+
+
+class _CommitAcknowledgementLost:
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
+
+    @property
+    def in_transaction(self) -> bool:
+        return self._connection.in_transaction
+
+    def execute(self, sql: str, parameters: tuple[object, ...] = ()) -> sqlite3.Cursor:
+        cursor = self._connection.execute(sql, parameters)
+        if sql == "COMMIT":
+            raise sqlite3.OperationalError("simulated lost commit acknowledgement")
+        return cursor
+
+    def close(self) -> None:
+        self._connection.close()
 
 
 def test_scheduler_persists_branch_decisions_idempotently_and_rejects_conflicts(tmp_path) -> None:
@@ -114,3 +134,26 @@ def test_scheduler_rejects_late_branch_decision_without_mutating_terminal_task(t
     finally:
         connection.close()
     assert version == 0
+
+
+def test_branch_decision_survives_lost_commit_acknowledgement(tmp_path, monkeypatch) -> None:
+    path = tmp_path / "scheduler.sqlite"
+    workspace_id = WorkspaceId("commit-ack-workspace")
+    workspace_store = SqliteWorkspaceStore(path, migration_now=NOW)
+    workspace_store.create_workspace(Workspace(workspace_id, "Commit ack"), now=NOW)
+    store = SqliteSchedulerStore(path, migration_now=NOW)
+    node = Node.create(operator=OperatorRef("notebook.run"), instance_key="commit-ack-gate")
+    workflow = WorkflowDefinition(WorkflowId("commit-ack-workflow"), "Commit", Pipeline((node,)))
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    run_id = WorkflowRunId("commit-ack-run")
+    store.create_run(workspace_id, run_id, workflow.id, Trigger("manual", "commit"), now=NOW)
+
+    connect = store._connect
+    monkeypatch.setattr(store, "_connect", lambda: _CommitAcknowledgementLost(connect()))
+    expression = {"op": "equals", "field": "environment", "value": "prod"}
+    context = {"environment": "prod"}
+    with pytest.raises(sqlite3.OperationalError, match="lost commit acknowledgement"):
+        store.apply_branch_decision(workspace_id, run_id, node.id, expression, context, now=NOW)
+
+    monkeypatch.setattr(store, "_connect", connect)
+    assert store.apply_branch_decision(workspace_id, run_id, node.id, expression, context, now=NOW)
