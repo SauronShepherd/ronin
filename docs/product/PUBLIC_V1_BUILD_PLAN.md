@@ -1,8 +1,8 @@
 # Ronin Public v1 — Plan de construcción
 
-**Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.  
-**Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).  
-**Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).  
+**Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
+**Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
+**Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
 **Base reconciliada:** `main@d0ca16a7bd3c` (2026-10-17). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Propósito y límites
