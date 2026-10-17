@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-17T12:24:49Z",
-  "observed_main_sha": "db9c81d7e8a5e809c61c4f5c4dffb455aad69ad3",
-  "observed_workspace_state": "observed main SHA; working tree adds SQLite scheduler outbox reopen/replay evidence; generated outputs are excluded from release evidence",
+  "observed_at": "2026-10-17T12:41:42Z",
+  "observed_main_sha": "41a2024fde3de508d29c2fc3f9960b611f075edd",
+  "observed_workspace_state": "observed main SHA; working tree adds isolated dispatcher process-termination recovery evidence; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "local_verification": {

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import subprocess
+import sys
+import time
 from dataclasses import replace
 from pathlib import Path
 
@@ -109,35 +112,95 @@ def test_execution_intent_survives_controller_lease_expiry_without_duplicate_rec
     )
 
 
-def test_execution_outbox_recovers_after_scheduler_store_restart(tmp_path: Path) -> None:
+def test_execution_outbox_recovers_after_dispatcher_process_termination(tmp_path: Path) -> None:
     _store, workspace_id, run, claim, intent = _setup(tmp_path)
+    database = tmp_path / "ronin.db"
+    ready = tmp_path / "dispatcher-ready"
+    child_script = """
+import asyncio
+import sys
+import time
+from pathlib import Path
+from studio_core import WorkspaceId
+from studio_execution import DurableExecutionService
+from studio_execution.scheduler_dispatch import dispatch_execution_intent
+from studio_storage import SqliteJobStore
+from studio_storage.scheduler_execution import SchedulerExecutionLinkStore
+from studio_storage.scheduler_fencing import TaskAttemptId
 
-    # Reopening SQLite models a scheduler restart after the outbox commit and
-    # before dispatch or terminal reconciliation.
-    restarted_store = SchedulerExecutionLinkStore(tmp_path / "ronin.db", migration_now=LATER)
+database = Path(sys.argv[1])
+ready = Path(sys.argv[2])
+workspace_id = WorkspaceId(sys.argv[3])
+attempt_id = TaskAttemptId(sys.argv[4])
+
+async def dispatch_once():
+    scheduler = SchedulerExecutionLinkStore(database, migration_now="2026-09-12T20:02:00.000000Z")
+    intent = scheduler.get_execution_intent(workspace_id, attempt_id)
+    assert intent is not None
+    service = DurableExecutionService(
+        SqliteJobStore(database, migration_now="2026-09-12T20:02:00.000000Z")
+    )
+    try:
+        submitted = await dispatch_execution_intent(intent, service)
+        assert submitted.id == intent.job.id
+        assert submitted.request_digest == intent.job.request_digest
+    finally:
+        await service.aclose()
+
+asyncio.run(dispatch_once())
+ready.write_text("durable submit complete", encoding="utf-8")
+while True:
+    time.sleep(1)
+"""
+    # Kill a separate dispatcher after its durable submit, before it can exit
+    # normally; this exercises recovery across an actual process boundary.
+    process = subprocess.Popen(  # noqa: S603 - explicit Python executable and argument list
+        [
+            sys.executable,
+            "-c",
+            child_script,
+            str(database),
+            str(ready),
+            str(workspace_id),
+            str(claim.attempt_id),
+        ],
+        cwd=Path(__file__).resolve().parents[1],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        deadline = time.monotonic() + 30
+        while process.poll() is None and not ready.exists() and time.monotonic() < deadline:
+            time.sleep(0.05)
+        if not ready.exists():
+            stdout, stderr = process.communicate(timeout=5)
+            raise AssertionError(
+                f"dispatcher did not commit its job before exit; stdout={stdout!r}, "
+                f"stderr={stderr!r}"
+            )
+        process.kill()
+        process.wait(timeout=5)
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=5)
+
+    # Reopen both stores after forced termination. The persisted intent blocks
+    # reclaim, and a replay resolves to the existing durable Job.
+    restarted_store = SchedulerExecutionLinkStore(database, migration_now=LATER)
     recovered = restarted_store.get_execution_intent(workspace_id, claim.attempt_id)
     assert recovered == intent
     assert restarted_store.list_execution_intents() == (intent,)
     assert restarted_store.reclaim_expired(now=LATER) == 0
 
     async def scenario() -> None:
-        database = tmp_path / "ronin.db"
-        service = DurableExecutionService(SqliteJobStore(database, migration_now=LATER))
-        try:
-            submitted = await dispatch_execution_intent(recovered, service)
-            assert submitted.id == intent.job.id
-            assert submitted.request_digest == intent.job.request_digest
-            assert await service.status(intent.job.id) == submitted
-        finally:
-            await service.aclose()
-
-        # Reopen the durable execution store too: replay after scheduler restart
-        # must return the already-created Job instead of duplicating it.
         restarted_service = DurableExecutionService(SqliteJobStore(database, migration_now=LATER))
         try:
             replayed = await dispatch_execution_intent(recovered, restarted_service)
-            assert replayed == submitted
-            assert await restarted_service.status(intent.job.id) == submitted
+            assert replayed.id == intent.job.id
+            assert replayed.request_digest == intent.job.request_digest
+            assert await restarted_service.status(intent.job.id) == replayed
         finally:
             await restarted_service.aclose()
 

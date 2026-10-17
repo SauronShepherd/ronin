@@ -7,7 +7,7 @@
 **Observed workspace snapshot:** 2026-10-17. The tracked source was reconciled
 against `main`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `db9c81d7e8a5e809c61c4f5c4dffb455aad69ad3` (2026-10-17).
+**Observed source head:** `41a2024fde3de508d29c2fc3f9960b611f075edd` (2026-10-17).
 This is the exact source identity used by the latest main-branch CI, Docker,
 Web, Security, Release and Status consistency runs recorded below.
 **Release status:** **INCOMPLETE**.
@@ -38,18 +38,20 @@ evidence only. The Public v1 release remains **INCOMPLETE**, and product
 qualification remains **blocked** by incomplete capability journeys and
 external/human-owned evidence.
 
-On the current `main@db9c81d7e8a5e809c61c4f5c4dffb455aad69ad3` snapshot,
-GitHub reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39031928381),
-[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39031928397),
-[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39031928380),
-[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39031928438),
-[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39031928391)
-and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39031928388).
+On the current `main@41a2024fde3de508d29c2fc3f9960b611f075edd` snapshot,
+GitHub reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39033061650),
+[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39033061624),
+[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39033061744),
+[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39033061598),
+[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39033061631)
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39033061612).
 Docker passed PostgreSQL storage coverage, real container qualification, and
-strict frozen v0.1 acceptance. PR #394's focused SQLite outbox test passed the
-full scheduler/API suite (151 tests), Ruff, and local image qualification
-(21 passed; strict acceptance 15/15). These checks do not simulate process
-termination or close the broader Public v1 journeys.
+strict frozen v0.1 acceptance. PR #395's SQLite outbox test also verifies replay
+after reopening both stores. The current process-termination candidate passed
+the scheduler/API suite (151 tests), Ruff, and local image qualification
+(21 passed; strict acceptance 15/15); it force-terminates a separate dispatcher
+process after its durable submit. This does not exercise daemon shutdown/restart
+or close the broader Public v1 journeys.
 
 The current workspace includes the implementation families listed in the
 package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
