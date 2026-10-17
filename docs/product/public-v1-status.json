@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-17T11:09:25Z",
-  "observed_main_sha": "a48d06335454029817006d50629df021b3de3a56",
-  "observed_workspace_state": "observed main SHA; current worktree has an unmerged release-tool coverage and supply-chain integrity slice; generated outputs are excluded from release evidence",
+  "observed_at": "2026-10-17T11:51:21Z",
+  "observed_main_sha": "58876c2a759fdb2d6dd93ba354ca6b5ce75ffbff",
+  "observed_workspace_state": "observed main SHA; current worktree has an unmerged fail-closed PostgreSQL scheduler route guard and scope reconciliation; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "local_verification": {
@@ -73,7 +73,7 @@
     {
       "id": "p5-durable-dag-scheduler",
       "status": "partial",
-      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook adapters, and durable notification retry/error recording exist; notification provider qualification, broader operator execution, crash-restart/deployment qualification and PostgreSQL multi-node HA qualification remain incomplete."
+      "summary": "Durable workflow snapshots/task runs, lease-fenced attempts/retries/dependencies, deterministic task-to-Job planning, execution outbox/reconciliation, deployment-aware controller, timezone-aware cron, durable event inbox/delivery, cancellation, timeout enforcement, snapshot-safe bounded backfill, shared resource pools, generation-fenced leader authority, leader-guarded scheduler services, continuous daemon orchestration, graceful SIGINT/SIGTERM daemon entrypoint with fenced lease release, group backfill cancellation, fail-closed conditional branches with idempotent persisted decisions/skipped task state, authenticated schedule/event-trigger list/read/replace and event-ingest routes, Scheduler Studio authoring for schedules, event triggers, workflow runs, deliveries and backfills, durable scheduler adapters for notebook, SQL, Python-code, Data Engineering pipeline, quality-gate, connector-sync, graph-query, notification, semantic-refresh, ML and GenAI nodes, optional leader-cycle notification dispatch, bounded SMTP/HTTPS webhook adapters, and durable notification retry/error recording exist. Crash-restart recovery, notification provider qualification, and broader operator conformance remain incomplete. The PostgreSQL profile stores workflow/schedule bundle metadata only and does not expose scheduler HTTP routes until durable run/event/backfill/task storage is implemented."
     },
     {
       "id": "p6-catalog-lineage",
@@ -128,7 +128,7 @@
     {
       "id": "p14-deployment-operations",
       "status": "partial",
-      "summary": "Local/container/Compose foundation, PostgreSQL metadata adapter with transactional migration and healthcheck, wired PostgreSQL JobStore, single-node real-PostgreSQL lifecycle qualification, SQLite online backup/restore with path-bound artifact-tree manifests, PostgreSQL dump backup with checksum sidecar verification, S3-compatible artifact adapter with retries and corruption checks, Kubernetes Job submit/status/cancel/log lifecycle adapter, forward-only migration qualification, explicit upgrade/failure recovery runbooks, multi-user Helm wiring and scheduler HA fencing profile exist. PostgreSQL multi-node/HA and external production qualification remain incomplete."
+      "summary": "Local/container/Compose foundation, PostgreSQL metadata adapter with transactional migration and healthcheck, wired PostgreSQL JobStore, single-node real-PostgreSQL lifecycle qualification, SQLite online backup/restore with path-bound artifact-tree manifests, PostgreSQL dump backup with checksum sidecar verification, S3-compatible artifact adapter with retries and corruption checks, Kubernetes Job submit/status/cancel/log lifecycle adapter, forward-only migration qualification, explicit upgrade/failure recovery runbooks, multi-user Helm wiring and scheduler HA fencing profile exist. PostgreSQL scheduler run/event/backfill/task adapters and external qualification remain incomplete. General production HA is outside the Public v1 contract."
     },
     {
       "id": "ronin-bundle",
@@ -227,7 +227,7 @@
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
     "Continue #102: coverage-release-gates applies a 90% line floor to 11 release-decision modules: strict gate (94%), aggregator (100%), artifact identity (96%), release evidence (91%), evidence emission (100%), installed-artifact evidence (96%), artifact qualification (96%), license qualification (97%), SBOM generation (96%), supply-chain evidence (97%), and mutation policy (97%). Review future decision modules against the policy.",
-    "Complete scheduler broad task adapters, branching/notifications, public scheduler APIs/UI, process/deployment wiring and PostgreSQL HA semantics/qualification.",
+    "Complete the PostgreSQL scheduler store for durable runs, events, backfills, leases, branches, and task evidence; qualify crash/restart recovery and broader operator/notification conformance. General production HA is outside the Public v1 contract.",
     "Extend native Bundle support to the next executable canonical metadata family, preferring workflow/pipeline persistence if its canonical snapshot/store contracts preserve identity without deployment locators; then quality/ontology/ML/GenAI as their contracts permit.",
     "Finish storage ports for remaining domains, then qualify the wired PostgreSQL JobStore and the existing S3-compatible artifact adapter.",
     "Implement Arrow/Parquet, a reference open lakehouse table profile and a reference SQL engine before broad vendor migration adapters.",
