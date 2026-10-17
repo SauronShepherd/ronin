@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@d0ca16a7bd3c` (2026-10-17). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@4daf8a164d729a6e91121849390233e66e68dfc7` (2026-10-17 10:00 UTC). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Propósito y límites
 
@@ -59,7 +59,7 @@ Los rangos siguientes preservan los IDs del plan fuente y forman el índice comp
 
 | Track | Cierre requerido |
 | --- | --- |
-| VER-001 — Mutation gate | Política aprobada y score mínimo comprobado en el candidato exacto; no resucitar campañas congeladas como evidencia nueva. |
+| VER-001 — Mutation gate (retired) | Campaña final histórica 86.88% vs 90% y decisión permanente de no repetirla en [`MUTATION_CAMPAIGN_FINAL.md`](../quality/MUTATION_CAMPAIGN_FINAL.md). Track superseded; no es un blocker ni un pass de calidad. Sólo reabrir con una decisión de producto y un plan nuevos; mantener suites ordinarias de regresión, contrato e integración. |
 | VER-002 — Qualification exact-head | Gates aplicables ejecutados en SHA limpio e inmutable; matriz de estados y skips completa. |
 | VER-003 — Contracts | Conformance de cada contrato/adapter y casos negativos en stores y versiones soportadas. |
 | VER-004 — E2E | Journeys por capacidad desde API hasta resultado persistido/observable, incluyendo fallo, permisos y recuperación. |
@@ -90,6 +90,22 @@ Los rangos siguientes preservan los IDs del plan fuente y forman el índice comp
 | Certificación vendor por import superficial | Exigir ejecución y round-trip por subset, recibos y reporte explícito de pérdida/remap. |
 | Presión para declarar release por cobertura parcial | Mantener `INCOMPLETE` y pedir evidencia/decisión humana sólo en el gate de release final. |
 
+## Decisiones resueltas y bloqueos humanos vigentes
+
+Las decisiones sobre namespace de capacidades de plugins (**#50**) y protocolo runner neutral (**#62**) están aceptadas y sus issues están cerradas; el trabajo de conformance técnica permanece separado en RPV1-003/004. La política de reporte de vulnerabilidades (**#45**) también está cerrada. La campaña de mutation está congelada y retirada, no se ejecutará de nuevo ni cuenta como puerta de release.
+
+La API de GitHub confirma que `main` requiere ocho status checks, aplica reglas también a administradores y prohíbe force-push y borrado; además, el ruleset activo protege tags de release `v*`. Esto cubre las protecciones configuradas que se pueden observar; la revisión legal de licencias/NOTICE/atribución y la aprobación de release siguen siendo humanas. La evidencia exact-head no equivale a journeys completos ni a certificación de proveedores.
+
 ## Incremento ejecutado en esta actualización
 
 Como cambio acotado de hardening, se añadió validación de timeout finito y acotado en OIDC/JWKS y HTTP JSON, con preflight HTTP antes de DNS, lectura de secretos y transporte. Las pruebas focalizadas de ambos módulos se ejecutaron en Docker: **47 passed**; Ruff: **All checks passed**. No se ejecutaron proveedores externos ni se cerró ningún ID RPV1/VER por este incremento.
+
+## Reconciliación de candidato y evidencia exacta
+
+La base actual es `main@4daf8a164d729a6e91121849390233e66e68dfc7`. En ese SHA terminaron correctamente los workflows de [CI](https://github.com/SauronShepherd/ronin/actions/runs/39018190123), [Docker](https://github.com/SauronShepherd/ronin/actions/runs/39018190124), [Web](https://github.com/SauronShepherd/ronin/actions/runs/39018190116), [Security](https://github.com/SauronShepherd/ronin/actions/runs/39018190148), [Release](https://github.com/SauronShepherd/ronin/actions/runs/39018190102) y [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39018190101) (17 de octubre de 2026). CI pasó en Python 3.11 y 3.12; Docker `docker-qualification` pasó; Release `python-artifacts` pasó; Web `web` pasó; Security pasó `dependencies`, `secrets` y `security-evidence`; Status consistency pasó `ledgers`. La tarea `mutation` quedó **skipped**, por lo que no se cuenta como aprobada. Los resultados acreditan los gates ejecutados en este candidato, no que las familias P1–P14 tengan journeys completos ni que el producto esté listo para release. `release_status` permanece `incomplete` y `qualification_status` permanece `blocked`.
+
+En esa base, Docker probaba integración real de contenedores y PostgreSQL, pero no ejecutaba el gate estricto de los 15 pasos v0.1; el workflow de progreso de CI usa `--progress-only` y permite skips. El cambio actual conecta el gate estricto al job Docker y al job de aceptación de tags: cada uno construye y fija la identidad de la imagen Ronin, ejecuta los pasos y falla ante cualquier skip, fallo, error o paso ausente.
+
+El ledger anterior citaba `5d598b903541f1c8aeaf2040896f2a4e6ae7ba45`; se actualizó con el generador de status contra el HEAD real de `main`. También se reconcilió la evidencia mutation con el único registro final congelado y se conservó aparte el snapshot anterior, sin ejecutarlo de nuevo. Las referencias de matriz, plan y ledger ahora comparten la base `4daf8a1`. El plan detallado aportado sigue siendo un índice de alcance histórico: sus conteos y estados no se promueven automáticamente; cada elemento RPV1 y VER debe revisarse contra este código y evidencia vigente antes de cerrarse.
+
+El ejecutor local `tools/run_docker_qualification.ps1` también aplica el gate estricto. En la revisión actual, Docker construyó la imagen de runtime y ejecutó **21 passed**; el gate confirmó **15/15 pasos**, cero skips, fallos o errores. Se retiró una warning de JUnit y se reemplazó el cómputo de progreso por una comprobación de igualdad entre los tests declarados y el manifiesto de aceptación. La ejecución de CI de este cambio queda pendiente; no se cierra todavía VER-004 ni se afirma una aceptación de release exacta.

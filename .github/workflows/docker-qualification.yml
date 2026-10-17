@@ -81,6 +81,30 @@ jobs:
           mkdir -p qualification-evidence
           python -m pytest -q tests/integration/test_docker_container_executor_real.py tests/integration/test_worker_runtime_real.py
 
+      - name: Build Ronin runtime image for frozen v0.1 acceptance
+        run: docker build --file docker/Dockerfile --tag ronin-v01-acceptance:ci .
+
+      - name: Resolve frozen acceptance image identity
+        id: v01-image
+        shell: bash
+        run: |
+          image="$(docker image inspect ronin-v01-acceptance:ci --format '{{.Id}}')"
+          [[ "$image" =~ ^sha256:[0-9a-f]{64}$ ]]
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Run strict frozen v0.1 acceptance
+        env:
+          RONIN_REAL_DOCKER_QUALIFICATION: "1"
+          RONIN_DOCKER_QUALIFICATION_IMAGE: ${{ steps.v01-image.outputs.image }}
+          RONIN_DOCKER_QUALIFICATION_EVIDENCE: ${{ github.workspace }}/qualification-evidence
+          RONIN_HOST_WORKSPACE: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          python -m pytest -q tests/e2e -m e2e --junitxml=qualification-evidence/v01-acceptance.xml
+          python -m tools.v01_acceptance_gate \
+            qualification-evidence/v01-acceptance.xml \
+            --evidence-json=qualification-evidence/v01-acceptance-strict.json
+
       - name: Emit normalized Docker release evidence
         shell: bash
         run: |
@@ -96,7 +120,7 @@ jobs:
             --commit "${GITHUB_SHA}" \
             --status passed \
             --fingerprint "github-actions-docker-${RUNNER_OS}" \
-            --command "pytest real Docker qualification" \
+            --command "pytest real Docker plus strict v0.1 acceptance" \
             "${artifact_args[@]}" \
             --output qualification-evidence/docker-release-evidence.json
 

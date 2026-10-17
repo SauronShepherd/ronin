@@ -4,10 +4,12 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-10. The implementation branch contains
-one local generated qualification directory; it is not release evidence.
-**Observed source head:** `5d598b903541f1c8aeaf2040896f2a4e6ae7ba45` (2026-10-17).
-This is the exact source identity used for the current local verification.
+**Observed workspace snapshot:** 2026-10-17. The tracked source was reconciled
+against `main`; untracked qualification output directories are not release
+evidence.
+**Observed source head:** `4daf8a164d729a6e91121849390233e66e68dfc7` (2026-10-17).
+This is the exact source identity used by the main-branch CI, Docker, Web,
+Security, Release and Status consistency runs recorded below.
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
@@ -17,8 +19,22 @@ This document records implementation state only. It does not claim test executio
 The source tree is the authority for implementation presence. The status ledger
 is intentionally conservative: a capability is `partial` until its mandatory
 Public v1 path is complete end to end. Historical CI/evidence files retain the
-candidate SHA they were generated for. They are not current-head evidence for
-this uncommitted workspace.
+candidate SHA they were generated for and are not promoted to current-head
+evidence.
+
+## Exact-head qualification snapshot
+
+On `main@4daf8a164d729a6e91121849390233e66e68dfc7` (2026-10-17), GitHub
+reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39018190123)
+(Python 3.11/3.12), [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39018190124),
+[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39018190116),
+[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39018190148),
+[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39018190102)
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39018190101).
+CI's `mutation` job was skipped; skipped is not pass. This is exact-head
+automation evidence only. The Public v1 release remains **INCOMPLETE**, and
+product qualification remains **blocked** by incomplete capability journeys
+and external/human-owned evidence.
 
 The current workspace includes the implementation families listed in the
 package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
@@ -28,20 +44,22 @@ ML, migration, Cloud Studio, PostgreSQL and synthetic-data contracts under
 `docs/`; those documents describe implemented slices and remaining boundaries,
 not Public v1 completion.
 
-## Local verification on this snapshot
+## Historical local verification (prior snapshot)
 
-On the current candidate, the full `python -m pytest -q` verification produced
-**2266 passed, 15 skipped** with zero failures or errors. The skips are
+These local results were recorded against the prior source snapshot
+`dfdb1045de2e997caa191ba81a8ec640c1dd04bd`, not the observed candidate above.
+The full `python -m pytest -q` verification produced **2266 passed, 15 skipped**
+with zero failures or errors. The skips are
 environment-gated Docker/PostgreSQL/Spark/provider qualification checks, not
 test failures.
 The latest focused contract verification produced **144 passed**.
-Additional exact-head evidence on this snapshot includes Docker qualification
+Additional evidence recorded for that snapshot includes Docker qualification
 (21 historical CI checks plus 5 current real-Docker tests), real PostgreSQL integration (11 passed), the installed-wheel
 browser smoke (no console/request/CSP failures), installed-wheel accessibility
 (no violations at 320/768/1440 px), and four credential-free migration fixture
-certifications. These checks do not constitute Public v1 release qualification.
+certifications. These checks do not constitute current-head or Public v1 release qualification.
 
-Current-head local checks additionally pass Ruff format/lint across all 881
+That snapshot's local checks additionally passed Ruff format/lint across all 881
 Python files, the public import smoke for 32 packages, 11 Data Engineering
 async tests, and installed-wheel plus installed-sdist Studio Chromium and
 accessibility qualification (zero console/request/CSP, axe, or layout failures).
@@ -111,12 +129,11 @@ These merges do **not** imply that their parent capability families are complete
 
 ## Human-decision / blocked work
 
-- **#50:** runtime capability namespace/value/ambiguity and dispatch-time binding semantics.
-- **#62:** language-neutral runner protocol family and compatibility semantics.
-- **#45:** choose and verify a real private vulnerability reporting path before publishing a security policy that points to it.
-- **License/NOTICE/attribution:** tooling may inventory facts; maintainers/legal review own conclusions.
-- **#199 and dependent release issues:** automated qualification is active; each claim must still identify the exact candidate SHA, and green automation does not replace product, provider, legal or administrative release evidence.
-- **#63:** repository/ref protection remains an administrative release-gate action even though the required checks are now restored.
+- **License/NOTICE/attribution and release approval:** tooling may inventory facts; maintainers/legal review own conclusions.
+- **Provider certifications:** real vendor qualification still needs authorized environments and credentials; fixture-only migration evidence is not certification.
+- **#63:** current GitHub API evidence shows protected `main` with eight required checks, admin enforcement, no force pushes or deletion, and an active `v*` tag ruleset. Reconcile the open issue's checklist with this evidence before claiming the issue is fully satisfied.
+- **#199, #57, #96, #202:** automated qualification is active. The exact `main` candidate passed current CI/Docker/Web/Security/Release/Status workflows; the Docker acceptance change in this branch adds strict 15-step execution to the Docker and tag-release gates. Keep release status blocked until the new exact-head gate and all mandatory product/provider/legal criteria pass.
+- **Mutation:** the campaign is permanently frozen and the score gate retired by product decision. Do not rerun; reopen only through a new explicit product decision and campaign plan.
 
 ## Updated critical path
 
@@ -130,5 +147,5 @@ These merges do **not** imply that their parent capability families are complete
 8. Complete quality runtime, ontology/KG actions/query, RQL, ML, GenAI, semantic/dashboard, streaming, observability/alerts/FinOps and multi-user identity.
 9. Add Kubernetes/Helm after the server metadata/object-store/identity profile is real.
 10. Build the four vendor migration profiles only against executable canonical target capabilities and certify them with exhaustive migration reports.
-11. Restore and run exact-candidate qualification only when authorized; Public v1 remains incomplete until every mandatory family has its supported end-to-end path.
+11. Maintain exact-candidate qualification; the new strict Docker/release acceptance gate must pass on its exact candidate. Public v1 remains incomplete until every mandatory family has its supported end-to-end path and the human-owned evidence is approved.
 
