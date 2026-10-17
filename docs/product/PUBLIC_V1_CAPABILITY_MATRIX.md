@@ -3,7 +3,7 @@
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed candidate:** `586801468a6b1cdc0f28d72d0da585ceb3ca2fd1` (`main`, 2026-10-17).
+**Observed candidate:** `209991ab4b67a1d1cdb85057432e80bda1c2bfdd` (`main`, 2026-10-17).
 
 This matrix is a conservative release view of P1–P14. `implemented` means
 that the repository contains the described source path. `qualified` means

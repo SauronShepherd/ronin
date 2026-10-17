@@ -10,8 +10,11 @@ from studio_core import (
     NodeId,
     OperatorRef,
     Pipeline,
+    ResourcePoolDefinition,
+    RetryPolicy,
     Schedule,
     ScheduleId,
+    TaskPolicy,
     Trigger,
     WorkflowDefinition,
     WorkflowId,
@@ -28,6 +31,7 @@ from studio_storage import (
 )
 from studio_storage.bundle_workflow_import_port import WorkflowBundleImportConflict
 from studio_storage.scheduler import WorkflowNotFound, WorkflowRunConflict
+from studio_storage.scheduler_fencing import TaskAttemptId
 from studio_storage.scheduler_leadership import SchedulerLeadershipLost
 
 pytestmark = pytest.mark.skipif(
@@ -280,9 +284,125 @@ def test_postgres_scheduler_rejects_late_branch_decision_without_mutating_termin
             {"environment": "dev"},
             now=NOW,
         )
-
     assert store.list_task_runs(workspace_id, run_id)[0].state == "succeeded"
     assert store.get_branch_decision(workspace_id, run_id, node.id) is None
+
+
+def test_postgres_scheduler_attempt_leases_fence_workers_and_reclaim_expiry() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerSnapshotStore(dsn, application_name="ronin-scheduler-attempt-lease")
+    workspace_id = WorkspaceId(f"scheduler-lease-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Scheduler lease"), now=NOW)
+    node = Node.create(operator=OperatorRef("notebook.run"), instance_key="lease-task")
+    workflow = WorkflowDefinition(
+        WorkflowId(f"scheduler-lease-workflow-{uuid4().hex}"),
+        "Scheduler lease",
+        Pipeline((node,)),
+        (
+            TaskPolicy(
+                node.id,
+                retry=RetryPolicy(max_attempts=2),
+                pool="lease-workers",
+            ),
+        ),
+    )
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    run_id = WorkflowRunId(f"scheduler-lease-run-{uuid4().hex}")
+    store.create_run(workspace_id, run_id, workflow.id, Trigger("manual", "lease"), now=NOW)
+
+    assert (
+        store.claim_next_task(
+            owner="worker-one",
+            lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+            attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+            lease_seconds=30,
+            now=NOW,
+            workspace_id=workspace_id,
+        )
+        is None
+    )
+    pool = ResourcePoolDefinition("lease-workers", 1)
+    assert store.put_resource_pool(workspace_id, pool, now=NOW) == pool
+    assert store.put_resource_pool(workspace_id, pool, now=NOW) == pool
+    assert store.get_resource_pool(workspace_id, pool.name) == pool
+    assert store.list_resource_pools(workspace_id) == (pool,)
+
+    first = store.claim_next_task(
+        owner="worker-one",
+        lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+        attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+        lease_seconds=30,
+        now=NOW,
+        workspace_id=workspace_id,
+    )
+    assert first is not None
+    assert first.pool_name == pool.name
+    assert store.resource_pool_usage(workspace_id, pool.name) == 1
+    assert (
+        store.claim_next_task(
+            owner="worker-two",
+            lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+            attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+            lease_seconds=30,
+            now=NOW,
+            workspace_id=workspace_id,
+        )
+        is None
+    )
+
+    with pytest.raises(ValueError, match="ownership lost"):
+        store.heartbeat_task(
+            workspace_id,
+            first.attempt_id,
+            owner="worker-two",
+            lease_token=first.lease_token,
+            lease_seconds=30,
+            now=NOW,
+        )
+
+    expired_at = Instant("2026-10-15T00:00:31.000000Z")
+    assert store.reclaim_expired(now=expired_at) == 1
+    second = store.claim_next_task(
+        owner="worker-two",
+        lease_token=LeaseToken(f"lease-{uuid4().hex}"),
+        attempt_id=TaskAttemptId(f"attempt-{uuid4().hex}"),
+        lease_seconds=30,
+        now=expired_at,
+        workspace_id=workspace_id,
+    )
+    assert second is not None
+    assert second.attempt_ordinal == 2
+    with pytest.raises(ValueError, match="ownership lost"):
+        store.complete_task(
+            workspace_id,
+            first.attempt_id,
+            owner=first.lease_owner,
+            lease_token=first.lease_token,
+            succeeded=True,
+            failure_code=None,
+            now=expired_at,
+        )
+
+    renewed_until = store.heartbeat_task(
+        workspace_id,
+        second.attempt_id,
+        owner=second.lease_owner,
+        lease_token=second.lease_token,
+        lease_seconds=60,
+        now=expired_at,
+    )
+    assert renewed_until == Instant("2026-10-15T00:01:31.000000Z")
+    store.complete_task(
+        workspace_id,
+        second.attempt_id,
+        owner=second.lease_owner,
+        lease_token=second.lease_token,
+        succeeded=True,
+        failure_code=None,
+        now=expired_at,
+    )
+    assert store.get_run(workspace_id, run_id).state == "succeeded"  # type: ignore[union-attr]
+    assert store.resource_pool_usage(workspace_id, pool.name) == 0
 
 
 def test_postgres_scheduler_leadership_is_generation_fenced_and_persistent() -> None:

@@ -109,9 +109,11 @@ coverage-t1:
 		--include="*/studio_core/*,*/studio_notebook/*,*/studio_orchestrator/*"
 
 coverage-t2:
-	# Runtime/storage foundations currently qualify at 75%; keep a regression margin.
+	# PostgreSQL scheduler persistence is qualified by the PostgreSQL-backed per-file gate.
+	# Keep the service-free package floor independent from this adapter.
 	coverage report --fail-under=70 \
-		--include="*/studio_kernel/*,*/studio_runners/*,*/studio_storage/*,*/studio_vcs/*,*/studio_worker/*"
+		--include="*/studio_kernel/*,*/studio_runners/*,*/studio_storage/*,*/studio_vcs/*,*/studio_worker/*" \
+		--omit="*/studio_storage/postgres_scheduler.py"
 
 coverage-t3:
 	# Keep package-specific floors for the three distinct platform layers.
