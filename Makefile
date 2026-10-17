@@ -109,11 +109,11 @@ coverage-t1:
 		--include="*/studio_core/*,*/studio_notebook/*,*/studio_orchestrator/*"
 
 coverage-t2:
-	# PostgreSQL scheduler persistence is qualified by the PostgreSQL-backed per-file gate.
+	# PostgreSQL adapters are qualified by the PostgreSQL-backed per-file gate.
 	# Keep the service-free package floor independent from this adapter.
 	coverage report --fail-under=70 \
 		--include="*/studio_kernel/*,*/studio_runners/*,*/studio_storage/*,*/studio_vcs/*,*/studio_worker/*" \
-		--omit="*/studio_storage/postgres_scheduler.py"
+		--omit="*/studio_storage/postgres_scheduler.py,*/studio_storage/postgres_scheduler_backfills.py"
 
 coverage-t3:
 	# Keep package-specific floors for the three distinct platform layers.
@@ -148,6 +148,7 @@ coverage-storage-files:
 		--exclude=postgres_ml.py \
 		--exclude=postgres_workflow.py \
 		--exclude=postgres_scheduler.py \
+		--exclude=postgres_scheduler_backfills.py \
 		--exclude=postgres_scheduler_leadership.py \
 		--threshold=80 \
 		--ratchet-margin=2.1 \
@@ -163,8 +164,8 @@ coverage-storage-files:
 		--baseline=ontology.py=37.40 \
 		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=74.20 \
-		--baseline=scheduler_backfill.py=50.48 \
-		--baseline=scheduler_backfill_runtime.py=66.53 \
+		--baseline=scheduler_backfill.py=65.91 \
+		--baseline=scheduler_backfill_runtime.py=69.11 \
 		--baseline=scheduler_cancellation.py=70.76 \
 		--baseline=scheduler_controller.py=73.94 \
 		--baseline=scheduler_events.py=75.30 \
@@ -195,8 +196,8 @@ coverage-storage-files-full:
 		--baseline=postgres_jobs.py=47.80 \
 		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=74.20 \
-		--baseline=scheduler_backfill.py=50.48 \
-		--baseline=scheduler_backfill_runtime.py=66.53 \
+		--baseline=scheduler_backfill.py=65.91 \
+		--baseline=scheduler_backfill_runtime.py=69.11 \
 		--baseline=scheduler_cancellation.py=70.76 \
 		--baseline=scheduler_controller.py=73.94 \
 		--baseline=scheduler_events.py=75.30 \

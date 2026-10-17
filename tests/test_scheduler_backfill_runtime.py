@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import pytest
 from studio_core import (
     Node,
     OperatorRef,
@@ -16,7 +18,12 @@ from studio_core import (
 )
 from studio_execution.scheduler_backfill import SchedulerBackfillService, preview_backfill
 from studio_orchestrator import Instant, LeaseToken
-from studio_storage.scheduler_backfill import BackfillId, BackfillRequest
+from studio_storage.scheduler_backfill import (
+    BackfillConflict,
+    BackfillId,
+    BackfillRequest,
+    BackfillRun,
+)
 from studio_storage.scheduler_backfill_runtime import SchedulerBackfillRuntimeStore
 from studio_storage.scheduler_fencing import TaskAttemptId
 from studio_storage.workspaces import SqliteWorkspaceStore
@@ -82,6 +89,8 @@ def test_backfill_generation_respects_active_run_cap_and_independent_cursor(
 ) -> None:
     store = _store(tmp_path)
     service = SchedulerBackfillService(store)
+    with pytest.raises(BackfillConflict, match="generation is not complete"):
+        store.complete_backfill(_WS, BackfillId("backfill-1"), now=_T0)
 
     first = asyncio.run(service.tick(_WS, BackfillId("backfill-1"), now=_T0))
     assert [run.logical_time for run in first.fires] == [_T0]
@@ -110,6 +119,16 @@ def test_backfill_generation_respects_active_run_cap_and_independent_cursor(
     third = asyncio.run(service.tick(_WS, BackfillId("backfill-1"), now=_T2))
     assert [run.logical_time for run in third.fires] == [_T2]
     assert third.generation_complete
+    with pytest.raises(BackfillConflict, match="still has active runs"):
+        store.complete_backfill(_WS, BackfillId("backfill-1"), now=_T2)
+    with pytest.raises(BackfillConflict, match="cannot be reopened"):
+        store.advance_backfill_cursor(
+            _WS,
+            BackfillId("backfill-1"),
+            through=_T2,
+            generation_complete=False,
+            now=_T2,
+        )
 
     _complete_one(store, 3, _T2)
     final = asyncio.run(service.tick(_WS, BackfillId("backfill-1"), now=_T2))
@@ -145,6 +164,39 @@ def test_backfill_tick_recovers_created_fire_before_advancing_cursor(tmp_path: P
     assert plan.cursor_at == _T0
 
 
+def test_cancellation_between_run_reservation_and_creation_is_fenced(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = _store(tmp_path)
+    reserve = store._reserve_snapshot_backfill_run
+
+    def reserve_then_cancel(
+        workspace_id: WorkspaceId,
+        backfill_id: BackfillId,
+        logical: Instant,
+        *,
+        now: Instant,
+    ) -> BackfillRun:
+        result = reserve(workspace_id, backfill_id, logical, now=now)
+        store.cancel_backfill(workspace_id, backfill_id, now=now)
+        return result
+
+    monkeypatch.setattr(store, "_reserve_snapshot_backfill_run", reserve_then_cancel)
+    with pytest.raises(BackfillConflict, match="cancelled backfill cannot create"):
+        store.create_snapshot_backfill_run(
+            _WS,
+            BackfillId("backfill-1"),
+            logical_time=_T0,
+            now=_T0,
+        )
+
+    runs = store.list_backfill_runs(_WS, BackfillId("backfill-1"))
+    assert len(runs) == 1
+    assert runs[0].state == "reserved"
+    assert store.get_run(_WS, runs[0].workflow_run_id) is None
+
+
 def test_backfill_runs_use_workflow_snapshot_from_plan_creation(tmp_path: Path) -> None:
     store = _store(tmp_path)
     store.put_workflow(_WS, _workflow("Changed live definition"), now=_T1)
@@ -156,6 +208,41 @@ def test_backfill_runs_use_workflow_snapshot_from_plan_creation(tmp_path: Path) 
     run = store.get_run(_WS, result.fires[0].workflow_run_id)
     assert run is not None
     assert run.workflow_snapshot.name == "Original"
+
+
+def test_concurrent_backfill_plan_creation_is_idempotent(tmp_path: Path) -> None:
+    path = tmp_path / "concurrent-backfill.sqlite3"
+    workspaces = SqliteWorkspaceStore(path, migration_now=_T0)
+    workspaces.create_workspace(Workspace(_WS, "Workspace"), now=_T0)
+    store = SchedulerBackfillRuntimeStore(path, migration_now=_T0)
+    store.put_workflow(_WS, _workflow(), now=_T0)
+    store.put_schedule(
+        _WS,
+        Schedule(ScheduleId("schedule-1"), WorkflowId("workflow-1"), "* * * * *"),
+        now=_T0,
+    )
+    with pytest.raises(ValueError, match="start pending"):
+        store.create_backfill_plan(
+            _WS,
+            BackfillRequest(
+                BackfillId("invalid-backfill"),
+                ScheduleId("schedule-1"),
+                _T0,
+                _T2,
+                state="running",
+            ),
+            max_concurrency=2,
+            now=_T0,
+        )
+    request = BackfillRequest(BackfillId("concurrent-backfill"), ScheduleId("schedule-1"), _T0, _T2)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        plans = tuple(
+            executor.map(
+                lambda _index: store.create_backfill_plan(_WS, request, max_concurrency=2, now=_T0),
+                range(2),
+            )
+        )
+    assert plans[0] == plans[1]
 
 
 def test_backfill_preview_is_pure_and_bounded() -> None:
