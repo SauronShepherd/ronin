@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
 from studio_core import NodeId, TaskRunId, WorkflowRunId, WorkspaceId
 from studio_orchestrator import Instant, JobId
@@ -40,6 +41,9 @@ def request_overdue_timeouts(
 
     if not 1 <= limit <= 1000:
         raise ValueError("timeout request limit must be between 1 and 1000")
+    postgres_request = getattr(store, "postgres_request_overdue_timeouts", None)
+    if postgres_request is not None:
+        return cast(tuple[TaskTimeoutRequest, ...], postgres_request(now=now, limit=limit))
     current = Instant(now)
     connection = store._connect()
     try:
@@ -125,6 +129,9 @@ def list_timeout_requests(
 ) -> tuple[TaskTimeoutRequest, ...]:
     if not 1 <= limit <= 1000:
         raise ValueError("timeout request limit must be between 1 and 1000")
+    postgres_list = getattr(store, "postgres_list_timeout_requests", None)
+    if postgres_list is not None:
+        return cast(tuple[TaskTimeoutRequest, ...], postgres_list(limit=limit))
     connection = store._connect()
     try:
         rows = connection.execute(
@@ -150,6 +157,9 @@ def timeout_requested(
     workspace_id: WorkspaceId,
     attempt_id: TaskAttemptId,
 ) -> bool:
+    postgres_check = getattr(store, "postgres_timeout_requested", None)
+    if postgres_check is not None:
+        return bool(postgres_check(workspace_id, attempt_id))
     connection = store._connect()
     try:
         row = connection.execute(
@@ -166,6 +176,10 @@ def clear_timeout_request(
     workspace_id: WorkspaceId,
     attempt_id: TaskAttemptId,
 ) -> None:
+    postgres_clear = getattr(store, "postgres_clear_timeout_request", None)
+    if postgres_clear is not None:
+        postgres_clear(workspace_id, attempt_id)
+        return
     connection = store._connect()
     try:
         connection.execute("BEGIN IMMEDIATE")
@@ -190,6 +204,9 @@ def finalize_timed_out_attempt(
 ) -> bool:
     """Finish one durable timeout as retry/failure, or cancellation if user-cancelled."""
 
+    postgres_finalize = getattr(store, "postgres_finalize_timed_out_attempt", None)
+    if postgres_finalize is not None:
+        return bool(postgres_finalize(request, now=now))
     current = Instant(now)
     connection = store._connect()
     try:

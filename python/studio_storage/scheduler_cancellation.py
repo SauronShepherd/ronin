@@ -49,6 +49,10 @@ def execution_intent_dispatch_allowed(
 ) -> bool:
     """Return whether an outbox intent still has live scheduler authority to dispatch."""
 
+    postgres_check = getattr(store, "postgres_execution_intent_dispatch_allowed", None)
+    if postgres_check is not None:
+        return bool(postgres_check(intent))
+
     connection = store._connect()
     try:
         row = connection.execute(

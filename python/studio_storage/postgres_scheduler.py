@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -64,8 +65,9 @@ from .scheduler_execution import (
     _intent_from_row,
 )
 from .scheduler_fencing import ClaimedTask, TaskAttemptId
+from .scheduler_timeout import TaskTimeoutRequest
 
-_SCHEMA_VERSION = 7
+_SCHEMA_VERSION = 9
 _SCHEMA = """
 CREATE TABLE ronin_workflow_runs (
     workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
@@ -399,6 +401,50 @@ class PostgresSchedulerSnapshotStore(
                         ),
                     )
                     current = 7
+                if current == 7:
+                    cursor.execute(
+                        "CREATE TABLE ronin_task_timeout_requests ("
+                        "workspace_id TEXT NOT NULL,task_attempt_id TEXT NOT NULL,job_id TEXT,"
+                        "requested_at TEXT NOT NULL,PRIMARY KEY(workspace_id,task_attempt_id),"
+                        "FOREIGN KEY(workspace_id,task_attempt_id) REFERENCES "
+                        "ronin_task_attempts(workspace_id,task_attempt_id) ON DELETE CASCADE)"
+                    )
+                    cursor.execute(
+                        "CREATE INDEX ronin_task_timeout_requests_job_idx "
+                        "ON ronin_task_timeout_requests(job_id,workspace_id,task_attempt_id)"
+                    )
+                    cursor.execute(
+                        "INSERT INTO ronin_scheduler_schema_migrations(version,applied_at) "
+                        "VALUES (%s,%s)",
+                        (
+                            8,
+                            datetime.now(UTC)
+                            .isoformat(timespec="microseconds")
+                            .replace("+00:00", "Z"),
+                        ),
+                    )
+                    current = 8
+                if current == 8:
+                    cursor.execute(
+                        "ALTER TABLE ronin_task_attempts "
+                        "DROP CONSTRAINT ronin_task_attempts_state_check"
+                    )
+                    cursor.execute(
+                        "ALTER TABLE ronin_task_attempts ADD CONSTRAINT "
+                        "ronin_task_attempts_state_check CHECK "
+                        "(state IN ('running','succeeded','failed','lost','cancelled'))"
+                    )
+                    cursor.execute(
+                        "INSERT INTO ronin_scheduler_schema_migrations(version,applied_at) "
+                        "VALUES (%s,%s)",
+                        (
+                            9,
+                            datetime.now(UTC)
+                            .isoformat(timespec="microseconds")
+                            .replace("+00:00", "Z"),
+                        ),
+                    )
+                    current = 9
             connection.commit()
         except Exception:
             connection.rollback()
@@ -527,6 +573,292 @@ class PostgresSchedulerSnapshotStore(
                     if EnvironmentDefinition.from_json(row["environment_json"]).disabled:
                         return None
                 return binding
+        finally:
+            connection.close()
+
+    def postgres_execution_intent_dispatch_allowed(self, intent: TaskExecutionIntent) -> bool:
+        """Check that an outbox intent still belongs to an active scheduler attempt."""
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT a.state AS attempt_state,t.state AS task_state,"
+                    "w.state AS workflow_state FROM ronin_task_execution_intents i "
+                    "JOIN ronin_task_attempts a ON a.workspace_id=i.workspace_id "
+                    "AND a.task_attempt_id=i.task_attempt_id "
+                    "JOIN ronin_task_runs t ON t.workspace_id=a.workspace_id "
+                    "AND t.task_run_id=a.task_run_id "
+                    "JOIN ronin_workflow_runs w ON w.workspace_id=t.workspace_id "
+                    "AND w.workflow_run_id=t.workflow_run_id "
+                    "WHERE i.workspace_id=%s AND i.task_attempt_id=%s AND i.job_id=%s",
+                    (
+                        str(intent.workspace_id),
+                        str(intent.task_attempt_id),
+                        str(intent.job.id),
+                    ),
+                )
+                row = cursor.fetchone()
+                return row is not None and (
+                    row["attempt_state"] == "running"
+                    and row["task_state"] == "running"
+                    and row["workflow_state"] in {"pending", "running"}
+                )
+        finally:
+            connection.close()
+
+    def postgres_request_overdue_timeouts(
+        self,
+        *,
+        now: Instant | str,
+        limit: int = 100,
+    ) -> tuple[TaskTimeoutRequest, ...]:
+        if not 1 <= limit <= 1000:
+            raise ValueError("timeout request limit must be between 1 and 1000")
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT a.workspace_id,a.task_attempt_id,a.created_at,t.node_id,"
+                    "t.workflow_run_id,i.job_id,i.parameters_json "
+                    "FROM ronin_task_attempts a "
+                    "JOIN ronin_task_runs t ON t.workspace_id=a.workspace_id "
+                    "AND t.task_run_id=a.task_run_id "
+                    "JOIN ronin_workflow_runs w ON w.workspace_id=t.workspace_id "
+                    "AND w.workflow_run_id=t.workflow_run_id "
+                    "LEFT JOIN ronin_task_execution_intents i ON i.workspace_id=a.workspace_id "
+                    "AND i.task_attempt_id=a.task_attempt_id "
+                    "LEFT JOIN ronin_task_timeout_requests r ON r.workspace_id=a.workspace_id "
+                    "AND r.task_attempt_id=a.task_attempt_id "
+                    "WHERE a.state='running' AND t.state='running' AND w.state='running' "
+                    "AND r.task_attempt_id IS NULL "
+                    "ORDER BY a.created_at,a.task_attempt_id FOR UPDATE OF a SKIP LOCKED"
+                )
+                rows = cursor.fetchall()
+                requested: list[TaskTimeoutRequest] = []
+                for row in rows:
+                    workspace_id = WorkspaceId(row["workspace_id"])
+                    run = self._workflow_state(
+                        cursor, workspace_id, WorkflowRunId(row["workflow_run_id"])
+                    )
+                    if run.state != "running":
+                        continue
+                    timeout_seconds = run.workflow_snapshot.policy_for(
+                        NodeId(row["node_id"])
+                    ).timeout_seconds
+                    parameters_json = row["parameters_json"]
+                    if parameters_json is not None:
+                        try:
+                            parameters = json.loads(parameters_json)
+                        except (TypeError, ValueError) as exc:
+                            raise ValueError(
+                                "scheduler execution parameters are invalid JSON"
+                            ) from exc
+                        adapter_timeout = (
+                            parameters.get("timeout_seconds")
+                            if isinstance(parameters, dict)
+                            else None
+                        )
+                        if adapter_timeout is not None:
+                            if (
+                                not isinstance(adapter_timeout, int)
+                                or isinstance(adapter_timeout, bool)
+                                or not 1 <= adapter_timeout <= 7 * 24 * 60 * 60
+                            ):
+                                raise ValueError("scheduler adapter timeout_seconds is invalid")
+                            timeout_seconds = adapter_timeout
+                    if timeout_seconds is None or current < self._add_seconds(
+                        Instant(row["created_at"]), timeout_seconds
+                    ):
+                        continue
+                    request = TaskTimeoutRequest(
+                        workspace_id,
+                        TaskAttemptId(row["task_attempt_id"]),
+                        None if row["job_id"] is None else JobId(row["job_id"]),
+                        current,
+                    )
+                    cursor.execute(
+                        "INSERT INTO ronin_task_timeout_requests("
+                        "workspace_id,task_attempt_id,job_id,requested_at) "
+                        "VALUES (%s,%s,%s,%s) ON CONFLICT(workspace_id,task_attempt_id) "
+                        "DO NOTHING RETURNING task_attempt_id",
+                        (
+                            str(request.workspace_id),
+                            str(request.task_attempt_id),
+                            None if request.job_id is None else str(request.job_id),
+                            str(request.requested_at),
+                        ),
+                    )
+                    if cursor.fetchone() is not None:
+                        requested.append(request)
+                        if len(requested) >= limit:
+                            break
+                connection.commit()
+                return tuple(requested)
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def postgres_list_timeout_requests(self, *, limit: int = 100) -> tuple[TaskTimeoutRequest, ...]:
+        if not 1 <= limit <= 1000:
+            raise ValueError("timeout request limit must be between 1 and 1000")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT workspace_id,task_attempt_id,job_id,requested_at "
+                    "FROM ronin_task_timeout_requests "
+                    "ORDER BY requested_at,task_attempt_id LIMIT %s",
+                    (limit,),
+                )
+                return tuple(
+                    TaskTimeoutRequest(
+                        WorkspaceId(row["workspace_id"]),
+                        TaskAttemptId(row["task_attempt_id"]),
+                        None if row["job_id"] is None else JobId(row["job_id"]),
+                        Instant(row["requested_at"]),
+                    )
+                    for row in cursor.fetchall()
+                )
+        finally:
+            connection.close()
+
+    def postgres_timeout_requested(
+        self, workspace_id: WorkspaceId, attempt_id: TaskAttemptId
+    ) -> bool:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT 1 FROM ronin_task_timeout_requests "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s",
+                    (str(workspace_id), str(attempt_id)),
+                )
+                return cursor.fetchone() is not None
+        finally:
+            connection.close()
+
+    def postgres_clear_timeout_request(
+        self, workspace_id: WorkspaceId, attempt_id: TaskAttemptId
+    ) -> None:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM ronin_task_timeout_requests "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s",
+                    (str(workspace_id), str(attempt_id)),
+                )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def postgres_finalize_timed_out_attempt(
+        self,
+        request: TaskTimeoutRequest,
+        *,
+        now: Instant | str,
+    ) -> bool:
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT job_id FROM ronin_task_timeout_requests "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s FOR UPDATE",
+                    (str(request.workspace_id), str(request.task_attempt_id)),
+                )
+                marker = cursor.fetchone()
+                if marker is None:
+                    connection.commit()
+                    return False
+                marker_job = None if marker["job_id"] is None else JobId(marker["job_id"])
+                if marker_job != request.job_id:
+                    raise RuntimeError("timeout request job identity changed")
+                cursor.execute(
+                    "SELECT * FROM ronin_task_attempts "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s FOR UPDATE",
+                    (str(request.workspace_id), str(request.task_attempt_id)),
+                )
+                attempt = cursor.fetchone()
+                if attempt is None:
+                    raise KeyError(str(request.task_attempt_id))
+                cursor.execute(
+                    "SELECT * FROM ronin_task_runs "
+                    "WHERE workspace_id=%s AND task_run_id=%s FOR UPDATE",
+                    (str(request.workspace_id), attempt["task_run_id"]),
+                )
+                task = cursor.fetchone()
+                if task is None:
+                    raise AssertionError("timeout attempt references missing task run")
+                workflow = self._workflow_state(
+                    cursor,
+                    request.workspace_id,
+                    WorkflowRunId(task["workflow_run_id"]),
+                )
+                if task["state"] not in {"succeeded", "failed", "cancelled"}:
+                    if workflow.state == "cancelling":
+                        cursor.execute(
+                            "UPDATE ronin_task_attempts SET state='cancelled',failure_code=NULL,"
+                            "updated_at=%s WHERE workspace_id=%s AND task_attempt_id=%s",
+                            (str(current), str(request.workspace_id), str(request.task_attempt_id)),
+                        )
+                        cursor.execute(
+                            "UPDATE ronin_task_runs SET state='cancelled',next_eligible_at=NULL,"
+                            "updated_at=%s,row_version=row_version+1 "
+                            "WHERE workspace_id=%s AND task_run_id=%s",
+                            (str(current), str(request.workspace_id), task["task_run_id"]),
+                        )
+                        cursor.execute(
+                            "SELECT COUNT(*) AS count FROM ronin_task_runs "
+                            "WHERE workspace_id=%s AND workflow_run_id=%s "
+                            "AND state NOT IN ('succeeded','failed','cancelled')",
+                            (str(request.workspace_id), str(workflow.id)),
+                        )
+                        if int(cursor.fetchone()["count"]) == 0:
+                            self._write_workflow_state(
+                                cursor,
+                                request.workspace_id,
+                                workflow,
+                                "cancelled",
+                                current,
+                            )
+                    else:
+                        cursor.execute(
+                            "UPDATE ronin_task_attempts SET state='failed',"
+                            "failure_code='timeout',updated_at=%s "
+                            "WHERE workspace_id=%s AND task_attempt_id=%s",
+                            (str(current), str(request.workspace_id), str(request.task_attempt_id)),
+                        )
+                        self._mark_failure_or_retry(
+                            cursor,
+                            request.workspace_id,
+                            workflow,
+                            task_run_id=TaskRunId(task["task_run_id"]),
+                            node_id=NodeId(task["node_id"]),
+                            attempt_ordinal=int(attempt["ordinal"]),
+                            now=current,
+                        )
+                cursor.execute(
+                    "DELETE FROM ronin_task_execution_intents "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s",
+                    (str(request.workspace_id), str(request.task_attempt_id)),
+                )
+                cursor.execute(
+                    "DELETE FROM ronin_task_timeout_requests "
+                    "WHERE workspace_id=%s AND task_attempt_id=%s",
+                    (str(request.workspace_id), str(request.task_attempt_id)),
+                )
+            connection.commit()
+            return True
+        except Exception:
+            connection.rollback()
+            raise
         finally:
             connection.close()
 
