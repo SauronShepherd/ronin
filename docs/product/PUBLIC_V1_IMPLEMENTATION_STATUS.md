@@ -5,9 +5,9 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-17. The tracked source is based on
-`main@209991a`; untracked qualification output directories are not release
+`main@0ccb5fd`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `209991ab4b67a1d1cdb85057432e80bda1c2bfdd` (2026-10-17).
+**Observed source head:** `0ccb5fdd68b8849f860c7ffe9ef2526e4ec9b3e4` (2026-10-17).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -98,13 +98,21 @@ The prior `main@586801468a6b1cdc0f28d72d0da585ceb3ca2fd1` passed
 [Security](https://github.com/SauronShepherd/ronin/actions/runs/39041024151),
 [Release](https://github.com/SauronShepherd/ronin/actions/runs/39041024086),
 and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39041024136).
-The current `main@209991ab4b67a1d1cdb85057432e80bda1c2bfdd`, including the
+The prior `main@209991ab4b67a1d1cdb85057432e80bda1c2bfdd`, including the
 squash merge of PR #401, passed [CI](https://github.com/SauronShepherd/ronin/actions/runs/39047807894),
 [Docker](https://github.com/SauronShepherd/ronin/actions/runs/39047807872),
 [Web](https://github.com/SauronShepherd/ronin/actions/runs/39047807911),
 [Security](https://github.com/SauronShepherd/ronin/actions/runs/39047807769),
 [Release](https://github.com/SauronShepherd/ronin/actions/runs/39047807778),
 and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39047807882).
+PR #402 added PostgreSQL task-attempt claims, lease heartbeat/fencing,
+expiry reclaim/retry, terminal completion and resource-pool capacity. Its exact
+head passed Python 3.11/3.12, PostgreSQL-backed storage coverage and Docker
+qualification; `mutation` was skipped. The squash commit is
+`main@0ccb5fdd68b8849f860c7ffe9ef2526e4ec9b3e4`; the main-push qualification
+workflows are running. PostgreSQL event, outbox, backfill and task-evidence
+stores remain incomplete, so the scheduler HTTP routes are still unavailable
+for that profile.
 PostgreSQL snapshots, replay-safe branch decisions and generation-fenced
 leadership persist in main. The real PostgreSQL integration passed 4 tests
 with 87% leadership-adapter coverage, including repeat execution against the
@@ -127,11 +135,10 @@ coverage, real container qualification, and strict v0.1 acceptance. The 0% relea
 progress remains unchanged because P5 and all other mandatory capability families
 remain partial.
 
-The next scheduler candidate adds PostgreSQL task-attempt persistence, claim,
-lease heartbeat, fencing, expiry reclaim/retry, and resource-pool capacity under
-transactional row locks. Its real-PostgreSQL Docker integration passed 14 tests
-and focused line coverage reached 81%. It is not yet in main or release-qualified;
-PostgreSQL outbox, events, backfills, task evidence and HTTP routes remain incomplete.
+The PostgreSQL task-attempt implementation passed real PostgreSQL integration
+in Docker: 14 focused tests passed and focused line coverage reached 81%.
+P5 remains partial because PostgreSQL outbox, events, backfills, task evidence,
+crash recovery and scheduler HTTP routes remain incomplete.
 
 The current workspace includes the implementation families listed in the
 package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
@@ -210,7 +217,7 @@ workspaces and generated reports are not release evidence.
 
 PRs **#242–#288** moved Public v1 from planning into source implementation. Scheduler foundations include deterministic task→Job identity/linking (#259), execution outbox/reconciliation (#260), deployment-aware controller (#262), cron/events (#263/#264), cancellation/timeouts (#265/#267), snapshot-safe backfill (#268), pools (#270), leader fencing (#271/#273), daemon orchestration (#274/#275), and group backfill cancellation (#276). Native Bundle portability added project semantic inventory/export (#278), project import planning (#279), runtime remapping plus atomic project/environment-binding commit (#280), connection round-trip with explicit secret-reference remapping (#282), deterministic dependency-ordered multi-object staging (#283), atomic project+connection commit (#285), explicit selected catalog subgraph export/planning (#287), and atomic catalog asset/revision/lineage commit (#288). PR #266 made Public v1 the active construction authority while preserving the historical v0.1 planning files verbatim.
 
-These merges do **not** imply that their parent capability families are complete. Scheduler branching/skipped semantics, durable notification dispatch, public APIs/Studio authoring, and process/signal wiring now exist; crash/restart recovery and broader operator/provider qualification remain. The PostgreSQL workflow adapter persists portable definitions but does not implement run/event/backfill/task evidence, so the Compose control plane now leaves scheduler routes unavailable on that backend instead of exposing a partial HTTP adapter. Bundle support now covers project, connection, workflow/schedule, quality contracts, ontology definitions, semantic models/dashboards, and an explicitly selected catalog subgraph; ML/GenAI/data assets remain outside it. Catalog export intentionally does not invent whole-catalog revision discovery because the current catalog port does not expose it. PostgreSQL does not yet implement the Bundle atomic commit ports.
+These merges do **not** imply that their parent capability families are complete. Scheduler branching/skipped semantics, durable notification dispatch, public APIs/Studio authoring, and process/signal wiring now exist; crash/restart recovery and broader operator/provider qualification remain. PostgreSQL now persists workflow/task snapshots, branch decisions, leader fencing and task-attempt leases, but does not yet implement scheduler outbox, event, backfill or task-evidence stores. The Compose control plane therefore still leaves scheduler routes unavailable on that backend instead of exposing a partial HTTP adapter. Bundle support now covers project, connection, workflow/schedule, quality contracts, ontology definitions, semantic models/dashboards, and an explicitly selected catalog subgraph; ML/GenAI/data assets remain outside it. Catalog export intentionally does not invent whole-catalog revision discovery because the current catalog port does not expose it. PostgreSQL does not yet implement the Bundle atomic commit ports.
 
 ## Invariants that remain mandatory
 
@@ -236,7 +243,7 @@ These merges do **not** imply that their parent capability families are complete
 ## Updated critical path
 
 1. Keep this ledger and the active construction plan synchronized with repository truth.
-2. Complete the PostgreSQL scheduler store for durable runs, events, backfills, leases, branches and task evidence; qualify crash/restart recovery, operator conformance and notification delivery in the supported local/Compose profiles. Do not claim production HA.
+2. Complete the PostgreSQL scheduler store for outbox/dispatch, events, backfills and task evidence; qualify crash/restart recovery, operator conformance and notification delivery in the supported local/Compose profiles. Do not claim production HA.
 3. Extend native Bundle support to the next executable canonical metadata family, preferring workflow/pipeline persistence if its canonical snapshot/store contracts preserve identity without deployment locators; then quality/ontology/ML/GenAI as their contracts permit.
 4. Complete store ports for remaining domains; then implement PostgreSQL adapters and an S3-compatible artifact store without changing logical references.
 5. Implement the first open data path: Arrow/Parquet + reference open table profile + reference SQL engine, with catalog/lineage/quality hooks.
