@@ -24,4 +24,4 @@ def test_changed_surface_classifies_current_candidate_without_unassigned_paths()
     paths = changed_files("origin/main", "HEAD")
     manifest = build_manifest(paths, base="origin/main", head="HEAD")
     assert manifest["files"] == len(paths)
-    assert manifest["subsystems"]
+    assert set(manifest["subsystems"]) == {classify(path) for path in paths}
