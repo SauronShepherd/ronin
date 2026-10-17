@@ -8,6 +8,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
 from studio_core import (
+    EnvironmentDefinition,
     NodeId,
     TaskRun,
     TaskRunId,
@@ -21,6 +22,7 @@ from studio_core import (
     WorkspaceId,
 )
 from studio_core.branching import BranchDecision, Scalar, evaluate_branch
+from studio_core.scheduler_deployment import WorkflowDeploymentBinding
 from studio_core.scheduler_events import (
     EventTriggerDefinition,
     SchedulerEventId,
@@ -38,6 +40,7 @@ from studio_orchestrator import (
     StoredEvidenceRef,
 )
 
+from .environments import EnvironmentConflict
 from .postgres_scheduler_backfills import PostgresSchedulerBackfillMixin
 from .postgres_workflow import PostgresWorkflowBundleImportStore
 from .scheduler import (
@@ -45,6 +48,7 @@ from .scheduler import (
     WorkflowRunConflict,
     _task_run_id,
 )
+from .scheduler_controller import WorkflowDeploymentConflict
 from .scheduler_events import (
     EventDelivery,
     SchedulerEventConflict,
@@ -61,7 +65,7 @@ from .scheduler_execution import (
 )
 from .scheduler_fencing import ClaimedTask, TaskAttemptId
 
-_SCHEMA_VERSION = 6
+_SCHEMA_VERSION = 7
 _SCHEMA = """
 CREATE TABLE ronin_workflow_runs (
     workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
@@ -110,8 +114,8 @@ class PostgresSchedulerSnapshotStore(
     """PostgreSQL workflow/task, execution and event persistence.
 
     This intentionally does not claim complete scheduler adapter conformance:
-    cron cursors, task evidence, API wiring and full restart/operator
-    qualification remain separate work.
+    timeout/cancellation controller transitions, cron cursors, API wiring and full
+    restart/operator qualification remain separate work.
     """
 
     def __init__(self, dsn: str, *, application_name: str = "ronin-scheduler-snapshots") -> None:
@@ -361,6 +365,40 @@ class PostgresSchedulerSnapshotStore(
                         ),
                     )
                     current = 6
+                if current == 6:
+                    cursor.execute(
+                        "CREATE TABLE ronin_workflow_deployments ("
+                        "workspace_id TEXT NOT NULL,workflow_id TEXT NOT NULL,"
+                        "project_id TEXT NOT NULL,environment_id TEXT,binding_json TEXT NOT NULL,"
+                        "created_at TEXT NOT NULL,updated_at TEXT NOT NULL,"
+                        "row_version BIGINT NOT NULL DEFAULT 0,"
+                        "PRIMARY KEY(workspace_id,workflow_id),"
+                        "FOREIGN KEY(workspace_id,workflow_id) REFERENCES "
+                        "ronin_workflows(workspace_id,workflow_id) ON DELETE CASCADE,"
+                        "FOREIGN KEY(workspace_id,project_id) REFERENCES "
+                        "ronin_projects(workspace_id,project_id) ON DELETE CASCADE,"
+                        "FOREIGN KEY(workspace_id,environment_id) REFERENCES "
+                        "ronin_environments(workspace_id,environment_id) ON DELETE RESTRICT)"
+                    )
+                    cursor.execute(
+                        "CREATE INDEX ronin_workflow_deployments_project_idx "
+                        "ON ronin_workflow_deployments(workspace_id,project_id,workflow_id)"
+                    )
+                    cursor.execute(
+                        "CREATE INDEX ronin_workflow_deployments_environment_idx "
+                        "ON ronin_workflow_deployments(workspace_id,environment_id,workflow_id)"
+                    )
+                    cursor.execute(
+                        "INSERT INTO ronin_scheduler_schema_migrations(version,applied_at) "
+                        "VALUES (%s,%s)",
+                        (
+                            7,
+                            datetime.now(UTC)
+                            .isoformat(timespec="microseconds")
+                            .replace("+00:00", "Z"),
+                        ),
+                    )
+                    current = 7
             connection.commit()
         except Exception:
             connection.rollback()
@@ -372,6 +410,125 @@ class PostgresSchedulerSnapshotStore(
     def _add_seconds(value: Instant, seconds: int) -> Instant:
         parsed = datetime.strptime(str(value), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
         return Instant((parsed + timedelta(seconds=seconds)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+
+    def put_workflow_deployment(
+        self,
+        workspace_id: WorkspaceId,
+        binding: WorkflowDeploymentBinding,
+        *,
+        now: Instant | str,
+    ) -> WorkflowDeploymentBinding:
+        """Persist a workspace-scoped workflow deployment binding."""
+        current = Instant(now)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                self._require_active_workspace(cursor, workspace_id)
+                cursor.execute(
+                    "SELECT 1 FROM ronin_workflows WHERE workspace_id=%s AND workflow_id=%s",
+                    (str(workspace_id), str(binding.workflow_id)),
+                )
+                if cursor.fetchone() is None:
+                    raise WorkflowNotFound(str(binding.workflow_id))
+                cursor.execute(
+                    "SELECT archived_at FROM ronin_projects "
+                    "WHERE workspace_id=%s AND project_id=%s",
+                    (str(workspace_id), str(binding.project_id)),
+                )
+                project = cursor.fetchone()
+                if project is None or project["archived_at"] is not None:
+                    raise WorkflowDeploymentConflict(
+                        "project is not registered and active in workspace"
+                    )
+                if binding.environment_id is not None:
+                    cursor.execute(
+                        "SELECT definition_json FROM ronin_environments "
+                        "WHERE workspace_id=%s AND environment_id=%s",
+                        (str(workspace_id), str(binding.environment_id)),
+                    )
+                    environment = cursor.fetchone()
+                    if environment is None:
+                        raise WorkflowDeploymentConflict("environment does not exist in workspace")
+                    if EnvironmentDefinition.from_json(environment["definition_json"]).disabled:
+                        raise EnvironmentConflict(
+                            "cannot deploy workflow to a disabled environment"
+                        )
+                cursor.execute(
+                    "INSERT INTO ronin_workflow_deployments("
+                    "workspace_id,workflow_id,project_id,environment_id,binding_json,"
+                    "created_at,updated_at) VALUES (%s,%s,%s,%s,%s,%s,%s) "
+                    "ON CONFLICT(workspace_id,workflow_id) DO UPDATE SET "
+                    "project_id=EXCLUDED.project_id,environment_id=EXCLUDED.environment_id,"
+                    "binding_json=EXCLUDED.binding_json,updated_at=EXCLUDED.updated_at,"
+                    "row_version=ronin_workflow_deployments.row_version+1 "
+                    "WHERE ronin_workflow_deployments.binding_json<>EXCLUDED.binding_json",
+                    (
+                        str(workspace_id),
+                        str(binding.workflow_id),
+                        str(binding.project_id),
+                        None if binding.environment_id is None else str(binding.environment_id),
+                        binding.to_json(),
+                        str(current),
+                        str(current),
+                    ),
+                )
+            connection.commit()
+            return binding
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def get_workflow_deployment(
+        self, workspace_id: WorkspaceId, workflow_id: WorkflowId
+    ) -> WorkflowDeploymentBinding | None:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT binding_json FROM ronin_workflow_deployments "
+                    "WHERE workspace_id=%s AND workflow_id=%s",
+                    (str(workspace_id), str(workflow_id)),
+                )
+                row = cursor.fetchone()
+                return (
+                    None
+                    if row is None
+                    else WorkflowDeploymentBinding.from_json(row["binding_json"])
+                )
+        finally:
+            connection.close()
+
+    def get_runnable_workflow_deployment(
+        self, workspace_id: WorkspaceId, workflow_id: WorkflowId
+    ) -> WorkflowDeploymentBinding | None:
+        """Return a binding only while its project and optional environment are active."""
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT d.binding_json,p.archived_at,e.definition_json AS environment_json "
+                    "FROM ronin_workflow_deployments d "
+                    "JOIN ronin_projects p ON p.workspace_id=d.workspace_id "
+                    "AND p.project_id=d.project_id "
+                    "LEFT JOIN ronin_environments e ON e.workspace_id=d.workspace_id "
+                    "AND e.environment_id=d.environment_id "
+                    "WHERE d.workspace_id=%s AND d.workflow_id=%s",
+                    (str(workspace_id), str(workflow_id)),
+                )
+                row = cursor.fetchone()
+                if row is None or row["archived_at"] is not None:
+                    return None
+                binding = WorkflowDeploymentBinding.from_json(row["binding_json"])
+                if binding.environment_id is not None:
+                    if row["environment_json"] is None:
+                        return None
+                    if EnvironmentDefinition.from_json(row["environment_json"]).disabled:
+                        return None
+                return binding
+        finally:
+            connection.close()
 
     def put_resource_pool(
         self,

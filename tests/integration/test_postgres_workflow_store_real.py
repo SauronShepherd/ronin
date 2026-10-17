@@ -12,12 +12,20 @@ from uuid import uuid4
 
 import pytest
 from studio_core import (
+    EnvironmentDefinition,
+    EnvironmentId,
+    ExecutionProfile,
     Node,
     NodeId,
     OperatorRef,
     Pipeline,
+    Project,
+    ProjectId,
+    ProjectManifest,
+    RepositoryBinding,
     ResourcePoolDefinition,
     RetryPolicy,
+    RuntimeProfileRef,
     Schedule,
     ScheduleId,
     TaskPolicy,
@@ -28,6 +36,7 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
+from studio_core.scheduler_deployment import WorkflowDeploymentBinding
 from studio_core.scheduler_events import (
     EventTriggerDefinition,
     EventTriggerId,
@@ -56,6 +65,7 @@ from studio_storage import (
     PostgresWorkflowBundleImportStore,
 )
 from studio_storage.bundle_workflow_import_port import WorkflowBundleImportConflict
+from studio_storage.environments import EnvironmentConflict
 from studio_storage.scheduler import WorkflowNotFound, WorkflowRunConflict
 from studio_storage.scheduler_backfill import (
     BackfillConflict,
@@ -83,6 +93,108 @@ NOW = Instant("2026-10-15T00:00:00.000000Z")
 def _workflow(identifier: str, name: str | None = None) -> WorkflowDefinition:
     node = Node.create(operator=OperatorRef("notebook.run"), instance_key=f"task-{identifier}")
     return WorkflowDefinition(WorkflowId(identifier), name or identifier, Pipeline((node,)))
+
+
+def test_postgres_scheduler_deployment_binding_is_workspace_scoped_and_runnable() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerSnapshotStore(dsn, application_name="ronin-scheduler-deployment")
+    workspace_id = WorkspaceId(f"deployment-ws-{uuid4().hex}")
+    metadata = PostgresMetadataStore(dsn, application_name="ronin-scheduler-deployment")
+    metadata.create_workspace(Workspace(workspace_id, "Deployment qualification"), now=NOW)
+    project_id = ProjectId(f"project-{uuid4().hex}")
+    metadata.register_project(
+        workspace_id,
+        ProjectManifest.from_project(
+            Project(
+                project_id,
+                "Deployment project",
+                (RepositoryBinding("source", "https://example.test/source.git", role="primary"),),
+                ExecutionProfile(runtime=RuntimeProfileRef("python", "3.11")),
+            )
+        ),
+        now=NOW,
+    )
+    workflow = _workflow(f"workflow-{uuid4().hex}")
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    binding = WorkflowDeploymentBinding(workflow.id, project_id)
+
+    assert store.put_workflow_deployment(workspace_id, binding, now=NOW) == binding
+    assert store.get_workflow_deployment(workspace_id, workflow.id) == binding
+    assert store.get_workflow_deployment(WorkspaceId("another-workspace"), workflow.id) is None
+    assert store.get_runnable_workflow_deployment(workspace_id, workflow.id) == binding
+
+    disabled_id = EnvironmentId(f"disabled-{uuid4().hex}")
+    metadata.put_environment(
+        workspace_id,
+        EnvironmentDefinition(disabled_id, "Initially active"),
+        now=NOW,
+    )
+    environment_binding = WorkflowDeploymentBinding(workflow.id, project_id, disabled_id)
+    assert store.put_workflow_deployment(workspace_id, environment_binding, now=NOW)
+    assert store.get_runnable_workflow_deployment(workspace_id, workflow.id) == environment_binding
+    metadata.put_environment(
+        workspace_id,
+        EnvironmentDefinition(disabled_id, "Disabled", state="disabled"),
+        now=NOW,
+    )
+    assert store.get_runnable_workflow_deployment(workspace_id, workflow.id) is None
+    with pytest.raises(EnvironmentConflict, match="disabled environment"):
+        store.put_workflow_deployment(
+            workspace_id,
+            WorkflowDeploymentBinding(workflow.id, project_id, disabled_id),
+            now=NOW,
+        )
+    assert metadata.archive_project(workspace_id, project_id, now=NOW)
+    assert store.get_runnable_workflow_deployment(workspace_id, workflow.id) is None
+
+
+def test_postgres_scheduler_migrates_schema_six_to_seven(
+    request: pytest.FixtureRequest,
+) -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    from studio_storage.postgres_core import _psycopg
+
+    psycopg, _ = _psycopg()
+    schema = f"scheduler_deployment_migration_{uuid4().hex}"
+    connection = psycopg.connect(dsn)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"CREATE SCHEMA {schema}")
+        connection.commit()
+    finally:
+        connection.close()
+    schema_dsn = psycopg.conninfo.make_conninfo(dsn, options=f"-c search_path={schema},public")
+
+    def drop_schema() -> None:
+        cleanup = psycopg.connect(dsn)
+        try:
+            with cleanup.cursor() as cursor:
+                cursor.execute(f"DROP SCHEMA {schema} CASCADE")
+            cleanup.commit()
+        finally:
+            cleanup.close()
+
+    request.addfinalizer(drop_schema)
+    PostgresSchedulerSnapshotStore(schema_dsn, application_name="ronin-deployment-migration")
+    connection = psycopg.connect(schema_dsn)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_workflow_deployments")
+            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version=7")
+        connection.commit()
+    finally:
+        connection.close()
+
+    PostgresSchedulerSnapshotStore(schema_dsn, application_name="ronin-deployment-migration")
+    connection = psycopg.connect(schema_dsn)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT version FROM ronin_scheduler_schema_migrations WHERE version=7")
+            assert cursor.fetchone() is not None
+            cursor.execute("SELECT to_regclass('ronin_workflow_deployments') AS table_name")
+            assert cursor.fetchone()[0] == "ronin_workflow_deployments"
+    finally:
+        connection.close()
 
 
 def test_postgres_workflow_and_schedule_bundle_import_is_atomic_and_idempotent() -> None:
@@ -475,6 +587,7 @@ def test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_workflow_deployments")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_plans")
             cursor.execute("DROP TABLE ronin_scheduler_backfills")
@@ -729,6 +842,7 @@ def test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_workflow_deployments")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_plans")
             cursor.execute("DROP TABLE ronin_scheduler_backfills")
@@ -1139,10 +1253,11 @@ def test_postgres_scheduler_backfill_migrates_schema_five_to_six(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_workflow_deployments")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_plans")
             cursor.execute("DROP TABLE ronin_scheduler_backfills")
-            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version=6")
+            cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version>=6")
         connection.commit()
     except Exception:
         connection.rollback()
@@ -1155,11 +1270,12 @@ def test_postgres_scheduler_backfill_migrates_schema_five_to_six(
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT version FROM ronin_scheduler_schema_migrations ORDER BY version")
-            assert [int(row[0]) for row in cursor.fetchall()] == [1, 2, 3, 4, 5, 6]
+            assert [int(row[0]) for row in cursor.fetchall()] == [1, 2, 3, 4, 5, 6, 7]
             for table in (
                 "ronin_scheduler_backfills",
                 "ronin_scheduler_backfill_plans",
                 "ronin_scheduler_backfill_runs",
+                "ronin_workflow_deployments",
             ):
                 cursor.execute("SELECT to_regclass(%s) AS table_name", (table,))
                 assert cursor.fetchone()[0] == table
