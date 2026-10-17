@@ -25,7 +25,7 @@ from studio_execution import DurableExecutionService
 from studio_execution.scheduler_bridge import plan_scheduler_execution
 from studio_execution.scheduler_dispatch import dispatch_execution_intent
 from studio_orchestrator import Instant, JobState, LeaseToken
-from studio_storage import InMemoryJobStore
+from studio_storage import InMemoryJobStore, SqliteJobStore
 from studio_storage.scheduler_execution import SchedulerExecutionLinkStore
 from studio_storage.scheduler_fencing import TaskAttemptId
 from studio_storage.workspaces import SqliteWorkspaceStore
@@ -121,13 +121,27 @@ def test_execution_outbox_recovers_after_scheduler_store_restart(tmp_path: Path)
     assert restarted_store.reclaim_expired(now=LATER) == 0
 
     async def scenario() -> None:
-        service = DurableExecutionService(InMemoryJobStore())
+        database = tmp_path / "ronin.db"
+        service = DurableExecutionService(SqliteJobStore(database, migration_now=LATER))
         try:
             submitted = await dispatch_execution_intent(recovered, service)
             assert submitted.id == intent.job.id
             assert submitted.request_digest == intent.job.request_digest
+            assert await service.status(intent.job.id) == submitted
         finally:
             await service.aclose()
+
+        # Reopen the durable execution store too: replay after scheduler restart
+        # must return the already-created Job instead of duplicating it.
+        restarted_service = DurableExecutionService(
+            SqliteJobStore(database, migration_now=LATER)
+        )
+        try:
+            replayed = await dispatch_execution_intent(recovered, restarted_service)
+            assert replayed == submitted
+            assert await restarted_service.status(intent.job.id) == submitted
+        finally:
+            await restarted_service.aclose()
 
     asyncio.run(scenario())
 
