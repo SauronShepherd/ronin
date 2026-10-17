@@ -132,7 +132,3 @@ These merges do **not** imply that their parent capability families are complete
 10. Build the four vendor migration profiles only against executable canonical target capabilities and certify them with exhaustive migration reports.
 11. Restore and run exact-candidate qualification only when authorized; Public v1 remains incomplete until every mandatory family has its supported end-to-end path.
 
-## Historical v0.1 planning documents
-
-The earlier v0.1 construction plan and backlog are preserved verbatim under `docs/automation/history/`. They remain useful evidence for the execution foundation and historical qualification baseline, but they are not current feature-selection authority. Active `docs/automation/CONSTRUCTION_PLAN.md` and `BACKLOG.md` derive scope from `PUBLIC_V1_SCOPE.md` rather than the superseded v0.1 feature freeze.
-

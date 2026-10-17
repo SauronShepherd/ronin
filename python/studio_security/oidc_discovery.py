@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
+import math
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, OpenerDirector, Request, build_opener
 
 _MAX_RESPONSE_BYTES = 1024 * 1024
 _DEFAULT_TIMEOUT_SECONDS = 5.0
+_MAX_TIMEOUT_SECONDS = 300.0
 
 
 class OidcDiscoveryError(RuntimeError):
@@ -56,14 +58,30 @@ class HttpsOidcJwksProvider:
         max_response_bytes: int = _MAX_RESPONSE_BYTES,
         opener: OpenerDirector | None = None,
     ) -> None:
+        if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (int, float)):
+            raise ValueError(
+                "OIDC discovery timeout_seconds must be finite and in (0, 300]"
+            )
+        try:
+            bounded_timeout = float(timeout_seconds)
+        except OverflowError as exc:
+            raise ValueError(
+                "OIDC discovery timeout_seconds must be finite and in (0, 300]"
+            ) from exc
+        if (
+            not math.isfinite(bounded_timeout)
+            or bounded_timeout <= 0
+            or bounded_timeout > _MAX_TIMEOUT_SECONDS
+        ):
+            raise ValueError(
+                "OIDC discovery timeout_seconds must be finite and in (0, 300]"
+            )
         self._issuer = _issuer_url(issuer)
-        if timeout_seconds <= 0:
-            raise ValueError("OIDC discovery timeout_seconds must be positive")
         if not 1 <= max_response_bytes <= _MAX_RESPONSE_BYTES:
             raise ValueError(
                 f"OIDC discovery max_response_bytes must be between 1 and {_MAX_RESPONSE_BYTES}"
             )
-        self._timeout_seconds = timeout_seconds
+        self._timeout_seconds = bounded_timeout
         self._max_response_bytes = max_response_bytes
         self._opener = opener or build_opener(_RejectRedirects())
 

@@ -136,7 +136,6 @@ Repository validation commands and the current qualification policy are document
 - `tests/` — executable quality and architecture contracts;
 - `tools/` — repository quality gates;
 - `docker/` and `compose.yaml` — local reference container topology;
-- `docs/product/` — product and domain contracts;
-- `docs/automation/` — durable progress, backlog and decision log for incremental autonomous work.
+- `docs/product/` — product and domain contracts, including the [Public v1 build plan](docs/product/PUBLIC_V1_BUILD_PLAN.md);
 
 Ronin reuses mature implementation ideas and code from the author's earlier projects where that accelerates the target architecture without reviving historical defects or vendor coupling.

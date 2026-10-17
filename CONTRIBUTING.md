@@ -36,7 +36,7 @@ make gates-negative
 
 `make test`, coverage, mutation, Docker qualification, release qualification, and CI-derived evidence are separate validation surfaces. Under the current code-only policy, a contribution must state exactly which checks were actually executed and must not claim checks that were not run.
 
-The pure-domain architecture boundary is executable in `tools/architecture_gate.py`. Preserve the package layering and fail-closed invariants documented under `docs/product/` and `docs/automation/`.
+The pure-domain architecture boundary is executable in `tools/architecture_gate.py`. Preserve the package layering and fail-closed invariants documented under `docs/product/` and `docs/architecture/`.
 
 ## Proposing changes
 

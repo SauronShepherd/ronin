@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from typing import cast
 from urllib.error import URLError
 from urllib.request import OpenerDirector
@@ -76,6 +77,27 @@ def test_https_oidc_provider_refetches_to_observe_key_rotation() -> None:
     assert provider.jwks()["keys"] == [{"kid": "one"}]
     assert provider.jwks()["keys"] == [{"kid": "two"}]
     assert len(opener.calls) == 4
+    assert {timeout for _, timeout in opener.calls} == {5.0}
+
+
+@pytest.mark.parametrize(
+    "timeout_seconds",
+    [True, False, None, "5", 0, -1, 301, math.nan, math.inf, -math.inf],
+)
+def test_https_oidc_provider_rejects_invalid_timeouts(timeout_seconds: object) -> None:
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        HttpsOidcJwksProvider(_ISSUER, timeout_seconds=timeout_seconds)  # type: ignore[arg-type]
+
+
+def test_https_oidc_provider_accepts_maximum_timeout() -> None:
+    opener = _Opener(
+        _Response({"issuer": _ISSUER, "jwks_uri": _JWKS}),
+        _Response({"keys": []}),
+    )
+    provider = _provider(opener, timeout_seconds=300)
+
+    assert provider.jwks() == {"keys": []}
+    assert [timeout for _, timeout in opener.calls] == [300.0, 300.0]
 
 
 @pytest.mark.parametrize(

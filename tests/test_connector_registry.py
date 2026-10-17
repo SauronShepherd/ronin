@@ -4,6 +4,7 @@ from threading import Thread
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
+import studio_connectors.http_json as http_json
 from studio_connectors import (
     ConnectorRegistry,
     HttpJsonConnector,
@@ -81,6 +82,117 @@ def test_http_connector_rejects_private_endpoint_without_explicit_opt_in() -> No
     with pytest.raises(ValueError, match="private or reserved"):
         _validate_endpoint_host("127.0.0.1", allow_private=False)
     _validate_endpoint_host("127.0.0.1", allow_private=True)
+
+
+@pytest.mark.parametrize(
+    "timeout_seconds",
+    ["not-a-number", "0", "-1", "301", "nan", "inf", "-inf", "1e309"],
+)
+def test_http_connector_rejects_invalid_timeout_before_dns_secrets_or_transport(
+    timeout_seconds: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[str] = []
+
+    def forbidden(label: str):
+        def fail(*_args: object, **_kwargs: object) -> None:
+            calls.append(label)
+            raise AssertionError(f"{label} must not be reached for invalid timeout")
+
+        return fail
+
+    monkeypatch.setattr(http_json.socket, "getaddrinfo", forbidden("dns"))
+    monkeypatch.setattr(http_json, "_httpx", forbidden("transport"))
+    resolver = EnvironmentSecretResolver({"RONIN_SECRET_HTTP_TOKEN": "secret"})
+    monkeypatch.setattr(resolver, "resolve", forbidden("secrets"))
+    connection = ConnectionDefinition(
+        ConnectionId("http-source"),
+        "HTTP source",
+        "http.json",
+        options=(
+            ("base_url", "https://provider.example/api"),
+            ("timeout_seconds", timeout_seconds),
+        ),
+        secret_refs=(("bearer_token", SecretRef("secret://http/token")),),
+    )
+
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        HttpJsonConnector().read(
+            connection,
+            AssetHandle(connection.id, (), "events"),
+            resolver,
+        )
+
+    assert calls == []
+
+
+def test_http_connector_accepts_maximum_finite_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    client_timeouts: list[float] = []
+    request_timeouts: list[float] = []
+
+    class Response:
+        status_code = 200
+        headers = {"content-type": "application/json", "content-length": "2"}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args: object) -> bool:
+            return False
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def iter_bytes(self):
+            yield b"[]"
+
+    class Client:
+        def __init__(self, *, follow_redirects: bool, timeout: float) -> None:
+            assert follow_redirects is False
+            client_timeouts.append(timeout)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args: object) -> bool:
+            return False
+
+        def stream(self, _method: str, _url: str, *, headers, timeout: float) -> Response:
+            del headers
+            request_timeouts.append(timeout)
+            return Response()
+
+    class Httpx:
+        class TimeoutException(Exception):
+            pass
+
+        class NetworkError(Exception):
+            pass
+
+    Httpx.Client = Client
+
+    monkeypatch.setattr(http_json, "_httpx", lambda: Httpx)
+    connection = ConnectionDefinition(
+        ConnectionId("http-source"),
+        "HTTP source",
+        "http.json",
+        options=(
+            ("allow_http", "true"),
+            ("allow_private_network", "true"),
+            ("base_url", "http://127.0.0.1/api"),
+            ("timeout_seconds", "300"),
+        ),
+    )
+
+    result = HttpJsonConnector().read(
+        connection,
+        AssetHandle(connection.id, (), "events"),
+        EnvironmentSecretResolver({}),
+    )
+
+    assert result.rows == ()
+    assert client_timeouts == [300.0]
+    assert len(request_timeouts) == 1
+    assert 0 < request_timeouts[0] <= 300.0
 
 
 def test_http_connector_revalidates_pagination_urls() -> None:
