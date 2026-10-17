@@ -507,6 +507,16 @@ class PostgresSchedulerBackfillMixin:
                     (str(workspace_id), str(run.id)),
                 )
                 cursor.execute(
+                    "SELECT state FROM ronin_scheduler_backfills "
+                    "WHERE workspace_id=%s AND backfill_id=%s FOR UPDATE",
+                    (str(workspace_id), str(backfill_id)),
+                )
+                backfill = cursor.fetchone()
+                if backfill is None:
+                    raise KeyError(str(backfill_id))
+                if backfill["state"] == "cancelled":
+                    raise BackfillConflict("cancelled backfill cannot create a reserved run")
+                cursor.execute(
                     "SELECT run_json FROM ronin_workflow_runs "
                     "WHERE workspace_id=%s AND workflow_run_id=%s FOR UPDATE",
                     (str(workspace_id), str(run.id)),

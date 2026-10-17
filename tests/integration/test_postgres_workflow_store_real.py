@@ -40,7 +40,12 @@ from studio_storage import (
 )
 from studio_storage.bundle_workflow_import_port import WorkflowBundleImportConflict
 from studio_storage.scheduler import WorkflowNotFound, WorkflowRunConflict
-from studio_storage.scheduler_backfill import BackfillConflict, BackfillId, BackfillRequest
+from studio_storage.scheduler_backfill import (
+    BackfillConflict,
+    BackfillId,
+    BackfillRequest,
+    BackfillRun,
+)
 from studio_storage.scheduler_backfill_runtime import BackfillCapacityExhausted
 from studio_storage.scheduler_events import (
     EventDelivery,
@@ -793,7 +798,9 @@ def test_postgres_scheduler_leadership_is_generation_fenced_and_persistent() -> 
     assert winners[0].generation == replacement.generation + 1
 
 
-def test_postgres_scheduler_backfill_runs_through_the_service_and_survives_reopen() -> None:
+def test_postgres_scheduler_backfill_runs_through_the_service_and_survives_reopen(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
     store = PostgresSchedulerSnapshotStore(dsn, application_name="ronin-scheduler-backfill")
     workspace_id = WorkspaceId(f"scheduler-backfill-ws-{uuid4().hex}")
@@ -946,6 +953,34 @@ def test_postgres_scheduler_backfill_runs_through_the_service_and_survives_reope
     assert reopened.list_backfill_runs(workspace_id, backfill.id) == store.list_backfill_runs(
         workspace_id, backfill.id
     )
+
+    racing_cancel = BackfillRequest(
+        BackfillId(f"scheduler-backfill-racing-cancel-{uuid4().hex}"), schedule.id, start, end
+    )
+    store.create_backfill_plan(workspace_id, racing_cancel, max_concurrency=1, now=NOW)
+    reserve = store._reserve_snapshot_backfill_run
+
+    def reserve_then_cancel(
+        target_workspace: WorkspaceId,
+        target_backfill: BackfillId,
+        logical_time: Instant,
+        *,
+        now: Instant,
+    ) -> BackfillRun:
+        reserved = reserve(target_workspace, target_backfill, logical_time, now=now)
+        store.cancel_backfill(target_workspace, target_backfill, now=now)
+        return reserved
+
+    with monkeypatch.context() as patch:
+        patch.setattr(store, "_reserve_snapshot_backfill_run", reserve_then_cancel)
+        with pytest.raises(BackfillConflict, match="cancelled backfill cannot create"):
+            store.create_snapshot_backfill_run(
+                workspace_id, racing_cancel.id, logical_time=start, now=NOW
+            )
+    racing_runs = store.list_backfill_runs(workspace_id, racing_cancel.id)
+    assert len(racing_runs) == 1
+    assert racing_runs[0].state == "reserved"
+    assert store.get_run(workspace_id, racing_runs[0].workflow_run_id) is None
 
 
 def test_postgres_scheduler_backfill_migrates_schema_five_to_six(

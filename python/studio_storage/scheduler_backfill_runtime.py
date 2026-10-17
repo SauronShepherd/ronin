@@ -556,6 +556,14 @@ class SchedulerBackfillRuntimeStore(SchedulerBackfillStore):
         try:
             connection.execute("BEGIN IMMEDIATE")
             self._require_active_workspace(connection, workspace_id)
+            backfill = connection.execute(
+                "SELECT state FROM scheduler_backfills WHERE workspace_id=? AND backfill_id=?",
+                (str(workspace_id), str(backfill_id)),
+            ).fetchone()
+            if backfill is None:
+                raise KeyError(str(backfill_id))
+            if backfill["state"] == "cancelled":
+                raise BackfillConflict("cancelled backfill cannot create a reserved run")
             existing = connection.execute(
                 "SELECT run_json FROM workflow_runs WHERE workspace_id=? AND workflow_run_id=?",
                 (str(workspace_id), str(run.id)),
