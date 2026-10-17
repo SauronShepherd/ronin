@@ -7,10 +7,9 @@
 **Observed workspace snapshot:** 2026-10-17. The tracked source was reconciled
 against `main`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `d45a7fb605ca4393e25c3aaec52e6dd1fbfac449` (2026-10-17).
-The latest application-source qualification below is for `25d0c440729161dc3b3116580fcd894ae5e0cc10`;
-`d45a7fb` adds only the documentation reconciliation, validated by its own
-Status consistency workflow.
+**Observed source head:** `a48d06335454029817006d50629df021b3de3a56` (2026-10-17).
+This is the exact source identity used by the latest main-branch CI, Docker,
+Web, Security, Release and Status consistency runs recorded below.
 **Release status:** **INCOMPLETE**.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
@@ -25,13 +24,13 @@ evidence.
 
 ## Exact-head qualification snapshot
 
-On `main@25d0c440729161dc3b3116580fcd894ae5e0cc10` (2026-10-17), GitHub
-reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39024767459)
-(Python 3.11/3.12), [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39024767432),
-[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39024767421),
-[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39024767422),
-[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39024767438)
-and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39024767522).
+On `main@a48d06335454029817006d50629df021b3de3a56` (2026-10-17), GitHub
+reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39027178089)
+(Python 3.11/3.12), [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39027178066),
+[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39027178158),
+[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39027178125),
+[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39027178188)
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39027178103).
 Docker included PostgreSQL storage coverage, real container qualification, and
 strict frozen v0.1 acceptance (15 passed, zero skips/failures/errors). CI's
 `mutation` job was skipped; skipped is not pass. This is exact-head automation
@@ -39,9 +38,9 @@ evidence only. The Public v1 release remains **INCOMPLETE**, and product
 qualification remains **blocked** by incomplete capability journeys and
 external/human-owned evidence.
 
-The local Docker qualification on this same source SHA also completed with 21
-passed in 112.16 seconds and strict v0.1 acceptance at 15/15, with no skips,
-failures, or errors.
+The previous local Docker run on `25d0c44` completed with 21 passed in 112.16
+seconds and strict v0.1 acceptance at 15/15. The current `a48d063` candidate
+has its own successful full Docker workflow, including the strict gate.
 
 The current workspace includes the implementation families listed in the
 package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
@@ -138,7 +137,7 @@ These merges do **not** imply that their parent capability families are complete
 
 - **License/NOTICE/attribution and release approval:** tooling may inventory facts; maintainers/legal review own conclusions.
 - **Provider certifications:** real vendor qualification still needs authorized environments and credentials; fixture-only migration evidence is not certification.
-- **#102:** this change raises the strict v0.1 acceptance gate and exact-candidate release aggregator to at least 90% line coverage. The remaining release tooling (artifact, license, SBOM/supply-chain and related gates) still needs an explicit per-module coverage policy and targeted tests; the finding stays open.
+- **#102:** `main` enforces a 90% line floor on the strict v0.1 acceptance gate and exact-candidate release aggregator. The current worktree measures all 11 release-decision modules at or above 90%: artifact identity and installed-artifact qualification (96%), release evidence (91%), evidence emission (100%), artifact qualification (96%), license qualification (97%), SBOM generation (96%), supply-chain evidence (97%), and mutation policy (97%), alongside the existing strict gate (94%) and aggregator (100%). The explicit module list and threshold are enforced by `coverage-release-gates`; the finding stays open pending exact-head CI and review of any additional decision modules.
 - **#63:** current GitHub API evidence shows protected `main` with eight required checks, admin enforcement, no force pushes or deletion, and an active `v*` tag ruleset. Reconcile the open issue's checklist with this evidence before claiming the issue is fully satisfied.
 - **#199, #57, #96, #202:** automated qualification is active and exact-head runs pass on the recorded candidate. The strict 15-step Docker/release gate for #96 landed in #389; keep the broader journey and product/provider/legal criteria open.
 - **Mutation:** the campaign is permanently frozen and the score gate retired by product decision. Do not rerun; reopen only through a new explicit product decision and campaign plan.
@@ -155,6 +154,6 @@ These merges do **not** imply that their parent capability families are complete
 8. Complete quality runtime, ontology/KG actions/query, RQL, ML, GenAI, semantic/dashboard, streaming, observability/alerts/FinOps and multi-user identity.
 9. Add Kubernetes/Helm after the server metadata/object-store/identity profile is real.
 10. Build the four vendor migration profiles only against executable canonical target capabilities and certify them with exhaustive migration reports.
-11. Continue #102 coverage work: the v0.1 strict gate and exact-candidate aggregator now have a 90% line floor; add explicit high-risk coverage policies for artifact, license, SBOM/supply-chain and other release-decision tooling.
+11. Continue #102 coverage work: `coverage-release-gates` now applies a 90% line floor to the strict gate, exact-candidate aggregator, artifact identity, release evidence/emission, installed-artifact evidence, artifact/license qualification, SBOM generation, supply-chain evidence, and mutation-policy parser. Review future release-decision modules against this explicit list.
 12. Maintain exact-candidate qualification; the strict Docker/release acceptance gate must pass on its exact candidate. Public v1 remains incomplete until every mandatory family has its supported end-to-end path and the human-owned evidence is approved.
 

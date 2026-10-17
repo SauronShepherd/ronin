@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from tools import emit_release_evidence, release_evidence
 from tools.aggregate_release_evidence import main as aggregate_release_evidence_main
 from tools.release_evidence import (
     GATE_PROFILES,
@@ -326,3 +327,135 @@ def test_emit_release_evidence_hashes_artifacts(tmp_path: Path) -> None:
     bundle = json.loads(output.read_text(encoding="utf-8"))
     assert len(bundle["records"]) == 1
     assert len(bundle["records"][0]["artifact_digests"][str(artifact)]) == 64
+
+
+def test_release_evidence_cli_validates_merges_and_verifies_exact_candidate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    first = tmp_path / "first.json"
+    second = tmp_path / "second.json"
+    first.write_text(
+        json.dumps({"schema": SCHEMA, "commit": "abc123", "records": [record("unit")]}),
+        encoding="utf-8",
+    )
+    second.write_text(
+        json.dumps({"schema": SCHEMA, "commit": "abc123", "records": [record("api")]}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(sys, "argv", ["release-evidence", "validate", str(first)])
+    assert release_evidence._main() == 0
+    assert '"commit": "abc123"' in capsys.readouterr().out
+
+    merged = tmp_path / "merged.json"
+    monkeypatch.setattr(
+        sys, "argv", ["release-evidence", "merge", str(merged), str(second), str(first)]
+    )
+    assert release_evidence._main() == 0
+    assert [item["gate_id"] for item in json.loads(merged.read_text())["records"]] == [
+        "api",
+        "unit",
+    ]
+    capsys.readouterr()
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "release-evidence",
+            "verdict",
+            str(first),
+            "--required-gate",
+            "unit",
+            "--expected-commit",
+            "abc123",
+        ],
+    )
+    assert release_evidence._main() == 0
+    assert '"status": "passed"' in capsys.readouterr().out
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "release-evidence",
+            "verdict",
+            str(first),
+            "--required-gate",
+            "unit",
+            "--expected-commit",
+            "stale",
+        ],
+    )
+    assert release_evidence._main() == 2
+    assert "release evidence invalid" in capsys.readouterr().out
+
+
+def test_release_evidence_rejects_invalid_input_shapes_and_merge_duplicates(tmp_path: Path) -> None:
+    invalid = record("unit")
+    invalid["environment"] = []
+    with pytest.raises(EvidenceError, match="environment must be an object"):
+        validate_bundle({"schema": SCHEMA, "commit": "abc123", "records": [invalid]})
+
+    first = tmp_path / "first.json"
+    second = tmp_path / "second.json"
+    duplicate = {"schema": SCHEMA, "commit": "abc123", "records": [record("unit")]}
+    first.write_text(json.dumps(duplicate), encoding="utf-8")
+    second.write_text(json.dumps(duplicate), encoding="utf-8")
+    with pytest.raises(EvidenceError, match="duplicate gate_id across bundles"):
+        merge([first, second])
+
+    unreadable = tmp_path / "unreadable.json"
+    unreadable.write_text("{", encoding="utf-8")
+    with pytest.raises(EvidenceError, match="cannot read evidence bundle"):
+        load(unreadable)
+
+
+def test_release_evidence_emitter_direct_api_and_cli(tmp_path: Path, monkeypatch, capsys) -> None:
+    artifact = tmp_path / "artifact.txt"
+    artifact.write_text("release evidence", encoding="utf-8")
+    passed = emit_release_evidence.build_record(
+        gate_id="unit",
+        commit="abc123",
+        status="passed",
+        fingerprint="local",
+        command="pytest",
+        artifacts=[artifact],
+        reason=None,
+    )
+    assert passed["artifact_digests"][str(artifact)]
+    skipped = emit_release_evidence.build_record(
+        gate_id="optional",
+        commit="abc123",
+        status="skipped",
+        fingerprint="local",
+        command="pytest optional",
+        artifacts=[],
+        reason="not configured",
+    )
+    assert skipped["reason"] == "not configured"
+
+    output = tmp_path / "emitted.json"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "emit-release-evidence",
+            "--gate-id",
+            "unit",
+            "--commit",
+            "abc123",
+            "--status",
+            "passed",
+            "--fingerprint",
+            "local",
+            "--command",
+            "pytest",
+            "--artifact",
+            str(artifact),
+            "--output",
+            str(output),
+        ],
+    )
+    assert emit_release_evidence.main() == 0
+    assert json.loads(output.read_text(encoding="utf-8"))["records"][0]["status"] == "passed"
+    assert '"status": "passed"' in capsys.readouterr().out

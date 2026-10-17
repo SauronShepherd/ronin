@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from tools import mutation_gate
 from tools.mutation_gate import MUTATION_THRESHOLD, load_stats, mutation_score, validate_stats
 
 
@@ -73,3 +74,16 @@ def test_load_stats_requires_json_object_with_string_keys(tmp_path: Path) -> Non
     array.write_text("[]", encoding="utf-8")
     with pytest.raises(TypeError, match="JSON object"):
         load_stats(array)
+
+
+def test_mutation_gate_cli_success_and_policy_failure(tmp_path: Path, monkeypatch, capsys) -> None:
+    stats_file = tmp_path / "stats.json"
+    stats_file.write_text(json.dumps(_stats()), encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["mutation_gate", str(stats_file)])
+    mutation_gate.main()
+    assert "meets policy" in capsys.readouterr().out
+
+    stats_file.write_text(json.dumps(_stats(killed=89, survived=11)), encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["mutation_gate", str(stats_file), "--threshold", "95"])
+    with pytest.raises(ValueError, match="below threshold"):
+        mutation_gate.main()

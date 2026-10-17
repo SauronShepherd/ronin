@@ -12,11 +12,13 @@ import hashlib
 import importlib.metadata
 import json
 import platform
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
 
 SCHEMA = "ronin.sbom-provenance/v1"
+_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
 def _sha256(path: Path) -> str:
@@ -54,6 +56,9 @@ def build_evidence(root: Path, artifacts: list[Path]) -> dict[str, Any]:
     resolved = [path.resolve() for path in artifacts]
     if not resolved or any(not path.is_file() for path in resolved):
         raise ValueError("all artifacts must exist and be files")
+    names = [path.name for path in resolved]
+    if len(names) != len(set(names)):
+        raise ValueError("artifact file names must be unique")
     artifact_records = [
         {
             "name": path.name,
@@ -82,10 +87,12 @@ def build_evidence(root: Path, artifacts: list[Path]) -> dict[str, Any]:
 
 def verify_evidence(path: Path, *, expected_revision: str | None = None) -> None:
     value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError("evidence must be a JSON object")
     if value.get("schema") != SCHEMA:
         raise ValueError("unsupported SBOM/provenance evidence schema")
     digest = value.pop("evidence_sha256", None)
-    if not isinstance(digest, str):
+    if not isinstance(digest, str) or not _SHA256.fullmatch(digest):
         raise ValueError("missing evidence_sha256")
     canonical = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
     if hashlib.sha256(canonical).hexdigest() != digest:
@@ -105,12 +112,23 @@ def verify_evidence(path: Path, *, expected_revision: str | None = None) -> None
     for artifact in artifacts:
         if not isinstance(artifact, dict):
             raise ValueError("artifact record must be an object")
-        artifact_path = Path(artifact["path"])
+        artifact_path_value = artifact.get("path")
+        digest_value = artifact.get("sha256")
+        size = artifact.get("bytes")
+        if (
+            not isinstance(artifact_path_value, str)
+            or not isinstance(digest_value, str)
+            or not _SHA256.fullmatch(digest_value)
+            or not isinstance(size, int)
+            or isinstance(size, bool)
+            or size < 0
+        ):
+            raise ValueError("artifact record has invalid path, digest, or size")
+        artifact_path = Path(artifact_path_value)
         if (
             not artifact_path.is_file()
-            or not isinstance(artifact.get("bytes"), int)
-            or artifact_path.stat().st_size != artifact["bytes"]
-            or _sha256(artifact_path) != artifact["sha256"]
+            or artifact_path.stat().st_size != size
+            or _sha256(artifact_path) != digest_value
         ):
             raise ValueError(f"artifact digest mismatch: {artifact.get('name', '<unknown>')}")
 

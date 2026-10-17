@@ -5,8 +5,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
+
+_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
 class SupplyChainEvidenceError(ValueError):
@@ -42,6 +45,8 @@ def validate(
     if not commit.strip():
         raise SupplyChainEvidenceError("commit must be non-empty")
     identity = _load(artifact_identity)
+    if identity.get("schema") != "ronin.artifact-identity/v1":
+        raise SupplyChainEvidenceError("unsupported artifact identity schema")
     if identity.get("commit") != commit:
         raise SupplyChainEvidenceError("artifact identity commit does not match candidate")
     artifacts = identity.get("artifacts")
@@ -52,7 +57,12 @@ def validate(
         if not isinstance(item, dict) or not isinstance(item.get("name"), str):
             raise SupplyChainEvidenceError("artifact identity contains an invalid subject")
         name, digest = item["name"].strip(), item.get("sha256")
-        if not name or name in subjects or not isinstance(digest, str) or len(digest) != 64:
+        if (
+            not name
+            or name in subjects
+            or not isinstance(digest, str)
+            or not _SHA256.fullmatch(digest)
+        ):
             raise SupplyChainEvidenceError("artifact identity contains an invalid digest")
         subjects[name] = digest
     if not sboms:
@@ -70,8 +80,9 @@ def validate(
         else:
             raise SupplyChainEvidenceError(f"SBOM is neither SPDX nor CycloneDX: {path}")
         for record in records:
-            if isinstance(record, dict) and isinstance(record.get("name"), str):
-                sbom_subjects.add(record["name"])
+            if not isinstance(record, dict) or not isinstance(record.get("name"), str):
+                raise SupplyChainEvidenceError(f"SBOM contains an invalid component: {path}")
+            sbom_subjects.add(record["name"])
         sbom_digests[str(path)] = _sha256(path)
     missing_subjects = sorted(set(subjects) - sbom_subjects)
     if missing_subjects:
@@ -83,8 +94,26 @@ def validate(
     statement = _load(provenance)
     if statement.get("commit") != commit:
         raise SupplyChainEvidenceError("provenance commit does not match candidate")
-    if not statement.get("subject") and not statement.get("subjects"):
+    statement_subjects = statement.get("subject", statement.get("subjects"))
+    if not isinstance(statement_subjects, list) or not statement_subjects:
         raise SupplyChainEvidenceError("provenance has no subjects")
+    proven: dict[str, str] = {}
+    for item in statement_subjects:
+        if not isinstance(item, dict) or not isinstance(item.get("name"), str):
+            raise SupplyChainEvidenceError("provenance contains an invalid subject")
+        name = item["name"].strip()
+        digest = item.get("digest", {})
+        sha256 = digest.get("sha256") if isinstance(digest, dict) else None
+        if (
+            not name
+            or name in proven
+            or not isinstance(sha256, str)
+            or not _SHA256.fullmatch(sha256)
+        ):
+            raise SupplyChainEvidenceError("provenance contains an invalid subject digest")
+        proven[name] = sha256
+    if any(proven.get(name) != digest for name, digest in subjects.items()):
+        raise SupplyChainEvidenceError("provenance subjects do not match artifact identity")
     provenance_digest = _sha256(provenance)
     return {
         "schema": "ronin.supply-chain-evidence/v1",
