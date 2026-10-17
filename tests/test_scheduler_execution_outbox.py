@@ -133,9 +133,7 @@ def test_execution_outbox_recovers_after_scheduler_store_restart(tmp_path: Path)
 
         # Reopen the durable execution store too: replay after scheduler restart
         # must return the already-created Job instead of duplicating it.
-        restarted_service = DurableExecutionService(
-            SqliteJobStore(database, migration_now=LATER)
-        )
+        restarted_service = DurableExecutionService(SqliteJobStore(database, migration_now=LATER))
         try:
             replayed = await dispatch_execution_intent(recovered, restarted_service)
             assert replayed == submitted
