@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-17T10:00:03Z",
-  "observed_main_sha": "4daf8a164d729a6e91121849390233e66e68dfc7",
-  "observed_workspace_state": "tracked sources reconciled against main; local generated qualification outputs are excluded from release evidence",
+  "observed_at": "2026-10-17T10:32:05Z",
+  "observed_main_sha": "25d0c440729161dc3b3116580fcd894ae5e0cc10",
+  "observed_workspace_state": "tracked sources on clean main; local generated qualification outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
   "local_verification": {
@@ -221,7 +221,8 @@
     285,
     286,
     287,
-    288
+    288,
+    389
   ],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",

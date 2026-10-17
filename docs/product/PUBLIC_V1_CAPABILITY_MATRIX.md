@@ -3,7 +3,7 @@
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed candidate:** `4daf8a164d729a6e91121849390233e66e68dfc7` (`main`, 2026-10-17).
+**Observed candidate:** `25d0c440729161dc3b3116580fcd894ae5e0cc10` (`main`, 2026-10-17).
 
 This matrix is a conservative release view of P1–P14. `implemented` means
 that the repository contains the described source path. `qualified` means
@@ -45,10 +45,12 @@ npm test -- --reporter=line  # from web-tests
 ```
 
 External or maintainer-controlled evidence still required includes real
-provider qualification, exact-candidate aggregate release evidence, legal and
-NOTICE review, a verified private vulnerability-reporting channel, branch and
-ruleset verification, and the mandatory end-to-end Studio journeys. Historical
-or fixture-only evidence must not be promoted to release qualification.
+provider qualification, complete Public v1 journeys, exact-candidate aggregate
+release evidence, and legal/NOTICE/attribution review plus human release
+approval. The private vulnerability-reporting policy is resolved, and GitHub
+branch/tag protections have been verified; these administrative checks are not
+the remaining product blockers. Historical or fixture-only evidence must not
+be promoted to release qualification.
 
 ## Reading rule
 
