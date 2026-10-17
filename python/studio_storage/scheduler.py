@@ -392,6 +392,10 @@ class SqliteSchedulerStore:
                     "branch decision already persisted with different content"
                 )
             if row["branch_decision_json"] is None:
+                if row["state"] != "pending":
+                    raise WorkflowRunConflict(
+                        "branch decision cannot be added after task execution has started"
+                    )
                 connection.execute(
                     "UPDATE task_runs SET state=?,branch_decision_json=?,updated_at=? "
                     "WHERE workspace_id=? AND task_run_id=?",
