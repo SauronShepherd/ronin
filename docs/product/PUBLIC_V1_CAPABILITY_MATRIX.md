@@ -3,7 +3,7 @@
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed candidate:** `58876c2a759fdb2d6dd93ba354ca6b5ce75ffbff` (`main`, 2026-10-17).
+**Observed candidate:** `106ec8ebf02f9a5f0e0a757593bf3fb91501169b` (`main`, 2026-10-17).
 
 This matrix is a conservative release view of P1–P14. `implemented` means
 that the repository contains the described source path. `qualified` means
@@ -18,7 +18,7 @@ all present. No P1–P14 family is release-qualified in the current snapshot.
 | P2 Connectors and ingestion | Partial | Partial | No | Production driver qualification and broad incremental-source coverage remain incomplete. | PostgreSQL, S3/Azure/JDBC drivers; provider credentials. | Local bounded files/HTTP; Compose/PostgreSQL; configured object storage. |
 | P3 Lakehouse and SQL | Partial | Partial | No | QueryFlux, remote/catalog qualification and full format/service coverage remain incomplete. | DuckDB locally; Iceberg/Delta libraries; Trino/QueryFlux for remote paths. | Local bounded Parquet/DuckDB; Compose; configured remote engine. |
 | P4 Data Engineering Studio | Partial | Partial | No | Worker/evidence lineage, complete CRUD and full authoring surfaces remain incomplete. | Notebook/runtime dependencies; PostgreSQL for runtime qualification. | Local/Compose reference profile. |
-| P5 Durable DAG scheduler | Partial | Partial | No | Crash/restart evidence, notification-provider qualification and broader operator conformance remain incomplete. PostgreSQL currently stores workflow/schedule bundle metadata only; scheduler HTTP routes stay unavailable on that backend until the full run/event/backfill/task store is implemented. General production HA is outside the Public v1 contract. | SMTP/HTTPS notification endpoints; PostgreSQL for the future complete shared scheduler store. | Local SQLite single leader; Compose currently uses PostgreSQL metadata and does not expose scheduler HTTP routes. |
+| P5 Durable DAG scheduler | Partial | Partial | No | A focused SQLite store-reopen test now covers persisted outbox recovery, expired-lease non-reclaim, replay dispatch and terminal reconciliation. Process-kill recovery, notification-provider qualification and broader operator conformance remain incomplete. PostgreSQL currently stores workflow/schedule bundle metadata only; scheduler HTTP routes stay unavailable on that backend until the full run/event/backfill/task store is implemented. General production HA is outside the Public v1 contract. | SMTP/HTTPS notification endpoints; PostgreSQL for the future complete shared scheduler store. | Local SQLite single leader; Compose currently uses PostgreSQL metadata and does not expose scheduler HTTP routes. |
 | P6 Catalog and lineage | Partial | Partial | No | Event-standard certification and complete asset-family integration remain incomplete. | OpenLineage HTTP endpoint for remote export. | Local SQLite; Compose/PostgreSQL reference profile. |
 | P7 Data quality and contracts | Partial | Partial | No | Provider qualification and complete alert/product surfaces remain incomplete. | Optional SQL/Python execution runtimes; SMTP/HTTPS delivery. | Local/Compose reference profile. |
 | P8 AI/ML/MLOps | Partial | Partial | No | Feature engineering, broader algorithms, MLflow/network serving and production qualification remain incomplete. | Numerical Python stack; MLflow or serving provider for interoperability paths. | Local deterministic training/inference; Compose reference profile. |

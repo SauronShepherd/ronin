@@ -109,6 +109,43 @@ def test_execution_intent_survives_controller_lease_expiry_without_duplicate_rec
     )
 
 
+def test_execution_outbox_recovers_after_scheduler_store_restart(tmp_path: Path) -> None:
+    _store, workspace_id, run, claim, intent = _setup(tmp_path)
+
+    # Reopening SQLite models a scheduler restart after the outbox commit and
+    # before dispatch or terminal reconciliation.
+    restarted_store = SchedulerExecutionLinkStore(tmp_path / "ronin.db", migration_now=LATER)
+    recovered = restarted_store.get_execution_intent(workspace_id, claim.attempt_id)
+    assert recovered == intent
+    assert restarted_store.list_execution_intents() == (intent,)
+    assert restarted_store.reclaim_expired(now=LATER) == 0
+
+    async def scenario() -> None:
+        service = DurableExecutionService(InMemoryJobStore())
+        try:
+            submitted = await dispatch_execution_intent(recovered, service)
+            assert submitted.id == intent.job.id
+            assert submitted.request_digest == intent.job.request_digest
+        finally:
+            await service.aclose()
+
+    asyncio.run(scenario())
+
+    terminal = replace(intent.job, state=JobState.SUCCEEDED, updated_at=Instant(LATER))
+    assert restarted_store.reconcile_execution(
+        workspace_id,
+        claim.attempt_id,
+        terminal,
+        now=LATER,
+    )
+    task_runs = restarted_store.list_task_runs(workspace_id, run.id)
+    assert len(task_runs) == 1
+    assert task_runs[0].state == "succeeded"
+    stored_run = restarted_store.get_run(workspace_id, run.id)
+    assert stored_run is not None
+    assert stored_run.state == "succeeded"
+
+
 def test_outbox_dispatch_is_idempotent_against_existing_job_store(tmp_path: Path) -> None:
     _store, _workspace_id, _run, _claim, intent = _setup(tmp_path)
 
