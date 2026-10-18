@@ -924,7 +924,7 @@ def test_postgres_scheduler_daemon_replays_job_after_process_crash_without_dupli
         application_name="ronin-scheduler-daemon-dispatch-recovery",
     )
     metadata.create_workspace(Workspace(workspace_id, "Scheduler dispatch recovery"), now=NOW)
-    project_id = ProjectId(f"scheduler-dispatch-project-{uuid4().hex}")
+    project_id = ProjectId("demo")
     metadata.register_project(
         workspace_id,
         ProjectManifest.from_project(
@@ -941,7 +941,7 @@ def test_postgres_scheduler_daemon_replays_job_after_process_crash_without_dupli
     node = Node.create(
         operator=OperatorRef("notebook.run"),
         instance_key=f"scheduler-dispatch-task-{uuid4().hex}",
-        params={"target": "notebooks/demo.ronin.json", "parameters": {}},
+        params={"target": "notebooks/etl.ronin.json", "parameters": {}},
     )
     workflow = WorkflowDefinition(workflow_id, "Scheduler dispatch recovery", Pipeline((node,)))
     store.put_workflow(workspace_id, workflow, now=NOW)
@@ -1051,6 +1051,7 @@ asyncio.run(daemon.run_once(SchedulerDaemonWork(controller_workspaces=(workspace
     assert persisted.request_digest == intent.job.request_digest
 
     restart_now = Instant("2026-10-15T00:00:31.000000Z")
+    example_workspace = Path(__file__).resolve().parents[2] / "examples"
 
     async def recover() -> None:
         clock_value = restart_now
@@ -1093,22 +1094,57 @@ asyncio.run(daemon.run_once(SchedulerDaemonWork(controller_workspaces=(workspace
             finally:
                 connection.close()
 
-            worker_claim = job_store.claim_next_run(
-                owner="scheduler-recovery-worker",
-                lease_token=LeaseToken("scheduler-recovery-worker-lease"),
-                attempt_id=AttemptId("scheduler-recovery-worker-attempt"),
-                lease_seconds=30,
-                now=clock_value,
-            )
-            assert worker_claim is not None
-            job_store.complete_attempt(
-                worker_claim.attempt_id,
-                state=AttemptState.SUCCEEDED,
-                failure_code=None,
-                owner="scheduler-recovery-worker",
-                lease_token=worker_claim.lease_token,
-                now=clock_value,
-            )
+            if os.environ.get("RONIN_REAL_DOCKER_QUALIFICATION") == "1":
+                from studio_runners import ContainerExecutionLimits
+                from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
+
+                image = os.environ["RONIN_DOCKER_QUALIFICATION_IMAGE"]
+                worker_config = LocalWorkerRuntimeConfig(
+                    paths=WorkerPaths(
+                        example_workspace,
+                        tmp_path / "scheduler-recovery-worker",
+                    ),
+                    owner="scheduler-recovery-worker",
+                    image=image,
+                    postgres_dsn=schema_dsn,
+                    limits=ContainerExecutionLimits(
+                        cpus="0.5",
+                        memory="128m",
+                        pids=32,
+                        timeout_seconds=10.0,
+                    ),
+                    heartbeat_interval_seconds=10.0,
+                )
+                async with LocalWorkerRuntime(
+                    worker_config,
+                    migration_now=clock_value,
+                    now=lambda: clock_value,
+                ) as worker:
+                    worker_outcome = await worker.run_once(
+                        attempt_id=AttemptId("scheduler-recovery-worker-attempt"),
+                        lease_token=LeaseToken("scheduler-recovery-worker-lease"),
+                    )
+                assert worker_outcome.execution is not None
+                assert worker_outcome.execution.state.value == "succeeded"
+                assert len(worker_outcome.execution.executed_cell_ids) == 5
+                assert len(job_store.read_cell_results(intent.run.id)) == 5
+            else:
+                worker_claim = job_store.claim_next_run(
+                    owner="scheduler-recovery-worker",
+                    lease_token=LeaseToken("scheduler-recovery-worker-lease"),
+                    attempt_id=AttemptId("scheduler-recovery-worker-attempt"),
+                    lease_seconds=30,
+                    now=clock_value,
+                )
+                assert worker_claim is not None
+                job_store.complete_attempt(
+                    worker_claim.attempt_id,
+                    state=AttemptState.SUCCEEDED,
+                    failure_code=None,
+                    owner="scheduler-recovery-worker",
+                    lease_token=worker_claim.lease_token,
+                    now=clock_value,
+                )
 
             clock_value = Instant("2026-10-15T00:00:32.000000Z")
             terminal = await daemon.run_once(

@@ -87,7 +87,10 @@ jobs:
           RONIN_POSTGRES_TEST_DSN: postgresql://ronin:ronin@localhost:5432/ronin_worker_qualification
         run: |
           mkdir -p qualification-evidence
-          python -m pytest -q tests/integration/test_docker_container_executor_real.py tests/integration/test_worker_runtime_real.py
+          python -m pytest -q \
+            tests/integration/test_docker_container_executor_real.py \
+            tests/integration/test_worker_runtime_real.py \
+            tests/integration/test_postgres_workflow_store_real.py::test_postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate
 
       - name: Build Ronin runtime image for frozen v0.1 acceptance
         run: docker build --file docker/Dockerfile --tag ronin-v01-acceptance:ci .
