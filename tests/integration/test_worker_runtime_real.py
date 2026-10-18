@@ -81,11 +81,14 @@ class GateBeforeFourthDockerRun:
 
 
 async def main() -> None:
-    mode, workspace, data_dir, image, docker, marker, outcome_path = sys.argv[1:]
+    mode, workspace, data_dir, image, docker, marker, outcome_path, postgres_dsn, attempt_id = (
+        sys.argv[1:]
+    )
     config = LocalWorkerRuntimeConfig(
         paths=WorkerPaths(Path(workspace), Path(data_dir)),
         owner=f"worker-process-{mode}",
         image=image,
+        postgres_dsn=postgres_dsn or None,
         limits=ContainerExecutionLimits(
             cpus="0.5",
             memory="128m",
@@ -102,7 +105,7 @@ async def main() -> None:
         engine_path=docker,
     ) as runtime:
         result = await runtime.run_once(
-            attempt_id=AttemptId(f"attempt-process-{mode}"),
+            attempt_id=AttemptId(attempt_id),
             lease_token=LeaseToken(f"lease-process-{mode}"),
         )
     if mode == "replacement":
@@ -183,6 +186,9 @@ def _process_args(
     config: LocalWorkerRuntimeConfig,
     marker: Path,
     outcome: Path,
+    *,
+    postgres_dsn: str | None = None,
+    attempt_id: str | None = None,
 ) -> list[str]:
     return [
         sys.executable,
@@ -195,6 +201,8 @@ def _process_args(
         _DOCKER,
         str(marker),
         str(outcome),
+        postgres_dsn or "",
+        attempt_id or f"attempt-process-{mode}",
     ]
 
 
@@ -398,6 +406,117 @@ def test_real_process_sigkill_reclaims_same_run_and_reuses_three_cells(tmp_path:
         assert job.state is JobState.SUCCEEDED
         assert len(final_store.read_cell_results(RunId("run-process-crash"))) == 5
         events = final_store.read_events(RunId("run-process-crash"), since=0)
+        assert sum(event.kind == "worker.attempt.succeeded" for event in events) == 1
+    finally:
+        if first.poll() is None:
+            first.kill()
+            first.wait(timeout=5.0)
+
+
+@pytest.mark.skipif(
+    not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
+    reason="PostgreSQL-backed worker crash qualification requires RONIN_POSTGRES_TEST_DSN",
+)
+def test_real_process_sigkill_reclaims_postgres_run_and_reuses_three_cells(
+    tmp_path: Path,
+) -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    suffix = uuid4().hex
+    job_id = JobId(f"job-postgres-process-crash-{suffix}")
+    run_id = RunId(f"run-postgres-process-crash-{suffix}")
+    store = PostgresJobReadPort(dsn, application_name="ronin-postgres-worker-process-crash")
+    PostgresMetadataStore(dsn, application_name="ronin-postgres-worker-process-crash")
+    store.create_job(
+        Job(
+            id=job_id,
+            project_id="examples/demo",
+            idempotency_key=f"postgres-process-crash-{suffix}",
+            request_digest="d" * 64,
+            state=JobState.QUEUED,
+            created_at=_NOW,
+            updated_at=_NOW,
+            target="notebooks/etl.ronin.json",
+            parameters_json='{"mode":"postgres-worker-crash-qualification"}',
+        ),
+        Run(
+            id=run_id,
+            job_id=job_id,
+            ordinal=1,
+            state=RunState.PENDING,
+            not_before=_NOW,
+            created_at=_NOW,
+            updated_at=_NOW,
+        ),
+    )
+
+    data_dir = tmp_path / "postgres-process-crash"
+    marker = tmp_path / "postgres-three-persisted.marker"
+    outcome_path = tmp_path / "postgres-replacement-outcome.json"
+    config = LocalWorkerRuntimeConfig(
+        paths=WorkerPaths(Path.cwd(), data_dir),
+        owner=f"parent-seed-postgres-{suffix}",
+        image=_IMAGE,
+        postgres_dsn=dsn,
+        limits=ContainerExecutionLimits(
+            cpus="0.5",
+            memory="128m",
+            pids=32,
+            timeout_seconds=10.0,
+        ),
+        heartbeat_interval_seconds=10.0,
+    )
+
+    first = subprocess.Popen(  # noqa: S603 - locally constructed qualification process args
+        _process_args(
+            "crash",
+            config,
+            marker,
+            outcome_path,
+            postgres_dsn=dsn,
+            attempt_id=f"attempt-postgres-crash-{suffix}",
+        ),
+        cwd=Path.cwd(),
+        text=True,
+    )
+    try:
+        _wait_for_path(marker, first, timeout=20.0)
+        before_crash = store.read_cell_results(run_id)
+        assert len(before_crash) == 3
+
+        first.kill()
+        assert first.wait(timeout=5.0) != 0
+
+        # Honor the production 30-second lease before the replacement worker reclaims it.
+        time.sleep(31.0)
+
+        replacement = subprocess.run(  # noqa: S603 - locally constructed qualification args
+            _process_args(
+                "replacement",
+                config,
+                marker,
+                outcome_path,
+                postgres_dsn=dsn,
+                attempt_id=f"attempt-postgres-replacement-{suffix}",
+            ),
+            cwd=Path.cwd(),
+            text=True,
+            check=False,
+            timeout=30.0,
+        )
+        assert replacement.returncode == 0
+        outcome = json.loads(outcome_path.read_text(encoding="utf-8"))
+        assert outcome["reclaimed"] == [str(run_id)]
+        assert outcome["attempt_id"] == f"attempt-postgres-replacement-{suffix}"
+        assert outcome["state"] == "succeeded"
+        assert len(outcome["reused"]) == 3
+        assert len(outcome["executed"]) == 2
+        assert set(outcome["reused"]) == {result.cell_id for result in before_crash}
+
+        completed_job = store.get_job(job_id)
+        assert completed_job is not None
+        assert completed_job.state is JobState.SUCCEEDED
+        assert len(store.read_cell_results(run_id)) == 5
+        events = store.read_events(run_id, since=0)
         assert sum(event.kind == "worker.attempt.succeeded" for event in events) == 1
     finally:
         if first.poll() is None:

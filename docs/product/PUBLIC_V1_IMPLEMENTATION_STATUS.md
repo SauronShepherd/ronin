@@ -5,9 +5,9 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-18. The tracked source is based on
-`main@90bbeb3`; untracked qualification output directories are not release
+`main@f067aff`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `90bbeb3ed1dd95ff3091a324408895a8836340c1` (2026-10-18).
+**Observed source head:** `f067affb09d5db74013e66544d16fc2f1423c90a` (2026-10-18).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -284,5 +284,7 @@ El PR [#417](https://github.com/SauronShepherd/ronin/pull/417) termina un proces
 
 El PR [#418](https://github.com/SauronShepherd/ronin/pull/418) continúa el caso de crash hasta completar el Job persistido desde un worker y reconciliar task/workflow a `succeeded` en el siguiente ciclo del daemon. El módulo PostgreSQL más los tests del daemon pasó localmente con Docker/PostgreSQL 16 (**30 tests**); CI 3.11/3.12 y Docker qualification (**8m13s**) pasaron en el PR. El merge es `main@90bbeb3ed1dd95ff3091a324408895a8836340c1`; CI, Docker, Web, Security, Release y Status consistency exact-head post-merge están verdes.
 
-El candidato `codex/postgres-docker-worker-execution` añade ejecución de notebook en contenedores Docker reales con Jobs/checkpoints/eventos persistidos en PostgreSQL. El test crea un Job aislado, ejecuta cinco celdas de `examples/demo` y verifica éxito terminal, cinco checkpoints, evento único y resultados del notebook. Se corrigió el aislamiento usando una base PostgreSQL dedicada, porque el worker reclama globalmente el siguiente Job. La prueba PostgreSQL Docker y el módulo worker real pasaron localmente (**3 tests**, 67.83s). CI exact-head pendiente. No cualifica proveedores externos ni operator general/HA; P5 sigue parcial y progreso release-qualified permanece en **0% (0/14)**.
+El PR [#419](https://github.com/SauronShepherd/ronin/pull/419) añadió ejecución de notebook en contenedores Docker reales con Jobs/checkpoints/eventos persistidos en PostgreSQL. La qualification usa una base PostgreSQL dedicada y verifica cinco celdas, estado terminal, checkpoints, evento único y resultados. El módulo worker real pasó localmente (**3 tests**, 67.83s); CI 3.11/3.12 y Docker qualification (**8m11s**) pasaron. El squash es `main@f067affb09d5db74013e66544d16fc2f1423c90a`; todos los checks exact-head post-merge están verdes.
+
+El candidato `codex/postgres-worker-crash-recovery` amplía el test de worker PostgreSQL con terminación forzada del proceso, tres checkpoints confirmados, espera del lease de 30 segundos y recuperación en proceso sustituto. La repetición verifica reutilización de tres celdas, ejecución de dos, Job exitoso y evento terminal único. Los cuatro tests de `tests/integration/test_worker_runtime_real.py` pasaron localmente en Docker/PostgreSQL 16 (**4/4**, 102.57s); Ruff, formato y diff check pasan. Gates exact-head pendientes. No cualifica proveedores externos ni operator general/HA; P5 continúa parcial y release-qualified en **0% (0/14)**.
 
