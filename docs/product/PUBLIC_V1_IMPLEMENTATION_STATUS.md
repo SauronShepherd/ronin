@@ -7,7 +7,7 @@
 **Observed workspace snapshot:** 2026-10-17. The tracked source is based on
 `main@dacd3ff`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `dacd3ffbecef029a77fdfa6ef09cc45bea232f2c` (2026-10-17).
+**Observed source head:** `897e04a3b6c4219d82ed70d13a126c27a97cff4c` (2026-10-18).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -270,5 +270,7 @@ Los PR #406 y #407 añadieron entrega durable de eventos y backfills PostgreSQL,
 
 El PR #411 integra migraciones PostgreSQL 7→9 para solicitudes persistentes de timeout y estado cancelado de intentos. Las funciones compartidas consultan la autoridad de dispatch y las solicitudes PostgreSQL; la detección es repetible, el timeout se reconcilia a retry/fallo, y si el workflow está cancelándose, la finalización conserva el estado cancelado. CI 3.11/3.12 y Docker qualification pasaron; Docker completó la cobertura PostgreSQL, pruebas Docker reales y aceptación estricta en **7m25s**. La cobertura medida de `scheduler_timeout.py` llegó a 68,78%, por lo que su baseline subió a 66,70% manteniendo el ratchet de 2,1 puntos. El merge squash es `main@dacd3ffbecef029a77fdfa6ef09cc45bea232f2c`; CI, Docker (**6m57s**), Web, Security, Release y Status consistency exact-head también pasaron.
 
-El candidato `codex/postgres-workflow-cancellation` delega a PostgreSQL el cambio durable de workflow a `cancelling`, la cancelación de tareas sin intent, el retiro de intents aún no enviados y la reconciliación de Jobs cancelados. La autoridad de cancelación se persiste antes de esperar bloqueos de tareas. Pasaron las 17 pruebas del módulo PostgreSQL en Docker/PostgreSQL 16 con 82% de cobertura del adaptador; pasaron 12 pruebas SQLite, Ruff, formato y mypy focalizado. Los checks exact-head aún están pendientes. El servidor/API y la conformance integral de daemon/operator/notificaciones siguen abiertos; las rutas HTTP PostgreSQL continúan deshabilitadas. El progreso release-qualified permanece en 0% (0/14 familias obligatorias).
+El PR [#412](https://github.com/SauronShepherd/ronin/pull/412) delega a PostgreSQL el cambio durable de workflow a `cancelling`, la cancelación de tareas sin intent, el retiro de intents aún no enviados y la reconciliación de Jobs cancelados. La autoridad de cancelación se persiste antes de esperar bloqueos de tareas. Sus 17 pruebas PostgreSQL pasaron en Docker/PostgreSQL 16 con 82% de cobertura del adaptador; CI 3.11/3.12 y Docker qualification completa (**8m14s**) también pasaron. El squash quedó en `main@897e04a3b6c4219d82ed70d13a126c27a97cff4c`; CI, Docker, Web, Security, Release y Status consistency exact-head de main pasaron.
+
+El siguiente corte candidato conecta el endpoint autenticado y auditado de cancelación de workflow al store scheduler PostgreSQL y al `DurableExecutionService`, usando timestamps UTC actuales y las transiciones durables de #412. La prueba focalizada del puente HTTP pasó dentro de 18 pruebas de cancelación/composición; Ruff, formato y mypy pasaron. El candidato todavía no tiene calificación exact-head. Las rutas generales del scheduler siguen deshabilitadas hasta cubrir persistencia de fires/cursors de schedule y completar conformance del adaptador; daemon/operator, recuperación tras crash y notificaciones siguen abiertos. El progreso release-qualified permanece en **0% (0/14)**.
 

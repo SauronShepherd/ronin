@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
-from typing import Protocol
+from datetime import UTC, datetime
+from typing import Any, Protocol
 
 from studio_core import (
     Schedule,
@@ -23,6 +25,7 @@ from studio_storage.scheduler_events import EventDelivery, SchedulerEventRecord
 from studio_storage.scheduler_schedule import ScheduleFire
 
 from .scheduler_backfill import preview_backfill
+from .scheduler_cancellation import CancellableJobService, cancel_workflow_run
 from .scheduler_schedule_service import SchedulerScheduleService
 
 
@@ -235,4 +238,28 @@ class SqliteWorkflowHTTPAdapter:
         )
 
 
-__all__ = ("SqliteWorkflowHTTPAdapter", "WorkflowStore")
+class WorkflowCancellationHTTPAdapter:
+    """Bridge synchronous control-plane requests to durable async cancellation."""
+
+    def __init__(
+        self,
+        store: Any,
+        job_service: CancellableJobService,
+    ) -> None:
+        self._store = store
+        self._job_service = job_service
+
+    def cancel_workflow_run(self, workspace_id: WorkspaceId, run_id: WorkflowRunId) -> int:
+        now = Instant(datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        return asyncio.run(
+            cancel_workflow_run(
+                self._store,
+                self._job_service,
+                workspace_id,
+                run_id,
+                now=now,
+            )
+        )
+
+
+__all__ = ("SqliteWorkflowHTTPAdapter", "WorkflowCancellationHTTPAdapter", "WorkflowStore")
