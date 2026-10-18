@@ -950,7 +950,7 @@ def test_postgres_scheduler_daemon_replays_job_after_process_crash_without_dupli
         WorkflowDeploymentBinding(workflow.id, project_id),
         now=NOW,
     )
-    store.create_run(
+    run = store.create_run(
         workspace_id,
         WorkflowRunId(f"scheduler-dispatch-run-{uuid4().hex}"),
         workflow.id,
@@ -1053,6 +1053,7 @@ asyncio.run(daemon.run_once(SchedulerDaemonWork(controller_workspaces=(workspace
     restart_now = Instant("2026-10-15T00:00:31.000000Z")
 
     async def recover() -> None:
+        clock_value = restart_now
         service = DurableExecutionService(job_store)
         daemon = SchedulerDaemon(
             leadership_store=leadership,
@@ -1061,7 +1062,7 @@ asyncio.run(daemon.run_once(SchedulerDaemonWork(controller_workspaces=(workspace
             backfill_store=store,
             job_service=service,
             owner="scheduler-after-process-crash",
-            clock=lambda: restart_now,
+            clock=lambda: clock_value,
             leader_token_factory=lambda: LeaseToken("scheduler-after-process-crash-token"),
             task_attempt_factory=lambda: TaskAttemptId("scheduler-after-crash-next-attempt"),
             task_lease_token_factory=lambda: LeaseToken("scheduler-after-crash-task-token"),
@@ -1091,6 +1092,40 @@ asyncio.run(daemon.run_once(SchedulerDaemonWork(controller_workspaces=(workspace
                     assert int(cursor.fetchone()["count"]) == 1
             finally:
                 connection.close()
+
+            worker_claim = job_store.claim_next_run(
+                owner="scheduler-recovery-worker",
+                lease_token=LeaseToken("scheduler-recovery-worker-lease"),
+                attempt_id=AttemptId("scheduler-recovery-worker-attempt"),
+                lease_seconds=30,
+                now=clock_value,
+            )
+            assert worker_claim is not None
+            job_store.complete_attempt(
+                worker_claim.attempt_id,
+                state=AttemptState.SUCCEEDED,
+                failure_code=None,
+                owner="scheduler-recovery-worker",
+                lease_token=worker_claim.lease_token,
+                now=clock_value,
+            )
+
+            clock_value = Instant("2026-10-15T00:00:32.000000Z")
+            terminal = await daemon.run_once(
+                SchedulerDaemonWork(controller_workspaces=(workspace_id,))
+            )
+            assert terminal.is_leader
+            assert terminal.leader_generation == 2
+            assert terminal.controller_cycles[0].reconciled == 1
+            completed = store.get_run(workspace_id, run.id)
+            assert completed is not None
+            assert completed.state == "succeeded"
+            task_runs = store.list_task_runs(workspace_id, run.id)
+            assert len(task_runs) == 1
+            assert task_runs[0].state == "succeeded"
+            completed_job = job_store.get_job(intent.job.id)
+            assert completed_job is not None
+            assert completed_job.state == JobState.SUCCEEDED
         finally:
             await daemon.release()
             await service.aclose()
