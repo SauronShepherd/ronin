@@ -5,9 +5,9 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-18. The tracked source is based on
-`main@3b7e9ac`; untracked qualification output directories are not release
+`main@c2329b0`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `3b7e9aca15c94d247af2ac459b606e83c2699581` (2026-10-18).
+**Observed source head:** `c2329b0e46c9a67636f20a5c70c8ba87f65af0ca` (2026-10-18).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -280,5 +280,7 @@ El PR [#415](https://github.com/SauronShepherd/ronin/pull/415) añadió takeover
 
 El PR [#416](https://github.com/SauronShepherd/ronin/pull/416) mueve la entrega síncrona de notificaciones fuera del event loop y renueva el lease durante proveedores lentos. La regresión confirma que un contender no obtiene liderazgo mientras el dispatcher excede el lease inicial. Daemon + PostgreSQL 16 en Docker pasaron **29 tests**, con Ruff, formato y mypy. El squash `main@3b7e9aca15c94d247af2ac459b606e83c2699581` pasó CI 3.11/3.12, Docker qualification (**7m56s**) y todos los workflows exact-head post-merge. No se han cualificado endpoints SMTP/HTTPS reales.
 
-El candidato `codex/postgres-daemon-dispatch-recovery` termina a la fuerza un proceso real del `SchedulerDaemon` después de que su Job quede confirmado en PostgreSQL. La instancia reiniciada recupera generación 2, reproduce la intención idempotente y verifica que no haya Job ni intent duplicados. La prueba aislada pasó y el módulo PostgreSQL más los tests del daemon pasó localmente en Docker/PostgreSQL 16 (**30 tests**); Ruff, formato y `git diff --check` pasan. Los checks exact-head están pendientes. Esto no cubre recovery del worker/operator completo ni qualification externa; P5 sigue parcial y el progreso release-qualified permanece en **0% (0/14)**.
+El PR [#417](https://github.com/SauronShepherd/ronin/pull/417) termina un proceso real del `SchedulerDaemon` después de que su Job quede confirmado en PostgreSQL y antes de responder a la llamada dispatch. La instancia reiniciada recupera generación 2, reproduce la intención idempotente y verifica un Job/intent únicos. El módulo PostgreSQL más los tests del daemon pasó localmente en Docker/PostgreSQL 16 (**30 tests**); el candidato pasó CI 3.11/3.12 y Docker qualification (**8m03s**). El merge es `main@c2329b0e46c9a67636f20a5c70c8ba87f65af0ca`; todos los checks post-merge exact-head (CI, Docker, Web, Security, Release y Status consistency) están verdes.
+
+El candidato `codex/postgres-daemon-terminal-recovery` avanza el recorrido tras el crash: el worker toma y completa el Job persistido, luego el daemon vuelve a correr y reconcilia task/workflow a `succeeded`. La ejecución aislada pasó y el módulo PostgreSQL más los tests del daemon pasó en PostgreSQL 16 en Docker (**30 tests**); Ruff, formato y `git diff --check` pasan. Los checks exact-head están pendientes. Esto no ejecuta un notebook real en Docker ni cualifica operator/proveedores externos; P5 sigue parcial y progreso release-qualified en **0% (0/14)**.
 
