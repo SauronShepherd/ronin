@@ -66,7 +66,11 @@ from .scheduler_adapters import (
     UnsupportedSchedulerWorkload,
     execute_scheduler_job,
 )
-from .scheduler_http import SqliteWorkflowHTTPAdapter, WorkflowStore
+from .scheduler_http import (
+    SqliteWorkflowHTTPAdapter,
+    WorkflowCancellationHTTPAdapter,
+    WorkflowStore,
+)
 from .scheduler_sql import SchedulerSqlResult, execute_scheduler_sql
 from .workspace_service import (
     ProjectService,
@@ -330,6 +334,7 @@ __all__ = (
     "DurableExecutionService",
     "ProjectService",
     "SqliteWorkflowHTTPAdapter",
+    "WorkflowCancellationHTTPAdapter",
     "WorkerPollResult",
     "WorkspaceService",
     "WorkspaceServiceConflict",

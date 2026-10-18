@@ -29,6 +29,7 @@ from studio_execution.scheduler_dispatch import (
     dispatch_execution_intent,
     reconcile_execution_intent,
 )
+from studio_execution.scheduler_http import WorkflowCancellationHTTPAdapter
 from studio_orchestrator import Instant, JobId, JobState, LeaseToken
 from studio_storage import InMemoryJobStore
 from studio_storage.scheduler_cancellation import (
@@ -164,6 +165,20 @@ def test_pending_workflow_cancellation_terminalizes_without_job(tmp_path: Path) 
     task_runs = store.list_task_runs(workspace_id, run.id)
     assert len(task_runs) == 1
     assert task_runs[0].state == "cancelled"
+
+
+def test_http_cancellation_adapter_runs_durable_workflow_cancellation(tmp_path: Path) -> None:
+    store, workspace_id, run = _setup(tmp_path)
+    service = DurableExecutionService(InMemoryJobStore())
+    try:
+        adapter = WorkflowCancellationHTTPAdapter(store, service)
+
+        assert adapter.cancel_workflow_run(workspace_id, run.id) == 0
+        stored_run = store.get_run(workspace_id, run.id)
+        assert stored_run is not None
+        assert stored_run.state == "cancelled"
+    finally:
+        asyncio.run(service.aclose())
 
 
 def test_cancellation_fences_claimed_task_before_execution_intent(tmp_path: Path) -> None:

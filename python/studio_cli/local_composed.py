@@ -32,6 +32,7 @@ from studio_execution import (
     OntologyHTTPAdapter,
     ProjectService,
     SqliteWorkflowHTTPAdapter,
+    WorkflowCancellationHTTPAdapter,
     WorkspaceService,
 )
 from studio_finops import SqliteFinOpsStore
@@ -58,7 +59,7 @@ from studio_storage import (
     PostgresAuditStore,
     PostgresJobReadPort,
     PostgresMLStore,
-    PostgresWorkflowBundleImportStore,
+    PostgresSchedulerSnapshotStore,
     SqliteAuditStore,
     SqliteCatalogStore,
     SqliteConnectionStore,
@@ -195,7 +196,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         grants=job_grants,
     )
     scheduler = (
-        PostgresWorkflowBundleImportStore(
+        PostgresSchedulerSnapshotStore(
             postgres_dsn,
             application_name="ronin-composed-workflows",
         )
@@ -334,6 +335,11 @@ def build_local_composed_from_env() -> LocalServerComposition:
         authenticator=StaticControlPlaneAuthenticator(control_token),
         authorizer=StaticControlPlaneAuthorizer(workspace_id, permissions),
         workflow_reader=_workflow_reader_for_backend(scheduler, now=now, postgres_dsn=postgres_dsn),
+        workflow_canceller=(
+            WorkflowCancellationHTTPAdapter(scheduler, job_service)
+            if postgres_dsn is not None
+            else None
+        ),
         graph_query_reader=cast(Any, graph_adapter),
         ontology_reader=graph_adapter,
         catalog_reader=catalog_reader,
