@@ -44,9 +44,8 @@ class QualityHTTPAdapter:
         self, workspace_id: WorkspaceId, payload: Mapping[str, object], *, now: Instant | str
     ) -> dict[str, object]:
         required = {"asset", "rows", "run_id"}
-        if set(payload) - required - {"execution_ref", "enforce_blocking"} or not required.issubset(
-            payload
-        ):
+        optional = {"execution_ref", "enforce_blocking", "contract_digest"}
+        if set(payload) - required - optional or not required.issubset(payload):
             raise ValueError("quality run body must contain asset, rows, and run_id")
         rows = payload["rows"]
         if not isinstance(rows, list) or not all(isinstance(row, Mapping) for row in rows):
@@ -62,6 +61,13 @@ class QualityHTTPAdapter:
             not isinstance(execution_ref, str) or not execution_ref.strip()
         ):
             raise ValueError("quality execution_ref must be a non-empty string or null")
+        expected_contract_digest = payload.get("contract_digest")
+        if expected_contract_digest is not None and (
+            not isinstance(expected_contract_digest, str)
+            or len(expected_contract_digest) != 64
+            or any(char not in "0123456789abcdef" for char in expected_contract_digest)
+        ):
+            raise ValueError("quality contract_digest must be a lowercase SHA-256 digest")
         asset = AssetRef.from_payload(payload["asset"])
         run = execute_quality(
             self._store,
@@ -69,6 +75,7 @@ class QualityHTTPAdapter:
             asset,
             rows,
             run_id=QualityRunId(run_id),
+            expected_contract_digest=expected_contract_digest,
             execution_ref=execution_ref,
             now=now,
             enforce_blocking=enforce_blocking,

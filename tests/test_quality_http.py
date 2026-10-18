@@ -8,6 +8,7 @@ from studio_core import (
     QualityRuleId,
     WorkspaceId,
 )
+from studio_quality import QualityContractDigestMismatch
 from studio_quality.http import QualityHTTPAdapter
 
 
@@ -76,6 +77,56 @@ def test_quality_http_rejects_ambiguous_boolean_and_identifiers() -> None:
             {"asset": asset, "rows": [], "run_id": 1},
             now="2026-09-21T00:00:00Z",
         )
+    with pytest.raises(ValueError, match="contract_digest"):
+        adapter.run(
+            workspace,
+            {"asset": asset, "rows": [], "run_id": "r1", "contract_digest": "invalid"},
+            now="2026-09-21T00:00:00Z",
+        )
+
+
+def test_quality_http_rejects_contract_drift_before_recording_evidence() -> None:
+    store = Store()
+    adapter = QualityHTTPAdapter(store)
+    pinned_digest = store.contract.digest
+    store.contract = DataContract(
+        store.contract.asset,
+        "exact",
+        (QualityRule(QualityRuleId("different"), "row_count", "Rows"),),
+    )
+
+    with pytest.raises(QualityContractDigestMismatch, match="contract digest mismatch"):
+        adapter.run(
+            WorkspaceId("ws"),
+            {
+                "asset": store.contract.asset.to_payload(),
+                "rows": [{"id": 1}],
+                "run_id": "run-stale-contract",
+                "contract_digest": pinned_digest,
+            },
+            now="2026-09-21T00:00:00Z",
+        )
+
+    assert store.runs == []
+
+
+def test_quality_contract_digest_is_canonical_and_http_pin_accepts_current_contract() -> None:
+    store = Store()
+    adapter = QualityHTTPAdapter(store)
+    result = adapter.run(
+        WorkspaceId("ws"),
+        {
+            "asset": store.contract.asset.to_payload(),
+            "rows": [{"id": 1}],
+            "run_id": "run-pinned-contract",
+            "contract_digest": store.contract.digest,
+        },
+        now="2026-09-21T00:00:00Z",
+    )
+
+    assert result["gate_passed"] is True
+    assert DataContract.from_json(store.contract.to_json()).digest == store.contract.digest
+    assert len(store.runs) == 1
 
 
 def test_quality_http_persists_contract() -> None:

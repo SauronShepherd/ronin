@@ -146,6 +146,7 @@ def execute_scheduler_job(
                 "asset": {"asset_id": asset_id, "version": version},
                 "rows": list(rows),
                 "run_id": run_id,
+                "contract_digest": contract_digest,
                 "execution_ref": rows_ref,
                 "enforce_blocking": True,
             },

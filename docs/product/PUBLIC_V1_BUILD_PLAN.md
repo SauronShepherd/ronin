@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@a0faef17d4897377765deac8445a60def604fd49` (2026-10-18). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@69a3ddae5c5b479f4cd0988d88e1ff0b1ca25b22` (2026-10-18). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Progreso verificable
 
@@ -169,6 +169,10 @@ El PR [#420](https://github.com/SauronShepherd/ronin/pull/420) terminó a la fue
 ### Journey daemon→worker Docker→reconciliación integrado por PR #421
 
 El PR [#421](https://github.com/SauronShepherd/ronin/pull/421) integró en un único test el crash del daemon después del commit del Job, takeover de generación 2 y replay idempotente; el worker Docker ejecuta las cinco celdas de `examples/demo` contra el mismo schema PostgreSQL, y el ciclo siguiente reconcilia workflow/task a `succeeded`. El test local pasó tanto con Docker/PostgreSQL (**1 passed**, 16.92s) como por el camino de fallback (**1 passed**, 7.13s). CI 3.11/3.12, Ruff, formato, seguridad, verificación, ledgers, Docker qualification (**8m46s**, incluido PostgreSQL-backed coverage, worker Docker real y aceptación estricta) y demás checks requeridos pasaron sobre el head `0e8becfe517a18e697ab72afe889c20a68d8f204`. El squash quedó en `main@a0faef17d4897377765deac8445a60def604fd49`; la cualificación post-merge sigue en curso. Este journey no cierra la conformance general de scheduler/operator, notificaciones externas ni HA; P5 y release-qualified siguen parciales en **0% (0/14)**.
+
+### Candidato actual: pin de digest para quality.gate
+
+La revisión de conformance detectó que el bridge de workflow incluía `contract_digest` en el Job, pero `execute_scheduler_job` lo descartaba y `QualityHTTPAdapter` ejecutaba el contrato actualmente guardado. Así, una edición posterior del contrato podía cambiar el resultado de una tarea ya planificada. El candidato `codex/quality-contract-pin-check` define `DataContract.digest` como SHA-256 de su JSON canónico, propaga el digest a la ejecución de quality y rechaza cambios antes de evaluar o guardar evidencia. El recorrido de contrato vigente/desactualizado y las suites scheduler/quality focalizadas pasan localmente (**47 tests**); Ruff, formato, mypy focalizado y diff check pasan. La qualification Docker exact-head está pendiente. P5 y el progreso release-qualified siguen parciales en **0% (0/14)**.
 
 El PR [#402](https://github.com/SauronShepherd/ronin/pull/402) integró `PostgresSchedulerSnapshotStore` con task attempts/pools persistidos, reclaim transaccional de leases vencidos, admisión con dependencias/concurrencia/pools, heartbeat y finalización protegidos por owner/token y vencimiento. El candidato `830a87d469d51df3f07fc01cd9adf344d9a98189` pasó CI 3.11/3.12, el gate Docker con PostgreSQL y cobertura storage, Docker real (**7m30s**), `ledgers`, seguridad y checks restantes; `mutation` quedó skipped. El merge squash es `main@0ccb5fdd68b8849f860c7ffe9ef2526e4ec9b3e4`. La integración Docker local con PostgreSQL 16 pasó **14 tests**, el módulo `postgres_scheduler.py` midió **81%** de cobertura de línea, Ruff y mypy focalizado pasan. CI excluye este adaptador sólo del agregado de cobertura sin servicio; el gate Docker per-file exige el piso de 80% con PostgreSQL activo.
 

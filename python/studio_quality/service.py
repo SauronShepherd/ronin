@@ -17,6 +17,10 @@ class QualityContractNotFound(KeyError):
     """Raised when quality execution is requested without a persisted contract."""
 
 
+class QualityContractDigestMismatch(RuntimeError):
+    """Raised when a pinned quality contract no longer matches the stored contract."""
+
+
 @runtime_checkable
 class QualityExecutionStore(Protocol):
     def get_contract(self, workspace_id: WorkspaceId, ref: AssetRef) -> DataContract | None: ...
@@ -111,6 +115,7 @@ def execute_quality(
     rows: Sequence[Mapping[str, object]],
     *,
     run_id: QualityRunId,
+    expected_contract_digest: str | None = None,
     execution_ref: str | None = None,
     now: Instant | str,
     evaluation_time: datetime | None = None,
@@ -124,6 +129,17 @@ def execute_quality(
     contract = store.get_contract(workspace_id, asset)
     if contract is None:
         raise QualityContractNotFound(f"{asset.asset_id}@{asset.version}")
+    if expected_contract_digest is not None:
+        if (
+            not isinstance(expected_contract_digest, str)
+            or len(expected_contract_digest) != 64
+            or any(char not in "0123456789abcdef" for char in expected_contract_digest)
+        ):
+            raise ValueError("expected quality contract digest must be a lowercase SHA-256 digest")
+        if contract.digest != expected_contract_digest:
+            raise QualityContractDigestMismatch(
+                f"quality contract digest mismatch for {asset.asset_id}@{asset.version}"
+            )
     run = evaluate_contract(
         contract,
         rows,

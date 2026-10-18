@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal, TypeAlias, cast
@@ -202,6 +203,12 @@ class DataContract:
 
     def to_json(self) -> str:
         return encode_canonical_json(self.to_payload()).decode("utf-8")
+
+    @property
+    def digest(self) -> str:
+        """Return the SHA-256 identity of the canonical contract payload."""
+
+        return hashlib.sha256(encode_canonical_json(self.to_payload())).hexdigest()
 
     @classmethod
     def from_payload(cls, payload: object) -> DataContract:

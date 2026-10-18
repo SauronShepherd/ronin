@@ -5,9 +5,9 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-18. The tracked source is based on
-`main@a0faef1`; untracked qualification output directories are not release
+`main@69a3dda`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `a0faef17d4897377765deac8445a60def604fd49` (2026-10-18).
+**Observed source head:** `69a3ddae5c5b479f4cd0988d88e1ff0b1ca25b22` (2026-10-18).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -265,6 +265,9 @@ These merges do **not** imply that their parent capability families are complete
 ### Reconciled after PRs #420–#421 (2026-10-18)
 
 PR [#420](https://github.com/SauronShepherd/ronin/pull/420) added PostgreSQL-backed worker crash recovery after three durable checkpoints and the complete 30-second lease expiry. A replacement worker reused the three completed cells and executed the remaining two. The merge is `main@37d00eb3d02ad6f6d9e8dba923261c5536d08838`; all six workflows passed exact-head after merge. PR [#421](https://github.com/SauronShepherd/ronin/pull/421) then qualified the combined daemon crash/replay, actual Docker notebook execution against the same PostgreSQL schema, and terminal workflow reconciliation. CI 3.11/3.12 and all required PR checks passed on `0e8becfe517a18e697ab72afe889c20a68d8f204`, including Docker qualification with PostgreSQL-backed coverage, real worker execution and strict acceptance in 8m46s. The squash is `main@a0faef17d4897377765deac8445a60def604fd49`; its exact-head post-merge workflows are being reconciled. P5 remains partial and verified release progress remains 0% (0/14).
+PR [#420](https://github.com/SauronShepherd/ronin/pull/420) added PostgreSQL-backed worker crash recovery after three durable checkpoints and the complete 30-second lease expiry. A replacement worker reused the three completed cells and executed the remaining two. The merge is `main@37d00eb3d02ad6f6d9e8dba923261c5536d08838`; all six workflows passed exact-head after merge. PR [#421](https://github.com/SauronShepherd/ronin/pull/421) then qualified the combined daemon crash/replay, actual Docker notebook execution against the same PostgreSQL schema, and terminal workflow reconciliation. CI 3.11/3.12 and all required PR checks passed on `0e8becfe517a18e697ab72afe889c20a68d8f204`, including Docker qualification with PostgreSQL-backed coverage, real worker execution and strict acceptance in 8m46s. The squash is `main@a0faef17d4897377765deac8445a60def604fd49`; all six exact-head post-merge workflows passed. P5 remains partial and verified release progress remains 0% (0/14).
+
+The current candidate fixes a conformance gap in `quality.gate`: `contract_digest` is now bound to the canonical persisted `DataContract` and checked before evaluation or evidence recording. Local quality/scheduler suites pass (**47 tests**), with Ruff, formatting and focused mypy clean; Docker qualification is pending.
 
 ## Reconciliación de PostgreSQL scheduler (2026-10-17)
 
