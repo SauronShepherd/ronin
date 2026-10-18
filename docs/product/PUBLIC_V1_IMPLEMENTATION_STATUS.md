@@ -5,9 +5,9 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-18. The tracked source is based on
-`main@2abc6ac`; untracked qualification output directories are not release
+`main@3b7e9ac`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `2abc6ac3495ae3aa61a406f6f8c5be3e3478b796` (2026-10-18).
+**Observed source head:** `3b7e9aca15c94d247af2ac459b606e83c2699581` (2026-10-18).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -278,5 +278,7 @@ El PR [#414](https://github.com/SauronShepherd/ronin/pull/414) añadió migraci�
 
 El PR [#415](https://github.com/SauronShepherd/ronin/pull/415) añadió takeover del `SchedulerDaemon` sobre stores PostgreSQL aislados: tras expirar el lease anterior, la instancia nueva adquiere generación 2 y vuelve a leer el cursor/fire persistente sin duplicarlo. PostgreSQL 16 en Docker pasó **20 tests** del módulo completo y CI 3.11/3.12 más Docker qualification (**6m37s**) pasaron antes del merge `main@2abc6ac3495ae3aa61a406f6f8c5be3e3478b796`. También pasaron todos los workflows exact-head post-merge: CI, Docker, Web, Security, Release y Status consistency. El test cubre takeover/replay de schedule, no recovery del controller.
 
-El candidato `codex/daemon-notification-lease-renewal` mueve la entrega síncrona de notificaciones fuera del event loop y renueva el lease durante proveedores lentos. La regresión verifica que un contender no obtiene liderazgo cuando el dispatcher excede el lease inicial. El módulo de daemon pasa **9 tests**; con PostgreSQL 16 en Docker pasan **29 tests** de daemon y scheduler. Ruff, formato, mypy y `git diff --check` también pasan. No se han cualificado endpoints SMTP/HTTPS reales ni la entrega completa a través de caída abrupta; P5 sigue parcial y el progreso release-qualified permanece en **0% (0/14)**.
+El PR [#416](https://github.com/SauronShepherd/ronin/pull/416) mueve la entrega síncrona de notificaciones fuera del event loop y renueva el lease durante proveedores lentos. La regresión confirma que un contender no obtiene liderazgo mientras el dispatcher excede el lease inicial. Daemon + PostgreSQL 16 en Docker pasaron **29 tests**, con Ruff, formato y mypy. El squash `main@3b7e9aca15c94d247af2ac459b606e83c2699581` pasó CI 3.11/3.12, Docker qualification (**7m56s**), Security y demás checks del PR; post-merge CI, Web, Security, Release y Status consistency están verdes y Docker sigue en ejecución. No se han cualificado endpoints SMTP/HTTPS reales.
+
+El candidato `codex/postgres-daemon-dispatch-recovery` termina a la fuerza un proceso real del `SchedulerDaemon` después de que su Job quede confirmado en PostgreSQL. La instancia reiniciada recupera generación 2, reproduce la intención idempotente y verifica que no haya Job ni intent duplicados. La prueba aislada pasó y el módulo PostgreSQL más los tests del daemon pasó localmente en Docker/PostgreSQL 16 (**30 tests**); Ruff, formato y `git diff --check` pasan. Los checks exact-head están pendientes. Esto no cubre recovery del worker/operator completo ni qualification externa; P5 sigue parcial y el progreso release-qualified permanece en **0% (0/14)**.
 

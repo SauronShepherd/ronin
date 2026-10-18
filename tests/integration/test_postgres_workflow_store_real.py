@@ -882,6 +882,222 @@ def test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplic
     asyncio.run(scenario())
 
 
+def test_postgres_scheduler_daemon_replays_job_after_process_crash_without_duplicate(
+    request: pytest.FixtureRequest,
+    tmp_path: Path,
+) -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    from studio_storage.postgres_core import _psycopg
+
+    psycopg, _ = _psycopg()
+    schema = f"scheduler_daemon_dispatch_recovery_{uuid4().hex}"
+    connection = psycopg.connect(dsn)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"CREATE SCHEMA {schema}")
+        connection.commit()
+    finally:
+        connection.close()
+    schema_dsn = psycopg.conninfo.make_conninfo(dsn, options=f"-c search_path={schema},public")
+
+    def drop_schema() -> None:
+        cleanup = psycopg.connect(dsn)
+        try:
+            with cleanup.cursor() as cursor:
+                cursor.execute(f"DROP SCHEMA {schema} CASCADE")
+            cleanup.commit()
+        finally:
+            cleanup.close()
+
+    request.addfinalizer(drop_schema)
+    store = PostgresSchedulerSnapshotStore(
+        schema_dsn,
+        application_name="ronin-scheduler-daemon-dispatch-recovery",
+    )
+    leadership = PostgresSchedulerLeadershipStore(
+        schema_dsn,
+        application_name="ronin-scheduler-daemon-dispatch-recovery",
+    )
+    workspace_id = WorkspaceId(f"scheduler-dispatch-ws-{uuid4().hex}")
+    metadata = PostgresMetadataStore(
+        schema_dsn,
+        application_name="ronin-scheduler-daemon-dispatch-recovery",
+    )
+    metadata.create_workspace(Workspace(workspace_id, "Scheduler dispatch recovery"), now=NOW)
+    project_id = ProjectId(f"scheduler-dispatch-project-{uuid4().hex}")
+    metadata.register_project(
+        workspace_id,
+        ProjectManifest.from_project(
+            Project(
+                project_id,
+                "Scheduler dispatch project",
+                (RepositoryBinding("source", "https://example.test/source.git", role="primary"),),
+                ExecutionProfile(runtime=RuntimeProfileRef("python", "3.11")),
+            )
+        ),
+        now=NOW,
+    )
+    workflow_id = WorkflowId(f"scheduler-dispatch-workflow-{uuid4().hex}")
+    node = Node.create(
+        operator=OperatorRef("notebook.run"),
+        instance_key=f"scheduler-dispatch-task-{uuid4().hex}",
+        params={"target": "notebooks/demo.ronin.json", "parameters": {}},
+    )
+    workflow = WorkflowDefinition(workflow_id, "Scheduler dispatch recovery", Pipeline((node,)))
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    store.put_workflow_deployment(
+        workspace_id,
+        WorkflowDeploymentBinding(workflow.id, project_id),
+        now=NOW,
+    )
+    store.create_run(
+        workspace_id,
+        WorkflowRunId(f"scheduler-dispatch-run-{uuid4().hex}"),
+        workflow.id,
+        Trigger("manual", f"scheduler-dispatch-trigger-{uuid4().hex}"),
+        now=NOW,
+    )
+
+    ready = tmp_path / "postgres-scheduler-daemon-job-committed"
+    child_script = """
+import asyncio
+import sys
+import time
+from pathlib import Path
+from studio_core import WorkspaceId
+from studio_execution import DurableExecutionService
+from studio_execution.scheduler_daemon import SchedulerDaemon, SchedulerDaemonWork
+from studio_orchestrator import Instant, LeaseToken
+from studio_storage import (
+    PostgresJobReadPort,
+    PostgresSchedulerLeadershipStore,
+    PostgresSchedulerSnapshotStore,
+)
+from studio_storage.scheduler_fencing import TaskAttemptId
+
+dsn, workspace_value, ready_value = sys.argv[1:]
+workspace_id = WorkspaceId(workspace_value)
+ready = Path(ready_value)
+now = Instant("2026-10-15T00:00:00.000000Z")
+store = PostgresSchedulerSnapshotStore(dsn, application_name="ronin-daemon-crash-child")
+leadership = PostgresSchedulerLeadershipStore(dsn, application_name="ronin-daemon-crash-child")
+job_store = PostgresJobReadPort(dsn, application_name="ronin-daemon-crash-child")
+service = DurableExecutionService(job_store)
+submit = service.submit
+
+async def submit_then_block(job, run):
+    persisted = await submit(job, run)
+    ready.write_text("Job committed", encoding="utf-8")
+    while True:
+        time.sleep(1)
+
+service.submit = submit_then_block
+daemon = SchedulerDaemon(
+    leadership_store=leadership,
+    schedule_store=store,
+    event_store=store,
+    backfill_store=store,
+    job_service=service,
+    owner="scheduler-before-process-crash",
+    clock=lambda: now,
+    leader_token_factory=lambda: LeaseToken("scheduler-before-process-crash-token"),
+    task_attempt_factory=lambda: TaskAttemptId("scheduler-process-crash-attempt"),
+    task_lease_token_factory=lambda: LeaseToken("scheduler-process-crash-task-token"),
+    leader_lease_seconds=30,
+    task_lease_seconds=30,
+)
+asyncio.run(daemon.run_once(SchedulerDaemonWork(controller_workspaces=(workspace_id,))))
+"""
+    process = subprocess.Popen(  # noqa: S603 - explicit Python executable and argument list
+        [
+            sys.executable,
+            "-c",
+            child_script,
+            schema_dsn,
+            str(workspace_id),
+            str(ready),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        deadline = time.monotonic() + 30
+        while process.poll() is None and not ready.exists() and time.monotonic() < deadline:
+            time.sleep(0.05)
+        if not ready.exists():
+            stdout, stderr = process.communicate(timeout=5)
+            raise AssertionError(
+                f"Scheduler daemon did not commit its Job before exit; "
+                f"stdout={stdout!r}, stderr={stderr!r}"
+            )
+        process.kill()
+        process.wait(timeout=5)
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=5)
+
+    intents = store.list_execution_intents()
+    assert len(intents) == 1
+    intent = intents[0]
+    job_store = PostgresJobReadPort(
+        schema_dsn,
+        application_name="ronin-scheduler-daemon-dispatch-recovery",
+    )
+    persisted = job_store.get_job(intent.job.id)
+    assert persisted is not None
+    assert persisted.request_digest == intent.job.request_digest
+
+    restart_now = Instant("2026-10-15T00:00:31.000000Z")
+
+    async def recover() -> None:
+        service = DurableExecutionService(job_store)
+        daemon = SchedulerDaemon(
+            leadership_store=leadership,
+            schedule_store=store,
+            event_store=store,
+            backfill_store=store,
+            job_service=service,
+            owner="scheduler-after-process-crash",
+            clock=lambda: restart_now,
+            leader_token_factory=lambda: LeaseToken("scheduler-after-process-crash-token"),
+            task_attempt_factory=lambda: TaskAttemptId("scheduler-after-crash-next-attempt"),
+            task_lease_token_factory=lambda: LeaseToken("scheduler-after-crash-task-token"),
+            leader_lease_seconds=30,
+            task_lease_seconds=30,
+        )
+        try:
+            cycle = await daemon.run_once(
+                SchedulerDaemonWork(controller_workspaces=(workspace_id,))
+            )
+            assert cycle.is_leader
+            assert cycle.leader_generation == 2
+            assert len(cycle.controller_cycles) == 1
+            assert cycle.controller_cycles[0].published is None
+            assert cycle.controller_cycles[0].dispatched == 1
+            assert store.list_execution_intents() == (intent,)
+            replayed_job = job_store.get_job(intent.job.id)
+            assert replayed_job == persisted
+            connection = job_store._connect()
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT COUNT(*) AS count FROM ronin_jobs WHERE project_id=%s "
+                        "AND idempotency_key=%s",
+                        (intent.job.project_id, intent.job.idempotency_key),
+                    )
+                    assert int(cursor.fetchone()["count"]) == 1
+            finally:
+                connection.close()
+        finally:
+            await daemon.release()
+            await service.aclose()
+
+    asyncio.run(recover())
+
+
 def test_postgres_workflow_http_routes_use_durable_scheduler_adapter() -> None:
     dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
     store = PostgresSchedulerSnapshotStore(
