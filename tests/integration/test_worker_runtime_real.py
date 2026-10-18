@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from studio_orchestrator import (
@@ -22,7 +23,7 @@ from studio_orchestrator import (
     RunState,
 )
 from studio_runners import ContainerExecutionLimits
-from studio_storage import SqliteJobStore
+from studio_storage import PostgresJobReadPort, PostgresMetadataStore, SqliteJobStore
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
 if os.environ.get("RONIN_REAL_DOCKER_QUALIFICATION") != "1":
@@ -234,6 +235,91 @@ def test_real_docker_worker_executes_clean_container_demo(tmp_path: Path) -> Non
         assert job is not None
         assert job.state is JobState.SUCCEEDED
         assert len(store.read_cell_results(RunId("run-real-demo"))) == 5
+
+        outputs = _log_outputs(config.execution_evidence_root)
+        assert len(outputs) == 5
+        assert any("extracted 100 customers" in output for output in outputs)
+        assert any("extracted 500 orders" in output for output in outputs)
+        assert any("quality checks passed" in output for output in outputs)
+        publish = next(output for output in outputs if '"dataset": "revenue_by_region"' in output)
+        published = json.loads(publish)
+        assert published["rows"] == 2
+        assert published["totals"] == {"eu": 187500, "us": 186750}
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.skipif(
+    not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
+    reason="PostgreSQL-backed real Docker worker qualification requires RONIN_POSTGRES_TEST_DSN",
+)
+def test_real_docker_worker_executes_demo_against_postgres(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+        suffix = uuid4().hex
+        job_id = JobId(f"job-real-postgres-{suffix}")
+        run_id = RunId(f"run-real-postgres-{suffix}")
+        project_id = "examples/demo"
+        now = _NOW
+        PostgresMetadataStore(dsn, application_name="ronin-real-docker-worker-qualification")
+        store = PostgresJobReadPort(dsn, application_name="ronin-real-docker-worker-qualification")
+        store.create_job(
+            Job(
+                id=job_id,
+                project_id=project_id,
+                idempotency_key=f"real-postgres-worker-{suffix}",
+                request_digest="c" * 64,
+                state=JobState.QUEUED,
+                created_at=now,
+                updated_at=now,
+                target="notebooks/etl.ronin.json",
+                parameters_json='{"mode":"postgres-qualification"}',
+            ),
+            Run(
+                id=run_id,
+                job_id=job_id,
+                ordinal=1,
+                state=RunState.PENDING,
+                not_before=now,
+                created_at=now,
+                updated_at=now,
+            ),
+        )
+        config = LocalWorkerRuntimeConfig(
+            paths=WorkerPaths(Path.cwd(), tmp_path),
+            owner=f"worker-real-postgres-{suffix}",
+            image=_IMAGE,
+            postgres_dsn=dsn,
+            limits=ContainerExecutionLimits(
+                cpus="0.5",
+                memory="128m",
+                pids=32,
+                timeout_seconds=10.0,
+            ),
+            heartbeat_interval_seconds=10.0,
+        )
+
+        async with LocalWorkerRuntime(
+            config,
+            migration_now=now,
+            engine_path=_DOCKER,
+        ) as runtime:
+            outcome = await runtime.run_once(
+                attempt_id=AttemptId(f"attempt-real-postgres-{suffix}"),
+                lease_token=LeaseToken(f"lease-real-postgres-{suffix}"),
+            )
+
+        assert outcome.execution is not None
+        assert outcome.execution.state.value == "succeeded"
+        assert len(outcome.execution.executed_cell_ids) == 5
+        assert outcome.execution.reused_cell_ids == ()
+
+        completed_job = store.get_job(job_id)
+        assert completed_job is not None
+        assert completed_job.state is JobState.SUCCEEDED
+        assert len(store.read_cell_results(run_id)) == 5
+        events = store.read_events(run_id, since=0)
+        assert sum(event.kind == "worker.attempt.succeeded" for event in events) == 1
 
         outputs = _log_outputs(config.execution_evidence_root)
         assert len(outputs) == 5
