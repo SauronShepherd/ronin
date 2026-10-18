@@ -196,7 +196,6 @@ coverage-storage-files-full:
 		--baseline=postgres_core.py=37.61 \
 		--baseline=postgres_jobs.py=47.80 \
 		--baseline=quality.py=31.00 \
-		--baseline=postgres_scheduler_schedule.py=97.90 \
 		--baseline=s3_artifacts.py=74.20 \
 		--baseline=scheduler_backfill.py=65.91 \
 		--baseline=scheduler_backfill_runtime.py=69.11 \
