@@ -54,6 +54,7 @@ from studio_execution import (
 from studio_execution.scheduler_backfill import BackfillTickResult, SchedulerBackfillService
 from studio_execution.scheduler_bridge import plan_scheduler_execution
 from studio_execution.scheduler_cancellation import cancel_workflow_run
+from studio_execution.scheduler_daemon import SchedulerDaemon, SchedulerDaemonWork
 from studio_execution.scheduler_dispatch import (
     dispatch_execution_intent,
     reconcile_execution_intent,
@@ -776,6 +777,109 @@ def test_postgres_scheduler_schedule_cursor_fire_and_http_adapter() -> None:
             scheduled_for="2026-10-15T00:01:00.000000Z",
             now=NOW,
         )
+
+
+def test_postgres_scheduler_daemon_reacquires_after_expired_lease_without_duplicate_fire(
+    request: pytest.FixtureRequest,
+) -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    from studio_storage.postgres_core import _psycopg
+
+    psycopg, _ = _psycopg()
+    schema = f"scheduler_daemon_recovery_{uuid4().hex}"
+    connection = psycopg.connect(dsn)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"CREATE SCHEMA {schema}")
+        connection.commit()
+    finally:
+        connection.close()
+    schema_dsn = psycopg.conninfo.make_conninfo(dsn, options=f"-c search_path={schema},public")
+
+    def drop_schema() -> None:
+        cleanup = psycopg.connect(dsn)
+        try:
+            with cleanup.cursor() as cursor:
+                cursor.execute(f"DROP SCHEMA {schema} CASCADE")
+            cleanup.commit()
+        finally:
+            cleanup.close()
+
+    request.addfinalizer(drop_schema)
+    store = PostgresSchedulerSnapshotStore(
+        schema_dsn,
+        application_name="ronin-scheduler-daemon-recovery",
+    )
+    leadership = PostgresSchedulerLeadershipStore(
+        schema_dsn,
+        application_name="ronin-scheduler-daemon-recovery",
+    )
+    workspace_id = WorkspaceId(f"scheduler-daemon-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Scheduler daemon recovery"), now=NOW)
+    workflow = _workflow(f"scheduler-daemon-workflow-{uuid4().hex}")
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    schedule = Schedule(ScheduleId(f"schedule-{uuid4().hex}"), workflow.id, "* * * * *")
+    store.put_schedule(workspace_id, schedule, now=NOW)
+
+    async def scenario() -> None:
+        first_jobs = DurableExecutionService(InMemoryJobStore())
+        first = SchedulerDaemon(
+            leadership_store=leadership,
+            schedule_store=store,
+            event_store=store,
+            backfill_store=store,
+            job_service=first_jobs,
+            owner="scheduler-before-restart",
+            clock=lambda: NOW,
+            leader_token_factory=lambda: LeaseToken("scheduler-daemon-before-restart"),
+            task_attempt_factory=lambda: TaskAttemptId("scheduler-daemon-before-attempt"),
+            task_lease_token_factory=lambda: LeaseToken("scheduler-daemon-before-task"),
+            leader_lease_seconds=30,
+            task_lease_seconds=30,
+        )
+        try:
+            first_cycle = await first.run_once(
+                SchedulerDaemonWork(schedule_workspaces=(workspace_id,))
+            )
+            assert first_cycle.is_leader
+            assert first_cycle.leader_generation == 1
+            assert first_cycle.schedule_fires == 1
+            assert len(store.list_schedule_fires(workspace_id, schedule.id)) == 1
+        finally:
+            # Drop the first daemon without release so its durable lease must expire.
+            await first_jobs.aclose()
+
+        restart_now = Instant("2026-10-15T00:00:31.000000Z")
+        second_jobs = DurableExecutionService(InMemoryJobStore())
+        second = SchedulerDaemon(
+            leadership_store=leadership,
+            schedule_store=store,
+            event_store=store,
+            backfill_store=store,
+            job_service=second_jobs,
+            owner="scheduler-after-restart",
+            clock=lambda: restart_now,
+            leader_token_factory=lambda: LeaseToken("scheduler-daemon-after-restart"),
+            task_attempt_factory=lambda: TaskAttemptId("scheduler-daemon-after-attempt"),
+            task_lease_token_factory=lambda: LeaseToken("scheduler-daemon-after-task"),
+            leader_lease_seconds=30,
+            task_lease_seconds=30,
+        )
+        try:
+            recovered = await second.run_once(
+                SchedulerDaemonWork(schedule_workspaces=(workspace_id,))
+            )
+            assert recovered.is_leader
+            assert recovered.leader_generation == 2
+            assert recovered.schedule_fires == 0
+            fires = store.list_schedule_fires(workspace_id, schedule.id)
+            assert len(fires) == 1
+            assert fires[0].scheduled_for == NOW
+        finally:
+            await second.release()
+            await second_jobs.aclose()
+
+    asyncio.run(scenario())
 
 
 def test_postgres_workflow_http_routes_use_durable_scheduler_adapter() -> None:
