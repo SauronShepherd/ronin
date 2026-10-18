@@ -178,6 +178,40 @@ class SchedulerDaemon:
         )
         return self._lease
 
+    async def _dispatch_notifications(self) -> int:
+        dispatcher = self._notification_dispatcher
+        if dispatcher is None:
+            return 0
+
+        # Provider I/O is synchronous and may take longer than the scheduler
+        # lease. Keep it off the event loop and renew leadership while it runs.
+        dispatch = asyncio.create_task(asyncio.to_thread(dispatcher.dispatch_once))
+        renew_interval = min(5.0, max(0.01, self._leader_lease_seconds / 3))
+        while not dispatch.done():
+            completed, _pending = await asyncio.wait({dispatch}, timeout=renew_interval)
+            if completed:
+                break
+            lease = self._lease
+            if lease is None:
+                continue
+            try:
+                self._lease = await asyncio.to_thread(
+                    self._leadership_store.heartbeat_scheduler_leadership,
+                    lease,
+                    lease_seconds=self._leader_lease_seconds,
+                    now=self._clock(),
+                )
+            except SchedulerLeadershipLost as lost:
+                self._lease = None
+                try:
+                    await dispatch
+                except Exception as dispatch_error:
+                    raise lost from dispatch_error
+                raise
+
+        result = await dispatch
+        return int(getattr(result, "delivered", 0))
+
     async def run_once(self, work: SchedulerDaemonWork) -> SchedulerDaemonCycle:
         lease = await self._acquire_or_renew()
         if lease is None:
@@ -219,8 +253,7 @@ class SchedulerDaemon:
 
         notification_deliveries = 0
         if self._notification_dispatcher is not None:
-            result = self._notification_dispatcher.dispatch_once()
-            notification_deliveries = int(getattr(result, "delivered", 0))
+            notification_deliveries = await self._dispatch_notifications()
 
         backfill_runs = 0
         for target in work.backfills:

@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import signal
 from pathlib import Path
+from threading import Event, Timer
+from types import SimpleNamespace
 
 from studio_core import (
     Node,
@@ -17,11 +19,14 @@ from studio_core import (
 )
 from studio_execution import DurableExecutionService
 from studio_execution.scheduler_daemon import (
+    NotificationDispatcher as SchedulerNotificationDispatcher,
+)
+from studio_execution.scheduler_daemon import (
     SchedulerDaemon,
     SchedulerDaemonWork,
     install_scheduler_stop_signals,
 )
-from studio_observability import NotificationDispatcher, scheduler_notification
+from studio_observability import NotificationDispatcher, NotificationIntent, scheduler_notification
 from studio_observability.dispatcher import SqliteNotificationIntentStore
 from studio_orchestrator import Instant, LeaseToken
 from studio_storage import InMemoryJobStore
@@ -116,7 +121,7 @@ def test_scheduler_daemon_dispatches_durable_notifications_when_configured(tmp_p
     sent: list[str] = []
 
     class Sink:
-        def send(self, value):
+        def send(self, value: NotificationIntent) -> str:
             sent.append(value.id)
             return value.id
 
@@ -140,6 +145,71 @@ def test_scheduler_daemon_dispatches_durable_notifications_when_configured(tmp_p
 
     asyncio.run(scenario())
     assert sent == [intent.id]
+
+
+def test_daemon_renews_leadership_during_slow_notification_delivery(tmp_path: Path) -> None:
+    leadership, schedules, events, backfills = _stores(tmp_path)
+    clock = MutableClock(_T0)
+    dispatch_started = Event()
+    release_dispatch = Event()
+
+    class SlowNotificationDispatcher:
+        def dispatch_once(self) -> SimpleNamespace:
+            dispatch_started.set()
+            release_dispatch.wait(timeout=3)
+            return SimpleNamespace(delivered=1)
+
+    first_service = DurableExecutionService(InMemoryJobStore())
+    first = _daemon(
+        leadership_store=leadership,
+        schedule_store=schedules,
+        event_store=events,
+        backfill_store=backfills,
+        service=first_service,
+        owner="scheduler-slow-notifications",
+        clock=clock,
+        token="leader-slow-notifications",  # noqa: S106
+        notification_dispatcher=SlowNotificationDispatcher(),
+        leader_lease_seconds=1,
+    )
+    contender_service = DurableExecutionService(InMemoryJobStore())
+    contender = _daemon(
+        leadership_store=leadership,
+        schedule_store=schedules,
+        event_store=events,
+        backfill_store=backfills,
+        service=contender_service,
+        owner="scheduler-notification-contender",
+        clock=MutableClock(Instant("2026-09-13T08:50:01.200000Z")),
+        token="leader-notification-contender",  # noqa: S106
+        leader_lease_seconds=1,
+    )
+
+    async def scenario() -> None:
+        timer = Timer(2, release_dispatch.set)
+        timer.start()
+        first_cycle = asyncio.create_task(first.run_once(SchedulerDaemonWork()))
+        try:
+            assert await asyncio.to_thread(dispatch_started.wait, 1)
+            clock.value = Instant("2026-09-13T08:50:00.500000Z")
+            await asyncio.sleep(0.4)
+            blocked = await contender.run_once(SchedulerDaemonWork())
+            assert not blocked.is_leader
+            release_dispatch.set()
+            delivered = await first_cycle
+            assert delivered.is_leader
+            assert delivered.notification_deliveries == 1
+        finally:
+            release_dispatch.set()
+            timer.cancel()
+            if not first_cycle.done():
+                await first_cycle
+            await first.release()
+            await contender.release()
+            await first_service.aclose()
+            await contender_service.aclose()
+
+    asyncio.run(scenario())
 
 
 class MutableClock:
@@ -179,7 +249,8 @@ def _daemon(
     owner: str,
     clock: MutableClock,
     token: str,
-    notification_dispatcher: NotificationDispatcher | None = None,
+    notification_dispatcher: SchedulerNotificationDispatcher | None = None,
+    leader_lease_seconds: int = 30,
 ) -> SchedulerDaemon:
     return SchedulerDaemon(
         leadership_store=leadership_store,
@@ -193,7 +264,7 @@ def _daemon(
         task_attempt_factory=lambda: TaskAttemptId(f"attempt-{owner}"),
         task_lease_token_factory=lambda: LeaseToken(f"task-{owner}"),
         notification_dispatcher=notification_dispatcher,
-        leader_lease_seconds=30,
+        leader_lease_seconds=leader_lease_seconds,
         task_lease_seconds=30,
     )
 
