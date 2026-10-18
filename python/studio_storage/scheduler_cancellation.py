@@ -95,6 +95,10 @@ def request_workflow_cancellation(
     application code determines whether the corresponding Job exists.
     """
 
+    postgres_request = getattr(store, "postgres_request_workflow_cancellation", None)
+    if postgres_request is not None:
+        return tuple(postgres_request(workspace_id, workflow_run_id, now=now))
+
     current = Instant(now)
     connection = store._connect()
     try:
@@ -184,6 +188,10 @@ def cancel_unsubmitted_execution(
 ) -> bool:
     """Cancel a scheduler execution intent that never reached the durable JobStore."""
 
+    postgres_cancel = getattr(store, "postgres_cancel_unsubmitted_execution", None)
+    if postgres_cancel is not None:
+        return bool(postgres_cancel(workspace_id, job_id, now=now))
+
     current = Instant(now)
     connection = store._connect()
     try:
@@ -256,6 +264,9 @@ def reconcile_cancelled_execution(
 
     if job.state is not JobState.CANCELLED:
         return False
+    postgres_reconcile = getattr(store, "postgres_reconcile_cancelled_execution", None)
+    if postgres_reconcile is not None:
+        return bool(postgres_reconcile(workspace_id, attempt_id, job, now=now))
     current = Instant(now)
     connection = store._connect()
     try:
