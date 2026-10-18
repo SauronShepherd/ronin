@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@c2329b0e46c9a67636f20a5c70c8ba87f65af0ca` (2026-10-18). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@90bbeb3ed1dd95ff3091a324408895a8836340c1` (2026-10-18). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Progreso verificable
 
@@ -154,9 +154,13 @@ El PR [#416](https://github.com/SauronShepherd/ronin/pull/416) saca el dispatche
 
 El PR [#417](https://github.com/SauronShepherd/ronin/pull/417) lanzó `SchedulerDaemon` en un proceso real contra PostgreSQL y lo terminó tras el commit del Job, antes de que `dispatch` devolviera. La instancia reiniciada tomó generación 2, reprodujo la intención por la misma identidad idempotente y verificó un Job/intent únicos. El módulo PostgreSQL junto con los tests del daemon pasó en Docker local (**30 tests**); CI 3.11/3.12 y Docker qualification (**8m03s**) pasaron en el PR. El squash quedó en `main@c2329b0e46c9a67636f20a5c70c8ba87f65af0ca`; todos los checks post-merge exact-head (CI, Docker, Web, Security, Release y Status consistency) están verdes. P5 permanece parcial; progreso release-qualified **0% (0/14)**.
 
-### Candidato actual: completar workflow tras recovery
+### Estado reconciliado tras PR #418 (2026-10-18)
 
-El candidato `codex/postgres-daemon-terminal-recovery` extiende el caso de crash: después del takeover y replay idempotente, un worker toma y completa el Job en PostgreSQL; el siguiente ciclo del daemon reconcilia task/run al estado `succeeded`. La prueba aislada pasó en PostgreSQL 16 en Docker; la suite daemon + módulo PostgreSQL completo pasó (**30 tests**), Ruff, formato y diff check pasan. Los checks exact-head están pendientes. No demuestra ejecución real del notebook dentro de un worker Docker ni cualifica operator/proveedores externos; P5 y progreso release-qualified permanecen parciales en **0% (0/14)**.
+El PR [#418](https://github.com/SauronShepherd/ronin/pull/418) completó la recuperación del dispatch hasta el worker y la reconciliación terminal: takeover, replay idempotente, Job completado y siguiente ciclo del daemon proyectando `succeeded` en task/run. La combinación de tests daemon + módulo PostgreSQL pasó en Docker local (**30 tests**), y el PR pasó CI 3.11/3.12 y Docker qualification (**8m13s**). El squash quedó en `main@90bbeb3ed1dd95ff3091a324408895a8836340c1`; CI, Docker, Web, Security, Release y Status consistency exact-head post-merge están verdes. No incluye ejecución de notebook en un worker Docker usando PostgreSQL; P5 continúa parcial y el avance release-qualified queda en **0% (0/14)**.
+
+### Candidato actual: worker Docker real con PostgreSQL
+
+El candidato `codex/postgres-docker-worker-execution` añade una qualification que crea un Job en PostgreSQL, ejecuta las cinco celdas del notebook de demo en contenedores Docker reales mediante `LocalWorkerRuntime(postgres_dsn=...)` y verifica estado Job/attempt terminal, eventos, checkpoints y resultados publicados. También crea una base de datos CI dedicada para que el worker no reclame Jobs pendientes de otras pruebas. La prueba focalizada pasó contra PostgreSQL 16 en Docker (**1 passed**) y todo `tests/integration/test_worker_runtime_real.py` pasó (**3 passed**, 67.83s); Ruff y formato pasan. La qualification exact-head está pendiente. No cualifica proveedores SMTP/HTTPS, operator workflow general ni HA de producción; P5 y progreso release-qualified siguen parciales en **0% (0/14)**.
 
 El PR [#402](https://github.com/SauronShepherd/ronin/pull/402) integró `PostgresSchedulerSnapshotStore` con task attempts/pools persistidos, reclaim transaccional de leases vencidos, admisión con dependencias/concurrencia/pools, heartbeat y finalización protegidos por owner/token y vencimiento. El candidato `830a87d469d51df3f07fc01cd9adf344d9a98189` pasó CI 3.11/3.12, el gate Docker con PostgreSQL y cobertura storage, Docker real (**7m30s**), `ledgers`, seguridad y checks restantes; `mutation` quedó skipped. El merge squash es `main@0ccb5fdd68b8849f860c7ffe9ef2526e4ec9b3e4`. La integración Docker local con PostgreSQL 16 pasó **14 tests**, el módulo `postgres_scheduler.py` midió **81%** de cobertura de línea, Ruff y mypy focalizado pasan. CI excluye este adaptador sólo del agregado de cobertura sin servicio; el gate Docker per-file exige el piso de 80% con PostgreSQL activo.
 

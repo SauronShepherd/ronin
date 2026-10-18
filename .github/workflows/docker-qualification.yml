@@ -72,11 +72,19 @@ jobs:
       - name: Resolve qualification image digest
         run: echo "RONIN_DOCKER_QUALIFICATION_IMAGE=$(docker image inspect ronin-probe:ci --format '{{.Id}}')" >> "$GITHUB_ENV"
 
+      - name: Create isolated PostgreSQL database for real worker qualification
+        env:
+          PGPASSWORD: ronin
+        run: |
+          dropdb --if-exists --host localhost --username ronin ronin_worker_qualification
+          createdb --host localhost --username ronin ronin_worker_qualification
+
       - name: Run real Docker qualification
         env:
           RONIN_REAL_DOCKER_QUALIFICATION: "1"
           RONIN_DOCKER_QUALIFICATION_EVIDENCE: ${{ github.workspace }}/qualification-evidence
           RONIN_HOST_WORKSPACE: ${{ github.workspace }}
+          RONIN_POSTGRES_TEST_DSN: postgresql://ronin:ronin@localhost:5432/ronin_worker_qualification
         run: |
           mkdir -p qualification-evidence
           python -m pytest -q tests/integration/test_docker_container_executor_real.py tests/integration/test_worker_runtime_real.py
