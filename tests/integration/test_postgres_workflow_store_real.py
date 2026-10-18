@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import http.client
+import json
 import os
 import subprocess
 import sys
@@ -8,6 +10,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from pathlib import Path
+from threading import Thread
 from uuid import uuid4
 
 import pytest
@@ -42,7 +45,12 @@ from studio_core.scheduler_events import (
     EventTriggerId,
     SchedulerEventId,
 )
-from studio_execution import DurableExecutionService
+from studio_execution import (
+    DurableExecutionService,
+    ProjectService,
+    WorkflowCancellationHTTPAdapter,
+    WorkspaceService,
+)
 from studio_execution.scheduler_backfill import BackfillTickResult, SchedulerBackfillService
 from studio_execution.scheduler_bridge import plan_scheduler_execution
 from studio_execution.scheduler_cancellation import cancel_workflow_run
@@ -50,6 +58,8 @@ from studio_execution.scheduler_dispatch import (
     dispatch_execution_intent,
     reconcile_execution_intent,
 )
+from studio_execution.scheduler_http import PostgresWorkflowHTTPAdapter
+from studio_execution.scheduler_schedule_service import SchedulerScheduleService
 from studio_orchestrator import (
     AttemptId,
     AttemptState,
@@ -57,6 +67,11 @@ from studio_orchestrator import (
     JobState,
     LeaseToken,
     StoredEvidenceRef,
+)
+from studio_server import (
+    StaticControlPlaneAuthenticator,
+    StaticControlPlaneAuthorizer,
+    WorkspaceProjectHTTPServer,
 )
 from studio_storage import (
     InMemoryJobStore,
@@ -87,6 +102,7 @@ from studio_storage.scheduler_events import (
 )
 from studio_storage.scheduler_fencing import TaskAttemptId
 from studio_storage.scheduler_leadership import SchedulerLeadershipLost
+from studio_storage.scheduler_schedule import ScheduleFireConflict
 from studio_storage.scheduler_timeout import (
     finalize_timed_out_attempt,
     list_timeout_requests,
@@ -160,7 +176,7 @@ def test_postgres_scheduler_deployment_binding_is_workspace_scoped_and_runnable(
     assert store.get_runnable_workflow_deployment(workspace_id, workflow.id) is None
 
 
-def test_postgres_scheduler_migrates_schema_six_to_nine(
+def test_postgres_scheduler_migrates_schema_six_to_ten(
     request: pytest.FixtureRequest,
 ) -> None:
     dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
@@ -191,6 +207,8 @@ def test_postgres_scheduler_migrates_schema_six_to_nine(
     connection = psycopg.connect(schema_dsn)
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_scheduler_schedule_fires")
+            cursor.execute("DROP TABLE ronin_scheduler_schedule_cursors")
             cursor.execute("DROP TABLE ronin_task_timeout_requests")
             cursor.execute("DROP TABLE ronin_workflow_deployments")
             cursor.execute("DELETE FROM ronin_scheduler_schema_migrations WHERE version>=7")
@@ -203,11 +221,15 @@ def test_postgres_scheduler_migrates_schema_six_to_nine(
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT MAX(version) FROM ronin_scheduler_schema_migrations")
-            assert cursor.fetchone()[0] == 9
+            assert cursor.fetchone()[0] == 10
             cursor.execute("SELECT to_regclass('ronin_workflow_deployments') AS table_name")
             assert cursor.fetchone()[0] == "ronin_workflow_deployments"
             cursor.execute("SELECT to_regclass('ronin_task_timeout_requests') AS table_name")
             assert cursor.fetchone()[0] == "ronin_task_timeout_requests"
+            cursor.execute("SELECT to_regclass('ronin_scheduler_schedule_cursors')")
+            assert cursor.fetchone()[0] == "ronin_scheduler_schedule_cursors"
+            cursor.execute("SELECT to_regclass('ronin_scheduler_schedule_fires')")
+            assert cursor.fetchone()[0] == "ronin_scheduler_schedule_fires"
     finally:
         connection.close()
 
@@ -623,6 +645,219 @@ def test_postgres_workflow_and_schedule_bundle_import_is_atomic_and_idempotent()
         )
 
 
+def test_postgres_scheduler_schedule_cursor_fire_and_http_adapter() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerSnapshotStore(
+        dsn,
+        application_name="ronin-scheduler-calendar-qualification",
+    )
+    workspace_id = WorkspaceId(f"scheduler-calendar-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Scheduler calendar qualification"), now=NOW)
+    workflow = _workflow(f"scheduler-calendar-workflow-{uuid4().hex}")
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    schedule = Schedule(ScheduleId(f"schedule-{uuid4().hex}"), workflow.id, "* * * * *")
+    store.put_schedule(workspace_id, schedule, now=NOW)
+    adapter = PostgresWorkflowHTTPAdapter(store, now=NOW)
+
+    assert adapter.list_workflows(workspace_id) == (workflow,)
+    assert adapter.list_schedules(workspace_id) == (schedule,)
+    assert adapter.get_schedule(workspace_id, schedule.id) == schedule
+    assert store.get_schedule_cursor(workspace_id, schedule.id) is None
+    assert adapter.preview_schedule_next_runs(workspace_id, schedule.id, after=NOW, count=2) == (
+        Instant("2026-10-15T00:01:00.000000Z"),
+        Instant("2026-10-15T00:02:00.000000Z"),
+    )
+    assert SchedulerScheduleService.preview_next_runs(schedule, after=NOW, count=1) == (
+        Instant("2026-10-15T00:01:00.000000Z"),
+    )
+
+    first = store.fire_schedule(
+        workspace_id,
+        schedule.id,
+        scheduled_for="2026-10-15T00:01:00.000000Z",
+        now=NOW,
+    )
+    replay = store.fire_schedule(
+        workspace_id,
+        schedule.id,
+        scheduled_for="2026-10-15T00:01:00.000000Z",
+        now=NOW,
+    )
+    assert replay == first
+    assert adapter.list_schedule_fires(workspace_id, schedule.id) == (first,)
+    assert adapter.get_run(workspace_id, first.workflow_run_id) is not None
+    assert len(adapter.list_task_runs(workspace_id, first.workflow_run_id)) == 1
+
+    assert store.advance_schedule_cursor(
+        workspace_id,
+        schedule.id,
+        through="2026-10-15T00:01:00.000000Z",
+        now=NOW,
+    ) == Instant("2026-10-15T00:01:00.000000Z")
+    with pytest.raises(ValueError, match="must not move backwards"):
+        store.advance_schedule_cursor(
+            workspace_id,
+            schedule.id,
+            through=NOW,
+            now=NOW,
+        )
+    with pytest.raises(ValueError, match="aligned to a UTC minute"):
+        store.advance_schedule_cursor(
+            workspace_id,
+            schedule.id,
+            through="2026-10-15T00:01:30.000000Z",
+            now=NOW,
+        )
+    with pytest.raises(KeyError, match="missing"):
+        store.advance_schedule_cursor(
+            workspace_id,
+            ScheduleId("missing"),
+            through=NOW,
+            now=NOW,
+        )
+    with pytest.raises(KeyError, match="missing"):
+        store.fire_schedule(
+            workspace_id,
+            ScheduleId("missing"),
+            scheduled_for="2026-10-15T00:01:00.000000Z",
+            now=NOW,
+        )
+    with pytest.raises(ValueError, match="aligned to a UTC minute"):
+        store.fire_schedule(
+            workspace_id,
+            schedule.id,
+            scheduled_for="2026-10-15T00:01:30.000000Z",
+            now=NOW,
+        )
+    disabled = Schedule(schedule.id, workflow.id, schedule.cron, enabled=False)
+    store.put_schedule(workspace_id, disabled, now=NOW)
+    with pytest.raises(ScheduleFireConflict, match="disabled"):
+        store.fire_schedule(
+            workspace_id,
+            schedule.id,
+            scheduled_for="2026-10-15T00:02:00.000000Z",
+            now=NOW,
+        )
+    store.put_schedule(workspace_id, schedule, now=NOW)
+    with pytest.raises(WorkflowNotFound):
+        store.put_schedule(
+            workspace_id,
+            Schedule(ScheduleId("orphan-schedule"), WorkflowId("missing"), "* * * * *"),
+            now=NOW,
+        )
+
+    conflict_run = store.create_run(
+        workspace_id,
+        WorkflowRunId(f"schedule-conflict-{uuid4().hex}"),
+        workflow.id,
+        Trigger("manual", f"schedule-conflict-trigger-{uuid4().hex}"),
+        now=NOW,
+    )
+    connection = store._connect()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE ronin_scheduler_schedule_fires SET workflow_run_id=%s "
+                "WHERE workspace_id=%s AND schedule_id=%s AND scheduled_for=%s",
+                (
+                    str(conflict_run.id),
+                    str(workspace_id),
+                    str(schedule.id),
+                    "2026-10-15T00:01:00.000000Z",
+                ),
+            )
+        connection.commit()
+    finally:
+        connection.close()
+    with pytest.raises(ScheduleFireConflict, match="conflicting workflow run"):
+        store.fire_schedule(
+            workspace_id,
+            schedule.id,
+            scheduled_for="2026-10-15T00:01:00.000000Z",
+            now=NOW,
+        )
+
+
+def test_postgres_workflow_http_routes_use_durable_scheduler_adapter() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresSchedulerSnapshotStore(
+        dsn,
+        application_name="ronin-scheduler-http-qualification",
+    )
+    workspace_id = WorkspaceId(f"scheduler-http-ws-{uuid4().hex}")
+    store.create_workspace(Workspace(workspace_id, "Scheduler HTTP qualification"), now=NOW)
+    workflow = _workflow(f"scheduler-http-workflow-{uuid4().hex}")
+    store.put_workflow(workspace_id, workflow, now=NOW)
+    schedule = Schedule(ScheduleId(f"schedule-{uuid4().hex}"), workflow.id, "* * * * *")
+    store.put_schedule(workspace_id, schedule, now=NOW)
+    adapter = PostgresWorkflowHTTPAdapter(store, now=NOW)
+    jobs = DurableExecutionService(InMemoryJobStore())
+    server = WorkspaceProjectHTTPServer(
+        ("127.0.0.1", 0),
+        WorkspaceService(store),
+        ProjectService(store),
+        authenticator=StaticControlPlaneAuthenticator("scheduler-http-token"),
+        authorizer=StaticControlPlaneAuthorizer(
+            workspace_id,
+            frozenset({"scheduler.read", "scheduler.write"}),
+        ),
+        workflow_reader=adapter,
+        workflow_runner=adapter,
+        workflow_canceller=WorkflowCancellationHTTPAdapter(store, jobs),
+    )
+    thread = Thread(target=server.serve_forever, name="postgres-scheduler-http", daemon=True)
+    thread.start()
+    try:
+        address = server.server_address
+
+        def request(method: str, path: str, payload: object | None = None):
+            connection = http.client.HTTPConnection(address[0], address[1], timeout=5)
+            body = None if payload is None else json.dumps(payload).encode("utf-8")
+            headers = {"Authorization": "Bearer scheduler-http-token"}
+            if body is not None:
+                headers["Content-Type"] = "application/json"
+            try:
+                connection.request(method, path, body=body, headers=headers)
+                response = connection.getresponse()
+                result = json.loads(response.read())
+                return response.status, result
+            finally:
+                connection.close()
+
+        status, payload = request("GET", f"/v1/workspaces/{workspace_id}/workflows?limit=10")
+        assert status == 200
+        assert payload["items"][0]["id"] == workflow.id.value
+
+        status, created = request(
+            "POST",
+            f"/v1/workspaces/{workspace_id}/workflows/{workflow.id}/runs",
+            {
+                "trigger": {"kind": "manual", "key": "manual-1", "source_ref": None},
+                "idempotency_key": "request-1",
+            },
+        )
+        assert status == 201
+        run_id = created["id"]
+        status, run = request("GET", f"/v1/workspaces/{workspace_id}/workflow-runs/{run_id}")
+        assert status == 200
+        assert run["state"] == "pending"
+        assert len(run["tasks"]) == 1
+
+        status, cancelled = request(
+            "POST", f"/v1/workspaces/{workspace_id}/workflow-runs/{run_id}/cancel"
+        )
+        assert status == 200
+        assert cancelled == {"workflow_run_id": run_id, "cancelled_jobs": 0}
+        stored = store.get_run(workspace_id, WorkflowRunId(run_id))
+        assert stored is not None
+        assert stored.state == "cancelled"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+        asyncio.run(jobs.aclose())
+
+
 def test_postgres_workflow_mutations_require_active_workspace() -> None:
     dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
     store = PostgresWorkflowBundleImportStore(dsn, application_name="ronin-workflow-qualification")
@@ -971,6 +1206,8 @@ def test_postgres_scheduler_execution_outbox_survives_expiry_and_reconciles(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_scheduler_schedule_fires")
+            cursor.execute("DROP TABLE ronin_scheduler_schedule_cursors")
             cursor.execute("DROP TABLE ronin_task_timeout_requests")
             cursor.execute("DROP TABLE ronin_workflow_deployments")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
@@ -1227,6 +1464,8 @@ def test_postgres_scheduler_event_inbox_freezes_and_replays_deliveries(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_scheduler_schedule_fires")
+            cursor.execute("DROP TABLE ronin_scheduler_schedule_cursors")
             cursor.execute("DROP TABLE ronin_task_timeout_requests")
             cursor.execute("DROP TABLE ronin_workflow_deployments")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
@@ -1639,6 +1878,8 @@ def test_postgres_scheduler_backfill_migrates_schema_five_to_six(
     connection = store._connect()
     try:
         with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE ronin_scheduler_schedule_fires")
+            cursor.execute("DROP TABLE ronin_scheduler_schedule_cursors")
             cursor.execute("DROP TABLE ronin_task_timeout_requests")
             cursor.execute("DROP TABLE ronin_workflow_deployments")
             cursor.execute("DROP TABLE ronin_scheduler_backfill_runs")
@@ -1657,13 +1898,26 @@ def test_postgres_scheduler_backfill_migrates_schema_five_to_six(
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT version FROM ronin_scheduler_schema_migrations ORDER BY version")
-            assert [int(row[0]) for row in cursor.fetchall()] == [1, 2, 3, 4, 5, 6, 7, 8, 9]
+            assert [int(row[0]) for row in cursor.fetchall()] == [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+            ]
             for table in (
                 "ronin_scheduler_backfills",
                 "ronin_scheduler_backfill_plans",
                 "ronin_scheduler_backfill_runs",
                 "ronin_workflow_deployments",
                 "ronin_task_timeout_requests",
+                "ronin_scheduler_schedule_cursors",
+                "ronin_scheduler_schedule_fires",
             ):
                 cursor.execute("SELECT to_regclass(%s) AS table_name", (table,))
                 assert cursor.fetchone()[0] == table

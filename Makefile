@@ -150,6 +150,7 @@ coverage-storage-files:
 		--exclude=postgres_scheduler.py \
 		--exclude=postgres_scheduler_backfills.py \
 		--exclude=postgres_scheduler_leadership.py \
+		--exclude=postgres_scheduler_schedule.py \
 		--threshold=80 \
 		--ratchet-margin=2.1 \
 		--baseline=artifacts.py=77.30 \

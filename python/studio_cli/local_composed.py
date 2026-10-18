@@ -30,6 +30,7 @@ from studio_execution import (
     DurableExecutionService,
     EnvironmentService,
     OntologyHTTPAdapter,
+    PostgresWorkflowHTTPAdapter,
     ProjectService,
     SqliteWorkflowHTTPAdapter,
     WorkflowCancellationHTTPAdapter,
@@ -138,14 +139,30 @@ def _port(name: str, default: str) -> int:
 def _workflow_reader_for_backend(
     scheduler: Any, *, now: Instant, postgres_dsn: str | None
 ) -> Any | None:
-    """Expose scheduler HTTP routes only when the selected store supports the full contract.
-
-    The current PostgreSQL adapter persists portable workflow/schedule metadata, but does not
-    implement executions, events, backfills, or task-run reads. Wrapping it in the SQLite HTTP
-    adapter would publish routes that fail at runtime when those methods are called.
-    """
+    """Expose workflow routes only when the selected store supports every route operation."""
     if postgres_dsn is not None:
-        return None
+        required = (
+            "list_workflows",
+            "put_workflow",
+            "list_schedules",
+            "get_schedule",
+            "put_schedule",
+            "list_schedule_fires",
+            "get_event",
+            "list_event_triggers",
+            "put_event_trigger",
+            "ingest_event",
+            "list_pending_deliveries",
+            "create_backfill",
+            "get_backfill",
+            "cancel_backfill",
+            "get_run",
+            "list_task_runs",
+            "create_run",
+        )
+        if not all(callable(getattr(scheduler, name, None)) for name in required):
+            return None
+        return PostgresWorkflowHTTPAdapter(cast(Any, scheduler), now=now)
     return SqliteWorkflowHTTPAdapter(cast(Any, scheduler), now=now)
 
 
