@@ -7,7 +7,7 @@
 **Observed workspace snapshot:** 2026-10-17. The tracked source is based on
 `main@dacd3ff`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `897e04a3b6c4219d82ed70d13a126c27a97cff4c` (2026-10-18).
+**Observed source head:** `2c9312c27bc200d372ba00e9c5964ebd0cd118db` (2026-10-18).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -272,5 +272,7 @@ El PR #411 integra migraciones PostgreSQL 7→9 para solicitudes persistentes de
 
 El PR [#412](https://github.com/SauronShepherd/ronin/pull/412) delega a PostgreSQL el cambio durable de workflow a `cancelling`, la cancelación de tareas sin intent, el retiro de intents aún no enviados y la reconciliación de Jobs cancelados. La autoridad de cancelación se persiste antes de esperar bloqueos de tareas. Sus 17 pruebas PostgreSQL pasaron en Docker/PostgreSQL 16 con 82% de cobertura del adaptador; CI 3.11/3.12 y Docker qualification completa (**8m14s**) también pasaron. El squash quedó en `main@897e04a3b6c4219d82ed70d13a126c27a97cff4c`; CI, Docker, Web, Security, Release y Status consistency exact-head de main pasaron.
 
-El siguiente corte candidato conecta el endpoint autenticado y auditado de cancelación de workflow al store scheduler PostgreSQL y al `DurableExecutionService`, usando timestamps UTC actuales y las transiciones durables de #412. La prueba focalizada del puente HTTP pasó dentro de 18 pruebas de cancelación/composición; Ruff, formato y mypy pasaron. El candidato todavía no tiene calificación exact-head. Las rutas generales del scheduler siguen deshabilitadas hasta cubrir persistencia de fires/cursors de schedule y completar conformance del adaptador; daemon/operator, recuperación tras crash y notificaciones siguen abiertos. El progreso release-qualified permanece en **0% (0/14)**.
+El PR [#413](https://github.com/SauronShepherd/ronin/pull/413) conectó el endpoint autenticado y auditado de cancelación de workflow al store scheduler PostgreSQL y al `DurableExecutionService`, usando timestamps UTC actuales y las transiciones durables de #412. Pasaron 18 pruebas focalizadas de cancelación/composición, Ruff, formato y mypy; CI 3.11/3.12, Docker qualification (**6m23s**), Security, Release y demás gates del candidato exacto también pasaron. El squash quedó en `main@2c9312c27bc200d372ba00e9c5964ebd0cd118db`. Las rutas generales del scheduler siguen deshabilitadas hasta cubrir persistencia de fires/cursors de schedule y completar conformance del adaptador; daemon/operator, recuperación tras crash y notificaciones siguen abiertos. El progreso release-qualified permanece en **0% (0/14)**.
+
+El candidato `codex/postgres-scheduler-calendar` añade migración PostgreSQL 9→10 con cursores monotónicos y ledger idempotente de schedule fires, implementación de `put_schedule`/cursor/fire/lectura y el adaptador HTTP PostgreSQL completo. Compose expone esas rutas sólo si el store tiene todas las operaciones requeridas. Una suite de integración contra PostgreSQL 16 en Docker pasó **19 tests**, con **100% de líneas y ramas** en `postgres_scheduler_schedule.py`; la prueba HTTP recorre workflow list, create/read run y cancel sobre el store real. También pasaron 28 tests SQLite/HTTP, Ruff, formato y mypy. La CI exact-head completa está pendiente; hasta entonces esta capacidad describe el candidato, no la base `main@2c9312c`. El progreso release-qualified permanece en **0% (0/14)**.
 

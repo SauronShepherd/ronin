@@ -43,6 +43,7 @@ from studio_orchestrator import (
 
 from .environments import EnvironmentConflict
 from .postgres_scheduler_backfills import PostgresSchedulerBackfillMixin
+from .postgres_scheduler_schedule import PostgresSchedulerScheduleMixin
 from .postgres_workflow import PostgresWorkflowBundleImportStore
 from .scheduler import (
     WorkflowNotFound,
@@ -67,7 +68,7 @@ from .scheduler_execution import (
 from .scheduler_fencing import ClaimedTask, TaskAttemptId
 from .scheduler_timeout import TaskTimeoutRequest
 
-_SCHEMA_VERSION = 9
+_SCHEMA_VERSION = 10
 _SCHEMA = """
 CREATE TABLE ronin_workflow_runs (
     workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
@@ -111,13 +112,15 @@ CREATE INDEX ronin_task_runs_state_idx
 
 
 class PostgresSchedulerSnapshotStore(
-    PostgresSchedulerBackfillMixin, PostgresWorkflowBundleImportStore
+    PostgresSchedulerScheduleMixin,
+    PostgresSchedulerBackfillMixin,
+    PostgresWorkflowBundleImportStore,
 ):
-    """PostgreSQL workflow/task, execution and event persistence.
+    """PostgreSQL workflow/task, execution, event, backfill and schedule persistence.
 
-    This intentionally does not claim complete scheduler adapter conformance:
-    timeout/cancellation controller transitions, cron cursors, API wiring and full
-    restart/operator qualification remain separate work.
+    The HTTP adapter contract is complete for this store. Full daemon/controller restart,
+    notification-provider qualification and broader operator conformance remain separate
+    release gates.
     """
 
     def __init__(self, dsn: str, *, application_name: str = "ronin-scheduler-snapshots") -> None:
@@ -445,6 +448,42 @@ class PostgresSchedulerSnapshotStore(
                         ),
                     )
                     current = 9
+                if current == 9:
+                    cursor.execute(
+                        "CREATE TABLE ronin_scheduler_schedule_cursors ("
+                        "workspace_id TEXT NOT NULL,schedule_id TEXT NOT NULL,"
+                        "last_evaluated_at TEXT NOT NULL,updated_at TEXT NOT NULL,"
+                        "PRIMARY KEY(workspace_id,schedule_id),"
+                        "FOREIGN KEY(workspace_id,schedule_id) REFERENCES "
+                        "ronin_schedules(workspace_id,schedule_id) ON DELETE CASCADE)"
+                    )
+                    cursor.execute(
+                        "CREATE TABLE ronin_scheduler_schedule_fires ("
+                        "workspace_id TEXT NOT NULL,schedule_id TEXT NOT NULL,"
+                        "scheduled_for TEXT NOT NULL,workflow_run_id TEXT NOT NULL,"
+                        "created_at TEXT NOT NULL,"
+                        "PRIMARY KEY(workspace_id,schedule_id,scheduled_for),"
+                        "UNIQUE(workspace_id,workflow_run_id),"
+                        "FOREIGN KEY(workspace_id,schedule_id) REFERENCES "
+                        "ronin_schedules(workspace_id,schedule_id) ON DELETE CASCADE,"
+                        "FOREIGN KEY(workspace_id,workflow_run_id) REFERENCES "
+                        "ronin_workflow_runs(workspace_id,workflow_run_id) ON DELETE CASCADE)"
+                    )
+                    cursor.execute(
+                        "CREATE INDEX ronin_scheduler_schedule_fires_run_idx "
+                        "ON ronin_scheduler_schedule_fires(workspace_id,workflow_run_id)"
+                    )
+                    cursor.execute(
+                        "INSERT INTO ronin_scheduler_schema_migrations(version,applied_at) "
+                        "VALUES (%s,%s)",
+                        (
+                            10,
+                            datetime.now(UTC)
+                            .isoformat(timespec="microseconds")
+                            .replace("+00:00", "Z"),
+                        ),
+                    )
+                    current = 10
             connection.commit()
         except Exception:
             connection.rollback()

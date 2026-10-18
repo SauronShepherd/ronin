@@ -3,9 +3,10 @@ from __future__ import annotations
 import pytest
 from studio_cli.local_composed import _workflow_reader_for_backend, build_local_composed_from_env
 from studio_core import WorkspaceId
-from studio_execution import SqliteWorkflowHTTPAdapter
+from studio_execution import PostgresWorkflowHTTPAdapter, SqliteWorkflowHTTPAdapter
 from studio_orchestrator import Instant
 from studio_server import LocalServerComposition
+from studio_storage import PostgresSchedulerSnapshotStore
 
 
 def _environment(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
@@ -33,6 +34,16 @@ def test_workflow_routes_are_not_mounted_for_incomplete_postgres_scheduler_store
         )
         is None
     )
+
+
+def test_workflow_routes_mount_for_complete_postgres_scheduler_store() -> None:
+    store = object.__new__(PostgresSchedulerSnapshotStore)
+    reader = _workflow_reader_for_backend(
+        store,
+        now=Instant("2026-10-17T00:00:00.000000Z"),
+        postgres_dsn="postgresql://localhost/ronin",
+    )
+    assert isinstance(reader, PostgresWorkflowHTTPAdapter)
 
 
 def test_workflow_routes_use_the_complete_sqlite_scheduler_contract(tmp_path) -> None:

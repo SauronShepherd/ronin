@@ -150,6 +150,7 @@ coverage-storage-files:
 		--exclude=postgres_scheduler.py \
 		--exclude=postgres_scheduler_backfills.py \
 		--exclude=postgres_scheduler_leadership.py \
+		--exclude=postgres_scheduler_schedule.py \
 		--threshold=80 \
 		--ratchet-margin=2.1 \
 		--baseline=artifacts.py=77.30 \
@@ -195,6 +196,7 @@ coverage-storage-files-full:
 		--baseline=postgres_core.py=37.61 \
 		--baseline=postgres_jobs.py=47.80 \
 		--baseline=quality.py=31.00 \
+		--baseline=postgres_scheduler_schedule.py=97.90 \
 		--baseline=s3_artifacts.py=74.20 \
 		--baseline=scheduler_backfill.py=65.91 \
 		--baseline=scheduler_backfill_runtime.py=69.11 \

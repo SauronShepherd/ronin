@@ -67,6 +67,7 @@ from .scheduler_adapters import (
     execute_scheduler_job,
 )
 from .scheduler_http import (
+    PostgresWorkflowHTTPAdapter,
     SqliteWorkflowHTTPAdapter,
     WorkflowCancellationHTTPAdapter,
     WorkflowStore,
@@ -333,6 +334,7 @@ __all__ = (
     "render_job",
     "DurableExecutionService",
     "ProjectService",
+    "PostgresWorkflowHTTPAdapter",
     "SqliteWorkflowHTTPAdapter",
     "WorkflowCancellationHTTPAdapter",
     "WorkerPollResult",

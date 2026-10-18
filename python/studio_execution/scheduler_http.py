@@ -262,4 +262,13 @@ class WorkflowCancellationHTTPAdapter:
         )
 
 
-__all__ = ("SqliteWorkflowHTTPAdapter", "WorkflowCancellationHTTPAdapter", "WorkflowStore")
+class PostgresWorkflowHTTPAdapter(SqliteWorkflowHTTPAdapter):
+    """HTTP contract adapter shared by a conformant PostgreSQL scheduler store."""
+
+
+__all__ = (
+    "PostgresWorkflowHTTPAdapter",
+    "SqliteWorkflowHTTPAdapter",
+    "WorkflowCancellationHTTPAdapter",
+    "WorkflowStore",
+)
