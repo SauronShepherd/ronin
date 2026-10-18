@@ -4,10 +4,10 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-17. The tracked source is based on
-`main@dacd3ff`; untracked qualification output directories are not release
+**Observed workspace snapshot:** 2026-10-18. The tracked source is based on
+`main@98e79db`; untracked qualification output directories are not release
 evidence.
-**Observed source head:** `2c9312c27bc200d372ba00e9c5964ebd0cd118db` (2026-10-18).
+**Observed source head:** `98e79db96ef45cfca6c3678c59475d5f74d024b6` (2026-10-18).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -142,8 +142,10 @@ remain partial.
 The PostgreSQL task-attempt implementation passed real PostgreSQL integration
 in Docker: 14 focused tests passed and focused line coverage reached 81%.
 PR #404 added the PostgreSQL execution intent outbox and terminal reconciliation.
-P5 remains partial because PostgreSQL event delivery, backfills and task evidence,
-end-to-end dispatch/restart recovery and scheduler HTTP routes remain incomplete.
+PRs #406–#414 now provide PostgreSQL event delivery, backfills, task evidence,
+schedule cursors/fires and the workflow/schedule HTTP adapter. P5 remains partial
+because full daemon/controller recovery, operator conformance and notification
+provider qualification remain incomplete.
 
 The current workspace includes the implementation families listed in the
 package inventory (`studio_ai_studio`, `studio_cloud`, `studio_data_engineering`,
@@ -272,7 +274,7 @@ El PR #411 integra migraciones PostgreSQL 7→9 para solicitudes persistentes de
 
 El PR [#412](https://github.com/SauronShepherd/ronin/pull/412) delega a PostgreSQL el cambio durable de workflow a `cancelling`, la cancelación de tareas sin intent, el retiro de intents aún no enviados y la reconciliación de Jobs cancelados. La autoridad de cancelación se persiste antes de esperar bloqueos de tareas. Sus 17 pruebas PostgreSQL pasaron en Docker/PostgreSQL 16 con 82% de cobertura del adaptador; CI 3.11/3.12 y Docker qualification completa (**8m14s**) también pasaron. El squash quedó en `main@897e04a3b6c4219d82ed70d13a126c27a97cff4c`; CI, Docker, Web, Security, Release y Status consistency exact-head de main pasaron.
 
-El PR [#413](https://github.com/SauronShepherd/ronin/pull/413) conectó el endpoint autenticado y auditado de cancelación de workflow al store scheduler PostgreSQL y al `DurableExecutionService`, usando timestamps UTC actuales y las transiciones durables de #412. Pasaron 18 pruebas focalizadas de cancelación/composición, Ruff, formato y mypy; CI 3.11/3.12, Docker qualification (**6m23s**), Security, Release y demás gates del candidato exacto también pasaron. El squash quedó en `main@2c9312c27bc200d372ba00e9c5964ebd0cd118db`. Las rutas generales del scheduler siguen deshabilitadas hasta cubrir persistencia de fires/cursors de schedule y completar conformance del adaptador; daemon/operator, recuperación tras crash y notificaciones siguen abiertos. El progreso release-qualified permanece en **0% (0/14)**.
+El PR [#414](https://github.com/SauronShepherd/ronin/pull/414) añadió migración PostgreSQL 9→10 con cursores monotónicos y ledger idempotente de schedule fires, implementación del contrato HTTP completo y montaje condicionado de rutas workflow/schedule en Compose. PostgreSQL 16 en Docker pasó **19 pruebas**, incluida una ruta HTTP real, y el módulo nuevo obtuvo 100% de cobertura de líneas y ramas. El PR pasó CI 3.11/3.12 y Docker qualification (**7m54s**); quedó integrado en `main@98e79db96ef45cfca6c3678c59475d5f74d024b6`. CI, Docker, Web, Security, Release y Status consistency exact-head de esa base pasaron. Las rutas generales workflow/schedule están disponibles cuando el backend expone todas las operaciones del contrato. P5 aún requiere recovery completo daemon/controller, conformance del operador y qualification de proveedores de notificación. El progreso release-qualified permanece en **0% (0/14)**.
 
-El candidato `codex/postgres-scheduler-calendar` añade migración PostgreSQL 9→10 con cursores monotónicos y ledger idempotente de schedule fires, implementación de `put_schedule`/cursor/fire/lectura y el adaptador HTTP PostgreSQL completo. Compose expone esas rutas sólo si el store tiene todas las operaciones requeridas. Una suite de integración contra PostgreSQL 16 en Docker pasó **19 tests**, con **100% de líneas y ramas** en `postgres_scheduler_schedule.py`; la prueba HTTP recorre workflow list, create/read run y cancel sobre el store real. También pasaron 28 tests SQLite/HTTP, Ruff, formato y mypy. La CI exact-head completa está pendiente; hasta entonces esta capacidad describe el candidato, no la base `main@2c9312c`. El progreso release-qualified permanece en **0% (0/14)**.
+El PR [#415](https://github.com/SauronShepherd/ronin/pull/415) añade un ciclo real del `SchedulerDaemon` sobre stores PostgreSQL aislados: el daemon siguiente toma la generación 2 al vencer el lease anterior y reutiliza el cursor/fire durable sin duplicar ejecuciones. La ejecución local contra PostgreSQL 16 en Docker pasó el módulo completo de integración (**20 tests**), además de Ruff, formato y `git diff --check`. El exact-head CI/Docker de este candidato está pendiente; el caso cubre takeover y replay de schedule, no el recovery completo del controller ni la conformance integral del operador. El progreso release-qualified permanece en **0% (0/14)**.
 
