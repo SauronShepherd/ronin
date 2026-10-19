@@ -147,6 +147,45 @@ def test_cancel_remains_terminal_when_runner_fails_after_cancellation() -> None:
         coordinator.close()
 
 
+def test_cancelled_running_run_does_not_become_succeeded_on_late_success() -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    started = Event()
+    release_success = Event()
+
+    class BlockingRunner:
+        def run(self, _lab, _rows):
+            started.set()
+            if not release_success.wait(timeout=5):
+                raise TimeoutError("test runner was not released")
+            return SimpleNamespace(to_payload=lambda: {"status": "completed"})
+
+    store = InMemoryExecutionStore()
+    coordinator = LocalExecutionCoordinator(runner=BlockingRunner(), store=store)
+    try:
+        coordinator.submit("run-cancel-success", lab, [{"x": 1, "target": 1}])
+        assert started.wait(timeout=5), "runner did not start"
+        assert coordinator.cancel("run-cancel-success").state == "cancelled"
+
+        release_success.set()
+        coordinator._futures["run-cancel-success"].result(timeout=5)
+
+        assert coordinator.status("run-cancel-success").state == "cancelled"
+        persisted = store.get("run-cancel-success")
+        assert persisted is not None
+        assert persisted.state == "cancelled"
+    finally:
+        release_success.set()
+        coordinator.close()
+
+
 def test_cancel_prevents_a_queued_run_from_starting() -> None:
     lab = Lab(
         "churn",

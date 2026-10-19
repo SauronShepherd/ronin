@@ -2,11 +2,13 @@
 
 # ruff: noqa: E501
 import time
+from threading import Event
 
 import pytest
 from studio_core import WorkspaceId
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_ml.domain import FeatureSpec, Lab
+from studio_ml.orchestration import LocalExecutionCoordinator
 from studio_ml.plugin import MachineLearningStudioPlugin
 from studio_ml.services import InMemoryMLLabStore, LabService
 
@@ -37,6 +39,48 @@ def test_submit_and_poll_execution() -> None:
         state = plugin.execution_status("async-1")["state"]
     assert state == "succeeded"
     plugin._coordinator.close()
+
+
+def test_cancel_execution_route_keeps_cancelled_state_after_runner_error() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._coordinator.close()
+    started = Event()
+    release_failure = Event()
+
+    class FailingRunner:
+        def run(self, _lab, _rows):
+            started.set()
+            if not release_failure.wait(timeout=5):
+                raise TimeoutError("test runner was not released")
+            raise ValueError("runner failed after cancellation")
+
+    plugin._coordinator = LocalExecutionCoordinator(runner=FailingRunner())
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    try:
+        plugin.submit_execution(
+            "ws", "churn", body={"run_id": "cancel-api", "rows": [{"x": 1, "target": 1}]}
+        )
+        assert started.wait(timeout=5), "runner did not start"
+        assert plugin.cancel_execution("cancel-api")["state"] == "cancelled"
+
+        release_failure.set()
+        future = plugin._coordinator._futures["cancel-api"]
+        with pytest.raises(ValueError, match="runner failed after cancellation"):
+            future.result(timeout=5)
+        assert plugin.execution_status("cancel-api")["state"] == "cancelled"
+    finally:
+        release_failure.set()
+        plugin._coordinator.close()
 
 
 def test_quality_route_returns_blocking_findings() -> None:
