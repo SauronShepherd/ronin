@@ -290,6 +290,7 @@ class InMemoryExecutionStore:
                 result_payload=result_payload,
                 error=error,
                 lab_json=None,
+                pipeline_json=None,
                 rows_json=None,
                 owner=None,
                 lease_expires_at=None,
@@ -309,6 +310,7 @@ class InMemoryExecutionStore:
                     current,
                     state="cancelled",
                     lab_json=None,
+                    pipeline_json=None,
                     rows_json=None,
                     owner=None,
                     lease_expires_at=None,
@@ -338,7 +340,10 @@ class JobStoreExecutionStore:
     @staticmethod
     def _parameters(job: Job) -> dict[str, object]:
         value = decode_canonical_json(job.parameters_json)
-        if not isinstance(value, dict):
+        if not isinstance(value, dict) or value.get("schema") not in {
+            "ronin.ml-execution.v1",
+            "ronin.ml-execution.v2",
+        }:
             raise ValueError("stored ML job parameters must be an object")
         return cast(dict[str, object], value)
 
@@ -373,7 +378,7 @@ class JobStoreExecutionStore:
             }
             rows_json = None
         parameters = {
-            "schema": "ronin.ml-execution.v1",
+            "schema": "ronin.ml-execution.v2",
             "workspace_id": snapshot.workspace_id,
             "run_id": snapshot.run_id,
             "lab_id": snapshot.lab_id,
@@ -631,7 +636,13 @@ class JobStoreExecutionStore:
         snapshot = self.get(workspace_id, run_id)
         if snapshot is None:
             raise KeyError(run_id)
-        return replace(snapshot, state="cancelled", lab_json=None, rows_json=None)
+        return replace(
+            snapshot,
+            state="cancelled",
+            lab_json=None,
+            pipeline_json=None,
+            rows_json=None,
+        )
 
 
 def _now() -> Instant:
