@@ -5,9 +5,10 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-19. The tracked source is based on
-`main@b5d0701`; the current Lab/v1 contract candidate is recorded separately in
-the build plan. Untracked qualification output directories are not release evidence.
-**Observed source head:** `b5d0701fee9d2e47c6c42eaca1766b1bf5e73e3e` (2026-10-19).
+`main@4365493`; PR #430 is merged and its exact-head checks plus all six
+post-merge workflows passed. Untracked qualification output directories are not
+release evidence.
+**Observed source head:** `43654932b573a8e84339095323ed8a424a21cb23` (2026-10-19).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -27,6 +28,19 @@ candidate SHA they were generated for and are not promoted to current-head
 evidence.
 
 ## Exact-head qualification snapshot
+
+On `main@43654932b573a8e84339095323ed8a424a21cb23`, all six post-merge
+workflows passed: [CI](https://github.com/SauronShepherd/ronin/actions/runs/39287975345),
+[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39287975304),
+[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39287975253),
+[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39287975331),
+[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39287975149)
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39287975583).
+Docker included PostgreSQL-backed storage coverage, real Docker worker
+qualification and strict frozen v0.1 acceptance. PR [#430](https://github.com/SauronShepherd/ronin/pull/430)
+was squash-merged as `43654932b573a8e84339095323ed8a424a21cb23` after its exact-head
+CI, Docker, Security, Release and Status consistency checks passed. These checks
+qualify the merged change; they do not close P8 or any Public v1 release family.
 
 On the prior `main@58876c2a759fdb2d6dd93ba354ca6b5ce75ffbff` snapshot
 (2026-10-17), GitHub reported success for [CI](https://github.com/SauronShepherd/ronin/actions/runs/39029783787)
