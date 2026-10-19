@@ -194,6 +194,55 @@ def test_resolve_lab_rows_validates_inline_data_and_requires_a_resolver() -> Non
         resolve_lab_rows(WorkspaceId("workspace-a"), lab, None, None)
 
 
+def test_resolve_lab_rows_enforces_inline_resource_bounds(monkeypatch: pytest.MonkeyPatch) -> None:
+    import studio_ml.datasets as datasets
+
+    _resolver_instance, _catalog, _artifacts, ref = _resolver(b"x,target\n1,yes\n")
+    lab = Lab(
+        "dataset-lab",
+        "Dataset Lab",
+        "project-1",
+        ref,
+        "target",
+        "classification",
+        (FeatureSpec("x", "numeric"),),
+    )
+    workspace = WorkspaceId("workspace-a")
+
+    monkeypatch.setattr(datasets, "MAX_DATASET_ROWS", 1)
+    with pytest.raises(ValueError, match="100000 row limit"):
+        resolve_lab_rows(workspace, lab, [{"x": 1}, {"x": 2}], None)
+
+    monkeypatch.setattr(datasets, "MAX_DATASET_ROWS", 100_000)
+    monkeypatch.setattr(datasets, "MAX_DATASET_COLUMNS", 1)
+    with pytest.raises(ValueError, match="1024 column limit"):
+        resolve_lab_rows(workspace, lab, [{"x": 1}, {"target": 1}], None)
+
+    monkeypatch.setattr(datasets, "MAX_DATASET_COLUMNS", 1024)
+    monkeypatch.setattr(datasets, "MAX_DATASET_BYTES", 4)
+    with pytest.raises(ValueError, match="64 MiB limit"):
+        resolve_lab_rows(workspace, lab, [{"x": 1}], None)
+
+
+def test_resolve_lab_rows_rejects_invalid_inline_keys_and_values() -> None:
+    _resolver_instance, _catalog, _artifacts, ref = _resolver(b"x,target\n1,yes\n")
+    lab = Lab(
+        "dataset-lab",
+        "Dataset Lab",
+        "project-1",
+        ref,
+        "target",
+        "classification",
+        (FeatureSpec("x", "numeric"),),
+    )
+    workspace = WorkspaceId("workspace-a")
+
+    with pytest.raises(ValueError, match="row keys"):
+        resolve_lab_rows(workspace, lab, [{" x ": 1}], None)
+    with pytest.raises(ValueError, match="canonical JSON"):
+        resolve_lab_rows(workspace, lab, [{"x": object()}], None)
+
+
 def test_resolve_rejects_artifact_content_digest_mismatch() -> None:
     resolver, _catalog, artifacts, ref = _resolver(b"x,target\n1,yes\n")
     artifacts.data = b"x,target\n1,no\n"
