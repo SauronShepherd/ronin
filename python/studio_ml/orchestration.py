@@ -496,6 +496,12 @@ class JobStoreExecutionStore:
             return None
         parameters = self._parameters(claim.job)
         input_error = None
+        stored_request_digest = parameters.get("request_digest")
+        if (
+            not isinstance(stored_request_digest, str)
+            or stored_request_digest != claim.job.request_digest
+        ):
+            input_error = "stored ML request digest does not match the durable Job identity"
         rows_json = cast(str | None, parameters.get("rows_json"))
         if rows_json is None and parameters.get("rows_artifact") is not None:
             try:
