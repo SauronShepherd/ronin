@@ -125,6 +125,11 @@ def test_resolve_rejects_revision_digest_mismatch() -> None:
 
 def test_resolve_rejects_missing_revision_and_unsupported_artifact() -> None:
     resolver, catalog, _artifacts, ref = _resolver(b"x,target\n1,yes\n")
+    catalog.asset = CatalogAsset(ref.asset_id, "file", "Customers")
+    with pytest.raises(DatasetReferenceError, match="missing or is not a dataset"):
+        resolver.resolve(WorkspaceId("workspace-a"), ref)
+
+    resolver, catalog, _artifacts, ref = _resolver(b"x,target\n1,yes\n")
     catalog.revision = None
     with pytest.raises(DatasetReferenceError, match="revision is missing"):
         resolver.resolve(WorkspaceId("workspace-a"), ref)

@@ -7,7 +7,7 @@ from studio_execution import PostgresWorkflowHTTPAdapter, SqliteWorkflowHTTPAdap
 from studio_ml.orchestration import JobStoreExecutionStore
 from studio_orchestrator import Instant
 from studio_server import LocalServerComposition
-from studio_storage import PostgresSchedulerSnapshotStore
+from studio_storage import LocalArtifactStore, PostgresSchedulerSnapshotStore, SqliteCatalogStore
 
 
 def _environment(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
@@ -93,6 +93,8 @@ def test_local_composition_injects_the_shared_durable_job_service(
     )
     try:
         assert isinstance(ml_plugin._coordinator._store, JobStoreExecutionStore)
+        assert isinstance(ml_plugin._dataset_resolver._catalog, SqliteCatalogStore)
+        assert isinstance(ml_plugin._dataset_resolver._artifacts, LocalArtifactStore)
     finally:
         composition.stop()
 

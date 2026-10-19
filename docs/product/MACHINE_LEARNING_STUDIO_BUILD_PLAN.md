@@ -303,7 +303,20 @@ La suite focalizada ML, HTTP, composición local y PostgreSQL pasó **139/139 en
 
 ## 18. Candidato: lectura de datasets gobernados por AssetRef
 
-El candidato actual resuelve el `AssetRef` del Lab mediante `CatalogStore` dentro del workspace autenticado, exige un asset `dataset`, comprueba que `content_digest` coincida con el `artifact_ref`, vuelve a verificar el SHA-256 de los bytes y acepta únicamente CSV UTF-8 o JSONL UTF-8. La lectura se limita a 64 MiB, 100000 filas y 1024 columnas. Quality, `run_lab` y `submit_execution` usan ese snapshot cuando el body omite `rows`; las filas inline siguen disponibles para solicitudes explícitas. La ejecución asíncrona conserva el límite durable de 1 MiB del request canónico, que se debe mover al `ArtifactStore` antes de declarar disponible el camino de datasets grandes.
+**Progreso de este slice: 100% (8/8 criterios técnicos); cualificación exact-head pendiente.**
+
+| Criterio técnico | Evidencia |
+| --- | --- |
+| Resolver asset y revisión desde el workspace del request | `tests/test_ml_datasets.py` verifica lectura autorizada y denegación entre workspaces. |
+| Exigir `kind=dataset`, referencia y revisión consistentes | Casos de asset/revisión ausentes y assets no dataset en el resolver. |
+| Verificar `artifact_ref`, `media_type`, `content_digest` y bytes SHA-256 | Casos negativos de referencia y digest; round-trip real con `LocalArtifactStore`. |
+| Leer CSV/JSONL UTF-8 de forma estricta | Casos de headers, anchura, JSON inválido/no estándar, objetos y entrada vacía. |
+| Aplicar límites de bytes, filas y columnas | Pruebas de límites y cobertura branch del resolver. |
+| Usar el snapshot al omitir filas en quality y ejecución síncrona/asíncrona | Test de plugin recorre los tres endpoints y compara filas entregadas. |
+| Inyectar catálogo y artefactos en la composición local | `tests/test_local_composed.py` confirma los adaptadores SQLite y el artifact store compartido. |
+| Documentar el contrato y request opcional de filas | `tests/test_openapi_snapshot.py` y snapshot OpenAPI actualizado. |
+
+La lectura admite 64 MiB, 100000 filas y 1024 columnas. La ejecución asíncrona conserva el límite durable de 1 MiB del request canónico; hay que mover su input durable al `ArtifactStore` antes de declarar disponible el camino de datasets grandes. El slice queda implementado, pero el compiler/runner global permanece abierto y no se afirma cualificación de release.
 
 La composición local inyecta el catálogo SQLite o, en el perfil PostgreSQL, el store PostgreSQL compartido que implementa el contrato de catálogo; ambos perfiles inyectan el mismo `ArtifactStore` usado para materializar los archivos locales. Las pruebas cubren CSV/JSONL, aislamiento por workspace, digest y estructuras inválidas. Este candidato no declara cerrado el compiler/runner global: quedan la integración de snapshots en pipelines/reintentos, el contrato de features, algoritmos adicionales, MLflow/serving de red, journeys E2E y cualificación de producción. La cualificación exact-head queda pendiente; P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
 
