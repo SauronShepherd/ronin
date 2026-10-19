@@ -96,6 +96,7 @@ class LocalWorkerRuntimeConfig:
     notification_artifacts: ArtifactStore | None = None
     ml_runner: object | None = None
     ml_lab: object | None = None
+    ml_pipeline: object | None = None
     ml_rows: object | None = None
     genai_runner: object | None = None
     semantic_refresh_runner: object | None = None
@@ -306,10 +307,11 @@ class LocalWorkerRuntime:
             if claim.job.target == "ml.run" and (
                 self.config.ml_runner is None
                 or self.config.ml_lab is None
+                or self.config.ml_pipeline is None
                 or self.config.ml_rows is None
             ):
                 raise UnsupportedSchedulerWorkload(
-                    "ml.run scheduler execution requires runner, lab, and rows"
+                    "ml.run scheduler execution requires runner, lab, pipeline, and rows"
                 )
             if claim.job.target == "genai.run" and self.config.genai_runner is None:
                 raise UnsupportedSchedulerWorkload(
@@ -355,6 +357,7 @@ class LocalWorkerRuntime:
                         notification_now=self._now(),
                         ml_runner=self.config.ml_runner,
                         ml_lab=self.config.ml_lab,
+                        ml_pipeline=self.config.ml_pipeline,
                         ml_rows=self.config.ml_rows,
                         genai_runner=self.config.genai_runner,
                         semantic_refresh_runner=self.config.semantic_refresh_runner,

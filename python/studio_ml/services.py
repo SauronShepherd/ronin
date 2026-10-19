@@ -85,6 +85,7 @@ class LabService:
             ),
             parameters=(
                 ("backend_id", lab.backend_id),
+                ("lab_digest", lab.digest),
                 ("seed", str(lab.seed)),
                 ("task", lab.task),
             ),

@@ -4,10 +4,15 @@ import json
 from types import SimpleNamespace
 
 import pytest
+from studio_core import WorkspaceId
+from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_execution import (
     UnsupportedSchedulerWorkload,
     execute_scheduler_job,
 )
+from studio_ml import PipelineIR, PipelineNode
+from studio_ml.domain import FeatureSpec, Lab
+from studio_ml.services import InMemoryMLLabStore, LabService
 from studio_orchestrator import Instant, Job, JobId, JobState
 from studio_sql import SqlColumn, SqlQueryResult
 from studio_storage import LocalArtifactStore
@@ -38,6 +43,24 @@ def _job(target: str, payload: object | None = None) -> Job:
     )
 
 
+def _ml_lab() -> Lab:
+    return Lab(
+        "lab-1",
+        "Churn",
+        "project-1",
+        AssetRef(AssetId("dataset-1"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("age"),),
+    )
+
+
+def _compiled_ml_pipeline(lab: Lab) -> PipelineIR:
+    service = LabService(InMemoryMLLabStore())
+    service.create(WorkspaceId("workspace-1"), lab)
+    return service.compile(WorkspaceId("workspace-1"), lab.id)
+
+
 def test_scheduler_dispatch_routes_sql_without_notebook_fallback() -> None:
     result = execute_scheduler_job(_job("sql.query"), sql_engine=Engine())
     assert result.family == "sql"
@@ -58,13 +81,124 @@ def test_scheduler_dispatch_rejects_blank_ml_identifiers(identifier: str) -> Non
         def run(self, _lab, _rows):
             return SimpleNamespace(to_payload=lambda: {})
 
-    with pytest.raises(UnsupportedSchedulerWorkload, match="ML runner, lab, and rows|parameters"):
+    with pytest.raises(
+        UnsupportedSchedulerWorkload,
+        match="ML runner, lab, pipeline, and rows|parameters",
+    ):
         execute_scheduler_job(
             _job("ml.run", {"lab_id": identifier, "dataset_ref": "dataset-1"}),
             ml_runner=Runner(),
             ml_lab=object(),
+            ml_pipeline=PipelineIR((PipelineNode("train", "train"),)),
             ml_rows=(),
         )
+
+
+def test_scheduler_dispatch_pins_ml_pipeline_and_records_its_digest() -> None:
+    lab = _ml_lab()
+    pipeline = _compiled_ml_pipeline(lab)
+    seen: dict[str, object] = {}
+
+    class Runner:
+        def run(self, lab, rows):
+            seen.update({"lab": lab, "rows": rows})
+            return SimpleNamespace(to_payload=lambda: {"status": "completed"})
+
+    rows = ({"value": 1},)
+    result = execute_scheduler_job(
+        _job(
+            "ml.run",
+            {
+                "lab_id": "lab-1",
+                "pipeline_digest": pipeline.digest,
+                "dataset_ref": "dataset-1",
+            },
+        ),
+        ml_runner=Runner(),
+        ml_lab=lab,
+        ml_pipeline=pipeline,
+        ml_rows=rows,
+    )
+
+    assert seen == {"lab": lab, "rows": rows}
+    assert result.family == "ml"
+    assert result.evidence_payload()["ml"]["pipeline_digest"] == pipeline.digest
+
+
+def test_scheduler_dispatch_rejects_changed_ml_pipeline_before_running() -> None:
+    lab = _ml_lab()
+    planned = _compiled_ml_pipeline(lab)
+    changed = PipelineIR(
+        planned.nodes,
+        parameters=tuple(
+            (key, "99" if key == "seed" else value) for key, value in planned.parameters
+        ),
+    )
+    called = False
+
+    class Runner:
+        def run(self, *_args):
+            nonlocal called
+            called = True
+            return SimpleNamespace(to_payload=lambda: {})
+
+    with pytest.raises(UnsupportedSchedulerWorkload, match="does not match the planned pipeline"):
+        execute_scheduler_job(
+            _job(
+                "ml.run",
+                {
+                    "lab_id": "lab-1",
+                    "pipeline_digest": planned.digest,
+                    "dataset_ref": "dataset-1",
+                },
+            ),
+            ml_runner=Runner(),
+            ml_lab=lab,
+            ml_pipeline=changed,
+            ml_rows=(),
+        )
+    assert called is False
+
+
+def test_scheduler_dispatch_rejects_pipeline_pinned_to_an_old_lab_definition() -> None:
+    planned_lab = _ml_lab()
+    current_lab = Lab(
+        planned_lab.id,
+        planned_lab.name,
+        planned_lab.project_id,
+        planned_lab.dataset,
+        planned_lab.target,
+        planned_lab.task,
+        (FeatureSpec("income"),),
+    )
+    planned_pipeline = _compiled_ml_pipeline(planned_lab)
+    called = False
+
+    class Runner:
+        def run(self, *_args):
+            nonlocal called
+            called = True
+            return SimpleNamespace(to_payload=lambda: {})
+
+    with pytest.raises(
+        UnsupportedSchedulerWorkload,
+        match="does not pin the current lab definition",
+    ):
+        execute_scheduler_job(
+            _job(
+                "ml.run",
+                {
+                    "lab_id": current_lab.id,
+                    "pipeline_digest": planned_pipeline.digest,
+                    "dataset_ref": "dataset-1",
+                },
+            ),
+            ml_runner=Runner(),
+            ml_lab=current_lab,
+            ml_pipeline=planned_pipeline,
+            ml_rows=(),
+        )
+    assert called is False
 
 
 @pytest.mark.parametrize("destination_ref", ["", " ", "\t"])
