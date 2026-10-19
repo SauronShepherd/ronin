@@ -140,11 +140,19 @@ predictions are labels or numeric values according to the model signature.
 ### 4.1 Lab lifecycle
 
 - A Lab must have a unique ID in its workspace.
+- A Lab is create-only for `(workspace_id, id)`; each execution pins its
+  canonical digest and governed dataset revision. A changed definition uses a
+  new ID (see [Lab v1 contract](../contracts/ml-lab-v1.md)).
 - A Lab must reference a governed dataset asset/revision.
 - Feature names must be unique.
 - A supervised target must not also be a feature.
 - Clustering Labs must not define a target.
 - `test_fraction` must be strictly between zero and one.
+- Clustering accepts `test_fraction` for a stable Lab payload but ignores it;
+  supervised execution validates whether the selected fraction is feasible for
+  the dataset before fitting.
+- Unknown canonical JSON Lab fields are preserved in storage and ignored by
+  v1 execution; they contribute to the immutable Lab digest.
 - A run must capture the Lab definition and source revision used at execution.
 - Unsupported task/backend/algorithm combinations fail before training.
 

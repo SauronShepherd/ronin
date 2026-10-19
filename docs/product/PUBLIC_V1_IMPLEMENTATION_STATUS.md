@@ -5,9 +5,9 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-19. The tracked source is based on
-`main@0180e27`; the ML cancellation race candidate is recorded separately in the
-build plan. Untracked qualification output directories are not release evidence.
-**Observed source head:** `0180e27ffd8171e27f5731b3397a3439ff90e916` (2026-10-19).
+`main@0afa7db`; the current Lab/v1 contract candidate is recorded separately in
+the build plan. Untracked qualification output directories are not release evidence.
+**Observed source head:** `0afa7db291eddcf0db0a3acc67372c9f55378ef4` (2026-10-19).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -270,7 +270,7 @@ PR [#420](https://github.com/SauronShepherd/ronin/pull/420) added PostgreSQL-bac
 
 PR #423 fixed the `quality.gate` contract-pinning gap: `contract_digest` is now bound to the canonical persisted `DataContract` and checked before evaluation or evidence recording. It merged as `35072ef4d1940842076814d34a240869ebf48065` after Docker and all remaining exact-head workflows passed. PR #424 closed the webhook DNS-to-private-network SSRF gap by pinning validated public addresses through TLS; Docker and all six exact-head post-merge workflows passed on `e4ddf182fca00a8861140fd1664590d027092b51`.
 
-PR [#425](https://github.com/SauronShepherd/ronin/pull/425) merged the canonical pipeline/Lab digest pin for scheduled `ml.run` jobs as `main@0180e27ffd8171e27f5731b3397a3439ff90e916`; all six exact-head post-merge workflows passed. A separate candidate now fixes the `RON-ML-001` race where a runner exception after cancellation could overwrite the persisted terminal state. Its deterministic queued/running tests pass locally and in Docker. Durable coordinator/workspace fencing, the Lab contract review, broader ML functionality and external qualification remain open.
+PR [#425](https://github.com/SauronShepherd/ronin/pull/425) merged the canonical pipeline/Lab digest pin for scheduled `ml.run` jobs as `main@0180e27ffd8171e27f5731b3397a3439ff90e916`; all six exact-head post-merge workflows passed. PR [#426](https://github.com/SauronShepherd/ronin/pull/426) then preserved terminal cancellation when the runner raises late, with deterministic queued/running tests, CI 3.11/3.12 and full Docker qualification; all six exact-head post-merge workflows passed on `main@0afa7db291eddcf0db0a3acc67372c9f55378ef4`. The current candidate reconciles Lab/v1 serialization, metadata, clustering and split semantics; it passes the broad ML suite locally and in Docker, plus a PostgreSQL 16 Lab round-trip. Durable coordinator/workspace fencing, broader Public v1 ML journeys and external qualification remain open.
 
 ## Reconciliación de PostgreSQL scheduler (2026-10-17)
 

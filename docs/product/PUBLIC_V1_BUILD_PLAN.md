@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@0180e27ffd8171e27f5731b3397a3439ff90e916` (2026-10-19). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@0afa7db291eddcf0db0a3acc67372c9f55378ef4` (2026-10-19). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Progreso verificable
 
@@ -188,11 +188,16 @@ El PR [#424](https://github.com/SauronShepherd/ronin/pull/424) cerró el remanen
 
 PR [#425](https://github.com/SauronShepherd/ronin/pull/425) integró el pinning canónico de `PipelineIR` y `Lab` en `ml.run`: el worker rechaza pipeline o definición de Lab stale antes del runner y conserva el digest del pipeline en evidencia. La suite focalizada pasó **58/58 localmente y 58/58 en Docker/Python 3.12**; CI, Docker qualification (**8m36s**), matrices Python 3.11/3.12, quality, seguridad, verificación, ledgers y checks obligatorios pasaron. El squash quedó en `main@0180e27ffd8171e27f5731b3397a3439ff90e916`; los seis workflows post-merge exact-head pasaron. P8 sigue parcial; progreso release-qualified **0% (0/14)**.
 
+### Reconciliación exact-head tras PR #426 (2026-10-19)
+
+PR [#426](https://github.com/SauronShepherd/ronin/pull/426) conserva `cancelled` como estado terminal si el runner falla después de cancelar; el Future retiene el error para diagnóstico. La suite de orquestación/API pasó **14/14 localmente y en Docker/Python 3.12**. CI 3.11/3.12, Docker qualification (**7m24s**, PostgreSQL, Docker real y aceptación estricta), calidad, seguridad, ledgers y checks requeridos pasaron. El squash quedó en `main@0afa7db291eddcf0db0a3acc67372c9f55378ef4`; los seis workflows post-merge exact-head pasaron y la rama remota fue eliminada. P8 sigue parcial; release-qualified **0% (0/14)**.
+
 ### Candidato actual: carreras terminales de cancelación de ML
 
 La revalidación del blocker `RON-ML-001` del documento adjunto confirmó que el deadlock histórico de `cancel()` ya está cubierto y corregido en `main`, pero el error tardío del runner aún podía sobrescribir un `cancelled` ya persistido como `failed`. El candidato preserva el estado cancelado al reconciliar la excepción; la excepción sigue disponible en el Future para diagnóstico. Pruebas deterministas cubren cancelación queued y cancelación running seguida de fallo del runner, incluyendo el snapshot persistido.
 
-La suite combinada de orquestación y API pasa **14/14 localmente y 14/14 en Docker/Python 3.12**, con casos queued, running, éxito/error posterior a cancel y la ruta `cancel_execution`. Ruff, formato, mypy focalizado y `git diff --check` pasan. La primera repetición Docker no pudo descargar Git por un fallo DNS de Debian; la suite se ejecutó después en la imagen Docker previamente cualificada con Git y dependencias ML. La siguiente prioridad es `RON-ML-003`: reconciliar Lab/v1 con clustering, metadata desconocida y `test_fraction`; `RON-ML-002` de coordinator durable/workspace fencing depende de esa decisión. P8 permanece parcial y el progreso release-qualified en **0% (0/14)**.
+
+`RON-ML-003` queda implementado en el candidato actual siguiendo `ADR-ML-LAB-V1.md`: Lab/v1 es create-only por `(workspace_id, id)`, fija digest y `AssetRef`, admite clustering sin target, acepta `test_fraction` finito en `(0,1)` con validación de viabilidad en entrenamiento, y preserva campos JSON desconocidos en digest y persistencia. Se añadieron fixture golden, round-trip SQLite/PostgreSQL y esquema OpenAPI explícito. El barrido ML completo pasa **113/113 localmente y 113/113 en Docker/Python 3.12**, con 3 tests PostgreSQL correctamente omitidos sin DSN; el nuevo round-trip de Lab pasó **1/1** contra PostgreSQL 16 en Docker. Ruff, formato, mypy, snapshot OpenAPI y `git diff --check` pasan. Sigue pendiente la cualificación exact-head del PR. Después de este contrato, la siguiente dependencia es `RON-ML-002` (coordinator durable y aislamiento por workspace). P8 permanece parcial; release-qualified **0% (0/14)**.
 
 El PR [#402](https://github.com/SauronShepherd/ronin/pull/402) integró `PostgresSchedulerSnapshotStore` con task attempts/pools persistidos, reclaim transaccional de leases vencidos, admisión con dependencias/concurrencia/pools, heartbeat y finalización protegidos por owner/token y vencimiento. El candidato `830a87d469d51df3f07fc01cd9adf344d9a98189` pasó CI 3.11/3.12, el gate Docker con PostgreSQL y cobertura storage, Docker real (**7m30s**), `ledgers`, seguridad y checks restantes; `mutation` quedó skipped. El merge squash es `main@0ccb5fdd68b8849f860c7ffe9ef2526e4ec9b3e4`. La integración Docker local con PostgreSQL 16 pasó **14 tests**, el módulo `postgres_scheduler.py` midió **81%** de cobertura de línea, Ruff y mypy focalizado pasan. CI excluye este adaptador sólo del agregado de cobertura sin servicio; el gate Docker per-file exige el piso de 80% con PostgreSQL activo.
 
