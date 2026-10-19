@@ -19,6 +19,27 @@ class FeatureDefinitionConflict(RuntimeError):
     """Raised when a feature identity/version is reused with different content."""
 
 
+def compile_lab_pipeline(lab: Lab) -> PipelineIR:
+    """Build the deterministic pipeline definition bound to an immutable Lab."""
+
+    return PipelineIR(
+        nodes=(
+            _node("profile"),
+            _node("quality_gate", ("profile",)),
+            _node("prepare", ("quality_gate",)),
+            _node("train", ("prepare",)),
+            _node("evaluate", ("train",)),
+            _node("select", ("evaluate",)),
+        ),
+        parameters=(
+            ("backend_id", lab.backend_id),
+            ("lab_digest", lab.digest),
+            ("seed", str(lab.seed)),
+            ("task", lab.task),
+        ),
+    )
+
+
 @dataclass
 class InMemoryMLLabStore:
     _labs: dict[tuple[str, str], Lab] = field(default_factory=dict)
@@ -74,22 +95,7 @@ class LabService:
 
     def compile(self, workspace_id: WorkspaceId, lab_id: str) -> PipelineIR:
         lab = self.get(workspace_id, lab_id)
-        pipeline = PipelineIR(
-            nodes=(
-                _node("profile"),
-                _node("quality_gate", ("profile",)),
-                _node("prepare", ("quality_gate",)),
-                _node("train", ("prepare",)),
-                _node("evaluate", ("train",)),
-                _node("select", ("evaluate",)),
-            ),
-            parameters=(
-                ("backend_id", lab.backend_id),
-                ("lab_digest", lab.digest),
-                ("seed", str(lab.seed)),
-                ("task", lab.task),
-            ),
-        )
+        pipeline = compile_lab_pipeline(lab)
         return self.store.put_pipeline(workspace_id, lab.id, pipeline)
 
 

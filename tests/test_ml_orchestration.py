@@ -1,17 +1,21 @@
 """Asynchronous ML Studio lifecycle tests."""
 # ruff: noqa: E501
 
+import asyncio
 import hashlib
 import os
+import sqlite3
 import time
+from dataclasses import replace
 from threading import Event, Thread
 from types import SimpleNamespace
 
 import pytest
+from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_execution import DurableExecutionService
-from studio_ml.domain import FeatureSpec, Lab
+from studio_ml.domain import FeatureSpec, Lab, PipelineIR
 from studio_ml.orchestration import (
     ExecutionConflict,
     ExecutionSnapshot,
@@ -19,6 +23,7 @@ from studio_ml.orchestration import (
     JobStoreExecutionStore,
     LocalExecutionCoordinator,
 )
+from studio_ml.services import compile_lab_pipeline
 from studio_orchestrator import Instant
 from studio_storage import LocalArtifactStore, SqliteJobStore
 
@@ -337,6 +342,175 @@ def test_local_coordinator_scopes_duplicate_run_ids_and_rejects_changed_retries(
             time.sleep(0.01)
         assert coordinator.status("workspace-a", "shared-run").state == "succeeded"
         assert coordinator.status("workspace-b", "shared-run").state == "succeeded"
+    finally:
+        coordinator.close()
+
+
+def test_pipeline_definition_is_pinned_in_durable_request_and_recovery(tmp_path) -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    service = DurableExecutionService(
+        SqliteJobStore(tmp_path / "jobs.sqlite", migration_now=_MIGRATION_NOW)
+    )
+    coordinator = LocalExecutionCoordinator(
+        runner=SimpleNamespace(),
+        store=JobStoreExecutionStore(service),
+        autostart=False,
+    )
+    try:
+        submitted = coordinator.submit("workspace-a", "pipeline-pinned", lab, [{"x": 1}])
+        pipeline = PipelineIR.from_json(submitted.pipeline_json or "")
+        assert submitted.pipeline_digest == pipeline.digest
+        assert dict(pipeline.parameters)["lab_digest"] == submitted.lab_digest == lab.digest
+        assert (
+            submitted.request_digest
+            == hashlib.sha256(
+                encode_canonical_json(
+                    {"lab": lab.to_payload(), "pipeline": pipeline.to_payload(), "rows": [{"x": 1}]}
+                )
+            ).hexdigest()
+        )
+        persisted = JobStoreExecutionStore(service).get("workspace-a", "pipeline-pinned")
+        assert persisted is not None
+        assert persisted.pipeline_json == submitted.pipeline_json
+        assert persisted.pipeline_digest == submitted.pipeline_digest
+    finally:
+        coordinator.close()
+        import asyncio
+
+        asyncio.run(service.aclose())
+
+
+def test_pipeline_definition_change_conflicts_for_same_durable_run() -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    coordinator = LocalExecutionCoordinator(autostart=False)
+    try:
+        pipeline = compile_lab_pipeline(lab)
+        coordinator.submit("workspace-a", "pipeline-change", lab, [{"x": 1}], pipeline)
+        changed_pipeline = PipelineIR(
+            nodes=pipeline.nodes,
+            parameters=(*pipeline.parameters, ("revision", "changed")),
+        )
+        with pytest.raises(ExecutionConflict, match="already exists"):
+            coordinator.submit("workspace-a", "pipeline-change", lab, [{"x": 1}], changed_pipeline)
+    finally:
+        coordinator.close()
+
+
+def test_claim_rejects_pipeline_and_digest_rewritten_inside_job_parameters(tmp_path) -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    rows = [{"x": 1}]
+    path = tmp_path / "jobs.sqlite"
+    service = DurableExecutionService(SqliteJobStore(path, migration_now=_MIGRATION_NOW))
+    coordinator = LocalExecutionCoordinator(
+        runner=SimpleNamespace(), store=JobStoreExecutionStore(service), autostart=False
+    )
+    try:
+        coordinator.submit("workspace-a", "job-parameters-tampered", lab, rows)
+        adapter = coordinator._store
+        assert isinstance(adapter, JobStoreExecutionStore)
+        job_id, _ = adapter._ids("workspace-a", "job-parameters-tampered")
+        job = asyncio.run(service.status(job_id))
+        assert job is not None
+        parameters = decode_canonical_json(job.parameters_json)
+        assert isinstance(parameters, dict)
+        pipeline = PipelineIR.from_json(parameters["pipeline_json"])
+        changed_pipeline = PipelineIR(
+            nodes=pipeline.nodes,
+            parameters=tuple(
+                (name, "forged" if name == "seed" else value) for name, value in pipeline.parameters
+            ),
+        )
+        parameters["pipeline_json"] = changed_pipeline.to_json()
+        parameters["pipeline_digest"] = changed_pipeline.digest
+        parameters["request_digest"] = hashlib.sha256(
+            encode_canonical_json(
+                {"lab": lab.to_payload(), "pipeline": changed_pipeline.to_payload(), "rows": rows}
+            )
+        ).hexdigest()
+        with sqlite3.connect(path) as connection:
+            connection.execute(
+                "UPDATE jobs SET parameters_json=? WHERE job_id=?",
+                (encode_canonical_json(parameters).decode("utf-8"), str(job_id)),
+            )
+
+        claim = adapter.claim_next("tamper-check")
+        assert claim is not None
+        assert claim.input_error == (
+            "stored ML request digest does not match the durable Job identity"
+        )
+        adapter.finish_claim(claim, state="failed", error=claim.input_error)
+    finally:
+        coordinator.close()
+        asyncio.run(service.aclose())
+
+
+def test_worker_rejects_pipeline_snapshot_tampering_before_runner() -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+
+    class MustNotRun:
+        called = False
+
+        def run(self, _lab, _rows):
+            self.called = True
+            raise AssertionError("runner must not receive a tampered pipeline")
+
+    runner = MustNotRun()
+    coordinator = LocalExecutionCoordinator(runner=runner, autostart=False)
+    try:
+        coordinator.submit("workspace-a", "pipeline-tampered", lab, [{"x": 1}])
+        key = ("workspace-a", "pipeline-tampered")
+        stored = coordinator._store._items[key]
+        pipeline = PipelineIR.from_json(stored.pipeline_json or "")
+        changed = PipelineIR(
+            nodes=pipeline.nodes,
+            parameters=tuple(
+                (name, "tampered" if name == "seed" else value)
+                for name, value in pipeline.parameters
+            ),
+        )
+        coordinator._store._items[key] = replace(stored, pipeline_json=changed.to_json())
+        coordinator.start()
+        deadline = time.time() + 5
+        while time.time() < deadline:
+            result = coordinator.status(*key)
+            if result.state in {"succeeded", "failed"}:
+                break
+            time.sleep(0.01)
+        assert result.state == "failed"
+        assert "pipeline" in (result.error or "").lower()
+        assert runner.called is False
     finally:
         coordinator.close()
 

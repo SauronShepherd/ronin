@@ -11,6 +11,7 @@ from studio_core import AssetId, ConnectionDefinition, ConnectionId, WorkspaceId
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import PostgresWorkflowHTTPAdapter, SqliteWorkflowHTTPAdapter
 from studio_ml import FeatureSpec, Lab
+from studio_ml.domain import PipelineIR
 from studio_ml.orchestration import JobStoreExecutionStore
 from studio_orchestrator import Instant
 from studio_server import LocalServerComposition
@@ -192,6 +193,12 @@ def test_local_composition_queues_large_assetref_input_as_verified_artifact(
         assert job is not None
         parameters = decode_canonical_json(job.parameters_json)
         assert isinstance(parameters, dict)
+        assert parameters["schema"] == "ronin.ml-execution.v2"
+        assert isinstance(parameters["pipeline_json"], str)
+        pipeline = PipelineIR.from_json(parameters["pipeline_json"])
+        assert parameters["pipeline_digest"] == pipeline.digest
+        assert dict(pipeline.parameters)["lab_digest"] == lab.digest
+        assert parameters["request_digest"] == job.request_digest
         assert parameters["rows_json"] is None
         assert isinstance(parameters["rows_artifact"], dict)
         assert len(job.parameters_json.encode("utf-8")) < 10_000
