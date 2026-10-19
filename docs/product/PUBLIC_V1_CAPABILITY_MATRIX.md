@@ -3,7 +3,7 @@
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed candidate:** `4686f1b34efb271b603dbfb131cbe4f2476c644f` (`main`, 2026-10-19). CI, Docker qualification, Web, Security, Release y Status consistency pasaron exact-head post-merge.
+**Observed candidate:** `95d25d0e5fccebac66d5a52a814a6c4ad7036f82` (`main`, 2026-10-19). CI, Docker qualification, Web, Security, Release y Status consistency pasaron exact-head post-merge.
 
 This matrix is a conservative release view of P1–P14. `implemented` means
 that the repository contains the described source path. `qualified` means

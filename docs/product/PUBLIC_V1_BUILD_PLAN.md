@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@4686f1b34efb271b603dbfb131cbe4f2476c644f` (2026-10-19). PR #430 incorporó la persistencia de inputs asíncronos ML grandes como ArtifactRefs; PR #431 reconcilió los ledgers. CI, Docker qualification, Web, Security, Release y Status consistency pasaron exact-head post-merge. Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@95d25d0e5fccebac66d5a52a814a6c4ad7036f82` (2026-10-19). PR #430 incorporó la persistencia de inputs asíncronos ML grandes como ArtifactRefs; PR #431 reconcilió los ledgers; PR #432 aplicó los límites de filas inline. CI, Docker qualification, Web, Security, Release y Status consistency pasaron exact-head post-merge. Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Progreso verificable
 

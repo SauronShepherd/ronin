@@ -5,10 +5,10 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-19. The tracked source is based on
-`main@4686f1b`; PRs #430 and #431 are merged and their exact-head checks plus all six
+`main@95d25d0`; PRs #430–#432 are merged and their exact-head checks plus all six
 post-merge workflows passed. Untracked qualification output directories are not
 release evidence.
-**Observed source head:** `4686f1b34efb271b603dbfb131cbe4f2476c644f` (2026-10-19).
+**Observed source head:** `95d25d0e5fccebac66d5a52a814a6c4ad7036f82` (2026-10-19).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -28,6 +28,18 @@ candidate SHA they were generated for and are not promoted to current-head
 evidence.
 
 ## Exact-head qualification snapshot
+
+On `main@95d25d0e5fccebac66d5a52a814a6c4ad7036f82`, all six post-merge
+workflows passed: [CI](https://github.com/SauronShepherd/ronin/actions/runs/39295218270),
+[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39295221825),
+[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39295218170),
+[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39295218134),
+[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39295218175)
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39295218271).
+Docker included PostgreSQL-backed storage coverage, real Docker workers and strict
+frozen v0.1 acceptance. PR [#432](https://github.com/SauronShepherd/ronin/pull/432)
+closed the inline row/column/byte-limit bypass and passed exact-head CI and Docker.
+These checks qualify the merged changes; P8 and Public v1 remain incomplete.
 
 On `main@43654932b573a8e84339095323ed8a424a21cb23`, all six post-merge
 workflows passed: [CI](https://github.com/SauronShepherd/ronin/actions/runs/39287975345),
