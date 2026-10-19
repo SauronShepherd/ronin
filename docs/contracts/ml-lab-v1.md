@@ -2,27 +2,42 @@
 
 Canonical identifier: `ronin.ml-lab/v1`.
 
-An ML Lab is the immutable-at-execution definition of a tabular experiment. Its
-persisted identity is `lab_id` plus a monotonically increasing `version`; an
-execution must reference both values so that changing a draft cannot alter a
-running experiment.
+An ML Lab is an immutable-at-execution definition of a tabular experiment. The
+canonical v1 payload uses `id`, `project_id`, `dataset` (`asset_id` plus
+`version`), `target`, `task`, `features` (`column` plus `role`), `backend_id`,
+`seed`, and `test_fraction`. The Lab's identity is its workspace-scoped `id`
+and canonical SHA-256 `digest`; v1 Labs are create-only. A changed definition
+uses a new `id`. Each execution pins the Lab digest and the dataset revision.
 
-Required fields:
+Required fields are `schema`, `id`, `name`, `project_id`, `dataset`, `target`,
+`task`, `features`, `backend_id`, `seed`, and `test_fraction`:
 
+- `schema`: `ronin.ml-lab/v1`.
+- `id`: non-empty identifier unique in its workspace.
 - `name`: non-empty human-readable label.
-- `task`: `classification` or `regression`.
-- `features`: ordered array of `{name, role}`; role is currently `feature`.
-- `target`: non-empty source column name and must not be listed as a feature.
+- `project_id`: non-empty project identifier.
+- `task`: `classification`, `regression`, or `clustering`.
+- `features`: non-empty ordered array of `{column, role}`; role is one of `auto`,
+  `numeric`, `categorical`, `text`, `datetime`, or `ignored`.
+- `target`: non-empty source column name for supervised tasks; `null` for
+  clustering. A target must not be listed as a feature.
 - `backend_id`: adapter identity, for example `local.sklearn`.
-- `dataset_ref`: logical dataset/artifact reference, never an embedded dataset.
+- `dataset`: a governed `AssetRef`, never an embedded dataset.
+- `seed`: non-negative integer.
+- `test_fraction`: finite number strictly between zero and one.
 
-Optional fields include `description`, `tags`, `test_fraction` (strictly between
-0 and 1), `random_seed` (non-negative integer), and algorithm parameters.
-Unknown fields must be preserved by storage when possible and ignored by v1
-execution; this permits forward-compatible UI metadata without changing the
-training contract.
+`test_fraction` is used by supervised training; clustering does not split
+rows. Additional JSON fields (including UI metadata) are accepted, preserved
+through serialization and persistence, and ignored by v1 execution. They are
+included in the canonical digest so an immutable Lab cannot silently change.
+Only JSON objects, arrays, strings, numbers, booleans, and null are accepted in
+additional fields.
 
-Compatibility rule: v1 consumers must reject an unsupported `task`, missing
-identity, duplicate feature names, target/feature collision, or invalid split.
-Adding optional fields is backward compatible; changing field meaning requires
-`ronin.ml-lab/v2` and a migration.
+Compatibility rule: v1 consumers reject unsupported task/feature roles,
+missing required fields, duplicate feature names, target/feature collision,
+invalid `AssetRef`, and invalid `test_fraction`. New fields are backward
+compatible because they are preserved but ignored by execution. Renaming a
+field, changing its meaning, or weakening immutable create-only identity
+requires `ronin.ml-lab/v2` and a migration. See
+[`ADR-ML-LAB-V1.md`](../architecture/ADR-ML-LAB-V1.md) for the reconciliation
+decision and golden contract fixtures.

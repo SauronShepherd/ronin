@@ -130,6 +130,14 @@ def test_nearby_regression_split_remains_feasible() -> None:
     assert set(dict(trained.metrics)) == {"mae", "r2", "rmse"}
 
 
+def test_regression_accepts_contract_split_fraction_above_one_half() -> None:
+    trained = train_tabular(
+        _regression_rows(20),
+        TrainingSpec("regression", "linear_regression", ("x",), "target", 0.75, 7),
+    )
+    assert set(dict(trained.metrics)) == {"mae", "r2", "rmse"}
+
+
 def test_training_service_records_run_and_registered_digest(tmp_path: Path) -> None:
     registry = _Registry()
     artifacts = LocalArtifactStore(tmp_path / "artifacts")

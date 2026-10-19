@@ -1,0 +1,25 @@
+{
+  "schema": "ronin.ml-lab/v1",
+  "id": "customers-segments-v1",
+  "name": "Customer segments",
+  "project_id": "crm",
+  "dataset": {
+    "asset_id": "customers",
+    "version": "sha256:customers-v1"
+  },
+  "target": null,
+  "task": "clustering",
+  "features": [
+    {"column": "age", "role": "numeric"},
+    {"column": "region", "role": "categorical"}
+  ],
+  "backend_id": "local.sklearn",
+  "seed": 17,
+  "test_fraction": 0.75,
+  "description": "Stable segments for the CRM workspace",
+  "tags": ["crm", "segmentation"],
+  "x-ui": {
+    "color": "violet",
+    "layout": ["profile", {"collapsed": true}]
+  }
+}

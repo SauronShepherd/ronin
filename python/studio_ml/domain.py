@@ -6,7 +6,8 @@ from __future__ import annotations
 import hashlib
 import math
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Literal, TypeAlias, cast
 
 from studio_core.canonical_json import decode as decode_canonical_json
@@ -30,6 +31,24 @@ def _text(value: object, name: str) -> str:
         or any(c in value for c in "\r\n\x00")
     ):
         raise ValueError(f"{name} must be non-empty, trimmed, and single-line")
+    return value
+
+
+def _freeze_json(value: object) -> object:
+    """Copy a canonical JSON value into recursively immutable containers."""
+
+    if isinstance(value, Mapping):
+        return MappingProxyType({key: _freeze_json(child) for key, child in value.items()})
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_json(child) for child in value)
+    return value
+
+
+def _thaw_json(value: object) -> object:
+    if isinstance(value, Mapping):
+        return {key: _thaw_json(child) for key, child in value.items()}
+    if isinstance(value, tuple):
+        return [_thaw_json(child) for child in value]
     return value
 
 
@@ -131,6 +150,7 @@ class Lab:
     seed: int = 17
     test_fraction: float = 0.2
     schema: str = LAB_SCHEMA
+    metadata: Mapping[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         _text(self.id, "lab id")
@@ -157,9 +177,30 @@ class Lab:
             not isinstance(self.test_fraction, (int, float))
             or isinstance(self.test_fraction, bool)
             or not math.isfinite(float(self.test_fraction))
-            or not 0 < self.test_fraction < 0.5
+            or not 0 < self.test_fraction < 1
         ):
             raise ValueError("invalid seed or test fraction")
+        known_fields = {
+            "schema",
+            "id",
+            "name",
+            "project_id",
+            "dataset",
+            "target",
+            "task",
+            "features",
+            "backend_id",
+            "seed",
+            "test_fraction",
+        }
+        if not isinstance(self.metadata, Mapping) or any(
+            not isinstance(key, str) or key in known_fields for key in self.metadata
+        ):
+            raise ValueError("lab metadata must contain only unknown string fields")
+        metadata = decode_canonical_json(encode_canonical_json(_thaw_json(self.metadata)))
+        if not isinstance(metadata, Mapping):
+            raise ValueError("lab metadata must be a JSON object")
+        object.__setattr__(self, "metadata", _freeze_json(metadata))
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -174,6 +215,7 @@ class Lab:
             "backend_id": self.backend_id,
             "seed": self.seed,
             "test_fraction": self.test_fraction,
+            **{key: _thaw_json(value) for key, value in self.metadata.items()},
         }
 
     def to_json(self) -> str:
@@ -202,7 +244,14 @@ class Lab:
             "seed",
             "test_fraction",
         }
-        if set(payload) != expected or not isinstance(payload["features"], list):
+        if (
+            not expected.issubset(payload)
+            or not isinstance(payload["features"], list)
+            or any(
+                not isinstance(item, Mapping) or set(item) != {"column", "role"}
+                for item in payload["features"]
+            )
+        ):
             raise ValueError("lab has invalid shape")
         return cls(
             id=cast(str, payload["id"]),
@@ -213,13 +262,13 @@ class Lab:
             task=cast(LabTask, payload["task"]),
             features=tuple(
                 FeatureSpec(cast(str, item["column"]), cast(str, item["role"]))
-                for item in payload["features"]
-                if isinstance(item, Mapping)
+                for item in cast(list[Mapping[str, object]], payload["features"])
             ),
             backend_id=cast(str, payload["backend_id"]),
             seed=cast(int, payload["seed"]),
             test_fraction=cast(float, payload["test_fraction"]),
             schema=cast(str, payload["schema"]),
+            metadata={key: value for key, value in payload.items() if key not in expected},
         )
 
     @classmethod

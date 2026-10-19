@@ -153,8 +153,13 @@ class TrainingSpec:
         target = _text(self.target, "ML target")
         if target in features:
             raise ValueError("ML target must not also be a feature")
-        if not 0 < self.test_fraction < 0.5:
-            raise ValueError("test_fraction must be in (0, 0.5)")
+        if (
+            not isinstance(self.test_fraction, (int, float))
+            or isinstance(self.test_fraction, bool)
+            or not isfinite(float(self.test_fraction))
+            or not 0 < self.test_fraction < 1
+        ):
+            raise ValueError("test_fraction must be in (0, 1)")
         if self.random_seed < 0:
             raise ValueError("random_seed must be non-negative")
         if len({name for name, _ in self.parameters}) != len(self.parameters):
@@ -222,6 +227,11 @@ def _validate_split_feasibility(targets: Sequence[object], spec: TrainingSpec) -
     row_count = len(targets)
     test_count = ceil(row_count * spec.test_fraction)
     train_count = row_count - test_count
+
+    if test_count < 1 or train_count < 1:
+        raise ValueError(
+            "training split must leave at least one row for both training and evaluation"
+        )
 
     if spec.task == "regression":
         if test_count < 2:

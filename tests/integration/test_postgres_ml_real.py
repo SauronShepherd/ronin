@@ -25,6 +25,8 @@ from studio_core.ml import (
     ModelVersion,
     RegisteredModelVersion,
 )
+from studio_ml.domain import FeatureSpec, Lab
+from studio_ml.postgres import PostgresMLLabStore
 from studio_orchestrator import Instant
 from studio_storage import PostgresMetadataStore, PostgresMLStore
 from studio_storage.catalog import CatalogAssetNotFound
@@ -181,3 +183,27 @@ def test_postgres_ml_rejects_mutation_for_archived_workspaces() -> None:
             Experiment(ExperimentId("missing"), "Missing"),
             now=NOW,
         )
+
+
+def test_postgres_ml_lab_v1_round_trips_clustering_and_unknown_metadata() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresMLLabStore(dsn, application_name="ronin-ml-lab-qualification")
+    store.migrate()
+    suffix = uuid4().hex
+    workspace_id = WorkspaceId(f"ml-lab-ws-{suffix}")
+    store.create_workspace(Workspace(workspace_id, "ML Lab qualification"), now=NOW)
+    lab = Lab(
+        f"lab-{suffix}",
+        "Contract v1 clustering",
+        "project-1",
+        AssetRef(AssetId(f"dataset-{suffix}"), AssetVersion("sha256:fixture-v1")),
+        None,
+        "clustering",
+        (FeatureSpec("age", "numeric"),),
+        test_fraction=0.75,
+        metadata={"x-ui": {"labels": ["review", {"collapsed": True}]}},
+    )
+
+    assert store.put_lab(workspace_id, lab) == lab
+    assert store.get_lab(workspace_id, lab.id) == lab
+    assert store.list_labs(workspace_id) == (lab,)
