@@ -5,9 +5,9 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-19. The tracked source is based on
-`main@0afa7db`; the current Lab/v1 contract candidate is recorded separately in
+`main@b5d0701`; the current Lab/v1 contract candidate is recorded separately in
 the build plan. Untracked qualification output directories are not release evidence.
-**Observed source head:** `0afa7db291eddcf0db0a3acc67372c9f55378ef4` (2026-10-19).
+**Observed source head:** `b5d0701fee9d2e47c6c42eaca1766b1bf5e73e3e` (2026-10-19).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
