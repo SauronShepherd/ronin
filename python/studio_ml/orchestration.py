@@ -33,8 +33,9 @@ from studio_orchestrator import (
 )
 from studio_storage import ArtifactRef, ArtifactStore
 
-from .domain import Lab
+from .domain import Lab, PipelineIR
 from .runner import ClusteringResult, ExperimentResult, LocalExperimentRunner
+from .services import compile_lab_pipeline
 
 RunState = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 MAX_EXECUTION_REQUEST_BYTES = 64 * 1024 * 1024
@@ -57,8 +58,10 @@ class ExecutionSnapshot:
     workspace_id: str = ""
     lab_id: str = ""
     lab_digest: str = ""
+    pipeline_digest: str = ""
     request_digest: str = ""
     lab_json: str | None = None
+    pipeline_json: str | None = None
     rows_json: str | None = None
     owner: str | None = None
     lease_expires_at: Instant | None = None
@@ -345,12 +348,13 @@ class JobStoreExecutionStore:
         rows_json = snapshot.rows_json
         rows_artifact: dict[str, object] | None = None
         lab_size = len((snapshot.lab_json or "").encode("utf-8"))
+        pipeline_size = len((snapshot.pipeline_json or "").encode("utf-8"))
         rows_size = len(rows_json.encode("utf-8")) if rows_json is not None else 0
-        if lab_size + rows_size + 256 > MAX_EXECUTION_REQUEST_BYTES:
+        if lab_size + pipeline_size + rows_size + 256 > MAX_EXECUTION_REQUEST_BYTES:
             raise ValueError(f"ML execution request exceeds {MAX_EXECUTION_REQUEST_BYTES} bytes")
         if (
             rows_json is not None
-            and lab_size + rows_size + 1024 > MAX_INLINE_EXECUTION_REQUEST_BYTES
+            and lab_size + pipeline_size + rows_size + 1024 > MAX_INLINE_EXECUTION_REQUEST_BYTES
         ):
             if self._artifact_store is None:
                 raise ValueError("artifact store is required for large async ML execution inputs")
@@ -374,8 +378,10 @@ class JobStoreExecutionStore:
             "run_id": snapshot.run_id,
             "lab_id": snapshot.lab_id,
             "lab_digest": snapshot.lab_digest,
+            "pipeline_digest": snapshot.pipeline_digest,
             "request_digest": snapshot.request_digest,
             "lab_json": snapshot.lab_json,
+            "pipeline_json": snapshot.pipeline_json,
             "rows_json": rows_json,
             "rows_artifact": rows_artifact,
         }
@@ -456,8 +462,12 @@ class JobStoreExecutionStore:
             workspace_id=workspace_id,
             lab_id=str(parameters.get("lab_id", "")),
             lab_digest=str(parameters.get("lab_digest", "")),
+            pipeline_digest=str(parameters.get("pipeline_digest", "")),
             request_digest=str(parameters.get("request_digest", job.request_digest)),
             lab_json=cast(str | None, parameters.get("lab_json"))
+            if state in {"queued", "running"}
+            else None,
+            pipeline_json=cast(str | None, parameters.get("pipeline_json"))
             if state in {"queued", "running"}
             else None,
             rows_json=cast(str | None, parameters.get("rows_json"))
@@ -493,8 +503,10 @@ class JobStoreExecutionStore:
             workspace_id=claim.job.project_id,
             lab_id=str(parameters["lab_id"]),
             lab_digest=str(parameters["lab_digest"]),
+            pipeline_digest=str(parameters.get("pipeline_digest", "")),
             request_digest=str(parameters["request_digest"]),
             lab_json=cast(str | None, parameters.get("lab_json")),
+            pipeline_json=cast(str | None, parameters.get("pipeline_json")),
             rows_json=rows_json,
             owner=owner,
             lease_expires_at=_lease_until(_now()),
@@ -672,11 +684,22 @@ class LocalExecutionCoordinator:
         self._poller.start()
 
     def submit(
-        self, workspace_id: str, run_id: str, lab: Lab, rows: list[dict[str, object]]
+        self,
+        workspace_id: str,
+        run_id: str,
+        lab: Lab,
+        rows: list[dict[str, object]],
+        pipeline: PipelineIR | None = None,
     ) -> ExecutionSnapshot:
+        pipeline = pipeline or compile_lab_pipeline(lab)
+        if dict(pipeline.parameters).get("lab_digest") != lab.digest:
+            raise ValueError("compiled ML pipeline is not bound to the submitted Lab")
         lab_json = lab.to_json()
+        pipeline_json = pipeline.to_json()
         rows_json = encode_canonical_json(rows).decode("utf-8")
-        request_body = encode_canonical_json({"lab": lab.to_payload(), "rows": rows})
+        request_body = encode_canonical_json(
+            {"lab": lab.to_payload(), "pipeline": pipeline.to_payload(), "rows": rows}
+        )
         if len(request_body) > MAX_EXECUTION_REQUEST_BYTES:
             raise ValueError(f"ML execution request exceeds {MAX_EXECUTION_REQUEST_BYTES} bytes")
         request_digest = hashlib.sha256(request_body).hexdigest()
@@ -686,8 +709,10 @@ class LocalExecutionCoordinator:
             workspace_id=workspace_id,
             lab_id=lab.id,
             lab_digest=lab.digest,
+            pipeline_digest=pipeline.digest,
             request_digest=request_digest,
             lab_json=lab_json,
+            pipeline_json=pipeline_json,
             rows_json=rows_json,
         )
         return self._store.create(snapshot)
@@ -791,14 +816,28 @@ class LocalExecutionCoordinator:
             if claimed.lab_json is None or claimed.rows_json is None:
                 raise ValueError("execution request is missing its recoverable input snapshot")
             lab = Lab.from_json(claimed.lab_json)
+            pipeline = (
+                PipelineIR.from_json(claimed.pipeline_json)
+                if claimed.pipeline_json is not None
+                else None
+            )
             rows = decode_canonical_json(claimed.rows_json)
             if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
                 raise ValueError("stored execution rows must be an array of objects")
             execution_rows = cast(list[dict[str, object]], rows)
-            request_body = encode_canonical_json({"lab": lab.to_payload(), "rows": execution_rows})
+            request_payload: dict[str, object] = {"lab": lab.to_payload(), "rows": execution_rows}
+            if pipeline is not None:
+                request_payload["pipeline"] = pipeline.to_payload()
+            request_body = encode_canonical_json(request_payload)
+            if lab.digest != claimed.lab_digest:
+                raise ValueError("stored execution Lab digest does not match its input snapshot")
+            if pipeline is not None and (
+                pipeline.digest != claimed.pipeline_digest
+                or dict(pipeline.parameters).get("lab_digest") != lab.digest
+            ):
+                raise ValueError("stored execution pipeline digest does not match its Lab snapshot")
             if (
-                lab.digest != claimed.lab_digest
-                or len(request_body) > MAX_EXECUTION_REQUEST_BYTES
+                len(request_body) > MAX_EXECUTION_REQUEST_BYTES
                 or hashlib.sha256(request_body).hexdigest() != claimed.request_digest
             ):
                 raise ValueError(

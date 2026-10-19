@@ -643,7 +643,8 @@ class MachineLearningStudioPlugin:
         rows = resolve_lab_rows(
             WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
         )
-        return self._coordinator.submit(workspace_id, run_id, lab, rows).to_payload()
+        pipeline = self._labs.compile(WorkspaceId(workspace_id), lab_id)
+        return self._coordinator.submit(workspace_id, run_id, lab, rows, pipeline).to_payload()
 
     def compare_trials(
         self,
