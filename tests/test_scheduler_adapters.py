@@ -248,3 +248,4 @@ def test_scheduler_dispatch_routes_quality_gate_through_rows_artifact(tmp_path) 
     )
     assert result.family == "quality"
     assert seen["payload"]["rows"] == [{"id": 1}]
+    assert seen["payload"]["contract_digest"] == "a" * 64

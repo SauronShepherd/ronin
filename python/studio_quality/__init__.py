@@ -13,6 +13,7 @@ from .http import QualityHTTPAdapter
 from .sandbox import PredicateSandboxError, evaluate_python_predicate
 from .service import (
     QualityAlertSignal,
+    QualityContractDigestMismatch,
     QualityContractNotFound,
     QualityExecutionBlocked,
     QualityExecutionStore,
@@ -25,6 +26,7 @@ from .service import (
 
 __all__ = (
     "QualityContractNotFound",
+    "QualityContractDigestMismatch",
     "QualityAlertSignal",
     "QualityExecutionBlocked",
     "QualityExecutionStore",
