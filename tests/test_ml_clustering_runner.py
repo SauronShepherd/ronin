@@ -1,4 +1,4 @@
-from studio_core.catalog import AssetRef, AssetVersion
+from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_ml.domain import FeatureSpec, Lab
 from studio_ml.runner import LocalExperimentRunner
 
@@ -8,7 +8,7 @@ def test_runner_executes_clustering_lab() -> None:
         id="clusters",
         name="Clusters",
         project_id="project",
-        dataset=AssetRef("asset", AssetVersion("v1")),
+        dataset=AssetRef(AssetId("asset"), AssetVersion("v1")),
         target=None,
         task="clustering",
         features=(FeatureSpec("x"),),
@@ -24,7 +24,7 @@ def test_runner_returns_a_content_addressed_clustering_result() -> None:
         id="clusters",
         name="Clusters",
         project_id="project",
-        dataset=AssetRef("asset", AssetVersion("v1")),
+        dataset=AssetRef(AssetId("asset"), AssetVersion("v1")),
         target=None,
         task="clustering",
         features=(FeatureSpec("x"),),

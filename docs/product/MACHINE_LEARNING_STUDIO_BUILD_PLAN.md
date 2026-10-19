@@ -335,3 +335,17 @@ La composición local inyecta el catálogo SQLite o, en el perfil PostgreSQL, el
 
 El PR [#434](https://github.com/SauronShepherd/ronin/pull/434) quedó en `main@2d3f7d3b43d0b3b9268a57860e19e707a57a02e8`. La suite completa de Windows pasó **3745 tests, 49 omitidos**; las pruebas focalizadas de persistencia y manipulación, los checks de calidad y la cualificación Docker exact-head pasaron. También pasaron los seis workflows post-merge de ese SHA. El pipeline queda reproduciblemente fijado y validado al recuperar un Job. El runner sigue ejecutando el flujo local existente directamente desde el Lab: la evaluación del DAG como plan ejecutable, el checkpoint/retry de nodos y la semántica de materialización todavía no están implementados. P8 permanece parcial; no se declara cualificación de release.
 
+## 20. Candidato: ejecutar las etapas fijadas de PipelineIR
+
+**Progreso técnico local: 5/5 criterios; CI exact-head pendiente; P8/release-qualified: 0% (0/14).**
+
+| Criterio técnico | Evidencia local |
+| --- | --- |
+| Exponer un orden topológico estable que no dependa del orden serializado | `PipelineIR.execution_order()` y prueba con dos ramas independientes. |
+| Ejecutar las seis etapas locales declaradas por IR | `LocalExperimentRunner.execute_pipeline()` interpreta profile, quality gate, prepare, train, evaluate y select. |
+| Rechazar grafos incompletos y saltos en el contrato de etapas antes de entrenar | Pruebas de contrato verifican que falta de nodo soportado no ejecuta training; se exige digest de Lab y dependencia directa entre etapas. |
+| Usar el mismo executor en rutas síncronas y asíncronas durables | `run()`, resultado de clustering y `LocalExecutionCoordinator` delegan el flujo a `execute_pipeline()`. |
+| Preservar compatibilidad con runners de prueba/adaptadores y resultados de clustering | Suite ML/API/composición local focalizada: **51 passed**. |
+
+Este incremento convierte la IR fijada en un plan que gobierna la ejecución del flujo local y conserva determinismo al reordenar su serialización. El full suite local pasó **3748 tests, 49 omitidos**; mypy global (457 archivos), la puerta de arquitectura, Ruff/formato y la suite focalizada también pasan. El grafo local soportado sigue siendo deliberadamente el conjunto fijo de seis etapas; `register` y etapas configurables aún no ejecutan. No hay checkpoints de nodo, retry selectivo, persistencia de outputs intermedios ni política de materialización; los reintentos durables todavía vuelven a ejecutar el Job entero. CI y Docker qualification exact-head de este candidato siguen pendientes antes de reconciliarlo como evidencia integrada. P8 permanece parcial y release-qualified sigue en **0% (0/14)**.
+

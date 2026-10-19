@@ -28,6 +28,24 @@ def test_pipeline_rejects_cycles() -> None:
         PipelineIR((PipelineNode("a", "prepare", ("b",)), PipelineNode("b", "train", ("a",))))
 
 
+def test_pipeline_execution_order_is_stable_and_dependency_respecting() -> None:
+    pipeline = PipelineIR(
+        (
+            PipelineNode("finish", "select", ("left", "right")),
+            PipelineNode("right", "evaluate", ("start",)),
+            PipelineNode("left", "prepare", ("start",)),
+            PipelineNode("start", "profile"),
+        )
+    )
+
+    assert [node.id for node in pipeline.execution_order()] == [
+        "start",
+        "left",
+        "right",
+        "finish",
+    ]
+
+
 def test_lab_rejects_boolean_seed_and_non_finite_test_fraction() -> None:
     arguments = {
         "id": "churn",
