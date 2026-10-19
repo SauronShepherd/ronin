@@ -5,9 +5,9 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-19. The tracked source is based on
-`main@e4ddf18`; the ML scheduler pin candidate is recorded separately in the
+`main@0180e27`; the ML cancellation race candidate is recorded separately in the
 build plan. Untracked qualification output directories are not release evidence.
-**Observed source head:** `e4ddf182fca00a8861140fd1664590d027092b51` (2026-10-19).
+**Observed source head:** `0180e27ffd8171e27f5731b3397a3439ff90e916` (2026-10-19).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -206,7 +206,7 @@ workspaces and generated reports are not release evidence.
 | Ontology/KG | partial | object/property/link/action schema and persistence, instance materialization, link resolution, bounded graph queries and authorized actions exist; durable replay and public interfaces remain |
 | Graph intelligence/RQL | partial | bounded read-only RQL SELECT filtering, one-hop typed traversal, and typed property joins over materialized KnowledgeGraph views exist; planning, provider execution and public API exposure remain |
 | Data quality/contracts | partial | versioned definitions/results, all built-in checks, injected SQL/Python/referential checks, quality gates, scheduler release enforcement, quality-to-common-alert transition evaluation, authenticated contract read/replace and run/history/state APIs, pyronin SDK parity including contract authoring, and Quality Studio contract authoring, validation, dry-run, evidence/history and blocking-policy controls exist; provider qualification remains |
-| AI/ML/MLOps | partial | experiment/run/model/evaluation provenance, deterministic tabular training, digest-verified inference, champion serving resolution, deterministic trial comparison, bounded numeric drift summaries, explicit feature-level threshold assessments, versioned feature definitions with dataset snapshots, workspace-scoped HTTP routes and pyronin SDK parity exist; broader feature engineering, algorithms, MLflow and network serving remain |
+| AI/ML/MLOps | partial | experiment/run/model/evaluation provenance, deterministic tabular training, canonical Lab/pipeline digest pinning for scheduled ML runs, digest-verified inference, champion serving resolution, deterministic trial comparison, bounded numeric drift summaries, explicit feature-level threshold assessments, versioned feature definitions with dataset snapshots, workspace-scoped HTTP routes and pyronin SDK parity exist; broader feature engineering, algorithms, MLflow and network serving remain |
 | GenAI/RAG/agents | partial | provider/prompt/vector/RAG/tool/agent contracts, OpenAI-compatible runtime, deterministic retrieval, bounded agents, deterministic per-example RAG scoring, aggregate reports, telemetry callbacks and GenAI definition Bundle export/import exist; judge-provider evaluation and production qualification remain |
 | Semantic models/dashboards | partial | safe semantic contracts, canonical persistence, parameterized metric compiler, calculated metrics, SQL metric runtime, bounded declared-column two-model JOIN execution, dashboard CRUD/execution, Studio and native semantic Bundle round-trips exist; multi-join planning, export/import API qualification and production surfaces remain |
 | Streaming/real-time | partial | Kafka polling, durable CAS checkpoints, micro-batch processing, Parquet sinks, event-time windows, stream tables, scheduler integration and bounded health/lag projection including unseen partitions exist; production qualification remains |
@@ -270,7 +270,7 @@ PR [#420](https://github.com/SauronShepherd/ronin/pull/420) added PostgreSQL-bac
 
 PR #423 fixed the `quality.gate` contract-pinning gap: `contract_digest` is now bound to the canonical persisted `DataContract` and checked before evaluation or evidence recording. It merged as `35072ef4d1940842076814d34a240869ebf48065` after Docker and all remaining exact-head workflows passed. PR #424 closed the webhook DNS-to-private-network SSRF gap by pinning validated public addresses through TLS; Docker and all six exact-head post-merge workflows passed on `e4ddf182fca00a8861140fd1664590d027092b51`.
 
-The current ML scheduler candidate carries canonical SHA-256 digests for both `PipelineIR` and the full `Lab`, verifies the job's planned digest against the worker's current definitions before invoking the runner, and records the pipeline digest in result evidence. The focused scheduler/ML/worker suite passes **58/58 locally and 58/58 in Docker/Python 3.12** with Git installed as in the runtime image; Ruff, format, focused mypy, ledger checks, and `git diff --check` pass. The first `python:3.12-slim` attempt lacked the runtime Git executable and was rerun with it installed. Broad scheduler/operator conformance and notification-provider qualification remain open.
+PR [#425](https://github.com/SauronShepherd/ronin/pull/425) merged the canonical pipeline/Lab digest pin for scheduled `ml.run` jobs as `main@0180e27ffd8171e27f5731b3397a3439ff90e916`; all six exact-head post-merge workflows passed. A separate candidate now fixes the `RON-ML-001` race where a runner exception after cancellation could overwrite the persisted terminal state. Its deterministic queued/running tests pass locally and in Docker. Durable coordinator/workspace fencing, the Lab contract review, broader ML functionality and external qualification remain open.
 
 ## Reconciliación de PostgreSQL scheduler (2026-10-17)
 

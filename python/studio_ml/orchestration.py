@@ -94,8 +94,9 @@ class LocalExecutionCoordinator:
                 result = self._runner.run(lab, rows)
         except Exception as exc:
             with self._lock:
-                self._snapshots[run_id] = ExecutionSnapshot(run_id, "failed", error=str(exc))
-                self._store.put(self._snapshots[run_id])
+                if self._snapshots[run_id].state != "cancelled":
+                    self._snapshots[run_id] = ExecutionSnapshot(run_id, "failed", error=str(exc))
+                    self._store.put(self._snapshots[run_id])
             raise
         with self._lock:
             if self._snapshots[run_id].state == "cancelled":
