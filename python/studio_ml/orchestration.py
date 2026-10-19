@@ -31,12 +31,14 @@ from studio_orchestrator import (
 from studio_orchestrator import (
     RunState as DurableRunState,
 )
+from studio_storage import ArtifactRef, ArtifactStore
 
 from .domain import Lab
 from .runner import ClusteringResult, ExperimentResult, LocalExperimentRunner
 
 RunState = Literal["queued", "running", "succeeded", "failed", "cancelled"]
-MAX_EXECUTION_REQUEST_BYTES = 1_048_576
+MAX_EXECUTION_REQUEST_BYTES = 64 * 1024 * 1024
+MAX_INLINE_EXECUTION_REQUEST_BYTES = 1_048_576
 EXECUTION_LEASE_SECONDS = 60
 EXECUTION_POLL_SECONDS = 0.2
 
@@ -65,6 +67,7 @@ class ExecutionSnapshot:
     attempt_id: str | None = None
     lease_token: str | None = None
     attempt_ordinal: int = 0
+    input_error: str | None = None
 
     def to_payload(self) -> dict[str, object]:
         payload: dict[str, object] = {"run_id": self.run_id, "state": self.state}
@@ -318,8 +321,11 @@ class JobStoreExecutionStore:
 
     target = "ml-studio.execute"
 
-    def __init__(self, service: DurableExecutionPort) -> None:
+    def __init__(
+        self, service: DurableExecutionPort, artifact_store: ArtifactStore | None = None
+    ) -> None:
         self._service = service
+        self._artifact_store = artifact_store
 
     @staticmethod
     def _ids(workspace_id: str, run_id: str) -> tuple[JobId, RunId]:
@@ -336,6 +342,32 @@ class JobStoreExecutionStore:
     def create(self, snapshot: ExecutionSnapshot) -> ExecutionSnapshot:
         job_id, durable_run_id = self._ids(snapshot.workspace_id, snapshot.run_id)
         now = _now()
+        rows_json = snapshot.rows_json
+        rows_artifact: dict[str, object] | None = None
+        lab_size = len((snapshot.lab_json or "").encode("utf-8"))
+        rows_size = len(rows_json.encode("utf-8")) if rows_json is not None else 0
+        if lab_size + rows_size + 256 > MAX_EXECUTION_REQUEST_BYTES:
+            raise ValueError(f"ML execution request exceeds {MAX_EXECUTION_REQUEST_BYTES} bytes")
+        if (
+            rows_json is not None
+            and lab_size + rows_size + 1024 > MAX_INLINE_EXECUTION_REQUEST_BYTES
+        ):
+            if self._artifact_store is None:
+                raise ValueError("artifact store is required for large async ML execution inputs")
+            artifact = self._artifact_store.put_bytes(
+                role="ml-execution-input",
+                data=rows_json.encode("utf-8"),
+                media_type="application/json",
+            )
+            rows_artifact = {
+                "role": artifact.role,
+                "digest_algorithm": artifact.digest_algorithm,
+                "digest": artifact.digest,
+                "media_type": artifact.media_type,
+                "size_bytes": artifact.size_bytes,
+                "storage_ref": artifact.storage_ref,
+            }
+            rows_json = None
         parameters = {
             "schema": "ronin.ml-execution.v1",
             "workspace_id": snapshot.workspace_id,
@@ -344,7 +376,8 @@ class JobStoreExecutionStore:
             "lab_digest": snapshot.lab_digest,
             "request_digest": snapshot.request_digest,
             "lab_json": snapshot.lab_json,
-            "rows_json": snapshot.rows_json,
+            "rows_json": rows_json,
+            "rows_artifact": rows_artifact,
         }
         job = Job(
             id=job_id,
@@ -447,6 +480,13 @@ class JobStoreExecutionStore:
         if claim is None:
             return None
         parameters = self._parameters(claim.job)
+        input_error = None
+        rows_json = cast(str | None, parameters.get("rows_json"))
+        if rows_json is None and parameters.get("rows_artifact") is not None:
+            try:
+                rows_json = self._load_rows_artifact(parameters["rows_artifact"])
+            except Exception:
+                input_error = "stored ML execution input artifact could not be verified"
         return ExecutionSnapshot(
             run_id=str(parameters["run_id"]),
             state="running",
@@ -455,13 +495,60 @@ class JobStoreExecutionStore:
             lab_digest=str(parameters["lab_digest"]),
             request_digest=str(parameters["request_digest"]),
             lab_json=cast(str | None, parameters.get("lab_json")),
-            rows_json=cast(str | None, parameters.get("rows_json")),
+            rows_json=rows_json,
             owner=owner,
             lease_expires_at=_lease_until(_now()),
             attempt_id=str(claim.attempt_id),
             lease_token=str(claim.lease_token),
             attempt_ordinal=claim.attempt_ordinal,
+            input_error=input_error,
         )
+
+    def _load_rows_artifact(self, value: object) -> str:
+        if self._artifact_store is None or not isinstance(value, dict):
+            raise ValueError("stored ML execution input artifact is unavailable")
+        fields = {
+            "role",
+            "digest_algorithm",
+            "digest",
+            "media_type",
+            "size_bytes",
+            "storage_ref",
+        }
+        if set(value) != fields:
+            raise ValueError("stored ML execution input artifact reference is invalid")
+        if (
+            not isinstance(value["role"], str)
+            or not isinstance(value["digest_algorithm"], str)
+            or not isinstance(value["digest"], str)
+            or (value["media_type"] is not None and not isinstance(value["media_type"], str))
+            or not isinstance(value["size_bytes"], int)
+            or isinstance(value["size_bytes"], bool)
+            or not isinstance(value["storage_ref"], str)
+        ):
+            raise ValueError("stored ML execution input artifact reference is invalid")
+        ref = ArtifactRef(
+            role=value["role"],
+            digest_algorithm=value["digest_algorithm"],
+            digest=value["digest"],
+            media_type=cast(str | None, value["media_type"]),
+            size_bytes=value["size_bytes"],
+            storage_ref=value["storage_ref"],
+        )
+        if ref.role != "ml-execution-input" or ref.media_type != "application/json":
+            raise ValueError("stored ML execution input artifact metadata is invalid")
+        if ref.digest_algorithm != "sha256" or ref.size_bytes > MAX_EXECUTION_REQUEST_BYTES:
+            raise ValueError("stored ML execution input artifact exceeds supported bounds")
+        if not self._artifact_store.verify(ref):
+            raise ValueError("stored ML execution input artifact failed verification")
+        data = self._artifact_store.get_bytes(ref)
+        if (
+            len(data) != ref.size_bytes
+            or len(data) > MAX_EXECUTION_REQUEST_BYTES
+            or hashlib.sha256(data).hexdigest() != ref.digest
+        ):
+            raise ValueError("stored ML execution input artifact integrity check failed")
+        return data.decode("utf-8", errors="strict")
 
     def heartbeat_claim(self, snapshot: ExecutionSnapshot) -> bool:
         if snapshot.attempt_id is None or snapshot.lease_token is None or snapshot.owner is None:
@@ -699,6 +786,8 @@ class LocalExecutionCoordinator:
                     or current.fence != claimed.fence
                 ):
                     return None
+            if claimed.input_error is not None:
+                raise ValueError(claimed.input_error)
             if claimed.lab_json is None or claimed.rows_json is None:
                 raise ValueError("execution request is missing its recoverable input snapshot")
             lab = Lab.from_json(claimed.lab_json)
@@ -784,5 +873,6 @@ __all__ = [
     "DurableExecutionPort",
     "LocalExecutionCoordinator",
     "MAX_EXECUTION_REQUEST_BYTES",
+    "MAX_INLINE_EXECUTION_REQUEST_BYTES",
     "RunState",
 ]

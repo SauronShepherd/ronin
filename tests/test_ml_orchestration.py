@@ -20,7 +20,7 @@ from studio_ml.orchestration import (
     LocalExecutionCoordinator,
 )
 from studio_orchestrator import Instant
-from studio_storage import SqliteJobStore
+from studio_storage import LocalArtifactStore, SqliteJobStore
 
 LOCAL_ML_TIMEOUT = 90 if os.name == "nt" else 30
 _MIGRATION_NOW = Instant("2026-10-19T00:00:00.000000Z")
@@ -97,6 +97,49 @@ def test_ml_execution_uses_shared_sqlite_job_lifecycle_and_persists_result(tmp_p
         first_id, _ = JobStoreExecutionStore._ids("workspace-a", "shared-id")
         second_id, _ = JobStoreExecutionStore._ids("workspace-b", "shared-id")
         assert first_id != second_id
+    finally:
+        coordinator.close()
+        import asyncio
+
+        asyncio.run(service.aclose())
+
+
+def test_large_async_execution_uses_artifact_input_and_completes(tmp_path) -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+
+    class ImmediateRunner:
+        def run(self, _lab, rows):
+            return SimpleNamespace(to_payload=lambda: {"input_bytes": len(rows[0]["large"])})
+
+    migration_now = _MIGRATION_NOW
+    jobs = SqliteJobStore(tmp_path / "jobs.sqlite", migration_now=migration_now)
+    service = DurableExecutionService(jobs)
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    adapter = JobStoreExecutionStore(service, artifacts)
+    coordinator = LocalExecutionCoordinator(runner=ImmediateRunner(), store=adapter)
+    try:
+        coordinator.submit(
+            "workspace-a",
+            "large-input",
+            lab,
+            [{"large": "x" * 1_100_000, "target": 1}],
+        )
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            result = coordinator.status("workspace-a", "large-input")
+            if result.state in {"succeeded", "failed"}:
+                break
+            time.sleep(0.01)
+        assert result.state == "succeeded"
+        assert result.result_payload == {"input_bytes": 1_100_000}
     finally:
         coordinator.close()
         import asyncio
