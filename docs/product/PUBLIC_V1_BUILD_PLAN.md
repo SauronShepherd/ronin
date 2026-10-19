@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@b5d0701fee9d2e47c6c42eaca1766b1bf5e73e3e` (2026-10-19). CI, Docker qualification, Web, Security, Release y Status consistency post-merge pasaron exact-head. Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@43654932b573a8e84339095323ed8a424a21cb23` (2026-10-19). PR #430 incorporó la persistencia de inputs asíncronos ML grandes como ArtifactRefs. CI, Docker qualification, Web, Security, Release y Status consistency pasaron exact-head post-merge. Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Progreso verificable
 
