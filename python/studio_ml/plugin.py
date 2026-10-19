@@ -70,9 +70,10 @@ class MachineLearningStudioPlugin:
         self._labs = LabService(cast(MLLabStore, store))
         coordinator_runner = self._coordinator._runner
         self._coordinator.close()
+        self._artifacts = cast(ArtifactStore | None, context.services.get("artifact_store"))
         execution_service = context.services.get("ml_execution_service")
         execution_store = (
-            JobStoreExecutionStore(cast(Any, execution_service))
+            JobStoreExecutionStore(cast(Any, execution_service), self._artifacts)
             if execution_service is not None
             else None
         )
@@ -80,7 +81,6 @@ class MachineLearningStudioPlugin:
             coordinator_runner, store=execution_store, autostart=False
         )
         self._registry = cast(MLRegistryStore | None, context.services.get("ml_registry"))
-        self._artifacts = cast(ArtifactStore | None, context.services.get("artifact_store"))
         catalog = context.services.get("catalog_store")
         if catalog is not None and self._artifacts is not None:
             from studio_storage.ports import CatalogStore

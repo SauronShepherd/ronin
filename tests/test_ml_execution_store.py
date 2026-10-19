@@ -5,13 +5,18 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+from studio_core.canonical_json import decode as decode_canonical_json
+from studio_core.canonical_json import encode as encode_canonical_json
 from studio_execution import DurableExecutionService
 from studio_ml import ExecutionConflict, ExecutionSnapshot, JobStoreExecutionStore
-from studio_orchestrator import JobState
-from studio_storage import InMemoryJobStore
+from studio_ml.orchestration import MAX_INLINE_EXECUTION_REQUEST_BYTES
+from studio_orchestrator import Instant, JobState
+from studio_storage import InMemoryJobStore, LocalArtifactStore, SqliteJobStore
 
 
-def _snapshot(workspace_id: str, digest: str = "a" * 64) -> ExecutionSnapshot:
+def _snapshot(
+    workspace_id: str, digest: str = "a" * 64, rows_json: str = "[]"
+) -> ExecutionSnapshot:
     return ExecutionSnapshot(
         run_id="shared-run",
         state="queued",
@@ -20,7 +25,7 @@ def _snapshot(workspace_id: str, digest: str = "a" * 64) -> ExecutionSnapshot:
         lab_digest="b" * 64,
         request_digest=digest,
         lab_json="{}",
-        rows_json="[]",
+        rows_json=rows_json,
     )
 
 
@@ -52,5 +57,98 @@ def test_job_store_adapter_scopes_and_idempotently_replays_requests() -> None:
             )
         )
         assert len(page.items) == 2
+    finally:
+        asyncio.run(service.aclose())
+
+
+def test_large_execution_rows_are_artifact_backed_and_recover_after_store_reopen(
+    tmp_path,
+) -> None:
+    rows_json = encode_canonical_json([{"large": "x" * MAX_INLINE_EXECUTION_REQUEST_BYTES}]).decode(
+        "utf-8"
+    )
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    jobs_path = tmp_path / "jobs.sqlite"
+    migration_now = Instant("2026-10-19T00:00:00.000000Z")
+    service = DurableExecutionService(SqliteJobStore(jobs_path, migration_now=migration_now))
+    adapter = JobStoreExecutionStore(service, artifacts)
+    try:
+        adapter.create(_snapshot("workspace-a", rows_json=rows_json))
+        job_id, _ = adapter._ids("workspace-a", "shared-run")
+        job = asyncio.run(service.status(job_id))
+        assert job is not None
+        parameters = decode_canonical_json(job.parameters_json)
+        assert isinstance(parameters, dict)
+        assert parameters["rows_json"] is None
+        assert isinstance(parameters["rows_artifact"], dict)
+        assert len(job.parameters_json.encode("utf-8")) < 10_000
+    finally:
+        asyncio.run(service.aclose())
+
+    reopened = DurableExecutionService(SqliteJobStore(jobs_path, migration_now=migration_now))
+    reopened_adapter = JobStoreExecutionStore(reopened, artifacts)
+    try:
+        claim = reopened_adapter.claim_next("worker-a")
+        assert claim is not None
+        assert claim.rows_json == rows_json
+        assert claim.input_error is None
+    finally:
+        asyncio.run(reopened.aclose())
+
+
+def test_large_execution_rows_require_artifact_store_before_job_submission() -> None:
+    rows_json = encode_canonical_json([{"large": "x" * MAX_INLINE_EXECUTION_REQUEST_BYTES}]).decode(
+        "utf-8"
+    )
+    service = DurableExecutionService(InMemoryJobStore())
+    adapter = JobStoreExecutionStore(service)
+    try:
+        with pytest.raises(ValueError, match="artifact store is required"):
+            adapter.create(_snapshot("workspace-a", rows_json=rows_json))
+        page = asyncio.run(
+            service.list_jobs(
+                project_id=None,
+                project_ids=None,
+                state=JobState.QUEUED,
+                limit=10,
+                cursor=None,
+            )
+        )
+        assert page.items == ()
+    finally:
+        asyncio.run(service.aclose())
+
+
+def test_large_execution_artifact_is_rehashed_after_store_read(tmp_path) -> None:
+    class CorruptingArtifactStore:
+        def __init__(self) -> None:
+            self.inner = LocalArtifactStore(tmp_path / "artifacts")
+
+        def put_bytes(self, **kwargs):
+            return self.inner.put_bytes(**kwargs)
+
+        def verify(self, _ref) -> bool:
+            return True
+
+        def get_bytes(self, ref):
+            data = self.inner.get_bytes(ref)
+            return b"!" + data[1:]
+
+    rows_json = encode_canonical_json([{"large": "x" * MAX_INLINE_EXECUTION_REQUEST_BYTES}]).decode(
+        "utf-8"
+    )
+    service = DurableExecutionService(InMemoryJobStore())
+    adapter = JobStoreExecutionStore(service, CorruptingArtifactStore())
+    try:
+        adapter.create(_snapshot("workspace-a", rows_json=rows_json))
+        claim = adapter.claim_next("worker-a")
+        assert claim is not None
+        assert claim.rows_json is None
+        assert claim.input_error == "stored ML execution input artifact could not be verified"
+        adapter.finish_claim(claim, state="failed", error=claim.input_error)
+        status = adapter.get("workspace-a", "shared-run")
+        assert status is not None
+        assert status.state == "failed"
+        assert status.error == claim.input_error
     finally:
         asyncio.run(service.aclose())

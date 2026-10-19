@@ -45,25 +45,30 @@ pipeline antes de entrenar.
 
 La ruta asíncrona de ejecución usa el mismo `AssetRef` del Lab cuando se omiten las filas;
 si se proporcionan `rows`, esas filas forman el input explícito de esa ejecución. El
-coordinador durable conserva actualmente un máximo de 1 MiB para el request canónico, por
-lo que un dataset mayor puede perfilarse o ejecutarse de forma síncrona, pero no encolarse
-todavía. La ejecución local mantiene el mismo contrato que el futuro worker broker: `queued`, `running`,
+coordinador admite hasta 64 MiB de request canónico. Si el input supera 1 MiB, el adapter
+durable escribe las filas como artifact direccionado por contenido y persiste en el Job
+sólo su referencia, digest, media type y tamaño. Al reclamar el Job, verifica el artifact
+y comprueba otra vez el digest canónico completo antes de entrenar. Así un reinicio puede
+recuperar el mismo input sin duplicar megabytes en los parámetros del Job. Los bodies HTTP
+inline continúan limitados a 1 MiB; para datasets mayores se usa el `AssetRef` del Lab.
+La ejecución local mantiene el mismo contrato que el futuro worker broker: `queued`, `running`,
 `succeeded`, `failed` y `cancelled`. El coordinador se cierra durante el shutdown del
 plugin para no dejar threads vivos.
 
-El estado de ejecución se persiste en `ml_studio_executions` dentro de la base SQLite
-local. Si Ronin se reinicia, una consulta de un `run_id` terminal recupera su estado y
-su error de auditoría sin volver a lanzar el entrenamiento. Los artefactos y métricas
-completos siguen viviendo en el registry/provenance; la tabla de ejecuciones es el
-registro durable del lifecycle y el punto de integración para un futuro worker broker.
+El estado de ejecución se persiste como Job/Run/Attempt en el `JobStore` configurado
+(SQLite local o PostgreSQL en el perfil Compose). Si Ronin se reinicia, el adapter reclama
+los Jobs pendientes y recupera el snapshot desde parámetros canónicos y `ArtifactStore`;
+una consulta de un `run_id` terminal devuelve estado y error sin volver a entrenar. Los
+artefactos y métricas completos siguen viviendo en el registry/provenance, y los resultados
+del coordinador se enlazan mediante checkpoints del Job.
 
 ## Seguridad
 
 Los permisos requeridos son `ml-studio:read`, `ml-studio:write` y `ml-studio:execute`.
 Las referencias se resuelven dentro del workspace del request, sólo se aceptan assets de
 tipo dataset y artefactos CSV/JSONL con digest coincidente. Los límites de lectura evitan
-cargar snapshots sin cota; los cuerpos inline siguen sujetos al límite HTTP y al límite
-durable de ejecución.
+cargar snapshots sin cota; los cuerpos inline siguen sujetos al límite HTTP, y la ejecución
+durable limita el request a 64 MiB con los datos grandes en `ArtifactStore`.
 
 ## Diagnóstico
 
