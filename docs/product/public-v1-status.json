@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-19T17:43:29Z",
-  "observed_main_sha": "95d25d0e5fccebac66d5a52a814a6c4ad7036f82",
+  "observed_at": "2026-10-19T18:24:06Z",
+  "observed_main_sha": "2d3f7d3b43d0b3b9268a57860e19e707a57a02e8",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -106,7 +106,7 @@
     {
       "id": "p8-ai-ml-mlops",
       "status": "partial",
-      "summary": "Experiment/run/model/evaluation metadata, provenance persistence, deterministic tabular training, digest-verified registered inference, champion-model serving resolution, deterministic trial comparison, bounded numeric drift summaries, explicit feature-level drift threshold assessments, versioned feature definitions with dataset snapshots, workspace-scoped feature-definition HTTP routes, and pyronin SDK parity exist; Lab AssetRefs resolve to workspace-scoped digest-verified CSV/JSONL snapshots, durable async inputs above 1 MiB use ArtifactStore with size/digest validation, and inline inputs enforce row, column, byte and canonical-JSON limits. Broader feature engineering, algorithms, MLflow interoperability, network serving APIs and production qualification remain incomplete. Scheduled ml.run execution and result evidence are bound to canonical pipeline and Lab digests."
+      "summary": "Experiment/run/model/evaluation metadata, provenance persistence, deterministic tabular training, digest-verified registered inference, champion-model serving resolution, deterministic trial comparison, bounded numeric drift summaries, explicit feature-level drift threshold assessments, versioned feature definitions with dataset snapshots, workspace-scoped feature-definition HTTP routes, and pyronin SDK parity exist; Lab AssetRefs resolve to workspace-scoped digest-verified CSV/JSONL snapshots, durable async inputs above 1 MiB use ArtifactStore with size/digest validation, and inline inputs enforce row, column, byte and canonical-JSON limits. Scheduled runs and async JobStore requests pin canonical pipeline/Lab digests, with validation against durable request identity before the local runner. Executable DAG/retry materialization, broader feature engineering, algorithms, MLflow interoperability, network serving APIs and production qualification remain incomplete."
     },
     {
       "id": "p9-genai-rag-agents",

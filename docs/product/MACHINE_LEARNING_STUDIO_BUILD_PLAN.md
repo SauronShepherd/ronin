@@ -321,3 +321,17 @@ La lectura, la ejecución asíncrona y las filas inline respetan 64 MiB, 100000 
 
 La composición local inyecta el catálogo SQLite o, en el perfil PostgreSQL, el store PostgreSQL compartido que implementa el contrato de catálogo; ambos perfiles inyectan el mismo `ArtifactStore` usado para materializar los archivos locales. Las pruebas cubren CSV/JSONL, aislamiento por workspace, digest y estructuras inválidas. Este incremento no declara cerrado el compiler/runner global: quedan la integración de snapshots en pipelines/reintentos, el contrato de features, algoritmos adicionales, MLflow/serving de red, journeys E2E y cualificación de producción. P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
 
+## 19. Candidato: fijar PipelineIR en ejecuciones asíncronas durables
+
+**Progreso técnico: 5/5 criterios; cualificación exact-head de PR #434 completada; P8/release-qualified: 0% (0/14).**
+
+| Criterio técnico | Evidencia |
+| --- | --- |
+| Compartir el compilador determinista entre `LabService.compile` y submit | `compile_lab_pipeline` produce la misma IR canónica y ligada al digest del Lab. |
+| Persistir PipelineIR y digest en la identidad de submit | `ronin.ml-execution.v2` guarda `pipeline_json`, `pipeline_digest` y request digest dentro del Job durable. |
+| Recuperar el snapshot y verificar pipeline, Lab y Job antes del runner | Tests de reapertura/composición y rechazo de digest inconsistente con la identidad durable de Job. |
+| Conservar la compatibilidad de registros v1 | El lector admite parámetros `ronin.ml-execution.v1` y v2; los submits nuevos generan v2. |
+| Liberar snapshots terminales y detectar alteraciones | Tests cubren cambio de pipeline en retry, manipulación de parámetros y limpieza al finalizar/cancelar. |
+
+El PR [#434](https://github.com/SauronShepherd/ronin/pull/434) quedó en `main@2d3f7d3b43d0b3b9268a57860e19e707a57a02e8`. La suite completa de Windows pasó **3745 tests, 49 omitidos**; las pruebas focalizadas de persistencia y manipulación, los checks de calidad y la cualificación Docker exact-head pasaron. También pasaron los seis workflows post-merge de ese SHA. El pipeline queda reproduciblemente fijado y validado al recuperar un Job. El runner sigue ejecutando el flujo local existente directamente desde el Lab: la evaluación del DAG como plan ejecutable, el checkpoint/retry de nodos y la semántica de materialización todavía no están implementados. P8 permanece parcial; no se declara cualificación de release.
+
