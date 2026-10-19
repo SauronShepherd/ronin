@@ -63,15 +63,14 @@ class LocalServerComposition:
 
     def stop(self) -> None:
         threads = self._threads
-        if threads is None:
-            return
         try:
-            self.job_server.shutdown()
-            self.control_plane_server.shutdown()
-            for thread in threads:
-                thread.join(timeout=10.0)
-            self.job_server.server_close()
-            self.control_plane_server.server_close()
+            if threads is not None:
+                self.job_server.shutdown()
+                self.control_plane_server.shutdown()
+                for thread in threads:
+                    thread.join(timeout=10.0)
+                self.job_server.server_close()
+                self.control_plane_server.server_close()
         finally:
             if self.plugin_host is not None:
                 self.plugin_host.stop()

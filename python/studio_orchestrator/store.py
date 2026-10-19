@@ -251,7 +251,9 @@ class JobStore(Protocol):
         cursor: str | None,
     ) -> Page: ...
 
-    def request_cancel(self, job_id: JobId, *, now: Instant) -> Job: ...
+    def request_cancel(
+        self, job_id: JobId, *, now: Instant, fence_active_attempt: bool = False
+    ) -> Job: ...
 
     def claim_next_run(
         self,
@@ -261,6 +263,7 @@ class JobStore(Protocol):
         attempt_id: AttemptId,
         lease_seconds: int,
         now: Instant,
+        target: str | None = None,
     ) -> ClaimedRun | None: ...
 
     def heartbeat(

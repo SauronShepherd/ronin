@@ -194,7 +194,7 @@ coverage-storage-files-full:
 		--baseline=ml.py=73.47 \
 		--baseline=ontology.py=37.40 \
 		--baseline=postgres_core.py=37.61 \
-		--baseline=postgres_jobs.py=47.80 \
+		--baseline=postgres_jobs.py=59.40 \
 		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=74.20 \
 		--baseline=scheduler_backfill.py=65.91 \

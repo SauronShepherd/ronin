@@ -38,12 +38,15 @@ from .drift import (
 from .mlflow import MLFLOW_SUBSET_SCHEMA, MLflowSubset
 from .optimization import SearchSpec, Trial, rank_trials
 from .orchestration import (
+    DurableExecutionPort,
+    ExecutionConflict,
     ExecutionSnapshot,
     ExecutionStore,
     InMemoryExecutionStore,
+    JobStoreExecutionStore,
     LocalExecutionCoordinator,
 )
-from .postgres import PostgresExecutionStore, PostgresMLLabStore
+from .postgres import PostgresMLLabStore
 from .provenance import run_record
 from .quality import ColumnProfile, QualityReport, profile_and_validate
 from .registry_bundle import (
@@ -93,7 +96,7 @@ from .services import (
     LabService,
     MLLabConflict,
 )
-from .sqlite import SqliteExecutionStore, SqliteMLLabStore
+from .sqlite import SqliteMLLabStore
 
 __all__ = (
     "Algorithm",
@@ -163,12 +166,13 @@ __all__ = (
     "LabService",
     "MLLabConflict",
     "SqliteMLLabStore",
-    "SqliteExecutionStore",
     "PostgresMLLabStore",
-    "PostgresExecutionStore",
     "ExecutionSnapshot",
+    "ExecutionConflict",
     "ExecutionStore",
     "InMemoryExecutionStore",
+    "JobStoreExecutionStore",
+    "DurableExecutionPort",
     "LocalExecutionCoordinator",
     "KMeansModel",
     "fit_kmeans",

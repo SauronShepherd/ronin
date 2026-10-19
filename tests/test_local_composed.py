@@ -4,6 +4,7 @@ import pytest
 from studio_cli.local_composed import _workflow_reader_for_backend, build_local_composed_from_env
 from studio_core import WorkspaceId
 from studio_execution import PostgresWorkflowHTTPAdapter, SqliteWorkflowHTTPAdapter
+from studio_ml.orchestration import JobStoreExecutionStore
 from studio_orchestrator import Instant
 from studio_server import LocalServerComposition
 from studio_storage import PostgresSchedulerSnapshotStore
@@ -78,6 +79,24 @@ def test_build_local_composed_from_env_creates_two_surface_composition(
     composition.stop()
 
 
+def test_local_composition_injects_the_shared_durable_job_service(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    _environment(monkeypatch, tmp_path)
+    composition = build_local_composed_from_env()
+    assert composition.plugin_host is not None
+    assert composition.plugin_host.plan is not None
+    ml_plugin = next(
+        record.plugin
+        for record in composition.plugin_host.plan.records
+        if record.manifest.id == "com.sauronshepherd.ronin.ml-studio"
+    )
+    try:
+        assert isinstance(ml_plugin._coordinator._store, JobStoreExecutionStore)
+    finally:
+        composition.stop()
+
+
 def test_build_local_composed_rejects_unknown_permission(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
@@ -147,6 +166,7 @@ def test_build_local_composed_validates_configured_plugin_lock(
     composition = build_local_composed_from_env()
 
     assert composition.plugin_host is not None
+    composition.stop()
 
 
 def test_build_local_composed_rejects_invalid_configured_plugin_lock(

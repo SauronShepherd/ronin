@@ -184,10 +184,14 @@ class DurableExecutionService:
             return None
         return await self._store.read_cell_results(run_id)
 
-    async def cancel(self, job_id: JobId, *, now: Instant) -> Job:
+    async def cancel(
+        self, job_id: JobId, *, now: Instant, fence_active_attempt: bool = False
+    ) -> Job:
         """Request cancellation through the same bounded store boundary."""
 
-        return await self._store.request_cancel(job_id, now=now)
+        return await self._store.request_cancel(
+            job_id, now=now, fence_active_attempt=fence_active_attempt
+        )
 
     async def worker_poll(
         self,
@@ -197,6 +201,7 @@ class DurableExecutionService:
         attempt_id: AttemptId,
         lease_seconds: int,
         now: Instant,
+        target: str | None = None,
     ) -> WorkerPollResult:
         """Reclaim expired leases, then attempt one claim."""
 
@@ -207,6 +212,7 @@ class DurableExecutionService:
             attempt_id=attempt_id,
             lease_seconds=lease_seconds,
             now=now,
+            target=target,
         )
         return WorkerPollResult(reclaimed, claim)
 

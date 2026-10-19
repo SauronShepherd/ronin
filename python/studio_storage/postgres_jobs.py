@@ -170,14 +170,21 @@ class PostgresJobReadPort:
         finally:
             connection.close()
 
-    def request_cancel(self, job_id: JobId, *, now: Instant | str) -> Job:
+    def request_cancel(
+        self,
+        job_id: JobId,
+        *,
+        now: Instant | str,
+        fence_active_attempt: bool = False,
+    ) -> Job:
         """Request cancellation while serializing against worker state changes."""
         current = Instant(now)
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT * FROM ronin_jobs WHERE job_id=%s FOR UPDATE", (str(job_id),)
+                    "SELECT * FROM ronin_jobs WHERE job_id=%s FOR UPDATE",
+                    (str(job_id),),
                 )
                 row = cursor.fetchone()
                 if row is None:
@@ -186,14 +193,35 @@ class PostgresJobReadPort:
                 if job.state.terminal:
                     connection.commit()
                     return job
+                # Job -> Attempt -> Run is the shared lock order for claim, cancel,
+                # and completion, so cancellation sees attempts created by a claim
+                # that committed while cancellation waited for the Job lock.
                 cursor.execute(
-                    "SELECT 1 FROM ronin_attempts a "
+                    "SELECT a.attempt_id FROM ronin_attempts a "
                     "JOIN ronin_runs r ON r.run_id=a.run_id "
-                    "WHERE r.job_id=%s AND a.state IN ('leased','running') LIMIT 1",
+                    "WHERE r.job_id=%s AND a.state IN ('leased','running') "
+                    "ORDER BY a.ordinal DESC LIMIT 1 FOR UPDATE OF a",
                     (str(job_id),),
                 )
-                active = cursor.fetchone() is not None
-                if active:
+                active_row = cursor.fetchone()
+                active = active_row is not None
+                fenced = active and fence_active_attempt
+                if fenced:
+                    cursor.execute(
+                        "UPDATE ronin_attempts SET state='cancelled',lease_owner=NULL,"
+                        "lease_token=NULL,lease_expires_at=NULL,updated_at=%s,"
+                        "row_version=row_version+1 WHERE attempt_id=%s "
+                        "AND state IN ('leased','running')",
+                        (str(current), str(active_row["attempt_id"])),
+                    )
+                    cursor.execute(
+                        "UPDATE ronin_runs SET state='cancelled',updated_at=%s,"
+                        "row_version=row_version+1 WHERE job_id=%s "
+                        "AND state IN ('pending','leased','running','cancelling')",
+                        (str(current), str(job_id)),
+                    )
+                    next_state = "cancelled"
+                elif active:
                     cursor.execute(
                         "UPDATE ronin_runs SET state='cancelling',updated_at=%s,"
                         "row_version=row_version+1 WHERE job_id=%s "
@@ -233,6 +261,7 @@ class PostgresJobReadPort:
         attempt_id: AttemptId,
         lease_seconds: int,
         now: Instant | str,
+        target: str | None = None,
     ) -> ClaimedRun | None:
         """Claim one pending run with PostgreSQL row-lock concurrency semantics."""
         if lease_seconds < 1:
@@ -241,25 +270,49 @@ class PostgresJobReadPort:
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
-                cursor.execute(
-                    "SELECT r.* FROM ronin_runs r JOIN ronin_jobs j ON j.job_id=r.job_id "
-                    "WHERE r.state='pending' AND r.not_before<=%s "
-                    "AND j.state IN ('queued','running') "
-                    "ORDER BY r.not_before,r.run_id LIMIT 1 FOR UPDATE SKIP LOCKED",
-                    (str(current),),
-                )
-                run_row = cursor.fetchone()
-                if run_row is None:
+                if target is None:
+                    cursor.execute(
+                        "SELECT j.job_id,r.run_id FROM ronin_jobs j "
+                        "JOIN ronin_runs r ON r.job_id=j.job_id "
+                        "WHERE r.state='pending' AND r.not_before<=%s "
+                        "AND j.state IN ('queued','running') "
+                        "ORDER BY r.not_before,r.run_id LIMIT 1 FOR UPDATE OF j SKIP LOCKED",
+                        (str(current),),
+                    )
+                else:
+                    cursor.execute(
+                        "SELECT j.job_id,r.run_id FROM ronin_jobs j "
+                        "JOIN ronin_runs r ON r.job_id=j.job_id "
+                        "WHERE r.state='pending' AND r.not_before<=%s "
+                        "AND j.state IN ('queued','running') AND j.target=%s "
+                        "ORDER BY r.not_before,r.run_id LIMIT 1 FOR UPDATE OF j SKIP LOCKED",
+                        (str(current), target),
+                    )
+                candidate = cursor.fetchone()
+                if candidate is None:
                     connection.commit()
                     return None
                 cursor.execute(
-                    "SELECT * FROM ronin_jobs WHERE job_id=%s FOR UPDATE",
-                    (str(run_row["job_id"]),),
+                    "SELECT * FROM ronin_jobs WHERE job_id=%s",
+                    (str(candidate["job_id"]),),
                 )
                 job_row = cursor.fetchone()
                 if job_row is None:
-                    raise AssertionError("run references missing job")
+                    raise AssertionError("claim candidate references missing job")
                 job = _job(job_row)
+                cursor.execute(
+                    "SELECT * FROM ronin_runs WHERE run_id=%s FOR UPDATE",
+                    (str(candidate["run_id"]),),
+                )
+                run_row = cursor.fetchone()
+                if (
+                    run_row is None
+                    or run_row["state"] != "pending"
+                    or Instant(str(run_row["not_before"])) > current
+                    or job.state not in {JobState.QUEUED, JobState.RUNNING}
+                ):
+                    connection.commit()
+                    return None
                 cursor.execute(
                     "SELECT COALESCE(MAX(ordinal),0)+1 AS ordinal "
                     "FROM ronin_attempts WHERE run_id=%s",
@@ -728,10 +781,25 @@ class PostgresJobReadPort:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
+                    "SELECT r.job_id FROM ronin_attempts a "
+                    "JOIN ronin_runs r ON r.run_id=a.run_id WHERE a.attempt_id=%s",
+                    (str(attempt_id),),
+                )
+                owner_row = cursor.fetchone()
+                if owner_row is None:
+                    raise LeaseLost("lease ownership no longer matches")
+                job_id = str(owner_row["job_id"])
+                cursor.execute(
+                    "SELECT job_id FROM ronin_jobs WHERE job_id=%s FOR UPDATE",
+                    (job_id,),
+                )
+                if cursor.fetchone() is None:
+                    raise LeaseLost("lease ownership no longer matches")
+                cursor.execute(
                     "SELECT a.run_id,r.job_id,a.state,a.lease_owner,a.lease_token,"
                     "a.lease_expires_at FROM ronin_attempts a "
                     "JOIN ronin_runs r ON r.run_id=a.run_id "
-                    "WHERE a.attempt_id=%s FOR UPDATE",
+                    "WHERE a.attempt_id=%s FOR UPDATE OF a",
                     (str(attempt_id),),
                 )
                 row = cursor.fetchone()
