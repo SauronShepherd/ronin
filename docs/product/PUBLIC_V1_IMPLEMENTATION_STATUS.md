@@ -5,10 +5,10 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-19. The tracked source is based on
-`main@95d25d0`; PRs #430–#432 are merged and their exact-head checks plus all six
+`main@2d3f7d3`; PRs #430–#434 are merged and their exact-head checks plus all six
 post-merge workflows passed. Untracked qualification output directories are not
 release evidence.
-**Observed source head:** `95d25d0e5fccebac66d5a52a814a6c4ad7036f82` (2026-10-19).
+**Observed source head:** `2d3f7d3b43d0b3b9268a57860e19e707a57a02e8` (2026-10-19).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -28,6 +28,18 @@ candidate SHA they were generated for and are not promoted to current-head
 evidence.
 
 ## Exact-head qualification snapshot
+
+On `main@2d3f7d3b43d0b3b9268a57860e19e707a57a02e8`, all six post-merge
+workflows passed: [CI](https://github.com/SauronShepherd/ronin/actions/runs/39300808656),
+[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39300808822),
+[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39300808898),
+[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39300808705),
+[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39300808877)
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39300808941).
+PR [#434](https://github.com/SauronShepherd/ronin/pull/434) passed exact-head CI,
+Docker qualification (8m50s), Web, Security and Release; Docker covered
+PostgreSQL-backed storage, a real Docker worker and strict frozen v0.1
+acceptance. Public v1 remains incomplete and P8 remains partial.
 
 On `main@95d25d0e5fccebac66d5a52a814a6c4ad7036f82`, all six post-merge
 workflows passed: [CI](https://github.com/SauronShepherd/ronin/actions/runs/39295218270),

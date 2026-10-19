@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@95d25d0e5fccebac66d5a52a814a6c4ad7036f82` (2026-10-19). PR #430 incorporó la persistencia de inputs asíncronos ML grandes como ArtifactRefs; PR #431 reconcilió los ledgers; PR #432 aplicó los límites de filas inline. CI, Docker qualification, Web, Security, Release y Status consistency pasaron exact-head post-merge. Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@2d3f7d3b43d0b3b9268a57860e19e707a57a02e8` (2026-10-19). PR #430 incorporó la persistencia de inputs asíncronos ML grandes como ArtifactRefs; PR #431 reconcilió los ledgers; PR #432 aplicó los límites de filas inline; PR #434 fijó la identidad del PipelineIR en ejecuciones asíncronas durables. CI, Docker qualification, Web, Security, Release y Status consistency pasaron exact-head post-merge. Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Progreso verificable
 
@@ -187,6 +187,10 @@ El PR [#424](https://github.com/SauronShepherd/ronin/pull/424) cerró el remanen
 ### Reconciliación exact-head tras PR #425 (2026-10-19)
 
 PR [#425](https://github.com/SauronShepherd/ronin/pull/425) integró el pinning canónico de `PipelineIR` y `Lab` en `ml.run`: el worker rechaza pipeline o definición de Lab stale antes del runner y conserva el digest del pipeline en evidencia. La suite focalizada pasó **58/58 localmente y 58/58 en Docker/Python 3.12**; CI, Docker qualification (**8m36s**), matrices Python 3.11/3.12, quality, seguridad, verificación, ledgers y checks obligatorios pasaron. El squash quedó en `main@0180e27ffd8171e27f5731b3397a3439ff90e916`; los seis workflows post-merge exact-head pasaron. P8 sigue parcial; progreso release-qualified **0% (0/14)**.
+
+### Reconciliación exact-head tras PR #434 (2026-10-19)
+
+PR [#434](https://github.com/SauronShepherd/ronin/pull/434) guarda el PipelineIR compilado y su digest junto al Lab y las filas en cada solicitud ML asíncrona durable. El digest del request cubre la definición del pipeline y el worker comprueba su vínculo al Lab y la coincidencia con `Job.request_digest` antes de ejecutar; el formato v2 conserva lectura de registros v1. El runner todavía ejecuta su flujo local directamente desde el Lab, así que esta integración fija la identidad pero no implementa todavía evaluación del DAG ni reintentos por nodo. La suite completa local pasó **3745 tests, 49 omitidos**; las pruebas focalizadas de persistencia, composición y manipulación, Ruff, formato, mypy, arquitectura, ledger y OpenAPI pasaron. Docker qualification exact-head (**8m50s**, PostgreSQL, worker Docker real y aceptación estricta) también pasó. El squash quedó en `main@2d3f7d3b43d0b3b9268a57860e19e707a57a02e8`; los seis workflows post-merge pasaron. P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
 
 ### Reconciliación exact-head tras PR #426 (2026-10-19)
 
