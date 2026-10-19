@@ -50,10 +50,14 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
     submit = document["paths"]["/v1/ml-studio/labs/{lab_id}/executions"]["post"]
     request_schema = submit["requestBody"]["content"]["application/json"]["schema"]
     assert request_schema["additionalProperties"] is False
-    assert request_schema["required"] == ["rows"]
+    assert "required" not in request_schema
     assert request_schema["properties"]["run_id"]["minLength"] == 1
     assert request_schema["properties"]["rows"]["type"] == "array"
     assert "409" in submit["responses"]
+    quality = document["paths"]["/v1/ml-studio/labs/{lab_id}/quality"]["post"]
+    quality_schema = quality["requestBody"]["content"]["application/json"]["schema"]
+    assert "required" not in quality_schema
+    assert quality_schema["properties"]["rows"]["type"] == "array"
 
 
 def test_openapi_snapshot_rejects_drift(tmp_path: Path) -> None:

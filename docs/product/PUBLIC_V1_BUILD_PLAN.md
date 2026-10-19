@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@0afa7db291eddcf0db0a3acc67372c9f55378ef4` (2026-10-19). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@b5d0701fee9d2e47c6c42eaca1766b1bf5e73e3e` (2026-10-19). CI, Docker qualification, Web, Security, Release y Status consistency post-merge pasaron exact-head. Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Progreso verificable
 
@@ -203,7 +203,11 @@ La revalidación del blocker `RON-ML-001` del documento adjunto confirmó que el
 
 **Progreso técnico: 100% (5/5 criterios); release-qualified: 0% (0/14).** La composición local inyecta `DurableExecutionService` y el adaptador ML usa el mismo `JobStore` para submit, claim, lease, heartbeat, checkpoint, finalización y cancelación. El claim se restringe a `target=ml-studio.execute`; el ID durable combina workspace y `run_id`, evitando colisiones entre workspaces. Repetir el mismo request devuelve el Job existente; cancelar cerca de un worker limpia la lease y hace fallar sus writes posteriores; la reapertura recupera los Jobs pendientes.
 
-La suite ML + HTTP + composición local + PostgreSQL pasó **139/139 en Windows** y **137/137 en Docker/Python 3.12** (dos tests específicos de plataforma no se recogen en Linux). Las cinco pruebas del módulo PostgreSQL pasaron dentro de Docker contra PostgreSQL 16; la carrera claim-cancel incluye 12 iteraciones. Ruff, formato, mypy completo de producto y la puerta de arquitectura pasan. CI, cualificación exact-head y merge protegido aún están pendientes; por ello este candidato no cambia el porcentaje release-qualified.
+La suite ML + HTTP + composición local + PostgreSQL pasó **139/139 en Windows** y **137/137 en Docker/Python 3.12** (dos tests específicos de plataforma no se recogen en Linux). Las cinco pruebas del módulo PostgreSQL pasaron dentro de Docker contra PostgreSQL 16; la carrera claim-cancel incluye 12 iteraciones. Ruff, formato, mypy completo de producto y la puerta de arquitectura pasan. El PR [#428](https://github.com/SauronShepherd/ronin/pull/428) se integró con squash en `main@b5d0701fee9d2e47c6c42eaca1766b1bf5e73e3e`; CI, Docker qualification, Web, Security, Release y Status consistency post-merge pasaron exact-head. RON-ML-002 queda cerrado; el porcentaje release-qualified no cambia.
+
+### Candidato actual: lectura de datasets ML gobernados por AssetRef
+
+El candidato implementa la resolución workspace-scoped de revisiones de catálogo y artefactos CSV/JSONL fijados por `Lab.dataset`, con límites explícitos y verificación doble de digest. Quality, ejecución síncrona y asíncrona usan el snapshot del Lab cuando se omiten las filas inline. Las primeras pruebas focalizadas y las puertas estáticas pasan; quedan la cualificación Docker/CI exact-head, pipelines/reintentos sobre el mismo input y las capacidades P8 más amplias. El estado release-qualified sigue en **0% (0/14)**.
 
 El PR [#402](https://github.com/SauronShepherd/ronin/pull/402) integró `PostgresSchedulerSnapshotStore` con task attempts/pools persistidos, reclaim transaccional de leases vencidos, admisión con dependencias/concurrencia/pools, heartbeat y finalización protegidos por owner/token y vencimiento. El candidato `830a87d469d51df3f07fc01cd9adf344d9a98189` pasó CI 3.11/3.12, el gate Docker con PostgreSQL y cobertura storage, Docker real (**7m30s**), `ledgers`, seguridad y checks restantes; `mutation` quedó skipped. El merge squash es `main@0ccb5fdd68b8849f860c7ffe9ef2526e4ec9b3e4`. La integración Docker local con PostgreSQL 16 pasó **14 tests**, el módulo `postgres_scheduler.py` midió **81%** de cobertura de línea, Ruff y mypy focalizado pasan. CI excluye este adaptador sólo del agregado de cobertura sin servicio; el gate Docker per-file exige el piso de 80% con PostgreSQL activo.
 

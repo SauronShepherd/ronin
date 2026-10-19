@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from studio_core import AssetId, ConnectionDefinition, ConnectionId, Workspace, WorkspaceId
+from studio_ml.datasets import DatasetResolver
 from studio_orchestrator import Instant
 from studio_storage import LocalArtifactStore, SqliteCatalogStore, SqliteWorkspaceStore
 from studio_storage.local_files import LocalFileConnector
@@ -52,6 +53,10 @@ def test_csv_ingestion_creates_snapshot_and_lineage(tmp_path: Path) -> None:
     assert [field.name for field in result.discovered.fields] == ["id", "name"]
     assert catalog.get_revision(_WS, result.target) is not None
     assert catalog.upstream(_WS, result.target)[0].source == result.source
+    assert DatasetResolver(catalog, artifacts).resolve(_WS, result.target) == [
+        {"id": "1", "name": "Ada"},
+        {"id": "2", "name": "Grace"},
+    ]
 
 
 def test_same_content_is_idempotent(tmp_path: Path) -> None:
@@ -79,6 +84,9 @@ def test_same_content_is_idempotent(tmp_path: Path) -> None:
 
     assert second == first
     assert len(catalog.upstream(_WS, first.target)) == 1
+    assert DatasetResolver(catalog, artifacts).resolve(_WS, first.target) == [
+        {"id": 1, "name": "Ada"}
+    ]
 
 
 def test_connector_rejects_path_escape(tmp_path: Path) -> None:

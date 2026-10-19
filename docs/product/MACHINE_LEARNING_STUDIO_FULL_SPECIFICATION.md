@@ -379,9 +379,9 @@ Representative routes are:
 | GET/POST | `/v1/ml-studio/labs` | List/create Labs |
 | GET | `/v1/ml-studio/labs/{lab_id}` | Read a Lab |
 | POST | `/v1/ml-studio/labs/{lab_id}/compile` | Compile/validate Lab |
-| POST | `/v1/ml-studio/labs/{lab_id}/quality` | Profile and validate rows |
+| POST | `/v1/ml-studio/labs/{lab_id}/quality` | Profile and validate inline rows or the Lab's workspace-scoped AssetRef snapshot |
 | POST | `/v1/ml-studio/labs/{lab_id}/runs` | Run a Lab synchronously |
-| POST | `/v1/ml-studio/labs/{lab_id}/executions` | Submit async execution |
+| POST | `/v1/ml-studio/labs/{lab_id}/executions` | Submit async execution using inline rows or the Lab's workspace-scoped AssetRef snapshot |
 | GET | `/v1/ml-studio/executions/{run_id}` | Read execution status |
 | POST | `/v1/ml-studio/executions/{run_id}/cancel` | Cancel execution |
 | POST | `/v1/ml-studio/labs/{lab_id}/compare` | Rank supplied trials |

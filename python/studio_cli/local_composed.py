@@ -206,6 +206,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         job_grants = GrantSet.from_json(_env("RONIN_TOKEN_SCOPES"))
     except ValueError as exc:
         raise ValueError(f"invalid RONIN_TOKEN_SCOPES: {exc}") from exc
+    artifact_store = LocalArtifactStore(database.parent / "artifacts")
     job_server = RoninHTTPServer(
         (_env("RONIN_HOST", "127.0.0.1"), _port("RONIN_PORT", "8080")),
         job_service,
@@ -219,6 +220,9 @@ def build_local_composed_from_env() -> LocalServerComposition:
         )
         if postgres_dsn is not None
         else SqliteWorkflowBundleImportStore(database, migration_now=now)
+    )
+    catalog_store = (
+        SqliteCatalogStore(database, migration_now=now) if postgres_dsn is None else scheduler
     )
     workspace_service = WorkspaceService(scheduler)
     project_service = ProjectService(scheduler)
@@ -251,7 +255,8 @@ def build_local_composed_from_env() -> LocalServerComposition:
                 if postgres_dsn is not None
                 else SqliteMLStore(database, migration_now=now)
             ),
-            "artifact_store": LocalArtifactStore(database.parent / "artifacts"),
+            "artifact_store": artifact_store,
+            "catalog_store": catalog_store,
         }
     )
     plugin_host.audit = PluginAuditSink(audit_store.append, workspace_id)
@@ -274,9 +279,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         if postgres_dsn is None
         else None
     )
-    catalog_reader = (
-        SqliteCatalogStore(database, migration_now=now) if postgres_dsn is None else None
-    )
+    catalog_reader = cast(Any, catalog_store) if postgres_dsn is None else None
     semantic_reader = None
     try:
         semantic_reader = SemanticHTTPAdapter(
