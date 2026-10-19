@@ -33,13 +33,23 @@ artefacto por `storage_ref`; en ambos casos el servicio comprueba digest y firma
 predecir. La forma inline es deliberadamente de desarrollo y debe evitarse con datasets
 grandes.
 
-Antes de ejecutar un dataset, puede usarse `POST /v1/ml-studio/labs/{lab_id}/quality` con
-`{"rows": [...]}`. La respuesta incluye el perfil por columna (`dtype`, nulos,
-cardinalidad y constantes), advertencias y fallos bloqueantes. Por defecto se exige un
-mínimo de cuatro filas; en clasificación también se exigen dos clases y al menos dos
-ejemplos por clase. Un `passed: false` debe detener el pipeline antes de entrenar.
+La ruta `POST /v1/ml-studio/labs/{lab_id}/quality` resuelve por defecto el `AssetRef`
+inmutable del Lab en el catálogo de su workspace y carga el snapshot CSV o JSONL desde el
+`ArtifactStore`, verificando el digest antes de perfilarlo. Se puede enviar `{"rows": [...]}`
+para una evaluación explícita; al omitir `rows`, el servicio usa el snapshot fijado por el
+Lab. La lectura admite hasta 64 MiB, 100000 filas y 1024 columnas. La respuesta incluye
+el perfil por columna (`dtype`, nulos, cardinalidad y constantes), advertencias y fallos
+bloqueantes. Por defecto se exige un mínimo de cuatro filas; en clasificación también se
+exigen dos clases y al menos dos ejemplos por clase. Un `passed: false` debe detener el
+pipeline antes de entrenar.
 
-La ejecución local mantiene el mismo contrato que el futuro worker broker: `queued`, `running`, `succeeded`, `failed` y `cancelled`. El coordinador se cierra durante el shutdown del plugin para no dejar threads vivos.
+La ruta asíncrona de ejecución usa el mismo `AssetRef` del Lab cuando se omiten las filas;
+si se proporcionan `rows`, esas filas forman el input explícito de esa ejecución. El
+coordinador durable conserva actualmente un máximo de 1 MiB para el request canónico, por
+lo que un dataset mayor puede perfilarse o ejecutarse de forma síncrona, pero no encolarse
+todavía. La ejecución local mantiene el mismo contrato que el futuro worker broker: `queued`, `running`,
+`succeeded`, `failed` y `cancelled`. El coordinador se cierra durante el shutdown del
+plugin para no dejar threads vivos.
 
 El estado de ejecución se persiste en `ml_studio_executions` dentro de la base SQLite
 local. Si Ronin se reinicia, una consulta de un `run_id` terminal recupera su estado y
@@ -49,7 +59,11 @@ registro durable del lifecycle y el punto de integración para un futuro worker 
 
 ## Seguridad
 
-Los permisos requeridos son `ml-studio:read`, `ml-studio:write` y `ml-studio:execute`. El body de ejecución actual está pensado para datasets pequeños y de desarrollo; la siguiente integración sustituirá las filas inline por `AssetRef` y lectura mediante catálogo para producción.
+Los permisos requeridos son `ml-studio:read`, `ml-studio:write` y `ml-studio:execute`.
+Las referencias se resuelven dentro del workspace del request, sólo se aceptan assets de
+tipo dataset y artefactos CSV/JSONL con digest coincidente. Los límites de lectura evitan
+cargar snapshots sin cota; los cuerpos inline siguen sujetos al límite HTTP y al límite
+durable de ejecución.
 
 ## Diagnóstico
 

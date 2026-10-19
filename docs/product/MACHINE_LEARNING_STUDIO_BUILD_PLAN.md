@@ -92,7 +92,7 @@ Migración limpia desde una base vacía, migración sobre base existente, rollba
 
 ### Compiler
 
-1. Resolver refs de datasets contra `CatalogStore`.
+1. Resolver refs de datasets contra `CatalogStore`; un resolver acotado de CSV/JSONL ya está implementado en el candidato actual para quality, ejecución síncrona y ejecución asíncrona. Falta la cualificación exact-head y extender la materialización a pipelines/reintentos antes de dar por cerrado el criterio global.
 2. Resolver backend contra `BackendRegistry`.
 3. Resolver runtime profile.
 4. Generar nodes `profile`, `quality`, `prepare`, `train`, `evaluate`, `select`, `register`.
@@ -299,5 +299,24 @@ Machine Learning Studio está listo cuando un nuevo backend puede implementarse 
 | Recuperar tras cierre/reapertura sin quedar bloqueado | Verificado con un Job pendiente, reapertura del servicio y finalización por el coordinador. |
 | Usar el ciclo canónico del host sin duplicar el scheduler | La composición local inyecta `DurableExecutionService`; ML filtra `target=ml-studio.execute` y persiste resultados como checkpoints de `JobStore`. |
 
-La suite focalizada ML, HTTP, composición local y PostgreSQL pasó **139/139 en Windows** y **137/137 en Docker/Python 3.12** (dos tests condicionados por plataforma no se recogen en Linux). Las cinco pruebas del módulo PostgreSQL pasaron en Docker contra PostgreSQL 16; la carrera claim-cancel incluye 12 iteraciones. Ruff, formato, mypy completo de producto y la puerta de arquitectura pasan. Sigue pendiente publicar este candidato, ejecutar CI y cualificación exact-head y fusionar por el flujo protegido. El avance release-qualified global continúa en **0% (0/14)** hasta completar esos gates.
+La suite focalizada ML, HTTP, composición local y PostgreSQL pasó **139/139 en Windows** y **137/137 en Docker/Python 3.12** (dos tests condicionados por plataforma no se recogen en Linux). Las cinco pruebas del módulo PostgreSQL pasaron en Docker contra PostgreSQL 16; la carrera claim-cancel incluye 12 iteraciones. Ruff, formato, mypy completo de producto y la puerta de arquitectura pasan. El PR [#428](https://github.com/SauronShepherd/ronin/pull/428) se integró con squash en `main@b5d0701fee9d2e47c6c42eaca1766b1bf5e73e3e`; CI, Docker qualification, Web, Security, Release y Status consistency post-merge pasaron exact-head. Este blocker queda cerrado; el avance release-qualified global continúa en **0% (0/14)**.
+
+## 18. Candidato: lectura de datasets gobernados por AssetRef
+
+**Progreso de este slice: 100% (8/8 criterios técnicos); cualificación exact-head pendiente.**
+
+| Criterio técnico | Evidencia |
+| --- | --- |
+| Resolver asset y revisión desde el workspace del request | `tests/test_ml_datasets.py` verifica lectura autorizada y denegación entre workspaces. |
+| Exigir `kind=dataset`, referencia y revisión consistentes | Casos de asset/revisión ausentes y assets no dataset en el resolver. |
+| Verificar `artifact_ref`, `media_type`, `content_digest` y bytes SHA-256 | Casos negativos de referencia y digest; round-trip real con `LocalArtifactStore`. |
+| Leer CSV/JSONL UTF-8 de forma estricta | Casos de headers, anchura, JSON inválido/no estándar, objetos y entrada vacía. |
+| Aplicar límites de bytes, filas y columnas | Pruebas de límites y cobertura branch del resolver. |
+| Usar el snapshot al omitir filas en quality y ejecución síncrona/asíncrona | Test de plugin recorre los tres endpoints y compara filas entregadas. |
+| Inyectar catálogo y artefactos en la composición local | `tests/test_local_composed.py` confirma los adaptadores SQLite y el artifact store compartido. |
+| Documentar el contrato y request opcional de filas | `tests/test_openapi_snapshot.py` y snapshot OpenAPI actualizado. |
+
+La lectura admite 64 MiB, 100000 filas y 1024 columnas. La ejecución asíncrona conserva el límite durable de 1 MiB del request canónico; hay que mover su input durable al `ArtifactStore` antes de declarar disponible el camino de datasets grandes. El slice queda implementado, pero el compiler/runner global permanece abierto y no se afirma cualificación de release.
+
+La composición local inyecta el catálogo SQLite o, en el perfil PostgreSQL, el store PostgreSQL compartido que implementa el contrato de catálogo; ambos perfiles inyectan el mismo `ArtifactStore` usado para materializar los archivos locales. Las pruebas cubren CSV/JSONL, aislamiento por workspace, digest y estructuras inválidas. Este candidato no declara cerrado el compiler/runner global: quedan la integración de snapshots en pipelines/reintentos, el contrato de features, algoritmos adicionales, MLflow/serving de red, journeys E2E y cualificación de producción. La cualificación exact-head queda pendiente; P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
 

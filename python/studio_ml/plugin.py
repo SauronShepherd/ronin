@@ -13,6 +13,7 @@ from studio_core.plugins import PluginContext, PluginManifest, SurfaceContributi
 from studio_storage.ports import ArtifactStore
 
 from .backends import default_backends
+from .datasets import DatasetResolver, resolve_lab_rows
 from .domain import Lab
 from .optimization import SearchSpec, Trial, propose_bayesian_candidates, rank_trials
 from .orchestration import JobStoreExecutionStore, LocalExecutionCoordinator
@@ -60,6 +61,7 @@ class MachineLearningStudioPlugin:
         self._coordinator = LocalExecutionCoordinator(self._runner)
         self._registry: MLRegistryStore | None = None
         self._artifacts: ArtifactStore | None = None
+        self._dataset_resolver: DatasetResolver | None = None
 
     def register(self, context: PluginContext) -> None:
         store = context.services.get("ml_lab_store")
@@ -79,6 +81,11 @@ class MachineLearningStudioPlugin:
         )
         self._registry = cast(MLRegistryStore | None, context.services.get("ml_registry"))
         self._artifacts = cast(ArtifactStore | None, context.services.get("artifact_store"))
+        catalog = context.services.get("catalog_store")
+        if catalog is not None and self._artifacts is not None:
+            from studio_storage.ports import CatalogStore
+
+            self._dataset_resolver = DatasetResolver(cast(CatalogStore, catalog), self._artifacts)
         context.contributions.add_ui(
             context.plugin_id,
             {
@@ -508,10 +515,17 @@ class MachineLearningStudioPlugin:
             "source_revision",
         }:
             raise ValueError("run body has invalid shape")
-        rows = body.get("rows")
-        if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+        if "rows" in body and body["rows"] is None:
+            raise ValueError("run rows must be an array when provided")
+        if "rows" in body and (
+            not isinstance(body["rows"], list)
+            or not all(isinstance(row, dict) for row in body["rows"])
+        ):
             raise ValueError("run rows must be an array of objects")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
+        rows = resolve_lab_rows(
+            WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
+        )
         if lab.task == "clustering":
             result = self._runner.run_clustering_result(lab, rows)
             payload = result.to_payload()
@@ -590,12 +604,15 @@ class MachineLearningStudioPlugin:
             raise ValueError("lab_id is required")
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
-        if not isinstance(body, dict) or not isinstance(body.get("rows"), list):
-            raise ValueError("quality body must contain rows array")
-        if not all(isinstance(row, dict) for row in body["rows"]):
-            raise ValueError("quality rows must be objects")
+        if not isinstance(body, dict) or set(body) - {"rows"}:
+            raise ValueError("quality body must contain optional rows only")
+        if "rows" in body and body["rows"] is None:
+            raise ValueError("quality rows must be an array when provided")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
-        return profile_and_validate(lab, body["rows"]).to_payload()
+        rows = resolve_lab_rows(
+            WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
+        )
+        return profile_and_validate(lab, rows).to_payload()
 
     def submit_execution(
         self,
@@ -610,14 +627,10 @@ class MachineLearningStudioPlugin:
             raise ValueError("lab_id is required")
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
-        if (
-            not isinstance(body, dict)
-            or set(body) - {"run_id", "rows"}
-            or not isinstance(body.get("rows"), list)
-        ):
-            raise ValueError("execution body must contain rows and optional run_id")
-        if not all(isinstance(row, dict) for row in body["rows"]):
-            raise ValueError("execution rows must be objects")
+        if not isinstance(body, dict) or set(body) - {"run_id", "rows"}:
+            raise ValueError("execution body must contain optional rows and run_id")
+        if "rows" in body and body["rows"] is None:
+            raise ValueError("execution rows must be an array when provided")
         run_id = body.get("run_id", f"run-{lab_id}")
         if (
             not isinstance(run_id, str)
@@ -627,7 +640,10 @@ class MachineLearningStudioPlugin:
         ):
             raise ValueError("execution run_id must be 1 to 256 characters of trimmed text")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
-        return self._coordinator.submit(workspace_id, run_id, lab, body["rows"]).to_payload()
+        rows = resolve_lab_rows(
+            WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
+        )
+        return self._coordinator.submit(workspace_id, run_id, lab, rows).to_payload()
 
     def compare_trials(
         self,

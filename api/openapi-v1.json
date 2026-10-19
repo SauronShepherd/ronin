@@ -917,7 +917,7 @@
       "post": {
         "operationId": "qualityCheckMlStudioLab",
         "parameters": [{"name": "lab_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["rows"]}}}},
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "properties": {"rows": {"type": "array", "items": {"type": "object"}}}}}}},
         "responses": {"200": {"description": "Quality report", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
       }
     },
@@ -925,7 +925,7 @@
       "post": {
         "operationId": "submitMlStudioExecution",
         "parameters": [{"name": "lab_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["rows"], "properties": {"run_id": {"type": "string", "minLength": 1}, "rows": {"type": "array", "items": {"type": "object"}}}}}}},
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "properties": {"run_id": {"type": "string", "minLength": 1}, "rows": {"type": "array", "items": {"type": "object"}}}}}}},
         "responses": {"200": {"description": "Workspace-scoped execution snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLExecutionSnapshot"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}}
       }
     },
