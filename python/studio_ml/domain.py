@@ -346,6 +346,24 @@ class PipelineIR:
             "parameters": dict(self.parameters),
         }
 
+    def execution_order(self) -> tuple[PipelineNode, ...]:
+        """Return a stable topological order for this immutable graph."""
+
+        remaining = {node.id: node for node in self.nodes}
+        resolved: set[str] = set()
+        ordered: list[PipelineNode] = []
+        while remaining:
+            ready = sorted(
+                node_id for node_id, node in remaining.items() if set(node.depends_on) <= resolved
+            )
+            if not ready:
+                # Construction rejects cycles; retain a defensive guard for mutated inputs.
+                raise ValueError("pipeline graph must be acyclic")
+            for node_id in ready:
+                ordered.append(remaining.pop(node_id))
+                resolved.add(node_id)
+        return tuple(ordered)
+
     def to_json(self) -> str:
         return encode_canonical_json(self.to_payload()).decode("utf-8")
 

@@ -860,8 +860,10 @@ class LocalExecutionCoordinator:
                 raise ValueError(
                     "stored execution request digest does not match its input snapshot"
                 )
-            result: ExperimentResult | ClusteringResult
-            if lab.task == "clustering":
+            execute_pipeline = getattr(self._runner, "execute_pipeline", None)
+            if callable(execute_pipeline):
+                result = execute_pipeline(lab, execution_rows, pipeline)
+            elif lab.task == "clustering":
                 result = self._runner.run_clustering_result(lab, execution_rows)
             else:
                 result = self._runner.run(lab, execution_rows)

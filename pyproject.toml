@@ -60,6 +60,7 @@ dev = [
   "hypothesis>=6.138,<7",
   "mutmut==3.7.0",
   "mypy>=1.17,<2",
+  "pip>=24,<26",
   "playwright>=1.55,<2",
   "pytest>=9.0.3,<10",
   "pytest-asyncio>=1.2,<2",
