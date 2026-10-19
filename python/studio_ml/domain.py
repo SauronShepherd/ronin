@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -178,6 +179,12 @@ class Lab:
     def to_json(self) -> str:
         return encode_canonical_json(self.to_payload()).decode("utf-8")
 
+    @property
+    def digest(self) -> str:
+        """Return the SHA-256 identity of this canonical lab definition."""
+
+        return hashlib.sha256(self.to_json().encode("utf-8")).hexdigest()
+
     @classmethod
     def from_payload(cls, payload: object) -> Lab:
         if not isinstance(payload, Mapping):
@@ -292,6 +299,12 @@ class PipelineIR:
 
     def to_json(self) -> str:
         return encode_canonical_json(self.to_payload()).decode("utf-8")
+
+    @property
+    def digest(self) -> str:
+        """Return the SHA-256 identity of this canonical pipeline definition."""
+
+        return hashlib.sha256(self.to_json().encode("utf-8")).hexdigest()
 
     @classmethod
     def from_payload(cls, payload: object) -> PipelineIR:

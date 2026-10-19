@@ -90,6 +90,7 @@ def execute_scheduler_job(
     notification_now: Instant | str | None = None,
     ml_runner: Any | None = None,
     ml_lab: Any | None = None,
+    ml_pipeline: Any | None = None,
     ml_rows: Any | None = None,
     genai_runner: Any | None = None,
     semantic_refresh_runner: Any | None = None,
@@ -245,22 +246,55 @@ def execute_scheduler_job(
             notification={"notification_id": intent.id, "delivery_id": delivery_id},
         )
     if job.target == "ml.run":
-        if ml_runner is None or ml_lab is None or ml_rows is None:
-            raise UnsupportedSchedulerWorkload("ml.run requires runner, lab, and rows")
+        if ml_runner is None or ml_lab is None or ml_pipeline is None or ml_rows is None:
+            raise UnsupportedSchedulerWorkload("ml.run requires runner, lab, pipeline, and rows")
         try:
             payload = json.loads(job.parameters_json)
-            if not all(
-                isinstance(payload.get(key), str) and payload[key].strip()
-                for key in ("lab_id", "dataset_ref")
-            ):
+            lab_id = payload["lab_id"]
+            dataset_ref = payload["dataset_ref"]
+            pipeline_digest = payload["pipeline_digest"]
+            if not all(isinstance(value, str) and value.strip() for value in (lab_id, dataset_ref)):
                 raise ValueError("missing ML identifiers")
-        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            if (
+                not isinstance(pipeline_digest, str)
+                or len(pipeline_digest) != 64
+                or any(char not in "0123456789abcdef" for char in pipeline_digest)
+            ):
+                raise ValueError("invalid ML pipeline digest")
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise UnsupportedSchedulerWorkload("ml.run parameters are invalid") from exc
+        if getattr(ml_lab, "id", None) != lab_id:
+            raise UnsupportedSchedulerWorkload("ml.run lab does not match the planned lab id")
+        lab_digest = getattr(ml_lab, "digest", None)
+        pipeline_parameters = getattr(ml_pipeline, "parameters", None)
+        if not isinstance(pipeline_parameters, tuple):
+            raise UnsupportedSchedulerWorkload(
+                "ml.run pipeline does not pin the current lab definition"
+            )
+        try:
+            pinned_lab_digest = dict(pipeline_parameters)["lab_digest"]
+        except (KeyError, TypeError, ValueError) as exc:
+            raise UnsupportedSchedulerWorkload(
+                "ml.run pipeline does not pin the current lab definition"
+            ) from exc
+        if not isinstance(lab_digest, str) or pinned_lab_digest != lab_digest:
+            raise UnsupportedSchedulerWorkload(
+                "ml.run pipeline does not pin the current lab definition"
+            )
+        if getattr(ml_pipeline, "digest", None) != pipeline_digest:
+            raise UnsupportedSchedulerWorkload(
+                "ml.run pipeline digest does not match the planned pipeline"
+            )
         result = ml_runner.run(ml_lab, ml_rows)
         to_payload = getattr(result, "to_payload", None)
         if not callable(to_payload):
             raise UnsupportedSchedulerWorkload("ML runner returned an invalid result")
-        return SchedulerWorkloadResult(family="ml", ml=to_payload())
+        ml_result = to_payload()
+        if not isinstance(ml_result, dict):
+            raise UnsupportedSchedulerWorkload("ML runner returned an invalid result")
+        return SchedulerWorkloadResult(
+            family="ml", ml={**ml_result, "pipeline_digest": pipeline_digest}
+        )
     if job.target == "genai.run":
         if genai_runner is None:
             raise UnsupportedSchedulerWorkload("genai.run requires an injected genai_runner")
