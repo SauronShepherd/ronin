@@ -5,10 +5,10 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-19. The tracked source is based on
-`main@4365493`; PR #430 is merged and its exact-head checks plus all six
+`main@4686f1b`; PRs #430 and #431 are merged and their exact-head checks plus all six
 post-merge workflows passed. Untracked qualification output directories are not
 release evidence.
-**Observed source head:** `43654932b573a8e84339095323ed8a424a21cb23` (2026-10-19).
+**Observed source head:** `4686f1b34efb271b603dbfb131cbe4f2476c644f` (2026-10-19).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are

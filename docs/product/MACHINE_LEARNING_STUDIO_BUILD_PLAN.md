@@ -303,7 +303,7 @@ La suite focalizada ML, HTTP, composición local y PostgreSQL pasó **139/139 en
 
 ## 18. Candidato: lectura de datasets gobernados por AssetRef
 
-**Progreso de este slice: 100% (8/8 criterios técnicos); integrado y cualificado exact-head en `main@43654932b573a8e84339095323ed8a424a21cb23`.**
+**Progreso del resolver AssetRef integrado: 100% (8/8 criterios, cualificado en `main@43654932b573a8e84339095323ed8a424a21cb23`).** **Corrección de límites inline en curso: 100% (9/9 criterios técnicos locales); cualificación exact-head pendiente.**
 
 | Criterio técnico | Evidencia |
 | --- | --- |
@@ -312,11 +312,12 @@ La suite focalizada ML, HTTP, composición local y PostgreSQL pasó **139/139 en
 | Verificar `artifact_ref`, `media_type`, `content_digest` y bytes SHA-256 | Casos negativos de referencia y digest; round-trip real con `LocalArtifactStore`. |
 | Leer CSV/JSONL UTF-8 de forma estricta | Casos de headers, anchura, JSON inválido/no estándar, objetos y entrada vacía. |
 | Aplicar límites de bytes, filas y columnas | Pruebas de límites y cobertura branch del resolver. |
+| Aplicar los mismos límites a filas inline | `tests/test_ml_datasets.py` verifica filas, columnas, bytes, claves y valores canónicos. |
 | Usar el snapshot al omitir filas en quality y ejecución síncrona/asíncrona | Test de plugin recorre los tres endpoints y compara filas entregadas. |
 | Inyectar catálogo y artefactos en la composición local | `tests/test_local_composed.py` confirma los adaptadores SQLite y el artifact store compartido. |
 | Documentar el contrato y request opcional de filas | `tests/test_openapi_snapshot.py` y snapshot OpenAPI actualizado. |
 
-La lectura y la ejecución asíncrona admiten hasta 64 MiB para el request canónico, 100000 filas y 1024 columnas. En ejecuciones durables, los inputs que superarían 1 MiB se guardan en `ArtifactStore`; el Job conserva sólo la referencia y metadatos del digest. Al reclamar el Job, el worker verifica referencia, tamaño y SHA-256, y el coordinador vuelve a comprobar el digest canónico del request antes de ejecutar. Las pruebas cubren reabrir SQLite entre submit y claim, ejecutar una solicitud >1 MiB con el coordinador durable y el recorrido de composición local AssetRef→Job→ArtifactStore→runner. Los bodies HTTP inline siguen sujetos al límite de transporte de 1 MiB; los datasets mayores llegan por el `AssetRef` fijado en el Lab. El PR [#430](https://github.com/SauronShepherd/ronin/pull/430) se integró con squash en `main@43654932b573a8e84339095323ed8a424a21cb23`; CI, Docker qualification (8m50s), Web, Security, Release y Status consistency pasaron exact-head post-merge. El compiler/runner global permanece abierto y no se afirma cualificación de release.
+La lectura, la ejecución asíncrona y las filas inline respetan 64 MiB, 100000 filas y 1024 columnas; los cuerpos HTTP inline además tienen el límite de transporte de 1 MiB. Las filas inline deben usar claves string no vacías, sin espacios periféricos, y valores JSON canónicos. En ejecuciones durables, los inputs que superarían 1 MiB se guardan en `ArtifactStore`; el Job conserva sólo la referencia y metadatos del digest. Al reclamar el Job, el worker verifica referencia, tamaño y SHA-256, y el coordinador vuelve a comprobar el digest canónico del request antes de ejecutar. Las pruebas cubren reabrir SQLite entre submit y claim, ejecutar una solicitud >1 MiB con el coordinador durable y el recorrido de composición local AssetRef→Job→ArtifactStore→runner. El PR [#430](https://github.com/SauronShepherd/ronin/pull/430) se integró con squash en `main@43654932b573a8e84339095323ed8a424a21cb23`; CI, Docker qualification (8m50s), Web, Security, Release y Status consistency pasaron exact-head post-merge. El compiler/runner global permanece abierto y no se afirma cualificación de release.
 
 La composición local inyecta el catálogo SQLite o, en el perfil PostgreSQL, el store PostgreSQL compartido que implementa el contrato de catálogo; ambos perfiles inyectan el mismo `ArtifactStore` usado para materializar los archivos locales. Las pruebas cubren CSV/JSONL, aislamiento por workspace, digest y estructuras inválidas. Este incremento no declara cerrado el compiler/runner global: quedan la integración de snapshots en pipelines/reintentos, el contrato de features, algoritmos adicionales, MLflow/serving de red, journeys E2E y cualificación de producción. P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
 

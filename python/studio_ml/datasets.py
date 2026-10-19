@@ -11,6 +11,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from studio_core import AssetRef, WorkspaceId
+from studio_core.canonical_json import encode as encode_canonical_json
 from studio_storage.ports import ArtifactStore, CatalogStore
 
 MAX_DATASET_BYTES = 64 * 1024 * 1024
@@ -139,7 +140,23 @@ def resolve_lab_rows(
             isinstance(row, Mapping) for row in supplied_rows
         ):
             raise ValueError("ML rows must be an array of objects")
-        return [dict(row) for row in supplied_rows]
+        if len(supplied_rows) > MAX_DATASET_ROWS:
+            raise ValueError("ML dataset exceeds the 100000 row limit")
+        rows = [dict(row) for row in supplied_rows]
+        columns: set[str] = set()
+        for row in rows:
+            if not all(isinstance(key, str) and key and key == key.strip() for key in row):
+                raise ValueError("ML row keys must be non-empty trimmed strings")
+            columns.update(row)
+            if len(columns) > MAX_DATASET_COLUMNS:
+                raise ValueError("ML dataset exceeds the 1024 column limit")
+        try:
+            encoded_rows = encode_canonical_json(rows)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("ML rows must contain canonical JSON values") from exc
+        if len(encoded_rows) > MAX_DATASET_BYTES:
+            raise ValueError("ML dataset exceeds the 64 MiB limit")
+        return rows
     if resolver is None:
         raise DatasetReferenceError("ML dataset catalog and artifact stores are unavailable")
     return resolver.resolve(workspace_id, lab.dataset)
