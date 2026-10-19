@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@69a3ddae5c5b479f4cd0988d88e1ff0b1ca25b22` (2026-10-18). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@35072ef4d1940842076814d34a240869ebf48065` (2026-10-19). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Progreso verificable
 
