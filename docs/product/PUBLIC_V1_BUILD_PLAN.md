@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@35072ef4d1940842076814d34a240869ebf48065` (2026-10-19). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@e4ddf182fca00a8861140fd1664590d027092b51` (2026-10-19). Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
 
 ## Progreso verificable
 
@@ -179,6 +179,16 @@ El PR [#423](https://github.com/SauronShepherd/ronin/pull/423) fijó el digest c
 La revisión del adaptador webhook confirmó el remanente T12′: se rechazaban redirects, pero una URL HTTPS podía resolver a loopback, redes privadas, link-local u otras direcciones no públicas. El candidato `7f13aadc8bb7f811ceb213629f2947c7dcf7eb92` valida todas las respuestas DNS, rechaza el conjunto completo si alguna dirección no es global y conecta únicamente a las IP verificadas, conservando validación TLS por hostname y deshabilitando proxies ambientales que eludirían el pinning. También rechaza puertos malformados. Los tests comprueban loopback, respuestas DNS mixtas, conexión a la IP exacta verificada y un POST HTTPS exitoso sobre transporte simulado, además de los límites y comportamiento existentes del webhook.
 
 La suite focalizada pasó **53 tests localmente y 53/53 en Docker/Python 3.12**; la cobertura por línea del adaptador webhook llegó a **84%** (con branch coverage activada). Ruff, formato, mypy focalizado y `git diff --check` pasan. El build plan permanece abierto para conformance amplia de scheduler/operators y qualification de proveedores SMTP/HTTPS autorizados; el servidor HTTPS del test es simulado y no cuenta como certificación externa. El progreso release-qualified sigue en **0% (0/14)**.
+
+### Reconciliación exact-head tras PR #424 (2026-10-19)
+
+El PR [#424](https://github.com/SauronShepherd/ronin/pull/424) cerró el remanente DNS→red privada del webhook: la ejecución rechaza respuestas DNS no públicas y conecta sólo a las IP verificadas, conserva hostname TLS, bloquea redirects y no usa proxies ambientales que eludirían el pinning. La suite enfocada pasó **53/53** en Docker/Python 3.12; CI 3.11/3.12, Docker qualification (**7m32s**), gates, seguridad, calidad y ledgers pasaron. El squash quedó en `main@e4ddf182fca00a8861140fd1664590d027092b51`; los seis workflows post-merge exact-head pasaron, con Docker en **8m40s**. Se eliminó la rama de trabajo. La certificación de endpoints externos continúa abierta.
+
+### Candidato actual: digest de pipeline y laboratorio para `ml.run`
+
+La conformance reveló que el bridge generaba `pipeline_digest` para `ml.run`, pero el worker no lo validaba ni lo conservaba como evidencia; además, el digest del pipeline compilado omitía identidad de features y dataset del Lab. El candidato `79e847fbc9031443e663326167144275ad51178e` añade SHA-256 canónico a `PipelineIR` y `Lab`, incorpora el digest completo de Lab al IR, y en el adapter compara el digest planificado, el laboratorio activo y el digest persistido antes de llamar al runner. La evidencia del resultado incluye `pipeline_digest`; los tests prueban identidad canónica y que los cambios de pipeline o Lab se rechazan sin ejecutar el runner.
+
+Las suites focalizadas de scheduler/ML/worker pasan **58/58 localmente y 58/58 en Docker/Python 3.12** (con Git instalado como en la imagen de runtime). Ruff, formato, mypy focalizado, generador/validador del ledger y `git diff --check` pasan. El primer intento con `python:3.12-slim` sin Git no representaba el runtime del worker; la repetición cualificada añadió esa dependencia explícitamente. P5 y el progreso release-qualified siguen parciales en **0% (0/14)**.
 
 El PR [#402](https://github.com/SauronShepherd/ronin/pull/402) integró `PostgresSchedulerSnapshotStore` con task attempts/pools persistidos, reclaim transaccional de leases vencidos, admisión con dependencias/concurrencia/pools, heartbeat y finalización protegidos por owner/token y vencimiento. El candidato `830a87d469d51df3f07fc01cd9adf344d9a98189` pasó CI 3.11/3.12, el gate Docker con PostgreSQL y cobertura storage, Docker real (**7m30s**), `ledgers`, seguridad y checks restantes; `mutation` quedó skipped. El merge squash es `main@0ccb5fdd68b8849f860c7ffe9ef2526e4ec9b3e4`. La integración Docker local con PostgreSQL 16 pasó **14 tests**, el módulo `postgres_scheduler.py` midió **81%** de cobertura de línea, Ruff y mypy focalizado pasan. CI excluye este adaptador sólo del agregado de cobertura sin servicio; el gate Docker per-file exige el piso de 80% con PostgreSQL activo.
 
