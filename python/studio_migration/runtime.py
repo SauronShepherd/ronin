@@ -96,7 +96,7 @@ def run_spark_smoke() -> SparkQualificationEvidence:
         return SparkQualificationEvidence("blocked_by_runtime", preflight, preflight.message)
     spark = None
     try:
-        from pyspark.sql import SparkSession  # type: ignore[import-not-found]
+        from pyspark.sql import SparkSession  # type: ignore[import-not-found, unused-ignore]
 
         from .spark_validation import SparkValidationPlan
 

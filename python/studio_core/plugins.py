@@ -18,6 +18,10 @@ class PluginError(RuntimeError):
     """Base error raised while discovering or composing plugins."""
 
 
+class PluginRouteConflict(PluginError):
+    """A plugin route request conflicts with an existing durable resource."""
+
+
 class PluginValidationError(PluginError):
     """A plugin manifest or contribution is invalid."""
 

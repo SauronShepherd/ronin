@@ -190,21 +190,25 @@ class PluginHost:
         return self.states
 
     def stop(self) -> None:
-        if self.plan is not None and self.states:
-            self.manager.stop(self.plan)
-            self.states = tuple(
-                PluginRecord(
-                    record.manifest,
-                    record.plugin,
-                    record.source,
-                    PluginState.STOPPED,
-                    record.error,
-                    record.distribution,
-                    record.distribution_version,
-                    record.artifact_hash,
-                )
-                for record in self.states
+        if self.plan is None or (
+            self.states and all(record.state is PluginState.STOPPED for record in self.states)
+        ):
+            return
+        self.manager.stop(self.plan)
+        records = self.states or self.plan.records
+        self.states = tuple(
+            PluginRecord(
+                record.manifest,
+                record.plugin,
+                record.source,
+                PluginState.STOPPED,
+                record.error,
+                record.distribution,
+                record.distribution_version,
+                record.artifact_hash,
             )
+            for record in records
+        )
 
     def diagnostics(self) -> tuple[dict[str, str | None], ...]:
         records = self.states if self.states else (self.plan.records if self.plan else ())

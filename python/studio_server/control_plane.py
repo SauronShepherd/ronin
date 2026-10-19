@@ -54,6 +54,7 @@ from studio_core.environments import (
     ProjectEnvironmentBindings,
 )
 from studio_core.ontology import KnowledgeObjectRef
+from studio_core.plugins import PluginRouteConflict
 from studio_core.scheduler_events import EventTriggerDefinition, SchedulerEventId
 from studio_data_engineering import PipelineRevisionRecord, SdpProjectSource
 from studio_execution import (
@@ -978,12 +979,22 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
     def _handle_failure(self, exc: Exception) -> None:
         if isinstance(
             exc,
-            (WorkspaceServiceNotFound, EnvironmentServiceNotFound, ConnectionServiceNotFound),
+            (
+                WorkspaceServiceNotFound,
+                EnvironmentServiceNotFound,
+                ConnectionServiceNotFound,
+                KeyError,
+            ),
         ):
             self._error(HTTPStatus.NOT_FOUND, "not_found", "requested resource does not exist")
         elif isinstance(
             exc,
-            (WorkspaceServiceConflict, EnvironmentServiceConflict, ConnectionServiceConflict),
+            (
+                WorkspaceServiceConflict,
+                EnvironmentServiceConflict,
+                ConnectionServiceConflict,
+                PluginRouteConflict,
+            ),
         ):
             self._error(HTTPStatus.CONFLICT, "conflict", str(exc))
         elif isinstance(exc, TimeoutError):

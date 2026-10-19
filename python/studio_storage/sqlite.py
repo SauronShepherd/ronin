@@ -208,7 +208,9 @@ class _SqliteLifecycleStore:
         finally:
             connection.close()
 
-    def request_cancel(self, job_id: JobId, *, now: Instant | str) -> Job:
+    def request_cancel(
+        self, job_id: JobId, *, now: Instant | str, fence_active_attempt: bool = False
+    ) -> Job:
         now = Instant(now)
         connection = self._connect()
         try:
@@ -229,6 +231,25 @@ class _SqliteLifecycleStore:
                 connection.execute(
                     "UPDATE runs SET state='cancelled',updated_at=?,row_version=row_version+1 "
                     "WHERE job_id=? AND state='pending'",
+                    (now, str(job_id)),
+                )
+                connection.execute(
+                    "UPDATE jobs SET state='cancelled',updated_at=?,row_version=row_version+1 "
+                    "WHERE job_id=?",
+                    (now, str(job_id)),
+                )
+            elif fence_active_attempt:
+                connection.execute(
+                    "UPDATE attempts SET state='cancelled',failure_code='cancelled',"
+                    "lease_owner=NULL,lease_token=NULL,lease_expires_at=NULL,updated_at=?,"
+                    "row_version=row_version+1 WHERE attempt_id IN ("
+                    "SELECT a.attempt_id FROM attempts a JOIN runs r ON r.run_id=a.run_id "
+                    "WHERE r.job_id=? AND a.state IN ('leased','running'))",
+                    (now, str(job_id)),
+                )
+                connection.execute(
+                    "UPDATE runs SET state='cancelled',updated_at=?,row_version=row_version+1 "
+                    "WHERE job_id=? AND state IN ('pending','leased','running','cancelling')",
                     (now, str(job_id)),
                 )
                 connection.execute(
@@ -269,6 +290,7 @@ class _SqliteLifecycleStore:
         attempt_id: AttemptId,
         lease_seconds: int,
         now: Instant | str,
+        target: str | None = None,
     ) -> ClaimedRun | None:
         if lease_seconds < 1:
             raise ValueError("lease_seconds must be positive")
@@ -279,9 +301,9 @@ class _SqliteLifecycleStore:
             run_row = connection.execute(
                 "SELECT r.* FROM runs r JOIN jobs j ON j.job_id=r.job_id "
                 "WHERE r.state='pending' AND r.not_before<=? "
-                "AND j.state IN ('queued','running') "
+                "AND j.state IN ('queued','running') AND (? IS NULL OR j.target=?) "
                 "ORDER BY r.not_before,r.run_id LIMIT 1",
-                (now,),
+                (now, target, target),
             ).fetchone()
             if run_row is None:
                 connection.execute("COMMIT")

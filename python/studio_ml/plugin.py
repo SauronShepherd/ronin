@@ -15,7 +15,7 @@ from studio_storage.ports import ArtifactStore
 from .backends import default_backends
 from .domain import Lab
 from .optimization import SearchSpec, Trial, propose_bayesian_candidates, rank_trials
-from .orchestration import ExecutionStore, LocalExecutionCoordinator
+from .orchestration import JobStoreExecutionStore, LocalExecutionCoordinator
 from .ports import MLLabStore
 from .quality import profile_and_validate
 from .runner import LocalExperimentRunner
@@ -66,12 +66,17 @@ class MachineLearningStudioPlugin:
         if store is None:
             store = InMemoryMLLabStore()
         self._labs = LabService(cast(MLLabStore, store))
-        execution_store = context.services.get("ml_execution_store")
-        if execution_store is not None:
-            self._coordinator.close()
-            self._coordinator = LocalExecutionCoordinator(
-                self._runner, store=cast(ExecutionStore, execution_store)
-            )
+        coordinator_runner = self._coordinator._runner
+        self._coordinator.close()
+        execution_service = context.services.get("ml_execution_service")
+        execution_store = (
+            JobStoreExecutionStore(cast(Any, execution_service))
+            if execution_service is not None
+            else None
+        )
+        self._coordinator = LocalExecutionCoordinator(
+            coordinator_runner, store=execution_store, autostart=False
+        )
         self._registry = cast(MLRegistryStore | None, context.services.get("ml_registry"))
         self._artifacts = cast(ArtifactStore | None, context.services.get("artifact_store"))
         context.contributions.add_ui(
@@ -273,7 +278,7 @@ class MachineLearningStudioPlugin:
         )
 
     def startup(self) -> None:
-        pass
+        self._coordinator.start()
 
     def shutdown(self) -> None:
         self._coordinator.close()
@@ -605,14 +610,24 @@ class MachineLearningStudioPlugin:
             raise ValueError("lab_id is required")
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
-        if not isinstance(body, dict) or not isinstance(body.get("rows"), list):
-            raise ValueError("execution body must contain rows array")
+        if (
+            not isinstance(body, dict)
+            or set(body) - {"run_id", "rows"}
+            or not isinstance(body.get("rows"), list)
+        ):
+            raise ValueError("execution body must contain rows and optional run_id")
         if not all(isinstance(row, dict) for row in body["rows"]):
             raise ValueError("execution rows must be objects")
+        run_id = body.get("run_id", f"run-{lab_id}")
+        if (
+            not isinstance(run_id, str)
+            or not run_id
+            or run_id != run_id.strip()
+            or len(run_id) > 256
+        ):
+            raise ValueError("execution run_id must be 1 to 256 characters of trimmed text")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
-        return self._coordinator.submit(
-            str(body.get("run_id", f"run-{lab_id}")), lab, body["rows"]
-        ).to_payload()
+        return self._coordinator.submit(workspace_id, run_id, lab, body["rows"]).to_payload()
 
     def compare_trials(
         self,
@@ -796,11 +811,17 @@ class MachineLearningStudioPlugin:
             response["registered"] = registered
         return response
 
-    def execution_status(self, run_id: str, **_kwargs: Any) -> dict[str, object]:
-        return self._coordinator.status(run_id).to_payload()
+    def execution_status(
+        self, run_id: str, workspace_id: str | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        return self._coordinator.status(workspace_id, run_id).to_payload()
 
-    def cancel_execution(self, run_id: str, **_kwargs: Any) -> dict[str, object]:
-        return self._coordinator.cancel(run_id).to_payload()
+    def cancel_execution(
+        self, run_id: str, workspace_id: str | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        return self._coordinator.cancel(workspace_id, run_id).to_payload()
 
     def create_experiment(self, *_args: Any, **_kwargs: Any) -> dict[str, str]:
         return {"status": "accepted", "contract": "ml-studio/experiment/v1"}

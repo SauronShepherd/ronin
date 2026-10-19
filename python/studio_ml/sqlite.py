@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import json
 import sqlite3
 from pathlib import Path
 
@@ -12,7 +11,6 @@ from studio_orchestrator import Instant
 from studio_storage.sqlite import open_database
 
 from .domain import FeatureDefinition, Lab, PipelineIR
-from .orchestration import ExecutionSnapshot, ExecutionStore
 from .ports import MLLabStore
 from .services import MLLabConflict
 
@@ -30,9 +28,6 @@ class SqliteMLLabStore(MLLabStore):
             )
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS ml_studio_pipelines (workspace_id TEXT NOT NULL, lab_id TEXT NOT NULL, pipeline_json TEXT NOT NULL, PRIMARY KEY(workspace_id, lab_id))"
-            )
-            connection.execute(
-                "CREATE TABLE IF NOT EXISTS ml_studio_executions (run_id TEXT PRIMARY KEY, state TEXT NOT NULL, error TEXT, result_json TEXT)"
             )
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS ml_studio_features (workspace_id TEXT NOT NULL, feature_id TEXT NOT NULL, version INTEGER NOT NULL, feature_json TEXT NOT NULL, PRIMARY KEY(workspace_id, feature_id, version))"
@@ -173,50 +168,4 @@ class SqliteMLLabStore(MLLabStore):
             connection.close()
 
 
-class SqliteExecutionStore(ExecutionStore):
-    """Durable execution lifecycle store; result payload is retained for audit."""
-
-    def __init__(self, path: Path) -> None:
-        self._path = path
-        connection = open_database(path)
-        try:
-            connection.execute(
-                "CREATE TABLE IF NOT EXISTS ml_studio_executions (run_id TEXT PRIMARY KEY, state TEXT NOT NULL, error TEXT, result_json TEXT)"
-            )
-        finally:
-            connection.close()
-
-    def put(self, snapshot: ExecutionSnapshot) -> None:
-        connection = open_database(self._path)
-        try:
-            payload = (
-                snapshot.result.to_payload()
-                if snapshot.result is not None
-                else snapshot.result_payload
-            )
-            result = None if payload is None else json.dumps(payload, sort_keys=True)
-            connection.execute(
-                "INSERT OR REPLACE INTO ml_studio_executions(run_id,state,error,result_json) VALUES (?,?,?,?)",
-                (snapshot.run_id, snapshot.state, snapshot.error, result),
-            )
-        finally:
-            connection.close()
-
-    def get(self, run_id: str) -> ExecutionSnapshot | None:
-        connection = open_database(self._path)
-        try:
-            row = connection.execute(
-                "SELECT run_id,state,error,result_json FROM ml_studio_executions WHERE run_id=?",
-                (run_id,),
-            ).fetchone()
-            if row is None:
-                return None
-            result_payload = json.loads(row["result_json"]) if row["result_json"] else None
-            return ExecutionSnapshot(
-                row["run_id"], row["state"], error=row["error"], result_payload=result_payload
-            )
-        finally:
-            connection.close()
-
-
-__all__ = ["SqliteExecutionStore", "SqliteMLLabStore"]
+__all__ = ["SqliteMLLabStore"]

@@ -925,8 +925,22 @@
       "post": {
         "operationId": "submitMlStudioExecution",
         "parameters": [{"name": "lab_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["rows"]}}}},
-        "responses": {"200": {"description": "Execution snapshot", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["rows"], "properties": {"run_id": {"type": "string", "minLength": 1}, "rows": {"type": "array", "items": {"type": "object"}}}}}}},
+        "responses": {"200": {"description": "Workspace-scoped execution snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLExecutionSnapshot"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/ml-studio/executions/{run_id}": {
+      "get": {
+        "operationId": "getMlStudioExecution",
+        "parameters": [{"name": "run_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
+        "responses": {"200": {"description": "Workspace-scoped ML execution snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLExecutionSnapshot"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/ml-studio/executions/{run_id}/cancel": {
+      "post": {
+        "operationId": "cancelMlStudioExecution",
+        "parameters": [{"name": "run_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
+        "responses": {"200": {"description": "Workspace-scoped cancelled execution snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLExecutionSnapshot"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
       }
     },
     "/v1/ml-studio/labs/{lab_id}/compare": {
@@ -1013,6 +1027,15 @@
           "backend_id": {"type": "string", "minLength": 1},
           "seed": {"type": "integer", "minimum": 0},
           "test_fraction": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1}
+        }
+      },
+      "MLExecutionSnapshot": {
+        "type": "object", "additionalProperties": false, "required": ["run_id", "state"],
+        "properties": {
+          "run_id": {"type": "string", "minLength": 1},
+          "state": {"type": "string", "enum": ["queued", "running", "succeeded", "failed", "cancelled"]},
+          "result": {"type": "object"},
+          "error": {"type": "string"}
         }
       },
       "EnvironmentDefinition": {

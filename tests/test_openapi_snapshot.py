@@ -31,6 +31,31 @@ def test_ml_lab_openapi_schema_matches_v1_contract() -> None:
     )
 
 
+def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() -> None:
+    import json
+
+    root = Path(__file__).parents[1]
+    document = json.loads((root / "api/openapi-v1.json").read_text(encoding="utf-8"))
+    get_operation = document["paths"]["/v1/ml-studio/executions/{run_id}"]["get"]
+    cancel_operation = document["paths"]["/v1/ml-studio/executions/{run_id}/cancel"]["post"]
+    for operation in (get_operation, cancel_operation):
+        workspace = next(
+            parameter
+            for parameter in operation["parameters"]
+            if parameter["name"] == "workspace_id"
+        )
+        assert workspace["in"] == "query"
+        assert workspace["required"] is True
+        assert workspace["schema"]["minLength"] == 1
+    submit = document["paths"]["/v1/ml-studio/labs/{lab_id}/executions"]["post"]
+    request_schema = submit["requestBody"]["content"]["application/json"]["schema"]
+    assert request_schema["additionalProperties"] is False
+    assert request_schema["required"] == ["rows"]
+    assert request_schema["properties"]["run_id"]["minLength"] == 1
+    assert request_schema["properties"]["rows"]["type"] == "array"
+    assert "409" in submit["responses"]
+
+
 def test_openapi_snapshot_rejects_drift(tmp_path: Path) -> None:
     document = tmp_path / "openapi.json"
     snapshot = tmp_path / "openapi.sha256"

@@ -116,8 +116,17 @@ class BoundedAsyncJobStore:
             )
         )
 
-    async def request_cancel(self, job_id: JobId, *, now: Instant) -> Job:
-        return await self._call(partial(self._store.request_cancel, job_id, now=now))
+    async def request_cancel(
+        self, job_id: JobId, *, now: Instant, fence_active_attempt: bool = False
+    ) -> Job:
+        return await self._call(
+            partial(
+                self._store.request_cancel,
+                job_id,
+                now=now,
+                fence_active_attempt=fence_active_attempt,
+            )
+        )
 
     async def claim_next_run(
         self,
@@ -127,6 +136,7 @@ class BoundedAsyncJobStore:
         attempt_id: AttemptId,
         lease_seconds: int,
         now: Instant,
+        target: str | None = None,
     ) -> ClaimedRun | None:
         return await self._call(
             partial(
@@ -136,6 +146,7 @@ class BoundedAsyncJobStore:
                 attempt_id=attempt_id,
                 lease_seconds=lease_seconds,
                 now=now,
+                target=target,
             )
         )
 

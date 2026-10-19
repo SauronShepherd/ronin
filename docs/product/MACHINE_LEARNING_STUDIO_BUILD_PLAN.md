@@ -287,3 +287,17 @@ No cambiar campos de `ronin.ml-lab/v1` en sitio. Crear v2 si se necesita alterar
 
 Machine Learning Studio está listo cuando un nuevo backend puede implementarse siguiendo el SDK sin modificar la UI ni los servicios de dominio, cuando un Lab exportado puede reproducirse en otra instalación con los mismos snapshots, cuando ningún artefacto no confiable se carga en el API process, cuando todas las transiciones de modelo quedan auditadas y cuando el camino de usuario completo funciona offline con evidencia verificable.
 
+## 17. Estado del blocker RON-ML-002
+
+**Progreso de implementación de RON-ML-002: 100% (5/5 criterios técnicos verificados).** Este porcentaje corresponde al blocker del coordinador ML y no al Definition of Done global de Machine Learning Studio.
+
+| Criterio | Estado y evidencia |
+| --- | --- |
+| Aislar el mismo `run_id` entre workspaces | Verificado con IDs durables derivados de workspace + run y prueba SQLite compartida. |
+| Reintentar sin crear otro Job | Verificado al reabrir SQLite: el Job terminal se devuelve por idempotency key y el recuento permanece en uno. |
+| Impedir escrituras después de cancelar | Verificado en SQLite y PostgreSQL 16; la cancelación fuerza el intento terminal y limpia su lease antes de rechazar el write tardío. |
+| Recuperar tras cierre/reapertura sin quedar bloqueado | Verificado con un Job pendiente, reapertura del servicio y finalización por el coordinador. |
+| Usar el ciclo canónico del host sin duplicar el scheduler | La composición local inyecta `DurableExecutionService`; ML filtra `target=ml-studio.execute` y persiste resultados como checkpoints de `JobStore`. |
+
+La suite focalizada ML, HTTP, composición local y PostgreSQL pasó **139/139 en Windows** y **137/137 en Docker/Python 3.12** (dos tests condicionados por plataforma no se recogen en Linux). Las cinco pruebas del módulo PostgreSQL pasaron en Docker contra PostgreSQL 16; la carrera claim-cancel incluye 12 iteraciones. Ruff, formato, mypy completo de producto y la puerta de arquitectura pasan. Sigue pendiente publicar este candidato, ejecutar CI y cualificación exact-head y fusionar por el flujo protegido. El avance release-qualified global continúa en **0% (0/14)** hasta completar esos gates.
+

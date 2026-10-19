@@ -122,7 +122,9 @@ class InMemoryJobStore:
             next_cursor = str(next_offset) if next_offset < len(filtered) else None
             return Page(items, next_cursor)
 
-    def request_cancel(self, job_id: JobId, *, now: Instant | str) -> Job:
+    def request_cancel(
+        self, job_id: JobId, *, now: Instant | str, fence_active_attempt: bool = False
+    ) -> Job:
         now = Instant(now)
         with self._lock:
             job = self._jobs[job_id]
@@ -133,6 +135,33 @@ class InMemoryJobStore:
                 and self._runs[attempt.run_id].job_id == job_id
                 for attempt in self._attempts.values()
             )
+            if active and fence_active_attempt:
+                for attempt_id, attempt in tuple(self._attempts.items()):
+                    if (
+                        attempt.state in {AttemptState.LEASED, AttemptState.RUNNING}
+                        and self._runs[attempt.run_id].job_id == job_id
+                    ):
+                        self._attempts[attempt_id] = attempt.transition(
+                            AttemptState.CANCELLED, now=now, failure_code="cancelled"
+                        )
+                        run = self._runs[attempt.run_id]
+                        cancelling_run = (
+                            run.transition(RunState.CANCELLING, now=now)
+                            if run.state in {RunState.LEASED, RunState.RUNNING}
+                            else run
+                        )
+                        self._runs[run.id] = cancelling_run.transition(RunState.CANCELLED, now=now)
+                for run_id, run in tuple(self._runs.items()):
+                    if run.job_id == job_id and run.state is RunState.PENDING:
+                        self._runs[run_id] = run.transition(RunState.CANCELLED, now=now)
+                cancelling_job = (
+                    job.transition(JobState.CANCELLING, now=now)
+                    if job.state is JobState.RUNNING
+                    else job
+                )
+                updated = cancelling_job.transition(JobState.CANCELLED, now=now)
+                self._jobs[job_id] = updated
+                return updated
             if active:
                 updated = job.transition(JobState.CANCELLING, now=now)
                 self._jobs[job_id] = updated
@@ -163,6 +192,7 @@ class InMemoryJobStore:
         attempt_id: AttemptId,
         lease_seconds: int,
         now: Instant | str,
+        target: str | None = None,
     ) -> ClaimedRun | None:
         if lease_seconds < 1:
             raise ValueError("lease_seconds must be positive")
@@ -172,7 +202,9 @@ class InMemoryJobStore:
                 (
                     run
                     for run in self._runs.values()
-                    if run.state is RunState.PENDING and run.not_before <= now
+                    if run.state is RunState.PENDING
+                    and run.not_before <= now
+                    and (target is None or self._jobs[run.job_id].target == target)
                 ),
                 key=lambda run: (run.not_before, str(run.id)),
             )

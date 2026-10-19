@@ -37,8 +37,8 @@ from studio_execution import (
     WorkspaceService,
 )
 from studio_finops import SqliteFinOpsStore
-from studio_ml import PostgresExecutionStore, PostgresMLLabStore
-from studio_ml.sqlite import SqliteExecutionStore, SqliteMLLabStore
+from studio_ml import PostgresMLLabStore
+from studio_ml.sqlite import SqliteMLLabStore
 from studio_orchestrator import Instant
 from studio_plugin_observability import LocalObservabilityBuffer
 from studio_runtime import PluginAuditSink, PluginHost, PluginLock, PluginLockError
@@ -245,11 +245,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
                 if postgres_dsn is not None
                 else SqliteMLLabStore(database, migration_now=now)
             ),
-            "ml_execution_store": (
-                PostgresExecutionStore(postgres_dsn, application_name="ronin-composed-ml-execution")
-                if postgres_dsn is not None
-                else SqliteExecutionStore(database)
-            ),
+            "ml_execution_service": job_service,
             "ml_registry": (
                 PostgresMLStore(postgres_dsn, application_name="ronin-composed-ml-registry")
                 if postgres_dsn is not None

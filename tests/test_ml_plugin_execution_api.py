@@ -33,12 +33,32 @@ def test_submit_and_poll_execution() -> None:
     )
     assert submitted["run_id"] == "async-1"
     deadline = time.time() + 30
-    state = plugin.execution_status("async-1")["state"]
+    state = plugin.execution_status("async-1", workspace_id="ws")["state"]
     while state not in {"succeeded", "failed"} and time.time() < deadline:
         time.sleep(0.01)
-        state = plugin.execution_status("async-1")["state"]
+        state = plugin.execution_status("async-1", workspace_id="ws")["state"]
     assert state == "succeeded"
     plugin._coordinator.close()
+
+
+def test_submit_rejects_run_ids_longer_than_public_limit() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    try:
+        with pytest.raises(ValueError, match="1 to 256 characters"):
+            plugin.submit_execution("ws", "churn", body={"run_id": "x" * 257, "rows": []})
+    finally:
+        plugin._coordinator.close()
 
 
 def test_cancel_execution_route_keeps_cancelled_state_after_runner_error() -> None:
@@ -71,13 +91,19 @@ def test_cancel_execution_route_keeps_cancelled_state_after_runner_error() -> No
             "ws", "churn", body={"run_id": "cancel-api", "rows": [{"x": 1, "target": 1}]}
         )
         assert started.wait(timeout=5), "runner did not start"
-        assert plugin.cancel_execution("cancel-api")["state"] == "cancelled"
+        assert plugin.cancel_execution("cancel-api", workspace_id="ws")["state"] == "cancelled"
 
+        deadline = time.monotonic() + 5
+        while (
+            "ws",
+            "cancel-api",
+        ) not in plugin._coordinator._futures and time.monotonic() < deadline:
+            time.sleep(0.001)
+        future = plugin._coordinator._futures[("ws", "cancel-api")]
         release_failure.set()
-        future = plugin._coordinator._futures["cancel-api"]
         with pytest.raises(ValueError, match="runner failed after cancellation"):
             future.result(timeout=5)
-        assert plugin.execution_status("cancel-api")["state"] == "cancelled"
+        assert plugin.execution_status("cancel-api", workspace_id="ws")["state"] == "cancelled"
     finally:
         release_failure.set()
         plugin._coordinator.close()
