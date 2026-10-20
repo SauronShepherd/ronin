@@ -195,15 +195,23 @@ class PostgresMLStore(PostgresMetadataStore):
         finally:
             connection.close()
 
-    def list_runs(self, workspace_id: WorkspaceId) -> tuple[MLRunRecord, ...]:
+    def list_runs(
+        self, workspace_id: WorkspaceId, *, limit: int | None = None
+    ) -> tuple[MLRunRecord, ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("ML run list limit must be positive")
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
-                cursor.execute(
-                    "SELECT run_json FROM ronin_ml_runs WHERE workspace_id=%s ORDER BY ml_run_id",
-                    (str(workspace_id),),
-                )
+                sql = "SELECT run_json FROM ronin_ml_runs WHERE workspace_id=%s ORDER BY ml_run_id"
+                if limit is not None:
+                    sql += " LIMIT %s"
+                    cursor.execute(sql, (str(workspace_id), limit + 1))
+                else:
+                    cursor.execute(sql, (str(workspace_id),))
                 rows = cursor.fetchall()
+                if limit is not None and len(rows) > limit:
+                    raise ValueError("ML run inventory exceeded its bound")
             return tuple(MLRunRecord.from_json(row["run_json"]) for row in rows)
         finally:
             connection.close()
@@ -285,22 +293,31 @@ class PostgresMLStore(PostgresMetadataStore):
             connection.close()
 
     def list_models(
-        self, workspace_id: WorkspaceId, model_id: ModelId | None = None
+        self,
+        workspace_id: WorkspaceId,
+        model_id: ModelId | None = None,
+        *,
+        limit: int | None = None,
     ) -> tuple[RegisteredModelVersion, ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("model list limit must be positive")
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
                 if model_id is None:
-                    cursor.execute(
-                        "SELECT model_json FROM ronin_ml_models WHERE workspace_id=%s ORDER BY model_id,version",
-                        (str(workspace_id),),
-                    )
+                    sql = "SELECT model_json FROM ronin_ml_models WHERE workspace_id=%s ORDER BY model_id,version"
+                    params: tuple[str, ...] = (str(workspace_id),)
                 else:
-                    cursor.execute(
-                        "SELECT model_json FROM ronin_ml_models WHERE workspace_id=%s AND model_id=%s ORDER BY version",
-                        (str(workspace_id), str(model_id)),
-                    )
+                    sql = "SELECT model_json FROM ronin_ml_models WHERE workspace_id=%s AND model_id=%s ORDER BY version"
+                    params = (str(workspace_id), str(model_id))
+                if limit is not None:
+                    sql += " LIMIT %s"
+                    cursor.execute(sql, (*params, limit + 1))
+                else:
+                    cursor.execute(sql, params)
                 rows = cursor.fetchall()
+                if limit is not None and len(rows) > limit:
+                    raise ValueError("registered model inventory exceeded its bound")
             return tuple(_model_from_json(row["model_json"]) for row in rows)
         finally:
             connection.close()

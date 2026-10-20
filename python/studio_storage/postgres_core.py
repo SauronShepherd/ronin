@@ -377,12 +377,22 @@ class PostgresMetadataStore:
         finally:
             connection.close()
 
-    def list_workspaces(self) -> tuple[Workspace, ...]:
+    def list_workspaces(self, *, limit: int | None = None) -> tuple[Workspace, ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("workspace list limit must be positive")
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM ronin_workspaces ORDER BY workspace_id")
-                return tuple(self._workspace_from_row(row) for row in cursor.fetchall())
+                sql = "SELECT * FROM ronin_workspaces ORDER BY workspace_id"
+                if limit is not None:
+                    sql += " LIMIT %s"
+                    cursor.execute(sql, (limit + 1,))
+                else:
+                    cursor.execute(sql)
+                rows = cursor.fetchall()
+                if limit is not None and len(rows) > limit:
+                    raise ValueError("workspace inventory exceeded its bound")
+                return tuple(self._workspace_from_row(row) for row in rows)
         finally:
             connection.close()
 
@@ -870,18 +880,27 @@ class PostgresMetadataStore:
         finally:
             connection.close()
 
-    def list_assets(self, workspace_id: WorkspaceId) -> tuple[CatalogAsset, ...]:
+    def list_assets(
+        self, workspace_id: WorkspaceId, *, limit: int | None = None
+    ) -> tuple[CatalogAsset, ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("catalog list limit must be positive")
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
-                cursor.execute(
+                sql = (
                     "SELECT definition_json FROM ronin_catalog_assets "
-                    "WHERE workspace_id=%s ORDER BY asset_id",
-                    (str(workspace_id),),
+                    "WHERE workspace_id=%s ORDER BY asset_id"
                 )
-                return tuple(
-                    CatalogAsset.from_json(row["definition_json"]) for row in cursor.fetchall()
-                )
+                if limit is not None:
+                    sql += " LIMIT %s"
+                    cursor.execute(sql, (str(workspace_id), limit + 1))
+                else:
+                    cursor.execute(sql, (str(workspace_id),))
+                rows = cursor.fetchall()
+                if limit is not None and len(rows) > limit:
+                    raise ValueError("catalog asset inventory exceeded its bound")
+                return tuple(CatalogAsset.from_json(row["definition_json"]) for row in rows)
         finally:
             connection.close()
 
@@ -978,17 +997,25 @@ class PostgresMetadataStore:
             connection.close()
 
     def list_revisions(
-        self, workspace_id: WorkspaceId, asset_id: AssetId
+        self, workspace_id: WorkspaceId, asset_id: AssetId, *, limit: int | None = None
     ) -> tuple[AssetRevision, ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("catalog revision list limit must be positive")
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
-                cursor.execute(
+                sql = (
                     "SELECT revision_json FROM ronin_catalog_revisions "
-                    "WHERE workspace_id=%s AND asset_id=%s ORDER BY version",
-                    (str(workspace_id), str(asset_id)),
+                    "WHERE workspace_id=%s AND asset_id=%s ORDER BY version"
                 )
+                if limit is not None:
+                    sql += " LIMIT %s"
+                    cursor.execute(sql, (str(workspace_id), str(asset_id), limit + 1))
+                else:
+                    cursor.execute(sql, (str(workspace_id), str(asset_id)))
                 rows = cursor.fetchall()
+                if limit is not None and len(rows) > limit:
+                    raise ValueError("catalog revision inventory exceeded its bound")
                 return tuple(AssetRevision.from_json(row["revision_json"]) for row in rows)
         finally:
             connection.close()

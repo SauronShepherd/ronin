@@ -335,13 +335,23 @@ class SqliteCatalogStore:
         finally:
             connection.close()
 
-    def list_assets(self, workspace_id: WorkspaceId) -> tuple[CatalogAsset, ...]:
+    def list_assets(
+        self, workspace_id: WorkspaceId, *, limit: int | None = None
+    ) -> tuple[CatalogAsset, ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("catalog list limit must be positive")
         connection = self._connect()
         try:
-            rows = connection.execute(
-                "SELECT definition_json FROM catalog_assets WHERE workspace_id=? ORDER BY asset_id",
-                (str(workspace_id),),
-            ).fetchall()
+            sql = (
+                "SELECT definition_json FROM catalog_assets WHERE workspace_id=? ORDER BY asset_id"
+            )
+            if limit is not None:
+                sql += " LIMIT ?"
+                rows = connection.execute(sql, (str(workspace_id), limit + 1)).fetchall()
+                if len(rows) > limit:
+                    raise ValueError("catalog asset inventory exceeded its bound")
+            else:
+                rows = connection.execute(sql, (str(workspace_id),)).fetchall()
             return tuple(CatalogAsset.from_json(row["definition_json"]) for row in rows)
         finally:
             connection.close()
@@ -489,15 +499,25 @@ class SqliteCatalogStore:
             connection.close()
 
     def list_revisions(
-        self, workspace_id: WorkspaceId, asset_id: AssetId
+        self, workspace_id: WorkspaceId, asset_id: AssetId, *, limit: int | None = None
     ) -> tuple[AssetRevision, ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("catalog revision list limit must be positive")
         connection = self._connect()
         try:
-            rows = connection.execute(
+            sql = (
                 "SELECT revision_json FROM catalog_asset_revisions "
-                "WHERE workspace_id=? AND asset_id=? ORDER BY version",
-                (str(workspace_id), str(asset_id)),
-            ).fetchall()
+                "WHERE workspace_id=? AND asset_id=? ORDER BY version"
+            )
+            if limit is not None:
+                sql += " LIMIT ?"
+                rows = connection.execute(
+                    sql, (str(workspace_id), str(asset_id), limit + 1)
+                ).fetchall()
+                if len(rows) > limit:
+                    raise ValueError("catalog revision inventory exceeded its bound")
+            else:
+                rows = connection.execute(sql, (str(workspace_id), str(asset_id))).fetchall()
             return tuple(AssetRevision.from_json(row["revision_json"]) for row in rows)
         finally:
             connection.close()

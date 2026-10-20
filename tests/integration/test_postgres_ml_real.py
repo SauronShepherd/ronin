@@ -116,7 +116,6 @@ def test_postgres_ml_registry_round_trip_and_conflict_guards() -> None:
             ),
             now=NOW,
         )
-
     model = RegisteredModelVersion(
         ModelId(f"model-{suffix}"),
         ModelVersion("1"),
@@ -272,6 +271,39 @@ def test_postgres_shared_job_store_claim_target_and_cancel_fence() -> None:
         assert status.state == "cancelled"
     finally:
         asyncio.run(service.aclose())
+
+
+def test_postgres_ml_reference_list_limits_fail_closed() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresMLStore(dsn, application_name="ronin-ml-retention-bounds")
+    store.migrate()
+    suffix = uuid4().hex
+    workspace_id = WorkspaceId(f"retention-ws-{suffix}")
+    store.create_workspace(Workspace(workspace_id, "Retention bounds"), now=NOW)
+    experiment = Experiment(ExperimentId(f"retention-exp-{suffix}"), "Retention bounds")
+    store.put_experiment(workspace_id, experiment, now=NOW)
+    dataset_ref = AssetRef(AssetId(f"retention-dataset-{suffix}"), AssetVersion("v1"))
+    store.create_asset(
+        workspace_id,
+        CatalogAsset(dataset_ref.asset_id, "dataset", "Retention dataset"),
+        now=NOW,
+    )
+    store.put_revision(workspace_id, AssetRevision(dataset_ref, content_digest="d" * 64), now=NOW)
+    runs = tuple(
+        MLRunRecord(
+            MLRunId(f"retention-run-{suffix}-{index}"),
+            experiment.id,
+            f"execution://{suffix}/{index}",
+            "revision-a",
+            (dataset_ref,),
+        )
+        for index in range(2)
+    )
+    for run in runs:
+        store.record_run(workspace_id, run, now=NOW)
+    assert store.list_runs(workspace_id, limit=2) == runs
+    with pytest.raises(ValueError, match="ML run inventory exceeded"):
+        store.list_runs(workspace_id, limit=1)
 
 
 def test_postgres_ml_node_checkpoint_survives_service_reopen() -> None:
