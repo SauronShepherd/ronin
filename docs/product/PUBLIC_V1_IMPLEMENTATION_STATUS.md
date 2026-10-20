@@ -5,11 +5,14 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-20. The tracked source is based on
-`main@18b2cde`; PRs #430–#436 are merged. PR #436 makes the fixed six-stage local
-PipelineIR executable in stable topological order; its exact-head checks and all
-six post-merge workflows passed. Untracked qualification output directories are
-not release evidence.
-**Observed source head:** `18b2cdecc1380886edeba2a0ad16305be065fa43` (2026-10-20).
+`main@92165f5`; PRs #430–#439 are merged. PR #436 makes the fixed six-stage local
+PipelineIR executable in stable topological order; PR #438 adds durable checkpoints
+for those stages and PR #439 fixes PostgreSQL keyset pagination and checkpoint-test
+lease cleanup. PR #439 exact-head checks passed, including Docker qualification.
+All six post-merge exact-head workflows on the merged SHA passed, including
+Docker qualification (run 39367136062, completed 2026-10-20 04:07:53Z).
+Untracked qualification output directories are not release evidence.
+**Observed source head:** `92165f5dbf23b6153c62b0150d4e74e300ac1dd8` (2026-10-20).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -17,6 +20,11 @@ release-qualified).** A family counts only after its mandatory Public v1
 journey and applicable provider, security and exact-head evidence are complete.
 All 14 remain partial; this is a release-completion metric, not a measure of
 code already implemented.
+
+**Estimated build-plan implementation progress:** **~60%** across the 14
+capability families, based on implemented source paths and the remaining gaps in
+the capability matrix. This is a rounded engineering estimate, not a task-count
+or release qualification metric.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
 
@@ -30,6 +38,17 @@ evidence.
 
 ## Exact-head qualification snapshot
 
+On `main@92165f5dbf23b6153c62b0150d4e74e300ac1dd8`, post-merge [CI](https://github.com/SauronShepherd/ronin/actions/runs/39367136040),
+[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39367136035),
+[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39367136031),
+[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39367136019)
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39367136046)
+passed. [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39367136062)
+also passed at 04:07:53Z. PR [#439](https://github.com/SauronShepherd/ronin/pull/439)
+passed its exact-head Docker qualification in 8m40s, including PostgreSQL-backed
+coverage, a real Docker worker and strict frozen v0.1 acceptance. Public v1 remains
+incomplete and P8 remains partial.
+
 On `main@18b2cdecc1380886edeba2a0ad16305be065fa43`, all six post-merge
 workflows passed: [CI](https://github.com/SauronShepherd/ronin/actions/runs/39309554646),
 [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39309554163),
@@ -41,7 +60,8 @@ PR [#436](https://github.com/SauronShepherd/ronin/pull/436) passed exact-head
 CI (Python 3.11/3.12), Docker qualification (**8m20s**), Web, Security, Release,
 ledgers and verification. Post-merge Docker took **8m43s**, including PostgreSQL
 coverage, a real Docker worker and strict frozen v0.1 acceptance. PipelineIR now
-governs the supported six local stages; checkpoints, per-node retry and
+governs the supported six local stages, and durable checkpoints let re-execution
+reuse successful stage outputs. Explicit per-node retry, downstream invalidation and
 materialization remain incomplete. Public v1 remains incomplete and P8 remains
 partial.
 
