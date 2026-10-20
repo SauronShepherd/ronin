@@ -52,5 +52,5 @@ configurables, `register` como etapa ejecutable, invalidación explícita de out
 dependientes ni reintentos selectivos visibles desde el producto.
 El resultado durable conserva una referencia verificada del modelo en ArtifactStore.
 El candidato local añade el registro de una ejecución como versión candidata por una
-API protegida. La lectura HTTP autorizada del contenido y su integración en el journey
-de UI siguen pendientes.
+API protegida y una acción en el journey de UI. La lectura HTTP autorizada del
+contenido y la verificación del flujo contra servicios persistentes siguen pendientes.
