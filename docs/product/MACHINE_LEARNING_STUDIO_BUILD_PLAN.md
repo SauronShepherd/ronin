@@ -337,7 +337,7 @@ El PR [#434](https://github.com/SauronShepherd/ronin/pull/434) quedó en `main@2
 
 ## 20. Candidato: ejecutar las etapas fijadas de PipelineIR
 
-**Progreso técnico local: 5/5 criterios; CI exact-head pendiente; P8/release-qualified: 0% (0/14).**
+**Progreso técnico: 5/5 criterios; PR #436 integrado y cualificado exact-head; P8/release-qualified: 0% (0/14).**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -347,5 +347,5 @@ El PR [#434](https://github.com/SauronShepherd/ronin/pull/434) quedó en `main@2
 | Usar el mismo executor en rutas síncronas y asíncronas durables | `run()`, resultado de clustering y `LocalExecutionCoordinator` delegan el flujo a `execute_pipeline()`. |
 | Preservar compatibilidad con runners de prueba/adaptadores y resultados de clustering | Suite ML/API/composición local focalizada: **51 passed**. |
 
-Este incremento convierte la IR fijada en un plan que gobierna la ejecución del flujo local y conserva determinismo al reordenar su serialización. El full suite local pasó **3748 tests, 49 omitidos**; mypy global (457 archivos), la puerta de arquitectura, Ruff/formato y la suite focalizada también pasan. El grafo local soportado sigue siendo deliberadamente el conjunto fijo de seis etapas; `register` y etapas configurables aún no ejecutan. No hay checkpoints de nodo, retry selectivo, persistencia de outputs intermedios ni política de materialización; los reintentos durables todavía vuelven a ejecutar el Job entero. CI y Docker qualification exact-head de este candidato siguen pendientes antes de reconciliarlo como evidencia integrada. P8 permanece parcial y release-qualified sigue en **0% (0/14)**.
+El PR [#436](https://github.com/SauronShepherd/ronin/pull/436) quedó integrado como `main@18b2cdecc1380886edeba2a0ad16305be065fa43`. El full suite local pasó **3748 tests, 49 omitidos**; mypy global (457 archivos), la puerta de arquitectura, Ruff/formato y la suite focalizada también pasan. CI, Docker qualification (**8m20s** en el PR y **8m43s** post-merge), Web, Security, Release y Status consistency pasaron exact-head. El Docker gate cubrió PostgreSQL, worker Docker real y aceptación estricta. El grafo local soportado sigue siendo deliberadamente el conjunto fijo de seis etapas; `register` y etapas configurables aún no ejecutan. No hay checkpoints de nodo, retry selectivo, persistencia de outputs intermedios ni política de materialización; los reintentos durables todavía vuelven a ejecutar el Job entero. P8 permanece parcial y release-qualified sigue en **0% (0/14)**.
 

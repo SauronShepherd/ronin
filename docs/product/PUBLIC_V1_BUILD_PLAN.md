@@ -3,7 +3,7 @@
 **Estado del producto:** INCOMPLETE. Este plan no declara completada ninguna capacidad ni autoriza un release.
 **Autoridad de alcance:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md).
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
-**Base reconciliada:** `main@2d3f7d3b43d0b3b9268a57860e19e707a57a02e8` (2026-10-19). PR #430 incorporó la persistencia de inputs asíncronos ML grandes como ArtifactRefs; PR #431 reconcilió los ledgers; PR #432 aplicó los límites de filas inline; PR #434 fijó la identidad del PipelineIR en ejecuciones asíncronas durables. CI, Docker qualification, Web, Security, Release y Status consistency pasaron exact-head post-merge. Los estados de una tarea se reconfirman contra el SHA que se cualifica; este plan no reemplaza los ledgers de producto.
+**Base reconciliada:** `main@18b2cdecc1380886edeba2a0ad16305be065fa43` (2026-10-20, verificado). El PR [#436](https://github.com/SauronShepherd/ronin/pull/436) ejecuta las seis etapas soportadas por `PipelineIR` en orden topológico estable para ejecuciones síncronas y durables; PR #430 conserva inputs asíncronos grandes como ArtifactRefs, #432 aplica límites inline y #434 fija la identidad del pipeline en Jobs. CI, Docker qualification, Web, Security, Release y Status consistency pasaron exact-head en el PR y post-merge; Docker incluye PostgreSQL, worker real y aceptación estricta. Los checkpoints/reintentos por nodo siguen pendientes. Los estados se confirman contra el SHA cualificado; este plan no reemplaza los ledgers de producto.
 
 ## Progreso verificable
 
