@@ -364,7 +364,7 @@ El PR [#436](https://github.com/SauronShepherd/ronin/pull/436) quedó integrado 
 
 El PR [#438](https://github.com/SauronShepherd/ronin/pull/438) añadió los checkpoints y se integró como `4fc7cbe3475ede0626975cd1f71bf97993b0e4bd`. El PR [#439](https://github.com/SauronShepherd/ronin/pull/439) corrigió la adaptación de `JobId` al reanudar una página PostgreSQL, cubrió filtros y cursor keyset en la integración real y elevó el baseline de cobertura de `postgres_jobs.py` a 73,01% después de medir 73,015%. Sus checks exact-head pasaron: Python 3.11/3.12, calidad, verificación, seguridad, ledgers y Docker qualification (**8m40s**, incluyendo PostgreSQL, worker real y aceptación estricta). En Windows, la suite de cobertura completa registró 3785 passed y 19 skipped, más dos fallos transitorios (conexión HTTP abortada y timeout al ejecutar CLI); ambos tests pasaron al repetirse focalizados. La primera ejecución Docker detectó un test que dejaba expirar el lease de un Job; el test ahora completa ese intento. En `main@92165f5dbf23b6153c62b0150d4e74e300ac1dd8`, los seis workflows post-merge exact-head —CI, Web, Security, Release, Status consistency y Docker qualification— pasaron; Docker terminó a las 04:07:53Z.
 
-Este slice no cierra el executor completo: sólo las seis etapas locales existentes son ejecutables; `register` y grafos configurables siguen rechazándose. El retry durable todavía vuelve a reclamar y ejecutar el Job, reutilizando etapas exitosas sólo si coinciden los digests de pipeline, request y runtime. El candidato de la sección 25 enlaza la huella de código/dependencias/opciones con checkpoints y resultados. Aún faltan una política explícita de materialización y retención, invalidación aguas abajo, retry selectivo observable y el journey completo de ejecución→registro. P8 continúa parcial; release-qualified continúa en **0% (0/14)**.
+Este slice no cierra el executor completo: sólo las seis etapas locales existentes son ejecutables; `register` y grafos configurables siguen rechazándose. El retry durable todavía vuelve a reclamar y ejecutar el Job, reutilizando etapas exitosas sólo si coinciden los digests de pipeline, request, runtime y outputs de dependencia. El candidato de la sección 25 enlaza esas identidades con checkpoints y resultados, y descarta automáticamente outputs downstream obsoletos. Aún faltan una política explícita de materialización y retención, retry selectivo observable y el journey completo de ejecución→registro. P8 continúa parcial; release-qualified continúa en **0% (0/14)**.
 
 ## 22. Materialización de resultados ML durables
 
@@ -407,9 +407,9 @@ Las pruebas focalizadas verifican el flujo tabular, la firma/digest/procedencia 
 
 Las pruebas de API cubren reconstrucción por varios bloques, aislamiento por workspace, rango, límites y corrupción. Playwright verifica el flujo de descarga desde el registry; OpenAPI documenta parámetros y respuesta. PR #446 pasó Docker, Web y CI; la cualificación exact-head post-merge de `main@c0e716f` sigue en ejecución. La prueba con ArtifactStore remoto sigue pendiente. P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
 
-## 25. Identidad de runtime para checkpoints ML
+## 25. Identidad de runtime y dependencias para checkpoints ML
 
-**Progreso técnico local: 5/5 criterios implementados; cualificación Docker exact-head pendiente.**
+**Progreso técnico local: 6/6 criterios implementados; cualificación Docker exact-head pendiente.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -418,6 +418,7 @@ Las pruebas de API cubren reconstrucción por varios bloques, aislamiento por wo
 | Incluir opciones de ejecución | Parameters, clusters y max_iterations forman parte de la huella; la misma request con opciones distintas no reutiliza outputs. |
 | Descartar checkpoints de otro runtime | Tests guardan checkpoints obsoletos y comprueban que el training vuelve a ejecutarse; la caché sólo se guarda si la identidad es estable. |
 | Persistir procedencia del output | La huella de runtime queda en el checkpoint de selección y en el payload durable `ExperimentResult`/`ClusteringResult`. |
+| Invalidar outputs downstream cuando cambia una dependencia | Cada checkpoint incorpora un digest canónico de las salidas de sus nodos upstream; la discrepancia descarta y vuelve a calcular esa etapa y sus dependientes. |
 
-La suite focalizada ML/API de este candidato pasó **163 tests**; Ruff, formato y mypy del runner pasan. La huella es deliberadamente conservadora: cualquier cambio en los módulos ejecutables invalida los checkpoints, y un backend sin código fuente o fingerprint declarado no reutiliza caché. Quedan política explícita de retención, invalidación selectiva aguas abajo y reintentos selectivos observables. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+La suite focalizada ML/API de este candidato pasó **164 tests**; Ruff, formato y mypy del runner pasan. La huella es deliberadamente conservadora: cualquier cambio en los módulos ejecutables invalida los checkpoints, y un backend sin código fuente o fingerprint declarado no reutiliza caché. La suite también prueba que alterar un output intermedio impide restaurar su evaluación y selección antiguas. Quedan política explícita de retención y reintentos selectivos observables. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
 

@@ -15,7 +15,7 @@ from typing import Any, cast
 
 from .backends import BackendRegistry, ExperimentRequest, MLBackend, default_backends
 from .clustering import KMeansModel, fit_kmeans
-from .domain import Lab, NodeKind, PipelineIR
+from .domain import Lab, NodeKind, PipelineIR, PipelineNode
 from .quality import ColumnProfile, QualityReport, profile_and_validate
 from .runtime import Algorithm, TrainedTabularModel, TrainingSpec
 
@@ -254,6 +254,23 @@ def _checkpoint_payload(kind: NodeKind, value: object) -> dict[str, object]:
     raise ValueError(f"cannot checkpoint output for ML pipeline stage {kind!r}")
 
 
+def _dependency_fingerprint(
+    node: PipelineNode,
+    nodes_by_id: Mapping[str, PipelineNode],
+    values: Mapping[str, object],
+) -> str:
+    dependencies: list[list[str]] = []
+    for dependency_id in sorted(node.depends_on):
+        dependency = nodes_by_id[dependency_id]
+        payload = _checkpoint_payload(dependency.kind, values[dependency_id])
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        dependencies.append([dependency_id, hashlib.sha256(encoded.encode("utf-8")).hexdigest()])
+    encoded_dependencies = json.dumps(
+        dependencies, sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    return hashlib.sha256(encoded_dependencies.encode("utf-8")).hexdigest()
+
+
 def _restore_checkpoint(kind: NodeKind, value: object) -> object:
     if not isinstance(value, Mapping) or value.get("kind") != kind:
         raise ValueError("stored ML node checkpoint does not match its pipeline stage")
@@ -408,6 +425,7 @@ class LocalExperimentRunner:
         by_kind = {node.kind: node for node in pipeline.nodes}
         if len(by_kind) != len(pipeline.nodes) or set(by_kind) != set(required_kinds):
             raise ValueError("local ML pipeline must contain exactly one supported node per stage")
+        nodes_by_id = {node.id: node for node in pipeline.nodes}
         for previous, current in zip(required_kinds[:-1], required_kinds[1:], strict=True):
             if by_kind[previous].id not in by_kind[current].depends_on:
                 raise ValueError(f"ML pipeline stage {current!r} must depend on {previous!r}")
@@ -425,11 +443,13 @@ class LocalExperimentRunner:
         )
         for node in pipeline.execution_order():
             dependencies = [values[dependency] for dependency in node.depends_on]
+            dependency_fingerprint = _dependency_fingerprint(node, nodes_by_id, values)
             cached = checkpoint_load(node.id) if checkpoint_load is not None else None
             if (
                 runtime_fingerprint is not None
                 and isinstance(cached, Mapping)
                 and cached.get("runtime_fingerprint") == runtime_fingerprint
+                and cached.get("dependency_fingerprint") == dependency_fingerprint
                 and isinstance(cached.get("checkpoint"), dict)
             ):
                 try:
@@ -568,6 +588,7 @@ class LocalExperimentRunner:
                     node.id,
                     {
                         "runtime_fingerprint": runtime_fingerprint,
+                        "dependency_fingerprint": dependency_fingerprint,
                         "checkpoint": _checkpoint_payload(node.kind, values[node.id]),
                     },
                 )

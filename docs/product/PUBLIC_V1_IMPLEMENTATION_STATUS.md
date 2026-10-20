@@ -50,7 +50,8 @@ rechecking artifact size and digest; PR #445 integrates the flow into Studio. PR
 adds workspace-scoped artifact retrieval in digest-verified chunks capped at 512 KiB
 and a chunked UI download. Its CI, Web and Docker qualification passed. Post-merge
 qualification for `c0e716f` is running. The current candidate binds checkpoint reuse
-and durable result provenance to the runtime fingerprint. PR [#441](https://github.com/SauronShepherd/ronin/pull/441) passed CI
+and durable result provenance to runtime and upstream dependency fingerprints,
+recalculating downstream stages when their outputs change. PR [#441](https://github.com/SauronShepherd/ronin/pull/441) passed CI
 Python 3.11/3.12, quality, security, verification, ledgers and [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39371246065)
 (8m54s, including PostgreSQL-backed coverage, a real Docker worker and strict
 frozen v0.1 acceptance). Public v1 remains incomplete; P8 is partial and release

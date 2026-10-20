@@ -148,3 +148,37 @@ def test_checkpoint_runtime_fingerprint_includes_execution_options() -> None:
     assert base is not None
     assert changed is not None
     assert base != changed
+
+
+def test_pipeline_recomputes_downstream_checkpoints_after_dependency_changes() -> None:
+    lab = _lab()
+    pipeline = compile_lab_pipeline(lab)
+    checkpoints: dict[str, dict[str, object]] = {}
+    first = LocalExperimentRunner((_CheckpointBackend(),)).execute_pipeline(
+        lab,
+        _rows(),
+        pipeline,
+        checkpoint_save=lambda node_id, payload: checkpoints.__setitem__(node_id, payload),
+    )
+    train_node_id = next(node.id for node in pipeline.nodes if node.kind == "train")
+    train_checkpoint = checkpoints[train_node_id]
+    checkpoint_payload = train_checkpoint["checkpoint"]
+    train_value = dict(checkpoint_payload["value"])
+    metrics = [list(metric) for metric in train_value["metrics"]]
+    metrics[0][1] = float(metrics[0][1]) + 0.125
+    train_value["metrics"] = metrics
+    checkpoints[train_node_id] = {
+        **train_checkpoint,
+        "checkpoint": {**checkpoint_payload, "value": train_value},
+    }
+
+    resumed_backend = _CheckpointBackend(fail_on_train=True)
+    resumed = LocalExperimentRunner((resumed_backend,)).execute_pipeline(
+        lab,
+        _rows(),
+        pipeline,
+        checkpoint_load=checkpoints.get,
+    )
+
+    assert resumed_backend.train_calls == 0
+    assert resumed.to_payload()["metrics"] != first.to_payload()["metrics"]
