@@ -946,16 +946,18 @@ class MachineLearningStudioPlugin:
         from .service import _input_signature, _output_signature
 
         if task == "clustering":
+            inertia = result.get("inertia")
             if (
                 media_type != "application/vnd.ronin.ml-kmeans+json"
                 or algorithm != "kmeans"
-                or result.get("inertia") is None
+                or not isinstance(inertia, (int, float))
+                or isinstance(inertia, bool)
             ):
                 raise ValueError("clustering result has an unsupported model artifact type")
             signature = ModelSignature(
                 _input_signature(rows, tuple(features)), (("cluster", "int64"),)
             )
-            metrics = (MetricValue("inertia", float(result["inertia"])),)
+            metrics: tuple[MetricValue, ...] = (MetricValue("inertia", float(inertia)),)
             framework = "ronin-kmeans"
         else:
             if media_type != "application/vnd.ronin.sklearn-tabular+json":
