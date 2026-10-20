@@ -153,7 +153,6 @@ coverage-storage-files:
 		--exclude=postgres_scheduler_schedule.py \
 		--threshold=80 \
 		--ratchet-margin=2.1 \
-		--baseline=artifacts.py=78.17 \
 		--baseline=backup.py=76.00 \
 		--baseline=bundle_workflow_import.py=77.55 \
 		--baseline=catalog.py=78.40 \
@@ -183,7 +182,6 @@ coverage-storage-files-full:
 	$(PYTHON) -m tools.coverage_file_gate coverage-storage.json python/studio_storage \
 		--threshold=80 \
 		--ratchet-margin=2.1 \
-		--baseline=artifacts.py=78.17 \
 		--baseline=backup.py=76.00 \
 		--baseline=bundle_workflow_import.py=77.55 \
 		--baseline=catalog.py=78.40 \
