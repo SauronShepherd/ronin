@@ -120,6 +120,19 @@ def test_pipeline_preprocessor_is_pinned_and_executed() -> None:
     assert artifact["preprocessing"]["kind"] == "standard_scale"
 
 
+def test_numeric_lab_can_pin_median_imputation() -> None:
+    import json
+
+    lab = _lab()
+    pipeline = compile_lab_pipeline(lab, preprocessor="median_impute")
+    rows = _rows()
+    rows[0]["x"] = None
+    result = LocalExperimentRunner().execute_pipeline(lab, rows, pipeline)
+    artifact = json.loads(result.model.artifact_bytes)
+    assert artifact["preprocessing"]["kind"] == "median_impute"
+    assert len(artifact["preprocessing"]["medians"]) == len(lab.features)
+
+
 def test_one_hot_pipeline_uses_lab_categorical_roles() -> None:
     import json
 

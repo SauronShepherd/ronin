@@ -1,4 +1,5 @@
 from pathlib import Path
+from statistics import median
 
 import pytest
 from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
@@ -99,6 +100,91 @@ def test_standard_scaler_is_fit_on_training_rows_and_reused_for_prediction() -> 
         expected_features=("x", "constant"),
     )
     assert predictions[0] == pytest.approx(47.0)
+
+
+def test_median_imputation_is_fit_on_training_rows_and_reused_for_inference() -> None:
+    import json
+
+    from sklearn.model_selection import train_test_split
+
+    labels = ["yes" if index % 2 else "no" for index in range(20)]
+    train_indices, test_indices = train_test_split(
+        list(range(20)), test_size=0.25, random_state=7, stratify=labels
+    )
+    held_out = test_indices[0]
+    rows = tuple(
+        {
+            "x": None if index in {train_indices[0], held_out} else float(index),
+            "label": labels[index],
+        }
+        for index in range(20)
+    )
+    trained = train_tabular(
+        rows,
+        TrainingSpec(
+            "classification",
+            "logistic_regression",
+            ("x",),
+            "label",
+            test_fraction=0.25,
+            random_seed=7,
+            preprocessor="median_impute",
+        ),
+    )
+    preprocessing = json.loads(trained.artifact_bytes)["preprocessing"]
+    expected = median(float(index) for index in train_indices if index != train_indices[0])
+    assert preprocessing == {"kind": "median_impute", "medians": [expected]}
+    missing_prediction = predict_tabular(trained.artifact_bytes, ({"x": None},))
+    blank_prediction = predict_tabular(trained.artifact_bytes, ({"x": ""},))
+    explicit_prediction = predict_tabular(trained.artifact_bytes, ({"x": expected},))
+    assert missing_prediction == blank_prediction == explicit_prediction
+
+
+def test_median_imputation_rejects_all_missing_training_feature() -> None:
+    from sklearn.model_selection import train_test_split
+
+    labels = [index % 2 for index in range(20)]
+    train_indices, test_indices = train_test_split(
+        list(range(20)), test_size=0.2, random_state=7, stratify=labels
+    )
+    test_only = set(test_indices)
+    rows = tuple(
+        {"x": float(index) if index in test_only else None, "label": index % 2}
+        for index in range(20)
+    )
+    with pytest.raises(ValueError, match="no training values"):
+        train_tabular(
+            rows,
+            TrainingSpec(
+                "classification",
+                "logistic_regression",
+                ("x",),
+                "label",
+                test_fraction=0.2,
+                random_seed=7,
+                preprocessor="median_impute",
+            ),
+        )
+
+
+@pytest.mark.parametrize("medians", [[], [float("nan")]])
+def test_median_imputation_artifact_rejects_invalid_medians(medians: list[float]) -> None:
+    import json
+
+    trained = train_tabular(
+        _classification_rows(),
+        TrainingSpec(
+            "classification",
+            "logistic_regression",
+            ("x", "y"),
+            "label",
+            preprocessor="median_impute",
+        ),
+    )
+    payload = json.loads(trained.artifact_bytes)
+    payload["preprocessing"] = {"kind": "median_impute", "medians": medians}
+    with pytest.raises(ValueError, match="canonical JSON|imputation"):
+        predict_tabular(json.dumps(payload).encode(), ({"x": 1.0, "y": 1.0},))
 
 
 def test_standard_scaler_rejects_malformed_artifact_parameters() -> None:

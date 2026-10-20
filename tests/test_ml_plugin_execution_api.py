@@ -94,6 +94,40 @@ def test_submit_one_hot_execution_uses_categorical_lab_feature() -> None:
         plugin._coordinator.close()
 
 
+def test_submit_median_impute_execution_fills_null_and_blank_numeric_values() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "missing",
+        "Missing values",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("age", "numeric"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    rows = [
+        {"age": None if index == 0 else ("" if index == 1 else float(index)), "target": index % 2}
+        for index in range(20)
+    ]
+    try:
+        plugin.submit_execution(
+            "ws",
+            lab.id,
+            body={"run_id": "median-impute-run", "rows": rows, "preprocessor": "median_impute"},
+        )
+        deadline = time.time() + 30
+        state = plugin.execution_status("median-impute-run", workspace_id="ws")["state"]
+        while state not in {"succeeded", "failed"} and time.time() < deadline:
+            time.sleep(0.01)
+            state = plugin.execution_status("median-impute-run", workspace_id="ws")["state"]
+        assert state == "succeeded"
+        assert plugin.execution_status("median-impute-run", workspace_id="ws")["result"]
+    finally:
+        plugin._coordinator.close()
+
+
 def test_submit_rejects_run_ids_longer_than_public_limit() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())

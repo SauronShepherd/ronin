@@ -79,6 +79,7 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
         "identity",
         "standard_scale",
         "one_hot",
+        "median_impute",
     ]
     assert "409" in submit["responses"]
     quality = document["paths"]["/v1/ml-studio/labs/{lab_id}/quality"]["post"]

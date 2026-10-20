@@ -107,6 +107,30 @@ test('ML Studio retries a failed durable run from a selected stage', async ({ pa
   await expect.poll(() => registered).toBe(true);
 });
 
+test('ML Studio offers numeric median imputation and sends it with the durable run', async ({ page }) => {
+  let executionBody;
+  await page.route('**/v1/ml-studio/labs?**', route => route.fulfill({json: {
+    items: [{
+      id: 'numeric-lab', name: 'Numeric Lab', task: 'classification', backend_id: 'local.sklearn',
+      target: 'label', features: [{column: 'age', role: 'numeric'}],
+    }],
+  }}));
+  await page.route('**/v1/ml-studio/models?**', route => route.fulfill({json: {items: []}}));
+  await page.route('**/v1/ml-studio/labs/numeric-lab/executions?**', async route => {
+    executionBody = route.request().postDataJSON();
+    await route.fulfill({json: {run_id: 'numeric-run', state: 'queued'}});
+  });
+  await page.route('**/v1/ml-studio/executions/numeric-run?**', route => route.fulfill({json: {
+    run_id: 'numeric-run', state: 'succeeded', result: {artifact_digest: 'c'.repeat(64)},
+  }}));
+  await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
+  await expect(page.locator('[data-ml-preprocessor="numeric-lab"] option[value="median_impute"]')).toHaveText('Median imputation');
+  await page.locator('[data-ml-preprocessor="numeric-lab"]').selectOption('median_impute');
+  await page.locator('[data-feature="ml-run"][data-lab="numeric-lab"]').click();
+  await expect.poll(() => executionBody?.preprocessor).toBe('median_impute');
+  await expect(page.locator('#ml-register-execution')).toBeVisible();
+});
+
 test('ML Studio downloads a verified artifact in bounded chunks', async ({ page }) => {
   const requests = [];
   await page.route('**/v1/ml-studio/labs**', route => route.fulfill({json: {items: []}}));
