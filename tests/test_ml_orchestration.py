@@ -3,6 +3,7 @@
 
 import asyncio
 import hashlib
+import json
 import os
 import sqlite3
 import time
@@ -15,14 +16,18 @@ from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_execution import DurableExecutionService
+from studio_ml.clustering import KMeansModel
 from studio_ml.domain import FeatureSpec, Lab, PipelineIR
 from studio_ml.orchestration import (
+    ClusteringResult,
     ExecutionConflict,
     ExecutionSnapshot,
     InMemoryExecutionStore,
     JobStoreExecutionStore,
     LocalExecutionCoordinator,
 )
+from studio_ml.runner import ExperimentResult
+from studio_ml.runtime import TrainedTabularModel
 from studio_ml.services import compile_lab_pipeline
 from studio_orchestrator import Instant
 from studio_storage import LocalArtifactStore, SqliteJobStore
@@ -270,6 +275,176 @@ def test_shared_job_store_reopens_and_idempotent_retry_does_not_duplicate_job(tm
     finally:
         coordinator.close()
         asyncio.run(reopened_service.aclose())
+
+
+def test_durable_ml_result_materializes_and_verifies_model_artifact(tmp_path) -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    artifact_bytes = b'{"schema":"ronin.ml-tabular/v1"}'
+    model = TrainedTabularModel(
+        "classification",
+        "LogisticRegression",
+        ("x",),
+        "target",
+        artifact_bytes,
+        (("accuracy", 1.0),),
+    )
+    result = ExperimentResult(
+        lab.id,
+        "local.sklearn",
+        4,
+        model,
+        f"sha256:{hashlib.sha256(artifact_bytes).hexdigest()}",
+    )
+
+    class ResultRunner:
+        def run(self, _lab, _rows):
+            return result
+
+    jobs = SqliteJobStore(tmp_path / "jobs.sqlite", migration_now=_MIGRATION_NOW)
+    service = DurableExecutionService(jobs)
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    coordinator = LocalExecutionCoordinator(
+        runner=ResultRunner(),
+        store=JobStoreExecutionStore(service, artifacts),
+    )
+    try:
+        coordinator.submit("workspace-a", "materialized-run", lab, [{"x": 1, "target": 1}])
+        deadline = time.monotonic() + 10
+        snapshot = coordinator.status("workspace-a", "materialized-run")
+        while snapshot.state not in {"succeeded", "failed"} and time.monotonic() < deadline:
+            time.sleep(0.01)
+            snapshot = coordinator.status("workspace-a", "materialized-run")
+        assert snapshot.state == "succeeded", snapshot.error
+        assert snapshot.result_payload is not None
+        assert snapshot.result_payload["artifact_digest"] == result.artifact_digest
+        assert snapshot.result_payload["artifact_ref"] == (
+            f"artifact://sha256/{hashlib.sha256(artifact_bytes).hexdigest()}"
+        )
+        assert snapshot.result_payload["artifact_media_type"] == (
+            "application/vnd.ronin.sklearn-tabular+json"
+        )
+        assert (
+            artifacts.get_bytes_by_storage_ref(
+                str(snapshot.result_payload["artifact_ref"]),
+                digest=hashlib.sha256(artifact_bytes).hexdigest(),
+            )
+            == artifact_bytes
+        )
+    finally:
+        coordinator.close()
+        asyncio.run(service.aclose())
+
+
+def test_durable_ml_result_rejects_mismatched_model_artifact_digest(tmp_path) -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    model = TrainedTabularModel(
+        "classification",
+        "LogisticRegression",
+        ("x",),
+        "target",
+        b'{"schema":"ronin.ml-tabular/v1"}',
+        (("accuracy", 1.0),),
+    )
+    result = ExperimentResult(lab.id, "local.sklearn", 4, model, "sha256:" + "0" * 64)
+
+    class ResultRunner:
+        def run(self, _lab, _rows):
+            return result
+
+    jobs = SqliteJobStore(tmp_path / "jobs.sqlite", migration_now=_MIGRATION_NOW)
+    service = DurableExecutionService(jobs)
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    coordinator = LocalExecutionCoordinator(
+        runner=ResultRunner(),
+        store=JobStoreExecutionStore(service, artifacts),
+    )
+    try:
+        coordinator.submit("workspace-a", "bad-result-digest", lab, [{"x": 1, "target": 1}])
+        deadline = time.monotonic() + 10
+        snapshot = coordinator.status("workspace-a", "bad-result-digest")
+        while snapshot.state not in {"succeeded", "failed"} and time.monotonic() < deadline:
+            time.sleep(0.01)
+            snapshot = coordinator.status("workspace-a", "bad-result-digest")
+        assert snapshot.state == "failed"
+        assert snapshot.error == "ML model artifact digest does not match the runner result"
+        assert artifacts.list_digests() == ()
+    finally:
+        coordinator.close()
+        asyncio.run(service.aclose())
+
+
+def test_durable_clustering_result_materializes_canonical_model_artifact(tmp_path) -> None:
+    lab = Lab(
+        "segments",
+        "Segments",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        None,
+        "clustering",
+        (FeatureSpec("x"),),
+    )
+    model = KMeansModel(((0.5,), (9.5,)), 3)
+    artifact_bytes = json.dumps(model.to_artifact(), sort_keys=True, separators=(",", ":")).encode()
+    result = ClusteringResult(
+        lab.id,
+        "local.kmeans",
+        4,
+        ("x",),
+        model,
+        f"sha256:{hashlib.sha256(artifact_bytes).hexdigest()}",
+        1.0,
+    )
+
+    class ResultRunner:
+        def run_clustering_result(self, _lab, _rows):
+            return result
+
+    jobs = SqliteJobStore(tmp_path / "jobs.sqlite", migration_now=_MIGRATION_NOW)
+    service = DurableExecutionService(jobs)
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    coordinator = LocalExecutionCoordinator(
+        runner=ResultRunner(),
+        store=JobStoreExecutionStore(service, artifacts),
+    )
+    try:
+        coordinator.submit("workspace-a", "cluster-materialized", lab, [{"x": 0.5}])
+        deadline = time.monotonic() + 10
+        snapshot = coordinator.status("workspace-a", "cluster-materialized")
+        while snapshot.state not in {"succeeded", "failed"} and time.monotonic() < deadline:
+            time.sleep(0.01)
+            snapshot = coordinator.status("workspace-a", "cluster-materialized")
+        assert snapshot.state == "succeeded", snapshot.error
+        assert snapshot.result_payload is not None
+        assert snapshot.result_payload["artifact_digest"] == result.artifact_digest
+        assert snapshot.result_payload["artifact_media_type"] == (
+            "application/vnd.ronin.ml-kmeans+json"
+        )
+        assert (
+            artifacts.get_bytes_by_storage_ref(
+                str(snapshot.result_payload["artifact_ref"]),
+                digest=hashlib.sha256(artifact_bytes).hexdigest(),
+            )
+            == artifact_bytes
+        )
+    finally:
+        coordinator.close()
+        asyncio.run(service.aclose())
 
 
 def test_shared_job_store_preserves_failure_reason(tmp_path) -> None:
