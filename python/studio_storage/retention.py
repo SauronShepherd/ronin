@@ -531,17 +531,59 @@ def _digest_from_storage_ref(storage_ref: object) -> str:
     return digest
 
 
-def collect_unreferenced(store: ArtifactStore, live_digests: Iterable[str]) -> tuple[str, ...]:
-    """Delete only stored digests absent from the caller-provided live set."""
+def collect_unreferenced(
+    store: ArtifactStore,
+    live_digests: Iterable[str],
+    *,
+    page_size: int = 500,
+    max_objects: int = 10_000,
+    max_pages: int = 1_000,
+) -> tuple[str, ...]:
+    """Delete stale digests after a complete, bounded inventory scan.
+
+    The supplied live set remains the caller's responsibility. This function
+    refuses unpaged stores and completes discovery before deleting anything, so
+    an incomplete or over-limit inventory cannot trigger a partial cleanup.
+    """
+
+    if page_size < 1 or page_size > 10_000:
+        raise ValueError("retention page_size must be between 1 and 10000")
+    if max_objects < 1:
+        raise ValueError("retention max_objects must be positive")
+    if max_pages < 1 or max_pages > 10_000:
+        raise ValueError("retention max_pages must be between 1 and 10000")
 
     live = set(live_digests)
-    if any(
-        len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest)
-        for digest in live
-    ):
-        raise ValueError("live artifact digests must be lowercase sha256 hex")
+    for digest in live:
+        _validate_digest(digest)
+    if not isinstance(store, PagedArtifactStore):
+        raise ValueError("artifact cleanup requires a paged artifact inventory")
+
+    stored_digests: list[str] = []
+    cursor: str | None = None
+    seen_cursors: set[str] = set()
+    for page_number in range(1, max_pages + 1):
+        page = store.list_digests_page(cursor=cursor, page_size=min(page_size, max_objects))
+        for digest in page.digests:
+            _validate_digest(digest)
+        stored_digests.extend(page.digests)
+        if len(stored_digests) > max_objects or (
+            page.truncated and len(stored_digests) >= max_objects
+        ):
+            raise ValueError("artifact cleanup inventory exceeded its object bound")
+        if not page.truncated:
+            break
+        if page_number >= max_pages:
+            raise ValueError("artifact cleanup inventory exceeded its page bound")
+        if page.next_cursor is None:
+            raise ValueError("truncated artifact inventory page is missing its cursor")
+        if page.next_cursor in seen_cursors or page.next_cursor == cursor:
+            raise ValueError("artifact inventory cursor repeated")
+        seen_cursors.add(page.next_cursor)
+        cursor = page.next_cursor
+
     deleted: list[str] = []
-    for digest in store.list_digests():
+    for digest in stored_digests:
         if digest in live:
             continue
         ref = ArtifactRef(
