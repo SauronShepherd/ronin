@@ -153,6 +153,105 @@ def test_standard_scaler_survives_tree_ensemble_round_trip(
     assert len(predict_tabular(trained.artifact_bytes, prediction_rows)) == 3
 
 
+def test_one_hot_uses_training_vocabulary_and_unknown_values_map_to_zero() -> None:
+    import json
+
+    from sklearn.model_selection import train_test_split
+
+    labels = ["yes" if index % 2 else "no" for index in range(20)]
+    train_indices, test_indices = train_test_split(
+        list(range(20)), test_size=0.25, random_state=7, stratify=labels
+    )
+    held_out_only = test_indices[0]
+    rows = tuple(
+        {
+            "segment": "held-out" if index == held_out_only else ("blue" if index % 2 else "red"),
+            "age": float(index),
+            "label": labels[index],
+        }
+        for index in range(20)
+    )
+    trained = train_tabular(
+        rows,
+        TrainingSpec(
+            "classification",
+            "logistic_regression",
+            ("segment", "age"),
+            "label",
+            0.25,
+            7,
+            preprocessor="one_hot",
+            categorical_features=("segment",),
+        ),
+    )
+    preprocessing = json.loads(trained.artifact_bytes)["preprocessing"]
+    assert preprocessing["categories"]["segment"] == sorted(
+        {rows[index]["segment"] for index in train_indices}
+    )
+    assert "held-out" not in preprocessing["categories"]["segment"]
+    predictions = predict_tabular(
+        trained.artifact_bytes,
+        ({"segment": "unseen", "age": 4.0},),
+        expected_features=("segment", "age"),
+    )
+    assert len(predictions) == 1
+
+
+def test_one_hot_rejects_invalid_or_unsorted_artifact_vocabulary() -> None:
+    import json
+
+    rows = tuple(
+        {"segment": "blue" if index % 2 else "red", "label": index % 2} for index in range(20)
+    )
+    trained = train_tabular(
+        rows,
+        TrainingSpec(
+            "classification",
+            "logistic_regression",
+            ("segment",),
+            "label",
+            preprocessor="one_hot",
+            categorical_features=("segment",),
+        ),
+    )
+    payload = json.loads(trained.artifact_bytes)
+    payload["preprocessing"]["categories"]["segment"] = ["red", "blue"]
+    with pytest.raises(ValueError, match="unique and sorted"):
+        predict_tabular(json.dumps(payload).encode(), ({"segment": "red"},))
+
+
+def test_one_hot_limits_category_count_and_value_size() -> None:
+    from studio_ml.runtime import _one_hot_matrix
+
+    values = [[f"category-{index}"] for index in range(257)]
+    with pytest.raises(ValueError, match="256 value limit"):
+        _one_hot_matrix(
+            values,
+            features=("segment",),
+            categorical_features=("segment",),
+        )
+    wide_features = tuple(f"category_{index}" for index in range(17))
+    wide_rows = tuple(tuple(f"value-{row}" for _ in wide_features) for row in range(256))
+    with pytest.raises(ValueError, match="configured feature limit"):
+        _one_hot_matrix(
+            wide_rows,
+            features=wide_features,
+            categorical_features=wide_features,
+        )
+    with pytest.raises(ValueError, match="size limit"):
+        train_tabular(
+            tuple({"segment": "x" * 1025, "label": index % 2} for index in range(20)),
+            TrainingSpec(
+                "classification",
+                "logistic_regression",
+                ("segment",),
+                "label",
+                preprocessor="one_hot",
+                categorical_features=("segment",),
+            ),
+        )
+
+
 @pytest.mark.parametrize("row_count", [4, 5])
 def test_regression_rejects_test_partition_too_small_for_r2(row_count: int) -> None:
     with pytest.raises(ValueError, match="at least two test rows"):

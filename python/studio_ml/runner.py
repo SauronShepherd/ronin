@@ -510,6 +510,11 @@ class LocalExperimentRunner:
                             Preprocessor,
                             dict(pipeline.parameters).get("preprocessor", "identity"),
                         ),
+                        categorical_features=tuple(
+                            feature.column
+                            for feature in lab.features
+                            if feature.role == "categorical"
+                        ),
                     )
             elif node.kind == "train":
                 prepared = next(

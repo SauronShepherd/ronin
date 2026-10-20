@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 62%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 63%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -469,9 +469,9 @@ El test de lifecycle y los contratos del adapter S3 pasaron **15/15** contra Loc
 
 PR [#452](https://github.com/SauronShepherd/ronin/pull/452) añade la selección para classification/regression y conserva K-Means para clustering. El digest completo de PipelineIR también forma parte de la huella de checkpoints, por lo que una selección distinta no reutiliza outputs de otra configuración. P8 continúa parcial y release-qualified sigue en **0% (0/14)**.
 
-## 29. Candidato: preprocesamiento numérico reproducible
+## 29. Preprocesamiento numérico reproducible
 
-**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+**Progreso técnico: 4/4 criterios implementados y cualificados exact-head en `main@cee103b9c37ebedddd7364499d276639809b6a1b`.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -480,4 +480,17 @@ PR [#452](https://github.com/SauronShepherd/ronin/pull/452) añade la selección
 | Persistir la transformación para inferencia segura | Artefactos canónicos v3 guardan la transformación; el lector mantiene compatibilidad con artefactos v2 y valida forma, finitud y escalas positivas. |
 | Exponerlo de forma durable y verificable | La API/OpenAPI y Studio permiten seleccionar preprocesador; pruebas cubren regresión, ensembles, entrada manipulada y selección fijada por PipelineIR. |
 
-Quedan abiertos preprocesamiento categórico, imputación configurable y más transformaciones. P8 permanece parcial y release-qualified continúa en **0% (0/14)**.
+PR [#453](https://github.com/SauronShepherd/ronin/pull/453) pasó Python 3.11/3.12, Playwright 80/80 y Docker qualification en **9m36s**, con PostgreSQL, worker real y aceptación estricta. Los seis workflows post-merge —CI, Web, Security, Release, Status consistency y Docker qualification— pasaron exact-head; Docker terminó en **9m32s**. Los transformadores se ajustan sólo con filas de entrenamiento; el artefacto v3 es declarativo y el lector conserva compatibilidad con v2. P8 permanece parcial y release-qualified continúa en **0% (0/14)**.
+
+## 30. Candidato: codificación one-hot de features categóricas
+
+**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+
+| Criterio técnico | Evidencia local |
+| --- | --- |
+| Usar roles categóricos declarados por el Lab | El runner fija en PipelineIR el preprocesador `one_hot` y pasa sólo las columnas con rol `categorical`. |
+| Ajustar vocabulario sin filtrar datos de evaluación | El vocabulario se aprende únicamente de las filas de entrenamiento; categorías no vistas generan un vector de ceros. |
+| Acotar y validar expansión | Vocabularios ordenados limitan cada columna a 256 valores y la salida a 4096 features; se rechazan valores categóricos mayores que 1024 caracteres. |
+| Persistir y verificar para inferencia | El artefacto v3 guarda vocabularios canónicos y valida su forma; API, OpenAPI, Studio, ejecución durable y Playwright incluyen el preprocesador. |
+
+La integración conserva el modelo numérico actual y añade transformación categórica acotada. La verificación focalizada local pasó **63 pruebas**; Ruff y mypy pasaron en los módulos cambiados, el ledger de capacidades valida y `git diff --check` no informa errores. La prueba Playwright que comprueba el selector y el payload categórico también pasó. La cualificación del PR, incluido Docker, y la verificación exact-head posterior al merge quedan pendientes. P8 permanece parcial y release-qualified continúa en **0% (0/14)**.

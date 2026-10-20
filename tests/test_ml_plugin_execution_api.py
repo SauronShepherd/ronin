@@ -60,6 +60,40 @@ def test_submit_and_poll_execution() -> None:
     plugin._coordinator.close()
 
 
+def test_submit_one_hot_execution_uses_categorical_lab_feature() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "segments",
+        "Segments",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("segment", "categorical"), FeatureSpec("age", "numeric")),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    rows = [
+        {"segment": "blue" if index % 2 else "red", "age": float(index), "target": index % 2}
+        for index in range(20)
+    ]
+    try:
+        plugin.submit_execution(
+            "ws",
+            lab.id,
+            body={"run_id": "one-hot-run", "rows": rows, "preprocessor": "one_hot"},
+        )
+        deadline = time.time() + 30
+        state = plugin.execution_status("one-hot-run", workspace_id="ws")["state"]
+        while state not in {"succeeded", "failed"} and time.time() < deadline:
+            time.sleep(0.01)
+            state = plugin.execution_status("one-hot-run", workspace_id="ws")["state"]
+        assert state == "succeeded"
+        assert plugin.execution_status("one-hot-run", workspace_id="ws")["result"]["algorithm"]
+    finally:
+        plugin._coordinator.close()
+
+
 def test_submit_rejects_run_ids_longer_than_public_limit() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())
