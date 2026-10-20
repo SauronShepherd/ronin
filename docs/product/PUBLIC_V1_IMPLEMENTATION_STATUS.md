@@ -5,7 +5,7 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-20. The tracked source is based on
-`main@c0e716f`; PRs #430–#446 are merged. PR #436 makes the fixed six-stage local
+`main@6db8573`; PRs #430–#447 are merged. PR #436 makes the fixed six-stage local
 PipelineIR executable in stable topological order; PR #438/#439 add durable stage
 checkpoints and correct PostgreSQL resume pagination. PR #441 materializes verified
 tabular and K-Means model artifacts for durable results, with bounded size and
@@ -14,11 +14,13 @@ PR #443 adds a write-authorized API route to register successful durable runs as
 candidate model versions, with artifact digest and size verification. Its PR checks,
 including Docker qualification, passed. PR #445 integrates that registration flow
 into Studio. PR #446 adds workspace-scoped chunked artifact retrieval and UI download;
-its PR Docker, Web and CI checks passed. Exact-head qualification for `c0e716f` is
-running. The current candidate binds ML checkpoints and results to source, environment,
-backend and execution-option fingerprints. Untracked
+its PR Docker, Web and CI checks passed. PR #447 binds checkpoints and durable results
+to runtime/dependency identity and invalidates downstream outputs when dependencies
+change; all PR checks passed, including Docker qualification. Exact-head qualification
+for `6db8573` is pending. PR #448 adds direct promotion from the execution registration
+flow; its local browser suite passed, while PR checks are pending. Untracked
 qualification output directories are not release evidence.
-**Observed source head:** `c0e716f5b792a33a10ef8ed5194aee974a8ae4fd` (2026-10-20).
+**Observed source head:** `6db85733c88889475f2a7f58cd5c76a41347abfe` (2026-10-20).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -44,14 +46,16 @@ evidence.
 
 ## Exact-head qualification snapshot
 
-On `main@c0e716f5b792a33a10ef8ed5194aee974a8ae4fd`, PR #443 adds workspace-scoped
+On `main@6db85733c88889475f2a7f58cd5c76a41347abfe`, PR #443 adds workspace-scoped
 registration of successful durable ML executions as candidate model versions after
 rechecking artifact size and digest; PR #445 integrates the flow into Studio. PR #446
 adds workspace-scoped artifact retrieval in digest-verified chunks capped at 512 KiB
-and a chunked UI download. Its CI, Web and Docker qualification passed. Post-merge
-qualification for `c0e716f` is running. The current candidate binds checkpoint reuse
-and durable result provenance to runtime and upstream dependency fingerprints,
-recalculating downstream stages when their outputs change. PR [#441](https://github.com/SauronShepherd/ronin/pull/441) passed CI
+and a chunked UI download. PR #447 fingerprints executable source, Python and ML
+dependencies, backend, options and upstream outputs for checkpoint reuse and durable
+result provenance; changed outputs invalidate downstream stages. Its CI and Docker
+qualification passed. Post-merge exact-head qualification for `6db8573` is pending.
+PR #448 adds a promotion action after successful execution registration; 79/79 local
+Playwright tests pass, while hosted CI/Docker checks are pending. PR [#441](https://github.com/SauronShepherd/ronin/pull/441) passed CI
 Python 3.11/3.12, quality, security, verification, ledgers and [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39371246065)
 (8m54s, including PostgreSQL-backed coverage, a real Docker worker and strict
 frozen v0.1 acceptance). Public v1 remains incomplete; P8 is partial and release

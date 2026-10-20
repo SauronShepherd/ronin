@@ -383,14 +383,15 @@ La salida durable expone URI, digest, media type y tamaño; el candidato actual 
 
 ## 23. Registro de resultados de ejecuciones durables
 
-**Progreso técnico local: 2/2 criterios implementados; cualificación exact-head pendiente.**
+**Progreso técnico local: 3/3 criterios implementados; cualificación exact-head pendiente.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
 | Registrar sólo una ejecución exitosa con artifact materializado | `POST /v1/ml-studio/executions/{run_id}/register` exige estado `succeeded`, metadatos completos y ArtifactStore disponible; revalida tamaño y SHA-256 antes de escribir en el registry. |
 | Crear procedencia y versión candidata idempotentes | Registra Experiment y MLRun ligados al Lab/dataset, luego el model version con digest, firma inferida y referencia content-addressed; el registry hace idempotentes escrituras idénticas y rechaza conflictos. |
+| Promover directamente el candidato recién registrado | El formulario de éxito conserva una acción Promote candidate que reutiliza `mlPromote()`, pide el motivo obligatorio y llama al endpoint existente protegido por autorización. |
 
-Las pruebas focalizadas verifican el flujo tabular, la firma/digest/procedencia y el rechazo de ejecuciones aún activas. El handler requiere autorización `ml-studio:write`; el contenido del artifact no se sirve por este endpoint. El candidato UI añade el formulario de registro al completar correctamente una ejecución y actualiza la lista de modelos tras el registro. Aún faltan probar el journey con servicios reales, promoción directa desde la ejecución, retry selectivo e invalidación aguas abajo. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+Las pruebas de API verifican el flujo tabular, la firma/digest/procedencia y el rechazo de ejecuciones aún activas; Playwright recorre registro y promoción hasta `champion`. El handler requiere autorización `ml-studio:write`; el contenido del artifact no se sirve por este endpoint. PR #448 pasa localmente el flujo focalizado (**3/3**) y la suite web completa (**79/79**); la cualificación CI/Docker y la comprobación exact-head siguen pendientes. El PR #447 ya vinculó checkpoints y resultados durables al runtime y dependencias, e invalida outputs downstream obsoletos. Aún faltan reintentos selectivos y la prueba con servicios/artifact store remoto. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
 
 ## 24. Lectura HTTP autorizada de artifacts de modelos
 
@@ -420,5 +421,5 @@ Las pruebas de API cubren reconstrucción por varios bloques, aislamiento por wo
 | Persistir procedencia del output | La huella de runtime queda en el checkpoint de selección y en el payload durable `ExperimentResult`/`ClusteringResult`. |
 | Invalidar outputs downstream cuando cambia una dependencia | Cada checkpoint incorpora un digest canónico de las salidas de sus nodos upstream; la discrepancia descarta y vuelve a calcular esa etapa y sus dependientes. |
 
-La suite focalizada ML/API de este candidato pasó **164 tests**; Ruff, formato y mypy del runner pasan. La huella es deliberadamente conservadora: cualquier cambio en los módulos ejecutables invalida los checkpoints, y un backend sin código fuente o fingerprint declarado no reutiliza caché. La suite también prueba que alterar un output intermedio impide restaurar su evaluación y selección antiguas. Quedan política explícita de retención y reintentos selectivos observables. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+El PR #447 (`main@6db8573`) pasó **164 tests ML/API**, Ruff, formato, mypy del runner, CI 3.11/3.12 y cualificación Docker con PostgreSQL, worker real y aceptación estricta. La cualificación exact-head post-merge está pendiente. La huella es deliberadamente conservadora: cualquier cambio en los módulos ejecutables invalida los checkpoints, y un backend sin código fuente o fingerprint declarado no reutiliza caché. La suite también prueba que alterar un output intermedio impide restaurar su evaluación y selección antiguas. Quedan política explícita de retención y reintentos selectivos observables. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
 
