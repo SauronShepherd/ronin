@@ -19,8 +19,23 @@ class FeatureDefinitionConflict(RuntimeError):
     """Raised when a feature identity/version is reused with different content."""
 
 
-def compile_lab_pipeline(lab: Lab) -> PipelineIR:
+def compile_lab_pipeline(lab: Lab, *, algorithm: str | None = None) -> PipelineIR:
     """Build the deterministic pipeline definition bound to an immutable Lab."""
+
+    parameters = {
+        "backend_id": lab.backend_id,
+        "lab_digest": lab.digest,
+        "seed": str(lab.seed),
+        "task": lab.task,
+    }
+    if algorithm is not None:
+        from .runtime import ALGORITHM_CAPABILITIES
+
+        if lab.task == "clustering" or lab.task not in ALGORITHM_CAPABILITIES.get(
+            algorithm, frozenset()
+        ):
+            raise ValueError("algorithm is not supported for this Lab task")
+        parameters["algorithm"] = algorithm
 
     return PipelineIR(
         nodes=(
@@ -31,12 +46,7 @@ def compile_lab_pipeline(lab: Lab) -> PipelineIR:
             _node("evaluate", ("train",)),
             _node("select", ("evaluate",)),
         ),
-        parameters=(
-            ("backend_id", lab.backend_id),
-            ("lab_digest", lab.digest),
-            ("seed", str(lab.seed)),
-            ("task", lab.task),
-        ),
+        parameters=tuple(sorted(parameters.items())),
     )
 
 
@@ -93,9 +103,11 @@ class LabService:
     def list(self, workspace_id: WorkspaceId) -> tuple[Lab, ...]:
         return self.store.list_labs(workspace_id)
 
-    def compile(self, workspace_id: WorkspaceId, lab_id: str) -> PipelineIR:
+    def compile(
+        self, workspace_id: WorkspaceId, lab_id: str, *, algorithm: str | None = None
+    ) -> PipelineIR:
         lab = self.get(workspace_id, lab_id)
-        pipeline = compile_lab_pipeline(lab)
+        pipeline = compile_lab_pipeline(lab, algorithm=algorithm)
         return self.store.put_pipeline(workspace_id, lab.id, pipeline)
 
 

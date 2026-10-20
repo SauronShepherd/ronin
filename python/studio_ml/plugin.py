@@ -721,8 +721,8 @@ class MachineLearningStudioPlugin:
             raise ValueError("lab_id is required")
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
-        if not isinstance(body, dict) or set(body) - {"run_id", "rows"}:
-            raise ValueError("execution body must contain optional rows and run_id")
+        if not isinstance(body, dict) or set(body) - {"run_id", "rows", "algorithm"}:
+            raise ValueError("execution body must contain run_id, rows, and optional algorithm")
         if "rows" in body and body["rows"] is None:
             raise ValueError("execution rows must be an array when provided")
         run_id = body.get("run_id", f"run-{lab_id}")
@@ -734,10 +734,15 @@ class MachineLearningStudioPlugin:
         ):
             raise ValueError("execution run_id must be 1 to 256 characters of trimmed text")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
+        algorithm = body.get("algorithm")
+        if algorithm is not None and (
+            not isinstance(algorithm, str) or not algorithm or algorithm != algorithm.strip()
+        ):
+            raise ValueError("algorithm must be a non-empty trimmed string")
         rows = resolve_lab_rows(
             WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
         )
-        pipeline = self._labs.compile(WorkspaceId(workspace_id), lab_id)
+        pipeline = self._labs.compile(WorkspaceId(workspace_id), lab_id, algorithm=algorithm)
         return self._coordinator.submit(workspace_id, run_id, lab, rows, pipeline).to_payload()
 
     def compare_trials(

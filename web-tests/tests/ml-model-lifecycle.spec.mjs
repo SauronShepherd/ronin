@@ -25,15 +25,17 @@ test('ML Studio exposes model card and promotion actions', async ({ page }) => {
 test('ML Studio registers a successful durable run as a candidate model', async ({ page }) => {
   let registered = false;
   let promoted = false;
+  let executionBody;
   await page.route('**/v1/ml-studio/labs?**', route => route.fulfill({json: {
     items: [{id: 'churn', name: 'Churn', task: 'classification', backend_id: 'local.sklearn'}],
   }}));
   await page.route('**/v1/ml-studio/models?**', route => route.fulfill({json: {
     items: registered ? [{model_id: 'churn', version: 'run-ui', stage: promoted ? 'champion' : 'candidate'}] : [],
   }}));
-  await page.route('**/v1/ml-studio/labs/churn/executions?**', route => route.fulfill({json: {
-    run_id: 'run-ui', state: 'queued',
-  }}));
+  await page.route('**/v1/ml-studio/labs/churn/executions?**', async route => {
+    executionBody = route.request().postDataJSON();
+    await route.fulfill({json: {run_id: 'run-ui', state: 'queued'}});
+  });
   await page.route('**/v1/ml-studio/executions/run-ui?**', route => route.fulfill({json: {
     run_id: 'run-ui', state: 'succeeded', result: {artifact_digest: 'a'.repeat(64)},
   }}));
@@ -49,7 +51,9 @@ test('ML Studio registers a successful durable run as a candidate model', async 
     await route.fulfill({json: {model_id: 'churn', version: 'run-ui', stage: 'champion'}});
   });
   await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
+  await page.locator('[data-ml-algorithm="churn"]').selectOption('random_forest_classifier');
   await page.locator('[data-feature="ml-run"]').click();
+  await expect.poll(() => executionBody?.algorithm).toBe('random_forest_classifier');
   await expect(page.locator('#ml-register-execution')).toBeVisible();
   await page.locator('#ml-register-execution button[type="submit"]').click();
   await expect.poll(() => registered).toBe(true);

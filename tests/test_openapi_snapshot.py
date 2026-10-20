@@ -65,6 +65,16 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
     assert "required" not in request_schema
     assert request_schema["properties"]["run_id"]["minLength"] == 1
     assert request_schema["properties"]["rows"]["type"] == "array"
+    assert request_schema["properties"]["algorithm"]["enum"] == [
+        "logistic_regression",
+        "linear_regression",
+        "decision_tree_classifier",
+        "decision_tree_regressor",
+        "random_forest_classifier",
+        "random_forest_regressor",
+        "gradient_boosting_classifier",
+        "gradient_boosting_regressor",
+    ]
     assert "409" in submit["responses"]
     quality = document["paths"]["/v1/ml-studio/labs/{lab_id}/quality"]["post"]
     quality_schema = quality["requestBody"]["content"]["application/json"]["schema"]
