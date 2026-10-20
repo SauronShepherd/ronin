@@ -94,7 +94,7 @@ def test_retention_plan_requires_all_reference_sources_and_never_deletes(
     stale = store.put_bytes(role="stale", data=b"stale")
 
     incomplete = plan_unreferenced(store, {"ml_runs": (live.digest,)})
-    assert not incomplete.complete
+    assert not incomplete.all_required_sources_supplied
     assert incomplete.missing_sources == tuple(
         sorted(REQUIRED_ARTIFACT_REFERENCE_SOURCES - {"ml_runs"})
     )
@@ -103,7 +103,7 @@ def test_retention_plan_requires_all_reference_sources_and_never_deletes(
     complete_snapshot = dict.fromkeys(REQUIRED_ARTIFACT_REFERENCE_SOURCES, ())
     complete_snapshot["ml_runs"] = (live.digest,)
     preview = plan_unreferenced(store, complete_snapshot)
-    assert preview.complete
+    assert preview.all_required_sources_supplied
     assert preview.candidate_digests == (stale.digest,)
     assert store.verify(live)
     assert store.verify(stale)
@@ -117,7 +117,7 @@ def test_retention_plan_fails_closed_for_truncated_inventory(tmp_path: Path) -> 
 
     preview = plan_unreferenced(store, complete_snapshot, page_size=1, max_objects=1)
 
-    assert not preview.complete
+    assert not preview.all_required_sources_supplied
     assert preview.inventory_truncated
     assert preview.candidate_digests == ()
 

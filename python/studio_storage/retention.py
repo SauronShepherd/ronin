@@ -29,7 +29,12 @@ class ArtifactRetentionPlan:
     inventory_truncated: bool = False
 
     @property
-    def complete(self) -> bool:
+    def all_required_sources_supplied(self) -> bool:
+        """Whether the caller supplied every known source family.
+
+        This does not attest that a caller's data for those sources is exhaustive.
+        """
+
         return not self.missing_sources and not self.inventory_truncated
 
 

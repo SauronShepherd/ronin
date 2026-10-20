@@ -541,7 +541,7 @@ La verificación local pasó **72 pruebas Python focalizadas**. La suite Playwri
 | Criterio | Evidencia local |
 | --- | --- |
 | Exigir el conjunto conocido de fuentes | `plan_unreferenced()` requiere catálogo, resultados durables, checkpoints, archivos locales, MLRun y versiones registradas; rechaza fuentes desconocidas. |
-| Fallar cerrado ante cobertura incompleta | Una fuente ausente devuelve `complete=false` y ningún candidato. Un inventario que supera el límite también devuelve cero candidatos. |
+| Fallar cerrado ante cobertura incompleta | Una fuente ausente devuelve `all_required_sources_supplied=false` y ningún candidato. Un inventario que supera el límite también devuelve cero candidatos. |
 | Limitar el inventario | Usa páginas cuando el store implementa `PagedArtifactStore`, con tamaño de página y máximo de objetos configurables y validados. |
 | Hacer el primer paso no destructivo | El plan lista digests candidatos ordenados y no llama a `delete`; las pruebas verifican que candidatos y objetos vivos siguen presentes. |
 
