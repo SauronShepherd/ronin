@@ -7,7 +7,10 @@ from studio_data_engineering import (
     SdpProjectSource,
     SqliteRevisionStore,
 )
-from studio_storage import LocalArtifactStore
+from studio_storage import (
+    LocalArtifactStore,
+    discover_data_engineering_artifact_references,
+)
 
 
 def test_sdp_import_persists_content_addressed_revision(tmp_path: Path) -> None:
@@ -49,3 +52,20 @@ def test_revision_application_uses_durable_revision_store(tmp_path: Path) -> Non
         project_id="p", pipeline_id="main", source=source, expected_revision=1
     )
     assert second.revision == 2
+
+
+def test_discovery_covers_all_projects_pipelines_and_historical_revisions(tmp_path: Path) -> None:
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    records = SqliteRevisionStore(tmp_path / "ronin.db")
+    service = RevisionApplication(artifacts, records)
+    source = SdpProjectSource("retail", b"name: retail\n", (("nodes/main.yaml", b"nodes: []\n"),))
+    service.import_sdp(project_id="project-a", pipeline_id="main", source=source)
+    service.import_sdp(project_id="project-a", pipeline_id="main", source=source)
+    service.import_sdp(project_id="project-b", pipeline_id="secondary", source=source)
+
+    references = discover_data_engineering_artifact_references(records)
+
+    assert len(records.list_all_revisions()) == 3
+    assert references["data_engineering_revisions"]
+    with pytest.raises(ValueError, match="inventory exceeded"):
+        discover_data_engineering_artifact_references(records, max_revisions=2)

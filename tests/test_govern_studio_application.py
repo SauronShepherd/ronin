@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
+from studio_storage import discover_synthetic_data_artifact_references
 from studio_synthetic_data import (
     GovernStudioService,
     RunStatus,
@@ -144,6 +145,9 @@ def test_sqlite_store_persists_export_artifact_metadata(tmp_path) -> None:
     assert artifacts[0]["format_id"] == "jsonl"
     assert artifacts[0]["size_bytes"] == len(content.encode())
     assert artifacts[0]["storage_ref"].endswith(artifacts[0]["digest"])
+    assert discover_synthetic_data_artifact_references(reopened) == {
+        "synthetic_data_exports": (artifacts[0]["digest"],)
+    }
 
 
 def test_generation_invokes_publication_hook_before_commit() -> None:
