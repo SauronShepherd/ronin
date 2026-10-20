@@ -300,6 +300,7 @@ def test_postgres_ml_node_checkpoint_survives_service_reopen() -> None:
             "profile",
             {"kind": "profile", "value": {"row_count": 4}},
         )
+        adapter.finish_claim(claim, state="succeeded", result_payload={"checkpointed": True})
     finally:
         asyncio.run(service.aclose())
 

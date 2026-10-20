@@ -102,3 +102,66 @@ def test_postgres_jobstore_complete_lifecycle() -> None:
     assert len(store.read_events(run_id, since=0)) == 1
     assert len(store.read_cell_results(run_id)) == 1
     assert len(store.read_evidence(run_id)) == 1
+
+
+def test_postgres_jobstore_list_filters_and_keyset_pagination() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    PostgresMetadataStore(dsn, application_name="ronin-jobstore-list-qualification").migrate()
+    store = PostgresJobReadPort(dsn, application_name="ronin-jobstore-list-qualification")
+    suffix = uuid4().hex
+    project_id = f"project-list-{suffix}"
+    other_project_id = f"project-other-{suffix}"
+    jobs: list[Job] = []
+
+    for index, current_project in enumerate((project_id, project_id, other_project_id), start=1):
+        job_id = JobId(f"job-list-{suffix}-{index}")
+        run_id = RunId(f"run-list-{suffix}-{index}")
+        job = Job(
+            id=job_id,
+            project_id=current_project,
+            idempotency_key=f"key-list-{suffix}-{index}",
+            request_digest="e" * 64,
+            state=JobState.QUEUED,
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        run = Run(
+            id=run_id,
+            job_id=job_id,
+            ordinal=1,
+            state=RunState.PENDING,
+            not_before=Instant("2099-01-01T00:00:00.000000Z"),
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        store.create_job(job, run)
+        jobs.append(job)
+
+    matching = store.list_jobs(
+        project_id=None,
+        project_ids=(project_id, other_project_id),
+        state=JobState.QUEUED,
+        limit=10,
+        cursor=None,
+    )
+    assert {job.id for job in matching.items} == {job.id for job in jobs}
+    assert matching.next_cursor is None
+
+    first_page = store.list_jobs(
+        project_id=project_id,
+        state=JobState.QUEUED,
+        limit=1,
+        cursor=None,
+    )
+    assert len(first_page.items) == 1
+    assert first_page.next_cursor is not None
+
+    second_page = store.list_jobs(
+        project_id=project_id,
+        state=JobState.QUEUED,
+        limit=1,
+        cursor=first_page.next_cursor,
+    )
+    assert len(second_page.items) == 1
+    assert second_page.next_cursor is None
+    assert {job.id for job in first_page.items + second_page.items} == {job.id for job in jobs[:2]}
