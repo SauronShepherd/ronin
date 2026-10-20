@@ -212,6 +212,10 @@ class CatalogStore(Protocol):
 
     def get_revision(self, workspace_id: WorkspaceId, ref: AssetRef) -> AssetRevision | None: ...
 
+    def list_revisions(
+        self, workspace_id: WorkspaceId, asset_id: AssetId
+    ) -> tuple[AssetRevision, ...]: ...
+
     def put_lineage(
         self,
         workspace_id: WorkspaceId,

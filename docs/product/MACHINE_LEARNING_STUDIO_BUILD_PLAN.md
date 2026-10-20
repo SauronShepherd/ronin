@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 66%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 67%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -536,7 +536,7 @@ La verificación local pasó **72 pruebas Python focalizadas**. La suite Playwri
 
 ## 34. Inventario dry-run para retención de artefactos
 
-**Progreso técnico local: 4/4 criterios de la primera etapa implementados; falta integrar los enumeradores reales de referencias.**
+**Progreso técnico: 4/4 criterios de la primera etapa implementados y cualificados exact-head en `main@58911b4d19dd922de31f08e47c6b82db5e7cb32e`; faltan enumeradores reales para cinco familias.**
 
 | Criterio | Evidencia local |
 | --- | --- |
@@ -545,4 +545,17 @@ La verificación local pasó **72 pruebas Python focalizadas**. La suite Playwri
 | Limitar el inventario | Usa páginas cuando el store implementa `PagedArtifactStore`, con tamaño de página, máximo de páginas y máximo de objetos configurables y validados. |
 | Hacer el primer paso no destructivo | El plan lista digests candidatos ordenados y no llama a `delete`; las pruebas verifican que candidatos y objetos vivos siguen presentes. |
 
-La batería focalizada de artifacts/paginación pasó **38 pruebas** y la suite Python completa pasó **3791 pruebas, 52 omitidas**. Ruff, formato, mypy, `git diff --check` y el gate portátil de cobertura (**54 archivos**) pasan. Los tests elevaron la cobertura de `artifacts.py` de 78.17% a 86.18%, por encima del piso de 80%; se quitó su baseline legacy de ambos gates de Makefile. La cualificación completa de cobertura requiere PostgreSQL y sigue delegada al gate Docker. El inventario de productores encontró estas nueve familias en `put_bytes()`; el snapshot aún lo prepara el llamador, así que el helper no puede demostrar que los datos de cada familia sean exhaustivos. El siguiente trabajo debe conectar y cualificar cada enumerador, añadir edad/rol a la vista de inventario y cubrir carreras antes de habilitar cualquier borrado automático. La limpieza global permanece deshabilitada. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+La batería focalizada de artifacts/paginación pasó **38 pruebas** y la suite Python completa pasó **3791 pruebas, 52 omitidas**. Ruff, formato, mypy, `git diff --check` y el gate portátil de cobertura (**54 archivos**) pasan. Los tests elevaron la cobertura de `artifacts.py` de 78.17% a 86.18%, por encima del piso de 80%; se quitó su baseline legacy de ambos gates de Makefile. PR [#457](https://github.com/SauronShepherd/ronin/pull/457) y los seis workflows post-merge exact-head de `main@58911b4` pasaron; Docker terminó en **8m20s** con cobertura PostgreSQL, worker real y aceptación estricta. El inventario de productores encontró nueve familias en `put_bytes()`; el snapshot aún lo prepara el llamador, así que el helper no puede demostrar que los datos de cada familia sean exhaustivos. La limpieza global permanece deshabilitada. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+
+## 35. Descubrimiento de referencias de catálogo y ML
+
+**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+
+| Criterio | Evidencia local |
+| --- | --- |
+| Enumerar revisiones completas del catálogo | `CatalogStore.list_revisions()` queda en el port y en SQLite/PostgreSQL; la búsqueda recorre todas las workspaces, assets y revisiones. |
+| Preservar inputs de archivos locales | Las referencias `artifact://sha256/...` de assets `file` se registran además como fuente `local_files`. |
+| Enumerar referencias del registry ML | Se recogen artifact refs/runtime snapshots de MLRun y se validan refs/digests de cada versión registrada. |
+| Mantener el fallo cerrado para fuentes pendientes | El snapshot cubre cuatro de nueve familias; al pasarlo al planner, las otras cinco ausentes impiden devolver candidatos. |
+
+La cobertura focalizada pasa **18 pruebas**; la integración real PostgreSQL está añadida al gate Docker. Esta etapa descubre cuatro familias pero no habilita retención global; siguen pendientes Jobs/evidencia durable, checkpoints, conectores, revisiones de ingeniería de datos y exports sintéticos.

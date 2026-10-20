@@ -94,6 +94,8 @@ from studio_storage.retention import (
     REQUIRED_ARTIFACT_REFERENCE_SOURCES,
     ArtifactRetentionPlan,
     collect_unreferenced,
+    discover_catalog_artifact_references,
+    discover_ml_artifact_references,
     plan_unreferenced,
 )
 from studio_storage.s3_artifacts import S3ArtifactStore, S3DependencyError
@@ -171,6 +173,8 @@ __all__ = (
     "S3ArtifactStore",
     "S3DependencyError",
     "collect_unreferenced",
+    "discover_catalog_artifact_references",
+    "discover_ml_artifact_references",
     "plan_unreferenced",
     "ArtifactRetentionPlan",
     "REQUIRED_ARTIFACT_REFERENCE_SOURCES",
