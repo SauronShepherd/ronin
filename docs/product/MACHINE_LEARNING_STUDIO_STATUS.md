@@ -19,6 +19,7 @@ planificadas de una plataforma ML completa.
 | Checkpoints durables de etapas PipelineIR | Implementado para las seis etapas locales | `runner.py`, `orchestration.py`, round-trip local y recuperación PostgreSQL tras reabrir el servicio |
 | Materialización del modelo en ejecución durable | Implementada para tabular y K-Means | `JobStoreExecutionStore.materialize_result_artifact()`, verificación de lectura/digest y referencia persistida en el resultado |
 | Registro de resultados de ejecuciones durables | Implementado en el candidato local; cualificación pendiente | `POST /v1/ml-studio/executions/{run_id}/register` valida estado, tamaño, digest, workspace/Lab y registra Experiment, MLRun y versión candidata con firma |
+| Lectura y descarga de artifacts de modelos | Implementadas en el candidato local; cualificación pendiente | Endpoint `GET .../artifact` con `ml-studio:read`, aislamiento por workspace y bloques Base64 verificados; UI reconstruye y descarga el archivo tras validar tamaño, digest y secuencia |
 | Provenance y registry base | Implementado | `service.py`, `provenance.py`, persistence tests |
 | HTTP control plane y autorización | Implementado | `test_ml_studio_http.py` |
 | OpenAPI base ML Studio | Implementado | `api/openapi-v1.json`, contract test |
@@ -52,5 +53,5 @@ configurables, `register` como etapa ejecutable, invalidación explícita de out
 dependientes ni reintentos selectivos visibles desde el producto.
 El resultado durable conserva una referencia verificada del modelo en ArtifactStore.
 El candidato local añade el registro de una ejecución como versión candidata por una
-API protegida y una acción en el journey de UI. La lectura HTTP autorizada del
-contenido y la verificación del flujo contra servicios persistentes siguen pendientes.
+API protegida, la lectura HTTP autorizada en bloques y la descarga verificada desde la
+UI. La verificación contra un ArtifactStore remoto sigue pendiente.
