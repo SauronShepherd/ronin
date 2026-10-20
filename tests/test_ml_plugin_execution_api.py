@@ -128,6 +128,49 @@ def test_submit_median_impute_execution_fills_null_and_blank_numeric_values() ->
         plugin._coordinator.close()
 
 
+def test_submit_composed_preprocessing_accepts_mixed_lab_features() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "mixed",
+        "Mixed features",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("segment", "categorical"), FeatureSpec("age", "numeric")),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    rows = [
+        {
+            "segment": "blue" if index % 2 else "red",
+            "age": None if index == 0 else float(index),
+            "target": index % 2,
+        }
+        for index in range(20)
+    ]
+    try:
+        plugin.submit_execution(
+            "ws",
+            lab.id,
+            body={
+                "run_id": "composed-preprocessing-run",
+                "rows": rows,
+                "preprocessor": "one_hot_median_impute",
+            },
+        )
+        deadline = time.time() + 30
+        state = plugin.execution_status("composed-preprocessing-run", workspace_id="ws")["state"]
+        while state not in {"succeeded", "failed"} and time.time() < deadline:
+            time.sleep(0.01)
+            state = plugin.execution_status("composed-preprocessing-run", workspace_id="ws")[
+                "state"
+            ]
+        assert state == "succeeded"
+    finally:
+        plugin._coordinator.close()
+
+
 def test_submit_rejects_run_ids_longer_than_public_limit() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())

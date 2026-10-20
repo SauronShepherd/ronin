@@ -51,6 +51,7 @@ test('ML Studio registers a successful durable run as a candidate model', async 
     await route.fulfill({json: {model_id: 'churn', version: 'run-ui', stage: 'champion'}});
   });
   await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
+  await expect(page.locator('[data-ml-preprocessor="churn"] option[value="one_hot_median_impute"]')).toHaveText('One hot + median imputation');
   await page.locator('[data-ml-algorithm="churn"]').selectOption('random_forest_classifier');
   await page.locator('[data-ml-preprocessor="churn"]').selectOption('one_hot');
   await page.locator('[data-feature="ml-run"]').click();

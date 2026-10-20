@@ -752,6 +752,7 @@ class MachineLearningStudioPlugin:
             "standard_scale",
             "one_hot",
             "median_impute",
+            "one_hot_median_impute",
         }:
             raise ValueError("preprocessor is not supported")
         if lab.task == "clustering" and preprocessor != "identity":

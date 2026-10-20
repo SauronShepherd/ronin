@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 64%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 65%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -497,7 +497,7 @@ PR [#454](https://github.com/SauronShepherd/ronin/pull/454) pasó las matrices P
 
 ## 31. Candidato: imputación numérica reproducible
 
-**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+**Progreso técnico: 4/4 criterios implementados y cualificados exact-head en `main@fcce4c673997d8c93fe12d22bd2aff2d3002591d`.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -506,4 +506,30 @@ PR [#454](https://github.com/SauronShepherd/ronin/pull/454) pasó las matrices P
 | Reutilizar la transformación al inferir | El artefacto v3 guarda una mediana finita por feature y la predicción reemplaza ausentes con esos valores persistidos. |
 | Conectarlo al flujo durable y al contrato público | PipelineIR, runner, API, OpenAPI y Studio exponen `median_impute` únicamente para Labs numéricos; hay cobertura de runtime, runner y API. |
 
-La verificación local pasó **69 pruebas Python focalizadas y 81/81 Playwright**. Ruff, formato, mypy, OpenAPI, ledger de capacidades, sintaxis JavaScript y `git diff --check` pasan. La cualificación del PR, incluido Docker, y la verificación exact-head posterior al merge quedan pendientes. P8 permanece parcial y release-qualified continúa en **0% (0/14)**.
+La verificación local pasó **69 pruebas Python focalizadas y 81/81 Playwright**. PR [#455](https://github.com/SauronShepherd/ronin/pull/455) pasó CI Python 3.11/3.12, Web, Security, Release, Status consistency y Docker qualification (**8m19s**). Los seis workflows post-merge exact-head de `main@fcce4c673997d8c93fe12d22bd2aff2d3002591d` también pasaron; Docker terminó en **9m20s**. Ruff, formato, mypy, OpenAPI, ledger de capacidades, sintaxis JavaScript y `git diff --check` pasan. El artefacto v3 fija una mediana finita por feature y la reutiliza en inferencia; se rechazan columnas sin valor de entrenamiento. P8 permanece parcial y release-qualified continúa en **0% (0/14)**.
+
+## 32. Candidato: retención de artefactos con referencias vivas
+
+**Estado: análisis de alcance; no cuenta como trabajo implementado.**
+
+| Requisito | Criterio de diseño |
+| --- | --- |
+| Descubrir referencias sin depender del llamador | Enumerar referencias de Labs/datasets, ejecuciones durables, MLRun records y todas las versiones registradas. Una fuente incompleta debe impedir el barrido. |
+| Preservar objetos vivos durante carreras concurrentes | Separar inventario de candidatos de borrado; volver a comprobar referencias inmediatamente antes de eliminar y hacer la operación idempotente. |
+| Operación observable y acotada | Exponer primero un plan dry-run con digest, rol, edad y fuente; paginar el inventario y limitar objetos por ciclo. |
+| No borrar datos generales al limpiar resultados ML | Identificar roles y productores de cada objeto; no eliminar un digest sólo porque una referencia de ML dejó de existir si otro producto lo usa. |
+
+`collect_unreferenced()` ya elimina digests ausentes de un conjunto que debe preparar el llamador; no descubre ese conjunto desde catálogos, ejecuciones ni registros. El test de LocalStack protege input y modelo en una llamada manual. Hasta cerrar el descubrimiento completo de referencias y las carreras, la limpieza automática global permanece deshabilitada. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+
+## 33. Candidato: componer codificación categórica e imputación numérica
+
+**Progreso técnico local: 4/4 criterios implementados; cualificación pendiente.**
+
+| Criterio técnico | Evidencia local |
+| --- | --- |
+| Aceptar Labs mixtos con categorías y números ausentes | La nueva opción `one_hot_median_impute` acepta `null`/celdas vacías numéricas y conserva validación estricta de columnas categóricas. |
+| Evitar fuga de datos para ambas transformaciones | Medianas y vocabularios se ajustan independientemente sólo sobre el split de entrenamiento. |
+| Persistir una transformación reproducible | Artefactos v3 guardan vocabularios categóricos y medianas por nombre de columna; predicción reproduce ambas etapas y rechaza metadata inválida. |
+| Exponerlo al flujo durable y al usuario | PipelineIR, runner, API, OpenAPI y Studio ofrecen la opción; runtime, runner, endpoint durable y Playwright tienen cobertura. |
+
+La verificación local pasó **72 pruebas Python focalizadas**. La suite Playwright completa registró **80/81** en la primera corrida; el único timeout ocurrió en una prueba de Synthetic Studio y pasó al repetirse aislada (**1/1**). Ruff, formato, mypy, OpenAPI, ledger, sintaxis JavaScript y `git diff --check` pasan. El PR y la cualificación exact-head Docker/Web quedan pendientes. La integración no modifica la semántica de `one_hot` ni de `median_impute` elegidas por separado. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.

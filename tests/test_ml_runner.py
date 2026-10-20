@@ -155,6 +155,34 @@ def test_one_hot_pipeline_uses_lab_categorical_roles() -> None:
     assert artifact["preprocessing"]["categories"]["segment"] == ["blue", "red"]
 
 
+def test_pipeline_composes_one_hot_and_numeric_median_imputation() -> None:
+    import json
+
+    lab = Lab(
+        "segments",
+        "Segments",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("segment", "categorical"), FeatureSpec("age", "numeric")),
+    )
+    rows = [
+        {
+            "segment": "blue" if index % 2 else "red",
+            "age": None if index == 0 else float(index),
+            "target": index % 2,
+        }
+        for index in range(20)
+    ]
+    pipeline = compile_lab_pipeline(lab, preprocessor="one_hot_median_impute")
+    result = LocalExperimentRunner().execute_pipeline(lab, rows, pipeline)
+    preprocessing = json.loads(result.model.artifact_bytes)["preprocessing"]
+    assert preprocessing["kind"] == "one_hot_median_impute"
+    assert preprocessing["categories"]["segment"] == ["blue", "red"]
+    assert "age" in preprocessing["medians"]
+
+
 def test_local_runner_restores_all_persisted_node_outputs_without_reexecution() -> None:
     lab = _lab()
     pipeline = compile_lab_pipeline(lab)
