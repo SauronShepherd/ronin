@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 72%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: todavía no hay limpieza global segura ni ejecución de grafos configurables. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 73%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: todavía no hay limpieza global segura ni ejecución de grafos configurables. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -611,7 +611,7 @@ La suite focalizada de artifacts/paginación pasa **13 tests**; la suite Python 
 
 ## 40. Borrado de artifacts tras inventario acotado
 
-**Estado en curso: implementado localmente; pendiente suite completa y cualificación del PR.**
+**Estado: integrado en PR #464 y cualificado en los seis workflows post-merge exact-head de `main@de0091d8ea4caa0b58e00f47bc0c3405d1016ade`.**
 
 | Criterio | Evidencia |
 | --- | --- |
@@ -619,4 +619,4 @@ La suite focalizada de artifacts/paginación pasa **13 tests**; la suite Python 
 | Evitar borrado parcial ante inventario incompleto | Primero valida y termina el recorrido completo; sólo después empieza a borrar candidatos. Overflow, cursores inválidos/repetidos o stores sin paginación fallan antes de borrar. |
 | Mantener explícito el límite de seguridad | La lista viva sigue siendo responsabilidad del llamador; esto acota la operación, pero no hace atómica la observación de seis fuentes ni permite activar limpieza global automática. |
 
-Las pruebas focalizadas pasan **25 tests**, incluyendo inventario paginado sin `list_digests()`, overflow de objetos, tope de páginas y rechazo de stores sin paginación; Ruff, formato, mypy de `retention.py` y `git diff --check` pasan. La suite completa registró **3813 pasadas y 54 omitidas**, con un timeout de 15 s en `test_step_03_validate_accepts_demo_project`; al repetir ese test aislado pasó (**1/1**), por lo que el fallo no apunta a la retención. CI y Docker del PR quedan pendientes para repetir la matriz completa.
+Las pruebas focalizadas pasan **25 tests**, incluyendo inventario paginado sin `list_digests()`, overflow de objetos, tope de páginas y rechazo de stores sin paginación; Ruff, formato, mypy de `retention.py` y `git diff --check` pasan. La suite local registró **3813 pasadas y 54 omitidas**, con un timeout de 15 s en `test_step_03_validate_accepts_demo_project`; al repetir ese test aislado pasó (**1/1**). CI, Release, Security, Status consistency y Docker del PR pasaron; los seis workflows post-merge exact-head de `main@de0091d` también, con PostgreSQL, worker real y aceptación estricta.

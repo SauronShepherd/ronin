@@ -4,16 +4,17 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-20. PRs #430–#462 are merged. Recent
+**Observed workspace snapshot:** 2026-10-20. PRs #430–#464 are merged. Recent
 increments add configurable ML algorithms and preprocessing, selective retry,
 non-destructive artifact retention preview, fail-closed reference discovery with
-bounded enumeration, and bounded-memory local artifact pagination. PR #462 uses
-stable digest cursors and retains only one page plus a sentinel in memory. The full
-Python suite passed 3810 tests with 54 environment/platform skips; CI, Web, Security,
-Release, Status consistency and Docker qualification all passed on the exact merged
-head, including PostgreSQL coverage, real worker execution and strict acceptance.
+bounded enumeration, bounded-memory local artifact pagination, and paged manual
+cleanup that validates a complete bounded inventory before deletion. Global cleanup
+remains disabled because there is no cross-store write barrier. The full Python suite
+passed 3813 tests with 54 environment/platform skips; CI, Web, Security, Release,
+Status consistency and Docker qualification all passed on the exact merged head,
+including PostgreSQL coverage, real worker execution and strict acceptance.
 Untracked qualification output directories are not release evidence.
-**Observed source head:** `4469f3e984cb3596e88584b1387bb4fbe81eb256` (2026-10-20).
+**Observed source head:** `de0091d8ea4caa0b58e00f47bc0c3405d1016ade` (2026-10-20).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
