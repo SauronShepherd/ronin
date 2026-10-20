@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 71%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: todavía no hay limpieza global segura ni ejecución de grafos configurables. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 72%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: todavía no hay limpieza global segura ni ejecución de grafos configurables. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -599,7 +599,7 @@ La suite focalizada pasa **31 tests**, con **7 integraciones PostgreSQL omitidas
 
 ## 39. Paginación local de artefactos con memoria acotada
 
-**Estado en curso: implementado localmente; pendiente cualificación del PR.**
+**Estado: integrado en PR #462 y cualificado en los seis workflows post-merge exact-head de `main@4469f3e984cb3596e88584b1387bb4fbe81eb256`.**
 
 | Criterio | Evidencia |
 | --- | --- |
@@ -607,4 +607,4 @@ La suite focalizada pasa **31 tests**, con **7 integraciones PostgreSQL omitidas
 | Mantener recorrido estable entre páginas | El cursor opaco guarda el último digest de la página y la lectura siguiente filtra lexicográficamente, sin offsets que cambien al borrar objetos anteriores. |
 | Proteger el contrato de paginación | La prueba prohíbe materializar el inventario completo, recorre dos páginas y comprueba cursor inválido; el planner continúa fallando cerrado al exceder topes. |
 
-La suite focalizada de artifacts/paginación pasa **13 tests**; la suite Python completa pasa **3810 tests y omite 54** por integraciones externas no configuradas y limitaciones de Windows. Ruff, formato, mypy de `artifacts.py`, ledger de capacidades y `git diff --check` pasan. La cualificación Docker real queda pendiente del gate CI del PR. El recorrido mantiene memoria O(page size), aunque sigue escaneando nombres de archivo para localizar la página siguiente.
+La suite focalizada de artifacts/paginación pasa **13 tests**; la suite Python completa pasa **3810 tests y omite 54** por integraciones externas no configuradas y limitaciones de Windows. Ruff, formato, mypy de `artifacts.py`, ledger de capacidades y `git diff --check` pasan. Los checks del PR y los seis workflows exact-head post-merge pasan; Docker incluye PostgreSQL, worker real y aceptación estricta. El recorrido mantiene memoria O(page size), aunque sigue escaneando nombres de archivo para localizar la página siguiente.
