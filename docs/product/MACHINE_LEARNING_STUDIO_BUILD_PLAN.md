@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 73%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: todavía no hay limpieza global segura ni ejecución de grafos configurables. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 74%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: todavía no hay limpieza global segura ni ejecución de grafos configurables. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -623,7 +623,7 @@ Las pruebas focalizadas pasan **25 tests**, incluyendo inventario paginado sin `
 
 ## 41. Lecturas acotadas de evidencia y resultados de jobs
 
-**Estado en curso: implementado localmente; pendiente suite completa y cualificación del PR.**
+**Estado: integrado en PR #466 y cualificado en los seis workflows post-merge exact-head de `main@f1a068f94772b36950538ce8c18c8db10309dc81`.**
 
 | Criterio | Evidencia |
 | --- | --- |
@@ -631,4 +631,4 @@ Las pruebas focalizadas pasan **25 tests**, incluyendo inventario paginado sin `
 | Limitar resultados celulares | Las lecturas de resultados usan `LIMIT limit + 1`, fallan cerrado si el run supera 10 000 resultados o el presupuesto total de 100 000. |
 | Cubrir adapters reales y fallos de overflow | Tests verifican topes por run y globales; la integración PostgreSQL prueba que `limit=0` sólo lee un registro centinela. |
 
-Las pruebas focalizadas de descubrimiento y JobStore pasan **44 tests**; Ruff, formato, mypy focalizado y `git diff --check` pasan. La suite Python completa pasa **3816 tests y omite 54** por integraciones externas no configuradas y límites de plataforma. La cualificación Docker/PostgreSQL queda pendiente del PR.
+Las pruebas focalizadas de descubrimiento y JobStore pasan **46 tests**; Ruff, formato, mypy focalizado y `git diff --check` pasan. La suite local completa registró **3817 pasadas y 54 omitidas**, más un `FailedHealthCheck` transitorio de Hypothesis por generación lenta en `test_lexical_order_equals_chronological_order`; el test pasó aislado (**1/1**). Las matrices CI Python 3.11/3.12 pasaron. Docker qualification pasó en **9m34s**, incluyendo S3-compatible storage, PostgreSQL, worker Docker real y aceptación estricta. Los seis workflows post-merge exact-head de `main@f1a068f` también pasaron. P8 sigue parcial y la cualificación release permanece en **0% (0/14)**.
