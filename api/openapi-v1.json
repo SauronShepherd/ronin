@@ -998,6 +998,13 @@
         "responses": {"200": {"description": "Bounded batch predictions with replay evidence", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
       }
     },
+    "/v1/ml-studio/models/{model_id}/{version}/artifact": {
+      "get": {
+        "operationId": "getMlStudioModelArtifactChunk",
+        "parameters": [{"name": "model_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1}}, {"name": "version", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}, {"name": "offset", "in": "query", "required": false, "schema": {"type": "integer", "minimum": 0, "default": 0}}, {"name": "length", "in": "query", "required": false, "schema": {"type": "integer", "minimum": 1, "maximum": 524288, "default": 524288}}],
+        "responses": {"200": {"description": "Digest-verified bounded model artifact chunk", "content": {"application/json": {"schema": {"type": "object", "required": ["model_id", "version", "digest", "media_type", "size_bytes", "offset", "next_offset", "complete", "data_base64"], "properties": {"model_id": {"type": "string"}, "version": {"type": "string"}, "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "media_type": {"type": "string"}, "size_bytes": {"type": "integer", "maximum": 67108864}, "offset": {"type": "integer"}, "next_offset": {"type": ["integer", "null"]}, "complete": {"type": "boolean"}, "data_base64": {"type": "string", "contentEncoding": "base64"}}}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
+      }
+    },
     "/v1/ml-studio/models/{model_id}/{version}/card": {
       "get": {
         "operationId": "getMlStudioModelCard",

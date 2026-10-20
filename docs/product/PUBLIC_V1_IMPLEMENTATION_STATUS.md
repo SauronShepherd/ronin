@@ -24,7 +24,7 @@ journey and applicable provider, security and exact-head evidence are complete.
 All 14 remain partial; this is a release-completion metric, not a measure of
 code already implemented.
 
-**Estimated build-plan implementation progress:** **~60%** across the 14
+**Estimated build-plan implementation progress:** **~62%** across the 14
 capability families, based on implemented source paths and the remaining gaps in
 the capability matrix. This is a rounded engineering estimate, not a task-count
 or release qualification metric.
@@ -41,8 +41,12 @@ evidence.
 
 ## Exact-head qualification snapshot
 
-On `main@97c1ee44e4aed0a8902ef4e546b10bb684001cb8`, post-merge qualification is
-running. PR [#441](https://github.com/SauronShepherd/ronin/pull/441) passed CI
+On `main@81b952ad4f38eeedddac532fea0c74732d9795ec`, PR #443 adds workspace-scoped
+registration of successful durable ML executions as candidate model versions after
+rechecking artifact size and digest. PR checks passed, including Docker qualification.
+Post-merge qualification is
+running. The current candidate adds workspace-scoped model artifact retrieval in
+digest-verified chunks capped at 512 KiB. PR [#441](https://github.com/SauronShepherd/ronin/pull/441) passed CI
 Python 3.11/3.12, quality, security, verification, ledgers and [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39371246065)
 (8m54s, including PostgreSQL-backed coverage, a real Docker worker and strict
 frozen v0.1 acceptance). Public v1 remains incomplete; P8 is partial and release
