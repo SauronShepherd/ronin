@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 from collections.abc import Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import suppress
@@ -42,6 +43,7 @@ RunState = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 MAX_EXECUTION_REQUEST_BYTES = 64 * 1024 * 1024
 MAX_INLINE_EXECUTION_REQUEST_BYTES = 1_048_576
 MAX_INLINE_NODE_CHECKPOINT_BYTES = 262_144
+MAX_MATERIALIZED_MODEL_BYTES = 64 * 1024 * 1024
 EXECUTION_LEASE_SECONDS = 60
 EXECUTION_POLL_SECONDS = 0.2
 
@@ -733,6 +735,45 @@ class JobStoreExecutionStore:
         )
         return True
 
+    def materialize_result_artifact(
+        self, result: ExperimentResult | ClusteringResult
+    ) -> dict[str, object]:
+        """Persist a completed model as a verified ArtifactStore object."""
+        if self._artifact_store is None:
+            raise ValueError("artifact store is required to materialize ML model outputs")
+        if isinstance(result, ExperimentResult):
+            data = result.model.artifact_bytes
+            media_type = "application/vnd.ronin.sklearn-tabular+json"
+        else:
+            data = json.dumps(
+                result.model.to_artifact(), sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+            media_type = "application/vnd.ronin.ml-kmeans+json"
+        if len(data) > MAX_MATERIALIZED_MODEL_BYTES:
+            raise ValueError(f"ML model artifact exceeds {MAX_MATERIALIZED_MODEL_BYTES} bytes")
+        expected_digest = hashlib.sha256(data).hexdigest()
+        if result.artifact_digest != f"sha256:{expected_digest}":
+            raise ValueError("ML model artifact digest does not match the runner result")
+        artifact = self._artifact_store.put_bytes(role="model", data=data, media_type=media_type)
+        if (
+            artifact.role != "model"
+            or artifact.digest_algorithm != "sha256"
+            or artifact.digest != expected_digest
+            or artifact.media_type != media_type
+            or artifact.size_bytes != len(data)
+            or not artifact.storage_ref
+            or not self._artifact_store.verify(artifact)
+        ):
+            raise ValueError("ML model artifact failed verification after materialization")
+        stored = self._artifact_store.get_bytes(artifact)
+        if len(stored) != len(data) or hashlib.sha256(stored).hexdigest() != expected_digest:
+            raise ValueError("ML model artifact integrity check failed after materialization")
+        payload = result.to_payload()
+        payload["artifact_ref"] = artifact.storage_ref
+        payload["artifact_media_type"] = media_type
+        payload["artifact_size_bytes"] = artifact.size_bytes
+        return payload
+
     def finish_claim(
         self,
         snapshot: ExecutionSnapshot,
@@ -1027,9 +1068,12 @@ class LocalExecutionCoordinator:
             else:
                 result = self._runner.run(lab, execution_rows)
             if isinstance(self._store, JobStoreExecutionStore):
-                self._store.finish_claim(
-                    claimed, state="succeeded", result_payload=result.to_payload()
+                result_payload = (
+                    self._store.materialize_result_artifact(result)
+                    if isinstance(result, (ExperimentResult, ClusteringResult))
+                    else result.to_payload()
                 )
+                self._store.finish_claim(claimed, state="succeeded", result_payload=result_payload)
                 return result
             finished = self._store.finish(
                 claimed.workspace_id,
@@ -1091,5 +1135,6 @@ __all__ = [
     "LocalExecutionCoordinator",
     "MAX_EXECUTION_REQUEST_BYTES",
     "MAX_INLINE_EXECUTION_REQUEST_BYTES",
+    "MAX_MATERIALIZED_MODEL_BYTES",
     "RunState",
 ]
