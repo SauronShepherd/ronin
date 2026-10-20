@@ -364,7 +364,7 @@ El PR [#436](https://github.com/SauronShepherd/ronin/pull/436) quedó integrado 
 
 El PR [#438](https://github.com/SauronShepherd/ronin/pull/438) añadió los checkpoints y se integró como `4fc7cbe3475ede0626975cd1f71bf97993b0e4bd`. El PR [#439](https://github.com/SauronShepherd/ronin/pull/439) corrigió la adaptación de `JobId` al reanudar una página PostgreSQL, cubrió filtros y cursor keyset en la integración real y elevó el baseline de cobertura de `postgres_jobs.py` a 73,01% después de medir 73,015%. Sus checks exact-head pasaron: Python 3.11/3.12, calidad, verificación, seguridad, ledgers y Docker qualification (**8m40s**, incluyendo PostgreSQL, worker real y aceptación estricta). En Windows, la suite de cobertura completa registró 3785 passed y 19 skipped, más dos fallos transitorios (conexión HTTP abortada y timeout al ejecutar CLI); ambos tests pasaron al repetirse focalizados. La primera ejecución Docker detectó un test que dejaba expirar el lease de un Job; el test ahora completa ese intento. En `main@92165f5dbf23b6153c62b0150d4e74e300ac1dd8`, los seis workflows post-merge exact-head —CI, Web, Security, Release, Status consistency y Docker qualification— pasaron; Docker terminó a las 04:07:53Z.
 
-Este slice no cierra el executor completo: sólo las seis etapas locales existentes son ejecutables; `register` y grafos configurables siguen rechazándose. El retry durable reutiliza etapas previas únicamente si coinciden pipeline, request, runtime y outputs de dependencia. PR #447 cerró la identidad del runtime y la invalidación downstream (sección 25), y PR #448 integró la promoción directa tras registro (sección 23). La sección 26 implementa ahora reintentos selectivos observables en el candidato local. Siguen abiertos grafos configurables y una política explícita de retención/materialización; P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
+Este slice no cierra el executor completo: sólo las seis etapas locales existentes son ejecutables; `register` y grafos configurables siguen rechazándose. El retry durable reutiliza etapas previas únicamente si coinciden pipeline, request, runtime y outputs de dependencia. PR #447 cerró la identidad del runtime y la invalidación downstream (sección 25), PR #448 integró la promoción directa tras registro (sección 23) y PR #449 integró retry selectivo observable (sección 26). Siguen abiertos grafos configurables y una política de retención/materialización integrada con productores y referencias; P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
 
 ## 22. Materialización de resultados ML durables
 
@@ -379,11 +379,11 @@ Este slice no cierra el executor completo: sólo las seis etapas locales existen
 
 El PR [#441](https://github.com/SauronShepherd/ronin/pull/441) pasó CI Python 3.11/3.12, calidad, seguridad, verificación, ledgers y Docker qualification (**8m54s**, PostgreSQL, worker Docker real y aceptación estricta). En Windows, la suite completa pasó **3752 tests con 51 omitidos**; la cobertura de `studio_storage/artifacts.py` subió a **80,263%**, por lo que el baseline con margen de 2,1 puntos se actualizó de 77,30% a 78,17% tanto en `coverage-storage-files` como en `coverage-storage-files-full`. La puerta local por archivo pasó para 54 módulos.
 
-La salida durable expone URI, digest, media type y tamaño. PR #443 registra las ejecuciones exitosas en MLRun/versiones candidatas, #445 integra el registro en Studio, #446 añade lectura HTTP autorizada y descarga UI acotada, #447 fija resultados/checkpoints al runtime y las dependencias, y #448 integra promoción directa tras el registro. La sección 26 cubre el retry selectivo en el candidato actual. Siguen abiertos validación con ArtifactStore remoto y política de retención/limpieza de artefactos. P8 permanece parcial y release-qualified sigue en **0% (0/14)**.
+La salida durable expone URI, digest, media type y tamaño. PR #443 registra las ejecuciones exitosas en MLRun/versiones candidatas, #445 integra el registro en Studio, #446 añade lectura HTTP autorizada y descarga UI acotada, #447 fija resultados/checkpoints al runtime y las dependencias, #448 integra promoción directa tras el registro y #449 integra retry selectivo. Siguen abiertos cualificación con ArtifactStore remoto, política de retención integrada con todos los productores/referencias y limpieza administrada de artefactos. P8 permanece parcial y release-qualified sigue en **0% (0/14)**.
 
 ## 23. Registro de resultados de ejecuciones durables
 
-**Progreso técnico: 3/3 criterios implementados y exact-head cualificados en `main@a5d6a24`.**
+**Progreso técnico: 3/3 criterios implementados y exact-head cualificados en `main@c2df903`.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -391,11 +391,11 @@ La salida durable expone URI, digest, media type y tamaño. PR #443 registra las
 | Crear procedencia y versión candidata idempotentes | Registra Experiment y MLRun ligados al Lab/dataset, luego el model version con digest, firma inferida y referencia content-addressed; el registry hace idempotentes escrituras idénticas y rechaza conflictos. |
 | Promover directamente el candidato recién registrado | El formulario de éxito conserva una acción Promote candidate que reutiliza `mlPromote()`, pide el motivo obligatorio y llama al endpoint existente protegido por autorización. |
 
-Las pruebas de API verifican el flujo tabular, la firma/digest/procedencia y el rechazo de ejecuciones aún activas; Playwright recorre registro y promoción hasta `champion`. El handler requiere autorización `ml-studio:write`; el contenido del artifact no se sirve por este endpoint. PR #448 pasó localmente el flujo focalizado (**3/3**), la suite web completa (**79/79**) y todos los checks requeridos; los seis workflows exact-head post-merge de `main@a5d6a24` también pasaron. La sección 26 añade retry selectivo al candidato; aún falta la prueba con servicios/artifact store remoto. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+Las pruebas de API verifican el flujo tabular, la firma/digest/procedencia y el rechazo de ejecuciones aún activas; Playwright recorre registro y promoción hasta `champion`. El handler requiere autorización `ml-studio:write`; el contenido del artifact no se sirve por este endpoint. PR #448 pasó localmente el flujo focalizado (**3/3**), la suite web completa (**79/79**) y todos los checks requeridos; los seis workflows exact-head post-merge de `main@a5d6a24` también pasaron. PR #449 cerró el retry selectivo; la qualification S3-compatible de la sección 27 está en curso. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
 
 ## 24. Lectura HTTP autorizada de artifacts de modelos
 
-**Progreso técnico: 6/6 criterios implementados y exact-head cualificados en `main@a5d6a24`.**
+**Progreso técnico: 6/6 criterios implementados y exact-head cualificados en `main@c2df903`.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -406,11 +406,11 @@ Las pruebas de API verifican el flujo tabular, la firma/digest/procedencia y el 
 | Descargar desde la UI sin cargar el artifact entero en una respuesta | La UI solicita bloques acotados, valida identidad, metadatos y continuidad de offsets y sólo crea el archivo al completar el tamaño declarado. |
 | Probar la reconstrucción del artifact en navegador | Playwright simula un artifact de dos bloques, verifica ambos offsets, el nombre descargado y el estado de éxito. |
 
-Las pruebas de API cubren reconstrucción por varios bloques, aislamiento por workspace, rango, límites y corrupción. Playwright verifica el flujo de descarga desde el registry; OpenAPI documenta parámetros y respuesta. PR #446 y PR #447 pasaron sus checks Docker/CI; los seis workflows exact-head post-merge de `main@a5d6a24` también pasaron. La prueba con ArtifactStore remoto sigue pendiente. P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
+Las pruebas de API cubren reconstrucción por varios bloques, aislamiento por workspace, rango, límites y corrupción. Playwright verifica el flujo de descarga desde el registry; OpenAPI documenta parámetros y respuesta. PR #446 y PR #447 pasaron sus checks Docker/CI; los seis workflows exact-head post-merge de `main@c2df903` también pasaron. La qualification contra ArtifactStore S3-compatible se está añadiendo en la sección 27. P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
 
 ## 25. Identidad de runtime y dependencias para checkpoints ML
 
-**Progreso técnico: 6/6 criterios implementados; cualificación exact-head aprobada en `main@a5d6a24`.**
+**Progreso técnico: 6/6 criterios implementados; cualificación exact-head aprobada en `main@c2df903`.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -421,11 +421,11 @@ Las pruebas de API cubren reconstrucción por varios bloques, aislamiento por wo
 | Persistir procedencia del output | La huella de runtime queda en el checkpoint de selección y en el payload durable `ExperimentResult`/`ClusteringResult`. |
 | Invalidar outputs downstream cuando cambia una dependencia | Cada checkpoint incorpora un digest canónico de las salidas de sus nodos upstream; la discrepancia descarta y vuelve a calcular esa etapa y sus dependientes. |
 
-El PR #447 (`main@6db8573`) pasó **164 tests ML/API**, Ruff, formato, mypy del runner y CI 3.11/3.12. Docker qualification verificó PostgreSQL, worker real y aceptación estricta; después del merge pasaron los seis workflows exact-head de `main@6db8573` y volvieron a pasar en `main@a5d6a24`. La huella es deliberadamente conservadora: cualquier cambio en los módulos ejecutables invalida los checkpoints, y un backend sin código fuente o fingerprint declarado no reutiliza caché. La suite también prueba que alterar un output intermedio impide restaurar su evaluación y selección antiguas. La sección 26 añade retry selectivo observable al candidato. Queda la política explícita de retención. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+El PR #447 (`main@6db8573`) pasó **164 tests ML/API**, Ruff, formato, mypy del runner y CI 3.11/3.12. Docker qualification verificó PostgreSQL, worker real y aceptación estricta; después del merge pasaron los seis workflows exact-head de `main@6db8573`, `main@a5d6a24` y `main@c2df903`. La huella es deliberadamente conservadora: cualquier cambio en los módulos ejecutables invalida los checkpoints, y un backend sin código fuente o fingerprint declarado no reutiliza caché. La suite también prueba que alterar un output intermedio impide restaurar su evaluación y selección antiguas. PR #449 cierra retry selectivo observable. Queda una política explícita de retención integrada con todos los productores y referencias. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
 
 ## 26. Reintentos selectivos observables de ejecuciones ML
 
-**Progreso técnico local: 6/6 criterios implementados; cualificación exact-head pendiente.**
+**Progreso técnico: 6/6 criterios implementados y cualificados exact-head en `main@c2df903`.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -436,4 +436,18 @@ El PR #447 (`main@6db8573`) pasó **164 tests ML/API**, Ruff, formato, mypy del 
 | Exponer la operación en Studio | Ante un job fallido, la UI solicita ID y etapa, crea el retry y continúa observando el hijo por el flujo de ejecución existente. |
 | Verificar backend, contrato y navegador | Suite focalizada durable/HTTP/OpenAPI: **28 passed**; Playwright focalizado: **1 passed**; suite web completa: **80 passed**. La prueba de orquestación verifica fallo y éxito al reintentar desde `train`, conservación del profiling y dos llamadas de entrenamiento. |
 
-La suite Python completa del candidato pasó **3.766 tests con 51 omitidos**. Ruff, formato, mypy focalizado, snapshot OpenAPI y diff check pasan. La ejecución del script Docker en Windows Desktop no cualifica: contenedores de Compose no localizan `ronin-container-entrypoint`, cinco journeys no crean sus marcadores de proceso y pruebas PostgreSQL omiten por falta de DSN. La qualification Linux con PostgreSQL, worker real y gate estricto sigue pendiente de CI. P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
+La suite Python completa pasó **3.766 tests con 51 omitidos**. Ruff, formato, mypy focalizado, snapshot OpenAPI y diff check pasan. El PR #449 (`main@c2df903`) pasó CI Python 3.11/3.12, Web, Security, Release, Status consistency y Docker qualification (**8m33s**, PostgreSQL, worker Docker real y aceptación estricta); los seis workflows post-merge exact-head también pasaron. La ejecución local del script Docker en Windows Desktop no cualificó por limitaciones de bind mount/Compose y falta de DSN, por lo que la evidencia Linux de CI es la calificación del candidato. P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
+
+
+## 27. Qualification ML con ArtifactStore S3-compatible
+
+**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+
+| Criterio técnico | Evidencia local |
+| --- | --- |
+| Validar input durable de más de 1 MiB contra un servicio S3-compatible | El Job guarda el snapshot de filas por `S3ArtifactStore` y el worker recupera sus bytes desde LocalStack en Docker; el journey usa un bucket efímero por test. |
+| Materializar y leer el modelo desde almacenamiento remoto | El resultado tabular durable conserva URI `s3://`, digest y media type; el test lee de vuelta bytes y compara SHA-256. |
+| Aplicar retención sólo con referencias vivas completas | La colección conserva el input aún referenciado por el Job y el modelo; elimina únicamente un objeto de prueba marcado como no referenciado. |
+| Automatizar la qualification en Docker CI | El Docker workflow usa LocalStack 4.3.0 fijado por digest y ejecuta el journey dedicado con credenciales locales sin secretos externos. |
+
+El test de lifecycle y los contratos del adapter S3 pasaron **15/15** contra LocalStack en Docker. Ruff, formato y mypy del integration test pasan. El endpoint de servicio es efímero y aislado por bucket. La cualificación Docker exact-head del nuevo workflow queda pendiente. P8 sigue parcial; release-qualified permanece en **0% (0/14)**.
