@@ -47,6 +47,7 @@ def plan_unreferenced(
     *,
     page_size: int = 500,
     max_objects: int = 10_000,
+    max_pages: int = 1_000,
 ) -> ArtifactRetentionPlan:
     """Preview stale digests only when every known reference source is present.
 
@@ -58,6 +59,8 @@ def plan_unreferenced(
         raise ValueError("retention page_size must be between 1 and 10000")
     if max_objects < 1:
         raise ValueError("retention max_objects must be positive")
+    if max_pages < 1 or max_pages > 10_000:
+        raise ValueError("retention max_pages must be between 1 and 10000")
 
     unknown_sources = set(references_by_source) - REQUIRED_ARTIFACT_REFERENCE_SOURCES
     if unknown_sources:
@@ -78,8 +81,10 @@ def plan_unreferenced(
     if isinstance(store, PagedArtifactStore):
         cursor: str | None = None
         seen_cursors: set[str] = set()
+        pages_seen = 0
         while True:
             page = store.list_digests_page(cursor=cursor, page_size=min(page_size, max_objects))
+            pages_seen += 1
             for digest in page.digests:
                 _validate_digest(digest)
             stored_digests.update(page.digests)
@@ -89,6 +94,9 @@ def plan_unreferenced(
                 truncated = True
                 break
             if not page.truncated:
+                break
+            if pages_seen >= max_pages:
+                truncated = True
                 break
             if page.next_cursor is None:
                 raise ValueError("truncated artifact inventory page is missing its cursor")

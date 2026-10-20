@@ -542,7 +542,7 @@ La verificación local pasó **72 pruebas Python focalizadas**. La suite Playwri
 | --- | --- |
 | Exigir el conjunto conocido de fuentes | `plan_unreferenced()` requiere revisiones de catálogo, salidas de conectores, revisiones de ingeniería de datos, resultados y checkpoints durables, archivos locales, MLRun, versiones registradas y exports sintéticos; rechaza fuentes desconocidas. |
 | Fallar cerrado ante cobertura incompleta | Una fuente ausente devuelve `all_required_sources_supplied=false` y ningún candidato. Un inventario que supera el límite también devuelve cero candidatos. |
-| Limitar el inventario | Usa páginas cuando el store implementa `PagedArtifactStore`, con tamaño de página y máximo de objetos configurables y validados. |
+| Limitar el inventario | Usa páginas cuando el store implementa `PagedArtifactStore`, con tamaño de página, máximo de páginas y máximo de objetos configurables y validados. |
 | Hacer el primer paso no destructivo | El plan lista digests candidatos ordenados y no llama a `delete`; las pruebas verifican que candidatos y objetos vivos siguen presentes. |
 
 La batería focalizada de artifacts/paginación pasó **37 pruebas**, junto con Ruff, formato, mypy y `git diff --check`. El inventario de productores encontró estas nueve familias en `put_bytes()`; el snapshot aún lo prepara el llamador, así que el helper no puede demostrar que los datos de cada familia sean exhaustivos. El siguiente trabajo debe conectar y cualificar cada enumerador, añadir edad/rol a la vista de inventario y cubrir carreras antes de habilitar cualquier borrado automático. La limpieza global permanece deshabilitada. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.

@@ -6,6 +6,7 @@ import pytest
 from studio_storage import (
     REQUIRED_ARTIFACT_REFERENCE_SOURCES,
     ArtifactIntegrityError,
+    ArtifactPage,
     ArtifactRef,
     LocalArtifactStore,
     collect_unreferenced,
@@ -131,3 +132,22 @@ def test_retention_plan_rejects_unknown_sources_and_invalid_digests(tmp_path: Pa
     invalid["ml_runs"] = ("not-a-digest",)
     with pytest.raises(ValueError, match="lowercase sha256"):
         plan_unreferenced(store, invalid)
+
+
+def test_retention_plan_stops_after_the_page_limit(tmp_path: Path) -> None:
+    class EndlessPagedArtifactStore(LocalArtifactStore):
+        def list_digests_page(
+            self, *, cursor: str | None = None, page_size: int = 1000
+        ) -> ArtifactPage:
+            del page_size
+            next_cursor = str(int(cursor or "0") + 1)
+            return ArtifactPage((), next_cursor, True)
+
+    store = EndlessPagedArtifactStore(tmp_path / "artifacts")
+    complete_snapshot = dict.fromkeys(REQUIRED_ARTIFACT_REFERENCE_SOURCES, ())
+
+    preview = plan_unreferenced(store, complete_snapshot, max_pages=2)
+
+    assert not preview.all_required_sources_supplied
+    assert preview.inventory_truncated
+    assert preview.candidate_digests == ()
