@@ -75,6 +75,10 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
         "gradient_boosting_classifier",
         "gradient_boosting_regressor",
     ]
+    assert request_schema["properties"]["preprocessor"]["enum"] == [
+        "identity",
+        "standard_scale",
+    ]
     assert "409" in submit["responses"]
     quality = document["paths"]["/v1/ml-studio/labs/{lab_id}/quality"]["post"]
     quality_schema = quality["requestBody"]["content"]["application/json"]["schema"]

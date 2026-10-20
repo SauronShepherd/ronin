@@ -69,6 +69,90 @@ def test_classification_training_and_prediction() -> None:
         predict_tabular(trained.artifact_bytes, ({"x": 2.0, "y": 2.0},), max_rows=0)
 
 
+def test_standard_scaler_is_fit_on_training_rows_and_reused_for_prediction() -> None:
+    import json
+
+    rows = tuple(
+        {"x": float(index * 100), "constant": 5.0, "target": float(index * 3 + 2)}
+        for index in range(20)
+    )
+    trained = train_tabular(
+        rows,
+        TrainingSpec(
+            "regression",
+            "linear_regression",
+            ("x", "constant"),
+            "target",
+            0.25,
+            7,
+            preprocessor="standard_scale",
+        ),
+    )
+    preprocessing = json.loads(trained.artifact_bytes)["preprocessing"]
+    assert preprocessing["kind"] == "standard_scale"
+    assert len(preprocessing["means"]) == len(preprocessing["scales"]) == 2
+    assert preprocessing["scales"][1] == 1.0
+    assert preprocessing["means"][0] != pytest.approx(950.0)
+    predictions = predict_tabular(
+        trained.artifact_bytes,
+        ({"x": 1500.0, "constant": 5.0},),
+        expected_features=("x", "constant"),
+    )
+    assert predictions[0] == pytest.approx(47.0)
+
+
+def test_standard_scaler_rejects_malformed_artifact_parameters() -> None:
+    import json
+
+    trained = train_tabular(
+        _regression_rows(20),
+        TrainingSpec(
+            "regression", "linear_regression", ("x",), "target", preprocessor="standard_scale"
+        ),
+    )
+    payload = json.loads(trained.artifact_bytes)
+    payload["preprocessing"]["scales"] = [0.0]
+    with pytest.raises(ValueError, match="positive"):
+        predict_tabular(json.dumps(payload).encode(), ({"x": 5.0},))
+
+
+@pytest.mark.parametrize(
+    ("task", "algorithm", "rows", "features", "target"),
+    [
+        (
+            "classification",
+            "random_forest_classifier",
+            _classification_rows(),
+            ("x", "y"),
+            "label",
+        ),
+        (
+            "regression",
+            "gradient_boosting_regressor",
+            _regression_rows(20),
+            ("x",),
+            "target",
+        ),
+    ],
+)
+def test_standard_scaler_survives_tree_ensemble_round_trip(
+    task, algorithm, rows, features, target
+) -> None:
+    trained = train_tabular(
+        rows,
+        TrainingSpec(
+            task,
+            algorithm,
+            features,
+            target,
+            random_seed=7,
+            preprocessor="standard_scale",
+        ),
+    )
+    prediction_rows = tuple({name: row[name] for name in features} for row in rows[:3])
+    assert len(predict_tabular(trained.artifact_bytes, prediction_rows)) == 3
+
+
 @pytest.mark.parametrize("row_count", [4, 5])
 def test_regression_rejects_test_partition_too_small_for_r2(row_count: int) -> None:
     with pytest.raises(ValueError, match="at least two test rows"):

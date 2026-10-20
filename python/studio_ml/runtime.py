@@ -27,9 +27,11 @@ Algorithm: TypeAlias = Literal[
     "gradient_boosting_classifier",
     "gradient_boosting_regressor",
 ]
+Preprocessor: TypeAlias = Literal["identity", "standard_scale"]
 ClassificationLabel: TypeAlias = bool | int | float | str
 
-_ARTIFACT_SCHEMA = "ronin.sklearn.tabular/v2"
+_ARTIFACT_SCHEMA = "ronin.sklearn.tabular/v3"
+_PREVIOUS_ARTIFACT_SCHEMA = "ronin.sklearn.tabular/v2"
 
 ALGORITHM_CAPABILITIES: dict[str, frozenset[str]] = {
     "logistic_regression": frozenset({"classification"}),
@@ -136,10 +138,13 @@ class TrainingSpec:
     test_fraction: float = 0.2
     random_seed: int = 17
     parameters: tuple[tuple[str, float | int], ...] = ()
+    preprocessor: Preprocessor = "identity"
 
     def __post_init__(self) -> None:
         if self.task not in {"classification", "regression"}:
             raise ValueError("unsupported ML task")
+        if self.preprocessor not in {"identity", "standard_scale"}:
+            raise ValueError("unsupported ML preprocessor")
         if (
             self.algorithm not in ALGORITHM_CAPABILITIES
             or self.task not in ALGORITHM_CAPABILITIES[self.algorithm]
@@ -413,6 +418,20 @@ def train_tabular(
         random_state=spec.random_seed,
         stratify=stratify,
     )
+    preprocessing: dict[str, object] = {"kind": "identity"}
+    if spec.preprocessor == "standard_scale":
+        import numpy as np
+
+        means = np.asarray(x_train, dtype=float).mean(axis=0)
+        scales = np.asarray(x_train, dtype=float).std(axis=0)
+        scales[scales == 0] = 1.0
+        x_train = ((np.asarray(x_train, dtype=float) - means) / scales).tolist()
+        x_test = ((np.asarray(x_test, dtype=float) - means) / scales).tolist()
+        preprocessing = {
+            "kind": "standard_scale",
+            "means": [_finite_float(value, "preprocessor mean") for value in means.tolist()],
+            "scales": [_finite_float(value, "preprocessor scale") for value in scales.tolist()],
+        }
     if spec.algorithm == "logistic_regression":
         options = dict(spec.parameters)
         model = sk["LogisticRegression"](
@@ -480,6 +499,7 @@ def train_tabular(
             "features": list(spec.features),
             "target": spec.target,
             "parameters": _model_parameters(model, spec),
+            "preprocessing": preprocessing,
         }
     )
     return TrainedTabularModel(
@@ -500,10 +520,18 @@ def _artifact_payload(artifact_bytes: bytes) -> dict[str, object]:
     if not isinstance(decoded, dict):
         raise ValueError("ML artifact must be a JSON object")
     required = {"schema", "task", "algorithm", "features", "target", "parameters"}
-    if set(decoded) != required:
-        raise ValueError("ML artifact fields do not match the supported schema")
-    if decoded["schema"] != _ARTIFACT_SCHEMA:
+    schema = decoded.get("schema")
+    if schema not in {_ARTIFACT_SCHEMA, _PREVIOUS_ARTIFACT_SCHEMA}:
         raise ValueError("unsupported ML artifact schema")
+    expected_fields = (
+        required | {"preprocessing"}
+        if schema == _ARTIFACT_SCHEMA
+        else required
+        if schema == _PREVIOUS_ARTIFACT_SCHEMA
+        else set()
+    )
+    if not expected_fields or set(decoded) != expected_fields:
+        raise ValueError("ML artifact fields do not match the supported schema")
     task = decoded["task"]
     algorithm = decoded["algorithm"]
     if task not in {"classification", "regression"}:
@@ -547,7 +575,34 @@ def _artifact_payload(artifact_bytes: bytes) -> dict[str, object]:
     parameters = decoded["parameters"]
     if not isinstance(parameters, dict):
         raise ValueError("ML artifact parameters must be an object")
-    return cast(dict[str, object], decoded)
+    normalized = cast(dict[str, object], decoded)
+    if "preprocessing" not in normalized:
+        normalized["preprocessing"] = {"kind": "identity"}
+    preprocessing = normalized["preprocessing"]
+    if not isinstance(preprocessing, dict):
+        raise ValueError("ML artifact preprocessing must be an object")
+    if preprocessing.get("kind") == "identity":
+        if set(preprocessing) != {"kind"}:
+            raise ValueError("identity preprocessing has unexpected parameters")
+    elif preprocessing.get("kind") == "standard_scale":
+        if set(preprocessing) != {"kind", "means", "scales"}:
+            raise ValueError("standard scaling parameters have invalid shape")
+        means, scales = preprocessing.get("means"), preprocessing.get("scales")
+        if (
+            not isinstance(means, list)
+            or not isinstance(scales, list)
+            or len(means) != len(features)
+            or len(scales) != len(features)
+        ):
+            raise ValueError("standard scaling parameters do not match artifact features")
+        normalized_scales = [_finite_float(value, "preprocessor scale") for value in scales]
+        if any(value <= 0 for value in normalized_scales):
+            raise ValueError("preprocessor scales must be positive")
+        preprocessing["means"] = [_finite_float(value, "preprocessor mean") for value in means]
+        preprocessing["scales"] = normalized_scales
+    else:
+        raise ValueError("ML artifact has unsupported preprocessing")
+    return normalized
 
 
 def _prediction_matrix(
@@ -575,8 +630,14 @@ def _dot(coefficients: Sequence[float], vector: Sequence[float], intercept: floa
 def _linear_predictions(
     parameters: Mapping[str, object], matrix: Sequence[Sequence[float]], feature_count: int
 ) -> tuple[float, ...]:
-    if set(parameters) != {"coefficients", "intercept"}:
+    if not {"coefficients", "intercept"} <= set(parameters) or set(parameters) - {
+        "coefficients",
+        "intercept",
+        "hyperparameters",
+    }:
         raise ValueError("linear regression artifact parameters are invalid")
+    if "hyperparameters" in parameters and not isinstance(parameters["hyperparameters"], dict):
+        raise ValueError("linear regression hyperparameters are invalid")
     coefficients_raw = parameters["coefficients"]
     if not isinstance(coefficients_raw, list) or len(coefficients_raw) != feature_count:
         raise ValueError("linear regression coefficient shape is invalid")
@@ -645,6 +706,20 @@ def predict_tabular(
     if expected_features is not None and features != expected_features:
         raise ValueError("ML artifact feature signature does not match registered model")
     matrix = _prediction_matrix(rows, features)
+    preprocessing = cast(Mapping[str, object], payload["preprocessing"])
+    if preprocessing["kind"] == "standard_scale":
+        means = cast(list[float], preprocessing["means"])
+        scales = cast(list[float], preprocessing["scales"])
+        matrix = [
+            [
+                _finite_float((value - mean) / scale, "scaled prediction feature")
+                for value, mean, scale in zip(row, means, scales, strict=True)
+            ]
+            for row in matrix
+        ]
+    inference_rows: Sequence[Mapping[str, object]] = rows
+    if preprocessing["kind"] == "standard_scale":
+        inference_rows = tuple(dict(zip(features, vector, strict=True)) for vector in matrix)
     parameters = cast(Mapping[str, object], payload["parameters"])
 
     def numeric(value: object, name: str) -> float:
@@ -670,10 +745,11 @@ def predict_tabular(
                         "features": payload["features"],
                         "target": payload["target"],
                         "parameters": tree,
+                        "preprocessing": {"kind": "identity"},
                     }
                 )
                 predicted_values = predict_tabular(
-                    tree_artifact, rows, expected_features=features, max_rows=max_rows
+                    tree_artifact, inference_rows, expected_features=features, max_rows=max_rows
                 )
                 for index, value in enumerate(predicted_values):
                     totals[class_index][index] += numeric(
@@ -703,10 +779,11 @@ def predict_tabular(
                     "features": payload["features"],
                     "target": payload["target"],
                     "parameters": tree,
+                    "preprocessing": {"kind": "identity"},
                 }
             )
             predicted_values = predict_tabular(
-                tree_artifact, rows, expected_features=features, max_rows=max_rows
+                tree_artifact, inference_rows, expected_features=features, max_rows=max_rows
             )
             for index, value in enumerate(predicted_values):
                 total[index] += learning_rate * numeric(value, "tree prediction")
@@ -726,9 +803,10 @@ def predict_tabular(
                         "features": payload["features"],
                         "target": payload["target"],
                         "parameters": tree,
+                        "preprocessing": {"kind": "identity"},
                     }
                 ),
-                rows,
+                inference_rows,
                 expected_features=features,
                 max_rows=max_rows,
             )

@@ -252,7 +252,25 @@ def test_expected_feature_signature_mismatch_fails_before_prediction() -> None:
         predict_tabular(artifact, ({"x": 1.0},), expected_features=("different",))
 
 
-def test_trained_artifacts_are_canonical_v2_data() -> None:
+def test_previous_v2_artifact_remains_predictable_as_identity_preprocessing() -> None:
+    legacy = encode_canonical_json(
+        {
+            "schema": "ronin.sklearn.tabular/v2",
+            "task": "regression",
+            "algorithm": "linear_regression",
+            "features": ["x"],
+            "target": "target",
+            "parameters": {
+                "coefficients": [2.0],
+                "intercept": 1.0,
+                "hyperparameters": {},
+            },
+        }
+    )
+    assert predict_tabular(legacy, ({"x": 3.0},)) == (7.0,)
+
+
+def test_trained_artifacts_are_canonical_v3_data() -> None:
     pytest.importorskip("sklearn")
     classification = train_tabular(
         _classification_rows(),
@@ -266,8 +284,16 @@ def test_trained_artifacts_are_canonical_v2_data() -> None:
     for trained in (classification, regression):
         payload = decode_canonical_json(trained.artifact_bytes)
         assert isinstance(payload, dict)
-        assert payload["schema"] == "ronin.sklearn.tabular/v2"
-        assert set(payload) == {"schema", "task", "algorithm", "features", "target", "parameters"}
+        assert payload["schema"] == "ronin.sklearn.tabular/v3"
+        assert set(payload) == {
+            "schema",
+            "task",
+            "algorithm",
+            "features",
+            "target",
+            "parameters",
+            "preprocessing",
+        }
         assert isinstance(payload["parameters"], dict)
 
 
@@ -293,7 +319,7 @@ def test_training_service_uses_json_media_type() -> None:
     assert model == registry.model
     assert artifacts.media_type == "application/vnd.ronin.sklearn-tabular+json"
     assert artifacts.data is not None
-    assert decode_canonical_json(artifacts.data)["schema"] == "ronin.sklearn.tabular/v2"
+    assert decode_canonical_json(artifacts.data)["schema"] == "ronin.sklearn.tabular/v3"
 
 
 def test_registered_digest_mismatch_still_fails_before_artifact_parse() -> None:

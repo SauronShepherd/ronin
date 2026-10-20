@@ -52,8 +52,10 @@ test('ML Studio registers a successful durable run as a candidate model', async 
   });
   await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
   await page.locator('[data-ml-algorithm="churn"]').selectOption('random_forest_classifier');
+  await page.locator('[data-ml-preprocessor="churn"]').selectOption('standard_scale');
   await page.locator('[data-feature="ml-run"]').click();
   await expect.poll(() => executionBody?.algorithm).toBe('random_forest_classifier');
+  await expect.poll(() => executionBody?.preprocessor).toBe('standard_scale');
   await expect(page.locator('#ml-register-execution')).toBeVisible();
   await page.locator('#ml-register-execution button[type="submit"]').click();
   await expect.poll(() => registered).toBe(true);

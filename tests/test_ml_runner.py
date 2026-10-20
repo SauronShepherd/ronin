@@ -110,6 +110,16 @@ def test_pipeline_selected_algorithm_is_executed_and_bound_to_checkpoints() -> N
     assert selected_backend.train_calls == 1
 
 
+def test_pipeline_preprocessor_is_pinned_and_executed() -> None:
+    import json
+
+    lab = _lab()
+    pipeline = compile_lab_pipeline(lab, preprocessor="standard_scale")
+    result = LocalExperimentRunner().execute_pipeline(lab, _rows(), pipeline)
+    artifact = json.loads(result.model.artifact_bytes)
+    assert artifact["preprocessing"]["kind"] == "standard_scale"
+
+
 def test_local_runner_restores_all_persisted_node_outputs_without_reexecution() -> None:
     lab = _lab()
     pipeline = compile_lab_pipeline(lab)
