@@ -17,10 +17,11 @@ planificadas de una plataforma ML completa.
 | Ejecución asíncrona | Implementado | `orchestration.py`, API execution tests |
 | Persistencia durable de lifecycle/result payload | Implementado | `SqliteExecutionStore`, reopen test |
 | Checkpoints durables de etapas PipelineIR | Implementado para las seis etapas locales | `runner.py`, `orchestration.py`, round-trip local y recuperación PostgreSQL tras reabrir el servicio |
-| Identidad de runtime y dependencias en checkpoints/resultados | Integrada y exact-head cualificada en `main@6db8573` | Hashes de fuentes ejecutables, Python, dependencias, backend, opciones y outputs upstream; runtimes o dependencias distintas invalidan checkpoints afectados |
+| Identidad de runtime y dependencias en checkpoints/resultados | Integrada y exact-head cualificada en `main@a5d6a24` | Hashes de fuentes ejecutables, Python, dependencias, backend, opciones y outputs upstream; runtimes o dependencias distintas invalidan checkpoints afectados |
 | Materialización del modelo en ejecución durable | Implementada para tabular y K-Means | `JobStoreExecutionStore.materialize_result_artifact()`, verificación de lectura/digest y referencia persistida en el resultado |
-| Registro de resultados de ejecuciones durables | Registro integrado en main; promoción directa en PR #448 | `POST /v1/ml-studio/executions/{run_id}/register` valida estado, tamaño, digest, workspace/Lab y registra Experiment, MLRun y versión candidata con firma; la acción de éxito en PR #448 permite promoverla con motivo |
-| Lectura y descarga de artifacts de modelos | Integradas y exact-head cualificadas en `main@6db8573` | Endpoint `GET .../artifact` con `ml-studio:read`, aislamiento por workspace y bloques Base64 verificados; UI reconstruye y descarga el archivo tras validar tamaño, digest y secuencia |
+| Registro de resultados de ejecuciones durables | Registro y promoción directa exact-head cualificados en `main@a5d6a24` | `POST /v1/ml-studio/executions/{run_id}/register` valida estado, tamaño, digest, workspace/Lab y registra Experiment, MLRun y versión candidata con firma; la acción de éxito promueve con motivo y autorización existentes |
+| Reintento selectivo de ejecuciones fallidas | Implementado localmente; cualificación exact-head pendiente | `POST .../retry` crea un hijo desde una etapa elegida, restaura checkpoints anteriores y permite seguimiento UI |
+| Lectura y descarga de artifacts de modelos | Integradas y exact-head cualificadas en `main@a5d6a24` | Endpoint `GET .../artifact` con `ml-studio:read`, aislamiento por workspace y bloques Base64 verificados; UI reconstruye y descarga el archivo tras validar tamaño, digest y secuencia |
 | Provenance y registry base | Implementado | `service.py`, `provenance.py`, persistence tests |
 | HTTP control plane y autorización | Implementado | `test_ml_studio_http.py` |
 | OpenAPI base ML Studio | Implementado | `api/openapi-v1.json`, contract test |
@@ -52,12 +53,11 @@ pendiente del módulo.
 La ejecución duradera reutiliza etapas exitosas sólo cuando coinciden su identidad de
 runtime y los outputs de sus dependencias; una etapa recalculada invalida sus
 dependientes obsoletos. Todavía no admite grafos configurables, `register` como etapa
-ejecutable ni reintentos selectivos visibles.
+ejecutable; el retry selectivo desde una etapa elegida está implementado en el candidato local y pendiente de CI exact-head.
 El resultado durable conserva una referencia verificada del modelo en ArtifactStore.
 El candidato local añade el registro de una ejecución como versión candidata por una
 API protegida, la lectura HTTP autorizada en bloques y la descarga verificada desde la
-UI. PR #447 añadió identidad de runtime/dependencias y su invalidación downstream; los
-seis workflows exact-head post-merge de `main@6db8573` pasaron. PR #448 añade la
-promoción directa al finalizar el registro y ya pasó la suite web local (79/79); faltan
-sus checks CI/Docker. La verificación contra un
-ArtifactStore remoto sigue pendiente.
+UI. PR #447 añadió identidad de runtime/dependencias y su invalidación downstream, y
+PR #448 añadió la promoción directa al finalizar el registro. Los seis workflows
+exact-head post-merge de `main@a5d6a24` pasaron; la suite web local completa dio 79/79.
+El retry selectivo se añadió en el candidato actual; la qualification exact-head de ese cambio y la verificación contra un ArtifactStore remoto siguen pendientes.

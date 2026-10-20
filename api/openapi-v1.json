@@ -951,6 +951,14 @@
         "responses": {"200": {"description": "Workspace-scoped cancelled execution snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLExecutionSnapshot"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
       }
     },
+    "/v1/ml-studio/executions/{run_id}/retry": {
+      "post": {
+        "operationId": "retryMlStudioExecutionFromStage",
+        "parameters": [{"name": "run_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["run_id", "from_stage"], "properties": {"run_id": {"type": "string", "minLength": 1, "maxLength": 256}, "from_stage": {"type": "string", "enum": ["profile", "quality_gate", "prepare", "train", "evaluate", "select"]}}}}}},
+        "responses": {"200": {"description": "Queued selective retry snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLExecutionSnapshot"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}}
+      }
+    },
     "/v1/ml-studio/labs/{lab_id}/compare": {
       "post": {
         "operationId": "compareMlStudioTrials",
@@ -1050,7 +1058,9 @@
           "run_id": {"type": "string", "minLength": 1},
           "state": {"type": "string", "enum": ["queued", "running", "succeeded", "failed", "cancelled"]},
           "result": {"type": "object"},
-          "error": {"type": "string"}
+          "error": {"type": "string"},
+          "retry_of_run_id": {"type": "string", "minLength": 1},
+          "retry_from_stage": {"type": "string", "enum": ["profile", "quality_gate", "prepare", "train", "evaluate", "select"]}
         }
       },
       "EnvironmentDefinition": {

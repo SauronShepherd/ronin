@@ -26,8 +26,8 @@ from studio_ml.orchestration import (
     JobStoreExecutionStore,
     LocalExecutionCoordinator,
 )
-from studio_ml.runner import ExperimentResult
-from studio_ml.runtime import TrainedTabularModel
+from studio_ml.runner import ExperimentResult, LocalExperimentRunner
+from studio_ml.runtime import TrainedTabularModel, train_tabular
 from studio_ml.services import compile_lab_pipeline
 from studio_orchestrator import Instant
 from studio_storage import LocalArtifactStore, SqliteJobStore
@@ -275,6 +275,88 @@ def test_shared_job_store_reopens_and_idempotent_retry_does_not_duplicate_job(tm
     finally:
         coordinator.close()
         asyncio.run(reopened_service.aclose())
+
+
+def test_selective_retry_reuses_upstream_checkpoints_and_retrains_from_selected_stage(
+    tmp_path, monkeypatch
+) -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    rows = [{"x": value, "target": value % 2} for value in range(1, 21)]
+
+    class FailFirstTraining:
+        backend_id = "local.sklearn"
+        display_name = "retry test backend"
+        capabilities = None
+
+        def __init__(self):
+            self.train_calls = 0
+
+        def train(self, request, training_rows):
+            self.train_calls += 1
+            if self.train_calls == 1:
+                raise RuntimeError("transient training failure")
+            return train_tabular(training_rows, request.spec)
+
+    import studio_ml.runner as runner_module
+
+    profile_calls = 0
+    original_profile = runner_module.profile_and_validate
+
+    def count_profiles(*args, **kwargs):
+        nonlocal profile_calls
+        profile_calls += 1
+        return original_profile(*args, **kwargs)
+
+    monkeypatch.setattr(runner_module, "profile_and_validate", count_profiles)
+    jobs = SqliteJobStore(tmp_path / "selective-retry.sqlite", migration_now=_MIGRATION_NOW)
+    service = DurableExecutionService(jobs)
+    backend = FailFirstTraining()
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    adapter = JobStoreExecutionStore(service, artifacts)
+    coordinator = LocalExecutionCoordinator(runner=LocalExperimentRunner((backend,)), store=adapter)
+    try:
+        coordinator.submit("workspace-a", "failed-run", lab, rows)
+        deadline = time.monotonic() + LOCAL_ML_TIMEOUT
+        failed = coordinator.status("workspace-a", "failed-run")
+        while failed.state not in {"failed", "succeeded"} and time.monotonic() < deadline:
+            time.sleep(0.01)
+            failed = coordinator.status("workspace-a", "failed-run")
+        assert failed.state == "failed"
+        assert "transient training failure" in (failed.error or "")
+        assert profile_calls == 1
+        with pytest.raises(ValueError, match="only a failed execution"):
+            coordinator.retry("workspace-b", "failed-run", "wrong-workspace-retry", "train")
+        with pytest.raises(ValueError, match="supported ML stage"):
+            coordinator.retry("workspace-a", "failed-run", "unknown-stage-retry", "register")
+        with pytest.raises(ValueError, match="trimmed text"):
+            coordinator.retry("workspace-a", "failed-run", "bad\nretry", "train")
+
+        retried = coordinator.retry("workspace-a", "failed-run", "failed-run-retry-1", "train")
+        assert retried.state == "queued"
+        assert retried.retry_of_run_id == "failed-run"
+        assert retried.retry_from_stage == "train"
+        deadline = time.monotonic() + LOCAL_ML_TIMEOUT
+        completed = coordinator.status("workspace-a", "failed-run-retry-1")
+        while completed.state not in {"failed", "succeeded"} and time.monotonic() < deadline:
+            time.sleep(0.01)
+            completed = coordinator.status("workspace-a", "failed-run-retry-1")
+        assert completed.state == "succeeded", completed.error
+        assert completed.result_payload is not None
+        assert completed.retry_of_run_id == "failed-run"
+        assert completed.retry_from_stage == "train"
+        assert profile_calls == 1
+        assert backend.train_calls == 2
+    finally:
+        coordinator.close()
+        asyncio.run(service.aclose())
 
 
 def test_durable_ml_result_materializes_and_verifies_model_artifact(tmp_path) -> None:

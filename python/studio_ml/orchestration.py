@@ -76,6 +76,8 @@ class ExecutionSnapshot:
     attempt_ordinal: int = 0
     input_error: str | None = None
     node_checkpoints: dict[str, object] | None = None
+    retry_of_run_id: str | None = None
+    retry_from_stage: str | None = None
 
     def to_payload(self) -> dict[str, object]:
         payload: dict[str, object] = {"run_id": self.run_id, "state": self.state}
@@ -85,6 +87,10 @@ class ExecutionSnapshot:
             payload["result"] = self.result_payload
         if self.error is not None:
             payload["error"] = self.error
+        if self.retry_of_run_id is not None:
+            payload["retry_of_run_id"] = self.retry_of_run_id
+        if self.retry_from_stage is not None:
+            payload["retry_from_stage"] = self.retry_from_stage
         return payload
 
 
@@ -394,6 +400,8 @@ class JobStoreExecutionStore:
             "pipeline_json": snapshot.pipeline_json,
             "rows_json": rows_json,
             "rows_artifact": rows_artifact,
+            "retry_of_run_id": snapshot.retry_of_run_id,
+            "retry_from_stage": snapshot.retry_from_stage,
         }
         job = Job(
             id=job_id,
@@ -424,7 +432,70 @@ class JobStoreExecutionStore:
             or created.project_id != snapshot.workspace_id
         ):
             raise ExecutionConflict(f"execution request already exists: {snapshot.run_id}")
+        created_parameters = self._parameters(created)
+        if (
+            created_parameters.get("retry_of_run_id") != snapshot.retry_of_run_id
+            or created_parameters.get("retry_from_stage") != snapshot.retry_from_stage
+        ):
+            raise ExecutionConflict(f"execution request already exists: {snapshot.run_id}")
         return self.get(snapshot.workspace_id, snapshot.run_id) or snapshot
+
+    def retry(
+        self, workspace_id: str, source_run_id: str, retry_run_id: str, from_stage: str
+    ) -> ExecutionSnapshot:
+        if retry_run_id == source_run_id:
+            raise ValueError("retry run_id must differ from the failed execution")
+        if (
+            not retry_run_id
+            or retry_run_id != retry_run_id.strip()
+            or len(retry_run_id) > 256
+            or any(ord(character) < 32 or ord(character) == 127 for character in retry_run_id)
+        ):
+            raise ValueError("retry run_id must be 1 to 256 characters of trimmed text")
+        supported_stages = {"profile", "quality_gate", "prepare", "train", "evaluate", "select"}
+        if from_stage not in supported_stages:
+            raise ValueError("retry from_stage is not a supported ML stage")
+        source_job_id, _ = self._ids(workspace_id, source_run_id)
+        source_job = asyncio.run(self._service.status(source_job_id))
+        if (
+            source_job is None
+            or source_job.project_id != workspace_id
+            or source_job.target != self.target
+            or source_job.state is not JobState.FAILED
+        ):
+            raise ValueError("only a failed execution in this workspace can be retried")
+        source_parameters = self._parameters(source_job)
+        if (
+            source_parameters.get("workspace_id") != workspace_id
+            or source_parameters.get("run_id") != source_run_id
+        ):
+            raise ValueError("failed execution is not available in this workspace")
+        pipeline_json = source_parameters.get("pipeline_json")
+        if not isinstance(pipeline_json, str):
+            raise ValueError("failed execution is missing its pinned pipeline")
+        pipeline = PipelineIR.from_json(pipeline_json)
+        if not any(node.kind == from_stage for node in pipeline.nodes):
+            raise ValueError("retry from_stage is not present in the pinned pipeline")
+        rows_json = cast(str | None, source_parameters.get("rows_json"))
+        if rows_json is None and source_parameters.get("rows_artifact") is not None:
+            rows_json = self._load_rows_artifact(source_parameters["rows_artifact"])
+        if rows_json is None:
+            raise ValueError("failed execution is missing its input snapshot")
+        snapshot = ExecutionSnapshot(
+            run_id=retry_run_id,
+            state="queued",
+            workspace_id=workspace_id,
+            lab_id=str(source_parameters.get("lab_id", "")),
+            lab_digest=str(source_parameters.get("lab_digest", "")),
+            pipeline_digest=str(source_parameters.get("pipeline_digest", "")),
+            request_digest=str(source_parameters.get("request_digest", "")),
+            lab_json=cast(str | None, source_parameters.get("lab_json")),
+            pipeline_json=pipeline_json,
+            rows_json=rows_json,
+            retry_of_run_id=source_run_id,
+            retry_from_stage=from_stage,
+        )
+        return self.create(snapshot)
 
     def get(self, workspace_id: str, run_id: str) -> ExecutionSnapshot | None:
         job_id, durable_run_id = self._ids(workspace_id, run_id)
@@ -483,6 +554,8 @@ class JobStoreExecutionStore:
             rows_json=cast(str | None, parameters.get("rows_json"))
             if state in {"queued", "running"}
             else None,
+            retry_of_run_id=cast(str | None, parameters.get("retry_of_run_id")),
+            retry_from_stage=cast(str | None, parameters.get("retry_from_stage")),
         )
 
     def claim_next(self, owner: str) -> ExecutionSnapshot | None:
@@ -530,6 +603,8 @@ class JobStoreExecutionStore:
             lease_token=str(claim.lease_token),
             attempt_ordinal=claim.attempt_ordinal,
             input_error=input_error,
+            retry_of_run_id=cast(str | None, parameters.get("retry_of_run_id")),
+            retry_from_stage=cast(str | None, parameters.get("retry_from_stage")),
         )
         return replace(snapshot, node_checkpoints=self.node_checkpoints(snapshot))
 
@@ -600,9 +675,26 @@ class JobStoreExecutionStore:
     def node_checkpoints(self, snapshot: ExecutionSnapshot) -> dict[str, object]:
         if not snapshot.pipeline_digest or not snapshot.request_digest:
             return {}
-        job_id, _ = self._ids(snapshot.workspace_id, snapshot.run_id)
+        source_run_id = snapshot.retry_of_run_id or snapshot.run_id
+        job_id, _ = self._ids(snapshot.workspace_id, source_run_id)
         stored = asyncio.run(self._service.cell_results(job_id)) or ()
         checkpoints: dict[str, object] = {}
+        invalidated_node_ids: set[str] = set()
+        if snapshot.retry_from_stage is not None:
+            if snapshot.pipeline_json is None:
+                return {}
+            ordered_nodes = PipelineIR.from_json(snapshot.pipeline_json).execution_order()
+            start_index = next(
+                (
+                    index
+                    for index, node in enumerate(ordered_nodes)
+                    if node.kind == snapshot.retry_from_stage
+                ),
+                None,
+            )
+            if start_index is None:
+                return {}
+            invalidated_node_ids = {node.id for node in ordered_nodes[start_index:]}
         for cell in stored:
             if (
                 not cell.cell_id.startswith("ml-node-")
@@ -620,6 +712,8 @@ class JobStoreExecutionStore:
                     continue
                 node_id = node_id_value
                 if self._node_cell_id(node_id) != cell.cell_id:
+                    continue
+                if node_id in invalidated_node_ids:
                     continue
                 checkpoint = decoded.get("checkpoint")
                 artifact_value = decoded.get("artifact")
@@ -1114,6 +1208,13 @@ class LocalExecutionCoordinator:
         with self._lock:
             self._owned.pop((workspace_id, run_id), None)
         return snapshot
+
+    def retry(
+        self, workspace_id: str, source_run_id: str, retry_run_id: str, from_stage: str
+    ) -> ExecutionSnapshot:
+        if not isinstance(self._store, JobStoreExecutionStore):
+            raise ValueError("selective ML retry requires durable JobStore execution storage")
+        return self._store.retry(workspace_id, source_run_id, retry_run_id, from_stage)
 
     def close(self) -> None:
         self._closing.set()

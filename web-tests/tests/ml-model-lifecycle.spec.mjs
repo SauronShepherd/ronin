@@ -61,6 +61,45 @@ test('ML Studio registers a successful durable run as a candidate model', async 
   await expect(page.locator('#ml-models')).toContainText('champion');
 });
 
+test('ML Studio retries a failed durable run from a selected stage', async ({ page }) => {
+  let retryBody;
+  let registered = false;
+  await page.route('**/v1/ml-studio/labs?**', route => route.fulfill({json: {
+    items: [{id: 'churn', name: 'Churn', task: 'classification', backend_id: 'local.sklearn'}],
+  }}));
+  await page.route('**/v1/ml-studio/models?**', route => route.fulfill({json: {items: []}}));
+  await page.route('**/v1/ml-studio/labs/churn/executions?**', route => route.fulfill({json: {
+    run_id: 'failed-ui', state: 'queued',
+  }}));
+  await page.route('**/v1/ml-studio/executions/failed-ui?**', route => route.fulfill({json: {
+    run_id: 'failed-ui', state: 'failed', error: 'train failed transiently',
+  }}));
+  await page.route('**/v1/ml-studio/executions/failed-ui/retry?**', async route => {
+    retryBody = route.request().postDataJSON();
+    await route.fulfill({json: {
+      run_id: retryBody.run_id, state: 'queued',
+      retry_of_run_id: 'failed-ui', retry_from_stage: retryBody.from_stage,
+    }});
+  });
+  await page.route('**/v1/ml-studio/executions/failed-ui-retry?**', route => route.fulfill({json: {
+    run_id: 'failed-ui-retry', state: 'succeeded', result: {artifact_digest: 'b'.repeat(64)},
+  }}));
+  await page.route('**/v1/ml-studio/executions/failed-ui-retry/register?**', async route => {
+    registered = true;
+    await route.fulfill({json: {model_id: 'churn', version: 'failed-ui-retry', stage: 'candidate'}});
+  });
+  await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
+  await page.locator('[data-feature="ml-run"]').click();
+  await expect(page.locator('#ml-retry-execution')).toBeVisible();
+  await page.locator('#ml-retry-execution [name="retry_run_id"]').fill('failed-ui-retry');
+  await page.locator('#ml-retry-execution [name="from_stage"]').selectOption('evaluate');
+  await page.locator('#ml-retry-execution button[type="submit"]').click();
+  await expect.poll(() => retryBody).toEqual({run_id: 'failed-ui-retry', from_stage: 'evaluate'});
+  await expect(page.locator('#ml-register-execution')).toBeVisible();
+  await page.locator('#ml-register-execution button[type="submit"]').click();
+  await expect.poll(() => registered).toBe(true);
+});
+
 test('ML Studio downloads a verified artifact in bounded chunks', async ({ page }) => {
   const requests = [];
   await page.route('**/v1/ml-studio/labs**', route => route.fulfill({json: {items: []}}));
