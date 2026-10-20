@@ -5,7 +5,7 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-20. The tracked source is based on
-`main@a5d6a24`; PRs #430–#448 are merged. PR #436 makes the fixed six-stage local
+`main@c2df903`; PRs #430–#449 are merged. PR #436 makes the fixed six-stage local
 PipelineIR executable in stable topological order; PR #438/#439 add durable stage
 checkpoints and correct PostgreSQL resume pagination. PR #441 materializes verified
 tabular and K-Means model artifacts for durable results, with bounded size and
@@ -18,11 +18,12 @@ its PR Docker, Web and CI checks passed. PR #447 binds checkpoints and durable r
 to runtime/dependency identity and invalidates downstream outputs when dependencies
 change; all PR checks passed, including Docker qualification. PR #448 adds direct
 promotion from the execution registration flow, reusing the existing authorization
-and reason gate. Its PR checks passed, and all six post-merge exact-head workflows for
-`a5d6a24` passed, including CI, Web, Security, Release, Status consistency and Docker
-qualification. Untracked
+and reason gate. PR #449 adds a durable selective retry endpoint and Studio action
+with exact-head PR checks green. All six post-merge exact-head workflows for `c2df903`
+passed, including CI, Web, Security, Release, Status consistency and Docker
+qualification (8m33s). Untracked
 qualification output directories are not release evidence.
-**Observed source head:** `a5d6a246e67d9f7c7e656c2b56101d6c9f3e6866` (2026-10-20).
+**Observed source head:** `c2df9035d9bdbd24b7dee4357d884807645e5048` (2026-10-20).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -63,6 +64,14 @@ passed, including [CI](https://github.com/SauronShepherd/ronin/actions/runs/3937
 [Security](https://github.com/SauronShepherd/ronin/actions/runs/39379910703),
 [Release](https://github.com/SauronShepherd/ronin/actions/runs/39379910695) and
 [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39379910759).
+On `main@c2df9035d9bdbd24b7dee4357d884807645e5048`, PR #449 adds selective retries
+for failed durable ML executions from a selected pipeline stage. All six post-merge
+exact-head workflows passed: [CI](https://github.com/SauronShepherd/ronin/actions/runs/39384556262),
+[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39384556283),
+[Web](https://github.com/SauronShepherd/ronin/actions/runs/39384556228),
+[Security](https://github.com/SauronShepherd/ronin/actions/runs/39384556222),
+[Release](https://github.com/SauronShepherd/ronin/actions/runs/39384556217) and
+[Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39384556223).
 PR [#441](https://github.com/SauronShepherd/ronin/pull/441) passed CI
 Python 3.11/3.12, quality, security, verification, ledgers and [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39371246065)
 (8m54s, including PostgreSQL-backed coverage, a real Docker worker and strict

@@ -29,6 +29,20 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 12
+      localstack:
+        image: localstack/localstack@sha256:f3cb1a79f3add997575e859c3a2808e6dae4b0de836661de255baa2b576868f8
+        env:
+          SERVICES: s3
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: us-east-1
+        ports:
+          - 4566:4566
+        options: >-
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 24
+          --health-start-period 30s
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -55,6 +69,14 @@ jobs:
           --ignore=tests/perf
           --ignore=tests/integration/test_docker_container_executor_real.py
           --ignore=tests/integration/test_worker_runtime_real.py
+
+      - name: Qualify ML artifact lifecycle against S3-compatible storage
+        env:
+          RONIN_TEST_S3_ENDPOINT: http://localhost:4566
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: us-east-1
+        run: python -m pytest -q tests/integration/test_ml_s3_artifact_store_real.py
 
       - name: Run PostgreSQL-backed storage coverage gate
         env:
