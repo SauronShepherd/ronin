@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-20T07:08:01Z",
-  "observed_main_sha": "c2df9035d9bdbd24b7dee4357d884807645e5048",
+  "observed_at": "2026-10-20T07:54:11Z",
+  "observed_main_sha": "6dc051ec18d8c54cb61bab37aba59a72f8dc843a",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -106,7 +106,7 @@
     {
       "id": "p8-ai-ml-mlops",
       "status": "partial",
-      "summary": "Experiment/run/model/evaluation metadata, provenance persistence, deterministic tabular training, digest-verified registered inference, champion-model serving resolution, deterministic trial comparison, bounded numeric drift summaries, explicit feature-level drift threshold assessments, versioned feature definitions with dataset snapshots, workspace-scoped feature-definition HTTP routes, and pyronin SDK parity exist. Lab AssetRefs resolve to workspace-scoped digest-verified CSV/JSONL snapshots; durable async inputs above 1 MiB use ArtifactStore with size/digest validation; inline inputs enforce row, column, byte and canonical-JSON limits. Scheduled runs and async JobStore requests pin canonical pipeline/Lab digests, and the local runner executes the supported six-stage PipelineIR in stable topological order with durable node checkpoints. Final tabular and K-Means model results are materialized as verified bounded ArtifactStore objects, and a write-authorized route registers successful durable executions as MLRun records and candidate model versions after rechecking artifact identity. Studio artifact download, remote ArtifactStore qualification, configurable stages, broader feature engineering and algorithms, MLflow interoperability, network serving APIs and production qualification remain incomplete. Selective retry and downstream invalidation are implemented in the observed source."
+      "summary": "Experiment/run/model/evaluation metadata, provenance persistence, deterministic tabular training, digest-verified registered inference, champion-model serving resolution, deterministic trial comparison, bounded numeric drift summaries, explicit feature-level drift threshold assessments, versioned feature definitions with dataset snapshots, workspace-scoped feature-definition HTTP routes, and pyronin SDK parity exist. Lab AssetRefs resolve to workspace-scoped digest-verified CSV/JSONL snapshots; durable async inputs above 1 MiB use ArtifactStore with size/digest validation; inline inputs enforce row, column, byte and canonical-JSON limits. Scheduled runs and async JobStore requests pin canonical pipeline/Lab digests, and the local runner executes the supported six-stage PipelineIR in stable topological order with durable node checkpoints. Final tabular and K-Means model results are materialized as verified bounded ArtifactStore objects, and a write-authorized route registers successful durable executions as MLRun records and candidate model versions after rechecking artifact identity. CI qualifies S3-compatible artifact input/output, digest verification and safe unreferenced-object deletion against LocalStack. Scheduled dispatch passes the exact PipelineIR to runners and rejects runners that cannot execute it. Configurable stages, broader feature engineering and algorithms, MLflow interoperability, network serving APIs, production-provider qualification and production qualification remain incomplete. Selective retry and downstream invalidation are implemented in the observed source."
     },
     {
       "id": "p9-genai-rag-agents",
