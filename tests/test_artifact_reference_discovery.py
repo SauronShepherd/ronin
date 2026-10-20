@@ -252,8 +252,14 @@ class _DurableJobStore:
     def read_evidence(self, run_id):
         return self.run_records[run_id][0]
 
+    def read_evidence_bounded(self, run_id, *, limit):
+        return self.run_records[run_id][0][: limit + 1]
+
     def read_cell_results(self, run_id):
         return self.run_records[run_id][1]
+
+    def read_cell_results_bounded(self, run_id, *, limit):
+        return self.run_records[run_id][1][: limit + 1]
 
 
 def test_durable_discovery_pages_jobs_and_separates_execution_and_checkpoint_refs() -> None:
@@ -324,3 +330,26 @@ def test_durable_discovery_fails_closed_when_job_inventory_exceeds_bound() -> No
             _DurableJobStore((("0", (), ()),), historical_runs={"0": ("old-run",)}),
             max_runs=1,
         )
+
+
+def test_durable_discovery_fails_closed_when_cell_results_exceed_bounds() -> None:
+    store = _DurableJobStore((("0", (), (SimpleNamespace(result_json="{}"),) * 2),))
+
+    with pytest.raises(ValueError, match="cell results exceeded their reference bound"):
+        discover_durable_job_artifact_references(store, max_cell_results_per_run=1)
+
+    with pytest.raises(ValueError, match="cell results exceeded their reference bound"):
+        discover_durable_job_artifact_references(store, max_cell_results=1)
+
+
+def test_durable_discovery_fails_closed_when_evidence_exceeds_bounds() -> None:
+    digest = _digest("bounded-evidence")
+    evidence = SimpleNamespace(
+        availability=EvidenceAvailability.AVAILABLE,
+        digest=digest,
+        storage_ref=f"artifact://sha256/{digest}",
+    )
+    store = _DurableJobStore((("0", (evidence, evidence), ()),))
+
+    with pytest.raises(ValueError, match="evidence exceeded its reference bound"):
+        discover_durable_job_artifact_references(store, max_evidence_refs_per_run=1)

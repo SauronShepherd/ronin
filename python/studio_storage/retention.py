@@ -12,6 +12,7 @@ from studio_core.ml import MLRunRecord, RegisteredModelVersion
 from studio_orchestrator import EvidenceAvailability, JobStore
 
 from .artifacts import ArtifactRef
+from .limits import MAX_CELL_RESULTS_PER_RUN, MAX_EVIDENCE_REFS_PER_RUN
 from .ports import ArtifactStore, PagedArtifactStore
 
 
@@ -273,6 +274,10 @@ def discover_durable_job_artifact_references(
     page_size: int = 100,
     max_pages: int = 1_000,
     max_runs: int = 100_000,
+    max_evidence_refs: int = 100_000,
+    max_cell_results: int = 100_000,
+    max_evidence_refs_per_run: int = MAX_EVIDENCE_REFS_PER_RUN,
+    max_cell_results_per_run: int = MAX_CELL_RESULTS_PER_RUN,
 ) -> dict[str, tuple[str, ...]]:
     """Enumerate artifact references persisted by durable job execution.
 
@@ -287,12 +292,27 @@ def discover_durable_job_artifact_references(
         raise ValueError("job max_pages must be between 1 and 10000")
     if max_runs < 1:
         raise ValueError("job max_runs must be positive")
+    if max_evidence_refs < 1:
+        raise ValueError("job max_evidence_refs must be positive")
+    if max_cell_results < 1:
+        raise ValueError("job max_cell_results must be positive")
+    if max_evidence_refs_per_run < 1:
+        raise ValueError("job max_evidence_refs_per_run must be positive")
+    if max_cell_results_per_run < 1:
+        raise ValueError("job max_cell_results_per_run must be positive")
+
+    read_evidence_bounded = getattr(jobs, "read_evidence_bounded", None)
+    read_cell_results_bounded = getattr(jobs, "read_cell_results_bounded", None)
+    if not callable(read_evidence_bounded) or not callable(read_cell_results_bounded):
+        raise ValueError("durable job reference discovery requires bounded evidence reads")
 
     execution_digests: set[str] = set()
     checkpoint_digests: set[str] = set()
     cursor: str | None = None
     seen_cursors: set[str] = set()
     runs_seen = 0
+    evidence_refs_seen = 0
+    cell_results_seen = 0
     for _ in range(max_pages):
         page = jobs.list_jobs(
             project_id=None,
@@ -309,7 +329,14 @@ def discover_durable_job_artifact_references(
             if runs_seen > max_runs:
                 raise ValueError("durable job inventory exceeded its run bound")
             for run_id in run_ids:
-                for evidence in jobs.read_evidence(run_id):
+                evidence_limit = min(
+                    max_evidence_refs_per_run, max_evidence_refs - evidence_refs_seen
+                )
+                evidence_refs = read_evidence_bounded(run_id, limit=evidence_limit)
+                if len(evidence_refs) > evidence_limit:
+                    raise ValueError("durable job evidence exceeded its reference bound")
+                evidence_refs_seen += len(evidence_refs)
+                for evidence in evidence_refs:
                     if evidence.availability is not EvidenceAvailability.AVAILABLE:
                         continue
                     if evidence.storage_ref and evidence.storage_ref.startswith("artifact://"):
@@ -319,7 +346,12 @@ def discover_durable_job_artifact_references(
                                 "durable execution evidence reference and digest do not match"
                             )
                         execution_digests.add(digest)
-                for result in jobs.read_cell_results(run_id):
+                result_limit = min(max_cell_results_per_run, max_cell_results - cell_results_seen)
+                cell_results = read_cell_results_bounded(run_id, limit=result_limit)
+                if len(cell_results) > result_limit:
+                    raise ValueError("durable job cell results exceeded their reference bound")
+                cell_results_seen += len(cell_results)
+                for result in cell_results:
                     try:
                         payload = json.loads(result.result_json)
                     except (TypeError, json.JSONDecodeError) as exc:
@@ -434,6 +466,10 @@ def discover_artifact_references(
     job_page_size: int = 100,
     max_job_pages: int = 1_000,
     max_job_runs: int = 100_000,
+    max_job_evidence_refs: int = 100_000,
+    max_job_cell_results: int = 100_000,
+    max_job_evidence_refs_per_run: int = MAX_EVIDENCE_REFS_PER_RUN,
+    max_job_cell_results_per_run: int = MAX_CELL_RESULTS_PER_RUN,
     max_workspaces: int = 10_000,
     max_catalog_assets: int = 100_000,
     max_catalog_revisions: int = 1_000_000,
@@ -470,6 +506,10 @@ def discover_artifact_references(
             page_size=job_page_size,
             max_pages=max_job_pages,
             max_runs=max_job_runs,
+            max_evidence_refs=max_job_evidence_refs,
+            max_cell_results=max_job_cell_results,
+            max_evidence_refs_per_run=max_job_evidence_refs_per_run,
+            max_cell_results_per_run=max_job_cell_results_per_run,
         ),
         discover_connector_artifact_references(
             connector_checkpoints, max_outputs=max_connector_outputs

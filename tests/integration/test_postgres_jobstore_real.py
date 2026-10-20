@@ -112,7 +112,9 @@ def test_postgres_jobstore_complete_lifecycle() -> None:
     assert completed_job.state is JobState.SUCCEEDED
     assert len(store.read_events(run_id, since=0)) == 1
     assert len(store.read_cell_results(run_id)) == 1
+    assert len(store.read_cell_results_bounded(run_id, limit=0)) == 1
     assert len(store.read_evidence(run_id)) == 1
+    assert len(store.read_evidence_bounded(run_id, limit=0)) == 1
     assert store.list_run_ids_for_job(job_id) == (run_id,)
     references = discover_durable_job_artifact_references(store)
     assert references == {

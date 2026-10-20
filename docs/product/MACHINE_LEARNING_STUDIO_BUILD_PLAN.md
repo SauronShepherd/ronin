@@ -620,3 +620,15 @@ La suite focalizada de artifacts/paginación pasa **13 tests**; la suite Python 
 | Mantener explícito el límite de seguridad | La lista viva sigue siendo responsabilidad del llamador; esto acota la operación, pero no hace atómica la observación de seis fuentes ni permite activar limpieza global automática. |
 
 Las pruebas focalizadas pasan **25 tests**, incluyendo inventario paginado sin `list_digests()`, overflow de objetos, tope de páginas y rechazo de stores sin paginación; Ruff, formato, mypy de `retention.py` y `git diff --check` pasan. La suite local registró **3813 pasadas y 54 omitidas**, con un timeout de 15 s en `test_step_03_validate_accepts_demo_project`; al repetir ese test aislado pasó (**1/1**). CI, Release, Security, Status consistency y Docker del PR pasaron; los seis workflows post-merge exact-head de `main@de0091d` también, con PostgreSQL, worker real y aceptación estricta.
+
+## 41. Lecturas acotadas de evidencia y resultados de jobs
+
+**Estado en curso: implementado localmente; pendiente suite completa y cualificación del PR.**
+
+| Criterio | Evidencia |
+| --- | --- |
+| No materializar toda la evidencia de un run | SQLite, PostgreSQL y memoria ofrecen lecturas `limit + 1`; el descubridor impone el máximo de 100 refs por run. |
+| Limitar resultados celulares | Las lecturas de resultados usan `LIMIT limit + 1`, fallan cerrado si el run supera 10 000 resultados o el presupuesto total de 100 000. |
+| Cubrir adapters reales y fallos de overflow | Tests verifican topes por run y globales; la integración PostgreSQL prueba que `limit=0` sólo lee un registro centinela. |
+
+Las pruebas focalizadas de descubrimiento y JobStore pasan **44 tests**; Ruff, formato, mypy focalizado y `git diff --check` pasan. La suite Python completa pasa **3816 tests y omite 54** por integraciones externas no configuradas y límites de plataforma. La cualificación Docker/PostgreSQL queda pendiente del PR.
