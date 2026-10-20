@@ -3,7 +3,7 @@
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).
 
-**Observed candidate:** `97c1ee44e4aed0a8902ef4e546b10bb684001cb8` (`main`, 2026-10-20 verification). PR #436 executes the supported six-stage PipelineIR in stable topological order; PR #438/#439 add durable checkpoints and PostgreSQL resume pagination; PR #441 stores verified tabular and K-Means model outputs in `ArtifactStore` and exposes their references. PR checks passed CI 3.11/3.12 and Docker qualification; post-merge exact-head qualification is in progress.
+**Observed candidate:** `81b952ad4f38eeedddac532fea0c74732d9795ec` (`main`, 2026-10-20 verification). PR #436 executes the supported six-stage PipelineIR in stable topological order; PR #438/#439 add durable checkpoints and PostgreSQL resume pagination; PR #441 stores verified tabular and K-Means model outputs in `ArtifactStore`; PR #443 registers successful durable runs as candidate models after digest verification. PR #443 checks passed CI 3.11/3.12 and Docker qualification; post-merge exact-head qualification for `81b952a` is in progress.
 
 This matrix is a conservative release view of P1–P14. `implemented` means
 that the repository contains the described source path. `qualified` means
