@@ -5,14 +5,14 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-20. The tracked source is based on
-`main@92165f5`; PRs #430–#439 are merged. PR #436 makes the fixed six-stage local
-PipelineIR executable in stable topological order; PR #438 adds durable checkpoints
-for those stages and PR #439 fixes PostgreSQL keyset pagination and checkpoint-test
-lease cleanup. PR #439 exact-head checks passed, including Docker qualification.
-All six post-merge exact-head workflows on the merged SHA passed, including
-Docker qualification (run 39367136062, completed 2026-10-20 04:07:53Z).
-Untracked qualification output directories are not release evidence.
-**Observed source head:** `92165f5dbf23b6153c62b0150d4e74e300ac1dd8` (2026-10-20).
+`main@97c1ee4`; PRs #430–#441 are merged. PR #436 makes the fixed six-stage local
+PipelineIR executable in stable topological order; PR #438/#439 add durable stage
+checkpoints and correct PostgreSQL resume pagination. PR #441 materializes verified
+tabular and K-Means model artifacts for durable results, with bounded size and
+content-addressed references. Its PR checks, including Docker qualification, passed.
+Post-merge exact-head qualification for the new main SHA is running. Untracked
+qualification output directories are not release evidence.
+**Observed source head:** `97c1ee44e4aed0a8902ef4e546b10bb684001cb8` (2026-10-20).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -37,6 +37,13 @@ candidate SHA they were generated for and are not promoted to current-head
 evidence.
 
 ## Exact-head qualification snapshot
+
+On `main@97c1ee44e4aed0a8902ef4e546b10bb684001cb8`, post-merge qualification is
+running. PR [#441](https://github.com/SauronShepherd/ronin/pull/441) passed CI
+Python 3.11/3.12, quality, security, verification, ledgers and [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39371246065)
+(8m54s, including PostgreSQL-backed coverage, a real Docker worker and strict
+frozen v0.1 acceptance). Public v1 remains incomplete; P8 is partial and release
+progress remains 0% (0/14).
 
 On `main@92165f5dbf23b6153c62b0150d4e74e300ac1dd8`, post-merge [CI](https://github.com/SauronShepherd/ronin/actions/runs/39367136040),
 [Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39367136035),

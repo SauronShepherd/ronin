@@ -366,3 +366,18 @@ El PR [#438](https://github.com/SauronShepherd/ronin/pull/438) añadió los chec
 
 Este slice no cierra el executor completo: sólo las seis etapas locales existentes son ejecutables; `register` y grafos configurables siguen rechazándose. El retry durable todavía vuelve a reclamar y ejecutar el Job, reutilizando etapas exitosas cuando sus checkpoints son válidos. Aún faltan una política explícita de materialización y retención, identidad de outputs ligada a dependencias/versiones del runtime, invalidación aguas abajo, retry selectivo observable y el journey completo de ejecución→registro. P8 continúa parcial; release-qualified continúa en **0% (0/14)**.
 
+## 22. Materialización de resultados ML durables
+
+**Progreso técnico: 4/4 criterios implementados y cualificados en PR #441; integrado en `main@97c1ee44e4aed0a8902ef4e546b10bb684001cb8`.** La qualification exact-head post-merge de esta base sigue en ejecución; la qualification exact-head del PR pasó.
+
+| Criterio técnico | Evidencia |
+| --- | --- |
+| Materializar artefacto tabular al terminar el Job | `ExperimentResult.model.artifact_bytes` se escribe con rol `model` y media type de tabular; el payload durable incluye su referencia content-addressed. |
+| Materializar el artefacto canónico K-Means | Centroides y schema se serializan en JSON determinista, se guardan con media type dedicado y se conserva el digest. |
+| Verificar lo almacenado antes de éxito terminal | El coordinator compara el digest declarado, verifica rol/tipo/tamaño, ejecuta `ArtifactStore.verify()` y lee los bytes de vuelta para comprobar el SHA-256. |
+| Acotar y rechazar salidas inconsistentes | Los modelos superan el límite de 64 MiB o digest incorrecto hacen fallar el Job antes de persistir un resultado exitoso; tests cubren el rechazo sin escribir artefactos. |
+
+El PR [#441](https://github.com/SauronShepherd/ronin/pull/441) pasó CI Python 3.11/3.12, calidad, seguridad, verificación, ledgers y Docker qualification (**8m54s**, PostgreSQL, worker Docker real y aceptación estricta). En Windows, la suite completa pasó **3752 tests con 51 omitidos**; la cobertura de `studio_storage/artifacts.py` subió a **80,263%**, por lo que el baseline con margen de 2,1 puntos se actualizó de 77,30% a 78,17% tanto en `coverage-storage-files` como en `coverage-storage-files-full`. La puerta local por archivo pasó para 54 módulos.
+
+La salida durable expone URI, digest, media type y tamaño; aún falta un endpoint de lectura con autorización/aislamiento y completar el flujo ejecución→MLRun→registro/promoción. Continúan abiertos retry selectivo, invalidación aguas abajo, identidad de resultados ligada a versión de runner y una política de retención/limpieza de artefactos. P8 permanece parcial y release-qualified sigue en **0% (0/14)**.
+
