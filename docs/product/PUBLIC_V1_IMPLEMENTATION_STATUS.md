@@ -4,11 +4,12 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-19. The tracked source is based on
-`main@2d3f7d3`; PRs #430–#434 are merged and their exact-head checks plus all six
-post-merge workflows passed. Untracked qualification output directories are not
-release evidence.
-**Observed source head:** `2d3f7d3b43d0b3b9268a57860e19e707a57a02e8` (2026-10-19).
+**Observed workspace snapshot:** 2026-10-20. The tracked source is based on
+`main@18b2cde`; PRs #430–#436 are merged. PR #436 makes the fixed six-stage local
+PipelineIR executable in stable topological order; its exact-head checks and all
+six post-merge workflows passed. Untracked qualification output directories are
+not release evidence.
+**Observed source head:** `18b2cdecc1380886edeba2a0ad16305be065fa43` (2026-10-20).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -28,6 +29,21 @@ candidate SHA they were generated for and are not promoted to current-head
 evidence.
 
 ## Exact-head qualification snapshot
+
+On `main@18b2cdecc1380886edeba2a0ad16305be065fa43`, all six post-merge
+workflows passed: [CI](https://github.com/SauronShepherd/ronin/actions/runs/39309554646),
+[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39309554163),
+[Web qualification](https://github.com/SauronShepherd/ronin/actions/runs/39309554116),
+[Security qualification](https://github.com/SauronShepherd/ronin/actions/runs/39309554392),
+[Release qualification](https://github.com/SauronShepherd/ronin/actions/runs/39309554126)
+and [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39309554432).
+PR [#436](https://github.com/SauronShepherd/ronin/pull/436) passed exact-head
+CI (Python 3.11/3.12), Docker qualification (**8m20s**), Web, Security, Release,
+ledgers and verification. Post-merge Docker took **8m43s**, including PostgreSQL
+coverage, a real Docker worker and strict frozen v0.1 acceptance. PipelineIR now
+governs the supported six local stages; checkpoints, per-node retry and
+materialization remain incomplete. Public v1 remains incomplete and P8 remains
+partial.
 
 On `main@2d3f7d3b43d0b3b9268a57860e19e707a57a02e8`, all six post-merge
 workflows passed: [CI](https://github.com/SauronShepherd/ronin/actions/runs/39300808656),
