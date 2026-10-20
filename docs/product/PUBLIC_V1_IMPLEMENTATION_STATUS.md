@@ -4,31 +4,16 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-20. The tracked source is based on
-`main@1edb11a`; PRs #430–#451 are merged. PR #436 makes the fixed six-stage local
-PipelineIR executable in stable topological order; PR #438/#439 add durable stage
-checkpoints and correct PostgreSQL resume pagination. PR #441 materializes verified
-tabular and K-Means model artifacts for durable results, with bounded size and
-content-addressed references. Its PR checks, including Docker qualification, passed.
-PR #443 adds a write-authorized API route to register successful durable runs as
-candidate model versions, with artifact digest and size verification. Its PR checks,
-including Docker qualification, passed. PR #445 integrates that registration flow
-into Studio. PR #446 adds workspace-scoped chunked artifact retrieval and UI download;
-its PR Docker, Web and CI checks passed. PR #447 binds checkpoints and durable results
-to runtime/dependency identity and invalidates downstream outputs when dependencies
-change; all PR checks passed, including Docker qualification. PR #448 adds direct
-promotion from the execution registration flow, reusing the existing authorization
-and reason gate. PR #449 adds a durable selective retry endpoint and Studio action
-with exact-head PR checks green. PR #450 qualifies the artifact lifecycle against
-S3-compatible LocalStack: large durable input, digest-verified reads/writes and safe
-stale-object deletion. All six post-merge exact-head workflows for `6dc051e` passed,
-including CI, Web, Security, Release, Status consistency and Docker qualification
-(9m27s). PR #451 fixes scheduler dispatch to pass the exact pinned PipelineIR to its
-runner and rejects runners that cannot execute it; all six post-merge workflows for
-`1edb11a` passed, including Docker in 9m36s. PR #452 is extending algorithm choice
-through request, runner, UI and checkpoint identity. Untracked
-qualification output directories are not release evidence.
-**Observed source head:** `518880fdb30d2ecd1ec08a221c699afd29eb6be4` (2026-10-20).
+**Observed workspace snapshot:** 2026-10-20. PRs #430–#462 are merged. Recent
+increments add configurable ML algorithms and preprocessing, selective retry,
+non-destructive artifact retention preview, fail-closed reference discovery with
+bounded enumeration, and bounded-memory local artifact pagination. PR #462 uses
+stable digest cursors and retains only one page plus a sentinel in memory. The full
+Python suite passed 3810 tests with 54 environment/platform skips; CI, Web, Security,
+Release, Status consistency and Docker qualification all passed on the exact merged
+head, including PostgreSQL coverage, real worker execution and strict acceptance.
+Untracked qualification output directories are not release evidence.
+**Observed source head:** `4469f3e984cb3596e88584b1387bb4fbe81eb256` (2026-10-20).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
