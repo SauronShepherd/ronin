@@ -4,16 +4,101 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import inspect
 import json
+import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
 from typing import Any, cast
 
 from .backends import BackendRegistry, ExperimentRequest, MLBackend, default_backends
 from .clustering import KMeansModel, fit_kmeans
-from .domain import Lab, NodeKind, PipelineIR
+from .domain import Lab, NodeKind, PipelineIR, PipelineNode
 from .quality import ColumnProfile, QualityReport, profile_and_validate
 from .runtime import Algorithm, TrainedTabularModel, TrainingSpec
+
+_CHECKPOINT_RUNTIME_DISTRIBUTIONS = ("joblib", "numpy", "scikit-learn", "scipy")
+
+
+def _file_digest(path: str | Path | None) -> str | None:
+    if path is None:
+        return None
+    try:
+        return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def _checkpoint_runtime_fingerprint(
+    backend: MLBackend,
+    *,
+    parameters: tuple[tuple[str, float | int], ...],
+    clusters: int,
+    max_iterations: int,
+) -> str | None:
+    """Bind reusable node outputs to the exact local runtime that produced them."""
+    backend_type = type(backend)
+    try:
+        backend_source = inspect.getsourcefile(backend_type)
+        declared_identity = getattr(backend, "checkpoint_fingerprint", None)
+    except Exception:
+        return None
+    backend_source_digest = _file_digest(backend_source)
+    if callable(declared_identity):
+        try:
+            declared_identity = declared_identity()
+        except Exception:
+            return None
+    if declared_identity is not None and (
+        not isinstance(declared_identity, str)
+        or not declared_identity.strip()
+        or len(declared_identity) > 256
+    ):
+        return None
+    if backend_source_digest is None and declared_identity is None:
+        return None
+
+    source_digests = {
+        "runner": _file_digest(__file__),
+        "domain": _file_digest(Path(__file__).with_name("domain.py")),
+        "pipeline_compiler": _file_digest(Path(__file__).with_name("services.py")),
+        "orchestration": _file_digest(Path(__file__).with_name("orchestration.py")),
+        "runtime": _file_digest(inspect.getsourcefile(TrainingSpec)),
+        "clustering": _file_digest(inspect.getsourcefile(KMeansModel)),
+        "quality": _file_digest(inspect.getsourcefile(profile_and_validate)),
+        "backend_registry": _file_digest(inspect.getsourcefile(BackendRegistry)),
+    }
+    if any(value is None for value in source_digests.values()):
+        return None
+
+    distributions: dict[str, str | None] = {}
+    for distribution in _CHECKPOINT_RUNTIME_DISTRIBUTIONS:
+        try:
+            distributions[distribution] = version(distribution)
+        except PackageNotFoundError:
+            distributions[distribution] = None
+
+    identity = {
+        "schema": "ronin.ml-checkpoint-runtime/v1",
+        "python": [sys.implementation.name, *sys.version_info[:3]],
+        "sources": source_digests,
+        "dependencies": distributions,
+        "backend": {
+            "id": backend.backend_id,
+            "type": f"{backend_type.__module__}.{backend_type.__qualname__}",
+            "source_digest": backend_source_digest,
+            "declared_fingerprint": declared_identity,
+        },
+        "options": {
+            "parameters": [[name, value] for name, value in sorted(parameters)],
+            "clusters": clusters,
+            "max_iterations": max_iterations,
+        },
+    }
+    encoded = json.dumps(identity, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,9 +108,10 @@ class ExperimentResult:
     row_count: int
     model: TrainedTabularModel
     artifact_digest: str
+    runtime_fingerprint: str = ""
 
     def to_payload(self) -> dict[str, object]:
-        return {
+        payload = {
             "lab_id": self.lab_id,
             "backend_id": self.backend_id,
             "row_count": self.row_count,
@@ -36,6 +122,9 @@ class ExperimentResult:
             "features": list(self.model.features),
             "target": self.model.target,
         }
+        if self.runtime_fingerprint:
+            payload["runtime_fingerprint"] = self.runtime_fingerprint
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,9 +136,10 @@ class ClusteringResult:
     model: KMeansModel
     artifact_digest: str
     inertia: float
+    runtime_fingerprint: str = ""
 
     def to_payload(self) -> dict[str, object]:
-        return {
+        payload = {
             "lab_id": self.lab_id,
             "backend_id": self.backend_id,
             "row_count": self.row_count,
@@ -61,6 +151,9 @@ class ClusteringResult:
             "inertia": self.inertia,
             "artifact_digest": self.artifact_digest,
         }
+        if self.runtime_fingerprint:
+            payload["runtime_fingerprint"] = self.runtime_fingerprint
+        return payload
 
 
 def _trained_payload(model: TrainedTabularModel) -> dict[str, object]:
@@ -140,6 +233,7 @@ def _checkpoint_payload(kind: NodeKind, value: object) -> dict[str, object]:
                 "row_count": value.row_count,
                 "model": _trained_payload(value.model),
                 "artifact_digest": value.artifact_digest,
+                "runtime_fingerprint": value.runtime_fingerprint,
             },
         }
     if kind == "select" and isinstance(value, ClusteringResult):
@@ -153,10 +247,28 @@ def _checkpoint_payload(kind: NodeKind, value: object) -> dict[str, object]:
                 "features": list(value.features),
                 "model": value.model.to_artifact(),
                 "artifact_digest": value.artifact_digest,
+                "runtime_fingerprint": value.runtime_fingerprint,
                 "inertia": value.inertia,
             },
         }
     raise ValueError(f"cannot checkpoint output for ML pipeline stage {kind!r}")
+
+
+def _dependency_fingerprint(
+    node: PipelineNode,
+    nodes_by_id: Mapping[str, PipelineNode],
+    values: Mapping[str, object],
+) -> str:
+    dependencies: list[list[str]] = []
+    for dependency_id in sorted(node.depends_on):
+        dependency = nodes_by_id[dependency_id]
+        payload = _checkpoint_payload(dependency.kind, values[dependency_id])
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        dependencies.append([dependency_id, hashlib.sha256(encoded.encode("utf-8")).hexdigest()])
+    encoded_dependencies = json.dumps(
+        dependencies, sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    return hashlib.sha256(encoded_dependencies.encode("utf-8")).hexdigest()
 
 
 def _restore_checkpoint(kind: NodeKind, value: object) -> object:
@@ -230,6 +342,7 @@ def _restore_checkpoint(kind: NodeKind, value: object) -> object:
                 int(payload["row_count"]),
                 _trained_from_payload(payload["model"]),
                 str(payload["artifact_digest"]),
+                str(payload.get("runtime_fingerprint", "")),
             )
         if payload.get("type") == "clustering":
             model = _restore_checkpoint("train", {"kind": "train", "value": payload["model"]})
@@ -243,6 +356,7 @@ def _restore_checkpoint(kind: NodeKind, value: object) -> object:
                 model,
                 str(payload["artifact_digest"]),
                 float(payload["inertia"]),
+                str(payload.get("runtime_fingerprint", "")),
             )
     raise ValueError(f"stored ML checkpoint for stage {kind!r} has invalid data")
 
@@ -311,21 +425,44 @@ class LocalExperimentRunner:
         by_kind = {node.kind: node for node in pipeline.nodes}
         if len(by_kind) != len(pipeline.nodes) or set(by_kind) != set(required_kinds):
             raise ValueError("local ML pipeline must contain exactly one supported node per stage")
+        nodes_by_id = {node.id: node for node in pipeline.nodes}
         for previous, current in zip(required_kinds[:-1], required_kinds[1:], strict=True):
             if by_kind[previous].id not in by_kind[current].depends_on:
                 raise ValueError(f"ML pipeline stage {current!r} must depend on {previous!r}")
 
         values: dict[str, object] = {}
         result: ExperimentResult | ClusteringResult | None = None
+        runtime_fingerprint = _checkpoint_runtime_fingerprint(
+            backend,
+            parameters=parameters,
+            clusters=clusters,
+            max_iterations=max_iterations,
+        )
         selected_features = tuple(
             feature.column for feature in lab.features if feature.role != "ignored"
         )
         for node in pipeline.execution_order():
             dependencies = [values[dependency] for dependency in node.depends_on]
+            dependency_fingerprint = _dependency_fingerprint(node, nodes_by_id, values)
             cached = checkpoint_load(node.id) if checkpoint_load is not None else None
-            if cached is not None:
+            if (
+                runtime_fingerprint is not None
+                and isinstance(cached, Mapping)
+                and cached.get("runtime_fingerprint") == runtime_fingerprint
+                and cached.get("dependency_fingerprint") == dependency_fingerprint
+                and isinstance(cached.get("checkpoint"), dict)
+            ):
                 try:
-                    values[node.id] = _restore_checkpoint(node.kind, cached)
+                    restored = _restore_checkpoint(
+                        node.kind, cast(dict[str, object], cached["checkpoint"])
+                    )
+                    if (
+                        node.kind == "select"
+                        and isinstance(restored, (ExperimentResult, ClusteringResult))
+                        and restored.runtime_fingerprint != runtime_fingerprint
+                    ):
+                        raise ValueError("stored ML result runtime identity is invalid")
+                    values[node.id] = restored
                 except (KeyError, TypeError, ValueError, OverflowError):
                     pass
                 else:
@@ -424,6 +561,7 @@ class LocalExperimentRunner:
                         model,
                         f"sha256:{digest}",
                         float(score),
+                        runtime_fingerprint or "",
                     )
                 else:
                     trained = (
@@ -435,13 +573,25 @@ class LocalExperimentRunner:
                         raise ValueError("select stage requires an evaluated model")
                     digest = hashlib.sha256(trained.artifact_bytes).hexdigest()
                     result = ExperimentResult(
-                        lab.id, backend.backend_id, len(rows), trained, f"sha256:{digest}"
+                        lab.id,
+                        backend.backend_id,
+                        len(rows),
+                        trained,
+                        f"sha256:{digest}",
+                        runtime_fingerprint or "",
                     )
                 values[node.id] = result
             else:  # pragma: no cover - PipelineNode validates kinds
                 raise ValueError(f"unsupported local ML pipeline node: {node.kind}")
-            if checkpoint_save is not None:
-                checkpoint_save(node.id, _checkpoint_payload(node.kind, values[node.id]))
+            if checkpoint_save is not None and runtime_fingerprint is not None:
+                checkpoint_save(
+                    node.id,
+                    {
+                        "runtime_fingerprint": runtime_fingerprint,
+                        "dependency_fingerprint": dependency_fingerprint,
+                        "checkpoint": _checkpoint_payload(node.kind, values[node.id]),
+                    },
+                )
 
         if result is None:
             raise ValueError("local ML pipeline did not select a result")
