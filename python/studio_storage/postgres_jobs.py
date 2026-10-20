@@ -924,7 +924,7 @@ class PostgresJobReadPort:
                     values.append(state.value)
                 if after is not None:
                     clauses.append("(created_at, job_id) < (%s, %s)")
-                    values.extend((str(after[0]), after[1]))
+                    values.extend((str(after[0]), str(after[1])))
                 where = " WHERE " + " AND ".join(clauses) if clauses else ""
                 db.execute(  # noqa: S608 - clauses are fixed SQL fragments
                     "SELECT * FROM ronin_jobs"  # noqa: S608 - fixed SQL fragments only
