@@ -117,6 +117,11 @@ class PostgresRevisionStore:
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
+                    "INSERT INTO ronin_de_pipeline_state(project_id,pipeline_id,archived) "
+                    "VALUES (%s,%s,FALSE) ON CONFLICT(project_id,pipeline_id) DO NOTHING",
+                    (project_id, pipeline_id),
+                )
+                cursor.execute(
                     "SELECT archived FROM ronin_de_pipeline_state WHERE project_id=%s AND pipeline_id=%s FOR UPDATE",
                     (project_id, pipeline_id),
                 )
@@ -124,7 +129,7 @@ class PostgresRevisionStore:
                 if state is not None and bool(state["archived"]):
                     raise ValueError("cannot save an archived pipeline")
                 cursor.execute(
-                    "SELECT COALESCE(MAX(revision), 0) AS revision FROM ronin_de_revisions WHERE project_id=%s AND pipeline_id=%s FOR UPDATE",
+                    "SELECT COALESCE(MAX(revision), 0) AS revision FROM ronin_de_revisions WHERE project_id=%s AND pipeline_id=%s",
                     (project_id, pipeline_id),
                 )
                 current = int(cursor.fetchone()["revision"])
@@ -144,10 +149,6 @@ class PostgresRevisionStore:
                         json.dumps(dict(sorted(pipeline_artifacts.items())), separators=(",", ":")),
                         metadata_artifact_ref,
                     ),
-                )
-                cursor.execute(
-                    "INSERT INTO ronin_de_pipeline_state(project_id,pipeline_id,archived) VALUES (%s,%s,FALSE) ON CONFLICT(project_id,pipeline_id) DO UPDATE SET archived=FALSE",
-                    (project_id, pipeline_id),
                 )
             connection.commit()
             return revision

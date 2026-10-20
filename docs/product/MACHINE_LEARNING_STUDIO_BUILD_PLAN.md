@@ -579,7 +579,7 @@ La suite focalizada pasa **49 pruebas**, con **2 integraciones PostgreSQL omitid
 | Criterio | Evidencia local |
 | --- | --- |
 | Recoger salidas de conectores comprometidas | `SqliteConnectorCheckpointStore.list_committed_outputs()` excluye placeholders, detecta pares incompletos y está limitada; el descubridor valida URI/digest. |
-| Cubrir cada revisión de Data Engineering | SQLite y PostgreSQL enumeran proyectos/pipelines y revisiones históricas con `LIMIT max+1`; sobrepasar el tope genera error en vez de snapshot parcial. |
+| Cubrir cada revisión de Data Engineering | SQLite y PostgreSQL enumeran proyectos/pipelines y revisiones históricas con `LIMIT max+1`; sobrepasar el tope genera error en vez de snapshot parcial. La prueba Docker detectó y corrigió un `FOR UPDATE` inválido sobre `MAX(revision)`, serializando ahora escrituras con la fila de estado del pipeline. |
 | Conservar exports sintéticos persistidos | Se recorren runs y exports registrados, validando cada par URI/digest dentro de topes de runs y exports. |
 | Formar las nueve fuentes requeridas | `discover_artifact_references()` ejecuta los seis enumeradores, combina las nueve familias y falla completo ante error o fuente faltante. |
 
