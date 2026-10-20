@@ -271,6 +271,50 @@ def test_postgres_shared_job_store_claim_target_and_cancel_fence() -> None:
         asyncio.run(service.aclose())
 
 
+def test_postgres_ml_node_checkpoint_survives_service_reopen() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    suffix = uuid4().hex
+    PostgresMetadataStore(dsn, application_name="ronin-ml-checkpoint-qualification").migrate()
+    service = DurableExecutionService(
+        PostgresJobReadPort(dsn, application_name="ronin-ml-checkpoint")
+    )
+    adapter = JobStoreExecutionStore(service)
+    snapshot = ExecutionSnapshot(
+        run_id=f"checkpoint-{suffix}",
+        state="queued",
+        workspace_id=f"workspace-{suffix}",
+        lab_id="lab",
+        lab_digest="a" * 64,
+        pipeline_digest="b" * 64,
+        request_digest="c" * 64,
+        lab_json="{}",
+        pipeline_json="{}",
+        rows_json="[]",
+    )
+    try:
+        adapter.create(snapshot)
+        claim = adapter.claim_next(f"worker-{suffix}")
+        assert claim is not None
+        adapter.save_node_checkpoint(
+            claim,
+            "profile",
+            {"kind": "profile", "value": {"row_count": 4}},
+        )
+    finally:
+        asyncio.run(service.aclose())
+
+    reopened_service = DurableExecutionService(
+        PostgresJobReadPort(dsn, application_name="ronin-ml-checkpoint-reopen")
+    )
+    try:
+        reopened_adapter = JobStoreExecutionStore(reopened_service)
+        assert reopened_adapter.node_checkpoints(claim) == {
+            "profile": {"kind": "profile", "value": {"row_count": 4}}
+        }
+    finally:
+        asyncio.run(reopened_service.aclose())
+
+
 def test_postgres_shared_job_claim_racing_cancel_finishes_without_deadlock() -> None:
     dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
     suffix = uuid4().hex

@@ -63,3 +63,32 @@ def test_local_runner_executes_pinned_pipeline_and_rejects_unsupported_graph() -
     )
     with pytest.raises(ValueError, match="exactly one supported node"):
         runner.execute_pipeline(lab, _rows(), unsupported)
+
+
+def test_local_runner_restores_all_persisted_node_outputs_without_reexecution() -> None:
+    lab = _lab()
+    pipeline = compile_lab_pipeline(lab)
+    checkpoints: dict[str, dict[str, object]] = {}
+    first = LocalExperimentRunner().execute_pipeline(
+        lab,
+        _rows(),
+        pipeline,
+        checkpoint_save=lambda node_id, payload: checkpoints.__setitem__(node_id, payload),
+    )
+    assert len(checkpoints) == 6
+
+    class MustNotTrain:
+        backend_id = "local.sklearn"
+        display_name = "test backend"
+        capabilities = None
+
+        def train(self, _request, _rows):  # pragma: no cover - should be bypassed by checkpoints
+            raise AssertionError("restored train node must not execute")
+
+    resumed = LocalExperimentRunner((MustNotTrain(),)).execute_pipeline(
+        lab,
+        _rows(),
+        pipeline,
+        checkpoint_load=checkpoints.get,
+    )
+    assert resumed.to_payload() == first.to_payload()
