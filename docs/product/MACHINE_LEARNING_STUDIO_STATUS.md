@@ -16,6 +16,7 @@ planificadas de una plataforma ML completa.
 | Profiling y quality gates | Implementado | `quality.py`, endpoint `/quality`, tests de calidad |
 | Ejecución asíncrona | Implementado | `orchestration.py`, API execution tests |
 | Persistencia durable de lifecycle/result payload | Implementado | `SqliteExecutionStore`, reopen test |
+| Checkpoints durables de etapas PipelineIR | Implementado para las seis etapas locales | `runner.py`, `orchestration.py`, round-trip local y recuperación PostgreSQL tras reabrir el servicio |
 | Provenance y registry base | Implementado | `service.py`, `provenance.py`, persistence tests |
 | HTTP control plane y autorización | Implementado | `test_ml_studio_http.py` |
 | OpenAPI base ML Studio | Implementado | `api/openapi-v1.json`, contract test |
@@ -44,3 +45,6 @@ La suite específica ML Studio, los contratos y la auditoría E2E deben permanec
 El módulo está completo dentro del alcance provider-neutral definido por el build plan;
 la conexión a un endpoint remoto concreto es configuración de despliegue, no código
 pendiente del módulo.
+La ejecución duradera reutiliza etapas exitosas, pero todavía no admite grafos
+configurables, `register` como etapa ejecutable, invalidación explícita de outputs
+dependientes ni reintentos selectivos visibles desde el producto.
