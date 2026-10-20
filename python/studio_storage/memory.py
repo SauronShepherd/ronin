@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import heapq
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from threading import RLock
@@ -380,6 +381,16 @@ class InMemoryJobStore:
             by_cell = self._cell_results.get(run_id, {})
             return tuple(by_cell[cell_id] for cell_id in sorted(by_cell))
 
+    def read_cell_results_bounded(
+        self, run_id: RunId, *, limit: int
+    ) -> tuple[StoredCellResult, ...]:
+        if limit < 0:
+            raise ValueError("cell result limit must be non-negative")
+        with self._lock:
+            by_cell = self._cell_results.get(run_id, {})
+            cell_ids = heapq.nsmallest(limit + 1, by_cell)
+            return tuple(by_cell[cell_id] for cell_id in cell_ids)
+
     def put_evidence(
         self,
         attempt_id: AttemptId,
@@ -403,6 +414,12 @@ class InMemoryJobStore:
     def read_evidence(self, run_id: RunId) -> tuple[StoredEvidenceRef, ...]:
         with self._lock:
             return tuple(self._evidence.get(run_id, ()))
+
+    def read_evidence_bounded(self, run_id: RunId, *, limit: int) -> tuple[StoredEvidenceRef, ...]:
+        if limit < 0:
+            raise ValueError("evidence limit must be non-negative")
+        with self._lock:
+            return tuple(self._evidence.get(run_id, ())[: limit + 1])
 
     def complete_attempt(
         self,

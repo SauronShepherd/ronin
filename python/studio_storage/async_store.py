@@ -7,7 +7,7 @@ import threading
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from typing import TypeVar
+from typing import Protocol, TypeVar, cast
 
 from studio_orchestrator import (
     AttemptId,
@@ -28,6 +28,16 @@ from studio_orchestrator import (
 )
 
 _T = TypeVar("_T")
+
+
+class _BoundedArtifactReferenceReads(Protocol):
+    def read_cell_results_bounded(
+        self, run_id: RunId, *, limit: int
+    ) -> tuple[StoredCellResult, ...]: ...
+
+    def read_evidence_bounded(
+        self, run_id: RunId, *, limit: int
+    ) -> tuple[StoredEvidenceRef, ...]: ...
 
 
 class StorageBackpressureError(RuntimeError):
@@ -221,6 +231,12 @@ class BoundedAsyncJobStore:
     async def read_cell_results(self, run_id: RunId) -> tuple[StoredCellResult, ...]:
         return await self._call(partial(self._store.read_cell_results, run_id))
 
+    async def read_cell_results_bounded(
+        self, run_id: RunId, *, limit: int
+    ) -> tuple[StoredCellResult, ...]:
+        store = cast(_BoundedArtifactReferenceReads, self._store)
+        return await self._call(partial(store.read_cell_results_bounded, run_id, limit=limit))
+
     async def put_evidence(
         self,
         attempt_id: AttemptId,
@@ -243,6 +259,12 @@ class BoundedAsyncJobStore:
 
     async def read_evidence(self, run_id: RunId) -> tuple[StoredEvidenceRef, ...]:
         return await self._call(partial(self._store.read_evidence, run_id))
+
+    async def read_evidence_bounded(
+        self, run_id: RunId, *, limit: int
+    ) -> tuple[StoredEvidenceRef, ...]:
+        store = cast(_BoundedArtifactReferenceReads, self._store)
+        return await self._call(partial(store.read_evidence_bounded, run_id, limit=limit))
 
     async def complete_attempt(
         self,

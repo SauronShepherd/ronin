@@ -471,6 +471,32 @@ class _SqliteLifecycleStore:
         finally:
             connection.close()
 
+    def read_cell_results_bounded(
+        self, run_id: RunId, *, limit: int
+    ) -> tuple[StoredCellResult, ...]:
+        if limit < 0:
+            raise ValueError("cell result limit must be non-negative")
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT * FROM cell_results WHERE run_id=? ORDER BY cell_id LIMIT ?",
+                (str(run_id), limit + 1),
+            ).fetchall()
+            return tuple(
+                StoredCellResult(
+                    run_id=RunId(row["run_id"]),
+                    cell_id=row["cell_id"],
+                    source_digest=row["source_digest"],
+                    execution_identity_digest=row["execution_identity_digest"],
+                    state=row["state"],
+                    result_json=row["result_json"],
+                    updated_at=row["updated_at"],
+                )
+                for row in rows
+            )
+        finally:
+            connection.close()
+
     def read_evidence(self, run_id: RunId) -> tuple[StoredEvidenceRef, ...]:
         connection = self._connect()
         try:
@@ -478,6 +504,34 @@ class _SqliteLifecycleStore:
                 "SELECT * FROM evidence_refs WHERE run_id=? "
                 "ORDER BY cell_id,role,availability,digest",
                 (str(run_id),),
+            ).fetchall()
+            return tuple(
+                StoredEvidenceRef(
+                    run_id=RunId(row["run_id"]),
+                    cell_id=row["cell_id"],
+                    role=row["role"],
+                    digest_algorithm=row["digest_algorithm"],
+                    digest=row["digest"],
+                    media_type=row["media_type"],
+                    size_bytes=row["size_bytes"],
+                    storage_ref=row["storage_ref"],
+                    availability=EvidenceAvailability(row["availability"]),
+                    unavailable_reason=row["unavailable_reason"],
+                )
+                for row in rows
+            )
+        finally:
+            connection.close()
+
+    def read_evidence_bounded(self, run_id: RunId, *, limit: int) -> tuple[StoredEvidenceRef, ...]:
+        if limit < 0:
+            raise ValueError("evidence limit must be non-negative")
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT * FROM evidence_refs WHERE run_id=? "
+                "ORDER BY cell_id,role,availability,digest LIMIT ?",
+                (str(run_id), limit + 1),
             ).fetchall()
             return tuple(
                 StoredEvidenceRef(
