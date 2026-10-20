@@ -108,6 +108,32 @@ def test_training_run_and_model_registry_preserve_provenance(tmp_path: Path) -> 
     assert store.get_model(_WS, model.model_id, model.version) == model
 
 
+def test_ml_registry_retention_limits_fail_closed(tmp_path: Path) -> None:
+    store, _catalog = _stores(tmp_path / "ronin.sqlite3")
+    store.put_experiment(_WS, Experiment(ExperimentId("exp-1"), "Baseline"), now=_NOW)
+    store.record_run(_WS, _run(), now=_NOW)
+    assert store.list_runs(_WS, limit=1) == (_run(),)
+    run = _run()
+    store.record_run(
+        _WS,
+        MLRunRecord(
+            MLRunId("run-2"),
+            run.experiment_id,
+            run.execution_ref,
+            run.source_revision,
+            run.datasets,
+            run.parameters,
+            run.metrics,
+            run.artifact_refs,
+        ),
+        now=_NOW,
+    )
+    with pytest.raises(ValueError, match="ML run inventory exceeded"):
+        store.list_runs(_WS, limit=1)
+    with pytest.raises(ValueError, match="model list limit must be positive"):
+        store.list_models(_WS, limit=0)
+
+
 def test_ml_registry_bundle_round_trip_preserves_experiments_runs_and_models(
     tmp_path: Path,
 ) -> None:

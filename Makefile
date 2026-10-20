@@ -175,7 +175,7 @@ coverage-storage-files:
 		--baseline=scheduler_schedule.py=74.00 \
 		--baseline=scheduler_timeout.py=66.70 \
 		--baseline=sqlite.py=79.12 \
-		--baseline=workspaces.py=61.62
+		--baseline=workspaces.py=65.10
 
 coverage-storage-files-full:
 	coverage json --include="*/studio_storage/*" -o coverage-storage.json
@@ -191,7 +191,7 @@ coverage-storage-files-full:
 		--baseline=local_files.py=77.22 \
 		--baseline=ml.py=73.47 \
 		--baseline=ontology.py=37.40 \
-		--baseline=postgres_core.py=37.61 \
+		--baseline=postgres_core.py=41.40 \
 		--baseline=postgres_jobs.py=73.01 \
 		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=74.20 \
@@ -206,5 +206,5 @@ coverage-storage-files-full:
 		--baseline=scheduler_schedule.py=74.00 \
 		--baseline=scheduler_timeout.py=66.70 \
 		--baseline=sqlite.py=79.12 \
-		--baseline=workspaces.py=61.62
+		--baseline=workspaces.py=65.10
 	@rm -f coverage-storage.json

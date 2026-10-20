@@ -7,12 +7,27 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Protocol
 
-from studio_core import WorkspaceId
+from studio_core import AssetId, AssetRevision, CatalogAsset, Workspace, WorkspaceId
 from studio_core.ml import MLRunRecord, RegisteredModelVersion
 from studio_orchestrator import EvidenceAvailability, JobStore
 
 from .artifacts import ArtifactRef
-from .ports import ArtifactStore, CatalogStore, PagedArtifactStore, WorkspaceStore
+from .ports import ArtifactStore, PagedArtifactStore
+
+
+class _BoundedWorkspaceInventory(Protocol):
+    def list_workspaces(self, *, limit: int | None = None) -> tuple[Workspace, ...]: ...
+
+
+class _BoundedCatalogInventory(Protocol):
+    def list_assets(
+        self, workspace_id: WorkspaceId, *, limit: int | None = None
+    ) -> tuple[CatalogAsset, ...]: ...
+
+    def list_revisions(
+        self, workspace_id: WorkspaceId, asset_id: AssetId, *, limit: int | None = None
+    ) -> tuple[AssetRevision, ...]: ...
+
 
 REQUIRED_ARTIFACT_REFERENCE_SOURCES = frozenset(
     {
@@ -48,9 +63,13 @@ class ArtifactRetentionPlan:
 
 
 class _MLArtifactReferenceStore(Protocol):
-    def list_runs(self, workspace_id: WorkspaceId) -> tuple[MLRunRecord, ...]: ...
+    def list_runs(
+        self, workspace_id: WorkspaceId, *, limit: int | None = None
+    ) -> tuple[MLRunRecord, ...]: ...
 
-    def list_models(self, workspace_id: WorkspaceId) -> tuple[RegisteredModelVersion, ...]: ...
+    def list_models(
+        self, workspace_id: WorkspaceId, *, limit: int | None = None
+    ) -> tuple[RegisteredModelVersion, ...]: ...
 
 
 class _ConnectorOutputReferenceStore(Protocol):
@@ -155,16 +174,42 @@ def _validate_digest(digest: object) -> None:
         raise ValueError("artifact reference digests must be lowercase sha256 hex")
 
 
+def _validate_retention_bound(limit: int, name: str) -> None:
+    if limit < 1:
+        raise ValueError(f"retention {name} bound must be positive")
+
+
 def discover_catalog_artifact_references(
-    workspaces: WorkspaceStore, catalog: CatalogStore
+    workspaces: _BoundedWorkspaceInventory,
+    catalog: _BoundedCatalogInventory,
+    *,
+    max_workspaces: int = 10_000,
+    max_assets: int = 100_000,
+    max_revisions: int = 1_000_000,
 ) -> dict[str, tuple[str, ...]]:
     """Enumerate artifact references held by catalog revisions and local files."""
 
+    _validate_retention_bound(max_workspaces, "workspace")
+    _validate_retention_bound(max_assets, "catalog asset")
+    _validate_retention_bound(max_revisions, "catalog revision")
+
     catalog_digests: set[str] = set()
     file_digests: set[str] = set()
-    for workspace in workspaces.list_workspaces():
-        for asset in catalog.list_assets(workspace.id):
-            for revision in catalog.list_revisions(workspace.id, asset.id):
+    assets_seen = 0
+    revisions_seen = 0
+    for workspace in workspaces.list_workspaces(limit=max_workspaces):
+        assets = catalog.list_assets(workspace.id, limit=max(1, max_assets - assets_seen))
+        assets_seen += len(assets)
+        if assets_seen > max_assets:
+            raise ValueError("catalog asset inventory exceeded its global bound")
+        for asset in assets:
+            revisions = catalog.list_revisions(
+                workspace.id, asset.id, limit=max(1, max_revisions - revisions_seen)
+            )
+            revisions_seen += len(revisions)
+            if revisions_seen > max_revisions:
+                raise ValueError("catalog revision inventory exceeded its global bound")
+            for revision in revisions:
                 artifact_ref = dict(revision.metadata).get("artifact_ref")
                 if artifact_ref is None:
                     continue
@@ -179,18 +224,37 @@ def discover_catalog_artifact_references(
 
 
 def discover_ml_artifact_references(
-    workspaces: WorkspaceStore, registry: _MLArtifactReferenceStore
+    workspaces: _BoundedWorkspaceInventory,
+    registry: _MLArtifactReferenceStore,
+    *,
+    max_workspaces: int = 10_000,
+    max_runs: int = 100_000,
+    max_models: int = 100_000,
 ) -> dict[str, tuple[str, ...]]:
     """Enumerate artifacts held by ML runs and registered model versions."""
 
+    _validate_retention_bound(max_workspaces, "workspace")
+    _validate_retention_bound(max_runs, "ML run")
+    _validate_retention_bound(max_models, "registered model")
+
     run_digests: set[str] = set()
     model_digests: set[str] = set()
-    for workspace in workspaces.list_workspaces():
-        for run in registry.list_runs(workspace.id):
+    runs_seen = 0
+    models_seen = 0
+    for workspace in workspaces.list_workspaces(limit=max_workspaces):
+        runs = registry.list_runs(workspace.id, limit=max(1, max_runs - runs_seen))
+        runs_seen += len(runs)
+        if runs_seen > max_runs:
+            raise ValueError("ML run inventory exceeded its global bound")
+        for run in runs:
             run_digests.update(_digest_from_storage_ref(ref) for ref in run.artifact_refs)
             if run.runtime_snapshot_ref and run.runtime_snapshot_ref.startswith("artifact://"):
                 run_digests.add(_digest_from_storage_ref(run.runtime_snapshot_ref))
-        for model in registry.list_models(workspace.id):
+        models = registry.list_models(workspace.id, limit=max(1, max_models - models_seen))
+        models_seen += len(models)
+        if models_seen > max_models:
+            raise ValueError("registered model inventory exceeded its global bound")
+        for model in models:
             digest = model.artifact_digest.removeprefix("sha256:")
             _validate_digest(digest)
             ref_digest = _digest_from_storage_ref(model.artifact_ref)
@@ -359,8 +423,8 @@ def discover_synthetic_data_artifact_references(
 
 
 def discover_artifact_references(
-    workspaces: WorkspaceStore,
-    catalog: CatalogStore,
+    workspaces: _BoundedWorkspaceInventory,
+    catalog: _BoundedCatalogInventory,
     ml_registry: _MLArtifactReferenceStore,
     jobs: JobStore,
     connector_checkpoints: _ConnectorOutputReferenceStore,
@@ -370,6 +434,11 @@ def discover_artifact_references(
     job_page_size: int = 100,
     max_job_pages: int = 1_000,
     max_job_runs: int = 100_000,
+    max_workspaces: int = 10_000,
+    max_catalog_assets: int = 100_000,
+    max_catalog_revisions: int = 1_000_000,
+    max_ml_runs: int = 100_000,
+    max_registered_models: int = 100_000,
     max_connector_outputs: int = 10_000,
     max_data_engineering_revisions: int = 10_000,
     max_synthetic_runs: int = 100_000,
@@ -382,8 +451,20 @@ def discover_artifact_references(
     """
 
     sources = (
-        discover_catalog_artifact_references(workspaces, catalog),
-        discover_ml_artifact_references(workspaces, ml_registry),
+        discover_catalog_artifact_references(
+            workspaces,
+            catalog,
+            max_workspaces=max_workspaces,
+            max_assets=max_catalog_assets,
+            max_revisions=max_catalog_revisions,
+        ),
+        discover_ml_artifact_references(
+            workspaces,
+            ml_registry,
+            max_workspaces=max_workspaces,
+            max_runs=max_ml_runs,
+            max_models=max_registered_models,
+        ),
         discover_durable_job_artifact_references(
             jobs,
             page_size=job_page_size,

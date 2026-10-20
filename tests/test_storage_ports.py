@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from studio_core import (
     AssetId,
     AssetRef,
@@ -60,3 +61,20 @@ def test_sqlite_catalog_lists_every_asset_revision(tmp_path: Path) -> None:
         catalog.put_revision(workspace_id, revision, now=NOW)
 
     assert catalog.list_revisions(workspace_id, asset.id) == revisions
+
+
+def test_sqlite_catalog_retention_limits_fail_closed(tmp_path: Path) -> None:
+    workspaces = SqliteWorkspaceStore(tmp_path / "ronin.db", migration_now=NOW)
+    catalog = SqliteCatalogStore(tmp_path / "ronin.db", migration_now=NOW)
+    workspace_id = WorkspaceId("retention-bounds-ws")
+    workspaces.create_workspace(Workspace(workspace_id, "Retention bounds"), now=NOW)
+    first = CatalogAsset(AssetId("asset-a"), "file", "a.csv")
+    second = CatalogAsset(AssetId("asset-b"), "file", "b.csv")
+    for asset in (first, second):
+        catalog.create_asset(workspace_id, asset, now=NOW)
+    assert catalog.list_assets(workspace_id, limit=2) == (first, second)
+    with pytest.raises(ValueError, match="catalog asset inventory exceeded"):
+        catalog.list_assets(workspace_id, limit=1)
+    workspaces.create_workspace(Workspace(WorkspaceId("retention-bounds-ws-2"), "Extra"), now=NOW)
+    with pytest.raises(ValueError, match="workspace inventory exceeded"):
+        workspaces.list_workspaces(limit=1)

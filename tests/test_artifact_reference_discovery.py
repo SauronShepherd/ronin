@@ -38,7 +38,8 @@ WORKSPACE = Workspace(WorkspaceId("ws-retention"), "Retention test")
 
 
 class _WorkspaceStore:
-    def list_workspaces(self) -> tuple[Workspace, ...]:
+    def list_workspaces(self, *, limit: int | None = None) -> tuple[Workspace, ...]:
+        del limit
         return (WORKSPACE,)
 
 
@@ -46,15 +47,23 @@ class _CatalogStore:
     def __init__(self, entries: tuple[tuple[CatalogAsset, AssetRevision], ...]) -> None:
         self._entries = entries
 
-    def list_assets(self, workspace_id: WorkspaceId) -> tuple[CatalogAsset, ...]:
+    def list_assets(
+        self, workspace_id: WorkspaceId, *, limit: int | None = None
+    ) -> tuple[CatalogAsset, ...]:
         assert workspace_id == WORKSPACE.id
-        return tuple(asset for asset, _revision in self._entries)
+        values = tuple(asset for asset, _revision in self._entries)
+        if limit is not None and len(values) > limit:
+            raise ValueError("catalog asset inventory exceeded its bound")
+        return values
 
     def list_revisions(
-        self, workspace_id: WorkspaceId, asset_id: AssetId
+        self, workspace_id: WorkspaceId, asset_id: AssetId, *, limit: int | None = None
     ) -> tuple[AssetRevision, ...]:
         assert workspace_id == WORKSPACE.id
-        return tuple(revision for asset, revision in self._entries if asset.id == asset_id)
+        values = tuple(revision for asset, revision in self._entries if asset.id == asset_id)
+        if limit is not None and len(values) > limit:
+            raise ValueError("catalog revision inventory exceeded its bound")
+        return values
 
 
 class _MLRegistry:
@@ -66,12 +75,20 @@ class _MLRegistry:
         self._runs = runs
         self._models = models
 
-    def list_runs(self, workspace_id: WorkspaceId) -> tuple[MLRunRecord, ...]:
+    def list_runs(
+        self, workspace_id: WorkspaceId, *, limit: int | None = None
+    ) -> tuple[MLRunRecord, ...]:
         assert workspace_id == WORKSPACE.id
+        if limit is not None and len(self._runs) > limit:
+            raise ValueError("ML run inventory exceeded its bound")
         return self._runs
 
-    def list_models(self, workspace_id: WorkspaceId) -> tuple[RegisteredModelVersion, ...]:
+    def list_models(
+        self, workspace_id: WorkspaceId, *, limit: int | None = None
+    ) -> tuple[RegisteredModelVersion, ...]:
         assert workspace_id == WORKSPACE.id
+        if limit is not None and len(self._models) > limit:
+            raise ValueError("registered model inventory exceeded its bound")
         return self._models
 
 

@@ -134,10 +134,19 @@ class SqliteWorkspaceStore:
         finally:
             connection.close()
 
-    def list_workspaces(self) -> tuple[Workspace, ...]:
+    def list_workspaces(self, *, limit: int | None = None) -> tuple[Workspace, ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("workspace list limit must be positive")
         connection = self._connect()
         try:
-            rows = connection.execute("SELECT * FROM workspaces ORDER BY workspace_id").fetchall()
+            sql = "SELECT * FROM workspaces ORDER BY workspace_id"
+            if limit is not None:
+                sql += " LIMIT ?"
+                rows = connection.execute(sql, (limit + 1,)).fetchall()
+                if len(rows) > limit:
+                    raise ValueError("workspace inventory exceeded its bound")
+            else:
+                rows = connection.execute(sql).fetchall()
             return tuple(_workspace(row) for row in rows)
         finally:
             connection.close()

@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 68%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 70%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: todavía no hay limpieza global segura ni ejecución de grafos configurables. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -519,7 +519,7 @@ La verificación local pasó **69 pruebas Python focalizadas y 81/81 Playwright*
 | Operación observable y acotada | Exponer primero un plan dry-run con digest, rol, edad y fuente; paginar el inventario y limitar objetos por ciclo. |
 | No borrar datos generales al limpiar resultados ML | Identificar roles y productores de cada objeto; no eliminar un digest sólo porque una referencia de ML dejó de existir si otro producto lo usa. |
 
-`collect_unreferenced()` ya elimina digests ausentes de un conjunto que debe preparar el llamador; no descubre ese conjunto desde catálogos, ejecuciones ni registros. El test de LocalStack protege input y modelo en una llamada manual. Hasta cerrar el descubrimiento completo de referencias y las carreras, la limpieza automática global permanece deshabilitada. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+`discover_artifact_references()` ya construye el snapshot de las nueve familias desde los stores reales y falla cerrado ante errores o topes excedidos. `collect_unreferenced()` sigue siendo una primitiva manual que confía en el conjunto vivo del llamador. El test de LocalStack protege input y modelo en una llamada manual. La lectura de seis stores no tiene transacción distribuida: la limpieza automática global permanece deshabilitada hasta definir e implementar una barrera de consistencia y una revalidación segura ante escrituras concurrentes. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
 
 ## 33. Candidato: componer codificación categórica e imputación numérica
 
@@ -536,7 +536,7 @@ La verificación local pasó **72 pruebas Python focalizadas**. La suite Playwri
 
 ## 34. Inventario dry-run para retención de artefactos
 
-**Progreso técnico: 4/4 criterios de la primera etapa implementados y cualificados exact-head en `main@58911b4d19dd922de31f08e47c6b82db5e7cb32e`; faltan enumeradores reales para cinco familias.**
+**Progreso técnico: primera etapa cualificada en `main@58911b4d19dd922de31f08e47c6b82db5e7cb32e`; la agregación de las nueve familias quedó implementada en PR #460 y cualificada exact-head en `main@d1c44a59e64bf49a8033231c4b9047a00e41e361`.**
 
 | Criterio | Evidencia local |
 | --- | --- |
@@ -545,7 +545,7 @@ La verificación local pasó **72 pruebas Python focalizadas**. La suite Playwri
 | Limitar el inventario | Usa páginas cuando el store implementa `PagedArtifactStore`, con tamaño de página, máximo de páginas y máximo de objetos configurables y validados. |
 | Hacer el primer paso no destructivo | El plan lista digests candidatos ordenados y no llama a `delete`; las pruebas verifican que candidatos y objetos vivos siguen presentes. |
 
-La batería focalizada de artifacts/paginación pasó **38 pruebas** y la suite Python completa pasó **3791 pruebas, 52 omitidas**. Ruff, formato, mypy, `git diff --check` y el gate portátil de cobertura (**54 archivos**) pasan. Los tests elevaron la cobertura de `artifacts.py` de 78.17% a 86.18%, por encima del piso de 80%; se quitó su baseline legacy de ambos gates de Makefile. PR [#457](https://github.com/SauronShepherd/ronin/pull/457) y los seis workflows post-merge exact-head de `main@58911b4` pasaron; Docker terminó en **8m20s** con cobertura PostgreSQL, worker real y aceptación estricta. El inventario de productores encontró nueve familias en `put_bytes()`; el snapshot aún lo prepara el llamador, así que el helper no puede demostrar que los datos de cada familia sean exhaustivos. La limpieza global permanece deshabilitada. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+La batería focalizada de artifacts/paginación pasó **38 pruebas** y la suite Python completa pasó **3791 pruebas, 52 omitidas**. Ruff, formato, mypy, `git diff --check` y el gate portátil de cobertura (**54 archivos**) pasan. Los tests elevaron la cobertura de `artifacts.py` de 78.17% a 86.18%, por encima del piso de 80%; se quitó su baseline legacy de ambos gates de Makefile. PR [#457](https://github.com/SauronShepherd/ronin/pull/457) y los seis workflows post-merge exact-head de `main@58911b4` pasaron; Docker terminó en **8m20s** con cobertura PostgreSQL, worker real y aceptación estricta. El inventario de productores encontró nueve familias en `put_bytes()`; PR #460 añadió el snapshot automático completo, cualificado en `main@d1c44a59e64bf49a8033231c4b9047a00e41e361`. La limpieza global permanece deshabilitada por la consistencia temporal entre stores. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
 
 ## 35. Descubrimiento de referencias de catálogo y ML
 
@@ -558,7 +558,7 @@ La batería focalizada de artifacts/paginación pasó **38 pruebas** y la suite 
 | Enumerar referencias del registry ML | Se recogen artifact refs/runtime snapshots de MLRun y se validan refs/digests de cada versión registrada. |
 | Mantener el fallo cerrado para fuentes pendientes | El snapshot cubre cuatro de nueve familias; al pasarlo al planner, las otras cinco ausentes impiden devolver candidatos. |
 
-La cobertura focalizada pasa **21 pruebas**; la integración real PostgreSQL está añadida al gate Docker. PR #458 y sus seis workflows post-merge exact-head, incluido Docker, pasaron en `main@87e34810f606a1ee325b353cba100d568fb02255`. Esta etapa descubre cuatro familias pero no habilita retención global; siguen pendientes Jobs/evidencia durable, checkpoints, conectores, revisiones de ingeniería de datos y exports sintéticos.
+La cobertura focalizada pasa **21 pruebas**; la integración real PostgreSQL está añadida al gate Docker. PR #458 y sus seis workflows post-merge exact-head, incluido Docker, pasaron en `main@87e34810f606a1ee325b353cba100d568fb02255`. Esta etapa descubre cuatro familias; PR #459 y #460 completaron las nueve, pero la retención global sigue deshabilitada mientras falte consistencia temporal entre fuentes independientes.
 
 ## 36. Descubrimiento de evidencia y checkpoints de jobs durables
 
@@ -570,11 +570,11 @@ La cobertura focalizada pasa **21 pruebas**; la integración real PostgreSQL est
 | Conservar evidencia durable disponible | Se agregan evidencias disponibles de ArtifactStore sólo cuando URI y digest coinciden; evidencia tombstoned/missing no se trata como referencia viva. |
 | Cubrir resultados y checkpoints persistidos | Se inspecciona JSON de resultados celulares y se separan `ml-node-checkpoint` de otros resultados; JSON o pares URI/digest inválidos fallan cerrado. |
 
-La suite focalizada pasa **49 pruebas**, con **2 integraciones PostgreSQL omitidas** sin `RONIN_POSTGRES_TEST_DSN`; la prueba de inventario PostgreSQL queda incorporada al gate Docker. Ruff, formato, mypy de almacenamiento y `git diff --check` pasan. Esta etapa cubre dos de nueve familias; conectores, revisiones de ingeniería de datos y exports sintéticos aún impiden candidatos de limpieza.
+La suite focalizada pasa **49 pruebas**, con **2 integraciones PostgreSQL omitidas** sin `RONIN_POSTGRES_TEST_DSN`; la prueba de inventario PostgreSQL queda incorporada al gate Docker. Ruff, formato, mypy de almacenamiento y `git diff --check` pasan. Esta etapa cubre dos familias; PR #460 completa el descubrimiento de las nueve.
 
 ## 37. Descubrimiento de conectores, Data Engineering y exports sintéticos
 
-**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+**Progreso técnico: 4/4 criterios implementados y cualificados en PR #460 y los seis workflows post-merge exact-head de `main@d1c44a59e64bf49a8033231c4b9047a00e41e361`.**
 
 | Criterio | Evidencia local |
 | --- | --- |
@@ -584,3 +584,15 @@ La suite focalizada pasa **49 pruebas**, con **2 integraciones PostgreSQL omitid
 | Formar las nueve fuentes requeridas | `discover_artifact_references()` ejecuta los seis enumeradores, combina las nueve familias y falla completo ante error o fuente faltante. |
 
 La suite focalizada pasa **32 pruebas**, con **1 integración PostgreSQL omitida** localmente por no tener DSN; la integración se ejecuta en Docker. Ruff, formato, mypy y `git diff --check` pasan. El agregador no ofrece una transacción distribuida sobre los seis stores: la vista previa sigue siendo no destructiva y la eliminación global permanece deshabilitada hasta definir una política de consistencia temporal entre productores.
+
+## 38. Topes de lectura para el descubrimiento de referencias
+
+**Estado en curso: implementado localmente; pendiente cualificación del PR.**
+
+| Criterio | Evidencia |
+| --- | --- |
+| Acotar las fuentes que antes leían colecciones completas | Workspaces, assets y revisiones de catálogo, runs ML y modelos registrados aceptan límites; SQLite/PostgreSQL leen como máximo `limit + 1` y rechazan overflow sin entregar un snapshot parcial. |
+| Aplicar topes globales al snapshot agregado | El descubridor limita workspaces, assets, revisiones, runs y modelos; cada fuente conserva sus topes configurables y falla cerrado. |
+| Cubrir adapters y regresiones | Tests SQLite verifican resultados bajo el tope y errores por overflow; la integración PostgreSQL prueba el límite de runs en el gate Docker. |
+
+Las pruebas focalizadas pasan **31 tests**, con **7 integraciones PostgreSQL omitidas** en Windows sin DSN; la suite completa pasó **3809 tests y omitió 54**. Mypy de `studio_storage` y `studio_ml`, Ruff, el ledger de capacidades y `git diff --check` pasan. Los gates de cobertura midieron mejoras por esta cobertura: `workspaces.py` de 61,62% a 65,10% y, al incluir las integraciones, `postgres_core.py` de 37,61% a 41,51%. El baseline de workspaces se actualizó a la cobertura medida; el de PostgreSQL quedó en 41,40% para evitar comparar el porcentaje real con el valor redondeado al alza. El primer gate detectó también un fixture PostgreSQL sin dataset gobernado; el test ahora crea una revisión válida y verifica overflow de dos runs. La cualificación PostgreSQL y Docker real corregida se comprobará en el gate CI. El plan de retención sigue en modo preview; estos topes previenen inventarios parciales o sin cota, pero no eliminan la carrera entre fuentes independientes.
