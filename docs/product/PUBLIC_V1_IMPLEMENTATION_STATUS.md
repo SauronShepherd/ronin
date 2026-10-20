@@ -4,17 +4,20 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-20. PRs #430–#464 are merged. Recent
+**Observed workspace snapshot:** 2026-10-20. PRs #430–#466 are merged. Recent
 increments add configurable ML algorithms and preprocessing, selective retry,
 non-destructive artifact retention preview, fail-closed reference discovery with
 bounded enumeration, bounded-memory local artifact pagination, and paged manual
-cleanup that validates a complete bounded inventory before deletion. Global cleanup
-remains disabled because there is no cross-store write barrier. The full Python suite
-passed 3813 tests with 54 environment/platform skips; CI, Web, Security, Release,
-Status consistency and Docker qualification all passed on the exact merged head,
-including PostgreSQL coverage, real worker execution and strict acceptance.
+cleanup that validates a complete bounded inventory before deletion, plus bounded
+durable job evidence and cell-result reads across SQLite, PostgreSQL and memory.
+Global cleanup remains disabled because there is no cross-store write barrier. The
+local Python suite recorded 3817 passes and 54 environment/platform skips, with one
+transient Hypothesis slow-generation failure that passed when repeated alone. CI
+Python 3.11/3.12, Web, Security, Release, Status consistency and Docker qualification
+all passed on the exact merged head, including PostgreSQL coverage, real worker
+execution and strict acceptance.
 Untracked qualification output directories are not release evidence.
-**Observed source head:** `de0091d8ea4caa0b58e00f47bc0c3405d1016ade` (2026-10-20).
+**Observed source head:** `f1a068f94772b36950538ce8c18c8db10309dc81` (2026-10-20).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
