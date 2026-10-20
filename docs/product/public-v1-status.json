@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-20T12:02:45+00:00",
-  "observed_main_sha": "58911b4d19dd922de31f08e47c6b82db5e7cb32e",
+  "observed_at": "2026-10-20T13:37:24Z",
+  "observed_main_sha": "87e34810f606a1ee325b353cba100d568fb02255",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",

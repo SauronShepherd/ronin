@@ -208,6 +208,21 @@ class _SqliteLifecycleStore:
         finally:
             connection.close()
 
+    def get_run_id_for_job(self, job_id: JobId) -> RunId | None:
+        run_ids = self.list_run_ids_for_job(job_id)
+        return run_ids[0] if run_ids else None
+
+    def list_run_ids_for_job(self, job_id: JobId) -> tuple[RunId, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT run_id FROM runs WHERE job_id=? ORDER BY ordinal DESC",
+                (str(job_id),),
+            ).fetchall()
+            return tuple(RunId(row["run_id"]) for row in rows)
+        finally:
+            connection.close()
+
     def request_cancel(
         self, job_id: JobId, *, now: Instant | str, fence_active_attempt: bool = False
     ) -> Job:

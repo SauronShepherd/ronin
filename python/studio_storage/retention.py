@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Protocol
 
 from studio_core import WorkspaceId
 from studio_core.ml import MLRunRecord, RegisteredModelVersion
+from studio_orchestrator import EvidenceAvailability, JobStore
 
 from .artifacts import ArtifactRef
 from .ports import ArtifactStore, CatalogStore, PagedArtifactStore, WorkspaceStore
@@ -179,6 +181,110 @@ def discover_ml_artifact_references(
     }
 
 
+def discover_durable_job_artifact_references(
+    jobs: JobStore,
+    *,
+    page_size: int = 100,
+    max_pages: int = 1_000,
+    max_runs: int = 100_000,
+) -> dict[str, tuple[str, ...]]:
+    """Enumerate artifact references persisted by durable job execution.
+
+    Job listing is globally paged and bounded. Any incomplete page walk or
+    malformed persisted cell payload raises, so callers cannot mistake a partial
+    snapshot for a complete reference source.
+    """
+
+    if page_size < 1 or page_size > 100:
+        raise ValueError("job page_size must be between 1 and 100")
+    if max_pages < 1 or max_pages > 10_000:
+        raise ValueError("job max_pages must be between 1 and 10000")
+    if max_runs < 1:
+        raise ValueError("job max_runs must be positive")
+
+    execution_digests: set[str] = set()
+    checkpoint_digests: set[str] = set()
+    cursor: str | None = None
+    seen_cursors: set[str] = set()
+    runs_seen = 0
+    for _ in range(max_pages):
+        page = jobs.list_jobs(
+            project_id=None,
+            project_ids=None,
+            state=None,
+            limit=page_size,
+            cursor=cursor,
+        )
+        for job in page.items:
+            run_ids = jobs.list_run_ids_for_job(job.id)
+            if not run_ids:
+                raise ValueError("durable job is missing its run identity")
+            runs_seen += len(run_ids)
+            if runs_seen > max_runs:
+                raise ValueError("durable job inventory exceeded its run bound")
+            for run_id in run_ids:
+                for evidence in jobs.read_evidence(run_id):
+                    if evidence.availability is not EvidenceAvailability.AVAILABLE:
+                        continue
+                    if evidence.storage_ref and evidence.storage_ref.startswith("artifact://"):
+                        digest = _digest_from_storage_ref(evidence.storage_ref)
+                        if evidence.digest != digest:
+                            raise ValueError(
+                                "durable execution evidence reference and digest do not match"
+                            )
+                        execution_digests.add(digest)
+                for result in jobs.read_cell_results(run_id):
+                    try:
+                        payload = json.loads(result.result_json)
+                    except (TypeError, json.JSONDecodeError) as exc:
+                        raise ValueError("durable cell result contains invalid JSON") from exc
+                    for reference in _artifact_references_in(payload):
+                        digest = _digest_from_storage_ref(reference["storage_ref"])
+                        if reference["digest"] != digest:
+                            raise ValueError(
+                                "durable cell artifact reference and digest do not match"
+                            )
+                        role = reference.get("role")
+                        if role == "ml-node-checkpoint":
+                            checkpoint_digests.add(digest)
+                        else:
+                            execution_digests.add(digest)
+        next_cursor = page.next_cursor
+        if next_cursor is None:
+            return {
+                "durable_execution_results": tuple(sorted(execution_digests)),
+                "durable_job_checkpoints": tuple(sorted(checkpoint_digests)),
+            }
+        if next_cursor in seen_cursors or next_cursor == cursor:
+            raise ValueError("durable job inventory cursor repeated")
+        seen_cursors.add(next_cursor)
+        cursor = next_cursor
+    raise ValueError("durable job inventory exceeded its page bound")
+
+
+def _artifact_references_in(value: object) -> Iterable[dict[str, str]]:
+    """Yield validated reference-shaped objects nested in persisted JSON."""
+
+    if isinstance(value, dict):
+        storage_ref = value.get("storage_ref")
+        digest = value.get("digest")
+        if storage_ref is not None:
+            if not isinstance(storage_ref, str) or not isinstance(digest, str):
+                raise ValueError("durable cell artifact reference is incomplete")
+            ref: dict[str, str] = {"storage_ref": storage_ref, "digest": digest}
+            role = value.get("role")
+            if role is not None:
+                if not isinstance(role, str):
+                    raise ValueError("durable cell artifact role is invalid")
+                ref["role"] = role
+            yield ref
+        for nested in value.values():
+            yield from _artifact_references_in(nested)
+    elif isinstance(value, list):
+        for nested in value:
+            yield from _artifact_references_in(nested)
+
+
 def _digest_from_storage_ref(storage_ref: str) -> str:
     prefix = "artifact://sha256/"
     if not isinstance(storage_ref, str) or not storage_ref.startswith(prefix):
@@ -219,6 +325,7 @@ __all__ = (
     "REQUIRED_ARTIFACT_REFERENCE_SOURCES",
     "collect_unreferenced",
     "discover_catalog_artifact_references",
+    "discover_durable_job_artifact_references",
     "discover_ml_artifact_references",
     "plan_unreferenced",
 )

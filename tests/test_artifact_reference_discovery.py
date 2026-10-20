@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from hashlib import sha256
+from types import SimpleNamespace
 
 import pytest
 from studio_core import (
@@ -21,10 +23,12 @@ from studio_core.ml import (
     ModelVersion,
     RegisteredModelVersion,
 )
+from studio_orchestrator import EvidenceAvailability
 from studio_storage import (
     REQUIRED_ARTIFACT_REFERENCE_SOURCES,
     LocalArtifactStore,
     discover_catalog_artifact_references,
+    discover_durable_job_artifact_references,
     discover_ml_artifact_references,
     plan_unreferenced,
 )
@@ -162,3 +166,107 @@ def test_discovery_fails_closed_on_invalid_refs_and_incomplete_source_set(
     plan = plan_unreferenced(store, partial)
     assert plan.missing_sources == tuple(sorted(REQUIRED_ARTIFACT_REFERENCE_SOURCES - set(partial)))
     assert plan.candidate_digests == ()
+
+
+class _DurableJobStore:
+    def __init__(
+        self,
+        records: tuple[tuple[str, object, tuple[object, ...]], ...],
+        historical_runs: dict[str, tuple[str, ...]] | None = None,
+    ) -> None:
+        self.records = records
+        self.historical_runs = historical_runs or {}
+        self.run_records = {job_id: (evidence, cells) for job_id, evidence, cells in records}
+
+    def list_jobs(self, *, project_id, project_ids, state, limit, cursor):
+        del project_id, project_ids, state, limit
+        index = 0 if cursor is None else int(cursor)
+        if index >= len(self.records):
+            return SimpleNamespace(items=(), next_cursor=None)
+        job_id, evidence, cells = self.records[index]
+        return SimpleNamespace(
+            items=(SimpleNamespace(id=job_id),),
+            next_cursor=str(index + 1) if index + 1 < len(self.records) else None,
+        )
+
+    def get_run_id_for_job(self, job_id):
+        return job_id
+
+    def list_run_ids_for_job(self, job_id):
+        return (job_id, *self.historical_runs.get(job_id, ()))
+
+    def read_evidence(self, run_id):
+        return self.run_records[run_id][0]
+
+    def read_cell_results(self, run_id):
+        return self.run_records[run_id][1]
+
+
+def test_durable_discovery_pages_jobs_and_separates_execution_and_checkpoint_refs() -> None:
+    execution_digest = _digest("durable-evidence")
+    checkpoint_digest = _digest("durable-checkpoint")
+    result = SimpleNamespace(
+        result_json=json.dumps(
+            {
+                "artifact": {
+                    "role": "ml-node-checkpoint",
+                    "digest": checkpoint_digest,
+                    "storage_ref": f"artifact://sha256/{checkpoint_digest}",
+                }
+            }
+        )
+    )
+    evidence = SimpleNamespace(
+        availability=EvidenceAvailability.AVAILABLE,
+        digest=execution_digest,
+        storage_ref=f"artifact://sha256/{execution_digest}",
+    )
+    store = _DurableJobStore((("0", (evidence,), (result,)), ("1", (), ())))
+
+    references = discover_durable_job_artifact_references(store, page_size=1)
+
+    assert references == {
+        "durable_execution_results": (execution_digest,),
+        "durable_job_checkpoints": (checkpoint_digest,),
+    }
+
+
+def test_durable_discovery_fails_closed_on_malformed_artifact_locator() -> None:
+    result = SimpleNamespace(
+        result_json=json.dumps({"artifact": {"digest": _digest("broken"), "storage_ref": "bad"}})
+    )
+    store = _DurableJobStore((("0", (), (result,)),))
+
+    with pytest.raises(ValueError, match="artifact://sha256"):
+        discover_durable_job_artifact_references(store)
+
+
+def test_durable_discovery_includes_references_from_historical_runs() -> None:
+    old_digest = _digest("old-run-evidence")
+    old_evidence = SimpleNamespace(
+        availability=EvidenceAvailability.AVAILABLE,
+        digest=old_digest,
+        storage_ref=f"artifact://sha256/{old_digest}",
+    )
+    store = _DurableJobStore(
+        (("0", (), ()),),
+        historical_runs={"0": ("old-run",)},
+    )
+    store.run_records["old-run"] = ((old_evidence,), ())
+
+    references = discover_durable_job_artifact_references(store)
+
+    assert references["durable_execution_results"] == (old_digest,)
+
+
+def test_durable_discovery_fails_closed_when_job_inventory_exceeds_bound() -> None:
+    store = _DurableJobStore((("0", (), ()), ("1", (), ())))
+
+    with pytest.raises(ValueError, match="page bound"):
+        discover_durable_job_artifact_references(store, page_size=1, max_pages=1)
+
+    with pytest.raises(ValueError, match="run bound"):
+        discover_durable_job_artifact_references(
+            _DurableJobStore((("0", (), ()),), historical_runs={"0": ("old-run",)}),
+            max_runs=1,
+        )
