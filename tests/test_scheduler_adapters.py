@@ -100,8 +100,8 @@ def test_scheduler_dispatch_pins_ml_pipeline_and_records_its_digest() -> None:
     seen: dict[str, object] = {}
 
     class Runner:
-        def run(self, lab, rows):
-            seen.update({"lab": lab, "rows": rows})
+        def execute_pipeline(self, lab, rows, submitted_pipeline):
+            seen.update({"lab": lab, "rows": rows, "pipeline": submitted_pipeline})
             return SimpleNamespace(to_payload=lambda: {"status": "completed"})
 
     rows = ({"value": 1},)
@@ -120,9 +120,76 @@ def test_scheduler_dispatch_pins_ml_pipeline_and_records_its_digest() -> None:
         ml_rows=rows,
     )
 
-    assert seen == {"lab": lab, "rows": rows}
+    assert seen == {"lab": lab, "rows": rows, "pipeline": pipeline}
     assert result.family == "ml"
     assert result.evidence_payload()["ml"]["pipeline_digest"] == pipeline.digest
+
+
+def test_scheduler_dispatch_passes_custom_pinned_pipeline_to_runner() -> None:
+    lab = _ml_lab()
+    canonical = _compiled_ml_pipeline(lab)
+    pipeline = PipelineIR(
+        canonical.nodes,
+        parameters=tuple(
+            (key, "custom-seed" if key == "seed" else value) for key, value in canonical.parameters
+        ),
+    )
+    seen: dict[str, object] = {}
+
+    class Runner:
+        def execute_pipeline(self, submitted_lab, rows, submitted_pipeline):
+            seen.update({"lab": submitted_lab, "rows": rows, "pipeline": submitted_pipeline})
+            return SimpleNamespace(to_payload=lambda: {"status": "completed"})
+
+    rows = ({"value": 1},)
+    result = execute_scheduler_job(
+        _job(
+            "ml.run",
+            {
+                "lab_id": lab.id,
+                "pipeline_digest": pipeline.digest,
+                "dataset_ref": "dataset-1",
+            },
+        ),
+        ml_runner=Runner(),
+        ml_lab=lab,
+        ml_pipeline=pipeline,
+        ml_rows=rows,
+    )
+
+    assert seen == {"lab": lab, "rows": rows, "pipeline": pipeline}
+    assert result.evidence_payload()["ml"]["pipeline_digest"] == pipeline.digest
+
+
+def test_scheduler_dispatch_rejects_pipeline_for_legacy_runner() -> None:
+    lab = _ml_lab()
+    canonical = _compiled_ml_pipeline(lab)
+    custom = PipelineIR(
+        canonical.nodes,
+        parameters=tuple(
+            (key, "custom-seed" if key == "seed" else value) for key, value in canonical.parameters
+        ),
+    )
+
+    class LegacyRunner:
+        def run(self, *_args):
+            raise AssertionError("custom pipeline must not fall back to Lab-only execution")
+
+    with pytest.raises(UnsupportedSchedulerWorkload, match="cannot execute the planned pipeline"):
+        execute_scheduler_job(
+            _job(
+                "ml.run",
+                {
+                    "lab_id": lab.id,
+                    "pipeline_digest": custom.digest,
+                    "dataset_ref": "dataset-1",
+                },
+            ),
+            ml_runner=LegacyRunner(),
+            ml_lab=lab,
+            ml_pipeline=custom,
+            ml_rows=(),
+        )
 
 
 def test_scheduler_dispatch_rejects_changed_ml_pipeline_before_running() -> None:

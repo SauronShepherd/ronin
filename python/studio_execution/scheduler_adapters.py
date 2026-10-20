@@ -285,7 +285,12 @@ def execute_scheduler_job(
             raise UnsupportedSchedulerWorkload(
                 "ml.run pipeline digest does not match the planned pipeline"
             )
-        result = ml_runner.run(ml_lab, ml_rows)
+        execute_pipeline = getattr(ml_runner, "execute_pipeline", None)
+        if not callable(execute_pipeline):
+            raise UnsupportedSchedulerWorkload(
+                "ML runner cannot execute the planned pipeline definition"
+            )
+        result = execute_pipeline(ml_lab, ml_rows, ml_pipeline)
         to_payload = getattr(result, "to_payload", None)
         if not callable(to_payload):
             raise UnsupportedSchedulerWorkload("ML runner returned an invalid result")
