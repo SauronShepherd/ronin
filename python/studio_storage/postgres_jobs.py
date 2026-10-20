@@ -170,6 +170,21 @@ class PostgresJobReadPort:
         finally:
             connection.close()
 
+    def list_run_ids_for_job(self, job_id: JobId) -> tuple[RunId, ...]:
+        """Return every durable run id for a job, newest first."""
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT run_id FROM ronin_runs WHERE job_id=%s ORDER BY ordinal DESC",
+                    (str(job_id),),
+                )
+                rows = cursor.fetchall()
+            connection.commit()
+            return tuple(RunId(str(row["run_id"])) for row in rows)
+        finally:
+            connection.close()
+
     def request_cancel(
         self,
         job_id: JobId,

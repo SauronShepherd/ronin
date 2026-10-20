@@ -116,6 +116,12 @@ def test_idempotency_replay_is_read_only_and_conflict_fails(store) -> None:
         store.create_job(_job("job-conflict", digest="b" * 64), _run("job-conflict", "run-x"))
 
 
+def test_job_store_lists_all_durable_runs_newest_first(store) -> None:
+    store.create_job(_job(), _run())
+
+    assert store.list_run_ids_for_job(JobId("job-1")) == (RunId("run-1"),)
+
+
 def test_cancel_pending_terminalizes_without_attempt(store) -> None:
     store.create_job(_job(), _run())
     cancelled = store.request_cancel(JobId("job-1"), now=HEARTBEAT)

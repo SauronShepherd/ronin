@@ -241,6 +241,8 @@ class JobStore(Protocol):
 
     def get_run_id_for_job(self, job_id: JobId) -> RunId | None: ...
 
+    def list_run_ids_for_job(self, job_id: JobId) -> tuple[RunId, ...]: ...
+
     def list_jobs(
         self,
         *,

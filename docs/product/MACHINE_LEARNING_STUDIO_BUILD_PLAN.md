@@ -549,7 +549,7 @@ La batería focalizada de artifacts/paginación pasó **38 pruebas** y la suite 
 
 ## 35. Descubrimiento de referencias de catálogo y ML
 
-**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+**Progreso técnico: 4/4 criterios implementados y cualificados exact-head en `main@87e34810f606a1ee325b353cba100d568fb02255`.**
 
 | Criterio | Evidencia local |
 | --- | --- |
@@ -558,4 +558,16 @@ La batería focalizada de artifacts/paginación pasó **38 pruebas** y la suite 
 | Enumerar referencias del registry ML | Se recogen artifact refs/runtime snapshots de MLRun y se validan refs/digests de cada versión registrada. |
 | Mantener el fallo cerrado para fuentes pendientes | El snapshot cubre cuatro de nueve familias; al pasarlo al planner, las otras cinco ausentes impiden devolver candidatos. |
 
-La cobertura focalizada pasa **18 pruebas**; la integración real PostgreSQL está añadida al gate Docker. Esta etapa descubre cuatro familias pero no habilita retención global; siguen pendientes Jobs/evidencia durable, checkpoints, conectores, revisiones de ingeniería de datos y exports sintéticos.
+La cobertura focalizada pasa **21 pruebas**; la integración real PostgreSQL está añadida al gate Docker. Esta etapa descubre cuatro familias pero no habilita retención global; siguen pendientes Jobs/evidencia durable, checkpoints, conectores, revisiones de ingeniería de datos y exports sintéticos.
+
+## 36. Descubrimiento de evidencia y checkpoints de jobs durables
+
+**Progreso técnico local: 3/3 criterios implementados; cualificación exact-head pendiente.**
+
+| Criterio | Evidencia local |
+| --- | --- |
+| Recorrer jobs y todos sus runs con límites | El descubridor pagina globalmente el `JobStore`, incluye runs históricos, acota páginas y número total de runs, y rechaza cursores repetidos o inventarios que exceden los topes. |
+| Conservar evidencia durable disponible | Se agregan evidencias disponibles de ArtifactStore sólo cuando URI y digest coinciden; evidencia tombstoned/missing no se trata como referencia viva. |
+| Cubrir resultados y checkpoints persistidos | Se inspecciona JSON de resultados celulares y se separan `ml-node-checkpoint` de otros resultados; JSON o pares URI/digest inválidos fallan cerrado. |
+
+La suite focalizada pasa **49 pruebas**, con **2 integraciones PostgreSQL omitidas** sin `RONIN_POSTGRES_TEST_DSN`; la prueba de inventario PostgreSQL queda incorporada al gate Docker. Ruff, formato, mypy de almacenamiento y `git diff --check` pasan. Esta etapa cubre dos de nueve familias; conectores, revisiones de ingeniería de datos y exports sintéticos aún impiden candidatos de limpieza.

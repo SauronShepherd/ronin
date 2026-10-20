@@ -96,6 +96,19 @@ class InMemoryJobStore:
         with self._lock:
             return self._jobs.get(job_id)
 
+    def get_run_id_for_job(self, job_id: JobId) -> RunId | None:
+        run_ids = self.list_run_ids_for_job(job_id)
+        return run_ids[0] if run_ids else None
+
+    def list_run_ids_for_job(self, job_id: JobId) -> tuple[RunId, ...]:
+        with self._lock:
+            runs = sorted(
+                (run for run in self._runs.values() if run.job_id == job_id),
+                key=lambda run: run.ordinal,
+                reverse=True,
+            )
+            return tuple(run.id for run in runs)
+
     def list_jobs(
         self,
         *,

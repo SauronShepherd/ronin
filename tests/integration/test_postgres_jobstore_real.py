@@ -19,7 +19,11 @@ from studio_orchestrator import (
     StoredEvidenceRef,
     StoredExecutionEvent,
 )
-from studio_storage import PostgresJobReadPort, PostgresMetadataStore
+from studio_storage import (
+    PostgresJobReadPort,
+    PostgresMetadataStore,
+    discover_durable_job_artifact_references,
+)
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
@@ -82,7 +86,14 @@ def test_postgres_jobstore_complete_lifecycle() -> None:
     store.put_evidence(
         claim.attempt_id,
         StoredEvidenceRef(
-            run_id, "cell-1", "stdout", "sha256", "d" * 64, "text/plain", 2, "local://evidence"
+            run_id,
+            "cell-1",
+            "stdout",
+            "sha256",
+            "d" * 64,
+            "text/plain",
+            2,
+            "artifact://sha256/" + "d" * 64,
         ),
         owner=owner,
         lease_token=lease_token,
@@ -102,6 +113,12 @@ def test_postgres_jobstore_complete_lifecycle() -> None:
     assert len(store.read_events(run_id, since=0)) == 1
     assert len(store.read_cell_results(run_id)) == 1
     assert len(store.read_evidence(run_id)) == 1
+    assert store.list_run_ids_for_job(job_id) == (run_id,)
+    references = discover_durable_job_artifact_references(store)
+    assert references == {
+        "durable_execution_results": ("d" * 64,),
+        "durable_job_checkpoints": (),
+    }
 
 
 def test_postgres_jobstore_list_filters_and_keyset_pagination() -> None:
