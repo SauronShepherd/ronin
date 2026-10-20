@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import hashlib
+import heapq
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -138,18 +140,36 @@ class LocalArtifactStore:
     ) -> ArtifactPage:
         if page_size < 1 or page_size > 10_000:
             raise ValueError("artifact discovery page_size must be between 1 and 10000")
-        offset = 0
-        if cursor is not None:
-            try:
-                offset = int(cursor)
-            except ValueError as exc:
-                raise ValueError("artifact discovery cursor is invalid") from exc
-            if offset < 0:
-                raise ValueError("artifact discovery cursor is invalid")
-        digests = self.list_digests()
-        page = digests[offset : offset + page_size]
-        truncated = offset + len(page) < len(digests)
-        return ArtifactPage(page, str(offset + len(page)) if truncated else None, truncated)
+        if cursor is not None and (
+            len(cursor) != 64 or any(char not in "0123456789abcdef" for char in cursor)
+        ):
+            raise ValueError("artifact discovery cursor is invalid")
+        root = self._root / "sha256"
+        if not root.is_dir():
+            return ArtifactPage((), None, False)
+
+        def iter_digests() -> Iterable[str]:
+            for prefix in root.iterdir():
+                if not prefix.is_dir() or len(prefix.name) != 2:
+                    continue
+                for path in prefix.iterdir():
+                    digest = path.name
+                    if (
+                        path.is_file()
+                        and len(digest) == 64
+                        and all(char in "0123456789abcdef" for char in digest)
+                        and digest.startswith(prefix.name)
+                        and (cursor is None or digest > cursor)
+                    ):
+                        yield digest
+
+        # Keep only one page plus a sentinel in memory, even when a prefix contains
+        # millions of artifacts. The digest cursor remains stable across rescans.
+        page = heapq.nsmallest(page_size + 1, iter_digests())
+        truncated = len(page) > page_size
+        if truncated:
+            page = page[:page_size]
+        return ArtifactPage(tuple(page), page[-1] if truncated else None, truncated)
 
     def storage_ref_for_digest(self, digest: str) -> str:
         self._path_for_digest(digest)

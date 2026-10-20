@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 70%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: todavía no hay limpieza global segura ni ejecución de grafos configurables. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 71%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: todavía no hay limpieza global segura ni ejecución de grafos configurables. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -587,7 +587,7 @@ La suite focalizada pasa **32 pruebas**, con **1 integración PostgreSQL omitida
 
 ## 38. Topes de lectura para el descubrimiento de referencias
 
-**Estado en curso: implementado localmente; pendiente cualificación del PR.**
+**Estado: implementado y cualificado en PR #461 y los seis workflows post-merge exact-head de `main@518880fdb30d2ecd1ec08a221c699afd29eb6be4`.**
 
 | Criterio | Evidencia |
 | --- | --- |
@@ -595,4 +595,16 @@ La suite focalizada pasa **32 pruebas**, con **1 integración PostgreSQL omitida
 | Aplicar topes globales al snapshot agregado | El descubridor limita workspaces, assets, revisiones, runs y modelos; cada fuente conserva sus topes configurables y falla cerrado. |
 | Cubrir adapters y regresiones | Tests SQLite verifican resultados bajo el tope y errores por overflow; la integración PostgreSQL prueba el límite de runs en el gate Docker. |
 
-Las pruebas focalizadas pasan **31 tests**, con **7 integraciones PostgreSQL omitidas** en Windows sin DSN; la suite completa pasó **3809 tests y omitió 54**. Mypy de `studio_storage` y `studio_ml`, Ruff, el ledger de capacidades y `git diff --check` pasan. Los gates de cobertura midieron mejoras por esta cobertura: `workspaces.py` de 61,62% a 65,10% y, al incluir las integraciones, `postgres_core.py` de 37,61% a 41,51%. El baseline de workspaces se actualizó a la cobertura medida; el de PostgreSQL quedó en 41,40% para evitar comparar el porcentaje real con el valor redondeado al alza. El primer gate detectó también un fixture PostgreSQL sin dataset gobernado; el test ahora crea una revisión válida y verifica overflow de dos runs. La cualificación PostgreSQL y Docker real corregida se comprobará en el gate CI. El plan de retención sigue en modo preview; estos topes previenen inventarios parciales o sin cota, pero no eliminan la carrera entre fuentes independientes.
+La suite focalizada pasa **31 tests**, con **7 integraciones PostgreSQL omitidas** en Windows sin DSN; la suite completa pasó **3809 tests y omitió 54**. Mypy de `studio_storage` y `studio_ml`, Ruff, el ledger de capacidades y `git diff --check` pasan. Los gates de cobertura midieron mejoras por esta cobertura: `workspaces.py` de 61,62% a 65,10% y, al incluir las integraciones, `postgres_core.py` de 37,61% a 41,51%. El baseline de workspaces se actualizó a la cobertura medida; el de PostgreSQL quedó en 41,40% para evitar comparar el porcentaje real con el valor redondeado al alza. El gate PostgreSQL/Docker incorporó el test con dos runs ligados a un dataset válido, cobertura completa de PostgreSQL, worker real y aceptación estricta (**8m23s**). Los seis workflows post-merge exact-head de `main@518880f` pasaron. El plan de retención sigue en modo preview; estos topes previenen inventarios parciales o sin cota, pero no eliminan la carrera entre fuentes independientes.
+
+## 39. Paginación local de artefactos con memoria acotada
+
+**Estado en curso: implementado localmente; pendiente cualificación del PR.**
+
+| Criterio | Evidencia |
+| --- | --- |
+| Evitar cargar el inventario completo por página | `LocalArtifactStore.list_digests_page()` conserva sólo `page_size + 1` digests usando selección incremental sobre el árbol; ya no llama a `list_digests()`. |
+| Mantener recorrido estable entre páginas | El cursor opaco guarda el último digest de la página y la lectura siguiente filtra lexicográficamente, sin offsets que cambien al borrar objetos anteriores. |
+| Proteger el contrato de paginación | La prueba prohíbe materializar el inventario completo, recorre dos páginas y comprueba cursor inválido; el planner continúa fallando cerrado al exceder topes. |
+
+La suite focalizada de artifacts/paginación pasa **13 tests**; la suite Python completa pasa **3810 tests y omite 54** por integraciones externas no configuradas y limitaciones de Windows. Ruff, formato, mypy de `artifacts.py`, ledger de capacidades y `git diff --check` pasan. La cualificación Docker real queda pendiente del gate CI del PR. El recorrido mantiene memoria O(page size), aunque sigue escaneando nombres de archivo para localizar la página siguiente.

@@ -57,6 +57,31 @@ def test_artifact_can_be_read_from_an_authorized_storage_reference(tmp_path: Pat
         store.get_bytes_by_storage_ref(ref.storage_ref, digest=ref.digest)
 
 
+def test_local_artifact_pages_are_bounded_and_use_digest_cursors(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    refs = tuple(
+        store.put_bytes(role="page", data=f"artifact-{index}".encode()) for index in range(4)
+    )
+    monkeypatch.setattr(
+        store,
+        "list_digests",
+        lambda: (_ for _ in ()).throw(AssertionError("full inventory must not be materialized")),
+    )
+
+    first = store.list_digests_page(page_size=2)
+    second = store.list_digests_page(cursor=first.next_cursor, page_size=2)
+
+    assert first.truncated
+    assert first.next_cursor == first.digests[-1]
+    assert not second.truncated
+    assert second.next_cursor is None
+    assert first.digests + second.digests == tuple(sorted(ref.digest for ref in refs))
+    with pytest.raises(ValueError, match="cursor is invalid"):
+        store.list_digests_page(cursor="1")
+
+
 def test_invalid_reference_cannot_escape_store(tmp_path: Path) -> None:
     store = LocalArtifactStore(tmp_path / "artifacts")
     ref = ArtifactRef(
