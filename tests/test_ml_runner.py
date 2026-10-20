@@ -82,6 +82,34 @@ def test_local_runner_executes_pinned_pipeline_and_rejects_unsupported_graph() -
         runner.execute_pipeline(lab, _rows(), unsupported)
 
 
+def test_pipeline_selected_algorithm_is_executed_and_bound_to_checkpoints() -> None:
+    lab = _lab()
+    default_pipeline = compile_lab_pipeline(lab)
+    selected_pipeline = compile_lab_pipeline(lab, algorithm="decision_tree_classifier")
+    assert selected_pipeline.digest != default_pipeline.digest
+
+    checkpoints: dict[str, dict[str, object]] = {}
+    first_backend = _CheckpointBackend()
+    default_result = LocalExperimentRunner((first_backend,)).execute_pipeline(
+        lab,
+        _rows(),
+        default_pipeline,
+        checkpoint_save=lambda node_id, payload: checkpoints.__setitem__(node_id, payload),
+    )
+    assert default_result.to_payload()["algorithm"] == "logistic_regression"
+
+    selected_backend = _CheckpointBackend()
+    selected_result = LocalExperimentRunner((selected_backend,)).execute_pipeline(
+        lab,
+        _rows(),
+        selected_pipeline,
+        checkpoint_load=checkpoints.get,
+    )
+
+    assert selected_result.to_payload()["algorithm"] == "decision_tree_classifier"
+    assert selected_backend.train_calls == 1
+
+
 def test_local_runner_restores_all_persisted_node_outputs_without_reexecution() -> None:
     lab = _lab()
     pipeline = compile_lab_pipeline(lab)

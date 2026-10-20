@@ -37,6 +37,7 @@ def _checkpoint_runtime_fingerprint(
     parameters: tuple[tuple[str, float | int], ...],
     clusters: int,
     max_iterations: int,
+    pipeline_digest: str = "",
 ) -> str | None:
     """Bind reusable node outputs to the exact local runtime that produced them."""
     backend_type = type(backend)
@@ -95,6 +96,7 @@ def _checkpoint_runtime_fingerprint(
             "parameters": [[name, value] for name, value in sorted(parameters)],
             "clusters": clusters,
             "max_iterations": max_iterations,
+            "pipeline_digest": pipeline_digest,
         },
     }
     encoded = json.dumps(identity, sort_keys=True, separators=(",", ":"), allow_nan=False)
@@ -437,6 +439,10 @@ class LocalExperimentRunner:
             parameters=parameters,
             clusters=clusters,
             max_iterations=max_iterations,
+            pipeline_digest=PipelineIR(
+                tuple(sorted(pipeline.nodes, key=lambda node: node.id)),
+                pipeline.parameters,
+            ).digest,
         )
         selected_features = tuple(
             feature.column for feature in lab.features if feature.role != "ignored"
@@ -486,14 +492,15 @@ class LocalExperimentRunner:
                 if lab.task == "clustering":
                     values[node.id] = selected_features
                 else:
+                    selected_algorithm = dict(pipeline.parameters).get(
+                        "algorithm",
+                        "logistic_regression"
+                        if lab.task == "classification"
+                        else "linear_regression",
+                    )
                     values[node.id] = TrainingSpec(
                         task=lab.task,
-                        algorithm=cast(
-                            Algorithm,
-                            "logistic_regression"
-                            if lab.task == "classification"
-                            else "linear_regression",
-                        ),
+                        algorithm=cast(Algorithm, selected_algorithm),
                         features=selected_features,
                         target=lab.target or "",
                         test_fraction=lab.test_fraction,

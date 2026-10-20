@@ -1158,8 +1158,12 @@ class LocalExecutionCoordinator:
                 else:
                     result = execute_pipeline(lab, execution_rows, pipeline)
             elif lab.task == "clustering":
+                if pipeline is not None and pipeline.digest != compile_lab_pipeline(lab).digest:
+                    raise ValueError("runner cannot execute the submitted ML pipeline")
                 result = self._runner.run_clustering_result(lab, execution_rows)
             else:
+                if pipeline is not None and pipeline.digest != compile_lab_pipeline(lab).digest:
+                    raise ValueError("runner cannot execute the submitted ML pipeline")
                 result = self._runner.run(lab, execution_rows)
             if isinstance(self._store, JobStoreExecutionStore):
                 result_payload = (

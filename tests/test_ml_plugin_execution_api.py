@@ -33,7 +33,11 @@ def test_submit_and_poll_execution() -> None:
     submitted = plugin.submit_execution(
         "ws",
         "churn",
-        body={"run_id": "async-1", "rows": [{"x": n, "target": n % 2} for n in range(1, 21)]},
+        body={
+            "run_id": "async-1",
+            "rows": [{"x": n, "target": n % 2} for n in range(1, 21)],
+            "algorithm": "decision_tree_classifier",
+        },
     )
     assert submitted["run_id"] == "async-1"
     deadline = time.time() + 30
@@ -42,6 +46,10 @@ def test_submit_and_poll_execution() -> None:
         time.sleep(0.01)
         state = plugin.execution_status("async-1", workspace_id="ws")["state"]
     assert state == "succeeded"
+    assert (
+        plugin.execution_status("async-1", workspace_id="ws")["result"]["algorithm"]
+        == "decision_tree_classifier"
+    )
     plugin._coordinator.close()
 
 
@@ -61,6 +69,50 @@ def test_submit_rejects_run_ids_longer_than_public_limit() -> None:
     try:
         with pytest.raises(ValueError, match="1 to 256 characters"):
             plugin.submit_execution("ws", "churn", body={"run_id": "x" * 257, "rows": []})
+    finally:
+        plugin._coordinator.close()
+
+
+def test_custom_algorithm_fails_closed_for_runner_without_pipeline_support() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._coordinator.close()
+    called = False
+
+    class LegacyRunner:
+        def run(self, *_args):
+            nonlocal called
+            called = True
+            raise AssertionError("custom PipelineIR must not be ignored")
+
+    plugin._coordinator = LocalExecutionCoordinator(runner=LegacyRunner())
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    try:
+        plugin.submit_execution(
+            "ws",
+            "churn",
+            body={
+                "run_id": "legacy-custom-pipeline",
+                "rows": [{"x": n, "target": n % 2} for n in range(1, 21)],
+                "algorithm": "decision_tree_classifier",
+            },
+        )
+        deadline = time.time() + 5
+        state = plugin.execution_status("legacy-custom-pipeline", workspace_id="ws")["state"]
+        while state not in {"succeeded", "failed"} and time.time() < deadline:
+            time.sleep(0.01)
+            state = plugin.execution_status("legacy-custom-pipeline", workspace_id="ws")["state"]
+        assert state == "failed"
+        assert called is False
     finally:
         plugin._coordinator.close()
 

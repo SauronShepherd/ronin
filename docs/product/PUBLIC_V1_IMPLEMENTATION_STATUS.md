@@ -5,7 +5,7 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-20. The tracked source is based on
-`main@6dc051e`; PRs #430–#450 are merged. PR #436 makes the fixed six-stage local
+`main@1edb11a`; PRs #430–#451 are merged. PR #436 makes the fixed six-stage local
 PipelineIR executable in stable topological order; PR #438/#439 add durable stage
 checkpoints and correct PostgreSQL resume pagination. PR #441 materializes verified
 tabular and K-Means model artifacts for durable results, with bounded size and
@@ -24,9 +24,11 @@ S3-compatible LocalStack: large durable input, digest-verified reads/writes and 
 stale-object deletion. All six post-merge exact-head workflows for `6dc051e` passed,
 including CI, Web, Security, Release, Status consistency and Docker qualification
 (9m27s). PR #451 fixes scheduler dispatch to pass the exact pinned PipelineIR to its
-runner and rejects runners that cannot execute it. Untracked
+runner and rejects runners that cannot execute it; all six post-merge workflows for
+`1edb11a` passed, including Docker in 9m36s. PR #452 is extending algorithm choice
+through request, runner, UI and checkpoint identity. Untracked
 qualification output directories are not release evidence.
-**Observed source head:** `6dc051ec18d8c54cb61bab37aba59a72f8dc843a` (2026-10-20).
+**Observed source head:** `1edb11a5123bf9ef3c29b7eb2d6d189cc459b8ea` (2026-10-20).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
@@ -51,6 +53,18 @@ candidate SHA they were generated for and are not promoted to current-head
 evidence.
 
 ## Exact-head qualification snapshot
+
+On `main@1edb11a5123bf9ef3c29b7eb2d6d189cc459b8ea`, PR #451 fixes scheduler
+dispatch to pass the exact digest-pinned PipelineIR into `execute_pipeline` and
+rejects runners that cannot execute that definition. All six exact-head workflows
+passed: [CI](https://github.com/SauronShepherd/ronin/actions/runs/39390985070),
+[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39390984778),
+[Web](https://github.com/SauronShepherd/ronin/actions/runs/39390984964),
+[Security](https://github.com/SauronShepherd/ronin/actions/runs/39390985032),
+[Release](https://github.com/SauronShepherd/ronin/actions/runs/39390984768) and
+[Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/39390984813).
+Docker qualification took 9m36s. P5 remains partial; release progress remains
+0% (0/14).
 
 On `main@6dc051ec18d8c54cb61bab37aba59a72f8dc843a`, PR #450 adds S3-compatible
 artifact qualification to CI with LocalStack. The exact-head workflow set passed:
