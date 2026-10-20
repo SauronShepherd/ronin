@@ -38,7 +38,8 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
     document = json.loads((root / "api/openapi-v1.json").read_text(encoding="utf-8"))
     get_operation = document["paths"]["/v1/ml-studio/executions/{run_id}"]["get"]
     cancel_operation = document["paths"]["/v1/ml-studio/executions/{run_id}/cancel"]["post"]
-    for operation in (get_operation, cancel_operation):
+    retry_operation = document["paths"]["/v1/ml-studio/executions/{run_id}/retry"]["post"]
+    for operation in (get_operation, cancel_operation, retry_operation):
         workspace = next(
             parameter
             for parameter in operation["parameters"]
@@ -47,6 +48,17 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
         assert workspace["in"] == "query"
         assert workspace["required"] is True
         assert workspace["schema"]["minLength"] == 1
+    retry_schema = retry_operation["requestBody"]["content"]["application/json"]["schema"]
+    assert retry_schema["additionalProperties"] is False
+    assert retry_schema["required"] == ["run_id", "from_stage"]
+    assert retry_schema["properties"]["from_stage"]["enum"] == [
+        "profile",
+        "quality_gate",
+        "prepare",
+        "train",
+        "evaluate",
+        "select",
+    ]
     submit = document["paths"]["/v1/ml-studio/labs/{lab_id}/executions"]["post"]
     request_schema = submit["requestBody"]["content"]["application/json"]["schema"]
     assert request_schema["additionalProperties"] is False

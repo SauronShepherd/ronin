@@ -242,6 +242,13 @@ class MachineLearningStudioPlugin:
             permission="ml-studio:execute",
         )
         context.contributions.add_route(
+            "POST",
+            "/v1/ml-studio/executions/{run_id}/retry",
+            context.plugin_id,
+            self.retry_execution,
+            permission="ml-studio:execute",
+        )
+        context.contributions.add_route(
             "GET",
             "/v1/ml-studio/backends",
             context.plugin_id,
@@ -1099,6 +1106,26 @@ class MachineLearningStudioPlugin:
     ) -> dict[str, object]:
         workspace_id = self._workspace(workspace_id, _kwargs)
         return self._coordinator.cancel(workspace_id, run_id).to_payload()
+
+    def retry_execution(
+        self,
+        run_id: str,
+        workspace_id: str | None = None,
+        *,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        if (
+            not isinstance(body, dict)
+            or set(body) != {"run_id", "from_stage"}
+            or not isinstance(body.get("run_id"), str)
+            or not isinstance(body.get("from_stage"), str)
+        ):
+            raise ValueError("retry requires exactly run_id and from_stage")
+        return self._coordinator.retry(
+            workspace_id, run_id, body["run_id"], body["from_stage"]
+        ).to_payload()
 
     def create_experiment(self, *_args: Any, **_kwargs: Any) -> dict[str, str]:
         return {"status": "accepted", "contract": "ml-studio/experiment/v1"}

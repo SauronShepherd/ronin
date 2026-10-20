@@ -255,6 +255,7 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("GET", "/v1/ml-studio/executions/{run_id}"),
         ("POST", "/v1/ml-studio/executions/{run_id}/register"),
         ("POST", "/v1/ml-studio/executions/{run_id}/cancel"),
+        ("POST", "/v1/ml-studio/executions/{run_id}/retry"),
         ("POST", "/v1/ml-studio/labs/{lab_id}/compare"),
         ("POST", "/v1/ml-studio/labs/{lab_id}/search"),
         ("GET", "/v1/ml-studio/models"),
