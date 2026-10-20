@@ -24,11 +24,12 @@ test('ML Studio exposes model card and promotion actions', async ({ page }) => {
 
 test('ML Studio registers a successful durable run as a candidate model', async ({ page }) => {
   let registered = false;
+  let promoted = false;
   await page.route('**/v1/ml-studio/labs?**', route => route.fulfill({json: {
     items: [{id: 'churn', name: 'Churn', task: 'classification', backend_id: 'local.sklearn'}],
   }}));
   await page.route('**/v1/ml-studio/models?**', route => route.fulfill({json: {
-    items: registered ? [{model_id: 'churn', version: 'run-ui', stage: 'candidate'}] : [],
+    items: registered ? [{model_id: 'churn', version: 'run-ui', stage: promoted ? 'champion' : 'candidate'}] : [],
   }}));
   await page.route('**/v1/ml-studio/labs/churn/executions?**', route => route.fulfill({json: {
     run_id: 'run-ui', state: 'queued',
@@ -43,6 +44,10 @@ test('ML Studio registers a successful durable run as a candidate model', async 
       model_id: body.model_id, version: body.version, stage: 'candidate',
     }});
   });
+  await page.route('**/v1/ml-studio/models/churn/run-ui/promote**', async route => {
+    promoted = (await route.request().postDataJSON()).reason === 'validated run';
+    await route.fulfill({json: {model_id: 'churn', version: 'run-ui', stage: 'champion'}});
+  });
   await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
   await page.locator('[data-feature="ml-run"]').click();
   await expect(page.locator('#ml-register-execution')).toBeVisible();
@@ -50,6 +55,10 @@ test('ML Studio registers a successful durable run as a candidate model', async 
   await expect.poll(() => registered).toBe(true);
   await expect(page.locator('#ml-register-execution')).toContainText('Registered candidate churn@run-ui');
   await expect(page.locator('#ml-models')).toContainText('churn');
+  await page.evaluate(() => { window.prompt = () => 'validated run'; });
+  await page.locator('#ml-register-execution [data-feature="ml-promote"]').click();
+  await expect.poll(() => promoted).toBe(true);
+  await expect(page.locator('#ml-models')).toContainText('champion');
 });
 
 test('ML Studio downloads a verified artifact in bounded chunks', async ({ page }) => {
