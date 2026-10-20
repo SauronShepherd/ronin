@@ -1,16 +1,20 @@
 """Async execution route contract tests."""
 
 # ruff: noqa: E501
+import json
 import time
 from threading import Event
 
 import pytest
 from studio_core import WorkspaceId
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
+from studio_core.ml import RegisteredModelVersion
 from studio_ml.domain import FeatureSpec, Lab
-from studio_ml.orchestration import LocalExecutionCoordinator
+from studio_ml.orchestration import ExecutionSnapshot, LocalExecutionCoordinator
 from studio_ml.plugin import MachineLearningStudioPlugin
+from studio_ml.runner import LocalExperimentRunner
 from studio_ml.services import InMemoryMLLabStore, LabService
+from studio_storage import LocalArtifactStore
 
 
 def test_submit_and_poll_execution() -> None:
@@ -106,6 +110,114 @@ def test_cancel_execution_route_keeps_cancelled_state_after_runner_error() -> No
         assert plugin.execution_status("cancel-api", workspace_id="ws")["state"] == "cancelled"
     finally:
         release_failure.set()
+        plugin._coordinator.close()
+
+
+def test_register_execution_model_persists_run_and_verified_artifact(tmp_path) -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    rows = [{"x": n, "target": n % 2} for n in range(1, 21)]
+    result = LocalExperimentRunner().run(lab, rows)
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    artifact = artifacts.put_bytes(
+        role="model",
+        data=result.model.artifact_bytes,
+        media_type="application/vnd.ronin.sklearn-tabular+json",
+    )
+
+    class Registry:
+        def __init__(self):
+            self.experiments = []
+            self.runs = []
+            self.models = []
+
+        def put_experiment(self, _workspace, experiment, *, now):
+            self.experiments.append((experiment, now))
+            return experiment
+
+        def record_run(self, _workspace, run, *, now):
+            self.runs.append((run, now))
+            return run
+
+        def register_model(self, _workspace, model, *, now):
+            self.models.append((model, now))
+            return model
+
+    registry = Registry()
+    plugin = MachineLearningStudioPlugin()
+    plugin._coordinator.close()
+    plugin._coordinator = type(
+        "CompletedCoordinator",
+        (),
+        {
+            "close": lambda _self: None,
+            "status": lambda _self, _workspace, _run: ExecutionSnapshot(
+                run_id="run-1",
+                state="succeeded",
+                workspace_id="ws",
+                lab_id=lab.id,
+                lab_digest=lab.digest,
+                rows_json=json.dumps(rows),
+                result_payload={
+                    "lab_id": lab.id,
+                    "task": result.model.task,
+                    "algorithm": result.model.algorithm,
+                    "backend_id": result.backend_id,
+                    "features": list(result.model.features),
+                    "target": result.model.target,
+                    "metrics": [[name, value] for name, value in result.model.metrics],
+                    "artifact_ref": artifact.storage_ref,
+                    "artifact_digest": artifact.digest,
+                    "artifact_media_type": artifact.media_type,
+                    "artifact_size_bytes": artifact.size_bytes,
+                },
+            ),
+        },
+    )()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    plugin._registry = registry
+    plugin._artifacts = artifacts
+    try:
+        model = plugin.register_execution_model(
+            "run-1", workspace_id="ws", body={"model_id": "churn", "version": "v1"}
+        )
+        assert model["artifact_ref"] == artifact.storage_ref
+        assert model["source_run_id"] == "run-1"
+        assert model["signature"]["inputs"] == {"x": "int64"}
+        assert registry.runs[0][0].artifact_refs == (artifact.storage_ref,)
+        assert isinstance(registry.models[0][0], RegisteredModelVersion)
+    finally:
+        plugin._coordinator.close()
+
+
+def test_register_execution_model_rejects_unfinished_execution() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._coordinator.close()
+    plugin._registry = object()
+    plugin._artifacts = object()
+    plugin._labs = object()
+    plugin._coordinator = type(
+        "QueuedCoordinator",
+        (),
+        {
+            "close": lambda _self: None,
+            "status": lambda *_args: ExecutionSnapshot(run_id="queued", state="running"),
+        },
+    )()
+    try:
+        with pytest.raises(ValueError, match="only a succeeded execution"):
+            plugin.register_execution_model(
+                "queued", workspace_id="ws", body={"model_id": "m", "version": "v1"}
+            )
+    finally:
         plugin._coordinator.close()
 
 

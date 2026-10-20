@@ -18,6 +18,7 @@ planificadas de una plataforma ML completa.
 | Persistencia durable de lifecycle/result payload | Implementado | `SqliteExecutionStore`, reopen test |
 | Checkpoints durables de etapas PipelineIR | Implementado para las seis etapas locales | `runner.py`, `orchestration.py`, round-trip local y recuperación PostgreSQL tras reabrir el servicio |
 | Materialización del modelo en ejecución durable | Implementada para tabular y K-Means | `JobStoreExecutionStore.materialize_result_artifact()`, verificación de lectura/digest y referencia persistida en el resultado |
+| Registro de resultados de ejecuciones durables | Implementado en el candidato local; cualificación pendiente | `POST /v1/ml-studio/executions/{run_id}/register` valida estado, tamaño, digest, workspace/Lab y registra Experiment, MLRun y versión candidata con firma |
 | Provenance y registry base | Implementado | `service.py`, `provenance.py`, persistence tests |
 | HTTP control plane y autorización | Implementado | `test_ml_studio_http.py` |
 | OpenAPI base ML Studio | Implementado | `api/openapi-v1.json`, contract test |
@@ -49,6 +50,7 @@ pendiente del módulo.
 La ejecución duradera reutiliza etapas exitosas, pero todavía no admite grafos
 configurables, `register` como etapa ejecutable, invalidación explícita de outputs
 dependientes ni reintentos selectivos visibles desde el producto.
-El resultado durable conserva una referencia verificada del modelo en ArtifactStore;
-el acceso autenticado al contenido y el recorrido de ese run hasta el registry siguen
-pendientes.
+El resultado durable conserva una referencia verificada del modelo en ArtifactStore.
+El candidato local añade el registro de una ejecución como versión candidata por una
+API protegida. La lectura HTTP autorizada del contenido y su integración en el journey
+de UI siguen pendientes.

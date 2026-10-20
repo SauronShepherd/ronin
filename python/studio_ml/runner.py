@@ -33,6 +33,8 @@ class ExperimentResult:
             "artifact_digest": self.artifact_digest,
             "task": self.model.task,
             "algorithm": self.model.algorithm,
+            "features": list(self.model.features),
+            "target": self.model.target,
         }
 
 
