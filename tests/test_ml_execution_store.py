@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 
 import pytest
 from studio_core.canonical_json import decode as decode_canonical_json
@@ -115,6 +116,69 @@ def test_large_execution_rows_require_artifact_store_before_job_submission() -> 
             )
         )
         assert page.items == ()
+    finally:
+        asyncio.run(service.aclose())
+
+
+def test_ml_node_checkpoints_are_fenced_and_bound_to_pipeline_and_request() -> None:
+    service = DurableExecutionService(InMemoryJobStore())
+    adapter = JobStoreExecutionStore(service)
+    try:
+        queued = replace(_snapshot("workspace-a"), pipeline_digest="c" * 64)
+        adapter.create(queued)
+        claimed = adapter.claim_next("worker-a")
+        assert claimed is not None
+        adapter.save_node_checkpoint(
+            claimed,
+            "profile",
+            {"kind": "profile", "value": {"row_count": 20}},
+        )
+        assert adapter.node_checkpoints(claimed) == {
+            "profile": {"kind": "profile", "value": {"row_count": 20}}
+        }
+        assert adapter.node_checkpoints(replace(claimed, request_digest="d" * 64)) == {}
+        assert adapter.node_checkpoints(replace(claimed, pipeline_digest="e" * 64)) == {}
+    finally:
+        asyncio.run(service.aclose())
+
+
+def test_large_ml_node_checkpoint_uses_verified_artifact_storage(tmp_path) -> None:
+    service = DurableExecutionService(InMemoryJobStore())
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    adapter = JobStoreExecutionStore(service, artifacts)
+    try:
+        queued = replace(_snapshot("workspace-a"), pipeline_digest="c" * 64)
+        adapter.create(queued)
+        claimed = adapter.claim_next("worker-a")
+        assert claimed is not None
+        checkpoint = {"kind": "profile", "value": {"large": "x" * 300_000}}
+        adapter.save_node_checkpoint(claimed, "profile", checkpoint)
+        assert adapter.node_checkpoints(claimed) == {"profile": checkpoint}
+        stored = asyncio.run(service.cell_results(adapter._ids("workspace-a", "shared-run")[0]))
+        assert stored is not None
+        assert len(stored) == 1
+        assert len(stored[0].result_json) < 2_000
+    finally:
+        asyncio.run(service.aclose())
+
+
+def test_large_ml_node_checkpoint_is_skipped_when_artifact_storage_is_unavailable() -> None:
+    service = DurableExecutionService(InMemoryJobStore())
+    adapter = JobStoreExecutionStore(service)
+    try:
+        queued = replace(_snapshot("workspace-a"), pipeline_digest="c" * 64)
+        adapter.create(queued)
+        claimed = adapter.claim_next("worker-a")
+        assert claimed is not None
+        assert (
+            adapter.save_node_checkpoint(
+                claimed,
+                "train",
+                {"kind": "train", "value": {"large": "x" * 300_000}},
+            )
+            is False
+        )
+        assert adapter.node_checkpoints(claimed) == {}
     finally:
         asyncio.run(service.aclose())
 

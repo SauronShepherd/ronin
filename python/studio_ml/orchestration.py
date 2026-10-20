@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+from collections.abc import Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import suppress
 from dataclasses import dataclass, replace
@@ -40,6 +41,7 @@ from .services import compile_lab_pipeline
 RunState = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 MAX_EXECUTION_REQUEST_BYTES = 64 * 1024 * 1024
 MAX_INLINE_EXECUTION_REQUEST_BYTES = 1_048_576
+MAX_INLINE_NODE_CHECKPOINT_BYTES = 262_144
 EXECUTION_LEASE_SECONDS = 60
 EXECUTION_POLL_SECONDS = 0.2
 
@@ -71,6 +73,7 @@ class ExecutionSnapshot:
     lease_token: str | None = None
     attempt_ordinal: int = 0
     input_error: str | None = None
+    node_checkpoints: dict[str, object] | None = None
 
     def to_payload(self) -> dict[str, object]:
         payload: dict[str, object] = {"run_id": self.run_id, "state": self.state}
@@ -508,7 +511,7 @@ class JobStoreExecutionStore:
                 rows_json = self._load_rows_artifact(parameters["rows_artifact"])
             except Exception:
                 input_error = "stored ML execution input artifact could not be verified"
-        return ExecutionSnapshot(
+        snapshot = ExecutionSnapshot(
             run_id=str(parameters["run_id"]),
             state="running",
             workspace_id=claim.job.project_id,
@@ -526,6 +529,7 @@ class JobStoreExecutionStore:
             attempt_ordinal=claim.attempt_ordinal,
             input_error=input_error,
         )
+        return replace(snapshot, node_checkpoints=self.node_checkpoints(snapshot))
 
     def _load_rows_artifact(self, value: object) -> str:
         if self._artifact_store is None or not isinstance(value, dict):
@@ -586,6 +590,148 @@ class JobStoreExecutionStore:
                 now=now,
             )
         )
+
+    @staticmethod
+    def _node_cell_id(node_id: str) -> str:
+        return "ml-node-" + hashlib.sha256(node_id.encode("utf-8")).hexdigest()
+
+    def node_checkpoints(self, snapshot: ExecutionSnapshot) -> dict[str, object]:
+        if not snapshot.pipeline_digest or not snapshot.request_digest:
+            return {}
+        job_id, _ = self._ids(snapshot.workspace_id, snapshot.run_id)
+        stored = asyncio.run(self._service.cell_results(job_id)) or ()
+        checkpoints: dict[str, object] = {}
+        for cell in stored:
+            if (
+                not cell.cell_id.startswith("ml-node-")
+                or cell.source_digest != snapshot.pipeline_digest
+                or cell.execution_identity_digest != snapshot.request_digest
+                or cell.state != "succeeded"
+            ):
+                continue
+            try:
+                decoded = decode_canonical_json(cell.result_json)
+                if not isinstance(decoded, dict):
+                    continue
+                node_id_value = decoded.get("node_id")
+                if not isinstance(node_id_value, str):
+                    continue
+                node_id = node_id_value
+                if self._node_cell_id(node_id) != cell.cell_id:
+                    continue
+                checkpoint = decoded.get("checkpoint")
+                artifact_value = decoded.get("artifact")
+                if checkpoint is None and isinstance(artifact_value, dict):
+                    checkpoint_bytes = self._load_checkpoint_artifact(artifact_value)
+                    checkpoint_envelope = decode_canonical_json(checkpoint_bytes)
+                    if (
+                        not isinstance(checkpoint_envelope, dict)
+                        or checkpoint_envelope.get("node_id") != node_id
+                        or not isinstance(checkpoint_envelope.get("checkpoint"), dict)
+                    ):
+                        continue
+                    checkpoint = checkpoint_envelope["checkpoint"]
+                if isinstance(checkpoint, dict):
+                    checkpoints[node_id] = checkpoint
+            except (ValueError, TypeError):
+                continue
+        return checkpoints
+
+    def _load_checkpoint_artifact(self, value: Mapping[str, object]) -> bytes:
+        if self._artifact_store is None:
+            raise ValueError("ML node checkpoint artifact store is unavailable")
+        fields = {"role", "digest_algorithm", "digest", "media_type", "size_bytes", "storage_ref"}
+        if set(value) != fields:
+            raise ValueError("ML node checkpoint artifact reference is invalid")
+        if (
+            not isinstance(value["role"], str)
+            or not isinstance(value["digest_algorithm"], str)
+            or not isinstance(value["digest"], str)
+            or (value["media_type"] is not None and not isinstance(value["media_type"], str))
+            or not isinstance(value["size_bytes"], int)
+            or isinstance(value["size_bytes"], bool)
+            or not isinstance(value["storage_ref"], str)
+        ):
+            raise ValueError("ML node checkpoint artifact reference is invalid")
+        ref = ArtifactRef(
+            role=value["role"],
+            digest_algorithm=value["digest_algorithm"],
+            digest=value["digest"],
+            media_type=cast(str | None, value["media_type"]),
+            size_bytes=value["size_bytes"],
+            storage_ref=value["storage_ref"],
+        )
+        if (
+            ref.role != "ml-node-checkpoint"
+            or ref.digest_algorithm != "sha256"
+            or ref.media_type != "application/json"
+            or ref.size_bytes > MAX_EXECUTION_REQUEST_BYTES
+            or not self._artifact_store.verify(ref)
+        ):
+            raise ValueError("ML node checkpoint artifact failed verification")
+        data = self._artifact_store.get_bytes(ref)
+        if len(data) != ref.size_bytes or hashlib.sha256(data).hexdigest() != ref.digest:
+            raise ValueError("ML node checkpoint artifact integrity check failed")
+        return data
+
+    def save_node_checkpoint(
+        self, snapshot: ExecutionSnapshot, node_id: str, checkpoint: dict[str, object]
+    ) -> bool:
+        if snapshot.attempt_id is None or snapshot.lease_token is None or snapshot.owner is None:
+            raise ValueError("durable ML claim is missing its lease identity")
+        if not snapshot.pipeline_digest or not snapshot.request_digest:
+            raise ValueError("durable ML claim is missing its checkpoint identity")
+        payload: dict[str, object] = {"node_id": node_id, "checkpoint": checkpoint}
+        encoded = encode_canonical_json(payload)
+        if len(encoded) > MAX_EXECUTION_REQUEST_BYTES:
+            return False
+        if len(encoded) > MAX_INLINE_NODE_CHECKPOINT_BYTES:
+            if self._artifact_store is None:
+                return False
+            artifact = self._artifact_store.put_bytes(
+                role="ml-node-checkpoint", data=encoded, media_type="application/json"
+            )
+            if (
+                artifact.role != "ml-node-checkpoint"
+                or artifact.digest_algorithm != "sha256"
+                or artifact.media_type != "application/json"
+                or artifact.size_bytes != len(encoded)
+                or not self._artifact_store.verify(artifact)
+            ):
+                raise ValueError("ML node checkpoint artifact failed verification after write")
+            encoded = encode_canonical_json(
+                {
+                    "node_id": node_id,
+                    "artifact": {
+                        "role": artifact.role,
+                        "digest_algorithm": artifact.digest_algorithm,
+                        "digest": artifact.digest,
+                        "media_type": artifact.media_type,
+                        "size_bytes": artifact.size_bytes,
+                        "storage_ref": artifact.storage_ref,
+                    },
+                }
+            )
+        now = _now()
+        _, run_id = self._ids(snapshot.workspace_id, snapshot.run_id)
+        asyncio.run(
+            self._service.worker_put_cell_result(
+                AttemptId(snapshot.attempt_id),
+                StoredCellResult(
+                    run_id=run_id,
+                    cell_id=self._node_cell_id(node_id),
+                    source_digest=snapshot.pipeline_digest,
+                    execution_identity_digest=snapshot.request_digest,
+                    state="succeeded",
+                    result_json=encoded.decode("utf-8"),
+                    updated_at=now,
+                ),
+                owner=snapshot.owner,
+                lease_token=LeaseToken(snapshot.lease_token),
+                now=now,
+            )
+        )
+        return True
 
     def finish_claim(
         self,
@@ -862,7 +1008,20 @@ class LocalExecutionCoordinator:
                 )
             execute_pipeline = getattr(self._runner, "execute_pipeline", None)
             if callable(execute_pipeline):
-                result = execute_pipeline(lab, execution_rows, pipeline)
+                if isinstance(self._runner, LocalExperimentRunner) and isinstance(
+                    self._store, JobStoreExecutionStore
+                ):
+                    result = execute_pipeline(
+                        lab,
+                        execution_rows,
+                        pipeline,
+                        checkpoint_load=(claimed.node_checkpoints or {}).get,
+                        checkpoint_save=lambda node_id, payload: self._store.save_node_checkpoint(
+                            claimed, node_id, payload
+                        ),
+                    )
+                else:
+                    result = execute_pipeline(lab, execution_rows, pipeline)
             elif lab.task == "clustering":
                 result = self._runner.run_clustering_result(lab, execution_rows)
             else:
