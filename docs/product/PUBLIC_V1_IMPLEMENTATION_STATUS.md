@@ -5,14 +5,17 @@
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
 **Observed workspace snapshot:** 2026-10-20. The tracked source is based on
-`main@97c1ee4`; PRs #430–#441 are merged. PR #436 makes the fixed six-stage local
+`main@81b952a`; PRs #430–#443 are merged. PR #436 makes the fixed six-stage local
 PipelineIR executable in stable topological order; PR #438/#439 add durable stage
 checkpoints and correct PostgreSQL resume pagination. PR #441 materializes verified
 tabular and K-Means model artifacts for durable results, with bounded size and
 content-addressed references. Its PR checks, including Docker qualification, passed.
-Post-merge exact-head qualification for the new main SHA is running. Untracked
+PR #443 adds a write-authorized API route to register successful durable runs as
+candidate model versions, with artifact digest and size verification. Its PR checks,
+including Docker qualification, passed; post-merge exact-head qualification for
+`81b952a` is still running. PR #445 carries the Studio registration UI. Untracked
 qualification output directories are not release evidence.
-**Observed source head:** `97c1ee44e4aed0a8902ef4e546b10bb684001cb8` (2026-10-20).
+**Observed source head:** `81b952ad4f38eeedddac532fea0c74732d9795ec` (2026-10-20).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
