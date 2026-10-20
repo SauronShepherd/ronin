@@ -30,6 +30,12 @@ def test_submit_and_poll_execution() -> None:
         (FeatureSpec("x"),),
     )
     plugin._labs.create(WorkspaceId("ws"), lab)
+    with pytest.raises(ValueError, match="preprocessor is not supported"):
+        plugin.submit_execution(
+            "ws",
+            "churn",
+            body={"run_id": "unsupported-preprocessor", "preprocessor": "custom"},
+        )
     submitted = plugin.submit_execution(
         "ws",
         "churn",
@@ -37,6 +43,7 @@ def test_submit_and_poll_execution() -> None:
             "run_id": "async-1",
             "rows": [{"x": n, "target": n % 2} for n in range(1, 21)],
             "algorithm": "decision_tree_classifier",
+            "preprocessor": "standard_scale",
         },
     )
     assert submitted["run_id"] == "async-1"

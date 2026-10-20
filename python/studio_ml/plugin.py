@@ -721,8 +721,15 @@ class MachineLearningStudioPlugin:
             raise ValueError("lab_id is required")
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
-        if not isinstance(body, dict) or set(body) - {"run_id", "rows", "algorithm"}:
-            raise ValueError("execution body must contain run_id, rows, and optional algorithm")
+        if not isinstance(body, dict) or set(body) - {
+            "run_id",
+            "rows",
+            "algorithm",
+            "preprocessor",
+        }:
+            raise ValueError(
+                "execution body must contain run_id, rows, and optional algorithm/preprocessor"
+            )
         if "rows" in body and body["rows"] is None:
             raise ValueError("execution rows must be an array when provided")
         run_id = body.get("run_id", f"run-{lab_id}")
@@ -739,10 +746,23 @@ class MachineLearningStudioPlugin:
             not isinstance(algorithm, str) or not algorithm or algorithm != algorithm.strip()
         ):
             raise ValueError("algorithm must be a non-empty trimmed string")
+        preprocessor = body.get("preprocessor", "identity")
+        if not isinstance(preprocessor, str) or preprocessor not in {
+            "identity",
+            "standard_scale",
+        }:
+            raise ValueError("preprocessor is not supported")
+        if lab.task == "clustering" and preprocessor != "identity":
+            raise ValueError("preprocessor is not supported for clustering Labs")
         rows = resolve_lab_rows(
             WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
         )
-        pipeline = self._labs.compile(WorkspaceId(workspace_id), lab_id, algorithm=algorithm)
+        pipeline = self._labs.compile(
+            WorkspaceId(workspace_id),
+            lab_id,
+            algorithm=algorithm,
+            preprocessor=preprocessor,
+        )
         return self._coordinator.submit(workspace_id, run_id, lab, rows, pipeline).to_payload()
 
     def compare_trials(

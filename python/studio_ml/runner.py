@@ -17,7 +17,7 @@ from .backends import BackendRegistry, ExperimentRequest, MLBackend, default_bac
 from .clustering import KMeansModel, fit_kmeans
 from .domain import Lab, NodeKind, PipelineIR, PipelineNode
 from .quality import ColumnProfile, QualityReport, profile_and_validate
-from .runtime import Algorithm, TrainedTabularModel, TrainingSpec
+from .runtime import Algorithm, Preprocessor, TrainedTabularModel, TrainingSpec
 
 _CHECKPOINT_RUNTIME_DISTRIBUTIONS = ("joblib", "numpy", "scikit-learn", "scipy")
 
@@ -506,6 +506,10 @@ class LocalExperimentRunner:
                         test_fraction=lab.test_fraction,
                         random_seed=lab.seed,
                         parameters=parameters,
+                        preprocessor=cast(
+                            Preprocessor,
+                            dict(pipeline.parameters).get("preprocessor", "identity"),
+                        ),
                     )
             elif node.kind == "train":
                 prepared = next(

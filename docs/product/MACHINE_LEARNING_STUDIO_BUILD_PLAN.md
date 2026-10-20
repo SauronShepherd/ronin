@@ -1,5 +1,9 @@
 # Machine Learning Studio — build plan de bajo nivel
 
+## Estado del plan
+
+**Avance de implementación técnica estimado: 62%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+
 ## 0. Principios de ejecución
 
 Este plan convierte la propuesta en cambios pequeños, verificables y reversibles. Cada fase debe dejar el repositorio compilable y los contratos versionados. No se debe empezar por una UI rica que invente datos: primero se construyen dominio, ports, persistencia, worker y API; después la UI consume contratos reales.
@@ -441,7 +445,7 @@ La suite Python completa pasó **3.766 tests con 51 omitidos**. Ruff, formato, m
 
 ## 27. Qualification ML con ArtifactStore S3-compatible
 
-**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+**Progreso técnico: 4/4 criterios implementados y cualificados exact-head en `main@68a3c0f9118458eaa49a5090877133b8226eb989`.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -450,4 +454,30 @@ La suite Python completa pasó **3.766 tests con 51 omitidos**. Ruff, formato, m
 | Aplicar retención sólo con referencias vivas completas | La colección conserva el input aún referenciado por el Job y el modelo; elimina únicamente un objeto de prueba marcado como no referenciado. |
 | Automatizar la qualification en Docker CI | El Docker workflow usa LocalStack 4.3.0 fijado por digest y ejecuta el journey dedicado con credenciales locales sin secretos externos. |
 
-El test de lifecycle y los contratos del adapter S3 pasaron **15/15** contra LocalStack en Docker. Ruff, formato y mypy del integration test pasan. El endpoint de servicio es efímero y aislado por bucket. La cualificación Docker exact-head del nuevo workflow queda pendiente. P8 sigue parcial; release-qualified permanece en **0% (0/14)**.
+El test de lifecycle y los contratos del adapter S3 pasaron **15/15** contra LocalStack en Docker. PR #450 pasó los checks del PR y los seis workflows post-merge exact-head de `main@6dc051ec18d8c54cb61bab37aba59a72f8dc843a`; PR #451 hizo lo mismo en `main@1edb11a5123bf9ef3c29b7eb2d6d189cc459b8ea`, y PR #452 en `main@68a3c0f9118458eaa49a5090877133b8226eb989`. La qualification Docker de #452 duró **9m12s** e incluyó PostgreSQL, worker real y aceptación estricta. El endpoint LocalStack es efímero y el bucket queda aislado por test. P8 sigue parcial; release-qualified permanece en **0% (0/14)**.
+
+## 28. Selección de algoritmos en ejecuciones durables
+
+**Progreso técnico: 4/4 criterios implementados y cualificados exact-head en `main@68a3c0f9118458eaa49a5090877133b8226eb989`.**
+
+| Criterio técnico | Evidencia |
+| --- | --- |
+| Compilar una selección compatible con la tarea | `compile_lab_pipeline()` valida algoritmo/tarea y fija la selección en parámetros canónicos de PipelineIR. |
+| Ejecutar el algoritmo fijado en el job | `LocalExperimentRunner` usa el valor de PipelineIR al crear `TrainingSpec`; las pruebas verifican el algoritmo del resultado. |
+| Evitar ejecución silenciosa por adaptadores heredados | Si el runner no puede ejecutar un pipeline personalizado, el coordinator falla cerrado; no vuelve al algoritmo predeterminado. |
+| Exponer y cualificar la selección | OpenAPI enumera los algoritmos, Studio ofrece selector por tarea y Playwright verifica el request; CI, Web, Security, Release, Status consistency y Docker pasaron exact-head. |
+
+PR [#452](https://github.com/SauronShepherd/ronin/pull/452) añade la selección para classification/regression y conserva K-Means para clustering. El digest completo de PipelineIR también forma parte de la huella de checkpoints, por lo que una selección distinta no reutiliza outputs de otra configuración. P8 continúa parcial y release-qualified sigue en **0% (0/14)**.
+
+## 29. Candidato: preprocesamiento numérico reproducible
+
+**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+
+| Criterio técnico | Evidencia local |
+| --- | --- |
+| Separar preparación de datos del algoritmo | `TrainingSpec` admite `identity` y `standard_scale`; el runner lee la opción de PipelineIR. |
+| Ajustar parámetros sólo con el conjunto de entrenamiento | Media y desviación se calculan después del split; columnas constantes usan escala 1 y no generan NaN/inf. |
+| Persistir la transformación para inferencia segura | Artefactos canónicos v3 guardan la transformación; el lector mantiene compatibilidad con artefactos v2 y valida forma, finitud y escalas positivas. |
+| Exponerlo de forma durable y verificable | La API/OpenAPI y Studio permiten seleccionar preprocesador; pruebas cubren regresión, ensembles, entrada manipulada y selección fijada por PipelineIR. |
+
+Quedan abiertos preprocesamiento categórico, imputación configurable y más transformaciones. P8 permanece parcial y release-qualified continúa en **0% (0/14)**.

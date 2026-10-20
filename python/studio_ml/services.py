@@ -19,7 +19,12 @@ class FeatureDefinitionConflict(RuntimeError):
     """Raised when a feature identity/version is reused with different content."""
 
 
-def compile_lab_pipeline(lab: Lab, *, algorithm: str | None = None) -> PipelineIR:
+def compile_lab_pipeline(
+    lab: Lab,
+    *,
+    algorithm: str | None = None,
+    preprocessor: str = "identity",
+) -> PipelineIR:
     """Build the deterministic pipeline definition bound to an immutable Lab."""
 
     parameters = {
@@ -36,6 +41,12 @@ def compile_lab_pipeline(lab: Lab, *, algorithm: str | None = None) -> PipelineI
         ):
             raise ValueError("algorithm is not supported for this Lab task")
         parameters["algorithm"] = algorithm
+    if preprocessor not in {"identity", "standard_scale"}:
+        raise ValueError("preprocessor is not supported for this Lab")
+    if preprocessor != "identity":
+        if lab.task == "clustering":
+            raise ValueError("preprocessor is not supported for clustering Labs")
+        parameters["preprocessor"] = preprocessor
 
     return PipelineIR(
         nodes=(
@@ -104,10 +115,15 @@ class LabService:
         return self.store.list_labs(workspace_id)
 
     def compile(
-        self, workspace_id: WorkspaceId, lab_id: str, *, algorithm: str | None = None
+        self,
+        workspace_id: WorkspaceId,
+        lab_id: str,
+        *,
+        algorithm: str | None = None,
+        preprocessor: str = "identity",
     ) -> PipelineIR:
         lab = self.get(workspace_id, lab_id)
-        pipeline = compile_lab_pipeline(lab, algorithm=algorithm)
+        pipeline = compile_lab_pipeline(lab, algorithm=algorithm, preprocessor=preprocessor)
         return self.store.put_pipeline(workspace_id, lab.id, pipeline)
 
 
