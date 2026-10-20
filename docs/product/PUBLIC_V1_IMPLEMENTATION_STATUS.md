@@ -16,9 +16,11 @@ including Docker qualification, passed. PR #445 integrates that registration flo
 into Studio. PR #446 adds workspace-scoped chunked artifact retrieval and UI download;
 its PR Docker, Web and CI checks passed. PR #447 binds checkpoints and durable results
 to runtime/dependency identity and invalidates downstream outputs when dependencies
-change; all PR checks passed, including Docker qualification. Exact-head qualification
-for `6db8573` is pending. PR #448 adds direct promotion from the execution registration
-flow; its local browser suite passed, while PR checks are pending. Untracked
+change; all PR checks passed, including Docker qualification. All six post-merge
+exact-head workflows for `6db8573` passed, including CI, Web, Security, Release,
+Status consistency and Docker qualification. PR #448 adds direct promotion from the
+execution registration flow; its local browser suite passed, while PR checks are
+pending. Untracked
 qualification output directories are not release evidence.
 **Observed source head:** `6db85733c88889475f2a7f58cd5c76a41347abfe` (2026-10-20).
 **Release status:** **INCOMPLETE**.
@@ -53,7 +55,10 @@ adds workspace-scoped artifact retrieval in digest-verified chunks capped at 512
 and a chunked UI download. PR #447 fingerprints executable source, Python and ML
 dependencies, backend, options and upstream outputs for checkpoint reuse and durable
 result provenance; changed outputs invalidate downstream stages. Its CI and Docker
-qualification passed. Post-merge exact-head qualification for `6db8573` is pending.
+qualification passed. Post-merge exact-head qualification for `6db8573` also passed:
+[CI](https://github.com/SauronShepherd/ronin/actions/runs/39378140909) and
+[Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39378140891),
+plus Web, Security, Release and Status consistency.
 PR #448 adds a promotion action after successful execution registration; 79/79 local
 Playwright tests pass, while hosted CI/Docker checks are pending. PR [#441](https://github.com/SauronShepherd/ronin/pull/441) passed CI
 Python 3.11/3.12, quality, security, verification, ledgers and [Docker qualification](https://github.com/SauronShepherd/ronin/actions/runs/39371246065)

@@ -391,7 +391,7 @@ La salida durable expone URI, digest, media type y tamaño. PR #443 registra las
 | Crear procedencia y versión candidata idempotentes | Registra Experiment y MLRun ligados al Lab/dataset, luego el model version con digest, firma inferida y referencia content-addressed; el registry hace idempotentes escrituras idénticas y rechaza conflictos. |
 | Promover directamente el candidato recién registrado | El formulario de éxito conserva una acción Promote candidate que reutiliza `mlPromote()`, pide el motivo obligatorio y llama al endpoint existente protegido por autorización. |
 
-Las pruebas de API verifican el flujo tabular, la firma/digest/procedencia y el rechazo de ejecuciones aún activas; Playwright recorre registro y promoción hasta `champion`. El handler requiere autorización `ml-studio:write`; el contenido del artifact no se sirve por este endpoint. PR #448 pasa localmente el flujo focalizado (**3/3**) y la suite web completa (**79/79**); la cualificación CI/Docker y la comprobación exact-head siguen pendientes. El PR #447 ya vinculó checkpoints y resultados durables al runtime y dependencias, e invalida outputs downstream obsoletos. Aún faltan reintentos selectivos y la prueba con servicios/artifact store remoto. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+Las pruebas de API verifican el flujo tabular, la firma/digest/procedencia y el rechazo de ejecuciones aún activas; Playwright recorre registro y promoción hasta `champion`. El handler requiere autorización `ml-studio:write`; el contenido del artifact no se sirve por este endpoint. PR #448 pasa localmente el flujo focalizado (**3/3**) y la suite web completa (**79/79**); sus checks CI/Docker están pendientes. `main@6db8573` ya pasó los seis workflows exact-head después de integrar PR #447. Aún faltan reintentos selectivos y la prueba con servicios/artifact store remoto. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
 
 ## 24. Lectura HTTP autorizada de artifacts de modelos
 
@@ -406,11 +406,11 @@ Las pruebas de API verifican el flujo tabular, la firma/digest/procedencia y el 
 | Descargar desde la UI sin cargar el artifact entero en una respuesta | La UI solicita bloques acotados, valida identidad, metadatos y continuidad de offsets y sólo crea el archivo al completar el tamaño declarado. |
 | Probar la reconstrucción del artifact en navegador | Playwright simula un artifact de dos bloques, verifica ambos offsets, el nombre descargado y el estado de éxito. |
 
-Las pruebas de API cubren reconstrucción por varios bloques, aislamiento por workspace, rango, límites y corrupción. Playwright verifica el flujo de descarga desde el registry; OpenAPI documenta parámetros y respuesta. PR #446 pasó Docker, Web y CI; PR #447 también pasó sus checks Docker/CI. La cualificación exact-head post-merge de `main@6db8573` sigue en ejecución. La prueba con ArtifactStore remoto sigue pendiente. P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
+Las pruebas de API cubren reconstrucción por varios bloques, aislamiento por workspace, rango, límites y corrupción. Playwright verifica el flujo de descarga desde el registry; OpenAPI documenta parámetros y respuesta. PR #446 y PR #447 pasaron sus checks Docker/CI; los seis workflows exact-head post-merge de `main@6db8573` también pasaron. La prueba con ArtifactStore remoto sigue pendiente. P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
 
 ## 25. Identidad de runtime y dependencias para checkpoints ML
 
-**Progreso técnico local: 6/6 criterios implementados; cualificación Docker exact-head pendiente.**
+**Progreso técnico: 6/6 criterios implementados; cualificación exact-head aprobada en `main@6db8573`.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -421,5 +421,5 @@ Las pruebas de API cubren reconstrucción por varios bloques, aislamiento por wo
 | Persistir procedencia del output | La huella de runtime queda en el checkpoint de selección y en el payload durable `ExperimentResult`/`ClusteringResult`. |
 | Invalidar outputs downstream cuando cambia una dependencia | Cada checkpoint incorpora un digest canónico de las salidas de sus nodos upstream; la discrepancia descarta y vuelve a calcular esa etapa y sus dependientes. |
 
-El PR #447 (`main@6db8573`) pasó **164 tests ML/API**, Ruff, formato, mypy del runner, CI 3.11/3.12 y cualificación Docker con PostgreSQL, worker real y aceptación estricta. La cualificación exact-head post-merge está pendiente. La huella es deliberadamente conservadora: cualquier cambio en los módulos ejecutables invalida los checkpoints, y un backend sin código fuente o fingerprint declarado no reutiliza caché. La suite también prueba que alterar un output intermedio impide restaurar su evaluación y selección antiguas. Quedan política explícita de retención y reintentos selectivos observables. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+El PR #447 (`main@6db8573`) pasó **164 tests ML/API**, Ruff, formato, mypy del runner y CI 3.11/3.12. Docker qualification verificó PostgreSQL, worker real y aceptación estricta; después del merge pasaron los seis workflows exact-head de `main@6db8573`. La huella es deliberadamente conservadora: cualquier cambio en los módulos ejecutables invalida los checkpoints, y un backend sin código fuente o fingerprint declarado no reutiliza caché. La suite también prueba que alterar un output intermedio impide restaurar su evaluación y selección antiguas. Quedan política explícita de retención y reintentos selectivos observables. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
 
