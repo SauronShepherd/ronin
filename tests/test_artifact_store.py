@@ -4,10 +4,12 @@ from pathlib import Path
 
 import pytest
 from studio_storage import (
+    REQUIRED_ARTIFACT_REFERENCE_SOURCES,
     ArtifactIntegrityError,
     ArtifactRef,
     LocalArtifactStore,
     collect_unreferenced,
+    plan_unreferenced,
 )
 
 
@@ -82,3 +84,50 @@ def test_retention_deletes_only_unreferenced_digests(tmp_path: Path) -> None:
     assert collect_unreferenced(store, (live.digest,)) == (stale.digest,)
     assert store.verify(live)
     assert not store.verify(stale)
+
+
+def test_retention_plan_requires_all_reference_sources_and_never_deletes(
+    tmp_path: Path,
+) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    live = store.put_bytes(role="live", data=b"live")
+    stale = store.put_bytes(role="stale", data=b"stale")
+
+    incomplete = plan_unreferenced(store, {"ml_runs": (live.digest,)})
+    assert not incomplete.complete
+    assert incomplete.missing_sources == tuple(
+        sorted(REQUIRED_ARTIFACT_REFERENCE_SOURCES - {"ml_runs"})
+    )
+    assert incomplete.candidate_digests == ()
+
+    complete_snapshot = dict.fromkeys(REQUIRED_ARTIFACT_REFERENCE_SOURCES, ())
+    complete_snapshot["ml_runs"] = (live.digest,)
+    preview = plan_unreferenced(store, complete_snapshot)
+    assert preview.complete
+    assert preview.candidate_digests == (stale.digest,)
+    assert store.verify(live)
+    assert store.verify(stale)
+
+
+def test_retention_plan_fails_closed_for_truncated_inventory(tmp_path: Path) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    store.put_bytes(role="one", data=b"one")
+    store.put_bytes(role="two", data=b"two")
+    complete_snapshot = dict.fromkeys(REQUIRED_ARTIFACT_REFERENCE_SOURCES, ())
+
+    preview = plan_unreferenced(store, complete_snapshot, page_size=1, max_objects=1)
+
+    assert not preview.complete
+    assert preview.inventory_truncated
+    assert preview.candidate_digests == ()
+
+
+def test_retention_plan_rejects_unknown_sources_and_invalid_digests(tmp_path: Path) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    with pytest.raises(ValueError, match="unknown artifact reference sources"):
+        plan_unreferenced(store, {"unknown": ()})
+
+    invalid = dict.fromkeys(REQUIRED_ARTIFACT_REFERENCE_SOURCES, ())
+    invalid["ml_runs"] = ("not-a-digest",)
+    with pytest.raises(ValueError, match="lowercase sha256"):
+        plan_unreferenced(store, invalid)

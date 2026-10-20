@@ -90,7 +90,12 @@ from studio_storage.quality import (
     quality_schema_version,
 )
 from studio_storage.readiness import sqlite_ready
-from studio_storage.retention import collect_unreferenced
+from studio_storage.retention import (
+    REQUIRED_ARTIFACT_REFERENCE_SOURCES,
+    ArtifactRetentionPlan,
+    collect_unreferenced,
+    plan_unreferenced,
+)
 from studio_storage.s3_artifacts import S3ArtifactStore, S3DependencyError
 from studio_storage.scheduler import (
     SqliteSchedulerStore,
@@ -166,6 +171,9 @@ __all__ = (
     "S3ArtifactStore",
     "S3DependencyError",
     "collect_unreferenced",
+    "plan_unreferenced",
+    "ArtifactRetentionPlan",
+    "REQUIRED_ARTIFACT_REFERENCE_SOURCES",
     "MountedFileSecretResolver",
     "OntologyConflict",
     "PostgresAuditStore",

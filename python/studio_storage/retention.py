@@ -2,10 +2,107 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
 
 from .artifacts import ArtifactRef
-from .ports import ArtifactStore
+from .ports import ArtifactStore, PagedArtifactStore
+
+REQUIRED_ARTIFACT_REFERENCE_SOURCES = frozenset(
+    {
+        "catalog_revisions",
+        "durable_execution_results",
+        "durable_job_checkpoints",
+        "local_files",
+        "ml_runs",
+        "registered_models",
+    }
+)
+
+
+@dataclass(frozen=True, slots=True)
+class ArtifactRetentionPlan:
+    """Non-destructive preview of unreferenced artifacts."""
+
+    missing_sources: tuple[str, ...]
+    candidate_digests: tuple[str, ...]
+    inventory_truncated: bool = False
+
+    @property
+    def complete(self) -> bool:
+        return not self.missing_sources and not self.inventory_truncated
+
+
+def plan_unreferenced(
+    store: ArtifactStore,
+    references_by_source: Mapping[str, Iterable[str]],
+    *,
+    page_size: int = 500,
+    max_objects: int = 10_000,
+) -> ArtifactRetentionPlan:
+    """Preview stale digests only when every known reference source is present.
+
+    This function never mutates the artifact store. Incomplete reference snapshots
+    or artifact inventories over the configured bound produce no deletion candidates.
+    """
+
+    if page_size < 1 or page_size > 10_000:
+        raise ValueError("retention page_size must be between 1 and 10000")
+    if max_objects < 1:
+        raise ValueError("retention max_objects must be positive")
+
+    unknown_sources = set(references_by_source) - REQUIRED_ARTIFACT_REFERENCE_SOURCES
+    if unknown_sources:
+        source_names = ", ".join(sorted(unknown_sources))
+        raise ValueError(f"unknown artifact reference sources: {source_names}")
+    missing_sources = tuple(sorted(REQUIRED_ARTIFACT_REFERENCE_SOURCES - set(references_by_source)))
+    if missing_sources:
+        return ArtifactRetentionPlan(missing_sources, ())
+
+    live_digests: set[str] = set()
+    for source_digests in references_by_source.values():
+        for digest in source_digests:
+            _validate_digest(digest)
+            live_digests.add(digest)
+
+    stored_digests: set[str] = set()
+    truncated = False
+    if isinstance(store, PagedArtifactStore):
+        cursor: str | None = None
+        seen_cursors: set[str] = set()
+        while True:
+            page = store.list_digests_page(cursor=cursor, page_size=min(page_size, max_objects))
+            for digest in page.digests:
+                _validate_digest(digest)
+            stored_digests.update(page.digests)
+            if len(stored_digests) > max_objects or (
+                page.truncated and len(stored_digests) >= max_objects
+            ):
+                truncated = True
+                break
+            if not page.truncated:
+                break
+            if page.next_cursor is None:
+                raise ValueError("truncated artifact inventory page is missing its cursor")
+            if page.next_cursor in seen_cursors:
+                raise ValueError("artifact inventory cursor repeated")
+            seen_cursors.add(page.next_cursor)
+            cursor = page.next_cursor
+    else:
+        return ArtifactRetentionPlan((), (), inventory_truncated=True)
+
+    if truncated:
+        return ArtifactRetentionPlan((), (), inventory_truncated=True)
+    return ArtifactRetentionPlan((), tuple(sorted(stored_digests - live_digests)))
+
+
+def _validate_digest(digest: object) -> None:
+    if (
+        not isinstance(digest, str)
+        or len(digest) != 64
+        or any(char not in "0123456789abcdef" for char in digest)
+    ):
+        raise ValueError("artifact reference digests must be lowercase sha256 hex")
 
 
 def collect_unreferenced(store: ArtifactStore, live_digests: Iterable[str]) -> tuple[str, ...]:
@@ -34,4 +131,9 @@ def collect_unreferenced(store: ArtifactStore, live_digests: Iterable[str]) -> t
     return tuple(sorted(deleted))
 
 
-__all__ = ("collect_unreferenced",)
+__all__ = (
+    "ArtifactRetentionPlan",
+    "REQUIRED_ARTIFACT_REFERENCE_SOURCES",
+    "collect_unreferenced",
+    "plan_unreferenced",
+)
