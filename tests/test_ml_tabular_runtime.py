@@ -283,6 +283,53 @@ def test_one_hot_uses_training_vocabulary_and_unknown_values_map_to_zero() -> No
     assert len(predictions) == 1
 
 
+def test_combined_preprocessing_fits_numeric_medians_and_categories_on_training_rows() -> None:
+    import json
+
+    from sklearn.model_selection import train_test_split
+
+    labels = ["yes" if index % 2 else "no" for index in range(20)]
+    train_indices, test_indices = train_test_split(
+        list(range(20)), test_size=0.25, random_state=7, stratify=labels
+    )
+    held_out = test_indices[0]
+    missing_training = train_indices[0]
+    rows = tuple(
+        {
+            "segment": "held-out" if index == held_out else ("blue" if index % 2 else "red"),
+            "age": None
+            if index == missing_training
+            else (10000.0 if index == held_out else float(index)),
+            "label": labels[index],
+        }
+        for index in range(20)
+    )
+    trained = train_tabular(
+        rows,
+        TrainingSpec(
+            "classification",
+            "logistic_regression",
+            ("segment", "age"),
+            "label",
+            test_fraction=0.25,
+            random_seed=7,
+            preprocessor="one_hot_median_impute",
+            categorical_features=("segment",),
+        ),
+    )
+    preprocessing = json.loads(trained.artifact_bytes)["preprocessing"]
+    expected_median = median(float(index) for index in train_indices if index != missing_training)
+    assert preprocessing["categories"] == {"segment": ["blue", "red"]}
+    assert preprocessing["medians"] == {"age": expected_median}
+    unknown_with_missing = predict_tabular(
+        trained.artifact_bytes, ({"segment": "unseen", "age": None},)
+    )
+    unknown_with_imputed = predict_tabular(
+        trained.artifact_bytes, ({"segment": "unseen", "age": expected_median},)
+    )
+    assert unknown_with_missing == unknown_with_imputed
+
+
 def test_one_hot_rejects_invalid_or_unsorted_artifact_vocabulary() -> None:
     import json
 

@@ -28,7 +28,9 @@ Algorithm: TypeAlias = Literal[
     "gradient_boosting_classifier",
     "gradient_boosting_regressor",
 ]
-Preprocessor: TypeAlias = Literal["identity", "standard_scale", "one_hot", "median_impute"]
+Preprocessor: TypeAlias = Literal[
+    "identity", "standard_scale", "one_hot", "median_impute", "one_hot_median_impute"
+]
 ClassificationLabel: TypeAlias = bool | int | float | str
 
 _ARTIFACT_SCHEMA = "ronin.sklearn.tabular/v3"
@@ -148,7 +150,13 @@ class TrainingSpec:
     def __post_init__(self) -> None:
         if self.task not in {"classification", "regression"}:
             raise ValueError("unsupported ML task")
-        if self.preprocessor not in {"identity", "standard_scale", "one_hot", "median_impute"}:
+        if self.preprocessor not in {
+            "identity",
+            "standard_scale",
+            "one_hot",
+            "median_impute",
+            "one_hot_median_impute",
+        }:
             raise ValueError("unsupported ML preprocessor")
         categorical_features = tuple(
             _text(item, "categorical feature") for item in self.categorical_features
@@ -157,9 +165,9 @@ class TrainingSpec:
             categorical_features
         ) <= set(self.features):
             raise ValueError("categorical features must be unique training features")
-        if categorical_features and self.preprocessor != "one_hot":
-            raise ValueError("categorical features require the one_hot preprocessor")
-        if self.preprocessor == "one_hot" and not categorical_features:
+        if categorical_features and self.preprocessor not in {"one_hot", "one_hot_median_impute"}:
+            raise ValueError("categorical features require a one_hot preprocessor")
+        if self.preprocessor in {"one_hot", "one_hot_median_impute"} and not categorical_features:
             raise ValueError("one_hot preprocessing requires categorical features")
         if (
             self.algorithm not in ALGORITHM_CAPABILITIES
@@ -240,7 +248,9 @@ def _matrix(
                 vector.append(value)
             else:
                 value = row[name]
-                if spec.preprocessor == "median_impute" and (value is None or value == ""):
+                if spec.preprocessor in {"median_impute", "one_hot_median_impute"} and (
+                    value is None or value == ""
+                ):
                     vector.append(None)
                 else:
                     vector.append(_finite_float(value, f"ML feature {name!r}"))
@@ -317,6 +327,41 @@ def _median_impute_matrix(
             ]
             for row in rows
         ]
+
+    return transform(train), transform(evaluation), medians
+
+
+def _median_impute_numeric_columns(
+    train: Sequence[Sequence[float | str | None]],
+    evaluation: Sequence[Sequence[float | str | None]],
+    *,
+    features: tuple[str, ...],
+    categorical_features: tuple[str, ...],
+) -> tuple[list[list[float | str]], list[list[float | str]], dict[str, float]]:
+    medians: dict[str, float] = {}
+    numeric_indices = [
+        index for index, name in enumerate(features) if name not in categorical_features
+    ]
+    for index in numeric_indices:
+        feature = features[index]
+        observed = [row[index] for row in train if row[index] is not None]
+        if not observed:
+            raise ValueError(f"numeric feature {feature!r} has no training values for imputation")
+        medians[feature] = _finite_float(median(cast(list[float], observed)), "imputation median")
+
+    def transform(rows: Sequence[Sequence[float | str | None]]) -> list[list[float | str]]:
+        transformed: list[list[float | str]] = []
+        for row in rows:
+            vector: list[float | str] = []
+            for name, value in zip(features, row, strict=True):
+                if name in categorical_features:
+                    vector.append(cast(str, value))
+                elif value is None:
+                    vector.append(medians[name])
+                else:
+                    vector.append(_finite_float(value, f"ML feature {name!r}"))
+            transformed.append(vector)
+        return transformed
 
     return transform(train), transform(evaluation), medians
 
@@ -526,6 +571,35 @@ def train_tabular(
             "means": [_finite_float(value, "preprocessor mean") for value in means.tolist()],
             "scales": [_finite_float(value, "preprocessor scale") for value in scales.tolist()],
         }
+    elif spec.preprocessor == "one_hot_median_impute":
+        x_train, x_test, numeric_medians = _median_impute_numeric_columns(
+            cast(Sequence[Sequence[float | str | None]], x_train),
+            cast(Sequence[Sequence[float | str | None]], x_test),
+            features=spec.features,
+            categorical_features=spec.categorical_features,
+        )
+        x_train, categories, model_features = _one_hot_matrix(
+            x_train,
+            features=spec.features,
+            categorical_features=spec.categorical_features,
+        )
+        x_test, _, _ = _one_hot_matrix(
+            x_test,
+            features=spec.features,
+            categorical_features=spec.categorical_features,
+            categories=categories,
+        )
+        preprocessing = {
+            "kind": "one_hot_median_impute",
+            "categories": {column: list(values) for column, values in categories.items()},
+            "medians": numeric_medians,
+        }
+        model_spec = replace(
+            spec,
+            features=model_features,
+            categorical_features=(),
+            preprocessor="identity",
+        )
     elif spec.preprocessor == "one_hot":
         x_train, categories, model_features = _one_hot_matrix(
             x_train,
@@ -732,8 +806,14 @@ def _artifact_payload(artifact_bytes: bytes) -> dict[str, object]:
         preprocessing["medians"] = [
             _finite_float(value, "imputation median") for value in raw_medians
         ]
-    elif preprocessing.get("kind") == "one_hot":
-        if set(preprocessing) != {"kind", "categories"}:
+    elif preprocessing.get("kind") in {"one_hot", "one_hot_median_impute"}:
+        kind = preprocessing.get("kind")
+        expected_shape = (
+            {"kind", "categories", "medians"}
+            if kind == "one_hot_median_impute"
+            else {"kind", "categories"}
+        )
+        if set(preprocessing) != expected_shape:
             raise ValueError("one_hot preprocessing has invalid shape")
         raw_categories = preprocessing.get("categories")
         if not isinstance(raw_categories, dict) or not raw_categories:
@@ -758,6 +838,15 @@ def _artifact_payload(artifact_bytes: bytes) -> dict[str, object]:
         if expanded_width > _MAX_PREPROCESSED_FEATURES:
             raise ValueError("one_hot output exceeds the configured feature limit")
         preprocessing["categories"] = categories
+        if kind == "one_hot_median_impute":
+            raw_medians = preprocessing.get("medians")
+            numeric_features = set(features) - set(categories)
+            if not isinstance(raw_medians, dict) or set(raw_medians) != numeric_features:
+                raise ValueError("combined preprocessing medians must match numeric features")
+            preprocessing["medians"] = {
+                name: _finite_float(value, "imputation median")
+                for name, value in raw_medians.items()
+            }
     else:
         raise ValueError("ML artifact has unsupported preprocessing")
     return normalized
@@ -768,7 +857,7 @@ def _prediction_matrix(
     features: tuple[str, ...],
     *,
     categories: Mapping[str, tuple[str, ...]] | None = None,
-    medians: Sequence[float] | None = None,
+    medians: Sequence[float] | Mapping[str, float] | None = None,
 ) -> list[list[float]]:
     category_map = categories or {}
     matrix: list[list[float]] = []
@@ -788,7 +877,12 @@ def _prediction_matrix(
             else:
                 value = row[name]
                 if medians is not None and (value is None or value == ""):
-                    vector.append(medians[len(vector)])
+                    median_value = (
+                        medians[name]
+                        if isinstance(medians, Mapping)
+                        else medians[features.index(name)]
+                    )
+                    vector.append(median_value)
                 else:
                     vector.append(_finite_float(value, f"prediction feature {name!r}"))
         matrix.append(vector)
@@ -882,15 +976,17 @@ def predict_tabular(
         raise ValueError("ML artifact feature signature does not match registered model")
     preprocessing = cast(Mapping[str, object], payload["preprocessing"])
     categories = cast(Mapping[str, tuple[str, ...]], preprocessing.get("categories", {}))
-    medians = (
-        cast(list[float], preprocessing["medians"])
-        if preprocessing["kind"] == "median_impute"
-        else None
-    )
+    medians: Sequence[float] | Mapping[str, float] | None
+    if preprocessing["kind"] == "median_impute":
+        medians = cast(list[float], preprocessing["medians"])
+    elif preprocessing["kind"] == "one_hot_median_impute":
+        medians = cast(Mapping[str, float], preprocessing["medians"])
+    else:
+        medians = None
     matrix = _prediction_matrix(rows, features, categories=categories, medians=medians)
     model_features = (
         tuple(f"feature_{index}" for index in range(len(matrix[0])))
-        if matrix and preprocessing["kind"] == "one_hot"
+        if matrix and preprocessing["kind"] in {"one_hot", "one_hot_median_impute"}
         else features
     )
     model_feature_count = (
@@ -911,7 +1007,7 @@ def predict_tabular(
     inference_rows: Sequence[Mapping[str, object]] = rows
     if preprocessing["kind"] == "standard_scale":
         inference_rows = tuple(dict(zip(features, vector, strict=True)) for vector in matrix)
-    elif preprocessing["kind"] == "one_hot":
+    elif preprocessing["kind"] in {"one_hot", "one_hot_median_impute"}:
         inference_rows = tuple(dict(zip(model_features, vector, strict=True)) for vector in matrix)
     parameters = cast(Mapping[str, object], payload["parameters"])
 
