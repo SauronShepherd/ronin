@@ -11,11 +11,14 @@ from .ports import ArtifactStore, PagedArtifactStore
 REQUIRED_ARTIFACT_REFERENCE_SOURCES = frozenset(
     {
         "catalog_revisions",
+        "connector_sync_outputs",
+        "data_engineering_revisions",
         "durable_execution_results",
         "durable_job_checkpoints",
         "local_files",
         "ml_runs",
         "registered_models",
+        "synthetic_data_exports",
     }
 )
 

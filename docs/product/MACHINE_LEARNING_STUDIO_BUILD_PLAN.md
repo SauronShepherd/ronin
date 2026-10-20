@@ -514,7 +514,7 @@ La verificación local pasó **69 pruebas Python focalizadas y 81/81 Playwright*
 
 | Requisito | Criterio de diseño |
 | --- | --- |
-| Descubrir referencias sin depender del llamador | Enumerar referencias de Labs/datasets, ejecuciones durables, MLRun records y todas las versiones registradas. Una fuente incompleta debe impedir el barrido. |
+| Descubrir referencias sin depender del llamador | Enumerar revisiones del catálogo, snapshots de archivos locales, evidencia y checkpoints durables, MLRun records, versiones registradas, salidas de conectores, revisiones de ingeniería de datos y exports sintéticos. Una fuente incompleta debe impedir el barrido. |
 | Preservar objetos vivos durante carreras concurrentes | Separar inventario de candidatos de borrado; volver a comprobar referencias inmediatamente antes de eliminar y hacer la operación idempotente. |
 | Operación observable y acotada | Exponer primero un plan dry-run con digest, rol, edad y fuente; paginar el inventario y limitar objetos por ciclo. |
 | No borrar datos generales al limpiar resultados ML | Identificar roles y productores de cada objeto; no eliminar un digest sólo porque una referencia de ML dejó de existir si otro producto lo usa. |
@@ -540,9 +540,9 @@ La verificación local pasó **72 pruebas Python focalizadas**. La suite Playwri
 
 | Criterio | Evidencia local |
 | --- | --- |
-| Exigir el conjunto conocido de fuentes | `plan_unreferenced()` requiere catálogo, resultados durables, checkpoints, archivos locales, MLRun y versiones registradas; rechaza fuentes desconocidas. |
+| Exigir el conjunto conocido de fuentes | `plan_unreferenced()` requiere revisiones de catálogo, salidas de conectores, revisiones de ingeniería de datos, resultados y checkpoints durables, archivos locales, MLRun, versiones registradas y exports sintéticos; rechaza fuentes desconocidas. |
 | Fallar cerrado ante cobertura incompleta | Una fuente ausente devuelve `all_required_sources_supplied=false` y ningún candidato. Un inventario que supera el límite también devuelve cero candidatos. |
 | Limitar el inventario | Usa páginas cuando el store implementa `PagedArtifactStore`, con tamaño de página y máximo de objetos configurables y validados. |
 | Hacer el primer paso no destructivo | El plan lista digests candidatos ordenados y no llama a `delete`; las pruebas verifican que candidatos y objetos vivos siguen presentes. |
 
-La batería focalizada de artifacts/paginación pasó **37 pruebas**, junto con Ruff, formato, mypy y `git diff --check`. Este helper exige un snapshot preparado por el llamador, así que aún no puede demostrar que dicho snapshot sea completo. El siguiente trabajo debe conectar y cualificar cada fuente de referencias, añadir edad/rol a la vista de inventario y cubrir carreras antes de habilitar cualquier borrado automático. La limpieza global permanece deshabilitada. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+La batería focalizada de artifacts/paginación pasó **37 pruebas**, junto con Ruff, formato, mypy y `git diff --check`. El inventario de productores encontró estas nueve familias en `put_bytes()`; el snapshot aún lo prepara el llamador, así que el helper no puede demostrar que los datos de cada familia sean exhaustivos. El siguiente trabajo debe conectar y cualificar cada enumerador, añadir edad/rol a la vista de inventario y cubrir carreras antes de habilitar cualquier borrado automático. La limpieza global permanece deshabilitada. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
