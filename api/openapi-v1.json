@@ -936,6 +936,14 @@
         "responses": {"200": {"description": "Workspace-scoped ML execution snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLExecutionSnapshot"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}}
       }
     },
+    "/v1/ml-studio/executions/{run_id}/register": {
+      "post": {
+        "operationId": "registerMlStudioExecutionModel",
+        "parameters": [{"name": "run_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["model_id", "version"], "properties": {"model_id": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}}}}}},
+        "responses": {"200": {"description": "Registered model version from a successful durable execution", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}}
+      }
+    },
     "/v1/ml-studio/executions/{run_id}/cancel": {
       "post": {
         "operationId": "cancelMlStudioExecution",

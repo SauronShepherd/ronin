@@ -229,6 +229,13 @@ class MachineLearningStudioPlugin:
         )
         context.contributions.add_route(
             "POST",
+            "/v1/ml-studio/executions/{run_id}/register",
+            context.plugin_id,
+            self.register_execution_model,
+            permission="ml-studio:write",
+        )
+        context.contributions.add_route(
+            "POST",
             "/v1/ml-studio/executions/{run_id}/cancel",
             context.plugin_id,
             self.cancel_execution,
@@ -833,6 +840,179 @@ class MachineLearningStudioPlugin:
     ) -> dict[str, object]:
         workspace_id = self._workspace(workspace_id, _kwargs)
         return self._coordinator.status(workspace_id, run_id).to_payload()
+
+    def register_execution_model(
+        self,
+        run_id: str,
+        workspace_id: str | None = None,
+        *,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        """Register a verified model artifact produced by a durable execution."""
+        if self._registry is None or self._artifacts is None or self._labs is None:
+            raise RuntimeError("model registration requires registry, artifact store and labs")
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        if (
+            not isinstance(body, dict)
+            or set(body) != {"model_id", "version"}
+            or not isinstance(body.get("model_id"), str)
+            or not isinstance(body.get("version"), str)
+        ):
+            raise ValueError("registration requires exactly model_id and version")
+        from studio_core.ml import (
+            Experiment,
+            ExperimentId,
+            MetricValue,
+            MLRunId,
+            MLRunRecord,
+            ModelId,
+            ModelSignature,
+            ModelVersion,
+            RegisteredModelVersion,
+        )
+
+        snapshot = self._coordinator.status(workspace_id, run_id)
+        if snapshot.state != "succeeded" or not isinstance(snapshot.result_payload, dict):
+            raise ValueError(
+                "only a succeeded execution with a materialized model can be registered"
+            )
+        result = snapshot.result_payload
+        required = {
+            "task",
+            "algorithm",
+            "features",
+            "artifact_ref",
+            "artifact_digest",
+            "artifact_media_type",
+            "artifact_size_bytes",
+        }
+        if not required.issubset(result):
+            raise ValueError("execution result does not contain a registrable model artifact")
+        features = result["features"]
+        artifact_ref = result["artifact_ref"]
+        digest = result["artifact_digest"]
+        media_type = result["artifact_media_type"]
+        size_bytes = result["artifact_size_bytes"]
+        task = result["task"]
+        algorithm = result["algorithm"]
+        backend_id = result.get("backend_id")
+        if (
+            not isinstance(features, list)
+            or not features
+            or not all(isinstance(name, str) for name in features)
+            or not isinstance(artifact_ref, str)
+            or not isinstance(digest, str)
+            or len(digest) != 64
+            or any(character not in "0123456789abcdef" for character in digest)
+            or not isinstance(media_type, str)
+            or not isinstance(size_bytes, int)
+            or isinstance(size_bytes, bool)
+            or size_bytes < 1
+            or size_bytes > 64 * 1024 * 1024
+            or not isinstance(task, str)
+            or task not in {"classification", "regression", "clustering"}
+            or not isinstance(algorithm, str)
+            or not isinstance(backend_id, str)
+            or not backend_id
+        ):
+            raise ValueError("execution model artifact metadata is invalid")
+        if not hasattr(self._artifacts, "get_bytes_by_storage_ref"):
+            raise ValueError("artifact store does not support verified storage references")
+        artifact = self._artifacts.get_bytes_by_storage_ref(artifact_ref, digest=digest)
+        if len(artifact) != size_bytes or hashlib.sha256(artifact).hexdigest() != digest:
+            raise ValueError("execution model artifact failed integrity verification")
+
+        lab = self._labs.get(WorkspaceId(workspace_id), snapshot.lab_id)
+        expected_features = tuple(
+            feature.column for feature in lab.features if feature.role != "ignored"
+        )
+        if (
+            lab.digest != snapshot.lab_digest
+            or lab.task != task
+            or lab.id != result.get("lab_id")
+            or lab.backend_id != backend_id
+            or tuple(features) != expected_features
+        ):
+            raise ValueError("execution Lab identity does not match its model result")
+        rows_value = json.loads(snapshot.rows_json) if snapshot.rows_json is not None else None
+        if (
+            not isinstance(rows_value, list)
+            or not rows_value
+            or not all(isinstance(row, dict) for row in rows_value)
+        ):
+            raise ValueError("execution input snapshot is unavailable for model signature")
+        rows = cast(list[dict[str, object]], rows_value)
+        from .service import _input_signature, _output_signature
+
+        if task == "clustering":
+            inertia = result.get("inertia")
+            if (
+                media_type != "application/vnd.ronin.ml-kmeans+json"
+                or algorithm != "kmeans"
+                or not isinstance(inertia, (int, float))
+                or isinstance(inertia, bool)
+            ):
+                raise ValueError("clustering result has an unsupported model artifact type")
+            signature = ModelSignature(
+                _input_signature(rows, tuple(features)), (("cluster", "int64"),)
+            )
+            metrics: tuple[MetricValue, ...] = (MetricValue("inertia", float(inertia)),)
+            framework = "ronin-kmeans"
+        else:
+            if media_type != "application/vnd.ronin.sklearn-tabular+json":
+                raise ValueError("supervised result has an unsupported model artifact type")
+            target = result.get("target")
+            if not isinstance(target, str) or target != lab.target:
+                raise ValueError("supervised execution result is missing its target")
+            signature = ModelSignature(
+                _input_signature(rows, tuple(features)), _output_signature(task, target)
+            )
+            raw_metrics = result.get("metrics")
+            if isinstance(raw_metrics, dict):
+                metric_items = list(raw_metrics.items())
+            elif isinstance(raw_metrics, list):
+                try:
+                    metric_items = [(str(pair[0]), float(pair[1])) for pair in raw_metrics]
+                except (IndexError, TypeError, ValueError) as exc:
+                    raise ValueError("execution metrics are invalid") from exc
+            else:
+                raise ValueError("supervised execution result is missing metrics")
+            try:
+                metrics = tuple(
+                    MetricValue(str(name), float(value)) for name, value in metric_items
+                )
+            except (TypeError, ValueError) as exc:
+                raise ValueError("execution metrics are invalid") from exc
+            framework = "sklearn"
+        model_id = ModelId(body["model_id"])
+        model_version = ModelVersion(body["version"])
+        ml_run_id = MLRunId(run_id)
+        experiment_id = ExperimentId(lab.id)
+        self._registry.put_experiment(
+            WorkspaceId(workspace_id),
+            Experiment(experiment_id, lab.name, lab.project_id),
+            now="plugin",
+        )
+        record = MLRunRecord(
+            ml_run_id,
+            experiment_id,
+            f"ml-studio-execution:{run_id}",
+            lab.digest,
+            (lab.dataset,),
+            parameters=(("algorithm", algorithm), ("backend_id", backend_id), ("task", task)),
+            metrics=metrics,
+            artifact_refs=(artifact_ref,),
+        )
+        self._registry.record_run(WorkspaceId(workspace_id), record, now="plugin")
+        registered = self._registry.register_model(
+            WorkspaceId(workspace_id),
+            RegisteredModelVersion(
+                model_id, model_version, ml_run_id, artifact_ref, digest, framework, signature
+            ),
+            now="plugin",
+        )
+        return registered.to_payload()
 
     def cancel_execution(
         self, run_id: str, workspace_id: str | None = None, **_kwargs: Any

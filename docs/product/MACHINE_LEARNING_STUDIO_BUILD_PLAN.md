@@ -379,5 +379,16 @@ Este slice no cierra el executor completo: sólo las seis etapas locales existen
 
 El PR [#441](https://github.com/SauronShepherd/ronin/pull/441) pasó CI Python 3.11/3.12, calidad, seguridad, verificación, ledgers y Docker qualification (**8m54s**, PostgreSQL, worker Docker real y aceptación estricta). En Windows, la suite completa pasó **3752 tests con 51 omitidos**; la cobertura de `studio_storage/artifacts.py` subió a **80,263%**, por lo que el baseline con margen de 2,1 puntos se actualizó de 77,30% a 78,17% tanto en `coverage-storage-files` como en `coverage-storage-files-full`. La puerta local por archivo pasó para 54 módulos.
 
-La salida durable expone URI, digest, media type y tamaño; aún falta un endpoint de lectura con autorización/aislamiento y completar el flujo ejecución→MLRun→registro/promoción. Continúan abiertos retry selectivo, invalidación aguas abajo, identidad de resultados ligada a versión de runner y una política de retención/limpieza de artefactos. P8 permanece parcial y release-qualified sigue en **0% (0/14)**.
+La salida durable expone URI, digest, media type y tamaño; el candidato actual añade el registro controlado de ejecuciones exitosas en MLRun y como versiones candidatas, pendiente de cualificación exact-head. Aún faltan lectura HTTP autorizada con aislamiento, integración UI y el recorrido hasta promoción. Continúan abiertos retry selectivo, invalidación aguas abajo, identidad de resultados ligada a versión de runner y una política de retención/limpieza de artefactos. P8 permanece parcial y release-qualified sigue en **0% (0/14)**.
+
+## 23. Registro de resultados de ejecuciones durables
+
+**Progreso técnico local: 2/2 criterios implementados; cualificación exact-head pendiente.**
+
+| Criterio técnico | Evidencia local |
+| --- | --- |
+| Registrar sólo una ejecución exitosa con artifact materializado | `POST /v1/ml-studio/executions/{run_id}/register` exige estado `succeeded`, metadatos completos y ArtifactStore disponible; revalida tamaño y SHA-256 antes de escribir en el registry. |
+| Crear procedencia y versión candidata idempotentes | Registra Experiment y MLRun ligados al Lab/dataset, luego el model version con digest, firma inferida y referencia content-addressed; el registry hace idempotentes escrituras idénticas y rechaza conflictos. |
+
+Las pruebas focalizadas verifican el flujo tabular, la firma/digest/procedencia y el rechazo de ejecuciones aún activas. El handler requiere autorización `ml-studio:write`; el contenido del artifact no se sirve por este endpoint. Aún faltan lectura autorizada de artifacts, soporte del journey completo en UI, promoción desde la ejecución, retry selectivo, invalidación aguas abajo y fijar checkpoints al runtime. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
 
