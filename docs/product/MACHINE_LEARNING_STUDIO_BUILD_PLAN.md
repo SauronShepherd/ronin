@@ -390,5 +390,20 @@ La salida durable expone URI, digest, media type y tamaño; el candidato actual 
 | Registrar sólo una ejecución exitosa con artifact materializado | `POST /v1/ml-studio/executions/{run_id}/register` exige estado `succeeded`, metadatos completos y ArtifactStore disponible; revalida tamaño y SHA-256 antes de escribir en el registry. |
 | Crear procedencia y versión candidata idempotentes | Registra Experiment y MLRun ligados al Lab/dataset, luego el model version con digest, firma inferida y referencia content-addressed; el registry hace idempotentes escrituras idénticas y rechaza conflictos. |
 
-Las pruebas focalizadas verifican el flujo tabular, la firma/digest/procedencia y el rechazo de ejecuciones aún activas. El handler requiere autorización `ml-studio:write`; el contenido del artifact no se sirve por este endpoint. El candidato UI añade el formulario de registro al completar correctamente una ejecución y actualiza la lista de modelos tras el registro. Aún faltan lectura autorizada de artifacts, probar el journey con servicios reales, promoción directa desde la ejecución, retry selectivo, invalidación aguas abajo y fijar checkpoints al runtime. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+Las pruebas focalizadas verifican el flujo tabular, la firma/digest/procedencia y el rechazo de ejecuciones aún activas. El handler requiere autorización `ml-studio:write`; el contenido del artifact no se sirve por este endpoint. El candidato UI añade el formulario de registro al completar correctamente una ejecución y actualiza la lista de modelos tras el registro. Aún faltan probar el journey con servicios reales, promoción directa desde la ejecución, retry selectivo, invalidación aguas abajo y fijar checkpoints al runtime. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+
+## 24. Lectura HTTP autorizada de artifacts de modelos
+
+**Progreso técnico local: 6/6 criterios implementados; cualificación exact-head pendiente.**
+
+| Criterio técnico | Evidencia local |
+| --- | --- |
+| Autorizar por permiso de lectura y workspace | `GET /v1/ml-studio/models/{model_id}/{version}/artifact` usa `ml-studio:read` y busca la versión dentro del `WorkspaceId` autenticado. |
+| Verificar la referencia antes de revelar bytes | El digest debe ser SHA-256 válido; el ArtifactStore recupera por ref+digest y el handler vuelve a verificar digest y límite de 64 MiB. |
+| Acotar transferencia y permitir reanudación | Responde Base64 en bloques de hasta 512 KiB, con offset, next_offset, tamaño total, digest y media type para reconstrucción/reanudación. |
+| Rechazar rangos ambiguos o fuera de límites | Parámetros desconocidos/duplicados, offset inválido o longitudes fuera de rango fallan antes de responder. |
+| Descargar desde la UI sin cargar el artifact entero en una respuesta | La UI solicita bloques acotados, valida identidad, metadatos y continuidad de offsets y sólo crea el archivo al completar el tamaño declarado. |
+| Probar la reconstrucción del artifact en navegador | Playwright simula un artifact de dos bloques, verifica ambos offsets, el nombre descargado y el estado de éxito. |
+
+Las pruebas de API cubren reconstrucción por varios bloques, aislamiento por workspace, rango, límites y corrupción. Playwright verifica el flujo de descarga desde el registry; OpenAPI documenta parámetros y respuesta. La cualificación exact-head en Docker/Web y la prueba con ArtifactStore remoto siguen pendientes. P8 continúa parcial y release-qualified permanece en **0% (0/14)**.
 

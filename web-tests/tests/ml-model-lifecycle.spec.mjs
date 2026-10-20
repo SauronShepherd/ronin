@@ -51,3 +51,27 @@ test('ML Studio registers a successful durable run as a candidate model', async 
   await expect(page.locator('#ml-register-execution')).toContainText('Registered candidate churn@run-ui');
   await expect(page.locator('#ml-models')).toContainText('churn');
 });
+
+test('ML Studio downloads a verified artifact in bounded chunks', async ({ page }) => {
+  const requests = [];
+  await page.route('**/v1/ml-studio/labs**', route => route.fulfill({json: {items: []}}));
+  await page.route('**/v1/ml-studio/models?**', route => route.fulfill({json: {
+    items: [{model_id: 'model-a', version: 'v1', stage: 'candidate'}],
+  }}));
+  await page.route('**/v1/ml-studio/models/model-a/v1/artifact**', async route => {
+    const url = new URL(route.request().url());
+    const offset = Number(url.searchParams.get('offset'));
+    requests.push(offset);
+    const common = {model_id: 'model-a', version: 'v1', digest: 'a'.repeat(64), media_type: 'application/octet-stream', size_bytes: 5};
+    await route.fulfill({json: offset === 0
+      ? {...common, offset: 0, next_offset: 3, complete: false, data_base64: 'YWJj'}
+      : {...common, offset: 3, next_offset: null, complete: true, data_base64: 'ZGU='}});
+  });
+  await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('[data-feature="ml-download"]').click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe('model-a-v1.artifact');
+  await expect(page.locator('#ml-output')).toContainText('Downloaded model-a@v1 (5 bytes');
+  expect(requests).toEqual([0, 3]);
+});

@@ -290,6 +290,13 @@ class MachineLearningStudioPlugin:
             self.model_card,
             permission="ml-studio:read",
         )
+        context.contributions.add_route(
+            "GET",
+            "/v1/ml-studio/models/{model_id}/{version}/artifact",
+            context.plugin_id,
+            self.model_artifact,
+            permission="ml-studio:read",
+        )
 
     def startup(self) -> None:
         self._coordinator.start()
@@ -473,6 +480,79 @@ class MachineLearningStudioPlugin:
             "framework": model.framework,
             "signature": model.signature.to_payload(),
             "limitations": ["Review dataset quality and evaluation evidence before promotion."],
+        }
+
+    def model_artifact(
+        self,
+        model_id: str,
+        version: str,
+        workspace_id: str | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        """Return a digest-verified, bounded chunk of a workspace model artifact."""
+        if self._registry is None or self._artifacts is None:
+            raise RuntimeError("model artifact retrieval requires registry and artifact store")
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        raw_query = _kwargs.get("query")
+        query = parse_qs(raw_query if isinstance(raw_query, str) else "", keep_blank_values=True)
+        if set(query) - {"workspace_id", "offset", "length"} or any(
+            len(values) != 1 for values in query.values()
+        ):
+            raise ValueError("artifact query contains unknown or duplicate parameters")
+
+        def query_int(name: str, default: int) -> int:
+            value = query.get(name, [str(default)])[0]
+            if not value.isascii() or not value.isdecimal():
+                raise ValueError(f"artifact {name} must be a non-negative integer")
+            return int(value)
+
+        offset = query_int("offset", 0)
+        length = query_int("length", 512 * 1024)
+        max_chunk = 512 * 1024
+        if length < 1 or length > max_chunk:
+            raise ValueError(f"artifact length must be between 1 and {max_chunk}")
+
+        from studio_core.ml import ModelId, ModelVersion
+
+        model = self._registry.get_model(
+            WorkspaceId(workspace_id), ModelId(model_id), ModelVersion(version)
+        )
+        if model is None:
+            raise KeyError(f"{model_id}@{version}")
+        if model.framework == "sklearn":
+            media_type = "application/vnd.ronin.sklearn-tabular+json"
+        elif model.framework == "ronin-kmeans":
+            media_type = "application/vnd.ronin.ml-kmeans+json"
+        else:
+            raise ValueError(f"unsupported model artifact framework: {model.framework}")
+        if len(model.artifact_digest) != 64 or any(
+            character not in "0123456789abcdef" for character in model.artifact_digest
+        ):
+            raise ValueError("registered model artifact digest is invalid")
+        getter = getattr(self._artifacts, "get_bytes_by_storage_ref", None)
+        if not callable(getter):
+            raise ValueError("artifact store does not support verified storage references")
+        data = getter(model.artifact_ref, digest=model.artifact_digest)
+        if (
+            not isinstance(data, bytes)
+            or not data
+            or len(data) > 64 * 1024 * 1024
+            or hashlib.sha256(data).hexdigest() != model.artifact_digest
+        ):
+            raise ValueError("registered model artifact failed integrity verification")
+        if offset > len(data):
+            raise ValueError("artifact offset exceeds artifact size")
+        end = min(offset + length, len(data))
+        return {
+            "model_id": model.model_id.value,
+            "version": model.version.value,
+            "digest": model.artifact_digest,
+            "media_type": media_type,
+            "size_bytes": len(data),
+            "offset": offset,
+            "next_offset": end if end < len(data) else None,
+            "complete": end == len(data),
+            "data_base64": base64.b64encode(data[offset:end]).decode("ascii"),
         }
 
     def list_labs(self, workspace_id: str, **_kwargs: Any) -> dict[str, object]:
