@@ -339,6 +339,49 @@ def test_cell_results_evidence_and_terminal_completion(store) -> None:
     assert completed.state is JobState.SUCCEEDED
 
 
+def test_bounded_cell_results_and_evidence_readers(store) -> None:
+    store.create_job(_job(), _run())
+    claim = _claim(store)
+    results = (
+        _result(),
+        StoredCellResult(
+            RunId("run-1"),
+            "cell-2",
+            "d" * 64,
+            "e" * 64,
+            "succeeded",
+            "{}",
+            HEARTBEAT,
+        ),
+    )
+    evidence = (
+        _evidence(),
+        StoredEvidenceRef(
+            RunId("run-1"),
+            "cell-2",
+            "stderr",
+            "sha256",
+            "f" * 64,
+            "text/plain",
+            1,
+            "artifact://sha256/" + "f" * 64,
+        ),
+    )
+    for result in results:
+        store.put_cell_result(claim.attempt_id, result, **_write_kwargs(claim))
+    for ref in evidence:
+        store.put_evidence(claim.attempt_id, ref, **_write_kwargs(claim))
+
+    assert store.read_cell_results_bounded(RunId("run-1"), limit=0) == (results[0],)
+    assert store.read_cell_results_bounded(RunId("run-1"), limit=1) == results
+    assert store.read_evidence_bounded(RunId("run-1"), limit=0) == (evidence[0],)
+    assert store.read_evidence_bounded(RunId("run-1"), limit=1) == evidence
+    with pytest.raises(ValueError, match="cell result limit must be non-negative"):
+        store.read_cell_results_bounded(RunId("run-1"), limit=-1)
+    with pytest.raises(ValueError, match="evidence limit must be non-negative"):
+        store.read_evidence_bounded(RunId("run-1"), limit=-1)
+
+
 def test_worker_writes_fail_closed_for_wrong_or_expired_lease(store) -> None:
     store.create_job(_job(), _run())
     claim = _claim(store)
