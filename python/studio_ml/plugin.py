@@ -750,6 +750,7 @@ class MachineLearningStudioPlugin:
         if not isinstance(preprocessor, str) or preprocessor not in {
             "identity",
             "standard_scale",
+            "one_hot",
         }:
             raise ValueError("preprocessor is not supported")
         if lab.task == "clustering" and preprocessor != "identity":

@@ -120,6 +120,28 @@ def test_pipeline_preprocessor_is_pinned_and_executed() -> None:
     assert artifact["preprocessing"]["kind"] == "standard_scale"
 
 
+def test_one_hot_pipeline_uses_lab_categorical_roles() -> None:
+    import json
+
+    lab = Lab(
+        "segments",
+        "Segments",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("segment", "categorical"), FeatureSpec("age", "numeric")),
+    )
+    rows = [
+        {"segment": "blue" if index % 2 else "red", "age": float(index), "target": index % 2}
+        for index in range(20)
+    ]
+    pipeline = compile_lab_pipeline(lab, preprocessor="one_hot")
+    result = LocalExperimentRunner().execute_pipeline(lab, rows, pipeline)
+    artifact = json.loads(result.model.artifact_bytes)
+    assert artifact["preprocessing"]["categories"]["segment"] == ["blue", "red"]
+
+
 def test_local_runner_restores_all_persisted_node_outputs_without_reexecution() -> None:
     lab = _lab()
     pipeline = compile_lab_pipeline(lab)

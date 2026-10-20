@@ -27,11 +27,14 @@ Algorithm: TypeAlias = Literal[
     "gradient_boosting_classifier",
     "gradient_boosting_regressor",
 ]
-Preprocessor: TypeAlias = Literal["identity", "standard_scale"]
+Preprocessor: TypeAlias = Literal["identity", "standard_scale", "one_hot"]
 ClassificationLabel: TypeAlias = bool | int | float | str
 
 _ARTIFACT_SCHEMA = "ronin.sklearn.tabular/v3"
 _PREVIOUS_ARTIFACT_SCHEMA = "ronin.sklearn.tabular/v2"
+_MAX_ONE_HOT_CATEGORIES = 256
+_MAX_PREPROCESSED_FEATURES = 4096
+_MAX_CATEGORY_CHARS = 1024
 
 ALGORITHM_CAPABILITIES: dict[str, frozenset[str]] = {
     "logistic_regression": frozenset({"classification"}),
@@ -139,12 +142,24 @@ class TrainingSpec:
     random_seed: int = 17
     parameters: tuple[tuple[str, float | int], ...] = ()
     preprocessor: Preprocessor = "identity"
+    categorical_features: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if self.task not in {"classification", "regression"}:
             raise ValueError("unsupported ML task")
-        if self.preprocessor not in {"identity", "standard_scale"}:
+        if self.preprocessor not in {"identity", "standard_scale", "one_hot"}:
             raise ValueError("unsupported ML preprocessor")
+        categorical_features = tuple(
+            _text(item, "categorical feature") for item in self.categorical_features
+        )
+        if len(set(categorical_features)) != len(categorical_features) or not set(
+            categorical_features
+        ) <= set(self.features):
+            raise ValueError("categorical features must be unique training features")
+        if categorical_features and self.preprocessor != "one_hot":
+            raise ValueError("categorical features require the one_hot preprocessor")
+        if self.preprocessor == "one_hot" and not categorical_features:
+            raise ValueError("one_hot preprocessing requires categorical features")
         if (
             self.algorithm not in ALGORITHM_CAPABILITIES
             or self.task not in ALGORITHM_CAPABILITIES[self.algorithm]
@@ -179,6 +194,7 @@ class TrainingSpec:
             raise ValueError("ML parameters must be finite numbers")
         object.__setattr__(self, "features", features)
         object.__setattr__(self, "target", target)
+        object.__setattr__(self, "categorical_features", categorical_features)
 
 
 @dataclass(frozen=True, slots=True)
@@ -202,18 +218,27 @@ class TrainedTabularModel:
 def _matrix(
     rows: Sequence[Mapping[str, object]],
     spec: TrainingSpec,
-) -> tuple[list[list[float]], list[object]]:
+) -> tuple[list[list[float | str]], list[object]]:
     if len(rows) < 4:
         raise ValueError("ML training requires at least four rows")
-    features: list[list[float]] = []
+    features: list[list[float | str]] = []
     targets: list[object] = []
     for index, row in enumerate(rows):
         missing = [name for name in (*spec.features, spec.target) if name not in row]
         if missing:
             raise ValueError(f"row {index} is missing ML fields: {missing}")
-        vector: list[float] = []
+        vector: list[float | str] = []
         for name in spec.features:
-            vector.append(_finite_float(row[name], f"ML feature {name!r}"))
+            if name in spec.categorical_features:
+                value = row[name]
+                if not isinstance(value, str):
+                    raise ValueError(f"categorical feature {name!r} must be a string")
+                value = _text(value, f"ML categorical feature {name!r}")
+                if len(value) > _MAX_CATEGORY_CHARS:
+                    raise ValueError("categorical feature value exceeds the size limit")
+                vector.append(value)
+            else:
+                vector.append(_finite_float(row[name], f"ML feature {name!r}"))
         target = row[spec.target]
         if target is None:
             raise ValueError("ML target values must not be null")
@@ -226,6 +251,44 @@ def _matrix(
     if spec.task == "classification" and len({repr(value) for value in targets}) < 2:
         raise ValueError("classification training requires at least two target classes")
     return features, targets
+
+
+def _one_hot_matrix(
+    rows: Sequence[Sequence[float | str]],
+    *,
+    features: tuple[str, ...],
+    categorical_features: tuple[str, ...],
+    categories: Mapping[str, tuple[str, ...]] | None = None,
+) -> tuple[list[list[float]], dict[str, tuple[str, ...]], tuple[str, ...]]:
+    vocabularies = dict(categories or {})
+    if categories is None:
+        for column in categorical_features:
+            column_index = features.index(column)
+            vocabularies[column] = tuple(sorted({cast(str, row[column_index]) for row in rows}))
+    if any(len(values) > _MAX_ONE_HOT_CATEGORIES for values in vocabularies.values()):
+        raise ValueError(f"one_hot categories exceed the {_MAX_ONE_HOT_CATEGORIES} value limit")
+    expanded_width = len(features) + sum(
+        len(vocabularies[column]) - 1 for column in categorical_features
+    )
+    if expanded_width > _MAX_PREPROCESSED_FEATURES:
+        raise ValueError("one_hot output exceeds the configured feature limit")
+    encoded: list[list[float]] = []
+    for row in rows:
+        vector: list[float] = []
+        for column, value in zip(features, row, strict=True):
+            if column in categorical_features:
+                vocabulary = vocabularies[column]
+                vector.extend(1.0 if value == category else 0.0 for category in vocabulary)
+            else:
+                vector.append(_finite_float(value, f"ML feature {column!r}"))
+        encoded.append(vector)
+    model_features = tuple(
+        f"feature_{index}"
+        for index in range(
+            len(features) + sum(len(vocabularies[column]) - 1 for column in categorical_features)
+        )
+    )
+    return encoded, vocabularies, model_features
 
 
 def _validate_split_feasibility(targets: Sequence[object], spec: TrainingSpec) -> None:
@@ -419,6 +482,7 @@ def train_tabular(
         stratify=stratify,
     )
     preprocessing: dict[str, object] = {"kind": "identity"}
+    model_spec = spec
     if spec.preprocessor == "standard_scale":
         import numpy as np
 
@@ -432,6 +496,28 @@ def train_tabular(
             "means": [_finite_float(value, "preprocessor mean") for value in means.tolist()],
             "scales": [_finite_float(value, "preprocessor scale") for value in scales.tolist()],
         }
+    elif spec.preprocessor == "one_hot":
+        x_train, categories, model_features = _one_hot_matrix(
+            x_train,
+            features=spec.features,
+            categorical_features=spec.categorical_features,
+        )
+        x_test, _, _ = _one_hot_matrix(
+            x_test,
+            features=spec.features,
+            categorical_features=spec.categorical_features,
+            categories=categories,
+        )
+        preprocessing = {
+            "kind": "one_hot",
+            "categories": {column: list(values) for column, values in categories.items()},
+        }
+        model_spec = replace(
+            spec,
+            features=model_features,
+            categorical_features=(),
+            preprocessor="identity",
+        )
     if spec.algorithm == "logistic_regression":
         options = dict(spec.parameters)
         model = sk["LogisticRegression"](
@@ -498,7 +584,7 @@ def train_tabular(
             "algorithm": spec.algorithm,
             "features": list(spec.features),
             "target": spec.target,
-            "parameters": _model_parameters(model, spec),
+            "parameters": _model_parameters(model, model_spec),
             "preprocessing": preprocessing,
         }
     )
@@ -600,6 +686,32 @@ def _artifact_payload(artifact_bytes: bytes) -> dict[str, object]:
             raise ValueError("preprocessor scales must be positive")
         preprocessing["means"] = [_finite_float(value, "preprocessor mean") for value in means]
         preprocessing["scales"] = normalized_scales
+    elif preprocessing.get("kind") == "one_hot":
+        if set(preprocessing) != {"kind", "categories"}:
+            raise ValueError("one_hot preprocessing has invalid shape")
+        raw_categories = preprocessing.get("categories")
+        if not isinstance(raw_categories, dict) or not raw_categories:
+            raise ValueError("one_hot categories must be a non-empty object")
+        categories: dict[str, tuple[str, ...]] = {}
+        for column, values in raw_categories.items():
+            if column not in features or not isinstance(values, list) or not values:
+                raise ValueError("one_hot categories do not match artifact features")
+            if not all(isinstance(value, str) for value in values):
+                raise ValueError("one_hot category values must be strings")
+            vocabulary = tuple(_text(value, "one_hot category") for value in values)
+            if any(len(value) > _MAX_CATEGORY_CHARS for value in vocabulary):
+                raise ValueError("one_hot category exceeds the size limit")
+            if len(vocabulary) > _MAX_ONE_HOT_CATEGORIES:
+                raise ValueError(
+                    f"one_hot categories exceed the {_MAX_ONE_HOT_CATEGORIES} value limit"
+                )
+            if vocabulary != tuple(sorted(set(vocabulary))):
+                raise ValueError("one_hot categories must be unique and sorted")
+            categories[column] = vocabulary
+        expanded_width = len(features) + sum(len(values) - 1 for values in categories.values())
+        if expanded_width > _MAX_PREPROCESSED_FEATURES:
+            raise ValueError("one_hot output exceeds the configured feature limit")
+        preprocessing["categories"] = categories
     else:
         raise ValueError("ML artifact has unsupported preprocessing")
     return normalized
@@ -608,14 +720,26 @@ def _artifact_payload(artifact_bytes: bytes) -> dict[str, object]:
 def _prediction_matrix(
     rows: Sequence[Mapping[str, object]],
     features: tuple[str, ...],
+    *,
+    categories: Mapping[str, tuple[str, ...]] | None = None,
 ) -> list[list[float]]:
+    category_map = categories or {}
     matrix: list[list[float]] = []
     for index, row in enumerate(rows):
         vector: list[float] = []
         for name in features:
             if name not in row:
                 raise ValueError(f"prediction row {index} is missing feature {name!r}")
-            vector.append(_finite_float(row[name], f"prediction feature {name!r}"))
+            if name in category_map:
+                value = row[name]
+                if not isinstance(value, str):
+                    raise ValueError(f"categorical prediction feature {name!r} must be a string")
+                value = _text(value, f"categorical prediction feature {name!r}")
+                if len(value) > _MAX_CATEGORY_CHARS:
+                    raise ValueError("categorical prediction value exceeds the size limit")
+                vector.extend(1.0 if value == category else 0.0 for category in category_map[name])
+            else:
+                vector.append(_finite_float(row[name], f"prediction feature {name!r}"))
         matrix.append(vector)
     return matrix
 
@@ -705,8 +829,19 @@ def predict_tabular(
     features = tuple(cast(list[str], payload["features"]))
     if expected_features is not None and features != expected_features:
         raise ValueError("ML artifact feature signature does not match registered model")
-    matrix = _prediction_matrix(rows, features)
     preprocessing = cast(Mapping[str, object], payload["preprocessing"])
+    categories = cast(Mapping[str, tuple[str, ...]], preprocessing.get("categories", {}))
+    matrix = _prediction_matrix(rows, features, categories=categories)
+    model_features = (
+        tuple(f"feature_{index}" for index in range(len(matrix[0])))
+        if matrix and preprocessing["kind"] == "one_hot"
+        else features
+    )
+    model_feature_count = (
+        len(model_features)
+        if model_features
+        else len(features) + sum(len(values) - 1 for values in categories.values())
+    )
     if preprocessing["kind"] == "standard_scale":
         means = cast(list[float], preprocessing["means"])
         scales = cast(list[float], preprocessing["scales"])
@@ -720,6 +855,8 @@ def predict_tabular(
     inference_rows: Sequence[Mapping[str, object]] = rows
     if preprocessing["kind"] == "standard_scale":
         inference_rows = tuple(dict(zip(features, vector, strict=True)) for vector in matrix)
+    elif preprocessing["kind"] == "one_hot":
+        inference_rows = tuple(dict(zip(model_features, vector, strict=True)) for vector in matrix)
     parameters = cast(Mapping[str, object], payload["parameters"])
 
     def numeric(value: object, name: str) -> float:
@@ -728,7 +865,7 @@ def predict_tabular(
         return float(value)
 
     if payload["algorithm"] == "linear_regression":
-        return _linear_predictions(parameters, matrix, len(features))
+        return _linear_predictions(parameters, matrix, model_feature_count)
     if payload["algorithm"] == "gradient_boosting_classifier":
         initial = parameters["initial"]
         class_count = len(cast(list[object], parameters["classes"]))
@@ -742,14 +879,17 @@ def predict_tabular(
                         "schema": _ARTIFACT_SCHEMA,
                         "task": "regression",
                         "algorithm": "decision_tree_regressor",
-                        "features": payload["features"],
+                        "features": list(model_features),
                         "target": payload["target"],
                         "parameters": tree,
                         "preprocessing": {"kind": "identity"},
                     }
                 )
                 predicted_values = predict_tabular(
-                    tree_artifact, inference_rows, expected_features=features, max_rows=max_rows
+                    tree_artifact,
+                    inference_rows,
+                    expected_features=model_features,
+                    max_rows=max_rows,
                 )
                 for index, value in enumerate(predicted_values):
                     totals[class_index][index] += numeric(
@@ -776,14 +916,17 @@ def predict_tabular(
                     "schema": _ARTIFACT_SCHEMA,
                     "task": "regression",
                     "algorithm": "decision_tree_regressor",
-                    "features": payload["features"],
+                    "features": list(model_features),
                     "target": payload["target"],
                     "parameters": tree,
                     "preprocessing": {"kind": "identity"},
                 }
             )
             predicted_values = predict_tabular(
-                tree_artifact, inference_rows, expected_features=features, max_rows=max_rows
+                tree_artifact,
+                inference_rows,
+                expected_features=model_features,
+                max_rows=max_rows,
             )
             for index, value in enumerate(predicted_values):
                 total[index] += learning_rate * numeric(value, "tree prediction")
@@ -800,14 +943,14 @@ def predict_tabular(
                             if payload["task"] == "classification"
                             else "decision_tree_regressor"
                         ),
-                        "features": payload["features"],
+                        "features": list(model_features),
                         "target": payload["target"],
                         "parameters": tree,
                         "preprocessing": {"kind": "identity"},
                     }
                 ),
                 inference_rows,
-                expected_features=features,
+                expected_features=model_features,
                 max_rows=max_rows,
             )
             for tree in cast(list[dict[str, object]], parameters["trees"])
@@ -851,7 +994,7 @@ def predict_tabular(
                 else classes[max(range(len(leaf)), key=leaf.__getitem__)]
             )
         return tuple(results)
-    return _logistic_predictions(parameters, matrix, len(features))
+    return _logistic_predictions(parameters, matrix, model_feature_count)
 
 
 __all__ = (
