@@ -2,19 +2,38 @@
 
 Canonical identifier: `ronin.ml-pipeline-ir/v1`.
 
-The intermediate representation is a deterministic directed acyclic graph. Each
-node has a stable `node_id`, `kind`, and JSON-serializable `config`; edges are
-represented by node input references. Node IDs are unique and execution order
-is the stable topological order, with lexical `node_id` tie-breaking.
+## Serialized shape
 
-The initial runtime supports the tabular training path and treats the lab's
-feature/target definition as the executable minimum. Future nodes may add
-select, impute, encode, split, train, evaluate, and register operations. A
-consumer must fail closed on cycles, unknown required node kinds, missing input
-references, or duplicate output names.
+The canonical JSON envelope has exactly three fields: `schema`, `nodes`, and
+`parameters`. `schema` is the canonical identifier above. `parameters` is an
+object whose keys and values are strings; the compiler uses it for the Lab
+digest and pinned runtime choices. Lab identity is bound through the
+`lab_digest` parameter rather than separate `lab_id` or `lab_version` fields.
 
-IR is data, not executable code: configs must contain primitives, arrays, and
-objects only; callables, imports, shell commands, and arbitrary code are
-invalid. The serialized envelope is `{schema, lab_id, lab_version, nodes}`.
-Changing node semantics requires a new schema version or an explicit node
-version; old IR must remain replayable for provenance.
+Each node has exactly `id`, `kind`, and `depends_on`. `id` is a unique,
+non-empty stable string. `kind` is one of `profile`, `quality_gate`, `prepare`,
+`train`, `evaluate`, `select`, or `register`. `depends_on` is an array of
+unique node IDs. The graph rejects self-dependencies, unresolved references,
+duplicate IDs, and cycles. Canonical serialization round-trips through
+`PipelineIR.from_json()`.
+
+The v1 model has no per-node `config` field, separate edge list, input ports,
+or output names. Node options are not executable payloads in this schema.
+Callables, imports, shell commands, and arbitrary code are never accepted.
+
+## Ordering and execution
+
+`PipelineIR.execution_order()` returns a deterministic topological order,
+breaking ties by lexical node ID. This is a graph serialization contract; it
+does not mean every valid `PipelineIR` is executable by every runner.
+
+The current local runner executes exactly one each of `profile`, `quality_gate`,
+`prepare`, `train`, `evaluate`, and `select`, wired in that order. It rejects
+`register` and other non-local compositions before training so a stored graph
+cannot be silently ignored. A scheduler must pass the pinned PipelineIR through
+unchanged, and the runner verifies that its `lab_digest` matches the submitted
+Lab. Configurable stage graphs and registration as an executor node require a
+future contract extension or schema version.
+
+Changing the serialized shape requires a new schema version. Old v1 payloads
+remain replayable for provenance.

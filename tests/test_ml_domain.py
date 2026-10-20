@@ -23,6 +23,19 @@ def test_lab_round_trips_canonical_json() -> None:
     assert Lab.from_json(lab.to_json()) == lab
 
 
+def test_pipeline_v1_canonical_json_matches_documented_shape() -> None:
+    pipeline = PipelineIR(
+        (PipelineNode("profile", "profile"),), parameters=(("task", "classification"),)
+    )
+
+    payload = json.loads(pipeline.to_json())
+    assert set(payload) == {"schema", "nodes", "parameters"}
+    assert payload["schema"] == "ronin.ml-pipeline-ir/v1"
+    assert payload["nodes"] == [{"depends_on": [], "id": "profile", "kind": "profile"}]
+    assert payload["parameters"] == {"task": "classification"}
+    assert PipelineIR.from_json(pipeline.to_json()) == pipeline
+
+
 def test_pipeline_rejects_cycles() -> None:
     with pytest.raises(ValueError, match="acyclic"):
         PipelineIR((PipelineNode("a", "prepare", ("b",)), PipelineNode("b", "train", ("a",))))
