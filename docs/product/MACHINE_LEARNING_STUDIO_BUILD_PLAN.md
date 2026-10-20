@@ -510,7 +510,7 @@ La verificación local pasó **69 pruebas Python focalizadas y 81/81 Playwright*
 
 ## 32. Candidato: retención de artefactos con referencias vivas
 
-**Estado: análisis de alcance; no cuenta como trabajo implementado.**
+**Estado: parcial; inventario y planificación completos; borrado manual acotado en curso; limpieza automática global aún bloqueada por la consistencia entre stores.**
 
 | Requisito | Criterio de diseño |
 | --- | --- |
@@ -519,7 +519,7 @@ La verificación local pasó **69 pruebas Python focalizadas y 81/81 Playwright*
 | Operación observable y acotada | Exponer primero un plan dry-run con digest, rol, edad y fuente; paginar el inventario y limitar objetos por ciclo. |
 | No borrar datos generales al limpiar resultados ML | Identificar roles y productores de cada objeto; no eliminar un digest sólo porque una referencia de ML dejó de existir si otro producto lo usa. |
 
-`discover_artifact_references()` ya construye el snapshot de las nueve familias desde los stores reales y falla cerrado ante errores o topes excedidos. `collect_unreferenced()` sigue siendo una primitiva manual que confía en el conjunto vivo del llamador. El test de LocalStack protege input y modelo en una llamada manual. La lectura de seis stores no tiene transacción distribuida: la limpieza automática global permanece deshabilitada hasta definir e implementar una barrera de consistencia y una revalidación segura ante escrituras concurrentes. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+`discover_artifact_references()` ya construye el snapshot de las nueve familias desde los stores reales y falla cerrado ante errores o topes excedidos. `collect_unreferenced()` requiere ahora un store paginado y límites explícitos; termina de leer el inventario antes de borrar, por lo que un inventario incompleto o sobre el tope no produce borrados parciales. La primitiva sigue confiando en el conjunto vivo del llamador. El test de LocalStack protege input y modelo en una llamada manual. La lectura de seis stores no tiene transacción distribuida: la limpieza automática global permanece deshabilitada hasta definir e implementar una barrera de consistencia y una revalidación segura ante escrituras concurrentes. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
 
 ## 33. Candidato: componer codificación categórica e imputación numérica
 
@@ -608,3 +608,15 @@ La suite focalizada pasa **31 tests**, con **7 integraciones PostgreSQL omitidas
 | Proteger el contrato de paginación | La prueba prohíbe materializar el inventario completo, recorre dos páginas y comprueba cursor inválido; el planner continúa fallando cerrado al exceder topes. |
 
 La suite focalizada de artifacts/paginación pasa **13 tests**; la suite Python completa pasa **3810 tests y omite 54** por integraciones externas no configuradas y limitaciones de Windows. Ruff, formato, mypy de `artifacts.py`, ledger de capacidades y `git diff --check` pasan. Los checks del PR y los seis workflows exact-head post-merge pasan; Docker incluye PostgreSQL, worker real y aceptación estricta. El recorrido mantiene memoria O(page size), aunque sigue escaneando nombres de archivo para localizar la página siguiente.
+
+## 40. Borrado de artifacts tras inventario acotado
+
+**Estado en curso: implementado localmente; pendiente suite completa y cualificación del PR.**
+
+| Criterio | Evidencia |
+| --- | --- |
+| Evitar leer todos los digests a la vez | `collect_unreferenced()` exige `PagedArtifactStore`, pagina el inventario y limita páginas y objetos (10 000 por defecto). |
+| Evitar borrado parcial ante inventario incompleto | Primero valida y termina el recorrido completo; sólo después empieza a borrar candidatos. Overflow, cursores inválidos/repetidos o stores sin paginación fallan antes de borrar. |
+| Mantener explícito el límite de seguridad | La lista viva sigue siendo responsabilidad del llamador; esto acota la operación, pero no hace atómica la observación de seis fuentes ni permite activar limpieza global automática. |
+
+Las pruebas focalizadas pasan **25 tests**, incluyendo inventario paginado sin `list_digests()`, overflow de objetos, tope de páginas y rechazo de stores sin paginación; Ruff, formato, mypy de `retention.py` y `git diff --check` pasan. La suite completa registró **3813 pasadas y 54 omitidas**, con un timeout de 15 s en `test_step_03_validate_accepts_demo_project`; al repetir ese test aislado pasó (**1/1**), por lo que el fallo no apunta a la retención. CI y Docker del PR quedan pendientes para repetir la matriz completa.
