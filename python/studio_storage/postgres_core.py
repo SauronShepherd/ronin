@@ -977,6 +977,22 @@ class PostgresMetadataStore:
         finally:
             connection.close()
 
+    def list_revisions(
+        self, workspace_id: WorkspaceId, asset_id: AssetId
+    ) -> tuple[AssetRevision, ...]:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT revision_json FROM ronin_catalog_revisions "
+                    "WHERE workspace_id=%s AND asset_id=%s ORDER BY version",
+                    (str(workspace_id), str(asset_id)),
+                )
+                rows = cursor.fetchall()
+                return tuple(AssetRevision.from_json(row["revision_json"]) for row in rows)
+        finally:
+            connection.close()
+
     def put_lineage(
         self, workspace_id: WorkspaceId, edge: LineageEdge, *, now: Instant | str
     ) -> LineageEdge:

@@ -64,6 +64,9 @@ def test_postgres_ml_registry_round_trip_and_conflict_guards() -> None:
         (),
         now=NOW,
     )
+    assert metadata.list_revisions(workspace_id, asset_id) == (
+        AssetRevision(ref, content_digest="a" * 64),
+    )
 
     experiment = Experiment(ExperimentId(f"experiment-{suffix}"), "Qualification")
     assert store.put_experiment(workspace_id, experiment, now=NOW) == experiment
