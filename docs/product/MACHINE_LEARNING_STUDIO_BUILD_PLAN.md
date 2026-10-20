@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 67%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 68%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -558,11 +558,11 @@ La batería focalizada de artifacts/paginación pasó **38 pruebas** y la suite 
 | Enumerar referencias del registry ML | Se recogen artifact refs/runtime snapshots de MLRun y se validan refs/digests de cada versión registrada. |
 | Mantener el fallo cerrado para fuentes pendientes | El snapshot cubre cuatro de nueve familias; al pasarlo al planner, las otras cinco ausentes impiden devolver candidatos. |
 
-La cobertura focalizada pasa **21 pruebas**; la integración real PostgreSQL está añadida al gate Docker. Esta etapa descubre cuatro familias pero no habilita retención global; siguen pendientes Jobs/evidencia durable, checkpoints, conectores, revisiones de ingeniería de datos y exports sintéticos.
+La cobertura focalizada pasa **21 pruebas**; la integración real PostgreSQL está añadida al gate Docker. PR #458 y sus seis workflows post-merge exact-head, incluido Docker, pasaron en `main@87e34810f606a1ee325b353cba100d568fb02255`. Esta etapa descubre cuatro familias pero no habilita retención global; siguen pendientes Jobs/evidencia durable, checkpoints, conectores, revisiones de ingeniería de datos y exports sintéticos.
 
 ## 36. Descubrimiento de evidencia y checkpoints de jobs durables
 
-**Progreso técnico local: 3/3 criterios implementados; cualificación exact-head pendiente.**
+**Progreso técnico: 3/3 criterios implementados; PR #459 y los seis workflows post-merge exact-head, incluido Docker, pasaron en `main@ba25baa253c300377695ea2c970a938be68be3a0`.**
 
 | Criterio | Evidencia local |
 | --- | --- |
@@ -571,3 +571,16 @@ La cobertura focalizada pasa **21 pruebas**; la integración real PostgreSQL est
 | Cubrir resultados y checkpoints persistidos | Se inspecciona JSON de resultados celulares y se separan `ml-node-checkpoint` de otros resultados; JSON o pares URI/digest inválidos fallan cerrado. |
 
 La suite focalizada pasa **49 pruebas**, con **2 integraciones PostgreSQL omitidas** sin `RONIN_POSTGRES_TEST_DSN`; la prueba de inventario PostgreSQL queda incorporada al gate Docker. Ruff, formato, mypy de almacenamiento y `git diff --check` pasan. Esta etapa cubre dos de nueve familias; conectores, revisiones de ingeniería de datos y exports sintéticos aún impiden candidatos de limpieza.
+
+## 37. Descubrimiento de conectores, Data Engineering y exports sintéticos
+
+**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+
+| Criterio | Evidencia local |
+| --- | --- |
+| Recoger salidas de conectores comprometidas | `SqliteConnectorCheckpointStore.list_committed_outputs()` excluye placeholders, detecta pares incompletos y está limitada; el descubridor valida URI/digest. |
+| Cubrir cada revisión de Data Engineering | SQLite y PostgreSQL enumeran proyectos/pipelines y revisiones históricas con `LIMIT max+1`; sobrepasar el tope genera error en vez de snapshot parcial. |
+| Conservar exports sintéticos persistidos | Se recorren runs y exports registrados, validando cada par URI/digest dentro de topes de runs y exports. |
+| Formar las nueve fuentes requeridas | `discover_artifact_references()` ejecuta los seis enumeradores, combina las nueve familias y falla completo ante error o fuente faltante. |
+
+La suite focalizada pasa **32 pruebas**, con **1 integración PostgreSQL omitida** localmente por no tener DSN; la integración se ejecuta en Docker. Ruff, formato, mypy y `git diff --check` pasan. El agregador no ofrece una transacción distribuida sobre los seis stores: la vista previa sigue siendo no destructiva y la eliminación global permanece deshabilitada hasta definir una política de consistencia temporal entre productores.

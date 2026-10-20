@@ -53,6 +53,28 @@ class _MLArtifactReferenceStore(Protocol):
     def list_models(self, workspace_id: WorkspaceId) -> tuple[RegisteredModelVersion, ...]: ...
 
 
+class _ConnectorOutputReferenceStore(Protocol):
+    def list_committed_outputs(
+        self, *, max_outputs: int = 10_000
+    ) -> tuple[tuple[str, str], ...]: ...
+
+
+class _DataEngineeringRevisionStore(Protocol):
+    def list_all_revisions(
+        self, *, max_revisions: int = 10_000
+    ) -> tuple[dict[str, object], ...]: ...
+
+
+class _SyntheticExportRun(Protocol):
+    run_id: str
+
+
+class _SyntheticExportStore(Protocol):
+    def snapshot(self) -> tuple[_SyntheticExportRun, ...]: ...
+
+    def artifacts(self, run_id: str) -> tuple[dict[str, object], ...]: ...
+
+
 def plan_unreferenced(
     store: ArtifactStore,
     references_by_source: Mapping[str, Iterable[str]],
@@ -262,6 +284,140 @@ def discover_durable_job_artifact_references(
     raise ValueError("durable job inventory exceeded its page bound")
 
 
+def discover_connector_artifact_references(
+    checkpoints: _ConnectorOutputReferenceStore, *, max_outputs: int = 10_000
+) -> dict[str, tuple[str, ...]]:
+    """Discover ArtifactStore outputs committed through connector checkpoints."""
+
+    digests: set[str] = set()
+    for storage_ref, declared_digest in checkpoints.list_committed_outputs(max_outputs=max_outputs):
+        if not storage_ref.startswith("artifact://"):
+            continue
+        digest = _digest_from_storage_ref(storage_ref)
+        _validate_digest(declared_digest)
+        if digest != declared_digest:
+            raise ValueError("connector output reference and digest do not match")
+        digests.add(digest)
+    return {"connector_sync_outputs": tuple(sorted(digests))}
+
+
+def discover_data_engineering_artifact_references(
+    revisions: _DataEngineeringRevisionStore, *, max_revisions: int = 10_000
+) -> dict[str, tuple[str, ...]]:
+    """Discover project, pipeline, and metadata artifacts for every stored revision."""
+
+    digests: set[str] = set()
+    records = revisions.list_all_revisions(max_revisions=max_revisions)
+    for record in records:
+        refs: list[object] = [
+            record.get("project_artifact_ref"),
+            record.get("metadata_artifact_ref"),
+        ]
+        pipeline_artifacts = record.get("pipeline_artifacts")
+        if not isinstance(pipeline_artifacts, Mapping):
+            raise ValueError("Data Engineering revision has invalid pipeline artifacts")
+        refs.extend(pipeline_artifacts.values())
+        for storage_ref in refs:
+            digests.add(_digest_from_storage_ref(storage_ref))
+    return {"data_engineering_revisions": tuple(sorted(digests))}
+
+
+def discover_synthetic_data_artifact_references(
+    exports: _SyntheticExportStore,
+    *,
+    max_runs: int = 100_000,
+    max_exports: int = 100_000,
+) -> dict[str, tuple[str, ...]]:
+    """Discover persisted synthetic-data exports within explicit run/export bounds."""
+
+    if max_runs < 1:
+        raise ValueError("synthetic export max_runs must be positive")
+    if max_exports < 1:
+        raise ValueError("synthetic export max_exports must be positive")
+    runs = exports.snapshot()
+    if len(runs) > max_runs:
+        raise ValueError("synthetic export inventory exceeded its run bound")
+    digests: set[str] = set()
+    exports_seen = 0
+    for run in runs:
+        if not isinstance(run.run_id, str) or not run.run_id:
+            raise ValueError("synthetic run has an invalid identity")
+        records = exports.artifacts(run.run_id)
+        exports_seen += len(records)
+        if exports_seen > max_exports:
+            raise ValueError("synthetic export inventory exceeded its export bound")
+        for record in records:
+            storage_ref = record.get("storage_ref")
+            digest = record.get("digest")
+            if not isinstance(digest, str):
+                raise ValueError("synthetic export has an invalid digest")
+            _validate_digest(digest)
+            if _digest_from_storage_ref(storage_ref) != digest:
+                raise ValueError("synthetic export reference and digest do not match")
+            digests.add(digest)
+    return {"synthetic_data_exports": tuple(sorted(digests))}
+
+
+def discover_artifact_references(
+    workspaces: WorkspaceStore,
+    catalog: CatalogStore,
+    ml_registry: _MLArtifactReferenceStore,
+    jobs: JobStore,
+    connector_checkpoints: _ConnectorOutputReferenceStore,
+    data_engineering_revisions: _DataEngineeringRevisionStore,
+    synthetic_exports: _SyntheticExportStore,
+    *,
+    job_page_size: int = 100,
+    max_job_pages: int = 1_000,
+    max_job_runs: int = 100_000,
+    max_connector_outputs: int = 10_000,
+    max_data_engineering_revisions: int = 10_000,
+    max_synthetic_runs: int = 100_000,
+    max_synthetic_exports: int = 100_000,
+) -> dict[str, tuple[str, ...]]:
+    """Build the complete known reference snapshot from every producer store.
+
+    Any source read or bound failure raises before a caller can pass a partial map
+    to the retention planner.
+    """
+
+    sources = (
+        discover_catalog_artifact_references(workspaces, catalog),
+        discover_ml_artifact_references(workspaces, ml_registry),
+        discover_durable_job_artifact_references(
+            jobs,
+            page_size=job_page_size,
+            max_pages=max_job_pages,
+            max_runs=max_job_runs,
+        ),
+        discover_connector_artifact_references(
+            connector_checkpoints, max_outputs=max_connector_outputs
+        ),
+        discover_data_engineering_artifact_references(
+            data_engineering_revisions, max_revisions=max_data_engineering_revisions
+        ),
+        discover_synthetic_data_artifact_references(
+            synthetic_exports,
+            max_runs=max_synthetic_runs,
+            max_exports=max_synthetic_exports,
+        ),
+    )
+    references: dict[str, tuple[str, ...]] = {}
+    for source in sources:
+        duplicates = set(references) & set(source)
+        if duplicates:
+            raise RuntimeError(
+                f"duplicate artifact reference sources: {', '.join(sorted(duplicates))}"
+            )
+        references.update(source)
+    missing = REQUIRED_ARTIFACT_REFERENCE_SOURCES - set(references)
+    if missing:
+        raise RuntimeError(
+            f"artifact reference snapshot is missing sources: {', '.join(sorted(missing))}"
+        )
+    return references
+
+
 def _artifact_references_in(value: object) -> Iterable[dict[str, str]]:
     """Yield validated reference-shaped objects nested in persisted JSON."""
 
@@ -285,7 +441,7 @@ def _artifact_references_in(value: object) -> Iterable[dict[str, str]]:
             yield from _artifact_references_in(nested)
 
 
-def _digest_from_storage_ref(storage_ref: str) -> str:
+def _digest_from_storage_ref(storage_ref: object) -> str:
     prefix = "artifact://sha256/"
     if not isinstance(storage_ref, str) or not storage_ref.startswith(prefix):
         raise ValueError("artifact storage reference must use artifact://sha256/<digest>")
@@ -325,7 +481,11 @@ __all__ = (
     "REQUIRED_ARTIFACT_REFERENCE_SOURCES",
     "collect_unreferenced",
     "discover_catalog_artifact_references",
+    "discover_connector_artifact_references",
+    "discover_data_engineering_artifact_references",
     "discover_durable_job_artifact_references",
+    "discover_artifact_references",
     "discover_ml_artifact_references",
+    "discover_synthetic_data_artifact_references",
     "plan_unreferenced",
 )

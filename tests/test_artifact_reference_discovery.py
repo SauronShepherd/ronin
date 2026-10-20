@@ -27,6 +27,7 @@ from studio_orchestrator import EvidenceAvailability
 from studio_storage import (
     REQUIRED_ARTIFACT_REFERENCE_SOURCES,
     LocalArtifactStore,
+    discover_artifact_references,
     discover_catalog_artifact_references,
     discover_durable_job_artifact_references,
     discover_ml_artifact_references,
@@ -72,6 +73,27 @@ class _MLRegistry:
     def list_models(self, workspace_id: WorkspaceId) -> tuple[RegisteredModelVersion, ...]:
         assert workspace_id == WORKSPACE.id
         return self._models
+
+
+class _ConnectorOutputStore:
+    def list_committed_outputs(self, *, max_outputs: int = 10_000):
+        del max_outputs
+        return ()
+
+
+class _DataEngineeringRevisionStore:
+    def list_all_revisions(self, *, max_revisions: int = 10_000):
+        del max_revisions
+        return ()
+
+
+class _SyntheticExportStore:
+    def snapshot(self):
+        return ()
+
+    def artifacts(self, run_id: str):
+        del run_id
+        return ()
 
 
 def _digest(value: str) -> str:
@@ -166,6 +188,21 @@ def test_discovery_fails_closed_on_invalid_refs_and_incomplete_source_set(
     plan = plan_unreferenced(store, partial)
     assert plan.missing_sources == tuple(sorted(REQUIRED_ARTIFACT_REFERENCE_SOURCES - set(partial)))
     assert plan.candidate_digests == ()
+
+
+def test_aggregate_discovery_returns_all_nine_known_reference_sources() -> None:
+    references = discover_artifact_references(
+        _WorkspaceStore(),
+        _CatalogStore(()),
+        _MLRegistry((), ()),
+        _DurableJobStore(()),
+        _ConnectorOutputStore(),
+        _DataEngineeringRevisionStore(),
+        _SyntheticExportStore(),
+    )
+
+    assert set(references) == REQUIRED_ARTIFACT_REFERENCE_SOURCES
+    assert all(not digests for digests in references.values())
 
 
 class _DurableJobStore:

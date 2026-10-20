@@ -210,6 +210,34 @@ class SqliteRevisionStore:
             for row in revisions
         )
 
+    def list_all_revisions(self, *, max_revisions: int = 10_000) -> tuple[dict[str, object], ...]:
+        """List every project and pipeline revision up to a strict inventory bound."""
+        if max_revisions < 1 or max_revisions > 100_000:
+            raise ValueError("max_revisions must be between 1 and 100000")
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM de_revisions ORDER BY project_id,pipeline_id,revision LIMIT ?",
+                (max_revisions + 1,),
+            ).fetchall()
+        if len(rows) > max_revisions:
+            raise ValueError("Data Engineering revision inventory exceeded its bound")
+        records: list[dict[str, object]] = []
+        for row in rows:
+            record: dict[str, object] = {
+                "project_id": row["project_id"],
+                "pipeline_id": row["pipeline_id"],
+                "revision": int(row["revision"]),
+                "source_digest": row["source_digest"],
+                "project_artifact_ref": row["project_artifact_ref"],
+                "pipeline_artifacts": cast(
+                    dict[str, str], json.loads(row["pipeline_artifacts_json"])
+                ),
+                "metadata_artifact_ref": row["metadata_artifact_ref"],
+            }
+            record["revision_digest"] = self._revision_digest(record)
+            records.append(record)
+        return tuple(records)
+
     def list_pipelines(self, *, project_id: str) -> tuple[str, ...]:
         with self._connect() as connection:
             rows = connection.execute(

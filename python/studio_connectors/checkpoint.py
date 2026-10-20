@@ -109,6 +109,26 @@ class SqliteConnectorCheckpointStore:
             identity, committed, int(row[1]), str(row[0]) if committed else None, committed, row[2]
         )
 
+    def list_committed_outputs(self, *, max_outputs: int = 10_000) -> tuple[tuple[str, str], ...]:
+        """List committed output locators and digests within an explicit bound."""
+        if max_outputs < 1 or max_outputs > 100_000:
+            raise ValueError("max_outputs must be between 1 and 100000")
+        with sqlite3.connect(self._path) as connection:
+            rows = connection.execute(
+                "SELECT output_id,output_digest FROM connector_checkpoints "
+                "WHERE output_id IS NOT NULL OR output_digest IS NOT NULL "
+                "ORDER BY identity LIMIT ?",
+                (max_outputs + 1,),
+            ).fetchall()
+        if len(rows) > max_outputs:
+            raise ValueError("connector output inventory exceeded its bound")
+        outputs: list[tuple[str, str]] = []
+        for output_id, output_digest in rows:
+            if not isinstance(output_id, str) or not isinstance(output_digest, str):
+                raise ValueError("connector output checkpoint has an incomplete identity")
+            outputs.append((output_id, output_digest))
+        return tuple(outputs)
+
     def acquire(self, identity: str) -> int:
         self._validate_identity(identity)
         with sqlite3.connect(self._path) as connection:

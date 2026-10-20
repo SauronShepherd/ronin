@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from hashlib import sha256
+
 import pytest
 from studio_connectors import (
     CheckpointFenceConflict,
     SqliteConnectorCheckpointStore,
 )
 from studio_core import SourceCheckpoint
+from studio_storage import discover_connector_artifact_references
 
 
 def test_checkpoint_commit_is_fenced_and_records_output(tmp_path) -> None:
@@ -194,3 +197,21 @@ def test_checkpoint_fence_placeholder_is_not_an_incremental_checkpoint(tmp_path)
     assert not health.output_committed
     assert health.fence == fence
     assert health.checkpoint_digest is None
+
+
+def test_committed_connector_artifacts_are_discovered_with_digest_validation(tmp_path):
+    store = SqliteConnectorCheckpointStore(tmp_path / "checkpoint.sqlite")
+    identity = "source/table"
+    store.acquire("source/pending")
+    fence = store.acquire(identity)
+    digest = sha256(b"connector output").hexdigest()
+    store.commit_output_then_checkpoint(
+        identity,
+        None,
+        SourceCheckpoint("cursor", "1"),
+        output_id=f"artifact://sha256/{digest}",
+        output_digest=digest,
+        fence=fence,
+        output_committed=True,
+    )
+    assert discover_connector_artifact_references(store) == {"connector_sync_outputs": (digest,)}

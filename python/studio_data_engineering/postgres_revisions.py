@@ -232,6 +232,26 @@ class PostgresRevisionStore:
         finally:
             connection.close()
 
+    def list_all_revisions(self, *, max_revisions: int = 10_000) -> tuple[dict[str, object], ...]:
+        """List every project and pipeline revision up to a strict inventory bound."""
+        if max_revisions < 1 or max_revisions > 100_000:
+            raise ValueError("max_revisions must be between 1 and 100000")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM ronin_de_revisions ORDER BY project_id,pipeline_id,revision "
+                    "LIMIT %s",
+                    (max_revisions + 1,),
+                )
+                rows = cursor.fetchall()
+            connection.commit()
+        finally:
+            connection.close()
+        if len(rows) > max_revisions:
+            raise ValueError("Data Engineering revision inventory exceeded its bound")
+        return tuple(self._record(row) for row in rows)
+
     def list_pipelines(self, *, project_id: str) -> tuple[str, ...]:
         connection = self._connect()
         try:
