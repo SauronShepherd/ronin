@@ -17,6 +17,7 @@ planificadas de una plataforma ML completa.
 | Ejecución asíncrona | Implementado | `orchestration.py`, API execution tests |
 | Persistencia durable de lifecycle/result payload | Implementado | `SqliteExecutionStore`, reopen test |
 | Checkpoints durables de etapas PipelineIR | Implementado para las seis etapas locales | `runner.py`, `orchestration.py`, round-trip local y recuperación PostgreSQL tras reabrir el servicio |
+| Identidad del runtime en checkpoints y resultados durables | Implementada en el candidato local; cualificación pendiente | Hashes de fuentes ejecutables, Python, dependencias, backend y opciones; un runtime distinto invalida la caché y el resultado conserva la huella |
 | Materialización del modelo en ejecución durable | Implementada para tabular y K-Means | `JobStoreExecutionStore.materialize_result_artifact()`, verificación de lectura/digest y referencia persistida en el resultado |
 | Registro de resultados de ejecuciones durables | Implementado en el candidato local; cualificación pendiente | `POST /v1/ml-studio/executions/{run_id}/register` valida estado, tamaño, digest, workspace/Lab y registra Experiment, MLRun y versión candidata con firma |
 | Lectura y descarga de artifacts de modelos | Implementadas en el candidato local; cualificación pendiente | Endpoint `GET .../artifact` con `ml-studio:read`, aislamiento por workspace y bloques Base64 verificados; UI reconstruye y descarga el archivo tras validar tamaño, digest y secuencia |
@@ -48,10 +49,11 @@ La suite específica ML Studio, los contratos y la auditoría E2E deben permanec
 El módulo está completo dentro del alcance provider-neutral definido por el build plan;
 la conexión a un endpoint remoto concreto es configuración de despliegue, no código
 pendiente del módulo.
-La ejecución duradera reutiliza etapas exitosas, pero todavía no admite grafos
-configurables, `register` como etapa ejecutable, invalidación explícita de outputs
-dependientes ni reintentos selectivos visibles desde el producto.
+La ejecución duradera reutiliza etapas exitosas sólo cuando su identidad de runtime
+coincide; todavía no admite grafos configurables, `register` como etapa ejecutable,
+invalidación explícita de outputs dependientes ni reintentos selectivos visibles.
 El resultado durable conserva una referencia verificada del modelo en ArtifactStore.
 El candidato local añade el registro de una ejecución como versión candidata por una
 API protegida, la lectura HTTP autorizada en bloques y la descarga verificada desde la
-UI. La verificación contra un ArtifactStore remoto sigue pendiente.
+UI. La cualificación exact-head post-merge de `main@c0e716f` sigue en ejecución; la
+verificación contra un ArtifactStore remoto sigue pendiente.
