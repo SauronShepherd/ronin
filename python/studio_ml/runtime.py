@@ -11,6 +11,7 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from math import ceil, isfinite, sqrt
+from statistics import median
 from typing import Any, Literal, TypeAlias, cast
 
 from studio_core.canonical_json import decode as decode_canonical_json
@@ -27,7 +28,7 @@ Algorithm: TypeAlias = Literal[
     "gradient_boosting_classifier",
     "gradient_boosting_regressor",
 ]
-Preprocessor: TypeAlias = Literal["identity", "standard_scale", "one_hot"]
+Preprocessor: TypeAlias = Literal["identity", "standard_scale", "one_hot", "median_impute"]
 ClassificationLabel: TypeAlias = bool | int | float | str
 
 _ARTIFACT_SCHEMA = "ronin.sklearn.tabular/v3"
@@ -147,7 +148,7 @@ class TrainingSpec:
     def __post_init__(self) -> None:
         if self.task not in {"classification", "regression"}:
             raise ValueError("unsupported ML task")
-        if self.preprocessor not in {"identity", "standard_scale", "one_hot"}:
+        if self.preprocessor not in {"identity", "standard_scale", "one_hot", "median_impute"}:
             raise ValueError("unsupported ML preprocessor")
         categorical_features = tuple(
             _text(item, "categorical feature") for item in self.categorical_features
@@ -218,16 +219,16 @@ class TrainedTabularModel:
 def _matrix(
     rows: Sequence[Mapping[str, object]],
     spec: TrainingSpec,
-) -> tuple[list[list[float | str]], list[object]]:
+) -> tuple[list[list[float | str | None]], list[object]]:
     if len(rows) < 4:
         raise ValueError("ML training requires at least four rows")
-    features: list[list[float | str]] = []
+    features: list[list[float | str | None]] = []
     targets: list[object] = []
     for index, row in enumerate(rows):
         missing = [name for name in (*spec.features, spec.target) if name not in row]
         if missing:
             raise ValueError(f"row {index} is missing ML fields: {missing}")
-        vector: list[float | str] = []
+        vector: list[float | str | None] = []
         for name in spec.features:
             if name in spec.categorical_features:
                 value = row[name]
@@ -238,7 +239,11 @@ def _matrix(
                     raise ValueError("categorical feature value exceeds the size limit")
                 vector.append(value)
             else:
-                vector.append(_finite_float(row[name], f"ML feature {name!r}"))
+                value = row[name]
+                if spec.preprocessor == "median_impute" and (value is None or value == ""):
+                    vector.append(None)
+                else:
+                    vector.append(_finite_float(value, f"ML feature {name!r}"))
         target = row[spec.target]
         if target is None:
             raise ValueError("ML target values must not be null")
@@ -254,7 +259,7 @@ def _matrix(
 
 
 def _one_hot_matrix(
-    rows: Sequence[Sequence[float | str]],
+    rows: Sequence[Sequence[float | str | None]],
     *,
     features: tuple[str, ...],
     categorical_features: tuple[str, ...],
@@ -289,6 +294,31 @@ def _one_hot_matrix(
         )
     )
     return encoded, vocabularies, model_features
+
+
+def _median_impute_matrix(
+    train: Sequence[Sequence[float | None]],
+    evaluation: Sequence[Sequence[float | None]],
+    *,
+    feature_count: int,
+) -> tuple[list[list[float]], list[list[float]], list[float]]:
+    medians: list[float] = []
+    for column in range(feature_count):
+        observed = [row[column] for row in train if row[column] is not None]
+        if not observed:
+            raise ValueError(f"numeric feature {column} has no training values for imputation")
+        medians.append(_finite_float(median(cast(list[float], observed)), "imputation median"))
+
+    def transform(rows: Sequence[Sequence[float | None]]) -> list[list[float]]:
+        return [
+            [
+                medians[index] if value is None else _finite_float(value, "imputed feature")
+                for index, value in enumerate(row)
+            ]
+            for row in rows
+        ]
+
+    return transform(train), transform(evaluation), medians
 
 
 def _validate_split_feasibility(targets: Sequence[object], spec: TrainingSpec) -> None:
@@ -518,6 +548,13 @@ def train_tabular(
             categorical_features=(),
             preprocessor="identity",
         )
+    elif spec.preprocessor == "median_impute":
+        x_train, x_test, medians = _median_impute_matrix(
+            cast(Sequence[Sequence[float | None]], x_train),
+            cast(Sequence[Sequence[float | None]], x_test),
+            feature_count=len(spec.features),
+        )
+        preprocessing = {"kind": "median_impute", "medians": medians}
     if spec.algorithm == "logistic_regression":
         options = dict(spec.parameters)
         model = sk["LogisticRegression"](
@@ -686,6 +723,15 @@ def _artifact_payload(artifact_bytes: bytes) -> dict[str, object]:
             raise ValueError("preprocessor scales must be positive")
         preprocessing["means"] = [_finite_float(value, "preprocessor mean") for value in means]
         preprocessing["scales"] = normalized_scales
+    elif preprocessing.get("kind") == "median_impute":
+        if set(preprocessing) != {"kind", "medians"}:
+            raise ValueError("median imputation parameters have invalid shape")
+        raw_medians = preprocessing.get("medians")
+        if not isinstance(raw_medians, list) or len(raw_medians) != len(features):
+            raise ValueError("median imputation values must match artifact features")
+        preprocessing["medians"] = [
+            _finite_float(value, "imputation median") for value in raw_medians
+        ]
     elif preprocessing.get("kind") == "one_hot":
         if set(preprocessing) != {"kind", "categories"}:
             raise ValueError("one_hot preprocessing has invalid shape")
@@ -722,6 +768,7 @@ def _prediction_matrix(
     features: tuple[str, ...],
     *,
     categories: Mapping[str, tuple[str, ...]] | None = None,
+    medians: Sequence[float] | None = None,
 ) -> list[list[float]]:
     category_map = categories or {}
     matrix: list[list[float]] = []
@@ -739,7 +786,11 @@ def _prediction_matrix(
                     raise ValueError("categorical prediction value exceeds the size limit")
                 vector.extend(1.0 if value == category else 0.0 for category in category_map[name])
             else:
-                vector.append(_finite_float(row[name], f"prediction feature {name!r}"))
+                value = row[name]
+                if medians is not None and (value is None or value == ""):
+                    vector.append(medians[len(vector)])
+                else:
+                    vector.append(_finite_float(value, f"prediction feature {name!r}"))
         matrix.append(vector)
     return matrix
 
@@ -831,7 +882,12 @@ def predict_tabular(
         raise ValueError("ML artifact feature signature does not match registered model")
     preprocessing = cast(Mapping[str, object], payload["preprocessing"])
     categories = cast(Mapping[str, tuple[str, ...]], preprocessing.get("categories", {}))
-    matrix = _prediction_matrix(rows, features, categories=categories)
+    medians = (
+        cast(list[float], preprocessing["medians"])
+        if preprocessing["kind"] == "median_impute"
+        else None
+    )
+    matrix = _prediction_matrix(rows, features, categories=categories, medians=medians)
     model_features = (
         tuple(f"feature_{index}" for index in range(len(matrix[0])))
         if matrix and preprocessing["kind"] == "one_hot"

@@ -41,12 +41,14 @@ def compile_lab_pipeline(
         ):
             raise ValueError("algorithm is not supported for this Lab task")
         parameters["algorithm"] = algorithm
-    if preprocessor not in {"identity", "standard_scale", "one_hot"}:
+    if preprocessor not in {"identity", "standard_scale", "one_hot", "median_impute"}:
         raise ValueError("preprocessor is not supported for this Lab")
     has_categorical = any(feature.role == "categorical" for feature in lab.features)
     if lab.task == "clustering" and preprocessor != "identity":
         raise ValueError("preprocessor is not supported for clustering Labs")
     if has_categorical and preprocessor != "one_hot":
+        if preprocessor == "median_impute":
+            raise ValueError("median imputation requires numeric Lab features")
         raise ValueError("categorical Lab features require the one_hot preprocessor")
     if preprocessor == "one_hot" and not has_categorical:
         raise ValueError("one_hot preprocessing requires categorical Lab features")

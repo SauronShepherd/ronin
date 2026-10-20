@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 63%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 64%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -482,9 +482,9 @@ PR [#452](https://github.com/SauronShepherd/ronin/pull/452) añade la selección
 
 PR [#453](https://github.com/SauronShepherd/ronin/pull/453) pasó Python 3.11/3.12, Playwright 80/80 y Docker qualification en **9m36s**, con PostgreSQL, worker real y aceptación estricta. Los seis workflows post-merge —CI, Web, Security, Release, Status consistency y Docker qualification— pasaron exact-head; Docker terminó en **9m32s**. Los transformadores se ajustan sólo con filas de entrenamiento; el artefacto v3 es declarativo y el lector conserva compatibilidad con v2. P8 permanece parcial y release-qualified continúa en **0% (0/14)**.
 
-## 30. Candidato: codificación one-hot de features categóricas
+## 30. Codificación one-hot de features categóricas
 
-**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+**Progreso técnico: 4/4 criterios implementados y cualificados exact-head en `main@6b6a479722df30276b1b725bb3936aa50370f7f6`.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -493,4 +493,17 @@ PR [#453](https://github.com/SauronShepherd/ronin/pull/453) pasó Python 3.11/3.
 | Acotar y validar expansión | Vocabularios ordenados limitan cada columna a 256 valores y la salida a 4096 features; se rechazan valores categóricos mayores que 1024 caracteres. |
 | Persistir y verificar para inferencia | El artefacto v3 guarda vocabularios canónicos y valida su forma; API, OpenAPI, Studio, ejecución durable y Playwright incluyen el preprocesador. |
 
-La integración conserva el modelo numérico actual y añade transformación categórica acotada. La verificación focalizada local pasó **63 pruebas**; Ruff y mypy pasaron en los módulos cambiados, el ledger de capacidades valida y `git diff --check` no informa errores. La prueba Playwright que comprueba el selector y el payload categórico también pasó. La cualificación del PR, incluido Docker, y la verificación exact-head posterior al merge quedan pendientes. P8 permanece parcial y release-qualified continúa en **0% (0/14)**.
+PR [#454](https://github.com/SauronShepherd/ronin/pull/454) pasó las matrices Python 3.11/3.12, Web, Security, Release, Status consistency y Docker. Docker qualification terminó en **8m23s** en el PR y en **8m22s** exact-head. La batería local focalizada pasó **63 pruebas**; Playwright completó **78/80** y las dos pruebas de navegación intermitentes pasaron al repetirse aisladas. Los vocabularios de categorías se ajustan sólo con el split de entrenamiento, quedan persistidos en artefactos v3 y asignan vector cero a categorías desconocidas. P8 permanece parcial y release-qualified continúa en **0% (0/14)**.
+
+## 31. Candidato: imputación numérica reproducible
+
+**Progreso técnico local: 4/4 criterios implementados; cualificación exact-head pendiente.**
+
+| Criterio técnico | Evidencia local |
+| --- | --- |
+| Permitir valores ausentes con una elección explícita | `median_impute` acepta `null` y celdas CSV vacías en features numéricas; los demás preprocesadores mantienen su rechazo estricto. |
+| Ajustar imputación sin filtrar la evaluación | Las medianas se calculan sólo con filas de entrenamiento; una columna totalmente ausente en entrenamiento se rechaza con error explicable. |
+| Reutilizar la transformación al inferir | El artefacto v3 guarda una mediana finita por feature y la predicción reemplaza ausentes con esos valores persistidos. |
+| Conectarlo al flujo durable y al contrato público | PipelineIR, runner, API, OpenAPI y Studio exponen `median_impute` únicamente para Labs numéricos; hay cobertura de runtime, runner y API. |
+
+La verificación local pasó **69 pruebas Python focalizadas y 81/81 Playwright**. Ruff, formato, mypy, OpenAPI, ledger de capacidades, sintaxis JavaScript y `git diff --check` pasan. La cualificación del PR, incluido Docker, y la verificación exact-head posterior al merge quedan pendientes. P8 permanece parcial y release-qualified continúa en **0% (0/14)**.
