@@ -28,7 +28,7 @@ runner and rejects runners that cannot execute it; all six post-merge workflows 
 `1edb11a` passed, including Docker in 9m36s. PR #452 is extending algorithm choice
 through request, runner, UI and checkpoint identity. Untracked
 qualification output directories are not release evidence.
-**Observed source head:** `1edb11a5123bf9ef3c29b7eb2d6d189cc459b8ea` (2026-10-20).
+**Observed source head:** `24218a7f1e29c74242266900a6adf1262c9d5382` (2026-10-20).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are

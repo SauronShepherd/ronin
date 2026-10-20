@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 65%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 66%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional ya integrado en dominio, persistencia, compiler/runner, API y UI; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -514,7 +514,7 @@ La verificación local pasó **69 pruebas Python focalizadas y 81/81 Playwright*
 
 | Requisito | Criterio de diseño |
 | --- | --- |
-| Descubrir referencias sin depender del llamador | Enumerar referencias de Labs/datasets, ejecuciones durables, MLRun records y todas las versiones registradas. Una fuente incompleta debe impedir el barrido. |
+| Descubrir referencias sin depender del llamador | Enumerar revisiones del catálogo, snapshots de archivos locales, evidencia y checkpoints durables, MLRun records, versiones registradas, salidas de conectores, revisiones de ingeniería de datos y exports sintéticos. Una fuente incompleta debe impedir el barrido. |
 | Preservar objetos vivos durante carreras concurrentes | Separar inventario de candidatos de borrado; volver a comprobar referencias inmediatamente antes de eliminar y hacer la operación idempotente. |
 | Operación observable y acotada | Exponer primero un plan dry-run con digest, rol, edad y fuente; paginar el inventario y limitar objetos por ciclo. |
 | No borrar datos generales al limpiar resultados ML | Identificar roles y productores de cada objeto; no eliminar un digest sólo porque una referencia de ML dejó de existir si otro producto lo usa. |
@@ -523,7 +523,7 @@ La verificación local pasó **69 pruebas Python focalizadas y 81/81 Playwright*
 
 ## 33. Candidato: componer codificación categórica e imputación numérica
 
-**Progreso técnico local: 4/4 criterios implementados; cualificación pendiente.**
+**Progreso técnico: 4/4 criterios implementados y cualificados exact-head en `main@24218a7f1e29c74242266900a6adf1262c9d5382`.**
 
 | Criterio técnico | Evidencia local |
 | --- | --- |
@@ -532,4 +532,17 @@ La verificación local pasó **69 pruebas Python focalizadas y 81/81 Playwright*
 | Persistir una transformación reproducible | Artefactos v3 guardan vocabularios categóricos y medianas por nombre de columna; predicción reproduce ambas etapas y rechaza metadata inválida. |
 | Exponerlo al flujo durable y al usuario | PipelineIR, runner, API, OpenAPI y Studio ofrecen la opción; runtime, runner, endpoint durable y Playwright tienen cobertura. |
 
-La verificación local pasó **72 pruebas Python focalizadas**. La suite Playwright completa registró **80/81** en la primera corrida; el único timeout ocurrió en una prueba de Synthetic Studio y pasó al repetirse aislada (**1/1**). Ruff, formato, mypy, OpenAPI, ledger, sintaxis JavaScript y `git diff --check` pasan. El PR y la cualificación exact-head Docker/Web quedan pendientes. La integración no modifica la semántica de `one_hot` ni de `median_impute` elegidas por separado. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+La verificación local pasó **72 pruebas Python focalizadas**. La suite Playwright completa registró **80/81** en la primera corrida; el único timeout ocurrió en una prueba de Synthetic Studio y pasó al repetirse aislada (**1/1**). PR [#456](https://github.com/SauronShepherd/ronin/pull/456) pasó Python 3.11/3.12, Web, Security, Release, Status consistency, verificación, calidad y Docker. Los seis workflows post-merge exact-head también pasaron; Docker terminó en **10m03s**, con cobertura PostgreSQL, worker real y aceptación estricta. La integración no modifica la semántica de `one_hot` ni de `median_impute` elegidas por separado. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
+
+## 34. Inventario dry-run para retención de artefactos
+
+**Progreso técnico local: 4/4 criterios de la primera etapa implementados; falta integrar los enumeradores reales de referencias.**
+
+| Criterio | Evidencia local |
+| --- | --- |
+| Exigir el conjunto conocido de fuentes | `plan_unreferenced()` requiere revisiones de catálogo, salidas de conectores, revisiones de ingeniería de datos, resultados y checkpoints durables, archivos locales, MLRun, versiones registradas y exports sintéticos; rechaza fuentes desconocidas. |
+| Fallar cerrado ante cobertura incompleta | Una fuente ausente devuelve `all_required_sources_supplied=false` y ningún candidato. Un inventario que supera el límite también devuelve cero candidatos. |
+| Limitar el inventario | Usa páginas cuando el store implementa `PagedArtifactStore`, con tamaño de página, máximo de páginas y máximo de objetos configurables y validados. |
+| Hacer el primer paso no destructivo | El plan lista digests candidatos ordenados y no llama a `delete`; las pruebas verifican que candidatos y objetos vivos siguen presentes. |
+
+La batería focalizada de artifacts/paginación pasó **38 pruebas** y la suite Python completa pasó **3791 pruebas, 52 omitidas**. Ruff, formato, mypy, `git diff --check` y el gate portátil de cobertura (**54 archivos**) pasan. Los tests elevaron la cobertura de `artifacts.py` de 78.17% a 86.18%, por encima del piso de 80%; se quitó su baseline legacy de ambos gates de Makefile. La cualificación completa de cobertura requiere PostgreSQL y sigue delegada al gate Docker. El inventario de productores encontró estas nueve familias en `put_bytes()`; el snapshot aún lo prepara el llamador, así que el helper no puede demostrar que los datos de cada familia sean exhaustivos. El siguiente trabajo debe conectar y cualificar cada enumerador, añadir edad/rol a la vista de inventario y cubrir carreras antes de habilitar cualquier borrado automático. La limpieza global permanece deshabilitada. P8 sigue parcial y release-qualified permanece en **0% (0/14)**.
