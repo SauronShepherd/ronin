@@ -4,7 +4,8 @@
 import pytest
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_ml.domain import FeatureSpec, Lab, PipelineIR, PipelineNode
-from studio_ml.runner import LocalExperimentRunner
+from studio_ml.runner import LocalExperimentRunner, _checkpoint_runtime_fingerprint
+from studio_ml.runtime import train_tabular
 from studio_ml.services import compile_lab_pipeline
 
 
@@ -22,6 +23,22 @@ def _lab() -> Lab:
 
 def _rows() -> list[dict[str, object]]:
     return [{"x": value, "target": value % 2} for value in range(1, 21)]
+
+
+class _CheckpointBackend:
+    backend_id = "local.sklearn"
+    display_name = "test backend"
+    capabilities = None
+
+    def __init__(self, *, fail_on_train: bool = False) -> None:
+        self.fail_on_train = fail_on_train
+        self.train_calls = 0
+
+    def train(self, request, rows):
+        self.train_calls += 1
+        if self.fail_on_train:
+            raise AssertionError("checkpointed train node must not execute")
+        return train_tabular(rows, request.spec)
 
 
 def test_local_runner_returns_portable_result_deterministically() -> None:
@@ -69,26 +86,65 @@ def test_local_runner_restores_all_persisted_node_outputs_without_reexecution() 
     lab = _lab()
     pipeline = compile_lab_pipeline(lab)
     checkpoints: dict[str, dict[str, object]] = {}
-    first = LocalExperimentRunner().execute_pipeline(
+    backend = _CheckpointBackend()
+    first = LocalExperimentRunner((backend,)).execute_pipeline(
         lab,
         _rows(),
         pipeline,
         checkpoint_save=lambda node_id, payload: checkpoints.__setitem__(node_id, payload),
     )
     assert len(checkpoints) == 6
+    assert len(first.runtime_fingerprint) == 64
+    assert (
+        checkpoints["select"]["checkpoint"]["value"]["runtime_fingerprint"]
+        == first.runtime_fingerprint
+    )
+    assert backend.train_calls == 1
 
-    class MustNotTrain:
-        backend_id = "local.sklearn"
-        display_name = "test backend"
-        capabilities = None
-
-        def train(self, _request, _rows):  # pragma: no cover - should be bypassed by checkpoints
-            raise AssertionError("restored train node must not execute")
-
-    resumed = LocalExperimentRunner((MustNotTrain(),)).execute_pipeline(
+    resumed_backend = _CheckpointBackend(fail_on_train=True)
+    resumed = LocalExperimentRunner((resumed_backend,)).execute_pipeline(
         lab,
         _rows(),
         pipeline,
         checkpoint_load=checkpoints.get,
     )
     assert resumed.to_payload() == first.to_payload()
+    assert resumed_backend.train_calls == 0
+
+
+def test_local_runner_discards_checkpoints_from_another_runtime() -> None:
+    lab = _lab()
+    pipeline = compile_lab_pipeline(lab)
+    checkpoints: dict[str, dict[str, object]] = {}
+    first = LocalExperimentRunner((_CheckpointBackend(),)).execute_pipeline(
+        lab,
+        _rows(),
+        pipeline,
+        checkpoint_save=lambda node_id, payload: checkpoints.__setitem__(node_id, payload),
+    )
+    stale = {
+        node_id: {**payload, "runtime_fingerprint": "0" * 64}
+        for node_id, payload in checkpoints.items()
+    }
+
+    replacement = _CheckpointBackend()
+    resumed = LocalExperimentRunner((replacement,)).execute_pipeline(
+        lab,
+        _rows(),
+        pipeline,
+        checkpoint_load=stale.get,
+    )
+
+    assert replacement.train_calls == 1
+    assert resumed.to_payload() == first.to_payload()
+
+
+def test_checkpoint_runtime_fingerprint_includes_execution_options() -> None:
+    backend = _CheckpointBackend()
+    base = _checkpoint_runtime_fingerprint(backend, parameters=(), clusters=2, max_iterations=100)
+    changed = _checkpoint_runtime_fingerprint(
+        backend, parameters=(("C", 0.5),), clusters=3, max_iterations=100
+    )
+    assert base is not None
+    assert changed is not None
+    assert base != changed
