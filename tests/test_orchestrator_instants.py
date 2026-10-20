@@ -57,10 +57,20 @@ def test_instant_rejects_noncanonical_or_invalid_values(value: str) -> None:
         Instant(value)
 
 
-_UTC_DATETIMES = st.datetimes(
-    min_value=datetime(2000, 1, 1),
-    max_value=datetime(2099, 12, 31, 23, 59, 59, 999999),
-    timezones=st.just(UTC),
+_UTC_START = datetime(2000, 1, 1, tzinfo=UTC)
+_UTC_END = datetime(2099, 12, 31, 23, 59, 59, 999999, tzinfo=UTC)
+_UTC_SPAN = _UTC_END - _UTC_START
+_UTC_SPAN_MICROSECONDS = (
+    _UTC_SPAN.days * 24 * 60 * 60 + _UTC_SPAN.seconds
+) * 1_000_000 + _UTC_SPAN.microseconds
+
+
+def _utc_datetime_from_microseconds(offset: int) -> datetime:
+    return _UTC_START + timedelta(microseconds=offset)
+
+
+_UTC_DATETIMES = st.integers(min_value=0, max_value=_UTC_SPAN_MICROSECONDS).map(
+    _utc_datetime_from_microseconds
 )
 
 
