@@ -864,3 +864,9 @@ Las suites de almacén, descubrimiento, barrera PostgreSQL y recolector guardado
 `queryflux_execute` exige un registro durable de referencia, y `execute_query` mantiene el writer lease desde `ArtifactStore.put_bytes()` hasta el commit de `(project_id, run_id, attempt_id, storage_ref, digest)`. La composición local crea el registro en SQLite o PostgreSQL; el descubrimiento acotado lo incorpora como una décima fuente requerida y falla cerrado si excede el máximo o encuentra digest/ref inconsistentes. La prueba del endpoint y del lease, el registro de referencias y la retención real en PostgreSQL cubren el nuevo camino.
 
 La batería focalizada de QueryFlux, descubrimiento, retención y PostgreSQL pasa **61 pruebas**; la suite amplia pasa **3.937 pruebas y omite 16**. Ruff, formato, mypy de producto (459 archivos), y `git diff --check` pasan. Pendiente: cualificar el PR exact-head y auditar otros artefactos devueltos por HTTP. La limpieza global automática sigue apagada hasta verificar todo el cableado productivo y las referencias externas.
+
+## 62. Alinear el backend PostgreSQL del worker con el servidor
+
+**Estado: corrección implementada en candidato basado en PR #493; validación focalizada: 6/6. Avance global: 85%.**
+
+La entrada `ronin worker` no pasaba `RONIN_POSTGRES_DSN` a `LocalWorkerRuntimeConfig`, aunque `ronin serve` sí abría PostgreSQL. En despliegues con `RONIN_STORAGE_BACKEND=postgres`, el servidor y el worker podían operar sobre bases distintas, eludiendo la barrera compartida de referencias de artefactos. El CLI ahora valida el backend igual que el servidor y construye la configuración del worker con el DSN; SQLite sigue siendo el valor predeterminado. Las pruebas cubren PostgreSQL con DSN obligatorio, propagación del DSN y configuración SQLite. La cualificación Docker real y los checks exact-head quedan pendientes; este cambio no habilita recolección automática.

@@ -747,14 +747,7 @@ def _postgres_ready(metadata: PostgresMetadataStore) -> bool:
 
 
 def _worker() -> int:
-    database = _database()
-    workspace = Path(_env("RONIN_WORKSPACE", ".")).expanduser().resolve()
-    config = LocalWorkerRuntimeConfig(
-        paths=WorkerPaths(workspace, database.parent),
-        owner=_env("RONIN_WORKER_OWNER", f"worker-{os.getpid()}"),
-        image=_env("RONIN_IMAGE"),
-        database_name=database.name,
-    )
+    config = _worker_config_from_environment()
 
     async def run() -> None:
         async with LocalWorkerRuntime(config, migration_now=_now()) as runtime:
@@ -762,6 +755,28 @@ def _worker() -> int:
 
     asyncio.run(run())
     return 0
+
+
+def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
+    """Build a worker config using the same durable backend as the server."""
+
+    storage_backend = os.environ.get("RONIN_STORAGE_BACKEND", "sqlite").strip().lower()
+    if storage_backend not in {"sqlite", "postgres"}:
+        raise CliError("RONIN_STORAGE_BACKEND must be sqlite or postgres")
+    postgres_dsn = os.environ.get("RONIN_POSTGRES_DSN")
+    if storage_backend == "postgres" and postgres_dsn is None:
+        raise CliError("RONIN_POSTGRES_DSN is required for PostgreSQL storage")
+    if postgres_dsn is not None and (not postgres_dsn or postgres_dsn != postgres_dsn.strip()):
+        raise CliError("RONIN_POSTGRES_DSN must be non-empty and trimmed")
+    database = _database()
+    workspace = Path(_env("RONIN_WORKSPACE", ".")).expanduser().resolve()
+    return LocalWorkerRuntimeConfig(
+        paths=WorkerPaths(workspace, database.parent),
+        owner=_env("RONIN_WORKER_OWNER", f"worker-{os.getpid()}"),
+        image=_env("RONIN_IMAGE"),
+        database_name=database.name,
+        postgres_dsn=postgres_dsn,
+    )
 
 
 def _migration_iics_discover(namespace: argparse.Namespace) -> int:
