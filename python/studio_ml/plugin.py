@@ -916,6 +916,31 @@ class MachineLearningStudioPlugin:
         if not all(isinstance(row, dict) for row in rows):
             raise ValueError("search rows must be objects")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
+        if lab.task not in {"classification", "regression"}:
+            raise ValueError("hyperparameter search requires a supervised lab")
+        allowed_parameters = {"seed"}
+        if lab.task == "classification":
+            allowed_parameters.update({"C", "max_iter"})
+        for name, values in spec.parameters:
+            if name not in allowed_parameters:
+                raise ValueError(f"unsupported search parameter {name!r} for {lab.task}")
+            for value in values:
+                if name == "seed":
+                    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                        raise ValueError("seed search values must be non-negative integers")
+                elif name == "max_iter":
+                    if (
+                        not isinstance(value, int)
+                        or isinstance(value, bool)
+                        or not 1 <= value <= 100_000
+                    ):
+                        raise ValueError("max_iter search values must be integers from 1 to 100000")
+                elif (
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or not 0 < value <= 1_000_000
+                ):
+                    raise ValueError("C search values must be finite numbers in (0, 1000000]")
         trials: list[Trial] = []
         registered: list[dict[str, object]] = []
         registration = body.get("register")

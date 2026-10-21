@@ -17,7 +17,7 @@ Python 3.11/3.12, Web, Security, Release, Status consistency and Docker qualific
 all passed on the exact merged head, including PostgreSQL coverage, real worker
 execution and strict acceptance.
 Untracked qualification output directories are not release evidence.
-**Observed source head:** `f1a068f94772b36950538ce8c18c8db10309dc81` (2026-10-20).
+**Observed source head:** `7df81a7e557872726ed32c3b2264fb983d111e72` (2026-10-21).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
