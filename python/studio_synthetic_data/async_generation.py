@@ -158,7 +158,7 @@ class LocalGenerationJobs:
             return self._jobs[job_id]
 
     def close(self) -> None:
-        self._executor.shutdown(wait=True, cancel_futures=True)
+        self._executor.shutdown(wait=True)
         if self._db:
             self._db.close()
 

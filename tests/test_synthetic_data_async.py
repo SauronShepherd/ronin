@@ -56,7 +56,7 @@ def test_recovery_commits_queued_state_before_dispatch(tmp_path, monkeypatch) ->
             future.set_result(None)
             return future
 
-        def shutdown(self, *, wait: bool, cancel_futures: bool) -> None:
+        def shutdown(self, *, wait: bool, cancel_futures: bool = False) -> None:
             del wait, cancel_futures
 
     monkeypatch.setattr(async_generation, "ThreadPoolExecutor", RecordingExecutor)
@@ -76,3 +76,34 @@ def test_cancel_of_terminal_job_is_safe(tmp_path) -> None:
     reopened = LocalGenerationJobs(GovernStudioService(), db_path=str(tmp_path / "cancel.db"))
     assert reopened.cancel(submitted.job_id).status == "completed"
     reopened.close()
+
+
+def test_close_preserves_queued_durable_job_for_recovery(tmp_path, monkeypatch) -> None:
+    executor_instances = []
+
+    class PendingExecutor:
+        def __init__(self, **_kwargs) -> None:
+            self.future: Future[None] = Future()
+            executor_instances.append(self)
+
+        def submit(self, _function, *_args):
+            return self.future
+
+        def shutdown(self, *, wait: bool, cancel_futures: bool = False) -> None:
+            del wait
+            if cancel_futures:
+                self.future.cancel()
+
+    monkeypatch.setattr(async_generation, "ThreadPoolExecutor", PendingExecutor)
+    database = str(tmp_path / "queued-close.db")
+    jobs = LocalGenerationJobs(GovernStudioService(), db_path=database)
+    submitted = jobs.submit(_plan(), idempotency_key="queued-close")
+
+    jobs.close()
+
+    assert executor_instances[0].future.cancelled() is False
+    with sqlite3.connect(database) as connection:
+        status = connection.execute(
+            "SELECT status FROM synthetic_jobs WHERE job_id=?", (submitted.job_id,)
+        ).fetchone()[0]
+    assert status == "queued"
