@@ -7,8 +7,8 @@ import hashlib
 import json
 import random
 from dataclasses import dataclass
-from itertools import product
-from math import erf, exp, pi, sqrt
+from itertools import islice, product
+from math import erf, exp, pi, prod, sqrt
 from typing import Literal
 
 SearchMode = Literal["single", "grid", "random", "bayesian"]
@@ -49,31 +49,74 @@ class SearchSpec:
     random_seed: int = 17
 
     def __post_init__(self) -> None:
-        if self.mode not in {"single", "grid", "random", "bayesian"}:
+        if not isinstance(self.mode, str) or self.mode not in {
+            "single",
+            "grid",
+            "random",
+            "bayesian",
+        }:
             raise ValueError("unsupported search mode")
-        if self.direction not in {"maximize", "minimize"} or not self.metric.strip():
+        if (
+            not isinstance(self.direction, str)
+            or self.direction not in {"maximize", "minimize"}
+            or not isinstance(self.metric, str)
+            or not self.metric.strip()
+        ):
             raise ValueError("invalid search objective")
-        if self.max_trials < 1 or len({name for name, _ in self.parameters}) != len(
-            self.parameters
+        if (
+            not isinstance(self.max_trials, int)
+            or isinstance(self.max_trials, bool)
+            or not 1 <= self.max_trials <= 1000
+            or not isinstance(self.parameters, tuple)
+            or any(
+                not isinstance(item, tuple)
+                or len(item) != 2
+                or not isinstance(item[0], str)
+                or not item[0].strip()
+                or not isinstance(item[1], tuple)
+                or not item[1]
+                for item in self.parameters
+            )
+            or len({name for name, _ in self.parameters}) != len(self.parameters)
         ):
             raise ValueError("invalid search limits or duplicate parameter")
-        if any(not name.strip() or not values for name, values in self.parameters):
-            raise ValueError("search parameters require a name and values")
-        if self.random_seed < 0:
+        if (
+            not isinstance(self.random_seed, int)
+            or isinstance(self.random_seed, bool)
+            or self.random_seed < 0
+        ):
             raise ValueError("random seed must be non-negative")
 
     def trials(self) -> tuple[dict[str, object], ...]:
         if self.mode == "single":
             return ({name: values[0] for name, values in self.parameters},)
         names = tuple(name for name, _ in self.parameters)
-        values = tuple(values for _, values in self.parameters)
-        combinations = list(product(*values))
-        if self.mode in {"random", "bayesian"}:
-            random.Random(self.random_seed).shuffle(combinations)  # noqa: S311
-        return tuple(
-            dict(zip(names, combination, strict=True))
-            for combination in combinations[: self.max_trials]
-        )
+        dimensions = tuple(values for _, values in self.parameters)
+        total = prod(len(values) for values in dimensions)
+        if self.mode == "grid":
+            combinations = islice(product(*dimensions), self.max_trials)
+            return tuple(dict(zip(names, combination, strict=True)) for combination in combinations)
+
+        count = min(total, self.max_trials)
+        rng = random.Random(self.random_seed)  # noqa: S311
+        indices: set[int] = set()
+        while len(indices) < count:
+            indices.add(rng.randrange(total))
+        trials: list[dict[str, object]] = []
+        for index in sorted(indices):
+            positions: list[int] = []
+            for dimension in reversed(dimensions):
+                index, position = divmod(index, len(dimension))
+                positions.append(position)
+            positions.reverse()
+            trials.append(
+                {
+                    name: choices[choice]
+                    for name, choices, choice in zip(names, dimensions, positions, strict=True)
+                }
+            )
+        rng.shuffle(trials)
+        return tuple(trials)
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,17 +172,17 @@ def propose_bayesian_candidates(
     """
     if spec.mode != "bayesian":
         raise ValueError("bayesian candidate proposals require mode='bayesian'")
-    candidates = [
-        dict(item)
-        for item in SearchSpec(
-            mode="grid",
+    pool_size = min(max(spec.max_trials * 10, 100), 1000)
+    candidates = list(
+        SearchSpec(
+            mode="random",
             parameters=spec.parameters,
-            max_trials=spec.max_trials,
+            max_trials=pool_size,
             metric=spec.metric,
             direction=spec.direction,
             random_seed=spec.random_seed,
         ).trials()
-    ]
+    )
     observed = {tuple(sorted(trial.parameters)) for trial in observations}
     candidates = [item for item in candidates if tuple(sorted(item.items())) not in observed]
     if not candidates:

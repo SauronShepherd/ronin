@@ -46,6 +46,55 @@ def test_random_trials_are_reproducible_and_bounded() -> None:
     assert len(spec.trials()) == 2
 
 
+def test_large_grid_search_is_lazy_and_stops_at_trial_budget() -> None:
+    values = tuple(range(1000))
+    spec = SearchSpec(
+        mode="grid",
+        max_trials=4,
+        parameters=(("a", values), ("b", values), ("c", values)),
+    )
+    assert spec.trials() == (
+        {"a": 0, "b": 0, "c": 0},
+        {"a": 0, "b": 0, "c": 1},
+        {"a": 0, "b": 0, "c": 2},
+        {"a": 0, "b": 0, "c": 3},
+    )
+
+
+def test_large_random_search_samples_without_materializing_the_product() -> None:
+    values = tuple(range(1000))
+    spec = SearchSpec(
+        mode="random",
+        max_trials=8,
+        random_seed=5,
+        parameters=(("a", values), ("b", values), ("c", values)),
+    )
+    trials = spec.trials()
+    assert len(trials) == 8
+    assert len({tuple(sorted(trial.items())) for trial in trials}) == 8
+    assert trials == spec.trials()
+
+
+def test_search_trial_budget_has_a_fixed_upper_bound() -> None:
+    with pytest.raises(ValueError, match="search limits"):
+        SearchSpec(max_trials=1001)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"max_trials": True},
+        {"random_seed": True},
+        {"metric": 1},
+        {"direction": []},
+        {"parameters": (("C", [1, 2]),)},
+    ],
+)
+def test_search_spec_rejects_wrong_runtime_types(kwargs: dict[str, object]) -> None:
+    with pytest.raises(ValueError, match="search|objective|random seed"):
+        SearchSpec(**kwargs)  # type: ignore[arg-type]
+
+
 def test_bayesian_mode_is_bounded_and_reproducible() -> None:
     spec = SearchSpec(
         mode="bayesian",
@@ -67,6 +116,23 @@ def test_bayesian_candidates_use_observations_without_repeating_them() -> None:
     observations = (Trial.create({"C": 1.0, "max_iter": 100}, {"score": 0.95}),)
     proposals = propose_bayesian_candidates(spec, observations)
     assert len(proposals) == 2
+    assert {tuple(sorted(item.items())) for item in proposals}.isdisjoint(
+        {tuple(sorted(observations[0].parameters))}
+    )
+    assert proposals == propose_bayesian_candidates(spec, observations)
+
+
+def test_bayesian_candidate_pool_is_bounded_for_a_large_search_space() -> None:
+    values = tuple(range(1000))
+    spec = SearchSpec(
+        mode="bayesian",
+        max_trials=3,
+        random_seed=19,
+        parameters=(("a", values), ("b", values), ("c", values)),
+    )
+    observations = (Trial.create({"a": 0, "b": 0, "c": 0}, {"score": 1.0}),)
+    proposals = propose_bayesian_candidates(spec, observations)
+    assert 0 < len(proposals) <= 3
     assert {tuple(sorted(item.items())) for item in proposals}.isdisjoint(
         {tuple(sorted(observations[0].parameters))}
     )
