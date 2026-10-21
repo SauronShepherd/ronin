@@ -30,7 +30,7 @@ planificadas de una plataforma ML completa.
 | Grid trials y ranking determinista | Parcial | `optimization.py` y `POST .../search`; `seed`, `C` y `max_iter` se aplican en logística; tie-breakers ordenados y direccionales exact-head cualificados en `main@a8e1120` |
 | Random trials | Implementado | muestreo determinista y bounded por `random_seed` |
 | Bayesian trials | Implementado y exact-head cualificado en `main@cc0ad8f` | surrogate discreto, Expected Improvement, propuestas de memoria acotada y parada por paciencia/mejora reciente |
-| Compare API y ranking de trials | Implementado y exact-head cualificado en `main@a8e1120` | API, formulario UI, tie-breakers direccionales y rendering del ranking |
+| Compare API y ranking de trials | Implementado y exact-head cualificado en `main@ba3106b` | API, formulario UI, tie-breakers direccionales, máximo de ocho y rechazo de campos desconocidos; OpenAPI y parser mantienen el mismo contrato |
 | Model registry list/promotion | Implementado | endpoints, registro opcional de trials y E2E con evaluación aprobada |
 | Model card API | Implementado | `GET .../models/{model_id}/{version}/card` devuelve provenance, digest y firma |
 | Registry/promotion UI | Implementado | lista modelos, model card y promoción con reason |
