@@ -13,7 +13,7 @@ from studio_orchestrator import EvidenceAvailability, JobStore
 
 from .artifacts import ArtifactRef
 from .limits import MAX_CELL_RESULTS_PER_RUN, MAX_EVIDENCE_REFS_PER_RUN
-from .ports import ArtifactStore, PagedArtifactStore
+from .ports import ArtifactReferenceBarrier, ArtifactStore, PagedArtifactStore
 
 
 class _BoundedWorkspaceInventory(Protocol):
@@ -557,9 +557,57 @@ def _artifact_references_in(value: object) -> Iterable[dict[str, str]]:
             yield ref
         for nested in value.values():
             yield from _artifact_references_in(nested)
+
     elif isinstance(value, list):
         for nested in value:
             yield from _artifact_references_in(nested)
+
+
+def collect_referenced_artifacts(
+    barrier: ArtifactReferenceBarrier,
+    store: ArtifactStore,
+    workspaces: _BoundedWorkspaceInventory,
+    catalog: _BoundedCatalogInventory,
+    ml_registry: _MLArtifactReferenceStore,
+    jobs: JobStore,
+    connector_checkpoints: _ConnectorOutputReferenceStore,
+    data_engineering_revisions: _DataEngineeringRevisionStore,
+    synthetic_exports: _SyntheticExportStore,
+    *,
+    allow_empty_live_set: bool = False,
+    page_size: int = 500,
+    max_objects: int = 10_000,
+    max_pages: int = 1_000,
+) -> tuple[str, ...]:
+    """Discover all known live references and collect under one exclusive lease.
+
+    Every writer must use the same PostgreSQL coordination barrier. Discovery,
+    bounded inventory validation, and deletion are kept inside the collector
+    lease so no reference can be published between the snapshot and deletion.
+    This primitive is opt-in and does not schedule automatic cleanup.
+    """
+
+    with barrier.collector():
+        references = discover_artifact_references(
+            workspaces,
+            catalog,
+            ml_registry,
+            jobs,
+            connector_checkpoints,
+            data_engineering_revisions,
+            synthetic_exports,
+        )
+        live_digests = tuple(
+            digest for source_digests in references.values() for digest in source_digests
+        )
+        return collect_unreferenced(
+            store,
+            live_digests,
+            allow_empty_live_set=allow_empty_live_set,
+            page_size=page_size,
+            max_objects=max_objects,
+            max_pages=max_pages,
+        )
 
 
 def _digest_from_storage_ref(storage_ref: object) -> str:
@@ -653,6 +701,7 @@ __all__ = (
     "ArtifactRetentionPlan",
     "REQUIRED_ARTIFACT_REFERENCE_SOURCES",
     "collect_unreferenced",
+    "collect_referenced_artifacts",
     "discover_catalog_artifact_references",
     "discover_connector_artifact_references",
     "discover_data_engineering_artifact_references",
