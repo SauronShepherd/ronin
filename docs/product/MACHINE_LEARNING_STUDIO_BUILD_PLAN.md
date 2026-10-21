@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 77%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada; PipelineIR v2 ejecuta candidatos para clasificación/regresión y clustering, cualificados por los seis workflows exact-head de `main@e20733d`. La selección desde la UI está en cualificación. Los porcentajes se actualizarán al pasar cada cualificación exact-head.
+**Avance de implementación técnica estimado: 78%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada; PipelineIR v2 ejecuta candidatos para clasificación/regresión y clustering, cualificados por los seis workflows exact-head de `main@e20733d`. La selección de candidatos desde la UI quedó integrada en `main@47e16fa` y pasó los seis workflows post-merge exact-head. Los porcentajes se actualizarán al pasar cada cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -667,7 +667,7 @@ Las pruebas focalizadas de clustering, runner, servicios, API durable y OpenAPI 
 
 ## 44. Selección de candidatos en la interfaz de ML Studio
 
-**Progreso técnico: implementado y cualificado localmente; pendiente de CI y merge. Avance global integrado: 77%; release-qualified: 0% (0/14).**
+**Progreso técnico: 5/5 criterios implementados y cualificados; PR #472 integrado en `main@47e16fa` y los seis workflows post-merge exact-head pasaron. Avance global integrado: 78%; release-qualified: 0% (0/14).**
 
 | Criterio | Implementación |
 | --- | --- |
@@ -677,4 +677,19 @@ Las pruebas focalizadas de clustering, runner, servicios, API durable y OpenAPI 
 | Hacer accesibles las opciones | Los controles múltiples incluyen nombres accesibles y una instrucción visible para la cantidad mínima. |
 | Verificar interacción de navegador | Playwright comprueba los cuerpos durable para selección de algoritmos y conteos; la suite web completa pasa **82/82** en un worker. |
 
-El recorrido añadido con Playwright pasa aislado y dentro de la suite completa. El primer pase paralelo dio **81/82** por timeout transitorio en Debugger Studio; el test pasó aislado y la repetición serial pasó **82/82**. Pendiente CI Web exact-head. Este incremento no cambia la API ni altera la selección individual existente; P8 permanece parcial y release-qualified en **0% (0/14)**.
+El recorrido añadido con Playwright pasa aislado y dentro de la suite completa. El primer pase paralelo dio **81/82** por timeout transitorio en Debugger Studio; el test pasó aislado y la repetición serial pasó **82/82**. PR #472 pasó Web y Docker; los seis workflows post-merge exact-head de `main@47e16fa` también pasaron. Este incremento no cambia la API ni altera la selección individual existente; P8 permanece parcial y release-qualified en **0% (0/14)**.
+
+
+## 45. Acotar memoria y presupuesto de búsqueda de hiperparámetros
+
+**Progreso técnico del incremento: implementación y verificación local en curso; pendiente de CI, Docker exact-head y merge. Avance global integrado: 78%; release-qualified: 0% (0/14).**
+
+| Criterio | Implementación |
+| --- | --- |
+| Evitar expandir cuadrículas completas | El modo `grid` consume `itertools.product` de forma perezosa y detiene la generación en `max_trials`. |
+| Muestrear espacios grandes de forma acotada | Los modos `random` y `bayesian` eligen índices únicos reproducibles sobre la cardinalidad del producto y decodifican sólo las pruebas elegidas. |
+| Limitar la propuesta Bayesian | El conjunto de candidatos se limita a un máximo de 1000 pruebas, incluso cuando el espacio cartesiano tiene miles de millones de combinaciones. |
+| Validar presupuesto y estructura en runtime | `max_trials` se limita a 1..1000; se rechazan tipos incorrectos, parámetros vacíos/duplicados y semillas inválidas. |
+| Probar cardinalidad, determinismo y API durable | Tests cubren un espacio de 1000³, unicidad/reproducibilidad y la ejecución API de plugin. |
+
+La suite completa local registró **3837 passed y 54 skipped** antes de añadir las cinco variantes de tipos inválidos; tras esos cambios, `tests/test_ml_optimization.py` pasó **16/16** y `tests/test_ml_plugin_execution_api.py` pasó **17/17**. Ruff, formato y mypy (455 archivos) pasan. La cualificación Docker local pasó **21 tests con 2 omitidos** porque el host no tiene `RONIN_POSTGRES_TEST_DSN`; la aceptación estricta pasó **15/15**. La CI Docker debe aportar la cobertura PostgreSQL antes de declarar cualificación exact-head. Este incremento no declara cualificación hasta completar Docker/CI exact-head y el merge.
