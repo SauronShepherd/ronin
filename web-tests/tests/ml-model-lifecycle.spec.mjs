@@ -155,3 +155,38 @@ test('ML Studio downloads a verified artifact in bounded chunks', async ({ page 
   await expect(page.locator('#ml-output')).toContainText('Downloaded model-a@v1 (5 bytes');
   expect(requests).toEqual([0, 3]);
 });
+
+test('ML Studio submits supervised and clustering candidate selections', async ({ page }) => {
+  const bodies = {};
+  await page.route('**/v1/ml-studio/labs?**', route => route.fulfill({json: {
+    items: [
+      {id: 'churn', name: 'Churn', task: 'classification', backend_id: 'local.sklearn', target: 'label', features: [{column: 'age', role: 'numeric'}]},
+      {id: 'segments', name: 'Segments', task: 'clustering', backend_id: 'local.sklearn', target: null, features: [{column: 'age', role: 'numeric'}]},
+    ],
+  }}));
+  await page.route('**/v1/ml-studio/models?**', route => route.fulfill({json: {items: []}}));
+  await page.route('**/v1/ml-studio/labs/*/executions?**', async route => {
+    const url = new URL(route.request().url());
+    const labId = url.pathname.split('/').at(-2);
+    bodies[labId] = route.request().postDataJSON();
+    await route.fulfill({json: {run_id: `run-${labId}`, state: 'queued'}});
+  });
+  await page.route('**/v1/ml-studio/executions/run-*?**', route => route.fulfill({json: {
+    run_id: new URL(route.request().url()).pathname.split('/').at(-1), state: 'succeeded',
+    result: {artifact_digest: 'a'.repeat(64)},
+  }}));
+  await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
+  await page.locator('[data-ml-algorithm="churn"]').selectOption([
+    'logistic_regression', 'decision_tree_classifier',
+  ]);
+  await page.locator('[data-feature="ml-run"][data-lab="churn"]').click();
+  await expect.poll(() => bodies.churn?.candidate_algorithms).toEqual([
+    'logistic_regression', 'decision_tree_classifier',
+  ]);
+  expect(bodies.churn).not.toHaveProperty('algorithm');
+
+  await page.locator('[data-ml-cluster-count="segments"]').selectOption(['3', '4']);
+  await page.locator('[data-feature="ml-run"][data-lab="segments"]').click();
+  await expect.poll(() => bodies.segments?.candidate_cluster_counts).toEqual([3, 4]);
+  expect(bodies.segments).not.toHaveProperty('algorithm');
+});
