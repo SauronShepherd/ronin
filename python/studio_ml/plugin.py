@@ -14,7 +14,7 @@ from studio_storage.ports import ArtifactReferenceBarrier, ArtifactStore
 
 from .backends import default_backends
 from .datasets import DatasetResolver, resolve_lab_rows
-from .domain import Lab
+from .domain import PIPELINE_SCHEMA_V2, Lab, PipelineIR
 from .optimization import (
     MAX_TIE_BREAKERS,
     BayesianStopPolicy,
@@ -768,6 +768,7 @@ class MachineLearningStudioPlugin:
             "candidate_cluster_counts",
             "selection_metric",
             "selection_direction",
+            "pipeline",
         }:
             raise ValueError("execution body contains unsupported fields")
         if "rows" in body and body["rows"] is None:
@@ -781,6 +782,19 @@ class MachineLearningStudioPlugin:
         ):
             raise ValueError("execution run_id must be 1 to 256 characters of trimmed text")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
+        if "pipeline" in body and body["pipeline"] is None:
+            raise ValueError("pipeline must be a PipelineIR v2 object when provided")
+        raw_pipeline = body.get("pipeline")
+        pipeline_options = {
+            "algorithm",
+            "preprocessor",
+            "candidate_algorithms",
+            "candidate_cluster_counts",
+            "selection_metric",
+            "selection_direction",
+        }
+        if raw_pipeline is not None and any(key in body for key in pipeline_options):
+            raise ValueError("pipeline cannot be combined with compiler execution options")
         algorithm = body.get("algorithm")
         if algorithm is not None and (
             not isinstance(algorithm, str) or not algorithm or algorithm != algorithm.strip()
@@ -831,20 +845,53 @@ class MachineLearningStudioPlugin:
         rows = resolve_lab_rows(
             WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
         )
-        pipeline = self._labs.compile(
-            WorkspaceId(workspace_id),
-            lab_id,
-            algorithm=algorithm,
-            preprocessor=preprocessor,
-            candidate_algorithms=(
-                tuple(candidate_algorithms) if candidate_algorithms is not None else None
-            ),
-            candidate_cluster_counts=(
-                tuple(candidate_cluster_counts) if candidate_cluster_counts is not None else None
-            ),
-            selection_metric=selection_metric,
-            selection_direction=selection_direction,
-        )
+        if raw_pipeline is not None:
+            pipeline = PipelineIR.from_payload(raw_pipeline)
+            if pipeline.schema != PIPELINE_SCHEMA_V2:
+                raise ValueError("client supplied execution pipelines must use PipelineIR v2")
+            supplied_parameters = dict(pipeline.parameters)
+            supplied_algorithm = supplied_parameters.get("algorithm")
+            supplied_preprocessor = supplied_parameters.get("preprocessor", "identity")
+            if supplied_algorithm is not None and (
+                not supplied_algorithm or supplied_algorithm != supplied_algorithm.strip()
+            ):
+                raise ValueError("pipeline algorithm must be trimmed text")
+            if not isinstance(supplied_preprocessor, str):
+                raise ValueError("pipeline preprocessor must be text")
+            bound_pipeline = self._labs.compile(
+                WorkspaceId(workspace_id),
+                lab_id,
+                algorithm=supplied_algorithm,
+                preprocessor=supplied_preprocessor,
+            )
+            bound_parameters = dict(bound_pipeline.parameters)
+            if set(supplied_parameters) - set(bound_parameters) or any(
+                bound_parameters.get(key) != value for key, value in supplied_parameters.items()
+            ):
+                raise ValueError("custom ML pipeline parameters do not match the submitted Lab")
+            pipeline = PipelineIR(pipeline.nodes, bound_pipeline.parameters, pipeline.schema)
+            validate_pipeline = getattr(self._coordinator._runner, "validate_pipeline", None)
+            if not callable(validate_pipeline):
+                raise ValueError("execution runner cannot validate custom ML pipelines")
+            validate_pipeline(lab, pipeline)
+            pipeline = self._labs.put_pipeline(WorkspaceId(workspace_id), lab_id, pipeline)
+        else:
+            pipeline = self._labs.compile(
+                WorkspaceId(workspace_id),
+                lab_id,
+                algorithm=algorithm,
+                preprocessor=preprocessor,
+                candidate_algorithms=(
+                    tuple(candidate_algorithms) if candidate_algorithms is not None else None
+                ),
+                candidate_cluster_counts=(
+                    tuple(candidate_cluster_counts)
+                    if candidate_cluster_counts is not None
+                    else None
+                ),
+                selection_metric=selection_metric,
+                selection_direction=selection_direction,
+            )
         return self._coordinator.submit(workspace_id, run_id, lab, rows, pipeline).to_payload()
 
     def compare_trials(

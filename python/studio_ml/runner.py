@@ -392,6 +392,64 @@ class LocalExperimentRunner:
             raise ValueError("classification/regression pipeline returned a clustering result")
         return result
 
+    def validate_pipeline(self, lab: Lab, pipeline: PipelineIR) -> None:
+        """Validate a client supplied pipeline before it is persisted as a Job."""
+        backend = self._backends.get(lab.backend_id)
+        if backend is None:
+            raise BackendNotFound(lab.backend_id)
+        capabilities = getattr(backend, "capabilities", None)
+        if capabilities is not None and lab.task not in capabilities.tasks:
+            raise ValueError(f"backend {backend.backend_id!r} does not support task {lab.task!r}")
+        parameters = dict(pipeline.parameters)
+        if (
+            parameters.get("lab_digest") != lab.digest
+            or parameters.get("backend_id") != lab.backend_id
+            or parameters.get("task") != lab.task
+            or parameters.get("seed") != str(lab.seed)
+        ):
+            raise ValueError("custom ML pipeline is not bound to the submitted Lab")
+        if pipeline.schema == PIPELINE_SCHEMA_V2:
+            self._validate_v2_graph(pipeline, lab.task)
+            if lab.task != "clustering":
+                from .runtime import ALGORITHM_CAPABILITIES
+
+                default_algorithm = (
+                    "logistic_regression" if lab.task == "classification" else "linear_regression"
+                )
+                for node in pipeline.nodes:
+                    if node.kind != "train":
+                        continue
+                    algorithm = node.config.get("algorithm", parameters.get("algorithm"))
+                    if algorithm is None:
+                        algorithm = default_algorithm
+                    if not isinstance(algorithm, str):
+                        raise ValueError("train node algorithm must be a string")
+                    if capabilities is not None and algorithm not in capabilities.algorithms:
+                        raise ValueError(
+                            f"backend {backend.backend_id!r} does not support algorithm "
+                            f"{algorithm!r}"
+                        )
+                    if lab.task not in ALGORITHM_CAPABILITIES.get(algorithm, frozenset()):
+                        raise ValueError("train node algorithm is not supported for this Lab task")
+            return
+        required_kinds: tuple[NodeKind, ...] = (
+            "profile",
+            "quality_gate",
+            "prepare",
+            "train",
+            "evaluate",
+            "select",
+        )
+        by_kind: dict[NodeKind, list[PipelineNode]] = {}
+        for node in pipeline.nodes:
+            by_kind.setdefault(node.kind, []).append(node)
+        singular = {kind: items[0] for kind, items in by_kind.items() if len(items) == 1}
+        if len(singular) != len(pipeline.nodes) or set(singular) != set(required_kinds):
+            raise ValueError("custom ML pipeline contains unsupported or duplicate stages")
+        for previous, current in zip(required_kinds[:-1], required_kinds[1:], strict=True):
+            if singular[previous].id not in singular[current].depends_on:
+                raise ValueError(f"ML pipeline stage {current!r} must depend on {previous!r}")
+
     def execute_pipeline(
         self,
         lab: Lab,
