@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from hashlib import sha256
 from types import SimpleNamespace
 
@@ -27,6 +28,7 @@ from studio_orchestrator import EvidenceAvailability
 from studio_storage import (
     REQUIRED_ARTIFACT_REFERENCE_SOURCES,
     LocalArtifactStore,
+    collect_referenced_artifacts,
     discover_artifact_references,
     discover_catalog_artifact_references,
     discover_durable_job_artifact_references,
@@ -353,3 +355,101 @@ def test_durable_discovery_fails_closed_when_evidence_exceeds_bounds() -> None:
 
     with pytest.raises(ValueError, match="evidence exceeded its reference bound"):
         discover_durable_job_artifact_references(store, max_evidence_refs_per_run=1)
+
+
+def test_guarded_collection_holds_collector_lease_through_deletion(tmp_path, monkeypatch) -> None:
+    live = _digest("still-live")
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    store.put_bytes(role="live", data=b"still-live")
+    stale = store.put_bytes(role="stale", data=b"stale")
+    file_asset = CatalogAsset(AssetId("file"), "file", "source.csv")
+    catalog = _CatalogStore(
+        (
+            (
+                file_asset,
+                AssetRevision(
+                    AssetRef(file_asset.id, AssetVersion("v1")),
+                    metadata=(("artifact_ref", f"artifact://sha256/{live}"),),
+                ),
+            ),
+        )
+    )
+    events: list[str] = []
+
+    class Barrier:
+        @contextmanager
+        def writer(self):
+            yield
+
+        @contextmanager
+        def collector(self):
+            events.append("lock")
+            try:
+                yield
+            finally:
+                events.append("unlock")
+
+    original_delete = store.delete
+
+    def delete(ref):
+        events.append("delete")
+        return original_delete(ref)
+
+    monkeypatch.setattr(store, "delete", delete)
+    deleted = collect_referenced_artifacts(
+        Barrier(),
+        store,
+        _WorkspaceStore(),
+        catalog,
+        _MLRegistry((), ()),
+        _DurableJobStore(()),
+        _ConnectorOutputStore(),
+        _DataEngineeringRevisionStore(),
+        _SyntheticExportStore(),
+    )
+
+    assert deleted == (stale.digest,)
+    assert events == ["lock", "delete", "unlock"]
+    assert store.verify(stale) is False
+
+
+def test_guarded_collection_releases_lease_without_deleting_on_incomplete_snapshot(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    stale = store.put_bytes(role="stale", data=b"stale")
+    events: list[str] = []
+
+    class Barrier:
+        @contextmanager
+        def writer(self):
+            yield
+
+        @contextmanager
+        def collector(self):
+            events.append("lock")
+            try:
+                yield
+            finally:
+                events.append("unlock")
+
+    def fail_snapshot(_self):
+        raise ValueError("synthetic export inventory unavailable")
+
+    monkeypatch.setattr(_SyntheticExportStore, "snapshot", fail_snapshot)
+    with pytest.raises(ValueError, match="inventory unavailable"):
+        collect_referenced_artifacts(
+            Barrier(),
+            store,
+            _WorkspaceStore(),
+            _CatalogStore(()),
+            _MLRegistry((), ()),
+            _DurableJobStore(()),
+            _ConnectorOutputStore(),
+            _DataEngineeringRevisionStore(),
+            _SyntheticExportStore(),
+        )
+
+    assert events == ["lock", "unlock"]
+    assert store.get_bytes_by_storage_ref(stale.storage_ref, digest=stale.digest) == b"stale"

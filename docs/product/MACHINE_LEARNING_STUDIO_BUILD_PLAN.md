@@ -784,7 +784,7 @@ La cobertura focalizada de artefactos y referencias pasó **26 pruebas**; Ruff, 
 | Excluir publicaciones mientras se calcula y borra | `collector()` adquiere el lock exclusivo; un timeout PostgreSQL acotado hace fallar cerrado si la coordinación tarda más de 30 s por defecto. |
 | Probar exclusión entre procesos y liberación | Tests unitarios cubren modo de lock, timeout y liberación ante excepciones; una prueba de integración verifica que el recolector espera a los escritores y que nuevos escritores esperan al recolector. Los 12 tests pasan contra PostgreSQL 16 efímero en Docker. |
 
-Este componente sólo ofrece el mecanismo. Ningún productor queda protegido hasta envolver, como mínimo, la materialización de bytes y el commit de su referencia con `writer()`. El recolector debe abarcar descubrimiento completo de las seis familias, inventario acotado y borrado bajo `collector()`. Los incrementos de catálogo/archivos locales y exports sintéticos ya están integrados en `main@2475bc9` (secciones 57 y 58); siguen pendientes Jobs/evidencia/checkpoints fuera de ML y cualquier productor adicional; también falta exigir una única base PostgreSQL de coordinación en la composición de servidor. La limpieza global automática permanece deshabilitada y el avance global no cambia hasta completar esas integraciones y cualificar Docker exact-head.
+Las secciones 53–59 instrumentan productores de conectores, ML, Data Engineering, worker, catálogo/archivos locales y exports sintéticos. La sección 60 unifica descubrimiento, inventario y borrado bajo `collector()`, pero no lo programa ni configura la composición: el llamador aún debe pasar el mismo DSN PostgreSQL a todos los escritores. Quedan por cubrir Jobs/evidencia/checkpoints fuera de ML y revisar cualquier referencia adicional antes de habilitar cleanup global. La limpieza global automática permanece deshabilitada hasta cualificar el commit exact-head y completar el cableado productivo.
 
 ## 53. Mantener el lock del productor de conectores hasta el checkpoint
 
@@ -827,15 +827,15 @@ La barrera pasó tests de liberación y cancelación; una prueba de integración
 
 ## 57. Coordinar ingesta de archivos con referencias del catálogo
 
-**Estado del slice: PR #490 integrado en `main@2475bc9`; cualificación post-merge exact-head en curso. Avance global: 85%.**
+**Estado del slice: PR #490 integrado en `main@2475bc9`; los seis workflows post-merge exact-head pasaron. Avance global: 85%.**
 
 `LocalFileConnector.ingest()` acepta una barrera opcional y mantiene el writer lease desde `ArtifactStore.put_bytes()` hasta completar assets, revisiones y lineage en el catálogo. Sin barrera conserva el flujo SQLite/local actual. La prueba de orden valida `lock → artifact → assets → revisions → lineage → unlock`, además de la resolución del dataset existente.
 
-La suite focalizada de ingesta y plugin sintético pasa **30 pruebas**, con un skip de symlink porque Windows no concede ese privilegio. En el árbol combinado posterior, la suite amplia pasó **3.930 pruebas y omitió 17**; Ruff, formato, mypy y `git diff --check` pasan. PR #490 pasó su Docker qualification de PR; está en curso la verificación post-merge exact-head.
+La suite focalizada de ingesta y plugin sintético pasa **30 pruebas**, con un skip de symlink porque Windows no concede ese privilegio. En el árbol combinado posterior, la suite amplia pasó **3.930 pruebas y omitió 17**; Ruff, formato, mypy y `git diff --check` pasan. PR #490 pasó Docker qualification y los seis workflows post-merge exact-head.
 
 ## 58. Coordinar el export de Synthetic Data Studio
 
-**Estado del slice: PR #490 integrado en `main@2475bc9`; cualificación post-merge exact-head en curso. Avance global: 85%.**
+**Estado del slice: PR #490 integrado en `main@2475bc9`; los seis workflows post-merge exact-head pasaron. Avance global: 85%.**
 
 El plugin recibe la barrera común de `PluginContext` y protege el intervalo de `GovernStudioService.export()` —que persiste la referencia del export— hasta la materialización física con `ArtifactStore.put_bytes()`. La prueba comprueba el orden `lock → durable reference → artifact → unlock`; un fallo en el bloque también libera el lease.
 
@@ -843,8 +843,22 @@ La limpieza global sigue deshabilitada. Siguen pendientes productores no inventa
 
 ## 59. Proteger registros manuales de modelos ML
 
-**Estado del slice: implementado en candidato basado en `main@2475bc9` y cualificado localmente; PR pendiente. Avance global: 85%.**
+**Estado del slice: PR #491 integrado en `main@7b427aa`; los seis workflows post-merge exact-head pasaron. Avance global: 85%.**
 
 Las rutas síncronas de ML que escriben un modelo directamente sin crear antes un Job —`persist_clustering_result()`, `register_clustering_model()` y `train_register_tabular()`— aceptan la barrera opcional y conservan el lease desde `put_bytes()` hasta persistir la referencia de run/model. `MachineLearningStudioPlugin` inyecta la misma barrera de `PluginContext` usada por el perfil PostgreSQL.
 
-Una prueba de regresión verifica el orden `lock → artifact → run reference → model reference → unlock`. Suites de seguridad de artefactos, API de ML y registro end-to-end pasan **42/42**; la suite amplia combinada pasa **3.930 pruebas y omite 17**. Ruff, formato, mypy y `git diff --check` pasan; falta la cualificación exact-head del PR. El cleanup global continúa apagado mientras haya otros productores sin lease común.
+Una prueba de regresión verifica el orden `lock → artifact → run reference → model reference → unlock`. Suites de seguridad de artefactos, API de ML y registro end-to-end pasan **42/42**; la suite amplia combinada pasa **3.930 pruebas y omite 17**. PR #491 pasó CI, Security, Release, Status consistency, Web y Docker; los seis workflows post-merge exact-head de `main@7b427aa` también pasaron. El cleanup global continúa apagado mientras haya otros productores sin lease común.
+
+## 60. Unificar snapshot, inventario y borrado bajo el collector lease
+
+**Estado del slice: implementado en candidato basado en `main@7b427aa` y probado con PostgreSQL 16 en Docker. Avance global: 85%; limpieza automática global deshabilitada.**
+
+`collect_referenced_artifacts()` exige la barrera exclusiva y ejecuta dentro de un solo `collector()` el descubrimiento completo de las fuentes actualmente soportadas, la validación de límites/inventario paginado y la eliminación. Si cualquier fuente falla o el inventario supera sus límites, no elimina nada; si el conjunto vivo está vacío, exige `allow_empty_live_set=True`. La API no programa recolección automática.
+
+Las suites de almacén, descubrimiento, barrera PostgreSQL y recolector guardado por advisory lock real pasan **44/44** contra PostgreSQL 16. La suite amplia pasa **3.933 pruebas y omite 17**; la ejecución real Docker/worker/replay pasa **8/8**, la aceptación estricta v0.1 pasa **15/15** y S3 con LocalStack **1/1**. Ruff, formato, mypy (458 archivos) y `git diff --check` pasan. Falta cualificar el PR exact-head y cablear una composición productiva que pase el mismo DSN de coordinación a cada productor. Una auditoría posterior encontró otra referencia fuera del inventario: la evidencia de QueryFlux se materializa y devuelve al cliente HTTP, pero no se registra en una fuente durable que el recolector pueda enumerar ni comparte todavía el lease durante la publicación.
+
+## 61. Registrar referencias de evidencia QueryFlux para retención
+
+**Estado: pendiente de implementación. Prioridad: bloquea habilitar recolección global. Avance global: 85%.**
+
+`queryflux_execute` persiste `query-evidence.json` en `ArtifactStore` y devuelve el `storage_ref` al cliente, pero la ruta no toma `artifact_reference_barrier` y no guarda la referencia en JobStore, Data Engineering revisions ni otra fuente paginada. El siguiente incremento debe establecer un registro durable acotado por proyecto/run/attempt, conservar el writer lease desde la escritura hasta el commit de esa referencia, enumerarlo en `discover_artifact_references()` y probar el flujo contra PostgreSQL 16, incluidos fallos parciales y exclusión entre escritor y collector. Hasta cerrar este camino y revisar otros consumidores de refs HTTP, la limpieza global automática permanece apagada.

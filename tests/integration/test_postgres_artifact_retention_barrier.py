@@ -4,9 +4,23 @@ import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
+from types import SimpleNamespace
 
 import pytest
-from studio_storage import PostgresArtifactReferenceBarrier
+from studio_core import (
+    AssetId,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
+    CatalogAsset,
+    Workspace,
+    WorkspaceId,
+)
+from studio_storage import (
+    LocalArtifactStore,
+    PostgresArtifactReferenceBarrier,
+    collect_referenced_artifacts,
+)
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
@@ -79,3 +93,90 @@ def test_async_worker_writer_blocks_collector_until_reference_commit() -> None:
             await asyncio.to_thread(collector_future.result, 5)
 
     asyncio.run(exercise())
+
+
+def test_bounded_reference_collection_uses_real_postgres_collector_lease(tmp_path) -> None:
+    barrier = PostgresArtifactReferenceBarrier(
+        os.environ["RONIN_POSTGRES_TEST_DSN"],
+        application_name="ronin-retention-collector-qualification",
+    )
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    live = artifacts.put_bytes(role="live", data=b"live")
+    stale = artifacts.put_bytes(role="stale", data=b"stale")
+    workspace = Workspace(WorkspaceId("retention-workspace"), "Retention")
+    file_asset = CatalogAsset(AssetId("source-file"), "file", "source.csv")
+    revision = AssetRevision(
+        AssetRef(file_asset.id, AssetVersion("v1")),
+        metadata=(("artifact_ref", live.storage_ref),),
+    )
+
+    class Workspaces:
+        def list_workspaces(self, *, limit=None):
+            del limit
+            return (workspace,)
+
+    class Catalog:
+        def list_assets(self, workspace_id, *, limit=None):
+            assert workspace_id == workspace.id
+            del limit
+            return (file_asset,)
+
+        def list_revisions(self, workspace_id, asset_id, *, limit=None):
+            assert workspace_id == workspace.id
+            del limit
+            return (revision,) if asset_id == file_asset.id else ()
+
+    class MLRegistry:
+        def list_runs(self, workspace_id, *, limit=None):
+            del workspace_id, limit
+            return ()
+
+        def list_models(self, workspace_id, *, limit=None):
+            del workspace_id, limit
+            return ()
+
+    class Jobs:
+        def list_jobs(self, **_kwargs):
+            return SimpleNamespace(items=(), next_cursor=None)
+
+        def read_evidence_bounded(self, run_id, *, limit):
+            del run_id, limit
+            return ()
+
+        def read_cell_results_bounded(self, run_id, *, limit):
+            del run_id, limit
+            return ()
+
+    class ConnectorCheckpoints:
+        def list_committed_outputs(self, *, max_outputs=10_000):
+            del max_outputs
+            return ()
+
+    class Revisions:
+        def list_all_revisions(self, *, max_revisions=10_000):
+            del max_revisions
+            return ()
+
+    class SyntheticExports:
+        def snapshot(self):
+            return ()
+
+        def artifacts(self, run_id):
+            del run_id
+            return ()
+
+    deleted = collect_referenced_artifacts(
+        barrier,
+        artifacts,
+        Workspaces(),
+        Catalog(),
+        MLRegistry(),
+        Jobs(),
+        ConnectorCheckpoints(),
+        Revisions(),
+        SyntheticExports(),
+    )
+
+    assert deleted == (stale.digest,)
+    assert artifacts.verify(live)
+    assert not artifacts.verify(stale)

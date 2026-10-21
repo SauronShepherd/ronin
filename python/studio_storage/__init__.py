@@ -96,6 +96,7 @@ from studio_storage.readiness import sqlite_ready
 from studio_storage.retention import (
     REQUIRED_ARTIFACT_REFERENCE_SOURCES,
     ArtifactRetentionPlan,
+    collect_referenced_artifacts,
     collect_unreferenced,
     discover_artifact_references,
     discover_catalog_artifact_references,
@@ -183,6 +184,7 @@ __all__ = (
     "S3ArtifactStore",
     "S3DependencyError",
     "collect_unreferenced",
+    "collect_referenced_artifacts",
     "discover_artifact_references",
     "discover_catalog_artifact_references",
     "discover_connector_artifact_references",
