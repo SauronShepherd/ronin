@@ -150,6 +150,29 @@ def test_sqlite_store_persists_export_artifact_metadata(tmp_path) -> None:
     }
 
 
+def test_synthetic_run_inventory_is_bounded_before_materializing_all_runs(tmp_path) -> None:
+    service = GovernStudioService(SqliteRunStore(str(tmp_path / "bounded-runs.sqlite3")))
+    service.create_run(_plan(), idempotency_key="run-one")
+    service.create_run(plan_from_payload({"seed": 99, "tables": []}), idempotency_key="run-two")
+
+    assert len(service.snapshot(limit=1)) == 1
+    with pytest.raises(ValueError, match="synthetic export inventory exceeded its run bound"):
+        discover_synthetic_data_artifact_references(service, max_runs=1)
+
+
+def test_synthetic_artifact_inventory_is_bounded_per_run(tmp_path) -> None:
+    service = GovernStudioService(SqliteRunStore(str(tmp_path / "bounded-artifacts.sqlite3")))
+    plan = _plan()
+    run = service.create_run(plan, idempotency_key="bounded-artifacts")
+    service.generate(run.run_id, plan)
+    service.export(run.run_id, format_id="jsonl", table_name="customers")
+    service.export(run.run_id, format_id="jsonl", table_name="customers")
+
+    assert len(service.artifacts(run.run_id, limit=1)) == 1
+    with pytest.raises(ValueError, match="synthetic export inventory exceeded its export bound"):
+        discover_synthetic_data_artifact_references(service, max_exports=1)
+
+
 def test_generation_invokes_publication_hook_before_commit() -> None:
     published = []
     service = GovernStudioService(

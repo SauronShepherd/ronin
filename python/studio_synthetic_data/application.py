@@ -52,9 +52,9 @@ class GovernRunStore(Protocol):
     def put(self, run: GovernRun, *, idempotency_key: str, plan: GenerationPlan) -> None: ...
     def get(self, run_id: str) -> GovernRun: ...
     def find_by_idempotency(self, key: str) -> GovernRun | None: ...
-    def all(self) -> tuple[GovernRun, ...]: ...
+    def all(self, *, limit: int | None = None) -> tuple[GovernRun, ...]: ...
     def add_artifact(self, run_id: str, artifact: dict[str, Any]) -> None: ...
-    def artifacts(self, run_id: str) -> tuple[dict[str, Any], ...]: ...
+    def artifacts(self, run_id: str, *, limit: int | None = None) -> tuple[dict[str, Any], ...]: ...
 
 
 def _plan_payload(plan: GenerationPlan) -> dict[str, Any]:
@@ -168,16 +168,23 @@ class InMemoryRunStore:
         run_id = self._keys.get(key)
         return self._runs.get(run_id) if run_id else None
 
-    def all(self) -> tuple[GovernRun, ...]:
-        return tuple(self._runs.values())
+    def all(self, *, limit: int | None = None) -> tuple[GovernRun, ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("run inventory limit must be positive")
+        runs = tuple(self._runs.values())
+        return runs if limit is None else runs[:limit]
 
     def add_artifact(self, run_id: str, artifact: dict[str, Any]) -> None:
         if run_id not in self._runs:
             raise KeyError(run_id)
         self._artifacts.setdefault(run_id, []).append(dict(artifact))
 
-    def artifacts(self, run_id: str) -> tuple[dict[str, Any], ...]:
-        return tuple(self._artifacts.get(run_id, ()))
+    def artifacts(self, run_id: str, *, limit: int | None = None) -> tuple[dict[str, Any], ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("artifact inventory limit must be positive")
+        artifacts = self._artifacts.get(run_id, ())
+        selected = artifacts if limit is None else artifacts[:limit]
+        return tuple(selected)
 
 
 class SqliteRunStore:
@@ -255,14 +262,21 @@ class SqliteRunStore:
             ).fetchone()
         return self._row(row) if row else None
 
-    def all(self) -> tuple[GovernRun, ...]:
+    def all(self, *, limit: int | None = None) -> tuple[GovernRun, ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("run inventory limit must be positive")
         with self._lock:
-            return tuple(
-                self._row(row)
-                for row in self._db.execute(
-                    "SELECT run_id,idempotency_key,plan_json,plan_fingerprint,status,result_json,validation_json,error FROM govern_runs ORDER BY run_id"  # noqa: E501
-                )
+            query = (
+                "SELECT run_id,idempotency_key,plan_json,plan_fingerprint,status,result_json,"
+                "validation_json,error "
+                "FROM govern_runs ORDER BY run_id"
             )
+            if limit is not None:
+                query += " LIMIT ?"
+                parameters: tuple[int, ...] = (limit,)
+            else:
+                parameters = ()
+            return tuple(self._row(row) for row in self._db.execute(query, parameters))
 
     def add_artifact(self, run_id: str, artifact: dict[str, Any]) -> None:
         with self._lock:
@@ -277,12 +291,16 @@ class SqliteRunStore:
             )
             self._db.commit()
 
-    def artifacts(self, run_id: str) -> tuple[dict[str, Any], ...]:
+    def artifacts(self, run_id: str, *, limit: int | None = None) -> tuple[dict[str, Any], ...]:
+        if limit is not None and limit < 1:
+            raise ValueError("artifact inventory limit must be positive")
         with self._lock:
-            rows = self._db.execute(
-                "SELECT artifact_json FROM govern_artifacts WHERE run_id=? ORDER BY sequence",
-                (run_id,),
-            )
+            query = "SELECT artifact_json FROM govern_artifacts WHERE run_id=? ORDER BY sequence"
+            parameters: tuple[str, ...] | tuple[str, int] = (run_id,)
+            if limit is not None:
+                query += " LIMIT ?"
+                parameters = (run_id, limit)
+            rows = self._db.execute(query, parameters)
             return tuple(json.loads(row[0]) for row in rows)
 
 
@@ -381,9 +399,9 @@ class GovernStudioService:
         with self._lock:
             return self._store.get(run_id)
 
-    def snapshot(self) -> tuple[GovernRun, ...]:
+    def snapshot(self, *, limit: int | None = None) -> tuple[GovernRun, ...]:
         with self._lock:
-            return self._store.all()
+            return self._store.all(limit=limit)
 
     def export(self, run_id: str, *, format_id: str, table_name: str) -> str:
         """Serialize one generated table through the extensible format registry."""
@@ -414,9 +432,9 @@ class GovernStudioService:
             )
             return content
 
-    def artifacts(self, run_id: str) -> tuple[dict[str, Any], ...]:
+    def artifacts(self, run_id: str, *, limit: int | None = None) -> tuple[dict[str, Any], ...]:
         with self._lock:
-            return self._store.artifacts(run_id)
+            return self._store.artifacts(run_id, limit=limit)
 
 
 def plan_from_payload(payload: Mapping[str, Any]) -> GenerationPlan:

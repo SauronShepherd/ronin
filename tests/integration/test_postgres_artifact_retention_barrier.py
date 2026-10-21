@@ -171,11 +171,12 @@ def test_bounded_reference_collection_uses_real_postgres_collector_lease(tmp_pat
             return ()
 
     class SyntheticExports:
-        def snapshot(self):
+        def snapshot(self, *, limit=None):
+            del limit
             return ()
 
-        def artifacts(self, run_id):
-            del run_id
+        def artifacts(self, run_id, *, limit=None):
+            del run_id, limit
             return ()
 
     deleted = collect_referenced_artifacts(

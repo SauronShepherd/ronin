@@ -34,6 +34,7 @@ from studio_storage import (
     discover_data_engineering_query_evidence_references,
     discover_durable_job_artifact_references,
     discover_ml_artifact_references,
+    discover_synthetic_data_artifact_references,
     plan_unreferenced,
 )
 
@@ -118,12 +119,70 @@ class _DataEngineeringQueryEvidenceStore:
 
 
 class _SyntheticExportStore:
-    def snapshot(self):
-        return ()
+    def __init__(self, runs=(), records=None):
+        self.runs = tuple(runs)
+        self.records = records or {}
+        self.snapshot_limit = None
+        self.artifact_limits = []
 
-    def artifacts(self, run_id: str):
-        del run_id
-        return ()
+    def snapshot(self, *, limit=None):
+        self.snapshot_limit = limit
+        return self.runs if limit is None else self.runs[:limit]
+
+    def artifacts(self, run_id: str, *, limit=None):
+        self.artifact_limits.append(limit)
+        records = self.records.get(run_id, ())
+        return records if limit is None else records[:limit]
+
+
+def test_synthetic_export_discovery_passes_bounded_reads_to_the_store() -> None:
+    digest = _digest("synthetic-export")
+    store = _SyntheticExportStore(
+        (SimpleNamespace(run_id="run-1"),),
+        {"run-1": ({"storage_ref": f"artifact://sha256/{digest}", "digest": digest},)},
+    )
+
+    assert discover_synthetic_data_artifact_references(store, max_runs=1, max_exports=1) == {
+        "synthetic_data_exports": (digest,)
+    }
+    assert store.snapshot_limit == 2
+    assert store.artifact_limits == [2]
+
+
+def test_synthetic_export_discovery_fails_closed_when_store_ignores_bounds() -> None:
+    digest = _digest("synthetic-export")
+
+    class UnboundedSyntheticStore:
+        def snapshot(self, *, limit=None):
+            assert limit == 2
+            return (SimpleNamespace(run_id="run-1"), SimpleNamespace(run_id="run-2"))
+
+        def artifacts(self, run_id: str, *, limit=None):
+            del run_id
+            assert limit == 2
+            return tuple(
+                {"storage_ref": f"artifact://sha256/{digest}", "digest": digest} for _ in range(2)
+            )
+
+    with pytest.raises(ValueError, match="synthetic export inventory exceeded its run bound"):
+        discover_synthetic_data_artifact_references(UnboundedSyntheticStore(), max_runs=1)
+
+    class UnboundedArtifactsStore:
+        def snapshot(self, *, limit=None):
+            assert limit == 2
+            return (SimpleNamespace(run_id="run-1"),)
+
+        def artifacts(self, run_id: str, *, limit=None):
+            del run_id
+            assert limit == 2
+            return tuple(
+                {"storage_ref": f"artifact://sha256/{digest}", "digest": digest} for _ in range(2)
+            )
+
+    with pytest.raises(ValueError, match="synthetic export inventory exceeded its export bound"):
+        discover_synthetic_data_artifact_references(
+            UnboundedArtifactsStore(), max_runs=1, max_exports=1
+        )
 
 
 def _digest(value: str) -> str:
@@ -467,7 +526,8 @@ def test_guarded_collection_releases_lease_without_deleting_on_incomplete_snapsh
             finally:
                 events.append("unlock")
 
-    def fail_snapshot(_self):
+    def fail_snapshot(_self, *, limit=None):
+        del limit
         raise ValueError("synthetic export inventory unavailable")
 
     monkeypatch.setattr(_SyntheticExportStore, "snapshot", fail_snapshot)
