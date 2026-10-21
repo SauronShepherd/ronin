@@ -69,6 +69,7 @@ from studio_storage.paged_store import BoundedAsyncJobStore, InMemoryJobStore
 from studio_storage.ports import (
     ArtifactReferenceBarrier,
     ArtifactStore,
+    AsyncArtifactReferenceBarrier,
     CatalogStore,
     ConnectionStore,
     EnvironmentStore,
@@ -150,6 +151,7 @@ __all__ = (
     "backup_sqlite",
     "BackupManifest",
     "ArtifactStore",
+    "AsyncArtifactReferenceBarrier",
     "ArtifactReferenceBarrier",
     "PagedArtifactStore",
     "BUNDLE_MANIFEST_PATH",

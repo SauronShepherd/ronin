@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import asyncio
+from threading import Event
+
 import pytest
 from studio_storage import PostgresArtifactReferenceBarrier, postgres_retention_barrier
 
@@ -81,6 +84,59 @@ def test_barrier_releases_session_when_protected_operation_raises(
     with pytest.raises(RuntimeError, match="write failed"), barrier.writer():
         raise RuntimeError("write failed")
 
+    assert connection.closed
+
+
+def test_async_writer_uses_shared_lock_and_closes_session(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    connection = _Connection()
+    psycopg = _Psycopg(connection)
+    monkeypatch.setattr(postgres_retention_barrier, "_psycopg", lambda: (psycopg, object()))
+    barrier = PostgresArtifactReferenceBarrier("postgresql://db")
+
+    async def exercise() -> None:
+        async with barrier.awriter():
+            assert not connection.closed
+
+    asyncio.run(exercise())
+
+    assert connection.closed
+    assert connection.cursor_value.calls[-1] == (
+        "SELECT pg_advisory_lock_shared(hashtext(%s),hashtext(%s))",
+        ("ronin:artifact-retention", "global"),
+    )
+
+
+def test_async_writer_cancellation_releases_lock_after_acquisition(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    connection = _Connection()
+    barrier = PostgresArtifactReferenceBarrier("postgresql://db")
+    acquiring = Event()
+    release_acquire = Event()
+
+    def acquire(*, shared: bool) -> _Connection:
+        assert shared
+        acquiring.set()
+        assert release_acquire.wait(timeout=5)
+        return connection
+
+    monkeypatch.setattr(barrier, "_acquire", acquire)
+
+    async def exercise() -> None:
+        lease = asyncio.create_task(use_barrier())
+        assert await asyncio.to_thread(acquiring.wait, 5)
+        lease.cancel()
+        release_acquire.set()
+        with pytest.raises(asyncio.CancelledError):
+            await lease
+
+    async def use_barrier() -> None:
+        async with barrier.awriter():
+            raise AssertionError("cancelled acquisition must not enter the lease")
+
+    asyncio.run(exercise())
     assert connection.closed
 
 

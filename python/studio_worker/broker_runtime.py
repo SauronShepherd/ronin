@@ -64,6 +64,7 @@ class BrokerWorkerRuntime(LocalWorkerRuntime):
             now=self._now,
             artifact_max_workers=self.config.artifact_max_workers,
             artifact_max_in_flight=self.config.artifact_max_in_flight,
+            artifact_reference_barrier=self._artifact_reference_barrier,
         )
         return await worker.run(claim, request, identities)
 

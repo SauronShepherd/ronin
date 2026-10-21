@@ -8,8 +8,10 @@ Until all producers participate, automated cleanup must remain disabled.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from contextlib import contextmanager
+import asyncio
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager, contextmanager
+from typing import Any
 
 from .postgres_core import _psycopg
 
@@ -61,6 +63,41 @@ class PostgresArtifactReferenceBarrier:
 
     @contextmanager
     def _lease(self, *, shared: bool) -> Iterator[None]:
+        connection = self._acquire(shared=shared)
+        try:
+            yield
+        finally:
+            # Closing a session releases its advisory lock, including when the
+            # protected operation raises.
+            connection.close()
+
+    @asynccontextmanager
+    async def awriter(self) -> AsyncIterator[None]:
+        """Acquire and release a writer lease without blocking an async loop."""
+        acquire = asyncio.create_task(asyncio.to_thread(self._acquire, shared=True))
+        try:
+            connection = await asyncio.shield(acquire)
+        except asyncio.CancelledError:
+            # The thread cannot be cancelled. Join it and release any lock it
+            # acquired before propagating cancellation to avoid leaking a session.
+            try:
+                connection = await acquire
+            except BaseException:
+                raise
+            close = asyncio.create_task(asyncio.to_thread(connection.close))
+            await asyncio.shield(close)
+            raise
+        try:
+            yield
+        finally:
+            close = asyncio.create_task(asyncio.to_thread(connection.close))
+            try:
+                await asyncio.shield(close)
+            except asyncio.CancelledError:
+                await close
+                raise
+
+    def _acquire(self, *, shared: bool) -> Any:
         psycopg, _ = _psycopg()
         connection = psycopg.connect(
             self._dsn,
@@ -78,11 +115,10 @@ class PostgresArtifactReferenceBarrier:
                     f"SELECT {operation}(hashtext(%s),hashtext(%s))",
                     (_LOCK_NAMESPACE, _LOCK_SCOPE),
                 )
-            yield
-        finally:
-            # Closing a session releases its advisory lock, including when the
-            # protected operation raises or explicit unlock fails.
+            return connection
+        except BaseException:
             connection.close()
+            raise
 
 
 __all__ = ("PostgresArtifactReferenceBarrier",)
