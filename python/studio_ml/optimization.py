@@ -12,6 +12,7 @@ from math import erf, exp, isfinite, pi, prod, sqrt
 from typing import Literal
 
 SearchMode = Literal["single", "grid", "random", "bayesian"]
+MAX_TIE_BREAKERS = 8
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +75,7 @@ class SearchSpec:
             or not isinstance(self.metric, str)
             or not self.metric.strip()
             or not isinstance(self.tie_breakers, tuple)
+            or len(self.tie_breakers) > MAX_TIE_BREAKERS
             or any(
                 not isinstance(item, tuple)
                 or len(item) != 2
