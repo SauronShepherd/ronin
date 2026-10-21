@@ -7,6 +7,7 @@ can implement the same contracts without changing service/domain behavior.
 
 from __future__ import annotations
 
+from contextlib import AbstractContextManager
 from typing import Protocol, runtime_checkable
 
 from studio_core import (
@@ -30,6 +31,14 @@ from studio_core.environments import (
 from studio_orchestrator import Instant
 
 from .artifacts import ArtifactPage, ArtifactRef
+
+
+class ArtifactReferenceBarrier(Protocol):
+    """Coordinate reference writers with content-addressed artifact collection."""
+
+    def writer(self) -> AbstractContextManager[None]: ...
+
+    def collector(self) -> AbstractContextManager[None]: ...
 
 
 @runtime_checkable

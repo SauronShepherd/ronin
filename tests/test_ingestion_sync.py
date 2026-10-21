@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 import pytest
 from studio_connectors import (
     ConnectorRegistry,
@@ -15,6 +17,7 @@ from studio_core import (
     ConnectorDescriptor,
     DiscoveredAsset,
     FieldSchema,
+    SourceCheckpoint,
 )
 
 
@@ -247,3 +250,77 @@ def test_ingestion_preview_scopes_checkpoint_read_and_hides_internal_identity() 
 
     assert identities == ["workspace/a/cp/a"]
     assert result["checkpoint"]["identity"] == "cp/a"
+
+
+def test_sync_holds_reference_barrier_through_artifact_and_checkpoint_commit() -> None:
+    events: list[str] = []
+
+    class _Barrier:
+        @contextmanager
+        def writer(self):
+            events.append("lock")
+            try:
+                yield
+            finally:
+                events.append("unlock")
+
+        @contextmanager
+        def collector(self):
+            yield
+
+    class _Health:
+        present = False
+
+    class _Plan:
+        digest = "plan-digest"
+
+        def to_payload(self):
+            return {"digest": self.digest}
+
+    class _Registry:
+        def plan_sync(self, _definition, *, checkpoint_present):
+            assert checkpoint_present is False
+            return _Plan()
+
+        def read(self, *_args, **_kwargs):
+            return ConnectorReadResult((), (), SourceCheckpoint("snapshot", "next"))
+
+    class _Checkpoints:
+        def health(self, _identity):
+            return _Health()
+
+        def get(self, _identity):
+            return None
+
+        def acquire(self, _identity):
+            return 1
+
+        def commit_output_then_checkpoint(self, *_args, **_kwargs):
+            events.append("reference")
+
+            class _Evidence:
+                def to_payload(self):
+                    return {"committed": True}
+
+            return _Evidence()
+
+    class _Destination:
+        def write(self, *_args, **_kwargs):
+            events.append("artifact")
+            return "artifact-id", "artifact-digest"
+
+    service = IngestionSyncService(
+        _Registry(),
+        _Checkpoints(),
+        artifact_reference_barrier=_Barrier(),
+    )
+    result = service.execute(
+        IngestionSyncDefinition("sync/a", "connector", "conn/a", "asset/a", "dest/a", "cp/a"),
+        connection=object(),
+        asset=object(),
+        secrets=object(),
+        destination=_Destination(),
+    )
+
+    assert result["rows_written"] == 0
+    assert events == ["lock", "artifact", "reference", "unlock"]
