@@ -25,6 +25,18 @@ def _rows() -> list[dict[str, object]]:
     return [{"x": value, "target": value % 2} for value in range(1, 21)]
 
 
+def _cluster_lab() -> Lab:
+    return Lab(
+        "segments",
+        "Segments",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        None,
+        "clustering",
+        (FeatureSpec("x", "numeric"),),
+    )
+
+
 class _CheckpointBackend:
     backend_id = "local.sklearn"
     display_name = "test backend"
@@ -136,6 +148,34 @@ def test_v2_pipeline_trains_multiple_candidates_and_selects_deterministically() 
 
     assert first.to_payload() == second.to_payload()
     assert first.model.algorithm in {"decision_tree_classifier", "logistic_regression"}
+
+
+def test_v2_clustering_pipeline_selects_highest_calinski_harabasz_candidate() -> None:
+    from studio_ml.clustering import calinski_harabasz, fit_kmeans, inertia
+
+    lab = _cluster_lab()
+    rows = [{"x": value} for value in range(1, 21)]
+    pipeline = compile_lab_pipeline(lab, candidate_cluster_counts=(2, 4, 3))
+    first = LocalExperimentRunner().execute_pipeline(lab, rows, pipeline)
+    second = LocalExperimentRunner().execute_pipeline(lab, rows, pipeline)
+    assert first.to_payload() == second.to_payload()
+    expected = {
+        count: calinski_harabasz(fit_kmeans(rows, ("x",), count), rows, ("x",))
+        for count in (2, 3, 4)
+    }
+    assert len(first.model.centroids) == max(expected, key=expected.get)
+    assert first.selection_metric == "calinski_harabasz"
+    assert first.selection_score == max(expected.values())
+    assert first.inertia == inertia(first.model, rows, ("x",))
+
+
+def test_v2_clustering_pipeline_rejects_candidate_count_before_any_training() -> None:
+    lab = _cluster_lab()
+    pipeline = compile_lab_pipeline(lab, candidate_cluster_counts=(2, 21))
+    with pytest.raises(ValueError, match="less than row count"):
+        LocalExperimentRunner().execute_pipeline(
+            lab, [{"x": value} for value in range(1, 21)], pipeline
+        )
 
 
 def test_v2_pipeline_rejects_unsupported_graph_before_training() -> None:

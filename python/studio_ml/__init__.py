@@ -26,7 +26,7 @@ from .bundle import (
     export_ml_bundle,
     plan_ml_bundle_import,
 )
-from .clustering import KMeansModel, fit_kmeans, inertia
+from .clustering import KMeansModel, calinski_harabasz, fit_kmeans, inertia
 from .domain import FeatureDefinition, FeatureSpec, Lab, PipelineIR, PipelineNode
 from .drift import (
     DriftAssessment,
@@ -175,6 +175,7 @@ __all__ = (
     "DurableExecutionPort",
     "LocalExecutionCoordinator",
     "KMeansModel",
+    "calinski_harabasz",
     "fit_kmeans",
     "inertia",
     "MLBundleImportPlan",

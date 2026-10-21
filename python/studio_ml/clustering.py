@@ -83,4 +83,30 @@ def inertia(
     )
 
 
-__all__ = ["KMeansModel", "fit_kmeans", "inertia"]
+def calinski_harabasz(
+    model: KMeansModel, rows: Sequence[Mapping[str, object]], features: tuple[str, ...]
+) -> float:
+    """Return the deterministic Calinski-Harabasz clustering score."""
+
+    if len(rows) <= len(model.centroids):
+        raise ValueError("Calinski-Harabasz requires more rows than clusters")
+    matrix = [[_number(row[name]) for name in features] for row in rows]
+    assignments = model.predict(rows, features)
+    global_mean = tuple(
+        sum(vector[column] for vector in matrix) / len(matrix) for column in range(len(features))
+    )
+    counts = [0] * len(model.centroids)
+    within = 0.0
+    for vector, cluster in zip(matrix, assignments, strict=True):
+        counts[cluster] += 1
+        within += _distance(vector, model.centroids[cluster])
+    between = sum(
+        count * _distance(centroid, global_mean)
+        for count, centroid in zip(counts, model.centroids, strict=True)
+    )
+    if within == 0.0:
+        return 1e300 if between > 0.0 else 0.0
+    return (between / (len(model.centroids) - 1)) / (within / (len(rows) - len(model.centroids)))
+
+
+__all__ = ["KMeansModel", "calinski_harabasz", "fit_kmeans", "inertia"]

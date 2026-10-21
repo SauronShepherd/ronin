@@ -139,6 +139,8 @@ class ClusteringResult:
     artifact_digest: str
     inertia: float
     runtime_fingerprint: str = ""
+    selection_metric: str | None = None
+    selection_score: float | None = None
 
     def to_payload(self) -> dict[str, object]:
         payload = {
@@ -155,6 +157,9 @@ class ClusteringResult:
         }
         if self.runtime_fingerprint:
             payload["runtime_fingerprint"] = self.runtime_fingerprint
+        if self.selection_metric is not None and self.selection_score is not None:
+            payload["selection_metric"] = self.selection_metric
+            payload["selection_score"] = self.selection_score
         return payload
 
 
@@ -251,6 +256,8 @@ def _checkpoint_payload(kind: NodeKind, value: object) -> dict[str, object]:
                 "artifact_digest": value.artifact_digest,
                 "runtime_fingerprint": value.runtime_fingerprint,
                 "inertia": value.inertia,
+                "selection_metric": value.selection_metric,
+                "selection_score": value.selection_score,
             },
         }
     raise ValueError(f"cannot checkpoint output for ML pipeline stage {kind!r}")
@@ -359,6 +366,8 @@ def _restore_checkpoint(kind: NodeKind, value: object) -> object:
                 str(payload["artifact_digest"]),
                 float(payload["inertia"]),
                 str(payload.get("runtime_fingerprint", "")),
+                cast(str | None, payload.get("selection_metric")),
+                cast(float | None, payload.get("selection_score")),
             )
     raise ValueError(f"stored ML checkpoint for stage {kind!r} has invalid data")
 
@@ -429,7 +438,11 @@ class LocalExperimentRunner:
             by_kind.setdefault(node.kind, []).append(node)
         if pipeline.schema == PIPELINE_SCHEMA_V2:
             self._validate_v2_graph(pipeline, lab.task)
-            if capabilities is not None:
+            if lab.task == "clustering" and any(
+                cast(int, node.config["clusters"]) >= len(rows) for node in by_kind["train"]
+            ):
+                raise ValueError("K-Means candidate clusters must be less than row count")
+            if capabilities is not None and lab.task != "clustering":
                 from .runtime import ALGORITHM_CAPABILITIES
 
                 default_algorithm = (
@@ -550,10 +563,20 @@ class LocalExperimentRunner:
                 if prepared is None:
                     raise ValueError("train stage requires prepared inputs")
                 if lab.task == "clustering":
+                    candidate_clusters = node.config.get("clusters", clusters)
+                    if (
+                        not isinstance(candidate_clusters, int)
+                        or isinstance(candidate_clusters, bool)
+                        or candidate_clusters < 2
+                        or candidate_clusters > len(rows)
+                    ):
+                        raise ValueError(
+                            "K-Means candidate clusters must be between 2 and row count"
+                        )
                     values[node.id] = fit_kmeans(
                         rows,
                         cast(tuple[str, ...], prepared),
-                        clusters,
+                        candidate_clusters,
                         max_iterations=max_iterations,
                     )
                 else:
@@ -582,9 +605,18 @@ class LocalExperimentRunner:
                     )
                     if model is None:
                         raise ValueError("evaluate stage requires a trained clustering model")
-                    from .clustering import inertia
+                    from .clustering import calinski_harabasz, inertia
 
-                    values[node.id] = inertia(model, rows, selected_features)
+                    if pipeline.schema == PIPELINE_SCHEMA_V2:
+                        values[node.id] = (
+                            (
+                                "calinski_harabasz",
+                                calinski_harabasz(model, rows, selected_features),
+                            ),
+                            ("inertia", inertia(model, rows, selected_features)),
+                        )
+                    else:
+                        values[node.id] = inertia(model, rows, selected_features)
                 else:
                     trained = next(
                         (item for item in dependencies if isinstance(item, TrainedTabularModel)),
@@ -668,10 +700,8 @@ class LocalExperimentRunner:
     @staticmethod
     def _validate_v2_graph(pipeline: PipelineIR, task: str) -> None:
         """Accept only the first supported v2 shape, rejecting ignored semantics early."""
-        if task not in {"classification", "regression"}:
-            raise ValueError(
-                "PipelineIR v2 candidate selection supports classification and regression"
-            )
+        if task not in {"classification", "regression", "clustering"}:
+            raise ValueError("PipelineIR v2 candidate selection does not support this Lab task")
         nodes = {
             kind: [node for node in pipeline.nodes if node.kind == kind]
             for kind in ("profile", "quality_gate", "prepare", "train", "evaluate", "select")
@@ -699,11 +729,21 @@ class LocalExperimentRunner:
             raise ValueError("PipelineIR v2 requires profile -> quality_gate -> prepare")
         train_ids = {node.id for node in nodes["train"]}
         eval_by_train: dict[str, PipelineNode] = {}
+        train_config = {"clusters"} if task == "clustering" else {"algorithm"}
         for train in nodes["train"]:
-            if train.depends_on != (prepare.id,) or set(train.config) - {"algorithm"}:
+            if train.depends_on != (prepare.id,) or set(train.config) - train_config:
                 raise ValueError(
-                    "PipelineIR v2 train nodes must depend on prepare and only configure algorithm"
+                    "PipelineIR v2 train nodes must depend on prepare and use supported "
+                    "task configuration"
                 )
+            if task == "clustering":
+                cluster_count = train.config.get("clusters")
+                if (
+                    not isinstance(cluster_count, int)
+                    or isinstance(cluster_count, bool)
+                    or not 2 <= cluster_count <= 32
+                ):
+                    raise ValueError("clustering train nodes require 2 to 32 clusters")
         for evaluate in nodes["evaluate"]:
             if len(evaluate.depends_on) != 1 or evaluate.depends_on[0] not in train_ids:
                 raise ValueError(
@@ -718,16 +758,36 @@ class LocalExperimentRunner:
             raise ValueError("PipelineIR v2 select must depend on every evaluated candidate")
         if set(select.config) - {"metric", "direction"}:
             raise ValueError("PipelineIR v2 select has unsupported configuration")
-        metric = select.config.get("metric", "accuracy" if task == "classification" else "r2")
+        metric = select.config.get(
+            "metric",
+            "accuracy"
+            if task == "classification"
+            else "calinski_harabasz"
+            if task == "clustering"
+            else "r2",
+        )
         direction = select.config.get("direction", "maximize")
         expected_metrics = (
-            {"accuracy"} if task == "classification" else {"r2", "mean_squared_error"}
+            {"accuracy"}
+            if task == "classification"
+            else {"calinski_harabasz"}
+            if task == "clustering"
+            else {"r2", "mean_squared_error"}
         )
-        if metric not in expected_metrics or direction not in {"maximize", "minimize"}:
+        if (
+            not isinstance(metric, str)
+            or metric not in expected_metrics
+            or not isinstance(direction, str)
+            or direction not in {"maximize", "minimize"}
+        ):
             raise ValueError(
                 "PipelineIR v2 select metric/direction is unsupported for this Lab task"
             )
+        if task == "clustering" and direction != "maximize":
+            raise ValueError("clustering candidate selection requires maximize direction")
         for train in nodes["train"]:
+            if task == "clustering":
+                continue
             algorithm = train.config.get("algorithm")
             if algorithm is not None:
                 from .runtime import ALGORITHM_CAPABILITIES
@@ -746,13 +806,63 @@ class LocalExperimentRunner:
         backend: MLBackend,
         rows: Sequence[Mapping[str, object]],
         runtime_fingerprint: str,
-    ) -> ExperimentResult:
+    ) -> ExperimentResult | ClusteringResult:
         metric = cast(
             str,
-            node.config.get("metric", "accuracy" if lab.task == "classification" else "r2"),
+            node.config.get(
+                "metric",
+                "accuracy"
+                if lab.task == "classification"
+                else "calinski_harabasz"
+                if lab.task == "clustering"
+                else "r2",
+            ),
         )
-        direction = cast(str, node.config.get("direction", "maximize"))
-        candidates: list[tuple[float, str, TrainedTabularModel]] = []
+        direction = cast(
+            str,
+            node.config.get("direction", "maximize"),
+        )
+        if lab.task == "clustering":
+            cluster_candidates: list[tuple[float, str, KMeansModel]] = []
+            for evaluate_id in sorted(node.depends_on):
+                evaluate = nodes_by_id[evaluate_id]
+                train_id = evaluate.depends_on[0]
+                model = values.get(train_id)
+                score = values.get(evaluate_id)
+                if not isinstance(model, KMeansModel) or not isinstance(score, tuple):
+                    raise ValueError("select stage requires evaluated K-Means candidates")
+                score_value = dict(score).get(metric)
+                if not isinstance(score_value, (int, float)):
+                    raise ValueError(f"candidate does not provide selection metric {metric!r}")
+                cluster_candidates.append((float(score_value), train_id, model))
+            if not cluster_candidates:
+                raise ValueError("select stage requires at least one evaluated candidate")
+            cluster_candidates.sort(key=lambda item: (-item[0], item[1]))
+            score, _, model = cluster_candidates[0]
+            artifact = json.dumps(
+                model.to_artifact(), sort_keys=True, separators=(",", ":")
+            ).encode()
+            digest = hashlib.sha256(artifact).hexdigest()
+            from .clustering import inertia
+
+            model_inertia = inertia(
+                model,
+                rows,
+                tuple(feature.column for feature in lab.features if feature.role != "ignored"),
+            )
+            return ClusteringResult(
+                lab.id,
+                backend.backend_id,
+                len(rows),
+                tuple(feature.column for feature in lab.features if feature.role != "ignored"),
+                model,
+                f"sha256:{digest}",
+                model_inertia,
+                runtime_fingerprint,
+                metric,
+                score,
+            )
+        tabular_candidates: list[tuple[float, str, TrainedTabularModel]] = []
         for evaluate_id in sorted(node.depends_on):
             evaluate = nodes_by_id[evaluate_id]
             train_id = evaluate.depends_on[0]
@@ -764,13 +874,13 @@ class LocalExperimentRunner:
             score = score_map.get(metric)
             if score is None or not isinstance(score, (int, float)):
                 raise ValueError(f"candidate does not provide selection metric {metric!r}")
-            candidates.append((float(score), train_id, trained))
-        if not candidates:
+            tabular_candidates.append((float(score), train_id, trained))
+        if not tabular_candidates:
             raise ValueError("select stage requires at least one evaluated candidate")
-        candidates.sort(
+        tabular_candidates.sort(
             key=lambda item: ((-item[0] if direction == "maximize" else item[0]), item[1])
         )
-        model = candidates[0][2]
+        model = tabular_candidates[0][2]
         digest = hashlib.sha256(model.artifact_bytes).hexdigest()
         return ExperimentResult(
             lab.id, backend.backend_id, len(rows), model, f"sha256:{digest}", runtime_fingerprint
