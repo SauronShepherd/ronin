@@ -8,7 +8,7 @@ import json
 import random
 from dataclasses import dataclass
 from itertools import islice, product
-from math import erf, exp, pi, prod, sqrt
+from math import erf, exp, isfinite, pi, prod, sqrt
 from typing import Literal
 
 SearchMode = Literal["single", "grid", "random", "bayesian"]
@@ -21,7 +21,18 @@ class BayesianStopPolicy:
     min_improvement: float = 0.0
 
     def __post_init__(self) -> None:
-        if self.max_trials < 1 or self.patience < 1 or self.min_improvement < 0:
+        if (
+            not isinstance(self.max_trials, int)
+            or isinstance(self.max_trials, bool)
+            or self.max_trials < 1
+            or not isinstance(self.patience, int)
+            or isinstance(self.patience, bool)
+            or self.patience < 1
+            or isinstance(self.min_improvement, bool)
+            or not isinstance(self.min_improvement, (int, float))
+            or not isfinite(self.min_improvement)
+            or self.min_improvement < 0
+        ):
             raise ValueError("invalid Bayesian stopping policy")
 
     def should_stop(self, spec: SearchSpec, trials: tuple[Trial, ...]) -> bool:
@@ -29,9 +40,9 @@ class BayesianStopPolicy:
             return True
         if len(trials) < self.patience + 1:
             return False
-        ordered = rank_trials(spec, trials)
-        best = ordered[0].metric(spec.metric)
-        prior = ordered[self.patience].metric(spec.metric)
+        previous_trials = trials[: -self.patience]
+        best = rank_trials(spec, trials)[0].metric(spec.metric)
+        prior = rank_trials(spec, previous_trials)[0].metric(spec.metric)
         return (
             (best - prior) < self.min_improvement
             if spec.direction == "maximize"
