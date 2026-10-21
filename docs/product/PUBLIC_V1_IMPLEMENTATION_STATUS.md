@@ -4,23 +4,25 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-21. PRs #430–#480 are merged. Recent
+**Observed workspace snapshot:** 2026-10-21. PRs #430–#482 are merged. Recent
 increments add configurable ML algorithms and preprocessing, selective retry,
 non-destructive artifact retention preview, fail-closed reference discovery with
 bounded enumeration, bounded-memory local artifact pagination, and paged manual
 cleanup that validates a complete bounded inventory before deletion, plus bounded
 durable job evidence and cell-result reads across SQLite, PostgreSQL and memory,
-Bayesian stopping and ordered directional trial tie-breakers with strict bounded
-input validation.
+Bayesian stopping, ordered directional trial tie-breakers with strict bounded
+input validation, and a manual-retention guard that requires an explicit opt-in
+before an empty live set can delete every artifact.
 Global cleanup remains disabled because there is no cross-store write barrier. The
-PR #480 closed the tie-breaker parser/OpenAPI mismatch, caps the list at eight and
-rejects unknown keys before training. Its 64 focused tests, CI Python 3.11/3.12,
+PR #482 prevents an empty live digest set from deleting every artifact unless the
+caller opts in with an explicit boolean. Its 26 focused tests, CI Python 3.11/3.12,
 Web, Security, Release, Status consistency, Docker PR qualification and all six
 post-merge exact-head workflows passed. Local Docker qualification passed 21 tests;
 two PostgreSQL-dependent tests were skipped without a local DSN, and strict
-acceptance passed 15/15.
+acceptance passed 15/15. The global sweep remains disabled until writers and
+retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
-**Observed source head:** `ba3106b73967d3b116a35c2bc0402ef74730d2af` (2026-10-21).
+**Observed source head:** `33a7b45235d7b08ea382f47ee47a31d9f122aa63` (2026-10-21).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
