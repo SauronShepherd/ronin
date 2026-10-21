@@ -10,7 +10,7 @@ from urllib.parse import parse_qs
 
 from studio_core import WorkspaceId
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
-from studio_storage.ports import ArtifactStore
+from studio_storage.ports import ArtifactReferenceBarrier, ArtifactStore
 
 from .backends import default_backends
 from .datasets import DatasetResolver, resolve_lab_rows
@@ -90,6 +90,7 @@ class MachineLearningStudioPlugin:
         self._coordinator = LocalExecutionCoordinator(self._runner)
         self._registry: MLRegistryStore | None = None
         self._artifacts: ArtifactStore | None = None
+        self._artifact_reference_barrier: ArtifactReferenceBarrier | None = None
         self._dataset_resolver: DatasetResolver | None = None
 
     def register(self, context: PluginContext) -> None:
@@ -101,6 +102,7 @@ class MachineLearningStudioPlugin:
         self._coordinator.close()
         self._artifacts = cast(ArtifactStore | None, context.services.get("artifact_store"))
         reference_barrier = context.services.get("artifact_reference_barrier")
+        self._artifact_reference_barrier = cast(ArtifactReferenceBarrier | None, reference_barrier)
         execution_service = context.services.get("ml_execution_service")
         execution_store = (
             JobStoreExecutionStore(
@@ -670,6 +672,7 @@ class MachineLearningStudioPlugin:
                     execution_ref=str(body.get("execution_ref", "ml-studio-local")),
                     source_revision=str(body.get("source_revision", "local")),
                     now="plugin",
+                    artifact_reference_barrier=self._artifact_reference_barrier,
                 )
                 payload["run"] = run.to_payload()
                 registration = body.get("register")
@@ -688,6 +691,7 @@ class MachineLearningStudioPlugin:
                         model_id=ModelId(str(registration.get("model_id", lab.id))),
                         model_version=ModelVersion(str(registration.get("version", "candidate-1"))),
                         now="plugin",
+                        artifact_reference_barrier=self._artifact_reference_barrier,
                     )
                     payload["model"] = model.to_payload()
             return payload
@@ -1073,6 +1077,7 @@ class MachineLearningStudioPlugin:
                     execution_ref="ml-studio-search",
                     spec=training_spec,
                     now="plugin",
+                    artifact_reference_barrier=self._artifact_reference_barrier,
                 )
                 registered.append(registered_model.to_payload())
             if spec.mode == "bayesian" and stop_policy.should_stop(spec, tuple(trials)):
