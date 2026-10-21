@@ -773,3 +773,15 @@ Este ajuste se encontró al comparar el parser de Python con el esquema OpenAPI 
 | Rechazar una opción ambigua o mal tipada | El opt-in acepta exclusivamente valores booleanos y los tests prueban el rechazo de texto. |
 
 La cobertura focalizada de artefactos y referencias pasó **26 pruebas**; Ruff, formato, mypy y `git diff --check` pasan. Docker local pasó **21 pruebas**, omitió dos pruebas PostgreSQL por falta de DSN y superó la aceptación estricta **15/15**. PR #482 pasó CI Python 3.11/3.12 y Docker qualification (**9m32s**); los seis workflows post-merge exact-head de `main@33a7b45` también pasaron. Esta guarda reduce el riesgo de la operación manual, pero no ofrece consistencia temporal entre los seis stores ni habilita la limpieza global automática.
+
+## 52. Primitiva PostgreSQL para coordinar productores y recolección
+
+**Estado del fundamento: implementado en candidato y probado contra PostgreSQL 16 en Docker. Avance global del Studio: permanece en 85%; esta primitiva no activa ni cualifica la recolección global.**
+
+| Criterio del fundamento | Evidencia |
+| --- | --- |
+| Permitir publicación concurrente entre productores | `PostgresArtifactReferenceBarrier.writer()` adquiere el advisory lock compartido de sesión en una conexión dedicada. |
+| Excluir publicaciones mientras se calcula y borra | `collector()` adquiere el lock exclusivo; un timeout PostgreSQL acotado hace fallar cerrado si la coordinación tarda más de 30 s por defecto. |
+| Probar exclusión entre procesos y liberación | Tests unitarios cubren modo de lock, timeout y liberación ante excepciones; una prueba de integración verifica que el recolector espera a los escritores y que nuevos escritores esperan al recolector. Los 12 tests pasan contra PostgreSQL 16 efímero en Docker. |
+
+Este componente sólo ofrece el mecanismo. Ningún productor queda protegido hasta envolver, como mínimo, la materialización de bytes y el commit de su referencia con `writer()`. El recolector debe abarcar descubrimiento completo de las seis familias, inventario acotado y borrado bajo `collector()`. Faltan instrumentar y cualificar catálogo/archivos locales, ML, Jobs/evidencia/checkpoints, conectores, revisiones de Data Engineering y exports sintéticos; también falta exigir una única base PostgreSQL de coordinación en la composición de servidor. La limpieza global automática permanece deshabilitada y el avance global no cambia hasta completar esas integraciones y cualificar Docker exact-head.
