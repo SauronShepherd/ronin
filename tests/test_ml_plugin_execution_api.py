@@ -503,14 +503,21 @@ def test_compare_route_ranks_trials_deterministically() -> None:
         "ws",
         "lab",
         body={
-            "spec": {"mode": "grid", "metric": "accuracy", "direction": "maximize"},
+            "spec": {
+                "mode": "grid",
+                "metric": "accuracy",
+                "direction": "maximize",
+                "tie_breakers": [{"metric": "cost", "direction": "minimize"}],
+            },
             "trials": [
-                {"parameters": {"C": 1}, "metrics": {"accuracy": 0.8}},
-                {"parameters": {"C": 2}, "metrics": {"accuracy": 0.9}},
+                {"parameters": {"C": 1}, "metrics": {"accuracy": 0.9, "cost": 2}},
+                {"parameters": {"C": 2}, "metrics": {"accuracy": 0.9, "cost": 1}},
+                {"parameters": {"C": 3}, "metrics": {"accuracy": 0.8, "cost": 0}},
             ],
         },
     )
-    assert result["items"][0]["metrics"]["accuracy"] == 0.9
+    assert result["items"][0]["parameters"]["C"] == 2
+    assert result["tie_breakers"] == [{"metric": "cost", "direction": "minimize"}]
     plugin._coordinator.close()
 
 
@@ -603,7 +610,7 @@ def test_bayesian_search_stops_after_patience_without_improvement() -> None:
 
     def run(_lab: Lab, _rows: object, parameters: object) -> object:
         calls.append(tuple(value for _, value in parameters))  # type: ignore[union-attr]
-        return SimpleNamespace(model=SimpleNamespace(metrics={"score": 0.5}))
+        return SimpleNamespace(model=SimpleNamespace(metrics={"accuracy": 0.5}))
 
     plugin._runner.run = run  # type: ignore[method-assign]
     result = plugin.search_trials(

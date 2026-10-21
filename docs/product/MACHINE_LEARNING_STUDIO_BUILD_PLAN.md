@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 81%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada; PipelineIR v2 ejecuta candidatos para clasificación/regresión y clustering, cualificados por los seis workflows exact-head de `main@e20733d`. La selección de candidatos desde la UI quedó integrada en `main@47e16fa` y pasó los seis workflows post-merge exact-head. La búsqueda de trials con memoria acotada quedó integrada en `main@1994778` y pasó los seis workflows post-merge exact-head. Las identidades y seeds de trials quedaron integradas en `main@7df81a7` y pasaron los seis workflows post-merge exact-head. La validación anticipada del espacio de búsqueda quedó integrada en `main@6507b97`; CI, Web, Security, Release, Status consistency y Docker qualification exact-head pasaron. Los porcentajes sólo cambian después de cualificar el commit integrado.
+**Avance de implementación técnica estimado: 82%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada; PipelineIR v2 ejecuta candidatos para clasificación/regresión y clustering, cualificados por los seis workflows exact-head de `main@e20733d`. La selección de candidatos desde la UI quedó integrada en `main@47e16fa` y pasó los seis workflows post-merge exact-head. La búsqueda de trials con memoria acotada quedó integrada en `main@1994778` y pasó los seis workflows post-merge exact-head. Las identidades y seeds de trials quedaron integradas en `main@7df81a7` y pasaron los seis workflows post-merge exact-head. La validación anticipada del espacio de búsqueda quedó integrada en `main@6507b97`; CI, Web, Security, Release, Status consistency y Docker qualification exact-head pasaron. La parada bayesiana por paciencia y mejora reciente quedó integrada en `main@cc0ad8f`; los seis workflows post-merge exact-head pasaron. Los porcentajes sólo cambian después de cualificar el commit integrado.
 
 ## 0. Principios de ejecución
 
@@ -724,7 +724,7 @@ Las pruebas focalizadas de optimización y ejecución API pasaron **41/41**; la 
 
 ## 48. Parada bayesiana por falta de mejora reciente
 
-**Progreso técnico del incremento: 4/4 criterios implementados y probados localmente; PR y cualificación CI exact-head pendientes. Avance global integrado: 81%; release-qualified: 0% (0/14).**
+**Progreso técnico del incremento: 4/4 criterios implementados y cualificados; PR #477 integrado en `main@cc0ad8f` y los seis workflows post-merge exact-head pasaron. Avance global integrado: 82%; release-qualified: 0% (0/14).**
 
 | Criterio | Implementación |
 | --- | --- |
@@ -733,4 +733,18 @@ Las pruebas focalizadas de optimización y ejecución API pasaron **41/41**; la 
 | Rechazar límites inválidos | Se rechazan bools como enteros, contadores no enteros, mejoras negativas, NaN/inf y claves desconocidas. |
 | Mantener memoria acotada y propuestas actuales | Se conserva sólo una candidata pendiente y se recalcula después de cada observación, en vez de acumular lotes obsoletos. |
 
-La cobertura focalizada pasa **47/47** y verifica umbrales en ambas direcciones, validación de tipos y parada efectiva del endpoint. La suite completa pasa **3859 tests y omite 54**; Ruff, formato, mypy (457 archivos), `git diff --check` y el ledger público pasan. Docker local pasó **21 tests y omitió 2** sin DSN PostgreSQL; la aceptación estricta pasó **15/15**. Falta cualificar el PR y los workflows post-merge exact-head antes de marcar integrado el incremento.
+La cobertura focalizada pasó **47/47** y verifica umbrales en ambas direcciones, validación de tipos y parada efectiva del endpoint. La suite completa pasó **3859 tests y omitió 54**; Ruff, formato, mypy (457 archivos), `git diff --check` y el ledger público pasaron. Docker local pasó **21 tests y omitió 2** sin DSN PostgreSQL; la aceptación estricta pasó **15/15**. PR #477 pasó CI 3.11/3.12, calidad, seguridad, Release, Status consistency, Web y Docker qualification (**9m40s**, con PostgreSQL, S3-compatible LocalStack, worker Docker real y aceptación estricta); los seis workflows post-merge exact-head de `main@cc0ad8f` también pasaron.
+
+
+## 49. Criterios de desempate configurables en la comparación de trials
+
+**Progreso técnico del incremento: implementación, suite local y UI comprobadas; PR y CI/Docker exact-head pendientes. Avance global integrado: 82%; release-qualified: 0% (0/14).**
+
+| Criterio | Implementación |
+| --- | --- |
+| Aplicar objetivo y criterios secundarios en orden | Ranking estable: métrica primaria, tie-breakers configurados con dirección propia y `trial_id` como último desempate. |
+| Evitar comparaciones parciales | Search valida que la métrica primaria y todos los desempates existen para la tarea antes de iniciar training; ranking rechaza métricas faltantes, no numéricas o no finitas. |
+| Rechazar configuraciones ambiguas | No se permiten métricas repetidas, el objetivo primario como tie-breaker ni direcciones distintas de `maximize`/`minimize`. |
+| Exponer la configuración al consumidor | Compare/search API devuelve y consume los desempates; la UI permite configurar métricas y dirección. |
+
+La suite focalizada de optimización y ejecución API pasó **53/53**; Playwright pasó **82/82** y el caso ML quality/search/compare **1/1**. La suite Python completa pasó **3864 tests y omitió 54**; un test HTTP ajeno al cambio falló por EOF en una de las cuatro solicitudes del servidor local y pasó **1/1** al repetirse aislado. Otro test asíncrono de ejecución de candidatos superó el timeout dentro de una ejecución cargada, y pasó **1/1** al repetirse aislado. OpenAPI, consistencia de rutas y superficie de Studio pasaron **37/37**, junto con el snapshot OpenAPI, la consistencia de 171 rutas y la superficie publicada. Ruff, formato, mypy (457 archivos), ledger y `git diff --check` pasan. Docker local pasó **21 tests y omitió 2** por falta de DSN PostgreSQL; la aceptación estricta pasó **15/15**. Falta la cualificación del PR y los workflows post-merge exact-head.

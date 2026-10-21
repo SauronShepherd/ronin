@@ -12,10 +12,21 @@ test('ML Studio exposes quality and trial-search contracts', async ({ page }) =>
     calls.push(['search', await route.request().postDataJSON()]);
     await route.fulfill({json: {items: [{parameters: {seed: 17}, metrics: {accuracy: 0.9}}]}});
   });
+  await page.route('**/v1/ml-studio/labs/churn/compare**', async route => {
+    calls.push(['compare', await route.request().postDataJSON()]);
+    await route.fulfill({json: {items: [], tie_breakers: [{metric: 'mean_squared_error', direction: 'minimize'}]}});
+  });
   await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
   await page.locator('#ml-quality-form button').click();
   await expect(page.locator('#ml-output')).toContainText('passed');
   await page.locator('#ml-search-form button').click();
   await expect(page.locator('#ml-output')).toContainText('0.9');
-  expect(calls.map(([kind]) => kind)).toEqual(['quality', 'search']);
+  const tieBreakers = [{metric: 'mean_squared_error', direction: 'minimize'}];
+  const tieBreakerField = page.locator('[data-feature-form="ml-compare"] textarea[name="tie_breakers"]');
+  await tieBreakerField.fill(JSON.stringify(tieBreakers));
+  await expect(tieBreakerField).toHaveValue(JSON.stringify(tieBreakers));
+  await page.locator('[data-feature-form="ml-compare"] button').click();
+  await expect(page.locator('#ml-output')).toContainText('mean_squared_error');
+  expect(calls.map(([kind]) => kind)).toEqual(['quality', 'search', 'compare']);
+  expect(calls[2][1].spec.tie_breakers).toEqual(tieBreakers);
 });
