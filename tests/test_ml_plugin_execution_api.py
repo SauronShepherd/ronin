@@ -60,6 +60,51 @@ def test_submit_and_poll_execution() -> None:
     plugin._coordinator.close()
 
 
+def test_submit_candidate_algorithms_runs_and_pins_v2_pipeline() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x", "numeric"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    rows = [{"x": value, "target": value % 2} for value in range(1, 21)]
+    try:
+        submitted = plugin.submit_execution(
+            "ws",
+            "churn",
+            body={
+                "run_id": "candidate-run",
+                "rows": rows,
+                "candidate_algorithms": ["logistic_regression", "decision_tree_classifier"],
+                "selection_metric": "accuracy",
+            },
+        )
+        assert submitted["run_id"] == "candidate-run"
+        pipeline = plugin._labs.store.get_pipeline(WorkspaceId("ws"), lab.id)
+        assert pipeline is not None
+        assert pipeline.schema == "ronin.ml-pipeline-ir/v2"
+        deadline = time.time() + 30
+        state = plugin.execution_status("candidate-run", workspace_id="ws")["state"]
+        while state not in {"succeeded", "failed"} and time.time() < deadline:
+            time.sleep(0.01)
+            state = plugin.execution_status("candidate-run", workspace_id="ws")["state"]
+        assert state == "succeeded"
+        assert plugin.execution_status("candidate-run", workspace_id="ws")["result"][
+            "algorithm"
+        ] in {
+            "logistic_regression",
+            "decision_tree_classifier",
+        }
+    finally:
+        plugin._coordinator.close()
+
+
 def test_submit_one_hot_execution_uses_categorical_lab_feature() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())

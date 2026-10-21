@@ -7,7 +7,14 @@ from dataclasses import dataclass, field
 
 from studio_core import WorkspaceId
 
-from .domain import FeatureDefinition, Lab, NodeKind, PipelineIR, PipelineNode
+from .domain import (
+    PIPELINE_SCHEMA_V2,
+    FeatureDefinition,
+    Lab,
+    NodeKind,
+    PipelineIR,
+    PipelineNode,
+)
 from .ports import FeatureDefinitionStore, MLLabStore
 
 
@@ -24,6 +31,9 @@ def compile_lab_pipeline(
     *,
     algorithm: str | None = None,
     preprocessor: str = "identity",
+    candidate_algorithms: tuple[str, ...] | None = None,
+    selection_metric: str | None = None,
+    selection_direction: str | None = None,
 ) -> PipelineIR:
     """Build the deterministic pipeline definition bound to an immutable Lab."""
 
@@ -60,6 +70,75 @@ def compile_lab_pipeline(
         raise ValueError("one_hot preprocessing requires categorical Lab features")
     if preprocessor != "identity":
         parameters["preprocessor"] = preprocessor
+
+    if candidate_algorithms is not None:
+        from .runtime import ALGORITHM_CAPABILITIES
+
+        if algorithm is not None:
+            raise ValueError("algorithm cannot be combined with candidate_algorithms")
+        if lab.task == "clustering":
+            raise ValueError("candidate algorithms are not supported for clustering Labs")
+        if not isinstance(candidate_algorithms, tuple) or not 2 <= len(candidate_algorithms) <= 8:
+            raise ValueError("candidate_algorithms must contain 2 to 8 unique algorithms")
+        if not all(
+            isinstance(item, str) and item and item == item.strip() for item in candidate_algorithms
+        ):
+            raise ValueError("candidate algorithm is not supported for this Lab task")
+        if len(set(candidate_algorithms)) != len(candidate_algorithms):
+            raise ValueError("candidate_algorithms must contain 2 to 8 unique algorithms")
+        if any(
+            not isinstance(item, str)
+            or not item
+            or item != item.strip()
+            or lab.task not in ALGORITHM_CAPABILITIES.get(item, frozenset())
+            for item in candidate_algorithms
+        ):
+            raise ValueError("candidate algorithm is not supported for this Lab task")
+        metric = (
+            selection_metric
+            if selection_metric is not None
+            else ("accuracy" if lab.task == "classification" else "r2")
+        )
+        supported_metrics = (
+            {"accuracy"} if lab.task == "classification" else {"r2", "mean_squared_error"}
+        )
+        effective_direction = (
+            selection_direction
+            if selection_direction is not None
+            else ("minimize" if metric == "mean_squared_error" else "maximize")
+        )
+        if (
+            not isinstance(metric, str)
+            or metric not in supported_metrics
+            or not isinstance(effective_direction, str)
+            or effective_direction not in {"maximize", "minimize"}
+        ):
+            raise ValueError("selection metric/direction is not supported for this Lab task")
+        nodes = [
+            _node("profile"),
+            _node("quality_gate", ("profile",)),
+            _node("prepare", ("quality_gate",)),
+        ]
+        evaluations: list[str] = []
+        for index, candidate_algorithm in enumerate(candidate_algorithms, start=1):
+            train_id = f"train_{index}"
+            evaluate_id = f"evaluate_{index}"
+            nodes.append(
+                PipelineNode(train_id, "train", ("prepare",), {"algorithm": candidate_algorithm})
+            )
+            nodes.append(PipelineNode(evaluate_id, "evaluate", (train_id,)))
+            evaluations.append(evaluate_id)
+        nodes.append(
+            PipelineNode(
+                "select",
+                "select",
+                tuple(evaluations),
+                {"metric": metric, "direction": effective_direction},
+            )
+        )
+        return PipelineIR(
+            tuple(nodes), parameters=tuple(sorted(parameters.items())), schema=PIPELINE_SCHEMA_V2
+        )
 
     return PipelineIR(
         nodes=(
@@ -134,9 +213,19 @@ class LabService:
         *,
         algorithm: str | None = None,
         preprocessor: str = "identity",
+        candidate_algorithms: tuple[str, ...] | None = None,
+        selection_metric: str | None = None,
+        selection_direction: str | None = None,
     ) -> PipelineIR:
         lab = self.get(workspace_id, lab_id)
-        pipeline = compile_lab_pipeline(lab, algorithm=algorithm, preprocessor=preprocessor)
+        pipeline = compile_lab_pipeline(
+            lab,
+            algorithm=algorithm,
+            preprocessor=preprocessor,
+            candidate_algorithms=candidate_algorithms,
+            selection_metric=selection_metric,
+            selection_direction=selection_direction,
+        )
         return self.store.put_pipeline(workspace_id, lab.id, pipeline)
 
 

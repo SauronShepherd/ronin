@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 74%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: todavía no hay limpieza global segura ni ejecución de grafos configurables. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 75%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada y la ejecución configurable sólo cubre DAGs v2 de selección de candidatos para clasificación/regresión. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -632,3 +632,18 @@ Las pruebas focalizadas pasan **25 tests**, incluyendo inventario paginado sin `
 | Cubrir adapters reales y fallos de overflow | Tests verifican topes por run y globales; la integración PostgreSQL prueba que `limit=0` sólo lee un registro centinela. |
 
 Las pruebas focalizadas de descubrimiento y JobStore pasan **46 tests**; Ruff, formato, mypy focalizado y `git diff --check` pasan. La suite local completa registró **3817 pasadas y 54 omitidas**, más un `FailedHealthCheck` transitorio de Hypothesis por generación lenta en `test_lexical_order_equals_chronological_order`; el test pasó aislado (**1/1**). Las matrices CI Python 3.11/3.12 pasaron. Docker qualification pasó en **9m34s**, incluyendo S3-compatible storage, PostgreSQL, worker Docker real y aceptación estricta. Los seis workflows post-merge exact-head de `main@f1a068f` también pasaron. P8 sigue parcial y la cualificación release permanece en **0% (0/14)**.
+
+
+## 42. DAG v2 de candidatos de clasificación y regresión
+
+**Progreso técnico del incremento: 100% (5/5 criterios y cualificación local completados); pendiente de CI y merge. Avance global estimado: 75%; release-qualified: 0% (0/14).**
+
+| Criterio | Implementación |
+| --- | --- |
+| Mantener compatibilidad con pipelines v1 | `PipelineIR/v1` conserva su payload exacto; la configuración por nodo se limita a `PipelineIR/v2`. |
+| Ejecutar varios candidatos en un grafo fijado | El compiler construye perfil, quality gate y prepare compartidos, de 2 a 8 ramas train/evaluate y un select que depende de todas. |
+| Elegir un resultado reproducible | La selección usa métrica y dirección explícitas, valida compatibilidad con la tarea y desempata por ID de nodo. `mean_squared_error` usa `minimize` por defecto. |
+| Exponerlo en ejecuciones durables | El endpoint acepta `candidate_algorithms`, `selection_metric` y `selection_direction`; OpenAPI limita nombres, cardinalidad y opciones. El digest del PipelineIR v2 queda fijado en el Job y checkpoints. |
+| Rechazar planes parciales o inválidos antes de entrenar | El runner valida la forma completa del DAG, parejas train/evaluate, dependencias, tareas, métricas y algoritmos soportados por el backend antes de ejecutar nodos. |
+
+Las pruebas focalizadas ML, plugin durable y OpenAPI pasan **71/71**; el contrato Docker pasa **5/5**. La suite completa pasó **3824 tests con 54 omitidos**; mypy cubrió 457 archivos, Ruff, formato, snapshot OpenAPI y las puertas de cobertura pasaron. La cualificación real Docker pasó **23 tests, 0 fallos y 2 omitidos**; la puerta estricta de aceptación pasó **15/15** (15 esperados, sin faltantes ni inesperados). La imagen calificó con ID inmutable `sha256:94d0bc18af7162d92fd3ffcd625e2c4e7af2c02e797e93afc4d52812c2c365bd`. Este incremento no habilita DAGs arbitrarios, clustering configurable, registros dentro del grafo, etapas definidas por plugins ni búsqueda de hiperparámetros. P8 sigue parcial y la cualificación release permanece en **0% (0/14)**.

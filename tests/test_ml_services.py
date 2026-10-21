@@ -6,9 +6,14 @@ from types import SimpleNamespace
 import pytest
 from studio_core import WorkspaceId
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
-from studio_ml.domain import FeatureSpec, Lab
+from studio_ml.domain import PIPELINE_SCHEMA_V2, FeatureSpec, Lab
 from studio_ml.service import compare_model_evaluations
-from studio_ml.services import InMemoryMLLabStore, LabService, MLLabConflict
+from studio_ml.services import (
+    InMemoryMLLabStore,
+    LabService,
+    MLLabConflict,
+    compile_lab_pipeline,
+)
 
 
 def test_model_evaluations_rank_deterministically_and_skip_missing_metrics() -> None:
@@ -70,3 +75,47 @@ def test_compile_produces_valid_pipeline() -> None:
         "evaluate",
         "select",
     ]
+
+
+def test_compile_candidate_algorithms_produces_pinned_v2_pipeline() -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "churn",
+        "classification",
+        (FeatureSpec("age"),),
+    )
+    service = LabService(InMemoryMLLabStore())
+    service.create(WorkspaceId("ws"), lab)
+    pipeline = service.compile(
+        WorkspaceId("ws"),
+        "churn",
+        candidate_algorithms=("logistic_regression", "decision_tree_classifier"),
+    )
+
+    assert pipeline.schema == PIPELINE_SCHEMA_V2
+    assert [node.config.get("algorithm") for node in pipeline.nodes if node.kind == "train"] == [
+        "logistic_regression",
+        "decision_tree_classifier",
+    ]
+    assert pipeline.nodes[-1].config == {"metric": "accuracy", "direction": "maximize"}
+
+
+def test_compile_candidate_algorithms_defaults_error_metric_to_minimize() -> None:
+    lab = Lab(
+        "prices",
+        "Prices",
+        "finance",
+        AssetRef(AssetId("prices"), AssetVersion("v1")),
+        "price",
+        "regression",
+        (FeatureSpec("day"),),
+    )
+    pipeline = compile_lab_pipeline(
+        lab,
+        candidate_algorithms=("linear_regression", "decision_tree_regressor"),
+        selection_metric="mean_squared_error",
+    )
+    assert pipeline.nodes[-1].config["direction"] == "minimize"

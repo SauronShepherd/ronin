@@ -15,6 +15,12 @@ def test_local_docker_qualification_script_uses_immutable_image_and_real_suites(
     assert "tests/e2e/test_v01_journey.py" in script
 
 
+def test_docker_image_normalizes_windows_line_endings_for_linux_entrypoint() -> None:
+    dockerfile = (ROOT / "docker" / "Dockerfile").read_text(encoding="utf-8")
+
+    assert "sed -i 's/\\r$//' /usr/local/bin/ronin-container-entrypoint" in dockerfile
+
+
 def test_ci_docker_qualification_declares_postgres_and_real_worker_gate() -> None:
     workflow = (ROOT / ".github" / "workflows" / "docker-qualification.yml").read_text(
         encoding="utf-8"

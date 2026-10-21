@@ -726,10 +726,11 @@ class MachineLearningStudioPlugin:
             "rows",
             "algorithm",
             "preprocessor",
+            "candidate_algorithms",
+            "selection_metric",
+            "selection_direction",
         }:
-            raise ValueError(
-                "execution body must contain run_id, rows, and optional algorithm/preprocessor"
-            )
+            raise ValueError("execution body contains unsupported fields")
         if "rows" in body and body["rows"] is None:
             raise ValueError("execution rows must be an array when provided")
         run_id = body.get("run_id", f"run-{lab_id}")
@@ -746,6 +747,28 @@ class MachineLearningStudioPlugin:
             not isinstance(algorithm, str) or not algorithm or algorithm != algorithm.strip()
         ):
             raise ValueError("algorithm must be a non-empty trimmed string")
+        candidate_algorithms = body.get("candidate_algorithms")
+        if candidate_algorithms is not None and (
+            not isinstance(candidate_algorithms, list)
+            or not all(
+                isinstance(item, str) and item and item == item.strip()
+                for item in candidate_algorithms
+            )
+        ):
+            raise ValueError("candidate_algorithms must be an array of trimmed algorithm names")
+        selection_metric = body.get("selection_metric")
+        if selection_metric is not None and (
+            not isinstance(selection_metric, str)
+            or not selection_metric
+            or selection_metric != selection_metric.strip()
+        ):
+            raise ValueError("selection_metric must be a non-empty trimmed string")
+        selection_direction = body.get("selection_direction")
+        if selection_direction is not None and (
+            not isinstance(selection_direction, str)
+            or selection_direction not in {"maximize", "minimize"}
+        ):
+            raise ValueError("selection_direction must be maximize or minimize")
         preprocessor = body.get("preprocessor", "identity")
         if not isinstance(preprocessor, str) or preprocessor not in {
             "identity",
@@ -765,6 +788,11 @@ class MachineLearningStudioPlugin:
             lab_id,
             algorithm=algorithm,
             preprocessor=preprocessor,
+            candidate_algorithms=(
+                tuple(candidate_algorithms) if candidate_algorithms is not None else None
+            ),
+            selection_metric=selection_metric,
+            selection_direction=selection_direction,
         )
         return self._coordinator.submit(workspace_id, run_id, lab, rows, pipeline).to_payload()
 
