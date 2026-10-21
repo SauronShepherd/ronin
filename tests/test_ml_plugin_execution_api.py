@@ -521,6 +521,30 @@ def test_compare_route_ranks_trials_deterministically() -> None:
     plugin._coordinator.close()
 
 
+@pytest.mark.parametrize(
+    "tie_breakers",
+    [
+        [{"metric": "cost", "direction": "minimize", "unexpected": True}],
+        [{"metric": f"metric-{index}", "direction": "maximize"} for index in range(9)],
+    ],
+)
+def test_compare_route_rejects_invalid_tie_breaker_contract(
+    tie_breakers: list[dict[str, object]],
+) -> None:
+    plugin = MachineLearningStudioPlugin()
+    message = "invalid tie breaker" if "unexpected" in tie_breakers[0] else "at most 8"
+    with pytest.raises(ValueError, match=message):
+        plugin.compare_trials(
+            "ws",
+            "lab",
+            body={
+                "spec": {"metric": "accuracy", "tie_breakers": tie_breakers},
+                "trials": [{"parameters": {}, "metrics": {"accuracy": 1.0}}],
+            },
+        )
+    plugin._coordinator.close()
+
+
 def test_search_route_executes_grid_trials() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())
@@ -675,6 +699,41 @@ def test_search_route_validates_entire_parameter_space_before_training(
             },
         )
     assert calls == []
+    plugin._coordinator.close()
+
+
+def test_search_route_rejects_unknown_tie_breaker_fields_before_training() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "search-tie-breaker-contract",
+        "Search tie-breaker contract",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+
+    def fail_training(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("invalid tie breaker must fail before training")
+
+    plugin._runner.run = fail_training  # type: ignore[method-assign]
+    with pytest.raises(ValueError, match="invalid tie breaker"):
+        plugin.search_trials(
+            "ws",
+            "search-tie-breaker-contract",
+            body={
+                "spec": {
+                    "mode": "grid",
+                    "tie_breakers": [
+                        {"metric": "cost", "direction": "minimize", "unexpected": True}
+                    ],
+                },
+                "rows": [{"x": n, "target": n % 2} for n in range(1, 21)],
+            },
+        )
     plugin._coordinator.close()
 
 

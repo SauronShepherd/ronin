@@ -16,6 +16,7 @@ from .backends import default_backends
 from .datasets import DatasetResolver, resolve_lab_rows
 from .domain import Lab
 from .optimization import (
+    MAX_TIE_BREAKERS,
     BayesianStopPolicy,
     SearchSpec,
     Trial,
@@ -42,10 +43,13 @@ from .services import InMemoryMLLabStore, LabService
 def _parse_tie_breakers(raw: object) -> tuple[tuple[str, Literal["maximize", "minimize"]], ...]:
     if not isinstance(raw, list):
         raise ValueError("spec tie_breakers must be an array")
+    if len(raw) > MAX_TIE_BREAKERS:
+        raise ValueError(f"spec tie_breakers must contain at most {MAX_TIE_BREAKERS} items")
     normalized: list[tuple[str, Literal["maximize", "minimize"]]] = []
     for item in raw:
         if (
             not isinstance(item, dict)
+            or set(item) != {"metric", "direction"}
             or not isinstance(item.get("metric"), str)
             or not isinstance(item.get("direction"), str)
             or item["direction"] not in {"maximize", "minimize"}

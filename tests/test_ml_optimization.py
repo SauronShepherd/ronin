@@ -53,6 +53,7 @@ def test_search_spec_rejects_duplicate_parameters() -> None:
         (("cost", "maximize"), ("cost", "minimize")),
         (("cost", "sideways"),),
         (("", "minimize"),),
+        tuple((f"metric-{index}", "maximize") for index in range(9)),
     ],
 )
 def test_search_spec_rejects_invalid_tie_breakers(

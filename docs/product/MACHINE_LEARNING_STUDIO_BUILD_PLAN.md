@@ -748,3 +748,16 @@ La cobertura focalizada pasó **47/47** y verifica umbrales en ambas direcciones
 | Exponer la configuración al consumidor | Compare/search API devuelve y consume los desempates; la UI permite configurar métricas y dirección. |
 
 La suite focalizada de optimización y ejecución API pasó **53/53**; Playwright pasó **82/82**. Las suites Python completas de CI pasaron en 3.11 y 3.12. La suite local previa pasó **3864 tests y omitió 54**; un test HTTP ajeno al cambio falló por EOF en una de las cuatro solicitudes del servidor local y pasó **1/1** al repetirse aislado. Otro test asíncrono de ejecución de candidatos superó el timeout dentro de una ejecución cargada, y pasó **1/1** al repetirse aislado. OpenAPI, consistencia de rutas y superficie de Studio pasaron **37/37**, junto con el snapshot OpenAPI, la consistencia de 171 rutas y la superficie publicada. Ruff, formato, mypy (457 archivos), ledger y `git diff --check` pasan. Docker local pasó **21 tests y omitió 2** por falta de DSN PostgreSQL; la aceptación estricta pasó **15/15**. PR #478 pasó CI 3.11/3.12, quality, security, release, status consistency, web y Docker qualification (**9m31s**, PostgreSQL, LocalStack, worker Docker real y aceptación estricta); los seis workflows post-merge exact-head de `main@a8e1120` también pasaron.
+
+## 50. Acotar y cerrar el contrato de tie-breakers
+
+**Progreso técnico del incremento: validación y pruebas locales implementadas; cualificación del PR y exact-head pendientes. El avance global permanece en 83% hasta completar esos gates.**
+
+| Criterio | Implementación |
+| --- | --- |
+| Limitar el costo de rankings configurables | Se aceptan como máximo ocho tie-breakers tanto en `SearchSpec` como en las APIs; OpenAPI declara el mismo límite. |
+| Mantener el esquema estricto | Cada elemento sólo admite `metric` y `direction`, igual que el contrato OpenAPI `additionalProperties: false`. |
+| Fallar antes de entrenar | Search rechaza campos desconocidos y configuraciones sobre el límite antes de ejecutar el runner. |
+| Cubrir ambos puntos de entrada | Pruebas de compare, search y dominio cubren campos extra y el límite máximo. |
+
+Este ajuste se encontró al comparar el parser de Python con el esquema OpenAPI añadido en PR #478: el esquema prohibía claves extra, pero el handler las aceptaba. La batería focalizada pasó **64 pruebas**; Ruff, formato y snapshot OpenAPI pasan. PR y workflows exact-head pendientes.
