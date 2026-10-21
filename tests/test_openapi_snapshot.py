@@ -82,6 +82,12 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
         "median_impute",
         "one_hot_median_impute",
     ]
+    assert request_schema["properties"]["candidate_algorithms"]["minItems"] == 2
+    assert request_schema["properties"]["candidate_algorithms"]["maxItems"] == 8
+    assert request_schema["properties"]["selection_direction"]["enum"] == [
+        "maximize",
+        "minimize",
+    ]
     assert "409" in submit["responses"]
     quality = document["paths"]["/v1/ml-studio/labs/{lab_id}/quality"]["post"]
     quality_schema = quality["requestBody"]["content"]["application/json"]["schema"]

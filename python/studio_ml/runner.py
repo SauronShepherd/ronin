@@ -8,14 +8,14 @@ import inspect
 import json
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, cast
 
 from .backends import BackendRegistry, ExperimentRequest, MLBackend, default_backends
 from .clustering import KMeansModel, fit_kmeans
-from .domain import Lab, NodeKind, PipelineIR, PipelineNode
+from .domain import PIPELINE_SCHEMA_V2, Lab, NodeKind, PipelineIR, PipelineNode
 from .quality import ColumnProfile, QualityReport, profile_and_validate
 from .runtime import Algorithm, Preprocessor, TrainedTabularModel, TrainingSpec
 
@@ -397,9 +397,8 @@ class LocalExperimentRunner:
     ) -> ExperimentResult | ClusteringResult:
         """Execute the pinned ML stages in stable dependency order.
 
-        The initial runtime supports the six-node local pipeline contract. Nodes are
-        interpreted from PipelineIR, and malformed or unsupported graphs fail before
-        training so a stored-but-ignored graph cannot silently change execution.
+        V1 retains the six-stage contract. V2 supports a validated multi-candidate
+        classification/regression DAG with deterministic metric-based selection.
         """
 
         backend = self._backends.get(lab.backend_id)
@@ -424,13 +423,39 @@ class LocalExperimentRunner:
             "evaluate",
             "select",
         )
-        by_kind = {node.kind: node for node in pipeline.nodes}
-        if len(by_kind) != len(pipeline.nodes) or set(by_kind) != set(required_kinds):
-            raise ValueError("local ML pipeline must contain exactly one supported node per stage")
         nodes_by_id = {node.id: node for node in pipeline.nodes}
-        for previous, current in zip(required_kinds[:-1], required_kinds[1:], strict=True):
-            if by_kind[previous].id not in by_kind[current].depends_on:
-                raise ValueError(f"ML pipeline stage {current!r} must depend on {previous!r}")
+        by_kind: dict[NodeKind, list[PipelineNode]] = {}
+        for node in pipeline.nodes:
+            by_kind.setdefault(node.kind, []).append(node)
+        if pipeline.schema == PIPELINE_SCHEMA_V2:
+            self._validate_v2_graph(pipeline, lab.task)
+            if capabilities is not None:
+                from .runtime import ALGORITHM_CAPABILITIES
+
+                default_algorithm = (
+                    "logistic_regression" if lab.task == "classification" else "linear_regression"
+                )
+                for node in by_kind["train"]:
+                    algorithm = node.config.get("algorithm", default_algorithm)
+                    if not isinstance(algorithm, str):
+                        raise ValueError("train node algorithm must be a string")
+                    if algorithm not in capabilities.algorithms:
+                        raise ValueError(
+                            f"backend {backend.backend_id!r} does not support algorithm "
+                            f"{algorithm!r}"
+                        )
+                    if lab.task not in ALGORITHM_CAPABILITIES.get(algorithm, frozenset()):
+                        raise ValueError("train node algorithm is not supported for this Lab task")
+        else:
+            singular = {kind: items[0] for kind, items in by_kind.items() if len(items) == 1}
+            if len(singular) != len(pipeline.nodes) or set(singular) != set(required_kinds):
+                raise ValueError(
+                    "local ML pipeline must contain exactly one supported node per stage"
+                )
+            for previous, current in zip(required_kinds[:-1], required_kinds[1:], strict=True):
+                if singular[previous].id not in singular[current].depends_on:
+                    raise ValueError(f"ML pipeline stage {current!r} must depend on {previous!r}")
+            by_kind = {kind: [node] for kind, node in singular.items()}
 
         values: dict[str, object] = {}
         result: ExperimentResult | ClusteringResult | None = None
@@ -442,6 +467,7 @@ class LocalExperimentRunner:
             pipeline_digest=PipelineIR(
                 tuple(sorted(pipeline.nodes, key=lambda node: node.id)),
                 pipeline.parameters,
+                pipeline.schema,
             ).digest,
         )
         selected_features = tuple(
@@ -532,6 +558,17 @@ class LocalExperimentRunner:
                     )
                 else:
                     spec = cast(TrainingSpec, prepared)
+                    algorithm = node.config.get("algorithm")
+                    if algorithm is not None:
+                        from .runtime import ALGORITHM_CAPABILITIES
+
+                        if not isinstance(
+                            algorithm, str
+                        ) or lab.task not in ALGORITHM_CAPABILITIES.get(algorithm, frozenset()):
+                            raise ValueError(
+                                "train node algorithm is not supported for this Lab task"
+                            )
+                        spec = replace(spec, algorithm=cast(Any, algorithm))
                     if capabilities is not None and spec.algorithm not in capabilities.algorithms:
                         raise ValueError(
                             f"backend {backend.backend_id!r} does not support algorithm "
@@ -557,7 +594,22 @@ class LocalExperimentRunner:
                         raise ValueError("evaluate stage requires a trained model")
                     values[node.id] = trained.metrics
             elif node.kind == "select":
-                training_output = values[by_kind["train"].id]
+                if pipeline.schema == PIPELINE_SCHEMA_V2:
+                    result = self._select_v2_candidate(
+                        node, values, nodes_by_id, lab, backend, rows, runtime_fingerprint or ""
+                    )
+                    values[node.id] = result
+                    if checkpoint_save is not None and runtime_fingerprint is not None:
+                        checkpoint_save(
+                            node.id,
+                            {
+                                "runtime_fingerprint": runtime_fingerprint,
+                                "dependency_fingerprint": dependency_fingerprint,
+                                "checkpoint": _checkpoint_payload(node.kind, values[node.id]),
+                            },
+                        )
+                    continue
+                training_output = values[by_kind["train"][0].id]
                 if lab.task == "clustering":
                     model = training_output if isinstance(training_output, KMeansModel) else None
                     score = next(
@@ -612,6 +664,117 @@ class LocalExperimentRunner:
         if result is None:
             raise ValueError("local ML pipeline did not select a result")
         return result
+
+    @staticmethod
+    def _validate_v2_graph(pipeline: PipelineIR, task: str) -> None:
+        """Accept only the first supported v2 shape, rejecting ignored semantics early."""
+        if task not in {"classification", "regression"}:
+            raise ValueError(
+                "PipelineIR v2 candidate selection supports classification and regression"
+            )
+        nodes = {
+            kind: [node for node in pipeline.nodes if node.kind == kind]
+            for kind in ("profile", "quality_gate", "prepare", "train", "evaluate", "select")
+        }
+        if (
+            len(nodes["profile"]) != 1
+            or len(nodes["quality_gate"]) != 1
+            or len(nodes["prepare"]) != 1
+            or len(nodes["train"]) < 2
+            or len(nodes["evaluate"]) != len(nodes["train"])
+            or len(nodes["select"]) != 1
+            or len(pipeline.nodes) != 4 + 2 * len(nodes["train"])
+        ):
+            raise ValueError(
+                "PipelineIR v2 requires shared stages, paired candidates, and one select"
+            )
+        profile, gate, prepare, select = (
+            nodes[kind][0] for kind in ("profile", "quality_gate", "prepare", "select")
+        )
+        if (
+            profile.depends_on
+            or gate.depends_on != (profile.id,)
+            or prepare.depends_on != (gate.id,)
+        ):
+            raise ValueError("PipelineIR v2 requires profile -> quality_gate -> prepare")
+        train_ids = {node.id for node in nodes["train"]}
+        eval_by_train: dict[str, PipelineNode] = {}
+        for train in nodes["train"]:
+            if train.depends_on != (prepare.id,) or set(train.config) - {"algorithm"}:
+                raise ValueError(
+                    "PipelineIR v2 train nodes must depend on prepare and only configure algorithm"
+                )
+        for evaluate in nodes["evaluate"]:
+            if len(evaluate.depends_on) != 1 or evaluate.depends_on[0] not in train_ids:
+                raise ValueError(
+                    "PipelineIR v2 evaluate nodes must depend on one candidate train node"
+                )
+            if evaluate.depends_on[0] in eval_by_train:
+                raise ValueError("PipelineIR v2 requires one evaluate node per candidate")
+            eval_by_train[evaluate.depends_on[0]] = evaluate
+        if set(eval_by_train) != train_ids or set(select.depends_on) != {
+            node.id for node in nodes["evaluate"]
+        }:
+            raise ValueError("PipelineIR v2 select must depend on every evaluated candidate")
+        if set(select.config) - {"metric", "direction"}:
+            raise ValueError("PipelineIR v2 select has unsupported configuration")
+        metric = select.config.get("metric", "accuracy" if task == "classification" else "r2")
+        direction = select.config.get("direction", "maximize")
+        expected_metrics = (
+            {"accuracy"} if task == "classification" else {"r2", "mean_squared_error"}
+        )
+        if metric not in expected_metrics or direction not in {"maximize", "minimize"}:
+            raise ValueError(
+                "PipelineIR v2 select metric/direction is unsupported for this Lab task"
+            )
+        for train in nodes["train"]:
+            algorithm = train.config.get("algorithm")
+            if algorithm is not None:
+                from .runtime import ALGORITHM_CAPABILITIES
+
+                if not isinstance(algorithm, str) or task not in ALGORITHM_CAPABILITIES.get(
+                    algorithm, frozenset()
+                ):
+                    raise ValueError("train node algorithm is not supported for this Lab task")
+
+    @staticmethod
+    def _select_v2_candidate(
+        node: PipelineNode,
+        values: Mapping[str, object],
+        nodes_by_id: Mapping[str, PipelineNode],
+        lab: Lab,
+        backend: MLBackend,
+        rows: Sequence[Mapping[str, object]],
+        runtime_fingerprint: str,
+    ) -> ExperimentResult:
+        metric = cast(
+            str,
+            node.config.get("metric", "accuracy" if lab.task == "classification" else "r2"),
+        )
+        direction = cast(str, node.config.get("direction", "maximize"))
+        candidates: list[tuple[float, str, TrainedTabularModel]] = []
+        for evaluate_id in sorted(node.depends_on):
+            evaluate = nodes_by_id[evaluate_id]
+            train_id = evaluate.depends_on[0]
+            trained = values.get(train_id)
+            scores = values.get(evaluate_id)
+            if not isinstance(trained, TrainedTabularModel) or not isinstance(scores, tuple):
+                raise ValueError("select stage requires evaluated tabular candidates")
+            score_map = dict(scores)
+            score = score_map.get(metric)
+            if score is None or not isinstance(score, (int, float)):
+                raise ValueError(f"candidate does not provide selection metric {metric!r}")
+            candidates.append((float(score), train_id, trained))
+        if not candidates:
+            raise ValueError("select stage requires at least one evaluated candidate")
+        candidates.sort(
+            key=lambda item: ((-item[0] if direction == "maximize" else item[0]), item[1])
+        )
+        model = candidates[0][2]
+        digest = hashlib.sha256(model.artifact_bytes).hexdigest()
+        return ExperimentResult(
+            lab.id, backend.backend_id, len(rows), model, f"sha256:{digest}", runtime_fingerprint
+        )
 
     def run_clustering(
         self,

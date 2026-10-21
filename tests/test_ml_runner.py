@@ -3,7 +3,7 @@
 
 import pytest
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
-from studio_ml.domain import FeatureSpec, Lab, PipelineIR, PipelineNode
+from studio_ml.domain import PIPELINE_SCHEMA_V2, FeatureSpec, Lab, PipelineIR, PipelineNode
 from studio_ml.runner import LocalExperimentRunner, _checkpoint_runtime_fingerprint
 from studio_ml.runtime import train_tabular
 from studio_ml.services import compile_lab_pipeline
@@ -108,6 +108,60 @@ def test_pipeline_selected_algorithm_is_executed_and_bound_to_checkpoints() -> N
 
     assert selected_result.to_payload()["algorithm"] == "decision_tree_classifier"
     assert selected_backend.train_calls == 1
+
+
+def test_v2_pipeline_trains_multiple_candidates_and_selects_deterministically() -> None:
+    lab = _lab()
+    pipeline = PipelineIR(
+        (
+            PipelineNode("profile", "profile"),
+            PipelineNode("quality", "quality_gate", ("profile",)),
+            PipelineNode("prepare", "prepare", ("quality",)),
+            PipelineNode("tree", "train", ("prepare",), {"algorithm": "decision_tree_classifier"}),
+            PipelineNode("linear", "train", ("prepare",), {"algorithm": "logistic_regression"}),
+            PipelineNode("tree_eval", "evaluate", ("tree",)),
+            PipelineNode("linear_eval", "evaluate", ("linear",)),
+            PipelineNode(
+                "select",
+                "select",
+                ("tree_eval", "linear_eval"),
+                {"metric": "accuracy", "direction": "maximize"},
+            ),
+        ),
+        parameters=(("lab_digest", lab.digest), ("task", lab.task)),
+        schema=PIPELINE_SCHEMA_V2,
+    )
+    first = LocalExperimentRunner().execute_pipeline(lab, _rows(), pipeline)
+    second = LocalExperimentRunner().execute_pipeline(lab, _rows(), pipeline)
+
+    assert first.to_payload() == second.to_payload()
+    assert first.model.algorithm in {"decision_tree_classifier", "logistic_regression"}
+
+
+def test_v2_pipeline_rejects_unsupported_graph_before_training() -> None:
+    lab = _lab()
+    backend = _CheckpointBackend()
+    pipeline = PipelineIR(
+        (
+            PipelineNode("profile", "profile"),
+            PipelineNode("quality", "quality_gate", ("profile",)),
+            PipelineNode("prepare", "prepare", ("quality",)),
+            PipelineNode(
+                "candidate", "train", ("quality",), {"algorithm": "decision_tree_classifier"}
+            ),
+            PipelineNode(
+                "candidate_b", "train", ("prepare",), {"algorithm": "logistic_regression"}
+            ),
+            PipelineNode("evaluate", "evaluate", ("candidate",)),
+            PipelineNode("evaluate_b", "evaluate", ("candidate_b",)),
+            PipelineNode("select", "select", ("evaluate", "evaluate_b")),
+        ),
+        parameters=(("lab_digest", lab.digest),),
+        schema=PIPELINE_SCHEMA_V2,
+    )
+    with pytest.raises(ValueError, match="train nodes must depend on prepare"):
+        LocalExperimentRunner((backend,)).execute_pipeline(lab, _rows(), pipeline)
+    assert backend.train_calls == 0
 
 
 def test_pipeline_preprocessor_is_pinned_and_executed() -> None:

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
-from studio_ml.domain import FeatureSpec, Lab, PipelineIR, PipelineNode
+from studio_ml.domain import PIPELINE_SCHEMA_V2, FeatureSpec, Lab, PipelineIR, PipelineNode
 
 
 def _dataset() -> AssetRef:
@@ -34,6 +34,27 @@ def test_pipeline_v1_canonical_json_matches_documented_shape() -> None:
     assert payload["nodes"] == [{"depends_on": [], "id": "profile", "kind": "profile"}]
     assert payload["parameters"] == {"task": "classification"}
     assert PipelineIR.from_json(pipeline.to_json()) == pipeline
+
+
+def test_pipeline_v2_serializes_explicit_data_only_node_configuration() -> None:
+    pipeline = PipelineIR(
+        (PipelineNode("candidate", "train", config={"algorithm": "linear_regression"}),),
+        schema=PIPELINE_SCHEMA_V2,
+    )
+    payload = json.loads(pipeline.to_json())
+    assert payload["schema"] == "ronin.ml-pipeline-ir/v2"
+    assert payload["nodes"][0]["config"] == {"algorithm": "linear_regression"}
+    assert PipelineIR.from_json(pipeline.to_json()) == pipeline
+
+
+def test_pipeline_v1_rejects_configured_nodes() -> None:
+    with pytest.raises(ValueError, match="v1 nodes cannot contain configuration"):
+        PipelineIR((PipelineNode("train", "train", config={"algorithm": "unsafe"}),))
+
+
+def test_pipeline_config_rejects_non_string_object_keys() -> None:
+    with pytest.raises(ValueError, match="object keys must be strings"):
+        PipelineNode("train", "train", config={1: "invalid"})
 
 
 def test_pipeline_rejects_cycles() -> None:

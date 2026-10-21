@@ -20,6 +20,7 @@ NodeKind: TypeAlias = Literal[
 ]
 LAB_SCHEMA = "ronin.ml-lab/v1"
 PIPELINE_SCHEMA = "ronin.ml-pipeline-ir/v1"
+PIPELINE_SCHEMA_V2 = "ronin.ml-pipeline-ir/v2"
 FEATURE_SCHEMA = "ronin.ml-feature/v1"
 
 
@@ -50,6 +51,18 @@ def _thaw_json(value: object) -> object:
     if isinstance(value, tuple):
         return [_thaw_json(child) for child in value]
     return value
+
+
+def _validate_json_object_keys(value: object) -> None:
+    """Reject non-string mapping keys before Python's JSON encoder coerces them."""
+    if isinstance(value, Mapping):
+        if any(not isinstance(key, str) for key in value):
+            raise ValueError("pipeline node config object keys must be strings")
+        for child in value.values():
+            _validate_json_object_keys(child)
+    elif isinstance(value, (list, tuple)):
+        for child in value:
+            _validate_json_object_keys(child)
 
 
 @dataclass(frozen=True, slots=True)
@@ -281,6 +294,7 @@ class PipelineNode:
     id: str
     kind: NodeKind
     depends_on: tuple[str, ...] = ()
+    config: Mapping[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         _text(self.id, "pipeline node id")
@@ -296,13 +310,32 @@ class PipelineNode:
             raise ValueError("unsupported pipeline node kind")
         if self.id in self.depends_on or len(set(self.depends_on)) != len(self.depends_on):
             raise ValueError("pipeline node dependencies must be unique and not self-referential")
+        frozen = _freeze_json(self.config)
+        if not isinstance(frozen, Mapping):
+            raise ValueError("pipeline node config must be an object")
+        _validate_json_object_keys(frozen)
+        # Round-trip through canonical JSON to reject non-JSON values and non-string keys.
+        canonical = decode_canonical_json(encode_canonical_json(_thaw_json(frozen)))
+        if not isinstance(canonical, Mapping):
+            raise ValueError("pipeline node config must be an object")
+        object.__setattr__(self, "config", _freeze_json(canonical))
 
-    def to_payload(self) -> dict[str, object]:
-        return {"id": self.id, "kind": self.kind, "depends_on": list(self.depends_on)}
+    def to_payload(self, *, include_config: bool = False) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "id": self.id,
+            "kind": self.kind,
+            "depends_on": list(self.depends_on),
+        }
+        if include_config:
+            payload["config"] = _thaw_json(self.config)
+        return payload
 
     @classmethod
     def from_payload(cls, payload: object) -> PipelineNode:
-        if not isinstance(payload, Mapping) or set(payload) != {"id", "kind", "depends_on"}:
+        if not isinstance(payload, Mapping) or set(payload) not in (
+            {"id", "kind", "depends_on"},
+            {"id", "kind", "depends_on", "config"},
+        ):
             raise ValueError("pipeline node has invalid shape")
         if (
             not isinstance(payload["id"], str)
@@ -312,7 +345,12 @@ class PipelineNode:
             raise ValueError("pipeline node fields have invalid types")
         if not all(isinstance(item, str) for item in payload["depends_on"]):
             raise ValueError("pipeline node dependencies must be strings")
-        return cls(payload["id"], cast(NodeKind, payload["kind"]), tuple(payload["depends_on"]))
+        config = payload.get("config", {})
+        if not isinstance(config, Mapping):
+            raise ValueError("pipeline node config must be an object")
+        return cls(
+            payload["id"], cast(NodeKind, payload["kind"]), tuple(payload["depends_on"]), config
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -322,8 +360,14 @@ class PipelineIR:
     schema: str = PIPELINE_SCHEMA
 
     def __post_init__(self) -> None:
-        if self.schema != PIPELINE_SCHEMA or not self.nodes:
+        if self.schema not in {PIPELINE_SCHEMA, PIPELINE_SCHEMA_V2} or not self.nodes:
             raise ValueError("invalid or empty pipeline schema")
+        if self.schema == PIPELINE_SCHEMA and any(node.config for node in self.nodes):
+            raise ValueError("PipelineIR v1 nodes cannot contain configuration")
+        if self.schema == PIPELINE_SCHEMA_V2 and any(
+            node.kind not in {"train", "select"} and node.config for node in self.nodes
+        ):
+            raise ValueError("PipelineIR v2 only supports train and select node configuration")
         ids = {node.id for node in self.nodes}
         if len(ids) != len(self.nodes) or any(
             dep not in ids for node in self.nodes for dep in node.depends_on
@@ -342,7 +386,10 @@ class PipelineIR:
     def to_payload(self) -> dict[str, object]:
         return {
             "schema": self.schema,
-            "nodes": [node.to_payload() for node in self.nodes],
+            "nodes": [
+                node.to_payload(include_config=self.schema == PIPELINE_SCHEMA_V2)
+                for node in self.nodes
+            ],
             "parameters": dict(self.parameters),
         }
 
@@ -390,7 +437,16 @@ class PipelineIR:
             isinstance(key, str) and isinstance(value, str) for key, value in parameters.items()
         ):
             raise ValueError("pipeline IR parameters must be string pairs")
-        return cls(tuple(parsed), tuple(sorted(parameters.items())), cast(str, payload["schema"]))
+        schema = cast(str, payload["schema"])
+        if schema == PIPELINE_SCHEMA and any(
+            "config" in item for item in nodes if isinstance(item, Mapping)
+        ):
+            raise ValueError("PipelineIR v1 nodes cannot contain configuration")
+        if schema == PIPELINE_SCHEMA_V2 and any(
+            not isinstance(item, Mapping) or "config" not in item for item in nodes
+        ):
+            raise ValueError("PipelineIR v2 nodes require explicit config objects")
+        return cls(tuple(parsed), tuple(sorted(parameters.items())), schema)
 
     @classmethod
     def from_json(cls, payload: str) -> PipelineIR:

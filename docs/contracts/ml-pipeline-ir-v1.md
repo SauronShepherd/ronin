@@ -32,8 +32,8 @@ The current local runner executes exactly one each of `profile`, `quality_gate`,
 `register` and other non-local compositions before training so a stored graph
 cannot be silently ignored. A scheduler must pass the pinned PipelineIR through
 unchanged, and the runner verifies that its `lab_digest` matches the submitted
-Lab. Configurable stage graphs and registration as an executor node require a
-future contract extension or schema version.
+Lab. Configurable candidate selection is defined by the v2 contract; v1 remains
+unchanged and replayable.
 
 Changing the serialized shape requires a new schema version. Old v1 payloads
 remain replayable for provenance.
