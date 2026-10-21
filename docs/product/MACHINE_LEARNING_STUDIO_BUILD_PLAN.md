@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 78%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada; PipelineIR v2 ejecuta candidatos para clasificación/regresión y clustering, cualificados por los seis workflows exact-head de `main@e20733d`. La selección de candidatos desde la UI quedó integrada en `main@47e16fa` y pasó los seis workflows post-merge exact-head. Los porcentajes se actualizarán al pasar cada cualificación exact-head.
+**Avance de implementación técnica estimado: 79%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada; PipelineIR v2 ejecuta candidatos para clasificación/regresión y clustering, cualificados por los seis workflows exact-head de `main@e20733d`. La selección de candidatos desde la UI quedó integrada en `main@47e16fa` y pasó los seis workflows post-merge exact-head. La búsqueda de trials con memoria acotada quedó integrada en `main@1994778` y pasó los seis workflows post-merge exact-head. Los porcentajes se actualizarán al pasar cada cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -682,7 +682,7 @@ El recorrido añadido con Playwright pasa aislado y dentro de la suite completa.
 
 ## 45. Acotar memoria y presupuesto de búsqueda de hiperparámetros
 
-**Progreso técnico del incremento: implementación y verificación local en curso; pendiente de CI, Docker exact-head y merge. Avance global integrado: 78%; release-qualified: 0% (0/14).**
+**Progreso técnico del incremento: 5/5 criterios implementados y cualificados; PR #473 integrado en `main@1994778` y los seis workflows post-merge exact-head pasaron. Avance global integrado: 79%; release-qualified: 0% (0/14).**
 
 | Criterio | Implementación |
 | --- | --- |
@@ -692,4 +692,4 @@ El recorrido añadido con Playwright pasa aislado y dentro de la suite completa.
 | Validar presupuesto y estructura en runtime | `max_trials` se limita a 1..1000; se rechazan tipos incorrectos, parámetros vacíos/duplicados y semillas inválidas. |
 | Probar cardinalidad, determinismo y API durable | Tests cubren un espacio de 1000³, unicidad/reproducibilidad y la ejecución API de plugin. |
 
-La suite completa local registró **3837 passed y 54 skipped** antes de añadir las cinco variantes de tipos inválidos; tras esos cambios, `tests/test_ml_optimization.py` pasó **16/16** y `tests/test_ml_plugin_execution_api.py` pasó **17/17**. Ruff, formato y mypy (455 archivos) pasan. La cualificación Docker local pasó **21 tests con 2 omitidos** porque el host no tiene `RONIN_POSTGRES_TEST_DSN`; la aceptación estricta pasó **15/15**. La CI Docker debe aportar la cobertura PostgreSQL antes de declarar cualificación exact-head. Este incremento no declara cualificación hasta completar Docker/CI exact-head y el merge.
+La suite completa local registró **3837 passed y 54 skipped** antes de añadir las cinco variantes de tipos inválidos; tras esos cambios, `tests/test_ml_optimization.py` pasó **16/16** y `tests/test_ml_plugin_execution_api.py` pasó **17/17**. Ruff, formato y mypy (455 archivos) pasan. La cualificación Docker local pasó **21 tests con 2 omitidos** porque el host no tiene `RONIN_POSTGRES_TEST_DSN`; la aceptación estricta pasó **15/15**. PR #473 pasó matrices Python 3.11/3.12, calidad, seguridad, Release, Status consistency, Web y Docker qualification (**9m47s**, con PostgreSQL, worker Docker real y aceptación estricta). Los seis workflows post-merge exact-head de `main@1994778` también pasaron, incluido Docker. P8 sigue parcial y la cualificación release permanece en **0% (0/14)**.
