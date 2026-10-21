@@ -76,9 +76,18 @@ from studio_storage.ml import SqliteMLStore
 
 
 class _LocalDataEngineeringRevisions:
-    def __init__(self, records: Any, artifact_root: Path) -> None:
+    def __init__(
+        self,
+        records: Any,
+        artifact_root: Path,
+        artifact_reference_barrier: Any = None,
+    ) -> None:
         self._records = records
-        self._application = RevisionApplication(LocalArtifactStore(artifact_root), self._records)
+        self._application = RevisionApplication(
+            LocalArtifactStore(artifact_root),
+            self._records,
+            artifact_reference_barrier=artifact_reference_barrier,
+        )
 
     def list_revisions(self, *, project_id: str, pipeline_id: str) -> Any:
         return self._records.list_revisions(project_id=project_id, pipeline_id=pipeline_id)
@@ -351,7 +360,9 @@ def build_local_composed_from_env() -> LocalServerComposition:
         _LocalDataEngineeringRevisions(SqliteRevisionStore(database), database.parent / "artifacts")
         if postgres_dsn is None
         else _LocalDataEngineeringRevisions(
-            PostgresRevisionStore(postgres_dsn), database.parent / "artifacts"
+            PostgresRevisionStore(postgres_dsn),
+            database.parent / "artifacts",
+            artifact_reference_barrier,
         )
     )
     control_server = WorkspaceProjectHTTPServer(

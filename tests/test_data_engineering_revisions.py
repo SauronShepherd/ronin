@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -69,3 +70,52 @@ def test_discovery_covers_all_projects_pipelines_and_historical_revisions(tmp_pa
     assert references["data_engineering_revisions"]
     with pytest.raises(ValueError, match="inventory exceeded"):
         discover_data_engineering_artifact_references(records, max_revisions=2)
+
+
+def test_revision_artifacts_and_record_commit_share_writer_lease(tmp_path: Path) -> None:
+    events: list[str] = []
+
+    class _Barrier:
+        @contextmanager
+        def writer(self):
+            events.append("lock")
+            try:
+                yield
+            finally:
+                events.append("unlock")
+
+        @contextmanager
+        def collector(self):
+            yield
+
+    class _Artifacts:
+        def __init__(self) -> None:
+            self._inner = LocalArtifactStore(tmp_path / "artifacts")
+
+        def put_bytes(self, **kwargs):
+            events.append("artifact")
+            return self._inner.put_bytes(**kwargs)
+
+    class _Records:
+        def get_latest(self, **_kwargs):
+            return None
+
+        def save(self, **kwargs):
+            events.append("reference")
+            return int(kwargs["expected_revision"] or 0) + 1
+
+    service = RevisionApplication(
+        _Artifacts(),
+        _Records(),
+        artifact_reference_barrier=_Barrier(),
+    )
+    source = SdpProjectSource(
+        "retail",
+        b"name: retail\n",
+        (("pipelines/main.yaml", b"nodes: []\n"),),
+    )
+
+    record = service.import_sdp(project_id="project-1", pipeline_id="main", source=source)
+
+    assert record.revision == 1
+    assert events == ["lock", "artifact", "artifact", "artifact", "reference", "unlock"]
