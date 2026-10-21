@@ -97,9 +97,11 @@ class _SyntheticExportRun(Protocol):
 
 
 class _SyntheticExportStore(Protocol):
-    def snapshot(self) -> tuple[_SyntheticExportRun, ...]: ...
+    def snapshot(self, *, limit: int | None = None) -> tuple[_SyntheticExportRun, ...]: ...
 
-    def artifacts(self, run_id: str) -> tuple[dict[str, object], ...]: ...
+    def artifacts(
+        self, run_id: str, *, limit: int | None = None
+    ) -> tuple[dict[str, object], ...]: ...
 
 
 def plan_unreferenced(
@@ -455,11 +457,11 @@ def discover_synthetic_data_artifact_references(
 ) -> dict[str, tuple[str, ...]]:
     """Discover persisted synthetic-data exports within explicit run/export bounds."""
 
-    if max_runs < 1:
-        raise ValueError("synthetic export max_runs must be positive")
-    if max_exports < 1:
-        raise ValueError("synthetic export max_exports must be positive")
-    runs = exports.snapshot()
+    if max_runs < 1 or max_runs > 100_000:
+        raise ValueError("synthetic export max_runs must be between 1 and 100000")
+    if max_exports < 1 or max_exports > 100_000:
+        raise ValueError("synthetic export max_exports must be between 1 and 100000")
+    runs = exports.snapshot(limit=max_runs + 1)
     if len(runs) > max_runs:
         raise ValueError("synthetic export inventory exceeded its run bound")
     digests: set[str] = set()
@@ -467,7 +469,7 @@ def discover_synthetic_data_artifact_references(
     for run in runs:
         if not isinstance(run.run_id, str) or not run.run_id:
             raise ValueError("synthetic run has an invalid identity")
-        records = exports.artifacts(run.run_id)
+        records = exports.artifacts(run.run_id, limit=max_exports - exports_seen + 1)
         exports_seen += len(records)
         if exports_seen > max_exports:
             raise ValueError("synthetic export inventory exceeded its export bound")

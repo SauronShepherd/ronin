@@ -873,6 +873,12 @@ La entrada `ronin worker` no pasaba `RONIN_POSTGRES_DSN` a `LocalWorkerRuntimeCo
 
 ## 63. Persistir el registro de exports sintéticos en la composición local
 
-**Estado: implementado en candidato basado en PR #494; 33 pruebas relacionadas pasan. Avance global: 85%.**
+**Estado: implementado en candidato basado en PR #494; 59 pruebas relacionadas pasan. Avance global: 85%.**
 
 La composición local creaba `GovernStudioService()` sin store, por lo que `snapshot()` y `artifacts()` olvidaban los runs y referencias de exportación al reiniciar. Ahora inyecta la ruta de un `SqliteRunStore` persistente dentro del directorio de datos; el propio plugin crea y cierra el store. Una prueba genera y exporta una tabla, reconstruye la composición, verifica que el run y la referencia sobreviven y vuelve a leer los bytes por digest. También se corrigió `LocalServerComposition.stop()` para cerrar los sockets reservados si se construyó una composición que nunca se inició, y el coordinador ML detiene su polling antes de cerrar el store. El test de reinicio cubre la reutilización de puertos. Esto hace inventariable la fuente sintética local; no activa recolección automática ni resuelve otras fuentes aún ausentes en la composición.
+
+## 64. Aplicar límites reales al inventario de exports sintéticos
+
+**Estado: implementado en candidato basado en PR #495; 44 pruebas relacionadas pasan. Avance global: 85%.**
+
+La auditoría del inventario sintético detectó que `snapshot()` y `artifacts()` materializaban todos los runs/exports antes de comprobar los máximos, de modo que los límites no acotaban memoria. `GovernStudioService` y sus stores ahora aceptan `limit`, y el scanner solicita como máximo `límite + 1` para detectar una fuente que exceda o ignore el tope y fallar cerrado. Pruebas con `SqliteRunStore` y dobles que ignoran el límite confirman el comportamiento para runs y exports. No se habilita borrado global.
