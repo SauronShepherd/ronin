@@ -5,6 +5,7 @@ from studio_data_engineering import (
     DataEnginerringStudioPlugin,
     QueryEngineRuntimeProvider,
     SqliteCompilationStore,
+    SqliteQueryEvidenceReferenceStore,
     compile_pipeline,
     preview_pipeline,
 )
@@ -175,6 +176,7 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
         QueryExecutionPolicy((("queryflux", ("duckdb",)),), required_capability="cancel"),
     )
     store = LocalArtifactStore(tmp_path / "artifacts")
+    references = SqliteQueryEvidenceReferenceStore(tmp_path / "ronin.db")
     plugin.register(
         PluginContext(
             plugin.manifest.id,
@@ -183,6 +185,7 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
                 "artifact_store": store,
                 "queryflux_runtime_provider": provider,
                 "queryflux_transport": _QueryFluxTransport(),
+                "queryflux_evidence_reference_store": references,
             },
         )
     )
@@ -200,6 +203,9 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
     assert result["status"] == "succeeded"
     assert result["rows"] == [[1]]
     assert result["evidence"]["digest"]
+    records = references.list_evidence_references()
+    assert len(records) == 1
+    assert records[0]["storage_ref"] == result["evidence"]["storage_ref"]
 
 
 def test_pipeline_compiler_reports_validity_and_runtime() -> None:

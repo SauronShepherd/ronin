@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import time
 from collections.abc import Callable
+from contextlib import nullcontext
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -17,6 +18,7 @@ from studio_query_engine import (
     QueryStatus,
 )
 from studio_storage import ArtifactRef
+from studio_storage.ports import ArtifactReferenceBarrier
 
 from .evidence import EvidenceStore, persist_query_engine_evidence
 from .runtimes import QueryEngineRuntimeProvider
@@ -30,6 +32,17 @@ class QueryTransport(Protocol):
     ) -> tuple[QueryStatus, QueryResultPage | None, str | None]: ...
 
     def cancel(self, handle: QueryHandle) -> CancellationResult: ...
+
+
+class QueryEvidenceReferenceStore(Protocol):
+    def record(
+        self,
+        *,
+        project_id: str,
+        run_id: str,
+        attempt_id: str,
+        artifact: ArtifactRef,
+    ) -> None: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,6 +63,8 @@ def execute_query(
     project_id: str,
     run_id: str,
     attempt_id: str,
+    evidence_reference_store: QueryEvidenceReferenceStore | None = None,
+    artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
     max_polls: int = 100,
     clock: Callable[[], float] = time.monotonic,
 ) -> QueryExecutionResult:
@@ -114,16 +129,34 @@ def execute_query(
         cluster_id=cluster_id,
         routing_trace=(("selected_engine", selected),),
     )
-    artifact = persist_query_engine_evidence(
-        store,
-        project_id=project_id,
-        run_id=run_id,
-        attempt_id=attempt_id,
-        query_evidence=evidence,
-        status=status,
-        output={"row_count": len(rows)},
+    lease = (
+        artifact_reference_barrier.writer()
+        if artifact_reference_barrier is not None
+        else nullcontext()
     )
+    with lease:
+        artifact = persist_query_engine_evidence(
+            store,
+            project_id=project_id,
+            run_id=run_id,
+            attempt_id=attempt_id,
+            query_evidence=evidence,
+            status=status,
+            output={"row_count": len(rows)},
+        )
+        if evidence_reference_store is not None:
+            evidence_reference_store.record(
+                project_id=project_id,
+                run_id=run_id,
+                attempt_id=attempt_id,
+                artifact=artifact,
+            )
     return QueryExecutionResult(status, result_page, artifact, selected)
 
 
-__all__ = ("QueryExecutionResult", "QueryTransport", "execute_query")
+__all__ = (
+    "QueryEvidenceReferenceStore",
+    "QueryExecutionResult",
+    "QueryTransport",
+    "execute_query",
+)

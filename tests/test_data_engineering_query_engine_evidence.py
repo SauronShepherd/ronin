@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
-from studio_data_engineering import persist_query_engine_evidence
+from studio_data_engineering import SqliteQueryEvidenceReferenceStore, persist_query_engine_evidence
 from studio_query_engine import QueryEvidence, QueryStatus
 from studio_storage import LocalArtifactStore
 
@@ -47,3 +47,42 @@ def test_query_engine_evidence_requires_all_durable_identity_parts(tmp_path: Pat
             query_evidence=QueryEvidence("a" * 64, "provider", None, None),
             status=QueryStatus("failed", "provider failed"),
         )
+
+
+def test_query_evidence_reference_store_is_immutable_and_bounded(tmp_path: Path) -> None:
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    first = artifacts.put_bytes(role="query-evidence", data=b"first")
+    second = artifacts.put_bytes(role="query-evidence", data=b"second")
+    store = SqliteQueryEvidenceReferenceStore(tmp_path / "ronin.db")
+
+    store.record(
+        project_id="project-1",
+        run_id="run-1",
+        attempt_id="attempt-1",
+        artifact=first,
+    )
+    store.record(
+        project_id="project-1",
+        run_id="run-1",
+        attempt_id="attempt-1",
+        artifact=first,
+    )
+    assert store.list_evidence_references() == (
+        {
+            "project_id": "project-1",
+            "run_id": "run-1",
+            "attempt_id": "attempt-1",
+            "storage_ref": first.storage_ref,
+            "digest": first.digest,
+        },
+    )
+
+    with pytest.raises(ValueError, match="different evidence artifact"):
+        store.record(
+            project_id="project-1",
+            run_id="run-1",
+            attempt_id="attempt-1",
+            artifact=second,
+        )
+    with pytest.raises(ValueError, match="bound"):
+        store.list_evidence_references(max_references=0)

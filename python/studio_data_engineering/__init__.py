@@ -18,7 +18,16 @@ from .pipeline_contracts import PipelineParameter, PipelineParameterSchema
 from .plugin import DataEnginerringStudioPlugin, factory
 from .postgres_revisions import PostgresRevisionDependencyError, PostgresRevisionStore
 from .previews import PreviewError, PreviewResult, preview_pipeline
-from .query_execution import QueryExecutionResult, QueryTransport, execute_query
+from .query_execution import (
+    QueryEvidenceReferenceStore,
+    QueryExecutionResult,
+    QueryTransport,
+    execute_query,
+)
+from .query_evidence_store import (
+    PostgresQueryEvidenceReferenceStore,
+    SqliteQueryEvidenceReferenceStore,
+)
 from .revisions import PipelineRevisionRecord, RevisionApplication, RevisionConflict
 from .runtimes import (
     QueryEngineRuntimeProvider,
@@ -64,8 +73,11 @@ __all__ = (
     "persist_pipeline_evidence",
     "persist_query_engine_evidence",
     "QueryExecutionResult",
+    "QueryEvidenceReferenceStore",
     "QueryTransport",
     "execute_query",
+    "PostgresQueryEvidenceReferenceStore",
+    "SqliteQueryEvidenceReferenceStore",
     "PipelineExecutionError",
     "PipelineParameter",
     "PipelineParameterSchema",

@@ -20,8 +20,10 @@ from studio_core import (
     WorkspaceId,
 )
 from studio_data_engineering import (
+    PostgresQueryEvidenceReferenceStore,
     PostgresRevisionStore,
     RevisionApplication,
+    SqliteQueryEvidenceReferenceStore,
     SqliteRevisionStore,
 )
 from studio_execution import (
@@ -275,6 +277,11 @@ def build_local_composed_from_env() -> LocalServerComposition:
             ),
             "artifact_store": artifact_store,
             "artifact_reference_barrier": artifact_reference_barrier,
+            "queryflux_evidence_reference_store": (
+                PostgresQueryEvidenceReferenceStore(postgres_dsn)
+                if postgres_dsn is not None
+                else SqliteQueryEvidenceReferenceStore(database)
+            ),
             "catalog_store": catalog_store,
         }
     )

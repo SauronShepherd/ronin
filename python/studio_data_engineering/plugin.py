@@ -82,6 +82,8 @@ class DataEnginerringStudioPlugin:
         self._queryflux_runtime: QueryEngineRuntimeProvider | None = None
         self._queryflux_transport: QueryTransport | None = None
         self._queryflux_evidence_store: Any | None = None
+        self._queryflux_evidence_reference_store: Any | None = None
+        self._artifact_reference_barrier: Any | None = None
 
     def register(self, context: PluginContext) -> None:
         self.context = context
@@ -101,6 +103,10 @@ class DataEnginerringStudioPlugin:
         self._queryflux_evidence_store = context.services.get(
             "queryflux_evidence_store", artifact_store
         )
+        self._queryflux_evidence_reference_store = context.services.get(
+            "queryflux_evidence_reference_store"
+        )
+        self._artifact_reference_barrier = context.services.get("artifact_reference_barrier")
         if artifact_store is not None:
             self._revisions = RevisionApplication(
                 cast(RevisionArtifactStore, artifact_store),
@@ -411,8 +417,11 @@ class DataEnginerringStudioPlugin:
             self._queryflux_runtime is None
             or self._queryflux_transport is None
             or self._queryflux_evidence_store is None
+            or self._queryflux_evidence_reference_store is None
         ):
-            raise LookupError("queryflux execution is not configured")
+            raise LookupError(
+                "queryflux execution and durable evidence references are not configured"
+            )
         if not isinstance(body, dict):
             raise ValueError("queryflux execution body must be an object")
         allowed = {
@@ -453,6 +462,8 @@ class DataEnginerringStudioPlugin:
             project_id=cast(str, body["project_id"]),
             run_id=cast(str, body["run_id"]),
             attempt_id=cast(str, body["attempt_id"]),
+            evidence_reference_store=cast(Any, self._queryflux_evidence_reference_store),
+            artifact_reference_barrier=cast(Any, self._artifact_reference_barrier),
         )
         return {
             "status": result.status.state,
