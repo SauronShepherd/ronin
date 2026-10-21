@@ -5,6 +5,7 @@ from .checkpoint import (
     CheckpointEvidence,
     CheckpointFenceConflict,
     CheckpointHealth,
+    PostgresConnectorCheckpointStore,
     SqliteConnectorCheckpointStore,
 )
 from .contracts import Connector, ConnectorReadResult, DiscoveryPage, PagedConnector
@@ -39,6 +40,7 @@ __all__ = (
     "CheckpointEvidence",
     "CheckpointFenceConflict",
     "CheckpointHealth",
+    "PostgresConnectorCheckpointStore",
     "JdbcBridgeProvenance",
     "SqliteConnectorCheckpointStore",
     "builtin_connector_registry",

@@ -6,7 +6,7 @@ import hashlib
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from studio_core import CheckpointStrategy, SourceCheckpoint
 
@@ -162,20 +162,8 @@ class SqliteConnectorCheckpointStore:
         output_committed: bool,
     ) -> CheckpointEvidence:
         self._validate_identity(identity)
-        if (
-            not output_id
-            or output_id != output_id.strip()
-            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in output_id)
-        ):
-            raise ValueError("output_id must be non-empty, trimmed and free of control characters")
-        if (
-            not output_digest
-            or output_digest != output_digest.strip()
-            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in output_digest)
-        ):
-            raise ValueError(
-                "output_digest must be non-empty, trimmed and free of control characters"
-            )
+        self._validate_output(output_id, "output_id")
+        self._validate_output(output_digest, "output_digest")
         if not output_committed:
             raise CheckpointFenceConflict(
                 "checkpoint cannot advance before output commit is acknowledged"
@@ -254,13 +242,276 @@ class SqliteConnectorCheckpointStore:
             )
 
     @staticmethod
+    def _validate_output(value: str, name: str) -> None:
+        if (
+            not value
+            or value != value.strip()
+            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in value)
+        ):
+            raise ValueError(f"{name} must be non-empty, trimmed and free of control characters")
+
+    @staticmethod
     def _digest(checkpoint: SourceCheckpoint) -> str:
         return hashlib.sha256(f"{checkpoint.strategy}:{checkpoint.value}".encode()).hexdigest()
+
+
+class PostgresConnectorCheckpointStore:
+    """PostgreSQL CAS + fencing store with a bounded output inventory."""
+
+    def __init__(self, dsn: str, *, application_name: str = "ronin-connector-checkpoints") -> None:
+        if not dsn or dsn != dsn.strip():
+            raise ValueError("PostgreSQL DSN must be non-empty and trimmed")
+        if not application_name or application_name != application_name.strip():
+            raise ValueError("application_name must be non-empty and trimmed")
+        self._dsn = dsn
+        self._application_name = application_name
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "CREATE TABLE IF NOT EXISTS ronin_connector_checkpoints ("
+                    "identity TEXT PRIMARY KEY, strategy TEXT NOT NULL, value TEXT NOT NULL, "
+                    "digest TEXT NOT NULL, previous_digest TEXT, fence BIGINT NOT NULL, "
+                    "output_id TEXT, output_digest TEXT)"
+                )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def _connect(self) -> Any:
+        from studio_storage.postgres_core import _psycopg
+
+        psycopg, dict_row = _psycopg()
+        return psycopg.connect(
+            self._dsn,
+            autocommit=False,
+            row_factory=dict_row,
+            application_name=self._application_name,
+        )
+
+    def get(self, identity: str) -> SourceCheckpoint | None:
+        row = self._row(identity)
+        return None if row is None else SourceCheckpoint(cast(CheckpointStrategy, row[0]), row[1])
+
+    def get_evidence(self, identity: str) -> CheckpointEvidence | None:
+        self._validate_identity(identity)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT digest,previous_digest,fence,output_id,output_digest "
+                    "FROM ronin_connector_checkpoints WHERE identity=%s",
+                    (identity,),
+                )
+                row = cursor.fetchone()
+            if row is None or row["output_id"] is None or row["output_digest"] is None:
+                return None
+            return CheckpointEvidence(
+                identity,
+                row["previous_digest"] or row["digest"],
+                row["digest"],
+                row["output_id"],
+                row["output_digest"],
+                int(row["fence"]),
+            )
+        finally:
+            connection.close()
+
+    def health(self, identity: str) -> CheckpointHealth:
+        self._validate_identity(identity)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT digest,fence,output_digest FROM ronin_connector_checkpoints "
+                    "WHERE identity=%s",
+                    (identity,),
+                )
+                row = cursor.fetchone()
+            if row is None:
+                return CheckpointHealth(identity, False, None, None, False, None)
+            committed = row["output_digest"] is not None
+            return CheckpointHealth(
+                identity,
+                committed,
+                int(row["fence"]),
+                row["digest"] if committed else None,
+                committed,
+                row["output_digest"],
+            )
+        finally:
+            connection.close()
+
+    def list_committed_outputs(self, *, max_outputs: int = 10_000) -> tuple[tuple[str, str], ...]:
+        if max_outputs < 1 or max_outputs > 100_000:
+            raise ValueError("max_outputs must be between 1 and 100000")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT output_id,output_digest FROM ronin_connector_checkpoints "
+                    "WHERE output_id IS NOT NULL OR output_digest IS NOT NULL "
+                    "ORDER BY identity LIMIT %s",
+                    (max_outputs + 1,),
+                )
+                rows = cursor.fetchall()
+            if len(rows) > max_outputs:
+                raise ValueError("connector output inventory exceeded its bound")
+            outputs: list[tuple[str, str]] = []
+            for row in rows:
+                output_id, output_digest = row["output_id"], row["output_digest"]
+                if not isinstance(output_id, str) or not isinstance(output_digest, str):
+                    raise ValueError("connector output checkpoint has an incomplete identity")
+                outputs.append((output_id, output_digest))
+            return tuple(outputs)
+        finally:
+            connection.close()
+
+    def acquire(self, identity: str) -> int:
+        self._validate_identity(identity)
+        empty_digest = hashlib.sha256(b"").hexdigest()
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO ronin_connector_checkpoints "
+                    "(identity,strategy,value,digest,fence) VALUES (%s,%s,%s,%s,0) "
+                    "ON CONFLICT (identity) DO NOTHING",
+                    (identity, "snapshot", "", empty_digest),
+                )
+                cursor.execute(
+                    "UPDATE ronin_connector_checkpoints SET fence=fence+1 "
+                    "WHERE identity=%s RETURNING fence",
+                    (identity,),
+                )
+                row = cursor.fetchone()
+            connection.commit()
+            return int(row["fence"])
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def commit_output_then_checkpoint(
+        self,
+        identity: str,
+        expected: SourceCheckpoint | None,
+        next_checkpoint: SourceCheckpoint,
+        *,
+        output_id: str,
+        output_digest: str,
+        fence: int,
+        output_committed: bool,
+    ) -> CheckpointEvidence:
+        SqliteConnectorCheckpointStore._validate_identity(identity)
+        SqliteConnectorCheckpointStore._validate_output(output_id, "output_id")
+        SqliteConnectorCheckpointStore._validate_output(output_digest, "output_digest")
+        if not output_committed:
+            raise CheckpointFenceConflict(
+                "checkpoint cannot advance before output commit is acknowledged"
+            )
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT strategy,value,digest,previous_digest,fence,output_id,output_digest "
+                    "FROM ronin_connector_checkpoints WHERE identity=%s FOR UPDATE",
+                    (identity,),
+                )
+                row = cursor.fetchone()
+                if row is None or int(row["fence"]) != fence:
+                    raise CheckpointFenceConflict("checkpoint fence is stale")
+                previous_digest = row["digest"]
+                next_digest = self._digest(next_checkpoint)
+                if (
+                    previous_digest == next_digest
+                    and row["output_id"] == output_id
+                    and row["output_digest"] == output_digest
+                ):
+                    connection.rollback()
+                    return CheckpointEvidence(
+                        identity,
+                        row["previous_digest"] or previous_digest,
+                        previous_digest,
+                        output_id,
+                        output_digest,
+                        fence,
+                    )
+                if expected is not None and previous_digest != self._digest(expected):
+                    raise CheckpointFenceConflict("checkpoint CAS precondition failed")
+                cursor.execute(
+                    "UPDATE ronin_connector_checkpoints SET strategy=%s,value=%s,digest=%s,"
+                    "previous_digest=%s,output_id=%s,output_digest=%s "
+                    "WHERE identity=%s AND fence=%s AND digest=%s",
+                    (
+                        next_checkpoint.strategy,
+                        next_checkpoint.value,
+                        next_digest,
+                        previous_digest,
+                        output_id,
+                        output_digest,
+                        identity,
+                        fence,
+                        previous_digest,
+                    ),
+                )
+                if cursor.rowcount != 1:
+                    raise CheckpointFenceConflict("checkpoint fence is stale")
+            connection.commit()
+            return CheckpointEvidence(
+                identity, previous_digest, next_digest, output_id, output_digest, fence
+            )
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def _row(self, identity: str) -> tuple[str, str] | None:
+        self._validate_identity(identity)
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT strategy,value,output_digest FROM ronin_connector_checkpoints "
+                    "WHERE identity=%s",
+                    (identity,),
+                )
+                row = cursor.fetchone()
+            return (
+                None
+                if row is None or row["output_digest"] is None
+                else (str(row["strategy"]), str(row["value"]))
+            )
+        finally:
+            connection.close()
+
+    @staticmethod
+    def _validate_identity(identity: str) -> None:
+        SqliteConnectorCheckpointStore._validate_identity(identity)
+
+    @staticmethod
+    def _digest(checkpoint: SourceCheckpoint) -> str:
+        return SqliteConnectorCheckpointStore._digest(checkpoint)
+
+    @staticmethod
+    def _validate_output(value: str, name: str) -> None:
+        if (
+            not value
+            or value != value.strip()
+            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in value)
+        ):
+            raise ValueError(f"{name} must be non-empty, trimmed and free of control characters")
 
 
 __all__ = (
     "CheckpointEvidence",
     "CheckpointFenceConflict",
     "CheckpointHealth",
+    "PostgresConnectorCheckpointStore",
     "SqliteConnectorCheckpointStore",
 )

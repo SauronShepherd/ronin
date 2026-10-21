@@ -8,6 +8,7 @@ from typing import Any, cast
 
 from studio_connectors import (
     IngestionHTTPAdapter,
+    PostgresConnectorCheckpointStore,
     SqliteConnectorCheckpointStore,
     builtin_connector_registry,
 )
@@ -332,32 +333,35 @@ def build_local_composed_from_env() -> LocalServerComposition:
     )
     connection_service = ConnectionService(scheduler, cast(Any, connection_store))
     connector_registry = builtin_connector_registry()
-    ingestion_adapter = None
-    if postgres_dsn is None:
-        checkpoint_store = SqliteConnectorCheckpointStore(database)
-        secrets_resolver = CompositeSecretResolver(environment=EnvironmentSecretResolver())
+    checkpoint_store = (
+        PostgresConnectorCheckpointStore(postgres_dsn)
+        if postgres_dsn is not None
+        else SqliteConnectorCheckpointStore(database)
+    )
+    secrets_resolver = CompositeSecretResolver(environment=EnvironmentSecretResolver())
 
-        def resolve_connection(scoped_workspace_id: str, reference: str) -> ConnectionDefinition:
-            return connection_service.get(WorkspaceId(scoped_workspace_id), ConnectionId(reference))
+    def resolve_connection(scoped_workspace_id: str, reference: str) -> ConnectionDefinition:
+        return connection_service.get(WorkspaceId(scoped_workspace_id), ConnectionId(reference))
 
-        def resolve_asset(reference: str) -> AssetHandle:
-            if "::" not in reference:
-                raise ValueError(
-                    "asset_ref must use connection_id::qualified_asset_name in the local profile"
-                )
-            connection_ref, qualified_name = reference.split("::", 1)
-            parts = tuple(qualified_name.split("."))
-            if not connection_ref or not parts or any(not part for part in parts):
-                raise ValueError("asset_ref must contain a connection id and qualified asset name")
-            return AssetHandle(ConnectionId(connection_ref), parts[:-1], parts[-1])
+    def resolve_asset(reference: str) -> AssetHandle:
+        if "::" not in reference:
+            raise ValueError(
+                "asset_ref must use connection_id::qualified_asset_name in the local profile"
+            )
+        connection_ref, qualified_name = reference.split("::", 1)
+        parts = tuple(qualified_name.split("."))
+        if not connection_ref or not parts or any(not part for part in parts):
+            raise ValueError("asset_ref must contain a connection id and qualified asset name")
+        return AssetHandle(ConnectionId(connection_ref), parts[:-1], parts[-1])
 
-        ingestion_adapter = IngestionHTTPAdapter(
-            connector_registry,
-            checkpoint_store,
-            resolve_connection,
-            resolve_asset,
-            lambda _reference: secrets_resolver,
-        )
+    ingestion_adapter = IngestionHTTPAdapter(
+        connector_registry,
+        checkpoint_store,
+        resolve_connection,
+        resolve_asset,
+        lambda _reference: secrets_resolver,
+        artifact_reference_barrier=artifact_reference_barrier,
+    )
     quality_reader = (
         QualityHTTPAdapter(SqliteQualityStore(database, migration_now=now))
         if postgres_dsn is None
