@@ -784,7 +784,7 @@ La cobertura focalizada de artefactos y referencias pasó **26 pruebas**; Ruff, 
 | Excluir publicaciones mientras se calcula y borra | `collector()` adquiere el lock exclusivo; un timeout PostgreSQL acotado hace fallar cerrado si la coordinación tarda más de 30 s por defecto. |
 | Probar exclusión entre procesos y liberación | Tests unitarios cubren modo de lock, timeout y liberación ante excepciones; una prueba de integración verifica que el recolector espera a los escritores y que nuevos escritores esperan al recolector. Los 12 tests pasan contra PostgreSQL 16 efímero en Docker. |
 
-Este componente sólo ofrece el mecanismo. Ningún productor queda protegido hasta envolver, como mínimo, la materialización de bytes y el commit de su referencia con `writer()`. El recolector debe abarcar descubrimiento completo de las seis familias, inventario acotado y borrado bajo `collector()`. Los incrementos candidatos de catálogo/archivos locales y exports sintéticos están descritos en las secciones 57 y 58; siguen pendientes Jobs/evidencia/checkpoints fuera de ML y cualquier productor adicional; también falta exigir una única base PostgreSQL de coordinación en la composición de servidor. La limpieza global automática permanece deshabilitada y el avance global no cambia hasta completar esas integraciones y cualificar Docker exact-head.
+Este componente sólo ofrece el mecanismo. Ningún productor queda protegido hasta envolver, como mínimo, la materialización de bytes y el commit de su referencia con `writer()`. El recolector debe abarcar descubrimiento completo de las seis familias, inventario acotado y borrado bajo `collector()`. Los incrementos de catálogo/archivos locales y exports sintéticos ya están integrados en `main@2475bc9` (secciones 57 y 58); siguen pendientes Jobs/evidencia/checkpoints fuera de ML y cualquier productor adicional; también falta exigir una única base PostgreSQL de coordinación en la composición de servidor. La limpieza global automática permanece deshabilitada y el avance global no cambia hasta completar esas integraciones y cualificar Docker exact-head.
 
 ## 53. Mantener el lock del productor de conectores hasta el checkpoint
 
@@ -809,34 +809,42 @@ Esta integración deja preparado el servicio de sync; todavía debe cablearse un
 | Proteger el modelo final hasta completar el Job | `finish_claim_with_result()` cubre materialización verificada y commit de `ml-result`. |
 | Compartir la coordinación en perfil PostgreSQL | La composición local inyecta una instancia `PostgresArtifactReferenceBarrier` en el host de plugins; el perfil SQLite conserva el modo actual sin barrera. |
 
-La prueba de regresión observa que el artefacto y su submit quedan dentro del mismo lease; las suites de ejecución ML y orchestration pasan **30/30**, Ruff y mypy focalizado pasan. Todavía faltan Job/evidencia y otros productores que guardan referencias fuera de ML Studio, más la integración de conectores, catálogo/archivos, revisiones de Data Engineering y exports sintéticos en la misma composición. No habilitar limpieza global hasta cubrirlos y cualificar el commit exact-head.
+La prueba de regresión observa que el artefacto y su submit quedan dentro del mismo lease; las suites de ejecución ML y orchestration pasan **30/30**, Ruff y mypy focalizado pasan. Las secciones 53, 55 y 57/58 cubren conectores, revisiones de Data Engineering, catálogo/archivos y exports sintéticos. Siguen pendientes productores de Jobs/evidencia/checkpoints fuera de ML y cualquier otro productor; no habilitar limpieza global hasta cubrirlos y cualificar el commit exact-head.
 
 ## 55. Proteger revisiones de Data Engineering hasta su commit durable
 
 **Estado del slice: implementado en candidato y cubierto por 45 tests dirigidos conjuntos. Avance global: 85%; recolección automática global deshabilitada.**
 
-`RevisionApplication.import_sdp()` ahora admite la barrera compartida y mantiene el lease durante la escritura de project YAML, documentos de pipeline, metadata y `RevisionRecordStore.save()`. El plugin y la composición PostgreSQL pasan la instancia común; SQLite conserva el comportamiento existente. Una prueba verifica el orden `lock → artefactos → referencia → unlock`. Las suites de Data Engineering, conectores y ejecución ML pasan **45/45**; Ruff y mypy focalizado pasan. Siguen pendientes Catalog/local files, Jobs/evidence/checkpoints no ML, exports sintéticos y cualquier productor adicional antes de poder habilitar recolección global.
+`RevisionApplication.import_sdp()` ahora admite la barrera compartida y mantiene el lease durante la escritura de project YAML, documentos de pipeline, metadata y `RevisionRecordStore.save()`. El plugin y la composición PostgreSQL pasan la instancia común; SQLite conserva el comportamiento existente. Una prueba verifica el orden `lock → artefactos → referencia → unlock`. Las suites de Data Engineering, conectores y ejecución ML pasan **45/45**; Ruff y mypy focalizado pasan. Las secciones 57/58 completan catálogo/archivos locales y exports sintéticos; aún faltan Jobs/evidence/checkpoints fuera de ML y cualquier productor adicional.
 
 ## 56. Proteger evidencias y checkpoints del worker durable
 
-**Estado del slice: integrado en el candidato actual basado en main y cualificado localmente con PostgreSQL 16 y Docker. Avance global: 85%; recolección global deshabilitada hasta completar los demás productores.**
+**Estado del slice: PR #489 integrado en `main@77bf1c1` y cualificado en los seis workflows post-merge exact-head. Avance global: 85%; recolección global deshabilitada hasta completar los demás productores.**
 
 `DurableWorkerExecution` mantiene el lease compartido desde la escritura del artefacto hasta el commit de evidencia/checkpoint y resultado, también para resultados del scheduler. `LocalWorkerRuntime` y `BrokerWorkerRuntime` inyectan la barrera PostgreSQL cuando usan el perfil PostgreSQL; la adquisición asíncrona evita bloquear el event loop y libera la sesión si se cancela durante la adquisición.
 
-La barrera pasó tests de liberación y cancelación; una prueba de integración confirmó que PostgreSQL 16 impide entrar al colector exclusivo mientras el writer async publica. Ruff, formato, mypy y `git diff --check` pasan. La suite amplia local terminó con **3.927 pasadas y 17 omitidas**; la cualificación de ejecución real pasó **7/7** contra contenedores Docker y una base PostgreSQL limpia, la aceptación estricta v0.1 pasó **15/15** y la integración S3 con LocalStack pasó **1/1**. PR #489 se integró en `main@77bf1c1`; los workflows post-merge exact-head están pendientes. Aún faltan Catalog/local files, productores de Jobs/evidence/checkpoints fuera de ML, exports sintéticos y cualquier productor adicional antes de habilitar limpieza global.
+La barrera pasó tests de liberación y cancelación; una prueba de integración confirmó que PostgreSQL 16 impide entrar al colector exclusivo mientras el writer async publica. Ruff, formato, mypy y `git diff --check` pasan. La suite amplia local terminó con **3.927 pasadas y 17 omitidas**; la cualificación de ejecución real pasó **7/7** contra contenedores Docker y una base PostgreSQL limpia, la aceptación estricta v0.1 pasó **15/15** y la integración S3 con LocalStack pasó **1/1**. PR #489 se integró en `main@77bf1c1`; CI, Security, Release, Status consistency, Web y Docker post-merge exact-head pasaron. Las secciones 57/58 cubren Catalog/local files y exports sintéticos. Aún faltan productores de Jobs/evidence/checkpoints fuera de ML y cualquier productor adicional antes de habilitar limpieza global.
 
 ## 57. Coordinar ingesta de archivos con referencias del catálogo
 
-**Estado del slice: implementado en candidato basado en `main@77bf1c1`; cualificación de PR pendiente. Avance global: 85%.**
+**Estado del slice: PR #490 integrado en `main@2475bc9`; cualificación post-merge exact-head en curso. Avance global: 85%.**
 
 `LocalFileConnector.ingest()` acepta una barrera opcional y mantiene el writer lease desde `ArtifactStore.put_bytes()` hasta completar assets, revisiones y lineage en el catálogo. Sin barrera conserva el flujo SQLite/local actual. La prueba de orden valida `lock → artifact → assets → revisions → lineage → unlock`, además de la resolución del dataset existente.
 
-La suite local de ingesta y el plugin sintético pasa 30 pruebas, con un skip de symlink porque Windows no concede ese privilegio; Ruff, formato, mypy y `git diff --check` pasan. El recorrido amplio tuvo **3.928 pasadas y 17 omitidas**, con un fallo transitorio de socket HTTP ajeno al cambio que pasó al repetirse aislado. La cualificación Docker del worker no cambia con este slice; falta el check exact-head del candidato.
+La suite focalizada de ingesta y plugin sintético pasa **30 pruebas**, con un skip de symlink porque Windows no concede ese privilegio. En el árbol combinado posterior, la suite amplia pasó **3.930 pruebas y omitió 17**; Ruff, formato, mypy y `git diff --check` pasan. PR #490 pasó su Docker qualification de PR; está en curso la verificación post-merge exact-head.
 
 ## 58. Coordinar el export de Synthetic Data Studio
 
-**Estado del slice: implementado en candidato basado en `main@77bf1c1`; cualificación de PR pendiente. Avance global: 85%.**
+**Estado del slice: PR #490 integrado en `main@2475bc9`; cualificación post-merge exact-head en curso. Avance global: 85%.**
 
 El plugin recibe la barrera común de `PluginContext` y protege el intervalo de `GovernStudioService.export()` —que persiste la referencia del export— hasta la materialización física con `ArtifactStore.put_bytes()`. La prueba comprueba el orden `lock → durable reference → artifact → unlock`; un fallo en el bloque también libera el lease.
 
 La limpieza global sigue deshabilitada. Siguen pendientes productores no inventariados o que no comparten una transacción/lease desde bytes hasta referencia, junto con demostrar que la composición de servidor pasa el mismo PostgreSQL de coordinación a todas las rutas soportadas.
+
+## 59. Proteger registros manuales de modelos ML
+
+**Estado del slice: implementado en candidato basado en `main@2475bc9` y cualificado localmente; PR pendiente. Avance global: 85%.**
+
+Las rutas síncronas de ML que escriben un modelo directamente sin crear antes un Job —`persist_clustering_result()`, `register_clustering_model()` y `train_register_tabular()`— aceptan la barrera opcional y conservan el lease desde `put_bytes()` hasta persistir la referencia de run/model. `MachineLearningStudioPlugin` inyecta la misma barrera de `PluginContext` usada por el perfil PostgreSQL.
+
+Una prueba de regresión verifica el orden `lock → artifact → run reference → model reference → unlock`. Suites de seguridad de artefactos, API de ML y registro end-to-end pasan **42/42**; la suite amplia combinada pasa **3.930 pruebas y omite 17**. Ruff, formato, mypy y `git diff --check` pasan; falta la cualificación exact-head del PR. El cleanup global continúa apagado mientras haya otros productores sin lease común.

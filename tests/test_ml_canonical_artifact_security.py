@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import pickle
+from contextlib import contextmanager
 
 import pytest
 from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
@@ -320,6 +321,66 @@ def test_training_service_uses_json_media_type() -> None:
     assert artifacts.media_type == "application/vnd.ronin.sklearn-tabular+json"
     assert artifacts.data is not None
     assert decode_canonical_json(artifacts.data)["schema"] == "ronin.sklearn.tabular/v3"
+
+
+def test_training_service_holds_reference_barrier_through_artifact_and_registry_commit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pytest.importorskip("sklearn")
+    events: list[str] = []
+
+    class Barrier:
+        @contextmanager
+        def writer(self):
+            events.append("lock")
+            try:
+                yield
+            finally:
+                events.append("unlock")
+
+        @contextmanager
+        def collector(self):
+            yield
+
+    registry = _Registry()
+    artifacts = _CapturingArtifactStore()
+    original_put_bytes = artifacts.put_bytes
+    original_record_run = registry.record_run
+    original_register_model = registry.register_model
+
+    def put_bytes(**kwargs):
+        events.append("artifact")
+        return original_put_bytes(**kwargs)
+
+    def record_run(*args, **kwargs):
+        events.append("run-reference")
+        return original_record_run(*args, **kwargs)
+
+    def register_model(*args, **kwargs):
+        events.append("model-reference")
+        return original_register_model(*args, **kwargs)
+
+    monkeypatch.setattr(artifacts, "put_bytes", put_bytes)
+    monkeypatch.setattr(registry, "record_run", record_run)
+    monkeypatch.setattr(registry, "register_model", register_model)
+    train_register_tabular(
+        registry,
+        artifacts,
+        WorkspaceId("workspace"),
+        _classification_rows(),
+        dataset=AssetRef(AssetId("dataset"), AssetVersion("v1")),
+        experiment_id=ExperimentId("experiment"),
+        run_id=MLRunId("run"),
+        model_id=ModelId("model"),
+        model_version=ModelVersion("1"),
+        source_revision="git:abc",
+        execution_ref="job:1",
+        spec=TrainingSpec("classification", "logistic_regression", ("x", "y"), "label", 0.25, 7),
+        now="2026-09-14T04:10:00.000000Z",
+        artifact_reference_barrier=Barrier(),
+    )
+
+    assert events == ["lock", "artifact", "run-reference", "model-reference", "unlock"]
 
 
 def test_registered_digest_mismatch_still_fails_before_artifact_parse() -> None:

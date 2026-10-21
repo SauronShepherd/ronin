@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from typing import Protocol, runtime_checkable
 
 from studio_core import AssetRef, WorkspaceId
@@ -21,11 +22,22 @@ from studio_core.ml import (
     RegisteredModelVersion,
 )
 from studio_orchestrator import Instant
-from studio_storage.ports import ArtifactStore
+from studio_storage.ports import ArtifactReferenceBarrier, ArtifactStore
 
 from .domain import Lab
 from .runner import ClusteringResult, ExperimentResult
 from .runtime import TrainingSpec, predict_tabular, train_tabular
+
+
+@contextmanager
+def _artifact_reference_lease(
+    barrier: ArtifactReferenceBarrier | None,
+) -> Iterator[None]:
+    if barrier is None:
+        yield
+        return
+    with barrier.writer():
+        yield
 
 
 @runtime_checkable
@@ -128,38 +140,40 @@ def persist_clustering_result(
     execution_ref: str,
     source_revision: str,
     now: Instant | str,
+    artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
 ) -> MLRunRecord:
     """Persist a K-Means artifact and immutable clustering run provenance."""
     artifact_bytes = json.dumps(
         result.model.to_artifact(), sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
-    artifact = artifacts.put_bytes(
-        role="model",
-        data=artifact_bytes,
-        media_type="application/vnd.ronin.ml-kmeans+json",
-    )
-    registry.put_experiment(
-        workspace_id,
-        Experiment(ExperimentId(lab.id), lab.name, lab.project_id),
-        now=now,
-    )
-    record = MLRunRecord(
-        id=run_id,
-        experiment_id=ExperimentId(lab.id),
-        execution_ref=execution_ref,
-        source_revision=source_revision,
-        datasets=(lab.dataset,),
-        parameters=(
-            ("algorithm", "kmeans"),
-            ("backend_id", result.backend_id),
-            ("task", "clustering"),
-            ("features", ",".join(result.features)),
-            ("iterations", str(result.model.iterations)),
-        ),
-        metrics=(MetricValue("inertia", result.inertia),),
-        artifact_refs=(artifact.storage_ref,),
-    )
-    return registry.record_run(workspace_id, record, now=now)
+    with _artifact_reference_lease(artifact_reference_barrier):
+        artifact = artifacts.put_bytes(
+            role="model",
+            data=artifact_bytes,
+            media_type="application/vnd.ronin.ml-kmeans+json",
+        )
+        registry.put_experiment(
+            workspace_id,
+            Experiment(ExperimentId(lab.id), lab.name, lab.project_id),
+            now=now,
+        )
+        record = MLRunRecord(
+            id=run_id,
+            experiment_id=ExperimentId(lab.id),
+            execution_ref=execution_ref,
+            source_revision=source_revision,
+            datasets=(lab.dataset,),
+            parameters=(
+                ("algorithm", "kmeans"),
+                ("backend_id", result.backend_id),
+                ("task", "clustering"),
+                ("features", ",".join(result.features)),
+                ("iterations", str(result.model.iterations)),
+            ),
+            metrics=(MetricValue("inertia", result.inertia),),
+            artifact_refs=(artifact.storage_ref,),
+        )
+        return registry.record_run(workspace_id, record, now=now)
 
 
 def register_clustering_model(
@@ -173,33 +187,35 @@ def register_clustering_model(
     model_id: ModelId,
     model_version: ModelVersion,
     now: Instant | str,
+    artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
 ) -> RegisteredModelVersion:
     """Register a persisted K-Means artifact as a candidate model version."""
     del lab
     artifact_bytes = json.dumps(
         result.model.to_artifact(), sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
-    artifact = artifacts.put_bytes(
-        role="model", data=artifact_bytes, media_type="application/vnd.ronin.ml-kmeans+json"
-    )
-    signature = ModelSignature(
-        _input_signature([dict.fromkeys(result.features, 0.0)], result.features),
-        (("cluster", "int64"),),
-    )
-    return registry.register_model(
-        workspace_id,
-        RegisteredModelVersion(
-            model_id,
-            model_version,
-            run_id,
-            artifact.storage_ref,
-            artifact.digest,
-            "ronin-kmeans",
-            signature,
-            "candidate",
-        ),
-        now=now,
-    )
+    with _artifact_reference_lease(artifact_reference_barrier):
+        artifact = artifacts.put_bytes(
+            role="model", data=artifact_bytes, media_type="application/vnd.ronin.ml-kmeans+json"
+        )
+        signature = ModelSignature(
+            _input_signature([dict.fromkeys(result.features, 0.0)], result.features),
+            (("cluster", "int64"),),
+        )
+        return registry.register_model(
+            workspace_id,
+            RegisteredModelVersion(
+                model_id,
+                model_version,
+                run_id,
+                artifact.storage_ref,
+                artifact.digest,
+                "ronin-kmeans",
+                signature,
+                "candidate",
+            ),
+            now=now,
+        )
 
 
 def promote_registered_model(
@@ -326,47 +342,49 @@ def train_register_tabular(
     execution_ref: str,
     spec: TrainingSpec,
     now: Instant | str,
+    artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
 ) -> RegisteredModelVersion:
     """Train, persist content-addressed artifact, record ML run, and register candidate model."""
 
     trained = train_tabular(rows, spec)
-    artifact = artifacts.put_bytes(
-        role="model",
-        data=trained.artifact_bytes,
-        media_type="application/vnd.ronin.sklearn-tabular+json",
-    )
-    run = MLRunRecord(
-        run_id,
-        experiment_id,
-        execution_ref,
-        source_revision,
-        (dataset,),
-        parameters=(
-            ("algorithm", spec.algorithm),
-            ("task", spec.task),
-            ("target", spec.target),
-            ("features", ",".join(spec.features)),
-            ("random_seed", str(spec.random_seed)),
-            ("test_fraction", str(spec.test_fraction)),
-        ),
-        metrics=tuple(MetricValue(name, value) for name, value in trained.metrics),
-        artifact_refs=(artifact.storage_ref,),
-    )
-    registry.record_run(workspace_id, run, now=now)
-    model = RegisteredModelVersion(
-        model_id,
-        model_version,
-        run_id,
-        artifact.storage_ref,
-        artifact.digest,
-        "sklearn",
-        ModelSignature(
-            _input_signature(rows, spec.features),
-            _output_signature(spec.task, spec.target),
-        ),
-        "candidate",
-    )
-    return registry.register_model(workspace_id, model, now=now)
+    with _artifact_reference_lease(artifact_reference_barrier):
+        artifact = artifacts.put_bytes(
+            role="model",
+            data=trained.artifact_bytes,
+            media_type="application/vnd.ronin.sklearn-tabular+json",
+        )
+        run = MLRunRecord(
+            run_id,
+            experiment_id,
+            execution_ref,
+            source_revision,
+            (dataset,),
+            parameters=(
+                ("algorithm", spec.algorithm),
+                ("task", spec.task),
+                ("target", spec.target),
+                ("features", ",".join(spec.features)),
+                ("random_seed", str(spec.random_seed)),
+                ("test_fraction", str(spec.test_fraction)),
+            ),
+            metrics=tuple(MetricValue(name, value) for name, value in trained.metrics),
+            artifact_refs=(artifact.storage_ref,),
+        )
+        registry.record_run(workspace_id, run, now=now)
+        model = RegisteredModelVersion(
+            model_id,
+            model_version,
+            run_id,
+            artifact.storage_ref,
+            artifact.digest,
+            "sklearn",
+            ModelSignature(
+                _input_signature(rows, spec.features),
+                _output_signature(spec.task, spec.target),
+            ),
+            "candidate",
+        )
+        return registry.register_model(workspace_id, model, now=now)
 
 
 def predict_registered_tabular(
