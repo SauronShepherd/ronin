@@ -47,19 +47,21 @@ class LocalGenerationJobs:
                 except sqlite3.OperationalError:
                     pass
             self._db.commit()
-            for job_id, run_id, plan_json in self._db.execute(
+            recovered_jobs = self._db.execute(
                 "SELECT job_id,run_id,plan_json FROM synthetic_jobs WHERE status='queued' OR (status='running' AND lease_expires_at IS NOT NULL AND lease_expires_at < ?)",
                 (time.time(),),
-            ).fetchall():
+            ).fetchall()
+            for job_id, run_id, _plan_json in recovered_jobs:
                 self._jobs[job_id] = GenerationJob(job_id, run_id, "queued")
                 self._db.execute(
                     "UPDATE synthetic_jobs SET status='queued',lease_owner=NULL,lease_expires_at=NULL,error=NULL WHERE job_id=?",
                     (job_id,),
                 )
+            self._db.commit()
+            for job_id, run_id, plan_json in recovered_jobs:
                 self._futures[job_id] = self._executor.submit(
                     self._execute, job_id, run_id, plan_from_payload(json.loads(plan_json))
                 )
-            self._db.commit()
 
     def submit(self, plan: GenerationPlan, *, idempotency_key: str) -> GenerationJob:
         run = self._service.create_run(plan, idempotency_key=idempotency_key)
