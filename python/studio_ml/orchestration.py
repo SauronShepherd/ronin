@@ -7,7 +7,7 @@ import hashlib
 import json
 from collections.abc import Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
-from contextlib import suppress
+from contextlib import AbstractContextManager, nullcontext, suppress
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from threading import Event, Lock, Thread
@@ -34,6 +34,7 @@ from studio_orchestrator import (
     RunState as DurableRunState,
 )
 from studio_storage import ArtifactRef, ArtifactStore
+from studio_storage.ports import ArtifactReferenceBarrier
 
 from .domain import Lab, PipelineIR
 from .runner import ClusteringResult, ExperimentResult, LocalExperimentRunner
@@ -338,10 +339,20 @@ class JobStoreExecutionStore:
     target = "ml-studio.execute"
 
     def __init__(
-        self, service: DurableExecutionPort, artifact_store: ArtifactStore | None = None
+        self,
+        service: DurableExecutionPort,
+        artifact_store: ArtifactStore | None = None,
+        *,
+        artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
     ) -> None:
         self._service = service
         self._artifact_store = artifact_store
+        self._artifact_reference_barrier = artifact_reference_barrier
+
+    def _writer_lease(self) -> AbstractContextManager[None]:
+        if self._artifact_reference_barrier is None:
+            return nullcontext()
+        return self._artifact_reference_barrier.writer()
 
     @staticmethod
     def _ids(workspace_id: str, run_id: str) -> tuple[JobId, RunId]:
@@ -359,6 +370,10 @@ class JobStoreExecutionStore:
         return cast(dict[str, object], value)
 
     def create(self, snapshot: ExecutionSnapshot) -> ExecutionSnapshot:
+        with self._writer_lease():
+            return self._create(snapshot)
+
+    def _create(self, snapshot: ExecutionSnapshot) -> ExecutionSnapshot:
         job_id, durable_run_id = self._ids(snapshot.workspace_id, snapshot.run_id)
         now = _now()
         rows_json = snapshot.rows_json
@@ -773,6 +788,12 @@ class JobStoreExecutionStore:
     def save_node_checkpoint(
         self, snapshot: ExecutionSnapshot, node_id: str, checkpoint: dict[str, object]
     ) -> bool:
+        with self._writer_lease():
+            return self._save_node_checkpoint(snapshot, node_id, checkpoint)
+
+    def _save_node_checkpoint(
+        self, snapshot: ExecutionSnapshot, node_id: str, checkpoint: dict[str, object]
+    ) -> bool:
         if snapshot.attempt_id is None or snapshot.lease_token is None or snapshot.owner is None:
             raise ValueError("durable ML claim is missing its lease identity")
         if not snapshot.pipeline_digest or not snapshot.request_digest:
@@ -829,7 +850,7 @@ class JobStoreExecutionStore:
         )
         return True
 
-    def materialize_result_artifact(
+    def _materialize_result_artifact(
         self, result: ExperimentResult | ClusteringResult
     ) -> dict[str, object]:
         """Persist a completed model as a verified ArtifactStore object."""
@@ -867,6 +888,16 @@ class JobStoreExecutionStore:
         payload["artifact_media_type"] = media_type
         payload["artifact_size_bytes"] = artifact.size_bytes
         return payload
+
+    def finish_claim_with_result(
+        self,
+        snapshot: ExecutionSnapshot,
+        result: ExperimentResult | ClusteringResult,
+    ) -> None:
+        """Publish the result artifact and its durable Job reference under one lease."""
+        with self._writer_lease():
+            payload = self._materialize_result_artifact(result)
+            self.finish_claim(snapshot, state="succeeded", result_payload=payload)
 
     def finish_claim(
         self,
@@ -1166,12 +1197,12 @@ class LocalExecutionCoordinator:
                     raise ValueError("runner cannot execute the submitted ML pipeline")
                 result = self._runner.run(lab, execution_rows)
             if isinstance(self._store, JobStoreExecutionStore):
-                result_payload = (
-                    self._store.materialize_result_artifact(result)
-                    if isinstance(result, (ExperimentResult, ClusteringResult))
-                    else result.to_payload()
-                )
-                self._store.finish_claim(claimed, state="succeeded", result_payload=result_payload)
+                if isinstance(result, (ExperimentResult, ClusteringResult)):
+                    self._store.finish_claim_with_result(claimed, result)
+                else:
+                    self._store.finish_claim(
+                        claimed, state="succeeded", result_payload=result.to_payload()
+                    )
                 return result
             finished = self._store.finish(
                 claimed.workspace_id,

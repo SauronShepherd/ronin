@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from typing import Protocol, cast
 
 from studio_storage import ArtifactRef
+from studio_storage.ports import ArtifactReferenceBarrier
 
 from .sdp_adapter import SdpProjectSource
 
@@ -56,12 +58,36 @@ class RevisionApplication:
         self,
         artifacts: RevisionArtifactStore,
         records: RevisionRecordStore | None = None,
+        *,
+        artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
     ) -> None:
         self._artifacts = artifacts
         self._records = records
+        self._artifact_reference_barrier = artifact_reference_barrier
         self._latest: dict[tuple[str, str], int] = {}
 
+    def _writer_lease(self) -> AbstractContextManager[None]:
+        if self._artifact_reference_barrier is None:
+            return nullcontext()
+        return self._artifact_reference_barrier.writer()
+
     def import_sdp(
+        self,
+        *,
+        project_id: str,
+        pipeline_id: str,
+        source: SdpProjectSource,
+        expected_revision: int | None = None,
+    ) -> PipelineRevisionRecord:
+        with self._writer_lease():
+            return self._import_sdp(
+                project_id=project_id,
+                pipeline_id=pipeline_id,
+                source=source,
+                expected_revision=expected_revision,
+            )
+
+    def _import_sdp(
         self,
         *,
         project_id: str,

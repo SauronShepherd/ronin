@@ -105,6 +105,9 @@ class DataEnginerringStudioPlugin:
             self._revisions = RevisionApplication(
                 cast(RevisionArtifactStore, artifact_store),
                 cast(RevisionRecordStore | None, context.services.get("revision_store")),
+                artifact_reference_barrier=cast(
+                    Any, context.services.get("artifact_reference_barrier")
+                ),
             )
         compilation_store = context.services.get("compilation_store")
         if isinstance(compilation_store, SqliteCompilationStore):
