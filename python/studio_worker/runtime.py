@@ -49,6 +49,7 @@ from studio_sql import SqlEngine
 from studio_storage import (
     ArtifactStore,
     LocalArtifactStore,
+    PostgresArtifactReferenceBarrier,
     PostgresJobReadPort,
     S3ArtifactStore,
     SqliteJobStore,
@@ -200,6 +201,11 @@ class LocalWorkerRuntime:
         self._runner = command_runner or AsyncioCommandRunner()
         self._engine_path = engine_path
         self._artifact_store = artifact_store or artifact_store_from_environment(config)
+        self._artifact_reference_barrier = (
+            PostgresArtifactReferenceBarrier(config.postgres_dsn)
+            if config.postgres_dsn is not None
+            else None
+        )
         config.paths.data_dir.mkdir(parents=True, exist_ok=True)
         store = (
             PostgresJobReadPort(config.postgres_dsn, application_name="ronin-worker")
@@ -415,6 +421,7 @@ class LocalWorkerRuntime:
                 now=self._now,
                 artifact_max_workers=self.config.artifact_max_workers,
                 artifact_max_in_flight=self.config.artifact_max_in_flight,
+                artifact_reference_barrier=self._artifact_reference_barrier,
             )
             return await worker.run_scheduler_result(claim, result)
         try:
@@ -458,6 +465,7 @@ class LocalWorkerRuntime:
             now=self._now,
             artifact_max_workers=self.config.artifact_max_workers,
             artifact_max_in_flight=self.config.artifact_max_in_flight,
+            artifact_reference_barrier=self._artifact_reference_barrier,
         )
         return await worker.run(claim, request, identities)
 

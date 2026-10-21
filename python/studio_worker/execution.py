@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable
-from contextlib import suppress
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
@@ -30,7 +30,12 @@ from studio_orchestrator import (
     StoredExecutionEvent,
     can_resume_cell,
 )
-from studio_storage import ArtifactRef, ArtifactStore, BoundedAsyncArtifactStore
+from studio_storage import (
+    ArtifactRef,
+    ArtifactStore,
+    AsyncArtifactReferenceBarrier,
+    BoundedAsyncArtifactStore,
+)
 
 
 class WorkerExecutionError(RuntimeError):
@@ -116,6 +121,7 @@ class DurableWorkerExecution:
     now: Callable[[], Instant] = utc_now
     artifact_max_workers: int = 2
     artifact_max_in_flight: int = 4
+    artifact_reference_barrier: AsyncArtifactReferenceBarrier | None = None
     _cancellation_wait: Callable[[float], Awaitable[None]] = field(
         default=asyncio.sleep,
         repr=False,
@@ -137,6 +143,14 @@ class DurableWorkerExecution:
             raise ValueError(
                 "artifact_max_in_flight must be greater than or equal to artifact_max_workers"
             )
+
+    @asynccontextmanager
+    async def _writer_lease(self) -> AsyncIterator[None]:
+        if self.artifact_reference_barrier is None:
+            yield
+            return
+        async with self.artifact_reference_barrier.awriter():
+            yield
 
     async def _append_event(self, claim: ClaimedRun, kind: str, message: str = "") -> None:
         occurred_at = self.now()
@@ -209,6 +223,16 @@ class DurableWorkerExecution:
             )
 
     async def _checkpoint(
+        self,
+        artifacts: BoundedAsyncArtifactStore,
+        claim: ClaimedRun,
+        identity: CellExecutionIdentity,
+        result: CellExecutionResult,
+    ) -> None:
+        async with self._writer_lease():
+            await self._checkpoint_under_lease(artifacts, claim, identity, result)
+
+    async def _checkpoint_under_lease(
         self,
         artifacts: BoundedAsyncArtifactStore,
         claim: ClaimedRun,
@@ -358,6 +382,15 @@ class DurableWorkerExecution:
         result: SchedulerWorkloadResult,
     ) -> WorkerExecutionOutcome:
         """Commit one non-notebook scheduler result as durable run evidence."""
+
+        async with self._writer_lease():
+            return await self._run_scheduler_result_under_lease(claim, result)
+
+    async def _run_scheduler_result_under_lease(
+        self,
+        claim: ClaimedRun,
+        result: SchedulerWorkloadResult,
+    ) -> WorkerExecutionOutcome:
 
         payload = encode_canonical_json(result.evidence_payload())
         async with BoundedAsyncArtifactStore(

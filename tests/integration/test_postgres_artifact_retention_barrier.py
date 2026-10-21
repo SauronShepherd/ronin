@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
@@ -53,3 +54,28 @@ def test_collector_waits_for_writers_and_fences_new_writers() -> None:
         collector_future.result(timeout=5)
         second_writer_future.result(timeout=5)
         assert writer_blocked_by_collector.is_set()
+
+
+def test_async_worker_writer_blocks_collector_until_reference_commit() -> None:
+    barrier = PostgresArtifactReferenceBarrier(
+        os.environ["RONIN_POSTGRES_TEST_DSN"],
+        application_name="ronin-async-worker-barrier-qualification",
+    )
+    collector_entered = Event()
+    release_collector = Event()
+
+    def collect() -> None:
+        with barrier.collector():
+            collector_entered.set()
+            assert release_collector.wait(timeout=10)
+
+    async def exercise() -> None:
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            async with barrier.awriter():
+                collector_future = executor.submit(collect)
+                assert not await asyncio.to_thread(collector_entered.wait, 0.25)
+            assert await asyncio.to_thread(collector_entered.wait, 5)
+            release_collector.set()
+            await asyncio.to_thread(collector_future.result, 5)
+
+    asyncio.run(exercise())

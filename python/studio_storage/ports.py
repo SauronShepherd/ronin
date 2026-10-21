@@ -7,7 +7,7 @@ can implement the same contracts without changing service/domain behavior.
 
 from __future__ import annotations
 
-from contextlib import AbstractContextManager
+from contextlib import AbstractAsyncContextManager, AbstractContextManager
 from typing import Protocol, runtime_checkable
 
 from studio_core import (
@@ -39,6 +39,13 @@ class ArtifactReferenceBarrier(Protocol):
     def writer(self) -> AbstractContextManager[None]: ...
 
     def collector(self) -> AbstractContextManager[None]: ...
+
+
+@runtime_checkable
+class AsyncArtifactReferenceBarrier(Protocol):
+    """Asynchronous writer lease capability for async durable producers."""
+
+    def awriter(self) -> AbstractAsyncContextManager[None]: ...
 
 
 @runtime_checkable
