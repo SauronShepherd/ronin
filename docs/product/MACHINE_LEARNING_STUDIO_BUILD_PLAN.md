@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 79%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada; PipelineIR v2 ejecuta candidatos para clasificación/regresión y clustering, cualificados por los seis workflows exact-head de `main@e20733d`. La selección de candidatos desde la UI quedó integrada en `main@47e16fa` y pasó los seis workflows post-merge exact-head. La búsqueda de trials con memoria acotada quedó integrada en `main@1994778` y pasó los seis workflows post-merge exact-head. Los porcentajes se actualizarán al pasar cada cualificación exact-head.
+**Avance de implementación técnica estimado: 80%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada; PipelineIR v2 ejecuta candidatos para clasificación/regresión y clustering, cualificados por los seis workflows exact-head de `main@e20733d`. La selección de candidatos desde la UI quedó integrada en `main@47e16fa` y pasó los seis workflows post-merge exact-head. La búsqueda de trials con memoria acotada quedó integrada en `main@1994778` y pasó los seis workflows post-merge exact-head. Las identidades y seeds de trials quedaron integradas en `main@7df81a7` y pasaron los seis workflows post-merge exact-head. Los porcentajes se actualizarán al pasar cada cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -696,7 +696,7 @@ El recorrido añadido con Playwright pasa aislado y dentro de la suite completa.
 
 ## 46. Identidad y semillas deterministas para trials
 
-**Progreso técnico del incremento: implementación focalizada en curso; pendiente de suite completa, Docker exact-head, CI y merge. Avance global integrado: 79%; release-qualified: 0% (0/14).**
+**Progreso técnico del incremento: 4/4 criterios implementados y cualificados; PR #475 integrado en `main@7df81a7` y los seis workflows post-merge exact-head pasaron. Avance global integrado: 80%; release-qualified: 0% (0/14).**
 
 | Criterio | Implementación |
 | --- | --- |
@@ -705,4 +705,18 @@ El recorrido añadido con Playwright pasa aislado y dentro de la suite completa.
 | Hacer estable el registro durable | `MLRunId` y `ModelVersion` se forman con el identificador del trial, no con su posición en la respuesta. |
 | Verificar repetición y separación entre runs | Tests prueban identidad/seed estables al repetir, semillas diferentes entre configuraciones y ejecuciones API repetibles. |
 
-La primera iteración focalizada detectó que al insertar el derivador de seed se había desplazado la indentación de los métodos `Trial.metric()`/`to_payload()`; se corrigió y el conjunto relevante pasó **37/37**. La suite completa pasó **3849 tests con 54 omitidos**; Ruff, formato, mypy (455 archivos) y `git diff --check` pasan. Docker local pasó **21 tests con 2 omitidos** por falta de `RONIN_POSTGRES_TEST_DSN`; la aceptación estricta pasó **15/15**. Falta Docker/CI exact-head y merge para cualificar este incremento.
+La primera iteración focalizada detectó que al insertar el derivador de seed se había desplazado la indentación de los métodos `Trial.metric()`/`to_payload()`; se corrigió y el conjunto relevante pasó **37/37**. La suite completa pasó **3849 tests con 54 omitidos**; Ruff, formato, mypy (455 archivos) y `git diff --check` pasan. Docker local pasó **21 tests con 2 omitidos** por falta de `RONIN_POSTGRES_TEST_DSN`; la aceptación estricta pasó **15/15**. PR #475 pasó matrices Python 3.11/3.12, calidad, seguridad, Release, Status consistency, Web y Docker qualification (**9m24s**, con PostgreSQL, worker Docker real y aceptación estricta). Los seis workflows post-merge exact-head de `main@7df81a7` también pasaron, incluido Docker.
+
+
+## 47. Validación anticipada del espacio de búsqueda
+
+**Progreso técnico del incremento: implementación focalizada en curso; pendiente de suite completa, Docker exact-head, CI y merge. Avance global integrado: 80%; release-qualified: 0% (0/14).**
+
+| Criterio | Implementación |
+| --- | --- |
+| Validar la búsqueda completa antes de iniciar training | Se comprueba toda la lista de valores configurados antes del loop, incluso valores que no llegarían a consumirse por el límite de trials. |
+| Rechazar parámetros incompatibles con el Lab | La búsqueda supervisada permite `seed` y, para clasificación, `C`/`max_iter`; clustering y cualquier parámetro de regresión distinto de `seed` fallan antes de entrenar. |
+| Acotar dominios peligrosos o inválidos | `seed` debe ser entero no negativo, `max_iter` entero 1..100000 y `C` numérico finito en (0, 1000000]. |
+| Evitar ejecución parcial por un valor inválido tardío | Tests espían al runner y prueban que un valor inválido al final del dominio, nombres desconocidos y seeds inválidos dejan cero ejecuciones. |
+
+Las pruebas focalizadas de optimización y ejecución API pasan **41/41**. La suite completa pasó **3853 tests y omitió 54**; Ruff, formato, mypy (455 archivos) y `git diff --check` pasan. Docker local pasó **21 tests y omitió 2** sin `RONIN_POSTGRES_TEST_DSN`; la aceptación estricta pasó **15/15**. Docker CI exact-head y merge siguen pendientes.

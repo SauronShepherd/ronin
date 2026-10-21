@@ -585,6 +585,53 @@ def test_search_route_derives_repeatable_per_trial_seeds_and_ids() -> None:
     plugin._coordinator.close()
 
 
+@pytest.mark.parametrize(
+    ("name", "values", "message"),
+    [
+        ("C", [1.0, -1.0], "C search values"),
+        ("max_iter", [100, 0], "max_iter search values"),
+        ("seed", [3, -1], "seed search values"),
+        ("unsupported", [1], "unsupported search parameter"),
+    ],
+)
+def test_search_route_validates_entire_parameter_space_before_training(
+    name: str, values: list[object], message: str
+) -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "search-preflight",
+        "Search preflight",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    calls: list[Lab] = []
+
+    def record_training(candidate: Lab, *_args: object, **_kwargs: object) -> object:
+        calls.append(candidate)
+        raise AssertionError("invalid search space must fail before training")
+
+    plugin._runner.run = record_training  # type: ignore[method-assign]
+    with pytest.raises(ValueError, match=message):
+        plugin.search_trials(
+            "ws",
+            "search-preflight",
+            body={
+                "spec": {
+                    "mode": "grid",
+                    "parameters": [{"name": name, "values": values}],
+                },
+                "rows": [{"x": n, "target": n % 2} for n in range(1, 21)],
+            },
+        )
+    assert calls == []
+    plugin._coordinator.close()
+
+
 def test_search_registration_requires_persistent_services() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())
