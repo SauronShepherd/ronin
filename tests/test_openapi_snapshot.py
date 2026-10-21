@@ -96,6 +96,12 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
     assert pipeline_schema["properties"]["schema"]["const"] == "ronin.ml-pipeline-ir/v2"
     assert pipeline_schema["properties"]["nodes"]["maxItems"] == 20
     assert (
+        "one_hot_median_impute"
+        in pipeline_schema["properties"]["nodes"]["items"]["properties"]["config"]["properties"][
+            "preprocessor"
+        ]["enum"]
+    )
+    assert (
         "register"
         not in pipeline_schema["properties"]["nodes"]["items"]["properties"]["kind"]["enum"]
     )

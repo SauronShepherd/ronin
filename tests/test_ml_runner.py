@@ -199,7 +199,7 @@ def test_v2_pipeline_rejects_unsupported_graph_before_training() -> None:
         parameters=(("lab_digest", lab.digest),),
         schema=PIPELINE_SCHEMA_V2,
     )
-    with pytest.raises(ValueError, match="train nodes must depend on prepare"):
+    with pytest.raises(ValueError, match="train nodes must depend on one prepare node"):
         LocalExperimentRunner((backend,)).execute_pipeline(lab, _rows(), pipeline)
     assert backend.train_calls == 0
 
@@ -275,6 +275,85 @@ def test_pipeline_composes_one_hot_and_numeric_median_imputation() -> None:
     assert preprocessing["kind"] == "one_hot_median_impute"
     assert preprocessing["categories"]["segment"] == ["blue", "red"]
     assert "age" in preprocessing["medians"]
+
+
+def test_candidate_dag_branches_preprocessors_and_restores_them_from_checkpoints() -> None:
+    lab = Lab(
+        "segments",
+        "Segments",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("segment", "categorical"), FeatureSpec("age", "numeric")),
+    )
+    rows = [
+        {"segment": "blue" if index % 2 else "red", "age": float(index), "target": index % 2}
+        for index in range(20)
+    ]
+    compiled = compile_lab_pipeline(
+        lab,
+        preprocessor="one_hot",
+        candidate_algorithms=("logistic_regression", "decision_tree_classifier"),
+    )
+    nodes = [
+        PipelineNode("profile", "profile"),
+        PipelineNode("quality", "quality_gate", ("profile",)),
+        PipelineNode("prep_onehot", "prepare", ("quality",), {"preprocessor": "one_hot"}),
+        PipelineNode(
+            "prep_imputed",
+            "prepare",
+            ("quality",),
+            {"preprocessor": "one_hot_median_impute"},
+        ),
+        PipelineNode(
+            "train_onehot", "train", ("prep_onehot",), {"algorithm": "logistic_regression"}
+        ),
+        PipelineNode(
+            "train_imputed",
+            "train",
+            ("prep_imputed",),
+            {"algorithm": "decision_tree_classifier"},
+        ),
+        PipelineNode("eval_onehot", "evaluate", ("train_onehot",)),
+        PipelineNode("eval_imputed", "evaluate", ("train_imputed",)),
+        PipelineNode("select", "select", ("eval_onehot", "eval_imputed")),
+    ]
+    pipeline = PipelineIR(tuple(nodes), compiled.parameters, compiled.schema)
+
+    class PreprocessorBackend:
+        backend_id = "local.sklearn"
+        display_name = "preprocessor recorder"
+        capabilities = None
+
+        def __init__(self) -> None:
+            self.preprocessors: list[str] = []
+
+        def train(self, request, data):
+            self.preprocessors.append(request.spec.preprocessor)
+            return train_tabular(data, request.spec)
+
+    checkpoints: dict[str, dict[str, object]] = {}
+    first_backend = PreprocessorBackend()
+    LocalExperimentRunner((first_backend,)).execute_pipeline(
+        lab,
+        rows,
+        pipeline,
+        checkpoint_save=lambda node_id, payload: checkpoints.__setitem__(node_id, payload),
+    )
+    assert set(first_backend.preprocessors) == {"one_hot", "one_hot_median_impute"}
+
+    resumed_backend = PreprocessorBackend()
+
+    def load_prepared_checkpoints(node_id: str) -> object | None:
+        if node_id.startswith("train") or node_id.startswith("eval") or node_id == "select":
+            return None
+        return checkpoints.get(node_id)
+
+    LocalExperimentRunner((resumed_backend,)).execute_pipeline(
+        lab, rows, pipeline, checkpoint_load=load_prepared_checkpoints
+    )
+    assert set(resumed_backend.preprocessors) == {"one_hot", "one_hot_median_impute"}
 
 
 def test_local_runner_restores_all_persisted_node_outputs_without_reexecution() -> None:

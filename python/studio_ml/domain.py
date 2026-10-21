@@ -368,9 +368,11 @@ class PipelineIR:
         if self.schema == PIPELINE_SCHEMA and any(node.config for node in self.nodes):
             raise ValueError("PipelineIR v1 nodes cannot contain configuration")
         if self.schema == PIPELINE_SCHEMA_V2 and any(
-            node.kind not in {"train", "select"} and node.config for node in self.nodes
+            node.kind not in {"prepare", "train", "select"} and node.config for node in self.nodes
         ):
-            raise ValueError("PipelineIR v2 only supports train and select node configuration")
+            raise ValueError(
+                "PipelineIR v2 only supports prepare, train, and select node configuration"
+            )
         ids = {node.id for node in self.nodes}
         if len(ids) != len(self.nodes) or any(
             dep not in ids for node in self.nodes for dep in node.depends_on
