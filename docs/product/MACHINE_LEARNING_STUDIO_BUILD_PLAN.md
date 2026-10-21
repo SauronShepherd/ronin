@@ -873,18 +873,32 @@ La entrada `ronin worker` no pasaba `RONIN_POSTGRES_DSN` a `LocalWorkerRuntimeCo
 
 ## 63. Persistir el registro de exports sintéticos en la composición local
 
-**Estado: PR #495 integrado en `main@c17424d`; 59 pruebas relacionadas pasan. Docker qualification del PR pasó en 9m38s; Docker post-merge exact-head sigue ejecutándose. Avance global: 85%.**
+**Estado: PR #495 integrado; los seis workflows post-merge exact-head pasaron. Avance global: 85%.**
 
 La composición local creaba `GovernStudioService()` sin store, por lo que `snapshot()` y `artifacts()` olvidaban los runs y referencias de exportación al reiniciar. Ahora inyecta la ruta de un `SqliteRunStore` persistente dentro del directorio de datos; el propio plugin crea y cierra el store. Una prueba genera y exporta una tabla, reconstruye la composición, verifica que el run y la referencia sobreviven y vuelve a leer los bytes por digest. También se corrigió `LocalServerComposition.stop()` para cerrar los sockets reservados si se construyó una composición que nunca se inició, y el coordinador ML detiene su polling antes de cerrar el store. El test de reinicio cubre la reutilización de puertos. Esto hace inventariable la fuente sintética local; no activa recolección automática ni resuelve otras fuentes aún ausentes en la composición.
 
 ## 64. Aplicar límites reales al inventario de exports sintéticos
 
-**Estado: implementado en candidato basado en `main@c17424d`; 44 pruebas relacionadas pasan. Cualificación exact-head pendiente. Avance global: 85%.**
+**Estado: PR #496 integrado; los seis workflows exact-head pasaron, incluido Docker qualification. Avance global: 85%.**
 
 La auditoría del inventario sintético detectó que `snapshot()` y `artifacts()` materializaban todos los runs/exports antes de comprobar los máximos, de modo que los límites no acotaban memoria. `GovernStudioService` y sus stores ahora aceptan `limit`, y el scanner solicita como máximo `límite + 1` para detectar una fuente que exceda o ignore el tope y fallar cerrado. Pruebas con `SqliteRunStore` y dobles que ignoran el límite confirman el comportamiento para runs y exports. No se habilita borrado global.
 
 ## 65. Usar checkpoints durables PostgreSQL para ingesta de conectores
 
-**Estado: implementación en candidato; 53 pruebas focalizadas pasan. Docker local pasó 23 pruebas y aceptación estricta 15/15; arquitectura, Ruff, formato y mypy focalizado pasan. Checks exact-head del PR pendientes. Avance global: permanece en 85% hasta integrar y cualificar el slice.**
+**Estado: PR #497 integrado en `main@b3b3bae`; los checks del PR, incluida la cualificación Docker Linux, pasaron. Los seis workflows post-merge exact-head están ejecutándose. Avance global: permanece en 85% hasta que terminen.**
 
 La composición local PostgreSQL exponía rutas de conectores pero no montaba `IngestionHTTPAdapter`; además, el perfil sólo disponía de checkpoints SQLite y el inventario de outputs sintéticos de una fuente distinta. `PostgresConnectorCheckpointStore` implementa el contrato CAS/fencing, recuperación de evidencia, salud e inventario acotado en PostgreSQL. La composición usa este store en el perfil PostgreSQL e inyecta la misma barrera de referencias que protege los bytes y el commit del checkpoint; SQLite conserva su store local. La prueba de integración verifica fencing obsoleto, persistencia tras reconstrucción, descubrimiento de digests y rechazo del inventario que supera el límite. La revisión Docker exact-head aún está pendiente.
+
+## 66. Exponer la retención como operación manual y fail-closed
+
+**Estado: implementación en candidato; 8 pruebas del operador y 79 pruebas dirigidas de retención/conectores/PostgreSQL pasan. La aceptación estricta Docker pasó 15/15 y el CLI empaquetado genera la vista previa en Docker. La batería worker Docker en Windows pasó 6/8; exact-head pendiente. Avance global: permanece en 85%.**
+
+`ronin artifacts retention preview` descubre las fuentes de referencia conocidas y devuelve los candidatos sin mutar el store. El perfil SQLite sólo ofrece una vista previa que no sincroniza escritores concurrentes. La respuesta incluye `live_reference_count` y sólo declara `collection_ready` si el snapshot está coordinado, completo, revisado y contiene referencias vivas. `collect` exige `--confirm` y perfil PostgreSQL, usa el mismo advisory lease exclusivo que los productores, mantiene topes de inventario y conserva el rechazo de live set vacío salvo `--allow-empty-live-set`. Si el inventario de plugins no está disponible o contiene plugins fuera de la lista revisada, la colección falla cerrada y la vista previa los enumera. La operación no se agenda ni corre automáticamente. La integración PostgreSQL real y la ejecución del CLI en Docker pasan localmente; falta cualificación exact-head.
+
+## 67. Integrar checkpoints PostgreSQL durables de conectores
+
+PR #497 integra la implementación descrita en la sección 65 como `main@b3b3bae`; los seis workflows post-merge exact-head determinarán su cualificación final.
+
+## 68. Estado de cualificación de retención
+
+PR #496 (scanner de exports sintéticos acotado) quedó integrado en `main@216d7d4` con CI, seguridad, release/status y Docker exact-head aprobados. PR #497 añadió checkpoints PostgreSQL de conectores y pasó CI/Docker del PR; su cualificación post-merge está en curso. La operación manual del CLI tiene cobertura local y Docker y espera PR/checks exact-head. Siguen pendientes la integración cualificada del operador y la revisión final del grafo de productores antes de decidir si alguna modalidad de recolección puede habilitarse. El avance global continúa en **85%** y release-qualified en **0% (0/14)**.

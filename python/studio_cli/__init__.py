@@ -59,6 +59,7 @@ from studio_storage.migration_registry import MigrationStatusError, migration_st
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
 from .network import TERMINAL_STATES, ControlPlaneClient, ControlPlaneError
+from .retention import run_artifact_retention
 
 
 class CliError(RuntimeError):
@@ -79,6 +80,17 @@ def _parser() -> argparse.ArgumentParser:
     plan.add_argument("-t", "--target", required=True)
     commands.add_parser("serve", help="run the local Ronin HTTP control plane")
     commands.add_parser("worker", help="run the local durable Docker worker")
+    artifacts = commands.add_parser("artifacts", help="inspect or collect local artifacts")
+    artifact_commands = artifacts.add_subparsers(dest="artifacts_command", required=True)
+    retention = artifact_commands.add_parser(
+        "retention", help="preview or explicitly collect unreferenced artifacts"
+    )
+    retention.add_argument("mode", choices=("preview", "collect"))
+    retention.add_argument("--confirm", action="store_true")
+    retention.add_argument("--allow-empty-live-set", action="store_true")
+    retention.add_argument("--page-size", type=int, default=500)
+    retention.add_argument("--max-objects", type=int, default=10_000)
+    retention.add_argument("--max-pages", type=int, default=1_000)
     connectors = commands.add_parser("connectors", help="inspect and plan connector ingestion")
     connectors.add_argument(
         "connectors_command",
@@ -1206,6 +1218,19 @@ def _migration_import(namespace: argparse.Namespace) -> int:
     return 0
 
 
+def _artifacts_retention(namespace: argparse.Namespace) -> int:
+    result = run_artifact_retention(
+        cast(str, namespace.mode),
+        confirmed=bool(namespace.confirm),
+        allow_empty_live_set=bool(namespace.allow_empty_live_set),
+        page_size=cast(int, namespace.page_size),
+        max_objects=cast(int, namespace.max_objects),
+        max_pages=cast(int, namespace.max_pages),
+    )
+    print(json.dumps(result, sort_keys=True, separators=(",", ":")))
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run one bounded CLI command and return a process exit code."""
 
@@ -1222,6 +1247,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _serve()
         if command == "worker":
             return _worker()
+        if command == "artifacts":
+            if namespace.artifacts_command == "retention":
+                return _artifacts_retention(namespace)
+            raise CliError(f"unsupported artifacts command: {namespace.artifacts_command}")
         if command == "plugins":
             return _plugins(namespace)
         if command == "submit":
