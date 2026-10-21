@@ -16,6 +16,7 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
+from studio_data_engineering import PostgresQueryEvidenceReferenceStore
 from studio_storage import (
     LocalArtifactStore,
     PostgresArtifactReferenceBarrier,
@@ -102,7 +103,19 @@ def test_bounded_reference_collection_uses_real_postgres_collector_lease(tmp_pat
     )
     artifacts = LocalArtifactStore(tmp_path / "artifacts")
     live = artifacts.put_bytes(role="live", data=b"live")
+    query_evidence = artifacts.put_bytes(role="query-evidence", data=b"query-evidence")
     stale = artifacts.put_bytes(role="stale", data=b"stale")
+    query_evidence_store = PostgresQueryEvidenceReferenceStore(
+        os.environ["RONIN_POSTGRES_TEST_DSN"],
+        application_name="ronin-retention-query-evidence-qualification",
+    )
+    with barrier.writer():
+        query_evidence_store.record(
+            project_id="retention-project",
+            run_id="retention-run",
+            attempt_id="retention-attempt",
+            artifact=query_evidence,
+        )
     workspace = Workspace(WorkspaceId("retention-workspace"), "Retention")
     file_asset = CatalogAsset(AssetId("source-file"), "file", "source.csv")
     revision = AssetRevision(
@@ -174,9 +187,11 @@ def test_bounded_reference_collection_uses_real_postgres_collector_lease(tmp_pat
         Jobs(),
         ConnectorCheckpoints(),
         Revisions(),
+        query_evidence_store,
         SyntheticExports(),
     )
 
     assert deleted == (stale.digest,)
     assert artifacts.verify(live)
+    assert artifacts.verify(query_evidence)
     assert not artifacts.verify(stale)

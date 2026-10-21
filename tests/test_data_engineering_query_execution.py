@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
-from studio_data_engineering import QueryEngineRuntimeProvider, execute_query
+from studio_data_engineering import (
+    QueryEngineRuntimeProvider,
+    SqliteQueryEvidenceReferenceStore,
+    execute_query,
+)
 from studio_query_engine import (
     DiscoveredEngine,
     EngineCapabilities,
@@ -161,3 +166,50 @@ def test_execute_query_persists_monotonic_lifecycle_timings(tmp_path: Path) -> N
     assert payload["query_evidence"]["provider_version"] == "1"
     assert payload["query_evidence"]["cluster_id"] is None
     assert payload["query_evidence"]["routing_trace"] == {"selected_engine": "duckdb"}
+
+
+def test_execute_query_holds_writer_lease_through_durable_reference_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    references = SqliteQueryEvidenceReferenceStore(tmp_path / "ronin.db")
+    events: list[str] = []
+
+    class Barrier:
+        @contextmanager
+        def writer(self):
+            events.append("lock")
+            try:
+                yield
+            finally:
+                events.append("unlock")
+
+    original_put_bytes = artifacts.put_bytes
+
+    def put_bytes(**kwargs):
+        events.append("artifact")
+        return original_put_bytes(**kwargs)
+
+    monkeypatch.setattr(artifacts, "put_bytes", put_bytes)
+    original_record = references.record
+
+    def record(**kwargs):
+        events.append("reference")
+        original_record(**kwargs)
+
+    monkeypatch.setattr(references, "record", record)
+    result = execute_query(
+        _provider(),
+        _Transport([QueryStatus("succeeded")]),
+        artifacts,
+        QueryRequest("SELECT 1", "local"),
+        engine="duckdb",
+        project_id="project-1",
+        run_id="run-1",
+        attempt_id="attempt-1",
+        evidence_reference_store=references,
+        artifact_reference_barrier=Barrier(),
+    )
+
+    assert events == ["lock", "artifact", "reference", "unlock"]
+    assert references.list_evidence_references()[0]["digest"] == result.evidence_artifact.digest

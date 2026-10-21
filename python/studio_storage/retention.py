@@ -35,6 +35,7 @@ REQUIRED_ARTIFACT_REFERENCE_SOURCES = frozenset(
         "catalog_revisions",
         "connector_sync_outputs",
         "data_engineering_revisions",
+        "data_engineering_query_evidence",
         "durable_execution_results",
         "durable_job_checkpoints",
         "local_files",
@@ -82,6 +83,12 @@ class _ConnectorOutputReferenceStore(Protocol):
 class _DataEngineeringRevisionStore(Protocol):
     def list_all_revisions(
         self, *, max_revisions: int = 10_000
+    ) -> tuple[dict[str, object], ...]: ...
+
+
+class _DataEngineeringQueryEvidenceStore(Protocol):
+    def list_evidence_references(
+        self, *, max_references: int = 10_000
     ) -> tuple[dict[str, object], ...]: ...
 
 
@@ -418,6 +425,28 @@ def discover_data_engineering_artifact_references(
     return {"data_engineering_revisions": tuple(sorted(digests))}
 
 
+def discover_data_engineering_query_evidence_references(
+    evidence: _DataEngineeringQueryEvidenceStore, *, max_references: int = 10_000
+) -> dict[str, tuple[str, ...]]:
+    """Discover durable QueryFlux evidence refs within an explicit bound."""
+
+    if max_references < 1 or max_references > 100_000:
+        raise ValueError("QueryFlux evidence reference bound must be between 1 and 100000")
+    records = evidence.list_evidence_references(max_references=max_references)
+    if len(records) > max_references:
+        raise ValueError("QueryFlux evidence reference inventory exceeded its bound")
+    digests: set[str] = set()
+    for record in records:
+        digest = record.get("digest")
+        if not isinstance(digest, str):
+            raise ValueError("QueryFlux evidence reference has an invalid digest")
+        _validate_digest(digest)
+        if _digest_from_storage_ref(record.get("storage_ref")) != digest:
+            raise ValueError("QueryFlux evidence storage reference and digest do not match")
+        digests.add(digest)
+    return {"data_engineering_query_evidence": tuple(sorted(digests))}
+
+
 def discover_synthetic_data_artifact_references(
     exports: _SyntheticExportStore,
     *,
@@ -461,6 +490,7 @@ def discover_artifact_references(
     jobs: JobStore,
     connector_checkpoints: _ConnectorOutputReferenceStore,
     data_engineering_revisions: _DataEngineeringRevisionStore,
+    data_engineering_query_evidence: _DataEngineeringQueryEvidenceStore,
     synthetic_exports: _SyntheticExportStore,
     *,
     job_page_size: int = 100,
@@ -477,6 +507,7 @@ def discover_artifact_references(
     max_registered_models: int = 100_000,
     max_connector_outputs: int = 10_000,
     max_data_engineering_revisions: int = 10_000,
+    max_query_evidence_refs: int = 10_000,
     max_synthetic_runs: int = 100_000,
     max_synthetic_exports: int = 100_000,
 ) -> dict[str, tuple[str, ...]]:
@@ -516,6 +547,9 @@ def discover_artifact_references(
         ),
         discover_data_engineering_artifact_references(
             data_engineering_revisions, max_revisions=max_data_engineering_revisions
+        ),
+        discover_data_engineering_query_evidence_references(
+            data_engineering_query_evidence, max_references=max_query_evidence_refs
         ),
         discover_synthetic_data_artifact_references(
             synthetic_exports,
@@ -572,6 +606,7 @@ def collect_referenced_artifacts(
     jobs: JobStore,
     connector_checkpoints: _ConnectorOutputReferenceStore,
     data_engineering_revisions: _DataEngineeringRevisionStore,
+    data_engineering_query_evidence: _DataEngineeringQueryEvidenceStore,
     synthetic_exports: _SyntheticExportStore,
     *,
     allow_empty_live_set: bool = False,
@@ -595,6 +630,7 @@ def collect_referenced_artifacts(
             jobs,
             connector_checkpoints,
             data_engineering_revisions,
+            data_engineering_query_evidence,
             synthetic_exports,
         )
         live_digests = tuple(
@@ -705,6 +741,7 @@ __all__ = (
     "discover_catalog_artifact_references",
     "discover_connector_artifact_references",
     "discover_data_engineering_artifact_references",
+    "discover_data_engineering_query_evidence_references",
     "discover_durable_job_artifact_references",
     "discover_artifact_references",
     "discover_ml_artifact_references",

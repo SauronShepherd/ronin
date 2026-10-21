@@ -31,6 +31,7 @@ from studio_storage import (
     collect_referenced_artifacts,
     discover_artifact_references,
     discover_catalog_artifact_references,
+    discover_data_engineering_query_evidence_references,
     discover_durable_job_artifact_references,
     discover_ml_artifact_references,
     plan_unreferenced,
@@ -104,6 +105,16 @@ class _DataEngineeringRevisionStore:
     def list_all_revisions(self, *, max_revisions: int = 10_000):
         del max_revisions
         return ()
+
+
+class _DataEngineeringQueryEvidenceStore:
+    def __init__(self, records=()):
+        self.records = tuple(records)
+
+    def list_evidence_references(self, *, max_references: int = 10_000):
+        if len(self.records) > max_references:
+            raise ValueError("QueryFlux evidence reference inventory exceeded its bound")
+        return self.records
 
 
 class _SyntheticExportStore:
@@ -182,6 +193,26 @@ def test_ml_discovery_checks_run_and_model_artifact_identity() -> None:
     }
 
 
+def test_queryflux_evidence_discovery_validates_and_bounds_durable_refs() -> None:
+    digest = _digest("query-evidence")
+    store = _DataEngineeringQueryEvidenceStore(
+        ({"storage_ref": f"artifact://sha256/{digest}", "digest": digest},)
+    )
+    assert discover_data_engineering_query_evidence_references(store) == {
+        "data_engineering_query_evidence": (digest,)
+    }
+
+    class UnboundedQueryEvidenceStore:
+        def list_evidence_references(self, *, max_references=10_000):
+            del max_references
+            return ({}, {})
+
+    with pytest.raises(ValueError, match="reference inventory exceeded its bound"):
+        discover_data_engineering_query_evidence_references(
+            UnboundedQueryEvidenceStore(), max_references=1
+        )
+
+
 def test_discovery_fails_closed_on_invalid_refs_and_incomplete_source_set(
     tmp_path,
 ) -> None:
@@ -209,7 +240,7 @@ def test_discovery_fails_closed_on_invalid_refs_and_incomplete_source_set(
     assert plan.candidate_digests == ()
 
 
-def test_aggregate_discovery_returns_all_nine_known_reference_sources() -> None:
+def test_aggregate_discovery_returns_all_known_reference_sources() -> None:
     references = discover_artifact_references(
         _WorkspaceStore(),
         _CatalogStore(()),
@@ -217,6 +248,7 @@ def test_aggregate_discovery_returns_all_nine_known_reference_sources() -> None:
         _DurableJobStore(()),
         _ConnectorOutputStore(),
         _DataEngineeringRevisionStore(),
+        _DataEngineeringQueryEvidenceStore(),
         _SyntheticExportStore(),
     )
 
@@ -405,6 +437,7 @@ def test_guarded_collection_holds_collector_lease_through_deletion(tmp_path, mon
         _DurableJobStore(()),
         _ConnectorOutputStore(),
         _DataEngineeringRevisionStore(),
+        _DataEngineeringQueryEvidenceStore(),
         _SyntheticExportStore(),
     )
 
@@ -448,6 +481,7 @@ def test_guarded_collection_releases_lease_without_deleting_on_incomplete_snapsh
             _DurableJobStore(()),
             _ConnectorOutputStore(),
             _DataEngineeringRevisionStore(),
+            _DataEngineeringQueryEvidenceStore(),
             _SyntheticExportStore(),
         )
 
