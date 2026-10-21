@@ -112,6 +112,27 @@ def test_retention_deletes_only_unreferenced_digests(tmp_path: Path) -> None:
     assert not store.verify(stale)
 
 
+def test_retention_requires_explicit_opt_in_to_delete_every_artifact(
+    tmp_path: Path,
+) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    first = store.put_bytes(role="first", data=b"first")
+    second = store.put_bytes(role="second", data=b"second")
+
+    with pytest.raises(ValueError, match="refuses an empty live digest set"):
+        collect_unreferenced(store, ())
+    with pytest.raises(ValueError, match="allow_empty_live_set must be a boolean"):
+        collect_unreferenced(store, (), allow_empty_live_set="yes")  # type: ignore[arg-type]
+
+    assert store.verify(first)
+    assert store.verify(second)
+    assert collect_unreferenced(store, (), allow_empty_live_set=True) == tuple(
+        sorted((first.digest, second.digest))
+    )
+    assert not store.verify(first)
+    assert not store.verify(second)
+
+
 def test_retention_scans_all_bounded_pages_before_deleting(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -137,7 +158,7 @@ def test_retention_overflow_fails_before_any_deletion(tmp_path: Path) -> None:
     second = store.put_bytes(role="second", data=b"second")
 
     with pytest.raises(ValueError, match="exceeded its object bound"):
-        collect_unreferenced(store, (), page_size=1, max_objects=1)
+        collect_unreferenced(store, ("0" * 64,), page_size=1, max_objects=1)
 
     assert store.verify(first)
     assert store.verify(second)
@@ -160,7 +181,7 @@ def test_retention_rejects_inventory_without_paging() -> None:
 
     store = UnpagedArtifactStore()
     with pytest.raises(ValueError, match="requires a paged"):
-        collect_unreferenced(store, ())  # type: ignore[arg-type]
+        collect_unreferenced(store, ("0" * 64,))  # type: ignore[arg-type]
     assert store.deleted == []
 
 
@@ -175,7 +196,7 @@ def test_retention_page_limit_fails_before_any_deletion(tmp_path: Path) -> None:
 
     store = EndlessPagedArtifactStore(tmp_path / "artifacts")
     with pytest.raises(ValueError, match="exceeded its page bound"):
-        collect_unreferenced(store, (), max_pages=1)
+        collect_unreferenced(store, ("0" * 64,), max_pages=1)
 
 
 def test_retention_plan_requires_all_reference_sources_and_never_deletes(
