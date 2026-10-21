@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from typing import Protocol, cast
 
 from studio_core.canonical_json import decode, encode
+from studio_storage.ports import ArtifactReferenceBarrier
 
 from .contracts import ConnectorReadResult
 
@@ -242,9 +244,21 @@ class IngestionSyncDefinition:
 class IngestionSyncService:
     """Bounded preview service; destination writes remain an explicit next step."""
 
-    def __init__(self, registry: object, checkpoints: object) -> None:
+    def __init__(
+        self,
+        registry: object,
+        checkpoints: object,
+        *,
+        artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
+    ) -> None:
         self._registry = cast(_SyncRegistry, registry)
         self._checkpoints = cast(_CheckpointStore, checkpoints)
+        self._artifact_reference_barrier = artifact_reference_barrier
+
+    def _writer_lease(self) -> AbstractContextManager[None]:
+        if self._artifact_reference_barrier is None:
+            return nullcontext()
+        return self._artifact_reference_barrier.writer()
 
     def preview(
         self,
@@ -305,20 +319,21 @@ class IngestionSyncService:
         )
         if result.checkpoint is None:
             raise ValueError("connector sync execution must return a next checkpoint")
-        output_id, output_digest = destination.write(
-            definition.destination_ref,
-            result,
-            fence=fence,
-        )
-        evidence = self._checkpoints.commit_output_then_checkpoint(
-            definition.checkpoint_identity,
-            expected,
-            result.checkpoint,
-            output_id=output_id,
-            output_digest=output_digest,
-            fence=fence,
-            output_committed=True,
-        )
+        with self._writer_lease():
+            output_id, output_digest = destination.write(
+                definition.destination_ref,
+                result,
+                fence=fence,
+            )
+            evidence = self._checkpoints.commit_output_then_checkpoint(
+                definition.checkpoint_identity,
+                expected,
+                result.checkpoint,
+                output_id=output_id,
+                output_digest=output_digest,
+                fence=fence,
+                output_committed=True,
+            )
         return {
             "schema": "ronin.ingestion-sync-result/v1",
             "plan": plan.to_payload(),

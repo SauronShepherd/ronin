@@ -785,3 +785,15 @@ La cobertura focalizada de artefactos y referencias pasó **26 pruebas**; Ruff, 
 | Probar exclusión entre procesos y liberación | Tests unitarios cubren modo de lock, timeout y liberación ante excepciones; una prueba de integración verifica que el recolector espera a los escritores y que nuevos escritores esperan al recolector. Los 12 tests pasan contra PostgreSQL 16 efímero en Docker. |
 
 Este componente sólo ofrece el mecanismo. Ningún productor queda protegido hasta envolver, como mínimo, la materialización de bytes y el commit de su referencia con `writer()`. El recolector debe abarcar descubrimiento completo de las seis familias, inventario acotado y borrado bajo `collector()`. Faltan instrumentar y cualificar catálogo/archivos locales, ML, Jobs/evidencia/checkpoints, conectores, revisiones de Data Engineering y exports sintéticos; también falta exigir una única base PostgreSQL de coordinación en la composición de servidor. La limpieza global automática permanece deshabilitada y el avance global no cambia hasta completar esas integraciones y cualificar Docker exact-head.
+
+## 53. Mantener el lock del productor de conectores hasta el checkpoint
+
+**Estado del slice: implementado en candidato y validado con 48 tests dirigidos. Avance global: 85%; el recolector global continúa deshabilitado.**
+
+| Criterio | Evidencia |
+| --- | --- |
+| Compartir un contrato de barrera entre storage y productores | `ArtifactReferenceBarrier` declara leases `writer()` y `collector()`; PostgreSQL implementa ambos. |
+| Proteger el intervalo crítico de sync | `IngestionSyncService.execute()` admite barrera opcional y conserva el lock desde `destination.write()` hasta `commit_output_then_checkpoint()`. El lease se libera si cualquiera de los dos pasos falla. |
+| Verificar el orden de publicación y referencia | Una prueba de sync comprueba `lock → artifact → reference → unlock`; suites de sync, checkpoints, registry, capabilities y PostgreSQL pasan **48/48**. |
+
+Esta integración deja preparado el servicio de sync; todavía debe cablearse una instancia compartida en la composición de servidor y demostrarse con sus adapters reales. No cubre los otros productores ni hace segura la recolección global.

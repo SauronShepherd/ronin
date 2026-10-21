@@ -7,6 +7,7 @@ from typing import Protocol, cast
 
 from studio_core import ConnectionDefinition
 from studio_core.canonical_json import encode
+from studio_storage.ports import ArtifactReferenceBarrier
 from studio_storage.secrets import SecretResolver
 
 from .registry import ConnectorRegistry
@@ -31,9 +32,13 @@ class IngestionHTTPAdapter:
         connection_resolver: Callable[[str, str], ConnectionDefinition],
         asset_resolver: Callable[[str], object],
         secrets_resolver: Callable[[str], SecretResolver],
+        *,
+        artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
     ) -> None:
         self._registry = registry
-        self._service = IngestionSyncService(registry, checkpoints)
+        self._service = IngestionSyncService(
+            registry, checkpoints, artifact_reference_barrier=artifact_reference_barrier
+        )
         self._checkpoints = cast(_CheckpointStore, checkpoints)
         self._connection = connection_resolver
         self._asset = asset_resolver

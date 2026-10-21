@@ -67,6 +67,7 @@ from studio_storage.ontology import (
 from studio_storage.ontology_graph import KnowledgeGraphConflict, SqliteKnowledgeGraphStore
 from studio_storage.paged_store import BoundedAsyncJobStore, InMemoryJobStore
 from studio_storage.ports import (
+    ArtifactReferenceBarrier,
     ArtifactStore,
     CatalogStore,
     ConnectionStore,
@@ -149,6 +150,7 @@ __all__ = (
     "backup_sqlite",
     "BackupManifest",
     "ArtifactStore",
+    "ArtifactReferenceBarrier",
     "PagedArtifactStore",
     "BUNDLE_MANIFEST_PATH",
     "BoundedAsyncArtifactStore",
