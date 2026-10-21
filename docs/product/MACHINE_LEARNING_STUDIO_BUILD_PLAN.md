@@ -867,9 +867,9 @@ La batería focalizada de QueryFlux, descubrimiento, retención y PostgreSQL pas
 
 ## 62. Alinear el backend PostgreSQL del worker con el servidor
 
-**Estado: corrección implementada en candidato basado en PR #493; validación focalizada: 6/6. Avance global: 85%.**
+**Estado: PR #494 integrado en `main@2d8fc73`; los seis workflows post-merge exact-head pasaron, incluido Docker qualification (9m53s). Validación focalizada: 6/6. Avance global: 85%.**
 
-La entrada `ronin worker` no pasaba `RONIN_POSTGRES_DSN` a `LocalWorkerRuntimeConfig`, aunque `ronin serve` sí abría PostgreSQL. En despliegues con `RONIN_STORAGE_BACKEND=postgres`, el servidor y el worker podían operar sobre bases distintas, eludiendo la barrera compartida de referencias de artefactos. El CLI ahora valida el backend igual que el servidor y construye la configuración del worker con el DSN; SQLite sigue siendo el valor predeterminado. Las pruebas cubren PostgreSQL con DSN obligatorio, propagación del DSN y configuración SQLite. La cualificación Docker real y los checks exact-head quedan pendientes; este cambio no habilita recolección automática.
+La entrada `ronin worker` no pasaba `RONIN_POSTGRES_DSN` a `LocalWorkerRuntimeConfig`, aunque `ronin serve` sí abría PostgreSQL. En despliegues con `RONIN_STORAGE_BACKEND=postgres`, el servidor y el worker podían operar sobre bases distintas, eludiendo la barrera compartida de referencias de artefactos. El CLI ahora valida el backend igual que el servidor y construye la configuración del worker con el DSN; SQLite sigue siendo el valor predeterminado. Las pruebas cubren PostgreSQL con DSN obligatorio, propagación del DSN y configuración SQLite. Este cambio no habilita recolección automática.
 
 ## 63. Persistir el registro de exports sintéticos en la composición local
 
