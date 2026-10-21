@@ -575,6 +575,7 @@ def collect_unreferenced(
     store: ArtifactStore,
     live_digests: Iterable[str],
     *,
+    allow_empty_live_set: bool = False,
     page_size: int = 500,
     max_objects: int = 10_000,
     max_pages: int = 1_000,
@@ -583,7 +584,9 @@ def collect_unreferenced(
 
     The supplied live set remains the caller's responsibility. This function
     refuses unpaged stores and completes discovery before deleting anything, so
-    an incomplete or over-limit inventory cannot trigger a partial cleanup.
+    an incomplete or over-limit inventory cannot trigger a partial cleanup. An
+    empty live set is rejected unless the caller explicitly opts in to deleting
+    every object in the bounded inventory.
     """
 
     if page_size < 1 or page_size > 10_000:
@@ -593,7 +596,14 @@ def collect_unreferenced(
     if max_pages < 1 or max_pages > 10_000:
         raise ValueError("retention max_pages must be between 1 and 10000")
 
+    if not isinstance(allow_empty_live_set, bool):
+        raise ValueError("allow_empty_live_set must be a boolean")
     live = set(live_digests)
+    if not live and not allow_empty_live_set:
+        raise ValueError(
+            "artifact cleanup refuses an empty live digest set; "
+            "pass allow_empty_live_set=True to intentionally delete all artifacts"
+        )
     for digest in live:
         _validate_digest(digest)
     if not isinstance(store, PagedArtifactStore):
