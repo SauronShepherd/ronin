@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 76%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada; PipelineIR v2 ejecuta candidatos para clasificación/regresión y la extensión a clustering está integrada en `main@e20733d`, con Docker post-merge aún en curso. La superficie UI para seleccionar esos candidatos está en cualificación. Los porcentajes se actualizarán al pasar cada cualificación exact-head.
+**Avance de implementación técnica estimado: 77%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada; PipelineIR v2 ejecuta candidatos para clasificación/regresión y clustering, cualificados por los seis workflows exact-head de `main@e20733d`. La selección desde la UI está en cualificación. Los porcentajes se actualizarán al pasar cada cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -652,7 +652,7 @@ Las pruebas focalizadas ML, plugin durable y OpenAPI pasan **71/71**; el contrat
 
 ## 43. Selección de candidatos de clustering en PipelineIR v2
 
-**Progreso técnico: 5/5 criterios implementados y cualificados en PR #471; integrado en `main@e20733d`. Los checks de PR y cinco workflows post-merge pasaron; Docker post-merge sigue en curso. Avance global integrado: 76%; release-qualified: 0% (0/14).**
+**Progreso técnico: 5/5 criterios implementados y cualificados en PR #471; integrado en `main@e20733d`. Los checks del PR y los seis workflows post-merge exact-head pasaron, incluido Docker. Avance global integrado: 77%; release-qualified: 0% (0/14).**
 
 | Criterio | Implementación |
 | --- | --- |
@@ -662,12 +662,12 @@ Las pruebas focalizadas ML, plugin durable y OpenAPI pasan **71/71**; el contrat
 | Hacer durable y auditable la selección | El endpoint fija el PipelineIR v2; el resultado y checkpoint conservan métrica y puntuación de selección además de inertia y digest del modelo. |
 | Conservar compatibilidad y contratos públicos | PipelineIR v1 y ejecuciones anteriores conservan sus payloads; OpenAPI limita cantidad y rango de `k` y declara Calinski-Harabasz. |
 
-Las pruebas focalizadas de clustering, runner, servicios, API durable y OpenAPI pasan **48/48**. La suite local completa pasa **3833 tests y omite 54**; mypy pasa sobre 457 archivos, Ruff, formato, snapshot OpenAPI y `git diff --check` pasan. Docker local pasa **21 tests y omite 2** por falta de DSN PostgreSQL en Windows; la aceptación estricta pasa **15/15**. PR #471 pasó matrices 3.11/3.12, calidad, seguridad, Release, status consistency y Docker (**9m25s**); post-merge exact-head de CI, Web, Security, Release y Status consistency están verdes. El alcance no añade algoritmo externo, selección de features ni hyperparameter search; P8 permanece parcial y release-qualified en **0% (0/14)**.
+Las pruebas focalizadas de clustering, runner, servicios, API durable y OpenAPI pasan **48/48**. La suite local completa pasa **3833 tests y omite 54**; mypy pasa sobre 457 archivos, Ruff, formato, snapshot OpenAPI y `git diff --check` pasan. Docker local pasa **21 tests y omite 2** por falta de DSN PostgreSQL en Windows; la aceptación estricta pasa **15/15**. PR #471 pasó matrices 3.11/3.12, calidad, seguridad, Release, status consistency y Docker (**9m25s**); los seis workflows post-merge exact-head de `main@e20733d` pasaron, incluido Docker. El alcance no añade algoritmo externo, selección de features ni hyperparameter search; P8 permanece parcial y release-qualified en **0% (0/14)**.
 
 
 ## 44. Selección de candidatos en la interfaz de ML Studio
 
-**Progreso técnico: implementado y cualificado localmente; pendiente de CI y merge. Avance global integrado: 76%; release-qualified: 0% (0/14).**
+**Progreso técnico: implementado y cualificado localmente; pendiente de CI y merge. Avance global integrado: 77%; release-qualified: 0% (0/14).**
 
 | Criterio | Implementación |
 | --- | --- |
