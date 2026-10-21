@@ -216,6 +216,8 @@ def _checkpoint_payload(kind: NodeKind, value: object) -> dict[str, object]:
                     "test_fraction": value.test_fraction,
                     "random_seed": value.random_seed,
                     "parameters": [[name, number] for name, number in value.parameters],
+                    "preprocessor": value.preprocessor,
+                    "categorical_features": list(value.categorical_features),
                 },
             }
         if isinstance(value, tuple) and all(isinstance(item, str) for item in value):
@@ -313,6 +315,11 @@ def _restore_checkpoint(kind: NodeKind, value: object) -> object:
             return tuple(payload)
         if not isinstance(payload, Mapping):
             raise ValueError("stored ML prepare checkpoint is invalid")
+        categorical_features = payload.get("categorical_features", [])
+        if not isinstance(categorical_features, list) or not all(
+            isinstance(item, str) for item in categorical_features
+        ):
+            raise ValueError("stored ML prepare checkpoint has invalid categorical features")
         return TrainingSpec(
             task=cast(Any, payload["task"]),
             algorithm=cast(Any, payload["algorithm"]),
@@ -321,6 +328,8 @@ def _restore_checkpoint(kind: NodeKind, value: object) -> object:
             test_fraction=float(payload["test_fraction"]),
             random_seed=int(payload["random_seed"]),
             parameters=tuple((str(item[0]), cast(Any, item[1])) for item in payload["parameters"]),
+            preprocessor=cast(Preprocessor, payload.get("preprocessor", "identity")),
+            categorical_features=tuple(categorical_features),
         )
     if kind == "train":
         if not isinstance(payload, Mapping):
@@ -409,7 +418,7 @@ class LocalExperimentRunner:
         ):
             raise ValueError("custom ML pipeline is not bound to the submitted Lab")
         if pipeline.schema == PIPELINE_SCHEMA_V2:
-            self._validate_v2_graph(pipeline, lab.task)
+            self._validate_v2_graph(pipeline, lab)
             if lab.task != "clustering":
                 from .runtime import ALGORITHM_CAPABILITIES
 
@@ -495,7 +504,7 @@ class LocalExperimentRunner:
         for node in pipeline.nodes:
             by_kind.setdefault(node.kind, []).append(node)
         if pipeline.schema == PIPELINE_SCHEMA_V2:
-            self._validate_v2_graph(pipeline, lab.task)
+            self._validate_v2_graph(pipeline, lab)
             if lab.task == "clustering" and any(
                 cast(int, node.config["clusters"]) >= len(rows) for node in by_kind["train"]
             ):
@@ -595,6 +604,9 @@ class LocalExperimentRunner:
                         if lab.task == "classification"
                         else "linear_regression",
                     )
+                    preprocessor = node.config.get(
+                        "preprocessor", dict(pipeline.parameters).get("preprocessor", "identity")
+                    )
                     values[node.id] = TrainingSpec(
                         task=lab.task,
                         algorithm=cast(Algorithm, selected_algorithm),
@@ -603,10 +615,7 @@ class LocalExperimentRunner:
                         test_fraction=lab.test_fraction,
                         random_seed=lab.seed,
                         parameters=parameters,
-                        preprocessor=cast(
-                            Preprocessor,
-                            dict(pipeline.parameters).get("preprocessor", "identity"),
-                        ),
+                        preprocessor=cast(Preprocessor, preprocessor),
                         categorical_features=tuple(
                             feature.column
                             for feature in lab.features
@@ -756,8 +765,9 @@ class LocalExperimentRunner:
         return result
 
     @staticmethod
-    def _validate_v2_graph(pipeline: PipelineIR, task: str) -> None:
-        """Accept only the first supported v2 shape, rejecting ignored semantics early."""
+    def _validate_v2_graph(pipeline: PipelineIR, lab: Lab) -> None:
+        """Validate bounded candidate branches and per-branch preparation semantics."""
+        task = lab.task
         if task not in {"classification", "regression", "clustering"}:
             raise ValueError("PipelineIR v2 candidate selection does not support this Lab task")
         nodes = {
@@ -767,33 +777,47 @@ class LocalExperimentRunner:
         if (
             len(nodes["profile"]) != 1
             or len(nodes["quality_gate"]) != 1
-            or len(nodes["prepare"]) != 1
+            or not 1 <= len(nodes["prepare"]) <= 8
             or len(nodes["train"]) < 2
             or len(nodes["evaluate"]) != len(nodes["train"])
             or len(nodes["select"]) != 1
-            or len(pipeline.nodes) != 4 + 2 * len(nodes["train"])
+            or len(pipeline.nodes) != 3 + len(nodes["prepare"]) + 2 * len(nodes["train"])
         ):
             raise ValueError(
                 "PipelineIR v2 requires shared stages, paired candidates, and one select"
             )
-        profile, gate, prepare, select = (
-            nodes[kind][0] for kind in ("profile", "quality_gate", "prepare", "select")
-        )
-        if (
-            profile.depends_on
-            or gate.depends_on != (profile.id,)
-            or prepare.depends_on != (gate.id,)
-        ):
-            raise ValueError("PipelineIR v2 requires profile -> quality_gate -> prepare")
+        profile, gate, select = (nodes[kind][0] for kind in ("profile", "quality_gate", "select"))
+        prepare_ids = {node.id for node in nodes["prepare"]}
+        if profile.depends_on or gate.depends_on != (profile.id,):
+            raise ValueError("PipelineIR v2 requires profile -> quality_gate")
+        if any(prepare.depends_on != (gate.id,) for prepare in nodes["prepare"]):
+            raise ValueError("PipelineIR v2 prepare nodes must depend on quality_gate")
+        from .services import compile_lab_pipeline
+
+        for prepare in nodes["prepare"]:
+            if set(prepare.config) - {"preprocessor"}:
+                raise ValueError("PipelineIR v2 prepare node has unsupported configuration")
+            preprocessor = prepare.config.get(
+                "preprocessor", dict(pipeline.parameters).get("preprocessor", "identity")
+            )
+            if not isinstance(preprocessor, str):
+                raise ValueError("prepare node preprocessor must be a string")
+            compile_lab_pipeline(lab, preprocessor=preprocessor)
         train_ids = {node.id for node in nodes["train"]}
         eval_by_train: dict[str, PipelineNode] = {}
         train_config = {"clusters"} if task == "clustering" else {"algorithm"}
+        used_prepares: set[str] = set()
         for train in nodes["train"]:
-            if train.depends_on != (prepare.id,) or set(train.config) - train_config:
+            if (
+                len(train.depends_on) != 1
+                or train.depends_on[0] not in prepare_ids
+                or set(train.config) - train_config
+            ):
                 raise ValueError(
-                    "PipelineIR v2 train nodes must depend on prepare and use supported "
+                    "PipelineIR v2 train nodes must depend on one prepare node and use supported "
                     "task configuration"
                 )
+            used_prepares.add(train.depends_on[0])
             if task == "clustering":
                 cluster_count = train.config.get("clusters")
                 if (
@@ -810,6 +834,8 @@ class LocalExperimentRunner:
             if evaluate.depends_on[0] in eval_by_train:
                 raise ValueError("PipelineIR v2 requires one evaluate node per candidate")
             eval_by_train[evaluate.depends_on[0]] = evaluate
+        if used_prepares != prepare_ids:
+            raise ValueError("PipelineIR v2 cannot contain unused prepare nodes")
         if set(eval_by_train) != train_ids or set(select.depends_on) != {
             node.id for node in nodes["evaluate"]
         }:
