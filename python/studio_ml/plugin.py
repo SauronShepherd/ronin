@@ -16,6 +16,7 @@ from .backends import default_backends
 from .datasets import DatasetResolver, resolve_lab_rows
 from .domain import Lab
 from .optimization import (
+    BayesianStopPolicy,
     SearchSpec,
     Trial,
     derive_trial_seed,
@@ -912,6 +913,20 @@ class MachineLearningStudioPlugin:
             max_trials=raw_spec.get("max_trials", 100),
             random_seed=raw_spec.get("random_seed", 17),
         )
+        raw_stop_policy = raw_spec.get("stop_policy", {})
+        if not isinstance(raw_stop_policy, dict) or set(raw_stop_policy) - {
+            "max_trials",
+            "patience",
+            "min_improvement",
+        }:
+            raise ValueError("invalid Bayesian stop_policy")
+        if raw_stop_policy and spec.mode != "bayesian":
+            raise ValueError("stop_policy is supported only for Bayesian search")
+        stop_policy = BayesianStopPolicy(
+            max_trials=raw_stop_policy.get("max_trials", spec.max_trials),
+            patience=raw_stop_policy.get("patience", 10),
+            min_improvement=raw_stop_policy.get("min_improvement", 0.0),
+        )
         rows = body["rows"]
         if not all(isinstance(row, dict) for row in rows):
             raise ValueError("search rows must be objects")
@@ -1019,8 +1034,10 @@ class MachineLearningStudioPlugin:
                     now="plugin",
                 )
                 registered.append(registered_model.to_payload())
+            if spec.mode == "bayesian" and stop_policy.should_stop(spec, tuple(trials)):
+                break
             if spec.mode == "bayesian" and len(trials) < spec.max_trials:
-                pending.extend(propose_bayesian_candidates(spec, tuple(trials)))
+                pending.extend(propose_bayesian_candidates(spec, tuple(trials))[:1])
         response: dict[str, object] = {
             "metric": spec.metric,
             "direction": spec.direction,

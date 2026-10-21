@@ -21,7 +21,7 @@ planificadas de una plataforma ML completa.
 | Materialización del modelo en ejecución durable | Implementada para tabular y K-Means | `JobStoreExecutionStore.materialize_result_artifact()`, verificación de lectura/digest y referencia persistida en el resultado |
 | Registro de resultados de ejecuciones durables | Registro y promoción directa exact-head cualificados en `main@c2df903` | `POST /v1/ml-studio/executions/{run_id}/register` valida estado, tamaño, digest, workspace/Lab y registra Experiment, MLRun y versión candidata con firma; la acción de éxito promueve con motivo y autorización existentes |
 | Reintento selectivo de ejecuciones fallidas | Integrado y exact-head cualificado en `main@c2df903` | `POST .../retry` crea un hijo desde una etapa elegida, restaura checkpoints anteriores y permite seguimiento UI |
-| ArtifactStore S3-compatible para lifecycle ML | Qualification local con LocalStack aprobada; CI exact-head pendiente | Input durable >1 MiB y materialización de modelo por `S3ArtifactStore`, con lectura/digest verificados |
+| ArtifactStore S3-compatible para lifecycle ML | Exact-head cualificado en `main@6507b97` | Input durable >1 MiB y materialización de modelo por `S3ArtifactStore`; lectura, digest y qualification LocalStack pasaron CI y Docker |
 | Lectura y descarga de artifacts de modelos | Integradas y exact-head cualificadas en `main@c2df903` | Endpoint `GET .../artifact` con `ml-studio:read`, aislamiento por workspace y bloques Base64 verificados; UI reconstruye y descarga el archivo tras validar tamaño, digest y secuencia |
 | Provenance y registry base | Implementado | `service.py`, `provenance.py`, persistence tests |
 | HTTP control plane y autorización | Implementado | `test_ml_studio_http.py` |
@@ -61,5 +61,6 @@ API protegida, la lectura HTTP autorizada en bloques y la descarga verificada de
 UI. PR #447 añadió identidad de runtime/dependencias y su invalidación downstream,
 PR #448 añadió la promoción directa al finalizar el registro, y PR #449 añadió el retry
 selectivo. Los seis workflows exact-head post-merge de `main@c2df903` pasaron; la suite
-web local completa dio 79/79 en PR #448 y 80/80 con el retry de PR #449. El candidato
-actual añade qualification ML contra S3-compatible real; su Docker CI aún está pendiente.
+web local completa dio 79/79 en PR #448 y 80/80 con el retry de PR #449. La qualification
+ML contra S3-compatible real también pasó en Docker y en los seis workflows exact-head
+de `main@6507b97`.

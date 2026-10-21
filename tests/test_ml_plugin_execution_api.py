@@ -4,6 +4,7 @@
 import json
 import time
 from threading import Event
+from types import SimpleNamespace
 
 import pytest
 from studio_core import WorkspaceId
@@ -582,6 +583,44 @@ def test_search_route_derives_repeatable_per_trial_seeds_and_ids() -> None:
         item["trial_id"] for item in second["items"]
     }
     assert first["items"] == second["items"]
+    plugin._coordinator.close()
+
+
+def test_bayesian_search_stops_after_patience_without_improvement() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "search-stop",
+        "Search stop",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    calls: list[tuple[float, ...]] = []
+
+    def run(_lab: Lab, _rows: object, parameters: object) -> object:
+        calls.append(tuple(value for _, value in parameters))  # type: ignore[union-attr]
+        return SimpleNamespace(model=SimpleNamespace(metrics={"score": 0.5}))
+
+    plugin._runner.run = run  # type: ignore[method-assign]
+    result = plugin.search_trials(
+        "ws",
+        "search-stop",
+        body={
+            "spec": {
+                "mode": "bayesian",
+                "max_trials": 8,
+                "parameters": [{"name": "C", "values": [0.1, 0.2, 0.3, 0.4, 0.5]}],
+                "stop_policy": {"patience": 1, "min_improvement": 0.01},
+            },
+            "rows": [{"x": value, "target": value % 2} for value in range(1, 21)],
+        },
+    )
+    assert len(calls) == 2
+    assert len(result["items"]) == 2
     plugin._coordinator.close()
 
 

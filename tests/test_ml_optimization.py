@@ -169,6 +169,43 @@ def test_bayesian_stop_policy_honors_budget_and_patience() -> None:
     assert BayesianStopPolicy(max_trials=2).should_stop(spec, trials)
 
 
+def test_bayesian_stop_policy_measures_improvement_over_recent_trials() -> None:
+    spec = SearchSpec(mode="bayesian", metric="score", max_trials=10)
+    trials = tuple(
+        Trial.create({"x": value}, {"score": score})
+        for value, score in enumerate((1.0, 0.5, 0.6, 0.7))
+    )
+    assert BayesianStopPolicy(max_trials=10, patience=2, min_improvement=0.01).should_stop(
+        spec, trials
+    )
+    improved = (*trials, Trial.create({"x": 4}, {"score": 1.1}))
+    assert not BayesianStopPolicy(max_trials=10, patience=2, min_improvement=0.01).should_stop(
+        spec, improved
+    )
+    minimize_spec = SearchSpec(mode="bayesian", metric="loss", direction="minimize", max_trials=10)
+    losses = tuple(
+        Trial.create({"x": value}, {"loss": score})
+        for value, score in enumerate((0.1, 0.5, 0.6, 0.7))
+    )
+    assert BayesianStopPolicy(max_trials=10, patience=2, min_improvement=0.01).should_stop(
+        minimize_spec, losses
+    )
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"max_trials": True},
+        {"patience": 1.5},
+        {"min_improvement": float("nan")},
+        {"min_improvement": float("inf")},
+    ],
+)
+def test_bayesian_stop_policy_rejects_invalid_runtime_values(kwargs: dict[str, object]) -> None:
+    with pytest.raises(ValueError, match="invalid Bayesian stopping policy"):
+        BayesianStopPolicy(**kwargs)  # type: ignore[arg-type]
+
+
 def test_expected_improvement_is_zero_at_observed_best_and_positive_for_uncertainty() -> None:
     spec = SearchSpec(mode="bayesian", metric="score", parameters=(("x", (0, 1, 2)),))
     observations = (Trial.create({"x": 0}, {"score": 1.0}), Trial.create({"x": 1}, {"score": 0.5}))
