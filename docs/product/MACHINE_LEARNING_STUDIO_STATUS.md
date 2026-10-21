@@ -29,7 +29,7 @@ planificadas de una plataforma ML completa.
 | UI Labs/quality/run básica | Implementado | `features.js`, Chromium browser audit |
 | Grid trials y ranking determinista | Parcial | `optimization.py` y `POST .../search`; `seed`, `C` y `max_iter` se aplican en logística |
 | Random trials | Implementado | muestreo determinista y bounded por `random_seed` |
-| Bayesian trials | Implementado | surrogate discreto, Expected Improvement, rondas y stopping policy bounded |
+| Bayesian trials | Implementado y exact-head cualificado en `main@cc0ad8f` | surrogate discreto, Expected Improvement, propuestas de memoria acotada y parada por paciencia/mejora reciente |
 | Compare API y ranking de trials | Implementado | API, formulario UI y rendering del ranking |
 | Model registry list/promotion | Implementado | endpoints, registro opcional de trials y E2E con evaluación aprobada |
 | Model card API | Implementado | `GET .../models/{model_id}/{version}/card` devuelve provenance, digest y firma |

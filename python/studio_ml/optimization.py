@@ -56,6 +56,7 @@ class SearchSpec:
     parameters: tuple[tuple[str, tuple[object, ...]], ...] = ()
     metric: str = "score"
     direction: Literal["maximize", "minimize"] = "maximize"
+    tie_breakers: tuple[tuple[str, Literal["maximize", "minimize"]], ...] = ()
     max_trials: int = 100
     random_seed: int = 17
 
@@ -72,6 +73,18 @@ class SearchSpec:
             or self.direction not in {"maximize", "minimize"}
             or not isinstance(self.metric, str)
             or not self.metric.strip()
+            or not isinstance(self.tie_breakers, tuple)
+            or any(
+                not isinstance(item, tuple)
+                or len(item) != 2
+                or not isinstance(item[0], str)
+                or not item[0].strip()
+                or not isinstance(item[1], str)
+                or item[1] not in {"maximize", "minimize"}
+                for item in self.tie_breakers
+            )
+            or self.metric in {name for name, _ in self.tie_breakers}
+            or len({name for name, _ in self.tie_breakers}) != len(self.tie_breakers)
         ):
             raise ValueError("invalid search objective")
         if (
@@ -185,14 +198,26 @@ def derive_trial_seed(random_seed: int, trial_id: str) -> int:
 
 
 def rank_trials(spec: SearchSpec, trials: tuple[Trial, ...]) -> tuple[Trial, ...]:
-    """Return deterministic ranking, using trial id as the tie-breaker."""
-    return tuple(
-        sorted(
-            trials,
-            key=lambda trial: (trial.metric(spec.metric), trial.trial_id),
-            reverse=spec.direction == "maximize",
-        )
-    )
+    """Rank by the primary metric, configured tie-breakers, then stable ID."""
+    metric_names = (spec.metric, *(name for name, _ in spec.tie_breakers))
+    for trial in trials:
+        for name in metric_names:
+            try:
+                value = trial.metric(name)
+            except KeyError as exc:
+                raise ValueError(f"trial is missing ranking metric {name!r}") from exc
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not isfinite(value)
+            ):
+                raise ValueError(f"trial ranking metric {name!r} must be finite")
+
+    ranked = sorted(trials, key=lambda trial: trial.trial_id)
+    for name, direction in reversed(spec.tie_breakers):
+        ranked.sort(key=lambda trial: trial.metric(name), reverse=direction == "maximize")
+    ranked.sort(key=lambda trial: trial.metric(spec.metric), reverse=spec.direction == "maximize")
+    return tuple(ranked)
 
 
 def propose_bayesian_candidates(

@@ -963,7 +963,7 @@
       "post": {
         "operationId": "compareMlStudioTrials",
         "parameters": [{"name": "lab_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["spec", "trials"]}}}},
+        "requestBody": {"required":true,"content":{"application/json":{"schema":{"type":"object","required":["spec","trials"],"properties":{"spec":{"type":"object","properties":{"mode":{"type":"string","enum":["single","grid","random","bayesian"]},"metric":{"type":"string","minLength":1},"direction":{"type":"string","enum":["maximize","minimize"]},"tie_breakers":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["metric","direction"],"properties":{"metric":{"type":"string","minLength":1},"direction":{"type":"string","enum":["maximize","minimize"]}}}}}},"trials":{"type":"array","items":{"type":"object"}}}}}}},
         "responses": {"200": {"description": "Ranked trials", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
       }
     },
@@ -971,7 +971,7 @@
       "post": {
         "operationId": "searchMlStudioTrials",
         "parameters": [{"name": "lab_id", "in": "path", "required": true, "schema": {"type": "string"}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["spec", "rows"]}}}},
+        "requestBody": {"required":true,"content":{"application/json":{"schema":{"type":"object","required":["spec","rows"],"properties":{"spec":{"type":"object","properties":{"mode":{"type":"string","enum":["single","grid","random","bayesian"]},"metric":{"type":"string","minLength":1},"direction":{"type":"string","enum":["maximize","minimize"]},"tie_breakers":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["metric","direction"],"properties":{"metric":{"type":"string","minLength":1},"direction":{"type":"string","enum":["maximize","minimize"]}}}},"max_trials":{"type":"integer","minimum":1,"maximum":1000},"random_seed":{"type":"integer","minimum":0},"stop_policy":{"type":"object","additionalProperties":false,"properties":{"max_trials":{"type":"integer","minimum":1},"patience":{"type":"integer","minimum":1},"min_improvement":{"type":"number","minimum":0}}}}},"rows":{"type":"array","items":{"type":"object"}}}}}}},
         "responses": {"200": {"description": "Executed and ranked trials", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}}
       }
     },

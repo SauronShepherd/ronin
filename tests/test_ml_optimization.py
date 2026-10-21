@@ -46,6 +46,51 @@ def test_search_spec_rejects_duplicate_parameters() -> None:
         SearchSpec(parameters=(("C", (1,)), ("C", (2,))))
 
 
+@pytest.mark.parametrize(
+    "tie_breakers",
+    [
+        (("score", "maximize"),),
+        (("cost", "maximize"), ("cost", "minimize")),
+        (("cost", "sideways"),),
+        (("", "minimize"),),
+    ],
+)
+def test_search_spec_rejects_invalid_tie_breakers(
+    tie_breakers: tuple[tuple[str, str], ...],
+) -> None:
+    with pytest.raises(ValueError, match="objective"):
+        SearchSpec(metric="score", tie_breakers=tie_breakers)  # type: ignore[arg-type]
+
+
+def test_trial_ranking_applies_directional_tie_breakers_in_order() -> None:
+    spec = SearchSpec(
+        metric="accuracy",
+        direction="maximize",
+        tie_breakers=(("cost", "minimize"), ("size", "minimize")),
+    )
+    trials = (
+        Trial.create({"name": "cost-high"}, {"accuracy": 0.9, "cost": 2, "size": 1}),
+        Trial.create({"name": "tie-best"}, {"accuracy": 0.9, "cost": 1, "size": 1}),
+        Trial.create({"name": "tie-size"}, {"accuracy": 0.9, "cost": 1, "size": 2}),
+        Trial.create({"name": "lower-primary"}, {"accuracy": 0.8, "cost": 0, "size": 0}),
+    )
+    ranked = rank_trials(spec, trials)
+    assert [dict(trial.parameters)["name"] for trial in ranked] == [
+        "tie-best",
+        "tie-size",
+        "cost-high",
+        "lower-primary",
+    ]
+
+
+def test_trial_ranking_rejects_missing_or_nonfinite_metrics() -> None:
+    spec = SearchSpec(metric="accuracy", tie_breakers=(("cost", "minimize"),))
+    with pytest.raises(ValueError, match="missing ranking metric"):
+        rank_trials(spec, (Trial.create({"x": 1}, {"accuracy": 0.9}),))
+    with pytest.raises(ValueError, match="must be finite"):
+        rank_trials(spec, (Trial.create({"x": 1}, {"accuracy": 0.9, "cost": float("nan")}),))
+
+
 def test_random_trials_are_reproducible_and_bounded() -> None:
     spec = SearchSpec(
         mode="random",

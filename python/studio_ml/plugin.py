@@ -39,6 +39,24 @@ from .service import (
 from .services import InMemoryMLLabStore, LabService
 
 
+def _parse_tie_breakers(raw: object) -> tuple[tuple[str, Literal["maximize", "minimize"]], ...]:
+    if not isinstance(raw, list):
+        raise ValueError("spec tie_breakers must be an array")
+    normalized: list[tuple[str, Literal["maximize", "minimize"]]] = []
+    for item in raw:
+        if (
+            not isinstance(item, dict)
+            or not isinstance(item.get("metric"), str)
+            or not isinstance(item.get("direction"), str)
+            or item["direction"] not in {"maximize", "minimize"}
+        ):
+            raise ValueError("invalid tie breaker")
+        normalized.append(
+            (item["metric"], cast(Literal["maximize", "minimize"], item["direction"]))
+        )
+    return tuple(normalized)
+
+
 class MachineLearningStudioPlugin:
     manifest = PluginManifest(
         id="com.sauronshepherd.ronin.ml-studio",
@@ -849,6 +867,7 @@ class MachineLearningStudioPlugin:
             parameters=tuple(normalized),
             metric=raw_spec.get("metric", "score"),
             direction=raw_spec.get("direction", "maximize"),
+            tie_breakers=_parse_tie_breakers(raw_spec.get("tie_breakers", [])),
             max_trials=raw_spec.get("max_trials", 100),
             random_seed=raw_spec.get("random_seed", 17),
         )
@@ -874,6 +893,10 @@ class MachineLearningStudioPlugin:
         return {
             "metric": spec.metric,
             "direction": spec.direction,
+            "tie_breakers": [
+                {"metric": metric, "direction": direction}
+                for metric, direction in spec.tie_breakers
+            ],
             "items": [trial.to_payload() for trial in rank_trials(spec, tuple(trials))],
         }
 
@@ -910,6 +933,7 @@ class MachineLearningStudioPlugin:
             parameters=normalized,
             metric=raw_spec.get("metric", "score"),
             direction=raw_spec.get("direction", "maximize"),
+            tie_breakers=_parse_tie_breakers(raw_spec.get("tie_breakers", [])),
             max_trials=raw_spec.get("max_trials", 100),
             random_seed=raw_spec.get("random_seed", 17),
         )
@@ -933,6 +957,14 @@ class MachineLearningStudioPlugin:
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
         if lab.task not in {"classification", "regression"}:
             raise ValueError("hyperparameter search requires a supervised lab")
+        if "metric" not in raw_spec:
+            spec = replace(spec, metric="accuracy" if lab.task == "classification" else "r2")
+        supported_metrics = (
+            {"accuracy"} if lab.task == "classification" else {"r2", "mean_squared_error"}
+        )
+        requested_metrics = {spec.metric, *(name for name, _ in spec.tie_breakers)}
+        if not requested_metrics.issubset(supported_metrics):
+            raise ValueError(f"unsupported ranking metric for {lab.task} search")
         allowed_parameters = {"seed"}
         if lab.task == "classification":
             allowed_parameters.update({"C", "max_iter"})
@@ -1041,6 +1073,10 @@ class MachineLearningStudioPlugin:
         response: dict[str, object] = {
             "metric": spec.metric,
             "direction": spec.direction,
+            "tie_breakers": [
+                {"metric": metric, "direction": direction}
+                for metric, direction in spec.tie_breakers
+            ],
             "items": [trial.to_payload() for trial in rank_trials(spec, tuple(trials))],
         }
         if registered:
