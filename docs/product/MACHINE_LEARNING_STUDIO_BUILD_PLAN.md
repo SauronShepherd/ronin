@@ -859,14 +859,20 @@ Las suites de almacén, descubrimiento, barrera PostgreSQL y recolector guardado
 
 ## 61. Registrar referencias de evidencia QueryFlux para retención
 
-**Estado: implementado en candidato basado en `main@83da3e7`. Prioridad: bloquea habilitar recolección global. Avance global: 85%.**
+**Estado: PR #493 integrado y cualificado en `main@fa8d22c`; los seis workflows post-merge exact-head pasaron. Prioridad: bloquea habilitar recolección global. Avance global: 85%.**
 
 `queryflux_execute` exige un registro durable de referencia, y `execute_query` mantiene el writer lease desde `ArtifactStore.put_bytes()` hasta el commit de `(project_id, run_id, attempt_id, storage_ref, digest)`. La composición local crea el registro en SQLite o PostgreSQL; el descubrimiento acotado lo incorpora como una décima fuente requerida y falla cerrado si excede el máximo o encuentra digest/ref inconsistentes. La prueba del endpoint y del lease, el registro de referencias y la retención real en PostgreSQL cubren el nuevo camino.
 
-La batería focalizada de QueryFlux, descubrimiento, retención y PostgreSQL pasa **61 pruebas**; la suite amplia pasa **3.937 pruebas y omite 16**. Ruff, formato, mypy de producto (459 archivos), y `git diff --check` pasan. Pendiente: cualificar el PR exact-head y auditar otros artefactos devueltos por HTTP. La limpieza global automática sigue apagada hasta verificar todo el cableado productivo y las referencias externas.
+La batería focalizada de QueryFlux, descubrimiento, retención y PostgreSQL pasa **61 pruebas**; la suite amplia pasa **3.937 pruebas y omite 16**. Ruff, formato, mypy de producto (459 archivos), y `git diff --check` pasan. PR #493 pasó Docker qualification (**10m03s**), CI, Web, Security, Release y Status consistency; los seis workflows post-merge exact-head de `main@fa8d22c` también pasaron. La auditoría del cableado encontró un store sintético en memoria dentro de la composición local; la limpieza global automática sigue apagada hasta hacer persistentes y enumerables todas las fuentes y verificar el llamador productivo.
 
 ## 62. Alinear el backend PostgreSQL del worker con el servidor
 
 **Estado: corrección implementada en candidato basado en PR #493; validación focalizada: 6/6. Avance global: 85%.**
 
 La entrada `ronin worker` no pasaba `RONIN_POSTGRES_DSN` a `LocalWorkerRuntimeConfig`, aunque `ronin serve` sí abría PostgreSQL. En despliegues con `RONIN_STORAGE_BACKEND=postgres`, el servidor y el worker podían operar sobre bases distintas, eludiendo la barrera compartida de referencias de artefactos. El CLI ahora valida el backend igual que el servidor y construye la configuración del worker con el DSN; SQLite sigue siendo el valor predeterminado. Las pruebas cubren PostgreSQL con DSN obligatorio, propagación del DSN y configuración SQLite. La cualificación Docker real y los checks exact-head quedan pendientes; este cambio no habilita recolección automática.
+
+## 63. Persistir el registro de exports sintéticos en la composición local
+
+**Estado: implementado en candidato basado en PR #494; 33 pruebas relacionadas pasan. Avance global: 85%.**
+
+La composición local creaba `GovernStudioService()` sin store, por lo que `snapshot()` y `artifacts()` olvidaban los runs y referencias de exportación al reiniciar. Ahora inyecta `SqliteRunStore` en un archivo persistente dentro del directorio de datos y cierra el recurso al apagar el plugin. Una prueba genera y exporta una tabla, reconstruye la composición, verifica que el run y la referencia sobreviven y vuelve a leer los bytes por digest. Esto hace inventariable la fuente sintética local; no activa recolección automática ni resuelve otras fuentes aún ausentes en la composición.

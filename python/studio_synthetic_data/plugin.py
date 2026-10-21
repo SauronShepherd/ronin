@@ -275,6 +275,7 @@ class SyntheticDataStudioPlugin:
     def shutdown(self) -> None:
         self.started = False
         self.jobs.close()
+        self.service.close()
 
     def create_plan(self, *, body: object | None = None, **_kwargs: Any) -> dict[str, object]:
         plan = _decode_plan(body)

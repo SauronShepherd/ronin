@@ -75,6 +75,7 @@ from studio_storage import (
 )
 from studio_storage.bundle_workflow_import import SqliteWorkflowBundleImportStore
 from studio_storage.ml import SqliteMLStore
+from studio_synthetic_data import GovernStudioService, SqliteRunStore
 
 
 class _LocalDataEngineeringRevisions:
@@ -281,6 +282,9 @@ def build_local_composed_from_env() -> LocalServerComposition:
                 PostgresQueryEvidenceReferenceStore(postgres_dsn)
                 if postgres_dsn is not None
                 else SqliteQueryEvidenceReferenceStore(database)
+            ),
+            "govern_studio_service": GovernStudioService(
+                SqliteRunStore(str(database.parent / "synthetic-data.sqlite3"))
             ),
             "catalog_store": catalog_store,
         }
