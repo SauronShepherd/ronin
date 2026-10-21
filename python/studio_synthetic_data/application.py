@@ -299,6 +299,13 @@ class GovernStudioService:
         self._publication_hook = publication_hook
         self._lock = RLock()
 
+    def close(self) -> None:
+        """Close an optional durable store owned by this service composition."""
+
+        close = getattr(self._store, "close", None)
+        if callable(close):
+            close()
+
     def create_run(self, plan: GenerationPlan, *, idempotency_key: str) -> GovernRun:
         if not idempotency_key.strip():
             raise ValueError("idempotency key is required")

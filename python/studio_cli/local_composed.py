@@ -282,6 +282,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
                 if postgres_dsn is not None
                 else SqliteQueryEvidenceReferenceStore(database)
             ),
+            "govern_studio_db_path": str(database.parent / "synthetic-data.sqlite3"),
             "catalog_store": catalog_store,
         }
     )

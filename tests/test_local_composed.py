@@ -22,6 +22,8 @@ from studio_storage import (
     SqliteCatalogStore,
 )
 from studio_storage.local_files import LocalFileConnector
+from studio_synthetic_data import ColumnSpec, GenerationPlan, TableSpec
+from studio_synthetic_data.application import GovernStudioService, SqliteRunStore
 
 
 def _environment(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
@@ -112,6 +114,60 @@ def test_local_composition_injects_the_shared_durable_job_service(
         assert ml_plugin._coordinator._store._artifact_store is ml_plugin._artifacts
     finally:
         composition.stop()
+
+
+def test_local_composition_persists_synthetic_export_references_across_restart(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    _environment(monkeypatch, tmp_path)
+    composition = build_local_composed_from_env()
+    assert composition.plugin_host is not None
+    assert composition.plugin_host.plan is not None
+    plugin = next(
+        record.plugin
+        for record in composition.plugin_host.plan.records
+        if record.manifest.id == "com.ronin.synthetic-data-studio"
+    )
+    plan = GenerationPlan(
+        (
+            TableSpec(
+                "customers",
+                (ColumnSpec("customer_id", kind="integer", nullable=False),),
+                primary_key="customer_id",
+                rows=2,
+            ),
+        ),
+        seed=7,
+    )
+    try:
+        assert isinstance(plugin.service, GovernStudioService)
+        assert isinstance(plugin.service._store, SqliteRunStore)
+        generated = plugin.generate(body={"plan": plan}, idempotency_key="retention-run")
+        run_id = generated["run_id"]
+        exported = plugin.export(body={"run_id": run_id, "format_id": "csv", "table": "customers"})
+        assert exported["artifact"]["storage_ref"].startswith("artifact://sha256/")
+        digest = exported["artifact"]["digest"]
+    finally:
+        composition.stop()
+
+    restarted = build_local_composed_from_env()
+    assert restarted.plugin_host is not None
+    assert restarted.plugin_host.plan is not None
+    plugin_after_restart = next(
+        record.plugin
+        for record in restarted.plugin_host.plan.records
+        if record.manifest.id == "com.ronin.synthetic-data-studio"
+    )
+    try:
+        assert plugin_after_restart.service.get_run(run_id).result is not None
+        artifact = plugin_after_restart.service.artifacts(run_id)[0]
+        assert artifact["digest"] == digest
+        assert plugin_after_restart.artifact_store.get_bytes_by_storage_ref(
+            artifact["storage_ref"], digest=digest
+        )
+        assert plugin_after_restart.list_runs()["items"][0]["run_id"] == run_id
+    finally:
+        restarted.stop()
 
 
 def test_local_composition_queues_large_assetref_input_as_verified_artifact(

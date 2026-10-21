@@ -1253,12 +1253,12 @@ class LocalExecutionCoordinator:
 
     def close(self) -> None:
         self._closing.set()
+        self._stop.set()
         with self._admission_lock:
             pass
-        self._executor.shutdown(wait=True, cancel_futures=False)
-        self._stop.set()
         if self._started:
             self._poller.join(timeout=5)
+        self._executor.shutdown(wait=True, cancel_futures=False)
 
 
 __all__ = [

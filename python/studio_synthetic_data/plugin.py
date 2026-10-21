@@ -2,6 +2,7 @@
 
 import os
 from contextlib import nullcontext
+from pathlib import Path
 from typing import Any, cast
 
 from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
@@ -9,7 +10,7 @@ from studio_core.plugins import PluginContext, PluginManifest, SurfaceContributi
 from studio_storage.catalog import SqliteCatalogStore
 from studio_storage.ports import ArtifactReferenceBarrier
 
-from studio_synthetic_data.application import GovernStudioService, plan_from_payload
+from studio_synthetic_data.application import GovernStudioService, SqliteRunStore, plan_from_payload
 from studio_synthetic_data.async_generation import LocalGenerationJobs
 from studio_synthetic_data.engine import GenerationPlan, ValidationReport, assess_privacy
 from studio_synthetic_data.engine import validate as validate_plan
@@ -61,6 +62,12 @@ class SyntheticDataStudioPlugin:
             self.service = injected_service
             self.jobs.close()
             self.jobs = LocalGenerationJobs(self.service, db_path=os.getenv("SDS_JOBS_DB"))
+        else:
+            database_path = context.services.get("govern_studio_db_path")
+            if isinstance(database_path, (str, Path)):
+                self.service = GovernStudioService(SqliteRunStore(str(database_path)))
+                self.jobs.close()
+                self.jobs = LocalGenerationJobs(self.service, db_path=os.getenv("SDS_JOBS_DB"))
         if "artifact_store" in context.services:
             self.artifact_store = context.services["artifact_store"]
         reference_barrier = context.services.get("artifact_reference_barrier")
@@ -275,6 +282,7 @@ class SyntheticDataStudioPlugin:
     def shutdown(self) -> None:
         self.started = False
         self.jobs.close()
+        self.service.close()
 
     def create_plan(self, *, body: object | None = None, **_kwargs: Any) -> dict[str, object]:
         plan = _decode_plan(body)

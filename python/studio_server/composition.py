@@ -71,6 +71,9 @@ class LocalServerComposition:
                     thread.join(timeout=10.0)
                 self.job_server.server_close()
                 self.control_plane_server.server_close()
+            else:
+                self.job_server.server_close()
+                self.control_plane_server.server_close()
         finally:
             if self.plugin_host is not None:
                 self.plugin_host.stop()
