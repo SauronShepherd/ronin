@@ -6,6 +6,7 @@ from studio_ml.optimization import (
     BayesianStopPolicy,
     SearchSpec,
     Trial,
+    derive_trial_seed,
     expected_improvement,
     propose_bayesian_candidates,
     rank_trials,
@@ -20,6 +21,24 @@ def test_grid_trials_and_ids_are_deterministic() -> None:
     assert len(trials) == 4
     assert trials[0].trial_id == Trial.create(spec.trials()[0], {"score": 0}).trial_id
     assert rank_trials(spec, trials)[0].metric("score") == 3.0
+
+
+def test_trial_identity_and_seed_are_stable_per_run_seed_and_parameters() -> None:
+    parameters = {"C": 1.0, "max_iter": 100}
+    first = Trial.create(parameters, {"score": 0.8}, random_seed=23)
+    repeat = Trial.create(parameters, {"score": 0.9}, random_seed=23)
+    different_run = Trial.create(parameters, {"score": 0.8}, random_seed=24)
+    assert first.trial_id == repeat.trial_id
+    assert first.trial_id != different_run.trial_id
+    assert derive_trial_seed(23, first.trial_id) == derive_trial_seed(23, repeat.trial_id)
+    assert derive_trial_seed(23, first.trial_id) != derive_trial_seed(24, first.trial_id)
+    assert 0 <= derive_trial_seed(23, first.trial_id) <= 0xFFFFFFFF
+
+
+@pytest.mark.parametrize("random_seed", [True, -1])
+def test_trial_identity_rejects_invalid_run_seed(random_seed: int) -> None:
+    with pytest.raises(ValueError, match="trial random seed"):
+        Trial.create({"C": 1}, {}, random_seed=random_seed)
 
 
 def test_search_spec_rejects_duplicate_parameters() -> None:

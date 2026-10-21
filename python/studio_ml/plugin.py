@@ -15,7 +15,13 @@ from studio_storage.ports import ArtifactStore
 from .backends import default_backends
 from .datasets import DatasetResolver, resolve_lab_rows
 from .domain import Lab
-from .optimization import SearchSpec, Trial, propose_bayesian_candidates, rank_trials
+from .optimization import (
+    SearchSpec,
+    Trial,
+    derive_trial_seed,
+    propose_bayesian_candidates,
+    rank_trials,
+)
 from .orchestration import JobStoreExecutionStore, LocalExecutionCoordinator
 from .ports import MLLabStore
 from .quality import profile_and_validate
@@ -925,11 +931,16 @@ class MachineLearningStudioPlugin:
             if signature in seen_parameters:
                 continue
             seen_parameters.add(signature)
+            identity = Trial.create(parameters, {}, random_seed=spec.random_seed)
             candidate = lab
             if "seed" in parameters:
                 if not isinstance(parameters["seed"], int) or isinstance(parameters["seed"], bool):
                     raise ValueError("seed trial parameter must be an integer")
                 candidate = replace(lab, seed=parameters["seed"])
+            else:
+                candidate = replace(
+                    lab, seed=derive_trial_seed(spec.random_seed, identity.trial_id)
+                )
             effective_values: list[tuple[str, float | int]] = []
             for name, value in parameters.items():
                 if name == "seed":
@@ -939,7 +950,10 @@ class MachineLearningStudioPlugin:
                 effective_values.append((name, value))
             effective = tuple(effective_values)
             result = self._runner.run(candidate, rows, effective)
-            trials.append(Trial.create(parameters, dict(result.model.metrics)))
+            trial = Trial.create(
+                parameters, dict(result.model.metrics), random_seed=spec.random_seed
+            )
+            trials.append(trial)
             if isinstance(registration, dict):
                 model_id = registration.get("model_id", lab.id)
                 version_prefix = registration.get("version_prefix", "trial")
@@ -971,9 +985,9 @@ class MachineLearningStudioPlugin:
                     rows,
                     dataset=lab.dataset,
                     experiment_id=ExperimentId(lab.id),
-                    run_id=MLRunId(f"{lab.id}-trial-{len(trials)}"),
+                    run_id=MLRunId(f"{lab.id}-{trial.trial_id}"),
                     model_id=ModelId(model_id),
-                    model_version=ModelVersion(f"{version_prefix}-{len(trials)}"),
+                    model_version=ModelVersion(f"{version_prefix}-{trial.trial_id}"),
                     source_revision="search",
                     execution_ref="ml-studio-search",
                     spec=training_spec,
