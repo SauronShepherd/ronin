@@ -21,6 +21,7 @@ NodeKind: TypeAlias = Literal[
 LAB_SCHEMA = "ronin.ml-lab/v1"
 PIPELINE_SCHEMA = "ronin.ml-pipeline-ir/v1"
 PIPELINE_SCHEMA_V2 = "ronin.ml-pipeline-ir/v2"
+MAX_PIPELINE_NODES = 20
 FEATURE_SCHEMA = "ronin.ml-feature/v1"
 
 
@@ -362,6 +363,8 @@ class PipelineIR:
     def __post_init__(self) -> None:
         if self.schema not in {PIPELINE_SCHEMA, PIPELINE_SCHEMA_V2} or not self.nodes:
             raise ValueError("invalid or empty pipeline schema")
+        if len(self.nodes) > MAX_PIPELINE_NODES:
+            raise ValueError(f"pipeline cannot contain more than {MAX_PIPELINE_NODES} nodes")
         if self.schema == PIPELINE_SCHEMA and any(node.config for node in self.nodes):
             raise ValueError("PipelineIR v1 nodes cannot contain configuration")
         if self.schema == PIPELINE_SCHEMA_V2 and any(

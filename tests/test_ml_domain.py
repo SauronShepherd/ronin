@@ -80,6 +80,15 @@ def test_pipeline_execution_order_is_stable_and_dependency_respecting() -> None:
     ]
 
 
+def test_pipeline_node_count_is_bounded() -> None:
+    nodes = tuple(
+        PipelineNode(f"stage-{index}", "profile", (f"stage-{index - 1}",) if index else ())
+        for index in range(21)
+    )
+    with pytest.raises(ValueError, match="cannot contain more than 20 nodes"):
+        PipelineIR(nodes)
+
+
 def test_lab_rejects_boolean_seed_and_non_finite_test_fraction() -> None:
     arguments = {
         "id": "churn",

@@ -92,6 +92,13 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
         "maximize",
         "minimize",
     ]
+    pipeline_schema = request_schema["properties"]["pipeline"]
+    assert pipeline_schema["properties"]["schema"]["const"] == "ronin.ml-pipeline-ir/v2"
+    assert pipeline_schema["properties"]["nodes"]["maxItems"] == 20
+    assert (
+        "register"
+        not in pipeline_schema["properties"]["nodes"]["items"]["properties"]["kind"]["enum"]
+    )
     assert "409" in submit["responses"]
     quality = document["paths"]["/v1/ml-studio/labs/{lab_id}/quality"]["post"]
     quality_schema = quality["requestBody"]["content"]["application/json"]["schema"]

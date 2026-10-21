@@ -10,11 +10,11 @@ import pytest
 from studio_core import WorkspaceId
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_core.ml import RegisteredModelVersion
-from studio_ml.domain import FeatureSpec, Lab
+from studio_ml.domain import FeatureSpec, Lab, PipelineIR, PipelineNode
 from studio_ml.orchestration import ExecutionSnapshot, LocalExecutionCoordinator
 from studio_ml.plugin import MachineLearningStudioPlugin
 from studio_ml.runner import LocalExperimentRunner
-from studio_ml.services import InMemoryMLLabStore, LabService
+from studio_ml.services import InMemoryMLLabStore, LabService, compile_lab_pipeline
 from studio_storage import LocalArtifactStore
 
 
@@ -102,6 +102,184 @@ def test_submit_candidate_algorithms_runs_and_pins_v2_pipeline() -> None:
             "logistic_regression",
             "decision_tree_classifier",
         }
+    finally:
+        plugin._coordinator.close()
+
+
+def test_submit_custom_v2_pipeline_is_validated_and_pinned() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x", "numeric"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    compiled = compile_lab_pipeline(
+        lab, candidate_algorithms=("logistic_regression", "decision_tree_classifier")
+    )
+    id_map = {node.id: f"custom_{node.id}" for node in compiled.nodes}
+    custom = PipelineIR(
+        tuple(
+            PipelineNode(
+                id_map[node.id],
+                node.kind,
+                tuple(id_map[dependency] for dependency in node.depends_on),
+                node.config,
+            )
+            for node in reversed(compiled.nodes)
+        ),
+        compiled.parameters,
+        compiled.schema,
+    )
+    rows = [{"x": value, "target": value % 2} for value in range(1, 21)]
+    try:
+        submitted = plugin.submit_execution(
+            "ws",
+            lab.id,
+            body={"run_id": "custom-pipeline-run", "rows": rows, "pipeline": custom.to_payload()},
+        )
+        assert submitted["run_id"] == "custom-pipeline-run"
+        stored_pipeline = plugin._labs.store.get_pipeline(WorkspaceId("ws"), lab.id)
+        assert stored_pipeline == custom
+        deadline = time.time() + 30
+        state = plugin.execution_status("custom-pipeline-run", workspace_id="ws")["state"]
+        while state not in {"succeeded", "failed"} and time.time() < deadline:
+            time.sleep(0.01)
+            state = plugin.execution_status("custom-pipeline-run", workspace_id="ws")["state"]
+        assert state == "succeeded"
+    finally:
+        plugin._coordinator.close()
+
+
+def test_custom_v2_pipeline_with_register_stage_is_rejected_before_job_creation() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x", "numeric"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    compiled = compile_lab_pipeline(
+        lab, candidate_algorithms=("logistic_regression", "decision_tree_classifier")
+    )
+    mismatched_parameters = tuple(
+        (key, "sha256:wrong-lab" if key == "lab_digest" else value)
+        for key, value in compiled.parameters
+    )
+    mismatched = PipelineIR(compiled.nodes, mismatched_parameters, compiled.schema)
+    unsupported = PipelineIR(
+        tuple(
+            PipelineNode(
+                node.id,
+                "register" if node.kind == "quality_gate" else node.kind,
+                node.depends_on,
+                node.config,
+            )
+            for node in compiled.nodes
+        ),
+        compiled.parameters,
+        compiled.schema,
+    )
+    unsupported_algorithm = PipelineIR(
+        tuple(
+            PipelineNode(
+                node.id,
+                node.kind,
+                node.depends_on,
+                {"algorithm": "untrusted_algorithm"} if node.kind == "train" else node.config,
+            )
+            for node in compiled.nodes
+        ),
+        compiled.parameters,
+        compiled.schema,
+    )
+    try:
+        with pytest.raises(ValueError, match="parameters do not match the submitted Lab"):
+            plugin.submit_execution(
+                "ws",
+                lab.id,
+                body={
+                    "run_id": "mismatched-pipeline",
+                    "rows": [{"x": value, "target": value % 2} for value in range(1, 21)],
+                    "pipeline": mismatched.to_payload(),
+                },
+            )
+        with pytest.raises(KeyError):
+            plugin.execution_status("mismatched-pipeline", workspace_id="ws")
+        with pytest.raises(ValueError, match="shared stages, paired candidates"):
+            plugin.submit_execution(
+                "ws",
+                lab.id,
+                body={
+                    "run_id": "rejected-register-pipeline",
+                    "rows": [{"x": value, "target": value % 2} for value in range(1, 21)],
+                    "pipeline": unsupported.to_payload(),
+                },
+            )
+        with pytest.raises(KeyError):
+            plugin.execution_status("rejected-register-pipeline", workspace_id="ws")
+        with pytest.raises(ValueError, match="not supported for this Lab task"):
+            plugin.submit_execution(
+                "ws",
+                lab.id,
+                body={
+                    "run_id": "rejected-algorithm-pipeline",
+                    "rows": [{"x": value, "target": value % 2} for value in range(1, 21)],
+                    "pipeline": unsupported_algorithm.to_payload(),
+                },
+            )
+        with pytest.raises(KeyError):
+            plugin.execution_status("rejected-algorithm-pipeline", workspace_id="ws")
+    finally:
+        plugin._coordinator.close()
+
+
+def test_custom_pipeline_fails_before_job_when_runner_cannot_validate_it() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._coordinator.close()
+
+    class LegacyRunner:
+        def run(self, *_args):
+            raise AssertionError("custom pipeline must not reach a legacy runner")
+
+    plugin._coordinator = LocalExecutionCoordinator(runner=LegacyRunner())
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x", "numeric"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    pipeline = compile_lab_pipeline(
+        lab, candidate_algorithms=("logistic_regression", "decision_tree_classifier")
+    )
+    try:
+        with pytest.raises(ValueError, match="cannot validate custom ML pipelines"):
+            plugin.submit_execution(
+                "ws",
+                lab.id,
+                body={
+                    "run_id": "legacy-custom-pipeline",
+                    "rows": [{"x": value, "target": value % 2} for value in range(1, 21)],
+                    "pipeline": pipeline.to_payload(),
+                },
+            )
+        with pytest.raises(KeyError):
+            plugin.execution_status("legacy-custom-pipeline", workspace_id="ws")
     finally:
         plugin._coordinator.close()
 

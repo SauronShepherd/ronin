@@ -254,6 +254,14 @@ class LabService:
     def list(self, workspace_id: WorkspaceId) -> tuple[Lab, ...]:
         return self.store.list_labs(workspace_id)
 
+    def put_pipeline(
+        self, workspace_id: WorkspaceId, lab_id: str, pipeline: PipelineIR
+    ) -> PipelineIR:
+        lab = self.get(workspace_id, lab_id)
+        if dict(pipeline.parameters).get("lab_digest") != lab.digest:
+            raise ValueError("pipeline is not bound to the current Lab version")
+        return self.store.put_pipeline(workspace_id, lab_id, pipeline)
+
     def compile(
         self,
         workspace_id: WorkspaceId,
