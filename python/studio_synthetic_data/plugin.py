@@ -1,11 +1,13 @@
 """Ronin plugin boundary for Synthetic Data Studio."""
 
 import os
+from contextlib import nullcontext
 from typing import Any, cast
 
 from studio_core import AssetId, AssetRef, AssetVersion, WorkspaceId
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 from studio_storage.catalog import SqliteCatalogStore
+from studio_storage.ports import ArtifactReferenceBarrier
 
 from studio_synthetic_data.application import GovernStudioService, plan_from_payload
 from studio_synthetic_data.async_generation import LocalGenerationJobs
@@ -49,6 +51,7 @@ class SyntheticDataStudioPlugin:
         # Hosts can inject a SqliteRunStore-backed service; ephemeral sessions use memory.
         self.service = service or GovernStudioService()
         self.artifact_store = artifact_store
+        self.artifact_reference_barrier: ArtifactReferenceBarrier | None = None
         self.catalog_store: SqliteCatalogStore | None = None
         self.jobs = LocalGenerationJobs(self.service, db_path=os.getenv("SDS_JOBS_DB"))
 
@@ -60,6 +63,9 @@ class SyntheticDataStudioPlugin:
             self.jobs = LocalGenerationJobs(self.service, db_path=os.getenv("SDS_JOBS_DB"))
         if "artifact_store" in context.services:
             self.artifact_store = context.services["artifact_store"]
+        reference_barrier = context.services.get("artifact_reference_barrier")
+        if reference_barrier is not None:
+            self.artifact_reference_barrier = cast(ArtifactReferenceBarrier, reference_barrier)
         injected_catalog = context.services.get("catalog_store")
         if isinstance(injected_catalog, SqliteCatalogStore):
             self.catalog_store = injected_catalog
@@ -415,30 +421,36 @@ class SyntheticDataStudioPlugin:
         table_name = str(body.get("table", ""))
         if not format_id or not table_name:
             raise ValueError("format_id and table are required for export")
-        content = self.service.export(
-            str(body["run_id"]), format_id=format_id, table_name=table_name
+        lease = (
+            self.artifact_reference_barrier.writer()
+            if self.artifact_reference_barrier is not None
+            else nullcontext()
         )
-        response: dict[str, object] = {
-            "status": "completed",
-            "contract": "synthetic-data-studio/export/v1",
-            "run_id": str(body["run_id"]),
-            "format_id": format_id,
-            "table": table_name,
-            "content": content,
-        }
-        if self.artifact_store is not None:
-            ref = self.artifact_store.put_bytes(
-                role=f"govern-studio/{body['run_id']}/{table_name}.{format_id}",
-                data=content.encode("utf-8"),
-                media_type=_media_type(format_id),
+        with lease:
+            content = self.service.export(
+                str(body["run_id"]), format_id=format_id, table_name=table_name
             )
-            response["artifact"] = {
-                "storage_ref": ref.storage_ref,
-                "digest": ref.digest,
-                "size_bytes": ref.size_bytes,
-                "media_type": ref.media_type,
+            response: dict[str, object] = {
+                "status": "completed",
+                "contract": "synthetic-data-studio/export/v1",
+                "run_id": str(body["run_id"]),
+                "format_id": format_id,
+                "table": table_name,
+                "content": content,
             }
-        return response
+            if self.artifact_store is not None:
+                ref = self.artifact_store.put_bytes(
+                    role=f"govern-studio/{body['run_id']}/{table_name}.{format_id}",
+                    data=content.encode("utf-8"),
+                    media_type=_media_type(format_id),
+                )
+                response["artifact"] = {
+                    "storage_ref": ref.storage_ref,
+                    "digest": ref.digest,
+                    "size_bytes": ref.size_bytes,
+                    "media_type": ref.media_type,
+                }
+            return response
 
     def list_assets(
         self, *, body: object | None = None, query: str | None = None, **_kwargs: Any

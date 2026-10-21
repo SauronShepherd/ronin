@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -56,6 +57,79 @@ def test_csv_ingestion_creates_snapshot_and_lineage(tmp_path: Path) -> None:
     assert DatasetResolver(catalog, artifacts).resolve(_WS, result.target) == [
         {"id": "1", "name": "Ada"},
         {"id": "2", "name": "Grace"},
+    ]
+
+
+def test_ingestion_holds_barrier_through_artifact_and_catalog_commit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_root = tmp_path / "source"
+    source_root.mkdir()
+    source_root.joinpath("people.csv").write_text("id,name\n1,Ada\n", encoding="utf-8")
+    catalog, artifacts = _stores(tmp_path)
+    events: list[str] = []
+
+    class Barrier:
+        @contextmanager
+        def writer(self):
+            events.append("lock")
+            try:
+                yield
+            finally:
+                events.append("unlock")
+
+        @contextmanager
+        def collector(self):
+            yield
+
+    original_put_bytes = artifacts.put_bytes
+    original_create_asset = catalog.create_asset
+    original_put_revision = catalog.put_revision
+    original_put_lineage = catalog.put_lineage
+
+    def put_bytes(**kwargs):
+        events.append("artifact")
+        return original_put_bytes(**kwargs)
+
+    def create_asset(*args, **kwargs):
+        events.append("asset")
+        return original_create_asset(*args, **kwargs)
+
+    def put_revision(*args, **kwargs):
+        events.append("reference")
+        return original_put_revision(*args, **kwargs)
+
+    def put_lineage(*args, **kwargs):
+        events.append("lineage")
+        return original_put_lineage(*args, **kwargs)
+
+    monkeypatch.setattr(artifacts, "put_bytes", put_bytes)
+    monkeypatch.setattr(catalog, "create_asset", create_asset)
+    monkeypatch.setattr(catalog, "put_revision", put_revision)
+    monkeypatch.setattr(catalog, "put_lineage", put_lineage)
+
+    LocalFileConnector(source_root).ingest(
+        workspace_id=_WS,
+        connection=_CONNECTION,
+        relative_path="people.csv",
+        target_asset_id=AssetId("people"),
+        target_name="People",
+        artifact_store=artifacts,
+        catalog_store=catalog,
+        artifact_reference_barrier=Barrier(),
+        now=_NOW,
+    )
+
+    assert events == [
+        "lock",
+        "artifact",
+        "asset",
+        "asset",
+        "reference",
+        "reference",
+        "lineage",
+        "unlock",
     ]
 
 

@@ -1,4 +1,5 @@
 import time
+from contextlib import contextmanager
 
 import pytest
 from studio_core import (
@@ -40,13 +41,25 @@ def _plan() -> GenerationPlan:
 
 
 def _plugin(
-    service: GovernStudioService | None = None, artifact_store=None
+    service: GovernStudioService | None = None,
+    artifact_store=None,
+    artifact_reference_barrier=None,
 ) -> SyntheticDataStudioPlugin:
     plugin = SyntheticDataStudioPlugin(service, artifact_store)
     contributions = ContributionRegistry()
     for permission in plugin.manifest.permissions:
         contributions.add_permission(permission, plugin.manifest.id)
-    plugin.register(PluginContext(plugin.manifest.id, contributions, {}))
+    plugin.register(
+        PluginContext(
+            plugin.manifest.id,
+            contributions,
+            {
+                "artifact_reference_barrier": artifact_reference_barrier,
+            }
+            if artifact_reference_barrier is not None
+            else {},
+        )
+    )
     plugin.startup()
     return plugin
 
@@ -200,6 +213,50 @@ def test_export_route_can_materialize_a_content_addressed_artifact(tmp_path) -> 
         body={"run_id": generated["run_id"], "format_id": "csv", "table": "customers"}
     )
     assert response["artifact"]["storage_ref"].startswith("artifact://sha256/")
+
+
+def test_export_holds_barrier_through_reference_and_artifact_write(tmp_path, monkeypatch) -> None:
+    events: list[str] = []
+
+    class Barrier:
+        @contextmanager
+        def writer(self):
+            events.append("lock")
+            try:
+                yield
+            finally:
+                events.append("unlock")
+
+        @contextmanager
+        def collector(self):
+            yield
+
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    original_put_bytes = artifacts.put_bytes
+
+    def put_bytes(**kwargs):
+        events.append("artifact")
+        return original_put_bytes(**kwargs)
+
+    plugin = _plugin(
+        artifact_store=artifacts,
+        artifact_reference_barrier=Barrier(),
+    )
+    generated = plugin.generate(body={"plan": _plan()})
+    original_export = plugin.service.export
+
+    def export(*args, **kwargs):
+        events.append("reference")
+        return original_export(*args, **kwargs)
+
+    monkeypatch.setattr(artifacts, "put_bytes", put_bytes)
+    monkeypatch.setattr(plugin.service, "export", export)
+    response = plugin.export(
+        body={"run_id": generated["run_id"], "format_id": "csv", "table": "customers"}
+    )
+
+    assert response["artifact"]["storage_ref"].startswith("artifact://sha256/")
+    assert events == ["lock", "reference", "artifact", "unlock"]
 
 
 def test_export_route_fails_closed_for_unknown_format() -> None:

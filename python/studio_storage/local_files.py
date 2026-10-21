@@ -6,6 +6,7 @@ import csv
 import hashlib
 import io
 import json
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,6 +28,7 @@ from studio_orchestrator import Instant
 
 from .artifacts import LocalArtifactStore
 from .catalog import SqliteCatalogStore
+from .ports import ArtifactReferenceBarrier
 
 _LOCAL_FILE_CONNECTOR_ID = "ronin.local-file"
 _SUPPORTED_SUFFIXES = {".csv", ".jsonl"}
@@ -190,6 +192,7 @@ class LocalFileConnector:
         target_name: str,
         artifact_store: LocalArtifactStore,
         catalog_store: SqliteCatalogStore,
+        artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
         now: Instant | str,
     ) -> LocalFileIngestionResult:
         if connection.connector_id != self.connector_id:
@@ -208,54 +211,60 @@ class LocalFileConnector:
         source_id = AssetId(f"source-{source_digest[:32]}")
         source_ref = AssetRef(source_id, version)
         target_ref = AssetRef(target_asset_id, version)
-        artifact = artifact_store.put_bytes(
-            role="ingestion-source",
-            data=data,
-            media_type=media_type,
+        lease = (
+            artifact_reference_barrier.writer()
+            if artifact_reference_barrier is not None
+            else nullcontext()
         )
-        source_asset = CatalogAsset(
-            id=source_id,
-            kind="file",
-            name=relative_path,
-            properties=(("connection_id", connection.id.value),),
-        )
-        target_asset = CatalogAsset(
-            id=target_asset_id,
-            kind="dataset",
-            name=target_name,
-        )
-        catalog_store.create_asset(workspace_id, source_asset, now=now)
-        catalog_store.create_asset(workspace_id, target_asset, now=now)
-        revision_metadata = (
-            ("artifact_ref", artifact.storage_ref),
-            ("media_type", media_type),
-        )
-        source_revision = AssetRevision(
-            source_ref,
-            content_digest=f"sha256:{digest}",
-            metadata=revision_metadata,
-        )
-        target_revision = AssetRevision(
-            target_ref,
-            content_digest=f"sha256:{digest}",
-            metadata=revision_metadata,
-        )
-        catalog_store.put_revision(workspace_id, source_revision, now=now)
-        catalog_store.put_revision(workspace_id, target_revision, now=now)
-        catalog_store.put_lineage(
-            workspace_id,
-            LineageEdge(
+        with lease:
+            artifact = artifact_store.put_bytes(
+                role="ingestion-source",
+                data=data,
+                media_type=media_type,
+            )
+            source_asset = CatalogAsset(
+                id=source_id,
+                kind="file",
+                name=relative_path,
+                properties=(("connection_id", connection.id.value),),
+            )
+            target_asset = CatalogAsset(
+                id=target_asset_id,
+                kind="dataset",
+                name=target_name,
+            )
+            catalog_store.create_asset(workspace_id, source_asset, now=now)
+            catalog_store.create_asset(workspace_id, target_asset, now=now)
+            revision_metadata = (
+                ("artifact_ref", artifact.storage_ref),
+                ("media_type", media_type),
+            )
+            source_revision = AssetRevision(
+                source_ref,
+                content_digest=f"sha256:{digest}",
+                metadata=revision_metadata,
+            )
+            target_revision = AssetRevision(
+                target_ref,
+                content_digest=f"sha256:{digest}",
+                metadata=revision_metadata,
+            )
+            catalog_store.put_revision(workspace_id, source_revision, now=now)
+            catalog_store.put_revision(workspace_id, target_revision, now=now)
+            catalog_store.put_lineage(
+                workspace_id,
+                LineageEdge(
+                    source=source_ref,
+                    target=target_ref,
+                    operation="write",
+                    mode="observed",
+                ),
+                now=now,
+            )
+            return LocalFileIngestionResult(
                 source=source_ref,
                 target=target_ref,
-                operation="write",
-                mode="observed",
-            ),
-            now=now,
-        )
-        return LocalFileIngestionResult(
-            source=source_ref,
-            target=target_ref,
-            checkpoint=SourceCheckpoint("snapshot", digest),
-            artifact_ref=artifact.storage_ref,
-            discovered=discovered,
-        )
+                checkpoint=SourceCheckpoint("snapshot", digest),
+                artifact_ref=artifact.storage_ref,
+                discovered=discovered,
+            )
