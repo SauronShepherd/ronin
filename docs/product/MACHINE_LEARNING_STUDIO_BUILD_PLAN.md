@@ -882,3 +882,9 @@ La composición local creaba `GovernStudioService()` sin store, por lo que `snap
 **Estado: implementado en candidato basado en `main@c17424d`; 44 pruebas relacionadas pasan. Cualificación exact-head pendiente. Avance global: 85%.**
 
 La auditoría del inventario sintético detectó que `snapshot()` y `artifacts()` materializaban todos los runs/exports antes de comprobar los máximos, de modo que los límites no acotaban memoria. `GovernStudioService` y sus stores ahora aceptan `limit`, y el scanner solicita como máximo `límite + 1` para detectar una fuente que exceda o ignore el tope y fallar cerrado. Pruebas con `SqliteRunStore` y dobles que ignoran el límite confirman el comportamiento para runs y exports. No se habilita borrado global.
+
+## 65. Usar checkpoints durables PostgreSQL para ingesta de conectores
+
+**Estado: implementación en candidato; 53 pruebas focalizadas pasan. Docker local pasó 23 pruebas y aceptación estricta 15/15; arquitectura, Ruff, formato y mypy focalizado pasan. Checks exact-head del PR pendientes. Avance global: permanece en 85% hasta integrar y cualificar el slice.**
+
+La composición local PostgreSQL exponía rutas de conectores pero no montaba `IngestionHTTPAdapter`; además, el perfil sólo disponía de checkpoints SQLite y el inventario de outputs sintéticos de una fuente distinta. `PostgresConnectorCheckpointStore` implementa el contrato CAS/fencing, recuperación de evidencia, salud e inventario acotado en PostgreSQL. La composición usa este store en el perfil PostgreSQL e inyecta la misma barrera de referencias que protege los bytes y el commit del checkpoint; SQLite conserva su store local. La prueba de integración verifica fencing obsoleto, persistencia tras reconstrucción, descubrimiento de digests y rechazo del inventario que supera el límite. La revisión Docker exact-head aún está pendiente.
