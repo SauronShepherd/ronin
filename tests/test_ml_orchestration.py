@@ -7,6 +7,7 @@ import json
 import os
 import sqlite3
 import time
+from contextlib import contextmanager
 from dataclasses import replace
 from threading import Event, Thread
 from types import SimpleNamespace
@@ -391,11 +392,49 @@ def test_durable_ml_result_materializes_and_verifies_model_artifact(tmp_path) ->
             return result
 
     jobs = SqliteJobStore(tmp_path / "jobs.sqlite", migration_now=_MIGRATION_NOW)
-    service = DurableExecutionService(jobs)
+    events: list[str] = []
+
+    class RecordingService(DurableExecutionService):
+        async def worker_put_cell_result(self, *_args, **_kwargs):
+            events.append("reference")
+            return await super().worker_put_cell_result(*_args, **_kwargs)
+
+    class RecordingArtifacts:
+        def __init__(self, inner):
+            self._inner = inner
+
+        def put_bytes(self, **kwargs):
+            events.append("artifact")
+            return self._inner.put_bytes(**kwargs)
+
+        def verify(self, ref):
+            return self._inner.verify(ref)
+
+        def get_bytes(self, ref):
+            return self._inner.get_bytes(ref)
+
+    class RecordingBarrier:
+        @contextmanager
+        def writer(self):
+            events.append("lock")
+            try:
+                yield
+            finally:
+                events.append("unlock")
+
+        @contextmanager
+        def collector(self):
+            yield
+
+    service = RecordingService(jobs)
     artifacts = LocalArtifactStore(tmp_path / "artifacts")
     coordinator = LocalExecutionCoordinator(
         runner=ResultRunner(),
-        store=JobStoreExecutionStore(service, artifacts),
+        store=JobStoreExecutionStore(
+            service,
+            RecordingArtifacts(artifacts),
+            artifact_reference_barrier=RecordingBarrier(),
+        ),
     )
     try:
         coordinator.submit("workspace-a", "materialized-run", lab, [{"x": 1, "target": 1}])
@@ -405,6 +444,10 @@ def test_durable_ml_result_materializes_and_verifies_model_artifact(tmp_path) ->
             time.sleep(0.01)
             snapshot = coordinator.status("workspace-a", "materialized-run")
         assert snapshot.state == "succeeded", snapshot.error
+        artifact_index = events.index("artifact")
+        reference_index = events.index("reference")
+        assert events[artifact_index - 1] == "lock"
+        assert events[reference_index + 1] == "unlock"
         assert snapshot.result_payload is not None
         assert snapshot.result_payload["artifact_digest"] == result.artifact_digest
         assert snapshot.result_payload["artifact_ref"] == (

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import contextmanager
 from dataclasses import replace
 
 import pytest
@@ -95,6 +96,64 @@ def test_large_execution_rows_are_artifact_backed_and_recover_after_store_reopen
         assert claim.input_error is None
     finally:
         asyncio.run(reopened.aclose())
+
+
+def test_ml_input_artifact_and_job_reference_share_writer_lease(tmp_path) -> None:
+    events: list[str] = []
+
+    class _Barrier:
+        @contextmanager
+        def writer(self):
+            events.append("lock")
+            try:
+                yield
+            finally:
+                events.append("unlock")
+
+        @contextmanager
+        def collector(self):
+            yield
+
+    class _RecordingArtifacts:
+        def __init__(self) -> None:
+            self._inner = LocalArtifactStore(tmp_path / "artifacts")
+
+        def put_bytes(self, **kwargs):
+            events.append("artifact")
+            return self._inner.put_bytes(**kwargs)
+
+        def verify(self, ref):
+            return self._inner.verify(ref)
+
+        def get_bytes(self, ref):
+            return self._inner.get_bytes(ref)
+
+        def delete(self, ref):
+            return self._inner.delete(ref)
+
+        def list_digests(self):
+            return self._inner.list_digests()
+
+        def storage_ref_for_digest(self, digest):
+            return self._inner.storage_ref_for_digest(digest)
+
+    class _RecordingService(DurableExecutionService):
+        async def submit(self, job, run):
+            events.append("reference")
+            return await super().submit(job, run)
+
+    service = _RecordingService(InMemoryJobStore())
+    adapter = JobStoreExecutionStore(
+        service,
+        _RecordingArtifacts(),
+        artifact_reference_barrier=_Barrier(),
+    )
+    rows_json = encode_canonical_json([{"large": "x" * MAX_INLINE_EXECUTION_REQUEST_BYTES}])
+    try:
+        adapter.create(_snapshot("workspace-a", rows_json=rows_json.decode("utf-8")))
+        assert events == ["lock", "artifact", "reference", "unlock"]
+    finally:
+        asyncio.run(service.aclose())
 
 
 def test_large_execution_rows_require_artifact_store_before_job_submission() -> None:

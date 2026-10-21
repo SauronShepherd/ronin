@@ -797,3 +797,16 @@ Este componente sólo ofrece el mecanismo. Ningún productor queda protegido has
 | Verificar el orden de publicación y referencia | Una prueba de sync comprueba `lock → artifact → reference → unlock`; suites de sync, checkpoints, registry, capabilities y PostgreSQL pasan **48/48**. |
 
 Esta integración deja preparado el servicio de sync; todavía debe cablearse una instancia compartida en la composición de servidor y demostrarse con sus adapters reales. No cubre los otros productores ni hace segura la recolección global.
+
+## 54. Proteger artefactos de ejecuciones durables de ML
+
+**Estado del slice: instrumentado en candidato; 30 tests ML dirigidos pasan. Avance global: 85%; la recolección global sigue deshabilitada.**
+
+| Criterio | Evidencia |
+| --- | --- |
+| Proteger inputs grandes hasta crear el Job que los referencia | `JobStoreExecutionStore.create()` mantiene el lease desde `ArtifactStore.put_bytes()` hasta `submit()` durable. |
+| Proteger checkpoints de nodo hasta guardar su referencia | `save_node_checkpoint()` mantiene el lease durante la materialización y `worker_put_cell_result()`. |
+| Proteger el modelo final hasta completar el Job | `finish_claim_with_result()` cubre materialización verificada y commit de `ml-result`. |
+| Compartir la coordinación en perfil PostgreSQL | La composición local inyecta una instancia `PostgresArtifactReferenceBarrier` en el host de plugins; el perfil SQLite conserva el modo actual sin barrera. |
+
+La prueba de regresión observa que el artefacto y su submit quedan dentro del mismo lease; las suites de ejecución ML y orchestration pasan **30/30**, Ruff y mypy focalizado pasan. Todavía faltan Job/evidencia y otros productores que guardan referencias fuera de ML Studio, más la integración de conectores, catálogo/archivos, revisiones de Data Engineering y exports sintéticos en la misma composición. No habilitar limpieza global hasta cubrirlos y cualificar el commit exact-head.
