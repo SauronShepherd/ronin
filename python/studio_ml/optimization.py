@@ -126,8 +126,20 @@ class Trial:
     metrics: tuple[tuple[str, float], ...]
 
     @classmethod
-    def create(cls, parameters: dict[str, object], metrics: dict[str, float]) -> Trial:
-        encoded = json.dumps(parameters, sort_keys=True, separators=(",", ":"))
+    def create(
+        cls,
+        parameters: dict[str, object],
+        metrics: dict[str, float],
+        *,
+        random_seed: int = 17,
+    ) -> Trial:
+        if not isinstance(random_seed, int) or isinstance(random_seed, bool) or random_seed < 0:
+            raise ValueError("trial random seed must be a non-negative integer")
+        encoded = json.dumps(
+            {"parameters": parameters, "random_seed": random_seed},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
         digest = hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
         return cls(
             f"trial-{digest}", tuple(sorted(parameters.items())), tuple(sorted(metrics.items()))
@@ -145,6 +157,20 @@ class Trial:
             "parameters": dict(self.parameters),
             "metrics": dict(self.metrics),
         }
+
+
+def derive_trial_seed(random_seed: int, trial_id: str) -> int:
+    """Derive a stable scikit-learn-compatible seed for one search trial."""
+    if (
+        not isinstance(random_seed, int)
+        or isinstance(random_seed, bool)
+        or random_seed < 0
+        or not isinstance(trial_id, str)
+        or not trial_id
+    ):
+        raise ValueError("trial seed requires a non-negative seed and trial id")
+    encoded = f"ronin-ml-trial-seed-v1:{random_seed}:{trial_id}"
+    return int.from_bytes(hashlib.sha256(encoded.encode("utf-8")).digest()[:4], "big")
 
 
 def rank_trials(spec: SearchSpec, trials: tuple[Trial, ...]) -> tuple[Trial, ...]:

@@ -692,4 +692,17 @@ El recorrido añadido con Playwright pasa aislado y dentro de la suite completa.
 | Validar presupuesto y estructura en runtime | `max_trials` se limita a 1..1000; se rechazan tipos incorrectos, parámetros vacíos/duplicados y semillas inválidas. |
 | Probar cardinalidad, determinismo y API durable | Tests cubren un espacio de 1000³, unicidad/reproducibilidad y la ejecución API de plugin. |
 
-La suite completa local registró **3837 passed y 54 skipped** antes de añadir las cinco variantes de tipos inválidos; tras esos cambios, `tests/test_ml_optimization.py` pasó **16/16** y `tests/test_ml_plugin_execution_api.py` pasó **17/17**. Ruff, formato y mypy (455 archivos) pasan. La cualificación Docker local pasó **21 tests con 2 omitidos** porque el host no tiene `RONIN_POSTGRES_TEST_DSN`; la aceptación estricta pasó **15/15**. PR #473 pasó matrices Python 3.11/3.12, calidad, seguridad, Release, Status consistency, Web y Docker qualification (**9m47s**, con PostgreSQL, worker Docker real y aceptación estricta). Los seis workflows post-merge exact-head de `main@1994778` también pasaron, incluido Docker. P8 sigue parcial y la cualificación release permanece en **0% (0/14)**.
+
+
+## 46. Identidad y semillas deterministas para trials
+
+**Progreso técnico del incremento: implementación focalizada en curso; pendiente de suite completa, Docker exact-head, CI y merge. Avance global integrado: 79%; release-qualified: 0% (0/14).**
+
+| Criterio | Implementación |
+| --- | --- |
+| Repetir identidad de trial por parámetros y semilla de búsqueda | `trial_id` deriva del JSON canónico de parámetros y `SearchSpec.random_seed`; resultados con métricas distintas conservan la misma identidad de configuración. |
+| Variar seed reproduciblemente entre configuraciones | Si no se declara `seed` como parámetro, cada trial deriva un seed scikit-learn de 32 bits desde la semilla de búsqueda y el `trial_id`. Un parámetro `seed` explícito conserva su precedencia. |
+| Hacer estable el registro durable | `MLRunId` y `ModelVersion` se forman con el identificador del trial, no con su posición en la respuesta. |
+| Verificar repetición y separación entre runs | Tests prueban identidad/seed estables al repetir, semillas diferentes entre configuraciones y ejecuciones API repetibles. |
+
+La primera iteración focalizada detectó que al insertar el derivador de seed se había desplazado la indentación de los métodos `Trial.metric()`/`to_payload()`; se corrigió y el conjunto relevante pasó **37/37**. La suite completa pasó **3849 tests con 54 omitidos**; Ruff, formato, mypy (455 archivos) y `git diff --check` pasan. Docker local pasó **21 tests con 2 omitidos** por falta de `RONIN_POSTGRES_TEST_DSN`; la aceptación estricta pasó **15/15**. Falta Docker/CI exact-head y merge para cualificar este incremento.

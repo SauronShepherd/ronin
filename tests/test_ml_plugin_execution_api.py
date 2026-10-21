@@ -543,6 +543,48 @@ def test_search_route_executes_grid_trials() -> None:
     plugin._coordinator.close()
 
 
+def test_search_route_derives_repeatable_per_trial_seeds_and_ids() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "search-seed",
+        "Search seed",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    observed_seeds: list[int] = []
+    runner = plugin._runner
+    original_run = runner.run
+
+    def record_seed(candidate: Lab, rows: object, parameters: object) -> object:
+        observed_seeds.append(candidate.seed)
+        return original_run(candidate, rows, parameters)  # type: ignore[arg-type]
+
+    runner.run = record_seed  # type: ignore[method-assign]
+    body = {
+        "spec": {
+            "mode": "grid",
+            "parameters": [{"name": "C", "values": [0.25, 1.0]}],
+            "metric": "accuracy",
+            "random_seed": 31,
+        },
+        "rows": [{"x": n, "target": n % 2} for n in range(1, 21)],
+    }
+    first = plugin.search_trials("ws", "search-seed", body=body)
+    second = plugin.search_trials("ws", "search-seed", body=body)
+    assert observed_seeds[:2] == observed_seeds[2:]
+    assert len(set(observed_seeds[:2])) == 2
+    assert {item["trial_id"] for item in first["items"]} == {
+        item["trial_id"] for item in second["items"]
+    }
+    assert first["items"] == second["items"]
+    plugin._coordinator.close()
+
+
 def test_search_registration_requires_persistent_services() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())
