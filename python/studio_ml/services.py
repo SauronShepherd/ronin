@@ -32,6 +32,7 @@ def compile_lab_pipeline(
     algorithm: str | None = None,
     preprocessor: str = "identity",
     candidate_algorithms: tuple[str, ...] | None = None,
+    candidate_cluster_counts: tuple[int, ...] | None = None,
     selection_metric: str | None = None,
     selection_direction: str | None = None,
 ) -> PipelineIR:
@@ -70,6 +71,53 @@ def compile_lab_pipeline(
         raise ValueError("one_hot preprocessing requires categorical Lab features")
     if preprocessor != "identity":
         parameters["preprocessor"] = preprocessor
+
+    if candidate_algorithms is not None and candidate_cluster_counts is not None:
+        raise ValueError("candidate_algorithms cannot be combined with candidate_cluster_counts")
+    if candidate_cluster_counts is not None:
+        if lab.task != "clustering":
+            raise ValueError("candidate_cluster_counts are supported only for clustering Labs")
+        if (
+            not isinstance(candidate_cluster_counts, tuple)
+            or not 2 <= len(candidate_cluster_counts) <= 8
+            or any(
+                not isinstance(item, int) or isinstance(item, bool) or not 2 <= item <= 32
+                for item in candidate_cluster_counts
+            )
+            or len(set(candidate_cluster_counts)) != len(candidate_cluster_counts)
+        ):
+            raise ValueError(
+                "candidate_cluster_counts must contain 2 to 8 unique counts from 2 to 32"
+            )
+        metric = selection_metric if selection_metric is not None else "calinski_harabasz"
+        direction = selection_direction if selection_direction is not None else "maximize"
+        if metric != "calinski_harabasz" or direction != "maximize":
+            raise ValueError(
+                "clustering candidate selection supports calinski_harabasz with maximize direction"
+            )
+        nodes = [
+            _node("profile"),
+            _node("quality_gate", ("profile",)),
+            _node("prepare", ("quality_gate",)),
+        ]
+        cluster_evaluations: list[str] = []
+        for index, cluster_count in enumerate(candidate_cluster_counts, start=1):
+            train_id = f"train_{index}"
+            evaluate_id = f"evaluate_{index}"
+            nodes.append(PipelineNode(train_id, "train", ("prepare",), {"clusters": cluster_count}))
+            nodes.append(PipelineNode(evaluate_id, "evaluate", (train_id,)))
+            cluster_evaluations.append(evaluate_id)
+        nodes.append(
+            PipelineNode(
+                "select",
+                "select",
+                tuple(cluster_evaluations),
+                {"metric": metric, "direction": direction},
+            )
+        )
+        return PipelineIR(
+            tuple(nodes), parameters=tuple(sorted(parameters.items())), schema=PIPELINE_SCHEMA_V2
+        )
 
     if candidate_algorithms is not None:
         from .runtime import ALGORITHM_CAPABILITIES
@@ -214,6 +262,7 @@ class LabService:
         algorithm: str | None = None,
         preprocessor: str = "identity",
         candidate_algorithms: tuple[str, ...] | None = None,
+        candidate_cluster_counts: tuple[int, ...] | None = None,
         selection_metric: str | None = None,
         selection_direction: str | None = None,
     ) -> PipelineIR:
@@ -223,6 +272,7 @@ class LabService:
             algorithm=algorithm,
             preprocessor=preprocessor,
             candidate_algorithms=candidate_algorithms,
+            candidate_cluster_counts=candidate_cluster_counts,
             selection_metric=selection_metric,
             selection_direction=selection_direction,
         )

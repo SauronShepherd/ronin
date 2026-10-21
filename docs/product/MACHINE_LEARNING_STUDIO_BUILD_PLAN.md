@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 75%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada y la ejecución configurable sólo cubre DAGs v2 de selección de candidatos para clasificación/regresión. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 76%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada y la ejecución configurable cubre DAGs v2 de candidatos para clasificación/regresión; la extensión a clustering está en cualificación. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -636,7 +636,7 @@ Las pruebas focalizadas de descubrimiento y JobStore pasan **46 tests**; Ruff, f
 
 ## 42. DAG v2 de candidatos de clasificación y regresión
 
-**Progreso técnico del incremento: 100% (5/5 criterios y cualificación local completados); pendiente de CI y merge. Avance global estimado: 75%; release-qualified: 0% (0/14).**
+**Progreso técnico del incremento: 100% (5/5 criterios y cualificación exact-head completados). Integrado por PR #470 en `main@cf7618b`; los seis workflows post-merge exact-head pasaron. Avance global estimado: 76%; release-qualified: 0% (0/14).**
 
 | Criterio | Implementación |
 | --- | --- |
@@ -646,4 +646,20 @@ Las pruebas focalizadas de descubrimiento y JobStore pasan **46 tests**; Ruff, f
 | Exponerlo en ejecuciones durables | El endpoint acepta `candidate_algorithms`, `selection_metric` y `selection_direction`; OpenAPI limita nombres, cardinalidad y opciones. El digest del PipelineIR v2 queda fijado en el Job y checkpoints. |
 | Rechazar planes parciales o inválidos antes de entrenar | El runner valida la forma completa del DAG, parejas train/evaluate, dependencias, tareas, métricas y algoritmos soportados por el backend antes de ejecutar nodos. |
 
-Las pruebas focalizadas ML, plugin durable y OpenAPI pasan **71/71**; el contrato Docker pasa **5/5**. La suite completa pasó **3824 tests con 54 omitidos**; mypy cubrió 457 archivos, Ruff, formato, snapshot OpenAPI y las puertas de cobertura pasaron. La cualificación real Docker pasó **23 tests, 0 fallos y 2 omitidos**; la puerta estricta de aceptación pasó **15/15** (15 esperados, sin faltantes ni inesperados). La imagen calificó con ID inmutable `sha256:94d0bc18af7162d92fd3ffcd625e2c4e7af2c02e797e93afc4d52812c2c365bd`. Este incremento no habilita DAGs arbitrarios, clustering configurable, registros dentro del grafo, etapas definidas por plugins ni búsqueda de hiperparámetros. P8 sigue parcial y la cualificación release permanece en **0% (0/14)**.
+
+Las pruebas focalizadas ML, plugin durable y OpenAPI pasan **71/71**; el contrato Docker pasa **5/5**. La suite completa pasó **3824 tests con 54 omitidos**; mypy cubrió 457 archivos, Ruff, formato, snapshot OpenAPI y las puertas de cobertura pasaron. La cualificación real Docker pasó **23 tests, 0 fallos y 2 omitidos**; la puerta estricta de aceptación pasó **15/15** (15 esperados, sin faltantes ni inesperados). La imagen calificó con ID inmutable `sha256:94d0bc18af7162d92fd3ffcd625e2c4e7af2c02e797e93afc4d52812c2c365bd`. El PR #470 y los seis workflows post-merge exact-head de `main@cf7618b` pasaron. Este incremento no habilita DAGs arbitrarios, clustering configurable, registros dentro del grafo, etapas definidas por plugins ni búsqueda de hiperparámetros. P8 sigue parcial y la cualificación release permanece en **0% (0/14)**.
+
+
+## 43. Selección de candidatos de clustering en PipelineIR v2
+
+**Progreso técnico: implementado y cualificado localmente; pendiente de CI y merge. Avance global integrado: 76%; release-qualified: 0% (0/14).**
+
+| Criterio | Implementación |
+| --- | --- |
+| Compilar candidatos de K-Means en un DAG fijado | `candidate_cluster_counts` compila de 2 a 8 ramas con `k` único entre 2 y 32; el grafo conserva perfil, quality gate y preparación compartidos. |
+| Seleccionar con un criterio que penalice complejidad | La selección usa Calinski-Harabasz y maximiza la puntuación; no usa inertia sola, que tiende a premiar más clusters. Empates resuelven por ID del nodo train. |
+| Rechazar configuraciones inválidas antes de entrenar | El runner valida forma/configuración completa y comprueba cada `k` contra el tamaño de filas antes de iniciar cualquier candidato. |
+| Hacer durable y auditable la selección | El endpoint fija el PipelineIR v2; el resultado y checkpoint conservan métrica y puntuación de selección además de inertia y digest del modelo. |
+| Conservar compatibilidad y contratos públicos | PipelineIR v1 y ejecuciones anteriores conservan sus payloads; OpenAPI limita cantidad y rango de `k` y declara Calinski-Harabasz. |
+
+Las pruebas focalizadas de clustering, runner, servicios, API durable y OpenAPI pasan **48/48**. La suite local completa pasa **3833 tests y omite 54**; mypy pasa sobre 457 archivos, Ruff, formato, snapshot OpenAPI y `git diff --check` pasan. Docker qualification pasa **21 tests y omite 2** por falta de DSN PostgreSQL en Windows; la aceptación estricta pasa **15/15**. Queda pendiente la cualificación Linux exact-head del PR. El alcance no añade algoritmo externo, selección de features ni hyperparameter search; P8 permanece parcial y release-qualified en **0% (0/14)**.

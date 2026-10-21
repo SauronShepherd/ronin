@@ -105,6 +105,47 @@ def test_submit_candidate_algorithms_runs_and_pins_v2_pipeline() -> None:
         plugin._coordinator.close()
 
 
+def test_submit_clustering_candidates_runs_and_pins_v2_pipeline() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "segments",
+        "Segments",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        None,
+        "clustering",
+        (FeatureSpec("x", "numeric"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    try:
+        submitted = plugin.submit_execution(
+            "ws",
+            lab.id,
+            body={
+                "run_id": "cluster-candidate-run",
+                "rows": [{"x": value} for value in range(1, 21)],
+                "candidate_cluster_counts": [2, 3, 4],
+            },
+        )
+        assert submitted["run_id"] == "cluster-candidate-run"
+        pipeline = plugin._labs.store.get_pipeline(WorkspaceId("ws"), lab.id)
+        assert pipeline is not None
+        assert pipeline.schema == "ronin.ml-pipeline-ir/v2"
+        deadline = time.time() + 30
+        state = plugin.execution_status("cluster-candidate-run", workspace_id="ws")["state"]
+        while state not in {"succeeded", "failed"} and time.time() < deadline:
+            time.sleep(0.01)
+            state = plugin.execution_status("cluster-candidate-run", workspace_id="ws")["state"]
+        assert state == "succeeded"
+        result = plugin.execution_status("cluster-candidate-run", workspace_id="ws")["result"]
+        assert result["task"] == "clustering"
+        assert result["selection_metric"] == "calinski_harabasz"
+        assert result["selection_score"] > 0
+    finally:
+        plugin._coordinator.close()
+
+
 def test_submit_one_hot_execution_uses_categorical_lab_feature() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())

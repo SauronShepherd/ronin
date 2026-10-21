@@ -727,6 +727,7 @@ class MachineLearningStudioPlugin:
             "algorithm",
             "preprocessor",
             "candidate_algorithms",
+            "candidate_cluster_counts",
             "selection_metric",
             "selection_direction",
         }:
@@ -756,6 +757,15 @@ class MachineLearningStudioPlugin:
             )
         ):
             raise ValueError("candidate_algorithms must be an array of trimmed algorithm names")
+        candidate_cluster_counts = body.get("candidate_cluster_counts")
+        if candidate_cluster_counts is not None and (
+            not isinstance(candidate_cluster_counts, list)
+            or any(
+                not isinstance(item, int) or isinstance(item, bool)
+                for item in candidate_cluster_counts
+            )
+        ):
+            raise ValueError("candidate_cluster_counts must be an array of integers")
         selection_metric = body.get("selection_metric")
         if selection_metric is not None and (
             not isinstance(selection_metric, str)
@@ -790,6 +800,9 @@ class MachineLearningStudioPlugin:
             preprocessor=preprocessor,
             candidate_algorithms=(
                 tuple(candidate_algorithms) if candidate_algorithms is not None else None
+            ),
+            candidate_cluster_counts=(
+                tuple(candidate_cluster_counts) if candidate_cluster_counts is not None else None
             ),
             selection_metric=selection_metric,
             selection_direction=selection_direction,

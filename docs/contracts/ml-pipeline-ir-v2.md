@@ -14,19 +14,23 @@ continues to serialize without `config`.
 
 ## Supported candidate DAG
 
-The first v2 executor supports classification and regression candidate
-selection. A graph contains one `profile`, one dependent `quality_gate`, one
+The v2 executor supports classification and regression algorithm candidates and
+clustering candidates with explicit K-Means cluster counts. A graph contains
+one `profile`, one dependent `quality_gate`, one
 dependent `prepare`, two to eight `train` nodes, one `evaluate` node per train
 node, and one `select` node depending on every evaluate node. Each train node
 depends directly on the shared prepare node. Each evaluate node depends on
 exactly one train node. The graph must be acyclic, and every dependency must
 resolve. Other graph shapes fail before training.
 
-Train-node `config` accepts only `algorithm`, whose value must be supported by
-the Lab task and selected backend. Select-node `config` accepts only `metric`
-and `direction`. Classification supports `accuracy`; regression supports `r2`
-and `mean_squared_error`. Direction is `maximize` or `minimize`; the compiler
-defaults `mean_squared_error` to `minimize` and the other supported metrics to
+For classification and regression, train-node `config` accepts only
+`algorithm`, whose value must be supported by the Lab task and selected backend. For
+clustering, it accepts only `clusters`, an integer from 2 to 32 and no larger
+than the input row count. Select-node `config` accepts only `metric` and
+`direction`. Classification supports `accuracy`; regression supports `r2` and
+`mean_squared_error`; clustering supports the Calinski-Harabasz score with
+`maximize`. Direction is `maximize` or `minimize`; the compiler defaults
+`mean_squared_error` to `minimize` and the other supported metrics to
 `maximize`. Ties resolve by lexical train-node ID. No implicit selection based
 on serialized node order is permitted.
 
@@ -34,6 +38,6 @@ The runner verifies the Lab digest, complete graph shape, task, algorithms,
 backend capabilities, and selection policy before executing any node. Stable
 topological ordering and checkpoint dependency fingerprints include the full
 v2 graph and each node's outputs. Unsupported v2 shapes are rejected rather
-than partially interpreted. Registration nodes, clustering, arbitrary stage
+than partially interpreted. Registration nodes, arbitrary stage
 configuration, plugin-defined stages, and hyperparameter search remain outside
 this contract.

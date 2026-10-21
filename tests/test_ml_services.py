@@ -119,3 +119,39 @@ def test_compile_candidate_algorithms_defaults_error_metric_to_minimize() -> Non
         selection_metric="mean_squared_error",
     )
     assert pipeline.nodes[-1].config["direction"] == "minimize"
+
+
+def test_compile_clustering_candidates_pins_counts_and_inertia_policy() -> None:
+    lab = Lab(
+        "segments",
+        "Segments",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        None,
+        "clustering",
+        (FeatureSpec("x", "numeric"),),
+    )
+    pipeline = compile_lab_pipeline(lab, candidate_cluster_counts=(2, 4, 3))
+    assert pipeline.schema == PIPELINE_SCHEMA_V2
+    assert [node.config["clusters"] for node in pipeline.nodes if node.kind == "train"] == [
+        2,
+        4,
+        3,
+    ]
+    select = next(node for node in pipeline.nodes if node.kind == "select")
+    assert select.config == {"direction": "maximize", "metric": "calinski_harabasz"}
+
+
+@pytest.mark.parametrize("counts", [(2, 2), (1, 3), (2, 33), (True, 3)])
+def test_compile_clustering_candidates_rejects_invalid_counts(counts: tuple[int, ...]) -> None:
+    lab = Lab(
+        "segments",
+        "Segments",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        None,
+        "clustering",
+        (FeatureSpec("x", "numeric"),),
+    )
+    with pytest.raises(ValueError, match="candidate_cluster_counts"):
+        compile_lab_pipeline(lab, candidate_cluster_counts=counts)
