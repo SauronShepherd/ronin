@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 76%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada y la ejecución configurable cubre DAGs v2 de candidatos para clasificación/regresión; la extensión a clustering está en cualificación. Los porcentajes se actualizarán al integrar cada incremento y al pasar su cualificación exact-head.
+**Avance de implementación técnica estimado: 76%. Cualificación release: 0% (0/14).** El primer porcentaje refleja el trabajo funcional integrado y cualificado en dominio, persistencia, compiler/runner, API, UI y retención; el segundo sólo cuenta los 14 gates de release y no equivale al avance de implementación. P8 continúa parcial: la limpieza global segura sigue deshabilitada; PipelineIR v2 ejecuta candidatos para clasificación/regresión y la extensión a clustering está integrada en `main@e20733d`, con Docker post-merge aún en curso. La superficie UI para seleccionar esos candidatos está en cualificación. Los porcentajes se actualizarán al pasar cada cualificación exact-head.
 
 ## 0. Principios de ejecución
 
@@ -652,7 +652,7 @@ Las pruebas focalizadas ML, plugin durable y OpenAPI pasan **71/71**; el contrat
 
 ## 43. Selección de candidatos de clustering en PipelineIR v2
 
-**Progreso técnico: implementado y cualificado localmente; pendiente de CI y merge. Avance global integrado: 76%; release-qualified: 0% (0/14).**
+**Progreso técnico: 5/5 criterios implementados y cualificados en PR #471; integrado en `main@e20733d`. Los checks de PR y cinco workflows post-merge pasaron; Docker post-merge sigue en curso. Avance global integrado: 76%; release-qualified: 0% (0/14).**
 
 | Criterio | Implementación |
 | --- | --- |
@@ -662,4 +662,19 @@ Las pruebas focalizadas ML, plugin durable y OpenAPI pasan **71/71**; el contrat
 | Hacer durable y auditable la selección | El endpoint fija el PipelineIR v2; el resultado y checkpoint conservan métrica y puntuación de selección además de inertia y digest del modelo. |
 | Conservar compatibilidad y contratos públicos | PipelineIR v1 y ejecuciones anteriores conservan sus payloads; OpenAPI limita cantidad y rango de `k` y declara Calinski-Harabasz. |
 
-Las pruebas focalizadas de clustering, runner, servicios, API durable y OpenAPI pasan **48/48**. La suite local completa pasa **3833 tests y omite 54**; mypy pasa sobre 457 archivos, Ruff, formato, snapshot OpenAPI y `git diff --check` pasan. Docker qualification pasa **21 tests y omite 2** por falta de DSN PostgreSQL en Windows; la aceptación estricta pasa **15/15**. Queda pendiente la cualificación Linux exact-head del PR. El alcance no añade algoritmo externo, selección de features ni hyperparameter search; P8 permanece parcial y release-qualified en **0% (0/14)**.
+Las pruebas focalizadas de clustering, runner, servicios, API durable y OpenAPI pasan **48/48**. La suite local completa pasa **3833 tests y omite 54**; mypy pasa sobre 457 archivos, Ruff, formato, snapshot OpenAPI y `git diff --check` pasan. Docker local pasa **21 tests y omite 2** por falta de DSN PostgreSQL en Windows; la aceptación estricta pasa **15/15**. PR #471 pasó matrices 3.11/3.12, calidad, seguridad, Release, status consistency y Docker (**9m25s**); post-merge exact-head de CI, Web, Security, Release y Status consistency están verdes. El alcance no añade algoritmo externo, selección de features ni hyperparameter search; P8 permanece parcial y release-qualified en **0% (0/14)**.
+
+
+## 44. Selección de candidatos en la interfaz de ML Studio
+
+**Progreso técnico: implementado y cualificado localmente; pendiente de CI y merge. Avance global integrado: 76%; release-qualified: 0% (0/14).**
+
+| Criterio | Implementación |
+| --- | --- |
+| Elegir un algoritmo o comparar candidatos supervisados | La tabla de Labs ofrece selección múltiple de algoritmos; uno conserva el flujo de ejecución individual y dos o más envían `candidate_algorithms`. |
+| Comparar candidatos K-Means desde el mismo flujo | Para clustering, la tabla ofrece conteos `k` múltiples y requiere al menos dos; la UI envía `candidate_cluster_counts`. |
+| Mantener un payload correcto para cada tarea | El generador de muestra no agrega target cuando el Lab de clustering no lo define y sólo envía parámetros soportados. |
+| Hacer accesibles las opciones | Los controles múltiples incluyen nombres accesibles y una instrucción visible para la cantidad mínima. |
+| Verificar interacción de navegador | Playwright comprueba los cuerpos durable para selección de algoritmos y conteos; la suite web completa pasa **82/82** en un worker. |
+
+El recorrido añadido con Playwright pasa aislado y dentro de la suite completa. El primer pase paralelo dio **81/82** por timeout transitorio en Debugger Studio; el test pasó aislado y la repetición serial pasó **82/82**. Pendiente CI Web exact-head. Este incremento no cambia la API ni altera la selección individual existente; P8 permanece parcial y release-qualified en **0% (0/14)**.
