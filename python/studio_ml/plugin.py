@@ -100,9 +100,14 @@ class MachineLearningStudioPlugin:
         coordinator_runner = self._coordinator._runner
         self._coordinator.close()
         self._artifacts = cast(ArtifactStore | None, context.services.get("artifact_store"))
+        reference_barrier = context.services.get("artifact_reference_barrier")
         execution_service = context.services.get("ml_execution_service")
         execution_store = (
-            JobStoreExecutionStore(cast(Any, execution_service), self._artifacts)
+            JobStoreExecutionStore(
+                cast(Any, execution_service),
+                self._artifacts,
+                artifact_reference_barrier=cast(Any, reference_barrier),
+            )
             if execution_service is not None
             else None
         )

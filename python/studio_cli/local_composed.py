@@ -57,6 +57,7 @@ from studio_storage import (
     CompositeSecretResolver,
     EnvironmentSecretResolver,
     LocalArtifactStore,
+    PostgresArtifactReferenceBarrier,
     PostgresAuditStore,
     PostgresJobReadPort,
     PostgresMLStore,
@@ -207,6 +208,14 @@ def build_local_composed_from_env() -> LocalServerComposition:
     except ValueError as exc:
         raise ValueError(f"invalid RONIN_TOKEN_SCOPES: {exc}") from exc
     artifact_store = LocalArtifactStore(database.parent / "artifacts")
+    artifact_reference_barrier = (
+        PostgresArtifactReferenceBarrier(
+            postgres_dsn,
+            application_name="ronin-composed-artifact-retention",
+        )
+        if postgres_dsn is not None
+        else None
+    )
     job_server = RoninHTTPServer(
         (_env("RONIN_HOST", "127.0.0.1"), _port("RONIN_PORT", "8080")),
         job_service,
@@ -256,6 +265,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
                 else SqliteMLStore(database, migration_now=now)
             ),
             "artifact_store": artifact_store,
+            "artifact_reference_barrier": artifact_reference_barrier,
             "catalog_store": catalog_store,
         }
     )
