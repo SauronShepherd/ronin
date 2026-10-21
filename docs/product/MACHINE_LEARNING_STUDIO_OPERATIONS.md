@@ -90,3 +90,34 @@ plugins y el control plane HTTP, autentica con un bearer de pruebas y verifica e
 Este escenario prueba también la autorización del permiso `ml-studio:write` y
 `ml-studio:execute`, la resolución de `workspace_id` desde query string y el registro de
 rutas del plugin dentro del control plane.
+
+## Retención manual de artefactos
+
+Vista previa de candidatos (no borra archivos):
+
+```powershell
+ronin artifacts retention preview
+```
+
+La recolección requiere el perfil PostgreSQL para coordinarse con todos los escritores y
+una confirmación explícita:
+
+```powershell
+$env:RONIN_STORAGE_BACKEND = "postgres"
+$env:RONIN_POSTGRES_DSN = "postgresql://..."
+ronin artifacts retention collect --confirm
+```
+
+La operación mantiene la barrera exclusiva durante el descubrimiento y el borrado. Un
+inventario incompleto o que supere sus límites falla sin borrar. Para vaciar intencionalmente
+un inventario sin referencias vivas, se debe añadir `--allow-empty-live-set`. No se ejecuta
+ningún borrado automático. En el perfil SQLite, la vista previa advierte que no sincroniza
+escritores concurrentes y la recolección se rechaza.
+
+La vista previa incluye `live_reference_count`, `collection_ready` y `unreviewed_plugins`.
+`collection_ready` sólo es verdadero si hay barrera PostgreSQL, todas las fuentes fueron
+leídas dentro de sus límites, no hay plugins sin revisar y existe al menos una referencia
+viva. La recolección se bloquea si no se puede leer el inventario de plugins o si hay
+plugins fuera de la lista revisada de productores de referencias; actualiza primero la
+composición y el inventario antes de reintentar. Un live set vacío requiere la opción
+explícita `--allow-empty-live-set`.
