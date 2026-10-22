@@ -967,6 +967,10 @@ class JobStoreExecutionStore:
         if len(encoded) > MAX_INLINE_NODE_CHECKPOINT_BYTES:
             if self._artifact_store is None:
                 return False
+            if self._artifact_reference_barrier is None:
+                raise ValueError(
+                    "artifact reference barrier is required for external ML checkpoints"
+                )
             artifact = self._artifact_store.put_bytes(
                 role="ml-node-checkpoint", data=encoded, media_type="application/json"
             )
@@ -1025,6 +1029,10 @@ class JobStoreExecutionStore:
         """Persist a completed model as a verified ArtifactStore object."""
         if self._artifact_store is None:
             raise ValueError("artifact store is required to materialize ML model outputs")
+        if self._artifact_reference_barrier is None:
+            raise ValueError(
+                "artifact reference barrier is required to materialize ML model outputs"
+            )
         if isinstance(result, ExperimentResult):
             data = result.model.artifact_bytes
             media_type = "application/vnd.ronin.sklearn-tabular+json"
