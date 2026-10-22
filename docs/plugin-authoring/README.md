@@ -142,6 +142,53 @@ bounded payloads, heartbeats, cancellation and retryable error categories.
 Cloud SDKs and credentials belong in the worker/plugin distribution, never in
 the Ronin HTTP process.
 
+## ML pipeline stages
+
+A plugin can declare a versioned ML stage through the frozen contribution
+registry. Stage identifiers are namespaced as `<plugin-id>/<local-name>` and
+must also appear in `PluginManifest.pipeline_stage_ids`. Pin both the installed
+plugin distribution digest and an OCI executor image by digest; mutable image
+tags are rejected. Declare typed input ports, an output type, the exact config
+fields, required artifact permissions, and CPU, memory, process and timeout
+ceilings. Every stage permission must also be declared in
+`PluginManifest.permissions`. The host includes the complete declaration set in the PipelineIR v3
+stage registry digest so a durable Job cannot resume against different plugin
+code or a changed port contract.
+
+```python
+from studio_plugin_sdk import PipelineStageContribution
+
+stage = PipelineStageContribution(
+    plugin_id="com.example.ronin.ml",
+    stage_id="com.example.ronin.ml/normalize",
+    version=1,
+    plugin_version="1.2.0",
+    distribution_digest="a" * 64,  # host-verified installed wheel digest
+    executor_image="registry.example/ml-plugin@sha256:" + "b" * 64,
+    operation_id="normalize.v1",
+    input_ports={"model": ("ml.model", 1, 1)},
+    output_type="ml.metrics",
+    config_fields=("strategy",),
+    cpu_limit="1.0",
+    memory_limit="512m",
+    pids_limit=128,
+    timeout_seconds=300,
+)
+context.contributions.add_pipeline_stage(stage, plugin_id=context.plugin_id)
+```
+
+The host compares the declared distribution digest with the installed plugin
+distribution before freezing the stage registry, so a durable Job cannot use a
+different package than the one that supplied its declaration. The stage contribution contract rejects mutable image tags, undeclared config, unbounded ports and unsupported permissions. Pure stages execute through the
+isolated OCI runner with bounded canonical JSON, and their output checkpoints
+are pinned to the contribution and image digests. A metrics stage returns an
+object such as `{"scores":{"accuracy":0.92}}`; the selector binds those scores
+to exactly one directly supplied trained model. `artifact:read` exposes only
+referenced upstream artifacts, while `artifact:write` accepts up to eight
+outputs with a 512 KiB aggregate limit. The host verifies and persists each
+artifact under the shared reference writer lease together with the durable
+checkpoint, and the retention inventory discovers those references.
+
 ## OSS boundary
 
 Ronin OSS is the only product contract in this repository. Extensions must use

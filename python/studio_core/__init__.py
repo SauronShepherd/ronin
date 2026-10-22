@@ -128,6 +128,8 @@ from .plugins import (
     PluginRecord,
     PluginState,
     PluginValidationError,
+    PipelineStageContribution,
+    PipelineStageContributionRegistry,
 )
 from .project_manifest import PROJECT_MANIFEST_PATH, PROJECT_MANIFEST_SCHEMA, ProjectManifest
 from .projects import (
@@ -297,6 +299,8 @@ __all__ = (
     "PluginRecord",
     "PluginState",
     "PluginValidationError",
+    "PipelineStageContribution",
+    "PipelineStageContributionRegistry",
     "PropertyDefinition",
     "QualityResult",
     "QualityRule",

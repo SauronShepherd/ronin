@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from threading import RLock
+from typing import Any
 
 from studio_core import WorkspaceId
 
@@ -15,7 +17,9 @@ from .domain import (
     PipelineIR,
     PipelineNode,
 )
+from .drift import DriftPolicy
 from .ports import FeatureDefinitionStore, MLLabStore
+from .quality import QualitySuite, validate_quality_suite
 
 
 class MLLabConflict(RuntimeError):
@@ -24,6 +28,14 @@ class MLLabConflict(RuntimeError):
 
 class FeatureDefinitionConflict(RuntimeError):
     """Raised when a feature identity/version is reused with different content."""
+
+
+class QualitySuiteConflict(RuntimeError):
+    """Raised when a suite version is reused or written out of order."""
+
+
+class DriftPolicyConflict(RuntimeError):
+    """Raised when a drift policy version is reused or written out of order."""
 
 
 def compile_lab_pipeline(
@@ -370,35 +382,143 @@ def compile_lab_pipeline(
 class InMemoryMLLabStore:
     _labs: dict[tuple[str, str], Lab] = field(default_factory=dict)
     _pipelines: dict[tuple[str, str], PipelineIR] = field(default_factory=dict)
+    _quality_suites: dict[tuple[str, str, str, int], QualitySuite] = field(default_factory=dict)
+    _drift_policies: dict[tuple[str, str, str, int], DriftPolicy] = field(default_factory=dict)
+    _lock: Any = field(default_factory=RLock, init=False, repr=False, compare=False)
 
     def put_lab(self, workspace_id: WorkspaceId, lab: Lab) -> Lab:
-        key = (str(workspace_id), lab.id)
-        current = self._labs.get(key)
-        if current is not None and current != lab:
-            raise MLLabConflict(f"lab id already exists: {lab.id}")
-        self._labs[key] = lab
-        return lab
+        with self._lock:
+            key = (str(workspace_id), lab.id)
+            current = self._labs.get(key)
+            if current is not None and current != lab:
+                raise MLLabConflict(f"lab id already exists: {lab.id}")
+            self._labs[key] = lab
+            return lab
 
     def get_lab(self, workspace_id: WorkspaceId, lab_id: str) -> Lab | None:
-        return self._labs.get((str(workspace_id), lab_id))
+        with self._lock:
+            return self._labs.get((str(workspace_id), lab_id))
 
     def list_labs(self, workspace_id: WorkspaceId) -> tuple[Lab, ...]:
-        prefix = str(workspace_id)
-        return tuple(
-            sorted(
-                (lab for (workspace, _), lab in self._labs.items() if workspace == prefix),
-                key=lambda item: item.id,
+        with self._lock:
+            prefix = str(workspace_id)
+            return tuple(
+                sorted(
+                    (lab for (workspace, _), lab in self._labs.items() if workspace == prefix),
+                    key=lambda item: item.id,
+                )
             )
-        )
 
     def put_pipeline(
         self, workspace_id: WorkspaceId, lab_id: str, pipeline: PipelineIR
     ) -> PipelineIR:
-        self._pipelines[(str(workspace_id), lab_id)] = pipeline
-        return pipeline
+        with self._lock:
+            self._pipelines[(str(workspace_id), lab_id)] = pipeline
+            return pipeline
 
     def get_pipeline(self, workspace_id: WorkspaceId, lab_id: str) -> PipelineIR | None:
-        return self._pipelines.get((str(workspace_id), lab_id))
+        with self._lock:
+            return self._pipelines.get((str(workspace_id), lab_id))
+
+    def put_quality_suite(
+        self, workspace_id: WorkspaceId, lab_id: str, suite: QualitySuite
+    ) -> QualitySuite:
+        with self._lock:
+            workspace = str(workspace_id)
+            if self.get_lab(workspace_id, lab_id) is None:
+                raise KeyError(lab_id)
+            key = (workspace, lab_id, suite.id, suite.version)
+            current = self._quality_suites.get(key)
+            if current is not None:
+                if current != suite:
+                    raise QualitySuiteConflict(f"quality suite version already exists: {suite.id}@{suite.version}")
+                return current
+            latest = self.get_quality_suite(workspace_id, lab_id, suite.id)
+            if latest is not None and suite.version <= latest.version:
+                raise QualitySuiteConflict("quality suite versions must increase monotonically")
+            self._quality_suites[key] = suite
+            return suite
+
+    def get_quality_suite(
+        self, workspace_id: WorkspaceId, lab_id: str, suite_id: str, version: int | None = None
+    ) -> QualitySuite | None:
+        with self._lock:
+            matches = [
+                suite
+                for (workspace, current_lab, current_id, current_version), suite
+                in self._quality_suites.items()
+                if workspace == str(workspace_id)
+                and current_lab == lab_id
+                and current_id == suite_id
+                and (version is None or current_version == version)
+            ]
+            return max(matches, key=lambda suite: suite.version) if matches else None
+
+    def list_quality_suites(
+        self, workspace_id: WorkspaceId, lab_id: str
+    ) -> tuple[QualitySuite, ...]:
+        with self._lock:
+            return tuple(
+                sorted(
+                    (
+                        suite
+                        for (workspace, current_lab, _, _), suite in self._quality_suites.items()
+                        if workspace == str(workspace_id) and current_lab == lab_id
+                    ),
+                    key=lambda suite: (suite.id, suite.version),
+                )
+            )
+
+    def put_drift_policy(
+        self, workspace_id: WorkspaceId, lab_id: str, policy: DriftPolicy
+    ) -> DriftPolicy:
+        with self._lock:
+            workspace = str(workspace_id)
+            if self.get_lab(workspace_id, lab_id) is None:
+                raise KeyError(lab_id)
+            key = (workspace, lab_id, policy.id, policy.version)
+            current = self._drift_policies.get(key)
+            if current is not None:
+                if current != policy:
+                    raise DriftPolicyConflict(
+                        f"drift policy version already exists: {policy.id}@{policy.version}"
+                    )
+                return current
+            latest = self.get_drift_policy(workspace_id, lab_id, policy.id)
+            if latest is not None and policy.version <= latest.version:
+                raise DriftPolicyConflict("drift policy versions must increase monotonically")
+            self._drift_policies[key] = policy
+            return policy
+
+    def get_drift_policy(
+        self, workspace_id: WorkspaceId, lab_id: str, policy_id: str, version: int | None = None
+    ) -> DriftPolicy | None:
+        with self._lock:
+            matches = [
+                policy
+                for (workspace, current_lab, current_id, current_version), policy
+                in self._drift_policies.items()
+                if workspace == str(workspace_id)
+                and current_lab == lab_id
+                and current_id == policy_id
+                and (version is None or current_version == version)
+            ]
+            return max(matches, key=lambda policy: policy.version) if matches else None
+
+    def list_drift_policies(
+        self, workspace_id: WorkspaceId, lab_id: str
+    ) -> tuple[DriftPolicy, ...]:
+        with self._lock:
+            return tuple(
+                sorted(
+                    (
+                        policy
+                        for (workspace, current_lab, _, _), policy in self._drift_policies.items()
+                        if workspace == str(workspace_id) and current_lab == lab_id
+                    ),
+                    key=lambda policy: (policy.id, policy.version),
+                )
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -455,6 +575,52 @@ class LabService:
         )
         return self.store.put_pipeline(workspace_id, lab.id, pipeline)
 
+    def put_quality_suite(
+        self, workspace_id: WorkspaceId, lab_id: str, suite: QualitySuite
+    ) -> QualitySuite:
+        lab = self.get(workspace_id, lab_id)
+        validate_quality_suite(lab, suite)
+        return self.store.put_quality_suite(workspace_id, lab_id, suite)
+
+    def get_quality_suite(
+        self, workspace_id: WorkspaceId, lab_id: str, suite_id: str, version: int | None = None
+    ) -> QualitySuite:
+        self.get(workspace_id, lab_id)
+        suite = self.store.get_quality_suite(workspace_id, lab_id, suite_id, version)
+        if suite is None:
+            raise KeyError(f"{suite_id}@{version}" if version is not None else suite_id)
+        return suite
+
+    def list_quality_suites(
+        self, workspace_id: WorkspaceId, lab_id: str
+    ) -> tuple[QualitySuite, ...]:
+        self.get(workspace_id, lab_id)
+        return self.store.list_quality_suites(workspace_id, lab_id)
+
+    def put_drift_policy(
+        self, workspace_id: WorkspaceId, lab_id: str, policy: DriftPolicy
+    ) -> DriftPolicy:
+        lab = self.get(workspace_id, lab_id)
+        numeric_features = {feature.column for feature in lab.features if feature.role == "numeric"}
+        if {item.feature for item in policy.thresholds} != numeric_features:
+            raise ValueError("drift policy thresholds must define every numeric Lab feature exactly once")
+        return self.store.put_drift_policy(workspace_id, lab_id, policy)
+
+    def get_drift_policy(
+        self, workspace_id: WorkspaceId, lab_id: str, policy_id: str, version: int | None = None
+    ) -> DriftPolicy:
+        self.get(workspace_id, lab_id)
+        policy = self.store.get_drift_policy(workspace_id, lab_id, policy_id, version)
+        if policy is None:
+            raise KeyError(f"{policy_id}@{version}" if version is not None else policy_id)
+        return policy
+
+    def list_drift_policies(
+        self, workspace_id: WorkspaceId, lab_id: str
+    ) -> tuple[DriftPolicy, ...]:
+        self.get(workspace_id, lab_id)
+        return self.store.list_drift_policies(workspace_id, lab_id)
+
 
 @dataclass(frozen=True, slots=True)
 class FeatureDefinitionService:
@@ -509,8 +675,10 @@ def _registration_node(register_model: tuple[str, str]) -> PipelineNode:
 
 __all__ = [
     "FeatureDefinitionConflict",
+    "DriftPolicyConflict",
     "FeatureDefinitionService",
     "InMemoryMLLabStore",
     "LabService",
     "MLLabConflict",
+    "QualitySuiteConflict",
 ]

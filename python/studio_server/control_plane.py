@@ -982,6 +982,21 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         return True
 
     def _handle_failure(self, exc: Exception) -> None:
+        ml_conflicts: tuple[type[Exception], ...] = ()
+        if exc.__class__.__module__ == "studio_ml.services":
+            from studio_ml.services import (
+                DriftPolicyConflict,
+                FeatureDefinitionConflict,
+                MLLabConflict,
+                QualitySuiteConflict,
+            )
+
+            ml_conflicts = (
+                DriftPolicyConflict,
+                FeatureDefinitionConflict,
+                MLLabConflict,
+                QualitySuiteConflict,
+            )
         if isinstance(
             exc,
             (
@@ -999,7 +1014,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 EnvironmentServiceConflict,
                 ConnectionServiceConflict,
                 PluginRouteConflict,
-            ),
+            ) + ml_conflicts,
         ):
             self._error(HTTPStatus.CONFLICT, "conflict", str(exc))
         elif isinstance(exc, TimeoutError):

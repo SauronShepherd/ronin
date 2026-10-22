@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from importlib.util import find_spec
 from typing import Protocol, runtime_checkable
 
 from .runtime import TrainedTabularModel, TrainingSpec, train_tabular
@@ -187,6 +188,18 @@ class LocalScikitLearnBackend:
             "gradient_boosting_classifier",
         ),
     )
+
+    @property
+    def available(self) -> bool:
+        """Check the optional dependency without importing its ML runtime."""
+        try:
+            return find_spec("sklearn") is not None
+        except (ImportError, ModuleNotFoundError, ValueError):
+            return False
+
+    @property
+    def unavailable_reason(self) -> str:
+        return "Install the optional ML dependencies with `pip install ronin-studio[ml]`."
 
     def train(
         self, request: ExperimentRequest, rows: Sequence[Mapping[str, object]]

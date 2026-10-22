@@ -6,15 +6,17 @@ import hashlib
 import json
 from dataclasses import replace
 from typing import Any, Literal, cast
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, unquote
 
 from studio_core import WorkspaceId
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
 from studio_storage.ports import ArtifactReferenceBarrier, ArtifactStore
 
 from .backends import default_backends
+from .catalog import parse_catalog_version
 from .datasets import DatasetResolver, resolve_lab_rows
-from .domain import PIPELINE_SCHEMA_V2, Lab, PipelineIR
+from .domain import PIPELINE_SCHEMA_V2, PIPELINE_SCHEMA_V3, Lab, PipelineIR, PipelineNode
+from .drift import DriftPolicy, assess_numeric_drift, compare_numeric_drift
 from .optimization import (
     MAX_TIE_BREAKERS,
     BayesianStopPolicy,
@@ -26,7 +28,7 @@ from .optimization import (
 )
 from .orchestration import ExecutionSnapshot, JobStoreExecutionStore, LocalExecutionCoordinator
 from .ports import MLLabStore
-from .quality import profile_and_validate
+from .quality import QualitySuite, profile_and_validate, validate_quality_suite
 from .runner import LocalExperimentRunner
 from .runtime import TrainingSpec
 from .service import (
@@ -59,6 +61,53 @@ def _parse_tie_breakers(raw: object) -> tuple[tuple[str, Literal["maximize", "mi
             (item["metric"], cast(Literal["maximize", "minimize"], item["direction"]))
         )
     return tuple(normalized)
+
+
+def _pipeline_with_quality_suite(
+    pipeline: PipelineIR, suite: QualitySuite, stage_registry_digest: str
+) -> PipelineIR:
+    """Upgrade a compiled built-in graph to v3 and pin a reusable quality suite."""
+    parameters = dict(pipeline.parameters)
+    algorithm = parameters.pop("algorithm", None)
+    preprocessor = parameters.pop("preprocessor", None)
+    output_ports = {
+        "quality_gate": "profile",
+        "prepare": "quality",
+        "train": "prepared",
+        "evaluate": "model",
+        "select": "candidates",
+        "register": "selected",
+    }
+    nodes: list[PipelineNode] = []
+    for node in pipeline.nodes:
+        if "/" in node.kind:
+            raise ValueError("quality_suite cannot be combined with plugin pipeline stages")
+        config = dict(node.config)
+        if node.kind == "quality_gate":
+            config["suite"] = suite.to_payload()
+        elif node.kind == "train" and algorithm is not None:
+            config.setdefault("algorithm", algorithm)
+        elif node.kind == "prepare" and preprocessor is not None:
+            config.setdefault("preprocessor", preprocessor)
+        port = output_ports.get(node.kind)
+        inputs = (
+            ((port, tuple(f"{dependency}.out" for dependency in node.depends_on)),)
+            if port is not None
+            else ()
+        )
+        nodes.append(
+            PipelineNode(
+                node.id,
+                node.kind,
+                config=config,
+                inputs=inputs,
+                stage_version=1,
+            )
+        )
+    parameters["stage_registry_digest"] = stage_registry_digest
+    return PipelineIR(
+        tuple(nodes), tuple(sorted(parameters.items())), PIPELINE_SCHEMA_V3
+    )
 
 
 class MachineLearningStudioPlugin:
@@ -101,6 +150,11 @@ class MachineLearningStudioPlugin:
             store = InMemoryMLLabStore()
         self._labs = LabService(cast(MLLabStore, store))
         coordinator_runner = self._coordinator._runner
+        configure_stage_registry = getattr(
+            coordinator_runner, "configure_plugin_stage_registry", None
+        )
+        if callable(configure_stage_registry):
+            configure_stage_registry(context.contributions.pipeline_stage_registry)
         self._coordinator.close()
         self._artifacts = cast(ArtifactStore | None, context.services.get("artifact_store"))
         reference_barrier = context.services.get("artifact_reference_barrier")
@@ -115,6 +169,17 @@ class MachineLearningStudioPlugin:
             if execution_service is not None
             else None
         )
+        configure_artifacts = getattr(
+            coordinator_runner, "configure_plugin_artifact_capabilities", None
+        )
+        if callable(configure_artifacts):
+            configure_artifacts(
+                available=(
+                    isinstance(execution_store, JobStoreExecutionStore)
+                    and self._artifacts is not None
+                    and self._artifact_reference_barrier is not None
+                )
+            )
         self._coordinator = LocalExecutionCoordinator(
             coordinator_runner,
             store=execution_store,
@@ -241,6 +306,37 @@ class MachineLearningStudioPlugin:
             permission="ml-studio:execute",
         )
         context.contributions.add_route(
+            "GET", "/v1/ml-studio/labs/{lab_id}/quality-suites", context.plugin_id,
+            self.list_quality_suites, permission="ml-studio:read",
+        )
+        context.contributions.add_route(
+            "POST", "/v1/ml-studio/labs/{lab_id}/quality-suites", context.plugin_id,
+            self.save_quality_suite, permission="ml-studio:write",
+        )
+        context.contributions.add_route(
+            "GET", "/v1/ml-studio/labs/{lab_id}/quality-suites/{suite_id}/{version}", context.plugin_id,
+            self.get_quality_suite, permission="ml-studio:read",
+        )
+        context.contributions.add_route(
+            "GET", "/v1/ml-studio/labs/{lab_id}/drift-policies", context.plugin_id,
+            self.list_drift_policies, permission="ml-studio:read",
+        )
+        context.contributions.add_route(
+            "POST", "/v1/ml-studio/labs/{lab_id}/drift-policies", context.plugin_id,
+            self.save_drift_policy, permission="ml-studio:write",
+        )
+        context.contributions.add_route(
+            "GET", "/v1/ml-studio/labs/{lab_id}/drift-policies/{policy_id}/{version}", context.plugin_id,
+            self.get_drift_policy, permission="ml-studio:read",
+        )
+        context.contributions.add_route(
+            "POST",
+            "/v1/ml-studio/labs/{lab_id}/drift",
+            context.plugin_id,
+            self.drift_report,
+            permission="ml-studio:execute",
+        )
+        context.contributions.add_route(
             "POST",
             "/v1/ml-studio/labs/{lab_id}/executions",
             context.plugin_id,
@@ -356,11 +452,19 @@ class MachineLearningStudioPlugin:
         items = []
         for backend in default_backends():
             capabilities = getattr(backend, "capabilities", None)
+            available = getattr(backend, "available", True) is not False
             item: dict[str, object] = {
                 "id": backend.backend_id,
                 "name": backend.display_name,
-                "status": "available",
+                "status": "available" if available else "unavailable",
             }
+            if not available:
+                item["reason"] = getattr(
+                    backend,
+                    "unavailable_reason",
+                    "The optional machine learning dependency is not installed.",
+                )
+                item["install_extra"] = "ml"
             if capabilities is not None:
                 item["capabilities"] = capabilities.to_payload()
             items.append(item)
@@ -517,6 +621,13 @@ class MachineLearningStudioPlugin:
         )
         if model is None:
             raise KeyError(f"{model_id}@{version}")
+        source_run = self._registry.get_run(
+            WorkspaceId(workspace_id), model.source_run_id
+        )
+        run_parameters = dict(source_run.parameters) if source_run is not None else {}
+        limitations = ["Review dataset quality and evaluation evidence before promotion."]
+        if source_run is None:
+            limitations.append("Source run evidence is unavailable; dataset and metrics are incomplete.")
         return {
             "schema": "ronin.ml-model-card/v1",
             "identity": {"model_id": model_id, "version": version, "stage": model.stage},
@@ -524,10 +635,33 @@ class MachineLearningStudioPlugin:
                 "source_run_id": model.source_run_id.value,
                 "artifact_ref": model.artifact_ref,
                 "artifact_digest": model.artifact_digest,
+                "execution_ref": source_run.execution_ref if source_run is not None else None,
+                "source_revision": source_run.source_revision if source_run is not None else None,
             },
             "framework": model.framework,
             "signature": model.signature.to_payload(),
-            "limitations": ["Review dataset quality and evaluation evidence before promotion."],
+            "intended_use": {
+                "task": run_parameters.get("task"),
+                "statement": "Use only with the declared input signature and reviewed evaluation evidence; this card does not imply production suitability.",
+            },
+            "dataset": (
+                [dataset.to_payload() for dataset in source_run.datasets]
+                if source_run is not None
+                else []
+            ),
+            "features": [name for name, _ in model.signature.inputs],
+            "parameters": run_parameters,
+            "metrics": (
+                [metric.to_payload() for metric in source_run.metrics]
+                if source_run is not None
+                else []
+            ),
+            "fairness": {
+                "status": "not_assessed",
+                "reason": "No protected-group or fairness evaluation evidence is attached to this model version.",
+            },
+            "owner": None,
+            "limitations": limitations,
         }
 
     def model_artifact(
@@ -741,15 +875,151 @@ class MachineLearningStudioPlugin:
             raise ValueError("lab_id is required")
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
-        if not isinstance(body, dict) or set(body) - {"rows"}:
-            raise ValueError("quality body must contain optional rows only")
+        if not isinstance(body, dict) or set(body) - {"rows", "suite"}:
+            raise ValueError("quality body supports optional rows and a versioned suite")
         if "rows" in body and body["rows"] is None:
             raise ValueError("quality rows must be an array when provided")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
+        raw_suite = body.get("suite")
+        suite = QualitySuite.from_payload(raw_suite) if raw_suite is not None else None
+        validate_quality_suite(lab, suite)
         rows = resolve_lab_rows(
             WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
         )
-        return profile_and_validate(lab, rows).to_payload()
+        return profile_and_validate(lab, rows, suite=suite).to_payload()
+
+    def list_quality_suites(
+        self, workspace_id: str | None = None, lab_id: str | None = None, **kwargs: Any
+    ) -> dict[str, object]:
+        workspace_id = self._workspace(workspace_id, kwargs)
+        if lab_id is None or self._labs is None:
+            raise ValueError("lab_id is required and ML Studio must be ready")
+        return {"items": [item.to_payload() for item in self._labs.list_quality_suites(WorkspaceId(workspace_id), lab_id)]}
+
+    def save_quality_suite(
+        self, workspace_id: str | None = None, lab_id: str | None = None, *, body: object | None = None, **kwargs: Any
+    ) -> dict[str, object]:
+        workspace_id = self._workspace(workspace_id, kwargs)
+        if lab_id is None or self._labs is None:
+            raise ValueError("lab_id is required and ML Studio must be ready")
+        suite = QualitySuite.from_payload(body)
+        return self._labs.put_quality_suite(WorkspaceId(workspace_id), lab_id, suite).to_payload()
+
+    def get_quality_suite(
+        self, workspace_id: str | None = None, lab_id: str | None = None,
+        suite_id: str | None = None, version: str | int | None = None, **kwargs: Any,
+    ) -> dict[str, object]:
+        workspace_id = self._workspace(workspace_id, kwargs)
+        if lab_id is None or suite_id is None or self._labs is None:
+            raise ValueError("lab_id and suite_id are required and ML Studio must be ready")
+        parsed_version = parse_catalog_version(version, "quality suite")
+        suite = self._labs.get_quality_suite(
+            WorkspaceId(workspace_id), lab_id, unquote(suite_id), parsed_version
+        )
+        if suite is None:
+            raise KeyError(f"{lab_id}/{unquote(suite_id)}@{parsed_version}")
+        return suite.to_payload()
+
+    def list_drift_policies(
+        self, workspace_id: str | None = None, lab_id: str | None = None, **kwargs: Any
+    ) -> dict[str, object]:
+        workspace_id = self._workspace(workspace_id, kwargs)
+        if lab_id is None or self._labs is None:
+            raise ValueError("lab_id is required and ML Studio must be ready")
+        return {
+            "items": [
+                item.to_payload()
+                for item in self._labs.list_drift_policies(WorkspaceId(workspace_id), lab_id)
+            ]
+        }
+
+    def save_drift_policy(
+        self, workspace_id: str | None = None, lab_id: str | None = None,
+        *, body: object | None = None, **kwargs: Any,
+    ) -> dict[str, object]:
+        workspace_id = self._workspace(workspace_id, kwargs)
+        if lab_id is None or self._labs is None:
+            raise ValueError("lab_id is required and ML Studio must be ready")
+        policy = DriftPolicy.from_payload(body)
+        return self._labs.put_drift_policy(WorkspaceId(workspace_id), lab_id, policy).to_payload()
+
+    def get_drift_policy(
+        self, workspace_id: str | None = None, lab_id: str | None = None,
+        policy_id: str | None = None, version: str | int | None = None, **kwargs: Any,
+    ) -> dict[str, object]:
+        workspace_id = self._workspace(workspace_id, kwargs)
+        if lab_id is None or policy_id is None or self._labs is None:
+            raise ValueError("lab_id and policy_id are required and ML Studio must be ready")
+        parsed_version = parse_catalog_version(version, "drift policy")
+        policy = self._labs.get_drift_policy(
+            WorkspaceId(workspace_id), lab_id, unquote(policy_id), parsed_version
+        )
+        if policy is None:
+            raise KeyError(f"{lab_id}/{unquote(policy_id)}@{parsed_version}")
+        return policy.to_payload()
+
+    def drift_report(
+        self,
+        workspace_id: str | None = None,
+        lab_id: str | None = None,
+        *,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        """Compare explicit, bounded numeric windows against a Lab's feature contract."""
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        if lab_id is None:
+            raise ValueError("lab_id is required")
+        if self._labs is None:
+            raise RuntimeError("ML Studio is not ready")
+        if not isinstance(body, dict) or set(body) != {
+            "baseline_rows", "current_rows", "policy"
+        }:
+            raise ValueError(
+                "drift body requires baseline_rows, current_rows, and a versioned policy"
+            )
+        baseline_rows = body["baseline_rows"]
+        current_rows = body["current_rows"]
+        raw_policy = body["policy"]
+        if (
+            not isinstance(baseline_rows, list)
+            or not isinstance(current_rows, list)
+            or len(baseline_rows) > 100_000
+            or len(current_rows) > 100_000
+            or any(
+                not isinstance(row, dict)
+                for window in (baseline_rows, current_rows)
+                for row in window
+            )
+        ):
+            raise ValueError("drift windows must be bounded arrays of row objects")
+        lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
+        features = tuple(
+            feature.column for feature in lab.features if feature.role == "numeric"
+        )
+        if not features:
+            raise ValueError("drift reports require at least one Lab feature with numeric role")
+        policy = DriftPolicy.from_payload(raw_policy)
+        threshold_features = {item.feature for item in policy.thresholds}
+        if threshold_features != set(features):
+            raise ValueError("drift thresholds must define every numeric Lab feature exactly once")
+        summaries = compare_numeric_drift(
+            baseline_rows, current_rows, features, max_rows=100_000
+        )
+        assessment = assess_numeric_drift(summaries, policy.thresholds)
+        return {
+            "schema": "ronin.ml-drift-report/v1",
+            "lab_id": lab.id,
+            "policy": policy.to_payload(),
+            "features": list(features),
+            "baseline_row_count": len(baseline_rows),
+            "current_row_count": len(current_rows),
+            "summaries": [summary.to_payload() for summary in summaries],
+            "assessment": assessment.to_payload(),
+            "limitations": [
+                "Numeric mean and population variance only; this report does not assess categorical drift or fairness."
+            ],
+        }
 
     def submit_execution(
         self,
@@ -776,6 +1046,7 @@ class MachineLearningStudioPlugin:
             "selection_direction",
             "register",
             "pipeline",
+            "quality_suite",
         }:
             raise ValueError("execution body contains unsupported fields")
         if "rows" in body and body["rows"] is None:
@@ -790,8 +1061,11 @@ class MachineLearningStudioPlugin:
             raise ValueError("execution run_id must be 1 to 256 characters of trimmed text")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
         if "pipeline" in body and body["pipeline"] is None:
-            raise ValueError("pipeline must be a PipelineIR v2 object when provided")
+            raise ValueError("pipeline must be a PipelineIR v2 or v3 object when provided")
         raw_pipeline = body.get("pipeline")
+        suite = QualitySuite.from_payload(body["quality_suite"]) if "quality_suite" in body else None
+        if raw_pipeline is not None and suite is not None:
+            raise ValueError("quality_suite cannot be combined with an explicitly supplied pipeline")
         pipeline_options = {
             "algorithm",
             "preprocessor",
@@ -878,14 +1152,17 @@ class MachineLearningStudioPlugin:
             )
         ):
             raise ValueError("register must contain exactly a trimmed model_id and version")
-        rows = resolve_lab_rows(
-            WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
-        )
         if raw_pipeline is not None:
             pipeline = PipelineIR.from_payload(raw_pipeline)
-            if pipeline.schema != PIPELINE_SCHEMA_V2:
-                raise ValueError("client supplied execution pipelines must use PipelineIR v2")
+            if pipeline.schema not in {PIPELINE_SCHEMA_V2, PIPELINE_SCHEMA_V3}:
+                raise ValueError("client supplied execution pipelines must use PipelineIR v2 or v3")
             supplied_parameters = dict(pipeline.parameters)
+            if pipeline.schema == PIPELINE_SCHEMA_V3 and (
+                "algorithm" in supplied_parameters or "preprocessor" in supplied_parameters
+            ):
+                raise ValueError(
+                    "PipelineIR v3 algorithm and preprocessor choices belong in stage config"
+                )
             supplied_algorithm = supplied_parameters.get("algorithm")
             supplied_preprocessor = supplied_parameters.get("preprocessor", "identity")
             if supplied_algorithm is not None and (
@@ -901,15 +1178,22 @@ class MachineLearningStudioPlugin:
                 preprocessor=supplied_preprocessor,
             )
             bound_parameters = dict(bound_pipeline.parameters)
+            if pipeline.schema == PIPELINE_SCHEMA_V3:
+                stage_registry_digest = getattr(
+                    self._coordinator._runner, "stage_registry_digest", None
+                )
+                if not isinstance(stage_registry_digest, str):
+                    raise ValueError("execution runner cannot pin the PipelineIR v3 stage registry")
+                bound_parameters["stage_registry_digest"] = stage_registry_digest
             if set(supplied_parameters) - set(bound_parameters) or any(
                 bound_parameters.get(key) != value for key, value in supplied_parameters.items()
             ):
                 raise ValueError("custom ML pipeline parameters do not match the submitted Lab")
-            pipeline = PipelineIR(pipeline.nodes, bound_pipeline.parameters, pipeline.schema)
-            validate_pipeline = getattr(self._coordinator._runner, "validate_pipeline", None)
-            if not callable(validate_pipeline):
-                raise ValueError("execution runner cannot validate custom ML pipelines")
-            validate_pipeline(lab, pipeline)
+            pipeline = PipelineIR(
+                pipeline.nodes,
+                tuple(sorted(bound_parameters.items())),
+                pipeline.schema,
+            )
         else:
             pipeline = self._labs.compile(
                 WorkspaceId(workspace_id),
@@ -935,6 +1219,19 @@ class MachineLearningStudioPlugin:
                     else None
                 ),
             )
+            if suite is not None:
+                stage_registry_digest = getattr(
+                    self._coordinator._runner, "stage_registry_digest", None
+                )
+                if not isinstance(stage_registry_digest, str):
+                    raise ValueError("execution runner cannot pin the PipelineIR v3 stage registry")
+                pipeline = _pipeline_with_quality_suite(
+                    pipeline, suite, stage_registry_digest
+                )
+        validate_pipeline = getattr(self._coordinator._runner, "validate_pipeline", None)
+        if not callable(validate_pipeline):
+            raise ValueError("execution runner cannot validate ML pipelines")
+        validate_pipeline(lab, pipeline)
         if any(node.kind == "register" for node in pipeline.nodes) and (
             self._registry is None
             or self._artifacts is None
@@ -943,6 +1240,11 @@ class MachineLearningStudioPlugin:
             raise ValueError(
                 "pipeline register stage requires durable execution, registry, and artifact storage"
             )
+        # Parse and validate caller supplied graphs before loading potentially
+        # large Lab snapshots; invalid pipelines must not pay input-resolution cost.
+        rows = resolve_lab_rows(
+            WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
+        )
         if raw_pipeline is not None:
             pipeline = self._labs.put_pipeline(WorkspaceId(workspace_id), lab_id, pipeline)
         return self._coordinator.submit(workspace_id, run_id, lab, rows, pipeline).to_payload()
@@ -993,16 +1295,7 @@ class MachineLearningStudioPlugin:
             ):
                 raise ValueError("invalid trial")
             metrics = item["metrics"]
-            if not all(
-                isinstance(value, (int, float)) and not isinstance(value, bool)
-                for value in metrics.values()
-            ):
-                raise ValueError("trial metrics must be numeric")
-            trials.append(
-                Trial.create(
-                    item["parameters"], {key: float(value) for key, value in metrics.items()}
-                )
-            )
+            trials.append(Trial.create(item["parameters"], metrics))
         return {
             "metric": spec.metric,
             "direction": spec.direction,
@@ -1349,7 +1642,7 @@ class MachineLearningStudioPlugin:
             elif isinstance(raw_metrics, list):
                 try:
                     metric_items = [(str(pair[0]), float(pair[1])) for pair in raw_metrics]
-                except (IndexError, TypeError, ValueError) as exc:
+                except (IndexError, TypeError, ValueError, OverflowError) as exc:
                     raise ValueError("execution metrics are invalid") from exc
             else:
                 raise ValueError("supervised execution result is missing metrics")
@@ -1357,7 +1650,7 @@ class MachineLearningStudioPlugin:
                 metrics = tuple(
                     MetricValue(str(name), float(value)) for name, value in metric_items
                 )
-            except (TypeError, ValueError) as exc:
+            except (TypeError, ValueError, OverflowError) as exc:
                 raise ValueError("execution metrics are invalid") from exc
             framework = "sklearn"
         model_id = ModelId(body["model_id"])

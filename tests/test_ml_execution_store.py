@@ -156,6 +156,84 @@ def test_ml_input_artifact_and_job_reference_share_writer_lease(tmp_path) -> Non
         asyncio.run(service.aclose())
 
 
+def test_plugin_stage_artifact_and_checkpoint_share_writer_lease(tmp_path) -> None:
+    events: list[str] = []
+
+    class _Barrier:
+        @contextmanager
+        def writer(self):
+            events.append("lock")
+            try:
+                yield
+            finally:
+                events.append("unlock")
+
+        @contextmanager
+        def collector(self):
+            yield
+
+    class _RecordingArtifacts:
+        def __init__(self) -> None:
+            self._inner = LocalArtifactStore(tmp_path / "plugin-artifacts")
+
+        def put_bytes(self, **kwargs):
+            events.append("artifact")
+            return self._inner.put_bytes(**kwargs)
+
+        def verify(self, ref):
+            return self._inner.verify(ref)
+
+        def get_bytes(self, ref):
+            return self._inner.get_bytes(ref)
+
+        def delete(self, ref):
+            return self._inner.delete(ref)
+
+        def list_digests(self):
+            return self._inner.list_digests()
+
+        def storage_ref_for_digest(self, digest):
+            return self._inner.storage_ref_for_digest(digest)
+
+    class _RecordingService(DurableExecutionService):
+        async def worker_put_cell_result(self, *args, **kwargs):
+            events.append("checkpoint")
+            return await super().worker_put_cell_result(*args, **kwargs)
+
+    service = _RecordingService(InMemoryJobStore())
+    artifacts = _RecordingArtifacts()
+    adapter = JobStoreExecutionStore(
+        service,
+        artifacts,
+        artifact_reference_barrier=_Barrier(),
+    )
+    try:
+        queued = replace(_snapshot("workspace-a"), pipeline_digest="c" * 64)
+        adapter.create(queued)
+        events.clear()
+        claimed = adapter.claim_next("worker-a")
+        assert claimed is not None
+        refs = adapter.save_plugin_stage_checkpoint(
+            claimed,
+            "plugin-metrics",
+            {
+                "runtime_fingerprint": "d" * 64,
+                "dependency_fingerprint": "e" * 64,
+                "checkpoint_codec": "ronin.ml.plugin-checkpoint/v1",
+                "checkpoint": {"kind": "com.example.ml/metrics", "value": {"scores": {}}},
+            },
+            {"metrics.json": ("application/json", b'{"accuracy":1.0}')},
+        )
+        assert events == ["lock", "artifact", "checkpoint", "unlock"]
+        assert adapter.load_plugin_stage_artifact(refs["metrics.json"]) == b'{"accuracy":1.0}'
+        checkpoints = adapter.node_checkpoints(claimed)
+        assert checkpoints["plugin-metrics"]["checkpoint"]["value"][
+            "__ronin_artifacts__"
+        ] == refs
+    finally:
+        asyncio.run(service.aclose())
+
+
 def test_large_execution_rows_require_artifact_store_before_job_submission() -> None:
     rows_json = encode_canonical_json([{"large": "x" * MAX_INLINE_EXECUTION_REQUEST_BYTES}]).decode(
         "utf-8"

@@ -89,3 +89,34 @@ def test_truncation_keeps_prefix() -> None:
     assert outcome.output.startswith("x" * 20)
     assert outcome.output.endswith("[OUTPUT TRUNCATED]")
     assert len(outcome.output) <= 100
+
+
+def test_data_protocol_captures_clean_stdout_and_preserves_json_bytes() -> None:
+    outcome = asyncio.run(
+        AsyncioCommandRunner(
+            discard_stderr=True,
+            redact_output=False,
+            strict_output_utf8=True,
+        ).run(
+            (
+                sys.executable,
+                "-c",
+                "import sys; sys.stderr.write('diagnostic\\n'); "
+                "sys.stdout.write('{\"password\":\"secret-value\"}')",
+            ),
+            input_text="",
+            cancellation=CancellationToken(),
+            timeout_seconds=2.0,
+            cancellation_args=(sys.executable, "-c", "pass"),
+        )
+    )
+
+    assert outcome.returncode == 0
+    assert outcome.output == '{"password":"secret-value"}'
+
+
+def test_data_protocol_rejects_invalid_utf8() -> None:
+    runner = AsyncioCommandRunner(redact_output=False, strict_output_utf8=True)
+
+    with pytest.raises(UnicodeDecodeError):
+        runner._format_output(b"\xff", truncated=False)

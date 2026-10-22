@@ -14,6 +14,7 @@ _REVIEWED_PUT_BYTES_CALLS = {
     "studio_data_engineering/revisions.py::_import_sdp": 3,
     "studio_ml/orchestration.py::_create": 1,
     "studio_ml/orchestration.py::_save_node_checkpoint": 1,
+    "studio_ml/orchestration.py::save_plugin_stage_checkpoint": 1,
     "studio_ml/orchestration.py::_materialize_result_artifact": 1,
     "studio_ml/service.py::persist_clustering_result": 1,
     "studio_ml/service.py::register_clustering_model": 1,

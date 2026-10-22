@@ -30,6 +30,7 @@ from .clustering import KMeansModel, calinski_harabasz, fit_kmeans, inertia
 from .domain import FeatureDefinition, FeatureSpec, Lab, PipelineIR, PipelineNode
 from .drift import (
     DriftAssessment,
+    DriftPolicy,
     DriftThreshold,
     NumericDrift,
     assess_numeric_drift,
@@ -48,7 +49,14 @@ from .orchestration import (
 )
 from .postgres import PostgresMLLabStore
 from .provenance import run_record
-from .quality import ColumnProfile, QualityReport, profile_and_validate
+from .quality import (
+    ColumnProfile,
+    QualityExpectation,
+    QualityExpectationResult,
+    QualityReport,
+    QualitySuite,
+    profile_and_validate,
+)
 from .registry_bundle import (
     MLRegistryBundleImportPlan,
     MLRegistryBundleStore,
@@ -90,11 +98,13 @@ from .service import (
     train_register_tabular,
 )
 from .services import (
+    DriftPolicyConflict,
     FeatureDefinitionConflict,
     FeatureDefinitionService,
     InMemoryMLLabStore,
     LabService,
     MLLabConflict,
+    QualitySuiteConflict,
 )
 from .sqlite import SqliteMLLabStore
 
@@ -159,12 +169,19 @@ __all__ = (
     "PipelineNode",
     "NumericDrift",
     "DriftAssessment",
+    "DriftPolicy",
+    "DriftPolicyConflict",
     "DriftThreshold",
     "assess_numeric_drift",
     "compare_numeric_drift",
+    "QualityExpectation",
+    "QualityExpectationResult",
+    "QualityReport",
+    "QualitySuite",
     "InMemoryMLLabStore",
     "LabService",
     "MLLabConflict",
+    "QualitySuiteConflict",
     "SqliteMLLabStore",
     "PostgresMLLabStore",
     "ExecutionSnapshot",
@@ -187,7 +204,6 @@ __all__ = (
     "LocalExperimentRunner",
     "run_record",
     "ColumnProfile",
-    "QualityReport",
     "profile_and_validate",
     "SearchSpec",
     "Trial",

@@ -7,6 +7,9 @@ the host never imports a plugin's implementation directly.
 
 from __future__ import annotations
 
+import hashlib
+import json
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -69,6 +72,7 @@ class PluginManifest:
     event_types: tuple[str, ...] = ()
     migration_ids: tuple[str, ...] = ()
     surface_ids: tuple[str, ...] = ()
+    pipeline_stage_ids: tuple[str, ...] = ()
     ui_entry: str | None = None
     config_schema: str | None = None
 
@@ -96,6 +100,7 @@ class PluginManifest:
             (self.event_types, "event type"),
             (self.migration_ids, "migration id"),
             (self.surface_ids, "surface id"),
+            (self.pipeline_stage_ids, "pipeline stage id"),
         ):
             if any(not value or value != value.strip() for value in values):
                 raise PluginValidationError(f"invalid {label} in {self.id}")
@@ -169,6 +174,219 @@ class MigrationContribution:
 class UiContribution:
     plugin_id: str
     manifest: Mapping[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class PipelineStageContribution:
+    """Pinned, declarative contract for an isolated plugin pipeline stage."""
+
+    plugin_id: str
+    stage_id: str
+    version: int
+    plugin_version: str
+    distribution_digest: str
+    executor_image: str
+    operation_id: str
+    input_ports: Mapping[str, tuple[str, int, int]]
+    output_type: str
+    config_fields: tuple[str, ...] = ()
+    permissions: tuple[str, ...] = ()
+    effect: str = "pure"
+    cpu_limit: str = "1.0"
+    memory_limit: str = "512m"
+    pids_limit: int = 128
+    timeout_seconds: int = 300
+
+    def __post_init__(self) -> None:
+        normalized_ports: dict[object, object] = {}
+        for name, port in self.input_ports.items():
+            try:
+                normalized_ports[name] = tuple(port)
+            except TypeError:
+                normalized_ports[name] = port
+        object.__setattr__(
+            self,
+            "input_ports",
+            MappingProxyType(normalized_ports),
+        )
+        config_fields = tuple(self.config_fields)
+        permissions = tuple(self.permissions)
+        object.__setattr__(
+            self,
+            "config_fields",
+            tuple(sorted(config_fields))
+            if all(isinstance(item, str) for item in config_fields)
+            else config_fields,
+        )
+        object.__setattr__(
+            self,
+            "permissions",
+            tuple(sorted(permissions))
+            if all(isinstance(item, str) for item in permissions)
+            else permissions,
+        )
+
+    def validate(self) -> None:
+        if (
+            not isinstance(self.plugin_id, str)
+            or not self.plugin_id
+            or len(self.plugin_id) > 128
+            or not isinstance(self.stage_id, str)
+            or not self.stage_id.startswith(f"{self.plugin_id}/")
+        ):
+            raise PluginValidationError("pipeline stage id must be namespaced by its plugin")
+        local_name = self.stage_id[len(self.plugin_id) + 1 :]
+        if not re.fullmatch(r"[a-z][a-z0-9_-]{0,63}", local_name):
+            raise PluginValidationError("invalid namespaced pipeline stage id")
+        if (
+            not isinstance(self.version, int)
+            or isinstance(self.version, bool)
+            or self.version < 1
+            or not isinstance(self.plugin_version, str)
+            or not self.plugin_version.strip()
+            or self.plugin_version != self.plugin_version.strip()
+            or len(self.plugin_version) > 128
+            or not isinstance(self.distribution_digest, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", self.distribution_digest)
+            or not isinstance(self.executor_image, str)
+            or len(self.executor_image) > 255
+            or not re.fullmatch(
+                r"[a-z0-9][a-z0-9._:/-]*@sha256:[0-9a-f]{64}", self.executor_image
+            )
+            or not isinstance(self.operation_id, str)
+            or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,127}", self.operation_id)
+            or not isinstance(self.output_type, str)
+            or not re.fullmatch(
+                r"(?:[a-z][a-z0-9_.-]{0,127}|[a-z0-9][a-z0-9.-]{0,127}/[a-z][a-z0-9_.-]{0,127})",
+                self.output_type,
+            )
+        ):
+            raise PluginValidationError("pipeline stage must pin its version and executor identity")
+        if not isinstance(self.effect, str) or self.effect not in {"pure", "artifact_write"}:
+            raise PluginValidationError("unsupported plugin pipeline stage effect")
+        if len(self.input_ports) > 16 or len(self.config_fields) > 32:
+            raise PluginValidationError("plugin pipeline stage contract exceeds limits")
+        for name, port in self.input_ports.items():
+            if (
+                not isinstance(port, tuple)
+                or len(port) != 3
+                or not isinstance(name, str)
+                or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,63}", name)
+                or not isinstance(port[0], str)
+                or not re.fullmatch(
+                    r"(?:[a-z][a-z0-9_.-]{0,127}|[a-z0-9][a-z0-9.-]{0,127}/[a-z][a-z0-9_.-]{0,127})",
+                    port[0],
+                )
+                or not isinstance(port[1], int)
+                or not isinstance(port[2], int)
+                or port[1] < 1
+                or port[2] < max(1, port[1])
+                or port[2] > 24
+            ):
+                raise PluginValidationError("invalid plugin pipeline stage input port")
+        if any(
+            not isinstance(field, str)
+            or not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", field)
+            for field in self.config_fields
+        ) or len(set(self.config_fields)) != len(self.config_fields):
+            raise PluginValidationError("invalid plugin pipeline stage configuration fields")
+        permitted = {"artifact:read", "artifact:write"}
+        if any(
+            not isinstance(permission, str) or permission not in permitted
+            for permission in self.permissions
+        ):
+            raise PluginValidationError("plugin pipeline stage requests an unsupported permission")
+        if len(set(self.permissions)) != len(self.permissions):
+            raise PluginValidationError("plugin pipeline stage permissions must be unique")
+        if self.effect == "artifact_write" and "artifact:write" not in self.permissions:
+            raise PluginValidationError("artifact-writing stage requires artifact:write permission")
+        if self.effect == "pure" and "artifact:write" in self.permissions:
+            raise PluginValidationError("pure stage cannot request artifact:write permission")
+        if (
+            not isinstance(self.cpu_limit, str)
+            or len(self.cpu_limit) > 16
+            or not re.fullmatch(r"[0-9]+(?:\.[0-9]+)?", self.cpu_limit)
+            or float(self.cpu_limit) <= 0
+            or float(self.cpu_limit) > 8
+            or not isinstance(self.memory_limit, str)
+            or len(self.memory_limit) > 16
+            or not re.fullmatch(r"[1-9][0-9]*[kKmMgG]", self.memory_limit)
+            or not isinstance(self.pids_limit, int)
+            or isinstance(self.pids_limit, bool)
+            or self.pids_limit < 1
+            or not isinstance(self.timeout_seconds, int)
+            or isinstance(self.timeout_seconds, bool)
+            or not 1 <= self.timeout_seconds <= 3600
+        ):
+            raise PluginValidationError("invalid plugin pipeline stage resource limits")
+        memory_match = re.fullmatch(r"([1-9][0-9]*)([kKmMgG])", self.memory_limit)
+        if memory_match is None:
+            raise PluginValidationError("invalid plugin pipeline stage memory limit")
+        memory_bytes = int(memory_match.group(1)) * {
+            "k": 1024,
+            "m": 1024**2,
+            "g": 1024**3,
+        }[memory_match.group(2).lower()]
+        if memory_bytes > 8 * 1024**3 or self.pids_limit > 1024:
+            raise PluginValidationError("plugin pipeline stage resource limit exceeds host policy")
+
+
+class PipelineStageContributionRegistry:
+    """Deterministic host registry for plugin supplied stage declarations."""
+
+    def __init__(self) -> None:
+        self._frozen = False
+        self._items: dict[str, PipelineStageContribution] = {}
+
+    def _assert_mutable(self) -> None:
+        if self._frozen:
+            raise PluginValidationError("plugin registry is frozen")
+
+    @property
+    def frozen(self) -> bool:
+        return self._frozen
+
+    def freeze(self) -> None:
+        self._frozen = True
+
+    def add(self, contribution: PipelineStageContribution) -> None:
+        self._assert_mutable()
+        contribution.validate()
+        if contribution.stage_id in self._items:
+            raise PluginValidationError(f"pipeline stage collision: {contribution.stage_id}")
+        self._items[contribution.stage_id] = contribution
+
+    @property
+    def items(self) -> tuple[PipelineStageContribution, ...]:
+        return tuple(self._items[key] for key in sorted(self._items))
+
+    @property
+    def digest(self) -> str:
+        payload = [
+            {
+                "plugin_id": item.plugin_id,
+                "stage_id": item.stage_id,
+                "version": item.version,
+                "plugin_version": item.plugin_version,
+                "distribution_digest": item.distribution_digest,
+                "executor_image": item.executor_image,
+                "operation_id": item.operation_id,
+                "input_ports": {
+                    name: list(value) for name, value in sorted(item.input_ports.items())
+                },
+                "output_type": item.output_type,
+                "config_fields": list(item.config_fields),
+                "permissions": list(item.permissions),
+                "effect": item.effect,
+                "cpu_limit": item.cpu_limit,
+                "memory_limit": item.memory_limit,
+                "pids_limit": item.pids_limit,
+                "timeout_seconds": item.timeout_seconds,
+            }
+            for item in self.items
+        ]
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)
@@ -431,6 +649,7 @@ class ContributionRegistry:
         self.surface_registry = SurfaceContributionRegistry()
         self.cli_registry = CliContributionRegistry()
         self.client_operation_registry = ClientOperationRegistry()
+        self.pipeline_stage_registry = PipelineStageContributionRegistry()
 
     def _assert_mutable(self) -> None:
         self.capability_registry._assert_mutable()
@@ -454,6 +673,13 @@ class ContributionRegistry:
 
     def add_job(self, job_type: str, plugin_id: str, handler: Any) -> None:
         self.job_registry.add(job_type, plugin_id, handler)
+
+    def add_pipeline_stage(
+        self, contribution: PipelineStageContribution, *, plugin_id: str
+    ) -> None:
+        if contribution.plugin_id != plugin_id:
+            raise PluginValidationError("plugin cannot contribute a stage for another plugin")
+        self.pipeline_stage_registry.add(contribution)
 
     def add_event_subscription(self, event_type: str, plugin_id: str, handler: Any) -> None:
         self.event_subscription_registry.add(event_type, plugin_id, handler)
@@ -497,6 +723,17 @@ class ContributionRegistry:
             if item.plugin_id == plugin_id
         }
         surfaces = {item.id for item in self.surface_registry.items if item.plugin_id == plugin_id}
+        stages = {
+            item.stage_id
+            for item in self.pipeline_stage_registry.items
+            if item.plugin_id == plugin_id
+        }
+        stage_permissions = {
+            permission
+            for item in self.pipeline_stage_registry.items
+            if item.plugin_id == plugin_id
+            for permission in item.permissions
+        }
         if not jobs <= set(manifest.job_types):
             raise PluginValidationError(f"undeclared job contribution in {plugin_id}")
         if not events <= set(manifest.event_types):
@@ -505,6 +742,10 @@ class ContributionRegistry:
             raise PluginValidationError(f"undeclared migration contribution in {plugin_id}")
         if not surfaces <= set(manifest.surface_ids):
             raise PluginValidationError(f"undeclared surface contribution in {plugin_id}")
+        if not stages <= set(manifest.pipeline_stage_ids):
+            raise PluginValidationError(f"undeclared pipeline stage contribution in {plugin_id}")
+        if not stage_permissions <= set(manifest.permissions):
+            raise PluginValidationError(f"undeclared pipeline stage permission in {plugin_id}")
         if (
             any(item.plugin_id == plugin_id for item in self.ui_registry.items)
             and not manifest.ui_entry
@@ -522,6 +763,7 @@ class ContributionRegistry:
         self.surface_registry.freeze()
         self.cli_registry.freeze()
         self.client_operation_registry.freeze()
+        self.pipeline_stage_registry.freeze()
 
     @property
     def routes(self) -> tuple[RouteContribution, ...]:
@@ -655,6 +897,17 @@ class PluginManager:
                 )
             )
             registry.validate_manifest(record.manifest)
+            for stage in registry.pipeline_stage_registry.items:
+                if stage.plugin_id != plugin_id:
+                    continue
+                if record.distribution_version != stage.plugin_version:
+                    raise PluginValidationError(
+                        f"pipeline stage {stage.stage_id} must pin the installed plugin version"
+                    )
+                if record.artifact_hash != stage.distribution_digest:
+                    raise PluginValidationError(
+                        f"pipeline stage {stage.stage_id} must pin the installed plugin distribution"
+                    )
             composed.append(
                 PluginRecord(
                     record.manifest,
@@ -750,6 +1003,8 @@ __all__ = (
     "PluginRecord",
     "PluginState",
     "PluginValidationError",
+    "PipelineStageContribution",
+    "PipelineStageContributionRegistry",
     "PermissionRegistry",
     "RouteContribution",
     "RouterRegistry",

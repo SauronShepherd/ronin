@@ -161,6 +161,14 @@ class Trial:
     ) -> Trial:
         if not isinstance(random_seed, int) or isinstance(random_seed, bool) or random_seed < 0:
             raise ValueError("trial random seed must be a non-negative integer")
+        normalized_metrics: dict[str, float] = {}
+        for name, raw_value in metrics.items():
+            if not isinstance(name, str) or not name or name != name.strip():
+                raise ValueError("trial metric names must be non-empty and trimmed")
+            value = _finite_metric(raw_value)
+            if value is None:
+                raise ValueError(f"trial metric {name!r} must be a finite number")
+            normalized_metrics[name] = value
         encoded = json.dumps(
             {"parameters": parameters, "random_seed": random_seed},
             sort_keys=True,
@@ -168,7 +176,9 @@ class Trial:
         )
         digest = hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
         return cls(
-            f"trial-{digest}", tuple(sorted(parameters.items())), tuple(sorted(metrics.items()))
+            f"trial-{digest}",
+            tuple(sorted(parameters.items())),
+            tuple(sorted(normalized_metrics.items())),
         )
 
     def metric(self, name: str) -> float:
@@ -183,6 +193,16 @@ class Trial:
             "parameters": dict(self.parameters),
             "metrics": dict(self.metrics),
         }
+
+
+def _finite_metric(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    try:
+        normalized = float(value)
+    except OverflowError:
+        return None
+    return normalized if isfinite(normalized) else None
 
 
 def derive_trial_seed(random_seed: int, trial_id: str) -> int:
@@ -208,11 +228,7 @@ def rank_trials(spec: SearchSpec, trials: tuple[Trial, ...]) -> tuple[Trial, ...
                 value = trial.metric(name)
             except KeyError as exc:
                 raise ValueError(f"trial is missing ranking metric {name!r}") from exc
-            if (
-                isinstance(value, bool)
-                or not isinstance(value, (int, float))
-                or not isfinite(value)
-            ):
+            if _finite_metric(value) is None:
                 raise ValueError(f"trial ranking metric {name!r} must be finite")
 
     ranked = sorted(trials, key=lambda trial: trial.trial_id)

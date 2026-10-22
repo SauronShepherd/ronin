@@ -131,10 +131,38 @@ jobs:
           cache-dependency-path: requirements-dev.lock
       - name: Install hash-locked development environment
         run: |
+          installation_started=$SECONDS
           python -m pip install --require-hashes -r requirements-dev.lock
           python -m pip install -e '.[data-plane,open-tables,ml,security,streaming]'
+          echo "RONIN_CI_INSTALL_SECONDS=$((SECONDS - installation_started))" >> "$GITHUB_ENV"
       - name: Tests and tier coverage
+        id: test-suite
+        env:
+          PYTEST_PLUGINS: tools.pytest_timing_report
+          RONIN_PYTEST_TIMINGS_PATH: pytest-timings.json
+          RONIN_CI_COMMIT: ${{ github.sha }}
+          RONIN_CI_RUN_ID: ${{ github.run_id }}
+          RONIN_CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          RONIN_CI_PYTHON_VERSION: ${{ matrix.python-version }}
+          RONIN_CI_TEST_SHARD: full
         run: make test
+      - name: Require timing evidence after a successful suite
+        if: always()
+        env:
+          TEST_SUITE_RESULT: ${{ steps.test-suite.outcome }}
+        run: |
+          if [ "$TEST_SUITE_RESULT" = success ] && [ ! -s pytest-timings.json ]; then
+            echo "Successful test suite did not produce pytest-timings.json" >&2
+            exit 1
+          fi
+      - name: Upload per-test timing evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pytest-timings-${{ matrix.python-version }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: pytest-timings.json
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Export tier coverage evidence
         run: coverage json -o coverage-tier-evidence.json
       - name: Upload tier coverage evidence

@@ -114,10 +114,22 @@ def _text(value: str, name: str) -> str:
 def _finite_float(value: object, name: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"{name} must be numeric")
-    number = float(value)
+    try:
+        number = float(value)
+    except OverflowError as exc:
+        raise ValueError(f"{name} must be finite") from exc
     if not isfinite(number):
         raise ValueError(f"{name} must be finite")
     return number
+
+
+def _is_finite_number(value: object) -> bool:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return isfinite(float(value))
+    except OverflowError:
+        return False
 
 
 def _classification_label(value: object) -> ClassificationLabel:
@@ -183,9 +195,7 @@ class TrainingSpec:
         if target in features:
             raise ValueError("ML target must not also be a feature")
         if (
-            not isinstance(self.test_fraction, (int, float))
-            or isinstance(self.test_fraction, bool)
-            or not isfinite(float(self.test_fraction))
+            not _is_finite_number(self.test_fraction)
             or not 0 < self.test_fraction < 1
         ):
             raise ValueError("test_fraction must be in (0, 1)")
@@ -195,9 +205,7 @@ class TrainingSpec:
             raise ValueError("ML parameters must be unique")
         if any(
             not _text(name, "ML parameter")
-            or not isinstance(value, (int, float))
-            or isinstance(value, bool)
-            or not isfinite(float(value))
+            or not _is_finite_number(value)
             for name, value in self.parameters
         ):
             raise ValueError("ML parameters must be finite numbers")
