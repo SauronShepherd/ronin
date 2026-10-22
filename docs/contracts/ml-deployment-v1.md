@@ -17,6 +17,10 @@ Routes:
   100,000 rows and never follows a changed champion.
 - `POST .../{deployment_id}/rollback` transitions the deployment to
   `rolled_back`/`unready` without changing registry model stages.
+- Scheduler jobs of type `ml-studio.deployment.v1` accept the same workspace,
+  deployment, model, version and endpoint identity and return a
+  `ronin.ml-deployment-task-result/v1` envelope. The task is idempotent and
+  verifies the artifact digest before reporting readiness.
 
 Deployment identity, model version, artifact reference and digest are immutable.
 Retries of the same create request are idempotent; reuse with a different pin is a

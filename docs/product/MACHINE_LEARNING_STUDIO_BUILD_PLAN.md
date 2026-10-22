@@ -1145,8 +1145,10 @@ persiste el estado en SQLite/PostgreSQL, expone health y telemetría acotada,
 sirve predicciones contra el digest fijado y permite rollback sin alterar el
 champion del registry. Las identidades de deployment son inmutables e
 idempotentes; un pin distinto produce conflicto. El contrato está documentado en
-`docs/contracts/ml-deployment-v1.md` y OpenAPI. No se ejecutaron pruebas,
-builds, validadores ni Docker por instrucción del usuario.
+`docs/contracts/ml-deployment-v1.md` y OpenAPI. El plugin registra además la
+tarea durable `ml-studio.deployment.v1` para ejecutar el mismo pin desde el
+scheduler. No se ejecutaron pruebas, builds, validadores ni Docker por
+instrucción del usuario.
 
 ## 90. Completar el recorrido de AI/ML Lab Studio
 

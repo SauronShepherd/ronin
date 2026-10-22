@@ -5,11 +5,13 @@ import base64
 import hashlib
 import json
 from dataclasses import replace
+from datetime import datetime, timezone
 from typing import Any, Literal, cast
 from urllib.parse import parse_qs, unquote
 
 from studio_core import WorkspaceId
 from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
+from studio_orchestrator import Instant
 from studio_storage.ports import ArtifactReferenceBarrier, ArtifactStore
 
 from .backends import default_backends
@@ -47,6 +49,11 @@ from .services import InMemoryMLLabStore, LabService
 
 MAX_PREDICTION_ROWS = 100_000
 MAX_PREDICTION_ARTIFACT_BYTES = 64 * 1024 * 1024
+
+
+def _plugin_now() -> Instant:
+    """Return the canonical UTC instant expected by durable ML stores."""
+    return Instant(datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z"))
 
 
 def _parse_tie_breakers(raw: object) -> tuple[tuple[str, Literal["maximize", "minimize"]], ...]:
@@ -129,14 +136,17 @@ class MachineLearningStudioPlugin:
             "ml-studio.experiments",
             "ml-studio.backends",
             "ml-studio.models",
+            "ml-studio.deployments",
         ),
         permissions=("ml-studio:read", "ml-studio:write", "ml-studio:execute"),
+        job_types=("ml-studio.deployment.v1",),
         ui_entry="ml-studio",
         surface_ids=(
             "ml-studio.backends.v1",
             "ml-studio.labs.v1",
             "ml-studio.run.v1",
             "ml-studio.models.v1",
+            "ml-studio.deployments.v1",
         ),
     )
 
@@ -265,6 +275,18 @@ class MachineLearningStudioPlugin:
                 capability="ml-studio.models",
                 permission="ml-studio:read",
                 path="/v1/ml-studio/models",
+                method="GET",
+                output_schema={"type": "object"},
+            ),
+            SurfaceContribution(
+                id="ml-studio.deployments.v1",
+                plugin_id=context.plugin_id,
+                namespace="ml-studio",
+                command="deployments",
+                operation_id="ml-studio.deployments.v1",
+                capability="ml-studio.deployments",
+                permission="ml-studio:read",
+                path="/v1/ml-studio/deployments",
                 method="GET",
                 output_schema={"type": "object"},
             ),
@@ -504,6 +526,11 @@ class MachineLearningStudioPlugin:
             self.predict_deployment,
             permission="ml-studio:execute",
         )
+        context.contributions.add_job(
+            "ml-studio.deployment.v1",
+            context.plugin_id,
+            self.run_deployment_task,
+        )
 
     def startup(self) -> None:
         self._coordinator.start()
@@ -586,7 +613,7 @@ class MachineLearningStudioPlugin:
         from studio_core.ml import ModelId, ModelVersion
 
         model = self._registry.promote_model(
-            WorkspaceId(workspace_id), ModelId(model_id), ModelVersion(version), now="plugin"
+            WorkspaceId(workspace_id), ModelId(model_id), ModelVersion(version), now=_plugin_now()
         )
         return model.to_payload()
 
@@ -878,6 +905,53 @@ class MachineLearningStudioPlugin:
             "data_base64": base64.b64encode(data[offset:end]).decode("ascii"),
         }
 
+    def run_deployment_task(
+        self, payload: object | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
+        """Execute one idempotent scheduler deployment task."""
+        if self._registry is None or self._artifacts is None:
+            raise RuntimeError("model deployment requires registry and artifact store")
+        if not isinstance(payload, dict) or set(payload) - {
+            "workspace_id",
+            "deployment_id",
+            "model_id",
+            "version",
+            "endpoint",
+        }:
+            raise ValueError("deployment task contains unsupported fields")
+        required = ("workspace_id", "deployment_id", "model_id", "version")
+        if not all(isinstance(payload.get(name), str) for name in required):
+            raise ValueError("deployment task requires workspace and model identity")
+        workspace_id = self._bounded_identifier(payload["workspace_id"], "workspace_id")
+        deployment_id = self._bounded_identifier(payload["deployment_id"], "deployment_id")
+        model_id = self._bounded_identifier(payload["model_id"], "model_id")
+        version = self._bounded_identifier(payload["version"], "version")
+        endpoint = payload.get("endpoint", "local")
+        if (
+            not isinstance(endpoint, str)
+            or not endpoint
+            or endpoint != endpoint.strip()
+            or len(endpoint) > 512
+        ):
+            raise ValueError("deployment endpoint must be bounded text")
+        from studio_core.ml import ModelId, ModelVersion
+
+        deployment = deploy_registered_model(
+            self._registry,
+            self._artifacts,
+            WorkspaceId(workspace_id),
+            deployment_id,
+            ModelId(model_id),
+            ModelVersion(version),
+            endpoint=endpoint,
+            now=_plugin_now(),
+        )
+        return {
+            "schema": "ronin.ml-deployment-task-result/v1",
+            "status": "ready",
+            "deployment": deployment.to_payload(),
+        }
+
     def create_deployment(
         self,
         workspace_id: str | None = None,
@@ -911,7 +985,7 @@ class MachineLearningStudioPlugin:
             ModelId(model_id),
             ModelVersion(version),
             endpoint=endpoint,
-            now="plugin",
+            now=_plugin_now(),
         )
         return deployment.to_payload()
 
@@ -985,7 +1059,7 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, _kwargs)
         deployment_id = self._bounded_identifier(deployment_id, "deployment_id")
         deployment = rollback_model_deployment(
-            self._registry, WorkspaceId(workspace_id), deployment_id, now="plugin"
+            self._registry, WorkspaceId(workspace_id), deployment_id, now=_plugin_now()
         )
         return deployment.to_payload()
 
@@ -1058,7 +1132,7 @@ class MachineLearningStudioPlugin:
                     deployment_id,
                     success=False,
                     error=str(exc)[:1024] or "serving request failed",
-                    now="plugin",
+                    now=_plugin_now(),
                 )
             except Exception:
                 pass
@@ -1068,7 +1142,7 @@ class MachineLearningStudioPlugin:
             WorkspaceId(workspace_id),
             deployment_id,
             success=True,
-            now="plugin",
+            now=_plugin_now(),
         )
         return {
             "deployment_id": deployment_id,
@@ -1201,7 +1275,7 @@ class MachineLearningStudioPlugin:
                     run_id=MLRunId(cast(str, body.get("run_id", f"run-{lab_id}"))),
                     execution_ref=cast(str, body.get("execution_ref", "ml-studio-local")),
                     source_revision=cast(str, body.get("source_revision", "local")),
-                    now="plugin",
+                    now=_plugin_now(),
                     artifact_reference_barrier=self._artifact_reference_barrier,
                 )
                 payload["run"] = run.to_payload()
@@ -1217,7 +1291,7 @@ class MachineLearningStudioPlugin:
                         run_id=MLRunId(run.id.value),
                         model_id=ModelId(cast(str, registration["model_id"])),
                         model_version=ModelVersion(cast(str, registration["version"])),
-                        now="plugin",
+                        now=_plugin_now(),
                         artifact_reference_barrier=self._artifact_reference_barrier,
                     )
                     payload["model"] = model.to_payload()
@@ -1235,7 +1309,7 @@ class MachineLearningStudioPlugin:
                 run_id=MLRunId(cast(str, body.get("run_id", f"run-{lab_id}"))),
                 execution_ref=cast(str, body.get("execution_ref", "ml-studio-local")),
                 source_revision=cast(str, body.get("source_revision", "local")),
-                now="plugin",
+                now=_plugin_now(),
             )
             payload["run"] = run.to_payload()
         return payload
@@ -1932,7 +2006,7 @@ class MachineLearningStudioPlugin:
                     source_revision="search",
                     execution_ref="ml-studio-search",
                     spec=training_spec,
-                    now="plugin",
+                    now=_plugin_now(),
                     artifact_reference_barrier=self._artifact_reference_barrier,
                 )
                 registered.append(registered_model.to_payload())
@@ -2166,7 +2240,7 @@ class MachineLearningStudioPlugin:
         self._registry.put_experiment(
             workspace,
             Experiment(experiment_id, lab.name, lab.project_id),
-            now="plugin",
+            now=_plugin_now(),
         )
         record = MLRunRecord(
             ml_run_id,
@@ -2178,12 +2252,12 @@ class MachineLearningStudioPlugin:
             metrics=metrics,
             artifact_refs=(artifact_ref,),
         )
-        self._registry.record_run(workspace, record, now="plugin")
+        self._registry.record_run(workspace, record, now=_plugin_now())
         requested = RegisteredModelVersion(
             model_id, model_version, ml_run_id, artifact_ref, digest, framework, signature
         )
         try:
-            registered = self._registry.register_model(workspace, requested, now="plugin")
+            registered = self._registry.register_model(workspace, requested, now=_plugin_now())
         except Exception:
             existing = self._registry.get_model(workspace, model_id, model_version)
             if (
@@ -2279,7 +2353,7 @@ class MachineLearningStudioPlugin:
             stored = existing
         else:
             try:
-                stored = self._registry.put_experiment(workspace, experiment, now="plugin")
+                stored = self._registry.put_experiment(workspace, experiment, now=_plugin_now())
             except ValueError as exc:
                 raise PluginRouteConflict(str(exc)) from exc
         return {
