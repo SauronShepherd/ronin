@@ -63,7 +63,13 @@ class MLRegistryBundleArtifact:
     data: bytes
 
     def __post_init__(self) -> None:
-        if not self.source_ref.strip() or not self.role.strip():
+        if (
+            not isinstance(self.source_ref, str)
+            or not isinstance(self.role, str)
+            or not self.source_ref.strip()
+            or not self.role.strip()
+            or not isinstance(self.data, bytes)
+        ):
             raise ValueError("ML bundle artifact identity is invalid")
         if len(self.digest) != 64 or any(
             char not in "0123456789abcdef" for char in self.digest
@@ -94,14 +100,17 @@ class MLRegistryBundleArtifact:
         }:
             raise ValueError("ML bundle artifact has invalid shape")
         encoded = payload["data_base64"]
-        if not isinstance(encoded, str) or not isinstance(payload["media_type"], (str, type(None))):
+        if (
+            payload["schema"] != "ronin.ml-artifact/v1"
+            or not all(isinstance(payload[key], str) for key in ("source_ref", "digest", "role"))
+            or not isinstance(encoded, str)
+            or not isinstance(payload["media_type"], (str, type(None)))
+        ):
             raise ValueError("ML bundle artifact fields have invalid types")
         try:
             data = base64.b64decode(encoded, validate=True)
         except (ValueError, TypeError) as exc:
             raise ValueError("ML bundle artifact data is invalid base64") from exc
-        if payload["schema"] != "ronin.ml-artifact/v1":
-            raise ValueError("unsupported ML bundle artifact schema")
         return cls(
             cast(str, payload["source_ref"]),
             cast(str, payload["digest"]),
@@ -264,6 +273,14 @@ def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
     if len(artifact_by_ref) != len(artifacts):
         raise ValueError("ML registry Bundle contains duplicate artifact references")
     model_refs = {model.artifact_ref: model.artifact_digest for model in models}
+    if artifacts and set(model_refs) != set(artifact_by_ref):
+        raise ValueError("ML registry Bundle does not contain every referenced model artifact")
+    if artifacts and any(
+        reference not in artifact_by_ref
+        for run in runs
+        for reference in run.artifact_refs
+    ):
+        raise ValueError("ML registry Bundle run references an absent artifact")
     for artifact in artifacts:
         if model_refs.get(artifact.source_ref) != artifact.digest:
             raise ValueError("ML registry Bundle artifact is not bound to a model digest")
