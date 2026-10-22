@@ -1084,3 +1084,11 @@ modo que las rutas `/v1/ml-studio/features` funcionan en los perfiles SQLite y
 PostgreSQL. OpenAPI y `docs/contracts/ml-feature-v1.md` describen el contrato.
 No se ejecutaron pruebas, builds, validadores ni Docker por instrucción del
 usuario.
+
+El bundle ML ahora puede transportar también definiciones de features y
+`ModelEvaluation` cuando se suministra el store de features o el registry
+expone lecturas de evaluaciones. El inventario conserva dependencias
+feature/run/model/evaluation, valida relaciones ausentes antes del commit y
+requiere los stores destino antes de escribir artefactos. El modo metadata-only
+continúa explícito. La cualificación exact-head sigue pendiente y no se
+ ejecutaron pruebas, builds, validadores ni Docker.

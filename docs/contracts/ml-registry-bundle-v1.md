@@ -2,8 +2,11 @@
 
 Canonical identifier: `ronin.ml-registry-bundle/v1`.
 
-The ML registry bundle contains canonical JSON objects for experiments, runs and
-registered model versions. When an `ArtifactStore` is supplied to export, every
+The ML registry bundle contains canonical JSON objects for experiments, feature
+definitions, runs, evaluations and registered model versions. Feature
+definitions are included only when a `FeatureDefinitionStore` is supplied;
+evaluations are collected from the registry when supported. When an
+`ArtifactStore` is supplied to export, every
 referenced model artifact is copied into a `ml_artifact` inventory object using
 the `ronin.ml-artifact/v1` payload. The payload carries the original storage
 reference, SHA-256 digest, role, media type and base64 encoded bytes.
