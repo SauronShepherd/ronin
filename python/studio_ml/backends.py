@@ -110,6 +110,13 @@ class RemoteTrainingResult:
                 or not math.isfinite(float(value))
             ):
                 raise ValueError("remote result metrics must be finite numbers")
+        if bool(self.artifact_ref) != bool(self.artifact_digest):
+            raise ValueError("remote artifact reference and digest must be supplied together")
+        if self.artifact_digest and (
+            len(self.artifact_digest) != 64
+            or any(char not in "0123456789abcdef" for char in self.artifact_digest)
+        ):
+            raise ValueError("remote artifact digest must be lowercase SHA-256")
 
 
 class RemoteAdapterError(RuntimeError):

@@ -47,6 +47,10 @@ Remote result metrics must be finite numeric values with non-empty names.
 NaN, positive infinity and negative infinity are rejected before a result can
 enter the execution or registry lifecycle.
 
+An artifact reference and digest are an all-or-nothing pair. When present, the
+digest must be a lowercase SHA-256 value; a result with only one half of the
+pair is rejected before it can be persisted.
+
 `RemoteExecutionController` is the provider-neutral lifecycle helper. It
 retries only `RemoteTransientError`, delegates polling and cancellation, and
 never changes the request identity between attempts.
