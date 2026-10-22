@@ -855,6 +855,11 @@ class MachineLearningStudioPlugin:
             ):
                 raise ValueError("register must contain bounded model_id and version")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
+        if registration is not None and lab.task != "clustering":
+            raise ValueError(
+                "synchronous register is supported only for clustering; "
+                "use the durable execution register route for supervised models"
+            )
         rows = resolve_lab_rows(
             WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
         )
