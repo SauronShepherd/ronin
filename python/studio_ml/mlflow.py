@@ -18,6 +18,16 @@ class MLflowFlavorError(ValueError):
     """Raised when an MLflow flavor is outside the safe metadata subset."""
 
 
+def _safe_reference(value: str, label: str) -> None:
+    if (
+        not value
+        or value != value.strip()
+        or any(char in value for char in "\r\n\x00?#")
+        or "@" in value.split("://", 1)[-1].split("/", 1)[0]
+    ):
+        raise ValueError(f"{label} contains unsafe credential-bearing URI syntax")
+
+
 @dataclass(frozen=True, slots=True)
 class MLflowSubset:
     model_id: str
@@ -164,8 +174,14 @@ class MLflowMetadata:
             raise MLflowFlavorError(f"unsupported MLflow flavor: {self.flavor}")
         if self.run.experiment_id != self.experiment.id:
             raise ValueError("MLflow run does not belong to the exported experiment")
+        for reference in self.run.artifact_refs:
+            _safe_reference(reference, "MLflow run artifact reference")
+        if self.run.runtime_snapshot_ref is not None:
+            _safe_reference(self.run.runtime_snapshot_ref, "MLflow runtime snapshot reference")
         if self.model is not None and self.model.source_run_id != self.run.id:
             raise ValueError("MLflow model does not reference the exported run")
+        if self.model is not None:
+            _safe_reference(self.model.artifact_ref, "MLflow model artifact reference")
 
     def to_payload(self) -> dict[str, object]:
         return {
