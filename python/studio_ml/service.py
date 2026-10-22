@@ -42,6 +42,12 @@ def _artifact_reference_lease(
 
 @runtime_checkable
 class MLRegistryStore(Protocol):
+    def get_experiment(
+        self, workspace_id: WorkspaceId, experiment_id: ExperimentId
+    ) -> Experiment | None: ...
+
+    def list_experiments(self, workspace_id: WorkspaceId) -> tuple[Experiment, ...]: ...
+
     def get_run(self, workspace_id: WorkspaceId, run_id: MLRunId) -> MLRunRecord | None: ...
 
     def put_experiment(

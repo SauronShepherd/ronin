@@ -1023,7 +1023,9 @@ El contrato `ronin.ml-quality-suite/v1` limita suites a 64 expectativas únicas 
 El endpoint `POST /v1/ml-studio/experiments` ya crea una identidad `Experiment`
 durable y workspace-scoped mediante el registry, rechaza cuerpos incompletos y
 mantiene la definición inmutable en SQLite y PostgreSQL. OpenAPI documenta la
-entrada y la respuesta creada.
+entrada y la respuesta creada. `GET /v1/ml-studio/experiments` y
+`GET /v1/ml-studio/experiments/{experiment_id}` completan el listado y la
+reapertura workspace-scoped.
 
 El transporte remoto aplica el timeout de la solicitud sin superar el timeout de
 despliegue, limita el tamaño de la respuesta JSON y ejecuta el backoff exponencial

@@ -903,6 +903,14 @@
       }
     },
     "/v1/ml-studio/experiments": {
+      "get": {
+        "operationId": "listMlStudioExperiments",
+        "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
+        "responses": {
+          "200": {"description": "Workspace-scoped experiments", "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["items"], "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/MLExperiment"}}}}}}},
+          "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}
+        }
+      },
       "post": {
         "operationId": "createMlStudioExperiment",
         "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
@@ -910,6 +918,16 @@
         "responses": {
           "200": {"description": "Created or existing immutable experiment", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLExperimentCreated"}}}},
           "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/ml-studio/experiments/{experiment_id}": {
+      "get": {
+        "operationId": "getMlStudioExperiment",
+        "parameters": [{"name": "experiment_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1}}, {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
+        "responses": {
+          "200": {"description": "Workspace-scoped experiment", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLExperiment"}}}},
+          "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}
         }
       }
     },

@@ -401,6 +401,20 @@ class MachineLearningStudioPlugin:
         )
         context.contributions.add_route(
             "GET",
+            "/v1/ml-studio/experiments",
+            context.plugin_id,
+            self.list_experiments,
+            permission="ml-studio:read",
+        )
+        context.contributions.add_route(
+            "GET",
+            "/v1/ml-studio/experiments/{experiment_id}",
+            context.plugin_id,
+            self.get_experiment,
+            permission="ml-studio:read",
+        )
+        context.contributions.add_route(
+            "GET",
             "/v1/ml-studio/models",
             context.plugin_id,
             self.list_models,
@@ -1770,6 +1784,37 @@ class MachineLearningStudioPlugin:
             "contract": "ml-studio/experiment/v1",
             **stored.to_payload(),
         }
+
+    def list_experiments(
+        self, workspace_id: str | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
+        if self._registry is None:
+            raise RuntimeError("ML registry is unavailable")
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        return {
+            "items": [
+                experiment.to_payload()
+                for experiment in self._registry.list_experiments(WorkspaceId(workspace_id))
+            ]
+        }
+
+    def get_experiment(
+        self,
+        experiment_id: str,
+        workspace_id: str | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        if self._registry is None:
+            raise RuntimeError("ML registry is unavailable")
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        from studio_core.ml import ExperimentId
+
+        experiment = self._registry.get_experiment(
+            WorkspaceId(workspace_id), ExperimentId(experiment_id)
+        )
+        if experiment is None:
+            raise KeyError(experiment_id)
+        return experiment.to_payload()
 
 
 def factory() -> MachineLearningStudioPlugin:
