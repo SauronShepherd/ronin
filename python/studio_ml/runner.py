@@ -609,6 +609,14 @@ class LocalExperimentRunner:
         capabilities = getattr(backend, "capabilities", None)
         if capabilities is not None and lab.task not in capabilities.tasks:
             raise ValueError(f"backend {backend.backend_id!r} does not support task {lab.task!r}")
+        if (
+            capabilities is not None
+            and lab.task == "clustering"
+            and "kmeans" not in capabilities.algorithms
+        ):
+            raise ValueError(
+                f"backend {backend.backend_id!r} does not support algorithm 'kmeans'"
+            )
         parameters = dict(pipeline.parameters)
         if (
             parameters.get("lab_digest") != lab.digest
@@ -697,6 +705,14 @@ class LocalExperimentRunner:
         capabilities = getattr(backend, "capabilities", None)
         if capabilities is not None and lab.task not in capabilities.tasks:
             raise ValueError(f"backend {backend.backend_id!r} does not support task {lab.task!r}")
+        if (
+            capabilities is not None
+            and lab.task == "clustering"
+            and "kmeans" not in capabilities.algorithms
+        ):
+            raise ValueError(
+                f"backend {backend.backend_id!r} does not support algorithm 'kmeans'"
+            )
 
         if pipeline is None:
             from .services import compile_lab_pipeline
@@ -1625,6 +1641,8 @@ class LocalExperimentRunner:
         capabilities = getattr(backend, "capabilities", None)
         if capabilities is not None and "clustering" not in capabilities.tasks:
             raise ValueError(f"backend {backend.backend_id!r} does not support clustering")
+        if capabilities is not None and "kmeans" not in capabilities.algorithms:
+            raise ValueError(f"backend {backend.backend_id!r} does not support algorithm 'kmeans'")
         quality = profile_and_validate(lab, [dict(row) for row in rows])
         if not quality.passed:
             raise ValueError("quality gate failed: " + "; ".join(quality.failures))
