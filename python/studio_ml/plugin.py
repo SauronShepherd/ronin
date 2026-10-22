@@ -1382,11 +1382,26 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, _kwargs)
         if self._labs is None or lab_id is None:
             raise RuntimeError("ML Studio is not ready")
-        if not isinstance(body, dict) or not isinstance(body.get("rows"), list):
+        if (
+            not isinstance(body, dict)
+            or set(body) - {"rows", "spec", "register"}
+            or not isinstance(body.get("rows"), list)
+        ):
             raise ValueError("search requires rows and spec")
         raw_spec = body.get("spec")
         if not isinstance(raw_spec, dict):
             raise ValueError("search requires a spec")
+        if set(raw_spec) - {
+            "mode",
+            "parameters",
+            "metric",
+            "direction",
+            "tie_breakers",
+            "max_trials",
+            "random_seed",
+            "stop_policy",
+        }:
+            raise ValueError("spec contains unknown fields")
         parameters = raw_spec.get("parameters", [])
         if not isinstance(parameters, list):
             raise ValueError("spec parameters must be an array")
@@ -1422,10 +1437,10 @@ class MachineLearningStudioPlugin:
             patience=raw_stop_policy.get("patience", 10),
             min_improvement=raw_stop_policy.get("min_improvement", 0.0),
         )
-        rows = body["rows"]
-        if not all(isinstance(row, dict) for row in rows):
-            raise ValueError("search rows must be objects")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
+        rows = resolve_lab_rows(
+            WorkspaceId(workspace_id), lab, body["rows"], self._dataset_resolver
+        )
         if lab.task not in {"classification", "regression"}:
             raise ValueError("hyperparameter search requires a supervised lab")
         if "metric" not in raw_spec:
@@ -1464,8 +1479,13 @@ class MachineLearningStudioPlugin:
         registration = body.get("register")
         if registration is not None and (self._registry is None or self._artifacts is None):
             raise ValueError("register requires ml_registry and artifact_store services")
-        if registration is not None and not isinstance(registration, dict):
-            raise ValueError("register must be an object")
+        if registration is not None and (
+            not isinstance(registration, dict)
+            or set(registration) - {"model_id", "version_prefix"}
+            or not isinstance(registration.get("model_id", lab.id), str)
+            or not isinstance(registration.get("version_prefix", "trial"), str)
+        ):
+            raise ValueError("register must contain only model_id and version_prefix text")
         pending = list(spec.trials()[:1] if spec.mode == "bayesian" else spec.trials())
         seen_parameters: set[tuple[tuple[str, object], ...]] = set()
         while pending and len(trials) < spec.max_trials:
@@ -1500,7 +1520,18 @@ class MachineLearningStudioPlugin:
             if isinstance(registration, dict):
                 model_id = registration.get("model_id", lab.id)
                 version_prefix = registration.get("version_prefix", "trial")
-                if not isinstance(model_id, str) or not isinstance(version_prefix, str):
+                if (
+                    not isinstance(model_id, str)
+                    or not isinstance(version_prefix, str)
+                    or not model_id.strip()
+                    or not version_prefix.strip()
+                    or model_id != model_id.strip()
+                    or version_prefix != version_prefix.strip()
+                    or len(model_id) > 256
+                    or len(version_prefix) > 256
+                    or any(char in model_id for char in "\r\n\x00")
+                    or any(char in version_prefix for char in "\r\n\x00")
+                ):
                     raise ValueError("register model_id and version_prefix must be strings")
                 from studio_core.ml import ExperimentId, MLRunId, ModelId, ModelVersion
 
