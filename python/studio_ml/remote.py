@@ -30,19 +30,27 @@ class RemoteExecutionController:
         policy: RemoteRetryPolicy | None = None,
         *,
         sleep: Callable[[float], None] | None = None,
+        clock: Callable[[], float] | None = None,
     ) -> None:
         self.backend = backend
         self.policy = policy or RemoteRetryPolicy()
         self._sleep = sleep or time.sleep
+        self._clock = clock or time.monotonic
 
     def submit(self, request: RemoteTrainingRequest) -> RemoteTrainingResult:
+        deadline = self._clock() + request.timeout_seconds
         for attempt in range(1, self.policy.max_attempts + 1):
+            if self._clock() >= deadline:
+                raise RemoteTransientError("remote training wall-clock budget expired")
             try:
                 return self.backend.submit(request)
             except RemoteTransientError:
                 if attempt == self.policy.max_attempts:
                     raise
-                self._sleep(self.policy.delay_for(attempt))
+                remaining = deadline - self._clock()
+                if remaining <= 0:
+                    raise RemoteTransientError("remote training wall-clock budget expired")
+                self._sleep(min(self.policy.delay_for(attempt), remaining))
         raise AssertionError("unreachable")
 
     def poll(self, run_id: str) -> RemoteTrainingResult:

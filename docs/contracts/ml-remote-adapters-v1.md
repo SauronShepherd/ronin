@@ -55,6 +55,8 @@ the verified durable pair; queued/running results may omit it.
 `RemoteExecutionController` is the provider-neutral lifecycle helper. It
 retries only `RemoteTransientError`, delegates polling and cancellation, and
 never changes the request identity between attempts.
+The request's `timeout_seconds` is also the total submit wall-clock budget:
+backoff consumes the remaining budget and no retry starts after its deadline.
 
 `MLflowBackend` and `SparkBackend` are the concrete provider adapters. Their
 transport is injected intentionally: deployment code supplies the authenticated
