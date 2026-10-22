@@ -4,7 +4,7 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-22. PRs #430–#505 are merged. Recent
+**Observed workspace snapshot:** 2026-10-22. PRs #430–#510 are merged. Recent
 increments add configurable ML algorithms and preprocessing, selective retry,
 non-destructive artifact retention preview, fail-closed reference discovery with
 bounded enumeration, bounded-memory local artifact pagination, and paged manual
@@ -15,7 +15,10 @@ input validation, a manual-retention guard that requires an explicit opt-in
 before an empty live set can delete every artifact, and bounded ML candidate grids.
 PR #505 supports up to eight algorithm×preprocessor combinations; its PR Docker
 qualification passed in 9m50s and all six exact-head workflows passed on
-`main@ad53878fac49330d29824dabf1f27e4c4bd2d9d8`.
+`main@ad53878fac49330d29824dabf1f27e4c4bd2d9d8`. PR #509 adds durable ML
+registration after digest revalidation and passed all six exact-head workflows
+on `main@156d60784e8e0c5e23f1383c2cf96dc8860560e3`. PR #510 records the ML
+build-plan progress and optimization findings on `main@8c7b7e3a8c9cbbbca7b4cdb8ca1d383125b52afa`.
 Global cleanup remains disabled because there is no cross-store write barrier. The
 PR #482 prevents an empty live digest set from deleting every artifact unless the
 caller opts in with an explicit boolean. Its 26 focused tests, CI Python 3.11/3.12,
@@ -25,7 +28,7 @@ two PostgreSQL-dependent tests were skipped without a local DSN, and strict
 acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
-**Observed source head:** `ad53878fac49330d29824dabf1f27e4c4bd2d9d8` (2026-10-22).
+**Observed source head:** `8c7b7e3a8c9cbbbca7b4cdb8ca1d383125b52afa` (2026-10-22).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
