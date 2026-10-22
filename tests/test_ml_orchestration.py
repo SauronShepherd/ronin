@@ -18,7 +18,7 @@ from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_execution import DurableExecutionService
 from studio_ml.clustering import KMeansModel
-from studio_ml.domain import FeatureSpec, Lab, PipelineIR
+from studio_ml.domain import PIPELINE_SCHEMA_V2, FeatureSpec, Lab, PipelineIR, PipelineNode
 from studio_ml.orchestration import (
     ClusteringResult,
     ExecutionConflict,
@@ -336,7 +336,7 @@ def test_selective_retry_reuses_upstream_checkpoints_and_retrains_from_selected_
         with pytest.raises(ValueError, match="only a failed execution"):
             coordinator.retry("workspace-b", "failed-run", "wrong-workspace-retry", "train")
         with pytest.raises(ValueError, match="supported ML stage"):
-            coordinator.retry("workspace-a", "failed-run", "unknown-stage-retry", "register")
+            coordinator.retry("workspace-a", "failed-run", "unknown-stage-retry", "publish")
         with pytest.raises(ValueError, match="trimmed text"):
             coordinator.retry("workspace-a", "failed-run", "bad\nretry", "train")
 
@@ -463,6 +463,104 @@ def test_durable_ml_result_materializes_and_verifies_model_artifact(tmp_path) ->
             )
             == artifact_bytes
         )
+    finally:
+        coordinator.close()
+        asyncio.run(service.aclose())
+
+
+def test_pipeline_registration_is_idempotent_across_durable_retry(tmp_path) -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x"),),
+    )
+    rows = [{"x": value, "target": value % 2} for value in range(1, 21)]
+    compiled = compile_lab_pipeline(
+        lab, candidate_algorithms=("logistic_regression", "decision_tree_classifier")
+    )
+    pipeline = PipelineIR(
+        (
+            *compiled.nodes,
+            PipelineNode(
+                "register",
+                "register",
+                ("select",),
+                {"model_id": "churn", "version": "candidate-1"},
+            ),
+        ),
+        parameters=compiled.parameters,
+        schema=PIPELINE_SCHEMA_V2,
+    )
+    jobs = SqliteJobStore(tmp_path / "jobs.sqlite", migration_now=_MIGRATION_NOW)
+    service = DurableExecutionService(jobs)
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    registered: dict[tuple[str, str], dict[str, object]] = {}
+    events: list[str] = []
+    finalizer_calls = 0
+
+    class RecordingBarrier:
+        @contextmanager
+        def writer(self):
+            events.append("writer-lock")
+            try:
+                yield
+            finally:
+                events.append("writer-unlock")
+
+        @contextmanager
+        def collector(self):
+            yield
+
+    def finalize(_snapshot, payload):
+        nonlocal finalizer_calls
+        finalizer_calls += 1
+        events.append("register")
+        key = ("churn", "candidate-1")
+        model = registered.setdefault(
+            key,
+            {
+                "model_id": key[0],
+                "version": key[1],
+                "artifact_ref": payload["artifact_ref"],
+            },
+        )
+        if finalizer_calls == 1:
+            raise RuntimeError("simulated worker loss after idempotent registration")
+        return {**payload, "registered_model": model}
+
+    coordinator = LocalExecutionCoordinator(
+        runner=LocalExperimentRunner(),
+        store=JobStoreExecutionStore(
+            service, artifacts, artifact_reference_barrier=RecordingBarrier()
+        ),
+        result_finalizer=finalize,
+    )
+    try:
+        coordinator.submit("workspace-a", "register-run", lab, rows, pipeline)
+        deadline = time.monotonic() + LOCAL_ML_TIMEOUT
+        failed = coordinator.status("workspace-a", "register-run")
+        while failed.state not in {"failed", "succeeded"} and time.monotonic() < deadline:
+            time.sleep(0.01)
+            failed = coordinator.status("workspace-a", "register-run")
+        assert failed.state == "failed"
+        assert len(registered) == 1
+
+        coordinator.retry("workspace-a", "register-run", "register-retry", "register")
+        deadline = time.monotonic() + LOCAL_ML_TIMEOUT
+        completed = coordinator.status("workspace-a", "register-retry")
+        while completed.state not in {"failed", "succeeded"} and time.monotonic() < deadline:
+            time.sleep(0.01)
+            completed = coordinator.status("workspace-a", "register-retry")
+        assert completed.state == "succeeded", completed.error
+        assert completed.result_payload is not None
+        assert completed.result_payload["registered_model"] == next(iter(registered.values()))
+        assert finalizer_calls == 2
+        assert len(registered) == 1
+        assert events[-3:] == ["writer-lock", "register", "writer-unlock"]
     finally:
         coordinator.close()
         asyncio.run(service.aclose())

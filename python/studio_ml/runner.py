@@ -748,6 +748,21 @@ class LocalExperimentRunner:
                         runtime_fingerprint or "",
                     )
                 values[node.id] = result
+            elif node.kind == "register":
+                # Registration is an external side effect. The durable coordinator runs it
+                # after materializing the selected artifact and before completing the Job.
+                selected = next(
+                    (
+                        item
+                        for item in dependencies
+                        if isinstance(item, (ExperimentResult, ClusteringResult))
+                    ),
+                    None,
+                )
+                if selected is None:
+                    raise ValueError("register stage requires a selected model result")
+                values[node.id] = selected
+                continue
             else:  # pragma: no cover - PipelineNode validates kinds
                 raise ValueError(f"unsupported local ML pipeline node: {node.kind}")
             if checkpoint_save is not None and runtime_fingerprint is not None:
@@ -772,17 +787,27 @@ class LocalExperimentRunner:
             raise ValueError("PipelineIR v2 candidate selection does not support this Lab task")
         nodes = {
             kind: [node for node in pipeline.nodes if node.kind == kind]
-            for kind in ("profile", "quality_gate", "prepare", "train", "evaluate", "select")
+            for kind in (
+                "profile",
+                "quality_gate",
+                "prepare",
+                "train",
+                "evaluate",
+                "select",
+                "register",
+            )
         }
         if (
             len(nodes["profile"]) != 1
             or len(nodes["quality_gate"]) != 1
             or not 1 <= len(nodes["prepare"]) <= 8
-            or len(nodes["train"]) < 2
+            or len(nodes["train"]) < 1
             or len(nodes["evaluate"]) != len(nodes["train"])
             or len(nodes["select"]) != 1
+            or len(nodes["register"]) > 1
             or len(pipeline.nodes) > 24
-            or len(pipeline.nodes) != 3 + len(nodes["prepare"]) + 2 * len(nodes["train"])
+            or len(pipeline.nodes)
+            != 3 + len(nodes["prepare"]) + 2 * len(nodes["train"]) + len(nodes["register"])
         ):
             raise ValueError(
                 "PipelineIR v2 requires shared stages, paired candidates, and one select"
@@ -841,6 +866,23 @@ class LocalExperimentRunner:
             node.id for node in nodes["evaluate"]
         }:
             raise ValueError("PipelineIR v2 select must depend on every evaluated candidate")
+        if nodes["register"]:
+            register = nodes["register"][0]
+            registration_values = (
+                register.config.get("model_id"),
+                register.config.get("version"),
+            )
+            if (
+                register.depends_on != (select.id,)
+                or set(register.config) != {"model_id", "version"}
+                or not all(
+                    isinstance(value, str) and bool(value) and value == value.strip()
+                    for value in registration_values
+                )
+            ):
+                raise ValueError(
+                    "PipelineIR v2 register must depend on select and specify model_id and version"
+                )
         if set(select.config) - {"metric", "direction"}:
             raise ValueError("PipelineIR v2 select has unsupported configuration")
         metric = select.config.get(

@@ -3,6 +3,7 @@
 # ruff: noqa: E501
 import json
 import time
+from dataclasses import replace
 from threading import Event
 from types import SimpleNamespace
 
@@ -10,12 +11,18 @@ import pytest
 from studio_core import WorkspaceId
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_core.ml import RegisteredModelVersion
-from studio_ml.domain import FeatureSpec, Lab, PipelineIR, PipelineNode
-from studio_ml.orchestration import ExecutionSnapshot, LocalExecutionCoordinator
+from studio_execution import DurableExecutionService
+from studio_ml.domain import PIPELINE_SCHEMA_V2, FeatureSpec, Lab, PipelineIR, PipelineNode
+from studio_ml.orchestration import (
+    ExecutionSnapshot,
+    JobStoreExecutionStore,
+    LocalExecutionCoordinator,
+)
 from studio_ml.plugin import MachineLearningStudioPlugin
 from studio_ml.runner import LocalExperimentRunner
 from studio_ml.services import InMemoryMLLabStore, LabService, compile_lab_pipeline
-from studio_storage import LocalArtifactStore
+from studio_orchestrator import Instant
+from studio_storage import LocalArtifactStore, SqliteJobStore
 
 
 def test_submit_and_poll_execution() -> None:
@@ -104,6 +111,127 @@ def test_submit_candidate_algorithms_runs_and_pins_v2_pipeline() -> None:
         }
     finally:
         plugin._coordinator.close()
+
+
+def test_pipeline_register_executes_durably_and_persists_registered_model(tmp_path) -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._coordinator.close()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x", "numeric"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+
+    class Registry:
+        def __init__(self):
+            self.experiments = {}
+            self.runs = {}
+            self.models = {}
+
+        def put_experiment(self, _workspace, experiment, *, now):
+            del now
+            self.experiments[experiment.id.value] = experiment
+            return experiment
+
+        def record_run(self, _workspace, run, *, now):
+            del now
+            self.runs[run.id.value] = run
+            return run
+
+        def get_model(self, _workspace, model_id, version):
+            return self.models.get((model_id.value, version.value))
+
+        def register_model(self, _workspace, model, *, now):
+            del now
+            key = (model.model_id.value, model.version.value)
+            existing = self.models.setdefault(key, model)
+            if existing != model:
+                raise ValueError("registered model version conflicts")
+            return existing
+
+    registry = Registry()
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    jobs = SqliteJobStore(
+        tmp_path / "jobs.sqlite", migration_now=Instant("2026-10-19T00:00:00.000000Z")
+    )
+    service = DurableExecutionService(jobs)
+    plugin._registry = registry
+    plugin._artifacts = artifacts
+    plugin._coordinator = LocalExecutionCoordinator(
+        runner=LocalExperimentRunner(),
+        store=JobStoreExecutionStore(service, artifacts),
+        autostart=True,
+        result_finalizer=plugin._finalize_pipeline_registration,
+    )
+    rows = [{"x": value, "target": value % 2} for value in range(1, 21)]
+    try:
+        submitted = plugin.submit_execution(
+            "ws",
+            "churn",
+            body={
+                "run_id": "register-api",
+                "rows": rows,
+                "register": {"model_id": "churn", "version": "candidate-1"},
+            },
+        )
+        assert submitted["run_id"] == "register-api"
+        pipeline = plugin._labs.store.get_pipeline(WorkspaceId("ws"), lab.id)
+        assert pipeline is not None
+        assert pipeline.schema == PIPELINE_SCHEMA_V2
+        assert pipeline.nodes[-1].kind == "register"
+        deadline = time.time() + 30
+        status = plugin.execution_status("register-api", workspace_id="ws")
+        while status["state"] not in {"succeeded", "failed"} and time.time() < deadline:
+            time.sleep(0.01)
+            status = plugin.execution_status("register-api", workspace_id="ws")
+        assert status["state"] == "succeeded", status.get("error")
+        result = status["result"]
+        assert isinstance(result, dict)
+        assert result["registered_model"]["model_id"] == "churn"
+        assert result["registered_model"]["version"] == "candidate-1"
+        assert len(registry.runs) == 1
+        assert len(registry.models) == 1
+        persisted_snapshot = ExecutionSnapshot(
+            run_id="register-api",
+            state="succeeded",
+            workspace_id="ws",
+            lab_id=lab.id,
+            lab_digest=lab.digest,
+            pipeline_digest=pipeline.digest,
+            request_digest="test-request",
+            pipeline_json=pipeline.to_json(),
+            rows_json=json.dumps(rows),
+        )
+        repeated = plugin._finalize_pipeline_registration(
+            persisted_snapshot,
+            {key: value for key, value in result.items() if key != "registered_model"},
+        )
+        assert repeated["registered_model"] == result["registered_model"]
+        assert len(registry.runs) == 1
+        assert len(registry.models) == 1
+        replayed_retry = plugin._finalize_pipeline_registration(
+            replace(persisted_snapshot, run_id="register-api-retry"),
+            {key: value for key, value in result.items() if key != "registered_model"},
+        )
+        assert replayed_retry["registered_model"] == result["registered_model"]
+        assert len(registry.runs) == 1
+        assert len(registry.models) == 1
+        registered_bytes = artifacts.get_bytes_by_storage_ref(
+            result["artifact_ref"],
+            digest=result["artifact_digest"].removeprefix("sha256:"),
+        )
+        assert len(registered_bytes) == result["artifact_size_bytes"]
+    finally:
+        plugin._coordinator.close()
+        import asyncio
+
+        asyncio.run(service.aclose())
 
 
 def test_submit_candidate_preprocessors_executes_each_bound_branch() -> None:
@@ -682,6 +810,9 @@ def test_register_execution_model_persists_run_and_verified_artifact(tmp_path) -
         def register_model(self, _workspace, model, *, now):
             self.models.append((model, now))
             return model
+
+        def get_model(self, _workspace, _model_id, _version):
+            return None
 
     registry = Registry()
     plugin = MachineLearningStudioPlugin()

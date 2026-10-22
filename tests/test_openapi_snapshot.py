@@ -58,6 +58,7 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
         "train",
         "evaluate",
         "select",
+        "register",
     ]
     submit = document["paths"]["/v1/ml-studio/labs/{lab_id}/executions"]["post"]
     request_schema = submit["requestBody"]["content"]["application/json"]["schema"]
@@ -102,9 +103,10 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
         "maximize",
         "minimize",
     ]
+    assert request_schema["properties"]["register"]["required"] == ["model_id", "version"]
     pipeline_schema = request_schema["properties"]["pipeline"]
     assert pipeline_schema["properties"]["schema"]["const"] == "ronin.ml-pipeline-ir/v2"
-    assert pipeline_schema["properties"]["nodes"]["maxItems"] == 20
+    assert pipeline_schema["properties"]["nodes"]["maxItems"] == 24
     assert (
         "one_hot_median_impute"
         in pipeline_schema["properties"]["nodes"]["items"]["properties"]["config"]["properties"][
@@ -112,8 +114,7 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
         ]["enum"]
     )
     assert (
-        "register"
-        not in pipeline_schema["properties"]["nodes"]["items"]["properties"]["kind"]["enum"]
+        "register" in pipeline_schema["properties"]["nodes"]["items"]["properties"]["kind"]["enum"]
     )
     assert "409" in submit["responses"]
     quality = document["paths"]["/v1/ml-studio/labs/{lab_id}/quality"]["post"]

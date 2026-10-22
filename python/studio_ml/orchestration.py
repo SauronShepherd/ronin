@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import AbstractContextManager, nullcontext, suppress
 from dataclasses import dataclass, replace
@@ -467,7 +467,15 @@ class JobStoreExecutionStore:
             or any(ord(character) < 32 or ord(character) == 127 for character in retry_run_id)
         ):
             raise ValueError("retry run_id must be 1 to 256 characters of trimmed text")
-        supported_stages = {"profile", "quality_gate", "prepare", "train", "evaluate", "select"}
+        supported_stages = {
+            "profile",
+            "quality_gate",
+            "prepare",
+            "train",
+            "evaluate",
+            "select",
+            "register",
+        }
         if from_stage not in supported_stages:
             raise ValueError("retry from_stage is not a supported ML stage")
         source_job_id, _ = self._ids(workspace_id, source_run_id)
@@ -893,10 +901,16 @@ class JobStoreExecutionStore:
         self,
         snapshot: ExecutionSnapshot,
         result: ExperimentResult | ClusteringResult,
+        *,
+        finalize_result: (
+            Callable[[ExecutionSnapshot, dict[str, object]], dict[str, object]] | None
+        ) = None,
     ) -> None:
-        """Publish the result artifact and its durable Job reference under one lease."""
+        """Publish, optionally register, and commit a result while holding the writer lease."""
         with self._writer_lease():
             payload = self._materialize_result_artifact(result)
+            if finalize_result is not None:
+                payload = finalize_result(snapshot, payload)
             self.finish_claim(snapshot, state="succeeded", result_payload=payload)
 
     def finish_claim(
@@ -982,11 +996,14 @@ class LocalExecutionCoordinator:
         max_workers: int = 2,
         store: ExecutionStore | JobStoreExecutionStore | None = None,
         autostart: bool = True,
+        result_finalizer: Callable[[ExecutionSnapshot, dict[str, object]], dict[str, object]]
+        | None = None,
     ) -> None:
         if max_workers < 1 or max_workers > 32:
             raise ValueError("max_workers must be between 1 and 32")
         self._runner = runner or LocalExperimentRunner()
         self._store = store or InMemoryExecutionStore()
+        self._result_finalizer = result_finalizer
         self._owner = str(uuid4())
         self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="ronin-ml")
         self._max_workers = max_workers
@@ -1198,12 +1215,27 @@ class LocalExecutionCoordinator:
                 result = self._runner.run(lab, execution_rows)
             if isinstance(self._store, JobStoreExecutionStore):
                 if isinstance(result, (ExperimentResult, ClusteringResult)):
-                    self._store.finish_claim_with_result(claimed, result)
+                    register_stage = pipeline is not None and any(
+                        node.kind == "register" for node in pipeline.nodes
+                    )
+                    if register_stage and self._result_finalizer is None:
+                        raise ValueError("pipeline register stage is unavailable")
+                    self._store.finish_claim_with_result(
+                        claimed,
+                        result,
+                        finalize_result=self._result_finalizer if register_stage else None,
+                    )
                 else:
+                    if pipeline is not None and any(
+                        node.kind == "register" for node in pipeline.nodes
+                    ):
+                        raise ValueError("pipeline register stage requires a materialized model")
                     self._store.finish_claim(
                         claimed, state="succeeded", result_payload=result.to_payload()
                     )
                 return result
+            if pipeline is not None and any(node.kind == "register" for node in pipeline.nodes):
+                raise ValueError("pipeline register stage requires durable artifact storage")
             finished = self._store.finish(
                 claimed.workspace_id,
                 claimed.run_id,
