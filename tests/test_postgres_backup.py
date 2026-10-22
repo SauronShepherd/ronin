@@ -5,6 +5,11 @@ from tools import ronin_postgres_backup
 
 def test_postgres_backup_writes_atomic_dump_and_checksum(tmp_path, monkeypatch) -> None:
     output = tmp_path / "ronin.dump"
+    # The backup tool intentionally honors Compose's POSTGRES_* overrides.
+    # Pin the defaults here so a developer's shell environment cannot change
+    # the command asserted by this unit test.
+    monkeypatch.setenv("POSTGRES_USER", "ronin")
+    monkeypatch.setenv("POSTGRES_DB", "ronin")
 
     def fake_run(command, *, check, stdout):
         assert check is True
