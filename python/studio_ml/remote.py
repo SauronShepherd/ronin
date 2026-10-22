@@ -105,22 +105,42 @@ class JsonRemoteBackend:
 
 
 def urllib_json_transport(
-    base_url: str, headers: Mapping[str, str] | None = None, timeout_seconds: float = 30.0
+    base_url: str,
+    headers: Mapping[str, str] | None = None,
+    timeout_seconds: float = 30.0,
+    max_response_bytes: int = 8 * 1024 * 1024,
 ) -> Callable[[str, Mapping[str, object]], Mapping[str, object]]:
     """Create a minimal POST JSON transport for provider deployment wiring."""
     normalized = base_url.rstrip("/")
     if not normalized.startswith(("http://", "https://")):
         raise ValueError("remote base_url must use http or https")
+    if timeout_seconds <= 0 or max_response_bytes < 1:
+        raise ValueError("remote transport limits must be positive")
 
     def transport(operation: str, payload: Mapping[str, object]) -> Mapping[str, object]:
+        request_payload = payload.get("request")
+        request_timeout = (
+            request_payload.get("timeout_seconds")
+            if isinstance(request_payload, Mapping)
+            else None
+        )
+        effective_timeout = timeout_seconds
+        if isinstance(request_timeout, (int, float)) and not isinstance(request_timeout, bool):
+            request_timeout = float(request_timeout)
+            if not math.isfinite(request_timeout) or request_timeout <= 0:
+                raise ValueError("remote request timeout must be positive and finite")
+            effective_timeout = min(timeout_seconds, request_timeout)
         request = Request(  # noqa: S310
             f"{normalized}/{operation}",
             data=json.dumps(dict(payload), separators=(",", ":")).encode("utf-8"),
             headers={"Content-Type": "application/json", **dict(headers or {})},
             method="POST",
         )
-        with urlopen(request, timeout=timeout_seconds) as response:  # noqa: S310
-            decoded = json.loads(response.read().decode("utf-8"))
+        with urlopen(request, timeout=effective_timeout) as response:  # noqa: S310
+            raw = response.read(max_response_bytes + 1)
+        if len(raw) > max_response_bytes:
+            raise ValueError("remote JSON response exceeds the configured byte limit")
+        decoded = json.loads(raw.decode("utf-8"))
         if not isinstance(decoded, dict):
             raise ValueError("remote JSON response must be an object")
         return decoded

@@ -57,4 +57,7 @@ HTTP/RPC client, while tests can use a deterministic fake transport. Their
 stable IDs and advertised capabilities are part of discovery and provenance.
 
 For simple HTTP deployments, `urllib_json_transport` supplies the transport
-with explicit URL-scheme validation, timeout and caller-provided headers.
+with explicit URL-scheme validation, request-scoped wall-clock timeout,
+bounded response bytes and caller-provided headers. A request timeout cannot
+extend the deployment transport timeout, and malformed/non-finite limits are
+rejected before the request is sent.
