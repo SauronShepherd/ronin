@@ -1142,14 +1142,23 @@ class MachineLearningStudioPlugin:
             raise ValueError("pipeline cannot be combined with compiler execution options")
         algorithm = body.get("algorithm")
         if algorithm is not None and (
-            not isinstance(algorithm, str) or not algorithm or algorithm != algorithm.strip()
+            not isinstance(algorithm, str)
+            or not algorithm
+            or algorithm != algorithm.strip()
+            or len(algorithm) > 256
+            or any(char in algorithm for char in "\r\n\x00")
         ):
             raise ValueError("algorithm must be a non-empty trimmed string")
         candidate_algorithms = body.get("candidate_algorithms")
         if candidate_algorithms is not None and (
             not isinstance(candidate_algorithms, list)
+            or len(candidate_algorithms) > 8
             or not all(
-                isinstance(item, str) and item and item == item.strip()
+                isinstance(item, str)
+                and item
+                and item == item.strip()
+                and len(item) <= 256
+                and not any(char in item for char in "\r\n\x00")
                 for item in candidate_algorithms
             )
         ):
@@ -1157,6 +1166,7 @@ class MachineLearningStudioPlugin:
         candidate_cluster_counts = body.get("candidate_cluster_counts")
         if candidate_cluster_counts is not None and (
             not isinstance(candidate_cluster_counts, list)
+            or len(candidate_cluster_counts) > 8
             or any(
                 not isinstance(item, int) or isinstance(item, bool)
                 for item in candidate_cluster_counts
@@ -1166,8 +1176,13 @@ class MachineLearningStudioPlugin:
         candidate_preprocessors = body.get("candidate_preprocessors")
         if candidate_preprocessors is not None and (
             not isinstance(candidate_preprocessors, list)
+            or len(candidate_preprocessors) > 5
             or not all(
-                isinstance(item, str) and item and item == item.strip()
+                isinstance(item, str)
+                and item
+                and item == item.strip()
+                and len(item) <= 256
+                and not any(char in item for char in "\r\n\x00")
                 for item in candidate_preprocessors
             )
         ):
@@ -1177,6 +1192,8 @@ class MachineLearningStudioPlugin:
             not isinstance(selection_metric, str)
             or not selection_metric
             or selection_metric != selection_metric.strip()
+            or len(selection_metric) > 128
+            or any(char in selection_metric for char in "\r\n\x00")
         ):
             raise ValueError("selection_metric must be a non-empty trimmed string")
         selection_direction = body.get("selection_direction")
@@ -1625,8 +1642,16 @@ class MachineLearningStudioPlugin:
             or set(body) != {"model_id", "version"}
             or not isinstance(body.get("model_id"), str)
             or not isinstance(body.get("version"), str)
+            or not body["model_id"]
+            or not body["version"]
+            or body["model_id"] != body["model_id"].strip()
+            or body["version"] != body["version"].strip()
+            or len(body["model_id"]) > 256
+            or len(body["version"]) > 256
+            or any(char in body["model_id"] for char in "\r\n\x00")
+            or any(char in body["version"] for char in "\r\n\x00")
         ):
-            raise ValueError("registration requires exactly model_id and version")
+            raise ValueError("registration requires bounded model_id and version text")
         from studio_core.ml import (
             Experiment,
             ExperimentId,
@@ -1678,12 +1703,27 @@ class MachineLearningStudioPlugin:
         if (
             not isinstance(features, list)
             or not features
+            or len(features) > 256
             or not all(isinstance(name, str) for name in features)
+            or not all(
+                name and name == name.strip() and len(name) <= 256 and not any(
+                    char in name for char in "\r\n\x00"
+                )
+                for name in features
+            )
             or not isinstance(artifact_ref, str)
+            or not artifact_ref
+            or artifact_ref != artifact_ref.strip()
+            or len(artifact_ref) > 512
+            or any(char in artifact_ref for char in "\r\n\x00")
             or not isinstance(digest, str)
             or len(digest) != 64
             or any(character not in "0123456789abcdef" for character in digest)
             or not isinstance(media_type, str)
+            or not media_type
+            or media_type != media_type.strip()
+            or len(media_type) > 256
+            or any(char in media_type for char in "\r\n\x00")
             or not isinstance(size_bytes, int)
             or isinstance(size_bytes, bool)
             or size_bytes < 1
@@ -1691,8 +1731,15 @@ class MachineLearningStudioPlugin:
             or not isinstance(task, str)
             or task not in {"classification", "regression", "clustering"}
             or not isinstance(algorithm, str)
+            or not algorithm
+            or algorithm != algorithm.strip()
+            or len(algorithm) > 256
+            or any(char in algorithm for char in "\r\n\x00")
             or not isinstance(backend_id, str)
             or not backend_id
+            or backend_id != backend_id.strip()
+            or len(backend_id) > 256
+            or any(char in backend_id for char in "\r\n\x00")
         ):
             raise ValueError("execution model artifact metadata is invalid")
         if not hasattr(self._artifacts, "get_bytes_by_storage_ref"):
@@ -1850,8 +1897,18 @@ class MachineLearningStudioPlugin:
             or set(body) != {"run_id", "from_stage"}
             or not isinstance(body.get("run_id"), str)
             or not isinstance(body.get("from_stage"), str)
+            or not body["run_id"]
+            or not body["run_id"].strip()
+            or body["run_id"] != body["run_id"].strip()
+            or len(body["run_id"]) > 256
+            or any(char in body["run_id"] for char in "\r\n\x00")
+            or not body["from_stage"]
+            or not body["from_stage"].strip()
+            or body["from_stage"] != body["from_stage"].strip()
+            or len(body["from_stage"]) > 256
+            or any(char in body["from_stage"] for char in "\r\n\x00")
         ):
-            raise ValueError("retry requires exactly run_id and from_stage")
+            raise ValueError("retry requires bounded run_id and from_stage text")
         return self._coordinator.retry(
             workspace_id, run_id, body["run_id"], body["from_stage"]
         ).to_payload()

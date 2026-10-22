@@ -1106,3 +1106,16 @@ las ejecuciones y quality gates, aplicando límites de filas, columnas, bytes y
 JSON canónico antes de lanzar trials. El cuerpo y la spec rechazan campos
 extraños; el registro opcional limita sus identificadores. No se ejecutaron
 pruebas, builds, validadores ni Docker.
+
+## 88. Acotar superficies de búsqueda y registro durable
+
+**Estado del candidato: implementado estáticamente; cualificación pendiente.**
+Las specs de búsqueda limitan el número de parámetros y valores, la longitud de
+identificadores y valores textuales, los nombres de métricas y los trials
+materializados. `BayesianStopPolicy` comparte el tope de 1.000 trials. El
+registro de modelos desde ejecuciones y el retry validan shape exacto, texto
+recortado, longitud y caracteres de control antes de leer snapshots o artefactos.
+Las opciones de compilación síncrona también acotan listas y nombres antes de
+crear el pipeline. No se ejecutaron pruebas, builds, validadores ni Docker por
+instrucción del usuario.
+OpenAPI refleja los límites de ejecución, registro, retry, compare y search.

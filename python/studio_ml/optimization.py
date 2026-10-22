@@ -13,6 +13,24 @@ from typing import Literal
 
 SearchMode = Literal["single", "grid", "random", "bayesian"]
 MAX_TIE_BREAKERS = 8
+MAX_SEARCH_PARAMETERS = 16
+MAX_PARAMETER_VALUES = 256
+MAX_PARAMETER_NAME_LENGTH = 128
+MAX_PARAMETER_STRING_LENGTH = 256
+MAX_METRIC_NAME_LENGTH = 128
+MAX_TRIAL_PARAMETERS = 32
+MAX_TRIAL_METRICS = 32
+MAX_INTEGER_PARAMETER = 2**63 - 1
+
+
+def _valid_parameter_value(value: object) -> bool:
+    if value is None or isinstance(value, bool):
+        return True
+    if isinstance(value, int):
+        return -MAX_INTEGER_PARAMETER <= value <= MAX_INTEGER_PARAMETER
+    if isinstance(value, float):
+        return isfinite(value)
+    return isinstance(value, str) and len(value) <= MAX_PARAMETER_STRING_LENGTH
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +44,7 @@ class BayesianStopPolicy:
             not isinstance(self.max_trials, int)
             or isinstance(self.max_trials, bool)
             or self.max_trials < 1
+            or self.max_trials > 1000
             or not isinstance(self.patience, int)
             or isinstance(self.patience, bool)
             or self.patience < 1
@@ -74,6 +93,7 @@ class SearchSpec:
             or self.direction not in {"maximize", "minimize"}
             or not isinstance(self.metric, str)
             or not self.metric.strip()
+            or len(self.metric) > MAX_METRIC_NAME_LENGTH
             or not isinstance(self.tie_breakers, tuple)
             or len(self.tie_breakers) > MAX_TIE_BREAKERS
             or any(
@@ -81,6 +101,7 @@ class SearchSpec:
                 or len(item) != 2
                 or not isinstance(item[0], str)
                 or not item[0].strip()
+                or len(item[0]) > MAX_METRIC_NAME_LENGTH
                 or not isinstance(item[1], str)
                 or item[1] not in {"maximize", "minimize"}
                 for item in self.tie_breakers
@@ -94,13 +115,17 @@ class SearchSpec:
             or isinstance(self.max_trials, bool)
             or not 1 <= self.max_trials <= 1000
             or not isinstance(self.parameters, tuple)
+            or len(self.parameters) > MAX_SEARCH_PARAMETERS
             or any(
                 not isinstance(item, tuple)
                 or len(item) != 2
                 or not isinstance(item[0], str)
                 or not item[0].strip()
+                or len(item[0]) > MAX_PARAMETER_NAME_LENGTH
                 or not isinstance(item[1], tuple)
                 or not item[1]
+                or len(item[1]) > MAX_PARAMETER_VALUES
+                or any(not _valid_parameter_value(value) for value in item[1])
                 for item in self.parameters
             )
             or len({name for name, _ in self.parameters}) != len(self.parameters)
@@ -162,17 +187,37 @@ class Trial:
         if not isinstance(random_seed, int) or isinstance(random_seed, bool) or random_seed < 0:
             raise ValueError("trial random seed must be a non-negative integer")
         normalized_parameters: dict[str, object] = {}
+        if len(parameters) > MAX_TRIAL_PARAMETERS:
+            raise ValueError(f"trial parameters must contain at most {MAX_TRIAL_PARAMETERS} items")
         for name, value in parameters.items():
-            if not isinstance(name, str) or not name or name != name.strip():
+            if (
+                not isinstance(name, str)
+                or not name
+                or name != name.strip()
+                or len(name) > MAX_PARAMETER_NAME_LENGTH
+            ):
                 raise ValueError("trial parameter names must be non-empty and trimmed")
             if isinstance(value, float) and not isfinite(value):
                 raise ValueError(f"trial parameter {name!r} must be finite")
+            if isinstance(value, str) and len(value) > MAX_PARAMETER_STRING_LENGTH:
+                raise ValueError(f"trial parameter {name!r} is too long")
+            if isinstance(value, int) and not isinstance(value, bool) and not (
+                -MAX_INTEGER_PARAMETER <= value <= MAX_INTEGER_PARAMETER
+            ):
+                raise ValueError(f"trial parameter {name!r} is out of range")
             if not isinstance(value, (str, int, float, bool)) and value is not None:
                 raise ValueError(f"trial parameter {name!r} must be a JSON scalar")
             normalized_parameters[name] = value
         normalized_metrics: dict[str, float] = {}
+        if len(metrics) > MAX_TRIAL_METRICS:
+            raise ValueError(f"trial metrics must contain at most {MAX_TRIAL_METRICS} items")
         for name, raw_value in metrics.items():
-            if not isinstance(name, str) or not name or name != name.strip():
+            if (
+                not isinstance(name, str)
+                or not name
+                or name != name.strip()
+                or len(name) > MAX_METRIC_NAME_LENGTH
+            ):
                 raise ValueError("trial metric names must be non-empty and trimmed")
             value = _finite_metric(raw_value)
             if value is None:
