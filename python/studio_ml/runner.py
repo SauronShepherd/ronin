@@ -387,30 +387,68 @@ def _restore_checkpoint(kind: NodeKind, value: object) -> object:
         if not isinstance(payload, Mapping):
             raise ValueError("stored ML profile checkpoint is invalid")
         profiles = payload.get("profiles")
-        if not isinstance(profiles, list):
+        if (
+            not isinstance(profiles, list)
+            or any(
+                not isinstance(item, Mapping)
+                or set(item)
+                != {"name", "dtype", "row_count", "null_count", "distinct_count", "constant"}
+                or not isinstance(item.get("name"), str)
+                or not isinstance(item.get("dtype"), str)
+                or not isinstance(item.get("row_count"), int)
+                or isinstance(item.get("row_count"), bool)
+                or item["row_count"] < 0
+                or not isinstance(item.get("null_count"), int)
+                or isinstance(item.get("null_count"), bool)
+                or item["null_count"] < 0
+                or item["null_count"] > item["row_count"]
+                or not isinstance(item.get("distinct_count"), int)
+                or isinstance(item.get("distinct_count"), bool)
+                or item["distinct_count"] < 0
+                or not isinstance(item.get("constant"), bool)
+                for item in profiles
+            )
+        ):
             raise ValueError("stored ML profile checkpoint is invalid")
         restored = tuple(
             ColumnProfile(
-                str(item["name"]),
-                str(item["dtype"]),
-                int(item["row_count"]),
-                int(item["null_count"]),
-                int(item["distinct_count"]),
-                bool(item["constant"]),
+                cast(str, item["name"]),
+                cast(str, item["dtype"]),
+                cast(int, item["row_count"]),
+                cast(int, item["null_count"]),
+                cast(int, item["distinct_count"]),
+                cast(bool, item["constant"]),
             )
             for item in profiles
-            if isinstance(item, Mapping)
         )
         suite_payload = payload.get("suite")
         if suite_payload is not None and (
             not isinstance(suite_payload, Mapping)
+            or set(suite_payload) != {"id", "version"}
             or not isinstance(suite_payload.get("id"), str)
             or not isinstance(suite_payload.get("version"), int)
+            or isinstance(suite_payload.get("version"), bool)
+            or cast(int, suite_payload["version"]) < 1
         ):
             raise ValueError("stored ML quality suite identity is invalid")
+        warnings = payload.get("warnings")
+        failures = payload.get("failures")
+        row_count = payload.get("row_count")
+        if (
+            not isinstance(row_count, int)
+            or isinstance(row_count, bool)
+            or row_count < 0
+            or not isinstance(warnings, list)
+            or not all(isinstance(item, str) for item in warnings)
+            or not isinstance(failures, list)
+            or not all(isinstance(item, str) for item in failures)
+        ):
+            raise ValueError("stored ML quality report fields are invalid")
         raw_expectations = payload.get("expectations", [])
         if not isinstance(raw_expectations, list) or any(
             not isinstance(item, Mapping)
+            or set(item)
+            != {"id", "column", "rule", "severity", "passed", "message"}
             or not all(
                 isinstance(item.get(key), str)
                 for key in ("id", "column", "rule", "severity", "message")
@@ -420,10 +458,10 @@ def _restore_checkpoint(kind: NodeKind, value: object) -> object:
         ):
             raise ValueError("stored ML quality expectations are invalid")
         return QualityReport(
-            int(payload["row_count"]),
+            row_count,
             restored,
-            tuple(str(item) for item in payload["warnings"]),
-            tuple(str(item) for item in payload["failures"]),
+            tuple(cast(list[str], warnings)),
+            tuple(cast(list[str], failures)),
             cast(str | None, suite_payload.get("id") if suite_payload is not None else None),
             cast(int | None, suite_payload.get("version") if suite_payload is not None else None),
             tuple(
