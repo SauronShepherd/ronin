@@ -861,12 +861,16 @@ class LocalExperimentRunner:
                         dependency_value = values[dependency_id]
                         model = (
                             dependency_value.model
-                            if isinstance(dependency_value, ExperimentResult)
+                            if isinstance(dependency_value, (ExperimentResult, ClusteringResult))
                             else dependency_value
                         )
-                        if isinstance(model, TrainedTabularModel) and len(
-                            model.artifact_bytes
-                        ) > _MAX_PLUGIN_MODEL_INPUT_BYTES:
+                        if isinstance(model, TrainedTabularModel):
+                            model_bytes = model.artifact_bytes
+                        elif isinstance(model, KMeansModel):
+                            model_bytes = encode_canonical_json(model.to_artifact())
+                        else:
+                            model_bytes = None
+                        if model_bytes is not None and len(model_bytes) > _MAX_PLUGIN_MODEL_INPUT_BYTES:
                             raise ValueError(
                                 "plugin stage model input exceeds the bounded JSON payload limit"
                             )
