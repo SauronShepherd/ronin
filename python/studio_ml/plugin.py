@@ -1776,9 +1776,19 @@ class MachineLearningStudioPlugin:
         from studio_core.ml import Experiment
 
         experiment = Experiment.from_payload(body)
-        stored = self._registry.put_experiment(
-            WorkspaceId(workspace_id), experiment, now="plugin"
-        )
+        workspace = WorkspaceId(workspace_id)
+        existing = self._registry.get_experiment(workspace, experiment.id)
+        if existing is not None:
+            if existing != experiment:
+                raise PluginRouteConflict(
+                    f"experiment id already exists with a different definition: {experiment.id}"
+                )
+            stored = existing
+        else:
+            try:
+                stored = self._registry.put_experiment(workspace, experiment, now="plugin")
+            except ValueError as exc:
+                raise PluginRouteConflict(str(exc)) from exc
         return {
             "status": "created",
             "contract": "ml-studio/experiment/v1",
