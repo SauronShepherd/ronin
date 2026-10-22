@@ -1046,19 +1046,15 @@ class MachineLearningStudioPlugin:
         baseline_rows = body["baseline_rows"]
         current_rows = body["current_rows"]
         raw_policy = body["policy"]
-        if (
-            not isinstance(baseline_rows, list)
-            or not isinstance(current_rows, list)
-            or len(baseline_rows) > 100_000
-            or len(current_rows) > 100_000
-            or any(
-                not isinstance(row, dict)
-                for window in (baseline_rows, current_rows)
-                for row in window
-            )
-        ):
-            raise ValueError("drift windows must be bounded arrays of row objects")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
+        if not isinstance(baseline_rows, list) or not isinstance(current_rows, list):
+            raise ValueError("drift windows must be arrays of row objects")
+        baseline_rows = resolve_lab_rows(
+            WorkspaceId(workspace_id), lab, baseline_rows, None
+        )
+        current_rows = resolve_lab_rows(
+            WorkspaceId(workspace_id), lab, current_rows, None
+        )
         features = tuple(
             feature.column for feature in lab.features if feature.role == "numeric"
         )
