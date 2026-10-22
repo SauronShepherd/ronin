@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Protocol, cast
 
@@ -26,6 +27,7 @@ MEDIA = {
     "experiment": "application/vnd.ronin.ml-experiment+json",
     "run": "application/vnd.ronin.ml-run+json",
     "model": "application/vnd.ronin.ml-model-version+json",
+    "artifact": "application/vnd.ronin.ml-artifact+json",
 }
 
 
@@ -44,12 +46,78 @@ class MLRegistryBundleStore(Protocol):
     ) -> RegisteredModelVersion: ...
 
 
+class MLRegistryBundleArtifactStore(Protocol):
+    def get_bytes_by_storage_ref(self, storage_ref: str, *, digest: str) -> bytes: ...
+
+    def put_bytes(
+        self, *, role: str, data: bytes, media_type: str | None = None
+    ) -> object: ...
+
+
+@dataclass(frozen=True, slots=True)
+class MLRegistryBundleArtifact:
+    source_ref: str
+    digest: str
+    role: str
+    media_type: str | None
+    data: bytes
+
+    def __post_init__(self) -> None:
+        if not self.source_ref.strip() or not self.role.strip():
+            raise ValueError("ML bundle artifact identity is invalid")
+        if len(self.digest) != 64 or any(
+            char not in "0123456789abcdef" for char in self.digest
+        ):
+            raise ValueError("ML bundle artifact digest is invalid")
+        if hashlib.sha256(self.data).hexdigest() != self.digest:
+            raise ValueError("ML bundle artifact digest does not match its bytes")
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "schema": "ronin.ml-artifact/v1",
+            "source_ref": self.source_ref,
+            "digest": self.digest,
+            "role": self.role,
+            "media_type": self.media_type,
+            "data_base64": base64.b64encode(self.data).decode("ascii"),
+        }
+
+    @classmethod
+    def from_payload(cls, payload: object) -> MLRegistryBundleArtifact:
+        if not isinstance(payload, dict) or set(payload) != {
+            "schema",
+            "source_ref",
+            "digest",
+            "role",
+            "media_type",
+            "data_base64",
+        }:
+            raise ValueError("ML bundle artifact has invalid shape")
+        encoded = payload["data_base64"]
+        if not isinstance(encoded, str) or not isinstance(payload["media_type"], (str, type(None))):
+            raise ValueError("ML bundle artifact fields have invalid types")
+        try:
+            data = base64.b64decode(encoded, validate=True)
+        except (ValueError, TypeError) as exc:
+            raise ValueError("ML bundle artifact data is invalid base64") from exc
+        if payload["schema"] != "ronin.ml-artifact/v1":
+            raise ValueError("unsupported ML bundle artifact schema")
+        return cls(
+            cast(str, payload["source_ref"]),
+            cast(str, payload["digest"]),
+            cast(str, payload["role"]),
+            cast(str | None, payload["media_type"]),
+            data,
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class MLRegistryBundleImportPlan:
     inventory: BundleInventory
     experiments: tuple[Experiment, ...]
     runs: tuple[MLRunRecord, ...]
     models: tuple[RegisteredModelVersion, ...]
+    artifacts: tuple[MLRegistryBundleArtifact, ...] = ()
 
 
 def _path(kind: str, identity: str) -> str:
@@ -58,21 +126,93 @@ def _path(kind: str, identity: str) -> str:
 
 
 def export_ml_registry_bundle(
-    workspace_id: WorkspaceId, store: MLRegistryBundleStore, path: Path
+    workspace_id: WorkspaceId,
+    store: MLRegistryBundleStore,
+    path: Path,
+    *,
+    artifact_store: MLRegistryBundleArtifactStore | None = None,
 ) -> RoninBundleManifest:
     objects: list[BundleInventoryObject] = []
     files: list[BundleFile] = []
-    for kind, values in (
-        ("experiment", store.list_experiments(workspace_id)),
-        ("run", store.list_runs(workspace_id)),
-        ("model", store.list_models(workspace_id)),
-    ):
+    experiments = store.list_experiments(workspace_id)
+    runs = store.list_runs(workspace_id)
+    models = store.list_models(workspace_id)
+    model_by_ref = {model.artifact_ref: model for model in models}
+    artifacts: dict[str, MLRegistryBundleArtifact] = {}
+    if artifact_store is not None:
+        getter = getattr(artifact_store, "get_bytes_by_storage_ref", None)
+        if not callable(getter):
+            raise ValueError("artifact store cannot export ML bundle bytes")
+        referenced_refs = {
+            artifact_ref for run in runs for artifact_ref in run.artifact_refs
+        } | {model.artifact_ref for model in models}
+        for source_ref in sorted(referenced_refs):
+            model = model_by_ref.get(source_ref)
+            if model is None:
+                raise ValueError(
+                    "ML bundle cannot verify an artifact reference without model digest metadata"
+                )
+            data = getter(source_ref, digest=model.artifact_digest)
+            if not isinstance(data, bytes):
+                raise ValueError("ML bundle artifact store returned non-byte data")
+            artifacts[source_ref] = MLRegistryBundleArtifact(
+                source_ref,
+                model.artifact_digest,
+                "model",
+                "application/octet-stream",
+                data,
+            )
+    values_by_kind = (
+        ("experiment", experiments),
+        ("run", runs),
+        ("model", models),
+    )
+    artifact_refs = {
+        ref: f"ml-artifact:{workspace_id}/{artifact.digest}/{hashlib.sha256(ref.encode('utf-8')).hexdigest()[:16]}"
+        for ref, artifact in artifacts.items()
+    }
+    experiment_refs = {
+        str(experiment.id): f"ml-experiment:{workspace_id}/{experiment.id}"
+        for experiment in experiments
+    }
+    run_refs = {
+        str(run.id): f"ml-run:{workspace_id}/{run.id}" for run in runs
+    }
+    for kind, values in values_by_kind:
         for value in values:
             identity = f"ml-{kind}:{workspace_id}/{_identity(kind, value)}"
             payload = value.to_json().encode("utf-8")
             object_path = _path(kind, identity)
-            objects.append(BundleInventoryObject(f"ml_{kind}", identity, object_path))
+            dependencies: set[str] = set()
+            if kind == "run":
+                dependencies.add(experiment_refs[str(cast(MLRunRecord, value).experiment_id)])
+                dependencies.update(
+                    artifact_refs.get(ref, "")
+                    for ref in cast(MLRunRecord, value).artifact_refs
+                )
+            elif kind == "model":
+                model = cast(RegisteredModelVersion, value)
+                dependencies.add(run_refs[str(model.source_run_id)])
+                if model.artifact_ref in artifact_refs:
+                    dependencies.add(artifact_refs[model.artifact_ref])
+            dependencies.discard("")
+            objects.append(
+                BundleInventoryObject(
+                    f"ml_{kind}", identity, object_path, tuple(sorted(dependencies))
+                )
+            )
             files.append(BundleFile(object_path, MEDIA[kind], payload))
+    for artifact in artifacts.values():
+        identity = artifact_refs[artifact.source_ref]
+        object_path = _path("artifact", identity)
+        objects.append(BundleInventoryObject("ml_artifact", identity, object_path))
+        files.append(
+            BundleFile(
+                object_path,
+                MEDIA["artifact"],
+                encode_canonical_json(artifact.to_payload()),
+            )
+        )
     inventory = BundleInventory(tuple(objects))
     files.append(
         BundleFile(
@@ -99,6 +239,7 @@ def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
     experiments: list[Experiment] = []
     runs: list[MLRunRecord] = []
     models: list[RegisteredModelVersion] = []
+    artifacts: list[MLRegistryBundleArtifact] = []
     for item in inventory.objects:
         payload = read_bundle_payload(path, item.path)
         if payload.manifest != inventory_payload.manifest:
@@ -111,30 +252,72 @@ def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
             experiments.append(Experiment.from_json(document))
         elif kind == "run":
             runs.append(MLRunRecord.from_json(document))
-        else:
+        elif kind == "model":
             models.append(RegisteredModelVersion.from_json(document))
+        else:
+            artifacts.append(
+                MLRegistryBundleArtifact.from_payload(
+                    json.loads(document)
+                )
+            )
+    artifact_by_ref = {artifact.source_ref: artifact for artifact in artifacts}
+    if len(artifact_by_ref) != len(artifacts):
+        raise ValueError("ML registry Bundle contains duplicate artifact references")
+    model_refs = {model.artifact_ref: model.artifact_digest for model in models}
+    for artifact in artifacts:
+        if model_refs.get(artifact.source_ref) != artifact.digest:
+            raise ValueError("ML registry Bundle artifact is not bound to a model digest")
     return MLRegistryBundleImportPlan(
         inventory,
         tuple(experiments),
         tuple(runs),
         tuple(models),
+        tuple(sorted(artifacts, key=lambda item: item.source_ref)),
     )
 
 
 def commit_ml_registry_bundle_import(
-    path: Path, workspace_id: WorkspaceId, store: MLRegistryBundleStore, *, now: Instant | str
+    path: Path,
+    workspace_id: WorkspaceId,
+    store: MLRegistryBundleStore,
+    *,
+    now: Instant | str,
+    artifact_store: MLRegistryBundleArtifactStore | None = None,
 ) -> MLRegistryBundleImportPlan:
     plan = plan_ml_registry_bundle_import(path)
+    artifact_refs: dict[str, str] = {}
+    if plan.artifacts:
+        if artifact_store is None:
+            raise ValueError("ML registry Bundle contains artifacts but no artifact store was supplied")
+        for artifact in plan.artifacts:
+            stored = artifact_store.put_bytes(
+                role=artifact.role,
+                data=artifact.data,
+                media_type=artifact.media_type,
+            )
+            storage_ref = getattr(stored, "storage_ref", None)
+            if not isinstance(storage_ref, str) or not storage_ref.strip():
+                raise ValueError("artifact store returned an invalid storage reference")
+            artifact_refs[artifact.source_ref] = storage_ref
     for experiment in plan.experiments:
         store.put_experiment(workspace_id, experiment, now=now)
     for run in plan.runs:
+        if artifact_refs:
+            run = replace(
+                run,
+                artifact_refs=tuple(artifact_refs.get(ref, ref) for ref in run.artifact_refs),
+            )
         store.record_run(workspace_id, run, now=now)
     for model in plan.models:
+        if model.artifact_ref in artifact_refs:
+            model = replace(model, artifact_ref=artifact_refs[model.artifact_ref])
         store.register_model(workspace_id, model, now=now)
     return plan
 
 
 __all__ = (
+    "MLRegistryBundleArtifact",
+    "MLRegistryBundleArtifactStore",
     "MLRegistryBundleImportPlan",
     "MLRegistryBundleStore",
     "commit_ml_registry_bundle_import",

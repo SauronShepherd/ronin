@@ -58,6 +58,8 @@ from .quality import (
     profile_and_validate,
 )
 from .registry_bundle import (
+    MLRegistryBundleArtifact,
+    MLRegistryBundleArtifactStore,
     MLRegistryBundleImportPlan,
     MLRegistryBundleStore,
     commit_ml_registry_bundle_import,
@@ -114,6 +116,8 @@ __all__ = (
     "MLModelNotFound",
     "MLRegistryStore",
     "MLRegistryBundleImportPlan",
+    "MLRegistryBundleArtifact",
+    "MLRegistryBundleArtifactStore",
     "MLRegistryBundleStore",
     "commit_ml_registry_bundle_import",
     "export_ml_registry_bundle",

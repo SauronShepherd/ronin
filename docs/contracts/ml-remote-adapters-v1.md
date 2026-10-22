@@ -58,6 +58,9 @@ stable IDs and advertised capabilities are part of discovery and provenance.
 
 For simple HTTP deployments, `urllib_json_transport` supplies the transport
 with explicit URL-scheme validation, request-scoped wall-clock timeout,
-bounded response bytes and caller-provided headers. A request timeout cannot
-extend the deployment transport timeout, and malformed/non-finite limits are
-rejected before the request is sent.
+bounded response bytes, exact host allowlisting and caller-provided headers.
+HTTPS is required by default; `allow_http=True` is reserved for local fixtures
+and cannot be combined with an `Authorization` header. Redirects are rejected,
+and HTTP 429/5xx responses map to `transient_error` while other HTTP errors map
+to `validation_error`. A request timeout cannot extend the deployment transport
+timeout, and malformed/non-finite limits are rejected before the request is sent.

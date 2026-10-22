@@ -7,15 +7,19 @@ import math
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict
-from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from .backends import (
     BackendCapabilities,
+    RemoteConfigurationError,
     RemoteMLBackend,
     RemoteRetryPolicy,
     RemoteTrainingRequest,
     RemoteTrainingResult,
     RemoteTransientError,
+    RemoteValidationError,
 )
 
 
@@ -46,6 +50,11 @@ class RemoteExecutionController:
 
     def cancel(self, run_id: str) -> RemoteTrainingResult:
         return self.backend.cancel(run_id)
+
+
+class _NoRedirectHandler(HTTPRedirectHandler):
+    def redirect_request(self, *_args: object, **_kwargs: object) -> None:
+        raise RemoteConfigurationError("remote redirects are disabled")
 
 
 class JsonRemoteBackend:
@@ -109,13 +118,30 @@ def urllib_json_transport(
     headers: Mapping[str, str] | None = None,
     timeout_seconds: float = 30.0,
     max_response_bytes: int = 8 * 1024 * 1024,
+    *,
+    allow_http: bool = False,
+    allowed_hosts: Sequence[str] | None = None,
 ) -> Callable[[str, Mapping[str, object]], Mapping[str, object]]:
     """Create a minimal POST JSON transport for provider deployment wiring."""
     normalized = base_url.rstrip("/")
-    if not normalized.startswith(("http://", "https://")):
+    parsed_base = urlparse(normalized)
+    if parsed_base.scheme not in {"http", "https"} or not parsed_base.hostname:
         raise ValueError("remote base_url must use http or https")
+    if parsed_base.scheme == "http" and not allow_http:
+        raise ValueError("remote base_url must use https unless allow_http is enabled")
+    normalized_hosts = (
+        None if allowed_hosts is None else frozenset(str(host).casefold() for host in allowed_hosts)
+    )
+    if normalized_hosts is not None and parsed_base.hostname.casefold() not in normalized_hosts:
+        raise ValueError("remote base_url host is not allowed")
+    normalized_headers = {str(key): str(value) for key, value in dict(headers or {}).items()}
+    if parsed_base.scheme == "http" and any(
+        key.casefold() == "authorization" for key in normalized_headers
+    ):
+        raise ValueError("authorization headers are not allowed over plaintext HTTP")
     if timeout_seconds <= 0 or max_response_bytes < 1:
         raise ValueError("remote transport limits must be positive")
+    opener = build_opener(_NoRedirectHandler())
 
     def transport(operation: str, payload: Mapping[str, object]) -> Mapping[str, object]:
         request_payload = payload.get("request")
@@ -133,11 +159,18 @@ def urllib_json_transport(
         request = Request(  # noqa: S310
             f"{normalized}/{operation}",
             data=json.dumps(dict(payload), separators=(",", ":")).encode("utf-8"),
-            headers={"Content-Type": "application/json", **dict(headers or {})},
+            headers={"Content-Type": "application/json", **normalized_headers},
             method="POST",
         )
-        with urlopen(request, timeout=effective_timeout) as response:  # noqa: S310
-            raw = response.read(max_response_bytes + 1)
+        try:
+            with opener.open(request, timeout=effective_timeout) as response:
+                raw = response.read(max_response_bytes + 1)
+        except HTTPError as exc:
+            if exc.code == 429 or 500 <= exc.code < 600:
+                raise RemoteTransientError(f"remote service returned HTTP {exc.code}") from exc
+            raise RemoteValidationError(f"remote service returned HTTP {exc.code}") from exc
+        except URLError as exc:
+            raise RemoteTransientError("remote transport failed") from exc
         if len(raw) > max_response_bytes:
             raise ValueError("remote JSON response exceeds the configured byte limit")
         decoded = json.loads(raw.decode("utf-8"))

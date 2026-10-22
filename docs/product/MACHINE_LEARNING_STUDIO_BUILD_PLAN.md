@@ -1031,3 +1031,16 @@ acotado sólo entre reintentos transitorios. Los resultados rechazan métricas c
 NaN/Inf antes de entrar en el lifecycle. Estas correcciones son estáticas y aún
 requieren cualificación exact-head; no se ejecutaron pruebas, builds, validadores
 ni Docker por instrucción del usuario.
+
+### Portabilidad del registry ML
+
+El bundle de registry puede incluir los bytes de los artefactos de modelos cuando
+se proporciona el `ArtifactStore`. Cada objeto `ml_artifact` conserva el digest
+SHA-256 y la referencia de origen dentro de un payload `ronin.ml-artifact/v1`;
+la planificación de importación verifica todos los bytes y la relación entre
+modelo y artefacto antes de mutar el registry. La importación escribe los bytes
+en el store de destino y remapea las referencias de runs y modelos. Sin un store
+de artefactos se mantiene explícitamente el modo metadata-only, sin afirmar que
+el bundle sea autosuficiente. El contrato está documentado en
+`docs/contracts/ml-registry-bundle-v1.md`; la cualificación exact-head sigue
+pendiente y no se ejecutaron pruebas ni Docker.
