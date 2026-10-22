@@ -157,6 +157,53 @@ def test_submit_candidate_preprocessors_executes_each_bound_branch() -> None:
         plugin._coordinator.close()
 
 
+def test_submit_candidate_grid_crosses_algorithms_and_preprocessors() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x", "numeric"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    rows = [{"x": value, "target": value % 2} for value in range(1, 21)]
+    try:
+        submitted = plugin.submit_execution(
+            "ws",
+            "churn",
+            body={
+                "run_id": "candidate-grid",
+                "rows": rows,
+                "candidate_algorithms": ["logistic_regression", "decision_tree_classifier"],
+                "candidate_preprocessors": ["identity", "standard_scale"],
+            },
+        )
+        assert submitted["run_id"] == "candidate-grid"
+        pipeline = plugin._labs.store.get_pipeline(WorkspaceId("ws"), lab.id)
+        assert pipeline is not None
+        prepares = [node for node in pipeline.nodes if node.kind == "prepare"]
+        trains = [node for node in pipeline.nodes if node.kind == "train"]
+        assert len(prepares) == 2
+        assert len(trains) == 4
+        assert {node.config["algorithm"] for node in trains} == {
+            "logistic_regression",
+            "decision_tree_classifier",
+        }
+        assert {node.depends_on[0] for node in trains} == {node.id for node in prepares}
+        deadline = time.time() + 30
+        state = plugin.execution_status("candidate-grid", workspace_id="ws")["state"]
+        while state not in {"succeeded", "failed"} and time.time() < deadline:
+            time.sleep(0.01)
+            state = plugin.execution_status("candidate-grid", workspace_id="ws")["state"]
+        assert state == "succeeded"
+    finally:
+        plugin._coordinator.close()
+
+
 def test_submit_custom_v2_pipeline_is_validated_and_pinned() -> None:
     plugin = MachineLearningStudioPlugin()
     plugin._labs = LabService(InMemoryMLLabStore())

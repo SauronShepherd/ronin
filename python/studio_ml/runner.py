@@ -781,6 +781,7 @@ class LocalExperimentRunner:
             or len(nodes["train"]) < 2
             or len(nodes["evaluate"]) != len(nodes["train"])
             or len(nodes["select"]) != 1
+            or len(pipeline.nodes) > 24
             or len(pipeline.nodes) != 3 + len(nodes["prepare"]) + 2 * len(nodes["train"])
         ):
             raise ValueError(

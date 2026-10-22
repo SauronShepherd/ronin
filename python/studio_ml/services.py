@@ -76,14 +76,10 @@ def compile_lab_pipeline(
     if preprocessor != "identity":
         parameters["preprocessor"] = preprocessor
 
-    if (
-        sum(
-            value is not None
-            for value in (candidate_algorithms, candidate_cluster_counts, candidate_preprocessors)
-        )
-        > 1
+    if candidate_cluster_counts is not None and (
+        candidate_algorithms is not None or candidate_preprocessors is not None
     ):
-        raise ValueError("candidate selection options cannot be combined")
+        raise ValueError("clustering candidates cannot be combined with supervised candidates")
     if candidate_cluster_counts is not None:
         if lab.task != "clustering":
             raise ValueError("candidate_cluster_counts are supported only for clustering Labs")
@@ -149,6 +145,26 @@ def compile_lab_pipeline(
             ):
                 raise ValueError("candidate_preprocessor is not supported for this Lab")
             compile_lab_pipeline(lab, algorithm=algorithm, preprocessor=candidate_preprocessor)
+        if candidate_algorithms is not None:
+            from .runtime import ALGORITHM_CAPABILITIES
+
+            if algorithm is not None:
+                raise ValueError("algorithm cannot be combined with candidate_algorithms")
+            if (
+                not isinstance(candidate_algorithms, tuple)
+                or not 2 <= len(candidate_algorithms) <= 8
+                or not all(
+                    isinstance(item, str)
+                    and bool(item)
+                    and item == item.strip()
+                    and lab.task in ALGORITHM_CAPABILITIES.get(item, frozenset())
+                    for item in candidate_algorithms
+                )
+                or len(set(candidate_algorithms)) != len(candidate_algorithms)
+            ):
+                raise ValueError("candidate algorithms are not supported for this Lab task")
+            if len(candidate_algorithms) * len(candidate_preprocessors) > 8:
+                raise ValueError("candidate grid supports at most 8 combinations")
         metric = (
             selection_metric
             if selection_metric is not None
@@ -170,11 +186,10 @@ def compile_lab_pipeline(
         ):
             raise ValueError("selection metric/direction is not supported for this Lab task")
         nodes = [_node("profile"), _node("quality_gate", ("profile",))]
-        preprocessor_evaluations: list[str] = []
+        prepare_ids: dict[str, str] = {}
         for index, candidate_preprocessor in enumerate(candidate_preprocessors, start=1):
             prepare_id = f"prepare_{index}"
-            train_id = f"train_{index}"
-            evaluate_id = f"evaluate_{index}"
+            prepare_ids[candidate_preprocessor] = prepare_id
             nodes.append(
                 PipelineNode(
                     prepare_id,
@@ -183,10 +198,21 @@ def compile_lab_pipeline(
                     {"preprocessor": candidate_preprocessor},
                 )
             )
-            train_config = {"algorithm": algorithm} if algorithm is not None else {}
-            nodes.append(PipelineNode(train_id, "train", (prepare_id,), train_config))
-            nodes.append(PipelineNode(evaluate_id, "evaluate", (train_id,)))
-            preprocessor_evaluations.append(evaluate_id)
+        preprocessor_evaluations: list[str] = []
+        algorithm_candidates = candidate_algorithms or ((algorithm,) if algorithm else (None,))
+        for prep_index, candidate_preprocessor in enumerate(candidate_preprocessors, start=1):
+            for algorithm_index, candidate_algorithm in enumerate(algorithm_candidates, start=1):
+                suffix = f"{prep_index}_{algorithm_index}"
+                train_id = f"train_{suffix}"
+                evaluate_id = f"evaluate_{suffix}"
+                train_config = {"algorithm": candidate_algorithm} if candidate_algorithm else {}
+                nodes.append(
+                    PipelineNode(
+                        train_id, "train", (prepare_ids[candidate_preprocessor],), train_config
+                    )
+                )
+                nodes.append(PipelineNode(evaluate_id, "evaluate", (train_id,)))
+                preprocessor_evaluations.append(evaluate_id)
         nodes.append(
             PipelineNode(
                 "select",
@@ -195,6 +221,8 @@ def compile_lab_pipeline(
                 {"metric": metric, "direction": effective_direction},
             )
         )
+        if len(nodes) > 24:
+            raise ValueError("candidate grid exceeds the 24-node execution limit")
         return PipelineIR(
             tuple(nodes), parameters=tuple(sorted(parameters.items())), schema=PIPELINE_SCHEMA_V2
         )

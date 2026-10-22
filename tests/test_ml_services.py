@@ -164,11 +164,28 @@ def test_compile_candidate_preprocessors_rejects_invalid_or_incompatible_lists()
             compile_lab_pipeline(lab, candidate_preprocessors=preprocessors)
     with pytest.raises(ValueError, match="one_hot preprocessing"):
         compile_lab_pipeline(lab, candidate_preprocessors=("identity", "one_hot"))
-    with pytest.raises(ValueError, match="candidate selection options"):
+    grid = compile_lab_pipeline(
+        lab,
+        candidate_algorithms=("logistic_regression", "decision_tree_classifier"),
+        candidate_preprocessors=("identity", "standard_scale"),
+    )
+    trains = [node for node in grid.nodes if node.kind == "train"]
+    assert len(trains) == 4
+    assert {node.config["algorithm"] for node in trains} == {
+        "logistic_regression",
+        "decision_tree_classifier",
+    }
+    assert len({node.depends_on[0] for node in trains}) == 2
+    assert len(grid.nodes) == 13
+    with pytest.raises(ValueError, match="at most 8 combinations"):
         compile_lab_pipeline(
             lab,
-            candidate_algorithms=("logistic_regression", "decision_tree_classifier"),
-            candidate_preprocessors=("identity", "standard_scale"),
+            candidate_algorithms=(
+                "logistic_regression",
+                "decision_tree_classifier",
+                "random_forest_classifier",
+            ),
+            candidate_preprocessors=("identity", "standard_scale", "median_impute"),
         )
 
 
