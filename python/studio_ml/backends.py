@@ -129,6 +129,8 @@ class RemoteTrainingResult:
             raise ValueError("unsupported remote training status")
         if not self.run_id.strip():
             raise ValueError("remote result requires run_id")
+        if any(char in self.run_id for char in "\r\n\x00"):
+            raise ValueError("remote result run_id must be single-line")
         for name, value in self.metrics:
             if not isinstance(name, str) or not name.strip():
                 raise ValueError("remote result metric names must be non-empty")
@@ -140,6 +142,12 @@ class RemoteTrainingResult:
                 raise ValueError("remote result metrics must be finite numbers")
         if bool(self.artifact_ref) != bool(self.artifact_digest):
             raise ValueError("remote artifact reference and digest must be supplied together")
+        if self.artifact_ref and (
+            not self.artifact_ref.strip()
+            or self.artifact_ref != self.artifact_ref.strip()
+            or any(char in self.artifact_ref for char in "\r\n\x00")
+        ):
+            raise ValueError("remote artifact reference must be trimmed single-line text")
         if self.status == "succeeded" and not self.artifact_ref:
             raise ValueError("successful remote results require a durable artifact reference")
         if self.artifact_digest and (
