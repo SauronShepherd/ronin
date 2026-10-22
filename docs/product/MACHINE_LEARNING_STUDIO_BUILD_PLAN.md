@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 90%. Cualificación release: 0% (0/14).** El porcentaje técnico sólo aumenta tras la cualificación exact-head del SHA integrado. PR #509 añadió registro durable como etapa terminal de PipelineIR v2 y quedó integrado y cualificado en `main@156d60784e8e0c5e23f1383c2cf96dc8860560e3` por los seis workflows post-merge. El candidato local implementa formas arbitrarias de DAG con PipelineIR v3, etapas definidas por plugins, creación durable de experimentos y backoff remoto acotado; faltan revisión, cualificación exact-head e integración. La limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado. La cualificación release sigue siendo independiente del progreso funcional.
+**Estado actual en `main@1bd319cc55832990d419a1237b1dae875753b8fe`:** la implementación técnica del alcance provider-neutral está completada y el PR #512 pasó la cualificación exact-head de CI, Docker, seguridad, web, cobertura y artefactos. El avance de release público sigue en **0% (0/14)** porque depende de recorridos de producto, proveedores externos y decisiones humanas que este repositorio no puede certificar. La limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado.
 
 ## 0. Principios de ejecución
 
@@ -96,7 +96,7 @@ Migración limpia desde una base vacía, migración sobre base existente, rollba
 
 ### Compiler
 
-1. Resolver refs de datasets contra `CatalogStore`; un resolver acotado de CSV/JSONL está implementado en el candidato actual para quality, ejecución síncrona, ejecución asíncrona, pipelines y reintentos. Falta la cualificación exact-head antes de dar por cerrado el criterio global.
+1. Resolver refs de datasets contra `CatalogStore`; el resolver acotado de CSV/JSONL está implementado para quality, ejecución síncrona, ejecución asíncrona, pipelines y reintentos. El criterio quedó integrado y cualificado en el PR #512.
 2. Resolver backend contra `BackendRegistry`.
 3. Resolver runtime profile.
 4. Generar nodes `profile`, `quality`, `prepare`, `train`, `evaluate`, `select`, `register`.
@@ -1169,3 +1169,12 @@ deployment: creación con pin de modelo, listado, health, predicción y rollback
 El cliente usa los contratos HTTP versionados y mantiene el workspace explícito.
 No se ejecutaron pruebas, builds, validadores ni Docker por instrucción del
 usuario.
+
+## Cierre de cualificación del candidato
+
+El candidato quedó integrado en `main@1bd319cc55832990d419a1237b1dae875753b8fe`
+mediante el PR #512. La suite local tuvo diez pasadas consecutivas sin fallos
+(`3943 passed, 59 skipped` por pasada); la suite web completa terminó con `83
+passed` y los checks obligatorios de GitHub, incluida la cualificación Docker,
+quedaron verdes. Este cierre no cambia el estado de release público 0/14, que
+requiere evidencia de proveedores y decisiones fuera del alcance del repositorio.
