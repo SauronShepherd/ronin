@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+from contextlib import nullcontext
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Protocol, cast
@@ -28,6 +29,7 @@ from studio_core.portability import RoninBundleManifest
 from studio_orchestrator import Instant
 from studio_storage.bundle import BundleFile, write_bundle
 from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.ports import ArtifactReferenceBarrier
 
 from .domain import FeatureDefinition
 from .ports import FeatureDefinitionStore
@@ -377,6 +379,41 @@ def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
 
 
 def commit_ml_registry_bundle_import(
+    path: Path,
+    workspace_id: WorkspaceId,
+    store: MLRegistryBundleStore,
+    *,
+    now: Instant | str,
+    artifact_store: MLRegistryBundleArtifactStore | None = None,
+    feature_store: FeatureDefinitionStore | None = None,
+    artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
+) -> MLRegistryBundleImportPlan:
+    """Commit a validated bundle while fencing artifact bytes and references.
+
+    PostgreSQL compositions pass the same shared barrier used by every other
+    artifact producer.  The lease spans artifact materialization and all
+    durable registry/feature references, so a collector cannot observe the
+    import half-published.  SQLite and metadata-only imports retain the
+    existing behavior when no barrier is supplied.
+    """
+
+    lease = (
+        artifact_reference_barrier.writer()
+        if artifact_reference_barrier is not None
+        else nullcontext()
+    )
+    with lease:
+        return _commit_ml_registry_bundle_import(
+            path,
+            workspace_id,
+            store,
+            now=now,
+            artifact_store=artifact_store,
+            feature_store=feature_store,
+        )
+
+
+def _commit_ml_registry_bundle_import(
     path: Path,
     workspace_id: WorkspaceId,
     store: MLRegistryBundleStore,

@@ -22,3 +22,9 @@ Metadata-only bundles remain supported for references intentionally managed by a
 external artifact provider. They do not claim to be self-contained and must be
 imported without artifact objects. Secrets and provider credentials are never
 serialized into the bundle.
+
+PostgreSQL compositions pass the shared `ArtifactReferenceBarrier` to the
+import operation. Its writer lease covers destination artifact materialization,
+reference remapping, and all registry/feature commits as one publication
+window, so retention cannot observe a partially imported bundle. SQLite and
+metadata-only imports may omit the barrier.

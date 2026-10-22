@@ -1093,6 +1093,12 @@ requiere los stores destino antes de escribir artefactos. El modo metadata-only
 continúa explícito. La cualificación exact-head sigue pendiente y no se
  ejecutaron pruebas, builds, validadores ni Docker.
 
+La importación del bundle acepta ahora la `ArtifactReferenceBarrier` compartida.
+En PostgreSQL el lease cubre la materialización de bytes, el remapeo de
+referencias y los commits de registry/features, evitando que la retención
+observe una importación a medias. SQLite y el modo metadata-only conservan la
+operación sin barrera.
+
 El flujo síncrono de ejecución acepta ahora de forma coherente la opción
 `register` que ya consumía internamente el camino de clustering. El handler
 valida el shape exacto y limita `model_id`, `version`, `run_id`,
