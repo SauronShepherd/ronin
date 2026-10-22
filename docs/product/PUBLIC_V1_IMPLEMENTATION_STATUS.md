@@ -4,15 +4,18 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-21. PRs #430–#503 are merged. Recent
+**Observed workspace snapshot:** 2026-10-22. PRs #430–#505 are merged. Recent
 increments add configurable ML algorithms and preprocessing, selective retry,
 non-destructive artifact retention preview, fail-closed reference discovery with
 bounded enumeration, bounded-memory local artifact pagination, and paged manual
 cleanup that validates a complete bounded inventory before deletion, plus bounded
 durable job evidence and cell-result reads across SQLite, PostgreSQL and memory,
 Bayesian stopping, ordered directional trial tie-breakers with strict bounded
-input validation, and a manual-retention guard that requires an explicit opt-in
-before an empty live set can delete every artifact.
+input validation, a manual-retention guard that requires an explicit opt-in
+before an empty live set can delete every artifact, and bounded ML candidate grids.
+PR #505 supports up to eight algorithm×preprocessor combinations; its PR Docker
+qualification passed in 9m50s and all six exact-head workflows passed on
+`main@ad53878fac49330d29824dabf1f27e4c4bd2d9d8`.
 Global cleanup remains disabled because there is no cross-store write barrier. The
 PR #482 prevents an empty live digest set from deleting every artifact unless the
 caller opts in with an explicit boolean. Its 26 focused tests, CI Python 3.11/3.12,
@@ -22,7 +25,7 @@ two PostgreSQL-dependent tests were skipped without a local DSN, and strict
 acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
-**Observed source head:** `3ba0ab70a137f6019d85c8063148c2f873a913e6` (2026-10-21).
+**Observed source head:** `ad53878fac49330d29824dabf1f27e4c4bd2d9d8` (2026-10-22).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are
