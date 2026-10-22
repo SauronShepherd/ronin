@@ -1118,6 +1118,7 @@ class MachineLearningStudioPlugin:
             or not run_id
             or run_id != run_id.strip()
             or len(run_id) > 256
+            or any(char in run_id for char in "\r\n\x00")
         ):
             raise ValueError("execution run_id must be 1 to 256 characters of trimmed text")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
@@ -1209,6 +1210,8 @@ class MachineLearningStudioPlugin:
                 not isinstance(registration.get(key), str)
                 or not registration[key]
                 or registration[key] != registration[key].strip()
+                    or len(registration[key]) > 256
+                    or any(char in registration[key] for char in "\r\n\x00")
                 for key in ("model_id", "version")
             )
         ):
@@ -1320,12 +1323,26 @@ class MachineLearningStudioPlugin:
     ) -> dict[str, object]:
         del lab_id
         self._workspace(workspace_id, _kwargs)
-        if not isinstance(body, dict):
+        if not isinstance(body, dict) or set(body) - {"spec", "trials"}:
             raise ValueError("compare body must be an object")
         raw_spec = body.get("spec", {})
         raw_trials = body.get("trials")
-        if not isinstance(raw_spec, dict) or not isinstance(raw_trials, list):
+        if (
+            not isinstance(raw_spec, dict)
+            or not isinstance(raw_trials, list)
+            or len(raw_trials) > 1_000
+        ):
             raise ValueError("compare requires spec and trials")
+        if set(raw_spec) - {
+            "mode",
+            "parameters",
+            "metric",
+            "direction",
+            "tie_breakers",
+            "max_trials",
+            "random_seed",
+        }:
+            raise ValueError("compare spec contains unknown fields")
         parameters = raw_spec.get("parameters", [])
         if not isinstance(parameters, list):
             raise ValueError("spec parameters must be an array")
@@ -1351,6 +1368,7 @@ class MachineLearningStudioPlugin:
         for item in raw_trials:
             if (
                 not isinstance(item, dict)
+                or set(item) != {"parameters", "metrics"}
                 or not isinstance(item.get("parameters"), dict)
                 or not isinstance(item.get("metrics"), dict)
             ):
