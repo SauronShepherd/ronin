@@ -97,7 +97,7 @@ class PostgresMLStore(PostgresMetadataStore):
                     (str(workspace_id), str(experiment.id)),
                 )
                 existing = cursor.fetchone()
-                if existing is not None and existing[0] != experiment.to_json():
+                if existing is not None and existing["experiment_json"] != experiment.to_json():
                     raise ValueError("experiment id already exists with a different definition")
                 cursor.execute(
                     "INSERT INTO ronin_ml_experiments VALUES (%s,%s,%s,%s,%s) "
