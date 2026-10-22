@@ -26,6 +26,9 @@ idempotency key. A remote artifact is accepted only after digest verification;
 the registry stores the provider reference as provenance, not as the model
 payload. Promotion and scoring remain provider-neutral.
 
+The host bounds `timeout_seconds` to 24 hours, `max_trials` to 10,000 and the
+idempotency key to 256 characters before dispatch.
+
 The current release implements the contract types and local adapter only.
 MLflow and Spark implementations remain future adapters and must pass the
 capability, provenance, artifact-digest, cancellation, retry, and prediction

@@ -10,6 +10,9 @@ from typing import Protocol, runtime_checkable
 
 from .runtime import TrainedTabularModel, TrainingSpec, train_tabular
 
+MAX_REMOTE_TIMEOUT_SECONDS = 86_400
+MAX_REMOTE_TRIALS = 10_000
+
 
 @dataclass(frozen=True, slots=True)
 class ExperimentRequest:
@@ -80,12 +83,18 @@ class RemoteTrainingRequest:
     idempotency_key: str = ""
 
     def __post_init__(self) -> None:
-        if self.lab_version < 1 or self.timeout_seconds < 1 or self.max_trials < 1:
-            raise ValueError("remote training limits must be positive")
+        if (
+            self.lab_version < 1
+            or self.timeout_seconds < 1
+            or self.timeout_seconds > MAX_REMOTE_TIMEOUT_SECONDS
+            or self.max_trials < 1
+            or self.max_trials > MAX_REMOTE_TRIALS
+        ):
+            raise ValueError("remote training limits exceed the bounded policy")
         if not self.dataset_ref.strip() or not self.lab_id.strip() or not self.algorithm.strip():
             raise ValueError("remote training identity fields must be non-empty")
-        if not self.idempotency_key.strip():
-            raise ValueError("remote training requires an idempotency key")
+        if not self.idempotency_key.strip() or len(self.idempotency_key) > 256:
+            raise ValueError("remote training requires a bounded idempotency key")
 
 
 @dataclass(frozen=True, slots=True)
@@ -253,6 +262,8 @@ def default_backends() -> tuple[MLBackend, ...]:
 
 
 __all__ = [
+    "MAX_REMOTE_TIMEOUT_SECONDS",
+    "MAX_REMOTE_TRIALS",
     "BackendCapabilities",
     "BackendRegistry",
     "TrainingContext",
