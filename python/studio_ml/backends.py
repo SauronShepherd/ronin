@@ -12,6 +12,8 @@ from .runtime import TrainedTabularModel, TrainingSpec, train_tabular
 
 MAX_REMOTE_TIMEOUT_SECONDS = 86_400
 MAX_REMOTE_TRIALS = 10_000
+MAX_BACKEND_TEXT = 256
+MAX_REMOTE_ARTIFACT_REF = 512
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +45,11 @@ class BackendCapabilities:
         ):
             if any(not isinstance(value, str) or not value.strip() for value in values):
                 raise ValueError(f"backend capability {label} entries must be non-empty text")
+            if any(
+                len(value) > MAX_BACKEND_TEXT or any(char in value for char in "\r\n\x00")
+                for value in values
+            ):
+                raise ValueError(f"backend capability {label} entries are too long or contain controls")
             if len(values) != len(set(values)):
                 raise ValueError(f"backend capability {label} entries must be unique")
 
@@ -102,17 +109,38 @@ class RemoteTrainingRequest:
     idempotency_key: str = ""
 
     def __post_init__(self) -> None:
+        if not isinstance(self.artifact_ref, str) or not isinstance(self.artifact_digest, str):
+            raise ValueError("remote artifact identity fields must be text")
         if (
-            self.lab_version < 1
+            not isinstance(self.lab_version, int)
+            or isinstance(self.lab_version, bool)
+            or self.lab_version < 1
+            or not isinstance(self.timeout_seconds, int)
+            or isinstance(self.timeout_seconds, bool)
             or self.timeout_seconds < 1
             or self.timeout_seconds > MAX_REMOTE_TIMEOUT_SECONDS
+            or not isinstance(self.max_trials, int)
+            or isinstance(self.max_trials, bool)
             or self.max_trials < 1
             or self.max_trials > MAX_REMOTE_TRIALS
         ):
             raise ValueError("remote training limits exceed the bounded policy")
-        if not self.dataset_ref.strip() or not self.lab_id.strip() or not self.algorithm.strip():
+        if any(
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            or len(value) > MAX_BACKEND_TEXT
+            or any(char in value for char in "\r\n\x00")
+            for value in (self.dataset_ref, self.lab_id, self.algorithm)
+        ):
             raise ValueError("remote training identity fields must be non-empty")
-        if not self.idempotency_key.strip() or len(self.idempotency_key) > 256:
+        if (
+            not isinstance(self.idempotency_key, str)
+            or not self.idempotency_key
+            or self.idempotency_key != self.idempotency_key.strip()
+            or len(self.idempotency_key) > MAX_BACKEND_TEXT
+            or any(char in self.idempotency_key for char in "\r\n\x00")
+        ):
             raise ValueError("remote training requires a bounded idempotency key")
 
 
@@ -125,14 +153,32 @@ class RemoteTrainingResult:
     metrics: tuple[tuple[str, float], ...] = ()
 
     def __post_init__(self) -> None:
-        if self.status not in {"queued", "running", "succeeded", "failed", "cancelled"}:
+        if (
+            not isinstance(self.run_id, str)
+            or not self.run_id
+            or self.run_id != self.run_id.strip()
+            or len(self.run_id) > MAX_BACKEND_TEXT
+            or any(char in self.run_id for char in "\r\n\x00")
+        ):
+            raise ValueError("remote result requires a bounded run_id")
+        if not isinstance(self.status, str) or self.status not in {
+            "queued", "running", "succeeded", "failed", "cancelled"
+        }:
             raise ValueError("unsupported remote training status")
-        if not self.run_id.strip():
-            raise ValueError("remote result requires run_id")
-        if any(char in self.run_id for char in "\r\n\x00"):
-            raise ValueError("remote result run_id must be single-line")
+        if (
+            not isinstance(self.metrics, tuple)
+            or len(self.metrics) > 32
+            or len({name for name, _ in self.metrics}) != len(self.metrics)
+        ):
+            raise ValueError("remote result metrics must be bounded and unique")
         for name, value in self.metrics:
-            if not isinstance(name, str) or not name.strip():
+            if (
+                not isinstance(name, str)
+                or not name
+                or name != name.strip()
+                or len(name) > MAX_BACKEND_TEXT
+                or any(char in name for char in "\r\n\x00")
+            ):
                 raise ValueError("remote result metric names must be non-empty")
             if (
                 isinstance(value, bool)
@@ -143,15 +189,18 @@ class RemoteTrainingResult:
         if bool(self.artifact_ref) != bool(self.artifact_digest):
             raise ValueError("remote artifact reference and digest must be supplied together")
         if self.artifact_ref and (
-            not self.artifact_ref.strip()
+            not isinstance(self.artifact_ref, str)
+            or not self.artifact_ref.strip()
             or self.artifact_ref != self.artifact_ref.strip()
+            or len(self.artifact_ref) > MAX_REMOTE_ARTIFACT_REF
             or any(char in self.artifact_ref for char in "\r\n\x00")
         ):
             raise ValueError("remote artifact reference must be trimmed single-line text")
         if self.status == "succeeded" and not self.artifact_ref:
             raise ValueError("successful remote results require a durable artifact reference")
         if self.artifact_digest and (
-            len(self.artifact_digest) != 64
+            not isinstance(self.artifact_digest, str)
+            or len(self.artifact_digest) != 64
             or any(char not in "0123456789abcdef" for char in self.artifact_digest)
         ):
             raise ValueError("remote artifact digest must be lowercase SHA-256")

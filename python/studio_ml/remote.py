@@ -84,6 +84,15 @@ class JsonRemoteBackend:
         self._transport = transport
 
     def _result(self, payload: Mapping[str, object]) -> RemoteTrainingResult:
+        run_id = payload.get("run_id")
+        status = payload.get("status")
+        artifact_ref = payload.get("artifact_ref", "")
+        artifact_digest = payload.get("artifact_digest", "")
+        if not all(
+            isinstance(value, str)
+            for value in (run_id, status, artifact_ref, artifact_digest)
+        ):
+            raise ValueError("remote result identity fields must be text")
         raw_metrics = payload.get("metrics", {})
         if not isinstance(raw_metrics, Mapping):
             raise ValueError("remote metrics must be an object")
@@ -100,10 +109,10 @@ class JsonRemoteBackend:
                 raise ValueError("remote metrics must contain finite values")
             metrics.append((key, metric))
         return RemoteTrainingResult(
-            str(payload["run_id"]),
-            str(payload.get("artifact_ref", "")),
-            str(payload.get("artifact_digest", "")),
-            str(payload["status"]),
+            run_id,
+            artifact_ref,
+            artifact_digest,
+            status,
             tuple(metrics),
         )
 

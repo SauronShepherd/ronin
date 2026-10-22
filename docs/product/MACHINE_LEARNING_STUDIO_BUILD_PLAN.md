@@ -1129,3 +1129,7 @@ Scoring valida además el tipo de `artifact_base64`, batch IDs recortados y
 offsets numéricos con una longitud máxima para evitar entradas ambiguas.
 Quality, drift y los catálogos versionados validan los IDs de Lab y catálogo
 antes de leer o escribir sus stores.
+
+Los contratos de adapters remotos rechazan tipos no textuales, controles,
+identidades largas, métricas duplicadas y resultados que convierten silenciosamente
+identidades remotas inválidas.
