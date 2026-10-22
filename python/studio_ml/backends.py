@@ -112,6 +112,8 @@ class RemoteTrainingResult:
                 raise ValueError("remote result metrics must be finite numbers")
         if bool(self.artifact_ref) != bool(self.artifact_digest):
             raise ValueError("remote artifact reference and digest must be supplied together")
+        if self.status == "succeeded" and not self.artifact_ref:
+            raise ValueError("successful remote results require a durable artifact reference")
         if self.artifact_digest and (
             len(self.artifact_digest) != 64
             or any(char not in "0123456789abcdef" for char in self.artifact_digest)

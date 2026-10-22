@@ -49,7 +49,8 @@ enter the execution or registry lifecycle.
 
 An artifact reference and digest are an all-or-nothing pair. When present, the
 digest must be a lowercase SHA-256 value; a result with only one half of the
-pair is rejected before it can be persisted.
+pair is rejected before it can be persisted. A `succeeded` result must include
+the verified durable pair; queued/running results may omit it.
 
 `RemoteExecutionController` is the provider-neutral lifecycle helper. It
 retries only `RemoteTransientError`, delegates polling and cancellation, and
