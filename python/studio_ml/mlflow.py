@@ -55,14 +55,21 @@ class MLflowSubset:
                 raise ValueError(f"MLflow {label} names and types must be non-empty text")
             if len({name for name, _ in values}) != len(values):
                 raise ValueError(f"MLflow {label} names must be unique")
-        if any(
-            not isinstance(name, str)
-            or not name.strip()
-            or isinstance(value, bool)
-            or not isinstance(value, (int, float))
-            or not isfinite(float(value))
-            for name, value in self.metrics
-        ):
+        if len({name for name, _ in self.metrics}) != len(self.metrics):
+            raise ValueError("MLflow metric names must be unique")
+        for name, value in self.metrics:
+            try:
+                finite = isfinite(float(value))
+            except (OverflowError, TypeError, ValueError):
+                finite = False
+            if (
+                not isinstance(name, str)
+                or not name.strip()
+                or isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not finite
+            ):
+                raise ValueError("MLflow metrics must be finite numbers")
             raise ValueError("MLflow metrics must be finite numbers")
 
     def to_payload(self) -> dict[str, object]:
