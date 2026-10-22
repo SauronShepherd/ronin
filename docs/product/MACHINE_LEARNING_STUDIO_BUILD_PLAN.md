@@ -1125,3 +1125,5 @@ Labs y definiciones de features limitan también a 256 columnas y 256 caracteres
 por campo textual; el contrato OpenAPI mantiene esos mismos topes.
 El scope de workspace y los identificadores de Lab, run y experiment quedan
 acotados antes de acceder a stores o al coordinador.
+Scoring valida además el tipo de `artifact_base64`, batch IDs recortados y
+offsets numéricos con una longitud máxima para evitar entradas ambiguas.

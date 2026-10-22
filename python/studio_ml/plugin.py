@@ -533,6 +533,7 @@ class MachineLearningStudioPlugin:
             or set(body) != {"reason"}
             or not isinstance(body.get("reason"), str)
             or not body["reason"].strip()
+            or body["reason"] != body["reason"].strip()
             or len(body["reason"]) > 1024
             or any(char in body["reason"] for char in "\r\n\x00")
         ):
@@ -581,6 +582,8 @@ class MachineLearningStudioPlugin:
             or not all(isinstance(row, dict) for row in rows)
         ):
             raise ValueError("predict rows must contain at most 100000 objects")
+        if encoded is not None and not isinstance(encoded, str):
+            raise ValueError("artifact_base64 must be text when provided")
         model = self._registry.get_model(
             WorkspaceId(workspace_id), ModelId(model_id), ModelVersion(version)
         )
@@ -630,8 +633,13 @@ class MachineLearningStudioPlugin:
             or not isinstance(body.get("batch_id"), str)
         ):
             raise ValueError("batch_id is required for batch prediction")
-        batch_id = body["batch_id"].strip()
-        if not batch_id or len(batch_id) > 256 or any(char in batch_id for char in "\r\n\x00"):
+        batch_id = body["batch_id"]
+        if (
+            not batch_id
+            or batch_id != batch_id.strip()
+            or len(batch_id) > 256
+            or any(char in batch_id for char in "\r\n\x00")
+        ):
             raise ValueError("batch_id must be a bounded single-line identifier")
         rows = body.get("rows")
         if (
@@ -772,7 +780,7 @@ class MachineLearningStudioPlugin:
 
         def query_int(name: str, default: int) -> int:
             value = query.get(name, [str(default)])[0]
-            if not value.isascii() or not value.isdecimal():
+            if not value.isascii() or not value.isdecimal() or len(value) > 20:
                 raise ValueError(f"artifact {name} must be a non-negative integer")
             return int(value)
 
