@@ -19,9 +19,9 @@ class ExamplePlugin:
         plugin_api="1.0",
         host_requires=">=1,<2",
         edition="third-party",
-    capabilities=("example.read",),
-    permissions=("example:read",),
-    surface_ids=("example.get.v1",),
+        capabilities=("example.read",),
+        permissions=("example:read",),
+        surface_ids=("example.get.v1",),
     )
 
     def register(self, context: PluginContext) -> None:
