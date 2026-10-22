@@ -1017,6 +1017,7 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, _kwargs)
         if lab_id is None:
             raise ValueError("lab_id is required")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
         if not isinstance(body, dict) or set(body) - {"rows", "suite"}:
@@ -1038,6 +1039,7 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, kwargs)
         if lab_id is None or self._labs is None:
             raise ValueError("lab_id is required and ML Studio must be ready")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
         return {"items": [item.to_payload() for item in self._labs.list_quality_suites(WorkspaceId(workspace_id), lab_id)]}
 
     def save_quality_suite(
@@ -1046,6 +1048,7 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, kwargs)
         if lab_id is None or self._labs is None:
             raise ValueError("lab_id is required and ML Studio must be ready")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
         suite = QualitySuite.from_payload(body)
         return self._labs.put_quality_suite(WorkspaceId(workspace_id), lab_id, suite).to_payload()
 
@@ -1056,9 +1059,11 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, kwargs)
         if lab_id is None or suite_id is None or self._labs is None:
             raise ValueError("lab_id and suite_id are required and ML Studio must be ready")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
+        suite_id = self._bounded_identifier(unquote(suite_id), "suite_id")
         parsed_version = parse_catalog_version(version, "quality suite")
         suite = self._labs.get_quality_suite(
-            WorkspaceId(workspace_id), lab_id, unquote(suite_id), parsed_version
+            WorkspaceId(workspace_id), lab_id, suite_id, parsed_version
         )
         if suite is None:
             raise KeyError(f"{lab_id}/{unquote(suite_id)}@{parsed_version}")
@@ -1070,6 +1075,7 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, kwargs)
         if lab_id is None or self._labs is None:
             raise ValueError("lab_id is required and ML Studio must be ready")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
         return {
             "items": [
                 item.to_payload()
@@ -1084,6 +1090,7 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, kwargs)
         if lab_id is None or self._labs is None:
             raise ValueError("lab_id is required and ML Studio must be ready")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
         policy = DriftPolicy.from_payload(body)
         return self._labs.put_drift_policy(WorkspaceId(workspace_id), lab_id, policy).to_payload()
 
@@ -1094,9 +1101,11 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, kwargs)
         if lab_id is None or policy_id is None or self._labs is None:
             raise ValueError("lab_id and policy_id are required and ML Studio must be ready")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
+        policy_id = self._bounded_identifier(unquote(policy_id), "policy_id")
         parsed_version = parse_catalog_version(version, "drift policy")
         policy = self._labs.get_drift_policy(
-            WorkspaceId(workspace_id), lab_id, unquote(policy_id), parsed_version
+            WorkspaceId(workspace_id), lab_id, policy_id, parsed_version
         )
         if policy is None:
             raise KeyError(f"{lab_id}/{unquote(policy_id)}@{parsed_version}")
@@ -1114,6 +1123,7 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, _kwargs)
         if lab_id is None:
             raise ValueError("lab_id is required")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
         if not isinstance(body, dict) or set(body) != {
@@ -1172,6 +1182,7 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, _kwargs)
         if lab_id is None:
             raise ValueError("lab_id is required")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
         if not isinstance(body, dict) or set(body) - {
@@ -1492,6 +1503,7 @@ class MachineLearningStudioPlugin:
         workspace_id = self._workspace(workspace_id, _kwargs)
         if self._labs is None or lab_id is None:
             raise RuntimeError("ML Studio is not ready")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
         if (
             not isinstance(body, dict)
             or set(body) - {"rows", "spec", "register"}
