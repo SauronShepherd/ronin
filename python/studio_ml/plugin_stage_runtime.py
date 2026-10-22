@@ -122,31 +122,53 @@ def _invoke(
         )
 
     try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        outcome = asyncio.run(run_container())
-    else:
-        result: list[object] = []
-        failure: list[BaseException] = []
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            outcome = asyncio.run(run_container())
+        else:
+            result: list[object] = []
+            failure: list[BaseException] = []
 
-        def run_on_worker_thread() -> None:
-            try:
-                result.append(asyncio.run(run_container()))
-            except BaseException as exc:  # propagate worker-thread failures to the caller
-                failure.append(exc)
+            def run_on_worker_thread() -> None:
+                try:
+                    result.append(asyncio.run(run_container()))
+                except BaseException as exc:  # propagate worker-thread failures to the caller
+                    failure.append(exc)
 
-        worker = threading.Thread(target=run_on_worker_thread, daemon=True)
-        worker.start()
-        worker.join(contribution.timeout_seconds + 10)
-        if worker.is_alive():
-            cancel = getattr(signal, "cancel", None)
-            if callable(cancel):
-                cancel()
-            worker.join(2)
-            raise PluginStageExecutionError("plugin stage runner did not stop after its deadline")
-        if failure:
-            raise failure[0]
-        outcome = result[0]
+            worker = threading.Thread(target=run_on_worker_thread, daemon=True)
+            worker.start()
+            worker.join(contribution.timeout_seconds + 10)
+            if worker.is_alive():
+                cancel = getattr(signal, "cancel", None)
+                if callable(cancel):
+                    cancel()
+                worker.join(2)
+                raise PluginStageExecutionError(
+                    "plugin stage runner did not stop after its deadline"
+                )
+            if failure:
+                error = failure[0]
+                if isinstance(error, PluginStageExecutionError):
+                    raise error
+                if isinstance(error, asyncio.CancelledError):
+                    raise PluginStageExecutionError(
+                        "plugin stage execution was cancelled"
+                    ) from error
+                if isinstance(error, Exception):
+                    raise PluginStageExecutionError(
+                        "plugin stage container could not be executed"
+                    ) from error
+                raise error
+            outcome = result[0]
+    except PluginStageExecutionError:
+        raise
+    except asyncio.CancelledError as exc:
+        raise PluginStageExecutionError("plugin stage execution was cancelled") from exc
+    except Exception as exc:
+        raise PluginStageExecutionError(
+            "plugin stage container could not be executed"
+        ) from exc
 
     if getattr(outcome, "cancelled", False):
         raise PluginStageExecutionError("plugin stage execution was cancelled")
