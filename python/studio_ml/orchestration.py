@@ -431,6 +431,10 @@ class JobStoreExecutionStore:
         ):
             if self._artifact_store is None:
                 raise ValueError("artifact store is required for large async ML execution inputs")
+            if self._artifact_reference_barrier is None:
+                raise ValueError(
+                    "artifact reference barrier is required for large async ML execution inputs"
+                )
             artifact = self._artifact_store.put_bytes(
                 role="ml-execution-input",
                 data=rows_json.encode("utf-8"),
