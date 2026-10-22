@@ -71,6 +71,8 @@ from .registry_bundle import (
 from .remote import (
     JsonRemoteBackend,
     MLflowBackend,
+    MAX_REMOTE_PREDICTION_BYTES,
+    MAX_REMOTE_PREDICTION_ROWS,
     RemoteExecutionController,
     SparkBackend,
     urllib_json_transport,
@@ -157,6 +159,8 @@ __all__ = (
     "RemoteRetryPolicy",
     "RemoteExecutionController",
     "JsonRemoteBackend",
+    "MAX_REMOTE_PREDICTION_BYTES",
+    "MAX_REMOTE_PREDICTION_ROWS",
     "MLflowBackend",
     "SparkBackend",
     "urllib_json_transport",

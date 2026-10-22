@@ -22,6 +22,9 @@ from .backends import (
     RemoteValidationError,
 )
 
+MAX_REMOTE_PREDICTION_ROWS = 100_000
+MAX_REMOTE_PREDICTION_BYTES = 8 * 1024 * 1024
+
 
 class RemoteExecutionController:
     def __init__(
@@ -114,7 +117,22 @@ class JsonRemoteBackend:
         return self._result(self._transport("cancel", {"run_id": run_id}))
 
     def predict(self, model_ref: str, rows: Sequence[Mapping[str, object]]) -> Sequence[object]:
-        payload = self._transport("predict", {"model_ref": model_ref, "rows": list(rows)})
+        if not model_ref.strip() or len(rows) > MAX_REMOTE_PREDICTION_ROWS:
+            raise ValueError("remote prediction request exceeds its row limit")
+        materialized = list(rows)
+        if not all(isinstance(row, Mapping) for row in materialized):
+            raise ValueError("remote prediction rows must be objects")
+        try:
+            encoded = json.dumps(
+                {"model_ref": model_ref, "rows": materialized},
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        except (TypeError, ValueError) as exc:
+            raise ValueError("remote prediction payload is not canonical JSON") from exc
+        if len(encoded) > MAX_REMOTE_PREDICTION_BYTES:
+            raise ValueError("remote prediction request exceeds its byte limit")
+        payload = self._transport("predict", {"model_ref": model_ref, "rows": materialized})
         predictions = payload.get("predictions", [])
         if not isinstance(predictions, list):
             raise ValueError("remote predictions must be an array")
@@ -225,6 +243,8 @@ class SparkBackend(JsonRemoteBackend):
 
 
 __all__ = [
+    "MAX_REMOTE_PREDICTION_BYTES",
+    "MAX_REMOTE_PREDICTION_ROWS",
     "JsonRemoteBackend",
     "MLflowBackend",
     "RemoteExecutionController",
