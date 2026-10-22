@@ -3,11 +3,17 @@
 Este documento evita confundir el núcleo operativo implementado con las capacidades
 planificadas de una plataforma ML completa.
 
+**Verificación actual (`main@1bd319cc55832990d419a1237b1dae875753b8fe`, PR #512):**
+la implementación del alcance provider-neutral quedó integrada y cualificada por
+los checks obligatorios de CI, Docker, seguridad, web, cobertura y artefactos.
+La release pública continúa bloqueada por capacidades de producto, certificación de
+proveedores y decisiones humanas externas al código.
+
 | Área | Estado | Evidencia |
 |---|---|---|
 | Plugin discovery, manifest y permisos | Implementado | `python/studio_ml/plugin.py`, tests de plugin |
 | Labs y pipeline IR | Implementado | `domain.py`, `services.py`, tests de dominio/SQLite |
-| Envío de DAG candidato por API | Implementado estáticamente en el candidato; cualificación pendiente | PipelineIR v3 durable con DAGs arbitrarios, `register` terminal y etapas namespaced de plugins; PipelineIR v2 mantiene compatibilidad con ramas prepare y cuadrículas de hasta ocho combinaciones/24 nodos |
+| Envío de DAG candidato por API | Implementado y cualificado exact-head en `main@1bd319c` | PipelineIR v3 durable con DAGs arbitrarios, `register` terminal y etapas namespaced de plugins; PipelineIR v2 mantiene compatibilidad con ramas prepare y cuadrículas de hasta ocho combinaciones/24 nodos |
 | Backend local intercambiable | Implementado | `backends.py`, `runner.py`, tests de runner |
 | Contratos versionados lab/IR/backend | Implementado | `docs/contracts/ml-*-v1.md` |
 | Capability discovery de adapters | Implementado | `BackendCapabilities`, `/v1/ml-studio/backends` |
@@ -67,10 +73,10 @@ la conexión a un endpoint remoto concreto es configuración de despliegue, no c
 pendiente del módulo.
 La ejecución duradera reutiliza etapas exitosas sólo cuando coinciden su identidad de
 runtime y los outputs de sus dependencias; una etapa recalculada invalida sus
-dependientes obsoletos. El candidato actual admite grafos configurables, `register` como
-etapa ejecutable y etapas namespaced de plugins; la cualificación exact-head e integración
-en `main` siguen pendientes. El retry selectivo desde una etapa elegida está integrado y
-exact-head cualificado en `main@c2df903`.
+dependientes obsoletos. El candidato integrado admite grafos configurables, `register`
+como etapa ejecutable y etapas namespaced de plugins; la cualificación exact-head e
+integración quedaron cerradas en el PR #512 sobre `main@1bd319c`. El retry selectivo
+desde una etapa elegida está integrado y cualificado.
 El resultado durable conserva una referencia verificada del modelo en ArtifactStore.
 El candidato local añade el registro de una ejecución como versión candidata por una
 API protegida, la lectura HTTP autorizada en bloques y la descarga verificada desde la
