@@ -30,10 +30,11 @@ The host bounds `timeout_seconds` to 24 hours, `max_trials` to 10,000 and the
 idempotency key to 256 characters before dispatch. Remote prediction requests
 are bounded to 100,000 rows and 8 MiB of canonical JSON before transport.
 
-The current release implements the contract types and local adapter only.
-MLflow and Spark implementations remain future adapters and must pass the
-capability, provenance, artifact-digest, cancellation, retry, and prediction
-signature conformance suites before being advertised as available.
+The candidate implements the contract types, local adapter, and
+transport-injected MLflow/Spark wrappers. Those wrappers are provider-neutral
+and are not provider-qualified until they pass the capability, provenance,
+artifact-digest, cancellation, retry, and prediction-signature conformance
+suites in a real deployment environment.
 The SDK representations are `RemoteTrainingRequest`, `RemoteTrainingResult`,
 and the provider-neutral `Remote*Error` hierarchy. They contain no credentials
 or provider clients and are safe to persist as audit metadata.
