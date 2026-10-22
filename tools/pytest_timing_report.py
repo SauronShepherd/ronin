@@ -15,7 +15,7 @@ _session_started: float | None = None
 _collection_finished: float | None = None
 
 
-def pytest_sessionstart(session: Any) -> None:
+def pytest_sessionstart(session: Any) -> None:  # noqa: ARG001 - pytest hook signature
     """Mark the start of the configured pytest session body."""
     global _collection_finished, _session_started
     _collected_nodeids.clear()
@@ -69,7 +69,7 @@ def pytest_runtest_logreport(report: Any) -> None:
     )
 
 
-def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
+def pytest_sessionfinish(session: Any, exitstatus: int) -> None:  # noqa: ARG001 - pytest hook signature
     """Write a stable JSON evidence file, even when the test session fails."""
     finished = monotonic()
     raw_installation_seconds = os.environ.get("RONIN_CI_INSTALL_SECONDS")
