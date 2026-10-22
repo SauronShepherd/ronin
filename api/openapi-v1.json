@@ -902,6 +902,17 @@
         }
       }
     },
+    "/v1/ml-studio/experiments": {
+      "post": {
+        "operationId": "createMlStudioExperiment",
+        "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLExperiment"}}}},
+        "responses": {
+          "200": {"description": "Created or existing immutable experiment", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLExperimentCreated"}}}},
+          "400": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
     "/v1/ml-studio/features": {
       "get": {"operationId": "listMlFeatureDefinitions", "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}], "responses": {"200": {"description": "Feature definitions", "content": {"application/json": {"schema": {"type": "object"}}}}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}},
       "post": {"operationId": "publishMlFeatureDefinition", "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}}, "responses": {"201": {"description": "Feature definition published", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "409": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}}
@@ -1022,6 +1033,8 @@
     },
     "schemas": {
       "MLBackend": {"type":"object","additionalProperties":false,"required":["id","name","status","capabilities"],"properties":{"id":{"type":"string","minLength":1},"name":{"type":"string","minLength":1},"status":{"type":"string","enum":["available","unavailable"]},"reason":{"type":"string"},"install_extra":{"type":"string"},"capabilities":{"type":"object","required":["tasks","algorithms","supports_prediction","supports_artifacts","supports_explainability"],"properties":{"tasks":{"type":"array","items":{"type":"string"}},"algorithms":{"type":"array","items":{"type":"string"}},"supports_prediction":{"type":"boolean"},"supports_artifacts":{"type":"boolean"},"supports_explainability":{"type":"boolean"}}}}},
+      "MLExperiment": {"type":"object","additionalProperties":false,"required":["id","name","description"],"properties":{"id":{"type":"string","minLength":1},"name":{"type":"string","minLength":1},"description":{"type":["string","null"]}}},
+      "MLExperimentCreated": {"type":"object","additionalProperties":false,"required":["status","contract","id","name","description"],"properties":{"status":{"const":"created"},"contract":{"const":"ml-studio/experiment/v1"},"id":{"type":"string","minLength":1},"name":{"type":"string","minLength":1},"description":{"type":["string","null"]}}},
       "MLQualityExpectation": {"type":"object","additionalProperties":false,"required":["id","column","rule","severity","value"],"properties":{"id":{"type":"string","minLength":1,"maxLength":256},"column":{"type":"string","minLength":1,"maxLength":256},"rule":{"type":"string","enum":["not_null","numeric","min","max","min_distinct"]},"severity":{"type":"string","enum":["warning","failure"]},"value":{"type":["number","null"]}},"allOf":[{"if":{"properties":{"rule":{"const":"min_distinct"}},"required":["rule"]},"then":{"properties":{"value":{"type":"integer","minimum":1}}}},{"if":{"properties":{"rule":{"enum":["min","max"]}},"required":["rule"]},"then":{"properties":{"value":{"type":"number"}}}},{"if":{"properties":{"rule":{"enum":["not_null","numeric"]}},"required":["rule"]},"then":{"properties":{"value":{"type":"null"}}}}]},
       "MLQualitySuite": {"type":"object","additionalProperties":false,"required":["schema","id","version","expectations"],"properties":{"schema":{"const":"ronin.ml-quality-suite/v1"},"id":{"type":"string","minLength":1,"maxLength":256},"version":{"type":"integer","minimum":1,"maximum":2147483647},"expectations":{"type":"array","minItems":1,"maxItems":64,"items":{"$ref":"#/components/schemas/MLQualityExpectation"}}}},
       "MLDriftThreshold": {"type":"object","additionalProperties":false,"required":["feature","mean_delta","variance_delta"],"properties":{"feature":{"type":"string","minLength":1},"mean_delta":{"type":"number","minimum":0},"variance_delta":{"type":"number","minimum":0}}},

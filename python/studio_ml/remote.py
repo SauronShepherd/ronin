@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import math
+import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict
 from urllib.request import Request, urlopen
@@ -18,9 +20,16 @@ from .backends import (
 
 
 class RemoteExecutionController:
-    def __init__(self, backend: RemoteMLBackend, policy: RemoteRetryPolicy | None = None) -> None:
+    def __init__(
+        self,
+        backend: RemoteMLBackend,
+        policy: RemoteRetryPolicy | None = None,
+        *,
+        sleep: Callable[[float], None] | None = None,
+    ) -> None:
         self.backend = backend
         self.policy = policy or RemoteRetryPolicy()
+        self._sleep = sleep or time.sleep
 
     def submit(self, request: RemoteTrainingRequest) -> RemoteTrainingResult:
         for attempt in range(1, self.policy.max_attempts + 1):
@@ -29,6 +38,7 @@ class RemoteExecutionController:
             except RemoteTransientError:
                 if attempt == self.policy.max_attempts:
                     raise
+                self._sleep(self.policy.delay_for(attempt))
         raise AssertionError("unreachable")
 
     def poll(self, run_id: str) -> RemoteTrainingResult:
@@ -65,7 +75,10 @@ class JsonRemoteBackend:
                 or not isinstance(value, (int, float))
             ):
                 raise ValueError("remote metrics must contain numeric values")
-            metrics.append((key, float(value)))
+            metric = float(value)
+            if not math.isfinite(metric):
+                raise ValueError("remote metrics must contain finite values")
+            metrics.append((key, metric))
         return RemoteTrainingResult(
             str(payload["run_id"]),
             str(payload.get("artifact_ref", "")),

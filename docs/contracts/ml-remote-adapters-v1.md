@@ -40,7 +40,12 @@ test suite; provider adapters must satisfy the same runtime-checkable protocol.
 
 `RemoteRetryPolicy` standardizes bounded exponential backoff. It is applied
 only to errors whose `retryable` property is true and must reuse the original
-idempotency key.
+idempotency key. The controller sleeps only between attempts and never after
+the final attempt; the delay is injectable for deterministic host integration.
+
+Remote result metrics must be finite numeric values with non-empty names.
+NaN, positive infinity and negative infinity are rejected before a result can
+enter the execution or registry lifecycle.
 
 `RemoteExecutionController` is the provider-neutral lifecycle helper. It
 retries only `RemoteTransientError`, delegates polling and cancellation, and

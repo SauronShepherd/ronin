@@ -92,6 +92,14 @@ class PostgresMLStore(PostgresMetadataStore):
             with connection.cursor() as cursor:
                 self._active(cursor, workspace_id)
                 cursor.execute(
+                    "SELECT experiment_json FROM ronin_ml_experiments "
+                    "WHERE workspace_id=%s AND experiment_id=%s",
+                    (str(workspace_id), str(experiment.id)),
+                )
+                existing = cursor.fetchone()
+                if existing is not None and existing[0] != experiment.to_json():
+                    raise ValueError("experiment id already exists with a different definition")
+                cursor.execute(
                     "INSERT INTO ronin_ml_experiments VALUES (%s,%s,%s,%s,%s) "
                     "ON CONFLICT (workspace_id,experiment_id) DO UPDATE SET experiment_json=EXCLUDED.experiment_json,updated_at=EXCLUDED.updated_at",
                     (

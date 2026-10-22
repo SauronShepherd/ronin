@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 90%. Cualificación release: 0% (0/14).** El porcentaje técnico sólo aumenta tras la cualificación exact-head del SHA integrado. PR #509 añadió registro durable como etapa terminal de PipelineIR v2 y quedó integrado y cualificado en `main@156d60784e8e0c5e23f1383c2cf96dc8860560e3` por los seis workflows post-merge. El candidato local implementa formas arbitrarias de DAG con PipelineIR v3 y etapas definidas por plugins; faltan revisión, cualificación exact-head e integración. La limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado. La cualificación release sigue siendo independiente del progreso funcional.
+**Avance de implementación técnica estimado: 90%. Cualificación release: 0% (0/14).** El porcentaje técnico sólo aumenta tras la cualificación exact-head del SHA integrado. PR #509 añadió registro durable como etapa terminal de PipelineIR v2 y quedó integrado y cualificado en `main@156d60784e8e0c5e23f1383c2cf96dc8860560e3` por los seis workflows post-merge. El candidato local implementa formas arbitrarias de DAG con PipelineIR v3, etapas definidas por plugins, creación durable de experimentos y backoff remoto acotado; faltan revisión, cualificación exact-head e integración. La limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado. La cualificación release sigue siendo independiente del progreso funcional.
 
 ## 0. Principios de ejecución
 
@@ -96,7 +96,7 @@ Migración limpia desde una base vacía, migración sobre base existente, rollba
 
 ### Compiler
 
-1. Resolver refs de datasets contra `CatalogStore`; un resolver acotado de CSV/JSONL ya está implementado en el candidato actual para quality, ejecución síncrona y ejecución asíncrona. Falta la cualificación exact-head y extender la materialización a pipelines/reintentos antes de dar por cerrado el criterio global.
+1. Resolver refs de datasets contra `CatalogStore`; un resolver acotado de CSV/JSONL está implementado en el candidato actual para quality, ejecución síncrona, ejecución asíncrona, pipelines y reintentos. Falta la cualificación exact-head antes de dar por cerrado el criterio global.
 2. Resolver backend contra `BackendRegistry`.
 3. Resolver runtime profile.
 4. Generar nodes `profile`, `quality`, `prepare`, `train`, `evaluate`, `select`, `register`.

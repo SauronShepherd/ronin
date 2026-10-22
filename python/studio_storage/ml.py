@@ -225,11 +225,7 @@ class SqliteMLStore:
                     (str(workspace_id), str(experiment.id), payload, now, now),
                 )
             elif row["experiment_json"] != payload:
-                connection.execute(
-                    "UPDATE ml_experiments SET experiment_json=?,updated_at=?, "
-                    "row_version=row_version+1 WHERE workspace_id=? AND experiment_id=?",
-                    (payload, now, str(workspace_id), str(experiment.id)),
-                )
+                raise ValueError("experiment id already exists with a different definition")
             connection.execute("COMMIT")
             return experiment
         except Exception:

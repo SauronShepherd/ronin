@@ -7,7 +7,7 @@ planificadas de una plataforma ML completa.
 |---|---|---|
 | Plugin discovery, manifest y permisos | Implementado | `python/studio_ml/plugin.py`, tests de plugin |
 | Labs y pipeline IR | Implementado | `domain.py`, `services.py`, tests de dominio/SQLite |
-| Envío de DAG candidato por API | Implementado y exact-head cualificado en `main@ad53878` | PipelineIR v2 durable con ramas prepare por preprocesador y cuadrículas algoritmo×preprocesador de hasta ocho combinaciones/24 nodos; clustering conserva su selector independiente. DAGs arbitrarios y `register` siguen fuera del contrato |
+| Envío de DAG candidato por API | Implementado estáticamente en el candidato; cualificación pendiente | PipelineIR v3 durable con DAGs arbitrarios, `register` terminal y etapas namespaced de plugins; PipelineIR v2 mantiene compatibilidad con ramas prepare y cuadrículas de hasta ocho combinaciones/24 nodos |
 | Backend local intercambiable | Implementado | `backends.py`, `runner.py`, tests de runner |
 | Contratos versionados lab/IR/backend | Implementado | `docs/contracts/ml-*-v1.md` |
 | Capability discovery de adapters | Implementado | `BackendCapabilities`, `/v1/ml-studio/backends` |
@@ -50,7 +50,7 @@ planificadas de una plataforma ML completa.
 | K-Means integrado en registry síncrono | Implementado | `run_lab` persiste artifact content-addressed, run, métricas y provenance |
 | K-Means scoring, registro y promoción síncrona | Implementado | artifact `ronin.ml-kmeans/v1`, firma `cluster`, registro candidato y predicción con digest verificado |
 | K-Means en flujo asíncrono | Implementado | coordinator local, lifecycle terminal y payload de resultado verificados |
-| Remote/MLflow/Spark adapters | Implementado como abstracción | adapters JSON configurables, retry/cancel/poll/predict y capacidades declaradas; la URL/semántica concreta del proveedor se configura por despliegue |
+| Remote/MLflow/Spark adapters | Implementado como abstracción; cualificación pendiente | adapters JSON configurables, retry/cancel/poll/predict, backoff exponencial acotado, métricas finitas y capacidades declaradas; la URL/semántica concreta del proveedor se configura por despliegue |
 | Remote adapter v1 contract | Implementado | `docs/contracts/ml-remote-adapters-v1.md`, tipos, errores, transporte y adapters de proveedor |
 
 La suite específica ML Studio, los contratos y la auditoría E2E deben permanecer verdes.
@@ -59,8 +59,10 @@ la conexión a un endpoint remoto concreto es configuración de despliegue, no c
 pendiente del módulo.
 La ejecución duradera reutiliza etapas exitosas sólo cuando coinciden su identidad de
 runtime y los outputs de sus dependencias; una etapa recalculada invalida sus
-dependientes obsoletos. Todavía no admite grafos configurables, `register` como etapa
-ejecutable; el retry selectivo desde una etapa elegida está integrado y exact-head cualificado en `main@c2df903`.
+dependientes obsoletos. El candidato actual admite grafos configurables, `register` como
+etapa ejecutable y etapas namespaced de plugins; la cualificación exact-head e integración
+en `main` siguen pendientes. El retry selectivo desde una etapa elegida está integrado y
+exact-head cualificado en `main@c2df903`.
 El resultado durable conserva una referencia verificada del modelo en ArtifactStore.
 El candidato local añade el registro de una ejecución como versión candidata por una
 API protegida, la lectura HTTP autorizada en bloques y la descarga verificada desde la

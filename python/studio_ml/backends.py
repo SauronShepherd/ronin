@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from importlib.util import find_spec
@@ -100,6 +101,15 @@ class RemoteTrainingResult:
             raise ValueError("unsupported remote training status")
         if not self.run_id.strip():
             raise ValueError("remote result requires run_id")
+        for name, value in self.metrics:
+            if not isinstance(name, str) or not name.strip():
+                raise ValueError("remote result metric names must be non-empty")
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(float(value))
+            ):
+                raise ValueError("remote result metrics must be finite numbers")
 
 
 class RemoteAdapterError(RuntimeError):

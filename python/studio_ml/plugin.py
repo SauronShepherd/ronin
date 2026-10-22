@@ -1746,8 +1746,30 @@ class MachineLearningStudioPlugin:
             workspace_id, run_id, body["run_id"], body["from_stage"]
         ).to_payload()
 
-    def create_experiment(self, *_args: Any, **_kwargs: Any) -> dict[str, str]:
-        return {"status": "accepted", "contract": "ml-studio/experiment/v1"}
+    def create_experiment(
+        self,
+        workspace_id: str | None = None,
+        *,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        """Create an immutable experiment identity in the workspace registry."""
+        if self._registry is None:
+            raise RuntimeError("ML registry is unavailable")
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        if not isinstance(body, dict):
+            raise ValueError("experiment body is required")
+        from studio_core.ml import Experiment
+
+        experiment = Experiment.from_payload(body)
+        stored = self._registry.put_experiment(
+            WorkspaceId(workspace_id), experiment, now="plugin"
+        )
+        return {
+            "status": "created",
+            "contract": "ml-studio/experiment/v1",
+            **stored.to_payload(),
+        }
 
 
 def factory() -> MachineLearningStudioPlugin:
