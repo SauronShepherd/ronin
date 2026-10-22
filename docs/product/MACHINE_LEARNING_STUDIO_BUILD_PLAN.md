@@ -1044,3 +1044,11 @@ de artefactos se mantiene explícitamente el modo metadata-only, sin afirmar que
 el bundle sea autosuficiente. El contrato está documentado en
 `docs/contracts/ml-registry-bundle-v1.md`; la cualificación exact-head sigue
 pendiente y no se ejecutaron pruebas ni Docker.
+
+Las rutas de publicación tabular y K-Means calculan la identidad del artefacto
+antes de escribirlo, detectan una versión de modelo ya publicada con la misma
+firma y digest, y tratan runs/modelos idénticos como reintentos idempotentes. Un
+conflicto de identidad se rechaza; el writer lease actual sigue cubriendo la
+escritura del artefacto y las referencias. Los artefactos huérfanos de un fallo
+intermedio permanecen sujetos a la política conservadora de retención y no se
+borran automáticamente.

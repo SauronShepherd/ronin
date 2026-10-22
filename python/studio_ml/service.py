@@ -173,6 +173,11 @@ def persist_clustering_result(
             metrics=(MetricValue("inertia", result.inertia),),
             artifact_refs=(artifact.storage_ref,),
         )
+        existing = registry.get_run(workspace_id, run_id)
+        if existing is not None:
+            if existing != record:
+                raise ValueError("ML run id already exists with a different publication")
+            return existing
         return registry.record_run(workspace_id, record, now=now)
 
 
@@ -202,20 +207,42 @@ def register_clustering_model(
             _input_signature([dict.fromkeys(result.features, 0.0)], result.features),
             (("cluster", "int64"),),
         )
-        return registry.register_model(
-            workspace_id,
-            RegisteredModelVersion(
-                model_id,
-                model_version,
-                run_id,
-                artifact.storage_ref,
-                artifact.digest,
-                "ronin-kmeans",
-                signature,
-                "candidate",
-            ),
-            now=now,
+        artifact_digest = artifact.digest
+        existing = registry.get_model(workspace_id, model_id, model_version)
+        if existing is not None:
+            if (
+                existing.artifact_digest != artifact_digest
+                or existing.framework != "ronin-kmeans"
+                or existing.signature != signature
+            ):
+                raise ValueError("model version already exists with a different publication")
+            return existing
+        model = RegisteredModelVersion(
+            model_id,
+            model_version,
+            run_id,
+            artifact.storage_ref,
+            artifact_digest,
+            "ronin-kmeans",
+            signature,
+            "candidate",
         )
+        try:
+            return registry.register_model(
+                workspace_id,
+                model,
+                now=now,
+            )
+        except Exception:
+            existing = registry.get_model(workspace_id, model_id, model_version)
+            if (
+                existing is not None
+                and existing.artifact_digest == artifact_digest
+                and existing.framework == "ronin-kmeans"
+                and existing.signature == signature
+            ):
+                return existing
+            raise
 
 
 def promote_registered_model(
@@ -347,6 +374,30 @@ def train_register_tabular(
     """Train, persist content-addressed artifact, record ML run, and register candidate model."""
 
     trained = train_tabular(rows, spec)
+    artifact_digest = hashlib.sha256(trained.artifact_bytes).hexdigest()
+    signature = ModelSignature(
+        _input_signature(rows, spec.features),
+        _output_signature(spec.task, spec.target),
+    )
+    existing_model = registry.get_model(workspace_id, model_id, model_version)
+    if existing_model is not None:
+        if (
+            existing_model.artifact_digest != artifact_digest
+            or existing_model.framework != "sklearn"
+            or existing_model.signature != signature
+        ):
+            raise ValueError("model version already exists with a different publication")
+        getter = getattr(artifacts, "get_bytes_by_storage_ref", None)
+        if callable(getter):
+            try:
+                existing_bytes = getter(
+                    existing_model.artifact_ref, digest=existing_model.artifact_digest
+                )
+            except Exception as exc:
+                raise ValueError("existing model artifact cannot be verified") from exc
+            if hashlib.sha256(existing_bytes).hexdigest() != existing_model.artifact_digest:
+                raise ValueError("existing model artifact digest verification failed")
+        return existing_model
     with _artifact_reference_lease(artifact_reference_barrier):
         artifact = artifacts.put_bytes(
             role="model",
@@ -370,7 +421,12 @@ def train_register_tabular(
             metrics=tuple(MetricValue(name, value) for name, value in trained.metrics),
             artifact_refs=(artifact.storage_ref,),
         )
-        registry.record_run(workspace_id, run, now=now)
+        existing_run = registry.get_run(workspace_id, run_id)
+        if existing_run is not None:
+            if existing_run != run:
+                raise ValueError("ML run id already exists with a different publication")
+        else:
+            registry.record_run(workspace_id, run, now=now)
         model = RegisteredModelVersion(
             model_id,
             model_version,
@@ -378,13 +434,21 @@ def train_register_tabular(
             artifact.storage_ref,
             artifact.digest,
             "sklearn",
-            ModelSignature(
-                _input_signature(rows, spec.features),
-                _output_signature(spec.task, spec.target),
-            ),
+            signature,
             "candidate",
         )
-        return registry.register_model(workspace_id, model, now=now)
+        try:
+            return registry.register_model(workspace_id, model, now=now)
+        except Exception:
+            existing_model = registry.get_model(workspace_id, model_id, model_version)
+            if (
+                existing_model is not None
+                and existing_model.artifact_digest == artifact_digest
+                and existing_model.signature == signature
+                and existing_model.framework == "sklearn"
+            ):
+                return existing_model
+            raise
 
 
 def predict_registered_tabular(

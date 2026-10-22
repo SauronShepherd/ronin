@@ -52,6 +52,7 @@ planificadas de una plataforma ML completa.
 | K-Means en flujo asíncrono | Implementado | coordinator local, lifecycle terminal y payload de resultado verificados |
 | Remote/MLflow/Spark adapters | Implementado como abstracción; cualificación pendiente | adapters JSON configurables, retry/cancel/poll/predict, backoff exponencial acotado, métricas finitas y capacidades declaradas; la URL/semántica concreta del proveedor se configura por despliegue |
 | Bundle de registry ML | Implementado estáticamente; cualificación pendiente | Export/import de experimentos, runs, modelos y, cuando se inyecta `ArtifactStore`, bytes de artefactos con digest y remapeo de referencias; metadata-only sigue explícito |
+| Publicación artifact→run→modelo | Implementada estáticamente; cualificación pendiente | Tabular y K-Means calculan digest/firma antes de publicar, aceptan reintentos idénticos y rechazan conflictos; el cleanup de huérfanos sigue deliberadamente conservador |
 | Remote adapter v1 contract | Implementado | `docs/contracts/ml-remote-adapters-v1.md`, tipos, errores, transporte y adapters de proveedor |
 
 La suite específica ML Studio, los contratos y la auditoría E2E deben permanecer verdes.
