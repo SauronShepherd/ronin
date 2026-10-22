@@ -67,6 +67,9 @@ backoff consumes the remaining budget and no retry starts after its deadline.
 transport is injected intentionally: deployment code supplies the authenticated
 HTTP/RPC client, while tests can use a deterministic fake transport. Their
 stable IDs and advertised capabilities are part of discovery and provenance.
+MLflow metadata-only import/export uses the separate
+`ronin.mlflow-metadata/v1` envelope; it does not make a provider endpoint or
+executable flavor part of the local contract.
 
 For simple HTTP deployments, `urllib_json_transport` supplies the transport
 with explicit URL-scheme validation, request-scoped wall-clock timeout,
