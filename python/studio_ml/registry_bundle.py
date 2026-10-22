@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import json
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Protocol, cast
@@ -15,6 +14,7 @@ from studio_core.bundle_inventory import (
     BundleInventory,
     BundleInventoryObject,
 )
+from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.ml import Experiment, MLRunRecord, RegisteredModelVersion
 from studio_core.portability import RoninBundleManifest
@@ -244,7 +244,9 @@ def _identity(kind: str, value: object) -> str:
 
 def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
     inventory_payload = read_bundle_payload(path, BUNDLE_INVENTORY_PATH)
-    inventory = BundleInventory.from_payload(json.loads(inventory_payload.file.data))
+    inventory = BundleInventory.from_payload(
+        decode_canonical_json(inventory_payload.file.data)
+    )
     experiments: list[Experiment] = []
     runs: list[MLRunRecord] = []
     models: list[RegisteredModelVersion] = []
@@ -266,7 +268,7 @@ def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
         else:
             artifacts.append(
                 MLRegistryBundleArtifact.from_payload(
-                    json.loads(document)
+                    decode_canonical_json(document)
                 )
             )
     artifact_by_ref = {artifact.source_ref: artifact for artifact in artifacts}
