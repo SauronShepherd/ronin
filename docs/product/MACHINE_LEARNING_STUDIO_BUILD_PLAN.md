@@ -1092,3 +1092,11 @@ feature/run/model/evaluation, valida relaciones ausentes antes del commit y
 requiere los stores destino antes de escribir artefactos. El modo metadata-only
 continúa explícito. La cualificación exact-head sigue pendiente y no se
  ejecutaron pruebas, builds, validadores ni Docker.
+
+El flujo síncrono de ejecución acepta ahora de forma coherente la opción
+`register` que ya consumía internamente el camino de clustering. El handler
+valida el shape exacto y limita `model_id`, `version`, `run_id`,
+`execution_ref` y `source_revision` antes de resolver datos o crear artefactos;
+las filas siguen usando los límites compartidos de dataset. La cualificación
+exact-head sigue pendiente y no se ejecutaron pruebas, builds, validadores ni
+Docker.

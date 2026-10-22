@@ -815,6 +815,7 @@ class MachineLearningStudioPlugin:
             "run_id",
             "execution_ref",
             "source_revision",
+            "register",
         }:
             raise ValueError("run body has invalid shape")
         if "rows" in body and body["rows"] is None:
@@ -824,6 +825,35 @@ class MachineLearningStudioPlugin:
             or not all(isinstance(row, dict) for row in body["rows"])
         ):
             raise ValueError("run rows must be an array of objects")
+        for field, default in (
+            ("run_id", f"run-{lab_id}"),
+            ("execution_ref", "ml-studio-local"),
+            ("source_revision", "local"),
+        ):
+            value = body.get(field, default)
+            if (
+                not isinstance(value, str)
+                or not value.strip()
+                or value != value.strip()
+                or len(value) > 256
+                or any(char in value for char in "\r\n\x00")
+            ):
+                raise ValueError(f"{field} must be a bounded single-line identifier")
+        registration = body.get("register")
+        if registration is not None:
+            if (
+                not isinstance(registration, dict)
+                or set(registration) != {"model_id", "version"}
+                or not all(isinstance(registration[key], str) for key in ("model_id", "version"))
+                or any(
+                    not registration[key].strip()
+                    or registration[key] != registration[key].strip()
+                    or len(registration[key]) > 256
+                    or any(char in registration[key] for char in "\r\n\x00")
+                    for key in ("model_id", "version")
+                )
+            ):
+                raise ValueError("register must contain bounded model_id and version")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
         rows = resolve_lab_rows(
             WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
@@ -840,17 +870,14 @@ class MachineLearningStudioPlugin:
                     WorkspaceId(workspace_id),
                     lab,
                     result,
-                    run_id=MLRunId(str(body.get("run_id", f"run-{lab_id}"))),
-                    execution_ref=str(body.get("execution_ref", "ml-studio-local")),
-                    source_revision=str(body.get("source_revision", "local")),
+                    run_id=MLRunId(cast(str, body.get("run_id", f"run-{lab_id}"))),
+                    execution_ref=cast(str, body.get("execution_ref", "ml-studio-local")),
+                    source_revision=cast(str, body.get("source_revision", "local")),
                     now="plugin",
                     artifact_reference_barrier=self._artifact_reference_barrier,
                 )
                 payload["run"] = run.to_payload()
-                registration = body.get("register")
                 if registration is not None:
-                    if not isinstance(registration, dict):
-                        raise ValueError("register must be an object")
                     from studio_core.ml import ModelId, ModelVersion
 
                     model = register_clustering_model(
@@ -860,8 +887,8 @@ class MachineLearningStudioPlugin:
                         lab,
                         result,
                         run_id=MLRunId(run.id.value),
-                        model_id=ModelId(str(registration.get("model_id", lab.id))),
-                        model_version=ModelVersion(str(registration.get("version", "candidate-1"))),
+                        model_id=ModelId(cast(str, registration["model_id"])),
+                        model_version=ModelVersion(cast(str, registration["version"])),
                         now="plugin",
                         artifact_reference_barrier=self._artifact_reference_barrier,
                     )
@@ -877,9 +904,9 @@ class MachineLearningStudioPlugin:
                 WorkspaceId(workspace_id),
                 lab,
                 experiment_result,
-                run_id=MLRunId(str(body.get("run_id", f"run-{lab_id}"))),
-                execution_ref=str(body.get("execution_ref", "ml-studio-local")),
-                source_revision=str(body.get("source_revision", "local")),
+                run_id=MLRunId(cast(str, body.get("run_id", f"run-{lab_id}"))),
+                execution_ref=cast(str, body.get("execution_ref", "ml-studio-local")),
+                source_revision=cast(str, body.get("source_revision", "local")),
                 now="plugin",
             )
             payload["run"] = run.to_payload()
