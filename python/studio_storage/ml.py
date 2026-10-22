@@ -18,6 +18,7 @@ from studio_core.ml import (
     MetricValue,
     MLRunId,
     MLRunRecord,
+    ModelDeployment,
     ModelEvaluation,
     ModelId,
     ModelSignature,
@@ -31,8 +32,8 @@ from .catalog import CatalogAssetNotFound, migrate_catalog
 from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound
 
-_ML_SCHEMA_VERSION = 1
-_ML_MIGRATIONS = {1: "ml_001.sql"}
+_ML_SCHEMA_VERSION = 2
+_ML_MIGRATIONS = {1: "ml_001.sql", 2: "ml_002.sql"}
 
 
 class MLConflict(RuntimeError):
@@ -225,11 +226,7 @@ class SqliteMLStore:
                     (str(workspace_id), str(experiment.id), payload, now, now),
                 )
             elif row["experiment_json"] != payload:
-                connection.execute(
-                    "UPDATE ml_experiments SET experiment_json=?,updated_at=?, "
-                    "row_version=row_version+1 WHERE workspace_id=? AND experiment_id=?",
-                    (payload, now, str(workspace_id), str(experiment.id)),
-                )
+                raise ValueError("experiment id already exists with a different definition")
             connection.execute("COMMIT")
             return experiment
         except Exception:
@@ -583,5 +580,109 @@ class SqliteMLStore:
                 (str(workspace_id), str(model_id), str(version)),
             ).fetchall()
             return tuple(_evaluation_from_json(row["evaluation_json"]) for row in rows)
+        finally:
+            connection.close()
+
+    def put_deployment(
+        self, workspace_id: WorkspaceId, deployment: ModelDeployment, *, now: Instant | str
+    ) -> ModelDeployment:
+        now = Instant(now)
+        payload = deployment.to_json()
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
+            model_row = connection.execute(
+                "SELECT model_json FROM model_versions WHERE workspace_id=? AND model_id=? AND version=?",
+                (str(workspace_id), str(deployment.model_id), str(deployment.version)),
+            ).fetchone()
+            if model_row is None:
+                raise KeyError(f"{deployment.model_id}@{deployment.version}")
+            model = _model_from_json(model_row["model_json"])
+            if (
+                model.artifact_ref != deployment.artifact_ref
+                or model.artifact_digest != deployment.artifact_digest
+            ):
+                raise MLConflict("deployment artifact is not the registered model artifact")
+            existing = connection.execute(
+                "SELECT deployment_json FROM model_deployments WHERE workspace_id=? AND deployment_id=?",
+                (str(workspace_id), deployment.deployment_id),
+            ).fetchone()
+            if existing is not None:
+                if existing["deployment_json"] == payload:
+                    connection.execute("COMMIT")
+                    return deployment
+                raise MLConflict(f"deployment id already exists: {deployment.deployment_id}")
+            connection.execute(
+                "INSERT INTO model_deployments(workspace_id,deployment_id,deployment_json,created_at,updated_at) VALUES (?,?,?,?,?)",
+                (str(workspace_id), deployment.deployment_id, payload, now, now),
+            )
+            connection.execute("COMMIT")
+            return deployment
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
+    def get_deployment(
+        self, workspace_id: WorkspaceId, deployment_id: str
+    ) -> ModelDeployment | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT deployment_json FROM model_deployments WHERE workspace_id=? AND deployment_id=?",
+                (str(workspace_id), deployment_id),
+            ).fetchone()
+            return None if row is None else ModelDeployment.from_json(row["deployment_json"])
+        finally:
+            connection.close()
+
+    def list_deployments(self, workspace_id: WorkspaceId) -> tuple[ModelDeployment, ...]:
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT deployment_json FROM model_deployments WHERE workspace_id=? ORDER BY deployment_id",
+                (str(workspace_id),),
+            ).fetchall()
+            return tuple(ModelDeployment.from_json(row["deployment_json"]) for row in rows)
+        finally:
+            connection.close()
+
+    def update_deployment(
+        self, workspace_id: WorkspaceId, deployment: ModelDeployment, *, now: Instant | str
+    ) -> ModelDeployment:
+        now = Instant(now)
+        payload = deployment.to_json()
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
+            existing = connection.execute(
+                "SELECT deployment_json FROM model_deployments WHERE workspace_id=? AND deployment_id=?",
+                (str(workspace_id), deployment.deployment_id),
+            ).fetchone()
+            if existing is None:
+                raise KeyError(deployment.deployment_id)
+            current = ModelDeployment.from_json(existing["deployment_json"])
+            if (
+                current.model_id != deployment.model_id
+                or current.version != deployment.version
+                or current.artifact_ref != deployment.artifact_ref
+                or current.artifact_digest != deployment.artifact_digest
+                or deployment.revision < current.revision
+            ):
+                raise MLConflict("deployment identity is immutable")
+            connection.execute(
+                "UPDATE model_deployments SET deployment_json=?,updated_at=? WHERE workspace_id=? AND deployment_id=?",
+                (payload, now, str(workspace_id), deployment.deployment_id),
+            )
+            connection.execute("COMMIT")
+            return deployment
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
         finally:
             connection.close()

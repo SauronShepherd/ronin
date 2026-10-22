@@ -17,6 +17,7 @@ from uuid import uuid4
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.plugins import PluginRouteConflict
+from studio_kernel import CancellationToken
 from studio_orchestrator import (
     AttemptId,
     AttemptState,
@@ -37,16 +38,47 @@ from studio_storage import ArtifactRef, ArtifactStore
 from studio_storage.ports import ArtifactReferenceBarrier
 
 from .domain import Lab, PipelineIR
-from .runner import ClusteringResult, ExperimentResult, LocalExperimentRunner
+from .runner import (
+    ClusteringResult,
+    ExperimentResult,
+    LocalExperimentRunner,
+    MLExecutionCancelled,
+)
 from .services import compile_lab_pipeline
 
 RunState = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 MAX_EXECUTION_REQUEST_BYTES = 64 * 1024 * 1024
 MAX_INLINE_EXECUTION_REQUEST_BYTES = 1_048_576
 MAX_INLINE_NODE_CHECKPOINT_BYTES = 262_144
+MAX_NODE_CHECKPOINT_ARTIFACT_BYTES = 128 * 1024 * 1024
+MAX_PLUGIN_STAGE_ARTIFACT_BYTES = 512 * 1024
 MAX_MATERIALIZED_MODEL_BYTES = 64 * 1024 * 1024
 EXECUTION_LEASE_SECONDS = 60
 EXECUTION_POLL_SECONDS = 0.2
+
+
+def _retry_invalidated_node_ids(pipeline: PipelineIR, from_stage: str) -> set[str]:
+    """Resolve a stage kind or ``node:<id>`` selector and its descendants."""
+    ordered_nodes = pipeline.execution_order()
+    if from_stage.startswith("node:"):
+        requested_id = from_stage[len("node:") :]
+        roots = {node.id for node in ordered_nodes if node.id == requested_id}
+    else:
+        roots = {node.id for node in ordered_nodes if node.kind == from_stage}
+        if not roots:
+            roots = {node.id for node in ordered_nodes if node.id == from_stage}
+    if not roots:
+        return set()
+    invalidated = set(roots)
+    while True:
+        descendants = {
+            node.id
+            for node in ordered_nodes
+            if node.id not in invalidated and set(pipeline.dependency_ids(node)) & invalidated
+        }
+        if not descendants:
+            return invalidated
+        invalidated.update(descendants)
 
 
 class ExecutionConflict(PluginRouteConflict):
@@ -82,10 +114,23 @@ class ExecutionSnapshot:
 
     def to_payload(self) -> dict[str, object]:
         payload: dict[str, object] = {"run_id": self.run_id, "state": self.state}
+        if self.pipeline_json is not None:
+            try:
+                pipeline = PipelineIR.from_json(self.pipeline_json)
+            except (TypeError, ValueError):
+                pipeline = None
+            if pipeline is not None:
+                payload["pipeline_stages"] = [
+                    {"id": node.id, "kind": node.kind} for node in pipeline.nodes
+                ]
         if self.result is not None:
             payload["result"] = self.result.to_payload()
         elif self.result_payload is not None:
-            payload["result"] = self.result_payload
+            result_payload = dict(self.result_payload)
+            stages = result_payload.pop("_pipeline_stages", None)
+            if isinstance(stages, list):
+                payload["pipeline_stages"] = stages
+            payload["result"] = result_payload
         if self.error is not None:
             payload["error"] = self.error
         if self.retry_of_run_id is not None:
@@ -467,17 +512,13 @@ class JobStoreExecutionStore:
             or any(ord(character) < 32 or ord(character) == 127 for character in retry_run_id)
         ):
             raise ValueError("retry run_id must be 1 to 256 characters of trimmed text")
-        supported_stages = {
-            "profile",
-            "quality_gate",
-            "prepare",
-            "train",
-            "evaluate",
-            "select",
-            "register",
-        }
-        if from_stage not in supported_stages:
-            raise ValueError("retry from_stage is not a supported ML stage")
+        if (
+            not isinstance(from_stage, str)
+            or not from_stage
+            or from_stage != from_stage.strip()
+            or len(from_stage) > 261
+        ):
+            raise ValueError("retry from_stage must be a pipeline stage id")
         source_job_id, _ = self._ids(workspace_id, source_run_id)
         source_job = asyncio.run(self._service.status(source_job_id))
         if (
@@ -497,7 +538,24 @@ class JobStoreExecutionStore:
         if not isinstance(pipeline_json, str):
             raise ValueError("failed execution is missing its pinned pipeline")
         pipeline = PipelineIR.from_json(pipeline_json)
-        if not any(node.kind == from_stage for node in pipeline.nodes):
+        if from_stage.startswith("node:"):
+            stage_exists = any(node.id == from_stage[len("node:") :] for node in pipeline.nodes)
+        else:
+            stage_exists = any(
+                node.kind == from_stage or node.id == from_stage for node in pipeline.nodes
+            )
+        if not stage_exists:
+            supported_stages = {
+                "profile",
+                "quality_gate",
+                "prepare",
+                "train",
+                "evaluate",
+                "select",
+                "register",
+            }
+            if from_stage not in supported_stages and "/" not in from_stage:
+                raise ValueError("retry from_stage is not a supported ML stage")
             raise ValueError("retry from_stage is not present in the pinned pipeline")
         rows_json = cast(str | None, source_parameters.get("rows_json"))
         if rows_json is None and source_parameters.get("rows_artifact") is not None:
@@ -571,9 +629,9 @@ class JobStoreExecutionStore:
             lab_json=cast(str | None, parameters.get("lab_json"))
             if state in {"queued", "running"}
             else None,
-            pipeline_json=cast(str | None, parameters.get("pipeline_json"))
-            if state in {"queued", "running"}
-            else None,
+            # Keep the pinned graph on terminal snapshots so the API can expose
+            # stage IDs/types for precise retries without returning node config.
+            pipeline_json=cast(str | None, parameters.get("pipeline_json")),
             rows_json=cast(str | None, parameters.get("rows_json"))
             if state in {"queued", "running"}
             else None,
@@ -706,18 +764,10 @@ class JobStoreExecutionStore:
         if snapshot.retry_from_stage is not None:
             if snapshot.pipeline_json is None:
                 return {}
-            ordered_nodes = PipelineIR.from_json(snapshot.pipeline_json).execution_order()
-            start_index = next(
-                (
-                    index
-                    for index, node in enumerate(ordered_nodes)
-                    if node.kind == snapshot.retry_from_stage
-                ),
-                None,
-            )
-            if start_index is None:
+            pipeline = PipelineIR.from_json(snapshot.pipeline_json)
+            invalidated_node_ids = _retry_invalidated_node_ids(pipeline, snapshot.retry_from_stage)
+            if not invalidated_node_ids:
                 return {}
-            invalidated_node_ids = {node.id for node in ordered_nodes[start_index:]}
         for cell in stored:
             if (
                 not cell.cell_id.startswith("ml-node-")
@@ -756,9 +806,20 @@ class JobStoreExecutionStore:
                 continue
         return checkpoints
 
-    def _load_checkpoint_artifact(self, value: Mapping[str, object]) -> bytes:
+    def _load_checkpoint_artifact(
+        self,
+        value: Mapping[str, object],
+        *,
+        expected_role: str = "ml-node-checkpoint",
+    ) -> bytes:
         if self._artifact_store is None:
             raise ValueError("ML node checkpoint artifact store is unavailable")
+        max_size_bytes = {
+            "ml-node-checkpoint": MAX_NODE_CHECKPOINT_ARTIFACT_BYTES,
+            "ml-plugin-stage-output": MAX_PLUGIN_STAGE_ARTIFACT_BYTES,
+        }.get(expected_role)
+        if max_size_bytes is None:
+            raise ValueError("unsupported ML checkpoint artifact role")
         fields = {"role", "digest_algorithm", "digest", "media_type", "size_bytes", "storage_ref"}
         if set(value) != fields:
             raise ValueError("ML node checkpoint artifact reference is invalid")
@@ -781,10 +842,12 @@ class JobStoreExecutionStore:
             storage_ref=value["storage_ref"],
         )
         if (
-            ref.role != "ml-node-checkpoint"
+            ref.role != expected_role
             or ref.digest_algorithm != "sha256"
-            or ref.media_type != "application/json"
-            or ref.size_bytes > MAX_EXECUTION_REQUEST_BYTES
+            or ref.media_type is None
+            or (expected_role == "ml-node-checkpoint" and ref.media_type != "application/json")
+            or ref.size_bytes > max_size_bytes
+            or ref.storage_ref != self._artifact_store.storage_ref_for_digest(ref.digest)
             or not self._artifact_store.verify(ref)
         ):
             raise ValueError("ML node checkpoint artifact failed verification")
@@ -793,6 +856,87 @@ class JobStoreExecutionStore:
             raise ValueError("ML node checkpoint artifact integrity check failed")
         return data
 
+    def load_plugin_stage_artifact(self, value: Mapping[str, object]) -> bytes:
+        """Read one verified artifact referenced by a durable plugin checkpoint."""
+        data = self._load_checkpoint_artifact(value, expected_role="ml-plugin-stage-output")
+        if len(data) > MAX_PLUGIN_STAGE_ARTIFACT_BYTES:
+            raise ValueError("ML plugin stage artifact exceeds the host byte limit")
+        return data
+
+    def save_plugin_stage_checkpoint(
+        self,
+        snapshot: ExecutionSnapshot,
+        node_id: str,
+        checkpoint: dict[str, object],
+        artifacts: Mapping[str, tuple[str, bytes]],
+    ) -> dict[str, dict[str, object]]:
+        """Write plugin artifacts and their checkpoint reference under one lease."""
+        if len(artifacts) > 8 or any(
+            not isinstance(name, str)
+            or not name
+            or name != name.strip()
+            or not isinstance(item, tuple)
+            or len(item) != 2
+            or not isinstance(item[0], str)
+            or "/" not in item[0]
+            or not isinstance(item[1], bytes)
+            for name, item in artifacts.items()
+        ):
+            raise ValueError("ML plugin stage artifacts have invalid metadata")
+        if sum(len(data) for _, data in artifacts.values()) > MAX_PLUGIN_STAGE_ARTIFACT_BYTES:
+            raise ValueError("ML plugin stage artifacts exceed the host limits")
+        if artifacts and self._artifact_store is None:
+            raise ValueError("artifact store is required for plugin stage outputs")
+        if artifacts and self._artifact_reference_barrier is None:
+            raise ValueError("artifact reference barrier is required for plugin stage outputs")
+        artifact_store = self._artifact_store
+        with self._writer_lease():
+            references: dict[str, dict[str, object]] = {}
+            for name, (media_type, data) in sorted(artifacts.items()):
+                if artifact_store is None:
+                    raise RuntimeError("artifact store disappeared during plugin checkpoint write")
+                artifact = artifact_store.put_bytes(
+                    role="ml-plugin-stage-output", data=data, media_type=media_type
+                )
+                if (
+                    artifact.role != "ml-plugin-stage-output"
+                    or artifact.digest_algorithm != "sha256"
+                    or artifact.media_type != media_type
+                    or artifact.size_bytes != len(data)
+                    or hashlib.sha256(data).hexdigest() != artifact.digest
+                    or artifact.storage_ref
+                    != artifact_store.storage_ref_for_digest(artifact.digest)
+                    or not artifact_store.verify(artifact)
+                ):
+                    raise ValueError("ML plugin stage artifact failed verification after write")
+                references[name] = {
+                    "role": artifact.role,
+                    "digest_algorithm": artifact.digest_algorithm,
+                    "digest": artifact.digest,
+                    "media_type": artifact.media_type,
+                    "size_bytes": artifact.size_bytes,
+                    "storage_ref": artifact.storage_ref,
+                }
+            payload = dict(checkpoint)
+            payload["plugin_artifacts"] = references
+            checkpoint_value = payload.get("checkpoint")
+            if not isinstance(checkpoint_value, Mapping):
+                raise ValueError("plugin checkpoint payload is invalid")
+            checkpoint_value = dict(checkpoint_value)
+            output_value = checkpoint_value.get("value")
+            if not isinstance(output_value, Mapping):
+                raise ValueError("plugin stage checkpoint output is invalid")
+            payload["checkpoint"] = {
+                **checkpoint_value,
+                "value": {**dict(output_value), "__ronin_artifacts__": references},
+            }
+            persisted = self._save_node_checkpoint(
+                snapshot, node_id, payload, retained_artifacts=references
+            )
+            if not persisted:
+                raise ValueError("plugin checkpoint could not be persisted durably")
+            return references
+
     def save_node_checkpoint(
         self, snapshot: ExecutionSnapshot, node_id: str, checkpoint: dict[str, object]
     ) -> bool:
@@ -800,7 +944,12 @@ class JobStoreExecutionStore:
             return self._save_node_checkpoint(snapshot, node_id, checkpoint)
 
     def _save_node_checkpoint(
-        self, snapshot: ExecutionSnapshot, node_id: str, checkpoint: dict[str, object]
+        self,
+        snapshot: ExecutionSnapshot,
+        node_id: str,
+        checkpoint: dict[str, object],
+        *,
+        retained_artifacts: Mapping[str, Mapping[str, object]] | None = None,
     ) -> bool:
         if snapshot.attempt_id is None or snapshot.lease_token is None or snapshot.owner is None:
             raise ValueError("durable ML claim is missing its lease identity")
@@ -808,7 +957,7 @@ class JobStoreExecutionStore:
             raise ValueError("durable ML claim is missing its checkpoint identity")
         payload: dict[str, object] = {"node_id": node_id, "checkpoint": checkpoint}
         encoded = encode_canonical_json(payload)
-        if len(encoded) > MAX_EXECUTION_REQUEST_BYTES:
+        if len(encoded) > MAX_NODE_CHECKPOINT_ARTIFACT_BYTES:
             return False
         if len(encoded) > MAX_INLINE_NODE_CHECKPOINT_BYTES:
             if self._artifact_store is None:
@@ -821,6 +970,8 @@ class JobStoreExecutionStore:
                 or artifact.digest_algorithm != "sha256"
                 or artifact.media_type != "application/json"
                 or artifact.size_bytes != len(encoded)
+                or artifact.storage_ref
+                != self._artifact_store.storage_ref_for_digest(artifact.digest)
                 or not self._artifact_store.verify(artifact)
             ):
                 raise ValueError("ML node checkpoint artifact failed verification after write")
@@ -835,6 +986,9 @@ class JobStoreExecutionStore:
                         "size_bytes": artifact.size_bytes,
                         "storage_ref": artifact.storage_ref,
                     },
+                    **(
+                        {"plugin_artifacts": dict(retained_artifacts)} if retained_artifacts else {}
+                    ),
                 }
             )
         now = _now()
@@ -909,6 +1063,11 @@ class JobStoreExecutionStore:
         """Publish, optionally register, and commit a result while holding the writer lease."""
         with self._writer_lease():
             payload = self._materialize_result_artifact(result)
+            if snapshot.pipeline_json is not None:
+                pipeline = PipelineIR.from_json(snapshot.pipeline_json)
+                payload["_pipeline_stages"] = [
+                    {"id": node.id, "kind": node.kind} for node in pipeline.nodes
+                ]
             if finalize_result is not None:
                 payload = finalize_result(snapshot, payload)
             self.finish_claim(snapshot, state="succeeded", result_payload=payload)
@@ -1013,6 +1172,7 @@ class LocalExecutionCoordinator:
         self._claims: dict[tuple[str, str], ExecutionSnapshot] = {}
         self._active: set[tuple[str, str]] = set()
         self._futures: dict[tuple[str, str], Future[object]] = {}
+        self._cancellations: dict[tuple[str, str], CancellationToken] = {}
         self._stop = Event()
         self._closing = Event()
         self._started = False
@@ -1072,6 +1232,9 @@ class LocalExecutionCoordinator:
                 for key, claim in claims:
                     if not self._store.heartbeat_claim(claim):
                         with self._lock:
+                            token = self._cancellations.get(key)
+                            if token is not None:
+                                token.cancel()
                             self._claims.pop(key, None)
                             self._owned.pop(key, None)
                 with self._admission_lock:
@@ -1086,6 +1249,7 @@ class LocalExecutionCoordinator:
                             self._active.add(key)
                             self._claims[key] = claimed
                             self._owned[key] = claimed.attempt_ordinal
+                            self._cancellations[key] = CancellationToken()
                             future = self._executor.submit(self._execute, claimed)
                             self._futures[key] = future
                         future.add_done_callback(self._forget_future)
@@ -1103,6 +1267,9 @@ class LocalExecutionCoordinator:
                     lease_until=_lease_until(now),
                 ):
                     with self._lock:
+                        token = self._cancellations.get((workspace_id, run_id))
+                        if token is not None:
+                            token.cancel()
                         self._owned.pop((workspace_id, run_id), None)
             with self._admission_lock:
                 with self._lock:
@@ -1127,6 +1294,7 @@ class LocalExecutionCoordinator:
                             continue
                         with self._lock:
                             self._owned[key] = claimed.fence
+                            self._cancellations[key] = CancellationToken()
                             future = self._executor.submit(self._execute, claimed)
                             self._futures[key] = future
                         future.add_done_callback(self._forget_future)
@@ -1139,9 +1307,12 @@ class LocalExecutionCoordinator:
                     self._futures.pop(key, None)
                     self._active.discard(key)
                     self._claims.pop(key, None)
+                    self._cancellations.pop(key, None)
 
     def _execute(self, claimed: ExecutionSnapshot) -> object:
         key = (claimed.workspace_id, claimed.run_id)
+        with self._lock:
+            cancellation = self._cancellations.setdefault(key, CancellationToken())
         try:
             if isinstance(self._store, JobStoreExecutionStore):
                 with self._lock:
@@ -1202,6 +1373,13 @@ class LocalExecutionCoordinator:
                         checkpoint_save=lambda node_id, payload: self._store.save_node_checkpoint(
                             claimed, node_id, payload
                         ),
+                        cancellation=cancellation,
+                        plugin_artifact_load=self._store.load_plugin_stage_artifact,
+                        plugin_artifact_persist=lambda node_id, payload, artifacts: (
+                            self._store.save_plugin_stage_checkpoint(
+                                claimed, node_id, payload, artifacts
+                            )
+                        ),
                     )
                 else:
                     result = execute_pipeline(lab, execution_rows, pipeline)
@@ -1213,6 +1391,8 @@ class LocalExecutionCoordinator:
                 if pipeline is not None and pipeline.digest != compile_lab_pipeline(lab).digest:
                     raise ValueError("runner cannot execute the submitted ML pipeline")
                 result = self._runner.run(lab, execution_rows)
+            if cancellation.is_cancelled:
+                raise MLExecutionCancelled("ML pipeline execution was cancelled")
             if isinstance(self._store, JobStoreExecutionStore):
                 if isinstance(result, (ExperimentResult, ClusteringResult)):
                     register_stage = pipeline is not None and any(
@@ -1220,10 +1400,24 @@ class LocalExecutionCoordinator:
                     )
                     if register_stage and self._result_finalizer is None:
                         raise ValueError("pipeline register stage is unavailable")
+                    finalizer = self._result_finalizer if register_stage else None
+                    if register_stage and self._result_finalizer is not None:
+                        result_finalizer = self._result_finalizer
+
+                        def finalize_if_active(
+                            snapshot: ExecutionSnapshot, payload: dict[str, object]
+                        ) -> dict[str, object]:
+                            if cancellation.is_cancelled:
+                                raise MLExecutionCancelled(
+                                    "ML pipeline execution was cancelled before registration"
+                                )
+                            return result_finalizer(snapshot, payload)
+
+                        finalizer = finalize_if_active
                     self._store.finish_claim_with_result(
                         claimed,
                         result,
-                        finalize_result=self._result_finalizer if register_stage else None,
+                        finalize_result=finalizer,
                     )
                 else:
                     if pipeline is not None and any(
@@ -1236,16 +1430,27 @@ class LocalExecutionCoordinator:
                 return result
             if pipeline is not None and any(node.kind == "register" for node in pipeline.nodes):
                 raise ValueError("pipeline register stage requires durable artifact storage")
+            result_payload = result.to_payload()
+            if pipeline is not None:
+                result_payload["_pipeline_stages"] = [
+                    {"id": node.id, "kind": node.kind} for node in pipeline.nodes
+                ]
             finished = self._store.finish(
                 claimed.workspace_id,
                 claimed.run_id,
                 self._owner,
                 claimed.fence,
                 state="succeeded",
-                result_payload=result.to_payload(),
+                result_payload=result_payload,
             )
             return result if finished is not None else None
         except Exception as exc:
+            if isinstance(exc, MLExecutionCancelled) and cancellation.is_cancelled:
+                return None
+            if cancellation.is_cancelled and self._closing.is_set():
+                # Closing the coordinator is not a user cancellation. Leave the
+                # durable lease to expire so another worker can resume it.
+                return None
             if isinstance(self._store, JobStoreExecutionStore):
                 with suppress(Exception):
                     self._store.finish_claim(claimed, state="failed", error=str(exc))
@@ -1271,9 +1476,14 @@ class LocalExecutionCoordinator:
         return snapshot
 
     def cancel(self, workspace_id: str, run_id: str) -> ExecutionSnapshot:
+        with self._lock:
+            token = self._cancellations.get((workspace_id, run_id))
+            if token is not None:
+                token.cancel()
         snapshot = self._store.cancel(workspace_id, run_id)
         with self._lock:
             self._owned.pop((workspace_id, run_id), None)
+            self._cancellations.pop((workspace_id, run_id), None)
         return snapshot
 
     def retry(
@@ -1286,6 +1496,9 @@ class LocalExecutionCoordinator:
     def close(self) -> None:
         self._closing.set()
         self._stop.set()
+        with self._lock:
+            for token in self._cancellations.values():
+                token.cancel()
         with self._admission_lock:
             pass
         if self._started:

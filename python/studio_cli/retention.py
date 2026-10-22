@@ -241,7 +241,10 @@ def run_artifact_retention(
                 "schema": "ronin.artifact-retention-result/v1",
                 "mode": mode,
                 "backend": backend,
+                "snapshot_consistent": True,
+                "collection_ready": True,
                 "deleted_digests": list(deleted),
+                "deleted_count": len(deleted),
             }
 
         guard = stores.barrier.collector() if stores.barrier is not None else nullcontext()

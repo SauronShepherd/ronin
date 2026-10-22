@@ -36,6 +36,11 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
 
     root = Path(__file__).parents[1]
     document = json.loads((root / "api/openapi-v1.json").read_text(encoding="utf-8"))
+    backends = document["paths"]["/v1/ml-studio/backends"]["get"]
+    backend_schema = document["components"]["schemas"]["MLBackend"]
+    assert backends["operationId"] == "listMlStudioBackends"
+    assert backend_schema["properties"]["status"]["enum"] == ["available", "unavailable"]
+    assert backend_schema["properties"]["install_extra"]["type"] == "string"
     get_operation = document["paths"]["/v1/ml-studio/executions/{run_id}"]["get"]
     cancel_operation = document["paths"]["/v1/ml-studio/executions/{run_id}/cancel"]["post"]
     retry_operation = document["paths"]["/v1/ml-studio/executions/{run_id}/retry"]["post"]
@@ -51,15 +56,13 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
     retry_schema = retry_operation["requestBody"]["content"]["application/json"]["schema"]
     assert retry_schema["additionalProperties"] is False
     assert retry_schema["required"] == ["run_id", "from_stage"]
-    assert retry_schema["properties"]["from_stage"]["enum"] == [
-        "profile",
-        "quality_gate",
-        "prepare",
-        "train",
-        "evaluate",
-        "select",
-        "register",
+    assert retry_schema["properties"]["from_stage"]["maxLength"] == 261
+    stage_schema = document["components"]["schemas"]["MLExecutionSnapshot"]["properties"][
+        "pipeline_stages"
     ]
+    assert stage_schema["type"] == "array"
+    assert stage_schema["items"]["required"] == ["id", "kind"]
+    assert stage_schema["items"]["properties"]["id"]["maxLength"] == 256
     submit = document["paths"]["/v1/ml-studio/labs/{lab_id}/executions"]["post"]
     request_schema = submit["requestBody"]["content"]["application/json"]["schema"]
     assert request_schema["additionalProperties"] is False
@@ -104,7 +107,8 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
         "minimize",
     ]
     assert request_schema["properties"]["register"]["required"] == ["model_id", "version"]
-    pipeline_schema = request_schema["properties"]["pipeline"]
+    pipeline_variants = request_schema["properties"]["pipeline"]["oneOf"]
+    pipeline_schema = pipeline_variants[0]
     assert pipeline_schema["properties"]["schema"]["const"] == "ronin.ml-pipeline-ir/v2"
     assert pipeline_schema["properties"]["nodes"]["maxItems"] == 24
     assert (
@@ -116,6 +120,30 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
     assert (
         "register" in pipeline_schema["properties"]["nodes"]["items"]["properties"]["kind"]["enum"]
     )
+    v3_schema = pipeline_variants[1]
+    assert v3_schema["properties"]["schema"]["const"] == "ronin.ml-pipeline-ir/v3"
+    assert v3_schema["properties"]["nodes"]["maxItems"] == 24
+    v3_node_variants = v3_schema["properties"]["nodes"]["items"]["oneOf"]
+    builtin_v3_nodes = [node for node in v3_node_variants if "const" in node["properties"]["kind"]]
+    v3_kinds = {node["properties"]["kind"]["const"] for node in builtin_v3_nodes}
+    assert v3_kinds == {
+        "profile",
+        "quality_gate",
+        "prepare",
+        "train",
+        "evaluate",
+        "select",
+        "register",
+    }
+    select_variant = next(
+        node for node in builtin_v3_nodes if node["properties"]["kind"]["const"] == "select"
+    )
+    assert select_variant["properties"]["inputs"]["properties"]["candidates"]["maxItems"] == 23
+    plugin_variant = next(
+        node for node in v3_node_variants if "pattern" in node["properties"]["kind"]
+    )
+    assert plugin_variant["properties"]["stage_version"]["minimum"] == 1
+    assert plugin_variant["properties"]["config"]["maxProperties"] == 32
     assert "409" in submit["responses"]
     quality = document["paths"]["/v1/ml-studio/labs/{lab_id}/quality"]["post"]
     quality_schema = quality["requestBody"]["content"]["application/json"]["schema"]

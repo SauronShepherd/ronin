@@ -4,12 +4,19 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from math import isfinite
 
 
 def _number(value: object) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError("clustering feature values must be numeric")
-    return float(value)
+    try:
+        number = float(value)
+    except OverflowError as exc:
+        raise ValueError("clustering feature values must be finite") from exc
+    if not isfinite(number):
+        raise ValueError("clustering feature values must be finite")
+    return number
 
 
 @dataclass(frozen=True, slots=True)

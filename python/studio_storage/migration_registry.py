@@ -61,7 +61,7 @@ _SUPPORTED_VERSIONS = {
     "scheduler": 2,
     "audit": 1,
     "genai": 3,
-    "ml": 1,
+    "ml": 2,
 }
 
 

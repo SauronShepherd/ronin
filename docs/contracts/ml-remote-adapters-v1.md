@@ -26,10 +26,15 @@ idempotency key. A remote artifact is accepted only after digest verification;
 the registry stores the provider reference as provenance, not as the model
 payload. Promotion and scoring remain provider-neutral.
 
-The current release implements the contract types and local adapter only.
-MLflow and Spark implementations remain future adapters and must pass the
-capability, provenance, artifact-digest, cancellation, retry, and prediction
-signature conformance suites before being advertised as available.
+The host bounds `timeout_seconds` to 24 hours, `max_trials` to 10,000 and the
+idempotency key to 256 characters before dispatch. Remote prediction requests
+are bounded to 100,000 rows and 8 MiB of canonical JSON before transport.
+
+The candidate implements the contract types, local adapter, and
+transport-injected MLflow/Spark wrappers. Those wrappers are provider-neutral
+and are not provider-qualified until they pass the capability, provenance,
+artifact-digest, cancellation, retry, and prediction-signature conformance
+suites in a real deployment environment.
 The SDK representations are `RemoteTrainingRequest`, `RemoteTrainingResult`,
 and the provider-neutral `Remote*Error` hierarchy. They contain no credentials
 or provider clients and are safe to persist as audit metadata.
@@ -40,16 +45,37 @@ test suite; provider adapters must satisfy the same runtime-checkable protocol.
 
 `RemoteRetryPolicy` standardizes bounded exponential backoff. It is applied
 only to errors whose `retryable` property is true and must reuse the original
-idempotency key.
+idempotency key. The controller sleeps only between attempts and never after
+the final attempt; the delay is injectable for deterministic host integration.
+
+Remote result metrics must be finite numeric values with non-empty names.
+NaN, positive infinity and negative infinity are rejected before a result can
+enter the execution or registry lifecycle.
+
+An artifact reference and digest are an all-or-nothing pair. When present, the
+digest must be a lowercase SHA-256 value; a result with only one half of the
+pair is rejected before it can be persisted. A `succeeded` result must include
+the verified durable pair; queued/running results may omit it.
 
 `RemoteExecutionController` is the provider-neutral lifecycle helper. It
 retries only `RemoteTransientError`, delegates polling and cancellation, and
 never changes the request identity between attempts.
+The request's `timeout_seconds` is also the total submit wall-clock budget:
+backoff consumes the remaining budget and no retry starts after its deadline.
 
 `MLflowBackend` and `SparkBackend` are the concrete provider adapters. Their
 transport is injected intentionally: deployment code supplies the authenticated
 HTTP/RPC client, while tests can use a deterministic fake transport. Their
 stable IDs and advertised capabilities are part of discovery and provenance.
+MLflow metadata-only import/export uses the separate
+`ronin.mlflow-metadata/v1` envelope; it does not make a provider endpoint or
+executable flavor part of the local contract.
 
 For simple HTTP deployments, `urllib_json_transport` supplies the transport
-with explicit URL-scheme validation, timeout and caller-provided headers.
+with explicit URL-scheme validation, request-scoped wall-clock timeout,
+bounded response bytes, exact host allowlisting and caller-provided headers.
+HTTPS is required by default; `allow_http=True` is reserved for local fixtures
+and cannot be combined with an `Authorization` header. Redirects are rejected,
+and HTTP 429/5xx responses map to `transient_error` while other HTTP errors map
+to `validation_error`. A request timeout cannot extend the deployment transport
+timeout, and malformed/non-finite limits are rejected before the request is sent.

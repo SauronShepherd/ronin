@@ -3,9 +3,18 @@
 
 import pytest
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
-from studio_ml.domain import PIPELINE_SCHEMA_V2, FeatureSpec, Lab, PipelineIR, PipelineNode
+from studio_ml.backends import LocalScikitLearnBackend
+from studio_ml.domain import (
+    PIPELINE_SCHEMA_V2,
+    PIPELINE_SCHEMA_V3,
+    FeatureSpec,
+    Lab,
+    PipelineIR,
+    PipelineNode,
+)
+from studio_ml.pipeline_stages import pipeline_stage_registry_digest
 from studio_ml.runner import LocalExperimentRunner, _checkpoint_runtime_fingerprint
-from studio_ml.runtime import train_tabular
+from studio_ml.runtime import MLDependencyError, train_tabular
 from studio_ml.services import compile_lab_pipeline
 
 
@@ -34,6 +43,63 @@ def _cluster_lab() -> Lab:
         None,
         "clustering",
         (FeatureSpec("x", "numeric"),),
+    )
+
+
+def test_missing_optional_sklearn_backend_is_reported_before_execution(monkeypatch) -> None:
+    monkeypatch.setattr(LocalScikitLearnBackend, "available", property(lambda _self: False))
+    lab = _lab()
+    runner = LocalExperimentRunner()
+
+    with pytest.raises(MLDependencyError, match=r"ronin-studio\[ml\]"):
+        runner.validate_pipeline(lab, compile_lab_pipeline(lab))
+
+
+def _v3_candidate_pipeline(lab: Lab) -> PipelineIR:
+    compiled = compile_lab_pipeline(lab)
+    return PipelineIR(
+        (
+            PipelineNode("profile", "profile"),
+            PipelineNode("quality", "quality_gate", inputs=(("profile", ("profile.out",)),)),
+            PipelineNode(
+                "prepare_a",
+                "prepare",
+                config={"preprocessor": "identity"},
+                inputs=(("quality", ("quality.out",)),),
+            ),
+            PipelineNode(
+                "prepare_b",
+                "prepare",
+                config={"preprocessor": "standard_scale"},
+                inputs=(("quality", ("quality.out",)),),
+            ),
+            PipelineNode(
+                "train_a",
+                "train",
+                config={"algorithm": "logistic_regression"},
+                inputs=(("prepared", ("prepare_a.out",)),),
+            ),
+            PipelineNode(
+                "train_b",
+                "train",
+                config={"algorithm": "decision_tree_classifier"},
+                inputs=(("prepared", ("prepare_b.out",)),),
+            ),
+            PipelineNode("eval_a", "evaluate", inputs=(("model", ("train_a.out",)),)),
+            PipelineNode("eval_b", "evaluate", inputs=(("model", ("train_b.out",)),)),
+            PipelineNode(
+                "select",
+                "select",
+                config={"metric": "accuracy", "direction": "maximize"},
+                inputs=(("candidates", ("eval_a.out", "eval_b.out")),),
+            ),
+        ),
+        parameters=tuple(
+            sorted(
+                (*compiled.parameters, ("stage_registry_digest", pipeline_stage_registry_digest()))
+            )
+        ),
+        schema=PIPELINE_SCHEMA_V3,
     )
 
 
@@ -148,6 +214,106 @@ def test_v2_pipeline_trains_multiple_candidates_and_selects_deterministically() 
 
     assert first.to_payload() == second.to_payload()
     assert first.model.algorithm in {"decision_tree_classifier", "logistic_regression"}
+
+
+def test_v3_typed_dag_executes_branches_selects_and_restores_checkpoints() -> None:
+    lab = _lab()
+    pipeline = _v3_candidate_pipeline(lab)
+    LocalExperimentRunner().validate_pipeline(lab, pipeline)
+    checkpoints: dict[str, dict[str, object]] = {}
+    first_backend = _CheckpointBackend()
+    first = LocalExperimentRunner((first_backend,)).execute_pipeline(
+        lab,
+        _rows(),
+        pipeline,
+        checkpoint_save=lambda node_id, payload: checkpoints.__setitem__(node_id, payload),
+    )
+    assert first.model.algorithm in {"logistic_regression", "decision_tree_classifier"}
+    assert first_backend.train_calls == 2
+
+    second_backend = _CheckpointBackend(fail_on_train=True)
+    resumed = LocalExperimentRunner((second_backend,)).execute_pipeline(
+        lab, _rows(), pipeline, checkpoint_load=checkpoints.get
+    )
+    assert resumed.to_payload() == first.to_payload()
+    assert second_backend.train_calls == 0
+
+
+def test_v3_rejects_task_incompatible_graph_before_training() -> None:
+    lab = _lab()
+    pipeline = _v3_candidate_pipeline(lab)
+    nodes = tuple(
+        PipelineNode(
+            node.id,
+            node.kind,
+            config={"algorithm": "decision_tree_regressor"}
+            if node.id == "train_a"
+            else node.config,
+            inputs=node.inputs,
+            stage_version=node.stage_version,
+        )
+        for node in pipeline.nodes
+    )
+    invalid = PipelineIR(nodes, pipeline.parameters, PIPELINE_SCHEMA_V3)
+    backend = _CheckpointBackend()
+    with pytest.raises(ValueError, match="not supported for this Lab"):
+        LocalExperimentRunner((backend,)).validate_pipeline(lab, invalid)
+    assert backend.train_calls == 0
+
+
+def test_v3_checkpoint_identity_rejects_a_different_stage_registry() -> None:
+    lab = _lab()
+    pipeline = _v3_candidate_pipeline(lab)
+    mismatched_parameters = tuple(
+        (key, "0" * 64 if key == "stage_registry_digest" else value)
+        for key, value in pipeline.parameters
+    )
+    mismatched = PipelineIR(pipeline.nodes, mismatched_parameters, PIPELINE_SCHEMA_V3)
+    with pytest.raises(ValueError, match="registry identity"):
+        LocalExperimentRunner().validate_pipeline(lab, mismatched)
+
+
+def test_v3_typed_clustering_dag_selects_by_declared_metric() -> None:
+    lab = _cluster_lab()
+    compiled = compile_lab_pipeline(lab, candidate_cluster_counts=(2, 3))
+    pipeline = PipelineIR(
+        (
+            PipelineNode("profile", "profile"),
+            PipelineNode("quality", "quality_gate", inputs=(("profile", ("profile.out",)),)),
+            PipelineNode("prepare", "prepare", inputs=(("quality", ("quality.out",)),)),
+            PipelineNode(
+                "k2",
+                "train",
+                config={"clusters": 2},
+                inputs=(("prepared", ("prepare.out",)),),
+            ),
+            PipelineNode(
+                "k3",
+                "train",
+                config={"clusters": 3},
+                inputs=(("prepared", ("prepare.out",)),),
+            ),
+            PipelineNode("eval2", "evaluate", inputs=(("model", ("k2.out",)),)),
+            PipelineNode("eval3", "evaluate", inputs=(("model", ("k3.out",)),)),
+            PipelineNode(
+                "select",
+                "select",
+                config={"metric": "calinski_harabasz"},
+                inputs=(("candidates", ("eval2.out", "eval3.out")),),
+            ),
+        ),
+        tuple(
+            sorted(
+                (*compiled.parameters, ("stage_registry_digest", pipeline_stage_registry_digest()))
+            )
+        ),
+        PIPELINE_SCHEMA_V3,
+    )
+    rows = [{"x": float(value)} for value in range(20)]
+    result = LocalExperimentRunner().execute_pipeline(lab, rows, pipeline)
+    assert result.selection_metric == "calinski_harabasz"
+    assert result.selection_score is not None
+    assert len(result.model.centroids) in {2, 3}
 
 
 def test_v2_register_stage_is_terminal_and_deferred_after_selection() -> None:

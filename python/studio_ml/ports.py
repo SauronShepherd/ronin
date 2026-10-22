@@ -8,6 +8,8 @@ from typing import Protocol, runtime_checkable
 from studio_core import WorkspaceId
 
 from .domain import FeatureDefinition, Lab, PipelineIR
+from .drift import DriftPolicy
+from .quality import QualitySuite
 
 
 @runtime_checkable
@@ -19,6 +21,24 @@ class MLLabStore(Protocol):
         self, workspace_id: WorkspaceId, lab_id: str, pipeline: PipelineIR
     ) -> PipelineIR: ...
     def get_pipeline(self, workspace_id: WorkspaceId, lab_id: str) -> PipelineIR | None: ...
+    def put_quality_suite(
+        self, workspace_id: WorkspaceId, lab_id: str, suite: QualitySuite
+    ) -> QualitySuite: ...
+    def get_quality_suite(
+        self, workspace_id: WorkspaceId, lab_id: str, suite_id: str, version: int | None = None
+    ) -> QualitySuite | None: ...
+    def list_quality_suites(
+        self, workspace_id: WorkspaceId, lab_id: str
+    ) -> tuple[QualitySuite, ...]: ...
+    def put_drift_policy(
+        self, workspace_id: WorkspaceId, lab_id: str, policy: DriftPolicy
+    ) -> DriftPolicy: ...
+    def get_drift_policy(
+        self, workspace_id: WorkspaceId, lab_id: str, policy_id: str, version: int | None = None
+    ) -> DriftPolicy | None: ...
+    def list_drift_policies(
+        self, workspace_id: WorkspaceId, lab_id: str
+    ) -> tuple[DriftPolicy, ...]: ...
 
 
 @runtime_checkable

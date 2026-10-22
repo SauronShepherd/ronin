@@ -118,6 +118,8 @@ from .ownership import OwnershipMetadata
 from .plugins import (
     CompositionPlan,
     ContributionRegistry,
+    PipelineStageContribution,
+    PipelineStageContributionRegistry,
     PluginCompatibilityError,
     PluginContext,
     PluginDependency,
@@ -297,6 +299,8 @@ __all__ = (
     "PluginRecord",
     "PluginState",
     "PluginValidationError",
+    "PipelineStageContribution",
+    "PipelineStageContributionRegistry",
     "PropertyDefinition",
     "QualityResult",
     "QualityRule",

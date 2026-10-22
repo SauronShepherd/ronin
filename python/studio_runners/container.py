@@ -192,6 +192,9 @@ class AsyncioCommandRunner:
     cleanup_timeout_seconds: float = 5.0
     max_output_bytes: int = 8 * 1024 * 1024
     max_control_bytes: int = _RESOURCE_CONTROL_MAX_BYTES
+    discard_stderr: bool = False
+    redact_output: bool = True
+    strict_output_utf8: bool = False
 
     def __post_init__(self) -> None:
         if self.poll_seconds <= 0 or self.cleanup_timeout_seconds <= 0:
@@ -249,7 +252,13 @@ class AsyncioCommandRunner:
             raise ValueError("execution and cancellation commands must be non-empty")
         started = time.monotonic()
         started_unix_ns = time.time_ns()
-        stderr_target = asyncio.subprocess.PIPE if capture_control else asyncio.subprocess.STDOUT
+        stderr_target = (
+            asyncio.subprocess.PIPE
+            if capture_control
+            else asyncio.subprocess.DEVNULL
+            if self.discard_stderr
+            else asyncio.subprocess.STDOUT
+        )
         process = await asyncio.create_subprocess_exec(
             *args,
             stdin=asyncio.subprocess.PIPE,
@@ -342,8 +351,10 @@ class AsyncioCommandRunner:
         return raw_output + b"".join(diagnostics), control_output, False
 
     def _format_output(self, raw_output: bytes, truncated: bool) -> str:
-        decoded = raw_output.decode("utf-8", errors="replace")
-        output = redact_sensitive_text(decoded)
+        decoded = raw_output.decode(
+            "utf-8", errors="strict" if self.strict_output_utf8 else "replace"
+        )
+        output = redact_sensitive_text(decoded) if self.redact_output else decoded
         if not truncated:
             return output
         if output != decoded:

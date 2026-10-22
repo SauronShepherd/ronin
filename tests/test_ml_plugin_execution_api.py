@@ -12,7 +12,14 @@ from studio_core import WorkspaceId
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_core.ml import RegisteredModelVersion
 from studio_execution import DurableExecutionService
-from studio_ml.domain import PIPELINE_SCHEMA_V2, FeatureSpec, Lab, PipelineIR, PipelineNode
+from studio_ml.domain import (
+    PIPELINE_SCHEMA_V2,
+    PIPELINE_SCHEMA_V3,
+    FeatureSpec,
+    Lab,
+    PipelineIR,
+    PipelineNode,
+)
 from studio_ml.orchestration import (
     ExecutionSnapshot,
     JobStoreExecutionStore,
@@ -197,6 +204,43 @@ def test_pipeline_register_executes_durably_and_persists_registered_model(tmp_pa
         assert result["registered_model"]["version"] == "candidate-1"
         assert len(registry.runs) == 1
         assert len(registry.models) == 1
+        v3 = PipelineIR(
+            (
+                PipelineNode("p", "profile"),
+                PipelineNode("q", "quality_gate", inputs=(("profile", ("p.out",)),)),
+                PipelineNode("prep", "prepare", inputs=(("quality", ("q.out",)),)),
+                PipelineNode(
+                    "train",
+                    "train",
+                    config={"algorithm": "logistic_regression"},
+                    inputs=(("prepared", ("prep.out",)),),
+                ),
+                PipelineNode("eval", "evaluate", inputs=(("model", ("train.out",)),)),
+                PipelineNode("select", "select", inputs=(("candidates", ("eval.out",)),)),
+                PipelineNode(
+                    "register",
+                    "register",
+                    config={"model_id": "churn", "version": "candidate-2"},
+                    inputs=(("selected", ("select.out",)),),
+                ),
+            ),
+            parameters=compile_lab_pipeline(lab).parameters,
+            schema=PIPELINE_SCHEMA_V3,
+        )
+        submitted_v3 = plugin.submit_execution(
+            "ws",
+            "churn",
+            body={"run_id": "register-v3-api", "rows": rows, "pipeline": v3.to_payload()},
+        )
+        assert submitted_v3["run_id"] == "register-v3-api"
+        deadline = time.time() + 30
+        v3_status = plugin.execution_status("register-v3-api", workspace_id="ws")
+        while v3_status["state"] not in {"succeeded", "failed"} and time.time() < deadline:
+            time.sleep(0.01)
+            v3_status = plugin.execution_status("register-v3-api", workspace_id="ws")
+        assert v3_status["state"] == "succeeded", v3_status.get("error")
+        assert v3_status["result"]["registered_model"]["version"] == "candidate-2"
+        assert len(registry.models) == 2
         persisted_snapshot = ExecutionSnapshot(
             run_id="register-api",
             state="succeeded",
@@ -213,15 +257,15 @@ def test_pipeline_register_executes_durably_and_persists_registered_model(tmp_pa
             {key: value for key, value in result.items() if key != "registered_model"},
         )
         assert repeated["registered_model"] == result["registered_model"]
-        assert len(registry.runs) == 1
-        assert len(registry.models) == 1
+        assert len(registry.runs) == 2
+        assert len(registry.models) == 2
         replayed_retry = plugin._finalize_pipeline_registration(
             replace(persisted_snapshot, run_id="register-api-retry"),
             {key: value for key, value in result.items() if key != "registered_model"},
         )
         assert replayed_retry["registered_model"] == result["registered_model"]
-        assert len(registry.runs) == 1
-        assert len(registry.models) == 1
+        assert len(registry.runs) == 2
+        assert len(registry.models) == 2
         registered_bytes = artifacts.get_bytes_by_storage_ref(
             result["artifact_ref"],
             digest=result["artifact_digest"].removeprefix("sha256:"),
@@ -378,6 +422,117 @@ def test_submit_custom_v2_pipeline_is_validated_and_pinned() -> None:
             time.sleep(0.01)
             state = plugin.execution_status("custom-pipeline-run", workspace_id="ws")["state"]
         assert state == "succeeded"
+    finally:
+        plugin._coordinator.close()
+
+
+def test_submit_custom_v3_typed_dag_is_validated_and_pinned() -> None:
+    plugin = MachineLearningStudioPlugin()
+    plugin._labs = LabService(InMemoryMLLabStore())
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "target",
+        "classification",
+        (FeatureSpec("x", "numeric"),),
+    )
+    plugin._labs.create(WorkspaceId("ws"), lab)
+    compiled = compile_lab_pipeline(lab)
+    custom = PipelineIR(
+        (
+            PipelineNode("profile", "profile"),
+            PipelineNode("quality", "quality_gate", inputs=(("profile", ("profile.out",)),)),
+            PipelineNode("prepare_a", "prepare", inputs=(("quality", ("quality.out",)),)),
+            PipelineNode(
+                "prepare_b",
+                "prepare",
+                config={"preprocessor": "standard_scale"},
+                inputs=(("quality", ("quality.out",)),),
+            ),
+            PipelineNode(
+                "train_a",
+                "train",
+                config={"algorithm": "logistic_regression"},
+                inputs=(("prepared", ("prepare_a.out",)),),
+            ),
+            PipelineNode(
+                "train_b",
+                "train",
+                config={"algorithm": "decision_tree_classifier"},
+                inputs=(("prepared", ("prepare_b.out",)),),
+            ),
+            PipelineNode("eval_a", "evaluate", inputs=(("model", ("train_a.out",)),)),
+            PipelineNode("eval_b", "evaluate", inputs=(("model", ("train_b.out",)),)),
+            PipelineNode(
+                "select",
+                "select",
+                config={"metric": "accuracy"},
+                inputs=(("candidates", ("eval_a.out", "eval_b.out")),),
+            ),
+        ),
+        parameters=compiled.parameters,
+        schema=PIPELINE_SCHEMA_V3,
+    )
+    rows = [{"x": value, "target": value % 2} for value in range(1, 21)]
+    try:
+        submitted = plugin.submit_execution(
+            "ws",
+            lab.id,
+            body={"run_id": "custom-v3-run", "rows": rows, "pipeline": custom.to_payload()},
+        )
+        assert submitted["run_id"] == "custom-v3-run"
+        stored_pipeline = plugin._labs.store.get_pipeline(WorkspaceId("ws"), lab.id)
+        assert stored_pipeline is not None
+        assert stored_pipeline.schema == PIPELINE_SCHEMA_V3
+        assert dict(stored_pipeline.parameters)["stage_registry_digest"]
+        deadline = time.time() + 30
+        status = plugin.execution_status("custom-v3-run", workspace_id="ws")
+        while status["state"] not in {"succeeded", "failed"} and time.time() < deadline:
+            time.sleep(0.01)
+            status = plugin.execution_status("custom-v3-run", workspace_id="ws")
+        assert status["state"] == "succeeded"
+        assert {stage["id"] for stage in status["pipeline_stages"]} == {
+            "profile",
+            "quality",
+            "prepare_a",
+            "prepare_b",
+            "train_a",
+            "train_b",
+            "eval_a",
+            "eval_b",
+            "select",
+        }
+        assert status["result"]["algorithm"] in {
+            "logistic_regression",
+            "decision_tree_classifier",
+        }
+        invalid_nodes = tuple(
+            PipelineNode(
+                node.id,
+                node.kind,
+                config={"algorithm": "decision_tree_regressor"}
+                if node.id == "train_a"
+                else node.config,
+                inputs=node.inputs,
+                stage_version=node.stage_version,
+            )
+            for node in custom.nodes
+        )
+        invalid = PipelineIR(invalid_nodes, custom.parameters, PIPELINE_SCHEMA_V3)
+        with pytest.raises(ValueError, match="not supported for this Lab"):
+            plugin.submit_execution(
+                "ws",
+                lab.id,
+                body={
+                    "run_id": "invalid-v3-task",
+                    "rows": rows,
+                    "pipeline": invalid.to_payload(),
+                },
+            )
+        with pytest.raises(KeyError):
+            plugin.execution_status("invalid-v3-task", workspace_id="ws")
     finally:
         plugin._coordinator.close()
 

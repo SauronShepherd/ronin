@@ -1,6 +1,8 @@
 """Executable ML/MLOps runtime for Ronin Public v1."""
 
 from .backends import (
+    MAX_REMOTE_TIMEOUT_SECONDS,
+    MAX_REMOTE_TRIALS,
     BackendCapabilities,
     BackendRegistry,
     ExperimentRequest,
@@ -30,12 +32,22 @@ from .clustering import KMeansModel, calinski_harabasz, fit_kmeans, inertia
 from .domain import FeatureDefinition, FeatureSpec, Lab, PipelineIR, PipelineNode
 from .drift import (
     DriftAssessment,
+    DriftPolicy,
     DriftThreshold,
     NumericDrift,
     assess_numeric_drift,
     compare_numeric_drift,
 )
-from .mlflow import MLFLOW_SUBSET_SCHEMA, MLflowSubset
+from .mlflow import (
+    MLFLOW_METADATA_SCHEMA,
+    MLFLOW_SUBSET_SCHEMA,
+    SUPPORTED_MLFLOW_FLAVORS,
+    MLflowFlavorError,
+    MLflowMetadata,
+    MLflowSubset,
+    export_mlflow_metadata,
+    import_mlflow_metadata,
+)
 from .optimization import SearchSpec, Trial, rank_trials
 from .orchestration import (
     DurableExecutionPort,
@@ -48,8 +60,17 @@ from .orchestration import (
 )
 from .postgres import PostgresMLLabStore
 from .provenance import run_record
-from .quality import ColumnProfile, QualityReport, profile_and_validate
+from .quality import (
+    ColumnProfile,
+    QualityExpectation,
+    QualityExpectationResult,
+    QualityReport,
+    QualitySuite,
+    profile_and_validate,
+)
 from .registry_bundle import (
+    MLRegistryBundleArtifact,
+    MLRegistryBundleArtifactStore,
     MLRegistryBundleImportPlan,
     MLRegistryBundleStore,
     commit_ml_registry_bundle_import,
@@ -57,6 +78,8 @@ from .registry_bundle import (
     plan_ml_registry_bundle_import,
 )
 from .remote import (
+    MAX_REMOTE_PREDICTION_BYTES,
+    MAX_REMOTE_PREDICTION_ROWS,
     JsonRemoteBackend,
     MLflowBackend,
     RemoteExecutionController,
@@ -79,22 +102,27 @@ from .service import (
     MLModelNotFound,
     MLRegistryStore,
     compare_model_evaluations,
+    deploy_registered_model,
     list_model_evaluations,
     list_registered_models,
     persist_experiment_result,
     predict_champion_tabular,
     predict_registered_tabular,
     promote_registered_model,
+    record_deployment_request,
     record_model_evaluation,
     resolve_champion_model,
+    rollback_model_deployment,
     train_register_tabular,
 )
 from .services import (
+    DriftPolicyConflict,
     FeatureDefinitionConflict,
     FeatureDefinitionService,
     InMemoryMLLabStore,
     LabService,
     MLLabConflict,
+    QualitySuiteConflict,
 )
 from .sqlite import SqliteMLLabStore
 
@@ -104,6 +132,8 @@ __all__ = (
     "MLModelNotFound",
     "MLRegistryStore",
     "MLRegistryBundleImportPlan",
+    "MLRegistryBundleArtifact",
+    "MLRegistryBundleArtifactStore",
     "MLRegistryBundleStore",
     "commit_ml_registry_bundle_import",
     "export_ml_registry_bundle",
@@ -111,7 +141,10 @@ __all__ = (
     "list_registered_models",
     "list_model_evaluations",
     "compare_model_evaluations",
+    "deploy_registered_model",
     "promote_registered_model",
+    "rollback_model_deployment",
+    "record_deployment_request",
     "record_model_evaluation",
     "resolve_champion_model",
     "TaskKind",
@@ -141,30 +174,47 @@ __all__ = (
     "RemoteRetryPolicy",
     "RemoteExecutionController",
     "JsonRemoteBackend",
+    "MAX_REMOTE_PREDICTION_BYTES",
+    "MAX_REMOTE_PREDICTION_ROWS",
     "MLflowBackend",
     "SparkBackend",
     "urllib_json_transport",
     "RemoteMLBackend",
     "MLBackend",
     "LocalScikitLearnBackend",
+    "MAX_REMOTE_TIMEOUT_SECONDS",
+    "MAX_REMOTE_TRIALS",
     "default_backends",
     "FeatureSpec",
     "FeatureDefinition",
     "FeatureDefinitionConflict",
     "FeatureDefinitionService",
     "MLFLOW_SUBSET_SCHEMA",
+    "MLFLOW_METADATA_SCHEMA",
+    "SUPPORTED_MLFLOW_FLAVORS",
+    "MLflowFlavorError",
+    "MLflowMetadata",
     "MLflowSubset",
+    "export_mlflow_metadata",
+    "import_mlflow_metadata",
     "Lab",
     "PipelineIR",
     "PipelineNode",
     "NumericDrift",
     "DriftAssessment",
+    "DriftPolicy",
+    "DriftPolicyConflict",
     "DriftThreshold",
     "assess_numeric_drift",
     "compare_numeric_drift",
+    "QualityExpectation",
+    "QualityExpectationResult",
+    "QualityReport",
+    "QualitySuite",
     "InMemoryMLLabStore",
     "LabService",
     "MLLabConflict",
+    "QualitySuiteConflict",
     "SqliteMLLabStore",
     "PostgresMLLabStore",
     "ExecutionSnapshot",
@@ -187,7 +237,6 @@ __all__ = (
     "LocalExperimentRunner",
     "run_record",
     "ColumnProfile",
-    "QualityReport",
     "profile_and_validate",
     "SearchSpec",
     "Trial",

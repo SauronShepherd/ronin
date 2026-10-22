@@ -6,6 +6,7 @@ import hashlib
 import json
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from dataclasses import replace
 from typing import Protocol, runtime_checkable
 
 from studio_core import AssetRef, WorkspaceId
@@ -15,6 +16,7 @@ from studio_core.ml import (
     MetricValue,
     MLRunId,
     MLRunRecord,
+    ModelDeployment,
     ModelEvaluation,
     ModelId,
     ModelSignature,
@@ -42,6 +44,12 @@ def _artifact_reference_lease(
 
 @runtime_checkable
 class MLRegistryStore(Protocol):
+    def get_experiment(
+        self, workspace_id: WorkspaceId, experiment_id: ExperimentId
+    ) -> Experiment | None: ...
+
+    def list_experiments(self, workspace_id: WorkspaceId) -> tuple[Experiment, ...]: ...
+
     def get_run(self, workspace_id: WorkspaceId, run_id: MLRunId) -> MLRunRecord | None: ...
 
     def put_experiment(
@@ -94,6 +102,24 @@ class MLRegistryStore(Protocol):
         *,
         now: Instant | str,
     ) -> RegisteredModelVersion: ...
+
+    def put_deployment(
+        self, workspace_id: WorkspaceId, deployment: ModelDeployment, *, now: Instant | str
+    ) -> ModelDeployment: ...
+
+    def get_deployment(
+        self, workspace_id: WorkspaceId, deployment_id: str
+    ) -> ModelDeployment | None: ...
+
+    def list_deployments(self, workspace_id: WorkspaceId) -> tuple[ModelDeployment, ...]: ...
+
+    def update_deployment(
+        self,
+        workspace_id: WorkspaceId,
+        deployment: ModelDeployment,
+        *,
+        now: Instant | str,
+    ) -> ModelDeployment: ...
 
 
 class MLModelNotFound(KeyError):
@@ -173,6 +199,11 @@ def persist_clustering_result(
             metrics=(MetricValue("inertia", result.inertia),),
             artifact_refs=(artifact.storage_ref,),
         )
+        existing = registry.get_run(workspace_id, run_id)
+        if existing is not None:
+            if existing != record:
+                raise ValueError("ML run id already exists with a different publication")
+            return existing
         return registry.record_run(workspace_id, record, now=now)
 
 
@@ -202,20 +233,42 @@ def register_clustering_model(
             _input_signature([dict.fromkeys(result.features, 0.0)], result.features),
             (("cluster", "int64"),),
         )
-        return registry.register_model(
-            workspace_id,
-            RegisteredModelVersion(
-                model_id,
-                model_version,
-                run_id,
-                artifact.storage_ref,
-                artifact.digest,
-                "ronin-kmeans",
-                signature,
-                "candidate",
-            ),
-            now=now,
+        artifact_digest = artifact.digest
+        existing = registry.get_model(workspace_id, model_id, model_version)
+        if existing is not None:
+            if (
+                existing.artifact_digest != artifact_digest
+                or existing.framework != "ronin-kmeans"
+                or existing.signature != signature
+            ):
+                raise ValueError("model version already exists with a different publication")
+            return existing
+        model = RegisteredModelVersion(
+            model_id,
+            model_version,
+            run_id,
+            artifact.storage_ref,
+            artifact_digest,
+            "ronin-kmeans",
+            signature,
+            "candidate",
         )
+        try:
+            return registry.register_model(
+                workspace_id,
+                model,
+                now=now,
+            )
+        except Exception:
+            existing = registry.get_model(workspace_id, model_id, model_version)
+            if (
+                existing is not None
+                and existing.artifact_digest == artifact_digest
+                and existing.framework == "ronin-kmeans"
+                and existing.signature == signature
+            ):
+                return existing
+            raise
 
 
 def promote_registered_model(
@@ -301,6 +354,110 @@ def list_registered_models(
     return registry.list_models(workspace_id, model_id)
 
 
+def deploy_registered_model(
+    registry: MLRegistryStore,
+    artifacts: ArtifactStore,
+    workspace_id: WorkspaceId,
+    deployment_id: str,
+    model_id: ModelId,
+    model_version: ModelVersion,
+    *,
+    endpoint: str = "local",
+    now: Instant | str,
+) -> ModelDeployment:
+    """Pin and verify one immutable model version before marking it ready."""
+
+    model = registry.get_model(workspace_id, model_id, model_version)
+    if model is None:
+        raise MLModelNotFound(f"{model_id}@{model_version}")
+    getter = getattr(artifacts, "get_bytes_by_storage_ref", None)
+    if not callable(getter):
+        raise ValueError("deployment requires digest-verifiable artifact storage")
+    try:
+        data = getter(model.artifact_ref, digest=model.artifact_digest)
+    except Exception as exc:
+        raise ValueError("deployment artifact cannot be verified") from exc
+    if (
+        not isinstance(data, bytes)
+        or not data
+        or len(data) > 64 * 1024 * 1024
+        or hashlib.sha256(data).hexdigest() != model.artifact_digest
+    ):
+        raise ValueError("deployment artifact digest verification failed")
+    deployment = ModelDeployment(
+        deployment_id,
+        model.model_id,
+        model.version,
+        model.artifact_ref,
+        model.artifact_digest,
+        endpoint,
+        "ready",
+        "ready",
+    )
+    existing = registry.get_deployment(workspace_id, deployment_id)
+    if existing is not None:
+        if (
+            existing.model_id != deployment.model_id
+            or existing.version != deployment.version
+            or existing.artifact_digest != deployment.artifact_digest
+            or existing.artifact_ref != deployment.artifact_ref
+            or existing.endpoint != deployment.endpoint
+            or existing.status == "rolled_back"
+        ):
+            raise ValueError("deployment id is already pinned to a different model")
+        return existing
+    return registry.put_deployment(workspace_id, deployment, now=now)
+
+
+def rollback_model_deployment(
+    registry: MLRegistryStore,
+    workspace_id: WorkspaceId,
+    deployment_id: str,
+    *,
+    now: Instant | str,
+) -> ModelDeployment:
+    """Disable a deployment without changing the registry champion."""
+
+    current = registry.get_deployment(workspace_id, deployment_id)
+    if current is None:
+        raise KeyError(deployment_id)
+    if current.status == "rolled_back":
+        return current
+    return registry.update_deployment(
+        workspace_id,
+        replace(current, status="rolled_back", readiness="unready", revision=current.revision + 1),
+        now=now,
+    )
+
+
+def record_deployment_request(
+    registry: MLRegistryStore,
+    workspace_id: WorkspaceId,
+    deployment_id: str,
+    *,
+    success: bool,
+    error: str | None = None,
+    now: Instant | str,
+) -> ModelDeployment:
+    """Persist bounded serving telemetry for a pinned deployment."""
+
+    current = registry.get_deployment(workspace_id, deployment_id)
+    if current is None:
+        raise KeyError(deployment_id)
+    if current.status != "ready" or current.readiness != "ready":
+        raise ValueError("deployment is not ready")
+    return registry.update_deployment(
+        workspace_id,
+        replace(
+            current,
+            request_count=current.request_count + 1,
+            error_count=current.error_count + (0 if success else 1),
+            last_error=(None if success else (error or "serving request failed")),
+        ),
+        now=now,
+    )
+
+
 def _input_signature(
     rows: Sequence[Mapping[str, object]],
     features: tuple[str, ...],
@@ -347,6 +504,30 @@ def train_register_tabular(
     """Train, persist content-addressed artifact, record ML run, and register candidate model."""
 
     trained = train_tabular(rows, spec)
+    artifact_digest = hashlib.sha256(trained.artifact_bytes).hexdigest()
+    signature = ModelSignature(
+        _input_signature(rows, spec.features),
+        _output_signature(spec.task, spec.target),
+    )
+    existing_model = registry.get_model(workspace_id, model_id, model_version)
+    if existing_model is not None:
+        if (
+            existing_model.artifact_digest != artifact_digest
+            or existing_model.framework != "sklearn"
+            or existing_model.signature != signature
+        ):
+            raise ValueError("model version already exists with a different publication")
+        getter = getattr(artifacts, "get_bytes_by_storage_ref", None)
+        if callable(getter):
+            try:
+                existing_bytes = getter(
+                    existing_model.artifact_ref, digest=existing_model.artifact_digest
+                )
+            except Exception as exc:
+                raise ValueError("existing model artifact cannot be verified") from exc
+            if hashlib.sha256(existing_bytes).hexdigest() != existing_model.artifact_digest:
+                raise ValueError("existing model artifact digest verification failed")
+        return existing_model
     with _artifact_reference_lease(artifact_reference_barrier):
         artifact = artifacts.put_bytes(
             role="model",
@@ -370,7 +551,13 @@ def train_register_tabular(
             metrics=tuple(MetricValue(name, value) for name, value in trained.metrics),
             artifact_refs=(artifact.storage_ref,),
         )
-        registry.record_run(workspace_id, run, now=now)
+        get_run = getattr(registry, "get_run", None)
+        existing_run = get_run(workspace_id, run_id) if callable(get_run) else None
+        if existing_run is not None:
+            if existing_run != run:
+                raise ValueError("ML run id already exists with a different publication")
+        else:
+            registry.record_run(workspace_id, run, now=now)
         model = RegisteredModelVersion(
             model_id,
             model_version,
@@ -378,13 +565,21 @@ def train_register_tabular(
             artifact.storage_ref,
             artifact.digest,
             "sklearn",
-            ModelSignature(
-                _input_signature(rows, spec.features),
-                _output_signature(spec.task, spec.target),
-            ),
+            signature,
             "candidate",
         )
-        return registry.register_model(workspace_id, model, now=now)
+        try:
+            return registry.register_model(workspace_id, model, now=now)
+        except Exception:
+            existing_model = registry.get_model(workspace_id, model_id, model_version)
+            if (
+                existing_model is not None
+                and existing_model.artifact_digest == artifact_digest
+                and existing_model.signature == signature
+                and existing_model.framework == "sklearn"
+            ):
+                return existing_model
+            raise
 
 
 def predict_registered_tabular(
@@ -460,6 +655,9 @@ __all__ = (
     "promote_registered_model",
     "resolve_champion_model",
     "list_registered_models",
+    "deploy_registered_model",
+    "rollback_model_deployment",
+    "record_deployment_request",
     "record_model_evaluation",
     "list_model_evaluations",
     "compare_model_evaluations",
