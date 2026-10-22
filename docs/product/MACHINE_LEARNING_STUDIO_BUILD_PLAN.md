@@ -796,7 +796,10 @@ Las secciones 53–59 instrumentan productores de conectores, ML, Data Engineeri
 | Proteger el intervalo crítico de sync | `IngestionSyncService.execute()` admite barrera opcional y conserva el lock desde `destination.write()` hasta `commit_output_then_checkpoint()`. El lease se libera si cualquiera de los dos pasos falla. |
 | Verificar el orden de publicación y referencia | Una prueba de sync comprueba `lock → artifact → reference → unlock`; suites de sync, checkpoints, registry, capabilities y PostgreSQL pasan **48/48**. |
 
-Esta integración deja preparado el servicio de sync; todavía debe cablearse una instancia compartida en la composición de servidor y demostrarse con sus adapters reales. No cubre los otros productores ni hace segura la recolección global.
+La composición local ya cablea la misma instancia de barrera al adapter HTTP de
+ingesta y al servicio de sync. El perfil PostgreSQL protege bytes, destino y
+checkpoint dentro del mismo lease; SQLite conserva el flujo local. No cubre los
+otros productores ni hace segura la recolección global por sí sola.
 
 ## 54. Proteger artefactos de ejecuciones durables de ML
 
@@ -809,7 +812,7 @@ Esta integración deja preparado el servicio de sync; todavía debe cablearse un
 | Proteger el modelo final hasta completar el Job | `finish_claim_with_result()` cubre materialización verificada y commit de `ml-result`. |
 | Compartir la coordinación en perfil PostgreSQL | La composición local inyecta una instancia `PostgresArtifactReferenceBarrier` en el host de plugins; el perfil SQLite conserva el modo actual sin barrera. |
 
-La prueba de regresión observa que el artefacto y su submit quedan dentro del mismo lease; las suites de ejecución ML y orchestration pasan **30/30**, Ruff y mypy focalizado pasan. Las secciones 53, 55 y 57/58 cubren conectores, revisiones de Data Engineering, catálogo/archivos y exports sintéticos. Siguen pendientes productores de Jobs/evidencia/checkpoints fuera de ML y cualquier otro productor; no habilitar limpieza global hasta cubrirlos y cualificar el commit exact-head.
+La prueba de regresión observa que el artefacto y su submit quedan dentro del mismo lease; las suites de ejecución ML y orchestration pasan **30/30**, Ruff y mypy focalizado pasan. Las secciones 53, 55, 56 y 57/58 cubren conectores, revisiones de Data Engineering, evidencias/checkpoints del worker, catálogo/archivos y exports sintéticos. La recolección global sigue deshabilitada hasta completar la cualificación del candidato y revisar cualquier productor nuevo.
 
 ## 55. Proteger revisiones de Data Engineering hasta su commit durable
 
@@ -819,7 +822,7 @@ La prueba de regresión observa que el artefacto y su submit quedan dentro del m
 
 ## 56. Proteger evidencias y checkpoints del worker durable
 
-**Estado del slice: PR #489 integrado en `main@77bf1c1` y cualificado en los seis workflows post-merge exact-head. Avance global: 85%; recolección global deshabilitada hasta completar los demás productores.**
+**Estado del slice: PR #489 integrado en `main@77bf1c1` y cualificado en los seis workflows post-merge exact-head. Avance global: 85%; recolección global deshabilitada hasta cualificar el candidato y revisar productores nuevos.**
 
 `DurableWorkerExecution` mantiene el lease compartido desde la escritura del artefacto hasta el commit de evidencia/checkpoint y resultado, también para resultados del scheduler. `LocalWorkerRuntime` y `BrokerWorkerRuntime` inyectan la barrera PostgreSQL cuando usan el perfil PostgreSQL; la adquisición asíncrona evita bloquear el event loop y libera la sesión si se cancela durante la adquisición.
 
