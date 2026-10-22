@@ -55,6 +55,7 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_migration",
             "studio_quality",
             "studio_data_engineering",
+            "studio_ml",
         }
     ),
     "studio_worker": frozenset(
@@ -106,7 +107,15 @@ PROJECT_DEPENDENCIES.update(
         "studio_graph": frozenset({"studio_core"}),
         "studio_lakehouse": frozenset({"studio_core", "studio_storage"}),
         "studio_migration": frozenset({"studio_core"}),
-        "studio_ml": frozenset({"studio_core", "studio_orchestrator", "studio_storage"}),
+        "studio_ml": frozenset(
+            {
+                "studio_core",
+                "studio_orchestrator",
+                "studio_storage",
+                "studio_kernel",
+                "studio_runners",
+            }
+        ),
         "studio_observability": frozenset({"studio_orchestrator"}),
         "studio_quality": frozenset({"studio_core", "studio_orchestrator", "studio_storage"}),
         "studio_security": frozenset({"studio_core", "studio_orchestrator"}),

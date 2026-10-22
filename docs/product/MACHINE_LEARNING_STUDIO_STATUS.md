@@ -7,7 +7,7 @@ planificadas de una plataforma ML completa.
 |---|---|---|
 | Plugin discovery, manifest y permisos | Implementado | `python/studio_ml/plugin.py`, tests de plugin |
 | Labs y pipeline IR | Implementado | `domain.py`, `services.py`, tests de dominio/SQLite |
-| Envío de DAG candidato por API | Implementado y exact-head cualificado en `main@ad53878` | PipelineIR v2 durable con ramas prepare por preprocesador y cuadrículas algoritmo×preprocesador de hasta ocho combinaciones/24 nodos; clustering conserva su selector independiente. DAGs arbitrarios y `register` siguen fuera del contrato |
+| Envío de DAG candidato por API | Implementado estáticamente en el candidato; cualificación pendiente | PipelineIR v3 durable con DAGs arbitrarios, `register` terminal y etapas namespaced de plugins; PipelineIR v2 mantiene compatibilidad con ramas prepare y cuadrículas de hasta ocho combinaciones/24 nodos |
 | Backend local intercambiable | Implementado | `backends.py`, `runner.py`, tests de runner |
 | Contratos versionados lab/IR/backend | Implementado | `docs/contracts/ml-*-v1.md` |
 | Capability discovery de adapters | Implementado | `BackendCapabilities`, `/v1/ml-studio/backends` |
@@ -24,16 +24,17 @@ planificadas de una plataforma ML completa.
 | Reintento selectivo de ejecuciones fallidas | Integrado y exact-head cualificado en `main@c2df903` | `POST .../retry` crea un hijo desde una etapa elegida, restaura checkpoints anteriores y permite seguimiento UI |
 | ArtifactStore S3-compatible para lifecycle ML | Exact-head cualificado en `main@6507b97` | Input durable >1 MiB y materialización de modelo por `S3ArtifactStore`; lectura, digest y qualification LocalStack pasaron CI y Docker |
 | Limpieza manual de artifacts sin referencias | Exact-head cualificada en `main@33a7b45` | Conjunto vivo vacío rechazado por defecto; vaciado completo requiere `allow_empty_live_set=True`; limpieza global automática sigue deshabilitada por falta de barrera entre stores |
-| Primitiva PostgreSQL de coordinación de retención | Candidato probado contra PostgreSQL 16 en Docker; sin integración de productores | Locks compartidos para escritores y exclusivo para recolección, timeout fail-closed; 12 tests pasan. El recolector automático sigue deshabilitado hasta instrumentar todos los productores y stores |
-| Servicio sync de conectores protegido por barrera opcional | Candidato; pendiente de cablear en composición | Si se inyecta `ArtifactReferenceBarrier`, el lock cubre `destination.write()` y el commit del checkpoint; 48 tests dirigidos pasan. No habilita limpieza global |
-| Artefactos de ejecución ML durable coordinados con JobStore | Candidato; composición PostgreSQL inyecta la barrera compartida | Inputs, checkpoints de nodo y modelo final mantienen el lock hasta confirmar la referencia durable; 30 tests ML dirigidos pasan. No cubre Jobs/evidence globales ni otros productores |
-| Revisiones de Data Engineering protegidas por barrera | Candidato; plugin y composición PostgreSQL inyectan la barrera | El lock abarca todos los artefactos de una revisión y su commit durable; 45 tests combinados pasan. Otros productores siguen sin instrumentar |
+| Primitiva PostgreSQL de coordinación de retención | Implementada estáticamente; cualificación pendiente | Locks compartidos para escritores y exclusivo para recolección, timeout fail-closed; la composición PostgreSQL comparte la barrera con conectores, worker, ML, Data Engineering, catálogo y exports. El recolector automático sigue deshabilitado hasta cualificar el candidato y revisar productores nuevos |
+| Servicio sync de conectores protegido por barrera opcional | Implementado estáticamente; cualificación pendiente | La composición local inyecta la misma `ArtifactReferenceBarrier` en el adapter HTTP y el servicio sync; el lock cubre `destination.write()` y el commit del checkpoint. No habilita limpieza global |
+| Artefactos de ejecución ML durable coordinados con JobStore | Implementado estáticamente; cualificación pendiente | Inputs, checkpoints de nodo y modelo final mantienen el lock hasta confirmar la referencia durable; la composición PostgreSQL inyecta la barrera compartida |
+| Revisiones de Data Engineering protegidas por barrera | Implementado estáticamente; cualificación pendiente | El lock abarca todos los artefactos de una revisión y su commit durable; el plugin y la composición PostgreSQL inyectan la barrera compartida |
 | Lectura y descarga de artifacts de modelos | Integradas y exact-head cualificadas en `main@c2df903` | Endpoint `GET .../artifact` con `ml-studio:read`, aislamiento por workspace y bloques Base64 verificados; UI reconstruye y descarga el archivo tras validar tamaño, digest y secuencia |
 | Provenance y registry base | Implementado | `service.py`, `provenance.py`, persistence tests |
 | HTTP control plane y autorización | Implementado | `test_ml_studio_http.py` |
 | OpenAPI base ML Studio | Implementado | `api/openapi-v1.json`, contract test |
 | UI Labs/quality/run básica | Implementado | `features.js`, Chromium browser audit |
-| Grid trials y ranking determinista | Parcial | `optimization.py` y `POST .../search`; `seed`, `C` y `max_iter` se aplican en logística; tie-breakers ordenados y direccionales exact-head cualificados en `main@a8e1120` |
+| Grid trials y ranking determinista | Implementado estáticamente; cualificación pendiente | `optimization.py` y `POST .../search` generan grids reproducibles y acotados; `seed`, `C` y `max_iter` se aplican en logística; ranking primario y tie-breakers ordenados y direccionales; Studio expone grids algoritmo×preprocesador con máximo de ocho candidatos |
+| Límites de búsqueda y registro durable | Implementado estáticamente; cualificación pendiente | `optimization.py` acota parámetros, valores, nombres y trials; rutas de ejecución, registro y retry acotan identificadores y texto antes de resolver snapshots o artefactos |
 | Random trials | Implementado | muestreo determinista y bounded por `random_seed` |
 | Bayesian trials | Implementado y exact-head cualificado en `main@cc0ad8f` | surrogate discreto, Expected Improvement, propuestas de memoria acotada y parada por paciencia/mejora reciente |
 | Compare API y ranking de trials | Implementado y exact-head cualificado en `main@ba3106b` | API, formulario UI, tie-breakers direccionales, máximo de ocho y rechazo de campos desconocidos; OpenAPI y parser mantienen el mismo contrato |
@@ -50,8 +51,15 @@ planificadas de una plataforma ML completa.
 | K-Means integrado en registry síncrono | Implementado | `run_lab` persiste artifact content-addressed, run, métricas y provenance |
 | K-Means scoring, registro y promoción síncrona | Implementado | artifact `ronin.ml-kmeans/v1`, firma `cluster`, registro candidato y predicción con digest verificado |
 | K-Means en flujo asíncrono | Implementado | coordinator local, lifecycle terminal y payload de resultado verificados |
-| Remote/MLflow/Spark adapters | Implementado como abstracción | adapters JSON configurables, retry/cancel/poll/predict y capacidades declaradas; la URL/semántica concreta del proveedor se configura por despliegue |
+| Remote/MLflow/Spark adapters | Implementado como abstracción; cualificación pendiente | adapters JSON configurables, retry/cancel/poll/predict, backoff exponencial acotado, métricas finitas y capacidades declaradas; la URL/semántica concreta del proveedor se configura por despliegue |
+| Bundle de registry ML | Implementado estáticamente; cualificación pendiente | Export/import de experimentos, features, evaluaciones, runs, modelos y, cuando se inyectan stores, bytes de artefactos con digest y remapeo de referencias; la importación PostgreSQL acepta la barrera compartida para publicar bytes y referencias en un mismo lease; metadata-only sigue explícito |
+| Publicación artifact→run→modelo | Implementada estáticamente; cualificación pendiente | Tabular y K-Means calculan digest/firma antes de publicar, aceptan reintentos idénticos y rechazan conflictos; el cleanup de huérfanos sigue deliberadamente conservador |
+| Experimentos API | Implementado estáticamente; cualificación pendiente | POST crea de forma durable y GET/listado recuperan por workspace; conflictos de definición se rechazan |
 | Remote adapter v1 contract | Implementado | `docs/contracts/ml-remote-adapters-v1.md`, tipos, errores, transporte y adapters de proveedor |
+| MLflow metadata interchange | Implementado estáticamente; cualificación pendiente | `mlflow.py` exporta/importa el subconjunto canónico de experiment/run/model con flavors seguros; no carga código ni artefactos ejecutables |
+| Feature definitions y dataset snapshots | Implementado estáticamente; cualificación pendiente | `FeatureDefinition` versionado e inmutable en in-memory/SQLite/PostgreSQL; composición local cablea el servicio al control plane y OpenAPI documenta las rutas |
+| Deployment/serving local con digest fijado | Implementado estáticamente; cualificación pendiente | `ModelDeployment`, persistencia SQLite/PostgreSQL, readiness/health, prediction contra artefacto fijado, telemetría acotada, rollback sin cambiar el champion y tarea scheduler `ml-studio.deployment.v1` |
+| AI/ML Lab Studio end-to-end | Implementado estáticamente; cualificación pendiente | Labs, quality suites, compare/export, registry/promotion, model cards, artifact download, scoring, drift y deployments con health/predict/rollback en la UI |
 
 La suite específica ML Studio, los contratos y la auditoría E2E deben permanecer verdes.
 El módulo está completo dentro del alcance provider-neutral definido por el build plan;
@@ -59,8 +67,10 @@ la conexión a un endpoint remoto concreto es configuración de despliegue, no c
 pendiente del módulo.
 La ejecución duradera reutiliza etapas exitosas sólo cuando coinciden su identidad de
 runtime y los outputs de sus dependencias; una etapa recalculada invalida sus
-dependientes obsoletos. Todavía no admite grafos configurables, `register` como etapa
-ejecutable; el retry selectivo desde una etapa elegida está integrado y exact-head cualificado en `main@c2df903`.
+dependientes obsoletos. El candidato actual admite grafos configurables, `register` como
+etapa ejecutable y etapas namespaced de plugins; la cualificación exact-head e integración
+en `main` siguen pendientes. El retry selectivo desde una etapa elegida está integrado y
+exact-head cualificado en `main@c2df903`.
 El resultado durable conserva una referencia verificada del modelo en ArtifactStore.
 El candidato local añade el registro de una ejecución como versión candidata por una
 API protegida, la lectura HTTP autorizada en bloques y la descarga verificada desde la

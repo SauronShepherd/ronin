@@ -40,7 +40,7 @@ from studio_execution import (
     WorkspaceService,
 )
 from studio_finops import SqliteFinOpsStore
-from studio_ml import PostgresMLLabStore
+from studio_ml import FeatureDefinitionService, PostgresMLLabStore
 from studio_ml.sqlite import SqliteMLLabStore
 from studio_orchestrator import Instant
 from studio_plugin_observability import LocalObservabilityBuffer
@@ -260,16 +260,17 @@ def build_local_composed_from_env() -> LocalServerComposition:
         else SqliteAuditStore(database, migration_now=now)
     )
     observability_buffer = LocalObservabilityBuffer()
+    ml_lab_store = (
+        PostgresMLLabStore(postgres_dsn, application_name="ronin-composed-ml")
+        if postgres_dsn is not None
+        else SqliteMLLabStore(database, migration_now=now)
+    )
     plugin_host = PluginHost.discover(
         services={
             "workspace_service": workspace_service,
             "project_service": project_service,
             "observability_buffer": observability_buffer,
-            "ml_lab_store": (
-                PostgresMLLabStore(postgres_dsn, application_name="ronin-composed-ml")
-                if postgres_dsn is not None
-                else SqliteMLLabStore(database, migration_now=now)
-            ),
+            "ml_lab_store": ml_lab_store,
             "ml_execution_service": job_service,
             "ml_registry": (
                 PostgresMLStore(postgres_dsn, application_name="ronin-composed-ml-registry")
@@ -399,6 +400,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         quality_reader=quality_reader,
         finops_reader=finops_reader,
         data_engineering_reader=data_engineering_reader,
+        feature_definition_service=FeatureDefinitionService(cast(Any, ml_lab_store)),
         connector_registry=connector_registry,
         ingestion_adapter=ingestion_adapter,
         plugin_host=plugin_host,

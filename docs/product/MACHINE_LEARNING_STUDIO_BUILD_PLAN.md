@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Avance de implementación técnica estimado: 90%. Cualificación release: 0% (0/14).** El porcentaje técnico sólo aumenta tras la cualificación exact-head del SHA integrado. PR #509 añadió registro durable como etapa terminal de PipelineIR v2 y quedó integrado y cualificado en `main@156d60784e8e0c5e23f1383c2cf96dc8860560e3` por los seis workflows post-merge. Siguen pendientes las formas arbitrarias de DAG y las etapas definidas por plugins; la limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado. La cualificación release sigue siendo independiente del progreso funcional.
+**Avance de implementación técnica estimado: 90%. Cualificación release: 0% (0/14).** El porcentaje técnico sólo aumenta tras la cualificación exact-head del SHA integrado. PR #509 añadió registro durable como etapa terminal de PipelineIR v2 y quedó integrado y cualificado en `main@156d60784e8e0c5e23f1383c2cf96dc8860560e3` por los seis workflows post-merge. El candidato local implementa formas arbitrarias de DAG con PipelineIR v3, etapas definidas por plugins, creación durable de experimentos y backoff remoto acotado; faltan revisión, cualificación exact-head e integración. La limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado. La cualificación release sigue siendo independiente del progreso funcional.
 
 ## 0. Principios de ejecución
 
@@ -96,7 +96,7 @@ Migración limpia desde una base vacía, migración sobre base existente, rollba
 
 ### Compiler
 
-1. Resolver refs de datasets contra `CatalogStore`; un resolver acotado de CSV/JSONL ya está implementado en el candidato actual para quality, ejecución síncrona y ejecución asíncrona. Falta la cualificación exact-head y extender la materialización a pipelines/reintentos antes de dar por cerrado el criterio global.
+1. Resolver refs de datasets contra `CatalogStore`; un resolver acotado de CSV/JSONL está implementado en el candidato actual para quality, ejecución síncrona, ejecución asíncrona, pipelines y reintentos. Falta la cualificación exact-head antes de dar por cerrado el criterio global.
 2. Resolver backend contra `BackendRegistry`.
 3. Resolver runtime profile.
 4. Generar nodes `profile`, `quality`, `prepare`, `train`, `evaluate`, `select`, `register`.
@@ -796,7 +796,10 @@ Las secciones 53–59 instrumentan productores de conectores, ML, Data Engineeri
 | Proteger el intervalo crítico de sync | `IngestionSyncService.execute()` admite barrera opcional y conserva el lock desde `destination.write()` hasta `commit_output_then_checkpoint()`. El lease se libera si cualquiera de los dos pasos falla. |
 | Verificar el orden de publicación y referencia | Una prueba de sync comprueba `lock → artifact → reference → unlock`; suites de sync, checkpoints, registry, capabilities y PostgreSQL pasan **48/48**. |
 
-Esta integración deja preparado el servicio de sync; todavía debe cablearse una instancia compartida en la composición de servidor y demostrarse con sus adapters reales. No cubre los otros productores ni hace segura la recolección global.
+La composición local ya cablea la misma instancia de barrera al adapter HTTP de
+ingesta y al servicio de sync. El perfil PostgreSQL protege bytes, destino y
+checkpoint dentro del mismo lease; SQLite conserva el flujo local. No cubre los
+otros productores ni hace segura la recolección global por sí sola.
 
 ## 54. Proteger artefactos de ejecuciones durables de ML
 
@@ -809,7 +812,7 @@ Esta integración deja preparado el servicio de sync; todavía debe cablearse un
 | Proteger el modelo final hasta completar el Job | `finish_claim_with_result()` cubre materialización verificada y commit de `ml-result`. |
 | Compartir la coordinación en perfil PostgreSQL | La composición local inyecta una instancia `PostgresArtifactReferenceBarrier` en el host de plugins; el perfil SQLite conserva el modo actual sin barrera. |
 
-La prueba de regresión observa que el artefacto y su submit quedan dentro del mismo lease; las suites de ejecución ML y orchestration pasan **30/30**, Ruff y mypy focalizado pasan. Las secciones 53, 55 y 57/58 cubren conectores, revisiones de Data Engineering, catálogo/archivos y exports sintéticos. Siguen pendientes productores de Jobs/evidencia/checkpoints fuera de ML y cualquier otro productor; no habilitar limpieza global hasta cubrirlos y cualificar el commit exact-head.
+La prueba de regresión observa que el artefacto y su submit quedan dentro del mismo lease; las suites de ejecución ML y orchestration pasan **30/30**, Ruff y mypy focalizado pasan. Las secciones 53, 55, 56 y 57/58 cubren conectores, revisiones de Data Engineering, evidencias/checkpoints del worker, catálogo/archivos y exports sintéticos. La recolección global sigue deshabilitada hasta completar la cualificación del candidato y revisar cualquier productor nuevo.
 
 ## 55. Proteger revisiones de Data Engineering hasta su commit durable
 
@@ -819,7 +822,7 @@ La prueba de regresión observa que el artefacto y su submit quedan dentro del m
 
 ## 56. Proteger evidencias y checkpoints del worker durable
 
-**Estado del slice: PR #489 integrado en `main@77bf1c1` y cualificado en los seis workflows post-merge exact-head. Avance global: 85%; recolección global deshabilitada hasta completar los demás productores.**
+**Estado del slice: PR #489 integrado en `main@77bf1c1` y cualificado en los seis workflows post-merge exact-head. Avance global: 85%; recolección global deshabilitada hasta cualificar el candidato y revisar productores nuevos.**
 
 `DurableWorkerExecution` mantiene el lease compartido desde la escritura del artefacto hasta el commit de evidencia/checkpoint y resultado, también para resultados del scheduler. `LocalWorkerRuntime` y `BrokerWorkerRuntime` inyectan la barrera PostgreSQL cuando usan el perfil PostgreSQL; la adquisición asíncrona evita bloquear el event loop y libera la sesión si se cancela durante la adquisición.
 
@@ -954,10 +957,215 @@ La auditoría paralela confirmó que PR #508 ejecuta en paralelo las lanes de Do
 
 La siguiente hipótesis es dividir la suite en **dos shards por versión de Python**. La estimación inicial es 2m30s–2m45s para CI, un ahorro de 1m30s–1m45s en ese workflow; el ahorro del camino exact-head total sería pequeño al principio porque Docker queda en 4m18s. Antes de adoptarlo, se deben medir duraciones, comprobar que cada node ID se ejecuta exactamente una vez y combinar cobertura dentro de cada versión de Python antes de ejecutar los mismos ocho umbrales de `make test`. Debe conservarse la evidencia de cobertura por versión. Validar al menos tres ejecuciones comparables, sin flakes ni fallos de fixtures/puertos; mantener las pruebas Docker y la aceptación 15/15.
 
-## 77. Generalizar DAGs built-in con PipelineIR v3 (pendiente)
+La lane de CI conserva su ejecución serial actual y ahora captura `pytest-timings.json` (esquema v2) con SHA, ID/intento del workflow, versión de Python, shard, node IDs recolectados, node IDs ejecutados (incluidos reintentos/duplicados), duración de cada fase, indicador de flakes, tiempo de instalación, tiempo total desde la carga del plugin de timing, duración del cuerpo de la sesión y tiempo de startup/recolección; publica el artefacto por versión de Python y ejecución incluso si falla la suite. El tiempo de sesión usado para comparar lanes incluye la configuración y recolección que ocurren después de cargar el plugin. El comparador exige las tres duraciones de sesión coherentes y rechaza el esquema v1 para no mezclar métricas incompatibles. Si la suite termina correctamente pero falta el JSON, CI falla para evitar perder evidencia silenciosamente. Esta instrumentación prepara la comparación de tiempos sin activar shards. La decisión de adoptar la división sigue pendiente de tres ejecuciones comparables y de demostrar reparto exacto de node IDs, cobertura combinada y gates equivalentes.
+
+`tools/pytest_shard_evidence.py` compara los artefactos baseline y shard de un SHA/versión de Python, exige por defecto tres ejecuciones exitosas de cada modo y exactamente dos shards por run, rechaza node IDs perdidos/duplicados, outcomes variables, retries flaky y resultados fallidos, y calcula la mediana del tiempo serial frente a la duración máxima estimada del shard concurrente, sumando instalación y sesión por lane. La combinación de cobertura y los ocho umbrales siguen siendo una cualificación separada y no quedan aprobados por este informe.
+
+## 77. Requisitos para generalizar DAGs built-in con PipelineIR v3
 
 No ampliar PipelineIR v2: su contrato actual falla antes de crear el Job si la topología no coincide con las formas de candidato admitidas. Diseñar PipelineIR v3 con un registro estático e inmutable de etapas built-in versionadas; cada etapa declara configuración canónica, entradas y salidas tipadas, cardinalidad, política de efectos, codec de checkpoint y executor. Mantener al principio el límite de 24 nodos y ejecución topológica estable y serial.
 
 Validar antes de crear el Job todos los IDs, referencias y puertos, tipos, cardinalidades, ciclos, nodos inalcanzables, límites de tamaño y compatibilidad de versiones. Fijar en el Job el digest de pipeline, esquema y executor; verificarlo al reanudar. Los outputs/checkpoints deben conservar sus digests y fingerprints, y un retry debe invalidar el nodo fallido y descendientes cuando cambie cualquier fingerprint. El registro permanece terminal y usa la interfaz idempotente host con el writer lease actual. No serializar código ejecutable, imports ni comandos shell.
 
 Mantener las etapas de plugins en un PR posterior al contrato v3: contribution namespaced y versionada, distribución fijada al Job, permisos explícitos, API de artefactos acotada y ejecución aislada con recursos/timeout/cancelación. No activar recolección automática global de artefactos hasta que estén inventariadas y protegidas todas las fuentes con referencias compartidas y eliminación fail-closed.
+
+## 78. Implementar el contrato PipelineIR v3 y el executor de DAGs built-in
+
+**Estado del candidato: implementación local sin ejecutar pruebas, builds, validadores ni Docker por instrucción del usuario. No integrado; el porcentaje global no cambia.**
+
+La primera implementación añade nodos con referencias `node.output` tipadas y puertos/cardenalidades declarados en un registro built-in inmutable. Las versiones fijan configuración permitida, clase de efecto, executor y codec de checkpoints; el digest del registro incorpora hashes del código host y versiones de Python/dependencias, y se guarda en la identidad del Job para invalidar una reanudación con otro executor. El grafo permite ramas `prepare/train/evaluate` y joins en `select`, conserva `register` como side effect terminal administrado por el host y valida antes de cargar los datos o crear el Job. Se mantienen los contratos y payloads v1/v2.
+
+La implementación incluye límites de 24 nodos, 48 aristas, fan-out 8, 16 KiB de configuración y 64 KiB de IR; valida referencias, tipos, parámetros ligados al Lab, configuración de tarea, nodos huérfanos y orden topológico determinista. Los checkpoints inline se limitan a 256 KiB y los externos a 128 MiB, para conservar modelos válidos de hasta 64 MiB. El runner consulta cancelación entre etapas; al cerrar el coordinador una ejecución durable conserva el Job y deja expirar el lease para permitir su recuperación. El snapshot de API expone sólo ID y tipo de etapa, y la UI envía `node:<id>` para reintentar una rama exacta. Los clientes pueden enviar un tipo desnudo para invalidar todas sus instancias; la UI evita la ambigüedad entre un tipo y un ID coincidente. La cobertura específica incluye clasificación/regresión con ramas y selección, clustering, rechazo antes del Job, identidad/recuperación de checkpoints, registro v3 durable y regresiones v1/v2. El incremento de porcentaje queda pendiente hasta integrar y cualificar el SHA exact-head con CI, Docker, Web, Security, Release y Status consistency.
+
+Las entradas grandes, los checkpoints externalizados y la materialización de modelos exigen ahora una barrera de referencias para mantener el writer lease desde la escritura hasta el commit; si falta, la ejecución falla cerrada. Las excepciones de infraestructura del executor OCI se normalizan como fallos de etapa con contrato estable.
+
+## 79. Registrar y ejecutar etapas aportadas por plugins (candidato implementado)
+
+**Estado del candidato: implementación local sin ejecutar pruebas, builds, validadores ni Docker por instrucción del usuario. No integrado; el porcentaje global no cambia.**
+
+El SDK y el registro de contribuciones del host ahora admiten etapas namespaced con versión, digest de la distribución instalada, imagen OCI fijada por digest, puertos tipados, configuración permitida, efecto, permisos y límites de CPU, memoria, procesos y timeout. Durante composición, el host compara el digest declarado con la distribución instalada antes de congelar el registro. El digest de todas las declaraciones contribuidas se incorpora al digest del registro v3 fijado en el Job. El host rechaza contribuciones fuera del manifest, colisiones, permisos no soportados y límites fuera de política.
+
+PipelineIR v3 ya valida la identidad declarada, versión, puertos tipados, cardinalidad y configuración contra el registro congelado. El runner despacha etapas al executor OCI fijado por digest, con payload JSON acotado por stdin interactivo, sin red, montajes, credenciales ni root filesystem escribible. Los resultados de datos disponen de codec canónico de checkpoint ligado a la distribución e imagen fijadas; cancelación del Job y pérdida de lease se propagan al comando Docker. Los evaluadores plugin pueden producir `ml.metrics` con scores finitos ligados a un modelo train directo. `artifact:read` entrega sólo referencias upstream autorizadas; `artifact:write` acepta hasta ocho objetos y 512 KiB agregados. El executor rechaza antes de codificar modelos de entrada mayores de 512 KiB y mide incrementalmente las solicitudes hasta el límite de 1 MiB.
+
+La escritura de bytes, su verificación, las referencias embebidas en el checkpoint y el guardado durable se ejecutan dentro del mismo writer lease. El inventario durable de Jobs ve las referencias aun cuando el checkpoint se externaliza como artefacto grande. No aumentar el progreso global ni declarar este hito terminado antes de cerrar la revisión del slice y cualificar el SHA exact-head con los gates requeridos.
+
+## 80. Degradar con claridad cuando falta scikit-learn
+
+El backend local detecta la presencia del paquete opcional sin importarlo durante el bootstrap. El endpoint `/v1/ml-studio/backends` informa `available` o `unavailable` y, cuando falta, devuelve el extra `ml` y la instrucción de instalación. La UI muestra el motivo y deshabilita controles de entrenamiento para Labs que usan ese backend; si no puede consultar capacidades, trata el estado como desconocido y también bloquea el entrenamiento hasta refrescar. El servidor valida tanto los pipelines compilados como los enviados por el cliente antes de resolver datos o crear el Job. Implementación local sin pruebas ni validadores por instrucción del usuario; el progreso técnico global no cambia.
+
+Las entradas directas de clustering aplican la misma guarda de disponibilidad que las ejecuciones tabulares. El control plane traduce la dependencia opcional ausente a `503 ml_backend_unavailable` y un backend desconocido a `404 ml_backend_not_found`, conservando un contrato HTTP explícito cuando el plugin se invoca desde la API.
+
+## 81. Publicar reportes de drift numérico por Lab
+
+El endpoint con permiso `ml-studio:execute` compara ventanas explícitas de referencia y actuales para las features que el Lab declara como numéricas. Requiere una `DriftPolicy` v1 con ID, versión y umbrales finitos por feature para el cambio absoluto de media y varianza poblacional; limita cada ventana a 100.000 filas y devuelve la política, resúmenes, features que exceden umbral y las limitaciones del método. La política se conserva como JSON portable y también puede guardarse como versión inmutable en un catálogo por workspace/Lab; Studio permite cargar versiones guardadas y reutilizarlas entre sesiones. No persiste las filas ni inicia retraining o promoción. Studio ofrece el formulario desde cada Lab y muestra el reporte devuelto por el API. Implementación local sin pruebas, builds ni validadores por instrucción del usuario; el progreso técnico global no cambia.
+
+## 82. Completar la evidencia de model cards
+
+La model card obtiene del registro el dataset, parámetros, métricas, referencia de ejecución y revisión de código del run de origen, además de la firma y provenance del artefacto. Expone el uso previsto ligado a la tarea y declara explícitamente fairness como `not_assessed` y owner como desconocido cuando esa evidencia no existe; añade limitaciones si no puede recuperar el run. OpenAPI describe el payload versionado. Implementación local sin pruebas, builds ni validadores por instrucción del usuario; el progreso técnico global no cambia.
+
+## 83. Filtrar y exportar comparaciones de trials
+
+La tabla de comparación en Studio permite filtrar localmente por ID, parámetro o métrica y descargar el ranking completo como JSON o CSV. El CSV conserva los objetos de parámetros y métricas como celdas JSON con escape RFC-compatible; no crea una ruta de exportación en el servidor ni modifica evidencia durable. Implementación local sin pruebas, builds ni validadores por instrucción del usuario; el progreso técnico global no cambia.
+
+## 84. Ejecutar suites de calidad versionadas
+
+El contrato `ronin.ml-quality-suite/v1` limita suites a 64 expectativas únicas con reglas `not_null`, `numeric`, `min`, `max` y `min_distinct`; cada expectativa declara severidad warning/failure. Las referencias a columnas se validan contra el Lab antes de resolver filas o crear el Job. El endpoint de quality acepta una suite para previsualizar resultados. Las ejecuciones aceptan `quality_suite`, la convierten a PipelineIR v3, la fijan en la identidad del Job y evalúan el gate antes de prepare/train. Los resultados detallan cada expectativa y forman parte del checkpoint durable. La UI permite aplicar la suite seleccionada a nuevas ejecuciones; la persistencia de catálogo y recuperación entre sesiones se detalla en el hito 85. Implementación local sin pruebas, builds ni validadores por instrucción del usuario; el progreso técnico global no cambia.
+
+
+## 85. Persistir suites de calidad entre sesiones
+
+**Estado del candidato: implementado estáticamente; cualificación pendiente.** El catálogo versionado por workspace y Lab está disponible en stores in-memory, SQLite y PostgreSQL, con claves compuestas, inmutabilidad, orden creciente de versión y borrado en cascada con el Lab en stores relacionales. Las versiones se limitan a 1..2,147,483,647 para ajustarse al `INTEGER` compartido por SQLite/PostgreSQL. El store in-memory serializa lecturas y escrituras del catálogo para preservar la inmutabilidad y el avance monotónico bajo solicitudes concurrentes. Los endpoints de listar/guardar/obtener aplican scope de workspace y permisos diferenciados; Studio puede cargar versiones desde el servidor y guardar/usar una suite. Los conflictos de versión responden como HTTP 409 y las referencias ausentes como 404, sin añadir una importación de ML al arranque general del servidor. OpenAPI y `docs/contracts/ml-quality-suite-v1.md` documentan rutas y esquema. No se ejecutaron pruebas, builds, verificadores ni Docker por instrucción del usuario; el progreso técnico global no cambia.
+
+
+## 86. Persistir políticas de drift versionadas
+
+**Estado del candidato: implementado estáticamente; cualificación pendiente.** El catálogo aislado por workspace y Lab para `DriftPolicy` usa versiones inmutables de 1..2,147,483,647, avance monotónico y borrado en cascada al borrar el Lab en SQLite/PostgreSQL. El límite coincide con el tipo `INTEGER` usado por ambos stores. El store in-memory serializa lecturas y escrituras del catálogo para preservar la inmutabilidad y el avance monotónico bajo solicitudes concurrentes. Los endpoints de guardar/listar/recuperar aplican permisos read/write y validan que cada política cubra exactamente las features numéricas del Lab. Studio guarda y carga políticas desde el formulario de drift. OpenAPI y `docs/contracts/ml-drift-policy-v1.md` documentan los endpoints y el esquema. No se ejecutaron pruebas, builds, verificadores ni Docker por instrucción del usuario; el progreso técnico global no cambia.
+
+### Cierre estático adicional del candidato
+
+El endpoint `POST /v1/ml-studio/experiments` ya crea una identidad `Experiment`
+durable y workspace-scoped mediante el registry, rechaza cuerpos incompletos y
+mantiene la definición inmutable en SQLite y PostgreSQL. OpenAPI documenta la
+entrada y la respuesta creada. `GET /v1/ml-studio/experiments` y
+`GET /v1/ml-studio/experiments/{experiment_id}` completan el listado y la
+reapertura workspace-scoped.
+
+El transporte remoto aplica el timeout de la solicitud sin superar el timeout de
+despliegue, limita el tamaño de la respuesta JSON y ejecuta el backoff exponencial
+acotado sólo entre reintentos transitorios. Los resultados rechazan métricas con
+NaN/Inf antes de entrar en el lifecycle. Estas correcciones son estáticas y aún
+requieren cualificación exact-head; no se ejecutaron pruebas, builds, validadores
+ni Docker por instrucción del usuario.
+
+### Portabilidad del registry ML
+
+El bundle de registry puede incluir los bytes de los artefactos de modelos cuando
+se proporciona el `ArtifactStore`. Cada objeto `ml_artifact` conserva el digest
+SHA-256 y la referencia de origen dentro de un payload `ronin.ml-artifact/v1`;
+la planificación de importación verifica todos los bytes y la relación entre
+modelo y artefacto antes de mutar el registry. La importación escribe los bytes
+en el store de destino y remapea las referencias de runs y modelos. Sin un store
+de artefactos se mantiene explícitamente el modo metadata-only, sin afirmar que
+el bundle sea autosuficiente. El contrato está documentado en
+`docs/contracts/ml-registry-bundle-v1.md`; la cualificación exact-head sigue
+pendiente y no se ejecutaron pruebas ni Docker.
+
+Las rutas de publicación tabular y K-Means calculan la identidad del artefacto
+antes de escribirlo, detectan una versión de modelo ya publicada con la misma
+firma y digest, y tratan runs/modelos idénticos como reintentos idempotentes. Un
+conflicto de identidad se rechaza; el writer lease actual sigue cubriendo la
+escritura del artefacto y las referencias. Los artefactos huérfanos de un fallo
+intermedio permanecen sujetos a la política conservadora de retención y no se
+borran automáticamente.
+
+El contrato de capacidades `ronin.ml-backend/v1` expone ahora, además de tareas
+y algoritmos, los nombres de hiperparámetros acotados, formatos de artefacto y
+perfiles de recursos que cada adapter acepta. El servidor publica estas
+capacidades en `/v1/ml-studio/backends`; los adapters local, MLflow y Spark
+declaran sus perfiles y rechazan declaraciones duplicadas o vacías antes de
+ser registrados. La cualificación exact-head sigue pendiente y no se ejecutaron
+pruebas, builds, validadores ni Docker.
+
+La interoperabilidad MLflow del subconjunto seguro ya tiene un sobre canónico
+`ronin.mlflow-metadata/v1` para experimento, run, modelo opcional y flavor.
+`export_mlflow_metadata()` e `import_mlflow_metadata()` preservan parámetros,
+métricas, firma, revisiones de datasets y digests sin cargar código, pickle,
+entornos ni URI de artefactos del proveedor; las relaciones run→experiment y
+model→run se validan y los flavors fuera de `python_function`/`sklearn` se
+rechazan explícitamente. La cualificación exact-head sigue pendiente y no se
+ejecutaron pruebas, builds, validadores ni Docker.
+
+## 87. Hacer durable el catálogo de FeatureDefinition en todos los perfiles
+
+**Estado del candidato: implementado estáticamente; cualificación pendiente.**
+`FeatureDefinition` valida versiones enteras dentro del rango compartido y enlaza
+cada definición con un `AssetRef` exacto. Los stores in-memory, SQLite y
+PostgreSQL rechazan sobrescrituras, exigen avance monotónico e implementan
+listado/lectura por workspace. La composición local reutiliza el mismo store
+ML para el plugin y conecta `FeatureDefinitionService` al control plane, de
+modo que las rutas `/v1/ml-studio/features` funcionan en los perfiles SQLite y
+PostgreSQL. OpenAPI y `docs/contracts/ml-feature-v1.md` describen el contrato.
+No se ejecutaron pruebas, builds, validadores ni Docker por instrucción del
+usuario.
+
+El bundle ML ahora puede transportar también definiciones de features y
+`ModelEvaluation` cuando se suministra el store de features o el registry
+expone lecturas de evaluaciones. El inventario conserva dependencias
+feature/run/model/evaluation, valida relaciones ausentes antes del commit y
+requiere los stores destino antes de escribir artefactos. El modo metadata-only
+continúa explícito. La cualificación exact-head sigue pendiente y no se
+ ejecutaron pruebas, builds, validadores ni Docker.
+
+La importación del bundle acepta ahora la `ArtifactReferenceBarrier` compartida.
+En PostgreSQL el lease cubre la materialización de bytes, el remapeo de
+referencias y los commits de registry/features, evitando que la retención
+observe una importación a medias. SQLite y el modo metadata-only conservan la
+operación sin barrera.
+
+El flujo síncrono de ejecución acepta ahora de forma coherente la opción
+`register` que ya consumía internamente el camino de clustering. El handler
+valida el shape exacto y limita `model_id`, `version`, `run_id`,
+`execution_ref` y `source_revision` antes de resolver datos o crear artefactos;
+las filas siguen usando los límites compartidos de dataset. La cualificación
+exact-head sigue pendiente y no se ejecutaron pruebas, builds, validadores ni
+Docker.
+
+La búsqueda de hiperparámetros reutiliza ahora el mismo resolver de datasets que
+las ejecuciones y quality gates, aplicando límites de filas, columnas, bytes y
+JSON canónico antes de lanzar trials. El cuerpo y la spec rechazan campos
+extraños; el registro opcional limita sus identificadores. No se ejecutaron
+pruebas, builds, validadores ni Docker.
+
+## 88. Acotar superficies de búsqueda y registro durable
+
+**Estado del candidato: implementado estáticamente; cualificación pendiente.**
+Las specs de búsqueda limitan el número de parámetros y valores, la longitud de
+identificadores y valores textuales, los nombres de métricas y los trials
+materializados. `BayesianStopPolicy` comparte el tope de 1.000 trials. El
+registro de modelos desde ejecuciones y el retry validan shape exacto, texto
+recortado, longitud y caracteres de control antes de leer snapshots o artefactos.
+Las opciones de compilación síncrona también acotan listas y nombres antes de
+crear el pipeline. No se ejecutaron pruebas, builds, validadores ni Docker por
+instrucción del usuario.
+OpenAPI refleja los límites de ejecución, registro, retry, compare y search.
+Las rutas de promoción, scoring, model card y descarga de artefactos comparten
+el límite de 256 caracteres para sus identificadores y rechazan controles.
+Labs y definiciones de features limitan también a 256 columnas y 256 caracteres
+por campo textual; el contrato OpenAPI mantiene esos mismos topes.
+El scope de workspace y los identificadores de Lab, run y experiment quedan
+acotados antes de acceder a stores o al coordinador.
+Scoring valida además el tipo de `artifact_base64`, batch IDs recortados y
+offsets numéricos con una longitud máxima para evitar entradas ambiguas.
+Quality, drift y los catálogos versionados validan los IDs de Lab y catálogo
+antes de leer o escribir sus stores.
+
+Los contratos de adapters remotos rechazan tipos no textuales, controles,
+identidades largas, métricas duplicadas y resultados que convierten silenciosamente
+identidades remotas inválidas.
+Polling, cancelación y prediction comparten límites de identificador y tamaño;
+el transporte exige timeouts finitos y un límite entero de respuesta.
+
+## 89. Completar el contrato de deployment y serving local
+
+**Estado del candidato: implementado estáticamente; cualificación pendiente.**
+`ModelDeployment` fija workspace, versión, referencia y digest del artefacto. La
+creación verifica los bytes mediante `ArtifactStore` antes de marcar readiness,
+persiste el estado en SQLite/PostgreSQL, expone health y telemetría acotada,
+sirve predicciones contra el digest fijado y permite rollback sin alterar el
+champion del registry. Las identidades de deployment son inmutables e
+idempotentes; un pin distinto produce conflicto. El contrato está documentado en
+`docs/contracts/ml-deployment-v1.md` y OpenAPI. El plugin registra además la
+tarea durable `ml-studio.deployment.v1` para ejecutar el mismo pin desde el
+scheduler. No se ejecutaron pruebas, builds, validadores ni Docker por
+instrucción del usuario.
+
+## 90. Completar el recorrido de AI/ML Lab Studio
+
+**Estado del candidato: implementado estáticamente; cualificación pendiente.**
+La superficie de Machine Learning Studio reúne creación de Labs, suites de
+calidad, comparación y exportación de trials, registro/promoción, model cards,
+descarga verificada de artefactos, scoring, drift y ahora el ciclo completo de
+deployment: creación con pin de modelo, listado, health, predicción y rollback.
+El cliente usa los contratos HTTP versionados y mantiene el workspace explícito.
+No se ejecutaron pruebas, builds, validadores ni Docker por instrucción del
+usuario.

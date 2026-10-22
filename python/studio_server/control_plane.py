@@ -264,6 +264,12 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("POST", "/v1/ml-studio/models/{model_id}/{version}/batch-predict"),
         ("GET", "/v1/ml-studio/models/{model_id}/{version}/artifact"),
         ("GET", "/v1/ml-studio/models/{model_id}/{version}/card"),
+        ("POST", "/v1/ml-studio/deployments"),
+        ("GET", "/v1/ml-studio/deployments"),
+        ("GET", "/v1/ml-studio/deployments/{deployment_id}"),
+        ("GET", "/v1/ml-studio/deployments/{deployment_id}/health"),
+        ("POST", "/v1/ml-studio/deployments/{deployment_id}/rollback"),
+        ("POST", "/v1/ml-studio/deployments/{deployment_id}/predict"),
     }
 )
 
@@ -982,6 +988,33 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
         return True
 
     def _handle_failure(self, exc: Exception) -> None:
+        ml_conflicts: tuple[type[Exception], ...] = ()
+        ml_dependency_errors: tuple[type[Exception], ...] = ()
+        ml_backend_not_found: tuple[type[Exception], ...] = ()
+        if exc.__class__.__module__ == "studio_ml.services":
+            from studio_ml.services import (
+                DriftPolicyConflict,
+                FeatureDefinitionConflict,
+                MLLabConflict,
+                QualitySuiteConflict,
+            )
+
+            ml_conflicts = (
+                DriftPolicyConflict,
+                FeatureDefinitionConflict,
+                MLLabConflict,
+                QualitySuiteConflict,
+            )
+        elif exc.__class__.__module__ in {"studio_ml.runtime", "studio_ml.runner"}:
+            # Keep the control plane importable without making the optional ML
+            # runtime a server bootstrap dependency.  These errors are raised
+            # while a plugin route invokes ML Studio, so translate them into a
+            # stable API response instead of leaking a generic 500.
+            from studio_ml.runner import BackendNotFound
+            from studio_ml.runtime import MLDependencyError
+
+            ml_dependency_errors = (MLDependencyError,)
+            ml_backend_not_found = (BackendNotFound,)
         if isinstance(
             exc,
             (
@@ -999,9 +1032,18 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 EnvironmentServiceConflict,
                 ConnectionServiceConflict,
                 PluginRouteConflict,
-            ),
+            )
+            + ml_conflicts,
         ):
             self._error(HTTPStatus.CONFLICT, "conflict", str(exc))
+        elif isinstance(exc, ml_dependency_errors):
+            self._error(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                "ml_backend_unavailable",
+                str(exc),
+            )
+        elif isinstance(exc, ml_backend_not_found):
+            self._error(HTTPStatus.NOT_FOUND, "ml_backend_not_found", str(exc))
         elif isinstance(exc, TimeoutError):
             self._error(
                 HTTPStatus.REQUEST_TIMEOUT, "request_timeout", "request body read timed out"

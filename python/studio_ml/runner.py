@@ -6,6 +6,7 @@ import base64
 import hashlib
 import inspect
 import json
+import math
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
@@ -13,13 +14,35 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, cast
 
+from studio_core.canonical_json import encode as encode_canonical_json
+from studio_kernel import CancellationSignal
+
 from .backends import BackendRegistry, ExperimentRequest, MLBackend, default_backends
 from .clustering import KMeansModel, fit_kmeans
-from .domain import PIPELINE_SCHEMA_V2, Lab, NodeKind, PipelineIR, PipelineNode
-from .quality import ColumnProfile, QualityReport, profile_and_validate
-from .runtime import Algorithm, Preprocessor, TrainedTabularModel, TrainingSpec
+from .domain import (
+    PIPELINE_SCHEMA_V2,
+    PIPELINE_SCHEMA_V3,
+    Lab,
+    NodeKind,
+    PipelineIR,
+    PipelineNode,
+)
+from .quality import (
+    ColumnProfile,
+    QualityExpectationResult,
+    QualityReport,
+    QualitySuite,
+    profile_and_validate,
+    validate_quality_suite,
+)
+from .runtime import Algorithm, MLDependencyError, Preprocessor, TrainedTabularModel, TrainingSpec
 
 _CHECKPOINT_RUNTIME_DISTRIBUTIONS = ("joblib", "numpy", "scikit-learn", "scipy")
+_MAX_PLUGIN_MODEL_INPUT_BYTES = 512 * 1024
+
+
+class MLExecutionCancelled(RuntimeError):
+    """Raised at a stage boundary after the owning execution is cancelled."""
 
 
 def _file_digest(path: str | Path | None) -> str | None:
@@ -65,6 +88,11 @@ def _checkpoint_runtime_fingerprint(
         "runner": _file_digest(__file__),
         "domain": _file_digest(Path(__file__).with_name("domain.py")),
         "pipeline_compiler": _file_digest(Path(__file__).with_name("services.py")),
+        "pipeline_stage_registry": _file_digest(Path(__file__).with_name("pipeline_stages.py")),
+        "plugin_stage_runtime": _file_digest(Path(__file__).with_name("plugin_stage_runtime.py")),
+        "plugin_contribution_contract": _file_digest(
+            Path(__file__).parents[1] / "studio_core" / "plugins.py"
+        ),
         "orchestration": _file_digest(Path(__file__).with_name("orchestration.py")),
         "runtime": _file_digest(inspect.getsourcefile(TrainingSpec)),
         "clustering": _file_digest(inspect.getsourcefile(KMeansModel)),
@@ -262,6 +290,10 @@ def _checkpoint_payload(kind: NodeKind, value: object) -> dict[str, object]:
                 "selection_score": value.selection_score,
             },
         }
+    if "/" in kind and isinstance(value, Mapping):
+        # Plugin stage values are restricted to the canonical JSON response from
+        # the isolated executor; no Python object or executable state is persisted.
+        return {"kind": kind, "value": dict(value)}
     raise ValueError(f"cannot checkpoint output for ML pipeline stage {kind!r}")
 
 
@@ -269,11 +301,45 @@ def _dependency_fingerprint(
     node: PipelineNode,
     nodes_by_id: Mapping[str, PipelineNode],
     values: Mapping[str, object],
+    dependency_ids: Sequence[str] | None = None,
 ) -> str:
     dependencies: list[list[str]] = []
-    for dependency_id in sorted(node.depends_on):
+    for dependency_id in sorted(dependency_ids if dependency_ids is not None else node.depends_on):
         dependency = nodes_by_id[dependency_id]
-        payload = _checkpoint_payload(dependency.kind, values[dependency_id])
+        output = values[dependency_id]
+        if isinstance(output, TrainedTabularModel):
+            payload: object = {
+                "schema": "ronin.ml-stage-output-fingerprint/v1",
+                "kind": dependency.kind,
+                "type": "tabular-model",
+                "task": output.task,
+                "algorithm": output.algorithm,
+                "features": list(output.features),
+                "target": output.target,
+                "artifact_digest": hashlib.sha256(output.artifact_bytes).hexdigest(),
+                "metrics": [[name, score] for name, score in output.metrics],
+            }
+        elif isinstance(output, ExperimentResult):
+            model = output.model
+            payload = {
+                "schema": "ronin.ml-stage-output-fingerprint/v1",
+                "kind": dependency.kind,
+                "type": "experiment-result",
+                "lab_id": output.lab_id,
+                "backend_id": output.backend_id,
+                "row_count": output.row_count,
+                "runtime_fingerprint": output.runtime_fingerprint,
+                "model": {
+                    "task": model.task,
+                    "algorithm": model.algorithm,
+                    "features": list(model.features),
+                    "target": model.target,
+                    "artifact_digest": hashlib.sha256(model.artifact_bytes).hexdigest(),
+                    "metrics": [[name, score] for name, score in model.metrics],
+                },
+            }
+        else:
+            payload = _checkpoint_payload(dependency.kind, output)
         encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
         dependencies.append([dependency_id, hashlib.sha256(encoded.encode("utf-8")).hexdigest()])
     encoded_dependencies = json.dumps(
@@ -282,33 +348,127 @@ def _dependency_fingerprint(
     return hashlib.sha256(encoded_dependencies.encode("utf-8")).hexdigest()
 
 
+def _candidate_score_map(value: object) -> dict[str, float] | None:
+    if isinstance(value, tuple):
+        entries = value
+    elif isinstance(value, Mapping) and isinstance(value.get("scores"), Mapping):
+        entries = tuple(value["scores"].items())
+    else:
+        return None
+    result: dict[str, float] = {}
+    for name, score in entries:
+        if (
+            not isinstance(name, str)
+            or not isinstance(score, (int, float))
+            or isinstance(score, bool)
+        ):
+            return None
+        try:
+            finite_score = float(score)
+        except OverflowError:
+            return None
+        if not math.isfinite(finite_score):
+            return None
+        result[name] = finite_score
+    return result
+
+
 def _restore_checkpoint(kind: NodeKind, value: object) -> object:
     if not isinstance(value, Mapping) or value.get("kind") != kind:
         raise ValueError("stored ML node checkpoint does not match its pipeline stage")
     payload = value.get("value")
+    if "/" in kind:
+        if not isinstance(payload, Mapping):
+            raise ValueError("stored plugin stage checkpoint is invalid")
+        return dict(payload)
     if kind in {"profile", "quality_gate"}:
         if not isinstance(payload, Mapping):
             raise ValueError("stored ML profile checkpoint is invalid")
         profiles = payload.get("profiles")
-        if not isinstance(profiles, list):
+        if not isinstance(profiles, list) or any(
+            not isinstance(item, Mapping)
+            or set(item)
+            != {"name", "dtype", "row_count", "null_count", "distinct_count", "constant"}
+            or not isinstance(item.get("name"), str)
+            or not isinstance(item.get("dtype"), str)
+            or not isinstance(item.get("row_count"), int)
+            or isinstance(item.get("row_count"), bool)
+            or item["row_count"] < 0
+            or not isinstance(item.get("null_count"), int)
+            or isinstance(item.get("null_count"), bool)
+            or item["null_count"] < 0
+            or item["null_count"] > item["row_count"]
+            or not isinstance(item.get("distinct_count"), int)
+            or isinstance(item.get("distinct_count"), bool)
+            or item["distinct_count"] < 0
+            or not isinstance(item.get("constant"), bool)
+            for item in profiles
+        ):
             raise ValueError("stored ML profile checkpoint is invalid")
         restored = tuple(
             ColumnProfile(
-                str(item["name"]),
-                str(item["dtype"]),
-                int(item["row_count"]),
-                int(item["null_count"]),
-                int(item["distinct_count"]),
-                bool(item["constant"]),
+                cast(str, item["name"]),
+                cast(str, item["dtype"]),
+                cast(int, item["row_count"]),
+                cast(int, item["null_count"]),
+                cast(int, item["distinct_count"]),
+                cast(bool, item["constant"]),
             )
             for item in profiles
-            if isinstance(item, Mapping)
         )
+        suite_payload = payload.get("suite")
+        if suite_payload is not None and (
+            not isinstance(suite_payload, Mapping)
+            or set(suite_payload) != {"id", "version"}
+            or not isinstance(suite_payload.get("id"), str)
+            or not isinstance(suite_payload.get("version"), int)
+            or isinstance(suite_payload.get("version"), bool)
+            or cast(int, suite_payload["version"]) < 1
+        ):
+            raise ValueError("stored ML quality suite identity is invalid")
+        warnings = payload.get("warnings")
+        failures = payload.get("failures")
+        row_count = payload.get("row_count")
+        if (
+            not isinstance(row_count, int)
+            or isinstance(row_count, bool)
+            or row_count < 0
+            or not isinstance(warnings, list)
+            or not all(isinstance(item, str) for item in warnings)
+            or not isinstance(failures, list)
+            or not all(isinstance(item, str) for item in failures)
+        ):
+            raise ValueError("stored ML quality report fields are invalid")
+        raw_expectations = payload.get("expectations", [])
+        if not isinstance(raw_expectations, list) or any(
+            not isinstance(item, Mapping)
+            or set(item) != {"id", "column", "rule", "severity", "passed", "message"}
+            or not all(
+                isinstance(item.get(key), str)
+                for key in ("id", "column", "rule", "severity", "message")
+            )
+            or not isinstance(item.get("passed"), bool)
+            for item in raw_expectations
+        ):
+            raise ValueError("stored ML quality expectations are invalid")
         return QualityReport(
-            int(payload["row_count"]),
+            row_count,
             restored,
-            tuple(str(item) for item in payload["warnings"]),
-            tuple(str(item) for item in payload["failures"]),
+            tuple(cast(list[str], warnings)),
+            tuple(cast(list[str], failures)),
+            cast(str | None, suite_payload.get("id") if suite_payload is not None else None),
+            cast(int | None, suite_payload.get("version") if suite_payload is not None else None),
+            tuple(
+                QualityExpectationResult(
+                    cast(str, item["id"]),
+                    cast(str, item["column"]),
+                    cast(str, item["rule"]),
+                    cast(str, item["severity"]),
+                    cast(bool, item["passed"]),
+                    cast(str, item["message"]),
+                )
+                for item in raw_expectations
+            ),
         )
     if kind == "prepare":
         if isinstance(payload, list) and all(isinstance(item, str) for item in payload):
@@ -389,6 +549,40 @@ class LocalExperimentRunner:
     def __init__(self, backends: Sequence[MLBackend] | None = None) -> None:
         selected = tuple(backends or default_backends())
         self._backends = BackendRegistry(selected)
+        self._plugin_stage_registry: object | None = None
+        self._plugin_artifact_capabilities_available = False
+
+    @staticmethod
+    def _ensure_backend_available(backend: MLBackend) -> None:
+        if getattr(backend, "available", True) is False:
+            reason = getattr(backend, "unavailable_reason", None)
+            raise MLDependencyError(
+                reason
+                if isinstance(reason, str) and reason
+                else f"ML backend {backend.backend_id!r} is unavailable"
+            )
+
+    def configure_plugin_stage_registry(self, registry: object) -> None:
+        """Attach the host-frozen plugin stage declarations used by durable Jobs."""
+        digest = getattr(registry, "digest", None)
+        if not isinstance(digest, str) or len(digest) != 64:
+            raise ValueError("plugin pipeline stage registry must expose a SHA-256 digest")
+        self._plugin_stage_registry = registry
+
+    def configure_plugin_artifact_capabilities(self, *, available: bool) -> None:
+        """Declare whether durable artifact reads and leased writes are wired."""
+        self._plugin_artifact_capabilities_available = bool(available)
+
+    @property
+    def stage_registry_digest(self) -> str:
+        from .pipeline_stages import pipeline_stage_registry_digest
+
+        if (
+            self._plugin_stage_registry is not None
+            and getattr(self._plugin_stage_registry, "frozen", False) is not True
+        ):
+            raise ValueError("PipelineIR v3 plugin stage registry must be frozen before use")
+        return pipeline_stage_registry_digest(self._plugin_stage_registry)
 
     def run(
         self,
@@ -406,9 +600,16 @@ class LocalExperimentRunner:
         backend = self._backends.get(lab.backend_id)
         if backend is None:
             raise BackendNotFound(lab.backend_id)
+        self._ensure_backend_available(backend)
         capabilities = getattr(backend, "capabilities", None)
         if capabilities is not None and lab.task not in capabilities.tasks:
             raise ValueError(f"backend {backend.backend_id!r} does not support task {lab.task!r}")
+        if (
+            capabilities is not None
+            and lab.task == "clustering"
+            and "kmeans" not in capabilities.algorithms
+        ):
+            raise ValueError(f"backend {backend.backend_id!r} does not support algorithm 'kmeans'")
         parameters = dict(pipeline.parameters)
         if (
             parameters.get("lab_digest") != lab.digest
@@ -417,8 +618,16 @@ class LocalExperimentRunner:
             or parameters.get("seed") != str(lab.seed)
         ):
             raise ValueError("custom ML pipeline is not bound to the submitted Lab")
+        if (
+            pipeline.schema == PIPELINE_SCHEMA_V3
+            and parameters.get("stage_registry_digest") != self.stage_registry_digest
+        ):
+            raise ValueError("PipelineIR v3 stage registry identity does not match executor")
         if pipeline.schema == PIPELINE_SCHEMA_V2:
             self._validate_v2_graph(pipeline, lab)
+        elif pipeline.schema == PIPELINE_SCHEMA_V3:
+            self._validate_v3_graph(pipeline, lab)
+        if pipeline.schema in {PIPELINE_SCHEMA_V2, PIPELINE_SCHEMA_V3}:
             if lab.task != "clustering":
                 from .runtime import ALGORITHM_CAPABILITIES
 
@@ -470,6 +679,13 @@ class LocalExperimentRunner:
         max_iterations: int = 100,
         checkpoint_load: Callable[[str], object | None] | None = None,
         checkpoint_save: Callable[[str, dict[str, object]], object] | None = None,
+        cancellation: CancellationSignal | None = None,
+        plugin_artifact_load: Callable[[Mapping[str, object]], bytes] | None = None,
+        plugin_artifact_persist: Callable[
+            [str, dict[str, object], Mapping[str, tuple[str, bytes]]],
+            Mapping[str, Mapping[str, object]],
+        ]
+        | None = None,
     ) -> ExperimentResult | ClusteringResult:
         """Execute the pinned ML stages in stable dependency order.
 
@@ -480,9 +696,16 @@ class LocalExperimentRunner:
         backend = self._backends.get(lab.backend_id)
         if backend is None:
             raise BackendNotFound(lab.backend_id)
+        self._ensure_backend_available(backend)
         capabilities = getattr(backend, "capabilities", None)
         if capabilities is not None and lab.task not in capabilities.tasks:
             raise ValueError(f"backend {backend.backend_id!r} does not support task {lab.task!r}")
+        if (
+            capabilities is not None
+            and lab.task == "clustering"
+            and "kmeans" not in capabilities.algorithms
+        ):
+            raise ValueError(f"backend {backend.backend_id!r} does not support algorithm 'kmeans'")
 
         if pipeline is None:
             from .services import compile_lab_pipeline
@@ -490,6 +713,11 @@ class LocalExperimentRunner:
             pipeline = compile_lab_pipeline(lab)
         if dict(pipeline.parameters).get("lab_digest") != lab.digest:
             raise ValueError("compiled ML pipeline is not bound to the submitted Lab")
+        if (
+            pipeline.schema == PIPELINE_SCHEMA_V3
+            and dict(pipeline.parameters).get("stage_registry_digest") != self.stage_registry_digest
+        ):
+            raise ValueError("PipelineIR v3 stage registry identity does not match executor")
 
         required_kinds: tuple[NodeKind, ...] = (
             "profile",
@@ -505,6 +733,9 @@ class LocalExperimentRunner:
             by_kind.setdefault(node.kind, []).append(node)
         if pipeline.schema == PIPELINE_SCHEMA_V2:
             self._validate_v2_graph(pipeline, lab)
+        elif pipeline.schema == PIPELINE_SCHEMA_V3:
+            self._validate_v3_graph(pipeline, lab)
+        if pipeline.schema in {PIPELINE_SCHEMA_V2, PIPELINE_SCHEMA_V3}:
             if lab.task == "clustering" and any(
                 cast(int, node.config["clusters"]) >= len(rows) for node in by_kind["train"]
             ):
@@ -526,7 +757,7 @@ class LocalExperimentRunner:
                         )
                     if lab.task not in ALGORITHM_CAPABILITIES.get(algorithm, frozenset()):
                         raise ValueError("train node algorithm is not supported for this Lab task")
-        else:
+        elif pipeline.schema != PIPELINE_SCHEMA_V3:
             singular = {kind: items[0] for kind, items in by_kind.items() if len(items) == 1}
             if len(singular) != len(pipeline.nodes) or set(singular) != set(required_kinds):
                 raise ValueError(
@@ -554,14 +785,55 @@ class LocalExperimentRunner:
             feature.column for feature in lab.features if feature.role != "ignored"
         )
         for node in pipeline.execution_order():
-            dependencies = [values[dependency] for dependency in node.depends_on]
-            dependency_fingerprint = _dependency_fingerprint(node, nodes_by_id, values)
+            if cancellation is not None and cancellation.is_cancelled:
+                raise MLExecutionCancelled("ML pipeline execution was cancelled")
+            plugin_checkpoint_saved = False
+            checkpoint_codec: str | None = None
+            executor_kind = node.kind
+            if pipeline.schema == PIPELINE_SCHEMA_V3:
+                from .pipeline_stages import BUILTIN_STAGE_REGISTRY
+
+                stage = BUILTIN_STAGE_REGISTRY.get(node.kind)
+                if stage is None:
+                    contribution = next(
+                        (
+                            item
+                            for item in getattr(self._plugin_stage_registry, "items", ())
+                            if item.stage_id == node.kind
+                        ),
+                        None,
+                    )
+                    if contribution is None or contribution.version != node.stage_version:
+                        raise ValueError(f"PipelineIR v3 plugin stage is unavailable: {node.kind}")
+                    checkpoint_codec = (
+                        f"ronin.ml.plugin-checkpoint/v1:{contribution.stage_id}:"
+                        f"{contribution.version}:{contribution.distribution_digest}:"
+                        f"{contribution.executor_image}"
+                    )
+                    executor_kind = node.kind
+                else:
+                    executor_parts = stage.executor.split(":")
+                    if (
+                        len(executor_parts) != 3
+                        or executor_parts[0] != "studio_ml.runner"
+                        or executor_parts[2] != f"v{stage.version}"
+                        or executor_parts[1] != node.kind
+                    ):
+                        raise ValueError("PipelineIR v3 stage executor identity is unsupported")
+                    checkpoint_codec = stage.checkpoint_codec
+                    executor_kind = executor_parts[1]
+            dependency_ids = pipeline.dependency_ids(node)
+            dependencies = [values[dependency] for dependency in dependency_ids]
+            dependency_fingerprint = _dependency_fingerprint(
+                node, nodes_by_id, values, dependency_ids
+            )
             cached = checkpoint_load(node.id) if checkpoint_load is not None else None
             if (
                 runtime_fingerprint is not None
                 and isinstance(cached, Mapping)
                 and cached.get("runtime_fingerprint") == runtime_fingerprint
                 and cached.get("dependency_fingerprint") == dependency_fingerprint
+                and (checkpoint_codec is None or cached.get("checkpoint_codec") == checkpoint_codec)
                 and isinstance(cached.get("checkpoint"), dict)
             ):
                 try:
@@ -583,18 +855,133 @@ class LocalExperimentRunner:
                         if isinstance(selected, (ExperimentResult, ClusteringResult)):
                             result = selected
                     continue
-            if node.kind == "profile":
+            if executor_kind == node.kind and "/" in node.kind:
+                from .plugin_stage_runtime import execute_plugin_stage
+
+                if contribution is None:
+                    raise ValueError(f"PipelineIR v3 plugin stage is unavailable: {node.kind}")
+                if contribution.effect == "artifact_write" and plugin_artifact_persist is None:
+                    raise ValueError(
+                        "plugin artifact-writing stage requires the durable artifact API"
+                    )
+                port_inputs: dict[str, object] = {}
+                node_inputs = dict(node.inputs)
+                for port, references in node_inputs.items():
+                    port_values: list[object] = []
+                    for reference in references:
+                        dependency_id, _ = reference.rsplit(".", 1)
+                        dependency_node = nodes_by_id[dependency_id]
+                        dependency_value = values[dependency_id]
+                        model = (
+                            dependency_value.model
+                            if isinstance(dependency_value, (ExperimentResult, ClusteringResult))
+                            else dependency_value
+                        )
+                        if isinstance(model, TrainedTabularModel):
+                            model_bytes = model.artifact_bytes
+                        elif isinstance(model, KMeansModel):
+                            model_bytes = encode_canonical_json(model.to_artifact())
+                        else:
+                            model_bytes = None
+                        if (
+                            model_bytes is not None
+                            and len(model_bytes) > _MAX_PLUGIN_MODEL_INPUT_BYTES
+                        ):
+                            raise ValueError(
+                                "plugin stage model input exceeds the bounded JSON payload limit"
+                            )
+                        encoded_value = _checkpoint_payload(dependency_node.kind, dependency_value)
+                        dependency_value = encoded_value["value"]
+                        if isinstance(dependency_value, Mapping):
+                            dependency_value = {
+                                key: value
+                                for key, value in dependency_value.items()
+                                if key != "__ronin_artifacts__"
+                            }
+                        port_values.append(dependency_value)
+                    port_inputs[port] = port_values[0] if len(port_values) == 1 else port_values
+                response = execute_plugin_stage(
+                    contribution,
+                    config=node.config,
+                    inputs=port_inputs,
+                    artifacts=self._plugin_input_artifacts(
+                        node,
+                        values,
+                        plugin_artifact_load,
+                        require_permission="artifact:read" in contribution.permissions,
+                    ),
+                    cancellation=cancellation,
+                )
+                if contribution.output_type == "ml.metrics":
+                    score_values = response.value.get("scores")
+                    invalid_scores = not isinstance(score_values, Mapping) or not score_values
+                    if not invalid_scores:
+                        score_map = cast(Mapping[object, object], score_values)
+                        try:
+                            for name, score in score_map.items():
+                                if (
+                                    not isinstance(name, str)
+                                    or not name
+                                    or name != name.strip()
+                                    or not isinstance(score, (int, float))
+                                    or isinstance(score, bool)
+                                    or not math.isfinite(float(score))
+                                ):
+                                    invalid_scores = True
+                                    break
+                        except OverflowError:
+                            invalid_scores = True
+                    if invalid_scores:
+                        raise ValueError(
+                            "plugin ml.metrics output requires a non-empty finite scores object"
+                        )
+                if "__ronin_artifacts__" in response.value:
+                    raise ValueError("plugin output uses a reserved host field")
+                values[node.id] = dict(response.value)
+                if response.artifacts:
+                    if (
+                        checkpoint_save is None
+                        or runtime_fingerprint is None
+                        or plugin_artifact_persist is None
+                    ):
+                        raise ValueError(
+                            "plugin artifact output requires durable checkpoint storage"
+                        )
+                    plugin_checkpoint: dict[str, object] = {
+                        "runtime_fingerprint": runtime_fingerprint,
+                        "dependency_fingerprint": dependency_fingerprint,
+                        "checkpoint_codec": checkpoint_codec,
+                        "checkpoint": _checkpoint_payload(node.kind, values[node.id]),
+                    }
+                    artifact_refs = plugin_artifact_persist(
+                        node.id,
+                        plugin_checkpoint,
+                        {
+                            artifact.name: (artifact.media_type, artifact.data)
+                            for artifact in response.artifacts
+                        },
+                    )
+                    values[node.id] = {
+                        **dict(response.value),
+                        "__ronin_artifacts__": dict(artifact_refs),
+                    }
+                    plugin_checkpoint_saved = True
+            elif executor_kind == "profile":
                 values[node.id] = profile_and_validate(lab, [dict(row) for row in rows])
-            elif node.kind == "quality_gate":
+            elif executor_kind == "quality_gate":
                 profile = next(
                     (item for item in dependencies if isinstance(item, QualityReport)), None
                 )
                 if profile is None:
                     raise ValueError("quality gate requires the profile stage output")
+                suite_payload = node.config.get("suite")
+                if suite_payload is not None:
+                    suite = QualitySuite.from_payload(suite_payload)
+                    profile = profile_and_validate(lab, [dict(row) for row in rows], suite=suite)
                 if not profile.passed:
                     raise ValueError("quality gate failed: " + "; ".join(profile.failures))
                 values[node.id] = profile
-            elif node.kind == "prepare":
+            elif executor_kind == "prepare":
                 if lab.task == "clustering":
                     values[node.id] = selected_features
                 else:
@@ -622,7 +1009,7 @@ class LocalExperimentRunner:
                             if feature.role == "categorical"
                         ),
                     )
-            elif node.kind == "train":
+            elif executor_kind == "train":
                 prepared = next(
                     (item for item in dependencies if isinstance(item, (TrainingSpec, tuple))),
                     None,
@@ -665,7 +1052,7 @@ class LocalExperimentRunner:
                             f"{spec.algorithm!r}"
                         )
                     values[node.id] = backend.train(ExperimentRequest(str(lab.dataset), spec), rows)
-            elif node.kind == "evaluate":
+            elif executor_kind == "evaluate":
                 if lab.task == "clustering":
                     model = next(
                         (item for item in dependencies if isinstance(item, KMeansModel)), None
@@ -674,7 +1061,7 @@ class LocalExperimentRunner:
                         raise ValueError("evaluate stage requires a trained clustering model")
                     from .clustering import calinski_harabasz, inertia
 
-                    if pipeline.schema == PIPELINE_SCHEMA_V2:
+                    if pipeline.schema in {PIPELINE_SCHEMA_V2, PIPELINE_SCHEMA_V3}:
                         values[node.id] = (
                             (
                                 "calinski_harabasz",
@@ -692,10 +1079,17 @@ class LocalExperimentRunner:
                     if trained is None:
                         raise ValueError("evaluate stage requires a trained model")
                     values[node.id] = trained.metrics
-            elif node.kind == "select":
-                if pipeline.schema == PIPELINE_SCHEMA_V2:
+            elif executor_kind == "select":
+                if pipeline.schema in {PIPELINE_SCHEMA_V2, PIPELINE_SCHEMA_V3}:
                     result = self._select_v2_candidate(
-                        node, values, nodes_by_id, lab, backend, rows, runtime_fingerprint or ""
+                        node,
+                        values,
+                        nodes_by_id,
+                        lab,
+                        backend,
+                        rows,
+                        runtime_fingerprint or "",
+                        pipeline,
                     )
                     values[node.id] = result
                     if checkpoint_save is not None and runtime_fingerprint is not None:
@@ -704,6 +1098,11 @@ class LocalExperimentRunner:
                             {
                                 "runtime_fingerprint": runtime_fingerprint,
                                 "dependency_fingerprint": dependency_fingerprint,
+                                **(
+                                    {"checkpoint_codec": checkpoint_codec}
+                                    if checkpoint_codec is not None
+                                    else {}
+                                ),
                                 "checkpoint": _checkpoint_payload(node.kind, values[node.id]),
                             },
                         )
@@ -748,7 +1147,7 @@ class LocalExperimentRunner:
                         runtime_fingerprint or "",
                     )
                 values[node.id] = result
-            elif node.kind == "register":
+            elif executor_kind == "register":
                 # Registration is an external side effect. The durable coordinator runs it
                 # after materializing the selected artifact and before completing the Job.
                 selected = next(
@@ -765,16 +1164,27 @@ class LocalExperimentRunner:
                 continue
             else:  # pragma: no cover - PipelineNode validates kinds
                 raise ValueError(f"unsupported local ML pipeline node: {node.kind}")
-            if checkpoint_save is not None and runtime_fingerprint is not None:
+            if (
+                checkpoint_save is not None
+                and runtime_fingerprint is not None
+                and not plugin_checkpoint_saved
+            ):
                 checkpoint_save(
                     node.id,
                     {
                         "runtime_fingerprint": runtime_fingerprint,
                         "dependency_fingerprint": dependency_fingerprint,
+                        **(
+                            {"checkpoint_codec": checkpoint_codec}
+                            if checkpoint_codec is not None
+                            else {}
+                        ),
                         "checkpoint": _checkpoint_payload(node.kind, values[node.id]),
                     },
                 )
 
+        if cancellation is not None and cancellation.is_cancelled:
+            raise MLExecutionCancelled("ML pipeline execution was cancelled")
         if result is None:
             raise ValueError("local ML pipeline did not select a result")
         return result
@@ -924,6 +1334,183 @@ class LocalExperimentRunner:
                 ):
                     raise ValueError("train node algorithm is not supported for this Lab task")
 
+    def _validate_v3_graph(self, pipeline: PipelineIR, lab: Lab) -> None:
+        """Validate task semantics after the static typed DAG contract passes."""
+        from .pipeline_stages import BUILTIN_STAGE_REGISTRY
+        from .services import compile_lab_pipeline
+
+        # Plugin declarations are part of the pinned executor identity. Validate
+        # graph edges here, where the frozen host contribution registry is available.
+        # PipelineIR parsing itself stays independent of installed plugins.
+        plugin_stages = {
+            item.stage_id: item for item in getattr(self._plugin_stage_registry, "items", ())
+        }
+        nodes_by_id = {node.id: node for node in pipeline.nodes}
+        for node in pipeline.nodes:
+            definition = BUILTIN_STAGE_REGISTRY.get(node.kind)
+            contribution = plugin_stages.get(node.kind)
+            if node.kind == "quality_gate" and "suite" in node.config:
+                validate_quality_suite(lab, QualitySuite.from_payload(node.config["suite"]))
+            if definition is None:
+                if contribution is None or contribution.version != node.stage_version:
+                    raise ValueError(f"PipelineIR v3 plugin stage is unavailable: {node.kind}")
+                if set(node.config) - set(contribution.config_fields):
+                    raise ValueError("plugin stage config contains undeclared fields")
+                if contribution.effect not in {"pure", "artifact_write"}:
+                    raise ValueError("plugin stage effect is unsupported")
+                if contribution.permissions and not self._plugin_artifact_capabilities_available:
+                    raise ValueError(
+                        "plugin artifact permissions require the durable artifact capability API"
+                    )
+                contracts = contribution.input_ports
+            else:
+                if node.stage_version != definition.version:
+                    raise ValueError(f"unsupported PipelineIR v3 stage version: {node.kind}")
+                contracts = {
+                    name: (port.value_type, port.minimum, port.maximum)
+                    for name, port in definition.inputs.items()
+                }
+            supplied = dict(node.inputs)
+            if set(supplied) != set(contracts):
+                raise ValueError(f"PipelineIR v3 {node.kind} inputs do not match its contract")
+            required_builtin_sources = {
+                "quality_gate": {"profile": "profile"},
+                "prepare": {"quality": "quality_gate"},
+                "train": {"prepared": "prepare"},
+                "evaluate": {"model": "train"},
+                "register": {"selected": "select"},
+            }.get(node.kind, {})
+            for port, references in supplied.items():
+                value_type, minimum, maximum = contracts[port]
+                if not minimum <= len(references) <= maximum:
+                    raise ValueError(f"PipelineIR v3 {node.kind}.{port} input count is invalid")
+                for reference in references:
+                    source_id, output_name = reference.rsplit(".", 1)
+                    source = nodes_by_id[source_id]
+                    if (
+                        port in required_builtin_sources
+                        and source.kind != required_builtin_sources[port]
+                    ):
+                        raise ValueError(
+                            f"PipelineIR v3 {node.kind}.{port} requires a built-in "
+                            f"{required_builtin_sources[port]} stage"
+                        )
+                    source_definition = BUILTIN_STAGE_REGISTRY.get(source.kind)
+                    source_contribution = plugin_stages.get(source.kind)
+                    source_type = (
+                        source_definition.output_type
+                        if source_definition is not None
+                        else source_contribution.output_type
+                        if source_contribution is not None
+                        else None
+                    )
+                    if output_name != "out" or source_type != value_type:
+                        raise ValueError("PipelineIR v3 has an incompatible typed stage edge")
+
+        selector = next(node for node in pipeline.nodes if node.kind == "select")
+        for candidate_id in pipeline.dependency_ids(selector):
+            candidate = nodes_by_id[candidate_id]
+            if candidate.kind == "evaluate":
+                continue
+            contribution = plugin_stages.get(candidate.kind)
+            if contribution is None or contribution.output_type != "ml.metrics":
+                raise ValueError("PipelineIR v3 select candidates must provide ml.metrics")
+            candidate_dependencies = pipeline.dependency_ids(candidate)
+            if not any(
+                nodes_by_id[dependency_id].kind == "train"
+                and BUILTIN_STAGE_REGISTRY["train"].output_type == "ml.model"
+                for dependency_id in candidate_dependencies
+            ):
+                raise ValueError("plugin ml.metrics candidates must depend directly on train")
+
+        train_nodes = [node for node in pipeline.nodes if node.kind == "train"]
+        prepare_nodes = [node for node in pipeline.nodes if node.kind == "prepare"]
+        selectors = [node for node in pipeline.nodes if node.kind == "select"]
+        for prepare in prepare_nodes:
+            preprocessor = prepare.config.get("preprocessor", "identity")
+            if not isinstance(preprocessor, str):
+                raise ValueError("PipelineIR v3 preprocessor must be text")
+            if lab.task == "clustering" and preprocessor != "identity":
+                raise ValueError("PipelineIR v3 does not support clustering preprocessors")
+            compile_lab_pipeline(lab, preprocessor=preprocessor)
+        for train in train_nodes:
+            algorithm = train.config.get("algorithm")
+            clusters = train.config.get("clusters")
+            if lab.task == "clustering":
+                if algorithm is not None or clusters is None:
+                    raise ValueError("PipelineIR v3 clustering train nodes require clusters only")
+            elif clusters is not None:
+                raise ValueError("PipelineIR v3 supervised train nodes cannot set clusters")
+            if algorithm is not None:
+                from .runtime import ALGORITHM_CAPABILITIES
+
+                if not isinstance(algorithm, str) or lab.task not in ALGORITHM_CAPABILITIES.get(
+                    algorithm, frozenset()
+                ):
+                    raise ValueError("PipelineIR v3 train algorithm is not supported for this Lab")
+        selector = selectors[0]
+        metric = selector.config.get(
+            "metric",
+            "calinski_harabasz"
+            if lab.task == "clustering"
+            else "accuracy"
+            if lab.task == "classification"
+            else "r2",
+        )
+        direction = selector.config.get(
+            "direction", "minimize" if metric == "mean_squared_error" else "maximize"
+        )
+        allowed_metrics = (
+            {"calinski_harabasz"}
+            if lab.task == "clustering"
+            else {"accuracy"}
+            if lab.task == "classification"
+            else {"r2", "mean_squared_error"}
+        )
+        if metric not in allowed_metrics or direction not in {"maximize", "minimize"}:
+            raise ValueError("PipelineIR v3 selection metric/direction is unsupported for this Lab")
+        if lab.task == "clustering" and direction != "maximize":
+            raise ValueError("PipelineIR v3 clustering selection must maximize Calinski-Harabasz")
+        if metric == "mean_squared_error" and direction != "minimize":
+            raise ValueError("PipelineIR v3 mean_squared_error selection must minimize")
+
+    @staticmethod
+    def _plugin_input_artifacts(
+        node: PipelineNode,
+        values: Mapping[str, object],
+        loader: Callable[[Mapping[str, object]], bytes] | None,
+        *,
+        require_permission: bool,
+    ) -> dict[str, bytes]:
+        artifacts: dict[str, bytes] = {}
+        for dependency_id in sorted(
+            {
+                reference.rsplit(".", 1)[0]
+                for _, references in node.inputs
+                for reference in references
+            }
+        ):
+            value = values.get(dependency_id)
+            if not isinstance(value, Mapping):
+                continue
+            references = value.get("__ronin_artifacts__")
+            if not isinstance(references, Mapping):
+                continue
+            if not require_permission:
+                continue
+            if loader is None:
+                raise ValueError("plugin stage artifact:read requires the durable artifact API")
+            for name, reference in sorted(references.items()):
+                if not isinstance(name, str) or not isinstance(reference, Mapping):
+                    raise ValueError("plugin dependency artifact reference is invalid")
+                artifact_name = f"{dependency_id}/{name}"
+                if artifact_name in artifacts:
+                    raise ValueError("plugin dependency artifact names collide")
+                artifacts[artifact_name] = loader(reference)
+                if sum(len(data) for data in artifacts.values()) > 512 * 1024:
+                    raise ValueError("plugin dependency artifacts exceed the host byte limit")
+        return artifacts
+
     @staticmethod
     def _select_v2_candidate(
         node: PipelineNode,
@@ -933,6 +1520,7 @@ class LocalExperimentRunner:
         backend: MLBackend,
         rows: Sequence[Mapping[str, object]],
         runtime_fingerprint: str,
+        pipeline: PipelineIR | None = None,
     ) -> ExperimentResult | ClusteringResult:
         metric = cast(
             str,
@@ -951,14 +1539,26 @@ class LocalExperimentRunner:
         )
         if lab.task == "clustering":
             cluster_candidates: list[tuple[float, str, KMeansModel]] = []
-            for evaluate_id in sorted(node.depends_on):
-                evaluate = nodes_by_id[evaluate_id]
-                train_id = evaluate.depends_on[0]
-                model = values.get(train_id)
-                score = values.get(evaluate_id)
-                if not isinstance(model, KMeansModel) or not isinstance(score, tuple):
+            selected_dependencies = pipeline.dependency_ids(node) if pipeline else node.depends_on
+            for candidate_id in sorted(selected_dependencies):
+                candidate = nodes_by_id[candidate_id]
+                candidate_dependencies = (
+                    pipeline.dependency_ids(candidate) if pipeline else candidate.depends_on
+                )
+                train_id = next(
+                    (
+                        dependency_id
+                        for dependency_id in candidate_dependencies
+                        if isinstance(values.get(dependency_id), KMeansModel)
+                    ),
+                    None,
+                )
+                model = values.get(train_id) if train_id is not None else None
+                score = values.get(candidate_id)
+                score_map = _candidate_score_map(score)
+                if train_id is None or not isinstance(model, KMeansModel) or score_map is None:
                     raise ValueError("select stage requires evaluated K-Means candidates")
-                score_value = dict(score).get(metric)
+                score_value = score_map.get(metric)
                 if not isinstance(score_value, (int, float)):
                     raise ValueError(f"candidate does not provide selection metric {metric!r}")
                 cluster_candidates.append((float(score_value), train_id, model))
@@ -990,14 +1590,29 @@ class LocalExperimentRunner:
                 score,
             )
         tabular_candidates: list[tuple[float, str, TrainedTabularModel]] = []
-        for evaluate_id in sorted(node.depends_on):
-            evaluate = nodes_by_id[evaluate_id]
-            train_id = evaluate.depends_on[0]
-            trained = values.get(train_id)
-            scores = values.get(evaluate_id)
-            if not isinstance(trained, TrainedTabularModel) or not isinstance(scores, tuple):
+        selected_dependencies = pipeline.dependency_ids(node) if pipeline else node.depends_on
+        for candidate_id in sorted(selected_dependencies):
+            candidate = nodes_by_id[candidate_id]
+            candidate_dependencies = (
+                pipeline.dependency_ids(candidate) if pipeline else candidate.depends_on
+            )
+            train_id = next(
+                (
+                    dependency_id
+                    for dependency_id in candidate_dependencies
+                    if isinstance(values.get(dependency_id), TrainedTabularModel)
+                ),
+                None,
+            )
+            trained = values.get(train_id) if train_id is not None else None
+            scores = values.get(candidate_id)
+            score_map = _candidate_score_map(scores)
+            if (
+                train_id is None
+                or not isinstance(trained, TrainedTabularModel)
+                or score_map is None
+            ):
                 raise ValueError("select stage requires evaluated tabular candidates")
-            score_map = dict(scores)
             score = score_map.get(metric)
             if score is None or not isinstance(score, (int, float)):
                 raise ValueError(f"candidate does not provide selection metric {metric!r}")
@@ -1026,9 +1641,12 @@ class LocalExperimentRunner:
         backend = self._backends.get(lab.backend_id)
         if backend is None:
             raise BackendNotFound(lab.backend_id)
+        self._ensure_backend_available(backend)
         capabilities = getattr(backend, "capabilities", None)
         if capabilities is not None and "clustering" not in capabilities.tasks:
             raise ValueError(f"backend {backend.backend_id!r} does not support clustering")
+        if capabilities is not None and "kmeans" not in capabilities.algorithms:
+            raise ValueError(f"backend {backend.backend_id!r} does not support algorithm 'kmeans'")
         quality = profile_and_validate(lab, [dict(row) for row in rows])
         if not quality.passed:
             raise ValueError("quality gate failed: " + "; ".join(quality.failures))
@@ -1058,4 +1676,10 @@ class LocalExperimentRunner:
         return result
 
 
-__all__ = ["BackendNotFound", "ClusteringResult", "ExperimentResult", "LocalExperimentRunner"]
+__all__ = [
+    "BackendNotFound",
+    "ClusteringResult",
+    "ExperimentResult",
+    "LocalExperimentRunner",
+    "MLExecutionCancelled",
+]

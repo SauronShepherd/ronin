@@ -55,6 +55,47 @@ _DEFAULT_LIST_LIMIT = 50
 _DEFAULT_SERVICE_TIMEOUT_SECONDS = 30.0
 _REQUEST_READ_TIMEOUT_SECONDS = 30.0
 _STUDIO_EXTENSIONS = frozenset({".html", ".css", ".js", ".png", ".webp", ".svg"})
+ML_PLUGIN_ROUTES = frozenset(
+    {
+        ("GET", "/v1/ml-studio/labs"),
+        ("POST", "/v1/ml-studio/labs"),
+        ("GET", "/v1/ml-studio/labs/{lab_id}"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/compile"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/runs"),
+        ("GET", "/v1/ml-studio/runs/{run_id}"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/quality"),
+        ("GET", "/v1/ml-studio/labs/{lab_id}/quality-suites"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/quality-suites"),
+        ("GET", "/v1/ml-studio/labs/{lab_id}/quality-suites/{suite_id}/{version}"),
+        ("GET", "/v1/ml-studio/labs/{lab_id}/drift-policies"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/drift-policies"),
+        ("GET", "/v1/ml-studio/labs/{lab_id}/drift-policies/{policy_id}/{version}"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/drift"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/executions"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/compare"),
+        ("POST", "/v1/ml-studio/labs/{lab_id}/search"),
+        ("GET", "/v1/ml-studio/executions/{run_id}"),
+        ("POST", "/v1/ml-studio/executions/{run_id}/register"),
+        ("POST", "/v1/ml-studio/executions/{run_id}/cancel"),
+        ("POST", "/v1/ml-studio/executions/{run_id}/retry"),
+        ("GET", "/v1/ml-studio/backends"),
+        ("POST", "/v1/ml-studio/experiments"),
+        ("GET", "/v1/ml-studio/experiments"),
+        ("GET", "/v1/ml-studio/experiments/{experiment_id}"),
+        ("GET", "/v1/ml-studio/models"),
+        ("POST", "/v1/ml-studio/models/{model_id}/{version}/promote"),
+        ("POST", "/v1/ml-studio/models/{model_id}/{version}/predict"),
+        ("POST", "/v1/ml-studio/models/{model_id}/{version}/batch-predict"),
+        ("GET", "/v1/ml-studio/models/{model_id}/{version}/card"),
+        ("GET", "/v1/ml-studio/models/{model_id}/{version}/artifact"),
+        ("POST", "/v1/ml-studio/deployments"),
+        ("GET", "/v1/ml-studio/deployments"),
+        ("GET", "/v1/ml-studio/deployments/{deployment_id}"),
+        ("GET", "/v1/ml-studio/deployments/{deployment_id}/health"),
+        ("POST", "/v1/ml-studio/deployments/{deployment_id}/rollback"),
+        ("POST", "/v1/ml-studio/deployments/{deployment_id}/predict"),
+    }
+)
 SUPPORTED_ROUTES = (
     frozenset(
         {
@@ -70,6 +111,7 @@ SUPPORTED_ROUTES = (
         }
     )
     | MIGRATION_ROUTES
+    | ML_PLUGIN_ROUTES
 )
 
 

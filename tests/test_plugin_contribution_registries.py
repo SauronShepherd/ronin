@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 from studio_core.plugins import (
     ContributionRegistry,
+    PipelineStageContribution,
     PluginManager,
     PluginManifest,
     PluginRecord,
@@ -142,3 +143,40 @@ def test_plugin_manifest_must_declare_non_http_contributions() -> None:
     plugin = Plugin()
     with pytest.raises(PluginValidationError, match="undeclared job"):
         PluginManager().compose((PluginRecord(plugin.manifest, plugin, "test"),))
+
+
+def test_pipeline_stage_manifest_must_declare_stage_and_artifact_permissions() -> None:
+    stage = PipelineStageContribution(
+        plugin_id="com.example.ronin.ml",
+        stage_id="com.example.ronin.ml/evaluate",
+        version=1,
+        plugin_version="1.2.0",
+        distribution_digest="a" * 64,
+        executor_image="registry.example/ml-plugin@sha256:" + "b" * 64,
+        operation_id="evaluate.v1",
+        input_ports={"model": ("ml.model", 1, 1)},
+        output_type="ml.metrics",
+        permissions=("artifact:write",),
+        effect="artifact_write",
+    )
+    registry = ContributionRegistry()
+    registry.add_pipeline_stage(stage, plugin_id=stage.plugin_id)
+    undeclared = PluginManifest(
+        id=stage.plugin_id,
+        name="ML stage provider",
+        version=stage.plugin_version,
+        plugin_api="1.0",
+        pipeline_stage_ids=(stage.stage_id,),
+    )
+    with pytest.raises(PluginValidationError, match="undeclared pipeline stage permission"):
+        registry.validate_manifest(undeclared)
+
+    declared = PluginManifest(
+        id=stage.plugin_id,
+        name="ML stage provider",
+        version=stage.plugin_version,
+        plugin_api="1.0",
+        permissions=("artifact:write",),
+        pipeline_stage_ids=(stage.stage_id,),
+    )
+    registry.validate_manifest(declared)
