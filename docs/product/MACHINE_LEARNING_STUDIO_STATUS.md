@@ -58,7 +58,7 @@ planificadas de una plataforma ML completa.
 | Remote adapter v1 contract | Implementado | `docs/contracts/ml-remote-adapters-v1.md`, tipos, errores, transporte y adapters de proveedor |
 | MLflow metadata interchange | Implementado estáticamente; cualificación pendiente | `mlflow.py` exporta/importa el subconjunto canónico de experiment/run/model con flavors seguros; no carga código ni artefactos ejecutables |
 | Feature definitions y dataset snapshots | Implementado estáticamente; cualificación pendiente | `FeatureDefinition` versionado e inmutable en in-memory/SQLite/PostgreSQL; composición local cablea el servicio al control plane y OpenAPI documenta las rutas |
-| Deployment/serving local con digest fijado | Implementado estáticamente; cualificación pendiente | `ModelDeployment`, persistencia SQLite/PostgreSQL, readiness/health, prediction contra artefacto fijado, telemetría acotada y rollback sin cambiar el champion |
+| Deployment/serving local con digest fijado | Implementado estáticamente; cualificación pendiente | `ModelDeployment`, persistencia SQLite/PostgreSQL, readiness/health, prediction contra artefacto fijado, telemetría acotada, rollback sin cambiar el champion y tarea scheduler `ml-studio.deployment.v1` |
 | AI/ML Lab Studio end-to-end | Implementado estáticamente; cualificación pendiente | Labs, quality suites, compare/export, registry/promotion, model cards, artifact download, scoring, drift y deployments con health/predict/rollback en la UI |
 
 La suite específica ML Studio, los contratos y la auditoría E2E deben permanecer verdes.
