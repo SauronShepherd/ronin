@@ -196,6 +196,20 @@ test('ML Studio submits supervised and clustering candidate selections', async (
   expect(bodies.churn).toHaveProperty('algorithm', 'decision_tree_classifier');
   expect(bodies.churn).not.toHaveProperty('candidate_algorithms');
 
+  await page.locator('[data-ml-algorithm="churn"]').selectOption([
+    'logistic_regression', 'decision_tree_classifier',
+  ]);
+  await page.locator('[data-ml-preprocessor="churn"]').selectOption([
+    'identity', 'standard_scale',
+  ]);
+  await page.locator('[data-feature="ml-run"][data-lab="churn"]').click();
+  await expect.poll(() => bodies.churn?.candidate_algorithms).toEqual([
+    'logistic_regression', 'decision_tree_classifier',
+  ]);
+  await expect.poll(() => bodies.churn?.candidate_preprocessors).toEqual([
+    'identity', 'standard_scale',
+  ]);
+
   await page.locator('[data-ml-cluster-count="segments"]').selectOption(['3', '4']);
   await page.locator('[data-feature="ml-run"][data-lab="segments"]').click();
   await expect.poll(() => bodies.segments?.candidate_cluster_counts).toEqual([3, 4]);
