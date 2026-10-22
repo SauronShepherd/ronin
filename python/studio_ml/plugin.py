@@ -832,12 +832,24 @@ class MachineLearningStudioPlugin:
 
     @staticmethod
     def _workspace(workspace_id: str | None, kwargs: dict[str, Any]) -> str:
-        if workspace_id:
-            return workspace_id
-        query = str(kwargs.get("query", ""))
-        value = parse_qs(query).get("workspace_id", [None])[0]
+        value = workspace_id
+        if not value:
+            query = str(kwargs.get("query", ""))
+            value = parse_qs(query).get("workspace_id", [None])[0]
         if not value:
             raise ValueError("workspace_id is required")
+        return MachineLearningStudioPlugin._bounded_identifier(value, "workspace_id")
+
+    @staticmethod
+    def _bounded_identifier(value: object, name: str) -> str:
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            or len(value) > 256
+            or any(char in value for char in "\r\n\x00")
+        ):
+            raise ValueError(f"{name} must be a bounded single-line identifier")
         return value
 
     def create_lab(
@@ -853,11 +865,13 @@ class MachineLearningStudioPlugin:
     def get_lab(self, workspace_id: str, lab_id: str, **_kwargs: Any) -> dict[str, object]:
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
         return self._labs.get(WorkspaceId(workspace_id), lab_id).to_payload()
 
     def compile_lab(self, workspace_id: str, lab_id: str, **_kwargs: Any) -> dict[str, object]:
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
         return self._labs.compile(WorkspaceId(workspace_id), lab_id).to_payload()
 
     def run_lab(
@@ -865,6 +879,7 @@ class MachineLearningStudioPlugin:
     ) -> dict[str, object]:
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
+        lab_id = self._bounded_identifier(lab_id, "lab_id")
         if not isinstance(body, dict) or set(body) - {
             "rows",
             "run_id",
@@ -975,6 +990,7 @@ class MachineLearningStudioPlugin:
     def get_run(self, workspace_id: str, run_id: str, **_kwargs: Any) -> dict[str, object]:
         if self._registry is None:
             raise RuntimeError("ML registry is unavailable")
+        run_id = self._bounded_identifier(run_id, "run_id")
         from studio_core.ml import MLRunId
 
         run = self._registry.get_run(WorkspaceId(workspace_id), MLRunId(run_id))
@@ -1676,6 +1692,7 @@ class MachineLearningStudioPlugin:
         self, run_id: str, workspace_id: str | None = None, **_kwargs: Any
     ) -> dict[str, object]:
         workspace_id = self._workspace(workspace_id, _kwargs)
+        run_id = self._bounded_identifier(run_id, "run_id")
         return self._coordinator.status(workspace_id, run_id).to_payload()
 
     def register_execution_model(
@@ -1691,6 +1708,7 @@ class MachineLearningStudioPlugin:
         """Register a verified model artifact produced by a durable execution."""
         if self._registry is None or self._artifacts is None or self._labs is None:
             raise RuntimeError("model registration requires registry, artifact store and labs")
+        run_id = self._bounded_identifier(run_id, "run_id")
         workspace_id = self._workspace(workspace_id, _kwargs)
         if (
             not isinstance(body, dict)
@@ -1936,6 +1954,7 @@ class MachineLearningStudioPlugin:
         self, run_id: str, workspace_id: str | None = None, **_kwargs: Any
     ) -> dict[str, object]:
         workspace_id = self._workspace(workspace_id, _kwargs)
+        run_id = self._bounded_identifier(run_id, "run_id")
         return self._coordinator.cancel(workspace_id, run_id).to_payload()
 
     def retry_execution(
@@ -1947,6 +1966,7 @@ class MachineLearningStudioPlugin:
         **_kwargs: Any,
     ) -> dict[str, object]:
         workspace_id = self._workspace(workspace_id, _kwargs)
+        run_id = self._bounded_identifier(run_id, "run_id")
         if (
             not isinstance(body, dict)
             or set(body) != {"run_id", "from_stage"}
@@ -2025,6 +2045,7 @@ class MachineLearningStudioPlugin:
         if self._registry is None:
             raise RuntimeError("ML registry is unavailable")
         workspace_id = self._workspace(workspace_id, _kwargs)
+        experiment_id = self._bounded_identifier(experiment_id, "experiment_id")
         from studio_core.ml import ExperimentId
 
         experiment = self._registry.get_experiment(
