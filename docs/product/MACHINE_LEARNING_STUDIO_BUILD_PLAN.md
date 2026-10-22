@@ -1017,3 +1017,17 @@ El contrato `ronin.ml-quality-suite/v1` limita suites a 64 expectativas únicas 
 ## 86. Persistir políticas de drift versionadas
 
 **Estado del candidato: implementado estáticamente; cualificación pendiente.** El catálogo aislado por workspace y Lab para `DriftPolicy` usa versiones inmutables de 1..2,147,483,647, avance monotónico y borrado en cascada al borrar el Lab en SQLite/PostgreSQL. El límite coincide con el tipo `INTEGER` usado por ambos stores. El store in-memory serializa lecturas y escrituras del catálogo para preservar la inmutabilidad y el avance monotónico bajo solicitudes concurrentes. Los endpoints de guardar/listar/recuperar aplican permisos read/write y validan que cada política cubra exactamente las features numéricas del Lab. Studio guarda y carga políticas desde el formulario de drift. OpenAPI y `docs/contracts/ml-drift-policy-v1.md` documentan los endpoints y el esquema. No se ejecutaron pruebas, builds, verificadores ni Docker por instrucción del usuario; el progreso técnico global no cambia.
+
+### Cierre estático adicional del candidato
+
+El endpoint `POST /v1/ml-studio/experiments` ya crea una identidad `Experiment`
+durable y workspace-scoped mediante el registry, rechaza cuerpos incompletos y
+mantiene la definición inmutable en SQLite y PostgreSQL. OpenAPI documenta la
+entrada y la respuesta creada.
+
+El transporte remoto aplica el timeout de la solicitud sin superar el timeout de
+despliegue, limita el tamaño de la respuesta JSON y ejecuta el backoff exponencial
+acotado sólo entre reintentos transitorios. Los resultados rechazan métricas con
+NaN/Inf antes de entrar en el lifecycle. Estas correcciones son estáticas y aún
+requieren cualificación exact-head; no se ejecutaron pruebas, builds, validadores
+ni Docker por instrucción del usuario.
