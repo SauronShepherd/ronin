@@ -161,6 +161,15 @@ class Trial:
     ) -> Trial:
         if not isinstance(random_seed, int) or isinstance(random_seed, bool) or random_seed < 0:
             raise ValueError("trial random seed must be a non-negative integer")
+        normalized_parameters: dict[str, object] = {}
+        for name, value in parameters.items():
+            if not isinstance(name, str) or not name or name != name.strip():
+                raise ValueError("trial parameter names must be non-empty and trimmed")
+            if isinstance(value, float) and not isfinite(value):
+                raise ValueError(f"trial parameter {name!r} must be finite")
+            if not isinstance(value, (str, int, float, bool)) and value is not None:
+                raise ValueError(f"trial parameter {name!r} must be a JSON scalar")
+            normalized_parameters[name] = value
         normalized_metrics: dict[str, float] = {}
         for name, raw_value in metrics.items():
             if not isinstance(name, str) or not name or name != name.strip():
@@ -170,14 +179,15 @@ class Trial:
                 raise ValueError(f"trial metric {name!r} must be a finite number")
             normalized_metrics[name] = value
         encoded = json.dumps(
-            {"parameters": parameters, "random_seed": random_seed},
+            {"parameters": normalized_parameters, "random_seed": random_seed},
             sort_keys=True,
             separators=(",", ":"),
+            allow_nan=False,
         )
         digest = hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
         return cls(
             f"trial-{digest}",
-            tuple(sorted(parameters.items())),
+            tuple(sorted(normalized_parameters.items())),
             tuple(sorted(normalized_metrics.items())),
         )
 
