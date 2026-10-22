@@ -33,6 +33,7 @@ def compile_lab_pipeline(
     preprocessor: str = "identity",
     candidate_algorithms: tuple[str, ...] | None = None,
     candidate_cluster_counts: tuple[int, ...] | None = None,
+    candidate_preprocessors: tuple[str, ...] | None = None,
     selection_metric: str | None = None,
     selection_direction: str | None = None,
 ) -> PipelineIR:
@@ -61,19 +62,28 @@ def compile_lab_pipeline(
     }:
         raise ValueError("preprocessor is not supported for this Lab")
     has_categorical = any(feature.role == "categorical" for feature in lab.features)
-    if lab.task == "clustering" and preprocessor != "identity":
-        raise ValueError("preprocessor is not supported for clustering Labs")
-    if has_categorical and preprocessor not in {"one_hot", "one_hot_median_impute"}:
-        if preprocessor == "median_impute":
-            raise ValueError("median imputation requires numeric Lab features")
-        raise ValueError("categorical Lab features require the one_hot preprocessor")
-    if preprocessor in {"one_hot", "one_hot_median_impute"} and not has_categorical:
-        raise ValueError("one_hot preprocessing requires categorical Lab features")
+    if candidate_preprocessors is not None and preprocessor != "identity":
+        raise ValueError("preprocessor cannot be combined with candidate_preprocessors")
+    if candidate_preprocessors is None:
+        if lab.task == "clustering" and preprocessor != "identity":
+            raise ValueError("preprocessor is not supported for clustering Labs")
+        if has_categorical and preprocessor not in {"one_hot", "one_hot_median_impute"}:
+            if preprocessor == "median_impute":
+                raise ValueError("median imputation requires numeric Lab features")
+            raise ValueError("categorical Lab features require the one_hot preprocessor")
+        if preprocessor in {"one_hot", "one_hot_median_impute"} and not has_categorical:
+            raise ValueError("one_hot preprocessing requires categorical Lab features")
     if preprocessor != "identity":
         parameters["preprocessor"] = preprocessor
 
-    if candidate_algorithms is not None and candidate_cluster_counts is not None:
-        raise ValueError("candidate_algorithms cannot be combined with candidate_cluster_counts")
+    if (
+        sum(
+            value is not None
+            for value in (candidate_algorithms, candidate_cluster_counts, candidate_preprocessors)
+        )
+        > 1
+    ):
+        raise ValueError("candidate selection options cannot be combined")
     if candidate_cluster_counts is not None:
         if lab.task != "clustering":
             raise ValueError("candidate_cluster_counts are supported only for clustering Labs")
@@ -113,6 +123,76 @@ def compile_lab_pipeline(
                 "select",
                 tuple(cluster_evaluations),
                 {"metric": metric, "direction": direction},
+            )
+        )
+        return PipelineIR(
+            tuple(nodes), parameters=tuple(sorted(parameters.items())), schema=PIPELINE_SCHEMA_V2
+        )
+
+    if candidate_preprocessors is not None:
+        if lab.task == "clustering":
+            raise ValueError("candidate_preprocessors are not supported for clustering Labs")
+        if (
+            not isinstance(candidate_preprocessors, tuple)
+            or not 2 <= len(candidate_preprocessors) <= 5
+            or not all(
+                isinstance(item, str) and item and item == item.strip()
+                for item in candidate_preprocessors
+            )
+            or len(set(candidate_preprocessors)) != len(candidate_preprocessors)
+        ):
+            raise ValueError("candidate_preprocessors must contain 2 to 5 unique preprocessors")
+        for candidate_preprocessor in candidate_preprocessors:
+            if (
+                not isinstance(candidate_preprocessor, str)
+                or candidate_preprocessor != candidate_preprocessor.strip()
+            ):
+                raise ValueError("candidate_preprocessor is not supported for this Lab")
+            compile_lab_pipeline(lab, algorithm=algorithm, preprocessor=candidate_preprocessor)
+        metric = (
+            selection_metric
+            if selection_metric is not None
+            else ("accuracy" if lab.task == "classification" else "r2")
+        )
+        supported_metrics = (
+            {"accuracy"} if lab.task == "classification" else {"r2", "mean_squared_error"}
+        )
+        effective_direction = (
+            selection_direction
+            if selection_direction is not None
+            else ("minimize" if metric == "mean_squared_error" else "maximize")
+        )
+        if (
+            not isinstance(metric, str)
+            or metric not in supported_metrics
+            or not isinstance(effective_direction, str)
+            or effective_direction not in {"maximize", "minimize"}
+        ):
+            raise ValueError("selection metric/direction is not supported for this Lab task")
+        nodes = [_node("profile"), _node("quality_gate", ("profile",))]
+        preprocessor_evaluations: list[str] = []
+        for index, candidate_preprocessor in enumerate(candidate_preprocessors, start=1):
+            prepare_id = f"prepare_{index}"
+            train_id = f"train_{index}"
+            evaluate_id = f"evaluate_{index}"
+            nodes.append(
+                PipelineNode(
+                    prepare_id,
+                    "prepare",
+                    ("quality_gate",),
+                    {"preprocessor": candidate_preprocessor},
+                )
+            )
+            train_config = {"algorithm": algorithm} if algorithm is not None else {}
+            nodes.append(PipelineNode(train_id, "train", (prepare_id,), train_config))
+            nodes.append(PipelineNode(evaluate_id, "evaluate", (train_id,)))
+            preprocessor_evaluations.append(evaluate_id)
+        nodes.append(
+            PipelineNode(
+                "select",
+                "select",
+                tuple(preprocessor_evaluations),
+                {"metric": metric, "direction": effective_direction},
             )
         )
         return PipelineIR(
@@ -271,6 +351,7 @@ class LabService:
         preprocessor: str = "identity",
         candidate_algorithms: tuple[str, ...] | None = None,
         candidate_cluster_counts: tuple[int, ...] | None = None,
+        candidate_preprocessors: tuple[str, ...] | None = None,
         selection_metric: str | None = None,
         selection_direction: str | None = None,
     ) -> PipelineIR:
@@ -281,6 +362,7 @@ class LabService:
             preprocessor=preprocessor,
             candidate_algorithms=candidate_algorithms,
             candidate_cluster_counts=candidate_cluster_counts,
+            candidate_preprocessors=candidate_preprocessors,
             selection_metric=selection_metric,
             selection_direction=selection_direction,
         )

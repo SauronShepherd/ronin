@@ -7,7 +7,7 @@ planificadas de una plataforma ML completa.
 |---|---|---|
 | Plugin discovery, manifest y permisos | Implementado | `python/studio_ml/plugin.py`, tests de plugin |
 | Labs y pipeline IR | Implementado | `domain.py`, `services.py`, tests de dominio/SQLite |
-| Envío de DAG candidato por API | Implementado y exact-head cualificado en `main@eff4bdb` | PipelineIR v2 de hasta 20 nodos, validado contra Lab/backend antes de crear el Job; `register` y formas fuera del contrato fallan cerradas |
+| Envío de DAG candidato por API | Implementado y exact-head cualificado en `main@3ba0ab7` | PipelineIR v2 de hasta 20 nodos, con hasta ocho ramas `prepare` validadas contra Lab/backend y preprocesadores/categorías conservados en checkpoints; `register` y formas fuera del contrato fallan cerradas |
 | Backend local intercambiable | Implementado | `backends.py`, `runner.py`, tests de runner |
 | Contratos versionados lab/IR/backend | Implementado | `docs/contracts/ml-*-v1.md` |
 | Capability discovery de adapters | Implementado | `BackendCapabilities`, `/v1/ml-studio/backends` |
