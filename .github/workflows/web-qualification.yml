@@ -40,10 +40,15 @@ jobs:
         run: python -m pip install --require-hashes -r requirements-dev.lock
       - name: Install Playwright dependencies
         run: npm --prefix web-tests ci
+      - name: Verify Python and Node Chromium revisions match
+        shell: bash
+        run: |
+          node_revision="$(node -e "console.log(require('./web-tests/node_modules/playwright-core/browsers.json').browsers.find(browser => browser.name === 'chromium').revision)")"
+          python_revision="$(python -c 'import json, pathlib, playwright; manifest = pathlib.Path(playwright.__file__).parent / "driver/package/browsers.json"; print(next(item["revision"] for item in json.loads(manifest.read_text())["browsers"] if item["name"] == "chromium"))')"
+          test "$node_revision" = "$python_revision"
+          echo "Shared Chromium revision: $node_revision"
       - name: Install Chromium
         run: npx --prefix web-tests playwright install --with-deps chromium
-      - name: Install Python Playwright Chromium
-        run: python -m playwright install --with-deps chromium
       - name: Start static Studio server
         run: python -m http.server 8080 --directory web &
       - name: Run route traversal and accessibility tests
