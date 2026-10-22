@@ -15,6 +15,8 @@ from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.catalog import AssetRef
 
+from .catalog import validate_catalog_version
+
 LabTask: TypeAlias = Literal["classification", "regression", "clustering"]
 NodeKind: TypeAlias = Literal[
     "profile", "quality_gate", "prepare", "train", "evaluate", "select", "register"
@@ -121,13 +123,9 @@ class FeatureDefinition:
         _text(self.name, "feature definition name")
         _text(self.project_id, "feature definition project")
         _text(self.transform, "feature transform")
-        if (
-            self.schema != FEATURE_SCHEMA
-            or not isinstance(self.version, int)
-            or isinstance(self.version, bool)
-            or self.version < 1
-        ):
+        if self.schema != FEATURE_SCHEMA:
             raise ValueError("invalid feature definition schema or version")
+        validate_catalog_version(self.version, "feature definition")
         if not self.features or len({item.column for item in self.features}) != len(self.features):
             raise ValueError("feature definition columns must be non-empty and unique")
 
@@ -148,22 +146,34 @@ class FeatureDefinition:
 
     @classmethod
     def from_payload(cls, payload: object) -> FeatureDefinition:
-        if (
-            not isinstance(payload, Mapping)
-            or set(payload)
-            != {"schema", "id", "name", "project_id", "dataset", "features", "transform", "version"}
-            or not isinstance(payload["features"], list)
-        ):
+        expected = {
+            "schema", "id", "name", "project_id", "dataset", "features", "transform", "version"
+        }
+        if not isinstance(payload, Mapping) or set(payload) != expected:
             raise ValueError("feature definition has invalid shape")
+        raw_features = payload["features"]
+        if not isinstance(raw_features, list):
+            raise ValueError("feature definition features must be an array")
+        features: list[FeatureSpec] = []
+        for item in raw_features:
+            if (
+                not isinstance(item, Mapping)
+                or set(item) != {"column", "role"}
+                or not isinstance(item["column"], str)
+                or not isinstance(item["role"], str)
+            ):
+                raise ValueError("feature definition feature has invalid shape")
+            features.append(FeatureSpec(cast(str, item["column"]), cast(str, item["role"])))
+        if not all(isinstance(payload[name], str) for name in ("schema", "id", "name", "project_id", "transform")):
+            raise ValueError("feature definition text fields must be strings")
+        if not isinstance(payload["version"], int) or isinstance(payload["version"], bool):
+            raise ValueError("feature definition version must be an integer")
         return cls(
             cast(str, payload["id"]),
             cast(str, payload["name"]),
             cast(str, payload["project_id"]),
             AssetRef.from_payload(payload["dataset"]),
-            tuple(
-                FeatureSpec(cast(str, item["column"]), cast(str, item["role"]))
-                for item in payload["features"]
-            ),
+            tuple(features),
             cast(str, payload["transform"]),
             cast(int, payload["version"]),
             cast(str, payload["schema"]),

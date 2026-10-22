@@ -1071,3 +1071,16 @@ entornos ni URI de artefactos del proveedor; las relaciones run→experiment y
 model→run se validan y los flavors fuera de `python_function`/`sklearn` se
 rechazan explícitamente. La cualificación exact-head sigue pendiente y no se
 ejecutaron pruebas, builds, validadores ni Docker.
+
+## 87. Hacer durable el catálogo de FeatureDefinition en todos los perfiles
+
+**Estado del candidato: implementado estáticamente; cualificación pendiente.**
+`FeatureDefinition` valida versiones enteras dentro del rango compartido y enlaza
+cada definición con un `AssetRef` exacto. Los stores in-memory, SQLite y
+PostgreSQL rechazan sobrescrituras, exigen avance monotónico e implementan
+listado/lectura por workspace. La composición local reutiliza el mismo store
+ML para el plugin y conecta `FeatureDefinitionService` al control plane, de
+modo que las rutas `/v1/ml-studio/features` funcionan en los perfiles SQLite y
+PostgreSQL. OpenAPI y `docs/contracts/ml-feature-v1.md` describen el contrato.
+No se ejecutaron pruebas, builds, validadores ni Docker por instrucción del
+usuario.

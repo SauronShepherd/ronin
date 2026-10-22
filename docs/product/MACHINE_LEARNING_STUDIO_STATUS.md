@@ -56,6 +56,7 @@ planificadas de una plataforma ML completa.
 | Experimentos API | Implementado estáticamente; cualificación pendiente | POST crea de forma durable y GET/listado recuperan por workspace; conflictos de definición se rechazan |
 | Remote adapter v1 contract | Implementado | `docs/contracts/ml-remote-adapters-v1.md`, tipos, errores, transporte y adapters de proveedor |
 | MLflow metadata interchange | Implementado estáticamente; cualificación pendiente | `mlflow.py` exporta/importa el subconjunto canónico de experiment/run/model con flavors seguros; no carga código ni artefactos ejecutables |
+| Feature definitions y dataset snapshots | Implementado estáticamente; cualificación pendiente | `FeatureDefinition` versionado e inmutable en in-memory/SQLite/PostgreSQL; composición local cablea el servicio al control plane y OpenAPI documenta las rutas |
 
 La suite específica ML Studio, los contratos y la auditoría E2E deben permanecer verdes.
 El módulo está completo dentro del alcance provider-neutral definido por el build plan;

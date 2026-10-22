@@ -379,9 +379,10 @@ def compile_lab_pipeline(
 
 
 @dataclass
-class InMemoryMLLabStore:
+class InMemoryMLLabStore(MLLabStore, FeatureDefinitionStore):
     _labs: dict[tuple[str, str], Lab] = field(default_factory=dict)
     _pipelines: dict[tuple[str, str], PipelineIR] = field(default_factory=dict)
+    _feature_definitions: dict[tuple[str, str, int], FeatureDefinition] = field(default_factory=dict)
     _quality_suites: dict[tuple[str, str, str, int], QualitySuite] = field(default_factory=dict)
     _drift_policies: dict[tuple[str, str, str, int], DriftPolicy] = field(default_factory=dict)
     _lock: Any = field(default_factory=RLock, init=False, repr=False, compare=False)
@@ -419,6 +420,58 @@ class InMemoryMLLabStore:
     def get_pipeline(self, workspace_id: WorkspaceId, lab_id: str) -> PipelineIR | None:
         with self._lock:
             return self._pipelines.get((str(workspace_id), lab_id))
+
+    def put_feature_definition(
+        self, workspace_id: WorkspaceId, definition: FeatureDefinition
+    ) -> FeatureDefinition:
+        with self._lock:
+            workspace = str(workspace_id)
+            key = (workspace, definition.id, definition.version)
+            current = self._feature_definitions.get(key)
+            if current is not None:
+                if current != definition:
+                    raise FeatureDefinitionConflict(
+                        f"feature definition version already exists: {definition.id}/{definition.version}"
+                    )
+                return current
+            latest = self.get_feature_definition(workspace_id, definition.id)
+            if latest is not None and definition.version <= latest.version:
+                raise FeatureDefinitionConflict(
+                    f"feature definition version must advance: {definition.id}/{latest.version}"
+                )
+            self._feature_definitions[key] = definition
+            return definition
+
+    def get_feature_definition(
+        self, workspace_id: WorkspaceId, feature_id: str, version: int | None = None
+    ) -> FeatureDefinition | None:
+        with self._lock:
+            matches = [
+                definition
+                for (workspace, current_id, current_version), definition
+                in self._feature_definitions.items()
+                if workspace == str(workspace_id)
+                and current_id == feature_id
+                and (version is None or current_version == version)
+            ]
+            return max(matches, key=lambda item: item.version) if matches else None
+
+    def list_feature_definitions(
+        self, workspace_id: WorkspaceId, feature_id: str | None = None
+    ) -> tuple[FeatureDefinition, ...]:
+        with self._lock:
+            return tuple(
+                sorted(
+                    (
+                        definition
+                        for (workspace, current_id, _), definition
+                        in self._feature_definitions.items()
+                        if workspace == str(workspace_id)
+                        and (feature_id is None or current_id == feature_id)
+                    ),
+                    key=lambda item: (item.id, item.version),
+                )
+            )
 
     def put_quality_suite(
         self, workspace_id: WorkspaceId, lab_id: str, suite: QualitySuite

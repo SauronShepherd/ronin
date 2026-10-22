@@ -13,12 +13,12 @@ from studio_storage.sqlite import open_database
 
 from .domain import FeatureDefinition, Lab, PipelineIR
 from .drift import DriftPolicy
-from .ports import MLLabStore
+from .ports import FeatureDefinitionStore, MLLabStore
 from .quality import QualitySuite
-from .services import MLLabConflict
+from .services import FeatureDefinitionConflict, MLLabConflict
 
 
-class SqliteMLLabStore(MLLabStore):
+class SqliteMLLabStore(MLLabStore, FeatureDefinitionStore):
     def __init__(self, path: Path, *, migration_now: Instant | str) -> None:
         self._path = path
         connection = open_database(path)
@@ -281,11 +281,40 @@ class SqliteMLLabStore(MLLabStore):
     ) -> FeatureDefinition:
         connection = self._connect()
         try:
+            connection.execute("BEGIN IMMEDIATE")
+            key = (str(workspace_id), definition.id, definition.version)
+            row = connection.execute(
+                "SELECT feature_json FROM ml_studio_features "
+                "WHERE workspace_id=? AND feature_id=? AND version=?",
+                key,
+            ).fetchone()
+            payload = definition.to_json()
+            if row is not None:
+                if row["feature_json"] != payload:
+                    raise FeatureDefinitionConflict(
+                        f"feature definition version already exists: {definition.id}/{definition.version}"
+                    )
+                connection.execute("COMMIT")
+                return definition
+            latest = connection.execute(
+                "SELECT MAX(version) AS version FROM ml_studio_features "
+                "WHERE workspace_id=? AND feature_id=?",
+                (str(workspace_id), definition.id),
+            ).fetchone()["version"]
+            if latest is not None and definition.version <= int(latest):
+                raise FeatureDefinitionConflict(
+                    f"feature definition version must advance: {definition.id}/{latest}"
+                )
             connection.execute(
-                "INSERT OR REPLACE INTO ml_studio_features(workspace_id,feature_id,version,feature_json) VALUES (?,?,?,?)",
-                (str(workspace_id), definition.id, definition.version, definition.to_json()),
+                "INSERT INTO ml_studio_features(workspace_id,feature_id,version,feature_json) VALUES (?,?,?,?)",
+                (*key, payload),
             )
+            connection.execute("COMMIT")
             return definition
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
         finally:
             connection.close()
 

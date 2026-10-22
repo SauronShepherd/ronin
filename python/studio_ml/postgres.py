@@ -5,14 +5,19 @@ from __future__ import annotations
 from studio_core import WorkspaceId
 from studio_storage.postgres_core import PostgresMetadataStore
 
-from studio_ml.domain import Lab, PipelineIR
+from studio_ml.domain import FeatureDefinition, Lab, PipelineIR
 from studio_ml.drift import DriftPolicy
-from studio_ml.ports import MLLabStore
+from studio_ml.ports import FeatureDefinitionStore, MLLabStore
 from studio_ml.quality import QualitySuite
-from studio_ml.services import DriftPolicyConflict, MLLabConflict, QualitySuiteConflict
+from studio_ml.services import (
+    DriftPolicyConflict,
+    FeatureDefinitionConflict,
+    MLLabConflict,
+    QualitySuiteConflict,
+)
 
 
-class PostgresMLLabStore(PostgresMetadataStore, MLLabStore):
+class PostgresMLLabStore(PostgresMetadataStore, MLLabStore, FeatureDefinitionStore):
     """Durable PostgreSQL adapter for labs and pipeline definitions."""
 
     def migrate(self) -> None:
@@ -31,6 +36,13 @@ class PostgresMLLabStore(PostgresMetadataStore, MLLabStore):
                     "(workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) "
                     "ON DELETE CASCADE, lab_id TEXT NOT NULL, pipeline_json TEXT NOT NULL, "
                     "PRIMARY KEY(workspace_id, lab_id))"
+                )
+                cursor.execute(
+                    "CREATE TABLE IF NOT EXISTS ronin_ml_studio_features "
+                    "(workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) "
+                    "ON DELETE CASCADE, feature_id TEXT NOT NULL, version INTEGER NOT NULL, "
+                    "feature_json TEXT NOT NULL, PRIMARY KEY(workspace_id, feature_id, version), "
+                    "CHECK (version >= 1 AND version <= 2147483647))"
                 )
                 cursor.execute(
                     "CREATE TABLE IF NOT EXISTS ronin_ml_studio_quality_suites "
@@ -143,6 +155,96 @@ class PostgresMLLabStore(PostgresMetadataStore, MLLabStore):
             if not isinstance(raw, str):
                 raise ValueError("stored ML pipeline must be JSON text")
             return PipelineIR.from_json(raw)
+        finally:
+            connection.close()
+
+    def put_feature_definition(
+        self, workspace_id: WorkspaceId, definition: FeatureDefinition
+    ) -> FeatureDefinition:
+        connection = self._connect()
+        key = (str(workspace_id), definition.id, definition.version)
+        payload = definition.to_json()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT feature_json FROM ronin_ml_studio_features "
+                    "WHERE workspace_id=%s AND feature_id=%s AND version=%s FOR UPDATE",
+                    key,
+                )
+                row = cursor.fetchone()
+                if row is not None:
+                    if row["feature_json"] != payload:
+                        raise FeatureDefinitionConflict(
+                            f"feature definition version already exists: {definition.id}/{definition.version}"
+                        )
+                    connection.commit()
+                    return definition
+                cursor.execute(
+                    "SELECT MAX(version) AS version FROM ronin_ml_studio_features "
+                    "WHERE workspace_id=%s AND feature_id=%s",
+                    key[:2],
+                )
+                latest = cursor.fetchone()["version"]
+                if latest is not None and definition.version <= int(latest):
+                    raise FeatureDefinitionConflict(
+                        f"feature definition version must advance: {definition.id}/{latest}"
+                    )
+                cursor.execute(
+                    "INSERT INTO ronin_ml_studio_features "
+                    "(workspace_id,feature_id,version,feature_json) VALUES (%s,%s,%s,%s)",
+                    (*key, payload),
+                )
+            connection.commit()
+            return definition
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def get_feature_definition(
+        self, workspace_id: WorkspaceId, feature_id: str, version: int | None = None
+    ) -> FeatureDefinition | None:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                if version is None:
+                    cursor.execute(
+                        "SELECT feature_json FROM ronin_ml_studio_features "
+                        "WHERE workspace_id=%s AND feature_id=%s ORDER BY version DESC LIMIT 1",
+                        (str(workspace_id), feature_id),
+                    )
+                else:
+                    cursor.execute(
+                        "SELECT feature_json FROM ronin_ml_studio_features "
+                        "WHERE workspace_id=%s AND feature_id=%s AND version=%s",
+                        (str(workspace_id), feature_id, version),
+                    )
+                row = cursor.fetchone()
+            return None if row is None else FeatureDefinition.from_json(row["feature_json"])
+        finally:
+            connection.close()
+
+    def list_feature_definitions(
+        self, workspace_id: WorkspaceId, feature_id: str | None = None
+    ) -> tuple[FeatureDefinition, ...]:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                if feature_id is None:
+                    cursor.execute(
+                        "SELECT feature_json FROM ronin_ml_studio_features "
+                        "WHERE workspace_id=%s ORDER BY feature_id,version",
+                        (str(workspace_id),),
+                    )
+                else:
+                    cursor.execute(
+                        "SELECT feature_json FROM ronin_ml_studio_features "
+                        "WHERE workspace_id=%s AND feature_id=%s ORDER BY version",
+                        (str(workspace_id), feature_id),
+                    )
+                rows = cursor.fetchall()
+            return tuple(FeatureDefinition.from_json(row["feature_json"]) for row in rows)
         finally:
             connection.close()
 
