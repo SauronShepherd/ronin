@@ -1621,6 +1621,7 @@ class LocalExperimentRunner:
         backend = self._backends.get(lab.backend_id)
         if backend is None:
             raise BackendNotFound(lab.backend_id)
+        self._ensure_backend_available(backend)
         capabilities = getattr(backend, "capabilities", None)
         if capabilities is not None and "clustering" not in capabilities.tasks:
             raise ValueError(f"backend {backend.backend_id!r} does not support clustering")
