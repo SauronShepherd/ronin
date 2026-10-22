@@ -574,6 +574,8 @@ class MachineLearningStudioPlugin:
             )
         else:
             raise ValueError("artifact_base64 is required when artifact store is unavailable")
+        if len(artifact) > MAX_PREDICTION_ARTIFACT_BYTES:
+            raise ValueError("model artifact exceeds the model artifact limit")
 
         predictions = predict_registered_tabular(
             self._registry,
