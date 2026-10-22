@@ -24,6 +24,7 @@ from .backends import (
 
 MAX_REMOTE_PREDICTION_ROWS = 100_000
 MAX_REMOTE_PREDICTION_BYTES = 8 * 1024 * 1024
+MAX_REMOTE_ID_LENGTH = 256
 
 
 class RemoteExecutionController:
@@ -57,9 +58,25 @@ class RemoteExecutionController:
         raise AssertionError("unreachable")
 
     def poll(self, run_id: str) -> RemoteTrainingResult:
+        if (
+            not isinstance(run_id, str)
+            or not run_id
+            or run_id != run_id.strip()
+            or len(run_id) > MAX_REMOTE_ID_LENGTH
+            or any(char in run_id for char in "\r\n\x00")
+        ):
+            raise ValueError("remote poll run_id must be a bounded identifier")
         return self.backend.poll(run_id)
 
     def cancel(self, run_id: str) -> RemoteTrainingResult:
+        if (
+            not isinstance(run_id, str)
+            or not run_id
+            or run_id != run_id.strip()
+            or len(run_id) > MAX_REMOTE_ID_LENGTH
+            or any(char in run_id for char in "\r\n\x00")
+        ):
+            raise ValueError("remote cancel run_id must be a bounded identifier")
         return self.backend.cancel(run_id)
 
 
@@ -126,7 +143,14 @@ class JsonRemoteBackend:
         return self._result(self._transport("cancel", {"run_id": run_id}))
 
     def predict(self, model_ref: str, rows: Sequence[Mapping[str, object]]) -> Sequence[object]:
-        if not model_ref.strip() or len(rows) > MAX_REMOTE_PREDICTION_ROWS:
+        if (
+            not isinstance(model_ref, str)
+            or not model_ref
+            or model_ref != model_ref.strip()
+            or len(model_ref) > MAX_REMOTE_ID_LENGTH
+            or any(char in model_ref for char in "\r\n\x00")
+            or len(rows) > MAX_REMOTE_PREDICTION_ROWS
+        ):
             raise ValueError("remote prediction request exceeds its row limit")
         materialized = list(rows)
         if not all(isinstance(row, Mapping) for row in materialized):
@@ -143,7 +167,7 @@ class JsonRemoteBackend:
             raise ValueError("remote prediction request exceeds its byte limit")
         payload = self._transport("predict", {"model_ref": model_ref, "rows": materialized})
         predictions = payload.get("predictions", [])
-        if not isinstance(predictions, list):
+        if not isinstance(predictions, list) or len(predictions) > MAX_REMOTE_PREDICTION_ROWS:
             raise ValueError("remote predictions must be an array")
         return predictions
 
@@ -174,7 +198,15 @@ def urllib_json_transport(
         key.casefold() == "authorization" for key in normalized_headers
     ):
         raise ValueError("authorization headers are not allowed over plaintext HTTP")
-    if timeout_seconds <= 0 or max_response_bytes < 1:
+    if (
+        isinstance(timeout_seconds, bool)
+        or not isinstance(timeout_seconds, (int, float))
+        or not math.isfinite(float(timeout_seconds))
+        or timeout_seconds <= 0
+        or isinstance(max_response_bytes, bool)
+        or not isinstance(max_response_bytes, int)
+        or max_response_bytes < 1
+    ):
         raise ValueError("remote transport limits must be positive")
     opener = build_opener(_NoRedirectHandler())
 
@@ -258,6 +290,7 @@ class SparkBackend(JsonRemoteBackend):
 
 
 __all__ = [
+    "MAX_REMOTE_ID_LENGTH",
     "MAX_REMOTE_PREDICTION_BYTES",
     "MAX_REMOTE_PREDICTION_ROWS",
     "JsonRemoteBackend",

@@ -1133,3 +1133,5 @@ antes de leer o escribir sus stores.
 Los contratos de adapters remotos rechazan tipos no textuales, controles,
 identidades largas, métricas duplicadas y resultados que convierten silenciosamente
 identidades remotas inválidas.
+Polling, cancelación y prediction comparten límites de identificador y tamaño;
+el transporte exige timeouts finitos y un límite entero de respuesta.
