@@ -33,6 +33,26 @@ def test_ci_docker_qualification_declares_postgres_and_real_worker_gate() -> Non
     assert "tests/integration/test_worker_runtime_real.py" in workflow
 
 
+def test_ci_docker_qualification_fans_out_and_aggregates_every_lane() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "docker-qualification.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "jobs:\n  non-docker-qualification:" in workflow
+    assert "  postgres-storage-coverage:" in workflow
+    assert "  docker-runtime-acceptance:" in workflow
+    assert (
+        "    needs:\n"
+        "      - non-docker-qualification\n"
+        "      - postgres-storage-coverage\n"
+        "      - docker-runtime-acceptance\n"
+    ) in workflow
+    assert 'test "$GENERAL_RESULT" = success' in workflow
+    assert 'test "$STORAGE_RESULT" = success' in workflow
+    assert 'test "$RUNTIME_RESULT" = success' in workflow
+    assert "name: docker-qualification-evidence" in workflow
+
+
 def test_release_acceptance_runs_on_tag_commit_without_cross_workflow_artifact_assumptions() -> (
     None
 ):
