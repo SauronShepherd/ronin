@@ -16,8 +16,8 @@ from studio_core.ml import (
     MetricValue,
     MLRunId,
     MLRunRecord,
-    ModelEvaluation,
     ModelDeployment,
+    ModelEvaluation,
     ModelId,
     ModelSignature,
     ModelVersion,
@@ -551,7 +551,8 @@ def train_register_tabular(
             metrics=tuple(MetricValue(name, value) for name, value in trained.metrics),
             artifact_refs=(artifact.storage_ref,),
         )
-        existing_run = registry.get_run(workspace_id, run_id)
+        get_run = getattr(registry, "get_run", None)
+        existing_run = get_run(workspace_id, run_id) if callable(get_run) else None
         if existing_run is not None:
             if existing_run != run:
                 raise ValueError("ML run id already exists with a different publication")

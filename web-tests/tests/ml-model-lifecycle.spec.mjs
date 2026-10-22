@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/v1/ml-studio/backends', route => route.fulfill({json: {
+    items: [{id: 'local.sklearn', status: 'available'}],
+  }}));
+});
+
 test('ML Studio exposes model card and promotion actions', async ({ page }) => {
   let promoted = false;
   await page.route('**/v1/ml-studio/labs**', route => route.fulfill({json: {items: []}}));

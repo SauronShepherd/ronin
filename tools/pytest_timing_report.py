@@ -15,7 +15,7 @@ _session_started: float | None = None
 _collection_finished: float | None = None
 
 
-def pytest_sessionstart(session: Any) -> None:
+def pytest_sessionstart(_session: Any) -> None:
     """Mark the start of the configured pytest session body."""
     global _collection_finished, _session_started
     _collected_nodeids.clear()
@@ -69,7 +69,7 @@ def pytest_runtest_logreport(report: Any) -> None:
     )
 
 
-def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
+def pytest_sessionfinish(_session: Any, exitstatus: int) -> None:
     """Write a stable JSON evidence file, even when the test session fails."""
     finished = monotonic()
     raw_installation_seconds = os.environ.get("RONIN_CI_INSTALL_SECONDS")
@@ -94,9 +94,7 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
         "exit_status": int(exitstatus),
         "timing": {
             "installation_seconds": installation_seconds,
-            "session_wall_seconds": (
-                finished - _plugin_loaded_at
-            ),
+            "session_wall_seconds": (finished - _plugin_loaded_at),
             "pytest_session_body_seconds": (
                 finished - _session_started if _session_started is not None else None
             ),
@@ -109,9 +107,7 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
         },
         "collected_nodeids": _collected_nodeids,
         "executed_nodeids": [
-            record["nodeid"]
-            for record in tests
-            for _ in range(record["attempts"])
+            record["nodeid"] for record in tests for _ in range(record["attempts"])
         ],
         "tests": tests,
     }

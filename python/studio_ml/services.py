@@ -382,7 +382,9 @@ def compile_lab_pipeline(
 class InMemoryMLLabStore(MLLabStore, FeatureDefinitionStore):
     _labs: dict[tuple[str, str], Lab] = field(default_factory=dict)
     _pipelines: dict[tuple[str, str], PipelineIR] = field(default_factory=dict)
-    _feature_definitions: dict[tuple[str, str, int], FeatureDefinition] = field(default_factory=dict)
+    _feature_definitions: dict[tuple[str, str, int], FeatureDefinition] = field(
+        default_factory=dict
+    )
     _quality_suites: dict[tuple[str, str, str, int], QualitySuite] = field(default_factory=dict)
     _drift_policies: dict[tuple[str, str, str, int], DriftPolicy] = field(default_factory=dict)
     _lock: Any = field(default_factory=RLock, init=False, repr=False, compare=False)
@@ -448,8 +450,11 @@ class InMemoryMLLabStore(MLLabStore, FeatureDefinitionStore):
         with self._lock:
             matches = [
                 definition
-                for (workspace, current_id, current_version), definition
-                in self._feature_definitions.items()
+                for (
+                    workspace,
+                    current_id,
+                    current_version,
+                ), definition in self._feature_definitions.items()
                 if workspace == str(workspace_id)
                 and current_id == feature_id
                 and (version is None or current_version == version)
@@ -464,8 +469,11 @@ class InMemoryMLLabStore(MLLabStore, FeatureDefinitionStore):
                 sorted(
                     (
                         definition
-                        for (workspace, current_id, _), definition
-                        in self._feature_definitions.items()
+                        for (
+                            workspace,
+                            current_id,
+                            _,
+                        ), definition in self._feature_definitions.items()
                         if workspace == str(workspace_id)
                         and (feature_id is None or current_id == feature_id)
                     ),
@@ -484,7 +492,9 @@ class InMemoryMLLabStore(MLLabStore, FeatureDefinitionStore):
             current = self._quality_suites.get(key)
             if current is not None:
                 if current != suite:
-                    raise QualitySuiteConflict(f"quality suite version already exists: {suite.id}@{suite.version}")
+                    raise QualitySuiteConflict(
+                        f"quality suite version already exists: {suite.id}@{suite.version}"
+                    )
                 return current
             latest = self.get_quality_suite(workspace_id, lab_id, suite.id)
             if latest is not None and suite.version <= latest.version:
@@ -498,8 +508,12 @@ class InMemoryMLLabStore(MLLabStore, FeatureDefinitionStore):
         with self._lock:
             matches = [
                 suite
-                for (workspace, current_lab, current_id, current_version), suite
-                in self._quality_suites.items()
+                for (
+                    workspace,
+                    current_lab,
+                    current_id,
+                    current_version,
+                ), suite in self._quality_suites.items()
                 if workspace == str(workspace_id)
                 and current_lab == lab_id
                 and current_id == suite_id
@@ -549,8 +563,12 @@ class InMemoryMLLabStore(MLLabStore, FeatureDefinitionStore):
         with self._lock:
             matches = [
                 policy
-                for (workspace, current_lab, current_id, current_version), policy
-                in self._drift_policies.items()
+                for (
+                    workspace,
+                    current_lab,
+                    current_id,
+                    current_version,
+                ), policy in self._drift_policies.items()
                 if workspace == str(workspace_id)
                 and current_lab == lab_id
                 and current_id == policy_id
@@ -656,7 +674,9 @@ class LabService:
         lab = self.get(workspace_id, lab_id)
         numeric_features = {feature.column for feature in lab.features if feature.role == "numeric"}
         if {item.feature for item in policy.thresholds} != numeric_features:
-            raise ValueError("drift policy thresholds must define every numeric Lab feature exactly once")
+            raise ValueError(
+                "drift policy thresholds must define every numeric Lab feature exactly once"
+            )
         return self.store.put_drift_policy(workspace_id, lab_id, policy)
 
     def get_drift_policy(

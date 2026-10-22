@@ -20,8 +20,8 @@ from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.ml import (
     Experiment,
     MLRunRecord,
-    ModelId,
     ModelEvaluation,
+    ModelId,
     ModelVersion,
     RegisteredModelVersion,
 )
@@ -66,9 +66,7 @@ class MLRegistryBundleStore(Protocol):
 class MLRegistryBundleArtifactStore(Protocol):
     def get_bytes_by_storage_ref(self, storage_ref: str, *, digest: str) -> bytes: ...
 
-    def put_bytes(
-        self, *, role: str, data: bytes, media_type: str | None = None
-    ) -> object: ...
+    def put_bytes(self, *, role: str, data: bytes, media_type: str | None = None) -> object: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,9 +86,7 @@ class MLRegistryBundleArtifact:
             or not isinstance(self.data, bytes)
         ):
             raise ValueError("ML bundle artifact identity is invalid")
-        if len(self.digest) != 64 or any(
-            char not in "0123456789abcdef" for char in self.digest
-        ):
+        if len(self.digest) != 64 or any(char not in "0123456789abcdef" for char in self.digest):
             raise ValueError("ML bundle artifact digest is invalid")
         if hashlib.sha256(self.data).hexdigest() != self.digest:
             raise ValueError("ML bundle artifact digest does not match its bytes")
@@ -167,9 +163,7 @@ def export_ml_registry_bundle(
     runs = store.list_runs(workspace_id)
     models = store.list_models(workspace_id)
     features = (
-        feature_store.list_feature_definitions(workspace_id)
-        if feature_store is not None
-        else ()
+        feature_store.list_feature_definitions(workspace_id) if feature_store is not None else ()
     )
     list_evaluations = getattr(store, "list_evaluations", None)
     evaluations: tuple[ModelEvaluation, ...] = ()
@@ -177,9 +171,7 @@ def export_ml_registry_bundle(
         evaluations = tuple(
             evaluation
             for model in models
-            for evaluation in list_evaluations(
-                workspace_id, model.model_id, model.version
-            )
+            for evaluation in list_evaluations(workspace_id, model.model_id, model.version)
         )
     model_by_ref: dict[str, RegisteredModelVersion] = {}
     for model in models:
@@ -192,16 +184,16 @@ def export_ml_registry_bundle(
         getter = getattr(artifact_store, "get_bytes_by_storage_ref", None)
         if not callable(getter):
             raise ValueError("artifact store cannot export ML bundle bytes")
-        referenced_refs = {
-            artifact_ref for run in runs for artifact_ref in run.artifact_refs
-        } | {model.artifact_ref for model in models}
+        referenced_refs = {artifact_ref for run in runs for artifact_ref in run.artifact_refs} | {
+            model.artifact_ref for model in models
+        }
         for source_ref in sorted(referenced_refs):
-            model = model_by_ref.get(source_ref)
-            if model is None:
+            model_record = model_by_ref.get(source_ref)
+            if model_record is None:
                 raise ValueError(
                     "ML bundle cannot verify an artifact reference without model digest metadata"
                 )
-            data = getter(source_ref, digest=model.artifact_digest)
+            data = getter(source_ref, digest=model_record.artifact_digest)
             if not isinstance(data, bytes):
                 raise ValueError("ML bundle artifact store returned non-byte data")
             media_type = (
@@ -213,7 +205,7 @@ def export_ml_registry_bundle(
             )
             artifacts[source_ref] = MLRegistryBundleArtifact(
                 source_ref,
-                model.artifact_digest,
+                model_record.artifact_digest,
                 "model",
                 media_type,
                 data,
@@ -233,20 +225,20 @@ def export_ml_registry_bundle(
         str(experiment.id): f"ml-experiment:{workspace_id}/{experiment.id}"
         for experiment in experiments
     }
-    run_refs = {
-        str(run.id): f"ml-run:{workspace_id}/{run.id}" for run in runs
-    }
+    run_refs = {str(run.id): f"ml-run:{workspace_id}/{run.id}" for run in runs}
     for kind, values in values_by_kind:
         for value in values:
             identity = f"ml-{kind}:{workspace_id}/{_identity(kind, value)}"
-            payload = value.to_json().encode("utf-8")
+            to_json = getattr(value, "to_json", None)
+            if not callable(to_json):
+                raise ValueError(f"ML bundle {kind} record cannot be serialized")
+            payload = to_json().encode("utf-8")
             object_path = _path(kind, identity)
             dependencies: set[str] = set()
             if kind == "run":
                 dependencies.add(experiment_refs[str(cast(MLRunRecord, value).experiment_id)])
                 dependencies.update(
-                    artifact_refs.get(ref, "")
-                    for ref in cast(MLRunRecord, value).artifact_refs
+                    artifact_refs.get(ref, "") for ref in cast(MLRunRecord, value).artifact_refs
                 )
             elif kind == "model":
                 model = cast(RegisteredModelVersion, value)
@@ -297,19 +289,14 @@ def _identity(kind: str, value: object) -> str:
         return f"{definition.id}@{definition.version}"
     if kind == "evaluation":
         evaluation = cast(ModelEvaluation, value)
-        return (
-            f"{evaluation.model_id}@{evaluation.version}/"
-            f"{evaluation.execution_ref}"
-        )
+        return f"{evaluation.model_id}@{evaluation.version}/{evaluation.execution_ref}"
     model = cast(RegisteredModelVersion, value)
     return f"{model.model_id}@{model.version}"
 
 
 def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
     inventory_payload = read_bundle_payload(path, BUNDLE_INVENTORY_PATH)
-    inventory = BundleInventory.from_payload(
-        decode_canonical_json(inventory_payload.file.data)
-    )
+    inventory = BundleInventory.from_payload(decode_canonical_json(inventory_payload.file.data))
     experiments: list[Experiment] = []
     runs: list[MLRunRecord] = []
     models: list[RegisteredModelVersion] = []
@@ -335,11 +322,7 @@ def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
         elif kind == "evaluation":
             evaluations.append(ModelEvaluation.from_json(document))
         else:
-            artifacts.append(
-                MLRegistryBundleArtifact.from_payload(
-                    decode_canonical_json(document)
-                )
-            )
+            artifacts.append(MLRegistryBundleArtifact.from_payload(decode_canonical_json(document)))
     artifact_by_ref = {artifact.source_ref: artifact for artifact in artifacts}
     if len(artifact_by_ref) != len(artifacts):
         raise ValueError("ML registry Bundle contains duplicate artifact references")
@@ -347,9 +330,7 @@ def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
     if artifacts and set(model_refs) != set(artifact_by_ref):
         raise ValueError("ML registry Bundle does not contain every referenced model artifact")
     if artifacts and any(
-        reference not in artifact_by_ref
-        for run in runs
-        for reference in run.artifact_refs
+        reference not in artifact_by_ref for run in runs for reference in run.artifact_refs
     ):
         raise ValueError("ML registry Bundle run references an absent artifact")
     for artifact in artifacts:
@@ -374,7 +355,12 @@ def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
         tuple(models),
         tuple(sorted(artifacts, key=lambda item: item.source_ref)),
         tuple(sorted(features, key=lambda item: (item.id, item.version))),
-        tuple(sorted(evaluations, key=lambda item: (str(item.model_id), str(item.version), item.execution_ref))),
+        tuple(
+            sorted(
+                evaluations,
+                key=lambda item: (str(item.model_id), str(item.version), item.execution_ref),
+            )
+        ),
     )
 
 
@@ -429,13 +415,13 @@ def _commit_ml_registry_bundle_import(
         )
     record_evaluation = getattr(store, "record_evaluation", None)
     if plan.evaluations and not callable(record_evaluation):
-        raise ValueError(
-            "ML registry Bundle contains evaluations but registry cannot store them"
-        )
+        raise ValueError("ML registry Bundle contains evaluations but registry cannot store them")
     artifact_refs: dict[str, str] = {}
     if plan.artifacts:
         if artifact_store is None:
-            raise ValueError("ML registry Bundle contains artifacts but no artifact store was supplied")
+            raise ValueError(
+                "ML registry Bundle contains artifacts but no artifact store was supplied"
+            )
         for artifact in plan.artifacts:
             stored = artifact_store.put_bytes(
                 role=artifact.role,
@@ -449,7 +435,8 @@ def _commit_ml_registry_bundle_import(
     for experiment in plan.experiments:
         store.put_experiment(workspace_id, experiment, now=now)
     if plan.features:
-        assert feature_store is not None
+        if feature_store is None:
+            raise RuntimeError("feature store disappeared during bundle import")
         for definition in plan.features:
             feature_store.put_feature_definition(workspace_id, definition)
     for run in plan.runs:
@@ -464,7 +451,8 @@ def _commit_ml_registry_bundle_import(
             model = replace(model, artifact_ref=artifact_refs[model.artifact_ref])
         store.register_model(workspace_id, model, now=now)
     for evaluation in plan.evaluations:
-        assert callable(record_evaluation)
+        if not callable(record_evaluation):
+            raise RuntimeError("evaluation recorder disappeared during bundle import")
         record_evaluation(workspace_id, evaluation, now=now)
     return plan
 

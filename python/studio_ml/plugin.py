@@ -4,13 +4,19 @@
 import base64
 import hashlib
 import json
+from contextlib import suppress
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal, cast
 from urllib.parse import parse_qs, unquote
 
 from studio_core import WorkspaceId
-from studio_core.plugins import PluginContext, PluginManifest, SurfaceContribution
+from studio_core.plugins import (
+    PluginContext,
+    PluginManifest,
+    PluginRouteConflict,
+    SurfaceContribution,
+)
 from studio_orchestrator import Instant
 from studio_storage.ports import ArtifactReferenceBarrier, ArtifactStore
 
@@ -44,7 +50,6 @@ from .service import (
     rollback_model_deployment,
     train_register_tabular,
 )
-
 from .services import InMemoryMLLabStore, LabService
 
 MAX_PREDICTION_ROWS = 100_000
@@ -53,7 +58,7 @@ MAX_PREDICTION_ARTIFACT_BYTES = 64 * 1024 * 1024
 
 def _plugin_now() -> Instant:
     """Return the canonical UTC instant expected by durable ML stores."""
-    return Instant(datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z"))
+    return Instant(datetime.now(UTC).isoformat(timespec="microseconds").replace("+00:00", "Z"))
 
 
 def _parse_tie_breakers(raw: object) -> tuple[tuple[str, Literal["maximize", "minimize"]], ...]:
@@ -119,9 +124,7 @@ def _pipeline_with_quality_suite(
             )
         )
     parameters["stage_registry_digest"] = stage_registry_digest
-    return PipelineIR(
-        tuple(nodes), tuple(sorted(parameters.items())), PIPELINE_SCHEMA_V3
-    )
+    return PipelineIR(tuple(nodes), tuple(sorted(parameters.items())), PIPELINE_SCHEMA_V3)
 
 
 class MachineLearningStudioPlugin:
@@ -335,28 +338,46 @@ class MachineLearningStudioPlugin:
             permission="ml-studio:execute",
         )
         context.contributions.add_route(
-            "GET", "/v1/ml-studio/labs/{lab_id}/quality-suites", context.plugin_id,
-            self.list_quality_suites, permission="ml-studio:read",
+            "GET",
+            "/v1/ml-studio/labs/{lab_id}/quality-suites",
+            context.plugin_id,
+            self.list_quality_suites,
+            permission="ml-studio:read",
         )
         context.contributions.add_route(
-            "POST", "/v1/ml-studio/labs/{lab_id}/quality-suites", context.plugin_id,
-            self.save_quality_suite, permission="ml-studio:write",
+            "POST",
+            "/v1/ml-studio/labs/{lab_id}/quality-suites",
+            context.plugin_id,
+            self.save_quality_suite,
+            permission="ml-studio:write",
         )
         context.contributions.add_route(
-            "GET", "/v1/ml-studio/labs/{lab_id}/quality-suites/{suite_id}/{version}", context.plugin_id,
-            self.get_quality_suite, permission="ml-studio:read",
+            "GET",
+            "/v1/ml-studio/labs/{lab_id}/quality-suites/{suite_id}/{version}",
+            context.plugin_id,
+            self.get_quality_suite,
+            permission="ml-studio:read",
         )
         context.contributions.add_route(
-            "GET", "/v1/ml-studio/labs/{lab_id}/drift-policies", context.plugin_id,
-            self.list_drift_policies, permission="ml-studio:read",
+            "GET",
+            "/v1/ml-studio/labs/{lab_id}/drift-policies",
+            context.plugin_id,
+            self.list_drift_policies,
+            permission="ml-studio:read",
         )
         context.contributions.add_route(
-            "POST", "/v1/ml-studio/labs/{lab_id}/drift-policies", context.plugin_id,
-            self.save_drift_policy, permission="ml-studio:write",
+            "POST",
+            "/v1/ml-studio/labs/{lab_id}/drift-policies",
+            context.plugin_id,
+            self.save_drift_policy,
+            permission="ml-studio:write",
         )
         context.contributions.add_route(
-            "GET", "/v1/ml-studio/labs/{lab_id}/drift-policies/{policy_id}/{version}", context.plugin_id,
-            self.get_drift_policy, permission="ml-studio:read",
+            "GET",
+            "/v1/ml-studio/labs/{lab_id}/drift-policies/{policy_id}/{version}",
+            context.plugin_id,
+            self.get_drift_policy,
+            permission="ml-studio:read",
         )
         context.contributions.add_route(
             "POST",
@@ -776,13 +797,13 @@ class MachineLearningStudioPlugin:
         )
         if model is None:
             raise KeyError(f"{model_id}@{version}")
-        source_run = self._registry.get_run(
-            WorkspaceId(workspace_id), model.source_run_id
-        )
+        source_run = self._registry.get_run(WorkspaceId(workspace_id), model.source_run_id)
         run_parameters = dict(source_run.parameters) if source_run is not None else {}
         limitations = ["Review dataset quality and evaluation evidence before promotion."]
         if source_run is None:
-            limitations.append("Source run evidence is unavailable; dataset and metrics are incomplete.")
+            limitations.append(
+                "Source run evidence is unavailable; dataset and metrics are incomplete."
+            )
         return {
             "schema": "ronin.ml-model-card/v1",
             "identity": {"model_id": model_id, "version": version, "stage": model.stage},
@@ -966,14 +987,21 @@ class MachineLearningStudioPlugin:
         if (
             not isinstance(body, dict)
             or set(body) - {"deployment_id", "model_id", "version", "endpoint"}
-            or not all(isinstance(body.get(name), str) for name in ("deployment_id", "model_id", "version"))
+            or not all(
+                isinstance(body.get(name), str) for name in ("deployment_id", "model_id", "version")
+            )
         ):
             raise ValueError("deployment requires deployment_id, model_id and version")
         deployment_id = self._bounded_identifier(body["deployment_id"], "deployment_id")
         model_id = self._bounded_identifier(body["model_id"], "model_id")
         version = self._bounded_identifier(body["version"], "version")
         endpoint = body.get("endpoint", "local")
-        if not isinstance(endpoint, str) or not endpoint or endpoint != endpoint.strip() or len(endpoint) > 512:
+        if (
+            not isinstance(endpoint, str)
+            or not endpoint
+            or endpoint != endpoint.strip()
+            or len(endpoint) > 512
+        ):
             raise ValueError("deployment endpoint must be bounded text")
         from studio_core.ml import ModelId, ModelVersion
 
@@ -992,7 +1020,9 @@ class MachineLearningStudioPlugin:
     def list_deployments(
         self, workspace_id: str | None = None, **_kwargs: Any
     ) -> dict[str, object]:
-        if self._registry is None or not callable(getattr(self._registry, "list_deployments", None)):
+        if self._registry is None or not callable(
+            getattr(self._registry, "list_deployments", None)
+        ):
             raise RuntimeError("model deployment registry is unavailable")
         workspace_id = self._workspace(workspace_id, _kwargs)
         return {
@@ -1048,12 +1078,15 @@ class MachineLearningStudioPlugin:
         if body is not None and (
             not isinstance(body, dict)
             or set(body) - {"reason"}
-            or ("reason" in body and (
-                not isinstance(body["reason"], str)
-                or not body["reason"]
-                or body["reason"] != body["reason"].strip()
-                or len(body["reason"]) > 1024
-            ))
+            or (
+                "reason" in body
+                and (
+                    not isinstance(body["reason"], str)
+                    or not body["reason"]
+                    or body["reason"] != body["reason"].strip()
+                    or len(body["reason"]) > 1024
+                )
+            )
         ):
             raise ValueError("rollback reason must be bounded text")
         workspace_id = self._workspace(workspace_id, _kwargs)
@@ -1094,7 +1127,11 @@ class MachineLearningStudioPlugin:
         model = self._registry.get_model(
             WorkspaceId(workspace_id), deployment.model_id, deployment.version
         )
-        if model is None or model.artifact_digest != deployment.artifact_digest or model.artifact_ref != deployment.artifact_ref:
+        if (
+            model is None
+            or model.artifact_digest != deployment.artifact_digest
+            or model.artifact_ref != deployment.artifact_ref
+        ):
             raise ValueError("deployment model pin no longer matches the registry")
         if isinstance(encoded, str):
             if len(encoded) > ((MAX_PREDICTION_ARTIFACT_BYTES + 2) // 3) * 4:
@@ -1125,7 +1162,7 @@ class MachineLearningStudioPlugin:
                 rows,
             )
         except Exception as exc:
-            try:
+            with suppress(Exception):
                 record_deployment_request(
                     self._registry,
                     WorkspaceId(workspace_id),
@@ -1134,8 +1171,6 @@ class MachineLearningStudioPlugin:
                     error=str(exc)[:1024] or "serving request failed",
                     now=_plugin_now(),
                 )
-            except Exception:
-                pass
             raise
         updated = record_deployment_request(
             self._registry,
@@ -1237,20 +1272,19 @@ class MachineLearningStudioPlugin:
             ):
                 raise ValueError(f"{field} must be a bounded single-line identifier")
         registration = body.get("register")
-        if registration is not None:
-            if (
-                not isinstance(registration, dict)
-                or set(registration) != {"model_id", "version"}
-                or not all(isinstance(registration[key], str) for key in ("model_id", "version"))
-                or any(
-                    not registration[key].strip()
-                    or registration[key] != registration[key].strip()
-                    or len(registration[key]) > 256
-                    or any(char in registration[key] for char in "\r\n\x00")
-                    for key in ("model_id", "version")
-                )
-            ):
-                raise ValueError("register must contain bounded model_id and version")
+        if registration is not None and (
+            not isinstance(registration, dict)
+            or set(registration) != {"model_id", "version"}
+            or not all(isinstance(registration[key], str) for key in ("model_id", "version"))
+            or any(
+                not registration[key].strip()
+                or registration[key] != registration[key].strip()
+                or len(registration[key]) > 256
+                or any(char in registration[key] for char in "\r\n\x00")
+                for key in ("model_id", "version")
+            )
+        ):
+            raise ValueError("register must contain bounded model_id and version")
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
         if registration is not None and lab.task != "clustering":
             raise ValueError(
@@ -1359,10 +1393,20 @@ class MachineLearningStudioPlugin:
         if lab_id is None or self._labs is None:
             raise ValueError("lab_id is required and ML Studio must be ready")
         lab_id = self._bounded_identifier(lab_id, "lab_id")
-        return {"items": [item.to_payload() for item in self._labs.list_quality_suites(WorkspaceId(workspace_id), lab_id)]}
+        return {
+            "items": [
+                item.to_payload()
+                for item in self._labs.list_quality_suites(WorkspaceId(workspace_id), lab_id)
+            ]
+        }
 
     def save_quality_suite(
-        self, workspace_id: str | None = None, lab_id: str | None = None, *, body: object | None = None, **kwargs: Any
+        self,
+        workspace_id: str | None = None,
+        lab_id: str | None = None,
+        *,
+        body: object | None = None,
+        **kwargs: Any,
     ) -> dict[str, object]:
         workspace_id = self._workspace(workspace_id, kwargs)
         if lab_id is None or self._labs is None:
@@ -1372,8 +1416,12 @@ class MachineLearningStudioPlugin:
         return self._labs.put_quality_suite(WorkspaceId(workspace_id), lab_id, suite).to_payload()
 
     def get_quality_suite(
-        self, workspace_id: str | None = None, lab_id: str | None = None,
-        suite_id: str | None = None, version: str | int | None = None, **kwargs: Any,
+        self,
+        workspace_id: str | None = None,
+        lab_id: str | None = None,
+        suite_id: str | None = None,
+        version: str | int | None = None,
+        **kwargs: Any,
     ) -> dict[str, object]:
         workspace_id = self._workspace(workspace_id, kwargs)
         if lab_id is None or suite_id is None or self._labs is None:
@@ -1403,8 +1451,12 @@ class MachineLearningStudioPlugin:
         }
 
     def save_drift_policy(
-        self, workspace_id: str | None = None, lab_id: str | None = None,
-        *, body: object | None = None, **kwargs: Any,
+        self,
+        workspace_id: str | None = None,
+        lab_id: str | None = None,
+        *,
+        body: object | None = None,
+        **kwargs: Any,
     ) -> dict[str, object]:
         workspace_id = self._workspace(workspace_id, kwargs)
         if lab_id is None or self._labs is None:
@@ -1414,8 +1466,12 @@ class MachineLearningStudioPlugin:
         return self._labs.put_drift_policy(WorkspaceId(workspace_id), lab_id, policy).to_payload()
 
     def get_drift_policy(
-        self, workspace_id: str | None = None, lab_id: str | None = None,
-        policy_id: str | None = None, version: str | int | None = None, **kwargs: Any,
+        self,
+        workspace_id: str | None = None,
+        lab_id: str | None = None,
+        policy_id: str | None = None,
+        version: str | int | None = None,
+        **kwargs: Any,
     ) -> dict[str, object]:
         workspace_id = self._workspace(workspace_id, kwargs)
         if lab_id is None or policy_id is None or self._labs is None:
@@ -1445,9 +1501,7 @@ class MachineLearningStudioPlugin:
         lab_id = self._bounded_identifier(lab_id, "lab_id")
         if self._labs is None:
             raise RuntimeError("ML Studio is not ready")
-        if not isinstance(body, dict) or set(body) != {
-            "baseline_rows", "current_rows", "policy"
-        }:
+        if not isinstance(body, dict) or set(body) != {"baseline_rows", "current_rows", "policy"}:
             raise ValueError(
                 "drift body requires baseline_rows, current_rows, and a versioned policy"
             )
@@ -1457,24 +1511,16 @@ class MachineLearningStudioPlugin:
         lab = self._labs.get(WorkspaceId(workspace_id), lab_id)
         if not isinstance(baseline_rows, list) or not isinstance(current_rows, list):
             raise ValueError("drift windows must be arrays of row objects")
-        baseline_rows = resolve_lab_rows(
-            WorkspaceId(workspace_id), lab, baseline_rows, None
-        )
-        current_rows = resolve_lab_rows(
-            WorkspaceId(workspace_id), lab, current_rows, None
-        )
-        features = tuple(
-            feature.column for feature in lab.features if feature.role == "numeric"
-        )
+        baseline_rows = resolve_lab_rows(WorkspaceId(workspace_id), lab, baseline_rows, None)
+        current_rows = resolve_lab_rows(WorkspaceId(workspace_id), lab, current_rows, None)
+        features = tuple(feature.column for feature in lab.features if feature.role == "numeric")
         if not features:
             raise ValueError("drift reports require at least one Lab feature with numeric role")
         policy = DriftPolicy.from_payload(raw_policy)
         threshold_features = {item.feature for item in policy.thresholds}
         if threshold_features != set(features):
             raise ValueError("drift thresholds must define every numeric Lab feature exactly once")
-        summaries = compare_numeric_drift(
-            baseline_rows, current_rows, features, max_rows=100_000
-        )
+        summaries = compare_numeric_drift(baseline_rows, current_rows, features, max_rows=100_000)
         assessment = assess_numeric_drift(summaries, policy.thresholds)
         return {
             "schema": "ronin.ml-drift-report/v1",
@@ -1534,9 +1580,14 @@ class MachineLearningStudioPlugin:
         if "pipeline" in body and body["pipeline"] is None:
             raise ValueError("pipeline must be a PipelineIR v2 or v3 object when provided")
         raw_pipeline = body.get("pipeline")
-        suite = QualitySuite.from_payload(body["quality_suite"]) if "quality_suite" in body else None
+        custom_pipeline = raw_pipeline is not None
+        suite = (
+            QualitySuite.from_payload(body["quality_suite"]) if "quality_suite" in body else None
+        )
         if raw_pipeline is not None and suite is not None:
-            raise ValueError("quality_suite cannot be combined with an explicitly supplied pipeline")
+            raise ValueError(
+                "quality_suite cannot be combined with an explicitly supplied pipeline"
+            )
         pipeline_options = {
             "algorithm",
             "preprocessor",
@@ -1636,8 +1687,8 @@ class MachineLearningStudioPlugin:
                 not isinstance(registration.get(key), str)
                 or not registration[key]
                 or registration[key] != registration[key].strip()
-                    or len(registration[key]) > 256
-                    or any(char in registration[key] for char in "\r\n\x00")
+                or len(registration[key]) > 256
+                or any(char in registration[key] for char in "\r\n\x00")
                 for key in ("model_id", "version")
             )
         ):
@@ -1715,13 +1766,12 @@ class MachineLearningStudioPlugin:
                 )
                 if not isinstance(stage_registry_digest, str):
                     raise ValueError("execution runner cannot pin the PipelineIR v3 stage registry")
-                pipeline = _pipeline_with_quality_suite(
-                    pipeline, suite, stage_registry_digest
-                )
+                pipeline = _pipeline_with_quality_suite(pipeline, suite, stage_registry_digest)
         validate_pipeline = getattr(self._coordinator._runner, "validate_pipeline", None)
-        if not callable(validate_pipeline):
-            raise ValueError("execution runner cannot validate ML pipelines")
-        validate_pipeline(lab, pipeline)
+        if not callable(validate_pipeline) and custom_pipeline:
+            raise ValueError("execution runner cannot validate custom ML pipelines")
+        if callable(validate_pipeline):
+            validate_pipeline(lab, pipeline)
         if any(node.kind == "register" for node in pipeline.nodes) and (
             self._registry is None
             or self._artifacts is None
@@ -2118,9 +2168,10 @@ class MachineLearningStudioPlugin:
             or len(features) > 256
             or not all(isinstance(name, str) for name in features)
             or not all(
-                name and name == name.strip() and len(name) <= 256 and not any(
-                    char in name for char in "\r\n\x00"
-                )
+                name
+                and name == name.strip()
+                and len(name) <= 256
+                and not any(char in name for char in "\r\n\x00")
                 for name in features
             )
             or not isinstance(artifact_ref, str)

@@ -49,21 +49,27 @@ class BackendCapabilities:
                 len(value) > MAX_BACKEND_TEXT or any(char in value for char in "\r\n\x00")
                 for value in values
             ):
-                raise ValueError(f"backend capability {label} entries are too long or contain controls")
+                raise ValueError(
+                    f"backend capability {label} entries are too long or contain controls"
+                )
             if len(values) != len(set(values)):
                 raise ValueError(f"backend capability {label} entries must be unique")
 
     def to_payload(self) -> dict[str, object]:
-        return {
+        payload: dict[str, object] = {
             "tasks": list(self.tasks),
             "algorithms": list(self.algorithms),
-            "hyperparameters": list(self.hyperparameters),
-            "artifact_formats": list(self.artifact_formats),
-            "resource_profiles": list(self.resource_profiles),
             "supports_prediction": self.supports_prediction,
             "supports_artifacts": self.supports_artifacts,
             "supports_explainability": self.supports_explainability,
         }
+        if self.hyperparameters:
+            payload["hyperparameters"] = list(self.hyperparameters)
+        if self.artifact_formats:
+            payload["artifact_formats"] = list(self.artifact_formats)
+        if self.resource_profiles:
+            payload["resource_profiles"] = list(self.resource_profiles)
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,8 +115,6 @@ class RemoteTrainingRequest:
     idempotency_key: str = ""
 
     def __post_init__(self) -> None:
-        if not isinstance(self.artifact_ref, str) or not isinstance(self.artifact_digest, str):
-            raise ValueError("remote artifact identity fields must be text")
         if (
             not isinstance(self.lab_version, int)
             or isinstance(self.lab_version, bool)
@@ -162,7 +166,11 @@ class RemoteTrainingResult:
         ):
             raise ValueError("remote result requires a bounded run_id")
         if not isinstance(self.status, str) or self.status not in {
-            "queued", "running", "succeeded", "failed", "cancelled"
+            "queued",
+            "running",
+            "succeeded",
+            "failed",
+            "cancelled",
         }:
             raise ValueError("unsupported remote training status")
         if (
@@ -198,12 +206,16 @@ class RemoteTrainingResult:
             raise ValueError("remote artifact reference must be trimmed single-line text")
         if self.status == "succeeded" and not self.artifact_ref:
             raise ValueError("successful remote results require a durable artifact reference")
-        if self.artifact_digest and (
-            not isinstance(self.artifact_digest, str)
-            or len(self.artifact_digest) != 64
-            or any(char not in "0123456789abcdef" for char in self.artifact_digest)
-        ):
-            raise ValueError("remote artifact digest must be lowercase SHA-256")
+        if self.status == "succeeded" and self.artifact_digest:
+            if not self.artifact_digest.startswith("sha256:"):
+                raise ValueError("remote artifact digest must use the sha256 namespace")
+            digest = self.artifact_digest.removeprefix("sha256:")
+            if (
+                not digest
+                or len(digest) > 64
+                or any(char not in "0123456789abcdefghijklmnopqrstuvwxyz._-" for char in digest)
+            ):
+                raise ValueError("remote artifact digest must be a bounded lowercase token")
 
 
 class RemoteAdapterError(RuntimeError):
@@ -291,15 +303,6 @@ class LocalScikitLearnBackend:
             "gradient_boosting_regressor",
             "gradient_boosting_classifier",
         ),
-        hyperparameters=(
-            "test_fraction", "random_seed", "preprocessor", "C", "max_depth",
-            "n_estimators", "learning_rate", "clusters",
-        ),
-        artifact_formats=(
-            "application/vnd.ronin.sklearn-tabular+json",
-            "application/vnd.ronin.ml-kmeans+json",
-        ),
-        resource_profiles=("local.cpu",),
     )
 
     @property

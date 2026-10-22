@@ -194,18 +194,14 @@ class TrainingSpec:
         target = _text(self.target, "ML target")
         if target in features:
             raise ValueError("ML target must not also be a feature")
-        if (
-            not _is_finite_number(self.test_fraction)
-            or not 0 < self.test_fraction < 1
-        ):
+        if not _is_finite_number(self.test_fraction) or not 0 < self.test_fraction < 1:
             raise ValueError("test_fraction must be in (0, 1)")
         if self.random_seed < 0:
             raise ValueError("random_seed must be non-negative")
         if len({name for name, _ in self.parameters}) != len(self.parameters):
             raise ValueError("ML parameters must be unique")
         if any(
-            not _text(name, "ML parameter")
-            or not _is_finite_number(value)
+            not _text(name, "ML parameter") or not _is_finite_number(value)
             for name, value in self.parameters
         ):
             raise ValueError("ML parameters must be finite numbers")

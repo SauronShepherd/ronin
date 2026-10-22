@@ -384,15 +384,13 @@ class ModelDeployment:
         _text(self.artifact_ref, "deployment artifact ref")
         _text(self.endpoint, "deployment endpoint")
         if any(
-            len(value) > 512
-            for value in (self.deployment_id, self.artifact_ref, self.endpoint)
+            len(value) > 512 for value in (self.deployment_id, self.artifact_ref, self.endpoint)
         ):
             raise ValueError("deployment identity fields exceed their bounds")
         if len(self.model_id.value) > 256 or len(self.version.value) > 256:
             raise ValueError("deployment model identity exceeds its bounds")
-        if (
-            len(self.artifact_digest) != 64
-            or any(char not in "0123456789abcdef" for char in self.artifact_digest)
+        if len(self.artifact_digest) != 64 or any(
+            char not in "0123456789abcdef" for char in self.artifact_digest
         ):
             raise ValueError("deployment artifact digest must be lowercase SHA-256")
         if self.status not in {"pending", "ready", "failed", "rolled_back"}:

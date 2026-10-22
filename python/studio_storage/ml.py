@@ -16,9 +16,9 @@ from studio_core.ml import (
     Experiment,
     ExperimentId,
     MetricValue,
-    ModelDeployment,
     MLRunId,
     MLRunRecord,
+    ModelDeployment,
     ModelEvaluation,
     ModelId,
     ModelSignature,
@@ -599,7 +599,10 @@ class SqliteMLStore:
             if model_row is None:
                 raise KeyError(f"{deployment.model_id}@{deployment.version}")
             model = _model_from_json(model_row["model_json"])
-            if model.artifact_ref != deployment.artifact_ref or model.artifact_digest != deployment.artifact_digest:
+            if (
+                model.artifact_ref != deployment.artifact_ref
+                or model.artifact_digest != deployment.artifact_digest
+            ):
                 raise MLConflict("deployment artifact is not the registered model artifact")
             existing = connection.execute(
                 "SELECT deployment_json FROM model_deployments WHERE workspace_id=? AND deployment_id=?",

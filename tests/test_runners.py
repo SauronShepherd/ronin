@@ -102,7 +102,7 @@ def test_data_protocol_captures_clean_stdout_and_preserves_json_bytes() -> None:
                 sys.executable,
                 "-c",
                 "import sys; sys.stderr.write('diagnostic\\n'); "
-                "sys.stdout.write('{\"password\":\"secret-value\"}')",
+                'sys.stdout.write(\'{"password":"secret-value"}\')',
             ),
             input_text="",
             cancellation=CancellationToken(),

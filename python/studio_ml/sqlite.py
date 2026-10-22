@@ -136,7 +136,9 @@ class SqliteMLLabStore(MLLabStore, FeatureDefinitionStore):
         finally:
             connection.close()
 
-    def put_quality_suite(self, workspace_id: WorkspaceId, lab_id: str, suite: QualitySuite) -> QualitySuite:
+    def put_quality_suite(
+        self, workspace_id: WorkspaceId, lab_id: str, suite: QualitySuite
+    ) -> QualitySuite:
         connection = self._connect()
         key = (str(workspace_id), lab_id, suite.id)
         payload = suite.to_json()
@@ -150,7 +152,9 @@ class SqliteMLLabStore(MLLabStore, FeatureDefinitionStore):
                 if QualitySuite.from_json(row["suite_json"]) != suite:
                     from .services import QualitySuiteConflict
 
-                    raise QualitySuiteConflict(f"quality suite version already exists: {suite.id}@{suite.version}")
+                    raise QualitySuiteConflict(
+                        f"quality suite version already exists: {suite.id}@{suite.version}"
+                    )
                 connection.execute("COMMIT")
                 return suite
             latest = connection.execute(
@@ -174,7 +178,9 @@ class SqliteMLLabStore(MLLabStore, FeatureDefinitionStore):
         finally:
             connection.close()
 
-    def get_quality_suite(self, workspace_id: WorkspaceId, lab_id: str, suite_id: str, version: int | None = None) -> QualitySuite | None:
+    def get_quality_suite(
+        self, workspace_id: WorkspaceId, lab_id: str, suite_id: str, version: int | None = None
+    ) -> QualitySuite | None:
         connection = self._connect()
         try:
             if version is None:
@@ -191,7 +197,9 @@ class SqliteMLLabStore(MLLabStore, FeatureDefinitionStore):
         finally:
             connection.close()
 
-    def list_quality_suites(self, workspace_id: WorkspaceId, lab_id: str) -> tuple[QualitySuite, ...]:
+    def list_quality_suites(
+        self, workspace_id: WorkspaceId, lab_id: str
+    ) -> tuple[QualitySuite, ...]:
         connection = self._connect()
         try:
             rows = connection.execute(
@@ -218,7 +226,9 @@ class SqliteMLLabStore(MLLabStore, FeatureDefinitionStore):
                 if DriftPolicy.from_json(row["policy_json"]) != policy:
                     from .services import DriftPolicyConflict
 
-                    raise DriftPolicyConflict(f"drift policy version already exists: {policy.id}@{policy.version}")
+                    raise DriftPolicyConflict(
+                        f"drift policy version already exists: {policy.id}@{policy.version}"
+                    )
                 connection.execute("COMMIT")
                 return policy
             latest = connection.execute(
@@ -270,9 +280,7 @@ class SqliteMLLabStore(MLLabStore, FeatureDefinitionStore):
                 "SELECT policy_json FROM ml_studio_drift_policies WHERE workspace_id=? AND lab_id=? ORDER BY policy_id,version",
                 (str(workspace_id), lab_id),
             ).fetchall()
-            return tuple(
-                DriftPolicy.from_json(row["policy_json"]) for row in rows
-            )
+            return tuple(DriftPolicy.from_json(row["policy_json"]) for row in rows)
         finally:
             connection.close()
 

@@ -9,12 +9,12 @@ from studio_core.plugin_events import (
 from studio_core.plugins import (
     CliContributionRegistry,
     ClientOperationRegistry,
+    PipelineStageContribution,
     PluginContext,
     PluginDependency,
     PluginManifest,
     PluginRecord,
     PluginState,
-    PipelineStageContribution,
     RoninPlugin,
     SurfaceContribution,
     SurfaceOption,

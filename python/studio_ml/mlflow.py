@@ -6,8 +6,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from math import isfinite
 
-from studio_core.ml import Experiment, MLRunRecord, RegisteredModelVersion
 from studio_core.canonical_json import decode, encode
+from studio_core.ml import Experiment, MLRunRecord, RegisteredModelVersion
 
 MLFLOW_SUBSET_SCHEMA = "ronin.mlflow-subset/v1"
 MLFLOW_METADATA_SCHEMA = "ronin.mlflow-metadata/v1"
@@ -40,13 +40,17 @@ class MLflowSubset:
     schema: str = MLFLOW_SUBSET_SCHEMA
 
     def __post_init__(self) -> None:
-        for value, name in (
+        for field_value, name in (
             (self.model_id, "model_id"),
             (self.version, "version"),
             (self.framework, "framework"),
             (self.artifact_digest, "artifact_digest"),
         ):
-            if not isinstance(value, str) or not value.strip() or value != value.strip():
+            if (
+                not isinstance(field_value, str)
+                or not field_value.strip()
+                or field_value != field_value.strip()
+            ):
                 raise ValueError(f"{name} must be non-empty and trimmed")
         if len(self.artifact_digest) != 64 or any(
             c not in "0123456789abcdef" for c in self.artifact_digest
@@ -80,7 +84,6 @@ class MLflowSubset:
                 or not finite
             ):
                 raise ValueError("MLflow metrics must be finite numbers")
-            raise ValueError("MLflow metrics must be finite numbers")
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -196,7 +199,7 @@ class MLflowMetadata:
         return encode(self.to_payload())
 
     @classmethod
-    def from_bytes(cls, payload: bytes) -> "MLflowMetadata":
+    def from_bytes(cls, payload: bytes) -> MLflowMetadata:
         value = decode(payload)
         expected = {"schema", "flavor", "experiment", "run", "model"}
         if not isinstance(value, Mapping) or set(value) != expected:

@@ -12,9 +12,7 @@ def validate_catalog_version(value: object, catalog_name: str) -> int:
         or isinstance(value, bool)
         or not 1 <= value <= MAX_CATALOG_VERSION
     ):
-        raise ValueError(
-            f"{catalog_name} version must be between 1 and {MAX_CATALOG_VERSION}"
-        )
+        raise ValueError(f"{catalog_name} version must be between 1 and {MAX_CATALOG_VERSION}")
     return value
 
 
@@ -30,9 +28,7 @@ def parse_catalog_version(value: str | int | None, catalog_name: str) -> int:
     ):
         parsed = int(value)
     else:
-        raise ValueError(
-            f"{catalog_name} version must be a canonical positive decimal integer"
-        )
+        raise ValueError(f"{catalog_name} version must be a canonical positive decimal integer")
     return validate_catalog_version(parsed, catalog_name)
 
 

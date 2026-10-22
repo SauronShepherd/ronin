@@ -118,6 +118,8 @@ from .ownership import OwnershipMetadata
 from .plugins import (
     CompositionPlan,
     ContributionRegistry,
+    PipelineStageContribution,
+    PipelineStageContributionRegistry,
     PluginCompatibilityError,
     PluginContext,
     PluginDependency,
@@ -128,8 +130,6 @@ from .plugins import (
     PluginRecord,
     PluginState,
     PluginValidationError,
-    PipelineStageContribution,
-    PipelineStageContributionRegistry,
 )
 from .project_manifest import PROJECT_MANIFEST_PATH, PROJECT_MANIFEST_SCHEMA, ProjectManifest
 from .projects import (

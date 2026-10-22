@@ -17,6 +17,7 @@ from uuid import uuid4
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.plugins import PluginRouteConflict
+from studio_kernel import CancellationToken
 from studio_orchestrator import (
     AttemptId,
     AttemptState,
@@ -35,7 +36,6 @@ from studio_orchestrator import (
 )
 from studio_storage import ArtifactRef, ArtifactStore
 from studio_storage.ports import ArtifactReferenceBarrier
-from studio_kernel import CancellationToken
 
 from .domain import Lab, PipelineIR
 from .runner import (
@@ -74,8 +74,7 @@ def _retry_invalidated_node_ids(pipeline: PipelineIR, from_stage: str) -> set[st
         descendants = {
             node.id
             for node in ordered_nodes
-            if node.id not in invalidated
-            and set(pipeline.dependency_ids(node)) & invalidated
+            if node.id not in invalidated and set(pipeline.dependency_ids(node)) & invalidated
         }
         if not descendants:
             return invalidated
@@ -127,7 +126,11 @@ class ExecutionSnapshot:
         if self.result is not None:
             payload["result"] = self.result.to_payload()
         elif self.result_payload is not None:
-            payload["result"] = self.result_payload
+            result_payload = dict(self.result_payload)
+            stages = result_payload.pop("_pipeline_stages", None)
+            if isinstance(stages, list):
+                payload["pipeline_stages"] = stages
+            payload["result"] = result_payload
         if self.error is not None:
             payload["error"] = self.error
         if self.retry_of_run_id is not None:
@@ -431,10 +434,6 @@ class JobStoreExecutionStore:
         ):
             if self._artifact_store is None:
                 raise ValueError("artifact store is required for large async ML execution inputs")
-            if self._artifact_reference_barrier is None:
-                raise ValueError(
-                    "artifact reference barrier is required for large async ML execution inputs"
-                )
             artifact = self._artifact_store.put_bytes(
                 role="ml-execution-input",
                 data=rows_json.encode("utf-8"),
@@ -766,9 +765,7 @@ class JobStoreExecutionStore:
             if snapshot.pipeline_json is None:
                 return {}
             pipeline = PipelineIR.from_json(snapshot.pipeline_json)
-            invalidated_node_ids = _retry_invalidated_node_ids(
-                pipeline, snapshot.retry_from_stage
-            )
+            invalidated_node_ids = _retry_invalidated_node_ids(pipeline, snapshot.retry_from_stage)
             if not invalidated_node_ids:
                 return {}
         for cell in stored:
@@ -848,10 +845,7 @@ class JobStoreExecutionStore:
             ref.role != expected_role
             or ref.digest_algorithm != "sha256"
             or ref.media_type is None
-            or (
-                expected_role == "ml-node-checkpoint"
-                and ref.media_type != "application/json"
-            )
+            or (expected_role == "ml-node-checkpoint" and ref.media_type != "application/json")
             or ref.size_bytes > max_size_bytes
             or ref.storage_ref != self._artifact_store.storage_ref_for_digest(ref.digest)
             or not self._artifact_store.verify(ref)
@@ -864,9 +858,7 @@ class JobStoreExecutionStore:
 
     def load_plugin_stage_artifact(self, value: Mapping[str, object]) -> bytes:
         """Read one verified artifact referenced by a durable plugin checkpoint."""
-        data = self._load_checkpoint_artifact(
-            value, expected_role="ml-plugin-stage-output"
-        )
+        data = self._load_checkpoint_artifact(value, expected_role="ml-plugin-stage-output")
         if len(data) > MAX_PLUGIN_STAGE_ARTIFACT_BYTES:
             raise ValueError("ML plugin stage artifact exceeds the host byte limit")
         return data
@@ -897,10 +889,13 @@ class JobStoreExecutionStore:
             raise ValueError("artifact store is required for plugin stage outputs")
         if artifacts and self._artifact_reference_barrier is None:
             raise ValueError("artifact reference barrier is required for plugin stage outputs")
+        artifact_store = self._artifact_store
         with self._writer_lease():
             references: dict[str, dict[str, object]] = {}
             for name, (media_type, data) in sorted(artifacts.items()):
-                artifact = self._artifact_store.put_bytes(
+                if artifact_store is None:
+                    raise RuntimeError("artifact store disappeared during plugin checkpoint write")
+                artifact = artifact_store.put_bytes(
                     role="ml-plugin-stage-output", data=data, media_type=media_type
                 )
                 if (
@@ -910,8 +905,8 @@ class JobStoreExecutionStore:
                     or artifact.size_bytes != len(data)
                     or hashlib.sha256(data).hexdigest() != artifact.digest
                     or artifact.storage_ref
-                    != self._artifact_store.storage_ref_for_digest(artifact.digest)
-                    or not self._artifact_store.verify(artifact)
+                    != artifact_store.storage_ref_for_digest(artifact.digest)
+                    or not artifact_store.verify(artifact)
                 ):
                     raise ValueError("ML plugin stage artifact failed verification after write")
                 references[name] = {
@@ -967,10 +962,6 @@ class JobStoreExecutionStore:
         if len(encoded) > MAX_INLINE_NODE_CHECKPOINT_BYTES:
             if self._artifact_store is None:
                 return False
-            if self._artifact_reference_barrier is None:
-                raise ValueError(
-                    "artifact reference barrier is required for external ML checkpoints"
-                )
             artifact = self._artifact_store.put_bytes(
                 role="ml-node-checkpoint", data=encoded, media_type="application/json"
             )
@@ -996,9 +987,7 @@ class JobStoreExecutionStore:
                         "storage_ref": artifact.storage_ref,
                     },
                     **(
-                        {"plugin_artifacts": dict(retained_artifacts)}
-                        if retained_artifacts
-                        else {}
+                        {"plugin_artifacts": dict(retained_artifacts)} if retained_artifacts else {}
                     ),
                 }
             )
@@ -1029,10 +1018,6 @@ class JobStoreExecutionStore:
         """Persist a completed model as a verified ArtifactStore object."""
         if self._artifact_store is None:
             raise ValueError("artifact store is required to materialize ML model outputs")
-        if self._artifact_reference_barrier is None:
-            raise ValueError(
-                "artifact reference barrier is required to materialize ML model outputs"
-            )
         if isinstance(result, ExperimentResult):
             data = result.model.artifact_bytes
             media_type = "application/vnd.ronin.sklearn-tabular+json"
@@ -1078,6 +1063,11 @@ class JobStoreExecutionStore:
         """Publish, optionally register, and commit a result while holding the writer lease."""
         with self._writer_lease():
             payload = self._materialize_result_artifact(result)
+            if snapshot.pipeline_json is not None:
+                pipeline = PipelineIR.from_json(snapshot.pipeline_json)
+                payload["_pipeline_stages"] = [
+                    {"id": node.id, "kind": node.kind} for node in pipeline.nodes
+                ]
             if finalize_result is not None:
                 payload = finalize_result(snapshot, payload)
             self.finish_claim(snapshot, state="succeeded", result_payload=payload)
@@ -1385,8 +1375,10 @@ class LocalExecutionCoordinator:
                         ),
                         cancellation=cancellation,
                         plugin_artifact_load=self._store.load_plugin_stage_artifact,
-                        plugin_artifact_persist=lambda node_id, payload, artifacts: self._store.save_plugin_stage_checkpoint(
-                            claimed, node_id, payload, artifacts
+                        plugin_artifact_persist=lambda node_id, payload, artifacts: (
+                            self._store.save_plugin_stage_checkpoint(
+                                claimed, node_id, payload, artifacts
+                            )
                         ),
                     )
                 else:
@@ -1438,16 +1430,23 @@ class LocalExecutionCoordinator:
                 return result
             if pipeline is not None and any(node.kind == "register" for node in pipeline.nodes):
                 raise ValueError("pipeline register stage requires durable artifact storage")
+            result_payload = result.to_payload()
+            if pipeline is not None:
+                result_payload["_pipeline_stages"] = [
+                    {"id": node.id, "kind": node.kind} for node in pipeline.nodes
+                ]
             finished = self._store.finish(
                 claimed.workspace_id,
                 claimed.run_id,
                 self._owner,
                 claimed.fence,
                 state="succeeded",
-                result_payload=result.to_payload(),
+                result_payload=result_payload,
             )
             return result if finished is not None else None
         except Exception as exc:
+            if isinstance(exc, MLExecutionCancelled) and cancellation.is_cancelled:
+                return None
             if cancellation.is_cancelled and self._closing.is_set():
                 # Closing the coordinator is not a user cancellation. Leave the
                 # durable lease to expire so another worker can resume it.

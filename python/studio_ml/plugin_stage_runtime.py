@@ -99,7 +99,7 @@ def _invoke(
         "--pids-limit",
         str(contribution.pids_limit),
         "--tmpfs",
-        "/tmp:rw,noexec,nosuid,nodev,size=64m",
+        "/tmp:rw,noexec,nosuid,nodev,size=64m",  # noqa: S108 - hardened isolated container tmpfs
         contribution.executor_image,
         "ronin-plugin-stage",
         contribution.operation_id,
@@ -166,9 +166,7 @@ def _invoke(
     except asyncio.CancelledError as exc:
         raise PluginStageExecutionError("plugin stage execution was cancelled") from exc
     except Exception as exc:
-        raise PluginStageExecutionError(
-            "plugin stage container could not be executed"
-        ) from exc
+        raise PluginStageExecutionError("plugin stage container could not be executed") from exc
 
     if getattr(outcome, "cancelled", False):
         raise PluginStageExecutionError("plugin stage execution was cancelled")

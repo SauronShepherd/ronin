@@ -33,7 +33,24 @@ def documented_routes(path: Path = OPENAPI_PATH) -> frozenset[tuple[str, str]]:
 
 
 def registered_routes() -> frozenset[tuple[str, str]]:
-    return frozenset(SUPPORTED_ROUTES | CONTROL_PLANE_ROUTES | OIDC_ADMIN_ROUTES)
+    routes = set(SUPPORTED_ROUTES | CONTROL_PLANE_ROUTES | OIDC_ADMIN_ROUTES)
+    # Plugin routes are registered dynamically and therefore cannot be listed
+    # in the static server registries. Compose the first-party ML plugin here
+    # so the OpenAPI contract is checked against the same contribution source
+    # used by the host bootstrap.
+    from studio_core.plugins import ContributionRegistry, PluginContext
+    from studio_ml.plugin import factory
+
+    plugin = factory()
+    manifest = plugin.manifest
+    contributions = ContributionRegistry()
+    for capability in manifest.capabilities:
+        contributions.add_capability(capability, manifest.id)
+    for permission in manifest.permissions:
+        contributions.add_permission(permission, manifest.id)
+    plugin.register(PluginContext(manifest.id, contributions, {}))
+    routes.update((route.method, route.path) for route in contributions.routes)
+    return frozenset(routes)
 
 
 def check(path: Path = OPENAPI_PATH) -> None:

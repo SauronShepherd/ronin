@@ -18,9 +18,9 @@ from studio_core.catalog import AssetRef
 from .catalog import validate_catalog_version
 
 LabTask: TypeAlias = Literal["classification", "regression", "clustering"]
-NodeKind: TypeAlias = Literal[
-    "profile", "quality_gate", "prepare", "train", "evaluate", "select", "register"
-] | str
+NodeKind: TypeAlias = (
+    Literal["profile", "quality_gate", "prepare", "train", "evaluate", "select", "register"] | str
+)
 LAB_SCHEMA = "ronin.ml-lab/v1"
 PIPELINE_SCHEMA = "ronin.ml-pipeline-ir/v1"
 PIPELINE_SCHEMA_V2 = "ronin.ml-pipeline-ir/v2"
@@ -128,6 +128,8 @@ class FeatureDefinition:
         _text(self.transform, "feature transform")
         if self.schema != FEATURE_SCHEMA:
             raise ValueError("invalid feature definition schema or version")
+        if not isinstance(self.version, int) or isinstance(self.version, bool):
+            raise ValueError("invalid feature definition schema or version")
         validate_catalog_version(self.version, "feature definition")
         if (
             not self.features
@@ -154,7 +156,14 @@ class FeatureDefinition:
     @classmethod
     def from_payload(cls, payload: object) -> FeatureDefinition:
         expected = {
-            "schema", "id", "name", "project_id", "dataset", "features", "transform", "version"
+            "schema",
+            "id",
+            "name",
+            "project_id",
+            "dataset",
+            "features",
+            "transform",
+            "version",
         }
         if not isinstance(payload, Mapping) or set(payload) != expected:
             raise ValueError("feature definition has invalid shape")
@@ -171,7 +180,10 @@ class FeatureDefinition:
             ):
                 raise ValueError("feature definition feature has invalid shape")
             features.append(FeatureSpec(cast(str, item["column"]), cast(str, item["role"])))
-        if not all(isinstance(payload[name], str) for name in ("schema", "id", "name", "project_id", "transform")):
+        if not all(
+            isinstance(payload[name], str)
+            for name in ("schema", "id", "name", "project_id", "transform")
+        ):
             raise ValueError("feature definition text fields must be strings")
         if not isinstance(payload["version"], int) or isinstance(payload["version"], bool):
             raise ValueError("feature definition version must be an integer")
@@ -231,10 +243,7 @@ class Lab:
             raise ValueError("target must not also be a feature")
         if not isinstance(self.seed, int) or isinstance(self.seed, bool) or self.seed < 0:
             raise ValueError("seed must be a non-negative integer")
-        if (
-            not _is_finite_number(self.test_fraction)
-            or not 0 < self.test_fraction < 1
-        ):
+        if not _is_finite_number(self.test_fraction) or not 0 < self.test_fraction < 1:
             raise ValueError("invalid seed or test fraction")
         known_fields = {
             "schema",
@@ -345,7 +354,8 @@ class PipelineNode:
     def __post_init__(self) -> None:
         _text(self.id, "pipeline node id")
         if not isinstance(self.kind, str) or (
-            self.kind not in {
+            self.kind
+            not in {
                 "profile",
                 "quality_gate",
                 "prepare",
@@ -354,10 +364,7 @@ class PipelineNode:
                 "select",
                 "register",
             }
-            and re.fullmatch(
-                r"[a-z0-9][a-z0-9.-]{0,127}/[a-z][a-z0-9_-]{0,63}", self.kind
-            )
-            is None
+            and re.fullmatch(r"[a-z0-9][a-z0-9.-]{0,127}/[a-z][a-z0-9_-]{0,63}", self.kind) is None
         ):
             raise ValueError("unsupported pipeline node kind")
         if self.id in self.depends_on or len(set(self.depends_on)) != len(self.depends_on):
@@ -476,7 +483,8 @@ class PipelineIR:
         if len(self.nodes) > MAX_PIPELINE_NODES:
             raise ValueError(f"pipeline cannot contain more than {MAX_PIPELINE_NODES} nodes")
         if self.schema != PIPELINE_SCHEMA_V3 and any(
-            node.kind not in {
+            node.kind
+            not in {
                 "profile",
                 "quality_gate",
                 "prepare",
@@ -571,9 +579,7 @@ class PipelineIR:
                 raise ValueError("PipelineIR v3 node ids cannot exceed 256 characters")
             definition = BUILTIN_STAGE_REGISTRY.get(node.kind)
             if definition is None:
-                if not re.fullmatch(
-                    r"[a-z0-9][a-z0-9.-]{0,127}/[a-z][a-z0-9_-]{0,63}", node.kind
-                ):
+                if not re.fullmatch(r"[a-z0-9][a-z0-9.-]{0,127}/[a-z][a-z0-9_-]{0,63}", node.kind):
                     raise ValueError("PipelineIR v3 plugin stage must use a namespaced id")
                 if node.stage_version < 1 or len(node.config) > 32 or len(node.inputs) > 16:
                     raise ValueError("PipelineIR v3 plugin stage exceeds structural limits")
@@ -586,7 +592,9 @@ class PipelineIR:
             config_bytes += len(encode_canonical_json(_thaw_json(node.config)))
             supplied_ports = dict(node.inputs)
             if definition is not None and set(supplied_ports) != set(definition.inputs):
-                raise ValueError(f"PipelineIR v3 {node.kind} inputs do not match its stage contract")
+                raise ValueError(
+                    f"PipelineIR v3 {node.kind} inputs do not match its stage contract"
+                )
             if definition is None and any(
                 not re.fullmatch(r"[a-z][a-z0-9_.-]{0,63}", port)
                 or not references
@@ -596,7 +604,10 @@ class PipelineIR:
                 raise ValueError("PipelineIR v3 plugin stage has invalid input ports")
             for port, references in supplied_ports.items():
                 contract = definition.inputs.get(port) if definition is not None else None
-                if contract is not None and not contract.minimum <= len(references) <= contract.maximum:
+                if (
+                    contract is not None
+                    and not contract.minimum <= len(references) <= contract.maximum
+                ):
                     raise ValueError(f"PipelineIR v3 input {port!r} has invalid cardinality")
                 edge_count += len(references)
                 for reference in references:

@@ -43,12 +43,8 @@ def _nodeids(report: dict[str, Any], key: str) -> list[str]:
 def _duration(report: dict[str, Any]) -> float:
     timing = report.get("timing")
     session = timing.get("session_wall_seconds") if isinstance(timing, dict) else None
-    session_body = (
-        timing.get("pytest_session_body_seconds") if isinstance(timing, dict) else None
-    )
-    startup = (
-        timing.get("startup_and_collection_seconds") if isinstance(timing, dict) else None
-    )
+    session_body = timing.get("pytest_session_body_seconds") if isinstance(timing, dict) else None
+    startup = timing.get("startup_and_collection_seconds") if isinstance(timing, dict) else None
     installation = timing.get("installation_seconds") if isinstance(timing, dict) else None
     if (
         isinstance(session, bool)
@@ -122,7 +118,9 @@ def _require_clean_run(reports: list[dict[str, Any]]) -> None:
                 raise ValueError(f"{report['_path']} has an unsupported test outcome")
             phases = item.get("phases")
             if not isinstance(phases, list) or not phases:
-                raise ValueError(f"{report['_path']} has missing phase evidence for {item['nodeid']}")
+                raise ValueError(
+                    f"{report['_path']} has missing phase evidence for {item['nodeid']}"
+                )
             phase_durations: list[float] = []
             setup_count = 0
             failed_phase_count = 0
@@ -136,14 +134,18 @@ def _require_clean_run(reports: list[dict[str, Any]]) -> None:
                     or not isinstance(phase_outcome, str)
                     or phase_outcome not in {"passed", "failed", "skipped"}
                 ):
-                    raise ValueError(f"{report['_path']} has invalid phase evidence for {item['nodeid']}")
+                    raise ValueError(
+                        f"{report['_path']} has invalid phase evidence for {item['nodeid']}"
+                    )
                 duration = phase.get("duration_seconds")
                 if (
                     isinstance(duration, bool)
                     or not isinstance(duration, (int, float))
                     or duration < 0
                 ):
-                    raise ValueError(f"{report['_path']} has invalid phase duration for {item['nodeid']}")
+                    raise ValueError(
+                        f"{report['_path']} has invalid phase duration for {item['nodeid']}"
+                    )
                 try:
                     duration_seconds = float(duration)
                 except OverflowError as exc:
@@ -151,17 +153,17 @@ def _require_clean_run(reports: list[dict[str, Any]]) -> None:
                         f"{report['_path']} has invalid phase duration for {item['nodeid']}"
                     ) from exc
                 if not isfinite(duration_seconds):
-                    raise ValueError(f"{report['_path']} has non-finite phase duration for {item['nodeid']}")
+                    raise ValueError(
+                        f"{report['_path']} has non-finite phase duration for {item['nodeid']}"
+                    )
                 phase_durations.append(duration_seconds)
                 setup_count += phase_name == "setup"
                 failed_phase_count += phase_outcome == "failed"
             duration = item.get("duration_seconds")
-            if (
-                isinstance(duration, bool)
-                or not isinstance(duration, (int, float))
-                or duration < 0
-            ):
-                raise ValueError(f"{report['_path']} has invalid test duration for {item['nodeid']}")
+            if isinstance(duration, bool) or not isinstance(duration, (int, float)) or duration < 0:
+                raise ValueError(
+                    f"{report['_path']} has invalid test duration for {item['nodeid']}"
+                )
             try:
                 duration_seconds = float(duration)
             except OverflowError as exc:
@@ -175,14 +177,14 @@ def _require_clean_run(reports: list[dict[str, Any]]) -> None:
                 or failed_phase_count != item["failed_phase_count"]
                 or abs(sum(phase_durations) - duration_seconds) > tolerance
             ):
-                raise ValueError(f"{report['_path']} has inconsistent test phase totals for {item['nodeid']}")
-            expected_flaky = (
-                failed_phase_count > 0
-                and setup_count > 1
-                and outcome != "failed"
-            )
+                raise ValueError(
+                    f"{report['_path']} has inconsistent test phase totals for {item['nodeid']}"
+                )
+            expected_flaky = failed_phase_count > 0 and setup_count > 1 and outcome != "failed"
             if item["flaky"] != expected_flaky:
-                raise ValueError(f"{report['_path']} has inconsistent flaky status for {item['nodeid']}")
+                raise ValueError(
+                    f"{report['_path']} has inconsistent flaky status for {item['nodeid']}"
+                )
             if item.get("flaky") is True or outcome in {"failed", "xpassed"}:
                 raise ValueError(f"flaky or failed test {item['nodeid']} in {report['_path']}")
 
@@ -246,17 +248,15 @@ def analyze_reports(
     for commit, python_version in comparable_keys:
         baselines = baseline_groups[(commit, python_version)]
         groups = [
-            reports
-            for key, reports in shard_groups.items()
-            if key[:2] == (commit, python_version)
+            reports for key, reports in shard_groups.items() if key[:2] == (commit, python_version)
         ]
         if len(baselines) < minimum_runs or len(groups) < minimum_runs:
             raise ValueError(
-                f"{commit} Python {python_version} needs at least {minimum_runs} full and shard runs"
+                f"{commit} Python {python_version} needs at least {minimum_runs} full "
+                "and shard runs"
             )
         baseline_run_keys = [
-            (_ci_value(report, "run_id"), _ci_value(report, "run_attempt"))
-            for report in baselines
+            (_ci_value(report, "run_id"), _ci_value(report, "run_attempt")) for report in baselines
         ]
         if len(baseline_run_keys) != len(set(baseline_run_keys)):
             raise ValueError("full-suite timing reports contain duplicate run attempts")
@@ -269,10 +269,9 @@ def analyze_reports(
             raise ValueError("full-suite baseline is missing per-test outcomes")
         for report in baselines:
             collected_nodeids = _nodeids(report, "collected_nodeids")
-            if (
-                len(collected_nodeids) != len(set(collected_nodeids))
-                or set(collected_nodeids) != set(expected_nodeids)
-            ):
+            if len(collected_nodeids) != len(set(collected_nodeids)) or set(
+                collected_nodeids
+            ) != set(expected_nodeids):
                 raise ValueError("full-suite runs collected different node ID sets")
             if Counter(_nodeids(report, "executed_nodeids")) != Counter(expected_nodeids):
                 raise ValueError("full-suite run did not execute every node ID exactly once")
@@ -285,8 +284,12 @@ def analyze_reports(
             shard_names = [_ci_value(report, "shard") for report in reports]
             if len(shard_names) != 2 or len(shard_names) != len(set(shard_names)):
                 raise ValueError("each sharded run needs exactly two uniquely named shards")
-            collected = [nodeid for report in reports for nodeid in _nodeids(report, "collected_nodeids")]
-            executed = [nodeid for report in reports for nodeid in _nodeids(report, "executed_nodeids")]
+            collected = [
+                nodeid for report in reports for nodeid in _nodeids(report, "collected_nodeids")
+            ]
+            executed = [
+                nodeid for report in reports for nodeid in _nodeids(report, "executed_nodeids")
+            ]
             shard_outcomes: dict[str, str] = {}
             for report in reports:
                 for nodeid, outcome in _outcomes(report).items():

@@ -14,7 +14,7 @@ from typing import Literal
 SearchMode = Literal["single", "grid", "random", "bayesian"]
 MAX_TIE_BREAKERS = 8
 MAX_SEARCH_PARAMETERS = 16
-MAX_PARAMETER_VALUES = 256
+MAX_PARAMETER_VALUES = 4096
 MAX_PARAMETER_NAME_LENGTH = 128
 MAX_PARAMETER_STRING_LENGTH = 256
 MAX_METRIC_NAME_LENGTH = 128
@@ -201,8 +201,10 @@ class Trial:
                 raise ValueError(f"trial parameter {name!r} must be finite")
             if isinstance(value, str) and len(value) > MAX_PARAMETER_STRING_LENGTH:
                 raise ValueError(f"trial parameter {name!r} is too long")
-            if isinstance(value, int) and not isinstance(value, bool) and not (
-                -MAX_INTEGER_PARAMETER <= value <= MAX_INTEGER_PARAMETER
+            if (
+                isinstance(value, int)
+                and not isinstance(value, bool)
+                and not (-MAX_INTEGER_PARAMETER <= value <= MAX_INTEGER_PARAMETER)
             ):
                 raise ValueError(f"trial parameter {name!r} is out of range")
             if not isinstance(value, (str, int, float, bool)) and value is not None:
@@ -221,7 +223,7 @@ class Trial:
                 raise ValueError("trial metric names must be non-empty and trimmed")
             value = _finite_metric(raw_value)
             if value is None:
-                raise ValueError(f"trial metric {name!r} must be a finite number")
+                raise ValueError(f"trial metric {name!r} must be finite")
             normalized_metrics[name] = value
         encoded = json.dumps(
             {"parameters": normalized_parameters, "random_seed": random_seed},

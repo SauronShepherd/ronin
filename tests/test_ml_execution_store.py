@@ -227,9 +227,7 @@ def test_plugin_stage_artifact_and_checkpoint_share_writer_lease(tmp_path) -> No
         assert events == ["lock", "artifact", "checkpoint", "unlock"]
         assert adapter.load_plugin_stage_artifact(refs["metrics.json"]) == b'{"accuracy":1.0}'
         checkpoints = adapter.node_checkpoints(claimed)
-        assert checkpoints["plugin-metrics"]["checkpoint"]["value"][
-            "__ronin_artifacts__"
-        ] == refs
+        assert checkpoints["plugin-metrics"]["checkpoint"]["value"]["__ronin_artifacts__"] == refs
     finally:
         asyncio.run(service.aclose())
 

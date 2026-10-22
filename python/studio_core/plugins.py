@@ -250,9 +250,7 @@ class PipelineStageContribution:
             or not re.fullmatch(r"[0-9a-f]{64}", self.distribution_digest)
             or not isinstance(self.executor_image, str)
             or len(self.executor_image) > 255
-            or not re.fullmatch(
-                r"[a-z0-9][a-z0-9._:/-]*@sha256:[0-9a-f]{64}", self.executor_image
-            )
+            or not re.fullmatch(r"[a-z0-9][a-z0-9._:/-]*@sha256:[0-9a-f]{64}", self.executor_image)
             or not isinstance(self.operation_id, str)
             or not re.fullmatch(r"[a-z][a-z0-9_.-]{0,127}", self.operation_id)
             or not isinstance(self.output_type, str)
@@ -285,8 +283,7 @@ class PipelineStageContribution:
             ):
                 raise PluginValidationError("invalid plugin pipeline stage input port")
         if any(
-            not isinstance(field, str)
-            or not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", field)
+            not isinstance(field, str) or not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", field)
             for field in self.config_fields
         ) or len(set(self.config_fields)) != len(self.config_fields):
             raise PluginValidationError("invalid plugin pipeline stage configuration fields")
@@ -322,11 +319,14 @@ class PipelineStageContribution:
         memory_match = re.fullmatch(r"([1-9][0-9]*)([kKmMgG])", self.memory_limit)
         if memory_match is None:
             raise PluginValidationError("invalid plugin pipeline stage memory limit")
-        memory_bytes = int(memory_match.group(1)) * {
-            "k": 1024,
-            "m": 1024**2,
-            "g": 1024**3,
-        }[memory_match.group(2).lower()]
+        memory_bytes = (
+            int(memory_match.group(1))
+            * {
+                "k": 1024,
+                "m": 1024**2,
+                "g": 1024**3,
+            }[memory_match.group(2).lower()]
+        )
         if memory_bytes > 8 * 1024**3 or self.pids_limit > 1024:
             raise PluginValidationError("plugin pipeline stage resource limit exceeds host policy")
 

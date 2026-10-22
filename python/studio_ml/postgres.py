@@ -248,7 +248,9 @@ class PostgresMLLabStore(PostgresMetadataStore, MLLabStore, FeatureDefinitionSto
         finally:
             connection.close()
 
-    def put_quality_suite(self, workspace_id: WorkspaceId, lab_id: str, suite: QualitySuite) -> QualitySuite:
+    def put_quality_suite(
+        self, workspace_id: WorkspaceId, lab_id: str, suite: QualitySuite
+    ) -> QualitySuite:
         connection = self._connect()
         key = (str(workspace_id), lab_id, suite.id)
         try:
@@ -266,7 +268,9 @@ class PostgresMLLabStore(PostgresMetadataStore, MLLabStore, FeatureDefinitionSto
                 row = cursor.fetchone()
                 if row is not None:
                     if QualitySuite.from_json(row["suite_json"]) != suite:
-                        raise QualitySuiteConflict(f"quality suite version already exists: {suite.id}@{suite.version}")
+                        raise QualitySuiteConflict(
+                            f"quality suite version already exists: {suite.id}@{suite.version}"
+                        )
                     connection.commit()
                     return suite
                 cursor.execute(
@@ -288,7 +292,9 @@ class PostgresMLLabStore(PostgresMetadataStore, MLLabStore, FeatureDefinitionSto
         finally:
             connection.close()
 
-    def get_quality_suite(self, workspace_id: WorkspaceId, lab_id: str, suite_id: str, version: int | None = None) -> QualitySuite | None:
+    def get_quality_suite(
+        self, workspace_id: WorkspaceId, lab_id: str, suite_id: str, version: int | None = None
+    ) -> QualitySuite | None:
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
@@ -307,7 +313,9 @@ class PostgresMLLabStore(PostgresMetadataStore, MLLabStore, FeatureDefinitionSto
         finally:
             connection.close()
 
-    def list_quality_suites(self, workspace_id: WorkspaceId, lab_id: str) -> tuple[QualitySuite, ...]:
+    def list_quality_suites(
+        self, workspace_id: WorkspaceId, lab_id: str
+    ) -> tuple[QualitySuite, ...]:
         connection = self._connect()
         try:
             with connection.cursor() as cursor:
@@ -340,7 +348,9 @@ class PostgresMLLabStore(PostgresMetadataStore, MLLabStore, FeatureDefinitionSto
                 row = cursor.fetchone()
                 if row is not None:
                     if DriftPolicy.from_json(row["policy_json"]) != policy:
-                        raise DriftPolicyConflict(f"drift policy version already exists: {policy.id}@{policy.version}")
+                        raise DriftPolicyConflict(
+                            f"drift policy version already exists: {policy.id}@{policy.version}"
+                        )
                     connection.commit()
                     return policy
                 cursor.execute(

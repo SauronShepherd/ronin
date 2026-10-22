@@ -37,8 +37,7 @@ class NumericDrift:
             raise ValueError("drift feature name must be non-empty and trimmed")
         counts = (self.baseline_count, self.current_count)
         if any(
-            not isinstance(count, int) or isinstance(count, bool) or count < 1
-            for count in counts
+            not isinstance(count, int) or isinstance(count, bool) or count < 1 for count in counts
         ):
             raise ValueError("drift window counts must be positive integers")
         statistics = (
@@ -50,9 +49,7 @@ class NumericDrift:
             self.variance_delta,
         )
         if any(
-            not isinstance(value, (int, float))
-            or isinstance(value, bool)
-            or not _finite(value)
+            not isinstance(value, (int, float)) or isinstance(value, bool) or not _finite(value)
             for value in statistics
         ):
             raise ValueError("drift statistics must be finite numbers")
@@ -205,9 +202,7 @@ class DriftAssessment:
         if not isinstance(self.status, str) or self.status not in {"ok", "drifted"}:
             raise ValueError("unsupported drift assessment status")
         if not isinstance(self.drifted_features, tuple) or any(
-            not isinstance(feature, str)
-            or not feature
-            or feature != feature.strip()
+            not isinstance(feature, str) or not feature or feature != feature.strip()
             for feature in self.drifted_features
         ):
             raise ValueError("drifted feature names must be non-empty and trimmed")

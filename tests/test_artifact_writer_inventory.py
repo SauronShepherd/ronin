@@ -19,6 +19,7 @@ _REVIEWED_PUT_BYTES_CALLS = {
     "studio_ml/service.py::persist_clustering_result": 1,
     "studio_ml/service.py::register_clustering_model": 1,
     "studio_ml/service.py::train_register_tabular": 1,
+    "studio_ml/registry_bundle.py::_commit_ml_registry_bundle_import": 1,
     "studio_storage/local_files.py::ingest": 1,
     "studio_synthetic_data/plugin.py::export": 1,
     "studio_worker/execution.py::_checkpoint_under_lease": 1,

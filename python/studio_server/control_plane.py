@@ -1010,8 +1010,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             # runtime a server bootstrap dependency.  These errors are raised
             # while a plugin route invokes ML Studio, so translate them into a
             # stable API response instead of leaking a generic 500.
-            from studio_ml.runtime import MLDependencyError
             from studio_ml.runner import BackendNotFound
+            from studio_ml.runtime import MLDependencyError
 
             ml_dependency_errors = (MLDependencyError,)
             ml_backend_not_found = (BackendNotFound,)
@@ -1032,7 +1032,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 EnvironmentServiceConflict,
                 ConnectionServiceConflict,
                 PluginRouteConflict,
-            ) + ml_conflicts,
+            )
+            + ml_conflicts,
         ):
             self._error(HTTPStatus.CONFLICT, "conflict", str(exc))
         elif isinstance(exc, ml_dependency_errors):

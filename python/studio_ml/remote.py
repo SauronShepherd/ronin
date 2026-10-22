@@ -7,6 +7,7 @@ import math
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict
+from typing import cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -53,7 +54,9 @@ class RemoteExecutionController:
                     raise
                 remaining = deadline - self._clock()
                 if remaining <= 0:
-                    raise RemoteTransientError("remote training wall-clock budget expired")
+                    raise RemoteTransientError(
+                        "remote training wall-clock budget expired"
+                    ) from None
                 self._sleep(min(self.policy.delay_for(attempt), remaining))
         raise AssertionError("unreachable")
 
@@ -106,8 +109,7 @@ class JsonRemoteBackend:
         artifact_ref = payload.get("artifact_ref", "")
         artifact_digest = payload.get("artifact_digest", "")
         if not all(
-            isinstance(value, str)
-            for value in (run_id, status, artifact_ref, artifact_digest)
+            isinstance(value, str) for value in (run_id, status, artifact_ref, artifact_digest)
         ):
             raise ValueError("remote result identity fields must be text")
         raw_metrics = payload.get("metrics", {})
@@ -126,10 +128,10 @@ class JsonRemoteBackend:
                 raise ValueError("remote metrics must contain finite values")
             metrics.append((key, metric))
         return RemoteTrainingResult(
-            run_id,
-            artifact_ref,
-            artifact_digest,
-            status,
+            cast(str, run_id),
+            cast(str, artifact_ref),
+            cast(str, artifact_digest),
+            cast(str, status),
             tuple(metrics),
         )
 
@@ -213,9 +215,7 @@ def urllib_json_transport(
     def transport(operation: str, payload: Mapping[str, object]) -> Mapping[str, object]:
         request_payload = payload.get("request")
         request_timeout = (
-            request_payload.get("timeout_seconds")
-            if isinstance(request_payload, Mapping)
-            else None
+            request_payload.get("timeout_seconds") if isinstance(request_payload, Mapping) else None
         )
         effective_timeout = timeout_seconds
         if isinstance(request_timeout, (int, float)) and not isinstance(request_timeout, bool):

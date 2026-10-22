@@ -1,6 +1,8 @@
 """Tabular profiling and declarative quality gates for Machine Learning Studio."""
-# ruff: noqa: E501
 
+from __future__ import annotations
+
+# ruff: noqa: E501
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -28,7 +30,11 @@ class QualityExpectation:
             if not isinstance(item, str) or not item or item != item.strip() or len(item) > 256:
                 raise ValueError(f"{name} must be trimmed text of at most 256 characters")
         if not isinstance(self.rule, str) or self.rule not in {
-            "not_null", "numeric", "min", "max", "min_distinct"
+            "not_null",
+            "numeric",
+            "min",
+            "max",
+            "min_distinct",
         }:
             raise ValueError("unsupported quality expectation rule")
         if not isinstance(self.severity, str) or self.severity not in {"warning", "failure"}:
@@ -71,7 +77,12 @@ class QualitySuite:
     schema: str = "ronin.ml-quality-suite/v1"
 
     def __post_init__(self) -> None:
-        if not isinstance(self.id, str) or not self.id or self.id != self.id.strip() or len(self.id) > 256:
+        if (
+            not isinstance(self.id, str)
+            or not self.id
+            or self.id != self.id.strip()
+            or len(self.id) > 256
+        ):
             raise ValueError("quality suite id must be trimmed text of at most 256 characters")
         if self.schema != "ronin.ml-quality-suite/v1":
             raise ValueError("unsupported quality suite schema")
@@ -84,7 +95,9 @@ class QualitySuite:
             or len({item.id for item in self.expectations}) != len(self.expectations)
         ):
             raise ValueError("quality suite requires 1 to 64 uniquely identified expectations")
-        object.__setattr__(self, "expectations", tuple(sorted(self.expectations, key=lambda item: item.id)))
+        object.__setattr__(
+            self, "expectations", tuple(sorted(self.expectations, key=lambda item: item.id))
+        )
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -116,7 +129,11 @@ class QualitySuite:
         expectations: list[QualityExpectation] = []
         for item in cast(list[object], payload["expectations"]):
             if not isinstance(item, Mapping) or set(item) != {
-                "id", "column", "rule", "severity", "value"
+                "id",
+                "column",
+                "rule",
+                "severity",
+                "value",
             }:
                 raise ValueError("quality expectation has invalid shape")
             expectations.append(
@@ -244,9 +261,9 @@ def profile_and_validate(
         if profile.constant:
             warnings.append(f"column {name!r} is constant")
     target_name = lab.target
-    target = next((profile for profile in profiles if profile.name == target_name), None)
-    if target is not None and lab.task == "classification" and target_name is not None:
-        if target.distinct_count < 2:
+    target_profile = next((profile for profile in profiles if profile.name == target_name), None)
+    if target_profile is not None and lab.task == "classification" and target_name is not None:
+        if target_profile.distinct_count < 2:
             failures.append("classification target must contain at least two classes")
         counts: dict[object, int] = {}
         for row in rows:
@@ -275,8 +292,8 @@ def profile_and_validate(
                 )
             )
             if not passed:
-                target = warnings if expectation.severity == "warning" else failures
-                target.append(message)
+                messages = warnings if expectation.severity == "warning" else failures
+                messages.append(message)
     return QualityReport(
         len(rows),
         tuple(profiles),
@@ -306,16 +323,12 @@ def _expectation_passes(expectation: QualityExpectation, values: list[object]) -
         return bool(values) and all(value is not None for value in values)
     if expectation.rule == "numeric":
         return bool(values) and all(
-            isinstance(value, (int, float))
-            and not isinstance(value, bool)
-            and _finite(value)
+            isinstance(value, (int, float)) and not isinstance(value, bool) and _finite(value)
             for value in values
         )
     if expectation.rule in {"min", "max"}:
         if not values or any(
-            not isinstance(value, (int, float))
-            or isinstance(value, bool)
-            or not _finite(value)
+            not isinstance(value, (int, float)) or isinstance(value, bool) or not _finite(value)
             for value in values
         ):
             return False
@@ -350,12 +363,7 @@ def _distinct_value_key(value: object) -> object:
             return ("other", type(value).__qualname__, repr(value))
         return (
             "object",
-            tuple(
-                sorted(
-                    (key, _distinct_value_key(child))
-                    for key, child in value.items()
-                )
-            ),
+            tuple(sorted((key, _distinct_value_key(child)) for key, child in value.items())),
         )
     if isinstance(value, (list, tuple)):
         return ("array", tuple(_distinct_value_key(child) for child in value))

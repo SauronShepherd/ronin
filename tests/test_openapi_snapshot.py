@@ -124,9 +124,7 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
     assert v3_schema["properties"]["schema"]["const"] == "ronin.ml-pipeline-ir/v3"
     assert v3_schema["properties"]["nodes"]["maxItems"] == 24
     v3_node_variants = v3_schema["properties"]["nodes"]["items"]["oneOf"]
-    builtin_v3_nodes = [
-        node for node in v3_node_variants if "const" in node["properties"]["kind"]
-    ]
+    builtin_v3_nodes = [node for node in v3_node_variants if "const" in node["properties"]["kind"]]
     v3_kinds = {node["properties"]["kind"]["const"] for node in builtin_v3_nodes}
     assert v3_kinds == {
         "profile",
