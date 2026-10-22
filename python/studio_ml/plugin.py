@@ -515,14 +515,28 @@ class MachineLearningStudioPlugin:
         if self._registry is None:
             raise RuntimeError("ML registry is unavailable")
         workspace_id = self._workspace(workspace_id, _kwargs)
-        if not model_id or not version:
-            raise ValueError("model_id and version are required")
+        if (
+            not isinstance(model_id, str)
+            or not isinstance(version, str)
+            or not model_id
+            or not version
+            or model_id != model_id.strip()
+            or version != version.strip()
+            or len(model_id) > 256
+            or len(version) > 256
+            or any(char in model_id for char in "\r\n\x00")
+            or any(char in version for char in "\r\n\x00")
+        ):
+            raise ValueError("model_id and version are bounded identifiers")
         if (
             not isinstance(body, dict)
+            or set(body) != {"reason"}
             or not isinstance(body.get("reason"), str)
             or not body["reason"].strip()
+            or len(body["reason"]) > 1024
+            or any(char in body["reason"] for char in "\r\n\x00")
         ):
-            raise ValueError("promotion reason is required")
+            raise ValueError("promotion reason is required and bounded")
         from studio_core.ml import ModelId, ModelVersion
 
         model = self._registry.promote_model(
@@ -542,7 +556,20 @@ class MachineLearningStudioPlugin:
         if self._registry is None:
             raise RuntimeError("ML registry is unavailable")
         workspace_id = self._workspace(workspace_id, _kwargs)
-        if not model_id or not version or not isinstance(body, dict):
+        if (
+            not isinstance(model_id, str)
+            or not isinstance(version, str)
+            or not model_id
+            or not version
+            or model_id != model_id.strip()
+            or version != version.strip()
+            or len(model_id) > 256
+            or len(version) > 256
+            or any(char in model_id for char in "\r\n\x00")
+            or any(char in version for char in "\r\n\x00")
+            or not isinstance(body, dict)
+            or set(body) - {"artifact_base64", "rows"}
+        ):
             raise ValueError("model, version and body are required")
         encoded = body.get("artifact_base64")
         rows = body.get("rows")
@@ -597,7 +624,11 @@ class MachineLearningStudioPlugin:
         **_kwargs: Any,
     ) -> dict[str, object]:
         """Run bounded batch inference with an explicit replay identity."""
-        if not isinstance(body, dict) or not isinstance(body.get("batch_id"), str):
+        if (
+            not isinstance(body, dict)
+            or set(body) - {"batch_id", "artifact_base64", "rows"}
+            or not isinstance(body.get("batch_id"), str)
+        ):
             raise ValueError("batch_id is required for batch prediction")
         batch_id = body["batch_id"].strip()
         if not batch_id or len(batch_id) > 256 or any(char in batch_id for char in "\r\n\x00"):
@@ -645,8 +676,19 @@ class MachineLearningStudioPlugin:
         if self._registry is None:
             raise RuntimeError("ML registry is unavailable")
         workspace_id = self._workspace(workspace_id, _kwargs)
-        if not model_id or not version:
-            raise ValueError("model_id and version are required")
+        if (
+            not isinstance(model_id, str)
+            or not isinstance(version, str)
+            or not model_id
+            or not version
+            or model_id != model_id.strip()
+            or version != version.strip()
+            or len(model_id) > 256
+            or len(version) > 256
+            or any(char in model_id for char in "\r\n\x00")
+            or any(char in version for char in "\r\n\x00")
+        ):
+            raise ValueError("model_id and version are bounded identifiers")
         from studio_core.ml import ModelId, ModelVersion
 
         model = self._registry.get_model(
@@ -707,6 +749,19 @@ class MachineLearningStudioPlugin:
         """Return a digest-verified, bounded chunk of a workspace model artifact."""
         if self._registry is None or self._artifacts is None:
             raise RuntimeError("model artifact retrieval requires registry and artifact store")
+        if (
+            not isinstance(model_id, str)
+            or not isinstance(version, str)
+            or not model_id
+            or not version
+            or model_id != model_id.strip()
+            or version != version.strip()
+            or len(model_id) > 256
+            or len(version) > 256
+            or any(char in model_id for char in "\r\n\x00")
+            or any(char in version for char in "\r\n\x00")
+        ):
+            raise ValueError("model_id and version are bounded identifiers")
         workspace_id = self._workspace(workspace_id, _kwargs)
         raw_query = _kwargs.get("query")
         query = parse_qs(raw_query if isinstance(raw_query, str) else "", keep_blank_values=True)
