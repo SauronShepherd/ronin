@@ -94,12 +94,11 @@ capabilities, legal review, or repository administration.
 
 The Public v1 product gate is broader than the older 15-step local execution journey. Missing any mandatory capability family means Public v1 remains incomplete.
 
-The current workspace snapshot was reviewed on 2026-09-20. It is uncommitted
-and the local `master` branch has no commits, so historical SHA/CI references
-must not be presented as current-head qualification. Use
-`docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md` for the conservative,
-source-grounded implementation ledger and `docs/product/public-v1-status.json`
-for its machine-readable form.
+The current Public v1 status snapshot is recorded in
+`docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md` and synchronized with the
+machine-readable `docs/product/public-v1-status.json`. Verify the snapshot
+against the current checkout with `python tools/generate_public_v1_status.py
+--check`; only cite workflow results for the exact SHA they tested.
 
 ## Alpha / unstable
 
