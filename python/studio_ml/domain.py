@@ -30,6 +30,8 @@ MAX_PIPELINE_EDGES_V3 = 48
 MAX_PIPELINE_CONFIG_BYTES_V3 = 16 * 1024
 MAX_PIPELINE_BYTES_V3 = 64 * 1024
 FEATURE_SCHEMA = "ronin.ml-feature/v1"
+MAX_DOMAIN_TEXT = 256
+MAX_FEATURE_SPECS = 256
 
 
 def _is_finite_number(value: object) -> bool:
@@ -46,6 +48,7 @@ def _text(value: object, name: str) -> str:
         not isinstance(value, str)
         or not value
         or value != value.strip()
+        or len(value) > MAX_DOMAIN_TEXT
         or any(c in value for c in "\r\n\x00")
     ):
         raise ValueError(f"{name} must be non-empty, trimmed, and single-line")
@@ -126,7 +129,11 @@ class FeatureDefinition:
         if self.schema != FEATURE_SCHEMA:
             raise ValueError("invalid feature definition schema or version")
         validate_catalog_version(self.version, "feature definition")
-        if not self.features or len({item.column for item in self.features}) != len(self.features):
+        if (
+            not self.features
+            or len(self.features) > MAX_FEATURE_SPECS
+            or len({item.column for item in self.features}) != len(self.features)
+        ):
             raise ValueError("feature definition columns must be non-empty and unique")
 
     def to_payload(self) -> dict[str, object]:
@@ -152,7 +159,7 @@ class FeatureDefinition:
         if not isinstance(payload, Mapping) or set(payload) != expected:
             raise ValueError("feature definition has invalid shape")
         raw_features = payload["features"]
-        if not isinstance(raw_features, list):
+        if not isinstance(raw_features, list) or len(raw_features) > MAX_FEATURE_SPECS:
             raise ValueError("feature definition features must be an array")
         features: list[FeatureSpec] = []
         for item in raw_features:
@@ -214,7 +221,11 @@ class Lab:
             raise ValueError("supervised labs require a target")
         if self.target is not None:
             _text(self.target, "target")
-        if not self.features or len({item.column for item in self.features}) != len(self.features):
+        if (
+            not self.features
+            or len(self.features) > MAX_FEATURE_SPECS
+            or len({item.column for item in self.features}) != len(self.features)
+        ):
             raise ValueError("lab features must be non-empty and unique")
         if self.target is not None and self.target in {item.column for item in self.features}:
             raise ValueError("target must not also be a feature")
@@ -292,6 +303,7 @@ class Lab:
         if (
             not expected.issubset(payload)
             or not isinstance(payload["features"], list)
+            or len(payload["features"]) > MAX_FEATURE_SPECS
             or any(
                 not isinstance(item, Mapping) or set(item) != {"column", "role"}
                 for item in payload["features"]

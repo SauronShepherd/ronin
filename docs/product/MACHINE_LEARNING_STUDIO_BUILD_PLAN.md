@@ -1121,3 +1121,5 @@ instrucción del usuario.
 OpenAPI refleja los límites de ejecución, registro, retry, compare y search.
 Las rutas de promoción, scoring, model card y descarga de artefactos comparten
 el límite de 256 caracteres para sus identificadores y rechazan controles.
+Labs y definiciones de features limitan también a 256 columnas y 256 caracteres
+por campo textual; el contrato OpenAPI mantiene esos mismos topes.
