@@ -26,14 +26,33 @@ class BackendCapabilities:
 
     tasks: tuple[str, ...]
     algorithms: tuple[str, ...]
+    hyperparameters: tuple[str, ...] = ()
+    artifact_formats: tuple[str, ...] = ()
+    resource_profiles: tuple[str, ...] = ()
     supports_prediction: bool = True
     supports_artifacts: bool = True
     supports_explainability: bool = False
+
+    def __post_init__(self) -> None:
+        for values, label in (
+            (self.tasks, "tasks"),
+            (self.algorithms, "algorithms"),
+            (self.hyperparameters, "hyperparameters"),
+            (self.artifact_formats, "artifact_formats"),
+            (self.resource_profiles, "resource_profiles"),
+        ):
+            if any(not isinstance(value, str) or not value.strip() for value in values):
+                raise ValueError(f"backend capability {label} entries must be non-empty text")
+            if len(values) != len(set(values)):
+                raise ValueError(f"backend capability {label} entries must be unique")
 
     def to_payload(self) -> dict[str, object]:
         return {
             "tasks": list(self.tasks),
             "algorithms": list(self.algorithms),
+            "hyperparameters": list(self.hyperparameters),
+            "artifact_formats": list(self.artifact_formats),
+            "resource_profiles": list(self.resource_profiles),
             "supports_prediction": self.supports_prediction,
             "supports_artifacts": self.supports_artifacts,
             "supports_explainability": self.supports_explainability,
@@ -215,6 +234,15 @@ class LocalScikitLearnBackend:
             "gradient_boosting_regressor",
             "gradient_boosting_classifier",
         ),
+        hyperparameters=(
+            "test_fraction", "random_seed", "preprocessor", "C", "max_depth",
+            "n_estimators", "learning_rate", "clusters",
+        ),
+        artifact_formats=(
+            "application/vnd.ronin.sklearn-tabular+json",
+            "application/vnd.ronin.ml-kmeans+json",
+        ),
+        resource_profiles=("local.cpu",),
     )
 
     @property

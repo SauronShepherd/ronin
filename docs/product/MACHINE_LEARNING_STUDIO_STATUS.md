@@ -55,6 +55,7 @@ planificadas de una plataforma ML completa.
 | Publicación artifact→run→modelo | Implementada estáticamente; cualificación pendiente | Tabular y K-Means calculan digest/firma antes de publicar, aceptan reintentos idénticos y rechazan conflictos; el cleanup de huérfanos sigue deliberadamente conservador |
 | Experimentos API | Implementado estáticamente; cualificación pendiente | POST crea de forma durable y GET/listado recuperan por workspace; conflictos de definición se rechazan |
 | Remote adapter v1 contract | Implementado | `docs/contracts/ml-remote-adapters-v1.md`, tipos, errores, transporte y adapters de proveedor |
+| MLflow metadata interchange | Implementado estáticamente; cualificación pendiente | `mlflow.py` exporta/importa el subconjunto canónico de experiment/run/model con flavors seguros; no carga código ni artefactos ejecutables |
 
 La suite específica ML Studio, los contratos y la auditoría E2E deben permanecer verdes.
 El módulo está completo dentro del alcance provider-neutral definido por el build plan;

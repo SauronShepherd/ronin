@@ -222,6 +222,9 @@ class MLflowBackend(JsonRemoteBackend):
                     "random_forest_classifier",
                     "random_forest_regressor",
                 ),
+                hyperparameters=("timeout_seconds", "max_trials"),
+                artifact_formats=("application/vnd.ronin.ml-remote+json",),
+                resource_profiles=("remote.provider",),
             ),
             transport,
         )
@@ -237,6 +240,9 @@ class SparkBackend(JsonRemoteBackend):
             BackendCapabilities(
                 tasks=("classification", "regression", "clustering"),
                 algorithms=("spark.gbt", "spark.rf", "spark.kmeans"),
+                hyperparameters=("timeout_seconds", "max_trials"),
+                artifact_formats=("application/vnd.ronin.ml-remote+json",),
+                resource_profiles=("remote.spark-connect",),
             ),
             transport,
         )

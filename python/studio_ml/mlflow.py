@@ -4,10 +4,18 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from math import isfinite
 
+from studio_core.ml import Experiment, MLRunRecord, RegisteredModelVersion
 from studio_core.canonical_json import decode, encode
 
 MLFLOW_SUBSET_SCHEMA = "ronin.mlflow-subset/v1"
+MLFLOW_METADATA_SCHEMA = "ronin.mlflow-metadata/v1"
+SUPPORTED_MLFLOW_FLAVORS = frozenset({"python_function", "sklearn"})
+
+
+class MLflowFlavorError(ValueError):
+    """Raised when an MLflow flavor is outside the safe metadata subset."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,10 +44,26 @@ class MLflowSubset:
             raise ValueError("artifact_digest must be a lowercase sha256 digest")
         if self.schema != MLFLOW_SUBSET_SCHEMA:
             raise ValueError("unsupported MLflow subset schema")
-        if len({name for name, _ in self.inputs}) != len(self.inputs):
-            raise ValueError("MLflow input names must be unique")
-        if len({name for name, _ in self.outputs}) != len(self.outputs):
-            raise ValueError("MLflow output names must be unique")
+        for values, label in ((self.inputs, "input"), (self.outputs, "output")):
+            if any(
+                not isinstance(name, str)
+                or not name.strip()
+                or not isinstance(kind, str)
+                or not kind.strip()
+                for name, kind in values
+            ):
+                raise ValueError(f"MLflow {label} names and types must be non-empty text")
+            if len({name for name, _ in values}) != len(values):
+                raise ValueError(f"MLflow {label} names must be unique")
+        if any(
+            not isinstance(name, str)
+            or not name.strip()
+            or isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not isfinite(float(value))
+            for name, value in self.metrics
+        ):
+            raise ValueError("MLflow metrics must be finite numbers")
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -116,4 +140,79 @@ class MLflowSubset:
         )
 
 
-__all__ = ("MLFLOW_SUBSET_SCHEMA", "MLflowSubset")
+@dataclass(frozen=True, slots=True)
+class MLflowMetadata:
+    """Portable MLflow tracking/registry metadata without executable artifacts."""
+
+    experiment: Experiment
+    run: MLRunRecord
+    model: RegisteredModelVersion | None = None
+    flavor: str = "python_function"
+    schema: str = MLFLOW_METADATA_SCHEMA
+
+    def __post_init__(self) -> None:
+        if self.schema != MLFLOW_METADATA_SCHEMA:
+            raise ValueError("unsupported MLflow metadata schema")
+        if self.flavor not in SUPPORTED_MLFLOW_FLAVORS:
+            raise MLflowFlavorError(f"unsupported MLflow flavor: {self.flavor}")
+        if self.run.experiment_id != self.experiment.id:
+            raise ValueError("MLflow run does not belong to the exported experiment")
+        if self.model is not None and self.model.source_run_id != self.run.id:
+            raise ValueError("MLflow model does not reference the exported run")
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "flavor": self.flavor,
+            "experiment": self.experiment.to_payload(),
+            "run": self.run.to_payload(),
+            "model": None if self.model is None else self.model.to_payload(),
+        }
+
+    def to_bytes(self) -> bytes:
+        return encode(self.to_payload())
+
+    @classmethod
+    def from_bytes(cls, payload: bytes) -> "MLflowMetadata":
+        value = decode(payload)
+        expected = {"schema", "flavor", "experiment", "run", "model"}
+        if not isinstance(value, Mapping) or set(value) != expected:
+            raise ValueError("MLflow metadata has invalid shape")
+        schema, flavor = value["schema"], value["flavor"]
+        if not isinstance(schema, str) or not isinstance(flavor, str):
+            raise ValueError("MLflow metadata schema and flavor must be text")
+        experiment = Experiment.from_payload(value["experiment"])
+        run = MLRunRecord.from_payload(value["run"])
+        raw_model = value["model"]
+        model = None if raw_model is None else RegisteredModelVersion.from_payload(raw_model)
+        return cls(experiment, run, model, flavor, schema)
+
+
+def export_mlflow_metadata(
+    experiment: Experiment,
+    run: MLRunRecord,
+    model: RegisteredModelVersion | None = None,
+    *,
+    flavor: str = "python_function",
+) -> bytes:
+    """Export secret-free tracking/registry metadata for a safe MLflow subset."""
+
+    return MLflowMetadata(experiment, run, model, flavor).to_bytes()
+
+
+def import_mlflow_metadata(payload: bytes) -> MLflowMetadata:
+    """Import metadata only; executable MLflow flavors and artifact URIs are not loaded."""
+
+    return MLflowMetadata.from_bytes(payload)
+
+
+__all__ = (
+    "MLFLOW_METADATA_SCHEMA",
+    "MLFLOW_SUBSET_SCHEMA",
+    "SUPPORTED_MLFLOW_FLAVORS",
+    "MLflowFlavorError",
+    "MLflowMetadata",
+    "MLflowSubset",
+    "export_mlflow_metadata",
+    "import_mlflow_metadata",
+)

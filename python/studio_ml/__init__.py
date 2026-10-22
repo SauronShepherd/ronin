@@ -38,7 +38,16 @@ from .drift import (
     assess_numeric_drift,
     compare_numeric_drift,
 )
-from .mlflow import MLFLOW_SUBSET_SCHEMA, MLflowSubset
+from .mlflow import (
+    MLFLOW_METADATA_SCHEMA,
+    MLFLOW_SUBSET_SCHEMA,
+    SUPPORTED_MLFLOW_FLAVORS,
+    MLflowFlavorError,
+    MLflowMetadata,
+    MLflowSubset,
+    export_mlflow_metadata,
+    import_mlflow_metadata,
+)
 from .optimization import SearchSpec, Trial, rank_trials
 from .orchestration import (
     DurableExecutionPort,
@@ -175,7 +184,13 @@ __all__ = (
     "FeatureDefinitionConflict",
     "FeatureDefinitionService",
     "MLFLOW_SUBSET_SCHEMA",
+    "MLFLOW_METADATA_SCHEMA",
+    "SUPPORTED_MLFLOW_FLAVORS",
+    "MLflowFlavorError",
+    "MLflowMetadata",
     "MLflowSubset",
+    "export_mlflow_metadata",
+    "import_mlflow_metadata",
     "Lab",
     "PipelineIR",
     "PipelineNode",

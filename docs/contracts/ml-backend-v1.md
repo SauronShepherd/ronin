@@ -4,7 +4,8 @@ Canonical identifier: `ronin.ml-backend/v1`.
 
 An adapter exposes a stable `backend_id`, display name, capability declaration,
 and a training operation receiving an `ExperimentRequest` and row sequence. A
-capability declaration contains `tasks`, `algorithms`,
+capability declaration contains `tasks`, `algorithms`, `hyperparameters`,
+`artifact_formats`, and `resource_profiles`,
 `supports_prediction`, `supports_artifacts`, and
 `supports_explainability`. Capability discovery is advisory; the backend still
 validates every request and must return a typed error for unsupported pairs.
@@ -17,6 +18,12 @@ its algorithms are `logistic_regression`, `linear_regression`,
 prediction and artifact support but not explainability. Backend identifiers are
 stable routing keys and must not encode environment-specific paths or
 credentials.
+
+`hyperparameters` names the bounded provider-controlled knobs accepted by the
+adapter; it does not grant clients permission to send arbitrary estimator
+options. `artifact_formats` lists media types the adapter can materialize and
+`resource_profiles` lists deployment profiles it can execute. An adapter must
+reject parameters or profiles outside its declaration before starting work.
 
 An implementation must produce a serializable model artifact, effective
 hyperparameters, input signature, metrics, and provenance sufficient to replay

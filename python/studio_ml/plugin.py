@@ -39,7 +39,11 @@ from .service import (
     register_clustering_model,
     train_register_tabular,
 )
+
 from .services import InMemoryMLLabStore, LabService
+
+MAX_PREDICTION_ROWS = 100_000
+MAX_PREDICTION_ARTIFACT_BYTES = 64 * 1024 * 1024
 
 
 def _parse_tie_breakers(raw: object) -> tuple[tuple[str, Literal["maximize", "minimize"]], ...]:
@@ -544,18 +548,26 @@ class MachineLearningStudioPlugin:
         rows = body.get("rows")
         from studio_core.ml import ModelId, ModelVersion
 
-        if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
-            raise ValueError("predict requires rows")
+        if (
+            not isinstance(rows, list)
+            or len(rows) > MAX_PREDICTION_ROWS
+            or not all(isinstance(row, dict) for row in rows)
+        ):
+            raise ValueError("predict rows must contain at most 100000 objects")
         model = self._registry.get_model(
             WorkspaceId(workspace_id), ModelId(model_id), ModelVersion(version)
         )
         if model is None:
             raise KeyError(f"{model_id}@{version}")
         if isinstance(encoded, str):
+            if len(encoded) > ((MAX_PREDICTION_ARTIFACT_BYTES + 2) // 3) * 4:
+                raise ValueError("artifact_base64 exceeds the model artifact limit")
             try:
                 artifact = base64.b64decode(encoded, validate=True)
             except Exception as exc:
                 raise ValueError("artifact_base64 is invalid") from exc
+            if len(artifact) > MAX_PREDICTION_ARTIFACT_BYTES:
+                raise ValueError("model artifact exceeds the model artifact limit")
         elif self._artifacts is not None and hasattr(self._artifacts, "get_bytes_by_storage_ref"):
             artifact = self._artifacts.get_bytes_by_storage_ref(
                 model.artifact_ref, digest=model.artifact_digest
@@ -611,7 +623,12 @@ class MachineLearningStudioPlugin:
                 "kind": "batch-inference",
                 "replay_key": f"{model_id}@{version}:{batch_id}",
                 "input_sha256": hashlib.sha256(
-                    json.dumps(rows, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                    json.dumps(
+                        rows,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        allow_nan=False,
+                    ).encode("utf-8")
                 ).hexdigest(),
             },
         }

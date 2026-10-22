@@ -1054,3 +1054,20 @@ conflicto de identidad se rechaza; el writer lease actual sigue cubriendo la
 escritura del artefacto y las referencias. Los artefactos huérfanos de un fallo
 intermedio permanecen sujetos a la política conservadora de retención y no se
 borran automáticamente.
+
+El contrato de capacidades `ronin.ml-backend/v1` expone ahora, además de tareas
+y algoritmos, los nombres de hiperparámetros acotados, formatos de artefacto y
+perfiles de recursos que cada adapter acepta. El servidor publica estas
+capacidades en `/v1/ml-studio/backends`; los adapters local, MLflow y Spark
+declaran sus perfiles y rechazan declaraciones duplicadas o vacías antes de
+ser registrados. La cualificación exact-head sigue pendiente y no se ejecutaron
+pruebas, builds, validadores ni Docker.
+
+La interoperabilidad MLflow del subconjunto seguro ya tiene un sobre canónico
+`ronin.mlflow-metadata/v1` para experimento, run, modelo opcional y flavor.
+`export_mlflow_metadata()` e `import_mlflow_metadata()` preservan parámetros,
+métricas, firma, revisiones de datasets y digests sin cargar código, pickle,
+entornos ni URI de artefactos del proveedor; las relaciones run→experiment y
+model→run se validan y los flavors fuera de `python_function`/`sklearn` se
+rechazan explícitamente. La cualificación exact-head sigue pendiente y no se
+ejecutaron pruebas, builds, validadores ni Docker.
