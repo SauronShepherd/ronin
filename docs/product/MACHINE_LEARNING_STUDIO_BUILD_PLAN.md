@@ -1100,3 +1100,9 @@ valida el shape exacto y limita `model_id`, `version`, `run_id`,
 las filas siguen usando los límites compartidos de dataset. La cualificación
 exact-head sigue pendiente y no se ejecutaron pruebas, builds, validadores ni
 Docker.
+
+La búsqueda de hiperparámetros reutiliza ahora el mismo resolver de datasets que
+las ejecuciones y quality gates, aplicando límites de filas, columnas, bytes y
+JSON canónico antes de lanzar trials. El cuerpo y la spec rechazan campos
+extraños; el registro opcional limita sus identificadores. No se ejecutaron
+pruebas, builds, validadores ni Docker.
