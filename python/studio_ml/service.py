@@ -6,6 +6,7 @@ import hashlib
 import json
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from dataclasses import replace
 from typing import Protocol, runtime_checkable
 
 from studio_core import AssetRef, WorkspaceId
@@ -16,6 +17,7 @@ from studio_core.ml import (
     MLRunId,
     MLRunRecord,
     ModelEvaluation,
+    ModelDeployment,
     ModelId,
     ModelSignature,
     ModelVersion,
@@ -100,6 +102,24 @@ class MLRegistryStore(Protocol):
         *,
         now: Instant | str,
     ) -> RegisteredModelVersion: ...
+
+    def put_deployment(
+        self, workspace_id: WorkspaceId, deployment: ModelDeployment, *, now: Instant | str
+    ) -> ModelDeployment: ...
+
+    def get_deployment(
+        self, workspace_id: WorkspaceId, deployment_id: str
+    ) -> ModelDeployment | None: ...
+
+    def list_deployments(self, workspace_id: WorkspaceId) -> tuple[ModelDeployment, ...]: ...
+
+    def update_deployment(
+        self,
+        workspace_id: WorkspaceId,
+        deployment: ModelDeployment,
+        *,
+        now: Instant | str,
+    ) -> ModelDeployment: ...
 
 
 class MLModelNotFound(KeyError):
@@ -334,6 +354,110 @@ def list_registered_models(
     return registry.list_models(workspace_id, model_id)
 
 
+def deploy_registered_model(
+    registry: MLRegistryStore,
+    artifacts: ArtifactStore,
+    workspace_id: WorkspaceId,
+    deployment_id: str,
+    model_id: ModelId,
+    model_version: ModelVersion,
+    *,
+    endpoint: str = "local",
+    now: Instant | str,
+) -> ModelDeployment:
+    """Pin and verify one immutable model version before marking it ready."""
+
+    model = registry.get_model(workspace_id, model_id, model_version)
+    if model is None:
+        raise MLModelNotFound(f"{model_id}@{model_version}")
+    getter = getattr(artifacts, "get_bytes_by_storage_ref", None)
+    if not callable(getter):
+        raise ValueError("deployment requires digest-verifiable artifact storage")
+    try:
+        data = getter(model.artifact_ref, digest=model.artifact_digest)
+    except Exception as exc:
+        raise ValueError("deployment artifact cannot be verified") from exc
+    if (
+        not isinstance(data, bytes)
+        or not data
+        or len(data) > 64 * 1024 * 1024
+        or hashlib.sha256(data).hexdigest() != model.artifact_digest
+    ):
+        raise ValueError("deployment artifact digest verification failed")
+    deployment = ModelDeployment(
+        deployment_id,
+        model.model_id,
+        model.version,
+        model.artifact_ref,
+        model.artifact_digest,
+        endpoint,
+        "ready",
+        "ready",
+    )
+    existing = registry.get_deployment(workspace_id, deployment_id)
+    if existing is not None:
+        if (
+            existing.model_id != deployment.model_id
+            or existing.version != deployment.version
+            or existing.artifact_digest != deployment.artifact_digest
+            or existing.artifact_ref != deployment.artifact_ref
+            or existing.endpoint != deployment.endpoint
+            or existing.status == "rolled_back"
+        ):
+            raise ValueError("deployment id is already pinned to a different model")
+        return existing
+    return registry.put_deployment(workspace_id, deployment, now=now)
+
+
+def rollback_model_deployment(
+    registry: MLRegistryStore,
+    workspace_id: WorkspaceId,
+    deployment_id: str,
+    *,
+    now: Instant | str,
+) -> ModelDeployment:
+    """Disable a deployment without changing the registry champion."""
+
+    current = registry.get_deployment(workspace_id, deployment_id)
+    if current is None:
+        raise KeyError(deployment_id)
+    if current.status == "rolled_back":
+        return current
+    return registry.update_deployment(
+        workspace_id,
+        replace(current, status="rolled_back", readiness="unready", revision=current.revision + 1),
+        now=now,
+    )
+
+
+def record_deployment_request(
+    registry: MLRegistryStore,
+    workspace_id: WorkspaceId,
+    deployment_id: str,
+    *,
+    success: bool,
+    error: str | None = None,
+    now: Instant | str,
+) -> ModelDeployment:
+    """Persist bounded serving telemetry for a pinned deployment."""
+
+    current = registry.get_deployment(workspace_id, deployment_id)
+    if current is None:
+        raise KeyError(deployment_id)
+    if current.status != "ready" or current.readiness != "ready":
+        raise ValueError("deployment is not ready")
+    return registry.update_deployment(
+        workspace_id,
+        replace(
+            current,
+            request_count=current.request_count + 1,
+            error_count=current.error_count + (0 if success else 1),
+            last_error=(None if success else (error or "serving request failed")),
+        ),
+        now=now,
+    )
+
+
 def _input_signature(
     rows: Sequence[Mapping[str, object]],
     features: tuple[str, ...],
@@ -530,6 +654,9 @@ __all__ = (
     "promote_registered_model",
     "resolve_champion_model",
     "list_registered_models",
+    "deploy_registered_model",
+    "rollback_model_deployment",
+    "record_deployment_request",
     "record_model_evaluation",
     "list_model_evaluations",
     "compare_model_evaluations",

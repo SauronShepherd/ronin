@@ -33,7 +33,7 @@ planificadas de una plataforma ML completa.
 | HTTP control plane y autorización | Implementado | `test_ml_studio_http.py` |
 | OpenAPI base ML Studio | Implementado | `api/openapi-v1.json`, contract test |
 | UI Labs/quality/run básica | Implementado | `features.js`, Chromium browser audit |
-| Grid trials y ranking determinista | Parcial | `optimization.py` y `POST .../search`; `seed`, `C` y `max_iter` se aplican en logística; tie-breakers ordenados y direccionales exact-head cualificados en `main@a8e1120` |
+| Grid trials y ranking determinista | Implementado estáticamente; cualificación pendiente | `optimization.py` y `POST .../search` generan grids reproducibles y acotados; `seed`, `C` y `max_iter` se aplican en logística; ranking primario y tie-breakers ordenados y direccionales; Studio expone grids algoritmo×preprocesador con máximo de ocho candidatos |
 | Límites de búsqueda y registro durable | Implementado estáticamente; cualificación pendiente | `optimization.py` acota parámetros, valores, nombres y trials; rutas de ejecución, registro y retry acotan identificadores y texto antes de resolver snapshots o artefactos |
 | Random trials | Implementado | muestreo determinista y bounded por `random_seed` |
 | Bayesian trials | Implementado y exact-head cualificado en `main@cc0ad8f` | surrogate discreto, Expected Improvement, propuestas de memoria acotada y parada por paciencia/mejora reciente |
@@ -58,6 +58,8 @@ planificadas de una plataforma ML completa.
 | Remote adapter v1 contract | Implementado | `docs/contracts/ml-remote-adapters-v1.md`, tipos, errores, transporte y adapters de proveedor |
 | MLflow metadata interchange | Implementado estáticamente; cualificación pendiente | `mlflow.py` exporta/importa el subconjunto canónico de experiment/run/model con flavors seguros; no carga código ni artefactos ejecutables |
 | Feature definitions y dataset snapshots | Implementado estáticamente; cualificación pendiente | `FeatureDefinition` versionado e inmutable en in-memory/SQLite/PostgreSQL; composición local cablea el servicio al control plane y OpenAPI documenta las rutas |
+| Deployment/serving local con digest fijado | Implementado estáticamente; cualificación pendiente | `ModelDeployment`, persistencia SQLite/PostgreSQL, readiness/health, prediction contra artefacto fijado, telemetría acotada y rollback sin cambiar el champion |
+| AI/ML Lab Studio end-to-end | Implementado estáticamente; cualificación pendiente | Labs, quality suites, compare/export, registry/promotion, model cards, artifact download, scoring, drift y deployments con health/predict/rollback en la UI |
 
 La suite específica ML Studio, los contratos y la auditoría E2E deben permanecer verdes.
 El módulo está completo dentro del alcance provider-neutral definido por el build plan;

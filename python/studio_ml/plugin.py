@@ -33,10 +33,13 @@ from .runner import LocalExperimentRunner
 from .runtime import TrainingSpec
 from .service import (
     MLRegistryStore,
+    deploy_registered_model,
     persist_clustering_result,
     persist_experiment_result,
     predict_registered_tabular,
+    record_deployment_request,
     register_clustering_model,
+    rollback_model_deployment,
     train_register_tabular,
 )
 
@@ -459,6 +462,48 @@ class MachineLearningStudioPlugin:
             self.model_artifact,
             permission="ml-studio:read",
         )
+        context.contributions.add_route(
+            "POST",
+            "/v1/ml-studio/deployments",
+            context.plugin_id,
+            self.create_deployment,
+            permission="ml-studio:write",
+        )
+        context.contributions.add_route(
+            "GET",
+            "/v1/ml-studio/deployments",
+            context.plugin_id,
+            self.list_deployments,
+            permission="ml-studio:read",
+        )
+        context.contributions.add_route(
+            "GET",
+            "/v1/ml-studio/deployments/{deployment_id}",
+            context.plugin_id,
+            self.get_deployment,
+            permission="ml-studio:read",
+        )
+        context.contributions.add_route(
+            "GET",
+            "/v1/ml-studio/deployments/{deployment_id}/health",
+            context.plugin_id,
+            self.deployment_health,
+            permission="ml-studio:read",
+        )
+        context.contributions.add_route(
+            "POST",
+            "/v1/ml-studio/deployments/{deployment_id}/rollback",
+            context.plugin_id,
+            self.rollback_deployment,
+            permission="ml-studio:write",
+        )
+        context.contributions.add_route(
+            "POST",
+            "/v1/ml-studio/deployments/{deployment_id}/predict",
+            context.plugin_id,
+            self.predict_deployment,
+            permission="ml-studio:execute",
+        )
 
     def startup(self) -> None:
         self._coordinator.start()
@@ -831,6 +876,206 @@ class MachineLearningStudioPlugin:
             "next_offset": end if end < len(data) else None,
             "complete": end == len(data),
             "data_base64": base64.b64encode(data[offset:end]).decode("ascii"),
+        }
+
+    def create_deployment(
+        self,
+        workspace_id: str | None = None,
+        *,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        """Create an immutable serving deployment pinned to one model digest."""
+        if self._registry is None or self._artifacts is None:
+            raise RuntimeError("model deployment requires registry and artifact store")
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        if (
+            not isinstance(body, dict)
+            or set(body) - {"deployment_id", "model_id", "version", "endpoint"}
+            or not all(isinstance(body.get(name), str) for name in ("deployment_id", "model_id", "version"))
+        ):
+            raise ValueError("deployment requires deployment_id, model_id and version")
+        deployment_id = self._bounded_identifier(body["deployment_id"], "deployment_id")
+        model_id = self._bounded_identifier(body["model_id"], "model_id")
+        version = self._bounded_identifier(body["version"], "version")
+        endpoint = body.get("endpoint", "local")
+        if not isinstance(endpoint, str) or not endpoint or endpoint != endpoint.strip() or len(endpoint) > 512:
+            raise ValueError("deployment endpoint must be bounded text")
+        from studio_core.ml import ModelId, ModelVersion
+
+        deployment = deploy_registered_model(
+            self._registry,
+            self._artifacts,
+            WorkspaceId(workspace_id),
+            deployment_id,
+            ModelId(model_id),
+            ModelVersion(version),
+            endpoint=endpoint,
+            now="plugin",
+        )
+        return deployment.to_payload()
+
+    def list_deployments(
+        self, workspace_id: str | None = None, **_kwargs: Any
+    ) -> dict[str, object]:
+        if self._registry is None or not callable(getattr(self._registry, "list_deployments", None)):
+            raise RuntimeError("model deployment registry is unavailable")
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        return {
+            "items": [
+                item.to_payload()
+                for item in self._registry.list_deployments(WorkspaceId(workspace_id))
+            ]
+        }
+
+    def get_deployment(
+        self,
+        deployment_id: str,
+        workspace_id: str | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        if self._registry is None or not callable(getattr(self._registry, "get_deployment", None)):
+            raise RuntimeError("model deployment registry is unavailable")
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        deployment_id = self._bounded_identifier(deployment_id, "deployment_id")
+        deployment = self._registry.get_deployment(WorkspaceId(workspace_id), deployment_id)
+        if deployment is None:
+            raise KeyError(deployment_id)
+        return deployment.to_payload()
+
+    def deployment_health(
+        self,
+        deployment_id: str,
+        workspace_id: str | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        deployment = self.get_deployment(deployment_id, workspace_id, **_kwargs)
+        return {
+            "schema": "ronin.ml-deployment-health/v1",
+            "deployment_id": deployment["deployment_id"],
+            "status": deployment["status"],
+            "readiness": deployment["readiness"],
+            "healthy": deployment["status"] == "ready" and deployment["readiness"] == "ready",
+            "artifact_digest": deployment["artifact_digest"],
+            "revision": deployment["revision"],
+            "telemetry": deployment["telemetry"],
+        }
+
+    def rollback_deployment(
+        self,
+        deployment_id: str,
+        workspace_id: str | None = None,
+        *,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        if self._registry is None:
+            raise RuntimeError("model deployment registry is unavailable")
+        if body is not None and (
+            not isinstance(body, dict)
+            or set(body) - {"reason"}
+            or ("reason" in body and (
+                not isinstance(body["reason"], str)
+                or not body["reason"]
+                or body["reason"] != body["reason"].strip()
+                or len(body["reason"]) > 1024
+            ))
+        ):
+            raise ValueError("rollback reason must be bounded text")
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        deployment_id = self._bounded_identifier(deployment_id, "deployment_id")
+        deployment = rollback_model_deployment(
+            self._registry, WorkspaceId(workspace_id), deployment_id, now="plugin"
+        )
+        return deployment.to_payload()
+
+    def predict_deployment(
+        self,
+        deployment_id: str,
+        workspace_id: str | None = None,
+        *,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
+        if self._registry is None or self._artifacts is None:
+            raise RuntimeError("model deployment requires registry and artifact store")
+        workspace_id = self._workspace(workspace_id, _kwargs)
+        deployment_id = self._bounded_identifier(deployment_id, "deployment_id")
+        deployment = self._registry.get_deployment(WorkspaceId(workspace_id), deployment_id)
+        if deployment is None:
+            raise KeyError(deployment_id)
+        if deployment.status != "ready" or deployment.readiness != "ready":
+            raise ValueError("deployment is not ready")
+        if not isinstance(body, dict) or set(body) - {"rows", "artifact_base64"}:
+            raise ValueError("deployment prediction body contains unsupported fields")
+        rows = body.get("rows")
+        encoded = body.get("artifact_base64")
+        if (
+            not isinstance(rows, list)
+            or len(rows) > MAX_PREDICTION_ROWS
+            or not all(isinstance(row, dict) for row in rows)
+            or (encoded is not None and not isinstance(encoded, str))
+        ):
+            raise ValueError("deployment prediction rows or artifact are invalid")
+        model = self._registry.get_model(
+            WorkspaceId(workspace_id), deployment.model_id, deployment.version
+        )
+        if model is None or model.artifact_digest != deployment.artifact_digest or model.artifact_ref != deployment.artifact_ref:
+            raise ValueError("deployment model pin no longer matches the registry")
+        if isinstance(encoded, str):
+            if len(encoded) > ((MAX_PREDICTION_ARTIFACT_BYTES + 2) // 3) * 4:
+                raise ValueError("artifact_base64 exceeds the model artifact limit")
+            try:
+                artifact = base64.b64decode(encoded, validate=True)
+            except Exception as exc:
+                raise ValueError("artifact_base64 is invalid") from exc
+        else:
+            getter = getattr(self._artifacts, "get_bytes_by_storage_ref", None)
+            if not callable(getter):
+                raise ValueError("deployment artifact store cannot verify the pinned artifact")
+            artifact = getter(deployment.artifact_ref, digest=deployment.artifact_digest)
+        if (
+            not isinstance(artifact, bytes)
+            or not artifact
+            or len(artifact) > MAX_PREDICTION_ARTIFACT_BYTES
+            or hashlib.sha256(artifact).hexdigest() != deployment.artifact_digest
+        ):
+            raise ValueError("deployment artifact failed digest verification")
+        try:
+            predictions = predict_registered_tabular(
+                self._registry,
+                WorkspaceId(workspace_id),
+                deployment.model_id,
+                deployment.version,
+                artifact,
+                rows,
+            )
+        except Exception as exc:
+            try:
+                record_deployment_request(
+                    self._registry,
+                    WorkspaceId(workspace_id),
+                    deployment_id,
+                    success=False,
+                    error=str(exc)[:1024] or "serving request failed",
+                    now="plugin",
+                )
+            except Exception:
+                pass
+            raise
+        updated = record_deployment_request(
+            self._registry,
+            WorkspaceId(workspace_id),
+            deployment_id,
+            success=True,
+            now="plugin",
+        )
+        return {
+            "deployment_id": deployment_id,
+            "model_id": deployment.model_id.value,
+            "version": deployment.version.value,
+            "predictions": list(predictions),
+            "telemetry": updated.to_payload()["telemetry"],
         }
 
     def list_labs(self, workspace_id: str, **_kwargs: Any) -> dict[str, object]:

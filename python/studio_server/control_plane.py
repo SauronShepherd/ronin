@@ -264,6 +264,12 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("POST", "/v1/ml-studio/models/{model_id}/{version}/batch-predict"),
         ("GET", "/v1/ml-studio/models/{model_id}/{version}/artifact"),
         ("GET", "/v1/ml-studio/models/{model_id}/{version}/card"),
+        ("POST", "/v1/ml-studio/deployments"),
+        ("GET", "/v1/ml-studio/deployments"),
+        ("GET", "/v1/ml-studio/deployments/{deployment_id}"),
+        ("GET", "/v1/ml-studio/deployments/{deployment_id}/health"),
+        ("POST", "/v1/ml-studio/deployments/{deployment_id}/rollback"),
+        ("POST", "/v1/ml-studio/deployments/{deployment_id}/predict"),
     }
 )
 

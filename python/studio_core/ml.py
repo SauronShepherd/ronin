@@ -12,6 +12,8 @@ from .catalog import AssetRef
 
 ModelStage: TypeAlias = Literal["candidate", "champion", "archived"]
 EvaluationStatus: TypeAlias = Literal["passed", "failed", "unknown"]
+DeploymentStatus: TypeAlias = Literal["pending", "ready", "failed", "rolled_back"]
+DeploymentReadiness: TypeAlias = Literal["unknown", "ready", "unready"]
 
 
 def _text(value: str, name: str) -> str:
@@ -357,6 +359,151 @@ class RegisteredModelVersion:
 
     @classmethod
     def from_json(cls, payload: str) -> RegisteredModelVersion:
+        return cls.from_payload(decode_canonical_json(payload))
+
+
+@dataclass(frozen=True, slots=True)
+class ModelDeployment:
+    """Workspace-scoped deployment pinned to one immutable model artifact."""
+
+    deployment_id: str
+    model_id: ModelId
+    version: ModelVersion
+    artifact_ref: str
+    artifact_digest: str
+    endpoint: str = "local"
+    status: DeploymentStatus = "pending"
+    readiness: DeploymentReadiness = "unknown"
+    revision: int = 1
+    request_count: int = 0
+    error_count: int = 0
+    last_error: str | None = None
+
+    def __post_init__(self) -> None:
+        _text(self.deployment_id, "deployment id")
+        _text(self.artifact_ref, "deployment artifact ref")
+        _text(self.endpoint, "deployment endpoint")
+        if any(
+            len(value) > 512
+            for value in (self.deployment_id, self.artifact_ref, self.endpoint)
+        ):
+            raise ValueError("deployment identity fields exceed their bounds")
+        if len(self.model_id.value) > 256 or len(self.version.value) > 256:
+            raise ValueError("deployment model identity exceeds its bounds")
+        if (
+            len(self.artifact_digest) != 64
+            or any(char not in "0123456789abcdef" for char in self.artifact_digest)
+        ):
+            raise ValueError("deployment artifact digest must be lowercase SHA-256")
+        if self.status not in {"pending", "ready", "failed", "rolled_back"}:
+            raise ValueError("unsupported deployment status")
+        if self.readiness not in {"unknown", "ready", "unready"}:
+            raise ValueError("unsupported deployment readiness")
+        if (
+            not isinstance(self.revision, int)
+            or isinstance(self.revision, bool)
+            or not 1 <= self.revision <= 2_147_483_647
+            or not isinstance(self.request_count, int)
+            or isinstance(self.request_count, bool)
+            or not 0 <= self.request_count <= 2_147_483_647
+            or not isinstance(self.error_count, int)
+            or isinstance(self.error_count, bool)
+            or not 0 <= self.error_count <= 2_147_483_647
+        ):
+            raise ValueError("deployment counters are invalid")
+        if self.last_error is not None:
+            _text(self.last_error, "deployment error")
+            if len(self.last_error) > 1024:
+                raise ValueError("deployment error exceeds its bound")
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "schema": "ronin.ml-deployment/v1",
+            "deployment_id": self.deployment_id,
+            "model_id": self.model_id.value,
+            "version": self.version.value,
+            "artifact_ref": self.artifact_ref,
+            "artifact_digest": self.artifact_digest,
+            "endpoint": self.endpoint,
+            "status": self.status,
+            "readiness": self.readiness,
+            "revision": self.revision,
+            "telemetry": {
+                "request_count": self.request_count,
+                "error_count": self.error_count,
+            },
+            "last_error": self.last_error,
+        }
+
+    def to_json(self) -> str:
+        return encode_canonical_json(self.to_payload()).decode("utf-8")
+
+    @classmethod
+    def from_payload(cls, payload: object) -> ModelDeployment:
+        expected = {
+            "schema",
+            "deployment_id",
+            "model_id",
+            "version",
+            "artifact_ref",
+            "artifact_digest",
+            "endpoint",
+            "status",
+            "readiness",
+            "revision",
+            "telemetry",
+            "last_error",
+        }
+        if not isinstance(payload, Mapping) or set(payload) != expected:
+            raise ValueError("deployment has invalid shape")
+        if payload["schema"] != "ronin.ml-deployment/v1":
+            raise ValueError("unsupported deployment schema")
+        telemetry = payload["telemetry"]
+        if not isinstance(telemetry, Mapping) or set(telemetry) != {
+            "request_count",
+            "error_count",
+        }:
+            raise ValueError("deployment telemetry has invalid shape")
+        text_fields = (
+            "deployment_id",
+            "model_id",
+            "version",
+            "artifact_ref",
+            "artifact_digest",
+            "endpoint",
+            "status",
+            "readiness",
+        )
+        if not all(isinstance(payload[name], str) for name in text_fields):
+            raise ValueError("deployment identity fields must be strings")
+        revision = payload["revision"]
+        request_count = telemetry["request_count"]
+        error_count = telemetry["error_count"]
+        if not all(
+            isinstance(value, int) and not isinstance(value, bool)
+            for value in (revision, request_count, error_count)
+        ):
+            raise ValueError("deployment counters must be integers")
+        last_error = payload["last_error"]
+        if last_error is not None and not isinstance(last_error, str):
+            raise ValueError("deployment error must be string or null")
+        return cls(
+            payload["deployment_id"],
+            ModelId(payload["model_id"]),
+            ModelVersion(payload["version"]),
+            payload["artifact_ref"],
+            payload["artifact_digest"],
+            payload["endpoint"],
+            cast(DeploymentStatus, payload["status"]),
+            cast(DeploymentReadiness, payload["readiness"]),
+            revision,
+            request_count,
+            error_count,
+            last_error,
+        )
+
+    @classmethod
+    def from_json(cls, payload: str) -> ModelDeployment:
         return cls.from_payload(decode_canonical_json(payload))
 
 

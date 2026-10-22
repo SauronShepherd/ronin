@@ -1135,3 +1135,26 @@ identidades largas, métricas duplicadas y resultados que convierten silenciosam
 identidades remotas inválidas.
 Polling, cancelación y prediction comparten límites de identificador y tamaño;
 el transporte exige timeouts finitos y un límite entero de respuesta.
+
+## 89. Completar el contrato de deployment y serving local
+
+**Estado del candidato: implementado estáticamente; cualificación pendiente.**
+`ModelDeployment` fija workspace, versión, referencia y digest del artefacto. La
+creación verifica los bytes mediante `ArtifactStore` antes de marcar readiness,
+persiste el estado en SQLite/PostgreSQL, expone health y telemetría acotada,
+sirve predicciones contra el digest fijado y permite rollback sin alterar el
+champion del registry. Las identidades de deployment son inmutables e
+idempotentes; un pin distinto produce conflicto. El contrato está documentado en
+`docs/contracts/ml-deployment-v1.md` y OpenAPI. No se ejecutaron pruebas,
+builds, validadores ni Docker por instrucción del usuario.
+
+## 90. Completar el recorrido de AI/ML Lab Studio
+
+**Estado del candidato: implementado estáticamente; cualificación pendiente.**
+La superficie de Machine Learning Studio reúne creación de Labs, suites de
+calidad, comparación y exportación de trials, registro/promoción, model cards,
+descarga verificada de artefactos, scoring, drift y ahora el ciclo completo de
+deployment: creación con pin de modelo, listado, health, predicción y rollback.
+El cliente usa los contratos HTTP versionados y mantiene el workspace explícito.
+No se ejecutaron pruebas, builds, validadores ni Docker por instrucción del
+usuario.

@@ -12,6 +12,7 @@ from studio_core.ml import (
     MLRunId,
     MLRunRecord,
     ModelEvaluation,
+    ModelDeployment,
     ModelId,
     ModelVersion,
     RegisteredModelVersion,
@@ -57,6 +58,13 @@ class PostgresMLStore(PostgresMetadataStore):
                     "model_id TEXT NOT NULL, version TEXT NOT NULL, evaluation_digest TEXT NOT NULL,"
                     "evaluation_json TEXT NOT NULL, created_at TEXT NOT NULL,"
                     "PRIMARY KEY(workspace_id, model_id, version, evaluation_digest))"
+                )
+                cursor.execute(
+                    "CREATE TABLE IF NOT EXISTS ronin_ml_deployments ("
+                    "workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,"
+                    "deployment_id TEXT NOT NULL, deployment_json TEXT NOT NULL,"
+                    "created_at TEXT NOT NULL, updated_at TEXT NOT NULL,"
+                    "PRIMARY KEY(workspace_id, deployment_id))"
                 )
             connection.commit()
         except Exception:
@@ -376,6 +384,109 @@ class PostgresMLStore(PostgresMetadataStore):
                 )
                 rows = cursor.fetchall()
             return tuple(_evaluation_from_json(row["evaluation_json"]) for row in rows)
+        finally:
+            connection.close()
+
+    def put_deployment(
+        self, workspace_id: WorkspaceId, deployment: ModelDeployment, *, now: Instant | str
+    ) -> ModelDeployment:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                self._active(cursor, workspace_id)
+                cursor.execute(
+                    "SELECT model_json FROM ronin_ml_models WHERE workspace_id=%s AND model_id=%s AND version=%s",
+                    (str(workspace_id), str(deployment.model_id), str(deployment.version)),
+                )
+                model_row = cursor.fetchone()
+                if model_row is None:
+                    raise KeyError(f"{deployment.model_id}@{deployment.version}")
+                model = _model_from_json(model_row["model_json"])
+                if model.artifact_ref != deployment.artifact_ref or model.artifact_digest != deployment.artifact_digest:
+                    raise MLConflict("deployment artifact is not the registered model artifact")
+                cursor.execute(
+                    "SELECT deployment_json FROM ronin_ml_deployments WHERE workspace_id=%s AND deployment_id=%s",
+                    (str(workspace_id), deployment.deployment_id),
+                )
+                existing = cursor.fetchone()
+                payload = deployment.to_json()
+                if existing is not None:
+                    if existing["deployment_json"] == payload:
+                        connection.commit()
+                        return deployment
+                    raise MLConflict(f"deployment id already exists: {deployment.deployment_id}")
+                cursor.execute(
+                    "INSERT INTO ronin_ml_deployments(workspace_id,deployment_id,deployment_json,created_at,updated_at) VALUES (%s,%s,%s,%s,%s)",
+                    (str(workspace_id), deployment.deployment_id, payload, str(now), str(now)),
+                )
+            connection.commit()
+            return deployment
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def get_deployment(
+        self, workspace_id: WorkspaceId, deployment_id: str
+    ) -> ModelDeployment | None:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT deployment_json FROM ronin_ml_deployments WHERE workspace_id=%s AND deployment_id=%s",
+                    (str(workspace_id), deployment_id),
+                )
+                row = cursor.fetchone()
+            return None if row is None else ModelDeployment.from_json(row["deployment_json"])
+        finally:
+            connection.close()
+
+    def list_deployments(self, workspace_id: WorkspaceId) -> tuple[ModelDeployment, ...]:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT deployment_json FROM ronin_ml_deployments WHERE workspace_id=%s ORDER BY deployment_id",
+                    (str(workspace_id),),
+                )
+                rows = cursor.fetchall()
+            return tuple(ModelDeployment.from_json(row["deployment_json"]) for row in rows)
+        finally:
+            connection.close()
+
+    def update_deployment(
+        self, workspace_id: WorkspaceId, deployment: ModelDeployment, *, now: Instant | str
+    ) -> ModelDeployment:
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                self._active(cursor, workspace_id)
+                cursor.execute(
+                    "SELECT deployment_json FROM ronin_ml_deployments WHERE workspace_id=%s AND deployment_id=%s",
+                    (str(workspace_id), deployment.deployment_id),
+                )
+                existing = cursor.fetchone()
+                if existing is None:
+                    raise KeyError(deployment.deployment_id)
+                current = ModelDeployment.from_json(existing["deployment_json"])
+                if (
+                    current.model_id != deployment.model_id
+                    or current.version != deployment.version
+                    or current.artifact_ref != deployment.artifact_ref
+                    or current.artifact_digest != deployment.artifact_digest
+                    or deployment.revision < current.revision
+                ):
+                    raise MLConflict("deployment identity is immutable")
+                cursor.execute(
+                    "UPDATE ronin_ml_deployments SET deployment_json=%s,updated_at=%s WHERE workspace_id=%s AND deployment_id=%s",
+                    (deployment.to_json(), str(now), str(workspace_id), deployment.deployment_id),
+                )
+            connection.commit()
+            return deployment
+        except Exception:
+            connection.rollback()
+            raise
         finally:
             connection.close()
 
