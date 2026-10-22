@@ -179,7 +179,12 @@ def export_ml_registry_bundle(
                 workspace_id, model.model_id, model.version
             )
         )
-    model_by_ref = {model.artifact_ref: model for model in models}
+    model_by_ref: dict[str, RegisteredModelVersion] = {}
+    for model in models:
+        existing = model_by_ref.get(model.artifact_ref)
+        if existing is not None and existing.artifact_digest != model.artifact_digest:
+            raise ValueError("ML bundle reuses an artifact reference with conflicting digests")
+        model_by_ref[model.artifact_ref] = model
     artifacts: dict[str, MLRegistryBundleArtifact] = {}
     if artifact_store is not None:
         getter = getattr(artifact_store, "get_bytes_by_storage_ref", None)
@@ -197,11 +202,18 @@ def export_ml_registry_bundle(
             data = getter(source_ref, digest=model.artifact_digest)
             if not isinstance(data, bytes):
                 raise ValueError("ML bundle artifact store returned non-byte data")
+            media_type = (
+                "application/vnd.ronin.sklearn-tabular+json"
+                if model.framework == "sklearn"
+                else "application/vnd.ronin.ml-kmeans+json"
+                if model.framework == "ronin-kmeans"
+                else "application/octet-stream"
+            )
             artifacts[source_ref] = MLRegistryBundleArtifact(
                 source_ref,
                 model.artifact_digest,
                 "model",
-                "application/octet-stream",
+                media_type,
                 data,
             )
     values_by_kind: tuple[tuple[str, tuple[object, ...]], ...] = (
