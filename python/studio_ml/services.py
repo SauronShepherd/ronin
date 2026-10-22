@@ -36,6 +36,7 @@ def compile_lab_pipeline(
     candidate_preprocessors: tuple[str, ...] | None = None,
     selection_metric: str | None = None,
     selection_direction: str | None = None,
+    register_model: tuple[str, str] | None = None,
 ) -> PipelineIR:
     """Build the deterministic pipeline definition bound to an immutable Lab."""
 
@@ -45,6 +46,15 @@ def compile_lab_pipeline(
         "seed": str(lab.seed),
         "task": lab.task,
     }
+    if register_model is not None and (
+        not isinstance(register_model, tuple)
+        or len(register_model) != 2
+        or any(
+            not isinstance(value, str) or not value or value != value.strip()
+            for value in register_model
+        )
+    ):
+        raise ValueError("register_model must contain a trimmed model id and version")
     if algorithm is not None:
         from .runtime import ALGORITHM_CAPABILITIES
 
@@ -121,6 +131,10 @@ def compile_lab_pipeline(
                 {"metric": metric, "direction": direction},
             )
         )
+        if register_model is not None:
+            nodes.append(_registration_node(register_model))
+        if len(nodes) > 24:
+            raise ValueError("candidate pipeline exceeds the 24-node execution limit")
         return PipelineIR(
             tuple(nodes), parameters=tuple(sorted(parameters.items())), schema=PIPELINE_SCHEMA_V2
         )
@@ -221,6 +235,8 @@ def compile_lab_pipeline(
                 {"metric": metric, "direction": effective_direction},
             )
         )
+        if register_model is not None:
+            nodes.append(_registration_node(register_model))
         if len(nodes) > 24:
             raise ValueError("candidate grid exceeds the 24-node execution limit")
         return PipelineIR(
@@ -292,6 +308,47 @@ def compile_lab_pipeline(
                 {"metric": metric, "direction": effective_direction},
             )
         )
+        if register_model is not None:
+            nodes.append(_registration_node(register_model))
+        return PipelineIR(
+            tuple(nodes), parameters=tuple(sorted(parameters.items())), schema=PIPELINE_SCHEMA_V2
+        )
+
+    if register_model is not None:
+        if lab.task == "clustering":
+            nodes = [
+                _node("profile"),
+                _node("quality_gate", ("profile",)),
+                _node("prepare", ("quality_gate",)),
+                PipelineNode("train", "train", ("prepare",), {"clusters": 2}),
+                _node("evaluate", ("train",)),
+                PipelineNode(
+                    "select",
+                    "select",
+                    ("evaluate",),
+                    {"metric": "calinski_harabasz", "direction": "maximize"},
+                ),
+                _registration_node(register_model),
+            ]
+        else:
+            train_config = {"algorithm": algorithm} if algorithm is not None else {}
+            nodes = [
+                _node("profile"),
+                _node("quality_gate", ("profile",)),
+                _node("prepare", ("quality_gate",)),
+                PipelineNode("train", "train", ("prepare",), train_config),
+                _node("evaluate", ("train",)),
+                PipelineNode(
+                    "select",
+                    "select",
+                    ("evaluate",),
+                    {
+                        "metric": "accuracy" if lab.task == "classification" else "r2",
+                        "direction": "maximize",
+                    },
+                ),
+                _registration_node(register_model),
+            ]
         return PipelineIR(
             tuple(nodes), parameters=tuple(sorted(parameters.items())), schema=PIPELINE_SCHEMA_V2
         )
@@ -382,6 +439,7 @@ class LabService:
         candidate_preprocessors: tuple[str, ...] | None = None,
         selection_metric: str | None = None,
         selection_direction: str | None = None,
+        register_model: tuple[str, str] | None = None,
     ) -> PipelineIR:
         lab = self.get(workspace_id, lab_id)
         pipeline = compile_lab_pipeline(
@@ -393,6 +451,7 @@ class LabService:
             candidate_preprocessors=candidate_preprocessors,
             selection_metric=selection_metric,
             selection_direction=selection_direction,
+            register_model=register_model,
         )
         return self.store.put_pipeline(workspace_id, lab.id, pipeline)
 
@@ -439,6 +498,13 @@ def _node(kind: str, depends_on: tuple[str, ...] = ()) -> PipelineNode:
     from typing import cast
 
     return PipelineNode(kind, cast(NodeKind, kind), depends_on)
+
+
+def _registration_node(register_model: tuple[str, str]) -> PipelineNode:
+    model_id, version = register_model
+    return PipelineNode(
+        "register", "register", ("select",), {"model_id": model_id, "version": version}
+    )
 
 
 __all__ = [

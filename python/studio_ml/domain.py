@@ -21,7 +21,7 @@ NodeKind: TypeAlias = Literal[
 LAB_SCHEMA = "ronin.ml-lab/v1"
 PIPELINE_SCHEMA = "ronin.ml-pipeline-ir/v1"
 PIPELINE_SCHEMA_V2 = "ronin.ml-pipeline-ir/v2"
-MAX_PIPELINE_NODES = 20
+MAX_PIPELINE_NODES = 24
 FEATURE_SCHEMA = "ronin.ml-feature/v1"
 
 
@@ -368,10 +368,11 @@ class PipelineIR:
         if self.schema == PIPELINE_SCHEMA and any(node.config for node in self.nodes):
             raise ValueError("PipelineIR v1 nodes cannot contain configuration")
         if self.schema == PIPELINE_SCHEMA_V2 and any(
-            node.kind not in {"prepare", "train", "select"} and node.config for node in self.nodes
+            node.kind not in {"prepare", "train", "select", "register"} and node.config
+            for node in self.nodes
         ):
             raise ValueError(
-                "PipelineIR v2 only supports prepare, train, and select node configuration"
+                "PipelineIR v2 only supports prepare, train, select, and register node configuration"
             )
         ids = {node.id for node in self.nodes}
         if len(ids) != len(self.nodes) or any(

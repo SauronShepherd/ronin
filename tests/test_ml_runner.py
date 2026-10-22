@@ -150,6 +150,70 @@ def test_v2_pipeline_trains_multiple_candidates_and_selects_deterministically() 
     assert first.model.algorithm in {"decision_tree_classifier", "logistic_regression"}
 
 
+def test_v2_register_stage_is_terminal_and_deferred_after_selection() -> None:
+    lab = _lab()
+    compiled = compile_lab_pipeline(
+        lab, candidate_algorithms=("logistic_regression", "decision_tree_classifier")
+    )
+    pipeline = PipelineIR(
+        (
+            *compiled.nodes,
+            PipelineNode(
+                "register", "register", ("select",), {"model_id": "churn", "version": "v1"}
+            ),
+        ),
+        parameters=compiled.parameters,
+        schema=PIPELINE_SCHEMA_V2,
+    )
+    runner = LocalExperimentRunner()
+    runner.validate_pipeline(lab, pipeline)
+    result = runner.execute_pipeline(lab, _rows(), pipeline)
+    assert result.to_payload()["algorithm"] in {
+        "logistic_regression",
+        "decision_tree_classifier",
+    }
+
+    invalid = PipelineIR(
+        (
+            *compiled.nodes,
+            PipelineNode(
+                "register",
+                "register",
+                (next(node.id for node in compiled.nodes if node.kind == "evaluate"),),
+                {"model_id": "churn", "version": "v1"},
+            ),
+        ),
+        parameters=compiled.parameters,
+        schema=PIPELINE_SCHEMA_V2,
+    )
+    with pytest.raises(ValueError, match="depend on select"):
+        runner.validate_pipeline(lab, invalid)
+
+
+@pytest.mark.parametrize("task", ["classification", "regression", "clustering"])
+def test_compiler_adds_register_stage_for_all_supported_tasks(task: str) -> None:
+    lab = _cluster_lab() if task == "clustering" else _lab()
+    if task == "regression":
+        lab = Lab(
+            lab.id,
+            lab.name,
+            lab.project_id,
+            lab.dataset,
+            lab.target,
+            "regression",
+            lab.features,
+        )
+    pipeline = compile_lab_pipeline(lab, register_model=("churn", "v1"))
+    assert pipeline.schema == PIPELINE_SCHEMA_V2
+    assert pipeline.nodes[-1].kind == "register"
+    assert pipeline.nodes[-1].depends_on == ("select",)
+    runner = LocalExperimentRunner()
+    runner.validate_pipeline(lab, pipeline)
+    rows = [{"x": value} for value in range(1, 21)] if task == "clustering" else _rows()
+    result = runner.execute_pipeline(lab, rows, pipeline)
+    assert result.to_payload()["lab_id"] == lab.id
+
+
 def test_v2_clustering_pipeline_selects_highest_calinski_harabasz_candidate() -> None:
     from studio_ml.clustering import calinski_harabasz, fit_kmeans, inertia
 

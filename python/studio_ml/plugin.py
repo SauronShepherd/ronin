@@ -24,7 +24,7 @@ from .optimization import (
     propose_bayesian_candidates,
     rank_trials,
 )
-from .orchestration import JobStoreExecutionStore, LocalExecutionCoordinator
+from .orchestration import ExecutionSnapshot, JobStoreExecutionStore, LocalExecutionCoordinator
 from .ports import MLLabStore
 from .quality import profile_and_validate
 from .runner import LocalExperimentRunner
@@ -87,7 +87,9 @@ class MachineLearningStudioPlugin:
     def __init__(self) -> None:
         self._labs: LabService | None = None
         self._runner = LocalExperimentRunner()
-        self._coordinator = LocalExecutionCoordinator(self._runner)
+        self._coordinator = LocalExecutionCoordinator(
+            self._runner, result_finalizer=self._finalize_pipeline_registration
+        )
         self._registry: MLRegistryStore | None = None
         self._artifacts: ArtifactStore | None = None
         self._artifact_reference_barrier: ArtifactReferenceBarrier | None = None
@@ -114,7 +116,10 @@ class MachineLearningStudioPlugin:
             else None
         )
         self._coordinator = LocalExecutionCoordinator(
-            coordinator_runner, store=execution_store, autostart=False
+            coordinator_runner,
+            store=execution_store,
+            autostart=False,
+            result_finalizer=self._finalize_pipeline_registration,
         )
         self._registry = cast(MLRegistryStore | None, context.services.get("ml_registry"))
         catalog = context.services.get("catalog_store")
@@ -769,6 +774,7 @@ class MachineLearningStudioPlugin:
             "candidate_preprocessors",
             "selection_metric",
             "selection_direction",
+            "register",
             "pipeline",
         }:
             raise ValueError("execution body contains unsupported fields")
@@ -794,6 +800,7 @@ class MachineLearningStudioPlugin:
             "candidate_preprocessors",
             "selection_metric",
             "selection_direction",
+            "register",
         }
         if raw_pipeline is not None and any(key in body for key in pipeline_options):
             raise ValueError("pipeline cannot be combined with compiler execution options")
@@ -859,6 +866,18 @@ class MachineLearningStudioPlugin:
             and preprocessor != "identity"
         ):
             raise ValueError("preprocessor is not supported for clustering Labs")
+        registration = body.get("register")
+        if registration is not None and (
+            not isinstance(registration, dict)
+            or set(registration) != {"model_id", "version"}
+            or any(
+                not isinstance(registration.get(key), str)
+                or not registration[key]
+                or registration[key] != registration[key].strip()
+                for key in ("model_id", "version")
+            )
+        ):
+            raise ValueError("register must contain exactly a trimmed model_id and version")
         rows = resolve_lab_rows(
             WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
         )
@@ -891,7 +910,6 @@ class MachineLearningStudioPlugin:
             if not callable(validate_pipeline):
                 raise ValueError("execution runner cannot validate custom ML pipelines")
             validate_pipeline(lab, pipeline)
-            pipeline = self._labs.put_pipeline(WorkspaceId(workspace_id), lab_id, pipeline)
         else:
             pipeline = self._labs.compile(
                 WorkspaceId(workspace_id),
@@ -911,7 +929,22 @@ class MachineLearningStudioPlugin:
                 ),
                 selection_metric=selection_metric,
                 selection_direction=selection_direction,
+                register_model=(
+                    (registration["model_id"], registration["version"])
+                    if isinstance(registration, dict)
+                    else None
+                ),
             )
+        if any(node.kind == "register" for node in pipeline.nodes) and (
+            self._registry is None
+            or self._artifacts is None
+            or not isinstance(self._coordinator._store, JobStoreExecutionStore)
+        ):
+            raise ValueError(
+                "pipeline register stage requires durable execution, registry, and artifact storage"
+            )
+        if raw_pipeline is not None:
+            pipeline = self._labs.put_pipeline(WorkspaceId(workspace_id), lab_id, pipeline)
         return self._coordinator.submit(workspace_id, run_id, lab, rows, pipeline).to_payload()
 
     def compare_trials(
@@ -1176,6 +1209,8 @@ class MachineLearningStudioPlugin:
         workspace_id: str | None = None,
         *,
         body: object | None = None,
+        snapshot_override: ExecutionSnapshot | None = None,
+        result_override: dict[str, object] | None = None,
         **_kwargs: Any,
     ) -> dict[str, object]:
         """Register a verified model artifact produced by a durable execution."""
@@ -1201,12 +1236,22 @@ class MachineLearningStudioPlugin:
             RegisteredModelVersion,
         )
 
-        snapshot = self._coordinator.status(workspace_id, run_id)
-        if snapshot.state != "succeeded" or not isinstance(snapshot.result_payload, dict):
-            raise ValueError(
-                "only a succeeded execution with a materialized model can be registered"
-            )
-        result = snapshot.result_payload
+        if snapshot_override is None:
+            snapshot = self._coordinator.status(workspace_id, run_id)
+            if snapshot.state != "succeeded" or not isinstance(snapshot.result_payload, dict):
+                raise ValueError(
+                    "only a succeeded execution with a materialized model can be registered"
+                )
+            result = snapshot.result_payload
+        else:
+            if (
+                snapshot_override.workspace_id != workspace_id
+                or snapshot_override.run_id != run_id
+                or result_override is None
+            ):
+                raise ValueError("pipeline registration context does not match its execution")
+            snapshot = snapshot_override
+            result = result_override
         required = {
             "task",
             "algorithm",
@@ -1220,7 +1265,8 @@ class MachineLearningStudioPlugin:
             raise ValueError("execution result does not contain a registrable model artifact")
         features = result["features"]
         artifact_ref = result["artifact_ref"]
-        digest = result["artifact_digest"]
+        raw_digest = result["artifact_digest"]
+        digest = raw_digest.removeprefix("sha256:") if isinstance(raw_digest, str) else raw_digest
         media_type = result["artifact_media_type"]
         size_bytes = result["artifact_size_bytes"]
         task = result["task"]
@@ -1318,8 +1364,19 @@ class MachineLearningStudioPlugin:
         model_version = ModelVersion(body["version"])
         ml_run_id = MLRunId(run_id)
         experiment_id = ExperimentId(lab.id)
+        workspace = WorkspaceId(workspace_id)
+        existing = self._registry.get_model(workspace, model_id, model_version)
+        if existing is not None:
+            if (
+                existing.artifact_ref != artifact_ref
+                or existing.artifact_digest != digest
+                or existing.framework != framework
+                or existing.signature != signature
+            ):
+                raise ValueError("model version already exists with different execution output")
+            return existing.to_payload()
         self._registry.put_experiment(
-            WorkspaceId(workspace_id),
+            workspace,
             Experiment(experiment_id, lab.name, lab.project_id),
             now="plugin",
         )
@@ -1333,15 +1390,42 @@ class MachineLearningStudioPlugin:
             metrics=metrics,
             artifact_refs=(artifact_ref,),
         )
-        self._registry.record_run(WorkspaceId(workspace_id), record, now="plugin")
-        registered = self._registry.register_model(
-            WorkspaceId(workspace_id),
-            RegisteredModelVersion(
-                model_id, model_version, ml_run_id, artifact_ref, digest, framework, signature
-            ),
-            now="plugin",
+        self._registry.record_run(workspace, record, now="plugin")
+        requested = RegisteredModelVersion(
+            model_id, model_version, ml_run_id, artifact_ref, digest, framework, signature
         )
+        try:
+            registered = self._registry.register_model(workspace, requested, now="plugin")
+        except Exception:
+            existing = self._registry.get_model(workspace, model_id, model_version)
+            if (
+                existing is None
+                or existing.artifact_ref != artifact_ref
+                or existing.artifact_digest != digest
+                or existing.framework != framework
+                or existing.signature != signature
+            ):
+                raise
+            registered = existing
         return registered.to_payload()
+
+    def _finalize_pipeline_registration(
+        self, snapshot: ExecutionSnapshot, result: dict[str, object]
+    ) -> dict[str, object]:
+        if snapshot.pipeline_json is None:
+            raise ValueError("pipeline registration requires a pinned PipelineIR")
+        pipeline = PipelineIR.from_json(snapshot.pipeline_json)
+        registration_nodes = [node for node in pipeline.nodes if node.kind == "register"]
+        if len(registration_nodes) != 1:
+            raise ValueError("pipeline registration stage is missing or ambiguous")
+        registered = self.register_execution_model(
+            snapshot.run_id,
+            snapshot.workspace_id,
+            body=dict(registration_nodes[0].config),
+            snapshot_override=snapshot,
+            result_override=result,
+        )
+        return {**result, "registered_model": registered}
 
     def cancel_execution(
         self, run_id: str, workspace_id: str | None = None, **_kwargs: Any

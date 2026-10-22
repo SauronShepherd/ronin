@@ -215,3 +215,35 @@ test('ML Studio submits supervised and clustering candidate selections', async (
   await expect.poll(() => bodies.segments?.candidate_cluster_counts).toEqual([3, 4]);
   expect(bodies.segments).not.toHaveProperty('algorithm');
 });
+
+test('ML Studio can register the selected model as part of its durable execution', async ({ page }) => {
+  let executionBody;
+  let modelRefreshes = 0;
+  await page.route('**/v1/ml-studio/labs?**', route => route.fulfill({json: {
+    items: [{id: 'churn', name: 'Churn', task: 'classification', backend_id: 'local.sklearn', target: 'label', features: [{column: 'age', role: 'numeric'}]}],
+  }}));
+  await page.route('**/v1/ml-studio/models?**', route => {
+    modelRefreshes += 1;
+    return route.fulfill({json: {items: []}});
+  });
+  await page.route('**/v1/ml-studio/labs/churn/executions?**', async route => {
+    executionBody = route.request().postDataJSON();
+    await route.fulfill({json: {run_id: 'register-inline-ui', state: 'queued'}});
+  });
+  await page.route('**/v1/ml-studio/executions/register-inline-ui?**', route => route.fulfill({json: {
+    run_id: 'register-inline-ui',
+    state: 'succeeded',
+    result: {registered_model: {model_id: 'churn', version: 'candidate-ui'}},
+  }}));
+  await page.goto('./#mlstudio', {waitUntil: 'domcontentloaded'});
+  await page.locator('[data-ml-register="churn"]').check();
+  await page.locator('[data-ml-register-version="churn"]').fill('candidate-ui');
+  await page.locator('[data-feature="ml-run"][data-lab="churn"]').click();
+  await expect.poll(() => executionBody?.register).toEqual({
+    model_id: 'churn',
+    version: 'candidate-ui',
+  });
+  await expect(page.locator('#ml-output')).toContainText('Registered candidate churn@candidate-ui');
+  await expect(page.locator('#ml-register-execution')).toHaveCount(0);
+  await expect.poll(() => modelRefreshes).toBeGreaterThan(1);
+});

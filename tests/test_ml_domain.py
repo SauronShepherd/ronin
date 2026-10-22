@@ -83,9 +83,9 @@ def test_pipeline_execution_order_is_stable_and_dependency_respecting() -> None:
 def test_pipeline_node_count_is_bounded() -> None:
     nodes = tuple(
         PipelineNode(f"stage-{index}", "profile", (f"stage-{index - 1}",) if index else ())
-        for index in range(21)
+        for index in range(25)
     )
-    with pytest.raises(ValueError, match="cannot contain more than 20 nodes"):
+    with pytest.raises(ValueError, match="cannot contain more than 24 nodes"):
         PipelineIR(nodes)
 
 
