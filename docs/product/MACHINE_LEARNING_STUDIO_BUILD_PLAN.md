@@ -1119,3 +1119,5 @@ Las opciones de compilación síncrona también acotan listas y nombres antes de
 crear el pipeline. No se ejecutaron pruebas, builds, validadores ni Docker por
 instrucción del usuario.
 OpenAPI refleja los límites de ejecución, registro, retry, compare y search.
+Las rutas de promoción, scoring, model card y descarga de artefactos comparten
+el límite de 256 caracteres para sus identificadores y rechazan controles.
