@@ -9,10 +9,14 @@ capability declaration contains `tasks`, `algorithms`,
 `supports_explainability`. Capability discovery is advisory; the backend still
 validates every request and must return a typed error for unsupported pairs.
 
-The current local adapter advertises classification/regression,
-`logistic_regression`/`linear_regression`, prediction, and artifact support.
-It does not advertise explainability. Backend identifiers are stable routing
-keys and must not encode environment-specific paths or credentials.
+The current local adapter advertises classification, regression and clustering;
+its algorithms are `logistic_regression`, `linear_regression`,
+`decision_tree_classifier`, `decision_tree_regressor`,
+`random_forest_classifier`, `random_forest_regressor`, `kmeans`,
+`gradient_boosting_regressor` and `gradient_boosting_classifier`. It advertises
+prediction and artifact support but not explainability. Backend identifiers are
+stable routing keys and must not encode environment-specific paths or
+credentials.
 
 An implementation must produce a serializable model artifact, effective
 hyperparameters, input signature, metrics, and provenance sufficient to replay
