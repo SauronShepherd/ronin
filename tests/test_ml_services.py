@@ -121,6 +121,57 @@ def test_compile_candidate_algorithms_defaults_error_metric_to_minimize() -> Non
     assert pipeline.nodes[-1].config["direction"] == "minimize"
 
 
+def test_compile_candidate_preprocessors_branches_and_pins_each_prepare() -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "churn",
+        "classification",
+        (FeatureSpec("age", "numeric"), FeatureSpec("region", "categorical")),
+    )
+    pipeline = compile_lab_pipeline(
+        lab,
+        algorithm="decision_tree_classifier",
+        candidate_preprocessors=("one_hot", "one_hot_median_impute"),
+    )
+
+    prepares = [node for node in pipeline.nodes if node.kind == "prepare"]
+    trains = [node for node in pipeline.nodes if node.kind == "train"]
+    assert pipeline.schema == PIPELINE_SCHEMA_V2
+    assert [node.config["preprocessor"] for node in prepares] == [
+        "one_hot",
+        "one_hot_median_impute",
+    ]
+    assert [node.depends_on for node in trains] == [(node.id,) for node in prepares]
+    assert all(node.config["algorithm"] == "decision_tree_classifier" for node in trains)
+    assert len(pipeline.nodes) == 9
+
+
+def test_compile_candidate_preprocessors_rejects_invalid_or_incompatible_lists() -> None:
+    lab = Lab(
+        "churn",
+        "Churn",
+        "crm",
+        AssetRef(AssetId("customers"), AssetVersion("v1")),
+        "churn",
+        "classification",
+        (FeatureSpec("age", "numeric"),),
+    )
+    for preprocessors in (("identity",), ("identity", "identity"), ("unknown", "identity")):
+        with pytest.raises(ValueError, match="candidate_preprocessors|preprocessor"):
+            compile_lab_pipeline(lab, candidate_preprocessors=preprocessors)
+    with pytest.raises(ValueError, match="one_hot preprocessing"):
+        compile_lab_pipeline(lab, candidate_preprocessors=("identity", "one_hot"))
+    with pytest.raises(ValueError, match="candidate selection options"):
+        compile_lab_pipeline(
+            lab,
+            candidate_algorithms=("logistic_regression", "decision_tree_classifier"),
+            candidate_preprocessors=("identity", "standard_scale"),
+        )
+
+
 def test_compile_clustering_candidates_pins_counts_and_inertia_policy() -> None:
     lab = Lab(
         "segments",

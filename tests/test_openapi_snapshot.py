@@ -87,6 +87,16 @@ def test_ml_execution_openapi_requires_workspace_scope_and_idempotent_shape() ->
     assert request_schema["properties"]["candidate_cluster_counts"]["minItems"] == 2
     assert request_schema["properties"]["candidate_cluster_counts"]["maxItems"] == 8
     assert request_schema["properties"]["candidate_cluster_counts"]["items"]["maximum"] == 32
+    assert request_schema["properties"]["candidate_preprocessors"]["minItems"] == 2
+    assert request_schema["properties"]["candidate_preprocessors"]["maxItems"] == 5
+    assert request_schema["properties"]["candidate_preprocessors"]["uniqueItems"] is True
+    assert request_schema["properties"]["candidate_preprocessors"]["items"]["enum"] == [
+        "identity",
+        "standard_scale",
+        "one_hot",
+        "median_impute",
+        "one_hot_median_impute",
+    ]
     assert "calinski_harabasz" in request_schema["properties"]["selection_metric"]["enum"]
     assert request_schema["properties"]["selection_direction"]["enum"] == [
         "maximize",

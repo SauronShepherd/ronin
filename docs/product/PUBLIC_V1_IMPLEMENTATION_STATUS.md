@@ -4,7 +4,7 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-21. PRs #430–#482 are merged. Recent
+**Observed workspace snapshot:** 2026-10-21. PRs #430–#503 are merged. Recent
 increments add configurable ML algorithms and preprocessing, selective retry,
 non-destructive artifact retention preview, fail-closed reference discovery with
 bounded enumeration, bounded-memory local artifact pagination, and paged manual
@@ -22,7 +22,7 @@ two PostgreSQL-dependent tests were skipped without a local DSN, and strict
 acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
-**Observed source head:** `eff4bdb3b3d2ed32b40cf48e59cbb567048df2a4` (2026-10-21).
+**Observed source head:** `3ba0ab70a137f6019d85c8063148c2f873a913e6` (2026-10-21).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are

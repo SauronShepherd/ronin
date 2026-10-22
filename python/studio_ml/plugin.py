@@ -766,6 +766,7 @@ class MachineLearningStudioPlugin:
             "preprocessor",
             "candidate_algorithms",
             "candidate_cluster_counts",
+            "candidate_preprocessors",
             "selection_metric",
             "selection_direction",
             "pipeline",
@@ -790,6 +791,7 @@ class MachineLearningStudioPlugin:
             "preprocessor",
             "candidate_algorithms",
             "candidate_cluster_counts",
+            "candidate_preprocessors",
             "selection_metric",
             "selection_direction",
         }
@@ -818,6 +820,15 @@ class MachineLearningStudioPlugin:
             )
         ):
             raise ValueError("candidate_cluster_counts must be an array of integers")
+        candidate_preprocessors = body.get("candidate_preprocessors")
+        if candidate_preprocessors is not None and (
+            not isinstance(candidate_preprocessors, list)
+            or not all(
+                isinstance(item, str) and item and item == item.strip()
+                for item in candidate_preprocessors
+            )
+        ):
+            raise ValueError("candidate_preprocessors must be an array of trimmed names")
         selection_metric = body.get("selection_metric")
         if selection_metric is not None and (
             not isinstance(selection_metric, str)
@@ -840,7 +851,13 @@ class MachineLearningStudioPlugin:
             "one_hot_median_impute",
         }:
             raise ValueError("preprocessor is not supported")
-        if lab.task == "clustering" and preprocessor != "identity":
+        if candidate_preprocessors is not None and "preprocessor" in body:
+            raise ValueError("preprocessor cannot be combined with candidate_preprocessors")
+        if (
+            candidate_preprocessors is None
+            and lab.task == "clustering"
+            and preprocessor != "identity"
+        ):
             raise ValueError("preprocessor is not supported for clustering Labs")
         rows = resolve_lab_rows(
             WorkspaceId(workspace_id), lab, body.get("rows"), self._dataset_resolver
@@ -888,6 +905,9 @@ class MachineLearningStudioPlugin:
                     tuple(candidate_cluster_counts)
                     if candidate_cluster_counts is not None
                     else None
+                ),
+                candidate_preprocessors=(
+                    tuple(candidate_preprocessors) if candidate_preprocessors is not None else None
                 ),
                 selection_metric=selection_metric,
                 selection_direction=selection_direction,
