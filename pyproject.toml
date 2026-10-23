@@ -132,6 +132,7 @@ studio_storage = ["migrations/*.sql"]
   "web/styles/base.css",
   "web/styles/components.css",
   "web/styles/layout.css",
+  "web/styles/standalone-theme.css",
   "web/styles/tokens.css",
 ]
 "share/ronin/web/cloud-studio" = [

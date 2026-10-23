@@ -6,7 +6,8 @@
   color: #fff8ef; padding: 1.15rem .8rem; box-shadow: 8px 0 24px rgb(60 35 20 / 12%); overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable;
 }
 .rail::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .24; background: radial-gradient(circle at 20% 4%, var(--gold) 0, transparent 17rem); pointer-events: none; }
-.rail-brand { display: flex; align-items: center; gap: .65rem; color: #fff8ef; text-decoration: none; font-weight: 800; letter-spacing: .01em; margin: .35rem .55rem 1.8rem; }
+.rail-brand { display: flex; align-items: center; gap: .65rem; color: #fff8ef; text-decoration: none; font-weight: 800; letter-spacing: .01em; margin: .35rem .2rem 1.35rem; padding: .55rem .65rem; border: 1px solid transparent; border-radius: var(--radius-sm); transition: background .18s ease, border-color .18s ease; }
+.rail-brand:hover { color: #fffdf9; background: rgb(255 248 239 / 10%); border-color: rgb(234 208 165 / 36%); }
 .rail-brand img { width: 34px; height: 34px; object-fit: contain; filter: drop-shadow(0 3px 6px rgb(0 0 0 / 22%)); }
 .rail-subtitle { margin: 0 .55rem .75rem; color: #d7c4b1; font-size: .78rem; }
 .nav-group { display: grid; gap: .3rem; }

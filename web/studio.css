@@ -12,3 +12,19 @@ body { margin:0; background:var(--ink); color:var(--text); font:14px system-ui,s
 .run-filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; } .run-filters input, .run-filters select { background:#120f0d; color:var(--text); } .run-filters select { border:1px solid var(--line); border-radius:6px; padding:9px 11px; }
 .sql-form { display:grid; gap:12px; max-width:900px; } .sql-form input, .sql-form textarea { background:#120f0d; color:var(--text); font:14px ui-monospace,monospace; padding:10px; width:100%; } .sql-result { background:var(--panel); border:1px solid var(--line); border-radius:8px; margin-top:16px; padding:18px; }
 @media (max-width:800px) { .layout { grid-template-columns:1fr; } .sidebar { border-bottom:1px solid var(--line); border-right:0; } .detail-grid { grid-template-columns:1fr; } .connection-form input { width:130px; } }
+
+/* Legacy studio surface aligned with the public dojo palette. */
+:root { color-scheme: light; --brown:#9a5f2b; --gold:#c98b3c; --ink:#2d211b; --panel:#fffaf3; --line:#c9ab8d; --text:#2d211b; --muted:#756458; }
+body { background:radial-gradient(circle at 90% 0,rgb(234 208 165 / 28%),transparent 30rem),#f4ede4; color:var(--text); }
+header { background:linear-gradient(105deg,#2d211b,#4b3529); color:#fff8ef; border-bottom-color:#6b4a37; box-shadow:0 5px 20px rgb(77 47 26 / 16%); }
+header span { color:#e3cfba; }
+input,button,.run-filters select { border-color:var(--line); border-radius:9px; }
+input,.run-filters input,.run-filters select,.sql-form input,.sql-form textarea { background:#fffdf9; color:var(--text); }
+button { background:#fffaf3; color:var(--text); box-shadow:0 3px 9px rgb(77 47 26 / 8%); }
+button:hover { background:#efe3d4; border-color:var(--brown); }
+.sidebar { background:linear-gradient(180deg,#fffaf3,#f3e6d8); border-color:var(--line); }
+.nav.active { background:#ead0a5; color:var(--ink); }
+.card,article,.sql-result { background:linear-gradient(180deg,#fffdf9,#fffaf3); border-color:var(--line); box-shadow:0 5px 16px rgb(77 47 26 / 8%); }
+.notice { background:#f8ead2; border-color:var(--gold); color:var(--ink); }
+.empty { border-color:var(--line); color:var(--muted); }
+.danger { background:#93463a; color:#fff8f0; }

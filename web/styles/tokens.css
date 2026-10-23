@@ -1,6 +1,10 @@
 :root {
+  color-scheme: light;
   --canvas: #f4ede4;
   --canvas-deep: #eadccd;
+  --cocoa: #2d211b;
+  --cocoa-soft: #4b3529;
+  --cocoa-wash: #6b4a37;
   --surface: #fffaf3;
   --surface-raised: #fffdf9;
   --surface-muted: #efe3d4;
@@ -28,4 +32,6 @@
   --radius-sm: 9px;
   --shadow: 0 12px 30px rgb(77 47 26 / 10%);
   --shadow-soft: 0 5px 16px rgb(77 47 26 / 8%);
+  --shadow-strong: 0 18px 42px rgb(77 47 26 / 16%);
+  --ring: 0 0 0 3px rgb(180 92 44 / 18%);
 }
