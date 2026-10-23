@@ -33,3 +33,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 __all__ = ("main",)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

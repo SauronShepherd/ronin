@@ -3,12 +3,9 @@ import {post} from './api.js';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const view = () => document.querySelector('#view');
 
-function addNavigation() {
-  const nav = document.querySelector('.nav-group');
-  if (nav && !nav.querySelector('[data-performance-nav]')) {
-    nav.insertAdjacentHTML('beforeend', '<a class="nav-item" data-performance-nav href="#performance" aria-label="Performance Studio" aria-current="false"><span aria-hidden="true">◈</span><span class="nav-label">Performance Studio</span></a>');
-  }
-}
+// Performance is part of routes.json and is rendered by the primary rail.
+// This module only owns the Performance Studio view.
+function addNavigation() {}
 
 function renderReport(report) {
   const stages = report.series?.stages || [];
@@ -26,7 +23,7 @@ export function renderPerformance() {
   addNavigation();
   const target = view();
   if (!target) return;
-  target.innerHTML = '<div class="page-heading"><div><p class="eyebrow">RUNTIME INTELLIGENCE</p><h1 id="view-title">Performance Studio</h1><p class="muted">Analyze a normalized run and inspect stage bottlenecks.</p></div></div><div class="panel"><form id="performance-form"><label for="performance-run">Normalized run JSON</label><textarea class="field sql-editor" id="performance-run" rows="12" required>{"run_id":"demo","stages":[]}</textarea><label for="performance-baseline">Baseline JSON (optional)</label><textarea class="field sql-editor" id="performance-baseline" rows="6"></textarea><button class="button primary" type="submit">Analyze performance</button></form><pre id="performance-error" class="error" aria-live="polite"></pre></div><div id="performance-result" aria-live="polite"></div>';
+  target.innerHTML = '<div class="page-heading"><div><p class="eyebrow">RUNTIME INTELLIGENCE</p><h1 id="view-title">Performance Studio</h1><p class="muted">Analyze a normalized run and inspect stage bottlenecks.</p></div></div><div class="panel"><form id="performance-form"><label for="performance-run">Normalized run JSON</label><textarea class="field sql-editor" id="performance-run" rows="12" required>{"run_id":"demo","stages":[]}</textarea><label for="performance-baseline">Baseline JSON (optional)</label><textarea class="field sql-editor" id="performance-baseline" rows="6"></textarea><button class="button primary" type="submit">Analyze performance</button></form><pre id="performance-error" class="error" aria-live="polite" hidden></pre></div><div id="performance-result" aria-live="polite"></div>';
 }
 
 document.addEventListener('submit', async event => {
@@ -40,9 +37,11 @@ document.addEventListener('submit', async event => {
     if (baseline) payload.baseline = JSON.parse(baseline);
     result.innerHTML = '<p class="muted">Analyzing…</p>';
     error.textContent = '';
+    error.hidden = true;
     result.innerHTML = renderReport(await post('/api/v1/performance/analyze', payload));
   } catch (exception) {
     error.textContent = `Analysis failed: ${exception.message}`;
+    error.hidden = false;
     result.innerHTML = '';
   }
 });

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import signal
 import uuid
@@ -36,6 +37,7 @@ from studio_orchestrator import (
     Job,
     LeaseToken,
     RunId,
+    StoredExecutionEvent,
 )
 from studio_runners import (
     AsyncioCommandRunner,
@@ -59,11 +61,14 @@ from .execution import DurableWorkerExecution, WorkerExecutionOutcome, utc_now
 from .preparation import (
     LOCAL_DOCKER_PROFILE,
     WorkerPaths,
+    WorkerPreparationError,
     build_request,
     execution_identities,
     load_project,
     resolve_runtime_snapshot,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -261,6 +266,86 @@ class LocalWorkerRuntime:
         )
         return request, identities
 
+    async def _fail_preparation(
+        self, claim: ClaimedRun, error: Exception
+    ) -> WorkerExecutionOutcome:
+        """Persist a preparation failure without taking down the durable worker."""
+
+        now = self._now()
+        failure_code = "worker.preparation.error"
+        await self._service.worker_append_events(
+            claim.attempt_id,
+            (
+                StoredExecutionEvent(
+                    attempt_id=claim.attempt_id,
+                    sequence=0,
+                    kind="worker.preparation.failed",
+                    message=failure_code,
+                    occurred_at=now,
+                ),
+            ),
+            owner=self.config.owner,
+            lease_token=claim.lease_token,
+            now=now,
+        )
+        await self._service.worker_complete_attempt(
+            claim.attempt_id,
+            state=AttemptState.FAILED,
+            failure_code=failure_code,
+            owner=self.config.owner,
+            lease_token=claim.lease_token,
+            now=now,
+        )
+        if isinstance(error, WorkerPreparationError):
+            _LOGGER.warning(
+                "job preparation failed; marking attempt failed and continuing "
+                "(job_id=%s, run_id=%s, attempt_id=%s, failure_code=%s)",
+                claim.job.id,
+                claim.run.id,
+                claim.attempt_id,
+                failure_code,
+            )
+        else:
+            _LOGGER.exception(
+                "unexpected job preparation error; marking attempt failed and continuing "
+                "(job_id=%s, run_id=%s, attempt_id=%s, failure_code=%s)",
+                claim.job.id,
+                claim.run.id,
+                claim.attempt_id,
+                failure_code,
+            )
+        return WorkerExecutionOutcome(AttemptState.FAILED, (), (), failure_code)
+
+    @staticmethod
+    def _log_execution_outcome(
+        claim: ClaimedRun,
+        outcome: WorkerExecutionOutcome,
+        duration_seconds: float,
+    ) -> None:
+        """Emit one operational log record for each durably completed attempt."""
+
+        if outcome.failure_code == "worker.preparation.error":
+            # Preparation already emitted a warning with the same durable failure code.
+            return
+        message = (
+            "worker attempt completed (job_id=%s, run_id=%s, attempt_id=%s, "
+            "state=%s, duration_ms=%d, failure_code=%s)"
+        )
+        arguments = (
+            claim.job.id,
+            claim.run.id,
+            claim.attempt_id,
+            outcome.state.value,
+            max(0, round(duration_seconds * 1000)),
+            outcome.failure_code or "none",
+        )
+        if outcome.state is AttemptState.FAILED:
+            _LOGGER.error(message, *arguments)
+        elif outcome.state is AttemptState.CANCELLED:
+            _LOGGER.warning(message, *arguments)
+        else:
+            _LOGGER.info(message, *arguments)
+
     async def _poll(
         self,
         *,
@@ -432,16 +517,8 @@ class LocalWorkerRuntime:
                 claim.run.id,
                 claim.job,
             )
-        except Exception:
-            await self._service.worker_complete_attempt(
-                claim.attempt_id,
-                state=AttemptState.FAILED,
-                failure_code="worker.preparation.error",
-                owner=self.config.owner,
-                lease_token=claim.lease_token,
-                now=self._now(),
-            )
-            raise
+        except Exception as exc:
+            return await self._fail_preparation(claim, exc)
 
         executor = DockerContainerKernelExecutor(
             ContainerExecutorConfig(
@@ -508,11 +585,19 @@ class LocalWorkerRuntime:
         try:
             execution = await self._execute_claim(claim)
         except Exception:
+            _LOGGER.exception(
+                "worker attempt raised unexpectedly (job_id=%s, run_id=%s, attempt_id=%s)",
+                claim.job.id,
+                claim.run.id,
+                claim.attempt_id,
+            )
             if self.config.record_execution is not None:
                 self.config.record_execution("worker.execute", monotonic() - started, "failed")
             raise
+        elapsed = monotonic() - started
+        self._log_execution_outcome(claim, execution, elapsed)
         if self.config.record_execution is not None:
-            self.config.record_execution("worker.execute", monotonic() - started, "succeeded")
+            self.config.record_execution("worker.execute", elapsed, execution.state.value)
         return LocalWorkerPollOutcome(
             polled.reclaimed_run_ids,
             claim.attempt_id,
@@ -553,18 +638,24 @@ class LocalWorkerRuntime:
                     await self._abandon_claim(claim)
                     return
                 try:
-                    await execution
+                    outcome = await execution
                 except Exception:
+                    _LOGGER.exception(
+                        "worker attempt raised unexpectedly (job_id=%s, run_id=%s, attempt_id=%s)",
+                        claim.job.id,
+                        claim.run.id,
+                        claim.attempt_id,
+                    )
                     if self.config.record_execution is not None:
                         self.config.record_execution(
                             "worker.execute", monotonic() - started, "failed"
                         )
                     raise
                 else:
+                    elapsed = monotonic() - started
+                    self._log_execution_outcome(claim, outcome, elapsed)
                     if self.config.record_execution is not None:
-                        self.config.record_execution(
-                            "worker.execute", monotonic() - started, "succeeded"
-                        )
+                        self.config.record_execution("worker.execute", elapsed, outcome.state.value)
             finally:
                 shutdown_wait.cancel()
                 with suppress(asyncio.CancelledError):

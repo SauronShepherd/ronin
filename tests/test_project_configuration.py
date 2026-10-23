@@ -36,10 +36,15 @@ def test_project_configuration_preserves_validation_contract() -> None:
         "web/data-enginerring-studio.html",
         "web/data-enginerring-studio.css",
         "web/data-enginerring-studio.js",
+        "web/throw-your-threads.html",
+        "web/throw-your-threads.css",
+        "web/throw-your-threads.js",
     ]
     assert data_files["share/ronin/web/assets"] == [
         "web/assets/ronin-logo-full.png",
         "web/assets/ronin-logo-mark.png",
+        "web/assets/throw-your-threads/environment-atlas.png",
+        "web/assets/throw-your-threads/character-sheet.png",
     ]
     assert set(data_files["share/ronin/web/js"]) == {
         f"web/js/{name}.js"
@@ -75,6 +80,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
             "streaming-studio",
             "synthetic-data-studio",
             "synthetic-journey",
+            "tutorials",
             "ml-studio-journey",
             "ml-features-studio",
             "workspace-journey",
@@ -85,7 +91,9 @@ def test_project_configuration_preserves_validation_contract() -> None:
         "web/styles/base.css",
         "web/styles/components.css",
         "web/styles/layout.css",
+        "web/styles/standalone-theme.css",
         "web/styles/tokens.css",
+        "web/styles/tutorials.css",
     ]
 
     compose = (root / "compose.yaml").read_text(encoding="utf-8")

@@ -251,7 +251,9 @@ setTimeout(() => { window.addEventListener('hashchange', render); if (location.h
 
 function addQueryFluxPanel() {
   const view = document.querySelector('#view');
-  if (!view || view.querySelector('#de-queryflux-result')) return;
+  const existing = view?.querySelector('#de-queryflux-result')?.closest('.panel');
+  if (location.hash.slice(1).split('/')[0] !== 'data') { existing?.remove(); return; }
+  if (!view || existing) return;
   const panel = document.createElement('section');
   panel.className = 'panel';
   panel.innerHTML = '<h2>QueryFlux</h2><p class="muted">Provider-neutral query routing evidence; raw cluster configuration is intentionally hidden.</p><div class="toolbar"><button class="button" data-action="de-queryflux-capabilities">Refresh capabilities</button></div><p id="de-queryflux-status" class="status" aria-live="polite">Loading QueryFlux health…</p><pre id="de-queryflux-result" class="code" aria-live="polite">No capability response yet.</pre>';
@@ -283,8 +285,8 @@ async function loadQueryFluxCapabilities() {
   }
 }
 
-setTimeout(addQueryFluxPanel, 0);
-window.addEventListener('hashchange', addQueryFluxPanel);
+setTimeout(addQueryFluxPanel, 100);
+window.addEventListener('hashchange', () => setTimeout(addQueryFluxPanel, 100));
 
 function addQueryTranslationPolicy() {
   const form = document.querySelector('#de-sql-form');

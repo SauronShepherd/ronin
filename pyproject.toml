@@ -86,10 +86,15 @@ studio_storage = ["migrations/*.sql"]
   "web/data-enginerring-studio.html",
   "web/data-enginerring-studio.css",
   "web/data-enginerring-studio.js",
+  "web/throw-your-threads.html",
+  "web/throw-your-threads.css",
+  "web/throw-your-threads.js",
 ]
 "share/ronin/web/assets" = [
   "web/assets/ronin-logo-full.png",
   "web/assets/ronin-logo-mark.png",
+  "web/assets/throw-your-threads/environment-atlas.png",
+  "web/assets/throw-your-threads/character-sheet.png",
 ]
 "share/ronin/web/js" = [
   "web/js/a11y.js",
@@ -126,18 +131,39 @@ studio_storage = ["migrations/*.sql"]
   "web/js/studio-context.js",
   "web/js/synthetic-data-studio.js",
   "web/js/synthetic-journey.js",
+  "web/js/tutorials.js",
   "web/js/workspace-journey.js",
 ]
 "share/ronin/web/styles" = [
   "web/styles/base.css",
   "web/styles/components.css",
   "web/styles/layout.css",
+  "web/styles/standalone-theme.css",
   "web/styles/tokens.css",
+  "web/styles/tutorials.css",
 ]
 "share/ronin/web/cloud-studio" = [
   "web/cloud-studio.html",
   "web/cloud-studio.css",
   "web/cloud-studio.js",
+]
+"share/ronin/agent-skills/ronin-core" = [
+  "agent-skills/ronin-core/SKILL.md",
+  "agent-skills/ronin-core/agents/openai.yaml",
+  "agent-skills/ronin-core/references/cli-contract.md",
+  "agent-skills/ronin-core/scripts/preflight.py",
+]
+"share/ronin/agent-skills/ronin-data-engineering" = [
+  "agent-skills/ronin-data-engineering/SKILL.md",
+  "agent-skills/ronin-data-engineering/agents/openai.yaml",
+  "agent-skills/ronin-data-engineering/references/workflows.md",
+  "agent-skills/ronin-data-engineering/scripts/preflight.py",
+]
+"share/ronin/agent-skills/ronin-machine-learning" = [
+  "agent-skills/ronin-machine-learning/SKILL.md",
+  "agent-skills/ronin-machine-learning/agents/openai.yaml",
+  "agent-skills/ronin-machine-learning/references/ml-contracts.md",
+  "agent-skills/ronin-machine-learning/scripts/verify_openapi.py",
 ]
 [tool.ruff]
 target-version = "py311"

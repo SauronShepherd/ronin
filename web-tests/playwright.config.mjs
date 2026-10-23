@@ -25,7 +25,7 @@ export default defineConfig({
   webServer: process.env.RONIN_STUDIO_E2E_URL
     ? undefined
     : {
-        command: 'python -m http.server 8099 --directory ..',
+        command: 'python static_server.py',
         url: 'http://127.0.0.1:8099/web/',
         // Reuse a developer's already-running static server locally, while
         // keeping CI hermetic so a stale process cannot mask a bad build.

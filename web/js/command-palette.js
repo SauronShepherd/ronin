@@ -1,13 +1,7 @@
 import {t} from './i18n.js';
+import routesManifest from '../routes.json' with {type: 'json'};
 
-const commands = [
-  ['nav.home', 'home'], ['nav.runs', 'runs'], ['nav.workspaces', 'workspaces'],
-  ['nav.migration', 'migration'], ['nav.synthetic', 'synthetic'],
-  ['nav.mlstudio', 'mlstudio'], ['nav.workflows', 'workflows'], ['nav.sql', 'sql'],
-  ['nav.access', 'access'], ['nav.settings', 'settings'],
-  ['nav.performance', 'performance'], ['nav.debugger', 'debugger'],
-  ['nav.cloud', 'cloud'], ['nav.ai', 'ai'],
-];
+const commands = routesManifest.map(({id}) => [`nav.${id}`, id]);
 
 let dialog;
 let input;
@@ -38,7 +32,7 @@ function ensure() {
 
 function filtered() {
   const query = (input?.value || '').toLowerCase().trim();
-  return commands.filter(([id]) => t(id).toLowerCase().includes(query));
+  return commands.filter(([id, route]) => t(id).toLowerCase().includes(query) || route.toLowerCase().includes(query));
 }
 
 function render() {

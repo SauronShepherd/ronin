@@ -1,0 +1,3 @@
+interface:
+  display_name: "Ronin Machine Learning"
+  short_description: "Develop and validate Ronin ML Studio and PipelineIR workflows"

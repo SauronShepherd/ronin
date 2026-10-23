@@ -120,7 +120,7 @@ def test_data_engineering_routes_execute_through_real_control_plane() -> None:
                 },
             )
             assert asset_response.status == 200
-            assert "Data Enginerring Studio" in asset_body
+            assert "Data Engineering Studio" in asset_body
             assert health_status == 200
         assert health["status"] == "ready"
         assert validate_status == 200

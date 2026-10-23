@@ -1,6 +1,6 @@
 .PHONY: check format lint lint-openapi typecheck architecture gates-negative route-consistency studio-surface web-lint web-budget browser-audit ui-installed ui-a11y ui-e2e-headed test \
 	coverage-t1 coverage-t2 coverage-t3 coverage-t4 coverage-broker coverage-storage-files coverage-storage-files-full coverage-tools coverage-release-gates performance \
-	canonical-json-check runner-protocol-check dependency-surfaces-check
+	canonical-json-check runner-protocol-check dependency-surfaces-check agent-skills-validate agent-skills-package
 
 ui-e2e:
 	npm --prefix web-tests ci
@@ -28,6 +28,12 @@ cloud-studio-floci:
 
 capability-status-check:
 	$(PYTHON) -m tools.capability_status docs/product/public-v1-status.json
+
+agent-skills-validate:
+	PYTHONPATH=python $(PYTHON) -m studio_cli.entrypoint skills validate --json
+
+agent-skills-package:
+	PYTHONPATH=python $(PYTHON) -m studio_cli.entrypoint skills package --output .tmp-agent-skills-dist
 
 CODE_PATHS := python tests tools packages docker
 

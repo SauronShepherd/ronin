@@ -27,6 +27,23 @@ Public v1 is intended to let a team simulate representative **proprietary, non-o
 
 Ronin does not promise fictional byte-for-byte compatibility with every proprietary feature. Any interoperability or simulation gap is classified explicitly as `exact`, `translated`, `partial`, `passthrough`, `unsupported` or `manual_decision`; capabilities may not be silently dropped or semantically weakened.
 
+## Coding-agent skills
+
+Ronin ships reviewable skills for coding agents in [`agent-skills/`](agent-skills/).
+They teach an agent to use the real CLI/API contracts for core project work,
+bounded data-engineering workflows, and Machine Learning Studio while keeping
+read-only discovery ahead of mutations. Inspect or package them with:
+
+```text
+PYTHONPATH=python python -m studio_cli.entrypoint skills list
+PYTHONPATH=python python -m studio_cli.entrypoint skills validate
+PYTHONPATH=python python -m studio_cli.entrypoint skills package --output .tmp-agent-skills-dist
+```
+
+The validator never executes a skill. It checks metadata, parses helper Python
+files, and the packager writes deterministic `skill.zip` archives for an agent
+runtime.
+
 The target platform includes:
 
 - workspaces, projects, repositories, environments and secrets;

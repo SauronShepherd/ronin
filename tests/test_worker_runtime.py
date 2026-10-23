@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import pytest
@@ -81,6 +81,7 @@ class _Clock:
 @dataclass
 class _Runner:
     block_on_call: int | None = None
+    exit_code: int = 0
     started: asyncio.Event = field(default_factory=asyncio.Event)
     calls: int = 0
     cancellation_args: list[tuple[str, ...]] = field(default_factory=list)
@@ -101,7 +102,7 @@ class _Runner:
             self.started.set()
             await asyncio.Event().wait()
         assert not cancellation.is_cancelled
-        return CommandOutcome(0, f"cell-{self.calls}", False, False, 1)
+        return CommandOutcome(self.exit_code, f"cell-{self.calls}", False, False, 1)
 
 
 def _seed(config: LocalWorkerRuntimeConfig) -> None:
@@ -128,29 +129,34 @@ def test_runtime_config_and_catalog_fail_closed(tmp_path: Path) -> None:
     assert image_capability.value == IMAGE
 
 
-def test_run_once_executes_claim_through_sqlite_and_container_boundary(tmp_path: Path) -> None:
+def test_run_once_executes_claim_through_sqlite_and_container_boundary(
+    tmp_path: Path, caplog
+) -> None:
     async def scenario() -> None:
         config = _config(tmp_path)
         _seed(config)
         runner = _Runner()
 
-        async with LocalWorkerRuntime(
-            config,
-            migration_now=START,
-            command_runner=runner,
-            engine_path="docker",
-            now=_Clock(START),
-        ) as runtime:
-            outcome = await runtime.run_once(
-                attempt_id=AttemptId("attempt-runtime-1"),
-                lease_token=LeaseToken("lease-runtime-1"),
-            )
+        with caplog.at_level("INFO", logger="studio_worker.runtime"):
+            async with LocalWorkerRuntime(
+                config,
+                migration_now=START,
+                command_runner=runner,
+                engine_path="docker",
+                now=_Clock(START),
+            ) as runtime:
+                outcome = await runtime.run_once(
+                    attempt_id=AttemptId("attempt-runtime-1"),
+                    lease_token=LeaseToken("lease-runtime-1"),
+                )
 
         assert outcome.attempt_id == AttemptId("attempt-runtime-1")
         assert outcome.execution is not None
         assert outcome.execution.state.value == "succeeded"
         assert len(outcome.execution.executed_cell_ids) == 5
         assert outcome.execution.reused_cell_ids == ()
+        assert "worker attempt completed" in caplog.text
+        assert "state=succeeded" in caplog.text
         assert runner.calls == 5
         assert all(args[:3] == ("docker", "rm", "-f") for args in runner.cancellation_args)
 
@@ -159,6 +165,77 @@ def test_run_once_executes_claim_through_sqlite_and_container_boundary(tmp_path:
         assert job is not None
         assert job.state is JobState.SUCCEEDED
         assert len(store.read_cell_results(RunId("run-runtime"))) == 5
+
+    asyncio.run(scenario())
+
+
+def test_execution_failure_is_logged_as_error_and_persisted(tmp_path: Path, caplog) -> None:
+    async def scenario() -> None:
+        config = _config(tmp_path)
+        _seed(config)
+        runner = _Runner(exit_code=17)
+
+        with caplog.at_level("ERROR", logger="studio_worker.runtime"):
+            async with LocalWorkerRuntime(
+                config,
+                migration_now=START,
+                command_runner=runner,
+                engine_path="docker",
+                now=_Clock(START),
+            ) as runtime:
+                outcome = await runtime.run_once(
+                    attempt_id=AttemptId("attempt-runtime-error"),
+                    lease_token=LeaseToken("lease-runtime-error"),
+                )
+
+        assert outcome.execution is not None
+        assert outcome.execution.state.value == "failed"
+        assert "worker attempt completed" in caplog.text
+        assert "state=failed" in caplog.text
+        assert "failure_code=" in caplog.text
+
+        persisted = SqliteJobStore(config.database_path, migration_now=START)
+        job = persisted.get_job(JobId("job-runtime"))
+        assert job is not None
+        assert job.state is JobState.FAILED
+        assert persisted.read_events(RunId("run-runtime"), since=0)
+
+    asyncio.run(scenario())
+
+
+def test_preparation_failure_is_logged_and_does_not_escape_worker(tmp_path: Path, caplog) -> None:
+    async def scenario() -> None:
+        config = _config(tmp_path)
+        store = SqliteJobStore(config.database_path, migration_now=START)
+        store.create_job(
+            replace(_job(), target="notebooks/missing.ronin.json"),
+            _run(),
+        )
+
+        with caplog.at_level("WARNING", logger="studio_worker.runtime"):
+            async with LocalWorkerRuntime(
+                config,
+                migration_now=START,
+                now=_Clock(START),
+            ) as runtime:
+                outcome = await runtime.run_once(
+                    attempt_id=AttemptId("attempt-invalid-target"),
+                    lease_token=LeaseToken("lease-invalid-target"),
+                )
+
+        assert outcome.execution is not None
+        assert outcome.execution.state.value == "failed"
+        assert outcome.execution.failure_code == "worker.preparation.error"
+        assert "marking attempt failed and continuing" in caplog.text
+
+        persisted = SqliteJobStore(config.database_path, migration_now=START)
+        job = persisted.get_job(JobId("job-runtime"))
+        assert job is not None
+        assert job.state is JobState.FAILED
+        events = persisted.read_events(RunId("run-runtime"), since=0)
+        assert [(event.kind, event.message) for event in events] == [
+            ("worker.preparation.failed", "worker.preparation.error")
+        ]
 
     asyncio.run(scenario())
 

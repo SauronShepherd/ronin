@@ -5,6 +5,7 @@ WORKDIR /src
 COPY pyproject.toml README.md LICENSE ./
 COPY python ./python
 COPY web ./web
+COPY agent-skills ./agent-skills
 RUN python -m pip wheel --no-deps --wheel-dir /wheels .
 
 FROM docker:27.3.1-cli-alpine3.20@sha256:328eb399a065780c2cebe9224de003aa14084cf69efae882ac27430f921819b7 AS docker-cli
@@ -20,7 +21,8 @@ RUN set -eux; \
     apt-get update; \
     apt-get install --no-install-recommends -y ca-certificates git gosu; \
     rm -rf /var/lib/apt/lists/*; \
-    useradd --create-home --uid 65532 --shell /usr/sbin/nologin ronin; \
+    groupadd --gid 65532 ronin; \
+    useradd --create-home --uid 65532 --gid 65532 --shell /usr/sbin/nologin ronin; \
     install -d -o 65532 -g 65532 /var/lib/ronin /workspace; \
     install -d /usr/local/lib/ronin
 

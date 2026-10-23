@@ -1,0 +1,94 @@
+:root {
+  color-scheme: light;
+  --dojo-canvas: #f4ede4;
+  --dojo-surface: #fffaf3;
+  --dojo-raised: #fffdf9;
+  --dojo-muted-surface: #efe3d4;
+  --dojo-ink: #2d211b;
+  --dojo-muted: #756458;
+  --dojo-copper: #9a5f2b;
+  --dojo-gold: #c98b3c;
+  --dojo-border: #c9ab8d;
+  --dojo-line: #dac6b0;
+  --dojo-shadow: 0 12px 30px rgb(77 47 26 / 10%);
+}
+
+* { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--dojo-copper) var(--dojo-muted-surface); }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: var(--dojo-muted-surface); }
+*::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--dojo-gold), var(--dojo-copper)); border: 2px solid var(--dojo-muted-surface); border-radius: 999px; }
+body { background: radial-gradient(circle at 90% 0, rgb(234 208 165 / 28%), transparent 30rem), var(--dojo-canvas); color: var(--dojo-ink); }
+header { background: linear-gradient(105deg, #2d211b, #4b3529); border-bottom-color: #6b4a37; box-shadow: 0 5px 20px rgb(77 47 26 / 16%); }
+header strong { color: #fff8ef; letter-spacing: .02em; }
+header span { color: #e3cfba; }
+button, select, textarea, input { border-color: var(--dojo-border); border-radius: 9px; background: var(--dojo-raised); color: var(--dojo-ink); }
+button { box-shadow: 0 3px 9px rgb(77 47 26 / 8%); }
+button:hover { background: var(--dojo-muted-surface); border-color: var(--dojo-copper); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible { outline: 3px solid #b45c2c; outline-offset: 2px; }
+main { background: linear-gradient(90deg, rgb(255 250 243 / 70%), transparent 42%, rgb(234 220 205 / 32%)); }
+aside { background: linear-gradient(180deg, var(--dojo-surface), #f3e6d8); border-color: var(--dojo-border); }
+aside h2 { color: var(--dojo-copper); }
+.palette-item,.node { background: linear-gradient(180deg, var(--dojo-raised), var(--dojo-surface)); border-color: var(--dojo-border); box-shadow: var(--dojo-shadow); }
+.palette-item:hover,.node:hover { border-color: var(--dojo-gold); }
+.palette-item small,.node small,label,.empty { color: var(--dojo-muted); }
+.canvas { background-color: #f7eee4; border-color: var(--dojo-border); }
+.canvas .node { border-color: var(--dojo-copper); }
+.canvas .node.selected { border-color: var(--dojo-gold); box-shadow: 0 0 0 3px rgb(201 139 60 / 28%), var(--dojo-shadow); }
+textarea,input,select { box-shadow: inset 0 1px 2px rgb(77 47 26 / 5%); }
+pre { background: #35251d; border-color: #694938; color: #f9e9d7; box-shadow: var(--dojo-shadow); }
+#status { color: #4d6347; }
+@media (max-width: 600px) { main { background: var(--dojo-canvas); } }
+
+/* Standalone studios use the same dojo hierarchy as the control plane. */
+body { background: radial-gradient(circle at 92% -8%, rgb(210 154 71 / 18%), transparent 28rem), var(--dojo-canvas); }
+header {
+  min-height: 64px;
+  padding: .75rem 1.25rem;
+  background: linear-gradient(105deg, #2b1d16, #4b3023 68%, #6c4935);
+  border-bottom-color: #8f6547;
+  box-shadow: 0 7px 24px rgb(73 43 24 / 18%);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+header strong { flex: 0 0 auto; letter-spacing: .03em; white-space: nowrap; }
+header span { flex: 1 0 10rem; color: #e4cfb8; white-space: nowrap; }
+header button, header select { flex: 0 0 auto; background: linear-gradient(180deg, #fffaf2, #ead8c4); font-weight: 700; white-space: nowrap; }
+header button:hover, header select:hover { background: #f5e9dc; }
+main { background: linear-gradient(90deg, rgb(255 250 242 / 74%), transparent 48%, rgb(229 211 192 / 36%)); }
+aside {
+  background: linear-gradient(180deg, var(--dojo-surface), #f1e0ce);
+  border-color: var(--dojo-border);
+  box-shadow: inset -1px 0 rgb(143 101 71 / 8%);
+}
+aside h2 { color: var(--dojo-copper); letter-spacing: .08em; }
+.palette-item, .node {
+  border-radius: 12px;
+  background: linear-gradient(155deg, var(--dojo-raised), var(--dojo-surface));
+  box-shadow: 0 7px 20px rgb(73 43 24 / 10%);
+}
+.palette-item:hover, .node:hover { border-color: var(--dojo-gold); box-shadow: 0 10px 26px rgb(73 43 24 / 14%); }
+.canvas { border-radius: 14px; box-shadow: inset 0 1px 0 rgb(255 250 242 / 80%); }
+.canvas .node { border-color: var(--dojo-copper); }
+.canvas .node.selected { box-shadow: 0 0 0 4px rgb(210 154 71 / 30%), 0 9px 24px rgb(73 43 24 / 15%); }
+pre { border-radius: 12px; box-shadow: 0 9px 24px rgb(73 43 24 / 14%); }
+
+/* Standalone studios: keep dense workspaces calm, legible and unmistakably Ronin. */
+header { gap: .7rem; }
+header strong { display: inline-flex; align-items: center; gap: .55rem; }
+header strong::before { content: '✦'; color: var(--dojo-gold); font-size: .85em; }
+header span { overflow: hidden; text-overflow: ellipsis; }
+header button, header select { min-height: 2.35rem; }
+main { min-width: 0; }
+aside { padding: 1.15rem; }
+aside h2 { margin-bottom: 1rem; }
+section { background: linear-gradient(180deg, rgb(255 250 243 / 34%), transparent 28%); }
+.palette-item, .node { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.palette-item:hover { transform: translateY(-1px); }
+.canvas { position: relative; }
+.canvas::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 12% 12%, rgb(210 154 71 / 10%), transparent 16rem); }
+.node { z-index: 1; }
+pre { color: #f9e9d7; }
+@media (max-width: 900px) {
+  header { min-height: 60px; }
+  section { padding: 1rem; }
+}

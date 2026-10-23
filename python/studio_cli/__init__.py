@@ -58,6 +58,7 @@ from studio_storage import PostgresJobReadPort, PostgresMetadataStore, SqliteJob
 from studio_storage.migration_registry import MigrationStatusError, migration_status
 from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
+from .agent_skills import default_skill_root, discover_skills, package_skill, render_skills_json
 from .network import TERMINAL_STATES, ControlPlaneClient, ControlPlaneError
 from .retention import run_artifact_retention
 
@@ -114,6 +115,26 @@ def _parser() -> argparse.ArgumentParser:
         default=Path(".ronin/plugin-lock.json"),
         help="plugin lock path (default: .ronin/plugin-lock.json)",
     )
+
+    skills = commands.add_parser("skills", help="discover and package coding-agent skills")
+    skills_commands = skills.add_subparsers(dest="skills_command", required=True)
+    skills_list = skills_commands.add_parser("list", help="list available agent skills")
+    skills_list.add_argument("--root", type=Path, help="skill directory (default: agent-skills)")
+    skills_list.add_argument("--json", action="store_true")
+    skills_validate = skills_commands.add_parser("validate", help="validate agent skill bundles")
+    skills_validate.add_argument("name", nargs="?", help="validate one skill by directory name")
+    skills_validate.add_argument(
+        "--root", type=Path, help="skill directory (default: agent-skills)"
+    )
+    skills_validate.add_argument("--json", action="store_true")
+    skills_package = skills_commands.add_parser(
+        "package", help="write deterministic skill ZIP files"
+    )
+    skills_package.add_argument("--root", type=Path, help="skill directory (default: agent-skills)")
+    skills_package.add_argument(
+        "--output", type=Path, help="output directory (default: agent-skills/dist)"
+    )
+    skills_package.add_argument("--name", help="package one skill by directory name")
 
     submit = commands.add_parser("submit", help="submit a project notebook for execution")
     submit.add_argument("project")
@@ -1125,6 +1146,54 @@ def _migration_spark_smoke(namespace: argparse.Namespace) -> int:
     return 0 if evidence.status == "passed" else 1
 
 
+def _skills(namespace: argparse.Namespace) -> int:
+    root = (namespace.root or default_skill_root()).expanduser().resolve()
+    skills = discover_skills(root)
+    if namespace.skills_command == "list":
+        if namespace.json:
+            print(render_skills_json(skills))
+        else:
+            for skill in skills:
+                state = "valid" if skill.valid else "invalid"
+                print(f"{skill.name}\t{skill.display_name}\t{state}")
+        return 0 if skills else 1
+    if namespace.skills_command == "validate":
+        selected = tuple(
+            skill for skill in skills if namespace.name is None or skill.name == namespace.name
+        )
+        if namespace.name is not None and not selected:
+            raise CliError(f"agent skill not found: {namespace.name}")
+        payload = {
+            "schema": "ronin.agent-skills-validation/v1",
+            "root": str(root),
+            "valid": all(skill.valid for skill in selected),
+            "skills": [skill.to_payload() for skill in selected],
+        }
+        if namespace.json:
+            print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+        else:
+            for skill in selected:
+                print(f"{skill.name}: {'valid' if skill.valid else '; '.join(skill.errors)}")
+        return 0 if selected and bool(payload["valid"]) else 1
+    if namespace.skills_command == "package":
+        selected = tuple(
+            skill for skill in skills if namespace.name is None or skill.name == namespace.name
+        )
+        if namespace.name is not None and not selected:
+            raise CliError(f"agent skill not found: {namespace.name}")
+        if not selected:
+            raise CliError(f"no agent skills found in {root}")
+        output = (namespace.output or root / "dist").expanduser().resolve()
+        paths = [package_skill(skill, output) for skill in selected]
+        print(
+            json.dumps(
+                {"output": str(output), "packages": [str(path) for path in paths]}, sort_keys=True
+            )
+        )
+        return 0
+    raise CliError(f"unsupported skills command: {namespace.skills_command}")
+
+
 def _plugins(namespace: argparse.Namespace) -> int:
     from studio_runtime import PluginHost, PluginLock, PluginLockError
 
@@ -1253,6 +1322,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise CliError(f"unsupported artifacts command: {namespace.artifacts_command}")
         if command == "plugins":
             return _plugins(namespace)
+        if command == "skills":
+            return _skills(namespace)
         if command == "submit":
             return _submit(namespace)
         if command == "status":
