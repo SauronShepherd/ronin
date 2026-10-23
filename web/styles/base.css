@@ -62,3 +62,24 @@ button:disabled { cursor: not-allowed; opacity: .5; transform: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+/* Shared dojo polish: controls, links and states use one visual hierarchy. */
+::selection { background: var(--gold-soft); color: var(--cocoa); }
+a.button, a.nav-item, a.rail-brand { text-decoration: none; }
+.button, .icon-button { min-height: 2.5rem; font-weight: 700; letter-spacing: -.01em; }
+.button:not(.primary):not(.danger), .icon-button {
+  background: linear-gradient(180deg, var(--surface-raised), var(--surface2));
+}
+.button:not(.primary):not(.danger):hover, .icon-button:hover {
+  background: var(--surface-muted); border-color: var(--copper); color: var(--cocoa);
+}
+.button.primary {
+  background: linear-gradient(135deg, var(--cocoa), var(--cocoa-soft));
+  border-color: var(--cocoa); color: var(--ink-on-dark);
+}
+.button.primary:hover { background: linear-gradient(135deg, var(--copper), var(--cocoa-soft)); }
+.button.danger { box-shadow: 0 5px 14px rgb(117 45 32 / 16%); }
+.button:active, .icon-button:active { transform: translateY(0); }
+.empty, .error, .loading {
+  border-radius: var(--radius-lg); box-shadow: inset 0 1px 0 rgb(255 250 242 / 70%);
+}
