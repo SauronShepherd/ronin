@@ -38,7 +38,7 @@ function ensure() {
 
 function filtered() {
   const query = (input?.value || '').toLowerCase().trim();
-  return commands.filter(([id]) => t(id).toLowerCase().includes(query));
+  return commands.filter(([id, route]) => t(id).toLowerCase().includes(query) || route.toLowerCase().includes(query));
 }
 
 function render() {
