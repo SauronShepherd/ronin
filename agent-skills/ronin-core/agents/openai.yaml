@@ -1,0 +1,3 @@
+interface:
+  display_name: "Ronin Core"
+  short_description: "Validate, run, inspect, and debug Ronin projects safely"

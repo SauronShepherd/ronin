@@ -139,6 +139,24 @@ studio_storage = ["migrations/*.sql"]
   "web/cloud-studio.css",
   "web/cloud-studio.js",
 ]
+"share/ronin/agent-skills/ronin-core" = [
+  "agent-skills/ronin-core/SKILL.md",
+  "agent-skills/ronin-core/agents/openai.yaml",
+  "agent-skills/ronin-core/references/cli-contract.md",
+  "agent-skills/ronin-core/scripts/preflight.py",
+]
+"share/ronin/agent-skills/ronin-data-engineering" = [
+  "agent-skills/ronin-data-engineering/SKILL.md",
+  "agent-skills/ronin-data-engineering/agents/openai.yaml",
+  "agent-skills/ronin-data-engineering/references/workflows.md",
+  "agent-skills/ronin-data-engineering/scripts/preflight.py",
+]
+"share/ronin/agent-skills/ronin-machine-learning" = [
+  "agent-skills/ronin-machine-learning/SKILL.md",
+  "agent-skills/ronin-machine-learning/agents/openai.yaml",
+  "agent-skills/ronin-machine-learning/references/ml-contracts.md",
+  "agent-skills/ronin-machine-learning/scripts/verify_openapi.py",
+]
 [tool.ruff]
 target-version = "py311"
 line-length = 100
