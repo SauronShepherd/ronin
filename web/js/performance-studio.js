@@ -3,12 +3,9 @@ import {post} from './api.js';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const view = () => document.querySelector('#view');
 
-function addNavigation() {
-  const nav = document.querySelector('.nav-group');
-  if (nav && !nav.querySelector('[data-performance-nav]')) {
-    nav.insertAdjacentHTML('beforeend', '<a class="nav-item" data-performance-nav href="#performance" aria-label="Performance Studio" aria-current="false"><span aria-hidden="true">◈</span><span class="nav-label">Performance Studio</span></a>');
-  }
-}
+// Performance is part of routes.json and is rendered by the primary rail.
+// This module only owns the Performance Studio view.
+function addNavigation() {}
 
 function renderReport(report) {
   const stages = report.series?.stages || [];
