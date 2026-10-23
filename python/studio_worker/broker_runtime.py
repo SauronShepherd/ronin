@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 
 from studio_kernel import ExecutionAttemptId
-from studio_orchestrator import AttemptState, ClaimedRun, Instant
+from studio_orchestrator import ClaimedRun, Instant
 from studio_runners import BrokerContainerKernelExecutor, BrokerExecutorConfig
 from studio_storage import LocalArtifactStore
 
@@ -38,16 +38,8 @@ class BrokerWorkerRuntime(LocalWorkerRuntime):
                 claim.run.id,
                 claim.job,
             )
-        except Exception:
-            await self._service.worker_complete_attempt(
-                claim.attempt_id,
-                state=AttemptState.FAILED,
-                failure_code="worker.preparation.error",
-                owner=self.config.owner,
-                lease_token=claim.lease_token,
-                now=self._now(),
-            )
-            raise
+        except Exception as exc:
+            return await self._fail_preparation(claim, exc)
 
         executor = BrokerContainerKernelExecutor(
             self._broker,

@@ -60,6 +60,6 @@ elif [ "${1:-}" = "ronin-runner-broker" ]; then
 fi
 
 if [ "$(id -u)" -eq 0 ]; then
-  exec gosu "$RONIN_UID:$RONIN_GID" "$@"
+  exec gosu "$RONIN_UID" "$@"
 fi
 exec "$@"

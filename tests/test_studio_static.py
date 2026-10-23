@@ -49,6 +49,7 @@ def test_studio_assets_are_allowlisted_and_served(tmp_path) -> None:
             assert b"RONIN Studio" in response.read()
             assert response.headers["Cache-Control"] == "no-cache"
         for asset, content_type in (
+            ("routes.json", "application/json"),
             ("js/app.js", "text/javascript"),
             ("styles/base.css", "text/css"),
             ("assets/ronin-logo-full.png", "image/png"),

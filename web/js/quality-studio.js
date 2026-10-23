@@ -62,8 +62,14 @@ document.addEventListener('click', async event => {
   }
 });
 
-setInterval(() => {
+function ensureQualityControls() {
   const form = document.querySelector('#quality-form');
   if (!form || form.querySelector('[data-quality-action]')) return;
   form.insertAdjacentHTML('beforeend', '<button class="button" type="button" data-quality-action="contract">Load contract</button><button class="button" type="button" data-quality-action="save-contract">Save contract</button><button class="button" type="button" data-quality-action="run">Dry-run rows</button><input class="field" id="quality-execution-ref" placeholder="Execution ref (optional)"><label class="checkbox"><input type="checkbox" id="quality-enforce-blocking"> Enforce blocking policy</label><textarea class="field" id="quality-contract" rows="4" placeholder="Contract JSON"></textarea><textarea class="field" id="quality-rows" rows="1" placeholder="Rows JSON, e.g. [{&quot;id&quot;:1}]"></textarea>');
-}, 100);
+}
+
+const qualityView = document.querySelector('#view');
+if (qualityView) {
+  new MutationObserver(ensureQualityControls).observe(qualityView, {childList: true, subtree: true});
+  ensureQualityControls();
+}

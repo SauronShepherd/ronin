@@ -59,6 +59,16 @@ def test_broker_worker_does_not_trigger_container_entrypoint_socket_setup() -> N
     assert script.count("resolve_worker_image") == 3  # definition + two explicit authority paths
 
 
+def test_runner_broker_keeps_docker_socket_supplementary_group_after_privilege_drop() -> None:
+    dockerfile = (_ROOT / "docker" / "Dockerfile").read_text(encoding="utf-8")
+    script = (_ROOT / "docker" / "container-entrypoint.sh").read_text(encoding="utf-8")
+
+    assert "groupadd --gid 65532 ronin;" in dockerfile
+    assert "useradd --create-home --uid 65532 --gid 65532" in dockerfile
+    assert 'usermod --append --groups "$socket_gid" ronin' in script
+    assert 'exec gosu "$RONIN_UID" "$@"' in script
+
+
 def test_broker_processes_are_installed_as_distinct_entrypoints() -> None:
     pyproject = (_ROOT / "pyproject.toml").read_text(encoding="utf-8")
 

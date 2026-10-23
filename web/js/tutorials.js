@@ -136,6 +136,7 @@ const catalogText = item => [item.title, item.subtitle, item.level, ...item.tags
 let current = null;
 let stepIndex = 0;
 let overlay;
+let returnFocus = null;
 let observer;
 
 function escapeHtml(value) {
@@ -177,13 +178,23 @@ function ensureOverlay() {
   overlay.className = 'tutorial-overlay';
   overlay.hidden = true;
   overlay.innerHTML = `<div class="tutorial-backdrop" data-tutorial-close="true"></div><div class="tutorial-spotlight" aria-hidden="true"></div><div class="tutorial-pointer" aria-hidden="true"></div>
-    <section class="tutorial-dialog" role="dialog" aria-modal="true" aria-labelledby="tutorial-step-title" aria-describedby="tutorial-step-body"><button class="tutorial-close" type="button" data-tutorial-close="true" aria-label="Close tutorial">×</button><div class="tutorial-dialog-header"><img src="${DOG_AVATAR}" alt="" class="tutorial-avatar"><div><p class="tutorial-kicker" id="tutorial-step-counter">STEP 1 OF 1</p><h2 id="tutorial-step-title"></h2></div></div><p id="tutorial-step-body"></p><div class="tutorial-progress"><span id="tutorial-progress-bar"></span></div><div class="tutorial-dialog-actions"><button class="button" type="button" data-tutorial-skip="true">Exit tutorial</button><div class="tutorial-next-actions"><button class="button" type="button" data-tutorial-prev="true">Back</button><button class="button primary" type="button" data-tutorial-next="true">Next <span aria-hidden="true">→</span></button></div></div><div id="tutorial-recommendations" class="tutorial-recommendations" hidden></div></section>`;
+    <section class="tutorial-dialog" role="dialog" aria-modal="true" aria-labelledby="tutorial-step-title" aria-describedby="tutorial-step-body" tabindex="-1"><button class="tutorial-close" type="button" data-tutorial-close="true" aria-label="Close tutorial">×</button><div class="tutorial-dialog-header"><img src="${DOG_AVATAR}" alt="" class="tutorial-avatar"><div><p class="tutorial-kicker" id="tutorial-step-counter" aria-live="polite">STEP 1 OF 1</p><h2 id="tutorial-step-title"></h2></div></div><p id="tutorial-step-body"></p><div class="tutorial-progress"><span id="tutorial-progress-bar"></span></div><div class="tutorial-dialog-actions"><button class="button" type="button" data-tutorial-skip="true">Exit tutorial</button><div class="tutorial-next-actions"><button class="button" type="button" data-tutorial-prev="true">Back</button><button class="button primary" type="button" data-tutorial-next="true">Next <span aria-hidden="true">→</span></button></div></div><div id="tutorial-recommendations" class="tutorial-recommendations" hidden></div></section>`;
   document.body.append(overlay);
   return overlay;
 }
 
 function targetFor(step) {
-  return document.querySelector(step.selector) || document.querySelector('.page-header') || document.querySelector('#view') || document.querySelector('.app-main');
+  const target = document.querySelector(step.selector);
+  const visible = element => {
+    if (!element || !element.getClientRects().length) return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  };
+  if (visible(target)) return target;
+  if (step.selector === '.rail-brand' && visible(document.querySelector('.tutorial-hero-art'))) return document.querySelector('.tutorial-hero-art');
+  if (step.selector === '#api-url' && visible(document.querySelector('[data-action="open-command"]'))) return document.querySelector('[data-action="open-command"]');
+  return ['.page-header', '#tutorial-hero', '.topbar', '#view', '.app-main']
+    .map(selector => document.querySelector(selector)).find(visible) || document.querySelector('.app-main');
 }
 
 function placeDialog(target, placement = 'bottom') {
@@ -264,12 +275,15 @@ function closeTutorial() {
   overlay.hidden = true; document.body.classList.remove('tutorial-active'); current = null;
   overlay.querySelector('.tutorial-dialog').classList.remove('is-complete');
   overlay.querySelector('#tutorial-recommendations').hidden = true;
+  returnFocus?.focus?.(); returnFocus = null;
 }
 
 function startTutorial(id) {
   const item = tutorialCatalog.find(tutorial => tutorial.id === id);
   if (!item) return;
+  if (!current) returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   current = item; stepIndex = 0; ensureOverlay().hidden = false; document.body.classList.add('tutorial-active'); renderStep();
+  overlay.querySelector('.tutorial-close').focus();
 }
 
 function filterTutorials(query) {
@@ -292,7 +306,17 @@ document.addEventListener('click', event => {
   if (event.target.closest('[data-tutorial-next]')) { if (overlay.querySelector('.tutorial-dialog').classList.contains('is-complete')) { closeTutorial(); return; } if (stepIndex >= current.steps.length - 1) finishTutorial(); else { stepIndex += 1; renderStep(); } }
 });
 document.addEventListener('input', event => { if (event.target.id === 'tutorial-search') filterTutorials(event.target.value); });
-document.addEventListener('keydown', event => { if (event.key === 'Escape' && overlay && !overlay.hidden) { event.preventDefault(); closeTutorial(); } });
+document.addEventListener('keydown', event => {
+  if (!overlay || overlay.hidden) return;
+  if (event.key === 'Escape') { event.preventDefault(); closeTutorial(); return; }
+  if (event.key !== 'Tab') return;
+  const dialog = overlay.querySelector('.tutorial-dialog');
+  const focusable = [...dialog.querySelectorAll('button:not([disabled]):not([hidden]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(element => element.getClientRects().length > 0);
+  if (!focusable.length) { event.preventDefault(); dialog.focus(); return; }
+  const first = focusable[0]; const last = focusable[focusable.length - 1];
+  if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+});
 window.addEventListener('resize', () => { if (current && overlay && !overlay.hidden) renderStep(); });
 observer = new MutationObserver(() => mount());
 observer.observe(document.querySelector('#view') || document.body, { childList: true, subtree: true });

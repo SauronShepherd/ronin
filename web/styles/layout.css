@@ -138,16 +138,21 @@
 .sidebar-collapsed .nav-item { justify-content: center; gap: 0; padding-inline: 0; }
 .sidebar-collapsed .nav-icon { flex-basis: 1.35rem; width: 1.35rem; height: 1.35rem; }
 .sidebar-collapsed .nav-icon svg { width: 1.22rem; height: 1.22rem; }
-.rail-head { display: block; position: relative; }
-.rail-brand { padding-right: 1.75rem; }
-.rail-toggle { position: absolute; top: .2rem; right: .1rem; }
+.rail-head { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: .2rem; }
+.rail-brand { padding-inline: .1rem; }
+.rail-toggle { position: static; justify-self: end; width: 2.25rem; min-height: 2.15rem; }
 .sidebar-collapsed .rail-head { display: grid; grid-template-columns: 1fr; justify-items: center; }
 .sidebar-collapsed .rail-brand { padding-right: .42rem; }
 .sidebar-collapsed .rail-toggle { position: static; width: 100%; }
 @media (max-width: 900px) {
-  .rail-head { grid-template-columns: 1fr; justify-items: center; }
-  .rail-brand { width: 100%; }
-  .rail-logo-full { display: none; }
-  .rail-logo-mark { display: block; }
-  .rail-toggle { width: 100%; }
+  .app-shell, .app-shell.sidebar-collapsed { grid-template-columns: minmax(0, 1fr); height: 100dvh; }
+  .app-main { min-width: 0; height: 100dvh; }
+  .rail { position: fixed; inset: auto 0 0; height: 66px; z-index: 3; padding: .42rem; }
+  .rail-head, .rail-subtitle { display: none; }
+  .nav-group { display: flex; justify-content: flex-start; gap: .25rem; padding-inline: .1rem; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+  .nav-item { flex: 0 0 44px; justify-content: center; min-width: 44px; height: 46px; padding: .5rem; }
+  .nav-label { display: none !important; }
+  .nav-icon { flex-basis: 1.35rem; width: 1.35rem; height: 1.35rem; }
+  .nav-icon svg { width: 1.2rem; height: 1.2rem; }
+  .app-main main { max-height: calc(100dvh - 66px); padding: 1rem; }
 }

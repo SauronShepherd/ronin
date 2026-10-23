@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import re
 import sys
@@ -20,6 +21,7 @@ from studio_runners import BrokerExecutorConfig
 from studio_worker import BrokerWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
 _IMMUTABLE_IMAGE = re.compile(r"^(?:[^\s]+@)?sha256:[0-9a-f]{64}$")
+_LOGGER_FORMAT = "%(asctime)s %(levelname)s %(name)s %(message)s"
 
 
 class _RejectRedirects(HTTPRedirectHandler):
@@ -46,6 +48,16 @@ def _boolean_env(name: str, default: str = "false") -> bool:
 
 def _now() -> Instant:
     return Instant(datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+
+
+def _configure_logging() -> None:
+    """Send worker operational logs to stderr for Docker and service log collectors."""
+
+    level_name = os.environ.get("RONIN_LOG_LEVEL", "INFO").strip().upper()
+    level = logging.getLevelName(level_name)
+    if not isinstance(level, int):
+        raise ValueError("RONIN_LOG_LEVEL must be DEBUG, INFO, WARNING, ERROR, or CRITICAL")
+    logging.basicConfig(level=level, format=_LOGGER_FORMAT, stream=sys.stderr)
 
 
 def _runtime_image(base_url: str, token: str, *, allow_insecure_http: bool) -> str:
@@ -95,6 +107,7 @@ def _runtime_image(base_url: str, token: str, *, allow_insecure_http: bool) -> s
 
 def main() -> int:
     try:
+        _configure_logging()
         broker_url = _env("RONIN_RUNNER_BROKER_URL")
         broker_token = _env("RONIN_RUNNER_BROKER_TOKEN")
         transport_policy = parse_bind_policy(os.environ.get("RONIN_BIND_POLICY"))

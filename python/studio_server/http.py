@@ -54,7 +54,7 @@ _MAX_LIST_LIMIT = 100
 _DEFAULT_LIST_LIMIT = 50
 _DEFAULT_SERVICE_TIMEOUT_SECONDS = 30.0
 _REQUEST_READ_TIMEOUT_SECONDS = 30.0
-_STUDIO_EXTENSIONS = frozenset({".html", ".css", ".js", ".png", ".webp", ".svg"})
+_STUDIO_EXTENSIONS = frozenset({".html", ".css", ".js", ".json", ".png", ".webp", ".svg"})
 ML_PLUGIN_ROUTES = frozenset(
     {
         ("GET", "/v1/ml-studio/labs"),
@@ -586,6 +586,8 @@ class _Handler(BaseHTTPRequestHandler):
             if asset_path.suffix == ".css"
             else "image/png"
             if asset_path.suffix == ".png"
+            else "application/json"
+            if asset_path.suffix == ".json"
             else "image/webp"
             if asset_path.suffix == ".webp"
             else "image/svg+xml"
@@ -600,7 +602,10 @@ class _Handler(BaseHTTPRequestHandler):
         )
         self.send_header("Content-Length", str(len(body)))
         self.send_header(
-            "Cache-Control", "no-cache" if asset_path.suffix == ".html" else "public, max-age=3600"
+            "Cache-Control",
+            "no-cache"
+            if asset_path.suffix in {".html", ".json"}
+            else "public, max-age=3600",
         )
         if asset_path.suffix == ".svg":
             self.send_header(
