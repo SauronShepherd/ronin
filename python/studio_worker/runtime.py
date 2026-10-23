@@ -597,9 +597,7 @@ class LocalWorkerRuntime:
         elapsed = monotonic() - started
         self._log_execution_outcome(claim, execution, elapsed)
         if self.config.record_execution is not None:
-            self.config.record_execution(
-                "worker.execute", elapsed, execution.state.value
-            )
+            self.config.record_execution("worker.execute", elapsed, execution.state.value)
         return LocalWorkerPollOutcome(
             polled.reclaimed_run_ids,
             claim.attempt_id,
@@ -643,8 +641,7 @@ class LocalWorkerRuntime:
                     outcome = await execution
                 except Exception:
                     _LOGGER.exception(
-                        "worker attempt raised unexpectedly "
-                        "(job_id=%s, run_id=%s, attempt_id=%s)",
+                        "worker attempt raised unexpectedly (job_id=%s, run_id=%s, attempt_id=%s)",
                         claim.job.id,
                         claim.run.id,
                         claim.attempt_id,
@@ -658,9 +655,7 @@ class LocalWorkerRuntime:
                     elapsed = monotonic() - started
                     self._log_execution_outcome(claim, outcome, elapsed)
                     if self.config.record_execution is not None:
-                        self.config.record_execution(
-                            "worker.execute", elapsed, outcome.state.value
-                        )
+                        self.config.record_execution("worker.execute", elapsed, outcome.state.value)
             finally:
                 shutdown_wait.cancel()
                 with suppress(asyncio.CancelledError):

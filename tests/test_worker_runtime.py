@@ -169,9 +169,7 @@ def test_run_once_executes_claim_through_sqlite_and_container_boundary(
     asyncio.run(scenario())
 
 
-def test_execution_failure_is_logged_as_error_and_persisted(
-    tmp_path: Path, caplog
-) -> None:
+def test_execution_failure_is_logged_as_error_and_persisted(tmp_path: Path, caplog) -> None:
     async def scenario() -> None:
         config = _config(tmp_path)
         _seed(config)

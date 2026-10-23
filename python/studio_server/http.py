@@ -603,9 +603,7 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header(
             "Cache-Control",
-            "no-cache"
-            if asset_path.suffix in {".html", ".json"}
-            else "public, max-age=3600",
+            "no-cache" if asset_path.suffix in {".html", ".json"} else "public, max-age=3600",
         )
         if asset_path.suffix == ".svg":
             self.send_header(
