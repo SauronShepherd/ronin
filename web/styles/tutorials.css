@@ -23,3 +23,8 @@
 .tutorial-recommendations{border-top-color:var(--line)}
 .tutorial-recommendation{border-color:var(--border);background:var(--surface-raised);color:var(--ink)}
 .tutorial-recommendation:hover{border-color:var(--copper);background:var(--surface-muted)}
+
+/* Keep the guided tour legible while preserving enough page context to orient the user. */
+.tutorial-overlay .tutorial-backdrop{background:rgb(45 33 27 / 56%);backdrop-filter:none}
+.tutorial-spotlight{background:rgb(255 250 243 / 8%);border-color:var(--gold);box-shadow:0 0 0 9999px rgb(45 33 27 / 48%),0 0 0 5px rgb(201 139 60 / 28%),0 0 24px rgb(201 139 60 / 50%)}
+.tutorial-dialog{box-shadow:0 1.5rem 3rem rgb(45 33 27 / 36%)}

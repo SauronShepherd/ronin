@@ -191,15 +191,19 @@ function placeDialog(target, placement = 'bottom') {
   const rect = target?.getBoundingClientRect?.();
   if (!rect) return;
   const gap = 18;
-  const width = Math.min(420, window.innerWidth - 28);
+  const margin = 24;
+  const width = Math.min(420, Math.max(0, window.innerWidth - margin * 2));
   dialog.style.width = `${width}px`;
+  const dialogHeight = Math.min(dialog.scrollHeight || 280, Math.max(0, window.innerHeight - margin * 2));
   let left = rect.left + rect.width / 2 - width / 2;
   let top = rect.bottom + gap;
-  if (placement === 'right') { left = rect.right + gap; top = rect.top + rect.height / 2 - 150; }
-  if (placement === 'left') { left = rect.left - width - gap; top = rect.top + rect.height / 2 - 150; }
-  if (placement === 'top') top = rect.top - 240 - gap;
-  left = Math.max(14, Math.min(window.innerWidth - width - 14, left));
-  top = Math.max(14, Math.min(window.innerHeight - 280, top));
+  if (placement === 'right') { left = rect.right + gap; top = rect.top + rect.height / 2 - dialogHeight / 2; }
+  if (placement === 'left') { left = rect.left - width - gap; top = rect.top + rect.height / 2 - dialogHeight / 2; }
+  if (placement === 'top') top = rect.top - dialogHeight - gap;
+  const maxLeft = Math.max(margin, window.innerWidth - width - margin);
+  const maxTop = Math.max(margin, window.innerHeight - dialogHeight - margin);
+  left = Math.max(margin, Math.min(maxLeft, left));
+  top = Math.max(margin, Math.min(maxTop, top));
   dialog.style.left = `${left}px`; dialog.style.top = `${top}px`;
 }
 
