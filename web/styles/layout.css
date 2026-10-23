@@ -111,3 +111,43 @@
   .page-header { align-items: flex-start; }
   .page-actions { justify-content: flex-start; }
 }
+
+/* Rail identity: the logo and collapse affordance belong to the navigation surface. */
+.rail { padding: 1rem .68rem; }
+.rail-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: .4rem; margin: .12rem .08rem 1rem; }
+.rail-brand { display: grid; place-items: center; min-width: 0; margin: 0; padding: .45rem .35rem; border-radius: 13px; }
+.rail-brand .nav-label { display: none; }
+.rail-brand .rail-logo-full { display: block; width: 100%; height: auto; max-height: 76px; object-fit: contain; object-position: center; filter: drop-shadow(0 5px 8px rgb(0 0 0 / 26%)); }
+.rail-brand .rail-logo-mark { display: none; width: 39px; height: 39px; object-fit: contain; filter: drop-shadow(0 4px 7px rgb(0 0 0 / 25%)); }
+.rail-toggle { display: grid; place-items: center; flex: none; width: 2.35rem; min-height: 2.35rem; padding: .45rem; color: #f8ede1; border-color: rgb(239 211 169 / 30%); background: rgb(255 248 239 / 8%); }
+.rail-toggle:hover { color: #fffdf9; background: rgb(255 248 239 / 16%); border-color: var(--gold); }
+.rail-toggle-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.rail-toggle-icon, .rail-toggle-icon svg { display: block; width: 1.1rem; height: 1.1rem; }
+.rail-toggle-icon svg { transition: transform .2s ease; }
+.sidebar-collapsed .rail-head { grid-template-columns: 1fr; justify-items: center; }
+.sidebar-collapsed .rail-brand { width: 100%; padding: .42rem; }
+.sidebar-collapsed .rail-logo-full { display: none; }
+.sidebar-collapsed .rail-logo-mark { display: block; }
+.sidebar-collapsed .rail-toggle { width: 100%; }
+.sidebar-collapsed .rail-toggle-icon svg { transform: rotate(180deg); }
+.rail-subtitle { padding-inline: .4rem; }
+.nav-item { gap: .65rem; }
+.nav-icon { display: grid; place-items: center; flex: 0 0 1.2rem; width: 1.2rem; height: 1.2rem; color: #e5c49a; }
+.nav-icon svg { width: 1.08rem; height: 1.08rem; stroke-width: 1.7; }
+.nav-item:hover .nav-icon, .nav-item[aria-current='page'] .nav-icon { color: var(--gold); }
+.sidebar-collapsed .nav-item { justify-content: center; gap: 0; padding-inline: 0; }
+.sidebar-collapsed .nav-icon { flex-basis: 1.35rem; width: 1.35rem; height: 1.35rem; }
+.sidebar-collapsed .nav-icon svg { width: 1.22rem; height: 1.22rem; }
+.rail-head { display: block; position: relative; }
+.rail-brand { padding-right: 1.75rem; }
+.rail-toggle { position: absolute; top: .2rem; right: .1rem; }
+.sidebar-collapsed .rail-head { display: grid; grid-template-columns: 1fr; justify-items: center; }
+.sidebar-collapsed .rail-brand { padding-right: .42rem; }
+.sidebar-collapsed .rail-toggle { position: static; width: 100%; }
+@media (max-width: 900px) {
+  .rail-head { grid-template-columns: 1fr; justify-items: center; }
+  .rail-brand { width: 100%; }
+  .rail-logo-full { display: none; }
+  .rail-logo-mark { display: block; }
+  .rail-toggle { width: 100%; }
+}
