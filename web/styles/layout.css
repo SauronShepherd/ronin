@@ -1,9 +1,9 @@
-.app-shell { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+.app-shell { display: grid; grid-template-columns: 250px 1fr; height: 100vh; min-height: 0; overflow: hidden; }
 .app-shell.sidebar-collapsed { grid-template-columns: 78px 1fr; }
 .rail {
   position: relative; isolation: isolate; overflow: hidden;
   background: linear-gradient(180deg, #2d211b 0%, #38271f 48%, #261b16 100%);
-  color: #fff8ef; padding: 1.15rem .8rem; box-shadow: 8px 0 24px rgb(60 35 20 / 12%);
+  color: #fff8ef; padding: 1.15rem .8rem; box-shadow: 8px 0 24px rgb(60 35 20 / 12%); overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable;
 }
 .rail::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .24; background: radial-gradient(circle at 20% 4%, var(--gold) 0, transparent 17rem); pointer-events: none; }
 .rail-brand { display: flex; align-items: center; gap: .65rem; color: #fff8ef; text-decoration: none; font-weight: 800; letter-spacing: .01em; margin: .35rem .55rem 1.8rem; }
@@ -16,7 +16,7 @@
 .nav-item[aria-disabled='true'] { opacity: .45; }
 .nav-label { white-space: nowrap; }
 .sidebar-collapsed .nav-label, .sidebar-collapsed .rail-subtitle { display: none; }
-.app-main { min-width: 0; }
+.app-main { min-width: 0; min-height: 0; height: 100vh; display: grid; grid-template-rows: auto minmax(0, 1fr); }
 .topbar {
   display: flex; align-items: center; gap: 1rem; padding: .78rem 1.35rem;
   background: rgb(255 253 249 / 90%); border-bottom: 1px solid var(--line);
@@ -27,7 +27,7 @@
 .connection-form input { min-width: 150px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .58rem .7rem; background: var(--surface-raised); color: var(--ink); }
 .connection-form input::placeholder { color: #9b8879; }
 .icon-button { padding: .52rem .7rem; }
-.app-main main { max-width: 1540px; margin: auto; padding: 2.2rem clamp(1rem, 3vw, 2.8rem); }
+.app-main main { max-width: 1540px; width: 100%; min-height: 0; max-height: calc(100vh - 64px); margin: 0 auto; padding: 2.2rem clamp(1rem, 3vw, 2.8rem); overflow: auto; scrollbar-gutter: stable; }
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.6rem; }
 .page-header h1 { font-size: clamp(1.8rem, 3vw, 2.65rem); line-height: 1.08; margin: .2rem 0; }
 .page-actions { display: flex; gap: .55rem; flex-wrap: wrap; }
@@ -35,19 +35,20 @@
 .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 900px) {
-  .app-shell { grid-template-columns: 78px 1fr; }
+  .app-shell { grid-template-columns: 78px 1fr; height: 100dvh; }
   .nav-label, .rail-subtitle { display: none; }
   .connection-form { display: none; }
-  .app-main main { padding: 1.25rem; }
+  .app-main { height: 100dvh; }
+  .app-main main { max-height: calc(100dvh - 64px); padding: 1.25rem; }
   .grid.two, .grid.three { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
-  .app-shell { grid-template-columns: 1fr; }
+  .app-shell { grid-template-columns: 1fr; height: 100dvh; }
   .rail { position: fixed; inset: auto 0 0 0; height: 62px; z-index: 3; padding: .42rem; }
   .rail-brand { display: none; }
   .nav-group { display: flex; justify-content: space-around; overflow: auto; }
   .nav-item { width: auto; padding: .55rem .7rem; }
-  .app-main main { padding: 1rem; }
+  .app-main main { max-height: calc(100dvh - 62px); padding: 1rem; }
   .page-header { display: block; }
   .page-actions { margin-top: 1rem; }
 }
