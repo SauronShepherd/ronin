@@ -93,6 +93,8 @@ studio_storage = ["migrations/*.sql"]
 "share/ronin/web/assets" = [
   "web/assets/ronin-logo-full.png",
   "web/assets/ronin-logo-mark.png",
+  "web/assets/throw-your-threads/environment-atlas.png",
+  "web/assets/throw-your-threads/character-sheet.png",
 ]
 "share/ronin/web/js" = [
   "web/js/a11y.js",

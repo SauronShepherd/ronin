@@ -11,6 +11,7 @@ const chapterCard = document.querySelector('#chapter-card');
 const chapterTitle = document.querySelector('#chapter-title');
 const chapterCopy = document.querySelector('#chapter-copy');
 const sceneButtons = [...document.querySelectorAll('[data-scene]')];
+const artScenes = ['woods', 'cinema', 'attic'];
 
 const scenes = {
   woods: { label: 'THE WOODS REMEMBER', title: 'The Woods Remember', copy: 'Something moves between the pines. Keep the red thread taut.', palette: ['#070c0a', '#15261c', '#4b291d'] },
@@ -131,6 +132,7 @@ async function startGame() {
 function setScene(name) {
   if (!scenes[name] || name === activeScene) return;
   activeScene = name; sceneLabel.textContent = scenes[name].label;
+  artScenes.forEach((scene) => game.classList.toggle(`is-scene-${scene}`, scene === name));
   sceneButtons.forEach((button) => button.classList.toggle('is-active', button.dataset.scene === name));
   chapterTitle.textContent = scenes[name].title; chapterCopy.textContent = scenes[name].copy; chapterCard.hidden = false;
   window.clearTimeout(setScene.timer); setScene.timer = window.setTimeout(() => { chapterCard.hidden = true; }, 3500);
@@ -160,8 +162,9 @@ sound.addEventListener('click', async () => {
 });
 sceneButtons.forEach((button) => button.addEventListener('click', () => setScene(button.dataset.scene)));
 window.addEventListener('resize', () => { resize(); if (!playing) render(frame); });
-window.addEventListener('pointermove', (event) => { pointer.x = clamp(event.clientX / window.innerWidth, 0, 1); pointer.y = clamp(event.clientY / window.innerHeight, 0, 1); });
+window.addEventListener('pointermove', (event) => { pointer.x = clamp(event.clientX / window.innerWidth, 0, 1); pointer.y = clamp(event.clientY / window.innerHeight, 0, 1); game.style.setProperty('--art-shift-x', `${(pointer.x - .5) * 20}px`); game.style.setProperty('--art-shift-y', `${(pointer.y - .5) * 14}px`); });
 window.addEventListener('keydown', (event) => { if (event.key.toLowerCase() === 'a' || event.key === 'ArrowLeft') setScene(sceneKeys[(sceneKeys.indexOf(activeScene) + sceneKeys.length - 1) % sceneKeys.length]); if (event.key.toLowerCase() === 'd' || event.key === 'ArrowRight') setScene(sceneKeys[(sceneKeys.indexOf(activeScene) + 1) % sceneKeys.length]); if (event.key === 'Escape' && document.fullscreenElement) document.exitFullscreen(); });
 document.addEventListener('fullscreenchange', () => { fullscreen.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen'; resize(); });
 
+game.classList.add('is-scene-woods');
 resize(); render(0);

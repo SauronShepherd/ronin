@@ -43,6 +43,8 @@ def test_project_configuration_preserves_validation_contract() -> None:
     assert data_files["share/ronin/web/assets"] == [
         "web/assets/ronin-logo-full.png",
         "web/assets/ronin-logo-mark.png",
+        "web/assets/throw-your-threads/environment-atlas.png",
+        "web/assets/throw-your-threads/character-sheet.png",
     ]
     assert set(data_files["share/ronin/web/js"]) == {
         f"web/js/{name}.js"

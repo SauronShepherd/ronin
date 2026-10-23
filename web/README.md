@@ -45,6 +45,11 @@ moving particles, drifting thread lines, lighting, grain, parallax silhouettes,
 and a chapter transition card. The scene drawer and `A`/`D` or arrow keys move
 between rooms.
 
+The visual layer also includes project-owned generated art atlases for the
+environment and character concepts. They sit behind the live canvas as slow
+parallax layers, so the page has painterly scene and character texture while
+the procedural threads, particles, lighting and silhouettes keep moving.
+
 The **Play the first night** action is the browser user gesture that requests
 fullscreen on the game shell. The page keeps playing when fullscreen is
 unavailable and reports that fallback through the live status region.
