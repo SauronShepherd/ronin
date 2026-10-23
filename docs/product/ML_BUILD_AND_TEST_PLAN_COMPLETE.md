@@ -514,6 +514,13 @@ tener una justificación escrita; no se debe bajar el umbral para silenciarlo.
 ### 6.1 Configuración
 
 ```powershell
+# compose.yaml valida también las variables de los perfiles opcionales. Define
+# valores locales antes de pedir la configuración, aunque no vayas a iniciar AI.
+$env:RONIN_TOKEN = "local-test-token"
+$env:RONIN_RUNNER_BROKER_TOKEN = "local-runner-token"
+$env:RONIN_AI_MODEL_DIR = (Join-Path $PWD ".cache\models")
+$env:RONIN_AI_VLLM_MODEL = "qualification-unused"
+New-Item -ItemType Directory -Force $env:RONIN_AI_MODEL_DIR | Out-Null
 docker compose -f compose.yaml config
 docker info
 ```
@@ -739,7 +746,8 @@ python -m pytest -q `
   tests/test_ml_domain.py `
   tests/test_ml_quality.py `
   tests/test_ml_orchestration.py `
-  tests/test_ml_http.py `
+  tests/test_ml_http_transport.py `
+  tests/integration/test_ml_studio_http.py `
   tests/test_ml_provider_adapters.py `
   tests/test_ml_tabular_runtime.py `
   tests/test_public_capability_matrix.py `
@@ -791,6 +799,16 @@ El recuento de tests, skips y warnings debe ser coherente entre las diez pasadas
 ### 13.7 Docker y stores externos
 
 ```powershell
+# Valores mínimos para que Compose pueda interpolar todos los perfiles.
+$env:RONIN_TOKEN = "local-test-token"
+$env:RONIN_RUNNER_BROKER_TOKEN = "local-runner-token"
+$env:RONIN_AI_MODEL_DIR = (Join-Path $PWD ".cache\models")
+$env:RONIN_AI_VLLM_MODEL = "qualification-unused"
+$env:POSTGRES_DB = "ronin_qualification"
+$env:POSTGRES_USER = "ronin"
+$env:POSTGRES_PASSWORD = "ronin"
+$env:RONIN_POSTGRES_PORT = "5432"
+New-Item -ItemType Directory -Force $env:RONIN_AI_MODEL_DIR | Out-Null
 docker info 2>&1 | Tee-Object (Join-Path $Evidence "docker-info.log")
 docker compose -f compose.yaml config 2>&1 |
   Tee-Object (Join-Path $Evidence "compose-config.log")
@@ -805,9 +823,11 @@ Para PostgreSQL y un S3-compatible de prueba:
 
 ```powershell
 $env:RONIN_POSTGRES_TEST_DSN = "postgresql://ronin:ronin@localhost:5432/ronin_qualification"
+$env:RONIN_TEST_POSTGRES_DSN = $env:RONIN_POSTGRES_TEST_DSN
+$env:RONIN_CONNECTOR_POSTGRES_DSN = $env:RONIN_POSTGRES_TEST_DSN
 $env:RONIN_TEST_S3_ENDPOINT = "http://localhost:4566"
 $env:RONIN_TEST_S3_BUCKET = "ronin-qualification"
-docker compose -f compose.yaml up -d postgres localstack
+docker compose -f compose.yaml up -d postgres
 docker compose -f compose.yaml ps
 python -m pytest -q `
   tests/integration/test_postgres_artifact_retention_barrier.py `
@@ -818,6 +838,12 @@ docker compose -f compose.yaml logs --no-color |
   Out-File (Join-Path $Evidence "compose.log")
 docker compose -f compose.yaml down -v
 ```
+
+`compose.yaml` no incluye un servicio `localstack`. Para ejecutar la parte S3 hay que
+levantar LocalStack por separado (o usar el servicio equivalente del runner de CI),
+por ejemplo con `docker run --rm -d --name ronin-localstack -p 4566:4566 localstack/localstack:3`.
+Si no se dispone de ese servicio, se deben ejecutar solo las pruebas PostgreSQL y
+dejar la evidencia S3 como qualification pendiente; no se debe simular un resultado.
 
 Para la qualification de ejecución real:
 
