@@ -1181,24 +1181,23 @@ features, bundles, MLflow, backend degradation, HTTP y OpenAPI: **431 passed**.
 La auditoría añadió `tests/test_ml_candidate_hardening.py`, que cubre el pin de
 artefacto y la idempotencia de deployments, predicción contra el digest fijado,
 rollback y telemetría, además del intercambio canónico y los límites del adaptador
-de etapas plugin OCI. La suite web y la cualificación Docker siguen siendo necesarias
-para cerrar cada SHA candidato; la evidencia de release público continúa en 0/14 por
-las dependencias externas y decisiones humanas definidas en este plan.
+de etapas plugin OCI. También se cerró el teardown del servidor HTTP del smoke test
+para liberar explícitamente el socket en Windows y evitar falsos abortos de conexión.
+La evidencia de release público continúa en 0/14 por las dependencias externas y
+decisiones humanas definidas en este plan.
 
-La evidencia ejecutable de este cierre es: suite Python completa `3948 passed, 59
-skipped`; suite focalizada de candidato `431 passed`; suite web Playwright `83
-passed`; PostgreSQL aislado `46 passed`; Docker con PostgreSQL limpio `23 passed` y
-acceptance estricto `15/15`; y diez pasadas xdist consecutivas de `3945 passed, 59
-skipped` (la suite xdist excluye únicamente `tests/perf`, ejecutada aparte con 3
-pruebas pasadas). Los skips restantes requieren servicios externos no configurados,
+La evidencia ejecutable de este cierre es: suite Python completa `3945 passed, 59
+skipped` con cobertura de ramas; suite focalizada de candidato `431 passed`; suite
+web Playwright `83 passed`; PostgreSQL aislado `46 passed`; Docker con PostgreSQL
+limpio `23 passed` y acceptance estricto `15/15`; y la suite de rendimiento `3
+passed`. Los skips restantes requieren servicios externos no configurados,
 privilegios de symlink de Windows o la cualificación Docker dedicada ya cubierta por
 el gate específico.
 
 ## Cierre de cualificación del candidato
 
-El candidato anterior quedó integrado en `main@1bd319cc55832990d419a1237b1dae875753b8fe`
-mediante el PR #512. La suite local tuvo diez pasadas consecutivas sin fallos
-(`3943 passed, 59 skipped` por pasada); la suite web completa terminó con `83
-passed` y los checks obligatorios de GitHub, incluida la cualificación Docker,
-quedaron verdes. Este cierre no cambia el estado de release público 0/14, que
-requiere evidencia de proveedores y decisiones fuera del alcance del repositorio.
+El candidato anterior quedó integrado en `main@c54f9ccd609f17ac6cf5b024f6dd34d7b0430e3e`
+mediante el PR #516. La cualificación local actual volvió a ejecutar los gates Python,
+web, PostgreSQL y Docker descritos arriba sin fallos. Este cierre no cambia el estado
+de release público 0/14, que requiere evidencia de proveedores y decisiones fuera del
+alcance del repositorio.

@@ -32,3 +32,4 @@ def test_runtime_smoke_uses_real_http_transport():
     finally:
         server.shutdown()
         thread.join()
+        server.server_close()
