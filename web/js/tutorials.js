@@ -228,8 +228,12 @@ function renderStep() {
   overlay.querySelector('#tutorial-progress-bar').style.width = `${((stepIndex + 1) / current.steps.length) * 100}%`;
   overlay.querySelector('[data-tutorial-prev]').disabled = stepIndex === 0;
   overlay.querySelector('[data-tutorial-next]').innerHTML = stepIndex === current.steps.length - 1 ? 'Finish <span aria-hidden="true">✓</span>' : 'Next <span aria-hidden="true">→</span>';
-  placeDialog(target, step.placement); paintSpotlight(target);
-  target?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  target?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+  requestAnimationFrame(() => {
+    if (!current || overlay.hidden) return;
+    placeDialog(target, step.placement);
+    paintSpotlight(target);
+  });
 }
 
 function showRecommendations() {
