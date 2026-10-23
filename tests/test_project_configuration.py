@@ -36,6 +36,9 @@ def test_project_configuration_preserves_validation_contract() -> None:
         "web/data-enginerring-studio.html",
         "web/data-enginerring-studio.css",
         "web/data-enginerring-studio.js",
+        "web/throw-your-threads.html",
+        "web/throw-your-threads.css",
+        "web/throw-your-threads.js",
     ]
     assert data_files["share/ronin/web/assets"] == [
         "web/assets/ronin-logo-full.png",
@@ -85,6 +88,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
         "web/styles/base.css",
         "web/styles/components.css",
         "web/styles/layout.css",
+        "web/styles/standalone-theme.css",
         "web/styles/tokens.css",
     ]
 

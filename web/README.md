@@ -34,3 +34,17 @@ passed through without construction or decoding in the browser.
 Source checkouts serve assets from `web/`. The Docker image copies them to
 `/usr/local/lib/ronin/web`, and wheels install them under
 `share/ronin/web`. The server uses an allowlist for all Studio asset paths.
+
+## Throw Your Threads In The Air
+
+The standalone interactive horror vignette is available at
+`/throw-your-threads.html`. It opens with an original lyric card and a
+cinematic title treatment, then moves into three animated rooms rendered on a
+canvas: The Woods, The Empty Cinema, and The Thread Room. Each room combines
+moving particles, drifting thread lines, lighting, grain, parallax silhouettes,
+and a chapter transition card. The scene drawer and `A`/`D` or arrow keys move
+between rooms.
+
+The **Play the first night** action is the browser user gesture that requests
+fullscreen on the game shell. The page keeps playing when fullscreen is
+unavailable and reports that fallback through the live status region.

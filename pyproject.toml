@@ -86,6 +86,9 @@ studio_storage = ["migrations/*.sql"]
   "web/data-enginerring-studio.html",
   "web/data-enginerring-studio.css",
   "web/data-enginerring-studio.js",
+  "web/throw-your-threads.html",
+  "web/throw-your-threads.css",
+  "web/throw-your-threads.js",
 ]
 "share/ronin/web/assets" = [
   "web/assets/ronin-logo-full.png",

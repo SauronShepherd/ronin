@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#120b09">
+    <meta name="description" content="Throw Your Threads In The Air — an atmospheric interactive horror vignette.">
+    <title>Throw Your Threads In The Air</title>
+    <link rel="stylesheet" href="./throw-your-threads.css">
+  </head>
+  <body>
+    <main id="game" class="game-shell" aria-label="Throw Your Threads In The Air">
+      <canvas id="world" aria-label="Animated game scene"></canvas>
+      <div class="film-grain" aria-hidden="true"></div>
+      <div class="vignette" aria-hidden="true"></div>
+      <div class="hud" aria-hidden="false">
+        <p class="hud-title">THROW YOUR THREADS IN THE AIR</p>
+        <p id="scene-label" class="hud-scene">THE WOODS REMEMBER</p>
+        <p id="status" class="sr-status" role="status" aria-live="polite"></p>
+        <div class="hud-controls">
+          <button id="fullscreen" class="hud-button" type="button">Fullscreen</button>
+          <button id="sound" class="hud-button" type="button" aria-pressed="false">Sound: off</button>
+        </div>
+      </div>
+
+      <section id="intro" class="intro" aria-labelledby="intro-title">
+        <div class="intro-inner">
+          <p class="eyebrow">A RONIN NIGHTMARE</p>
+          <h1 id="intro-title">Throw Your<br><em>Threads</em> In The Air</h1>
+          <p class="strap">Every loose end is a door. Every door is listening.</p>
+          <div class="lyric-block" aria-label="Original opening lyrics">
+            <p class="lyric-line">Thread by thread, the dark remembers.</p>
+            <p class="lyric-line">Pull the sky, wake the embers.</p>
+            <p class="lyric-line">Throw your threads in the air.</p>
+            <p class="lyric-line">If something answers, don't look there.</p>
+          </div>
+          <button id="play" class="play-button" type="button">Play the first night <span aria-hidden="true">↗</span></button>
+          <p id="fullscreen-note" class="fullscreen-note">Play opens an immersive fullscreen view when your browser allows it.</p>
+        </div>
+        <div class="intro-thread thread-a" aria-hidden="true"></div>
+        <div class="intro-thread thread-b" aria-hidden="true"></div>
+        <div class="intro-thread thread-c" aria-hidden="true"></div>
+      </section>
+
+      <aside class="scene-drawer" aria-label="Scene selection">
+        <p class="drawer-kicker">THE FIRST THREE ROOMS</p>
+        <button class="scene-card is-active" data-scene="woods" type="button"><span class="scene-swatch woods-swatch"></span><span><b>01 · The Woods</b><small>Something moves between the pines.</small></span></button>
+        <button class="scene-card" data-scene="cinema" type="button"><span class="scene-swatch cinema-swatch"></span><span><b>02 · The Empty Cinema</b><small>The projector still knows your name.</small></span></button>
+        <button class="scene-card" data-scene="attic" type="button"><span class="scene-swatch attic-swatch"></span><span><b>03 · The Thread Room</b><small>Do not cut the red one.</small></span></button>
+        <p class="drawer-hint">A / D or ← / → to move between scenes</p>
+      </aside>
+
+      <div id="chapter-card" class="chapter-card" hidden>
+        <p class="eyebrow">NEW ROOM FOUND</p>
+        <h2 id="chapter-title">The Woods Remember</h2>
+        <p id="chapter-copy">Keep your eyes on the thread line.</p>
+      </div>
+    </main>
+    <script type="module" src="./throw-your-threads.js"></script>
+  </body>
+</html>
