@@ -1174,6 +1174,7 @@ class LocalExecutionCoordinator:
         self._futures: dict[tuple[str, str], Future[object]] = {}
         self._cancellations: dict[tuple[str, str], CancellationToken] = {}
         self._stop = Event()
+        self._wake = Event()
         self._closing = Event()
         self._started = False
         self._poller = Thread(target=self._poll, name="ronin-ml-coordinator", daemon=True)
@@ -1187,6 +1188,7 @@ class LocalExecutionCoordinator:
         if self._started:
             return
         self._started = True
+        self._wake.set()
         self._poller.start()
 
     def submit(
@@ -1221,7 +1223,19 @@ class LocalExecutionCoordinator:
             pipeline_json=pipeline_json,
             rows_json=rows_json,
         )
-        return self._store.create(snapshot)
+        created = self._store.create(snapshot)
+        # Wake the poller immediately instead of waiting for the next
+        # periodic tick.  This keeps short local executions responsive on
+        # busy hosts while retaining the bounded polling fallback.
+        self._wake.set()
+        return created
+
+    def _wait_for_poll(self) -> None:
+        # Clear before waiting so a submission that arrives during the wait
+        # cannot be lost.  A submission that races immediately before clear
+        # is handled by the bounded fallback interval on the next cycle.
+        self._wake.clear()
+        self._wake.wait(EXECUTION_POLL_SECONDS)
 
     def _poll(self) -> None:
         while not self._stop.is_set():
@@ -1254,7 +1268,7 @@ class LocalExecutionCoordinator:
                             self._futures[key] = future
                         future.add_done_callback(self._forget_future)
                         capacity -= 1
-                self._stop.wait(EXECUTION_POLL_SECONDS)
+                self._wait_for_poll()
                 continue
             with self._lock:
                 owned = tuple(self._owned.items())
@@ -1298,7 +1312,7 @@ class LocalExecutionCoordinator:
                             future = self._executor.submit(self._execute, claimed)
                             self._futures[key] = future
                         future.add_done_callback(self._forget_future)
-            self._stop.wait(EXECUTION_POLL_SECONDS)
+            self._wait_for_poll()
 
     def _forget_future(self, future: Future[object]) -> None:
         with self._lock:
@@ -1496,6 +1510,7 @@ class LocalExecutionCoordinator:
     def close(self) -> None:
         self._closing.set()
         self._stop.set()
+        self._wake.set()
         with self._lock:
             for token in self._cancellations.values():
                 token.cancel()
