@@ -4,6 +4,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Always run qualification with the interpreter belonging to this checkout.
+# A globally installed editable package can point at a different worktree and
+# makes subprocess probes resolve project manifests from the wrong directory.
+$python = Join-Path (Get-Location) ".venv\Scripts\python.exe"
+if (-not (Test-Path -LiteralPath $python -PathType Leaf)) {
+    $python = (Get-Command python -ErrorAction Stop).Source
+}
+
 docker build --file docker/Dockerfile --tag $ImageTag .
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
@@ -21,7 +29,7 @@ $env:RONIN_DOCKER_QUALIFICATION_EVIDENCE = $evidenceRoot
 $env:RONIN_HOST_WORKSPACE = (Get-Location).Path
 $junitReport = Join-Path $evidenceRoot "v01-acceptance.xml"
 $acceptanceEvidence = Join-Path $evidenceRoot "v01-acceptance-strict.json"
-python -m pytest -q `
+& $python -m pytest -q `
     tests/integration/test_docker_container_executor_real.py `
     tests/integration/test_worker_runtime_real.py `
     tests/e2e/test_v01_journey.py `
@@ -30,7 +38,7 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-python -m tools.v01_acceptance_gate `
+& $python -m tools.v01_acceptance_gate `
     $junitReport `
     "--evidence-json=$acceptanceEvidence"
 if ($LASTEXITCODE -ne 0) {

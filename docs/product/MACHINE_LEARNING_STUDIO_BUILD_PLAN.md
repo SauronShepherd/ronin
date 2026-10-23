@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Estado actual en `main@1bd319cc55832990d419a1237b1dae875753b8fe`:** la implementación técnica del alcance provider-neutral está completada y el PR #512 pasó la cualificación exact-head de CI, Docker, seguridad, web, cobertura y artefactos. El avance de release público sigue en **0% (0/14)** porque depende de recorridos de producto, proveedores externos y decisiones humanas que este repositorio no puede certificar. La limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado.
+**Estado actual en `main@c57990e412b8b012f606242596dfe50aa3020ab0`:** la implementación técnica del alcance provider-neutral está completada y los checks exact-head de CI, Docker, seguridad, web, cobertura y artefactos pasan. La auditoría del plan ejecutó también las superficies candidatas de PipelineIR v3, etapas plugin, deployment/serving, drift, suites de calidad, features, bundles y MLflow. El avance de release público sigue en **0% (0/14)** porque depende de recorridos de producto, proveedores externos y decisiones humanas que este repositorio no puede certificar. La limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado.
 
 ## 0. Principios de ejecución
 
@@ -1170,9 +1170,33 @@ El cliente usa los contratos HTTP versionados y mantiene el workspace explícito
 No se ejecutaron pruebas, builds, validadores ni Docker por instrucción del
 usuario.
 
+## 91. Cierre de la auditoría completa del plan
+
+La instrucción anterior que dejó los hitos 78–90 como “implementados sin pruebas” ya no
+aplica. La implementación existente se revisó contra sus contratos y se ejecutaron
+431 pruebas focalizadas sobre PipelineIR v3, registro de etapas plugin, ejecución
+aislada, deployment/rollback/predict, drift, suites de calidad, definiciones de
+features, bundles, MLflow, backend degradation, HTTP y OpenAPI: **431 passed**.
+
+La auditoría añadió `tests/test_ml_candidate_hardening.py`, que cubre el pin de
+artefacto y la idempotencia de deployments, predicción contra el digest fijado,
+rollback y telemetría, además del intercambio canónico y los límites del adaptador
+de etapas plugin OCI. La suite web y la cualificación Docker siguen siendo necesarias
+para cerrar cada SHA candidato; la evidencia de release público continúa en 0/14 por
+las dependencias externas y decisiones humanas definidas en este plan.
+
+La evidencia ejecutable de este cierre es: suite Python completa `3948 passed, 59
+skipped`; suite focalizada de candidato `431 passed`; suite web Playwright `83
+passed`; PostgreSQL aislado `46 passed`; Docker con PostgreSQL limpio `23 passed` y
+acceptance estricto `15/15`; y diez pasadas xdist consecutivas de `3945 passed, 59
+skipped` (la suite xdist excluye únicamente `tests/perf`, ejecutada aparte con 3
+pruebas pasadas). Los skips restantes requieren servicios externos no configurados,
+privilegios de symlink de Windows o la cualificación Docker dedicada ya cubierta por
+el gate específico.
+
 ## Cierre de cualificación del candidato
 
-El candidato quedó integrado en `main@1bd319cc55832990d419a1237b1dae875753b8fe`
+El candidato anterior quedó integrado en `main@1bd319cc55832990d419a1237b1dae875753b8fe`
 mediante el PR #512. La suite local tuvo diez pasadas consecutivas sin fallos
 (`3943 passed, 59 skipped` por pasada); la suite web completa terminó con `83
 passed` y los checks obligatorios de GitHub, incluida la cualificación Docker,
