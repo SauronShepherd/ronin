@@ -28,7 +28,7 @@ two PostgreSQL-dependent tests were skipped without a local DSN, and strict
 acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
-**Observed source head:** `ec78064c1bf487439126a9835ff8ad3c6a425abe` (2026-10-23).
+**Observed source head:** `bf4371f4a4c01900080cdb5441237b520713d9e3` (2026-10-23).
 **Release status:** **INCOMPLETE**.
 
 **Verified release progress:** **0% (0/14 P1–P14 capability families are

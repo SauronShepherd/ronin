@@ -80,6 +80,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
             "streaming-studio",
             "synthetic-data-studio",
             "synthetic-journey",
+            "tutorials",
             "ml-studio-journey",
             "ml-features-studio",
             "workspace-journey",
@@ -92,6 +93,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
         "web/styles/layout.css",
         "web/styles/standalone-theme.css",
         "web/styles/tokens.css",
+        "web/styles/tutorials.css",
     ]
 
     compose = (root / "compose.yaml").read_text(encoding="utf-8")

@@ -48,6 +48,7 @@ SUBSYSTEMS = {
         "python/studio_plugin_sdk",
         "python/studio_plugin_testkit",
         "python/studio_plugin_workspaces",
+        "agent-skills/",
         "packages/",
     ),
     "data-engineering": (
