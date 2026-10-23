@@ -154,6 +154,16 @@ function tutorialCard(item) {
 
 function renderLibrary(root) {
   if (!root || root.querySelector('#tutorial-library')) return;
+  const pageTitle = root.querySelector('#view-title');
+  if (pageTitle?.tagName === 'H1') {
+    const secondaryTitle = document.createElement('h2');
+    for (const attribute of pageTitle.attributes) {
+      secondaryTitle.setAttribute(attribute.name, attribute.value);
+    }
+    secondaryTitle.classList.add('tutorial-home-title');
+    secondaryTitle.textContent = pageTitle.textContent;
+    pageTitle.replaceWith(secondaryTitle);
+  }
   const hero = document.createElement('section');
   hero.className = 'tutorial-hero';
   hero.id = 'tutorial-hero';

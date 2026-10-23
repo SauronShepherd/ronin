@@ -93,6 +93,7 @@ def inspect_skill(path: Path) -> SkillInspection:
     if read_error:
         errors.append(read_error)
         skill_text = ""
+    skill_text = skill_text or ""
     fields, frontmatter_errors = _frontmatter(skill_text)
     errors.extend(frontmatter_errors)
     if fields.get("name") and fields["name"] != name:
@@ -104,6 +105,7 @@ def inspect_skill(path: Path) -> SkillInspection:
     if read_error:
         errors.append(read_error)
         agent_text = ""
+    agent_text = agent_text or ""
     display_name, interface_errors = _interface(agent_text)
     errors.extend(interface_errors)
 
