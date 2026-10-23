@@ -131,6 +131,7 @@ studio_storage = ["migrations/*.sql"]
   "web/js/studio-context.js",
   "web/js/synthetic-data-studio.js",
   "web/js/synthetic-journey.js",
+  "web/js/tutorials.js",
   "web/js/workspace-journey.js",
 ]
 "share/ronin/web/styles" = [
@@ -139,6 +140,7 @@ studio_storage = ["migrations/*.sql"]
   "web/styles/layout.css",
   "web/styles/standalone-theme.css",
   "web/styles/tokens.css",
+  "web/styles/tutorials.css",
 ]
 "share/ronin/web/cloud-studio" = [
   "web/cloud-studio.html",
