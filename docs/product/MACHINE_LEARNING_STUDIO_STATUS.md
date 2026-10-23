@@ -3,17 +3,22 @@
 Este documento evita confundir el núcleo operativo implementado con las capacidades
 planificadas de una plataforma ML completa.
 
-**Verificación actual (`main@c54f9ccd609f17ac6cf5b024f6dd34d7b0430e3e`, PR #516):**
+**Verificación actual (consolidación derivada de `main@e01bb411870e1c1661bea37d88247e8648606952`):**
 la implementación del alcance provider-neutral quedó integrada y cualificada por
 los checks obligatorios de CI, Docker, seguridad, web, cobertura y artefactos.
 La release pública continúa bloqueada por capacidades de producto, certificación de
 proveedores y decisiones humanas externas al código.
 
+La ejecución local también está endurecida para Windows bajo carga: el runner consulta
+el handle nativo cuando el callback de proceso se retrasa y el coordinador ML despierta
+su poller al recibir trabajos, evitando falsos timeouts y latencia de sondeo en tareas
+breves.
+
 | Área | Estado | Evidencia |
 |---|---|---|
 | Plugin discovery, manifest y permisos | Implementado | `python/studio_ml/plugin.py`, tests de plugin |
 | Labs y pipeline IR | Implementado | `domain.py`, `services.py`, tests de dominio/SQLite |
-| Envío de DAG candidato por API | Implementado y cualificado exact-head en `main@c54f9cc` | PipelineIR v3 durable con DAGs arbitrarios, `register` terminal y etapas namespaced de plugins; PipelineIR v2 mantiene compatibilidad con ramas prepare y cuadrículas de hasta ocho combinaciones/24 nodos |
+| Envío de DAG candidato por API | Implementado y cualificado en la consolidación actual | PipelineIR v3 durable con DAGs arbitrarios, `register` terminal y etapas namespaced de plugins; PipelineIR v2 mantiene compatibilidad con ramas prepare y cuadrículas de hasta ocho combinaciones/24 nodos |
 | Backend local intercambiable | Implementado | `backends.py`, `runner.py`, tests de runner |
 | Contratos versionados lab/IR/backend | Implementado | `docs/contracts/ml-*-v1.md` |
 | Capability discovery de adapters | Implementado | `BackendCapabilities`, `/v1/ml-studio/backends` |

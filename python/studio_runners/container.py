@@ -265,6 +265,13 @@ class AsyncioCommandRunner:
             stdout=asyncio.subprocess.PIPE,
             stderr=stderr_target,
         )
+        # The execution budget applies to the child after it has been
+        # launched.  Process creation can transiently take several seconds
+        # on a busy Windows host (for example while the event loop is
+        # servicing other subprocess transports); charging that scheduling
+        # delay to the child makes short commands fail closed as timeouts
+        # even though they completed immediately once started.
+        execution_started = time.monotonic()
         stdin = cast(asyncio.StreamWriter, process.stdin)
         stdout = cast(asyncio.StreamReader, process.stdout)
         output_task = asyncio.create_task(self._collect_stream(stdout, self.max_output_bytes))
@@ -287,8 +294,17 @@ class AsyncioCommandRunner:
             timed_out = False
             needs_cleanup = False
             while not wait_task.done():
-                elapsed = time.monotonic() - started
                 cancelled = cancellation.is_cancelled
+                # On Windows the Proactor event loop can deliver the process
+                # wait callback substantially later than the child actually
+                # exits when the host is under load (coverage and the full
+                # suite make this particularly visible).  Poll the native
+                # Popen handle as a fallback so a completed short command is
+                # not mistaken for a timeout merely because its callback is
+                # queued behind other subprocess transports.
+                if self._poll_returncode(process) is not None:
+                    break
+                elapsed = time.monotonic() - execution_started
                 timed_out = elapsed >= timeout_seconds
                 if cancelled or timed_out:
                     needs_cleanup = True
@@ -328,6 +344,28 @@ class AsyncioCommandRunner:
                     (output_task,) if control_task is None else (output_task, control_task)
                 )
                 await self._reap_process(process, wait_task, stream_tasks, cancellation_args)
+
+    @staticmethod
+    def _poll_returncode(process: asyncio.subprocess.Process) -> int | None:
+        """Return a completed child code even if asyncio's callback is delayed.
+
+        ``asyncio.subprocess.Process.returncode`` is populated by the event-loop
+        transport.  The Windows transport also keeps the underlying
+        ``asyncio.windows_utils.Popen`` object, whose public ``poll`` method
+        queries the native process handle directly.  Keep the transport access
+        guarded so Unix and lightweight test doubles continue to use the
+        portable ``returncode`` attribute only.
+        """
+
+        returncode = process.returncode
+        if returncode is not None:
+            return returncode
+        transport = getattr(process, "_transport", None)
+        native_process = getattr(transport, "_proc", None)
+        poll = getattr(native_process, "poll", None)
+        if callable(poll):
+            return cast(int | None, poll())
+        return None
 
     def _separate_control(
         self,

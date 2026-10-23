@@ -2,7 +2,7 @@
 
 ## Estado del plan
 
-**Estado actual en `main@c57990e412b8b012f606242596dfe50aa3020ab0`:** la implementación técnica del alcance provider-neutral está completada y los checks exact-head de CI, Docker, seguridad, web, cobertura y artefactos pasan. La auditoría del plan ejecutó también las superficies candidatas de PipelineIR v3, etapas plugin, deployment/serving, drift, suites de calidad, features, bundles y MLflow. El avance de release público sigue en **0% (0/14)** porque depende de recorridos de producto, proveedores externos y decisiones humanas que este repositorio no puede certificar. La limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado.
+**Estado actual verificado en la consolidación derivada de `main@e01bb411870e1c1661bea37d88247e8648606952`:** la implementación técnica del alcance provider-neutral está completada y los checks exact-head de CI, Docker, seguridad, web, cobertura y artefactos pasan. La auditoría del plan ejecutó también las superficies candidatas de PipelineIR v3, etapas plugin, deployment/serving, drift, suites de calidad, features, bundles y MLflow. El avance de release público sigue en **0% (0/14)** porque depende de recorridos de producto, proveedores externos y decisiones humanas que este repositorio no puede certificar. La limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado.
 
 ## 0. Principios de ejecución
 
@@ -1183,6 +1183,11 @@ artefacto y la idempotencia de deployments, predicción contra el digest fijado,
 rollback y telemetría, además del intercambio canónico y los límites del adaptador
 de etapas plugin OCI. También se cerró el teardown del servidor HTTP del smoke test
 para liberar explícitamente el socket en Windows y evitar falsos abortos de conexión.
+En esta pasada se endureció `AsyncioCommandRunner` para consultar el código de salida
+nativo en Windows cuando el callback del Proactor llega tarde bajo carga, evitando
+timeouts falsos de comandos cortos. `LocalExecutionCoordinator` ahora despierta el
+poller al recibir un trabajo, conservando el intervalo acotado como fallback y
+evitando carreras en ejecuciones locales breves.
 La evidencia de release público continúa en 0/14 por las dependencias externas y
 decisiones humanas definidas en este plan.
 
@@ -1196,8 +1201,7 @@ el gate específico.
 
 ## Cierre de cualificación del candidato
 
-El candidato anterior quedó integrado en `main@c54f9ccd609f17ac6cf5b024f6dd34d7b0430e3e`
-mediante el PR #516. La cualificación local actual volvió a ejecutar los gates Python,
-web, PostgreSQL y Docker descritos arriba sin fallos. Este cierre no cambia el estado
+La cualificación local actual volvió a ejecutar los gates Python, web, PostgreSQL y
+Docker descritos arriba sin fallos. Este cierre no cambia el estado
 de release público 0/14, que requiere evidencia de proveedores y decisiones fuera del
 alcance del repositorio.
