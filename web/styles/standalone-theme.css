@@ -71,3 +71,24 @@ aside h2 { color: var(--dojo-copper); letter-spacing: .08em; }
 .canvas .node { border-color: var(--dojo-copper); }
 .canvas .node.selected { box-shadow: 0 0 0 4px rgb(210 154 71 / 30%), 0 9px 24px rgb(73 43 24 / 15%); }
 pre { border-radius: 12px; box-shadow: 0 9px 24px rgb(73 43 24 / 14%); }
+
+/* Standalone studios: keep dense workspaces calm, legible and unmistakably Ronin. */
+header { gap: .7rem; }
+header strong { display: inline-flex; align-items: center; gap: .55rem; }
+header strong::before { content: '✦'; color: var(--dojo-gold); font-size: .85em; }
+header span { overflow: hidden; text-overflow: ellipsis; }
+header button, header select { min-height: 2.35rem; }
+main { min-width: 0; }
+aside { padding: 1.15rem; }
+aside h2 { margin-bottom: 1rem; }
+section { background: linear-gradient(180deg, rgb(255 250 243 / 34%), transparent 28%); }
+.palette-item, .node { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.palette-item:hover { transform: translateY(-1px); }
+.canvas { position: relative; }
+.canvas::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 12% 12%, rgb(210 154 71 / 10%), transparent 16rem); }
+.node { z-index: 1; }
+pre { color: #f9e9d7; }
+@media (max-width: 900px) {
+  header { min-height: 60px; }
+  section { padding: 1rem; }
+}

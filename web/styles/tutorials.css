@@ -28,3 +28,19 @@
 .tutorial-overlay .tutorial-backdrop{background:rgb(45 33 27 / 56%);backdrop-filter:none}
 .tutorial-spotlight{background:rgb(255 250 243 / 8%);border-color:var(--gold);box-shadow:0 0 0 9999px rgb(45 33 27 / 48%),0 0 0 5px rgb(201 139 60 / 28%),0 0 24px rgb(201 139 60 / 50%)}
 .tutorial-dialog{box-shadow:0 1.5rem 3rem rgb(45 33 27 / 36%)}
+
+/* Academy polish: the first screen and every trail card share the same story. */
+.tutorial-hero { min-height: 14rem; border-width: 1px 1px 3px; border-bottom-color: var(--copper); }
+.tutorial-hero-copy { padding-block: .25rem; }
+.tutorial-hero-copy h1 { font-size: clamp(1.65rem, 3.2vw, 2.5rem); }
+.tutorial-hero-actions .button { min-width: 12rem; }
+.tutorial-hint { padding: .35rem .6rem; border: 1px solid rgb(143 101 71 / 35%); border-radius: 999px; background: rgb(255 250 242 / 55%); }
+.tutorial-library-head { align-items: center; }
+.tutorial-library-head > div:first-child { min-width: 0; }
+.tutorial-search { min-height: 2.8rem; }
+.tutorial-card { position: relative; overflow: hidden; min-height: 238px; border-radius: 16px; }
+.tutorial-card::before { content: ''; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, var(--copper), var(--gold), transparent); opacity: .78; }
+.tutorial-card-top { padding-top: .15rem; }
+.tutorial-kicker { padding: .2rem .45rem; border: 1px solid rgb(159 90 45 / 28%); border-radius: 999px; background: var(--surface-muted); }
+.tutorial-tags span { transition: background .18s ease, color .18s ease; }
+.tutorial-card:hover .tutorial-tags span { background: var(--gold-soft); color: var(--cocoa); }

@@ -123,3 +123,34 @@ tr:hover td, .data-table tr:hover td { background: rgb(234 216 196 / 40%); }
 .status.amber { color: #98601a; background: #f8e9d0; }
 .status.red { color: #8d4238; background: #f4dfda; }
 code { background: var(--surface-muted); border-color: var(--line); color: var(--copper); }
+
+/* Second visual pass: shared rhythm, section headers and deliberate states. */
+.panel > h2:first-child, .panel > h3:first-child, .card > h2:first-child, .card > h3:first-child {
+  display: flex; align-items: baseline; gap: .55rem; margin-bottom: .8rem; padding-bottom: .7rem;
+  border-bottom: 1px solid var(--line);
+}
+.panel > h2:first-child::after, .panel > h3:first-child::after, .card > h2:first-child::after, .card > h3:first-child::after {
+  content: ''; width: .42rem; height: .42rem; flex: none; border-radius: 50%; background: var(--gold); opacity: .8;
+}
+.panel > p:first-of-type, .card > p:first-of-type { margin-top: -.2rem; }
+.toolbar { align-items: end; gap: .7rem; padding: .85rem; background: linear-gradient(105deg, rgb(234 216 196 / 56%), rgb(245 233 220 / 36%)); }
+.toolbar label { min-width: min(14rem, 100%); flex: 1 1 12rem; }
+.toolbar .button { align-self: end; }
+.toolbar + .loading, .toolbar + .empty, .toolbar + .error { margin-top: -.25rem; }
+.empty, .error, .loading { min-height: 8rem; display: grid; place-items: center; align-content: center; gap: .3rem; }
+.empty h2, .error h2, .loading h2 { margin: 0; color: var(--cocoa); }
+.empty p, .error p, .loading p { margin: 0; }
+.status { letter-spacing: .02em; box-shadow: inset 0 1px 0 rgb(255 250 242 / 70%); }
+.status::before { content: ''; width: .38rem; height: .38rem; border-radius: 50%; background: currentColor; opacity: .75; }
+.code { max-height: 28rem; }
+.card .button, .panel .button { margin-top: .2rem; }
+.stack > .panel, .stack > .card { margin: 0; }
+.table-wrap { scrollbar-gutter: stable; }
+.table-wrap table caption { padding: .65rem .9rem; text-align: left; color: var(--muted); font-size: .78rem; }
+.page-heading + .panel, .page-header + .panel { margin-top: .15rem; }
+@media (max-width: 700px) {
+  .card, .panel { padding: 1rem; }
+  .toolbar { align-items: stretch; }
+  .toolbar label, .toolbar .button { width: 100%; flex-basis: 100%; }
+  .toolbar .button { align-self: stretch; }
+}
