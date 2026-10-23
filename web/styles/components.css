@@ -58,7 +58,7 @@ textarea{min-height:7rem;resize:vertical}
 .data-table th{background:var(--surface-muted);color:var(--cocoa-soft)}
 .data-table tr:last-child td{border-bottom:0}
 .data-table tr:hover td{background:rgb(239 227 212 / 42%)}
-code{border:1px solid var(--line);border-radius:5px;padding:.08rem .3rem;background:var(--surface-muted);color:var(--copper)}
+code{border:1px solid var(--line);border-radius:5px;padding:.08rem .3rem;background:var(--surface-muted);color:var(--cocoa)}
 hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
 .loading{background:linear-gradient(110deg,var(--surface-muted),var(--surface-raised),var(--surface-muted));background-size:220% 100%;animation:dojo-shimmer 2.2s ease-in-out infinite}
 @keyframes dojo-shimmer{0%,100%{background-position:0 0}50%{background-position:100% 0}}
