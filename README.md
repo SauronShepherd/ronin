@@ -8,7 +8,7 @@ Ronin is being built as a professional, free, open-source and self-hostable **Da
 
 The existing `0.1.0a*` work is an **engineering alpha and execution foundation**, not the product-completeness gate for Ronin's first public release.
 
-Ronin Public v1 will not be declared complete until the platform has end-to-end supported paths for data integration, lakehouse/SQL, scheduling/orchestration, catalog/lineage/ontology/knowledge graph, data quality, machine learning/MLOps, semantic models/dashboards, streaming, observability/alerts/FinOps, single-operator security, local/Compose deployment and vendor migration. GenAI/RAG/agent execution is excluded; multi-user identity and administration belong to Ronin Pro.
+Ronin Public v1 will not be declared complete until the platform has end-to-end supported paths for data integration, lakehouse/SQL, scheduling/orchestration, catalog/lineage/ontology/knowledge graph, data quality, machine learning/MLOps, semantic models/dashboards, streaming, observability/alerts/FinOps, single-operator security, local/Compose deployment and vendor migration. No Ronin tier provides in-product GenAI/model-provider invocation, RAG, or agent execution; multi-user identity and administration belong to Ronin Pro.
 
 The normative contracts are:
 
@@ -59,7 +59,7 @@ The target platform includes:
 - Monitoring & Alerts plus Cost Control / FinOps;
 - CLI, HTTP API, Python SDK and a web Studio over the same backend contracts.
 
-Ronin coding-agent skills are packaged as external instructions for coding agents. Ronin itself does not provide generative model invocation, RAG, or an agent runtime.
+Ronin coding-agent skills are packaged as external instructions for coding agents to consume outside the product. No Ronin tier provides generative model invocation, RAG, or an agent runtime.
 
 ## Brand
 

@@ -1,8 +1,8 @@
 # Ronin AI Studio — propuesta técnica v1
 
-> **Retirada de Ronin Public v1 (2026-10-24).** Se conserva sólo como registro histórico. Public v1 no implementa descubrimiento ni invocación de proveedores/modelos; las coding-agent skills se usan externamente.
+> **Retirada de Ronin (2026-10-24).** Se conserva sólo como registro histórico y no debe ejecutarse. Ningún nivel de Ronin implementa descubrimiento ni invocación de proveedores/modelos; las coding-agent skills se consumen externamente.
 
-Estado: propuesta open-source para `studio_ai_studio`.
+Estado: propuesta histórica retirada; `studio_ai_studio` no forma parte de Ronin.
 
 ## 1. Objetivo
 

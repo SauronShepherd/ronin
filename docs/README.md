@@ -67,7 +67,7 @@ The complete product target includes:
 
 The web Studio must expose these capabilities through the same backend contracts used by API/CLI/SDK; it is not a second semantic implementation.
 
-GenAI/RAG/agent execution is excluded from Public v1. Ronin coding-agent skills are consumed by agents externally. Multi-user identity, administration and deployment belong to Ronin Pro.
+No Ronin tier includes GenAI/RAG/model-provider invocation or agent execution. Ronin coding-agent skills are consumed by agents externally. Multi-user identity, administration and deployment belong to Ronin Pro.
 
 ## Portability principle
 

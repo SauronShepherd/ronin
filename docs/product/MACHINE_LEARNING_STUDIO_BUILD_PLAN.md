@@ -1,6 +1,6 @@
 # Machine Learning Studio — build plan de bajo nivel
 
-**Alcance Public v1 vigente (2026-10-24):** P9 GenAI queda fuera del producto; las coding-agent skills se consumen externamente. Multiusuario, su administración y despliegue pertenecen a Ronin Pro. El progreso agregado de release es 0% (0/13 familias Public v1 activas); las referencias históricas de este plan a 0/14 conservan el denominador anterior.
+**Alcance vigente (2026-10-24):** Ningún nivel de Ronin incluye GenAI, RAG ni ejecución de agentes. Las coding-agent skills se consumen externamente. Multiusuario, su administración y despliegue pertenecen a Ronin Pro. El progreso agregado de release Public v1 es 0% (0/13 familias activas); las referencias históricas de este plan a 0/14 conservan el denominador anterior.
 
 ## Estado del plan
 

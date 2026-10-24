@@ -2,7 +2,7 @@
 
 **Status:** implementation roadmap for the first complete public release
 
-**Scope amendment (2026-10-24):** Public v1 is single-operator and excludes in-product GenAI/RAG/agent execution. Ronin coding-agent skills are external-only. Multi-user identity, administration and deployment are Ronin Pro. These rules supersede the historical wave descriptions below.
+**Scope amendment (2026-10-24):** No Ronin tier includes in-product GenAI/model-provider invocation, RAG, or agent execution; coding-agent skills are consumed externally. Public v1 is single-operator; multi-user identity, administration and deployment are Ronin Pro. These rules supersede the historical wave descriptions below.
 
 This roadmap replaces the earlier assumption that a durable notebook runner is sufficient for the first public version. The current execution/control-plane work is retained as foundation work.
 
@@ -173,9 +173,9 @@ Required work:
 
 Exit: a Dataiku visual-ML fixture and a Databricks MLflow fixture can be imported, evaluated and operated in Ronin for the certified subset.
 
-## 9. Wave H — GenAI/RAG/agents (excluded from Public v1)
+## 9. Wave H — GenAI/RAG/agents (retired from Ronin)
 
-This wave is retired from the Public v1 build. Ronin must not invoke generative model providers or execute RAG pipelines, tools, or agents. Coding-agent skills are packaged as external instructions for agents to consume outside Ronin; they are not a Ronin runtime or Studio feature.
+This wave is retired from the Ronin product roadmap. No Ronin tier may invoke generative model providers or execute RAG pipelines, tools, or agents. Coding-agent skills are packaged as external instructions for agents to consume outside Ronin; they are not a Ronin runtime or Studio feature.
 
 ## 10. Wave I — Streaming and real-time
 
