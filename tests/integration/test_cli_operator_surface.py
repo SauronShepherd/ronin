@@ -145,7 +145,21 @@ def test_cli_operator_surface_reuses_real_http_contract_and_terminal_idempotency
 
         assert main(["status", job_id, "--json"]) == 0
         status = json.loads(capsys.readouterr().out)
-        assert status == {"failure_code": None, "id": job_id, "state": "succeeded"}
+        assert set(status) == {
+            "created_at",
+            "failure_code",
+            "id",
+            "project_id",
+            "state",
+            "updated_at",
+        }
+        assert status["id"] == job_id
+        assert status["project_id"] == "examples/demo"
+        assert status["state"] == "succeeded"
+        assert len(status["created_at"]) == 27
+        assert status["created_at"].endswith("Z")
+        assert status["updated_at"] == "2099-01-01T00:00:04.000000Z"
+        assert status["failure_code"] is None
 
         assert main(["logs", job_id, "--json"]) == 0
         events = [json.loads(line) for line in capsys.readouterr().out.splitlines()]

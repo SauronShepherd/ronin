@@ -29,7 +29,6 @@ class SchedulerWorkloadResult:
     connector: dict[str, object] | None = None
     notification: dict[str, object] | None = None
     ml: dict[str, object] | None = None
-    genai: dict[str, object] | None = None
     semantic: dict[str, object] | None = None
     pipeline: dict[str, object] | None = None
 
@@ -61,8 +60,6 @@ class SchedulerWorkloadResult:
             return {"family": self.family, "notification": self.notification, "version": 1}
         if self.family == "ml" and self.ml is not None:
             return {"family": self.family, "ml": self.ml, "version": 1}
-        if self.family == "genai" and self.genai is not None:
-            return {"family": self.family, "genai": self.genai, "version": 1}
         if self.family == "semantic" and self.semantic is not None:
             return {"family": self.family, "semantic": self.semantic, "version": 1}
         if self.family == "pipeline" and self.pipeline is not None:
@@ -92,7 +89,6 @@ def execute_scheduler_job(
     ml_lab: Any | None = None,
     ml_pipeline: Any | None = None,
     ml_rows: Any | None = None,
-    genai_runner: Any | None = None,
     semantic_refresh_runner: Any | None = None,
     pipeline_runner: Any | None = None,
     max_rows: int = 10_000,
@@ -300,22 +296,6 @@ def execute_scheduler_job(
         return SchedulerWorkloadResult(
             family="ml", ml={**ml_result, "pipeline_digest": pipeline_digest}
         )
-    if job.target == "genai.run":
-        if genai_runner is None:
-            raise UnsupportedSchedulerWorkload("genai.run requires an injected genai_runner")
-        try:
-            payload = json.loads(job.parameters_json)
-            required = ("provider_id", "model_id", "prompt_ref")
-            if not all(
-                isinstance(payload.get(key), str) and payload[key].strip() for key in required
-            ):
-                raise ValueError("missing GenAI identifiers")
-        except (TypeError, ValueError, json.JSONDecodeError) as exc:
-            raise UnsupportedSchedulerWorkload("genai.run parameters are invalid") from exc
-        result = genai_runner.run(payload)
-        if not isinstance(result, dict):
-            raise UnsupportedSchedulerWorkload("GenAI runner returned an invalid result")
-        return SchedulerWorkloadResult(family="genai", genai=result)
     if job.target == "semantic.refresh":
         if semantic_refresh_runner is None:
             raise UnsupportedSchedulerWorkload(

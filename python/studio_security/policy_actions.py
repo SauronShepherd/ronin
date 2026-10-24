@@ -27,7 +27,7 @@ class PolicyActionResult:
             "resource_ref": self.resource_ref,
             "allowed": self.decision.allowed,
             "reason": self.decision.reason,
-            "matched_roles": list(self.decision.matched_roles),
+            "matched_permissions": list(self.decision.matched_permissions),
             "audit_action": self.audit_action,
         }
 
@@ -43,7 +43,7 @@ def evaluate_policy_action(
     classification_policy: ClassificationPolicy | None = None,
     explicit_high_sensitivity_grant: bool = False,
 ) -> PolicyActionResult:
-    """Evaluate an action through the supplied RBAC authorizer, never bypassing it."""
+    """Evaluate an action through the supplied single-operator authorizer, never bypassing it."""
     if action not in {"warn", "block-new-work", "require-approval"}:
         raise ValueError("unsupported policy action")
     if not resource_ref or resource_ref != resource_ref.strip() or "\x00" in resource_ref:

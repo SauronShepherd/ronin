@@ -4,10 +4,8 @@ import pytest
 from studio_core import (
     InstanceAnchor,
     OwnershipMetadata,
-    Principal,
     allocate_instance_keys,
     ownership,
-    role_assignments,
 )
 from studio_core.transport_policy import BIND_POLICIES, parse_bind_policy
 from studio_core.versions import compare_releases, parse_comparable_release
@@ -63,19 +61,3 @@ def test_bind_policy_error_lists_the_exact_closed_vocabulary() -> None:
 def test_bind_policy_returns_each_supported_literal_and_default() -> None:
     assert parse_bind_policy(None) == "loopback"
     assert tuple(parse_bind_policy(value) for value in BIND_POLICIES) == BIND_POLICIES
-
-
-@pytest.mark.parametrize("value", ["", " ", "line\nfeed", "carriage\rreturn", "nul\x00byte"])
-def test_role_assignment_text_rejects_each_noncanonical_value(value: str) -> None:
-    with pytest.raises(ValueError, match=".") as error:
-        role_assignments._text(value, "principal identifier")
-    expected = (
-        "principal identifier must be single-line text"
-        if any(char in value for char in "\r\n\x00")
-        else "principal identifier must be non-empty trimmed text"
-    )
-    assert str(error.value) == expected
-
-
-def test_principal_preserves_valid_identity_text() -> None:
-    assert Principal("user", "alice").identifier == "alice"

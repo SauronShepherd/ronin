@@ -103,7 +103,6 @@ PROJECT_DEPENDENCIES.update(
     {
         "studio_connectors": frozenset({"studio_core", "studio_storage"}),
         "studio_finops": frozenset({"studio_core", "studio_orchestrator", "studio_observability"}),
-        "studio_genai": frozenset({"studio_core", "studio_storage"}),
         "studio_graph": frozenset({"studio_core"}),
         "studio_lakehouse": frozenset({"studio_core", "studio_storage"}),
         "studio_migration": frozenset({"studio_core"}),
@@ -156,9 +155,7 @@ PROJECT_PACKAGES = frozenset(
 )
 # Community plugins are independently packaged and therefore must not be
 # added to the v0.1 core matrix. They may depend only on public core contracts.
-OPTIONAL_PLUGIN_PACKAGES = frozenset(
-    {"studio_data_engineering", "studio_ai_studio", "studio_query_engine"}
-)
+OPTIONAL_PLUGIN_PACKAGES = frozenset({"studio_data_engineering", "studio_query_engine"})
 PURE_DOMAIN_PACKAGES = frozenset({"studio_core", "studio_notebook", "studio_orchestrator"})
 PURE_STDLIB_IMPORT_ROOTS = frozenset(
     {
@@ -292,7 +289,6 @@ def _dependency_violations(tree: ast.AST, path: Path, source: str | None) -> lis
         allowed = {
             "studio_core",
             "studio_storage",
-            "studio_genai",
             "studio_orchestrator",
             "studio_query_engine",
         }

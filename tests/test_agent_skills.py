@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -33,3 +34,18 @@ def test_agent_skill_package_contains_only_the_skill_tree(tmp_path: Path) -> Non
         names = archive.namelist()
         assert names == [f"{skill.name}/{relative}" for relative in skill.files]
         assert all(not name.startswith("/") for name in names)
+
+
+def test_discovery_ignores_generated_output_and_bytecode(tmp_path: Path) -> None:
+    root = tmp_path / "skills"
+    shutil.copytree(SKILLS_ROOT / "ronin-core", root / "ronin-core")
+    bytecode = root / "ronin-core" / "scripts" / "__pycache__"
+    bytecode.mkdir()
+    (bytecode / "preflight.pyc").write_bytes(b"generated")
+    (root / "dist" / "ronin-core").mkdir(parents=True)
+
+    skills = discover_skills(root)
+
+    assert [skill.name for skill in skills] == ["ronin-core"]
+    assert all("__pycache__" not in path and not path.endswith(".pyc") for path in skills[0].files)
+    assert skills[0].valid

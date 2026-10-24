@@ -14,9 +14,9 @@ class ServiceIdentityError(ValueError):
 
 
 class ServiceIdentityStore(Protocol):
-    def get_principal(self, principal_id: PrincipalId) -> Principal | None: ...
+    def get_service_identity(self, principal_id: PrincipalId) -> Principal | None: ...
 
-    def put_principal(self, principal: Principal) -> Principal: ...
+    def put_service_identity(self, principal: Principal) -> Principal: ...
 
 
 @dataclass(frozen=True)
@@ -54,18 +54,18 @@ class ServiceIdentityLifecycle:
         principal = Principal(
             PrincipalId(principal_id), "service", display_name, issuer, subject, None, True
         )
-        if self._store.get_principal(principal.id) is not None:
+        if self._store.get_service_identity(principal.id) is not None:
             raise ServiceIdentityError("service identity already exists")
-        stored = self._store.put_principal(principal)
+        stored = self._store.put_service_identity(principal)
         self._emit(ServiceIdentityTransition("create", principal_id))
         return stored
 
     def disable(self, principal_id: str) -> ServiceIdentityTransition:
-        current = self._store.get_principal(PrincipalId(principal_id))
+        current = self._store.get_service_identity(PrincipalId(principal_id))
         if current is None or current.kind != "service":
             raise ServiceIdentityError("service identity does not exist")
         if current.active:
-            self._store.put_principal(
+            self._store.put_service_identity(
                 Principal(
                     current.id,
                     "service",
@@ -87,7 +87,7 @@ class ServiceIdentityLifecycle:
         display_name: str | None = None,
         issuer: str | None = None,
     ) -> Principal:
-        current = self._store.get_principal(PrincipalId(principal_id))
+        current = self._store.get_service_identity(PrincipalId(principal_id))
         if current is None or current.kind != "service" or not current.active:
             raise ServiceIdentityError("active service identity does not exist")
         replacement = self.create(

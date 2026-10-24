@@ -8,9 +8,16 @@ test('live Runs connects without submitting a connection and retains the project
 
   const apiOrigin = new URL(liveUrl).origin;
   const connectionRequests = [];
+  const jobResponses = [];
   const pageErrors = [];
   page.on('request', request => {
     if (new URL(request.url()).pathname.endsWith('/connections')) connectionRequests.push(request.url());
+  });
+  page.on('response', response => {
+    const url = new URL(response.url());
+    if (url.pathname === '/v1/jobs') {
+      jobResponses.push({ project: url.searchParams.get('project'), status: response.status() });
+    }
   });
   page.on('pageerror', error => pageErrors.push(error.message));
 
@@ -18,6 +25,8 @@ test('live Runs connects without submitting a connection and retains the project
   await page.locator('#api-url').fill(apiOrigin);
   await page.locator('#api-token').fill(token);
   await page.getByRole('button', { name: 'Connect' }).click();
+  await expect(page.locator('#run-result')).toContainText('Enter a project ID to load runs');
+  expect(jobResponses).toEqual([]);
   await page.locator('#run-project').fill('examples/demo');
 
   const listResponse = page.waitForResponse(response => {
@@ -29,7 +38,11 @@ test('live Runs connects without submitting a connection and retains the project
   const response = await listResponse;
   expect(response.status()).toBe(200);
   await expect(page.locator('#run-project')).toHaveValue('examples/demo');
+  await expect(page.locator('#view table')).toContainText('Duration');
   await expect(page.locator('#view table tbody tr').first()).toBeVisible();
+  await expect(page.locator('#view table tbody tr').first()).toContainText('examples/demo');
+  await expect(page.locator('#view table tbody tr').first()).not.toContainText('—');
   expect(connectionRequests).toEqual([]);
+  expect(jobResponses).toEqual([{ project: 'examples/demo', status: 200 }]);
   expect(pageErrors).toEqual([]);
 });

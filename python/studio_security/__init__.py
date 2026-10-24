@@ -1,7 +1,6 @@
-"""Multi-user identity, OIDC, RBAC and actor propagation for Ronin Public v1."""
+"""Single-operator authorization, audit, redaction and service identity support."""
 
 from .audit import audit_actor, authorization_audit_event, mutation_audit_event
-from .authentication import PrincipalAuthenticator, authenticate_actor
 from .classification_policy import (
     Classification,
     ClassificationDecision,
@@ -11,91 +10,49 @@ from .classification_policy import (
 from .context import actor_context, current_actor, require_actor
 from .contracts import (
     PERMISSIONS,
-    ROLE_PERMISSIONS,
     Actor,
-    Group,
-    GroupId,
     Permission,
     PolicyDecision,
     PolicyRequirement,
     Principal,
     PrincipalId,
     PrincipalKind,
-    RoleBinding,
-    SubjectKind,
-    WorkspaceRole,
 )
-from .jwks_file import FileJwksProvider, JwksFileError
-from .oidc import (
-    JwksProvider,
-    OidcAuthenticationError,
-    OidcClaims,
-    OidcConfig,
-    OidcDependencyError,
-    OidcPrincipalStore,
-    OidcTokenValidator,
-)
-from .oidc_discovery import HttpsOidcJwksProvider, OidcDiscoveryError
 from .policy_actions import PolicyAction, PolicyActionResult, evaluate_policy_action
-from .postgres_store import PostgresIdentityStore, PostgresSecurityDependencyError
-from .rbac import RbacAuthorizer, RbacStore
 from .redaction import redact
 from .service_identity import (
     ServiceIdentityError,
     ServiceIdentityLifecycle,
     ServiceIdentityTransition,
 )
-from .store import IdentityConflict, SqliteIdentityStore
+from .store import IdentityConflict, SqliteServiceIdentityStore
 
 __all__ = (
     "Actor",
     "Classification",
     "ClassificationDecision",
     "ClassificationPolicy",
-    "PrincipalAuthenticator",
-    "FileJwksProvider",
-    "Group",
-    "GroupId",
-    "HttpsOidcJwksProvider",
     "IdentityConflict",
-    "JwksFileError",
-    "JwksProvider",
-    "OidcAuthenticationError",
-    "OidcClaims",
-    "OidcConfig",
-    "OidcDependencyError",
-    "OidcDiscoveryError",
-    "OidcPrincipalStore",
-    "OidcTokenValidator",
     "PERMISSIONS",
     "Permission",
-    "PolicyDecision",
-    "PolicyRequirement",
     "PolicyAction",
     "PolicyActionResult",
-    "PostgresIdentityStore",
-    "PostgresSecurityDependencyError",
+    "PolicyDecision",
+    "PolicyRequirement",
     "Principal",
     "PrincipalId",
     "PrincipalKind",
-    "ROLE_PERMISSIONS",
-    "RbacAuthorizer",
-    "RbacStore",
-    "RoleBinding",
-    "SqliteIdentityStore",
-    "SubjectKind",
-    "WorkspaceRole",
-    "actor_context",
-    "audit_actor",
-    "authenticate_actor",
-    "authorization_audit_event",
-    "mutation_audit_event",
-    "evaluate_classification_policy",
-    "evaluate_policy_action",
-    "redact",
     "ServiceIdentityError",
     "ServiceIdentityLifecycle",
     "ServiceIdentityTransition",
+    "SqliteServiceIdentityStore",
+    "actor_context",
+    "audit_actor",
+    "authorization_audit_event",
     "current_actor",
+    "evaluate_classification_policy",
+    "evaluate_policy_action",
+    "mutation_audit_event",
+    "redact",
     "require_actor",
 )

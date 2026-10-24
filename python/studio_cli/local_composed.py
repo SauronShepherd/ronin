@@ -265,7 +265,14 @@ def build_local_composed_from_env() -> LocalServerComposition:
         if postgres_dsn is not None
         else SqliteMLLabStore(database, migration_now=now)
     )
+    secrets_resolver = CompositeSecretResolver(environment=EnvironmentSecretResolver())
     plugin_host = PluginHost.discover(
+        excluded_plugin_ids=frozenset(
+            {
+                "com.sauronshepherd.ronin.ai-studio",
+                "com.sauronshepherd.ronin.genai",
+            }
+        ),
         services={
             "workspace_service": workspace_service,
             "project_service": project_service,
@@ -286,7 +293,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
             ),
             "govern_studio_db_path": str(database.parent / "synthetic-data.sqlite3"),
             "catalog_store": catalog_store,
-        }
+        },
     )
     plugin_host.audit = PluginAuditSink(audit_store.append, workspace_id)
     lock_path = os.environ.get("RONIN_PLUGIN_LOCK")
@@ -339,7 +346,6 @@ def build_local_composed_from_env() -> LocalServerComposition:
         if postgres_dsn is not None
         else SqliteConnectorCheckpointStore(database)
     )
-    secrets_resolver = CompositeSecretResolver(environment=EnvironmentSecretResolver())
 
     def resolve_connection(scoped_workspace_id: str, reference: str) -> ConnectionDefinition:
         return connection_service.get(WorkspaceId(scoped_workspace_id), ConnectionId(reference))

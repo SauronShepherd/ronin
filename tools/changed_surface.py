@@ -61,9 +61,6 @@ SUBSYSTEMS = {
         "python/studio_ml",
         "tests/test_ml",
         "tests/integration/test_ml",
-        "python/studio_ai_studio",
-        "tests/test_ai_studio",
-        "tests/integration/test_ai_studio",
     ),
     "migration": (
         "python/studio_migration",

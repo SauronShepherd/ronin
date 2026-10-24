@@ -34,7 +34,9 @@ class AzureBlobJsonConnector:
     """Discover and read JSON or JSONL blobs from an Azure container."""
 
     descriptor = ConnectorDescriptor(
-        "azure.blob.json", 1, ConnectorCapabilities(discover=True, read=True)
+        "azure.blob.json",
+        1,
+        ConnectorCapabilities(discover=True, read=True, max_page_size=10_000),
     )
 
     def __init__(self, *, container_client: Any | None = None) -> None:

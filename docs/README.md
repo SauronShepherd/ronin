@@ -55,18 +55,19 @@ The complete product target includes:
 - persistent catalog and lineage;
 - ontology and knowledge graph;
 - data quality and contracts;
-- AI/ML Lab and MLOps;
-- GenAI/RAG/agents;
+- Machine Learning Studio and MLOps;
 - graph intelligence/RQL;
 - semantic models and dashboards;
 - streaming and real-time processing;
 - Monitoring & Alerts;
 - Cost Control / FinOps;
-- multi-user security and audit;
-- local/Compose/Kubernetes deployment profiles;
+- single-operator security and audit;
+- local/Compose deployment profiles;
 - representative local simulation profiles for proprietary, non-open-source data and AI environments; any future portability or migration support is explicitly secondary and bounded.
 
 The web Studio must expose these capabilities through the same backend contracts used by API/CLI/SDK; it is not a second semantic implementation.
+
+GenAI/RAG/agent execution is excluded from Public v1. Ronin coding-agent skills are consumed by agents externally. Multi-user identity, administration and deployment belong to Ronin Pro.
 
 ## Portability principle
 

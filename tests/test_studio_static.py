@@ -60,6 +60,8 @@ def test_studio_assets_are_allowlisted_and_served(tmp_path) -> None:
             with urllib.request.urlopen(f"{base_url}/studio/{asset}", timeout=2) as response:  # noqa: S310
                 assert response.status == 200
                 assert response.headers["Content-Type"].startswith(content_type)
+                if asset.endswith((".json", ".js", ".css")):
+                    assert response.headers["Cache-Control"] == "no-cache"
         with pytest.raises(urllib.error.HTTPError) as error_info:
             urllib.request.urlopen(f"{base_url}/studio/../pyproject.toml", timeout=2)  # noqa: S310
         assert error_info.value.code == 404
@@ -174,18 +176,11 @@ def test_quality_studio_exposes_contract_authoring_and_dry_run_controls() -> Non
         assert marker in source
 
 
-def test_access_studio_exposes_project_permission_scope_inspection() -> None:
-    source = (Path(__file__).parents[1] / "web" / "js" / "access-studio.js").read_text(
-        encoding="utf-8"
-    )
-    for marker in (
-        'id="project-scope-form"',
-        'id="project-scope-workspace"',
-        'id="project-scope-project"',
-        "Inspect project permissions",
-        "/v1/workspaces/${encodeURIComponent(workspace)}/projects/${encodeURIComponent(project)}/permissions",
-    ):
-        assert marker in source
+def test_public_studio_does_not_publish_multiuser_access_administration() -> None:
+    root = Path(__file__).parents[1]
+    routes = json.loads((root / "web" / "routes.json").read_text(encoding="utf-8"))
+    assert all(route["id"] != "access" for route in routes)
+    assert not (root / "web" / "js" / "access-studio.js").exists()
 
 
 def test_data_engineering_studio_exposes_queryflux_health_and_capabilities() -> None:

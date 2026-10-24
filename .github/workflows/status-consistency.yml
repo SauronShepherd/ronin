@@ -22,7 +22,10 @@ jobs:
         with:
           python-version: "3.11"
       - name: Validate Public v1 status ledgers
-        run: python tools/generate_public_v1_status.py --check
+        run: >-
+          python tools/generate_public_v1_status.py
+          --check
+          --reference-sha "${{ github.event.pull_request.base.sha || github.sha }}"
       - name: Validate machine ledger JSON
         run: python -m json.tool docs/product/public-v1-status.json >/dev/null
       - name: Emit normalized status-consistency release evidence

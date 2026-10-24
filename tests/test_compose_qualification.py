@@ -9,6 +9,12 @@ def test_repository_compose_appliance_contract_is_qualified():
     assert qualify_compose(Path("compose.yaml"))
 
 
+def test_public_compose_does_not_publish_model_provider_services():
+    compose = Path("compose.yaml").read_text(encoding="utf-8").casefold()
+    forbidden = ("ollama", "llama.cpp", "vllm", "ai-ollama", "ai-llama-cpp", "ai-vllm")
+    assert not [name for name in forbidden if name in compose]
+
+
 def test_compose_qualification_rejects_public_postgres_port(tmp_path):
     compose = (
         Path("compose.yaml")

@@ -14,6 +14,7 @@ STATUSES = {
     "blocked",
     "human_decision",
     "qualification_pending",
+    "out_of_scope",
 }
 SCHEMA_VERSION = 1
 

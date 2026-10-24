@@ -212,12 +212,12 @@
       "notice_required": false,
       "rationale": "Reviewed exact locked distribution evidence; permissive license approved for project use."
     },
-    "setuptools==84.0.0": {
+    "setuptools==84.2.1": {
       "attribution_required": false,
       "decision": "allow",
-      "evidence_sha256": "415f36a02b698cc3bc5473c9e7fd26111316d1fbdfd74dd3e97ffd6d98d866ac",
+      "evidence_sha256": "01597562c0894e54ccd93a1361e5b377d2f2949555a28ce3a2202d49c9807088",
       "notice_required": false,
-      "rationale": "Reviewed exact Linux wheel license file: upstream declares MIT; locked as the build backend for development and clean-room package tests."
+      "rationale": "Reviewed exact setuptools 84.2.1 distribution evidence. Upstream declares MIT; installed license and vendored license/NOTICE file hashes match the previously reviewed distribution, with versioned paths updated for packaging 26.3. The build tool is not shipped in Ronin product artifacts."
     },
     "sortedcontainers==2.4.0": {
       "attribution_required": false,

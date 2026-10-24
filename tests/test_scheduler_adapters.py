@@ -290,30 +290,6 @@ def test_scheduler_dispatch_rejects_blank_notification_destination(destination_r
         )
 
 
-def test_scheduler_dispatch_routes_genai_run_through_injected_runner() -> None:
-    seen: dict[str, object] = {}
-
-    class Runner:
-        def run(self, payload: dict[str, object]) -> dict[str, object]:
-            seen.update(payload)
-            return {"provider_id": payload["provider_id"], "status": "completed"}
-
-    result = execute_scheduler_job(
-        _job(
-            "genai.run",
-            {
-                "provider_id": "openai",
-                "model_id": "gpt-5",
-                "prompt_ref": "artifact://sha256/" + "a" * 64,
-            },
-        ),
-        genai_runner=Runner(),
-    )
-    assert result.family == "genai"
-    assert seen["model_id"] == "gpt-5"
-    assert result.evidence_payload()["genai"]["status"] == "completed"
-
-
 def test_scheduler_dispatch_routes_semantic_refresh_through_injected_runner() -> None:
     class Runner:
         def run(

@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import logging
 import os
 import shutil
 import sqlite3
@@ -99,6 +100,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     connectors.add_argument("--connector-id")
     connectors.add_argument("--connection-ref")
+    connectors.add_argument("--cursor")
+    connectors.add_argument("--page-size", type=int)
     connectors.add_argument("--asset-ref")
     connectors.add_argument("--destination-ref")
     connectors.add_argument("--checkpoint-identity")
@@ -560,7 +563,13 @@ def _connectors(namespace: argparse.Namespace) -> int:
         connection_ref = cast(str | None, namespace.connection_ref)
         if connector_id is None or connection_ref is None:
             raise CliError("connectors discover requires --connector-id and --connection-ref")
-        result = client.connector_discover(cast(str, workspace_id), connector_id, connection_ref)
+        result = client.connector_discover(
+            cast(str, workspace_id),
+            connector_id,
+            connection_ref,
+            cursor=cast(str | None, namespace.cursor),
+            page_size=cast(int | None, namespace.page_size),
+        )
     elif command == "checkpoint-health":
         identity = cast(str | None, namespace.checkpoint_identity)
         if identity is None:
@@ -700,6 +709,7 @@ def _sql_engine_from_environment() -> DuckDbSqlEngine | None:
 
 
 def _serve() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     if os.environ.get("RONIN_SERVER_PROFILE", "single") == "local-composed":
         return _serve_local_composed()
     storage_backend = os.environ.get("RONIN_STORAGE_BACKEND", "sqlite").strip().lower()

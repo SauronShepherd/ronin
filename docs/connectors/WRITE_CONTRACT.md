@@ -1,0 +1,11 @@
+# Connector sink write contract
+
+Ronin connector writes are opt-in. A connector must advertise `write=true` and expose a callable `write` method before `ConnectorRegistry.write` will invoke it. A request for `transactional=true` requires both `transactional_write=true` and a callable `transactional_write` method. Missing or inconsistent capabilities fail closed before the adapter is called; Ronin does not fall back from a transactional request to an ordinary write.
+
+Every call carries a non-empty, trimmed idempotency key (at most 1024 UTF-8 bytes). A retry of the same logical operation must reuse that key. Adapters must not invent a new key on retry. The returned `ConnectorCommitResult` binds that key to a commit ID, output ID, SHA-256 output digest, transaction mode, provider-enforced idempotency declaration, and delivery semantics. Ronin rejects missing receipts, altered keys, mismatched transaction mode, malformed digests, and an `exactly_once` claim without provider-enforced idempotency.
+
+`transactional_write` means the adapter reports an atomic provider transaction for the target write. It does not, by itself, prove exactly-once effects across a lost response or a Ronin process crash. An adapter may report `exactly_once` only when the provider atomically enforces the supplied idempotency key against the output and the receipt. Otherwise it reports `at_least_once`; the caller must treat a timeout after sending as an unknown outcome and retry with the same key or reconcile by that key. Ronin does not automatically retry an external write.
+
+No built-in external connector currently advertises write capability. That is deliberate until each adapter has a provider-specific implementation and conformance tests for duplicate keys, changed payload under the same key, transaction rollback, and response loss. The content-addressed `ArtifactDestinationWriter` used by ingestion sync is a local artifact destination, not a provider connector and not evidence that external connector writeback is supported.
+
+This contract is currently a Python connector capability. It does not expose a public HTTP write endpoint; any future route must add tenant authorization, secret-reference checks, audit evidence, and bounded job execution before connecting this sink contract to Studio or the SDK.

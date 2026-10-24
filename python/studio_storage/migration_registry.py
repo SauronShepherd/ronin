@@ -35,7 +35,6 @@ STORAGE_MIGRATION_DOMAINS = (
     MigrationDomain("quality", ("catalog",)),
     MigrationDomain("scheduler", ("workspaces",)),
     MigrationDomain("audit", ("workspaces",)),
-    MigrationDomain("genai", ("catalog",)),
     MigrationDomain("ml", ("catalog",)),
 )
 
@@ -48,7 +47,6 @@ _SCHEMA_TABLES = {
     "quality": "quality_schema_migrations",
     "scheduler": "scheduler_schema_migrations",
     "audit": "audit_schema_migrations",
-    "genai": "genai_schema_migrations",
     "ml": "ml_schema_migrations",
 }
 _SUPPORTED_VERSIONS = {
@@ -60,7 +58,6 @@ _SUPPORTED_VERSIONS = {
     "quality": 1,
     "scheduler": 2,
     "audit": 1,
-    "genai": 3,
     "ml": 2,
 }
 
@@ -145,7 +142,6 @@ def migrate_storage(connection: sqlite3.Connection, *, now: Any) -> tuple[str, .
     from studio_storage.catalog import migrate_catalog
     from studio_storage.connections import migrate_connections
     from studio_storage.environments import migrate_environments
-    from studio_storage.genai import migrate_genai
     from studio_storage.ml import migrate_ml
     from studio_storage.ontology import migrate_ontology
     from studio_storage.quality import migrate_quality
@@ -161,7 +157,6 @@ def migrate_storage(connection: sqlite3.Connection, *, now: Any) -> tuple[str, .
         "quality": migrate_quality,
         "scheduler": migrate_scheduler,
         "audit": migrate_audit,
-        "genai": migrate_genai,
         "ml": migrate_ml,
     }
     order = migration_order(STORAGE_MIGRATION_DOMAINS)

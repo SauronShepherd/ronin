@@ -4,9 +4,11 @@
 **Supersedes for release gating:** `V01_SCOPE.md`  
 **Does not erase:** the v0.1 execution foundation; that work becomes the execution/control-plane substrate of the larger platform.
 
+**Scope amendment (2026-10-24):** Ronin Public v1 is single-operator. Multi-user identity and administration belong to Ronin Pro. Public v1 has no in-product GenAI/model-provider invocation, RAG, or agent runtime; Ronin coding-agent skills are installed for agents to consume externally. P9 is excluded from Public v1 release gating.
+
 ## 1. Release principle
 
-Ronin MUST NOT present a first public product release as complete until it is a coherent, self-hostable Data + AI operating platform rather than only a durable notebook runner.
+Ronin MUST NOT present a first public product release as complete until it is a coherent, self-hostable data and classical ML platform rather than only a durable notebook runner.
 
 The first public release is **Ronin Public v1**. The existing `0.1.0a*` line is an engineering alpha and foundation milestone, not the product-completeness gate.
 
@@ -18,7 +20,7 @@ Ronin does not promise fictional byte-for-byte compatibility with every propriet
 
 ## 2. Product identity
 
-Ronin is a professional, free, open-source and self-hostable **Data + AI OS platform**.
+Ronin is a professional, free, open-source and self-hostable **Data + AI/ML platform**.
 
 It combines in one product:
 
@@ -29,13 +31,12 @@ It combines in one product:
 5. catalog, lineage, governance, ontology and knowledge graph;
 6. data quality and contracts;
 7. AI/ML experimentation, registry, evaluation and serving;
-8. GenAI/RAG/agent development and evaluation;
-9. graph intelligence and provider-neutral graph execution;
-10. semantic models, metrics and dashboards;
-11. real-time/streaming data processing and triggers;
-12. observability, alerts, budgets and FinOps;
-13. migration/import/export adapters for major data/AI platforms;
-14. CLI, HTTP API, Python SDK and a web Studio over the same contracts.
+8. graph intelligence and provider-neutral graph execution;
+9. semantic models, metrics and dashboards;
+10. real-time/streaming data processing and triggers;
+11. observability, alerts, budgets and FinOps;
+12. migration/import/export adapters for major data/AI platforms;
+13. CLI, HTTP API, Python SDK and a web Studio over the same contracts.
 
 ## 3. Existing foundation retained
 
@@ -183,19 +184,9 @@ Public v1 MUST provide a usable AI/ML lifecycle:
 - HTTP serving contract or pluggable serving adapter;
 - lineage from data -> run -> model -> deployment.
 
-### P9 — GenAI, RAG and agents
+### P9 — GenAI, RAG and agents (excluded from Public v1)
 
-Because the product claims Data + AI platform scope, Public v1 MUST include a bounded but real GenAI surface:
-
-- model/provider registry;
-- prompt assets and versions;
-- embeddings and vector-index abstraction;
-- retrieval pipeline;
-- RAG evaluation datasets and metrics;
-- tool/function registry;
-- agent/workflow execution with explicit permissions;
-- token/latency/cost telemetry;
-- no secret values in traces by default.
+Public v1 MUST NOT ship in-product generative model/provider invocation, prompts, embeddings, vector indexes, retrieval, RAG evaluation, tool registries, or agent execution. Ronin coding-agent skills are external instructions consumed by coding agents; they do not add a model runtime, provider connection, API, Studio surface, or agent execution capability to Ronin. This capability family is excluded from the Public v1 progress denominator and release gate.
 
 ### P10 — Semantic models, metrics and dashboards
 
@@ -234,7 +225,6 @@ Required telemetry:
 - CPU/memory/storage/network evidence when available;
 - rows/bytes processed;
 - model serving/request metrics;
-- GenAI token usage;
 - scheduler queue/lag;
 - connector freshness/lag;
 - quality failures;
@@ -244,20 +234,18 @@ Required controls:
 
 - alert rules with thresholds and state transitions;
 - notification adapter contract;
-- budgets by workspace/project/team/tag;
+- budgets by workspace/project/tag;
 - cost allocation tags;
 - anomaly hooks;
 - expensive-run/resource views;
 - cost forecast hook;
 - policy actions such as warn, block new work, or require approval.
 
-### P13 — Security and governance
+### P13 — Security and governance (single-operator Public v1)
 
-Public v1 MUST provide:
+Public v1 MUST provide a secure local/single-operator profile:
 
-- OIDC/OAuth2-compatible authentication for multi-user deployments;
-- project/workspace RBAC or typed-grant equivalent with named roles;
-- service identities;
+- authenticated control-plane access;
 - secret resolver abstraction;
 - audit log;
 - data sensitivity/classification metadata;
@@ -267,15 +255,17 @@ Public v1 MUST provide:
 - private vulnerability-reporting channel before release;
 - dependency/license/SBOM/provenance release evidence.
 
+OIDC, user/group provisioning, workspace membership administration, and multi-user role management are Ronin Pro capabilities and MUST NOT be release requirements for Public v1.
+
 ### P14 — Deployment and operations
 
 Required supported deployment profiles:
 
 1. local developer mode;
 2. Docker/Compose single-host reference deployment;
-3. Kubernetes reference deployment for multi-user/server operation.
 
-SQLite MAY remain for local development. Public multi-user server deployment MUST have a production metadata-store profile with transactional concurrency suitable for multiple workers.
+SQLite MAY remain for local development. Public v1 release qualification targets local and single-host Compose operation; multi-worker and multi-user deployment qualification belongs to Ronin Pro.
+Kubernetes server deployment is a Ronin Pro profile, not a Public v1 requirement.
 
 ## 5. Migration and portability requirement
 
@@ -298,13 +288,12 @@ The first public release MUST ship a coherent web Studio with at least these top
 - Notebooks / SQL;
 - Catalog;
 - Ontology / Knowledge Graph;
-- AI/ML Lab;
-- GenAI Lab;
+- Machine Learning Studio;
 - Models / Deployments;
 - Dashboards;
 - Monitoring & Alerts;
 - Cost Control;
-- Administration.
+- Settings.
 
 All UI mutations MUST be representable through documented backend APIs. The UI is not a second semantic implementation.
 
@@ -318,12 +307,12 @@ The UI MUST NOT use red, green or blue as the dominant brand color. Those colors
 
 Ronin Public v1 may be declared only when all of the following are true:
 
-- P1-P14 each have an end-to-end supported path;
+- each active Public v1 family (P1-P8 and P10-P14) has an end-to-end supported path;
 - the web Studio exposes the mandatory product surfaces;
 - the canonical Ronin Bundle round-trips without losing Ronin-native semantics;
 - each certified vendor migration profile has golden fixtures and migration reports with no undisclosed loss;
 - the four vendor profiles can be imported into Ronin and run through their published acceptance journeys;
-- security, audit, secrets and multi-user authorization are enabled in the server profile;
+- single-operator authentication, audit, secret handling and least-privilege checks are enabled in the server profile;
 - monitoring, alerts and cost records are visible for scheduled workloads;
 - the scheduler survives process restart without corrupting run state;
 - lakehouse/SQL, ML, ontology/KG, dashboards and streaming have working reference journeys;

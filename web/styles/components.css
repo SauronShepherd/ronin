@@ -122,7 +122,7 @@ tr:hover td, .data-table tr:hover td { background: rgb(234 216 196 / 40%); }
 .status.blue { color: #76543d; background: #efe3d4; }
 .status.amber { color: #98601a; background: #f8e9d0; }
 .status.red { color: #8d4238; background: #f4dfda; }
-code { background: var(--surface-muted); border-color: var(--line); color: var(--copper); }
+code { background: var(--surface-muted); border-color: var(--line); color: var(--cocoa); }
 
 /* Second visual pass: shared rhythm, section headers and deliberate states. */
 .panel > h2:first-child, .panel > h3:first-child, .card > h2:first-child, .card > h3:first-child {

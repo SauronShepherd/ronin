@@ -21,7 +21,6 @@ def test_current_project_respects_architecture_contracts() -> None:
 
 def test_public_v1_packages_import_cleanly() -> None:
     packages = tuple(PROJECT_DEPENDENCIES) + (
-        "studio_ai_studio",
         "studio_data_engineering",
         "studio_query_engine",
     )
@@ -45,7 +44,6 @@ def test_matrix_contains_exactly_the_v01_packages() -> None:
         "studio_connectors",
         "studio_graph",
         "studio_finops",
-        "studio_genai",
         "studio_lakehouse",
         "studio_migration",
         "studio_ml",

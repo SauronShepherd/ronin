@@ -240,29 +240,6 @@ def _operator_payload(node: Mapping[str, object]) -> tuple[str, dict[str, object
             "pipeline_digest": pipeline_digest,
             "dataset_ref": dataset_ref,
         }
-    if name == "genai.run":
-        provider_id = params.get("provider_id")
-        model_id = params.get("model_id")
-        prompt_ref = params.get("prompt_ref")
-        max_tokens = params.get("max_tokens", 1024)
-        if not isinstance(provider_id, str) or not provider_id.strip():
-            raise ValueError("genai.run provider_id must be non-empty")
-        if not isinstance(model_id, str) or not model_id.strip():
-            raise ValueError("genai.run model_id must be non-empty")
-        if not isinstance(prompt_ref, str) or not prompt_ref.strip():
-            raise ValueError("genai.run prompt_ref must be non-empty")
-        if (
-            not isinstance(max_tokens, int)
-            or isinstance(max_tokens, bool)
-            or not 1 <= max_tokens <= 100000
-        ):
-            raise ValueError("genai.run max_tokens must be between 1 and 100000")
-        return "genai.run.v1", {
-            "provider_id": provider_id,
-            "model_id": model_id,
-            "prompt_ref": prompt_ref,
-            "max_tokens": max_tokens,
-        }
     raise UnsupportedTaskExecution(f"no durable execution adapter for {name}@{version}")
 
 

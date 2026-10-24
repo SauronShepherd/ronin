@@ -21,7 +21,7 @@ For the current alpha stage:
 
 The current response shapes are exactly those in `api/openapi-v1.json`:
 
-- `Job`: `id`, `state`, `failure_code`;
+- `Job`: `id`, `project_id`, `state`, `created_at`, `updated_at`, `failure_code`;
 - `JobPage`: `items`, `next_cursor`;
 - `JobEvent`: `sequence`, `attempt_id`, `attempt_sequence`, `kind`, `message`, `occurred_at`;
 - `JobEventPage`: `items`, `next_since`;
@@ -95,6 +95,24 @@ scalars: UTC timestamps are RFC 3339 strings with `Z`, dates/times use ISO 8601,
 decimals and UUID-like values are strings, and binary values are standard Base64
 strings. Non-finite numeric results are rejected, and raw engine diagnostics are
 never returned to clients.
+
+`POST /v1/platform/connectors/discover` accepts optional `page_size` and opaque
+`cursor` fields. Its response always contains `schema`, `items`, `count`,
+`has_more`, and `next_cursor`; `source_version` is present only when supplied by
+the provider. The default page size is at most 1,000 and the requested size may
+not exceed the connector's advertised maximum. Cursors are bound to the
+authorized workspace, connection reference, resolved connection identity, and
+connector. A cursor from another source scope, an unsupported cursor version,
+or an invalid provider continuation value fails closed. A connector that claims
+discovery but cannot produce bounded pages is unavailable through this public
+route rather than being allowed to materialize an unbounded response.
+
+Ingestion checkpoint storage keys preserve the legacy `workspace/identity`
+form only when neither component contains `/`. If either component contains a
+slash, the adapter derives a deterministic `ronin:v2` key from the structured
+pair, so distinct workspace/identity pairs cannot alias. Existing slash-bearing
+legacy checkpoints are not silently reused; incremental planning fails as
+missing until an explicit migration or authorized remap is implemented.
 
 The request body is parsed through the shared `ronin/canonical-json/v1` decoder before authorization-sensitive request handling and before idempotency identity is computed. Duplicate object members and non-finite JSON numbers are therefore rejected with `400 invalid_request` instead of being interpreted with implementation-specific last-wins or non-standard numeric semantics. This is an alpha validation tightening: payloads containing duplicate members or non-finite numbers that older code may have accepted are no longer valid. Canonical bytes and request digests for valid v1 inputs are unchanged.
 

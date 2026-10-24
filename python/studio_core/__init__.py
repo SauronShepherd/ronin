@@ -156,7 +156,6 @@ from .quality import (
     SchemaCompatibility,
 )
 from .reproducible_manifest import REPRODUCIBLE_MANIFEST_SCHEMA, ReproducibleManifest
-from .role_assignments import Principal, PrincipalKind, RoleAssignment
 from .roles import RoleDefinition, RoleName, role_definition, role_names
 from .rql import RqlQuery, RqlResult, execute_rql, parse_rql
 from .runtime_profiles import (
@@ -359,9 +358,6 @@ __all__ = (
     "RoleName",
     "role_definition",
     "role_names",
-    "Principal",
-    "PrincipalKind",
-    "RoleAssignment",
     "resolve_runtime",
     "resolve_link_type",
     "materialize_object_type",

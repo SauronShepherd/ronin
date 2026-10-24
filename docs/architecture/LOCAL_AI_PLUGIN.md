@@ -1,5 +1,7 @@
 # Ronin AI Studio plugin
 
+> **Withdrawn from Ronin Public v1 (2026-10-24).** Historical design only; do not wire or expose a model-provider runtime in the Public product. Coding-agent skills remain external.
+
 ## Decision
 
 `studio_ai_studio` is the community plugin for discovering and exposing local

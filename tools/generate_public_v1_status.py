@@ -45,37 +45,46 @@ def synchronize(sha: str, observed_at: str) -> None:
     MARKDOWN.write_text(updated, encoding="utf-8")
 
 
-def check() -> None:
+def check(reference_sha: str | None = None) -> None:
     machine_sha, markdown_sha = _read_observed()
     if machine_sha != markdown_sha:
         raise SystemExit("Public v1 status ledgers disagree on observed source SHA")
-    head = subprocess.run(  # noqa: S603, S607 - fixed Git executable and validated SHA inputs
-        ["git", "rev-parse", "HEAD"],  # noqa: S607 - fixed Git executable
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
-    if not SHA_PATTERN.fullmatch(head):
-        raise SystemExit("Git returned an invalid HEAD SHA")
+    reference_name = "HEAD" if reference_sha is None else "reference"
+    if reference_sha is None:
+        reference_sha = subprocess.run(  # noqa: S603, S607 - fixed Git executable
+            ["git", "rev-parse", "HEAD"],  # noqa: S607 - fixed Git executable
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    if not SHA_PATTERN.fullmatch(reference_sha):
+        raise SystemExit("Git returned an invalid status reference SHA")
     distance = subprocess.run(  # noqa: S603, S607 - fixed Git executable and validated SHA inputs
-        ["git", "rev-list", "--count", f"{machine_sha}..{head}"],  # noqa: S607
+        [  # noqa: S607 - fixed Git executable and validated SHA inputs
+            "git",
+            "rev-list",
+            "--count",
+            "--no-merges",
+            f"{machine_sha}..{reference_sha}",
+        ],
         cwd=ROOT,
         capture_output=True,
         text=True,
         check=True,
     ).stdout.strip()
     ancestor = subprocess.run(  # noqa: S603, S607 - fixed Git executable and validated SHA inputs
-        ["git", "merge-base", "--is-ancestor", machine_sha, head],  # noqa: S607
+        ["git", "merge-base", "--is-ancestor", machine_sha, reference_sha],  # noqa: S607
         cwd=ROOT,
         capture_output=True,
         text=True,
     )
-    if machine_sha != head and (
+    if machine_sha != reference_sha and (
         ancestor.returncode != 0 or not distance.isdigit() or int(distance) > MAX_LEDGER_AGE_COMMITS
     ):
         raise SystemExit(
-            f"status ledger is stale: records {machine_sha[:12]}, HEAD is {head[:12]} "
+            f"status ledger is stale: records {machine_sha[:12]}, "
+            f"{reference_name} is {reference_sha[:12]} "
             f"({distance} commits behind)"
         )
 
@@ -84,13 +93,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("sha", nargs="?")
     parser.add_argument("--check", action="store_true")
+    parser.add_argument("--reference-sha")
     parser.add_argument(
         "--observed-at",
         default=datetime.now(UTC).isoformat(timespec="seconds"),
     )
     args = parser.parse_args()
     if args.check:
-        check()
+        check(args.reference_sha)
         return 0
     if args.sha is None:
         parser.error("sha is required unless --check is used")

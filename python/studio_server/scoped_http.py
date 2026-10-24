@@ -109,6 +109,9 @@ class _ReadinessHandler(_Handler):
                 return
             if query.get("project") is None:
                 server = cast(RoninHTTPServer, self.server)
+                if not server.authorized(self.headers.get("Authorization")):
+                    super().do_GET()
+                    return
                 if not server.permits_unfiltered_project_list():
                     self._error(
                         HTTPStatus.FORBIDDEN,

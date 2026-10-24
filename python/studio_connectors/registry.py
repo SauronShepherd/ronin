@@ -9,7 +9,12 @@ from typing import cast
 from studio_core import AssetHandle, ConnectionDefinition, ConnectorCapabilities
 from studio_storage.secrets import SecretResolver
 
-from .contracts import Connector, ConnectorReadResult
+from .contracts import (
+    Connector,
+    ConnectorCapabilityError,
+    ConnectorCommitResult,
+    ConnectorReadResult,
+)
 from .sync import IngestionSyncDefinition, IngestionSyncPlan, plan_sync
 
 
@@ -133,6 +138,74 @@ class ConnectorRegistry:
 
     def ids(self) -> tuple[str, ...]:
         return tuple(sorted(self._by_id))
+
+    def write(
+        self,
+        connector_id: str,
+        connection: ConnectionDefinition,
+        asset: AssetHandle,
+        result: ConnectorReadResult,
+        secrets: SecretResolver,
+        *,
+        idempotency_key: str,
+        transactional: bool = False,
+    ) -> ConnectorCommitResult:
+        """Perform an explicitly advertised sink operation, failing closed by default."""
+        if (
+            not isinstance(idempotency_key, str)
+            or not idempotency_key
+            or idempotency_key != idempotency_key.strip()
+            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in idempotency_key)
+            or len(idempotency_key.encode("utf-8")) > 1024
+        ):
+            raise ValueError(
+                "idempotency_key must be non-empty, trimmed text of at most 1024 bytes"
+            )
+        if not isinstance(transactional, bool):
+            raise ValueError("transactional must be boolean")
+
+        connector = self.require(connector_id)
+        if connection.connector_id != connector_id:
+            raise ConnectorCapabilityError("connection is bound to a different connector")
+        if asset.connection_id != connection.id:
+            raise ConnectorCapabilityError("asset is bound to a different connection")
+        capabilities = connector.descriptor.capabilities
+        if transactional:
+            if not capabilities.transactional_write:
+                raise ConnectorCapabilityError(
+                    f"connector {connector_id} does not advertise transactional writes"
+                )
+            method_name = "transactional_write"
+        else:
+            if not capabilities.write:
+                raise ConnectorCapabilityError(
+                    f"connector {connector_id} does not advertise writes"
+                )
+            method_name = "write"
+
+        method = getattr(connector, method_name, None)
+        if not callable(method):
+            raise ConnectorCapabilityError(
+                f"connector {connector_id} advertises {method_name} but does not implement it"
+            )
+        receipt = method(
+            connection,
+            asset,
+            result,
+            secrets,
+            idempotency_key=idempotency_key,
+        )
+        if not isinstance(receipt, ConnectorCommitResult):
+            raise ConnectorCapabilityError(
+                f"connector {connector_id} returned no validated commit receipt"
+            )
+        if receipt.idempotency_key != idempotency_key:
+            raise ConnectorCapabilityError("connector commit receipt changed the idempotency key")
+        if receipt.transactional is not transactional:
+            raise ConnectorCapabilityError(
+                "connector commit receipt does not match the requested mode"
+            )
+        return receipt
 
     def capability_records(self) -> tuple[ConnectorCapabilityRecord, ...]:
         return tuple(

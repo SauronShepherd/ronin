@@ -1,11 +1,18 @@
 """Open-format lakehouse primitives for Ronin Public v1."""
 
 from .bundle import export_table_metadata_bundle, import_table_metadata_bundle
-from .delta import DeltaCompatibilityProfile, DeltaDependencyError, DeltaTableStore
+from .delta import (
+    DeltaCapabilityError,
+    DeltaCompatibilityProfile,
+    DeltaDependencyError,
+    DeltaTableStore,
+)
 from .iceberg import (
     IcebergCapabilityError,
     IcebergCompatibilityProfile,
     IcebergDependencyError,
+    IcebergPartialWriteError,
+    IcebergProviderError,
     IcebergTableStore,
 )
 from .parquet import (
@@ -27,12 +34,15 @@ from .tables import (
 )
 
 __all__ = (
+    "DeltaCapabilityError",
     "DeltaDependencyError",
     "DeltaCompatibilityProfile",
     "DeltaTableStore",
     "IcebergDependencyError",
     "IcebergCapabilityError",
     "IcebergCompatibilityProfile",
+    "IcebergPartialWriteError",
+    "IcebergProviderError",
     "IcebergTableStore",
     "OpenTableField",
     "OpenTableIdentifier",

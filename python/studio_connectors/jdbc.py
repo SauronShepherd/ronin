@@ -130,7 +130,9 @@ class JdbcConnector:
     """Execute portable bounded reads through a deployment-provided DB-API bridge."""
 
     descriptor = ConnectorDescriptor(
-        "jdbc", 1, ConnectorCapabilities(discover=True, read=True, incremental=True)
+        "jdbc",
+        1,
+        ConnectorCapabilities(discover=True, read=True, incremental=True, max_page_size=10_000),
     )
 
     def __init__(

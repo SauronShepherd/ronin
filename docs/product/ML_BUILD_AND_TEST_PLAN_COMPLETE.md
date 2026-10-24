@@ -1,5 +1,11 @@
 # Plan completo de implementación y validación de Machine Learning Studio
 
+> **Alcance rebaselined (2026-10-24):** Este documento conserva instrucciones
+> históricas de GenAI que ya no se ejecutan. Ronin Public v1 no incluye modelos
+> generativos, RAG ni agentes; los pasos de esas capacidades están retirados.
+> El alcance actual y sus pruebas están definidos por
+> [`PUBLIC_V1_BUILD_PLAN.md`](PUBLIC_V1_BUILD_PLAN.md).
+
 ## 1. Objetivo y definición de terminado
 
 Este documento describe cómo llevar el alcance provider-neutral de Machine Learning
@@ -514,13 +520,9 @@ tener una justificación escrita; no se debe bajar el umbral para silenciarlo.
 ### 6.1 Configuración
 
 ```powershell
-# compose.yaml valida también las variables de los perfiles opcionales. Define
-# valores locales antes de pedir la configuración, aunque no vayas a iniciar AI.
+# Compose sólo valida los servicios del perfil Public de PostgreSQL.
 $env:RONIN_TOKEN = "local-test-token"
 $env:RONIN_RUNNER_BROKER_TOKEN = "local-runner-token"
-$env:RONIN_AI_MODEL_DIR = (Join-Path $PWD ".cache\models")
-$env:RONIN_AI_VLLM_MODEL = "qualification-unused"
-New-Item -ItemType Directory -Force $env:RONIN_AI_MODEL_DIR | Out-Null
 docker compose -f compose.yaml config
 docker info
 ```
@@ -799,16 +801,13 @@ El recuento de tests, skips y warnings debe ser coherente entre las diez pasadas
 ### 13.7 Docker y stores externos
 
 ```powershell
-# Valores mínimos para que Compose pueda interpolar todos los perfiles.
+# Valores mínimos para que Compose pueda interpolar el perfil Public.
 $env:RONIN_TOKEN = "local-test-token"
 $env:RONIN_RUNNER_BROKER_TOKEN = "local-runner-token"
-$env:RONIN_AI_MODEL_DIR = (Join-Path $PWD ".cache\models")
-$env:RONIN_AI_VLLM_MODEL = "qualification-unused"
 $env:POSTGRES_DB = "ronin_qualification"
 $env:POSTGRES_USER = "ronin"
 $env:POSTGRES_PASSWORD = "ronin"
 $env:RONIN_POSTGRES_PORT = "5432"
-New-Item -ItemType Directory -Force $env:RONIN_AI_MODEL_DIR | Out-Null
 docker info 2>&1 | Tee-Object (Join-Path $Evidence "docker-info.log")
 docker compose -f compose.yaml config 2>&1 |
   Tee-Object (Join-Path $Evidence "compose-config.log")

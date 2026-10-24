@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+import time
 from collections.abc import Mapping
 from dataclasses import dataclass
 from importlib import import_module
@@ -14,6 +16,10 @@ from .tables import OpenTableField, OpenTableIdentifier, OpenTableState, TableWr
 
 class DeltaDependencyError(RuntimeError):
     """Raised when the optional Delta dependency is unavailable."""
+
+
+class DeltaCapabilityError(RuntimeError):
+    """Raised when the configured Delta runtime cannot provide bounded reads."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,10 +124,25 @@ class DeltaTableStore:
         *,
         columns: tuple[str, ...] | None = None,
         limit: int = 10_000,
+        max_bytes: int = 64 * 1024 * 1024,
+        max_elapsed_seconds: float = 300.0,
         version: str | None = None,
     ) -> tuple[dict[str, object], ...]:
-        if limit < 1 or limit > 100_000:
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 100_000:
             raise ValueError("Delta read limit must be between 1 and 100000")
+        if (
+            not isinstance(max_bytes, int)
+            or isinstance(max_bytes, bool)
+            or not 1 <= max_bytes <= 512 * 1024 * 1024
+        ):
+            raise ValueError("Delta max_bytes must be between 1 and 536870912")
+        if (
+            not isinstance(max_elapsed_seconds, (int, float))
+            or isinstance(max_elapsed_seconds, bool)
+            or not math.isfinite(max_elapsed_seconds)
+            or not 0 < max_elapsed_seconds <= 3600
+        ):
+            raise ValueError("Delta max_elapsed_seconds must be finite and in (0, 3600]")
         if columns is not None:
             if any(not column or column != column.strip() for column in columns):
                 raise ValueError("Delta projection columns must be non-empty and trimmed")
@@ -139,10 +160,40 @@ class DeltaTableStore:
             kwargs["version"] = parsed_version
         deltalake = _deltalake()
         table = deltalake.DeltaTable(str(path), **kwargs)
-        arrow = table.to_pyarrow_table(columns=list(columns) if columns is not None else None)
-        if arrow.num_rows > limit:
-            raise ValueError("Delta result exceeds requested row limit")
-        return tuple(dict(row) for row in arrow.to_pylist())
+        to_dataset = getattr(table, "to_pyarrow_dataset", None)
+        if not callable(to_dataset):
+            raise DeltaCapabilityError(
+                "configured Delta runtime does not expose streaming dataset reads"
+            )
+        dataset = to_dataset()
+        scanner = dataset.scanner(
+            columns=list(columns) if columns is not None else None,
+            batch_size=min(1024, limit + 1),
+            batch_readahead=1,
+            fragment_readahead=1,
+            use_threads=False,
+        )
+        deadline = time.monotonic() + max_elapsed_seconds
+        total_bytes = 0
+        rows: list[dict[str, object]] = []
+        batches = iter(scanner.to_batches())
+        while len(rows) <= limit:
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Delta read exceeded its time budget")
+            try:
+                batch = next(batches)
+            except StopIteration:
+                break
+            batch_bytes = int(batch.nbytes)
+            if batch_bytes < 0 or total_bytes + batch_bytes > max_bytes:
+                raise ValueError("Delta result exceeds configured byte budget")
+            total_bytes += batch_bytes
+            remaining = limit + 1 - len(rows)
+            selected = batch.slice(0, remaining)
+            rows.extend(dict(row) for row in selected.to_pylist())
+            if len(rows) > limit:
+                raise ValueError("Delta result exceeds requested row limit")
+        return tuple(rows)
 
     def inspect(self, identifier: OpenTableIdentifier) -> OpenTableState:
         deltalake = _deltalake()
@@ -168,4 +219,9 @@ class DeltaTableStore:
         rmtree(path)
 
 
-__all__ = ("DeltaCompatibilityProfile", "DeltaDependencyError", "DeltaTableStore")
+__all__ = (
+    "DeltaCapabilityError",
+    "DeltaCompatibilityProfile",
+    "DeltaDependencyError",
+    "DeltaTableStore",
+)

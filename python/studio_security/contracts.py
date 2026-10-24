@@ -1,15 +1,13 @@
-"""Multi-user identity, actor and workspace RBAC contracts for Ronin Public v1."""
+"""Single-operator authorization and audit contracts for Ronin Public v1."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, TypeAlias, cast
+from typing import Literal, TypeAlias
 
 from studio_core import WorkspaceId
 
 PrincipalKind: TypeAlias = Literal["user", "service"]
-SubjectKind: TypeAlias = Literal["principal", "group"]
-WorkspaceRole: TypeAlias = Literal["admin", "operator", "editor", "viewer"]
 Permission: TypeAlias = Literal[
     "workspace.read",
     "workspace.write",
@@ -31,8 +29,6 @@ Permission: TypeAlias = Literal[
     "quality.write",
     "ml.read",
     "ml.write",
-    "genai.read",
-    "genai.write",
     "semantic.read",
     "semantic.write",
     "stream.read",
@@ -66,8 +62,6 @@ PERMISSIONS: frozenset[str] = frozenset(
         "quality.write",
         "ml.read",
         "ml.write",
-        "genai.read",
-        "genai.write",
         "semantic.read",
         "semantic.write",
         "stream.read",
@@ -79,56 +73,6 @@ PERMISSIONS: frozenset[str] = frozenset(
         "audit.read",
     }
 )
-
-ROLE_PERMISSIONS: dict[WorkspaceRole, frozenset[Permission]] = {
-    "viewer": frozenset(
-        {
-            "workspace.read",
-            "project.read",
-            "git.read",
-            "job.read",
-            "scheduler.read",
-            "connection.read",
-            "catalog.read",
-            "quality.read",
-            "ml.read",
-            "genai.read",
-            "semantic.read",
-            "stream.read",
-            "observability.read",
-            "finops.read",
-        }
-    ),
-    "operator": frozenset(
-        {
-            "workspace.read",
-            "project.read",
-            "git.read",
-            "job.read",
-            "job.submit",
-            "job.cancel",
-            "scheduler.read",
-            "scheduler.write",
-            "connection.read",
-            "catalog.read",
-            "quality.read",
-            "ml.read",
-            "genai.read",
-            "semantic.read",
-            "stream.read",
-            "stream.write",
-            "observability.read",
-            "finops.read",
-            "secret.use",
-        }
-    ),
-    "editor": frozenset(
-        cast(Permission, permission)
-        for permission in PERMISSIONS
-        if permission not in {"workspace.admin", "audit.read"}
-    ),
-    "admin": frozenset(cast(Permission, permission) for permission in PERMISSIONS),
-}
 
 
 def _text(value: str, name: str) -> str:
@@ -143,17 +87,6 @@ class PrincipalId:
 
     def __post_init__(self) -> None:
         _text(self.value, "principal id")
-
-    def __str__(self) -> str:
-        return self.value
-
-
-@dataclass(frozen=True, order=True, slots=True)
-class GroupId:
-    value: str
-
-    def __post_init__(self) -> None:
-        _text(self.value, "group id")
 
     def __str__(self) -> str:
         return self.value
@@ -180,38 +113,11 @@ class Principal:
 
 
 @dataclass(frozen=True, slots=True)
-class Group:
-    id: GroupId
-    name: str
-
-    def __post_init__(self) -> None:
-        _text(self.name, "group name")
-
-
-@dataclass(frozen=True, order=True, slots=True)
-class RoleBinding:
-    workspace_id: WorkspaceId
-    subject_kind: SubjectKind
-    subject_id: str
-    role: WorkspaceRole
-
-    def __post_init__(self) -> None:
-        if self.subject_kind not in {"principal", "group"}:
-            raise ValueError("role binding subject_kind must be principal or group")
-        _text(self.subject_id, "role binding subject_id")
-        if self.role not in {"admin", "operator", "editor", "viewer"}:
-            raise ValueError("unsupported workspace role")
-
-
-@dataclass(frozen=True, slots=True)
 class Actor:
     principal: Principal
-    groups: tuple[GroupId, ...] = ()
-    auth_method: str = "oidc"
+    auth_method: str = "static"
 
     def __post_init__(self) -> None:
-        groups = tuple(sorted(set(self.groups)))
-        object.__setattr__(self, "groups", groups)
         _text(self.auth_method, "actor auth_method")
         if not self.principal.active:
             raise ValueError("inactive principal cannot become an actor")
@@ -234,20 +140,20 @@ class PolicyRequirement:
 class PolicyDecision:
     allowed: bool
     reason: str
-    matched_roles: tuple[WorkspaceRole, ...] = ()
+    matched_permissions: tuple[Permission, ...] = ()
 
     def __post_init__(self) -> None:
         _text(self.reason, "policy decision reason")
-        roles = tuple(sorted(set(self.matched_roles)))
-        object.__setattr__(self, "matched_roles", roles)
-        if self.allowed and not roles:
-            raise ValueError("allowed policy decision requires a matched role")
+        if any(permission not in PERMISSIONS for permission in self.matched_permissions):
+            raise ValueError("policy decision contains an unsupported permission")
+        permissions = tuple(sorted(set(self.matched_permissions)))
+        object.__setattr__(self, "matched_permissions", permissions)
+        if self.allowed and not permissions:
+            raise ValueError("allowed policy decision requires a matched permission")
 
 
 __all__ = (
     "Actor",
-    "Group",
-    "GroupId",
     "PERMISSIONS",
     "Permission",
     "PolicyDecision",
@@ -255,8 +161,4 @@ __all__ = (
     "Principal",
     "PrincipalId",
     "PrincipalKind",
-    "ROLE_PERMISSIONS",
-    "RoleBinding",
-    "SubjectKind",
-    "WorkspaceRole",
 )

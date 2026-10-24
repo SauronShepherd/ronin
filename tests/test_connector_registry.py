@@ -1,19 +1,35 @@
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+from typing import cast
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
 import studio_connectors.http_json as http_json
 from studio_connectors import (
+    ConnectorCapabilityError,
+    ConnectorCommitResult,
+    ConnectorReadResult,
     ConnectorRegistry,
     HttpJsonConnector,
     PostgresConnector,
     S3JsonConnector,
     builtin_connector_registry,
 )
-from studio_connectors.http_json import _validate_endpoint_host, _validate_request_url
-from studio_core import AssetHandle, ConnectionDefinition, ConnectionId, SecretRef
+from studio_connectors.contracts import Connector
+from studio_connectors.http_json import (
+    _retry_after_delay,
+    _validate_endpoint_host,
+    _validate_request_url,
+)
+from studio_core import (
+    AssetHandle,
+    ConnectionDefinition,
+    ConnectionId,
+    ConnectorCapabilities,
+    ConnectorDescriptor,
+    SecretRef,
+)
 from studio_storage import EnvironmentSecretResolver
 
 
@@ -24,6 +40,223 @@ def test_builtin_connector_registry_is_explicit() -> None:
     assert registry.require("postgresql").descriptor.capabilities.discover
     with pytest.raises(KeyError):
         registry.require("unknown")
+
+
+def test_connector_write_fails_closed_for_read_only_and_incomplete_adapters() -> None:
+    connection = ConnectionDefinition(ConnectionId("sink"), "Sink", "test.sink")
+    asset = AssetHandle(connection.id, (), "output")
+    result = ConnectorReadResult((), ())
+    secrets = EnvironmentSecretResolver({})
+    registry = builtin_connector_registry()
+    read_only_connection = ConnectionDefinition(ConnectionId("source"), "HTTP", "http.json")
+    read_only_asset = AssetHandle(read_only_connection.id, (), "output")
+
+    with pytest.raises(ConnectorCapabilityError, match="does not advertise writes"):
+        registry.write(
+            "http.json",
+            read_only_connection,
+            read_only_asset,
+            result,
+            secrets,
+            idempotency_key="operation-1",
+        )
+    with pytest.raises(ConnectorCapabilityError, match="does not advertise transactional"):
+        registry.write(
+            "http.json",
+            read_only_connection,
+            read_only_asset,
+            result,
+            secrets,
+            idempotency_key="operation-1",
+            transactional=True,
+        )
+    with pytest.raises(ConnectorCapabilityError, match="different connector"):
+        registry.write(
+            "http.json",
+            connection,
+            asset,
+            result,
+            secrets,
+            idempotency_key="operation-1",
+        )
+    with pytest.raises(ValueError, match="idempotency_key"):
+        registry.write(
+            "http.json",
+            read_only_connection,
+            read_only_asset,
+            result,
+            secrets,
+            idempotency_key="operation\n1",
+        )
+
+    class IncompleteSink:
+        descriptor = ConnectorDescriptor("test.sink", 1, ConnectorCapabilities(write=True))
+
+        def discover(self, *_args: object, **_kwargs: object) -> tuple[object, ...]:
+            return ()
+
+        def read(self, *_args: object, **_kwargs: object) -> object:
+            return result
+
+    mismatched_asset = AssetHandle(ConnectionId("another-sink"), (), "output")
+    incomplete_registry = ConnectorRegistry((cast(Connector, IncompleteSink()),))
+    with pytest.raises(ConnectorCapabilityError, match="different connection"):
+        incomplete_registry.write(
+            "test.sink",
+            connection,
+            mismatched_asset,
+            result,
+            secrets,
+            idempotency_key="operation-1",
+        )
+
+    with pytest.raises(ConnectorCapabilityError, match="does not implement it"):
+        ConnectorRegistry((cast(Connector, IncompleteSink()),)).write(
+            "test.sink",
+            connection,
+            asset,
+            result,
+            secrets,
+            idempotency_key="operation-1",
+        )
+
+
+def test_connector_write_dispatches_and_validates_commit_receipts() -> None:
+    connection = ConnectionDefinition(ConnectionId("sink"), "Sink", "test.sink")
+    asset = AssetHandle(connection.id, (), "output")
+    result = ConnectorReadResult((), ())
+    secrets = EnvironmentSecretResolver({})
+
+    class Sink:
+        descriptor = ConnectorDescriptor(
+            "test.sink", 1, ConnectorCapabilities(write=True, transactional_write=True)
+        )
+        calls: list[tuple[str, str]] = []
+
+        def discover(self, *_args: object, **_kwargs: object) -> tuple[object, ...]:
+            return ()
+
+        def read(self, *_args: object, **_kwargs: object) -> object:
+            return result
+
+        def write(
+            self,
+            *_args: object,
+            idempotency_key: str,
+        ) -> ConnectorCommitResult:
+            self.calls.append(("write", idempotency_key))
+            return ConnectorCommitResult(
+                idempotency_key,
+                "commit-1",
+                "output-1",
+                "a" * 64,
+                transactional=False,
+                idempotency_enforced=True,
+                delivery_semantics="exactly_once",
+            )
+
+        def transactional_write(
+            self,
+            *_args: object,
+            idempotency_key: str,
+        ) -> ConnectorCommitResult:
+            self.calls.append(("transactional_write", idempotency_key))
+            return ConnectorCommitResult(
+                idempotency_key,
+                "commit-2",
+                "output-2",
+                "b" * 64,
+                transactional=True,
+                idempotency_enforced=True,
+                delivery_semantics="exactly_once",
+            )
+
+    sink = Sink()
+    registry = ConnectorRegistry((cast(Connector, sink),))
+    first = registry.write(
+        "test.sink",
+        connection,
+        asset,
+        result,
+        secrets,
+        idempotency_key="operation-1",
+    )
+    second = registry.write(
+        "test.sink",
+        connection,
+        asset,
+        result,
+        secrets,
+        idempotency_key="operation-2",
+        transactional=True,
+    )
+
+    assert first.delivery_semantics == "exactly_once"
+    assert first.transactional is False
+    assert second.transactional is True
+    assert sink.calls == [("write", "operation-1"), ("transactional_write", "operation-2")]
+
+
+def test_connector_write_rejects_unproven_exactly_once_and_wrong_receipt() -> None:
+    with pytest.raises(ValueError, match="provider-enforced idempotency"):
+        ConnectorCommitResult(
+            "operation-1",
+            "commit-1",
+            "output-1",
+            "a" * 64,
+            transactional=False,
+            idempotency_enforced=False,
+            delivery_semantics="exactly_once",
+        )
+    with pytest.raises(ValueError, match="control characters"):
+        ConnectorCommitResult(
+            "operation\n1",
+            "commit-1",
+            "output-1",
+            "a" * 64,
+            transactional=False,
+            idempotency_enforced=False,
+            delivery_semantics="at_least_once",
+        )
+
+    connection = ConnectionDefinition(ConnectionId("sink"), "Sink", "test.sink")
+    asset = AssetHandle(connection.id, (), "output")
+    read_result = ConnectorReadResult((), ())
+
+    class WrongReceiptSink:
+        descriptor = ConnectorDescriptor("test.sink", 1, ConnectorCapabilities(write=True))
+
+        def discover(self, *_args: object, **_kwargs: object) -> tuple[object, ...]:
+            return ()
+
+        def read(self, *_args: object, **_kwargs: object) -> object:
+            return read_result
+
+        def write(
+            self,
+            *_args: object,
+            idempotency_key: str,
+        ) -> ConnectorCommitResult:
+            del idempotency_key
+            return ConnectorCommitResult(
+                "different-key",
+                "commit-1",
+                "output-1",
+                "a" * 64,
+                transactional=False,
+                idempotency_enforced=False,
+                delivery_semantics="at_least_once",
+            )
+
+    with pytest.raises(ConnectorCapabilityError, match="changed the idempotency key"):
+        ConnectorRegistry((cast(Connector, WrongReceiptSink()),)).write(
+            "test.sink",
+            connection,
+            asset,
+            read_result,
+            EnvironmentSecretResolver({}),
+            idempotency_key="operation-1",
+        )
 
 
 def test_connector_registry_rejects_duplicate_ids() -> None:
@@ -427,6 +660,59 @@ def test_http_connector_enforces_deadline_before_retry_sleep() -> None:
             ),
         )
         with pytest.raises(ValueError, match="operation exceeded its time budget"):
+            HttpJsonConnector().read(
+                connection,
+                AssetHandle(connection.id, (), "events"),
+                EnvironmentSecretResolver({}),
+            )
+        assert len(calls) == 1
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+@pytest.mark.parametrize("value", ["NaN", "Infinity", "-1", "not-a-delay"])
+def test_http_retry_after_rejects_non_finite_negative_and_malformed_values(value: str) -> None:
+    with pytest.raises(ValueError, match="Retry-After"):
+        _retry_after_delay(value, 0.0)
+
+
+def test_http_retry_after_accepts_bounded_seconds_and_past_http_dates() -> None:
+    assert _retry_after_delay("120", 0.0) == 60.0
+    assert _retry_after_delay("Sat, 01 Jan 2000 00:00:00 GMT", 1.0) == 0.0
+
+
+def test_http_connector_fails_before_retrying_malformed_retry_after() -> None:
+    calls: list[str] = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            calls.append(self.path)
+            self.send_response(503)
+            self.send_header("Retry-After", "NaN")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        def log_message(self, *_args: object) -> None:
+            return None
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        connection = ConnectionDefinition(
+            ConnectionId("http-source"),
+            "HTTP source",
+            "http.json",
+            options=(
+                ("allow_http", "true"),
+                ("allow_private_network", "true"),
+                ("base_url", f"http://127.0.0.1:{server.server_port}"),
+                ("max_retries", "2"),
+            ),
+        )
+        with pytest.raises(ValueError, match="Retry-After seconds must be finite"):
             HttpJsonConnector().read(
                 connection,
                 AssetHandle(connection.id, (), "events"),

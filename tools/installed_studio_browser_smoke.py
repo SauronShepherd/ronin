@@ -1,20 +1,31 @@
-"""Browser-qualify the Studio shell from an installed wheel, never the checkout."""
+"""Browser-qualify Studio and coding-agent skills from a built artifact."""
 
 from __future__ import annotations
 
 import argparse
 import contextlib
 import json
+import sys
 import tarfile
 import tempfile
 import zipfile
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from threading import Thread
 from typing import cast
 
 from playwright.sync_api import sync_playwright
+
+try:
+    from studio_cli.agent_skills import discover_skills
+except ModuleNotFoundError as exc:
+    if exc.name != "studio_cli":
+        raise
+    # CI runs this artifact checker before installing the built wheel. Use the
+    # repository validator against the skill files extracted from the artifact.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
+    from studio_cli.agent_skills import discover_skills
 
 # mypy: ignore-errors
 
@@ -26,6 +37,24 @@ except ModuleNotFoundError:  # Direct ``python tools/...`` execution.
     )
 
 ROUTES = ()
+
+
+def _safe_artifact_target(root: Path, relative: str) -> Path:
+    member = PurePosixPath(relative)
+    if (
+        not relative
+        or member.is_absolute()
+        or not member.parts
+        or "\\" in relative
+        or ":" in relative
+        or any(part in {"", ".", ".."} for part in member.parts)
+    ):
+        raise RuntimeError(f"unsafe artifact member path: {relative!r}")
+    destination_root = root.resolve()
+    target = destination_root.joinpath(*member.parts).resolve()
+    if not target.is_relative_to(destination_root):
+        raise RuntimeError(f"unsafe artifact member path: {relative!r}")
+    return target
 
 
 def unpack_web(artifact: Path, destination: Path) -> Path:
@@ -40,7 +69,7 @@ def unpack_web(artifact: Path, destination: Path) -> Path:
             prefix = next(name.split(".data/data/share/ronin/web/", 1)[0] for name in wheel_members)
             for name in wheel_members:
                 relative = name.split(f"{prefix}.data/data/share/ronin/web/", 1)[1]
-                target = web_root / relative
+                target = _safe_artifact_target(web_root, relative)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(archive.read(name))
     else:
@@ -57,15 +86,53 @@ def unpack_web(artifact: Path, destination: Path) -> Path:
                 source = archive.extractfile(member)
                 if source is None:
                     raise RuntimeError(f"cannot read sdist member: {member.name}")
-                target = web_root / member.name[marker + len("/web/") :]
+                relative = member.name[marker + len("/web/") :]
+                target = _safe_artifact_target(web_root, relative)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(source.read())
     return web_root
 
 
-def qualify(wheel: Path) -> dict[str, object]:
+def unpack_agent_skills(artifact: Path, destination: Path) -> Path:
+    skills_root = destination / "agent-skills"
+    members: list[tuple[str, bytes]] = []
+    if artifact.name.endswith(".whl"):
+        with zipfile.ZipFile(artifact) as archive:
+            marker = ".data/data/share/ronin/agent-skills/"
+            members = [
+                (name.split(marker, 1)[1], archive.read(name))
+                for name in archive.namelist()
+                if marker in name
+            ]
+    else:
+        with tarfile.open(artifact, mode="r:gz") as archive:
+            marker = "/agent-skills/"
+            for member in archive.getmembers():
+                if not member.isfile() or marker not in member.name:
+                    continue
+                source = archive.extractfile(member)
+                if source is None:
+                    raise RuntimeError(f"cannot read source distribution member: {member.name}")
+                members.append((member.name.split(marker, 1)[1], source.read()))
+    if not members:
+        raise RuntimeError("artifact does not contain installed Ronin coding-agent skills")
+    for relative, content in members:
+        target = _safe_artifact_target(skills_root, relative)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+    return skills_root
+
+
+def qualify(artifact: Path) -> dict[str, object]:
     with tempfile.TemporaryDirectory(prefix="ronin-installed-studio-") as temporary:
-        web_root = unpack_web(wheel, Path(temporary))
+        destination = Path(temporary)
+        web_root = unpack_web(artifact, destination)
+        skills = discover_skills(unpack_agent_skills(artifact, destination))
+        if len(skills) != 3 or any(not skill.valid for skill in skills):
+            raise AssertionError(
+                "installed coding-agent skills are incomplete or malformed: "
+                + json.dumps([skill.to_payload() for skill in skills], indent=2)
+            )
         missing = sorted(path for path in _referenced_assets(web_root) if not path.is_file())
         if missing:
             raise AssertionError(
@@ -177,7 +244,8 @@ def qualify(wheel: Path) -> dict[str, object]:
             or cast(int, page["smoke_selector_count"]) < 1
         ]
         result: dict[str, object] = {
-            "wheel": str(wheel),
+            "artifact": str(artifact),
+            "agent_skills": [skill.to_payload() for skill in skills],
             "routes": pages,
             "console_errors": console_errors,
             "failed_requests": failed_requests,
@@ -191,9 +259,9 @@ def qualify(wheel: Path) -> dict[str, object]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("wheel", type=Path)
+    parser.add_argument("artifact", type=Path)
     args = parser.parse_args()
-    print(json.dumps(qualify(args.wheel), indent=2))
+    print(json.dumps(qualify(args.artifact), indent=2))
     return 0
 
 

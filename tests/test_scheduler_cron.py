@@ -161,6 +161,37 @@ def test_schedule_preview_next_runs_is_bounded_and_non_mutating(tmp_path: Path) 
         service.preview_next_runs(schedule, after=NOW, count=0)
 
 
+def test_schedule_preview_normalizes_unaligned_after_to_next_utc_minute() -> None:
+    schedule = Schedule(ScheduleId("preview-minute"), WorkflowId("workflow"), "* * * * *")
+
+    result = SchedulerScheduleService.preview_next_runs(
+        schedule,
+        after=Instant("2026-09-12T20:01:45.123456Z"),
+        count=1,
+    )
+
+    assert tuple(str(item) for item in result) == ("2026-09-12T20:02:00.000000Z",)
+
+
+def test_schedule_preview_excludes_exact_after_boundary_and_stops_at_count() -> None:
+    schedule = Schedule(ScheduleId("preview-quarter"), WorkflowId("workflow"), "*/15 * * * *")
+
+    result = SchedulerScheduleService.preview_next_runs(
+        schedule,
+        after=Instant("2026-09-12T20:14:59.000000Z"),
+        count=1,
+        max_scan_minutes=1_000_000,
+    )
+
+    assert tuple(str(item) for item in result) == ("2026-09-12T20:15:00.000000Z",)
+    exact_boundary = SchedulerScheduleService.preview_next_runs(
+        schedule,
+        after=Instant("2026-09-12T20:15:00.000000Z"),
+        count=1,
+    )
+    assert tuple(str(item) for item in exact_boundary) == ("2026-09-12T20:30:00.000000Z",)
+
+
 def test_disabled_schedule_advances_cursor_without_backfilling_disabled_minute(
     tmp_path: Path,
 ) -> None:

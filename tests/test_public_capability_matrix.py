@@ -25,21 +25,27 @@ def _rows() -> list[list[str]]:
     return rows
 
 
-def test_public_matrix_covers_exactly_p1_to_p14_and_required_fields() -> None:
+def test_public_matrix_covers_stable_family_ids_and_excludes_p9_from_release_scope() -> None:
     rows = _rows()
     assert len(rows) == 14
     assert [row[0].split()[0] for row in rows] == [f"P{i}" for i in range(1, 15)]
     assert all(len(row) == 7 for row in rows)
-    assert all(row[1] in {"Implemented", "Partial"} for row in rows)
-    assert all(row[2] in {"Yes", "Partial", "No"} for row in rows)
-    assert all(row[3] in {"Yes", "No"} for row in rows)
+    assert all(row[1] in {"Implemented", "Partial", "Out of scope"} for row in rows)
+    assert all(row[2] in {"Yes", "Partial", "No", "N/A"} for row in rows)
+    assert all(row[3] in {"Yes", "No", "N/A"} for row in rows)
     assert all(cell.strip() for row in rows for cell in row)
+    p9 = rows[8]
+    assert p9[1:4] == ["Out of scope", "N/A", "N/A"]
 
 
 def test_matrix_does_not_claim_release_qualification_while_ledger_is_incomplete() -> None:
     ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
     assert ledger["release_status"] != "complete"
-    assert all(row[3] == "No" for row in _rows())
+    assert ledger["progress"]["total"] == 13
+    assert ledger["progress"]["percent"] == 0
+    assert all(row[3] in {"No", "N/A"} for row in _rows())
+    p9 = next(item for item in ledger["capabilities"] if item["id"] == "p9-genai-rag-agents")
+    assert p9["status"] == "out_of_scope"
 
 
 def test_matrix_observed_candidate_matches_status_ledger() -> None:

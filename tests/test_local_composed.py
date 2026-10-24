@@ -86,6 +86,10 @@ def test_build_local_composed_from_env_creates_two_surface_composition(
     assert composition.job_server.server_address[1] == 8080
     assert composition.control_plane_server.server_address[1] == 8081
     assert composition.plugin_host is not None
+    assert composition.plugin_host.plan is not None
+    plugin_ids = {record.manifest.id for record in composition.plugin_host.plan.records}
+    assert "com.sauronshepherd.ronin.ai-studio" not in plugin_ids
+    assert "com.sauronshepherd.ronin.genai" not in plugin_ids
     assert composition.control_plane_server.data_engineering_reader is not None
     assert composition.control_plane_server.connector_registry is not None
     assert composition.control_plane_server.ingestion_adapter is not None
@@ -327,7 +331,16 @@ def test_build_local_composed_validates_configured_plugin_lock(
     from studio_runtime import PluginHost
 
     lock_path = tmp_path / "plugin-lock.json"
-    lock_path.write_text(PluginHost.discover().create_lock().dumps(), encoding="utf-8")
+    lock_path.write_text(
+        PluginHost.discover(
+            excluded_plugin_ids=frozenset(
+                {"com.sauronshepherd.ronin.ai-studio", "com.sauronshepherd.ronin.genai"}
+            )
+        )
+        .create_lock()
+        .dumps(),
+        encoding="utf-8",
+    )
     monkeypatch.setenv("RONIN_PLUGIN_LOCK", str(lock_path))
 
     composition = build_local_composed_from_env()

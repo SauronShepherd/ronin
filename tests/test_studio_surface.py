@@ -5,7 +5,7 @@ def test_surface_scanner_recognizes_plugin_routes_and_normalizes_ui_paths() -> N
     published = plugin_operations()
     invoked = ui_operations()
 
-    assert "GET /v1/workspaces/{workspace_id}/genai/providers" in published
+    assert not any("/genai/" in operation or "/ai-studio/" in operation for operation in published)
     assert "GET /v1/workspaces/{id}/catalog/assets" in invoked
     assert all("?" not in operation for operation in invoked)
     # The ternary is a computed client expression; its literal validate and

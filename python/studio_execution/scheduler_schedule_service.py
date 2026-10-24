@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from datetime import timedelta
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from studio_core import Schedule, WorkspaceId
 from studio_orchestrator import Instant
@@ -13,7 +15,14 @@ from studio_storage.scheduler_schedule import (
     SchedulerScheduleStore,
 )
 
-from .scheduler_cron import evaluated_minutes, schedule_matches
+from .scheduler_cron import (
+    CronExpression,
+    CronSyntaxError,
+    _instant_datetime,
+    _minute_instant,
+    evaluated_minutes,
+    schedule_matches,
+)
 
 AuthorityCheck = Callable[[Instant | str], Awaitable[None]]
 
@@ -53,21 +62,33 @@ class SchedulerScheduleService:
         max_scan_minutes: int = 100_000,
     ) -> tuple[Instant, ...]:
         """Preview future fire times without touching durable cursor state."""
-        if count < 1 or count > 1000:
+        if not isinstance(count, int) or isinstance(count, bool) or not 1 <= count <= 1000:
             raise ValueError("preview count must be between 1 and 1000")
-        if max_scan_minutes < count or max_scan_minutes > 1_000_000:
+        if (
+            not isinstance(max_scan_minutes, int)
+            or isinstance(max_scan_minutes, bool)
+            or max_scan_minutes < count
+            or max_scan_minutes > 1_000_000
+        ):
             raise ValueError("preview max_scan_minutes is outside the configured bound")
-        cursor = Instant(after)
-        # Scan one bounded minute at a time; cron matching remains the sole
-        # authority for timezone and DST semantics.
-        from datetime import datetime, timedelta
-
-        start = datetime.fromisoformat(str(cursor)[:-1])
-        candidates = tuple(
-            Instant((start + timedelta(minutes=offset)).isoformat(timespec="microseconds") + "Z")
-            for offset in range(1, max_scan_minutes + 1)
-        )
-        return tuple(minute for minute in candidates if schedule_matches(schedule, minute))[:count]
+        if not schedule.enabled:
+            return ()
+        try:
+            timezone = ZoneInfo(schedule.timezone)
+        except ZoneInfoNotFoundError as exc:
+            raise CronSyntaxError(f"unknown schedule timezone: {schedule.timezone}") from exc
+        expression = CronExpression.parse(schedule.cron)
+        start = _instant_datetime(after)
+        candidate = start.replace(second=0, microsecond=0) + timedelta(minutes=1)
+        result: list[Instant] = []
+        for _ in range(max_scan_minutes):
+            minute = _minute_instant(candidate)
+            if expression.matches_local(_instant_datetime(minute).astimezone(timezone)):
+                result.append(minute)
+                if len(result) == count:
+                    break
+            candidate += timedelta(minutes=1)
+        return tuple(result)
 
     async def tick(
         self,

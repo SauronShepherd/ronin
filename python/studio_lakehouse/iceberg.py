@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import math
+import time
 from collections.abc import Mapping
-from contextlib import suppress
 from dataclasses import dataclass
 from importlib import import_module
 from typing import Any
@@ -17,6 +18,14 @@ class IcebergDependencyError(RuntimeError):
 
 class IcebergCapabilityError(RuntimeError):
     """Raised when the configured Iceberg runtime lacks a requested capability."""
+
+
+class IcebergProviderError(RuntimeError):
+    """Raised when a catalog operation fails for a reason other than not-found."""
+
+
+class IcebergPartialWriteError(IcebergProviderError):
+    """Raised when a failed create flow could not safely remove its partial table."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +67,19 @@ def _pyarrow() -> Any:
     return pa
 
 
+def _pyiceberg_exception_type(name: str) -> type[BaseException]:
+    try:
+        exceptions = import_module("pyiceberg.exceptions")
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise IcebergDependencyError(
+            "Iceberg support requires the optional Ronin open-table dependencies"
+        ) from exc
+    error_type = getattr(exceptions, name, None)
+    if not isinstance(error_type, type) or not issubclass(error_type, BaseException):
+        raise IcebergDependencyError(f"PyIceberg does not expose the required {name} exception")
+    return error_type
+
+
 def _rows_table(rows: tuple[Mapping[str, object], ...]) -> Any:
     if not rows:
         raise ValueError("Iceberg writes require at least one row")
@@ -91,6 +113,9 @@ class IcebergTableStore:
             raise ValueError("Iceberg catalog_name must be non-empty and trimmed")
         load_catalog = _pyiceberg_catalog()
         self._catalog = load_catalog(catalog_name, **dict(catalog_properties or {}))
+        self._no_such_table_error = _pyiceberg_exception_type("NoSuchTableError")
+        self._namespace_exists_error = _pyiceberg_exception_type("NamespaceAlreadyExistsError")
+        self._table_exists_error = _pyiceberg_exception_type("TableAlreadyExistsError")
 
     @staticmethod
     def _identifier(identifier: OpenTableIdentifier) -> tuple[str, ...]:
@@ -99,9 +124,26 @@ class IcebergTableStore:
     def _load(self, identifier: OpenTableIdentifier) -> Any:
         try:
             return self._catalog.load_table(self._identifier(identifier))
-        except Exception as exc:
+        except self._no_such_table_error as exc:
             raise FileNotFoundError(
                 f"Iceberg table does not exist: {identifier.qualified_name}"
+            ) from exc
+        except Exception as exc:
+            raise IcebergProviderError("Iceberg catalog table lookup failed") from exc
+
+    def _drop_created_table(self, identifier: OpenTableIdentifier) -> None:
+        try:
+            self._catalog.drop_table(self._identifier(identifier), purge=True)
+        except TypeError:
+            try:
+                self._catalog.drop_table(self._identifier(identifier))
+            except Exception as exc:
+                raise IcebergPartialWriteError(
+                    "Iceberg create failed and cleanup of the new table also failed"
+                ) from exc
+        except Exception as exc:
+            raise IcebergPartialWriteError(
+                "Iceberg create failed and cleanup of the new table also failed"
             ) from exc
 
     def write_rows(
@@ -118,16 +160,35 @@ class IcebergTableStore:
         if mode == "create":
             try:
                 self._catalog.load_table(table_identifier)
-            except Exception:
+            except self._no_such_table_error:
                 for index in range(1, len(identifier.namespace) + 1):
                     namespace = identifier.namespace[:index]
-                    with suppress(Exception):
+                    try:
                         self._catalog.create_namespace(namespace)
-                self._catalog.create_table(table_identifier, schema=arrow.schema)
+                    except self._namespace_exists_error:
+                        pass
+                    except Exception as exc:
+                        raise IcebergProviderError("Iceberg namespace creation failed") from exc
+                try:
+                    self._catalog.create_table(table_identifier, schema=arrow.schema)
+                except self._table_exists_error as exc:
+                    raise FileExistsError(
+                        f"Iceberg table already exists: {identifier.qualified_name}"
+                    ) from exc
+                except Exception as exc:
+                    raise IcebergProviderError("Iceberg table creation failed") from exc
+                try:
+                    table = self._catalog.load_table(table_identifier)
+                    table.append(arrow)
+                except Exception as exc:
+                    self._drop_created_table(identifier)
+                    raise IcebergProviderError(
+                        "Iceberg initial append failed; the new table was removed"
+                    ) from exc
+            except Exception as exc:
+                raise IcebergProviderError("Iceberg catalog preflight failed") from exc
             else:
                 raise FileExistsError(f"Iceberg table already exists: {identifier.qualified_name}")
-            table = self._catalog.load_table(table_identifier)
-            table.append(arrow)
         elif mode == "append":
             table = self._load(identifier)
             table.append(arrow)
@@ -147,10 +208,25 @@ class IcebergTableStore:
         *,
         columns: tuple[str, ...] | None = None,
         limit: int = 10_000,
+        max_bytes: int = 64 * 1024 * 1024,
+        max_elapsed_seconds: float = 300.0,
         version: str | None = None,
     ) -> tuple[dict[str, object], ...]:
-        if limit < 1 or limit > 100_000:
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 100_000:
             raise ValueError("Iceberg read limit must be between 1 and 100000")
+        if (
+            not isinstance(max_bytes, int)
+            or isinstance(max_bytes, bool)
+            or not 1 <= max_bytes <= 512 * 1024 * 1024
+        ):
+            raise ValueError("Iceberg max_bytes must be between 1 and 536870912")
+        if (
+            not isinstance(max_elapsed_seconds, (int, float))
+            or isinstance(max_elapsed_seconds, bool)
+            or not math.isfinite(max_elapsed_seconds)
+            or not 0 < max_elapsed_seconds <= 3600
+        ):
+            raise ValueError("Iceberg max_elapsed_seconds must be finite and in (0, 3600]")
         if columns is not None:
             if any(not column or column != column.strip() for column in columns):
                 raise ValueError("Iceberg projection columns must be non-empty and trimmed")
@@ -174,10 +250,33 @@ class IcebergTableStore:
                 selected_fields=columns or ("*",),
                 limit=limit + 1,
             )
-        arrow = scan.to_arrow()
-        if arrow.num_rows > limit:
-            raise ValueError("Iceberg result exceeds requested row limit")
-        return tuple(dict(row) for row in arrow.to_pylist())
+        to_batch_reader = getattr(scan, "to_arrow_batch_reader", None)
+        if not callable(to_batch_reader):
+            raise IcebergCapabilityError(
+                "configured PyIceberg runtime does not expose streaming scan reads"
+            )
+        reader = to_batch_reader()
+        deadline = time.monotonic() + max_elapsed_seconds
+        total_bytes = 0
+        rows: list[dict[str, object]] = []
+        batches = iter(reader)
+        while len(rows) <= limit:
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Iceberg read exceeded its time budget")
+            try:
+                batch = next(batches)
+            except StopIteration:
+                break
+            batch_bytes = int(batch.nbytes)
+            if batch_bytes < 0 or total_bytes + batch_bytes > max_bytes:
+                raise ValueError("Iceberg result exceeds configured byte budget")
+            total_bytes += batch_bytes
+            remaining = limit + 1 - len(rows)
+            selected = batch.slice(0, remaining)
+            rows.extend(dict(row) for row in selected.to_pylist())
+            if len(rows) > limit:
+                raise ValueError("Iceberg result exceeds requested row limit")
+        return tuple(rows)
 
     def inspect(self, identifier: OpenTableIdentifier) -> OpenTableState:
         table = self._load(identifier)
@@ -205,11 +304,26 @@ class IcebergTableStore:
         try:
             drop_table(self._identifier(identifier), purge=True)
         except TypeError:
-            drop_table(self._identifier(identifier))
-        except Exception as exc:
+            try:
+                drop_table(self._identifier(identifier))
+            except self._no_such_table_error as exc:
+                raise FileNotFoundError(
+                    f"Iceberg table does not exist: {identifier.qualified_name}"
+                ) from exc
+            except Exception as exc:
+                raise IcebergProviderError("Iceberg table deletion failed") from exc
+        except self._no_such_table_error as exc:
             raise FileNotFoundError(
                 f"Iceberg table does not exist: {identifier.qualified_name}"
             ) from exc
+        except Exception as exc:
+            raise IcebergProviderError("Iceberg table deletion failed") from exc
 
 
-__all__ = ("IcebergCapabilityError", "IcebergDependencyError", "IcebergTableStore")
+__all__ = (
+    "IcebergCapabilityError",
+    "IcebergDependencyError",
+    "IcebergPartialWriteError",
+    "IcebergProviderError",
+    "IcebergTableStore",
+)

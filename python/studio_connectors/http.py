@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
+import hashlib
 from collections.abc import Callable, Mapping
 from typing import Protocol, cast
 
 from studio_core import ConnectionDefinition
-from studio_core.canonical_json import encode
+from studio_core.canonical_json import decode, encode
 from studio_storage.ports import ArtifactReferenceBarrier
 from studio_storage.secrets import SecretResolver
 
@@ -25,6 +28,9 @@ class _CheckpointStore(Protocol):
 
 
 class IngestionHTTPAdapter:
+    _CURSOR_SCHEMA = "ronin.connector-discovery-cursor/v1"
+    _MAX_CURSOR_LENGTH = 16_384
+
     def __init__(
         self,
         registry: ConnectorRegistry,
@@ -48,10 +54,14 @@ class IngestionHTTPAdapter:
         return self._registry.capability_payload()
 
     def discover(self, body: object, *, workspace_id: str) -> dict[str, object]:
-        if not isinstance(body, Mapping) or set(body) != {"connector_id", "connection_ref"}:
-            raise ValueError(
-                "connector discovery body must contain connector_id and connection_ref"
-            )
+        required = {"connector_id", "connection_ref"}
+        optional = {"cursor", "page_size"}
+        if (
+            not isinstance(body, Mapping)
+            or not required.issubset(body)
+            or set(body) - required - optional
+        ):
+            raise ValueError("connector discovery body has invalid fields")
         connector_id = body["connector_id"]
         connection_ref = body["connection_ref"]
         if not isinstance(connector_id, str) or not connector_id.strip():
@@ -62,7 +72,66 @@ class IngestionHTTPAdapter:
         connection = self._connection(workspace_id, connection_ref)
         if getattr(connection, "connector_id", connector_id) != connector_id:
             raise ValueError("connection connector_id does not match connector_id")
-        assets = connector.discover(connection, self._secrets(connection_ref))
+        secrets = self._secrets(connection_ref)
+        cursor_value = body.get("cursor")
+        page_size_value = body.get("page_size")
+        if cursor_value is not None and (
+            not isinstance(cursor_value, str)
+            or not cursor_value
+            or len(cursor_value) > self._MAX_CURSOR_LENGTH
+        ):
+            raise ValueError("connector discovery cursor is invalid")
+        if page_size_value is not None and (
+            not isinstance(page_size_value, int) or isinstance(page_size_value, bool)
+        ):
+            raise ValueError("connector discovery page_size must be an integer")
+
+        discover_page = getattr(connector, "discover_page", None)
+        if not connector.descriptor.capabilities.discover:
+            raise ValueError("connector does not advertise discovery capability")
+        if not callable(discover_page):
+            raise ValueError("connector does not provide bounded paginated discovery")
+        max_page_size = connector.descriptor.capabilities.max_page_size or 1000
+        page_size = page_size_value if page_size_value is not None else min(1000, max_page_size)
+        if page_size < 1 or page_size > min(10_000, max_page_size):
+            raise ValueError(
+                "connector discovery page_size exceeds the connector's advertised limit"
+            )
+        provider_cursor = self._decode_discovery_cursor(
+            cursor_value,
+            workspace_id=workspace_id,
+            connector_id=connector_id,
+            connection_ref=connection_ref,
+            connection_id=str(connection.id),
+        )
+        page = discover_page(
+            connection,
+            secrets,
+            cursor=provider_cursor,
+            page_size=page_size,
+        )
+        if len(page.items) > page_size:
+            raise ValueError("connector discovery page exceeded the requested page_size")
+        if provider_cursor is not None and page.next_cursor == provider_cursor:
+            raise ValueError("connector discovery cursor did not advance")
+        assets = page.items
+        next_cursor = (
+            self._encode_discovery_cursor(
+                page.next_cursor,
+                workspace_id=workspace_id,
+                connector_id=connector_id,
+                connection_ref=connection_ref,
+                connection_id=str(connection.id),
+            )
+            if page.truncated and page.next_cursor is not None
+            else None
+        )
+        page_metadata: dict[str, object] = {
+            "has_more": page.truncated,
+            "next_cursor": next_cursor,
+        }
+        if page.source_version is not None:
+            page_metadata["source_version"] = page.source_version
         items = [
             {
                 "asset_ref": (f"{asset.handle.connection_id}::{asset.handle.qualified_name}"),
@@ -74,7 +143,75 @@ class IngestionHTTPAdapter:
             }
             for asset in assets
         ]
-        return {"schema": "ronin.connector-discovery/v1", "items": items, "count": len(items)}
+        return {
+            "schema": "ronin.connector-discovery/v1",
+            "items": items,
+            "count": len(items),
+            **page_metadata,
+        }
+
+    @classmethod
+    def _encode_discovery_cursor(
+        cls,
+        provider_cursor: str,
+        *,
+        workspace_id: str,
+        connector_id: str,
+        connection_ref: str,
+        connection_id: str,
+    ) -> str:
+        payload = encode(
+            {
+                "schema": cls._CURSOR_SCHEMA,
+                "workspace_id": workspace_id,
+                "connector_id": connector_id,
+                "connection_ref": connection_ref,
+                "connection_id": connection_id,
+                "provider_cursor": provider_cursor,
+            }
+        )
+        cursor = base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
+        if len(cursor) > cls._MAX_CURSOR_LENGTH:
+            raise ValueError("connector discovery cursor is too large")
+        return cursor
+
+    @classmethod
+    def _decode_discovery_cursor(
+        cls,
+        cursor: str | None,
+        *,
+        workspace_id: str,
+        connector_id: str,
+        connection_ref: str,
+        connection_id: str,
+    ) -> str | None:
+        if cursor is None:
+            return None
+        if len(cursor) > cls._MAX_CURSOR_LENGTH:
+            raise ValueError("connector discovery cursor is too large")
+        try:
+            padding = "=" * (-len(cursor) % 4)
+            raw = base64.b64decode(cursor + padding, altchars=b"-_", validate=True)
+            payload = decode(raw)
+        except (binascii.Error, UnicodeDecodeError, ValueError) as exc:
+            raise ValueError("connector discovery cursor is invalid") from exc
+        expected = {
+            "schema": cls._CURSOR_SCHEMA,
+            "workspace_id": workspace_id,
+            "connector_id": connector_id,
+            "connection_ref": connection_ref,
+            "connection_id": connection_id,
+        }
+        if not isinstance(payload, dict) or any(
+            payload.get(key) != value for key, value in expected.items()
+        ):
+            raise ValueError("connector discovery cursor belongs to a different source scope")
+        if set(payload) != {*expected, "provider_cursor"}:
+            raise ValueError("connector discovery cursor is invalid")
+        provider_cursor = payload["provider_cursor"]
+        if not isinstance(provider_cursor, str) or not provider_cursor:
+            raise ValueError("connector discovery cursor is invalid")
+        return provider_cursor
 
     def preview(self, body: object, *, workspace_id: str) -> dict[str, object]:
         definition = self._definition(body)
@@ -110,9 +247,18 @@ class IngestionHTTPAdapter:
 
     @staticmethod
     def _checkpoint_identity(workspace_id: str, identity: str) -> str:
-        if not workspace_id.strip():
-            raise ValueError("workspace_id must be non-empty text")
-        return f"{workspace_id}/{identity}"
+        if (
+            not workspace_id.strip()
+            or workspace_id != workspace_id.strip()
+            or not identity.strip()
+            or identity != identity.strip()
+        ):
+            raise ValueError("workspace_id and checkpoint identity must be non-empty and trimmed")
+        if "/" not in workspace_id and "/" not in identity:
+            # Keep collision-free legacy keys readable when the separator is unambiguous.
+            return f"{workspace_id}/{identity}"
+        identity_bytes = encode({"workspace_id": workspace_id, "identity": identity})
+        return f"ronin:v2:{hashlib.sha256(identity_bytes).hexdigest()}"
 
     @staticmethod
     def _definition(body: object) -> IngestionSyncDefinition:
