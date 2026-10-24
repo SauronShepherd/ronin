@@ -5,23 +5,20 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 
-from studio_core.ontology import KnowledgeObjectRef, LinkType, ObjectType, OntologyDefinition
+from studio_core.ontology import (
+    KnowledgeObjectRef,
+    LinkType,
+    ObjectType,
+    OntologyDefinition,
+    _canonicalize_property_value,
+    _typed_value_key,
+)
 
 from .contracts import GraphLink, GraphObject, GraphScalar, GraphSnapshot
 
 
 class GraphMaterializationError(ValueError):
     """Raised when source rows cannot satisfy declared ontology semantics."""
-
-
-def _scalar(value: object, *, field: str) -> GraphScalar:
-    if value is None or isinstance(value, (bool, int, str)):
-        return value
-    if isinstance(value, float):
-        if value != value or value in (float("inf"), float("-inf")):
-            raise GraphMaterializationError(f"field {field!r} contains non-finite float")
-        return value
-    raise GraphMaterializationError(f"field {field!r} is not a supported scalar value")
 
 
 def _object_ref(definition: ObjectType, row: Mapping[str, object]) -> KnowledgeObjectRef:
@@ -36,7 +33,13 @@ def _object_ref(definition: ObjectType, row: Mapping[str, object]) -> KnowledgeO
             raise GraphMaterializationError(
                 f"object type {definition.name} key field {source_field!r} is null"
             )
-        scalar = _scalar(value, field=source_field)
+        property_definition = next(
+            item for item in definition.properties if item.source_field == source_field
+        )
+        try:
+            scalar = _canonicalize_property_value(property_definition, value, field=source_field)
+        except ValueError as error:
+            raise GraphMaterializationError(str(error)) from error
         pairs.append((source_field, str(scalar)))
     return KnowledgeObjectRef(definition.name, tuple(pairs))
 
@@ -56,24 +59,42 @@ def _graph_object(definition: ObjectType, row: Mapping[str, object]) -> GraphObj
                 raise GraphMaterializationError(
                     f"required property {definition.name}.{prop.name} is null"
                 )
-            value = _scalar(raw, field=prop.source_field)
+            try:
+                value = _canonicalize_property_value(prop, raw, field=prop.source_field)
+            except ValueError as error:
+                raise GraphMaterializationError(str(error)) from error
         properties.append((prop.name, value))
     return GraphObject(_object_ref(definition, row), tuple(properties))
 
 
 def _join_key(
-    row: Mapping[str, object], fields: tuple[str, ...], *, link_name: str
-) -> tuple[str, ...]:
-    result: list[str] = []
+    object_type: ObjectType,
+    row: Mapping[str, object],
+    fields: tuple[str, ...],
+    *,
+    link_name: str,
+) -> tuple[tuple[str, object], ...]:
+    properties = {item.name: item for item in object_type.properties}
+    result: list[tuple[str, object]] = []
     for field in fields:
-        if field not in row:
+        property_definition = properties[field]
+        source_field = property_definition.source_field
+        if source_field not in row:
+            if not property_definition.required:
+                return ()
             raise GraphMaterializationError(
                 f"link {link_name} source row is missing join field {field!r}"
             )
-        value = row[field]
+        value = row[source_field]
         if value is None:
             return ()
-        result.append(str(_scalar(value, field=field)))
+        try:
+            normalized = _canonicalize_property_value(
+                property_definition, value, field=source_field
+            )
+        except ValueError as error:
+            raise GraphMaterializationError(str(error)) from error
+        result.append(_typed_value_key(normalized))
     return tuple(result)
 
 
@@ -115,6 +136,10 @@ def materialize_graph(
         materialized: list[tuple[KnowledgeObjectRef, Mapping[str, object]]] = []
         seen: set[KnowledgeObjectRef] = set()
         for row in rows:
+            if not isinstance(row, Mapping) or not all(isinstance(key, str) for key in row):
+                raise GraphMaterializationError(
+                    f"ontology row for {object_type.name} must be an object with string keys"
+                )
             graph_object = _graph_object(object_type, row)
             if graph_object.ref in seen:
                 raise GraphMaterializationError(
@@ -134,14 +159,26 @@ def materialize_graph(
             )
         source_entries = source_rows[link.source_type]
         target_entries = source_rows[link.target_type]
-        targets_by_key: dict[tuple[str, ...], list[KnowledgeObjectRef]] = defaultdict(list)
+        targets_by_key: dict[tuple[tuple[str, object], ...], list[KnowledgeObjectRef]] = (
+            defaultdict(list)
+        )
         for target_ref, target_row in target_entries:
-            key = _join_key(target_row, link.target_fields, link_name=link.name)
+            key = _join_key(
+                object_definitions[link.target_type],
+                target_row,
+                link.target_fields,
+                link_name=link.name,
+            )
             if key:
                 targets_by_key[key].append(target_ref)
         materialized_links: list[GraphLink] = []
         for source_ref, source_row in source_entries:
-            key = _join_key(source_row, link.source_fields, link_name=link.name)
+            key = _join_key(
+                object_definitions[link.source_type],
+                source_row,
+                link.source_fields,
+                link_name=link.name,
+            )
             if not key:
                 continue
             for target_ref in targets_by_key.get(key, ()):

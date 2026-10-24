@@ -58,8 +58,8 @@ def test_ontology_contracts_round_trip_nested_payloads_and_asset_refs() -> None:
         "Customer",
         "Order",
         "one-to-many",
-        ("customer_id",),
-        ("order_id",),
+        ("id",),
+        ("id",),
         _asset("links"),
     )
     definition = OntologyDefinition(
@@ -103,8 +103,13 @@ def test_each_link_cardinality_accepts_a_single_matching_pair(cardinality: str) 
     assert len(resolve_link_type(link, source, target)) == 1
 
 
-def test_materialization_accepts_limit_boundary_and_stringifies_key_values() -> None:
-    object_type = _customer()
+def test_materialization_accepts_limit_boundary_and_canonicalizes_integer_keys() -> None:
+    object_type = ObjectType(
+        "Customer",
+        _asset("customers"),
+        ("customer_id",),
+        (PropertyDefinition("id", "integer", "customer_id", True),),
+    )
     result = materialize_object_type(object_type, ({"customer_id": 7},), max_objects=1)
     assert result[0].ref == KnowledgeObjectRef("Customer", (("customer_id", "7"),))
 

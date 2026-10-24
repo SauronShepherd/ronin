@@ -6,6 +6,7 @@ from studio_core import (
     AssetRef,
     AssetVersion,
     KnowledgeGraph,
+    KnowledgeObject,
     KnowledgeObjectRef,
     LinkType,
     ObjectType,
@@ -22,7 +23,7 @@ def _object_type() -> ObjectType:
         AssetRef(AssetId("customers"), AssetVersion("1")),
         ("customer_id",),
         (
-            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("customer_id", "integer", "customer_id", True),
             PropertyDefinition("name", "string", "name"),
         ),
     )
@@ -39,6 +40,60 @@ def test_materialize_rejects_duplicate_or_missing_keys() -> None:
         materialize_object_type(_object_type(), ({"customer_id": 7}, {"customer_id": 7}))
     with pytest.raises(ValueError, match="missing required fields"):
         materialize_object_type(_object_type(), ({"name": "Ada"},))
+
+
+def test_ontology_property_types_are_closed_and_values_are_canonicalized() -> None:
+    with pytest.raises(ValueError, match="unsupported ontology property data_type"):
+        PropertyDefinition("id", "uuid", "id")  # type: ignore[arg-type]
+
+    integer_type = _object_type()
+    with pytest.raises(ValueError, match="must be an integer"):
+        materialize_object_type(integer_type, ({"customer_id": True},))
+    with pytest.raises(ValueError, match="must be an integer"):
+        materialize_object_type(integer_type, ({"customer_id": "7"},))
+
+    number_type = ObjectType(
+        "Measurement",
+        AssetRef(AssetId("measurements"), AssetVersion("1")),
+        ("value",),
+        (PropertyDefinition("value", "number", "value", True),),
+    )
+    result = materialize_object_type(number_type, ({"value": 1},))
+    assert result[0].properties == (("value", 1.0),)
+    positive_zero = materialize_object_type(number_type, ({"value": 0.0},))
+    negative_zero = materialize_object_type(number_type, ({"value": -0.0},))
+    assert positive_zero[0].ref == negative_zero[0].ref
+
+
+def test_core_materialization_rejects_null_required_non_key_property() -> None:
+    object_type = ObjectType(
+        "Customer",
+        AssetRef(AssetId("customers"), AssetVersion("1")),
+        ("id",),
+        (
+            PropertyDefinition("id", "string", "id", True),
+            PropertyDefinition("name", "string", "name", True),
+        ),
+    )
+    with pytest.raises(ValueError, match="null required fields"):
+        materialize_object_type(object_type, ({"id": "c1", "name": None},))
+
+
+def test_link_resolution_uses_typed_values_and_never_joins_nulls() -> None:
+    source_ref = KnowledgeObjectRef("Source", (("id", "s"),))
+    target_ref = KnowledgeObjectRef("Target", (("id", "t"),))
+    link = LinkType("related", "Source", "Target", "many-to-many", ("join",), ("join",))
+    source = (KnowledgeObject(source_ref, (("join", True),)),)
+    target = (KnowledgeObject(target_ref, (("join", 1),)),)
+    assert resolve_link_type(link, source, target) == ()
+    assert (
+        resolve_link_type(
+            link,
+            (KnowledgeObject(source_ref, (("join", None),)),),
+            (KnowledgeObject(target_ref, (("join", None),)),),
+        )
+        == ()
+    )
 
 
 def test_materialize_rejects_bounds_null_keys_and_preserves_optional_missing_values() -> None:
@@ -78,7 +133,7 @@ def test_object_type_rejects_duplicate_keys_and_unrepresented_key_fields() -> No
             "Customer",
             asset,
             ("customer_id", "customer_id"),
-            (PropertyDefinition("customer_id", "string", "customer_id"),),
+            (PropertyDefinition("customer_id", "integer", "customer_id"),),
         )
     with pytest.raises(ValueError, match="represented by properties"):
         ObjectType(
@@ -96,7 +151,7 @@ def test_resolve_link_type_joins_references_and_enforces_cardinality() -> None:
         AssetRef(AssetId("orders"), AssetVersion("1")),
         ("customer_id",),
         (
-            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("customer_id", "integer", "customer_id", True),
             PropertyDefinition("order_id", "string", "order_id", True),
         ),
     )
@@ -117,7 +172,7 @@ def test_resolve_link_type_rejects_bounds_and_mismatched_object_types() -> None:
         AssetRef(AssetId("orders"), AssetVersion("1")),
         ("order_id",),
         (
-            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("customer_id", "integer", "customer_id", True),
             PropertyDefinition("order_id", "string", "order_id", True),
         ),
     )
@@ -140,7 +195,7 @@ def test_resolve_link_type_enforces_target_cardinality_and_returns_sorted_pairs(
         AssetRef(AssetId("customers"), AssetVersion("1")),
         ("source_id",),
         (
-            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("customer_id", "integer", "customer_id", True),
             PropertyDefinition("source_id", "string", "source_id", True),
         ),
     )
@@ -149,7 +204,7 @@ def test_resolve_link_type_enforces_target_cardinality_and_returns_sorted_pairs(
         AssetRef(AssetId("orders"), AssetVersion("1")),
         ("order_id",),
         (
-            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("customer_id", "integer", "customer_id", True),
             PropertyDefinition("order_id", "string", "order_id", True),
         ),
     )
@@ -177,7 +232,7 @@ def test_resolve_link_type_rejects_source_mismatch_link_limit_and_one_to_one() -
         AssetRef(AssetId("orders"), AssetVersion("1")),
         ("order_id",),
         (
-            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("customer_id", "integer", "customer_id", True),
             PropertyDefinition("order_id", "string", "order_id", True),
         ),
     )
@@ -205,7 +260,7 @@ def test_resolve_link_type_enforces_source_side_many_to_one_cardinality() -> Non
         ("source_id",),
         (
             PropertyDefinition("source_id", "string", "source_id", True),
-            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("customer_id", "integer", "customer_id", True),
         ),
     )
     target_type = ObjectType(
@@ -213,7 +268,7 @@ def test_resolve_link_type_enforces_source_side_many_to_one_cardinality() -> Non
         AssetRef(AssetId("accounts"), AssetVersion("1")),
         ("account_id",),
         (
-            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("customer_id", "integer", "customer_id", True),
             PropertyDefinition("account_id", "string", "account_id", True),
         ),
     )
@@ -240,7 +295,7 @@ def test_resolve_link_type_returns_empty_for_nonmatching_values_and_honors_exact
         AssetRef(AssetId("orders"), AssetVersion("1")),
         ("order_id",),
         (
-            PropertyDefinition("customer_id", "string", "customer_id", True),
+            PropertyDefinition("customer_id", "integer", "customer_id", True),
             PropertyDefinition("order_id", "string", "order_id", True),
         ),
     )
@@ -257,7 +312,7 @@ def test_resolve_link_type_rejects_target_objects_with_wrong_declared_type() -> 
         "Invoice",
         AssetRef(AssetId("invoices"), AssetVersion("1")),
         ("customer_id",),
-        (PropertyDefinition("customer_id", "string", "customer_id", True),),
+        (PropertyDefinition("customer_id", "integer", "customer_id", True),),
     )
     targets = materialize_object_type(wrong_type, ({"customer_id": 7},))
     link = LinkType(
@@ -305,7 +360,7 @@ def test_ontology_materialization_and_link_limits_have_exact_contracts() -> None
         "Order",
         AssetRef(AssetId("orders"), AssetVersion("1")),
         ("customer_id",),
-        (PropertyDefinition("customer_id", "string", "customer_id", True),),
+        (PropertyDefinition("customer_id", "integer", "customer_id", True),),
     )
     targets = materialize_object_type(target_type, ({"customer_id": 7},))
     link = LinkType(
@@ -322,7 +377,7 @@ def test_ontology_link_resolution_returns_no_match() -> None:
         "Order",
         AssetRef(AssetId("orders"), AssetVersion("1")),
         ("customer_id",),
-        (PropertyDefinition("customer_id", "string", "customer_id", True),),
+        (PropertyDefinition("customer_id", "integer", "customer_id", True),),
     )
     targets = materialize_object_type(target_type, ({"customer_id": 8},))
     link = LinkType(
