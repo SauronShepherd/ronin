@@ -1,10 +1,13 @@
+from urllib.request import Request
+
 import pytest
 from studio_core import (
+    MAX_OPENLINEAGE_EVENT_BYTES,
     OpenLineageTransport,
     OpenLineageTransportError,
     validate_openlineage_event,
 )
-from studio_server.openlineage_http import HttpOpenLineageSink
+from studio_server.openlineage_http import HttpOpenLineageSink, _RejectRedirects
 
 
 class Sink:
@@ -24,7 +27,8 @@ EVENT = {
     "eventTime": "2026-09-21T00:00:00Z",
     "run": {"runId": "run-1"},
     "job": {"namespace": "ns", "name": "job"},
-    "producer": "ronin",
+    "producer": "https://github.com/SauronShepherd/ronin",
+    "schemaURL": "https://openlineage.io/spec/1-0-5/OpenLineage.json#/definitions/RunEvent",
 }
 
 
@@ -47,7 +51,7 @@ def test_transport_fails_after_bounded_attempts() -> None:
 
 def test_schema_validator_rejects_incompatible_events() -> None:
     with pytest.raises(ValueError, match="producer"):
-        validate_openlineage_event({**EVENT, "producer": "other"})
+        validate_openlineage_event({**EVENT, "producer": "not a uri"})
     with pytest.raises(ValueError, match="run.runId"):
         validate_openlineage_event({**EVENT, "run": {}})
     with pytest.raises(ValueError, match="schemaVersion"):
@@ -56,6 +60,13 @@ def test_schema_validator_rejects_incompatible_events() -> None:
 
 def test_schema_validator_accepts_supported_explicit_version() -> None:
     validate_openlineage_event({**EVENT, "schemaVersion": "1.0"})
+
+
+def test_schema_validator_accepts_iso8601_offsets_and_requires_valid_run_event_uri() -> None:
+    validate_openlineage_event({**EVENT, "eventTime": "2026-09-21T02:00:00+02:00"})
+    for field in ("producer", "schemaURL"):
+        with pytest.raises(ValueError, match="absolute URI"):
+            validate_openlineage_event({**EVENT, field: "relative/path"})
 
 
 @pytest.mark.parametrize("event_type", ["START", "RUNNING", "COMPLETE", "ABORT", "FAIL", "OTHER"])
@@ -71,6 +82,7 @@ def test_schema_validator_accepts_every_supported_event_type(event_type: str) ->
         ("run", None, "required fields"),
         ("job", None, "required fields"),
         ("producer", None, "required fields"),
+        ("schemaURL", None, "required fields"),
     ],
 )
 def test_schema_validator_requires_every_top_level_contract_field(
@@ -87,7 +99,7 @@ def test_schema_validator_requires_every_top_level_contract_field(
     ("field", "value", "message"),
     [
         ("eventType", "UNKNOWN", "event type"),
-        ("eventTime", "2026-09-21T00:00:00+00:00", "eventTime"),
+        ("eventTime", "not-a-timestampZ", "eventTime"),
         ("eventTime", 123, "eventTime"),
         ("run", [], "run and job"),
         ("job", [], "run and job"),
@@ -143,7 +155,8 @@ def test_transport_digest_is_canonical_and_invalid_events_are_not_published() ->
     sink = Sink()
     transport = OpenLineageTransport(sink)
     reordered = {
-        "producer": "ronin",
+        "producer": "https://github.com/SauronShepherd/ronin",
+        "schemaURL": "https://openlineage.io/spec/1-0-5/OpenLineage.json#/definitions/RunEvent",
         "job": {"name": "job", "namespace": "ns"},
         "run": {"runId": "run-1"},
         "eventTime": "2026-09-21T00:00:00Z",
@@ -155,7 +168,7 @@ def test_transport_digest_is_canonical_and_invalid_events_are_not_published() ->
     assert second.deduplicated
     assert len(sink.events) == 1
     with pytest.raises(ValueError, match="producer"):
-        transport.publish({**EVENT, "producer": "other"})
+        transport.publish({**EVENT, "producer": "not a uri"})
     assert len(sink.events) == 1
 
 
@@ -164,22 +177,32 @@ def test_http_sink_posts_canonical_json_with_bounded_configuration() -> None:
 
     class Response:
         status = 202
+        closed = False
+
+        def close(self) -> None:
+            self.closed = True
+
+    response = Response()
 
     def opener(request, *, timeout):
         calls.append((request, timeout))
-        return Response()
+        return response
 
     HttpOpenLineageSink("http://127.0.0.1:8080/events", timeout_seconds=2, opener=opener).publish(
         EVENT
     )
     assert calls[0][1] == 2
+    assert response.closed
     assert calls[0][0].get_method() == "POST"
     assert calls[0][0].get_header("Content-type") == "application/json"
     assert calls[0][0].get_header("X-ronin-event-digest")
     assert calls[0][0].data == (
         b'{"eventTime":"2026-09-21T00:00:00Z","eventType":"COMPLETE",'
-        b'"job":{"name":"job","namespace":"ns"},"producer":"ronin",'
-        b'"run":{"runId":"run-1"}}'
+        b'"job":{"name":"job","namespace":"ns"},'
+        b'"producer":"https://github.com/SauronShepherd/ronin",'
+        b'"run":{"runId":"run-1"},'
+        b'"schemaURL":"https://openlineage.io/spec/1-0-5/OpenLineage.json#'
+        b'/definitions/RunEvent"}'
     )
 
 
@@ -197,14 +220,61 @@ def test_http_sink_rejects_insecure_remote_endpoint_and_sanitizes_failure() -> N
         )
 
 
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "https://user:secret@lineage.example.test/events",
+        "https://lineage.example.test/events#fragment",
+        "https://lineage.example.test:99999/events",
+        "https://[invalid/events",
+    ],
+)
+def test_http_sink_rejects_ambiguous_or_credential_bearing_urls(endpoint: str) -> None:
+    with pytest.raises(ValueError, match="endpoint"):
+        HttpOpenLineageSink(endpoint)
+
+
+def test_http_sink_does_not_follow_redirects() -> None:
+    handler = _RejectRedirects()
+    request = Request("https://lineage.example.test/events")
+    assert handler.redirect_request(request, None, 302, "Found", {}, "https://other.test") is None
+
+
+@pytest.mark.parametrize("timeout", [True, False, 0, -1, 61, float("inf"), 10**100])
+def test_http_sink_rejects_invalid_timeout_bounds(timeout: object) -> None:
+    with pytest.raises(ValueError, match="timeout"):
+        HttpOpenLineageSink("https://lineage.example.test/events", timeout_seconds=timeout)
+
+
+def test_openlineage_event_payload_has_a_hard_byte_limit() -> None:
+    event = {**EVENT, "extension": "x" * MAX_OPENLINEAGE_EVENT_BYTES}
+    with pytest.raises(ValueError, match="1048576-byte limit"):
+        validate_openlineage_event(event)
+
+
+def test_openlineage_facets_require_schema_and_producer_metadata() -> None:
+    event = {
+        **EVENT,
+        "outputs": [
+            {
+                "namespace": "ns",
+                "name": "output",
+                "facets": {"columnLineage": {"fields": {}}},
+            }
+        ],
+    }
+    with pytest.raises(ValueError, match="facet producer and schemaURL"):
+        validate_openlineage_event(event)
+
+
 def test_openlineage_validation_messages_are_stable() -> None:
     cases = (
-        ({**EVENT, "producer": "other"}, "OpenLineage producer is unsupported"),
+        ({**EVENT, "producer": "not a uri"}, "OpenLineage producer must be an absolute URI"),
         ({**EVENT, "schemaVersion": "2.0"}, "OpenLineage schemaVersion is unsupported"),
         ({**EVENT, "eventType": "UNKNOWN"}, "OpenLineage event type is unsupported"),
         (
-            {**EVENT, "eventTime": "2026-09-21T00:00:00+00:00"},
-            "OpenLineage eventTime must be a UTC timestamp",
+            {**EVENT, "eventTime": "not-a-timestampZ"},
+            "OpenLineage eventTime must be a timezone-aware ISO 8601 timestamp",
         ),
         ({**EVENT, "run": []}, "OpenLineage run and job must be objects"),
         ({**EVENT, "run": {}}, "OpenLineage run.runId is required"),
@@ -226,6 +296,27 @@ def test_transport_attempt_bounds_are_inclusive_and_message_is_stable() -> None:
         with pytest.raises(ValueError, match=".") as error:
             OpenLineageTransport(Sink(), max_attempts=value)
         assert str(error.value) == "max_attempts must be between 1 and 10"
+
+
+def test_transport_deduplication_cache_is_bounded_and_evicts_oldest_entries() -> None:
+    sink = Sink()
+    transport = OpenLineageTransport(sink, max_deduplication_entries=1)
+    first = transport.publish(EVENT)
+    second = transport.publish({**EVENT, "eventType": "START"})
+
+    assert first.deduplicated is False
+    assert second.deduplicated is False
+    assert transport.publish({**EVENT, "eventType": "START"}).deduplicated is True
+    evicted = transport.publish(EVENT)
+    assert evicted.deduplicated is False
+    assert evicted.attempts == 1
+    assert len(sink.events) == 3
+
+
+@pytest.mark.parametrize("value", [True, False, 0, -1, 100_001, 1.5, "2", None])
+def test_transport_rejects_invalid_deduplication_cache_bounds(value: object) -> None:
+    with pytest.raises(ValueError, match="max_deduplication_entries"):
+        OpenLineageTransport(Sink(), max_deduplication_entries=value)  # type: ignore[arg-type]
 
 
 def test_transport_deduplicates_only_after_successful_publish() -> None:
@@ -258,7 +349,11 @@ def test_transport_receipt_is_stable_and_digest_changes_with_event_content() -> 
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
-        ("eventTime", "2026-09-21T00:00:00+00:00", "OpenLineage eventTime must be a UTC timestamp"),
+        (
+            "eventTime",
+            "2026-09-21T00:00:00",
+            "OpenLineage eventTime must be a timezone-aware ISO 8601 timestamp",
+        ),
         ("run", [], "OpenLineage run and job must be objects"),
         ("job", [], "OpenLineage run and job must be objects"),
         ("run", {"runId": "  "}, "OpenLineage run.runId is required"),
