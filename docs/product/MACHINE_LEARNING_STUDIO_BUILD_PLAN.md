@@ -1113,11 +1113,18 @@ reapertura del store y rollback ante conflictos tardíos de modelo/feature,
 dataset ausente y cancelación durante la escritura; la suite relacionada pasó
 41/41 localmente en Windows/Python 3.13, conectada a PostgreSQL en Docker y con
 `ResourceWarning` como error. Ruff, formato, mypy, architecture gate y
-consistencia del ledger también pasan; la cualificación exact-head de este
-candidato sigue pendiente. El primer workflow exact-head ejecutó 3929 pruebas
-(14 omitidas), pero detectó que `postgres_ml.py` mejoró a 76.16% y superó el
-margen del ratchet frente a 72.52%; el baseline se actualizó a 74.07% y debe
-volver a cualificarse.
+consistencia del ledger también pasan. El primer workflow exact-head ejecutó
+3929 pruebas (14 omitidas), pero detectó que `postgres_ml.py` medía 76.16% y
+superaba el margen del ratchet frente a 72.52%; el baseline se actualizó a
+74.07%. La repetición pasó los gates exact-head de CI, Docker/PostgreSQL,
+Security, Release y Status; PR #528 está integrado en
+`main@72a89d06eaf33f604a613376e630a01c5b163dfd`. En post-merge, CI 3.12 y el
+worker real Docker fallaron por una carrera POSIX de `Popen.poll()` con el child
+watcher de asyncio. PR #529 corrigió la recolección del código de salida; CI
+3.11/3.12, Docker/PostgreSQL y los seis workflows post-merge exact-head pasaron
+en `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`. La importación ML y el
+resto de Public v1 siguen parciales; el avance release-qualified permanece en
+0% (0/13).
 
 El flujo síncrono de ejecución acepta ahora de forma coherente la opción
 `register` que ya consumía internamente el camino de clustering. El handler
