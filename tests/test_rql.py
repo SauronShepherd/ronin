@@ -80,6 +80,31 @@ def test_rql_bounded_typed_join_matches_property_values() -> None:
     assert [item.ref.key for item in result.objects] == [(("id", "10"),)]
 
 
+@pytest.mark.parametrize(
+    ("left_properties", "right_properties"),
+    [
+        ((("key", True),), (("key", 1),)),
+        ((("key", 1),), (("key", 1.0),)),
+        ((("key", None),), (("key", None),)),
+        ((("key", None),), ()),
+    ],
+)
+def test_rql_join_requires_same_non_null_typed_value(
+    left_properties: tuple[tuple[str, object], ...],
+    right_properties: tuple[tuple[str, object], ...],
+) -> None:
+    graph = KnowledgeGraph(
+        (
+            KnowledgeObject(KnowledgeObjectRef("Customer", (("id", "1"),)), left_properties),
+            KnowledgeObject(KnowledgeObjectRef("Order", (("id", "10"),)), right_properties),
+        )
+    )
+
+    result = execute_rql("SELECT Customer JOIN Order ON key = key", graph)
+
+    assert result.objects == ()
+
+
 def test_rql_parser_exposes_versioned_canonical_ast() -> None:
     query = parse_rql("SELECT Customer JOIN Order ON account = customer LIMIT 3")
     assert query.to_data()["version"] == 1
