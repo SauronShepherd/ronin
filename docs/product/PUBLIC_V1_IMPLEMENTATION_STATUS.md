@@ -4,12 +4,13 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-24. PRs #430–#544 are merged. PR #520
+**Observed workspace snapshot:** 2026-10-24. PRs #430–#545 are merged. PR #520
 reconciles Public v1 to exclude in-product GenAI/RAG/agent execution, keeps
 coding-agent skills external-only, and places multi-user administration in
 Ronin Pro. Its exact-head CI, Docker/PostgreSQL, Web, Security, Release, Status
 consistency, external-skills boundary and prerelease-artifact workflows passed.
 PR #531 reconciles ML qualification wording. PR #532 adds atomic, exact-replay SQLite ontology Bundle import, including rollback on a late missing asset or conflicting definition; its 55 focused tests, Python 3.11/3.12, Docker/PostgreSQL storage coverage and all six exact-head post-merge workflows passed on `main@29dd455d4ba80d546e830571f2139228d29c6594`. PR #539 adds typed ontology semantics and PR #540 closes unsafe RQL joins for mismatched scalar types and null/missing values. On `main@0b32db1c83e681a08e8118e23c0e4b744b3929a5`, PR checks passed 3,921 local tests (66 platform/provider skips), Python 3.11/3.12, Docker runtime and strict acceptance, PostgreSQL storage coverage, Web, Security, Release, Status and evidence workflows; all six post-merge exact-head workflows passed. `mutation` remained skipped by policy and is not reported as pass. The ontology storage coverage ratchet remains at 76.35%. PR #542 makes Graph `=`/`!=` filters type-aware; its full local suite passed 3,922 tests with 66 environment/platform skips, and its required PR gates passed. Los seis workflows post-merge exact-head de `main@4e63e69334a2ae55ce6bc1c2656742193cb919bb` pasaron. PR #544 corrects OpenLineage export: observed edges emit RunEvents with standard column-lineage facets, declared edges emit DatasetEvents with lineage facets, and validation/transport now enforce bounded payloads and no redirects. The full local suite passed 3,954 tests with 66 skips in 489.21s; all six post-merge exact-head workflows passed. `mutation` remains skipped by policy. P6 remains partial and Public v1 remains incomplete.
+OpenLineage candidate `e02d5e79a85fc67625df9f40dbf0d00a3d6fdde7` additionally enforces exact event/facet schema identity and rejects mixed RunEvent/DatasetEvent payloads. Its 130 focused tests and full local suite (3,960 passed, 66 skipped in 453.06s), Ruff, format, mypy (425 files) and architecture checks passed. CI/Docker/PostgreSQL qualification for this candidate is pending; P6 remains partial.
 Recent
 increments add configurable ML algorithms and preprocessing, selective retry,
 non-destructive artifact retention preview, fail-closed reference discovery with
@@ -35,7 +36,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `11295e3d2c904ae300598d9592ea8a1eebf29c3d` (2026-10-24).
+**Observed source head:** `caa0c8ba6561b11d21401e5c9beea08fe0f80fbd` (2026-10-24).
 **Release status:** **INCOMPLETE**.
 
 **Scope amendment (2026-10-24):** No Ronin tier provides in-product GenAI/model invocation, RAG, or agent execution. Ronin coding-agent skills are external instructions consumed outside the product. Multi-user identity, user/group administration and multi-user deployment belong to Ronin Pro. Dated evidence notes below preserve their original scope context; the current release denominator excludes GenAI and Pro capabilities.

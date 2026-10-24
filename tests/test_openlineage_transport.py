@@ -62,6 +62,57 @@ def test_schema_validator_accepts_supported_explicit_version() -> None:
     validate_openlineage_event({**EVENT, "schemaVersion": "1.0"})
 
 
+@pytest.mark.parametrize(
+    ("event", "message"),
+    [
+        (
+            {
+                **EVENT,
+                "schemaURL": "https://openlineage.io/spec/1-0-5/OpenLineage.json#/definitions/DatasetEvent",
+            },
+            "RunEvent",
+        ),
+        (
+            {
+                "eventTime": "2026-09-21T00:00:00Z",
+                "dataset": {"namespace": "ns", "name": "output"},
+                "producer": "https://github.com/SauronShepherd/ronin",
+                "schemaURL": "https://openlineage.io/spec/1-0-5/OpenLineage.json#/definitions/RunEvent",
+            },
+            "DatasetEvent",
+        ),
+    ],
+)
+def test_schema_validator_rejects_schema_urls_for_the_wrong_event_kind(
+    event: dict[str, object], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        validate_openlineage_event(event)
+
+
+@pytest.mark.parametrize(
+    "event",
+    [
+        {
+            **EVENT,
+            "dataset": {"namespace": "ns", "name": "output"},
+        },
+        {
+            "eventTime": "2026-09-21T00:00:00Z",
+            "dataset": {"namespace": "ns", "name": "output"},
+            "producer": "https://github.com/SauronShepherd/ronin",
+            "schemaURL": "https://openlineage.io/spec/1-0-5/OpenLineage.json#/definitions/DatasetEvent",
+            "run": {"runId": "run-1"},
+        },
+    ],
+)
+def test_schema_validator_rejects_mixed_run_and_dataset_event_shapes(
+    event: dict[str, object],
+) -> None:
+    with pytest.raises(ValueError, match="payload cannot contain"):
+        validate_openlineage_event(event)
+
+
 def test_schema_validator_accepts_iso8601_offsets_and_requires_valid_run_event_uri() -> None:
     validate_openlineage_event({**EVENT, "eventTime": "2026-09-21T02:00:00+02:00"})
     for field in ("producer", "schemaURL"):
@@ -264,6 +315,48 @@ def test_openlineage_facets_require_schema_and_producer_metadata() -> None:
         ],
     }
     with pytest.raises(ValueError, match="facet producer and schemaURL"):
+        validate_openlineage_event(event)
+
+
+@pytest.mark.parametrize(
+    ("facet_name", "schema_url"),
+    [
+        (
+            "columnLineage",
+            "https://openlineage.io/spec/facets/1-0-0/LineageFacet.json#/$defs/LineageDatasetFacet",
+        ),
+        (
+            "lineage",
+            "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json",
+        ),
+    ],
+)
+def test_openlineage_known_facet_names_require_their_schema_url(
+    facet_name: str, schema_url: str
+) -> None:
+    facet: dict[str, object]
+    if facet_name == "columnLineage":
+        facet = {
+            "_producer": "https://github.com/SauronShepherd/ronin",
+            "_schemaURL": schema_url,
+            "fields": {
+                "target": {
+                    "inputFields": [{"namespace": "ns", "name": "source", "field": "origin"}]
+                }
+            },
+        }
+    else:
+        facet = {
+            "_producer": "https://github.com/SauronShepherd/ronin",
+            "_schemaURL": schema_url,
+            "inputs": [{"namespace": "ns", "name": "source", "type": "DATASET"}],
+        }
+    event = {
+        **EVENT,
+        "outputs": [{"namespace": "ns", "name": "output", "facets": {facet_name: facet}}],
+    }
+
+    with pytest.raises(ValueError, match=f"{facet_name} facet schemaURL is unsupported"):
         validate_openlineage_event(event)
 
 
