@@ -34,6 +34,15 @@ class SemanticBundleStore(Protocol):
     ) -> DashboardDefinition: ...
 
 
+class SemanticBundleImportStore(SemanticBundleStore, Protocol):
+    def commit_bundle_import(
+        self,
+        project_id: str,
+        models: tuple[SemanticModel, ...],
+        dashboards: tuple[DashboardDefinition, ...],
+    ) -> None: ...
+
+
 @dataclass(frozen=True, slots=True)
 class SemanticBundleImportPlan:
     inventory: BundleInventory
@@ -97,28 +106,16 @@ def plan_semantic_bundle_import(path: Path) -> SemanticBundleImportPlan:
 
 
 def commit_semantic_bundle_import(
-    path: Path, project_id: str, store: SemanticBundleStore
+    path: Path, project_id: str, store: SemanticBundleImportStore
 ) -> SemanticBundleImportPlan:
     plan = plan_semantic_bundle_import(path)
-    existing_models = {item.id: item for item in store.list_models(project_id)}
-    existing_dashboards = {item.id: item for item in store.list_dashboards(project_id)}
-    for model in plan.models:
-        if model.id in existing_models and existing_models[model.id] != model:
-            raise ValueError(f"semantic model conflicts with existing definition: {model.id}")
-    for dashboard in plan.dashboards:
-        if dashboard.id in existing_dashboards and existing_dashboards[dashboard.id] != dashboard:
-            raise ValueError(
-                f"semantic dashboard conflicts with existing definition: {dashboard.id}"
-            )
-    for model in plan.models:
-        store.put_model(project_id, model)
-    for dashboard in plan.dashboards:
-        store.put_dashboard(project_id, dashboard)
+    store.commit_bundle_import(project_id, plan.models, plan.dashboards)
     return plan
 
 
 __all__ = (
     "SemanticBundleImportPlan",
+    "SemanticBundleImportStore",
     "build_semantic_bundle",
     "commit_semantic_bundle_import",
     "export_semantic_bundle",
