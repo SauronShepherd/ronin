@@ -1171,7 +1171,7 @@ el transporte exige timeouts finitos y un límite entero de respuesta.
 
 ## 89. Completar el contrato de deployment y serving local
 
-**Estado del candidato: implementado estáticamente; cualificación pendiente.**
+**Estado actual: implementado; la cualificación de release sigue pendiente.**
 `ModelDeployment` fija workspace, versión, referencia y digest del artefacto. La
 creación verifica los bytes mediante `ArtifactStore` antes de marcar readiness,
 persiste el estado en SQLite/PostgreSQL, expone health y telemetría acotada,
@@ -1180,19 +1180,17 @@ champion del registry. Las identidades de deployment son inmutables e
 idempotentes; un pin distinto produce conflicto. El contrato está documentado en
 `docs/contracts/ml-deployment-v1.md` y OpenAPI. El plugin registra además la
 tarea durable `ml-studio.deployment.v1` para ejecutar el mismo pin desde el
-scheduler. No se ejecutaron pruebas, builds, validadores ni Docker por
-instrucción del usuario.
+scheduler. Las pruebas focalizadas de esta superficie se registran en la sección 91; la cualificación de release sigue pendiente.
 
 ## 90. Completar el recorrido de AI/ML Lab Studio
 
-**Estado del candidato: implementado estáticamente; cualificación pendiente.**
+**Estado actual: implementado; la cualificación de release sigue pendiente.**
 La superficie de Machine Learning Studio reúne creación de Labs, suites de
 calidad, comparación y exportación de trials, registro/promoción, model cards,
 descarga verificada de artefactos, scoring, drift y ahora el ciclo completo de
 deployment: creación con pin de modelo, listado, health, predicción y rollback.
 El cliente usa los contratos HTTP versionados y mantiene el workspace explícito.
-No se ejecutaron pruebas, builds, validadores ni Docker por instrucción del
-usuario.
+Las pruebas focalizadas de esta superficie se registran en la sección 91; la cualificación de release sigue pendiente.
 
 ## 91. Cierre de la auditoría completa del plan
 
@@ -1212,8 +1210,7 @@ nativo en Windows cuando el callback del Proactor llega tarde bajo carga, evitan
 timeouts falsos de comandos cortos. `LocalExecutionCoordinator` ahora despierta el
 poller al recibir un trabajo, conservando el intervalo acotado como fallback y
 evitando carreras en ejecuciones locales breves.
-La evidencia de release público continúa en 0/14 por las dependencias externas y
-decisiones humanas definidas en este plan.
+La evidencia de release público continúa en 0/13 familias activas según el alcance vigente (P9 GenAI queda fuera; multiusuario pertenece a Ronin Pro). Siguen pendientes las dependencias externas y decisiones humanas definidas en este plan.
 
 La evidencia ejecutable de este cierre es: suite Python completa `3945 passed, 59
 skipped` con cobertura de ramas; suite focalizada de candidato `431 passed`; suite
