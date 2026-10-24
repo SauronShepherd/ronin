@@ -317,6 +317,145 @@ def test_ml_registry_bundle_rejects_champion_without_passed_evaluation(
     assert target.list_models(_WS) == ()
 
 
+def test_ml_registry_bundle_wont_replace_an_existing_champion_version(
+    tmp_path: Path,
+) -> None:
+    source, _source_catalog = _stores(tmp_path / "source.sqlite3")
+    source_experiment = Experiment(ExperimentId("source-champion-exp"), "Source")
+    source_run = MLRunRecord(
+        MLRunId("source-champion-run"),
+        source_experiment.id,
+        "job-source/run-1/attempt-1",
+        "git:source",
+        datasets=(_DATA,),
+    )
+    imported_champion = RegisteredModelVersion(
+        ModelId("single-champion"),
+        ModelVersion("2"),
+        source_run.id,
+        "artifact://source-champion",
+        "sha256:source-champion",
+        "sklearn",
+        ModelSignature((("x", "float64"),), (("prediction", "float64"),)),
+        stage="champion",
+    )
+    source.put_experiment(_WS, source_experiment, now=_NOW)
+    source.record_run(_WS, source_run, now=_NOW)
+    source.register_model(_WS, imported_champion, now=_NOW)
+    source.record_evaluation(
+        _WS,
+        ModelEvaluation(
+            imported_champion.model_id,
+            imported_champion.version,
+            _DATA,
+            "passed",
+            (MetricValue("accuracy", 0.9),),
+            "source-champion-evaluation",
+        ),
+        now=_NOW,
+    )
+    bundle = tmp_path / "existing-champion.roninbundle"
+    export_ml_registry_bundle(_WS, source, bundle)
+
+    target, _target_catalog = _stores(tmp_path / "target.sqlite3")
+    target_experiment = Experiment(ExperimentId("target-champion-exp"), "Target")
+    target_run = MLRunRecord(
+        MLRunId("target-champion-run"),
+        target_experiment.id,
+        "job-target/run-1/attempt-1",
+        "git:target",
+        datasets=(_DATA,),
+    )
+    existing_champion = RegisteredModelVersion(
+        imported_champion.model_id,
+        ModelVersion("1"),
+        target_run.id,
+        "artifact://target-champion",
+        "sha256:target-champion",
+        "sklearn",
+        imported_champion.signature,
+        stage="champion",
+    )
+    target.put_experiment(_WS, target_experiment, now=_NOW)
+    target.record_run(_WS, target_run, now=_NOW)
+    target.register_model(_WS, existing_champion, now=_NOW)
+    existing_evaluation = ModelEvaluation(
+        existing_champion.model_id,
+        existing_champion.version,
+        _DATA,
+        "passed",
+        (MetricValue("accuracy", 0.8),),
+        "target-champion-evaluation",
+    )
+    target.record_evaluation(_WS, existing_evaluation, now=_NOW)
+    before = (
+        target.list_experiments(_WS),
+        target.list_runs(_WS),
+        target.list_models(_WS),
+        target.list_evaluations(_WS, existing_champion.model_id, existing_champion.version),
+    )
+
+    with pytest.raises(MLConflict, match="different champion version"):
+        commit_ml_registry_bundle_import(bundle, _WS, target, now=_NOW)
+
+    assert (
+        target.list_experiments(_WS),
+        target.list_runs(_WS),
+        target.list_models(_WS),
+        target.list_evaluations(_WS, existing_champion.model_id, existing_champion.version),
+    ) == before
+
+
+def test_ml_registry_bundle_rejects_multiple_champion_versions_for_one_model(
+    tmp_path: Path,
+) -> None:
+    source, _source_catalog = _stores(tmp_path / "source.sqlite3")
+    experiment = Experiment(ExperimentId("multi-champion-exp"), "Source")
+    source.put_experiment(_WS, experiment, now=_NOW)
+    for version in ("1", "2"):
+        run = MLRunRecord(
+            MLRunId(f"multi-champion-run-{version}"),
+            experiment.id,
+            f"job-version-{version}/run-1/attempt-1",
+            "git:multi-champion",
+            datasets=(_DATA,),
+        )
+        model = RegisteredModelVersion(
+            ModelId("multiple-champions"),
+            ModelVersion(version),
+            run.id,
+            f"artifact://model-{version}",
+            f"sha256:model-{version}",
+            "sklearn",
+            ModelSignature((("x", "float64"),), (("prediction", "float64"),)),
+            stage="champion",
+        )
+        source.record_run(_WS, run, now=_NOW)
+        source.register_model(_WS, model, now=_NOW)
+        source.record_evaluation(
+            _WS,
+            ModelEvaluation(
+                model.model_id,
+                model.version,
+                _DATA,
+                "passed",
+                (MetricValue("accuracy", 0.9),),
+                f"evaluation-{version}",
+            ),
+            now=_NOW,
+        )
+    bundle = tmp_path / "multiple-champions.roninbundle"
+    export_ml_registry_bundle(_WS, source, bundle)
+
+    target, _target_catalog = _stores(tmp_path / "target.sqlite3")
+    with pytest.raises(ValueError, match="multiple champion versions"):
+        commit_ml_registry_bundle_import(bundle, _WS, target, now=_NOW)
+
+    assert target.list_experiments(_WS) == ()
+    assert target.list_runs(_WS) == ()
+    assert target.list_models(_WS) == ()
+
+
 def test_ml_registry_bundle_late_model_conflict_rolls_back_all_sqlite_metadata(
     tmp_path: Path,
 ) -> None:

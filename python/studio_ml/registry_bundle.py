@@ -384,6 +384,9 @@ def _plan_ml_registry_bundle_import_from_reader(
         for model in models
     ):
         raise ValueError("ML registry Bundle champion model requires a passed evaluation")
+    champion_model_ids = [str(model.model_id) for model in models if model.stage == "champion"]
+    if len(champion_model_ids) != len(set(champion_model_ids)):
+        raise ValueError("ML registry Bundle contains multiple champion versions for one model")
     return MLRegistryBundleImportPlan(
         inventory,
         tuple(experiments),

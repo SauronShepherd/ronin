@@ -297,6 +297,16 @@ class SqliteMLStore:
                     is None
                 ):
                     raise KeyError(str(model.source_run_id))
+                if model.stage == "champion":
+                    champion = connection.execute(
+                        "SELECT version FROM model_versions WHERE workspace_id=? "
+                        "AND model_id=? AND stage='champion'",
+                        (str(workspace_id), str(model.model_id)),
+                    ).fetchone()
+                    if champion is not None and champion["version"] != str(model.version):
+                        raise MLConflict(
+                            f"model already has a different champion version: {model.model_id}"
+                        )
                 existing = connection.execute(
                     "SELECT model_json FROM model_versions "
                     "WHERE workspace_id=? AND model_id=? AND version=?",
