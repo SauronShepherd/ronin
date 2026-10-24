@@ -17,7 +17,7 @@ from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.portability import RoninBundleManifest
 from studio_orchestrator import Instant
 from studio_storage.bundle import BundleFile, write_bundle
-from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.bundle_payload import BundlePayloadReader
 
 INVENTORY_MEDIA_TYPE = "application/vnd.ronin.bundle-inventory+json"
 ONTOLOGY_MEDIA_TYPE = "application/vnd.ronin.ontology-definition+json"
@@ -63,21 +63,22 @@ def export_ontology_bundle(
 def import_ontology_bundle(
     path: Path, workspace_id: WorkspaceId, store: OntologyBundleStore, *, now: Instant | str
 ) -> tuple[OntologyDefinition, ...]:
-    inventory_payload = read_bundle_payload(path, BUNDLE_INVENTORY_PATH)
-    if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
-        raise ValueError("ontology Bundle inventory has unsupported media type")
-    inventory = BundleInventory.from_payload(json.loads(inventory_payload.file.data))
-    values: list[OntologyDefinition] = []
-    for item in inventory.objects:
-        if item.kind != "ontology":
-            raise ValueError("unsupported ontology Bundle object")
-        payload = read_bundle_payload(path, item.path)
-        if (
-            payload.manifest != inventory_payload.manifest
-            or payload.file.media_type != ONTOLOGY_MEDIA_TYPE
-        ):
-            raise ValueError("ontology Bundle integrity or media type mismatch")
-        values.append(OntologyDefinition.from_json(payload.file.data.decode("utf-8")))
+    with BundlePayloadReader(path) as reader:
+        inventory_payload = reader.read_payload(BUNDLE_INVENTORY_PATH)
+        if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
+            raise ValueError("ontology Bundle inventory has unsupported media type")
+        inventory = BundleInventory.from_payload(json.loads(inventory_payload.file.data))
+        values: list[OntologyDefinition] = []
+        for item in inventory.objects:
+            if item.kind != "ontology":
+                raise ValueError("unsupported ontology Bundle object")
+            payload = reader.read_payload(item.path)
+            if (
+                payload.manifest != inventory_payload.manifest
+                or payload.file.media_type != ONTOLOGY_MEDIA_TYPE
+            ):
+                raise ValueError("ontology Bundle integrity or media type mismatch")
+            values.append(OntologyDefinition.from_json(payload.file.data.decode("utf-8")))
     for value in values:
         store.put(workspace_id, value, now=now)
     return tuple(values)

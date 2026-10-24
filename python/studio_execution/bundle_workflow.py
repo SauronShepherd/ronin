@@ -22,7 +22,7 @@ from studio_storage.bundle import (
     BundleReadLimits,
     write_bundle,
 )
-from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.bundle_payload import BundlePayloadReader
 from studio_storage.bundle_workflow_import_port import SchedulerDefinitionStore
 
 WORKFLOW_MEDIA_TYPE = "application/vnd.ronin.workflow+json"
@@ -137,8 +137,27 @@ def plan_workflow_bundle_import(
     max_object_bytes: int = 8 * 1024 * 1024,
 ) -> WorkflowBundleImportPlan:
     """Verify and parse a workflow Bundle without changing target state."""
-    inventory_payload = read_bundle_payload(
-        path, BUNDLE_INVENTORY_PATH, max_bytes=max_inventory_bytes, limits=limits
+    with BundlePayloadReader(path, limits=limits) as reader:
+        return _plan_workflow_bundle_import_from_reader(
+            reader,
+            scheduler_store,
+            workspace_id,
+            max_inventory_bytes=max_inventory_bytes,
+            max_object_bytes=max_object_bytes,
+        )
+
+
+def _plan_workflow_bundle_import_from_reader(
+    reader: BundlePayloadReader,
+    scheduler_store: SchedulerDefinitionStore | None,
+    workspace_id: WorkspaceId | None,
+    *,
+    max_inventory_bytes: int,
+    max_object_bytes: int,
+) -> WorkflowBundleImportPlan:
+    inventory_payload = reader.read_payload(
+        BUNDLE_INVENTORY_PATH,
+        max_bytes=max_inventory_bytes,
     )
     if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
         raise BundleIntegrityError("workflow Bundle inventory has unsupported media type")
@@ -149,7 +168,7 @@ def plan_workflow_bundle_import(
     objects: list[StagedWorkflowObject] = []
     known_refs = {item.logical_ref for item in inventory.objects}
     for item in inventory.objects:
-        payload = read_bundle_payload(path, item.path, max_bytes=max_object_bytes, limits=limits)
+        payload = reader.read_payload(item.path, max_bytes=max_object_bytes)
         if payload.manifest != inventory_payload.manifest:
             raise BundleIntegrityError("workflow Bundle changed while import plan was constructed")
         try:

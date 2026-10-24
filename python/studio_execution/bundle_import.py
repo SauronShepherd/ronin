@@ -10,7 +10,7 @@ from studio_core import ProjectId, ProjectManifest, WorkspaceId
 from studio_core.bundle_inventory import BUNDLE_INVENTORY_PATH, BundleInventory
 from studio_core.portability import BindingRequest, RoninBundleManifest
 from studio_storage.bundle import DEFAULT_BUNDLE_READ_LIMITS, BundleIntegrityError, BundleReadLimits
-from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.bundle_payload import BundlePayloadReader
 from studio_storage.ports import WorkspaceStore
 
 from .bundle_inventory import INVENTORY_MEDIA_TYPE, PROJECT_BUNDLE_MEDIA_TYPE
@@ -84,11 +84,27 @@ def plan_project_bundle_import(
     """Verify and classify one native project bundle without mutating target state."""
 
     _require_active_target_workspace(store, workspace_id)
-    inventory_payload = read_bundle_payload(
-        bundle_path,
+    with BundlePayloadReader(bundle_path, limits=limits) as reader:
+        return _plan_project_bundle_import_from_reader(
+            reader,
+            store,
+            workspace_id,
+            max_inventory_bytes=max_inventory_bytes,
+            max_project_bytes=max_project_bytes,
+        )
+
+
+def _plan_project_bundle_import_from_reader(
+    reader: BundlePayloadReader,
+    store: WorkspaceStore,
+    workspace_id: WorkspaceId,
+    *,
+    max_inventory_bytes: int,
+    max_project_bytes: int,
+) -> ProjectBundleImportPlan:
+    inventory_payload = reader.read_payload(
         BUNDLE_INVENTORY_PATH,
         max_bytes=max_inventory_bytes,
-        limits=limits,
     )
     if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
         raise UnsupportedBundleInventory("bundle inventory has unsupported media type")
@@ -103,12 +119,7 @@ def plan_project_bundle_import(
         )
     item = inventory.objects[0]
 
-    project_payload = read_bundle_payload(
-        bundle_path,
-        item.path,
-        max_bytes=max_project_bytes,
-        limits=limits,
-    )
+    project_payload = reader.read_payload(item.path, max_bytes=max_project_bytes)
     if project_payload.manifest != inventory_payload.manifest:
         raise BundleIntegrityError("bundle changed while import plan was being constructed")
     if project_payload.file.media_type != PROJECT_BUNDLE_MEDIA_TYPE:

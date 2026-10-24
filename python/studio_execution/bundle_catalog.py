@@ -30,7 +30,7 @@ from studio_storage.bundle import (
     BundleReadLimits,
     write_bundle,
 )
-from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.bundle_payload import BundlePayloadReader
 from studio_storage.ports import CatalogStore, WorkspaceStore
 
 CATALOG_ASSET_MEDIA_TYPE = "application/vnd.ronin.catalog-asset+json"
@@ -426,11 +426,27 @@ def plan_catalog_bundle_import(
     """Verify and classify one selected catalog subgraph without mutating target state."""
 
     _require_active_workspace(workspace_store, workspace_id)
-    inventory_payload = read_bundle_payload(
-        bundle_path,
+    with BundlePayloadReader(bundle_path, limits=limits) as reader:
+        return _plan_catalog_bundle_import_from_reader(
+            reader,
+            catalog_store,
+            workspace_id,
+            max_inventory_bytes=max_inventory_bytes,
+            max_object_bytes=max_object_bytes,
+        )
+
+
+def _plan_catalog_bundle_import_from_reader(
+    reader: BundlePayloadReader,
+    catalog_store: CatalogStore,
+    workspace_id: WorkspaceId,
+    *,
+    max_inventory_bytes: int,
+    max_object_bytes: int,
+) -> CatalogBundleImportPlan:
+    inventory_payload = reader.read_payload(
         BUNDLE_INVENTORY_PATH,
         max_bytes=max_inventory_bytes,
-        limits=limits,
     )
     if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
         raise UnsupportedCatalogBundle("catalog Bundle inventory has unsupported media type")
@@ -443,12 +459,7 @@ def plan_catalog_bundle_import(
     known_assets: dict[AssetId, str] = {}
     known_revisions: dict[AssetRef, str] = {}
     for item in _ordered_objects(inventory):
-        payload = read_bundle_payload(
-            bundle_path,
-            item.path,
-            max_bytes=max_object_bytes,
-            limits=limits,
-        )
+        payload = reader.read_payload(item.path, max_bytes=max_object_bytes)
         if payload.manifest != inventory_payload.manifest:
             raise BundleIntegrityError("catalog Bundle changed while import plan was constructed")
         digest = _manifest_entry_digest(inventory_payload.manifest, item.path)
