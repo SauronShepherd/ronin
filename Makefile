@@ -196,7 +196,7 @@ coverage-storage-files-full:
 		--baseline=ml.py=72.19 \
 		--baseline=postgres_ml.py=72.52 \
 		--baseline=ontology.py=37.40 \
-		--baseline=postgres_core.py=41.40 \
+		--baseline=postgres_core.py=48.49 \
 		--baseline=postgres_jobs.py=73.01 \
 		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=74.20 \

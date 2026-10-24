@@ -21,7 +21,12 @@ from studio_core.bundle_inventory import (
     BundleInventory,
     BundleInventoryObject,
 )
-from studio_core.environments import DeploymentBinding, EnvironmentDefinition, EnvironmentId
+from studio_core.environments import (
+    DeploymentBinding,
+    EnvironmentDefinition,
+    EnvironmentId,
+    ProjectEnvironmentBindings,
+)
 from studio_core.portability import BindingRequest
 from studio_execution.bundle_connection import CONNECTION_BUNDLE_MEDIA_TYPE
 from studio_execution.bundle_inventory import INVENTORY_MEDIA_TYPE, PROJECT_BUNDLE_MEDIA_TYPE
@@ -244,3 +249,42 @@ def test_multi_object_commit_rolls_back_project_when_resolved_connection_conflic
         )
     assert store.get_connection(_WS, _CONNECTION) == existing
     assert store.list_projects(_WS) == ()
+
+
+def test_multi_object_storage_commit_rolls_back_connection_on_late_binding_conflict(
+    tmp_path: Path,
+) -> None:
+    store, environments = _target(tmp_path)
+    project = _project()
+    store.register_project(_WS, project, now=_NOW)
+    existing_bindings = ProjectEnvironmentBindings(
+        _PROJECT,
+        _ENV,
+        (
+            DeploymentBinding(
+                "runtime",
+                "runtime-profile:python/3.11",
+                "runtime://python311-existing",
+            ),
+        ),
+    )
+    environments.put_project_bindings(_WS, existing_bindings, now=_NOW)
+    imported_connection = _connection(_TARGET_SECRET)
+    imported_bindings = ProjectEnvironmentBindings(
+        _PROJECT,
+        _ENV,
+        (DeploymentBinding("runtime", "runtime-profile:python/3.11", "runtime://python311"),),
+    )
+
+    with pytest.raises(MultiObjectBundleImportConflict, match="different project bindings"):
+        store.commit_multi_object_import(
+            _WS,
+            (imported_connection,),
+            (project,),
+            (imported_bindings,),
+            now=_NOW,
+        )
+
+    assert store.get_connection(_WS, _CONNECTION) is None
+    assert store.get_project(_WS, _PROJECT) == project
+    assert environments.get_project_bindings(_WS, _PROJECT, _ENV) == existing_bindings
