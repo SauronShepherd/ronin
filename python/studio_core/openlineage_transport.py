@@ -10,7 +10,14 @@ from typing import Protocol
 from urllib.parse import urlsplit
 
 from .canonical_json import encode as encode_canonical_json
-from .openlineage import JsonValue, _is_valid_iso8601_timestamp
+from .openlineage import (
+    OPENLINEAGE_COLUMN_LINEAGE_SCHEMA,
+    OPENLINEAGE_DATASET_EVENT_SCHEMA,
+    OPENLINEAGE_LINEAGE_FACET_SCHEMA,
+    OPENLINEAGE_RUN_EVENT_SCHEMA,
+    JsonValue,
+    _is_valid_iso8601_timestamp,
+)
 
 OPENLINEAGE_API_VERSION = "1.0"
 SUPPORTED_OPENLINEAGE_SCHEMA_VERSIONS = frozenset({OPENLINEAGE_API_VERSION})
@@ -52,6 +59,12 @@ def _validate_facets(entity: Mapping[str, JsonValue], entity_name: str) -> None:
             raise ValueError(
                 f"OpenLineage {entity_name} facet producer and schemaURL are required URIs"
             )
+        expected_schema = {
+            "columnLineage": OPENLINEAGE_COLUMN_LINEAGE_SCHEMA,
+            "lineage": OPENLINEAGE_LINEAGE_FACET_SCHEMA,
+        }.get(name)
+        if expected_schema is not None and facet.get("_schemaURL") != expected_schema:
+            raise ValueError(f"OpenLineage {entity_name} {name} facet schemaURL is unsupported")
         if name == "columnLineage":
             fields = facet.get("fields")
             if not isinstance(fields, Mapping) or not fields:
@@ -168,9 +181,13 @@ def validate_openlineage_event(event: Mapping[str, JsonValue]) -> None:
         required_run_fields = {"eventType", "run", "job"}
         if not required_run_fields <= set(event):
             raise ValueError("OpenLineage run event is missing required fields")
+        if "dataset" in event:
+            raise ValueError("OpenLineage RunEvent payload cannot contain a DatasetEvent dataset")
         event_type = event.get("eventType")
         if event_type not in {"START", "RUNNING", "COMPLETE", "ABORT", "FAIL", "OTHER"}:
             raise ValueError("OpenLineage event type is unsupported")
+        if event["schemaURL"] != OPENLINEAGE_RUN_EVENT_SCHEMA:
+            raise ValueError("OpenLineage schemaURL does not match RunEvent payload")
         run = event.get("run")
         job = event.get("job")
         if not isinstance(run, Mapping) or not isinstance(job, Mapping):
@@ -194,6 +211,10 @@ def validate_openlineage_event(event: Mapping[str, JsonValue]) -> None:
     else:
         if "dataset" not in event:
             raise ValueError("OpenLineage event is missing required fields")
+        if {"run", "job", "inputs", "outputs"} & set(event):
+            raise ValueError("OpenLineage DatasetEvent payload cannot contain RunEvent fields")
+        if event["schemaURL"] != OPENLINEAGE_DATASET_EVENT_SCHEMA:
+            raise ValueError("OpenLineage schemaURL does not match DatasetEvent payload")
         _validate_dataset(event["dataset"], "dataset")
     try:
         encoded = encode_canonical_json(dict(event))
