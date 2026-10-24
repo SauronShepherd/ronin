@@ -14,8 +14,11 @@ from studio_graph import (
     GraphLink,
     GraphMaterializationError,
     GraphObject,
+    GraphQueryIR,
     GraphQueryResult,
+    GraphResourceBudgetExceeded,
     GraphSnapshot,
+    GraphTraverse,
     NativeGraphProvider,
     RqlSyntaxError,
     SqliteGraphStore,
@@ -217,3 +220,182 @@ def test_native_provider_rejects_missing_return_fields(tmp_path: Path) -> None:
 
     with pytest.raises(KeyError, match="absent from object type"):
         provider.execute(parse_rql("MATCH Customer RETURN missing"))
+
+
+def _fanout_snapshot(fanout: int) -> GraphSnapshot:
+    customer = GraphObject(
+        KnowledgeObjectRef("Customer", (("id", "customer"),)),
+        (("name", "customer"),),
+    )
+    orders = tuple(
+        GraphObject(
+            KnowledgeObjectRef("Order", (("id", str(index)),)),
+            (("name", f"order-{index}"),),
+        )
+        for index in range(fanout)
+    )
+    links = tuple(GraphLink("owns", customer.ref, order.ref) for order in orders)
+    return GraphSnapshot(OntologyId("sales"), "v1", (customer, *orders), links)
+
+
+def test_native_provider_hard_stops_when_node_scan_exceeds_budget(tmp_path: Path) -> None:
+    store = SqliteGraphStore(tmp_path / "graph.sqlite")
+    snapshot = GraphSnapshot(
+        OntologyId("sales"),
+        "v1",
+        tuple(
+            GraphObject(
+                KnowledgeObjectRef("Customer", (("id", str(index)),)),
+                (("name", f"customer-{index}"),),
+            )
+            for index in range(3)
+        ),
+    )
+    store.replace_snapshot(snapshot)
+    provider = NativeGraphProvider(store, snapshot.ontology_id, snapshot.ontology_version)
+    query = GraphQueryIR(
+        "Customer",
+        return_fields=("_key",),
+        limit=1,
+        max_examined_nodes=2,
+    )
+
+    with pytest.raises(GraphResourceBudgetExceeded, match="node budget of 2"):
+        provider.execute(query)
+
+
+def test_native_provider_counts_edges_even_when_result_limit_is_one(tmp_path: Path) -> None:
+    store = SqliteGraphStore(tmp_path / "graph.sqlite")
+    snapshot = _fanout_snapshot(3)
+    store.replace_snapshot(snapshot)
+    provider = NativeGraphProvider(store, snapshot.ontology_id, snapshot.ontology_version)
+    query = GraphQueryIR(
+        "Customer",
+        traverse=GraphTraverse("owns", "out", 1),
+        return_fields=("_key",),
+        limit=1,
+        max_examined_nodes=10,
+        max_examined_edges=2,
+    )
+
+    with pytest.raises(GraphResourceBudgetExceeded, match="edge budget of 2"):
+        provider.execute(query)
+
+
+def test_native_provider_enforces_node_budget_during_traversal(tmp_path: Path) -> None:
+    store = SqliteGraphStore(tmp_path / "graph.sqlite")
+    snapshot = _fanout_snapshot(3)
+    store.replace_snapshot(snapshot)
+    provider = NativeGraphProvider(store, snapshot.ontology_id, snapshot.ontology_version)
+    query = GraphQueryIR(
+        "Customer",
+        traverse=GraphTraverse("owns", "out", 1),
+        return_fields=("_key",),
+        max_examined_nodes=3,
+        max_examined_edges=10,
+    )
+
+    with pytest.raises(GraphResourceBudgetExceeded, match="node budget of 3"):
+        provider.execute(query)
+
+
+def test_native_provider_batches_neighbors_and_applies_result_limit(tmp_path: Path) -> None:
+    store = SqliteGraphStore(tmp_path / "graph.sqlite")
+    snapshot = _fanout_snapshot(5)
+    store.replace_snapshot(snapshot)
+    statements: list[str] = []
+    connect = store._connect
+
+    def tracked_connect():
+        connection = connect()
+        connection.set_trace_callback(statements.append)
+        return connection
+
+    store._connect = tracked_connect  # type: ignore[method-assign]
+    provider = NativeGraphProvider(store, snapshot.ontology_id, snapshot.ontology_version)
+    result = provider.execute(
+        GraphQueryIR(
+            "Customer",
+            traverse=GraphTraverse("owns", "out", 1),
+            return_fields=("_key",),
+            limit=1,
+            max_examined_nodes=10,
+            max_examined_edges=10,
+        )
+    )
+
+    selects = [
+        statement for statement in statements if statement.lstrip().upper().startswith("SELECT")
+    ]
+    assert len(selects) == 2
+    assert result == GraphQueryResult(((("_key", "id=0"),),))
+
+
+def test_graph_store_chunks_large_frontiers_and_honors_global_neighbor_limit(
+    tmp_path: Path,
+) -> None:
+    sources = tuple(
+        GraphObject(KnowledgeObjectRef("Customer", (("id", f"{index:04d}"),)), ())
+        for index in range(501)
+    )
+    targets = tuple(
+        GraphObject(KnowledgeObjectRef("Order", (("id", f"{index:04d}"),)), ())
+        for index in range(501)
+    )
+    snapshot = GraphSnapshot(
+        OntologyId("sales"),
+        "v1",
+        (*sources, *targets),
+        tuple(
+            GraphLink("owns", source.ref, target.ref)
+            for source, target in zip(sources, targets, strict=True)
+        ),
+    )
+    store = SqliteGraphStore(tmp_path / "graph.sqlite")
+    store.replace_snapshot(snapshot)
+
+    neighbors = store.neighbors_many(
+        snapshot.ontology_id,
+        snapshot.ontology_version,
+        tuple(source.ref for source in sources),
+        link_type="owns",
+        direction="out",
+        limit=501,
+    )
+    limited_neighbors = store.neighbors_many(
+        snapshot.ontology_id,
+        snapshot.ontology_version,
+        tuple(source.ref for source in sources),
+        link_type="owns",
+        direction="out",
+        limit=3,
+    )
+
+    assert tuple(item.ref for item in neighbors) == tuple(item.ref for item in targets)
+    assert tuple(item.ref for item in limited_neighbors) == tuple(item.ref for item in targets[:3])
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"limit": True}, "graph query limit must be an integer"),
+        ({"limit": 1.5}, "graph query limit must be an integer"),
+        ({"max_examined_nodes": False}, "graph max_examined_nodes must be an integer"),
+        ({"max_examined_edges": 2.5}, "graph max_examined_edges must be an integer"),
+        (
+            {"max_examined_edges": 1_000_001},
+            "graph max_examined_edges must be between 1 and 1000000",
+        ),
+    ],
+)
+def test_graph_query_rejects_non_integer_execution_budgets(
+    kwargs: dict[str, object], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        GraphQueryIR("Customer", **kwargs)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("depth", [True, 1.5])
+def test_graph_traverse_rejects_non_integer_depth(depth: int | float) -> None:
+    with pytest.raises(ValueError, match="graph traverse depth must be an integer"):
+        GraphTraverse("owns", depth=depth)  # type: ignore[arg-type]

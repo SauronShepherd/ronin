@@ -102,6 +102,8 @@ class GraphTraverse:
         _text(self.link_type, "graph traverse link_type")
         if self.direction not in {"out", "in"}:
             raise ValueError("graph traverse direction must be out or in")
+        if not isinstance(self.depth, int) or isinstance(self.depth, bool):
+            raise ValueError("graph traverse depth must be an integer")
         if self.depth < 1 or self.depth > 8:
             raise ValueError("graph traverse depth must be between 1 and 8")
 
@@ -113,6 +115,8 @@ class GraphQueryIR:
     traverse: GraphTraverse | None = None
     return_fields: tuple[str, ...] = ()
     limit: int = 1000
+    max_examined_nodes: int = 100_000
+    max_examined_edges: int = 1_000_000
 
     def __post_init__(self) -> None:
         _text(self.object_type, "graph query object_type")
@@ -123,8 +127,22 @@ class GraphQueryIR:
             _text(field, "graph return field")
         object.__setattr__(self, "filters", tuple(self.filters))
         object.__setattr__(self, "return_fields", fields)
+        if not isinstance(self.limit, int) or isinstance(self.limit, bool):
+            raise ValueError("graph query limit must be an integer")
         if self.limit < 1 or self.limit > 100_000:
             raise ValueError("graph query limit must be between 1 and 100000")
+        if not isinstance(self.max_examined_nodes, int) or isinstance(
+            self.max_examined_nodes, bool
+        ):
+            raise ValueError("graph max_examined_nodes must be an integer")
+        if self.max_examined_nodes < 1 or self.max_examined_nodes > 1_000_000:
+            raise ValueError("graph max_examined_nodes must be between 1 and 1000000")
+        if not isinstance(self.max_examined_edges, int) or isinstance(
+            self.max_examined_edges, bool
+        ):
+            raise ValueError("graph max_examined_edges must be an integer")
+        if self.max_examined_edges < 1 or self.max_examined_edges > 1_000_000:
+            raise ValueError("graph max_examined_edges must be between 1 and 1000000")
 
 
 @dataclass(frozen=True, slots=True)
