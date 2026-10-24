@@ -128,7 +128,7 @@ class NativeGraphProvider:
                 self._check_deadline(deadline, query.timeout_ms)
                 return self._execute_on_snapshot(reader, query, deadline)
         except sqlite3.OperationalError as exc:
-            if "interrupted" in str(exc).lower() and time.monotonic() >= deadline:
+            if time.monotonic() >= deadline:
                 raise GraphResourceBudgetExceeded("deadline", query.timeout_ms) from exc
             raise
 

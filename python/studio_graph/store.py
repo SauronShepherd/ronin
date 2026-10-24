@@ -81,8 +81,8 @@ class SqliteGraphStore:
         finally:
             connection.close()
 
-    def _connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(self._path, timeout=5.0)
+    def _connect(self, *, timeout: float = 5.0) -> sqlite3.Connection:
+        return sqlite3.connect(self._path, timeout=timeout)
 
     def replace_snapshot(self, snapshot: GraphSnapshot) -> GraphSnapshot:
         connection = self._connect()
@@ -144,7 +144,7 @@ class SqliteGraphStore:
             or timeout_ms > 60_000
         ):
             raise ValueError("graph read timeout_ms must be an integer between 1 and 60000")
-        connection = self._connect()
+        connection = self._connect(timeout=timeout_ms / 1000)
         try:
             deadline = time.monotonic() + timeout_ms / 1000
             connection.set_progress_handler(lambda: time.monotonic() >= deadline, 1_000)

@@ -438,8 +438,8 @@ def test_native_provider_batches_neighbors_and_applies_result_limit(tmp_path: Pa
     connections = []
     connect = store._connect
 
-    def tracked_connect():
-        connection = connect()
+    def tracked_connect(*, timeout: float = 5.0):
+        connection = connect(timeout=timeout)
         connections.append(connection)
         connection.set_trace_callback(statements.append)
         return connection
