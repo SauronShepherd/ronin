@@ -18,7 +18,8 @@ EVENT = {
     "eventTime": "2026-09-21T00:00:00Z",
     "run": {"runId": "run-1"},
     "job": {"namespace": "ns", "name": "job"},
-    "producer": "ronin",
+    "producer": "https://github.com/SauronShepherd/ronin",
+    "schemaURL": "https://openlineage.io/spec/1-0-5/OpenLineage.json#/definitions/RunEvent",
 }
 
 
@@ -40,7 +41,7 @@ class _Sink:
         ("producer", "", "producer"),
         ("producer", " ronin ", "producer"),
         ("schemaVersion", None, "schemaVersion"),
-        ("eventTime", "2026-09-21T00:00:00+00:00", "eventTime"),
+        ("eventTime", "2026-09-21T00:00:00", "eventTime"),
         ("run", {"runId": "\t"}, "run.runId"),
         ("job", {"namespace": "ns", "name": "\t"}, "namespace and name"),
     ],

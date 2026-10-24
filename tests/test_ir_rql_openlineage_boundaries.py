@@ -26,7 +26,8 @@ EVENT = {
     "eventTime": "2026-09-21T00:00:00Z",
     "run": {"runId": "run-1"},
     "job": {"namespace": "ns", "name": "job"},
-    "producer": "ronin",
+    "producer": "https://github.com/SauronShepherd/ronin",
+    "schemaURL": "https://openlineage.io/spec/1-0-5/OpenLineage.json#/definitions/RunEvent",
 }
 
 
@@ -183,7 +184,7 @@ def test_rql_execution_applies_limit_after_traversal_and_join() -> None:
     )
 
 
-@pytest.mark.parametrize("field", ["eventType", "eventTime", "run", "job", "producer"])
+@pytest.mark.parametrize("field", ["eventType", "eventTime", "run", "job", "producer", "schemaURL"])
 def test_openlineage_validator_requires_each_top_level_field(field: str) -> None:
     event = dict(EVENT)
     del event[field]
@@ -191,8 +192,8 @@ def test_openlineage_validator_requires_each_top_level_field(field: str) -> None
         validate_openlineage_event(event)
 
 
-@pytest.mark.parametrize("event_time", ["", "2026-09-21T00:00:00+00:00", 1, None])
-def test_openlineage_validator_requires_utc_string_ending_in_z(event_time: object) -> None:
+@pytest.mark.parametrize("event_time", ["", "2026-09-21T00:00:00", 1, None])
+def test_openlineage_validator_requires_timezone_aware_timestamp(event_time: object) -> None:
     with pytest.raises(ValueError, match="eventTime"):
         validate_openlineage_event({**EVENT, "eventTime": event_time})
 

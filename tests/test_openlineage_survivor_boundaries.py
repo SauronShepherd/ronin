@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from studio_core.catalog import AssetId, AssetRef, AssetVersion, ColumnMapping, LineageEdge
-from studio_core.openlineage import lineage_event_payload
+from studio_core.openlineage import OPENLINEAGE_PRODUCER, lineage_event_payload
 
 
 def _edge() -> LineageEdge:
@@ -29,18 +29,17 @@ def test_openlineage_payload_preserves_all_standard_field_names_and_values() -> 
         "inputs",
         "outputs",
         "producer",
-        "columnLineage",
+        "schemaURL",
     }
-    assert event["outputs"] == [{"namespace": "workspace", "name": "target@v2"}]
-    assert event["producer"] == "ronin"
-    assert event["columnLineage"] == {
-        "fields": {
-            "total": {
-                "inputFields": [
-                    {"namespace": "workspace", "name": "amount"},
-                    {"namespace": "workspace", "name": "tax"},
-                ]
-            }
+    assert event["outputs"][0]["name"] == "target@v2"
+    assert event["producer"] == OPENLINEAGE_PRODUCER
+    output = event["outputs"][0]
+    assert output["facets"]["columnLineage"]["fields"] == {
+        "total": {
+            "inputFields": [
+                {"namespace": "workspace", "name": "source@v1", "field": "amount"},
+                {"namespace": "workspace", "name": "source@v1", "field": "tax"},
+            ]
         }
     }
 
@@ -55,4 +54,4 @@ def test_openlineage_namespace_error_is_exact_for_each_control_character(namespa
 def test_openlineage_event_time_error_is_exact() -> None:
     with pytest.raises(ValueError, match=".") as error:
         lineage_event_payload(_edge(), namespace="workspace", event_time="2026-01-01T00:00:00")
-    assert str(error.value) == "event_time must be a non-empty UTC timestamp ending in Z"
+    assert str(error.value) == "event_time must be a valid UTC timestamp"

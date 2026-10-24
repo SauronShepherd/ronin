@@ -152,16 +152,17 @@ def test_openlineage_validator_rejects_each_structural_boundary() -> None:
         "eventTime": "2026-01-01T00:00:00Z",
         "run": {"runId": "run"},
         "job": {"namespace": "ns", "name": "job"},
-        "producer": "ronin",
+        "producer": "https://github.com/SauronShepherd/ronin",
+        "schemaURL": "https://openlineage.io/spec/1-0-5/OpenLineage.json#/definitions/RunEvent",
     }
-    for field in ("eventType", "eventTime", "run", "job", "producer"):
+    for field in ("eventType", "eventTime", "run", "job", "producer", "schemaURL"):
         invalid = dict(event)
         invalid.pop(field)
-        with pytest.raises(ValueError, match="OpenLineage event"):
+        with pytest.raises(ValueError, match="OpenLineage (event|run event)"):
             validate_openlineage_event(invalid)
     for invalid in (
         {**event, "eventType": "UNKNOWN"},
-        {**event, "eventTime": "2026-01-01T00:00:00+00:00"},
+        {**event, "eventTime": "2026-01-01T00:00:00"},
         {**event, "run": []},
         {**event, "job": []},
         {**event, "run": {"runId": " "}},
