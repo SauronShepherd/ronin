@@ -4,7 +4,7 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-24. PRs #430–#527 are merged. PR #520
+**Observed workspace snapshot:** 2026-10-24. PRs #430–#529 are merged. PR #520
 reconciles Public v1 to exclude in-product GenAI/RAG/agent execution, keeps
 coding-agent skills external-only, and places multi-user administration in
 Ronin Pro. Its exact-head CI, Docker/PostgreSQL, Web, Security, Release, Status
@@ -33,8 +33,8 @@ two PostgreSQL-dependent tests were skipped without a local DSN, and strict
 acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
-PR #527 adds atomic, exact-replay SQLite ML Registry Bundle imports and passed its required exact-head CI, Docker/PostgreSQL, Security, Release and Status gates before merge at `main@3895258c4524788a86f96d927541d69fa0f0470b`. The current candidate adds the same transaction guarantee to PostgreSQL; its 41 focused ML/API/PostgreSQL tests and static gates pass locally, while exact-head CI is pending.
-**Observed source head:** `3895258c4524788a86f96d927541d69fa0f0470b` (2026-10-24).
+PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
+**Observed source head:** `313b8b87670e3f5cad8d641eeeb4f29cf0c31d63` (2026-10-24).
 **Release status:** **INCOMPLETE**.
 
 **Scope amendment (2026-10-24):** P9 GenAI/RAG/in-product agents are excluded from Public v1; Ronin coding-agent skills are consumed externally. Multi-user identity, user/group administration and multi-user deployment belong to Ronin Pro. Dated evidence notes below preserve their original scope context; the current release denominator excludes these capabilities.
