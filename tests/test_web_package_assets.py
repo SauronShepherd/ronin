@@ -110,6 +110,7 @@ def test_public_studio_does_not_publish_model_invocation_or_genai_surfaces() -> 
     )
     assert "genai.run" not in (source / "studio_worker/runtime.py").read_text(encoding="utf-8")
     assert "genai.read" not in (source / "studio_security/contracts.py").read_text(encoding="utf-8")
+    assert not (root / "config/ai-studio.schema.json").exists()
     openapi = json.loads((root / "api/openapi-v1.json").read_text(encoding="utf-8"))
     assert not any(path.startswith("/v1/admin/security/") for path in openapi["paths"])
     assert not (source / "studio_server/oidc_admin.py").exists()

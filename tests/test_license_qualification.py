@@ -199,7 +199,7 @@ def test_direct_requirements_excludes_build_backend_not_present_in_resolved_lock
     (tmp_path / "packages/pyronin").mkdir(parents=True)
     (tmp_path / "pyproject.toml").write_text(
         """[build-system]
-requires = [\"setuptools==84.0.0\"]
+requires = [\"setuptools==84.2.1\"]
 build-backend = \"setuptools.build_meta\"
 
 [project]
@@ -214,7 +214,7 @@ dev = [\"pytest>=9,<10\"]
     )
     (tmp_path / "packages/pyronin/pyproject.toml").write_text(
         """[build-system]
-requires = [\"setuptools==84.0.0\"]
+requires = [\"setuptools==84.2.1\"]
 build-backend = \"setuptools.build_meta\"
 
 [project]
