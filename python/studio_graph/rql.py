@@ -9,19 +9,22 @@ Grammar (case-insensitive keywords):
       [LIMIT <1..100000>]
 
 `<op>` is one of = != > >= < <=. Literals are parsed as JSON scalars when
-possible; otherwise they are treated as strings. This is intentionally a
-bounded executable subset, not a claim of final RQL language completeness.
+possible; otherwise they are treated as strings. Quoted JSON strings preserve
+their type and escapes. Input is limited to 64 KiB and 4096 tokens. This is
+intentionally a bounded executable subset, not a claim of final RQL language
+completeness.
 """
 
 from __future__ import annotations
 
 import json
 import re
-import shlex
 
 from .contracts import GraphFilter, GraphQueryIR, GraphScalar, GraphTraverse
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*$")
+_MAX_QUERY_BYTES = 64 * 1024
+_MAX_QUERY_TOKENS = 4096
 _OPERATORS = {
     "=": "eq",
     "!=": "ne",
@@ -42,10 +45,46 @@ def _identifier(value: str, name: str) -> str:
     return value
 
 
+def _tokenize(text: str) -> list[str]:
+    """Split on whitespace outside JSON strings while retaining their escapes."""
+
+    tokens: list[str] = []
+    index = 0
+    while index < len(text):
+        while index < len(text) and text[index].isspace():
+            index += 1
+        if index == len(text):
+            break
+        start = index
+        if text[index] == '"':
+            index += 1
+            while index < len(text):
+                if text[index] == "\\":
+                    index += 2
+                    continue
+                if text[index] == '"':
+                    index += 1
+                    break
+                index += 1
+            else:
+                raise RqlSyntaxError("RQL quoting is invalid")
+            if index < len(text) and not text[index].isspace():
+                raise RqlSyntaxError("quoted RQL strings must be separate tokens")
+        else:
+            while index < len(text) and not text[index].isspace():
+                if text[index] == '"':
+                    raise RqlSyntaxError("quoted RQL strings must be separate tokens")
+                index += 1
+        tokens.append(text[start:index])
+    return tokens
+
+
 def _literal(token: str) -> GraphScalar:
     try:
         value = json.loads(token)
     except json.JSONDecodeError:
+        if token.startswith('"'):
+            raise RqlSyntaxError("quoted RQL string is invalid JSON") from None
         value = token
     if value is None or isinstance(value, (bool, int, float, str)):
         if isinstance(value, float) and (value != value or value in (float("inf"), float("-inf"))):
@@ -58,9 +97,14 @@ def parse_rql(text: str) -> GraphQueryIR:
     if not text or not text.strip():
         raise RqlSyntaxError("RQL query must be non-empty")
     try:
-        tokens = shlex.split(text, posix=True)
-    except ValueError as exc:
-        raise RqlSyntaxError("RQL quoting is invalid") from exc
+        encoded_length = len(text.encode("utf-8"))
+    except UnicodeEncodeError:
+        raise RqlSyntaxError("RQL query must contain valid Unicode") from None
+    if len(text) > _MAX_QUERY_BYTES or encoded_length > _MAX_QUERY_BYTES:
+        raise RqlSyntaxError(f"RQL query exceeds {_MAX_QUERY_BYTES}-byte limit")
+    tokens = _tokenize(text)
+    if len(tokens) > _MAX_QUERY_TOKENS:
+        raise RqlSyntaxError(f"RQL query exceeds {_MAX_QUERY_TOKENS}-token limit")
     if len(tokens) < 4 or tokens[0].upper() != "MATCH":
         raise RqlSyntaxError("RQL query must start with MATCH <ObjectType>")
     object_type = _identifier(tokens[1], "object type")
@@ -112,8 +156,12 @@ def parse_rql(text: str) -> GraphQueryIR:
     while index < len(tokens) and tokens[index].upper() != "LIMIT":
         field_tokens.append(tokens[index])
         index += 1
-    fields_raw = "".join(field_tokens)
-    fields = tuple(_identifier(value, "return field") for value in fields_raw.split(",") if value)
+    fields_raw = " ".join(field_tokens)
+    fields = tuple(
+        _identifier(value.strip(), "return field")
+        for value in fields_raw.split(",")
+        if value.strip()
+    )
     if not fields:
         raise RqlSyntaxError("RETURN requires at least one field")
     if len(fields) != len(set(fields)):
