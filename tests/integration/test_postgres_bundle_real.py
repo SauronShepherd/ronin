@@ -25,6 +25,7 @@ from studio_core.environments import (
 )
 from studio_orchestrator import Instant
 from studio_storage import PostgresMetadataStore
+from studio_storage.bundle_multi_import_port import MultiObjectBundleImportConflict
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
@@ -79,3 +80,70 @@ def test_postgres_bundle_multi_object_commit_is_atomic_and_idempotent() -> None:
         0,
         0,
     )
+
+
+def test_postgres_bundle_late_binding_conflict_rolls_back_earlier_connection_insert() -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    store = PostgresMetadataStore(dsn, application_name="ronin-bundle-rollback-qualification")
+    suffix = uuid4().hex
+    workspace_id = WorkspaceId(f"bundle-rollback-ws-{suffix}")
+    project_id = ProjectId(f"bundle-rollback-project-{suffix}")
+    environment_id = EnvironmentId(f"bundle-rollback-env-{suffix}")
+    connection_id = ConnectionId(f"bundle-rollback-connection-{suffix}")
+    now = Instant("2026-10-24T12:00:00.000000Z")
+    project = ProjectManifest.from_project(
+        Project(
+            project_id,
+            "Bundle rollback qualification",
+            (RepositoryBinding("code", "https://git.example.test/rollback.git", role="primary"),),
+            ExecutionProfile(runtime=RuntimeProfileRef("python", "3.11")),
+        )
+    )
+    connection = ConnectionDefinition(
+        connection_id,
+        "Bundle rollback warehouse",
+        "postgresql",
+        options=(("host", "db.example.test"),),
+        secret_refs=(("password", SecretRef(f"secret://bundle-rollback/{suffix}")),),
+    )
+    store.create_workspace(Workspace(workspace_id, "Bundle rollback"), now=now)
+    store.put_environment(
+        workspace_id,
+        EnvironmentDefinition(environment_id, "Bundle rollback env"),
+        now=now,
+    )
+    store.register_project(workspace_id, project, now=now)
+    existing_bindings = ProjectEnvironmentBindings(
+        project_id,
+        environment_id,
+        (
+            DeploymentBinding(
+                "runtime",
+                "runtime-profile:python/3.11",
+                "runtime://python311-existing",
+            ),
+        ),
+    )
+    store.put_project_bindings(workspace_id, existing_bindings, now=now)
+    conflicting_bindings = ProjectEnvironmentBindings(
+        project_id,
+        environment_id,
+        (
+            DeploymentBinding(
+                "runtime", "runtime-profile:python/3.11", "runtime://python311-imported"
+            ),
+        ),
+    )
+
+    with pytest.raises(MultiObjectBundleImportConflict, match="different project bindings"):
+        store.commit_multi_object_import(
+            workspace_id,
+            (connection,),
+            (project,),
+            (conflicting_bindings,),
+            now=now,
+        )
+
+    assert store.get_connection(workspace_id, connection_id) is None
+    assert store.get_project(workspace_id, project_id) == project
+    assert store.get_project_bindings(workspace_id, project_id, environment_id) == existing_bindings
