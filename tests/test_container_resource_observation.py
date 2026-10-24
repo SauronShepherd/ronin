@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import sys
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Literal, cast
 
 import pytest
@@ -178,6 +179,20 @@ def test_resource_unavailability_reasons_are_explicit() -> None:
         CommandOutcome(137, "", False, True, 1)
     )
     assert timed_out["unavailable_reason"] == "execution_timed_out_before_final_measurement"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX child watchers reap child processes")
+def test_posix_returncode_fallback_does_not_poll_and_reap_native_process() -> None:
+    poll_calls: list[bool] = []
+    process = SimpleNamespace(
+        returncode=None,
+        _transport=SimpleNamespace(
+            _proc=SimpleNamespace(poll=lambda: poll_calls.append(True) or 0)
+        ),
+    )
+
+    assert AsyncioCommandRunner._poll_returncode(process) is None  # noqa: SLF001
+    assert poll_calls == []
 
 
 def test_control_channel_is_private_bounded_and_preserves_diagnostics() -> None:

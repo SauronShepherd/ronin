@@ -360,6 +360,12 @@ class AsyncioCommandRunner:
         returncode = process.returncode
         if returncode is not None:
             return returncode
+        # POSIX child watchers reap the native process themselves.  Calling
+        # Popen.poll() here can race with that watcher: one side consumes the
+        # wait status and asyncio reports the synthetic code 255 to the other.
+        # The fallback is needed only for Windows' Proactor callback delay.
+        if os.name != "nt":
+            return None
         transport = getattr(process, "_transport", None)
         native_process = getattr(transport, "_proc", None)
         poll = getattr(native_process, "poll", None)
