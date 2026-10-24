@@ -44,7 +44,9 @@ def _valid_uri(value: object, *, url_only: bool = False) -> bool:
     return True
 
 
-def _validate_facets(entity: Mapping[str, JsonValue], entity_name: str) -> None:
+def _validate_facets(
+    entity: Mapping[str, JsonValue], entity_name: str, *, dataset: bool = False
+) -> None:
     if "facets" not in entity:
         return
     facets = entity["facets"]
@@ -63,8 +65,13 @@ def _validate_facets(entity: Mapping[str, JsonValue], entity_name: str) -> None:
             "columnLineage": OPENLINEAGE_COLUMN_LINEAGE_SCHEMA,
             "lineage": OPENLINEAGE_LINEAGE_FACET_SCHEMA,
         }.get(name)
-        if expected_schema is not None and facet.get("_schemaURL") != expected_schema:
-            raise ValueError(f"OpenLineage {entity_name} {name} facet schemaURL is unsupported")
+        if expected_schema is not None:
+            if not dataset:
+                raise ValueError(
+                    f"OpenLineage {entity_name} {name} facet is only supported on datasets"
+                )
+            if facet.get("_schemaURL") != expected_schema:
+                raise ValueError(f"OpenLineage {entity_name} {name} facet schemaURL is unsupported")
         if name == "columnLineage":
             fields = facet.get("fields")
             if not isinstance(fields, Mapping) or not fields:
@@ -133,7 +140,7 @@ def _validate_dataset(value: object, label: str) -> None:
         raise ValueError(f"OpenLineage {label} namespace is required")
     if not isinstance(name, str) or not name.strip():
         raise ValueError(f"OpenLineage {label} name is required")
-    _validate_facets(value, label)
+    _validate_facets(value, label, dataset=True)
 
 
 def _validate_datasets(value: object, field: str) -> None:

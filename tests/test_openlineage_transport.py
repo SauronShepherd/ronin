@@ -7,6 +7,10 @@ from studio_core import (
     OpenLineageTransportError,
     validate_openlineage_event,
 )
+from studio_core.openlineage import (
+    OPENLINEAGE_COLUMN_LINEAGE_SCHEMA,
+    OPENLINEAGE_LINEAGE_FACET_SCHEMA,
+)
 from studio_server.openlineage_http import HttpOpenLineageSink, _RejectRedirects
 
 
@@ -357,6 +361,51 @@ def test_openlineage_known_facet_names_require_their_schema_url(
     }
 
     with pytest.raises(ValueError, match=f"{facet_name} facet schemaURL is unsupported"):
+        validate_openlineage_event(event)
+
+
+@pytest.mark.parametrize(
+    ("entity_name", "facet_name", "schema_url", "facet_data"),
+    [
+        (
+            "run",
+            "lineage",
+            OPENLINEAGE_LINEAGE_FACET_SCHEMA,
+            {"inputs": [{"namespace": "ns", "name": "source", "type": "DATASET"}]},
+        ),
+        (
+            "job",
+            "columnLineage",
+            OPENLINEAGE_COLUMN_LINEAGE_SCHEMA,
+            {
+                "fields": {
+                    "target": {
+                        "inputFields": [{"namespace": "ns", "name": "source", "field": "origin"}]
+                    }
+                }
+            },
+        ),
+    ],
+)
+def test_dataset_lineage_facets_are_rejected_on_run_and_job_entities(
+    entity_name: str,
+    facet_name: str,
+    schema_url: str,
+    facet_data: dict[str, object],
+) -> None:
+    event = dict(EVENT)
+    event[entity_name] = {
+        **event[entity_name],
+        "facets": {
+            facet_name: {
+                "_producer": "https://github.com/SauronShepherd/ronin",
+                "_schemaURL": schema_url,
+                **facet_data,
+            }
+        },
+    }
+
+    with pytest.raises(ValueError, match="facet is only supported on datasets"):
         validate_openlineage_event(event)
 
 
