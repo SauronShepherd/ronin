@@ -373,6 +373,17 @@ def _plan_ml_registry_bundle_import_from_reader(
         for evaluation in evaluations
     ):
         raise ValueError("ML registry Bundle evaluation references an absent model")
+    passed_evaluations = {
+        (str(evaluation.model_id), str(evaluation.version))
+        for evaluation in evaluations
+        if evaluation.status == "passed"
+    }
+    if any(
+        model.stage == "champion"
+        and (str(model.model_id), str(model.version)) not in passed_evaluations
+        for model in models
+    ):
+        raise ValueError("ML registry Bundle champion model requires a passed evaluation")
     return MLRegistryBundleImportPlan(
         inventory,
         tuple(experiments),

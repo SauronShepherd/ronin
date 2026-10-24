@@ -54,6 +54,7 @@ def test_model_registry_contracts_round_trip_canonically() -> None:
         "sha256:model",
         "sklearn",
         ModelSignature((("x", "float64"),), (("prediction", "float64"),)),
+        stage="champion",
     )
     assert RegisteredModelVersion.from_json(model.to_json()) == model
     evaluation = ModelEvaluation(
@@ -154,6 +155,7 @@ def test_ml_registry_bundle_round_trip_preserves_experiments_runs_and_models(
         "sha256:model",
         "sklearn",
         ModelSignature((("x", "float64"),), (("prediction", "float64"),)),
+        stage="champion",
     )
     source.register_model(_WS, model, now=_NOW)
     evaluation = ModelEvaluation(
@@ -181,6 +183,37 @@ def test_ml_registry_bundle_round_trip_preserves_experiments_runs_and_models(
     assert target.list_runs(_WS) == (run,)
     assert target.list_models(_WS) == (model,)
     assert target.list_evaluations(_WS, model.model_id, model.version) == (evaluation,)
+
+
+def test_ml_registry_bundle_rejects_champion_without_passed_evaluation(
+    tmp_path: Path,
+) -> None:
+    source, _source_catalog = _stores(tmp_path / "source.sqlite3")
+    experiment = Experiment(ExperimentId("exp-1"), "Baseline")
+    run = _run()
+    champion = RegisteredModelVersion(
+        ModelId("model-1"),
+        ModelVersion("1"),
+        run.id,
+        "artifact://model-1",
+        "sha256:model",
+        "sklearn",
+        ModelSignature((("x", "float64"),), (("prediction", "float64"),)),
+        stage="champion",
+    )
+    source.put_experiment(_WS, experiment, now=_NOW)
+    source.record_run(_WS, run, now=_NOW)
+    source.register_model(_WS, champion, now=_NOW)
+    bundle = tmp_path / "unqualified-champion.roninbundle"
+    export_ml_registry_bundle(_WS, source, bundle)
+
+    target, _target_catalog = _stores(tmp_path / "target.sqlite3")
+    with pytest.raises(ValueError, match="champion model requires a passed evaluation"):
+        commit_ml_registry_bundle_import(bundle, _WS, target, now=_NOW)
+
+    assert target.list_experiments(_WS) == ()
+    assert target.list_runs(_WS) == ()
+    assert target.list_models(_WS) == ()
 
 
 def test_ml_registry_bundle_late_model_conflict_rolls_back_all_sqlite_metadata(

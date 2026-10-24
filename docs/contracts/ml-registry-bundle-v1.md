@@ -22,7 +22,8 @@ definitions in one database transaction; exact replays are idempotent, while a
 conflict rolls the metadata transaction back. Feature definitions require a
 transaction-aware feature store on the same SQLite database and an existing
 workspace-scoped catalog revision for each referenced dataset. Stores without
-an atomic import adapter fail closed.
+an atomic import adapter fail closed. A model marked `champion` is accepted only
+when the Bundle contains a passed evaluation for that exact model version.
 
 Artifact bytes are materialized before the SQLite metadata transaction because
 the artifact store has a separate durability boundary. If metadata commit later
