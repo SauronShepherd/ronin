@@ -15,12 +15,13 @@ from .contracts import (
 from .materialize import GraphMaterializationError, materialize_graph
 from .provider import (
     GraphQueryProvider,
+    GraphReadSession,
     GraphReadStore,
     GraphResourceBudgetExceeded,
     NativeGraphProvider,
 )
 from .rql import RqlSyntaxError, parse_rql
-from .store import SqliteGraphStore
+from .store import SqliteGraphReadSession, SqliteGraphStore
 
 __all__ = (
     "FilterOperator",
@@ -32,6 +33,7 @@ __all__ = (
     "GraphQueryProvider",
     "GraphQueryResult",
     "GraphReadStore",
+    "GraphReadSession",
     "GraphResourceBudgetExceeded",
     "GraphScalar",
     "GraphSnapshot",
@@ -39,6 +41,7 @@ __all__ = (
     "NativeGraphProvider",
     "RqlSyntaxError",
     "SqliteGraphStore",
+    "SqliteGraphReadSession",
     "TraverseDirection",
     "materialize_graph",
     "parse_rql",
