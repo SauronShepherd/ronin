@@ -25,6 +25,10 @@ from studio_core.ml import (
     RegisteredModelVersion,
 )
 from studio_ml import (
+    FeatureDefinition,
+    FeatureDefinitionConflict,
+    FeatureSpec,
+    SqliteMLLabStore,
     commit_ml_registry_bundle_import,
     export_ml_registry_bundle,
     list_registered_models,
@@ -152,6 +156,15 @@ def test_ml_registry_bundle_round_trip_preserves_experiments_runs_and_models(
         ModelSignature((("x", "float64"),), (("prediction", "float64"),)),
     )
     source.register_model(_WS, model, now=_NOW)
+    evaluation = ModelEvaluation(
+        model.model_id,
+        model.version,
+        _DATA,
+        "passed",
+        (MetricValue("accuracy", 0.9),),
+        "evaluation-1",
+    )
+    source.record_evaluation(_WS, evaluation, now=_NOW)
 
     bundle = tmp_path / "ml-registry.roninbundle"
     export_ml_registry_bundle(_WS, source, bundle)
@@ -159,12 +172,183 @@ def test_ml_registry_bundle_round_trip_preserves_experiments_runs_and_models(
     assert plan.experiments == (experiment,)
     assert plan.runs == (run,)
     assert plan.models == (model,)
+    assert plan.evaluations == (evaluation,)
 
     target, _catalog = _stores(tmp_path / "target.sqlite3")
+    commit_ml_registry_bundle_import(bundle, _WS, target, now=_NOW)
     commit_ml_registry_bundle_import(bundle, _WS, target, now=_NOW)
     assert target.list_experiments(_WS) == (experiment,)
     assert target.list_runs(_WS) == (run,)
     assert target.list_models(_WS) == (model,)
+    assert target.list_evaluations(_WS, model.model_id, model.version) == (evaluation,)
+
+
+def test_ml_registry_bundle_late_model_conflict_rolls_back_all_sqlite_metadata(
+    tmp_path: Path,
+) -> None:
+    source, _source_catalog = _stores(tmp_path / "source.sqlite3")
+    experiment = Experiment(ExperimentId("imported-experiment"), "Imported")
+    run = MLRunRecord(
+        MLRunId("imported-run"),
+        experiment.id,
+        "job-imported/run-1/attempt-1",
+        "git:imported",
+        datasets=(_DATA,),
+    )
+    model = RegisteredModelVersion(
+        ModelId("model-collision"),
+        ModelVersion("1"),
+        run.id,
+        "artifact://imported-model",
+        "sha256:imported",
+        "sklearn",
+        ModelSignature((("x", "float64"),), (("prediction", "float64"),)),
+    )
+    source.put_experiment(_WS, experiment, now=_NOW)
+    source.record_run(_WS, run, now=_NOW)
+    source.register_model(_WS, model, now=_NOW)
+    bundle = tmp_path / "ml-conflict.roninbundle"
+    export_ml_registry_bundle(_WS, source, bundle)
+
+    target, _target_catalog = _stores(tmp_path / "target.sqlite3")
+    existing_experiment = Experiment(ExperimentId("existing-experiment"), "Existing")
+    existing_run = MLRunRecord(
+        MLRunId("existing-run"),
+        existing_experiment.id,
+        "job-existing/run-1/attempt-1",
+        "git:existing",
+        datasets=(_DATA,),
+    )
+    conflicting_model = RegisteredModelVersion(
+        model.model_id,
+        model.version,
+        existing_run.id,
+        "artifact://existing-model",
+        "sha256:existing",
+        "sklearn",
+        model.signature,
+    )
+    target.put_experiment(_WS, existing_experiment, now=_NOW)
+    target.record_run(_WS, existing_run, now=_NOW)
+    target.register_model(_WS, conflicting_model, now=_NOW)
+    before = (
+        target.list_experiments(_WS),
+        target.list_runs(_WS),
+        target.list_models(_WS),
+    )
+
+    with pytest.raises(MLConflict, match="model version already exists"):
+        commit_ml_registry_bundle_import(bundle, _WS, target, now=_NOW)
+
+    assert target.get_experiment(_WS, experiment.id) is None
+    assert target.get_run(_WS, run.id) is None
+    assert (
+        target.list_experiments(_WS),
+        target.list_runs(_WS),
+        target.list_models(_WS),
+    ) == before
+
+
+def test_ml_registry_bundle_feature_conflict_rolls_back_registry_rows(
+    tmp_path: Path,
+) -> None:
+    source_path = tmp_path / "source.sqlite3"
+    source, _source_catalog = _stores(source_path)
+    source_feature_store = SqliteMLLabStore(source_path, migration_now=_NOW)
+    experiment = Experiment(ExperimentId("feature-import-experiment"), "Imported")
+    feature = FeatureDefinition(
+        "feature-1",
+        "Imported feature",
+        "project-1",
+        _DATA,
+        (FeatureSpec("amount", "numeric"),),
+    )
+    source.put_experiment(_WS, experiment, now=_NOW)
+    source_feature_store.put_feature_definition(_WS, feature)
+    bundle = tmp_path / "ml-feature-conflict.roninbundle"
+    export_ml_registry_bundle(_WS, source, bundle, feature_store=source_feature_store)
+
+    success_path = tmp_path / "feature-success.sqlite3"
+    successful_target, _successful_catalog = _stores(success_path)
+    successful_feature_store = SqliteMLLabStore(success_path, migration_now=_NOW)
+    commit_ml_registry_bundle_import(
+        bundle,
+        _WS,
+        successful_target,
+        now=_NOW,
+        feature_store=successful_feature_store,
+    )
+    commit_ml_registry_bundle_import(
+        bundle,
+        _WS,
+        successful_target,
+        now=_NOW,
+        feature_store=successful_feature_store,
+    )
+    assert successful_target.list_experiments(_WS) == (experiment,)
+    assert successful_feature_store.list_feature_definitions(_WS) == (feature,)
+
+    target_path = tmp_path / "target.sqlite3"
+    target, _target_catalog = _stores(target_path)
+    target_feature_store = SqliteMLLabStore(target_path, migration_now=_NOW)
+    existing_feature = FeatureDefinition(
+        feature.id,
+        "Existing feature",
+        feature.project_id,
+        _DATA,
+        feature.features,
+        version=feature.version,
+    )
+    target_feature_store.put_feature_definition(_WS, existing_feature)
+
+    with pytest.raises(FeatureDefinitionConflict, match="version already exists"):
+        commit_ml_registry_bundle_import(
+            bundle,
+            _WS,
+            target,
+            now=_NOW,
+            feature_store=target_feature_store,
+        )
+
+    assert target.get_experiment(_WS, experiment.id) is None
+    assert target_feature_store.list_feature_definitions(_WS) == (existing_feature,)
+
+
+def test_ml_registry_bundle_rejects_feature_store_on_another_database_before_import(
+    tmp_path: Path,
+) -> None:
+    source_path = tmp_path / "source.sqlite3"
+    source, _source_catalog = _stores(source_path)
+    source_feature_store = SqliteMLLabStore(source_path, migration_now=_NOW)
+    experiment = Experiment(ExperimentId("feature-preflight-experiment"), "Imported")
+    feature = FeatureDefinition(
+        "feature-preflight",
+        "Preflight feature",
+        "project-1",
+        _DATA,
+        (FeatureSpec("amount", "numeric"),),
+    )
+    source.put_experiment(_WS, experiment, now=_NOW)
+    source_feature_store.put_feature_definition(_WS, feature)
+    bundle = tmp_path / "ml-feature-preflight.roninbundle"
+    export_ml_registry_bundle(_WS, source, bundle, feature_store=source_feature_store)
+
+    target_path = tmp_path / "target.sqlite3"
+    target, _target_catalog = _stores(target_path)
+    mismatched_feature_store = SqliteMLLabStore(
+        tmp_path / "other-features.sqlite3", migration_now=_NOW
+    )
+
+    with pytest.raises(ValueError, match="must share one SQLite database"):
+        commit_ml_registry_bundle_import(
+            bundle,
+            _WS,
+            target,
+            now=_NOW,
+            feature_store=mismatched_feature_store,
+        )
+
+    assert target.get_experiment(_WS, experiment.id) is None
 
 
 def test_ml_run_id_reuse_with_different_content_fails_closed(tmp_path: Path) -> None:

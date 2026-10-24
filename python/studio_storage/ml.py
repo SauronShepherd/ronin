@@ -204,6 +204,181 @@ class SqliteMLStore:
         if row is None:
             raise CatalogAssetNotFound(f"{ref.asset_id}@{ref.version}")
 
+    def commit_registry_bundle_import(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        experiments: tuple[Experiment, ...],
+        runs: tuple[MLRunRecord, ...],
+        models: tuple[RegisteredModelVersion, ...],
+        evaluations: tuple[ModelEvaluation, ...],
+        feature_definitions: tuple[object, ...] = (),
+        feature_store: object | None = None,
+        now: Instant | str,
+    ) -> None:
+        """Atomically publish one ML registry Bundle into this SQLite database.
+
+        Feature definitions use the transaction-aware adapter method so the ML
+        registry and feature records share this connection and commit boundary.
+        """
+
+        now = Instant(now)
+        self.validate_registry_bundle_import(
+            feature_definitions=feature_definitions,
+            feature_store=feature_store,
+        )
+        feature_writer = getattr(feature_store, "put_feature_definition_in_transaction", None)
+
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._require_active_workspace(connection, workspace_id)
+
+            for experiment in experiments:
+                payload = experiment.to_json()
+                existing = connection.execute(
+                    "SELECT experiment_json FROM ml_experiments "
+                    "WHERE workspace_id=? AND experiment_id=?",
+                    (str(workspace_id), str(experiment.id)),
+                ).fetchone()
+                if existing is None:
+                    connection.execute(
+                        "INSERT INTO ml_experiments(workspace_id,experiment_id,experiment_json,"
+                        "created_at,updated_at) VALUES (?,?,?,?,?)",
+                        (str(workspace_id), str(experiment.id), payload, now, now),
+                    )
+                elif existing["experiment_json"] != payload:
+                    raise ValueError(
+                        f"experiment id already exists with a different definition: {experiment.id}"
+                    )
+
+            if feature_definitions:
+                if not callable(feature_writer):
+                    raise ValueError("atomic ML Bundle feature store lost its transaction writer")
+                for definition in feature_definitions:
+                    dataset = getattr(definition, "dataset", None)
+                    if not isinstance(dataset, AssetRef):
+                        raise ValueError("ML Bundle feature definition has an invalid dataset ref")
+                    self._require_asset_ref(connection, workspace_id, dataset)
+                    feature_writer(connection, workspace_id, definition)
+
+            for run in runs:
+                payload = run.to_json()
+                if (
+                    connection.execute(
+                        "SELECT 1 FROM ml_experiments WHERE workspace_id=? AND experiment_id=?",
+                        (str(workspace_id), str(run.experiment_id)),
+                    ).fetchone()
+                    is None
+                ):
+                    raise KeyError(str(run.experiment_id))
+                for ref in run.datasets:
+                    self._require_asset_ref(connection, workspace_id, ref)
+                existing = connection.execute(
+                    "SELECT run_json FROM ml_runs WHERE workspace_id=? AND ml_run_id=?",
+                    (str(workspace_id), str(run.id)),
+                ).fetchone()
+                if existing is None:
+                    connection.execute(
+                        "INSERT INTO ml_runs(workspace_id,ml_run_id,experiment_id,run_json,"
+                        "created_at) VALUES (?,?,?,?,?)",
+                        (str(workspace_id), str(run.id), str(run.experiment_id), payload, now),
+                    )
+                elif existing["run_json"] != payload:
+                    raise MLConflict(f"ML run id already exists: {run.id}")
+
+            for model in models:
+                payload = model.to_json()
+                if (
+                    connection.execute(
+                        "SELECT 1 FROM ml_runs WHERE workspace_id=? AND ml_run_id=?",
+                        (str(workspace_id), str(model.source_run_id)),
+                    ).fetchone()
+                    is None
+                ):
+                    raise KeyError(str(model.source_run_id))
+                existing = connection.execute(
+                    "SELECT model_json FROM model_versions "
+                    "WHERE workspace_id=? AND model_id=? AND version=?",
+                    (str(workspace_id), str(model.model_id), str(model.version)),
+                ).fetchone()
+                if existing is None:
+                    connection.execute(
+                        "INSERT INTO model_versions(workspace_id,model_id,version,source_ml_run_id,"
+                        "stage,model_json,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
+                        (
+                            str(workspace_id),
+                            str(model.model_id),
+                            str(model.version),
+                            str(model.source_run_id),
+                            model.stage,
+                            payload,
+                            now,
+                            now,
+                        ),
+                    )
+                elif existing["model_json"] != payload:
+                    raise MLConflict(
+                        f"model version already exists: {model.model_id}@{model.version}"
+                    )
+
+            for evaluation in evaluations:
+                self._require_asset_ref(connection, workspace_id, evaluation.dataset)
+                key = (str(workspace_id), str(evaluation.model_id), str(evaluation.version))
+                if (
+                    connection.execute(
+                        "SELECT 1 FROM model_versions WHERE workspace_id=? AND model_id=? "
+                        "AND version=?",
+                        key,
+                    ).fetchone()
+                    is None
+                ):
+                    raise KeyError(f"{evaluation.model_id}@{evaluation.version}")
+                payload = evaluation.to_json()
+                digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+                existing = connection.execute(
+                    "SELECT evaluation_json FROM model_evaluations WHERE workspace_id=? "
+                    "AND model_id=? AND version=? AND evaluation_digest=?",
+                    (*key, digest),
+                ).fetchone()
+                if existing is None:
+                    connection.execute(
+                        "INSERT INTO model_evaluations(workspace_id,model_id,version,"
+                        "evaluation_digest,evaluation_json,created_at) VALUES (?,?,?,?,?,?)",
+                        (*key, digest, payload, now),
+                    )
+                elif existing["evaluation_json"] != payload:
+                    raise MLConflict(
+                        f"model evaluation digest collision: {evaluation.model_id}@{evaluation.version}"
+                    )
+
+            connection.execute("COMMIT")
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+
+    def validate_registry_bundle_import(
+        self,
+        *,
+        feature_definitions: tuple[object, ...],
+        feature_store: object | None,
+    ) -> None:
+        """Check feature-store transaction compatibility before external writes."""
+
+        feature_writer = None
+        if feature_definitions:
+            feature_writer = getattr(feature_store, "put_feature_definition_in_transaction", None)
+            feature_path = getattr(feature_store, "database_path", None)
+            if not callable(feature_writer) or feature_path is None:
+                raise ValueError(
+                    "atomic ML Bundle feature import requires a transaction-aware feature store"
+                )
+            if Path(feature_path).resolve() != self._path.resolve():
+                raise ValueError("atomic ML Bundle stores must share one SQLite database")
+
     def put_experiment(
         self, workspace_id: WorkspaceId, experiment: Experiment, *, now: Instant | str
     ) -> Experiment:

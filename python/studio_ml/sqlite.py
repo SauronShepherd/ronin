@@ -59,6 +59,49 @@ class SqliteMLLabStore(MLLabStore, FeatureDefinitionStore):
     def _connect(self) -> sqlite3.Connection:
         return open_database(self._path)
 
+    @property
+    def database_path(self) -> Path:
+        """Return the SQLite file used by this feature store."""
+
+        return self._path.resolve()
+
+    def put_feature_definition_in_transaction(
+        self,
+        connection: sqlite3.Connection,
+        workspace_id: WorkspaceId,
+        definition: FeatureDefinition,
+    ) -> FeatureDefinition:
+        """Write one feature definition inside a caller-owned SQLite transaction."""
+
+        key = (str(workspace_id), definition.id, definition.version)
+        row = connection.execute(
+            "SELECT feature_json FROM ml_studio_features "
+            "WHERE workspace_id=? AND feature_id=? AND version=?",
+            key,
+        ).fetchone()
+        payload = definition.to_json()
+        if row is not None:
+            if row["feature_json"] != payload:
+                raise FeatureDefinitionConflict(
+                    f"feature definition version already exists: {definition.id}/{definition.version}"
+                )
+            return definition
+        latest = connection.execute(
+            "SELECT MAX(version) AS version FROM ml_studio_features "
+            "WHERE workspace_id=? AND feature_id=?",
+            (str(workspace_id), definition.id),
+        ).fetchone()["version"]
+        if latest is not None and definition.version <= int(latest):
+            raise FeatureDefinitionConflict(
+                f"feature definition version must advance: {definition.id}/{latest}"
+            )
+        connection.execute(
+            "INSERT INTO ml_studio_features(workspace_id,feature_id,version,feature_json) "
+            "VALUES (?,?,?,?)",
+            (*key, payload),
+        )
+        return definition
+
     def put_lab(self, workspace_id: WorkspaceId, lab: Lab) -> Lab:
         connection = self._connect()
         payload = lab.to_json()
@@ -290,33 +333,7 @@ class SqliteMLLabStore(MLLabStore, FeatureDefinitionStore):
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
-            key = (str(workspace_id), definition.id, definition.version)
-            row = connection.execute(
-                "SELECT feature_json FROM ml_studio_features "
-                "WHERE workspace_id=? AND feature_id=? AND version=?",
-                key,
-            ).fetchone()
-            payload = definition.to_json()
-            if row is not None:
-                if row["feature_json"] != payload:
-                    raise FeatureDefinitionConflict(
-                        f"feature definition version already exists: {definition.id}/{definition.version}"
-                    )
-                connection.execute("COMMIT")
-                return definition
-            latest = connection.execute(
-                "SELECT MAX(version) AS version FROM ml_studio_features "
-                "WHERE workspace_id=? AND feature_id=?",
-                (str(workspace_id), definition.id),
-            ).fetchone()["version"]
-            if latest is not None and definition.version <= int(latest):
-                raise FeatureDefinitionConflict(
-                    f"feature definition version must advance: {definition.id}/{latest}"
-                )
-            connection.execute(
-                "INSERT INTO ml_studio_features(workspace_id,feature_id,version,feature_json) VALUES (?,?,?,?)",
-                (*key, payload),
-            )
+            self.put_feature_definition_in_transaction(connection, workspace_id, definition)
             connection.execute("COMMIT")
             return definition
         except Exception:
