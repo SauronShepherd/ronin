@@ -50,6 +50,8 @@ class SqliteGraphStore:
                 );
                 CREATE INDEX IF NOT EXISTS graph_objects_type_idx
                     ON graph_objects(ontology_id, ontology_version, object_type);
+                CREATE INDEX IF NOT EXISTS graph_objects_type_ref_idx
+                    ON graph_objects(ontology_id, ontology_version, object_type, object_ref_json);
                 CREATE TABLE IF NOT EXISTS graph_links (
                     ontology_id TEXT NOT NULL,
                     ontology_version TEXT NOT NULL,
@@ -64,6 +66,10 @@ class SqliteGraphStore:
                     ON graph_links(ontology_id, ontology_version, link_type, source_ref_json);
                 CREATE INDEX IF NOT EXISTS graph_links_target_idx
                     ON graph_links(ontology_id, ontology_version, link_type, target_ref_json);
+                CREATE INDEX IF NOT EXISTS graph_links_target_source_idx
+                    ON graph_links(
+                        ontology_id, ontology_version, link_type, target_ref_json, source_ref_json
+                    );
                 """
             )
             connection.commit()

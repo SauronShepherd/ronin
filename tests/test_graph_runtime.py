@@ -189,6 +189,13 @@ def test_sqlite_store_round_trips_snapshot_and_replaces_atomically(tmp_path: Pat
         link_type="owns",
         direction="out",
     ) == (snapshot.objects[1],)
+    assert store.neighbors(
+        snapshot.ontology_id,
+        snapshot.ontology_version,
+        snapshot.objects[1].ref,
+        link_type="owns",
+        direction="in",
+    ) == (snapshot.objects[0],)
 
     replacement = GraphSnapshot(
         snapshot.ontology_id, snapshot.ontology_version, (snapshot.objects[0],)
@@ -373,6 +380,33 @@ def test_graph_store_chunks_large_frontiers_and_honors_global_neighbor_limit(
 
     assert tuple(item.ref for item in neighbors) == tuple(item.ref for item in targets)
     assert tuple(item.ref for item in limited_neighbors) == tuple(item.ref for item in targets[:3])
+
+
+def test_graph_store_rejects_invalid_bounded_read_arguments(tmp_path: Path) -> None:
+    store = SqliteGraphStore(tmp_path / "graph.sqlite")
+    ontology_id = OntologyId("sales")
+    ref = KnowledgeObjectRef("Customer", (("id", "1"),))
+
+    with pytest.raises(ValueError, match="scan limit must be an integer"):
+        store.scan_objects(ontology_id, "v1", "Customer", limit=True)
+    with pytest.raises(ValueError, match="neighbor limit must be an integer"):
+        store.neighbors_many(
+            ontology_id,
+            "v1",
+            (ref,),
+            link_type="owns",
+            direction="out",
+            limit=1.5,
+        )
+    with pytest.raises(ValueError, match="direction must be out or in"):
+        store.neighbors_many(
+            ontology_id,
+            "v1",
+            (ref,),
+            link_type="owns",
+            direction="sideways",
+            limit=1,
+        )  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(
