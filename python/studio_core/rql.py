@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import cast
 
 from .canonical_json import encode as encode_canonical_json
-from .ontology import KnowledgeGraph, KnowledgeObject
+from .ontology import KnowledgeGraph, KnowledgeObject, _typed_value_key
 
 _SELECT = re.compile(
     r"^SELECT\s+(?P<type>[A-Za-z_][\w.-]*)"
@@ -201,9 +201,16 @@ def execute_rql(query: str, graph: KnowledgeGraph, *, max_limit: int = 10_000) -
         if left_field is None or right_field is None:
             raise ValueError("RQL join requires both field names")
         target_objects = graph.objects_of_type(join_type, limit=max_limit)
-        left_values = {dict(item.properties).get(left_field) for item in objects}
+        left_values = {
+            _typed_value_key(left_value)
+            for item in objects
+            if (left_value := dict(item.properties).get(left_field)) is not None
+        }
         objects = tuple(
-            item for item in target_objects if dict(item.properties).get(right_field) in left_values
+            item
+            for item in target_objects
+            if (right_value := dict(item.properties).get(right_field)) is not None
+            and _typed_value_key(right_value) in left_values
         )
     return RqlResult(objects=objects[:limit])
 
