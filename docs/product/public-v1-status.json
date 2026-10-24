@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-24T15:36:22+00:00",
+  "observed_at": "2026-10-24T15:47:36+00:00",
   "observed_main_sha": "caa0c8ba6561b11d21401e5c9beea08fe0f80fbd",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
@@ -15,9 +15,9 @@
   },
   "local_verification": {
     "observed_at": "2026-10-24",
-    "candidate_sha": "e02d5e79a85fc67625df9f40dbf0d00a3d6fdde7",
+    "candidate_sha": "b8e6d7834692e35688054f50655f8f73733d34cb",
     "command": "$env:PATH = \"$PWD\\.venv\\Scripts;$env:PATH\"; .venv\\Scripts\\python.exe -m pytest -q",
-    "result": "3960 passed, 66 skipped in 453.06s (Windows; Docker/PostgreSQL and platform/provider cases are qualified in dedicated CI jobs where configured)",
+    "result": "3962 passed, 66 skipped in 447.66s (Windows; Docker/PostgreSQL and platform/provider cases are qualified in dedicated CI jobs where configured)",
     "qualification_claimed": false,
     "mutation_campaign": {
       "status": "historical_frozen",
@@ -87,7 +87,7 @@
     {
       "id": "p6-catalog-lineage",
       "status": "partial",
-      "summary": "Governed asset CRUD/revisions, versioned sensitivity and ownership metadata, glossary term authoring, bounded project-scoped catalog search, declared/observed lineage persistence with HTTP navigation, and selected-subgraph Bundle export/planning/atomic import exist. OpenLineage export emits observed RunEvents with standard column-lineage output facets and declared DatasetEvents with lineage facets; validation binds event and known facet names to exact schema URLs, rejects mixed event shapes, validates timezone-aware timestamps, caps payloads at 1 MiB, bounds duplicate suppression, and rejects HTTP redirects while closing responses. Consumer/provider certification and complete asset-family integration remain incomplete."
+      "summary": "Governed asset CRUD/revisions, versioned sensitivity and ownership metadata, glossary term authoring, bounded project-scoped catalog search, declared/observed lineage persistence with HTTP navigation, and selected-subgraph Bundle export/planning/atomic import exist. OpenLineage export emits observed RunEvents with standard column-lineage output facets and declared DatasetEvents with lineage facets; validation binds event and known facet names to exact schema URLs, restricts these facets to dataset entities, rejects mixed event shapes, validates timezone-aware timestamps, caps payloads at 1 MiB, bounds duplicate suppression, and rejects HTTP redirects while closing responses. Consumer/provider certification and complete asset-family integration remain incomplete."
     },
     {
       "id": "p6-ontology-knowledge-graph",
