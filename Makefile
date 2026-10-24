@@ -165,7 +165,7 @@ coverage-storage-files:
 		--baseline=connections.py=64.44 \
 		--baseline=environments.py=75.51 \
 		--baseline=local_files.py=77.22 \
-		--baseline=ml.py=72.19 \
+		--baseline=ml.py=73.30 \
 		--baseline=ontology.py=37.40 \
 		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=74.20 \
@@ -193,7 +193,7 @@ coverage-storage-files-full:
 		--baseline=connections.py=64.44 \
 		--baseline=environments.py=75.51 \
 		--baseline=local_files.py=77.22 \
-		--baseline=ml.py=72.19 \
+		--baseline=ml.py=73.30 \
 		--baseline=postgres_ml.py=72.52 \
 		--baseline=ontology.py=37.40 \
 		--baseline=postgres_core.py=48.49 \

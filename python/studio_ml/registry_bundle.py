@@ -61,6 +61,24 @@ class MLRegistryBundleStore(Protocol):
     def register_model(
         self, workspace_id: WorkspaceId, model: RegisteredModelVersion, *, now: Instant | str
     ) -> RegisteredModelVersion: ...
+    def commit_registry_bundle_import(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        experiments: tuple[Experiment, ...],
+        runs: tuple[MLRunRecord, ...],
+        models: tuple[RegisteredModelVersion, ...],
+        evaluations: tuple[ModelEvaluation, ...],
+        feature_definitions: tuple[FeatureDefinition, ...],
+        feature_store: FeatureDefinitionStore | None,
+        now: Instant | str,
+    ) -> None: ...
+    def validate_registry_bundle_import(
+        self,
+        *,
+        feature_definitions: tuple[FeatureDefinition, ...],
+        feature_store: FeatureDefinitionStore | None,
+    ) -> None: ...
 
 
 class MLRegistryBundleArtifactStore(Protocol):
@@ -355,6 +373,20 @@ def _plan_ml_registry_bundle_import_from_reader(
         for evaluation in evaluations
     ):
         raise ValueError("ML registry Bundle evaluation references an absent model")
+    passed_evaluations = {
+        (str(evaluation.model_id), str(evaluation.version))
+        for evaluation in evaluations
+        if evaluation.status == "passed"
+    }
+    if any(
+        model.stage == "champion"
+        and (str(model.model_id), str(model.version)) not in passed_evaluations
+        for model in models
+    ):
+        raise ValueError("ML registry Bundle champion model requires a passed evaluation")
+    champion_model_ids = [str(model.model_id) for model in models if model.stage == "champion"]
+    if len(champion_model_ids) != len(set(champion_model_ids)):
+        raise ValueError("ML registry Bundle contains multiple champion versions for one model")
     return MLRegistryBundleImportPlan(
         inventory,
         tuple(experiments),
@@ -416,13 +448,18 @@ def _commit_ml_registry_bundle_import(
     feature_store: FeatureDefinitionStore | None = None,
 ) -> MLRegistryBundleImportPlan:
     plan = plan_ml_registry_bundle_import(path)
+    commit_registry = getattr(store, "commit_registry_bundle_import", None)
+    if not callable(commit_registry):
+        raise ValueError("ML registry store does not support atomic Bundle imports")
     if plan.features and feature_store is None:
         raise ValueError(
             "ML registry Bundle contains feature definitions but no feature store was supplied"
         )
-    record_evaluation = getattr(store, "record_evaluation", None)
-    if plan.evaluations and not callable(record_evaluation):
-        raise ValueError("ML registry Bundle contains evaluations but registry cannot store them")
+    if plan.features:
+        validate_registry = getattr(store, "validate_registry_bundle_import", None)
+        if not callable(validate_registry):
+            raise ValueError("ML registry store cannot preflight atomic feature import")
+        validate_registry(feature_definitions=plan.features, feature_store=feature_store)
     artifact_refs: dict[str, str] = {}
     if plan.artifacts:
         if artifact_store is None:
@@ -439,28 +476,31 @@ def _commit_ml_registry_bundle_import(
             if not isinstance(storage_ref, str) or not storage_ref.strip():
                 raise ValueError("artifact store returned an invalid storage reference")
             artifact_refs[artifact.source_ref] = storage_ref
-    for experiment in plan.experiments:
-        store.put_experiment(workspace_id, experiment, now=now)
-    if plan.features:
-        if feature_store is None:
-            raise RuntimeError("feature store disappeared during bundle import")
-        for definition in plan.features:
-            feature_store.put_feature_definition(workspace_id, definition)
-    for run in plan.runs:
-        if artifact_refs:
-            run = replace(
-                run,
-                artifact_refs=tuple(artifact_refs.get(ref, ref) for ref in run.artifact_refs),
-            )
-        store.record_run(workspace_id, run, now=now)
-    for model in plan.models:
-        if model.artifact_ref in artifact_refs:
-            model = replace(model, artifact_ref=artifact_refs[model.artifact_ref])
-        store.register_model(workspace_id, model, now=now)
-    for evaluation in plan.evaluations:
-        if not callable(record_evaluation):
-            raise RuntimeError("evaluation recorder disappeared during bundle import")
-        record_evaluation(workspace_id, evaluation, now=now)
+    runs = tuple(
+        replace(
+            run,
+            artifact_refs=tuple(artifact_refs.get(ref, ref) for ref in run.artifact_refs),
+        )
+        if artifact_refs
+        else run
+        for run in plan.runs
+    )
+    models = tuple(
+        replace(model, artifact_ref=artifact_refs[model.artifact_ref])
+        if model.artifact_ref in artifact_refs
+        else model
+        for model in plan.models
+    )
+    commit_registry(
+        workspace_id,
+        experiments=plan.experiments,
+        runs=runs,
+        models=models,
+        evaluations=plan.evaluations,
+        feature_definitions=plan.features,
+        feature_store=feature_store,
+        now=now,
+    )
     return plan
 
 
