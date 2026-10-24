@@ -10,9 +10,9 @@ Grammar (case-insensitive keywords):
 
 `<op>` is one of = != > >= < <=. Literals are parsed as JSON scalars when
 possible; otherwise they are treated as strings. Quoted JSON strings preserve
-their type and escapes. Input is limited to 64 KiB and 4096 tokens. This is
-intentionally a bounded executable subset, not a claim of final RQL language
-completeness.
+their type and escapes; single-quoted text is also a string. Input is limited
+to 64 KiB and 4096 tokens. This is intentionally a bounded executable subset,
+not a claim of final RQL language completeness.
 """
 
 from __future__ import annotations
@@ -56,13 +56,14 @@ def _tokenize(text: str) -> list[str]:
         if index == len(text):
             break
         start = index
-        if text[index] == '"':
+        quote = text[index] if text[index] in {'"', "'"} else None
+        if quote is not None:
             index += 1
             while index < len(text):
-                if text[index] == "\\":
+                if quote == '"' and text[index] == "\\":
                     index += 2
                     continue
-                if text[index] == '"':
+                if text[index] == quote:
                     index += 1
                     break
                 index += 1
@@ -86,6 +87,8 @@ def _literal(token: str) -> GraphScalar:
         if token.startswith('"'):
             raise RqlSyntaxError("quoted RQL string is invalid JSON") from None
         value = token
+    if token.startswith("'"):
+        value = token[1:-1]
     if value is None or isinstance(value, (bool, int, float, str)):
         if isinstance(value, float) and (value != value or value in (float("inf"), float("-inf"))):
             raise RqlSyntaxError("RQL numeric literal must be finite")

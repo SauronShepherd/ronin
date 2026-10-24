@@ -61,6 +61,7 @@ def test_rql_parser_builds_bounded_query_and_rejects_unsupported_input() -> None
 def test_rql_parser_preserves_quoted_scalar_types_and_rejects_joined_fields() -> None:
     quoted_true = parse_rql('MATCH Customer WHERE name = "true" RETURN name')
     quoted_null = parse_rql('MATCH Customer WHERE name = "null" RETURN name')
+    single_quoted = parse_rql("MATCH Customer WHERE name = 'hello world' RETURN name")
     escaped_quote = parse_rql('MATCH Customer WHERE name = "say \\"true\\"" RETURN name')
     bare_true = parse_rql("MATCH Customer WHERE active = true RETURN name")
     separated_fields = parse_rql("MATCH Customer RETURN name , _key")
@@ -70,6 +71,7 @@ def test_rql_parser_preserves_quoted_scalar_types_and_rejects_joined_fields() ->
     assert isinstance(quoted_true.filters[0].value, str)
     assert quoted_null.filters[0].value == "null"
     assert isinstance(quoted_null.filters[0].value, str)
+    assert single_quoted.filters[0].value == "hello world"
     assert escaped_quote.filters[0].value == 'say "true"'
     assert unicode_literal.filters[0].value == "café"
     assert bare_true.filters[0].value is True
