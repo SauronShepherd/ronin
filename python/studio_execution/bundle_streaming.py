@@ -18,8 +18,7 @@ from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.portability import BindingKind, BindingRequest, RoninBundleManifest
 from studio_storage.bundle import BundleFile, write_bundle
 from studio_storage.bundle_payload import BundlePayloadReader
-
-from .contracts import StreamDefinition
+from studio_streaming.contracts import StreamDefinition
 
 INVENTORY_MEDIA_TYPE = "application/vnd.ronin.bundle-inventory+json"
 STREAM_DEFINITION_MEDIA_TYPE = "application/vnd.ronin.stream-definition+json"

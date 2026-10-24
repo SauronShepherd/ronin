@@ -5,6 +5,11 @@ from contextlib import closing
 from pathlib import Path
 
 import pytest
+from studio_execution.bundle_streaming import (
+    commit_stream_bundle_import,
+    export_stream_bundle,
+    plan_stream_bundle_import,
+)
 from studio_streaming import (
     SqliteStreamCheckpointStore,
     StreamCheckpoint,
@@ -15,9 +20,6 @@ from studio_streaming import (
     StreamSchemaField,
     StreamSinkDefinition,
     StreamSourceDefinition,
-    commit_stream_bundle_import,
-    export_stream_bundle,
-    plan_stream_bundle_import,
 )
 
 
