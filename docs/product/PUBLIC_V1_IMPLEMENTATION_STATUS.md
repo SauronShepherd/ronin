@@ -4,7 +4,12 @@
 **Machine-readable ledger:** `docs/product/public-v1-status.json`.  
 **Capability matrix:** [`PUBLIC_V1_CAPABILITY_MATRIX.md`](PUBLIC_V1_CAPABILITY_MATRIX.md).
 **Architecture decisions:** [`docs/architecture/PUBLIC_V1_ADRS.md`](../architecture/PUBLIC_V1_ADRS.md).
-**Observed workspace snapshot:** 2026-10-22. PRs #430–#510 are merged. Recent
+**Observed workspace snapshot:** 2026-10-24. PRs #430–#520 are merged. PR #520
+reconciles Public v1 to exclude in-product GenAI/RAG/agent execution, keeps
+coding-agent skills external-only, and places multi-user administration in
+Ronin Pro. Its exact-head CI, Docker/PostgreSQL, Web, Security, Release, Status
+consistency, external-skills boundary and prerelease-artifact workflows passed.
+Recent
 increments add configurable ML algorithms and preprocessing, selective retry,
 non-destructive artifact retention preview, fail-closed reference discovery with
 bounded enumeration, bounded-memory local artifact pagination, and paged manual
@@ -28,7 +33,7 @@ two PostgreSQL-dependent tests were skipped without a local DSN, and strict
 acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
-**Observed source head:** `cc08a7f66eb2fed0102492da7bff78a68baf8054` (2026-10-24).
+**Observed source head:** `7f6d16dcd24cf1ed2af0a5fc2cb1cff7d0c1ecd9` (2026-10-24).
 **Release status:** **INCOMPLETE**.
 
 **Scope amendment (2026-10-24):** P9 GenAI/RAG/in-product agents are excluded from Public v1; Ronin coding-agent skills are consumed externally. Multi-user identity, user/group administration and multi-user deployment belong to Ronin Pro. Dated evidence notes below preserve their original scope context; the current release denominator excludes these capabilities.
