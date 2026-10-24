@@ -311,6 +311,37 @@ def test_native_provider_executes_filters_and_bounded_traversal(tmp_path: Path) 
     assert traversed == GraphQueryResult(((("_type", "Order"), ("name", "A-9")),))
 
 
+def test_native_provider_equality_filters_preserve_scalar_types(tmp_path: Path) -> None:
+    objects = (
+        GraphObject(KnowledgeObjectRef("Customer", (("id", "bool"),)), (("value", True),)),
+        GraphObject(KnowledgeObjectRef("Customer", (("id", "integer"),)), (("value", 1),)),
+        GraphObject(KnowledgeObjectRef("Customer", (("id", "number"),)), (("value", 1.0),)),
+        GraphObject(KnowledgeObjectRef("Customer", (("id", "null"),)), (("value", None),)),
+    )
+    snapshot = GraphSnapshot(OntologyId("typed"), "v1", objects)
+    store = SqliteGraphStore(tmp_path / "typed-graph.sqlite")
+    store.replace_snapshot(snapshot)
+    provider = NativeGraphProvider(store, snapshot.ontology_id, snapshot.ontology_version)
+
+    assert provider.execute(parse_rql("MATCH Customer WHERE value = 1 RETURN _key")).rows == (
+        (("_key", "id=integer"),),
+    )
+    assert provider.execute(parse_rql("MATCH Customer WHERE value = 1.0 RETURN _key")).rows == (
+        (("_key", "id=number"),),
+    )
+    assert provider.execute(parse_rql("MATCH Customer WHERE value = true RETURN _key")).rows == (
+        (("_key", "id=bool"),),
+    )
+    assert provider.execute(parse_rql("MATCH Customer WHERE value != 1 RETURN _key")).rows == (
+        (("_key", "id=bool"),),
+        (("_key", "id=null"),),
+        (("_key", "id=number"),),
+    )
+    assert provider.execute(parse_rql("MATCH Customer WHERE value = null RETURN _key")).rows == (
+        (("_key", "id=null"),),
+    )
+
+
 def test_native_provider_rejects_missing_return_fields(tmp_path: Path) -> None:
     store = SqliteGraphStore(tmp_path / "graph.sqlite")
     snapshot = _snapshot()

@@ -71,10 +71,9 @@ class GraphResourceBudgetExceeded(RuntimeError):
 
 def _compare(left: GraphScalar, filter_: GraphFilter) -> bool:
     right = filter_.value
-    if filter_.operator == "eq":
-        return left == right
-    if filter_.operator == "ne":
-        return left != right
+    if filter_.operator in {"eq", "ne"}:
+        equal = type(left) is type(right) and left == right
+        return equal if filter_.operator == "eq" else not equal
     if left is None or right is None:
         return False
     if isinstance(left, bool) or isinstance(right, bool):
