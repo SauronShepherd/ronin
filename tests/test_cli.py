@@ -63,10 +63,14 @@ def test_connectors_capabilities_uses_control_plane_client(monkeypatch, capsys) 
 
 def test_connectors_discover_emits_assets(monkeypatch, capsys) -> None:
     class _Client:
-        def connector_discover(self, workspace_id, connector_id, connection_ref):
+        def connector_discover(
+            self, workspace_id, connector_id, connection_ref, *, cursor=None, page_size=None
+        ):
             assert workspace_id == "workspace-a"
             assert connector_id == "http.json"
             assert connection_ref == "conn-1"
+            assert cursor is None
+            assert page_size is None
             return {
                 "schema": "ronin.connector-discovery/v1",
                 "items": [{"asset_ref": "conn-1::orders"}],
@@ -91,6 +95,47 @@ def test_connectors_discover_emits_assets(monkeypatch, capsys) -> None:
         == 0
     )
     assert json.loads(capsys.readouterr().out)["items"][0]["asset_ref"] == "conn-1::orders"
+
+
+def test_connectors_discover_passes_page_cursor_and_size(monkeypatch, capsys) -> None:
+    class _Client:
+        def connector_discover(
+            self, workspace_id, connector_id, connection_ref, *, cursor=None, page_size=None
+        ):
+            assert workspace_id == "workspace-a"
+            assert connector_id == "s3.json"
+            assert connection_ref == "conn-1"
+            assert cursor == "opaque-cursor"
+            assert page_size == 25
+            return {
+                "schema": "ronin.connector-discovery/v1",
+                "items": [],
+                "count": 0,
+                "has_more": False,
+                "next_cursor": None,
+            }
+
+    monkeypatch.setattr("studio_cli._control_plane_client", lambda: _Client())
+    assert (
+        main(
+            [
+                "connectors",
+                "discover",
+                "--workspace-id",
+                "workspace-a",
+                "--connector-id",
+                "s3.json",
+                "--connection-ref",
+                "conn-1",
+                "--cursor",
+                "opaque-cursor",
+                "--page-size",
+                "25",
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out)["has_more"] is False
 
 
 def test_connectors_plan_requires_complete_definition(monkeypatch, capsys) -> None:

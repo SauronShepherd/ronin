@@ -8,7 +8,7 @@ Ronin is being built as a professional, free, open-source and self-hostable **Da
 
 The existing `0.1.0a*` work is an **engineering alpha and execution foundation**, not the product-completeness gate for Ronin's first public release.
 
-Ronin Public v1 will not be declared complete until the platform has end-to-end supported paths for data integration, lakehouse/SQL, scheduling/orchestration, catalog/lineage/ontology/knowledge graph, data quality, AI/ML/MLOps, GenAI/RAG/agents, semantic models/dashboards, streaming, observability/alerts/FinOps, multi-user security, deployment and vendor migration.
+Ronin Public v1 will not be declared complete until the platform has end-to-end supported paths for data integration, lakehouse/SQL, scheduling/orchestration, catalog/lineage/ontology/knowledge graph, data quality, machine learning/MLOps, semantic models/dashboards, streaming, observability/alerts/FinOps, single-operator security, local/Compose deployment and vendor migration. GenAI/RAG/agent execution is excluded; multi-user identity and administration belong to Ronin Pro.
 
 The normative contracts are:
 
@@ -21,7 +21,7 @@ The original [`docs/product/V01_SCOPE.md`](docs/product/V01_SCOPE.md) remains th
 
 ## Product direction
 
-Public v1 is intended to let a team simulate representative **proprietary, non-open-source data and AI platform** environments locally in Ronin, using provider-inspired capabilities without requiring external vendors or their control planes. The project is focused on local development, experimentation, learning and reproducible evaluation; migration and interoperability may be useful secondary outcomes, but they are not the product's primary purpose.
+Public v1 is intended to let an operator simulate representative **proprietary, non-open-source data and machine-learning platform** environments locally in Ronin, using provider-inspired capabilities without requiring external vendors or their control planes. The project is focused on local development, experimentation, learning and reproducible evaluation; migration and interoperability may be useful secondary outcomes, but they are not the product's primary purpose.
 
 > **Production-use warning:** Ronin is currently a local simulation and development platform. Production deployments and production workloads are not supported, are not covered by the current release guarantees, and are not part of the current roadmap. Anyone choosing to use Ronin in production does so at their own risk and responsibility.
 
@@ -52,13 +52,14 @@ The target platform includes:
 - DAG planning/scheduling with retries, backfills, triggers and durable history;
 - persistent catalog, lineage, ontology and knowledge graph;
 - data quality and data contracts;
-- AI/ML Lab, experiment tracking, model registry, evaluation and serving;
-- GenAI/RAG/agent development and evaluation;
+- Machine Learning Studio, experiment tracking, model registry, evaluation and serving;
 - graph intelligence and provider-neutral graph execution;
 - semantic models, metrics and dashboards;
 - streaming and event-triggered workflows;
 - Monitoring & Alerts plus Cost Control / FinOps;
 - CLI, HTTP API, Python SDK and a web Studio over the same backend contracts.
+
+Ronin coding-agent skills are packaged as external instructions for coding agents. Ronin itself does not provide generative model invocation, RAG, or an agent runtime.
 
 ## Brand
 

@@ -1,5 +1,7 @@
 # Ronin AI Studio
 
+> **Withdrawn from Ronin Public v1 (2026-10-24).** This is a historical design record, not an implementation or deployment instruction. Public v1 ships no model-provider discovery or invocation surface; coding-agent skills are external-only.
+
 ## Functional, Architectural, and Technical Specification
 
 **Status:** Implemented specification  

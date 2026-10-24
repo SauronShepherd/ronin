@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
@@ -37,9 +38,39 @@ def _decimal(value: object, *, name: str) -> Decimal:
     if isinstance(value, bool) or value is None:
         raise ValueError(f"{name} must be numeric")
     try:
-        return Decimal(str(value))
+        parsed = Decimal(str(value))
     except InvalidOperation as exc:
         raise ValueError(f"{name} must be numeric") from exc
+    if not parsed.is_finite():
+        raise ValueError(f"{name} must be finite")
+    return parsed
+
+
+def _unique_key(value: object) -> object:
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("unique values must not contain non-finite numbers")
+    if isinstance(value, Decimal) and not value.is_finite():
+        raise ValueError("unique values must not contain non-finite numbers")
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        return bytes(value)
+    if isinstance(value, Mapping):
+        return (
+            "mapping",
+            frozenset((_unique_key(key), _unique_key(child)) for key, child in value.items()),
+        )
+    if isinstance(value, list):
+        return ("list", tuple(_unique_key(child) for child in value))
+    if isinstance(value, tuple):
+        return ("tuple", tuple(_unique_key(child) for child in value))
+    if isinstance(value, set):
+        return ("set", frozenset(_unique_key(child) for child in value))
+    if isinstance(value, frozenset):
+        return ("set", frozenset(_unique_key(child) for child in value))
+    try:
+        hash(value)
+    except TypeError as exc:
+        raise ValueError("unique rule encountered an unsupported unhashable value") from exc
+    return value
 
 
 def _parse_int(parameters: dict[str, str], key: str, default: int | None = None) -> int | None:
@@ -89,15 +120,14 @@ def _evaluate_unique(rule: QualityRule, rows: Sequence[Row]) -> QualityResult:
     parameters = _parameters(rule)
     ignore_nulls = parameters.get("ignore_nulls", "true").casefold() == "true"
     normalized = [value for value in values if value is not None or not ignore_nulls]
-    distinct: list[tuple[object, int]] = []
+    seen: set[object] = set()
+    duplicates = 0
     for value in normalized:
-        for index, (existing, count) in enumerate(distinct):
-            if value == existing:
-                distinct[index] = (existing, count + 1)
-                break
+        key = _unique_key(value)
+        if key in seen:
+            duplicates += 1
         else:
-            distinct.append((value, 1))
-    duplicates = sum(count - 1 for _, count in distinct if count > 1)
+            seen.add(key)
     observed = (("duplicate_count", str(duplicates)), ("row_count", str(len(rows))))
     if duplicates == 0:
         return _passed(rule, observed)
@@ -113,6 +143,8 @@ def _evaluate_range(rule: QualityRule, rows: Sequence[Row]) -> QualityResult:
         raise ValueError("range rule requires min and/or max parameter")
     minimum_value = None if minimum is None else _decimal(minimum, name="range min")
     maximum_value = None if maximum is None else _decimal(maximum, name="range max")
+    if minimum_value is not None and maximum_value is not None and minimum_value > maximum_value:
+        raise ValueError("range min must not exceed range max")
     violations = 0
     numeric_values: list[Decimal] = []
     for value in values:

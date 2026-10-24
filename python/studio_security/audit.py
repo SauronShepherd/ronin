@@ -1,4 +1,4 @@
-"""Bridge multi-user security decisions into the existing append-only audit contract."""
+"""Bridge Public single-operator authorization decisions into append-only audit."""
 
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ def authorization_audit_event(
     metadata = (
         ("auth_method", actor.auth_method),
         ("decision_reason", decision.reason),
-        ("roles", ",".join(decision.matched_roles) or "none"),
+        ("matched_permissions", ",".join(decision.matched_permissions) or "none"),
         ("workspace_id", requirement.workspace_id.value),
     )
     return AuditEvent(

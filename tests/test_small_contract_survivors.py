@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from studio_core import audit, genai, ml, scheduler, source_control
+from studio_core import audit, ml, scheduler, source_control
 
 
 @pytest.mark.parametrize("validator", [audit._require_text, scheduler._require_text])
@@ -23,22 +23,22 @@ def test_audit_and_scheduler_text_contracts_reject_all_noncanonical_shapes(
         validator(value, "field")
 
 
-@pytest.mark.parametrize("validator", [genai._text, ml._text])
+@pytest.mark.parametrize("validator", [ml._text])
 @pytest.mark.parametrize(
     "value", ["", " value", "value ", "line\nfeed", "line\rfeed", "value\x00tail"]
 )
-def test_genai_and_ml_text_contracts_reject_all_noncanonical_shapes(validator, value: str) -> None:
+def test_ml_text_contract_rejects_all_noncanonical_shapes(validator, value: str) -> None:
     with pytest.raises(ValueError, match=r"must be non-empty, trimmed, and single-line"):
         validator(value, "field")
 
 
-@pytest.mark.parametrize("validator", [genai._text, ml._text])
+@pytest.mark.parametrize("validator", [ml._text])
 def test_provider_text_contracts_reject_non_strings(validator) -> None:
     with pytest.raises(ValueError, match=r"^field must be non-empty, trimmed, and single-line$"):
         validator(123, "field")  # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize("validator", [genai._pairs, ml._pairs])
+@pytest.mark.parametrize("validator", [ml._pairs])
 def test_provider_pairs_are_sorted_and_reject_invalid_keys_values_and_duplicates(validator) -> None:
     assert validator((("z", "last"), ("a", "first")), "properties") == (
         ("a", "first"),
@@ -53,7 +53,7 @@ def test_provider_pairs_are_sorted_and_reject_invalid_keys_values_and_duplicates
 
 
 @pytest.mark.parametrize("term", ["password", "secret", "token", "credential", "api_key"])
-@pytest.mark.parametrize("validator", [genai._pairs, ml._pairs])
+@pytest.mark.parametrize("validator", [ml._pairs])
 def test_provider_pairs_reject_each_credential_key_marker(validator, term: str) -> None:
     with pytest.raises(ValueError, match=r"^properties must not contain credential-bearing keys$"):
         validator(((f"prefix-{term.upper()}-suffix", "redacted"),), "properties")

@@ -9,6 +9,8 @@ test('runs surface renders a bounded backend error state', async ({ page }) => {
     });
   });
   await page.goto('./#runs', { waitUntil: 'domcontentloaded' });
+  await page.locator('#run-project').fill('examples/demo');
+  await page.locator('[data-action="refresh-runs"]').click();
   await expect(page.locator('#run-result .error')).toBeVisible();
   await expect(page.locator('#run-result')).toContainText('Could not load runs.');
   await expect(page.locator('body')).not.toContainText('undefined');

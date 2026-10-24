@@ -43,17 +43,15 @@ def test_project_configuration_preserves_validation_contract() -> None:
     assert data_files["share/ronin/web/assets"] == [
         "web/assets/ronin-logo-full.png",
         "web/assets/ronin-logo-mark.png",
-        "web/assets/throw-your-threads/environment-atlas.png",
-        "web/assets/throw-your-threads/character-sheet.png",
+        "web/assets/throw-your-threads/environment-atlas.webp",
+        "web/assets/throw-your-threads/character-sheet.webp",
     ]
     assert set(data_files["share/ronin/web/js"]) == {
         f"web/js/{name}.js"
         for name in (
             "api",
-            "access-studio",
             "a11y",
             "app",
-            "ai-studio",
             "alerts-studio",
             "cloud-studio",
             "catalog-studio",
@@ -84,7 +82,6 @@ def test_project_configuration_preserves_validation_contract() -> None:
             "ml-studio-journey",
             "ml-features-studio",
             "workspace-journey",
-            "genai-studio",
         )
     }
     assert data_files["share/ronin/web/styles"] == [
@@ -95,6 +92,12 @@ def test_project_configuration_preserves_validation_contract() -> None:
         "web/styles/tokens.css",
         "web/styles/tutorials.css",
     ]
+    for skill in ("ronin-core", "ronin-data-engineering", "ronin-machine-learning"):
+        prefix = f"share/ronin/agent-skills/{skill}"
+        assert data_files[prefix] == [f"agent-skills/{skill}/SKILL.md"]
+        assert data_files[f"{prefix}/agents"] == [f"agent-skills/{skill}/agents/openai.yaml"]
+        assert len(data_files[f"{prefix}/references"]) == 1
+        assert len(data_files[f"{prefix}/scripts"]) == 1
 
     compose = (root / "compose.yaml").read_text(encoding="utf-8")
     for variable in (

@@ -93,10 +93,10 @@ First-class routes inside those groups:
 - **Data:** Connections, Ingestion, Lakehouse, Streams
 - **Build:** Pipelines, Notebooks, SQL, Graph Query, Semantic Models, Dashboards
 - **Catalog:** Assets, Lineage, Quality, Ontology, Knowledge Graph
-- **AI:** AI/ML Lab, Experiments, Features, Models, GenAI, Prompts, RAG, Agents
+- **Machine Learning:** Experiments, Features, Models, Evaluation
 - **Deploy:** Endpoints, Services, Workflow Deployments, Environments, Runtime Profiles
 - **Observe:** Runs, Monitoring, Alerts, Cost Control
-- **Admin:** Access, Identities, Secrets, Policies, Audit, Settings
+- **Settings:** Public single-operator preferences. Identity provisioning and multi-user administration are Ronin Pro features.
 
 Persistent context:
 
@@ -206,11 +206,6 @@ Graph canvas always has a structured editor equivalent.
 **Lineage:** data → run → model → deployment.
 **Advanced:** params/artifacts/runtime snapshot.
 
-### GenAI Lab
-**Job:** build/evaluate prompts, retrieval and agents.
-**Validation:** secret refs, tool permissions, knowledge source, token/cost policy.
-**Evidence:** retrieved context/tool calls visible; trace values redacted by default.
-
 ### Deploy
 **Job:** make a validated asset operable in a supported reference/development profile.
 **Review:** artifact/version, runtime, environment, permissions, limits, telemetry.
@@ -219,9 +214,8 @@ Graph canvas always has a structured editor equivalent.
 ### Observe
 Runs / Monitoring & Alerts / Cost Control. Revision 3 deep dive below.
 
-### Admin
-People & identities / Roles & grants / Secrets / Policies / Audit / Settings.
-Fail closed; secrets are reference metadata only.
+### Settings
+Public settings cover local single-operator preferences. People, identities, group memberships, and role administration are Ronin Pro surfaces.
 
 ## 5. Deep dive #1 — Create / New
 
@@ -230,7 +224,7 @@ Two entry modes:
 1. **Describe an outcome** — Ronin proposes a build plan for explicit user approval.
 2. **Choose a starting point** — expert resource shortcuts.
 
-Quick starts: Connect data, Ingest/sync, Pipeline, Notebook, SQL, Ontology/KG, Graph Query, Train/evaluate model, RAG/Agent, Semantic Model/Dashboard, Deployment, Import/Migrate.
+Quick starts: Connect data, Ingest/sync, Pipeline, Notebook, SQL, Ontology/KG, Graph Query, Train/evaluate model, Semantic Model/Dashboard, Deployment, Import/Migrate.
 
 Generated plans never silently persist or deploy resources.
 
@@ -359,7 +353,6 @@ Normalize cross-platform metrics first:
 - retries
 - queue/lag
 - serving metrics
-- GenAI tokens/latency
 - streaming lag
 
 Provider-native metrics live under Provider details/Raw.
@@ -461,9 +454,6 @@ Catalog datasets → logical relationship model → semantic validation → bind
 ### Train + serve model
 Dataset snapshot → experiment → runtime compatibility → train/evaluate → compare/register → deploy reference endpoint → Observe metrics/cost → lineage.
 
-### RAG/agent
-Model/provider → governed knowledge → retrieval → prompt → tools/permissions → evaluation → token/cost evidence → deploy → Observe.
-
 ### Diagnose failure
 Home attention → Run Summary → affected task → structured evidence/event → logs only if needed → edit source/config → explicit rerun → compare evidence.
 
@@ -509,7 +499,7 @@ Extend existing tests rather than replacing them: semantic run links, structured
 5. Workflow task hierarchy reusing Run Detail.
 6. Data/Catalog/domain modules only as supported APIs mature.
 7. Graph Explain through shared DecisionEvidence.
-8. AI/GenAI/deployment observation reusing Run/Evidence/Metrics/Cost primitives.
+8. ML/deployment observation reusing Run/Evidence/Metrics/Cost primitives.
 
 ## 13. Visual artifacts
 
@@ -519,7 +509,7 @@ Extend existing tests rather than replacing them: semantic run links, structured
 
 ## 14. Re-review
 
-Navigation remains compact by grouping mandatory Public v1 areas into Data / Build / Catalog / AI / Deploy / Observe while keeping first-class direct routes.
+Navigation remains compact by grouping mandatory Public v1 areas into Data / Build / Catalog / Machine Learning / Deploy / Observe while keeping first-class direct routes.
 
 Terminology:
 - Studio = whole web product.

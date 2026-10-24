@@ -37,7 +37,11 @@ def _fields(rows: tuple[dict[str, object], ...]) -> tuple[FieldSchema, ...]:
 class S3JsonConnector:
     """Discover and read JSON or JSONL objects from an S3-compatible bucket."""
 
-    descriptor = ConnectorDescriptor("s3.json", 1, ConnectorCapabilities(discover=True, read=True))
+    descriptor = ConnectorDescriptor(
+        "s3.json",
+        1,
+        ConnectorCapabilities(discover=True, read=True, max_page_size=10_000),
+    )
 
     def __init__(self, *, client: Any | None = None) -> None:
         self._client = client

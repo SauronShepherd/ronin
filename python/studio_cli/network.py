@@ -22,7 +22,7 @@ _MAX_ERROR_BYTES = 64 * 1024
 _MAX_CURSOR_BYTES = 4096
 _BIND_POLICY_ENV = "RONIN_BIND_POLICY"
 _INSTANT_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$")
-_JOB_FIELDS = frozenset({"id", "state", "failure_code"})
+_JOB_FIELDS = frozenset({"id", "project_id", "state", "created_at", "updated_at", "failure_code"})
 _EVENT_FIELDS = frozenset(
     {"sequence", "attempt_id", "attempt_sequence", "kind", "message", "occurred_at"}
 )
@@ -261,14 +261,28 @@ class ControlPlaneClient:
         return payload
 
     def connector_discover(
-        self, workspace_id: str, connector_id: str, connection_ref: str
+        self,
+        workspace_id: str,
+        connector_id: str,
+        connection_ref: str,
+        *,
+        cursor: str | None = None,
+        page_size: int | None = None,
     ) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "connector_id": connector_id,
+            "connection_ref": connection_ref,
+        }
+        if cursor is not None:
+            payload["cursor"] = cursor
+        if page_size is not None:
+            payload["page_size"] = page_size
         return _connector_result(
             self.request(
                 "POST",
                 "/v1/platform/connectors/discover",
                 query={"workspace_id": workspace_id},
-                payload={"connector_id": connector_id, "connection_ref": connection_ref},
+                payload=payload,
             )
         )
 
@@ -315,15 +329,36 @@ def _job(payload: object) -> dict[str, object]:
     if not isinstance(payload, dict) or set(payload) != _JOB_FIELDS:
         raise ControlPlaneError("Ronin job response fields violated the protocol")
     job_id = payload.get("id")
+    project_id = payload.get("project_id")
     state = payload.get("state")
+    created_at = payload.get("created_at")
+    updated_at = payload.get("updated_at")
     failure_code = payload.get("failure_code")
     if not isinstance(job_id, str) or not job_id or job_id != job_id.strip() or len(job_id) > 256:
         raise ControlPlaneError("Ronin job id must be a bounded non-empty string")
     if state not in {"queued", "running", "cancelling", "cancelled", "succeeded", "failed"}:
         raise ControlPlaneError("Ronin job state is invalid")
+    if (
+        not isinstance(project_id, str)
+        or not project_id
+        or project_id != project_id.strip()
+        or len(project_id) > 256
+    ):
+        raise ControlPlaneError("Ronin job project_id is invalid")
+    if not isinstance(created_at, str) or _INSTANT_RE.fullmatch(created_at) is None:
+        raise ControlPlaneError("Ronin job created_at is invalid")
+    if not isinstance(updated_at, str) or _INSTANT_RE.fullmatch(updated_at) is None:
+        raise ControlPlaneError("Ronin job updated_at is invalid")
     if failure_code is not None and not isinstance(failure_code, str):
         raise ControlPlaneError("Ronin failure_code must be a string when present")
-    return {"id": job_id, "state": state, "failure_code": failure_code}
+    return {
+        "id": job_id,
+        "project_id": project_id,
+        "state": state,
+        "created_at": created_at,
+        "updated_at": updated_at,
+        "failure_code": failure_code,
+    }
 
 
 def _event(payload: object) -> dict[str, object]:

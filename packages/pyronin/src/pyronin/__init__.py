@@ -26,7 +26,7 @@ _MAX_CURSOR_BYTES = 4096
 _RETRYABLE_STATUS_CODES = frozenset({429, 502, 503, 504})
 _RETRYABLE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 _INSTANT_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$")
-_JOB_FIELDS = frozenset({"id", "state", "failure_code"})
+_JOB_FIELDS = frozenset({"id", "project_id", "state", "created_at", "updated_at", "failure_code"})
 _EVENT_FIELDS = frozenset(
     {"sequence", "attempt_id", "attempt_sequence", "kind", "message", "occurred_at"}
 )
@@ -95,6 +95,9 @@ class EvidenceAvailability(StrEnum):
 class Job:
     id: str
     state: JobState
+    project_id: str
+    created_at: str
+    updated_at: str
     failure_code: str | None = None
 
 
@@ -397,41 +400,6 @@ class ProjectPermissions:
         return dict(self.permissions).get(permission)
 
 
-@dataclass(frozen=True, slots=True)
-class Principal:
-    id: str
-    kind: str
-    display_name: str
-    issuer: str
-    subject: str
-    email: str | None = None
-    active: bool = True
-
-
-@dataclass(frozen=True, slots=True)
-class Group:
-    id: str
-    name: str
-
-
-def _parse_principal(payload: object) -> Principal:
-    item = _parse_resource(payload, "principal")
-    fields = ("id", "kind", "display_name", "issuer", "subject")
-    if not all(isinstance(item.get(field), str) and item[field] for field in fields):
-        raise ProtocolError("principal response has invalid identity")
-    email = item.get("email")
-    if email is not None and not isinstance(email, str):
-        raise ProtocolError("principal response has invalid email")
-    return Principal(*(item[field] for field in fields), email, bool(item.get("active", True)))  # type: ignore[arg-type]
-
-
-def _parse_group(payload: object) -> Group:
-    item = _parse_resource(payload, "group")
-    if not isinstance(item.get("id"), str) or not isinstance(item.get("name"), str):
-        raise ProtocolError("group response has invalid identity")
-    return Group(item["id"], item["name"])  # type: ignore[arg-type]
-
-
 def _parse_project_permissions(payload: object) -> ProjectPermissions:
     item = _parse_resource(payload, "project permissions")
     workspace_id = item.get("workspace_id")
@@ -461,22 +429,6 @@ def _parse_project_permissions(payload: object) -> ProjectPermissions:
             (permission, ProjectPermissionDecision(value["allowed"], value["reason"], tuple(roles)))
         )
     return ProjectPermissions(workspace_id, project_id, tuple(sorted(decisions)))
-
-
-@dataclass(frozen=True, slots=True)
-class RoleBinding:
-    workspace_id: str
-    subject_kind: str
-    subject_id: str
-    role: str
-
-
-def _parse_role_binding(payload: object) -> RoleBinding:
-    item = _parse_resource(payload, "role_binding")
-    fields = ("workspace_id", "subject_kind", "subject_id", "role")
-    if not all(isinstance(item.get(field), str) and item[field] for field in fields):
-        raise ProtocolError("role binding response has invalid identity")
-    return RoleBinding(*(item[field] for field in fields))  # type: ignore[arg-type]
 
 
 def _parse_resource(payload: object, kind: str) -> dict[str, object]:
@@ -2173,115 +2125,6 @@ class Ronin:
             )
         )
 
-    def list_security_principals(self) -> tuple[Principal, ...]:
-        payload = self._transport.request("GET", "/v1/admin/security/principals")
-        if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
-            raise ProtocolError("principals response must contain an items array")
-        return tuple(_parse_principal(item) for item in payload["items"])
-
-    def get_security_principal(self, principal_id: str) -> Principal:
-        if not principal_id.strip():
-            raise ValueError("principal_id must be non-empty")
-        return _parse_principal(
-            self._transport.request(
-                "GET", f"/v1/admin/security/principals/{quote(principal_id, safe='')}"
-            )
-        )
-
-    def put_security_principal(
-        self, principal_id: str, definition: Mapping[str, object]
-    ) -> Principal:
-        if not principal_id.strip():
-            raise ValueError("principal_id must be non-empty")
-        return _parse_principal(
-            self._transport.request(
-                "PUT",
-                f"/v1/admin/security/principals/{quote(principal_id, safe='')}",
-                payload=dict(definition),
-            )
-        )
-
-    def list_security_groups(self) -> tuple[Group, ...]:
-        payload = self._transport.request("GET", "/v1/admin/security/groups")
-        if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
-            raise ProtocolError("groups response must contain an items array")
-        return tuple(_parse_group(item) for item in payload["items"])
-
-    def get_security_group(self, group_id: str) -> Group:
-        if not group_id.strip():
-            raise ValueError("group_id must be non-empty")
-        return _parse_group(
-            self._transport.request("GET", f"/v1/admin/security/groups/{quote(group_id, safe='')}")
-        )
-
-    def put_security_group(self, group_id: str, name: str) -> Group:
-        if not group_id.strip() or not name.strip():
-            raise ValueError("group_id and name must be non-empty")
-        return _parse_group(
-            self._transport.request(
-                "PUT",
-                f"/v1/admin/security/groups/{quote(group_id, safe='')}",
-                payload={"name": name},
-            )
-        )
-
-    def list_security_group_members(self, group_id: str) -> tuple[Principal, ...]:
-        if not group_id.strip():
-            raise ValueError("group_id must be non-empty")
-        payload = self._transport.request(
-            "GET", f"/v1/admin/security/groups/{quote(group_id, safe='')}/members"
-        )
-        if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
-            raise ProtocolError("group members response must contain an items array")
-        return tuple(_parse_principal(item) for item in payload["items"])
-
-    def add_security_group_member(self, group_id: str, principal_id: str) -> bool:
-        if not group_id.strip() or not principal_id.strip():
-            raise ValueError("group_id and principal_id must be non-empty")
-        payload = self._transport.request(
-            "PUT",
-            f"/v1/admin/security/groups/{quote(group_id, safe='')}/members/"
-            f"{quote(principal_id, safe='')}",
-        )
-        return isinstance(payload, dict) and payload.get("member") is True
-
-    def remove_security_group_member(self, group_id: str, principal_id: str) -> bool:
-        if not group_id.strip() or not principal_id.strip():
-            raise ValueError("group_id and principal_id must be non-empty")
-        payload = self._transport.request(
-            "DELETE",
-            f"/v1/admin/security/groups/{quote(group_id, safe='')}/members/"
-            f"{quote(principal_id, safe='')}",
-        )
-        return isinstance(payload, dict) and payload.get("member") is False
-
-    def list_role_bindings(self) -> tuple[RoleBinding, ...]:
-        payload = self._transport.request("GET", "/v1/admin/security/role-bindings")
-        if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
-            raise ProtocolError("role bindings response must contain an items array")
-        return tuple(_parse_role_binding(item) for item in payload["items"])
-
-    def put_role_binding(self, subject_kind: str, subject_id: str, role: str) -> RoleBinding:
-        if not all(value.strip() for value in (subject_kind, subject_id, role)):
-            raise ValueError("subject_kind, subject_id and role must be non-empty")
-        return _parse_role_binding(
-            self._transport.request(
-                "PUT",
-                f"/v1/admin/security/role-bindings/{quote(subject_kind, safe='')}/"
-                f"{quote(subject_id, safe='')}/{quote(role, safe='')}",
-            )
-        )
-
-    def delete_role_binding(self, subject_kind: str, subject_id: str, role: str) -> bool:
-        if not all(value.strip() for value in (subject_kind, subject_id, role)):
-            raise ValueError("subject_kind, subject_id and role must be non-empty")
-        payload = self._transport.request(
-            "DELETE",
-            f"/v1/admin/security/role-bindings/{quote(subject_kind, safe='')}/"
-            f"{quote(subject_id, safe='')}/{quote(role, safe='')}",
-        )
-        return isinstance(payload, dict) and payload.get("removed") is True
-
     def submit(
         self,
         *,
@@ -3368,7 +3211,20 @@ def _parse_job(payload: object) -> Job:
     failure_code = payload["failure_code"]
     if failure_code is not None and not isinstance(failure_code, str):
         raise ProtocolError("failure_code must be a string when present")
-    return Job(job_id, job_state, failure_code)
+    project_id = payload["project_id"]
+    if (
+        not isinstance(project_id, str)
+        or not project_id
+        or project_id != project_id.strip()
+        or len(project_id) > 256
+    ):
+        raise ProtocolError("project_id must be a bounded non-empty string")
+    created_at = payload["created_at"]
+    updated_at = payload["updated_at"]
+    for field_name, value in (("created_at", created_at), ("updated_at", updated_at)):
+        if not isinstance(value, str) or _INSTANT_RE.fullmatch(value) is None:
+            raise ProtocolError(f"Job {field_name} must be a canonical Instant")
+    return Job(job_id, job_state, project_id, created_at, updated_at, failure_code)
 
 
 def _parse_sql_result(payload: object) -> SqlResult:

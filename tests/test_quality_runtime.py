@@ -56,6 +56,57 @@ def test_builtin_quality_rules_evaluate_into_immutable_run() -> None:
     assert blocking_failures(contract, run) == ()
 
 
+def test_unique_rule_handles_nested_unhashable_values_without_pairwise_scan() -> None:
+    from studio_quality.evaluator import evaluate_rule
+
+    rule = QualityRule(QualityRuleId("nested-unique"), "unique", "nested unique", field="value")
+    contract = DataContract(_REF, "exact", rules=(rule,))
+    rows = tuple({"value": {"items": [index]}} for index in range(2, 3002))
+    rows += ({"value": {"items": [True]}}, {"value": {"items": [1]}})
+
+    result = evaluate_rule(rule, rows, contract=contract)
+
+    assert result.status == "failed"
+    assert dict(result.observed)["duplicate_count"] == "1"
+
+
+@pytest.mark.parametrize("invalid", [float("inf"), float("-inf"), float("nan"), "NaN", "Infinity"])
+def test_range_rule_rejects_non_finite_observed_values(invalid: object) -> None:
+    from studio_quality.evaluator import evaluate_rule
+
+    rule = QualityRule(
+        QualityRuleId("finite-range"),
+        "range",
+        "finite amount",
+        field="amount",
+        parameters=(("min", "0"),),
+    )
+    contract = DataContract(_REF, "exact", rules=(rule,))
+
+    result = evaluate_rule(rule, [{"amount": invalid}], contract=contract)
+
+    assert result.status == "error"
+    assert result.message == "field amount must be finite"
+
+
+def test_range_rule_rejects_inverted_bounds_as_a_typed_error() -> None:
+    from studio_quality.evaluator import evaluate_rule
+
+    rule = QualityRule(
+        QualityRuleId("inverted-range"),
+        "range",
+        "invalid range",
+        field="amount",
+        parameters=(("min", "10"), ("max", "1")),
+    )
+    contract = DataContract(_REF, "exact", rules=(rule,))
+
+    result = evaluate_rule(rule, [{"amount": 5}], contract=contract)
+
+    assert result.status == "error"
+    assert result.message == "range min must not exceed range max"
+
+
 def test_blocking_failure_is_reported() -> None:
     contract = DataContract(
         _REF,

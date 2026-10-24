@@ -36,9 +36,7 @@ from studio_storage.ml import SqliteMLStore
 _REVIEWED_PLUGIN_IDS = frozenset(
     {
         "com.ronin.synthetic-data-studio",
-        "com.sauronshepherd.ronin.ai-studio",
         "com.sauronshepherd.ronin.cloud-studio",
-        "com.sauronshepherd.ronin.genai",
         "com.sauronshepherd.ronin.logging",
         "com.sauronshepherd.ronin.ml-studio",
         "com.sauronshepherd.ronin.monitoring",

@@ -1,19 +1,35 @@
 from __future__ import annotations
 
 import os
+import socket
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from typing import cast
 from uuid import uuid4
 
 import pytest
 from studio_cli.local_composed import build_local_composed_from_env
 from studio_connectors import CheckpointFenceConflict, PostgresConnectorCheckpointStore
+from studio_connectors.http import IngestionHTTPAdapter
 from studio_core import SourceCheckpoint
+from studio_server.control_plane import WorkspaceProjectHTTPServer
 from studio_storage import discover_connector_artifact_references
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
     reason="real PostgreSQL connector checkpoint qualification requires RONIN_POSTGRES_TEST_DSN",
 )
+
+
+def _available_tcp_ports(count: int) -> tuple[int, ...]:
+    sockets = [socket.socket() for _ in range(count)]
+    try:
+        for probe in sockets:
+            probe.bind(("127.0.0.1", 0))
+        return tuple(int(probe.getsockname()[1]) for probe in sockets)
+    finally:
+        for probe in sockets:
+            probe.close()
 
 
 def test_postgres_connector_checkpoint_fencing_inventory_and_restart() -> None:
@@ -93,14 +109,15 @@ def test_postgres_connector_checkpoint_fencing_inventory_and_restart() -> None:
 
 
 def test_postgres_local_composition_mounts_shared_connector_ingestion(
-    monkeypatch: pytest.MonkeyPatch, tmp_path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
+    job_port, control_plane_port = _available_tcp_ports(2)
     monkeypatch.setenv("RONIN_DB", str(tmp_path / "ronin.sqlite3"))
     monkeypatch.setenv("RONIN_WORKSPACE_ID", f"workspace-{uuid4().hex}")
     monkeypatch.setenv("RONIN_CONTROL_PLANE_TOKEN", "control-token")
     monkeypatch.setenv("RONIN_TOKEN", "job-token")
-    monkeypatch.setenv("RONIN_PORT", "18080")
-    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", "18081")
+    monkeypatch.setenv("RONIN_PORT", str(job_port))
+    monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(control_plane_port))
     monkeypatch.setenv("RONIN_STORAGE_BACKEND", "postgres")
     monkeypatch.setenv("RONIN_POSTGRES_DSN", os.environ["RONIN_POSTGRES_TEST_DSN"])
     monkeypatch.setenv(
@@ -112,7 +129,8 @@ def test_postgres_local_composition_mounts_shared_connector_ingestion(
 
     composition = build_local_composed_from_env()
     try:
-        adapter = composition.control_plane_server.ingestion_adapter
+        control_plane = cast(WorkspaceProjectHTTPServer, composition.control_plane_server)
+        adapter = cast(IngestionHTTPAdapter | None, control_plane.ingestion_adapter)
         assert adapter is not None
         assert isinstance(adapter._checkpoints, PostgresConnectorCheckpointStore)
         assert adapter._service._artifact_reference_barrier is not None

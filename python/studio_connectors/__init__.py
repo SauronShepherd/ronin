@@ -8,7 +8,16 @@ from .checkpoint import (
     PostgresConnectorCheckpointStore,
     SqliteConnectorCheckpointStore,
 )
-from .contracts import Connector, ConnectorReadResult, DiscoveryPage, PagedConnector
+from .contracts import (
+    Connector,
+    ConnectorCapabilityError,
+    ConnectorCommitResult,
+    ConnectorReadResult,
+    ConnectorWriter,
+    DiscoveryPage,
+    PagedConnector,
+    TransactionalConnectorWriter,
+)
 from .http import IngestionHTTPAdapter
 from .http_json import HttpJsonConnector
 from .jdbc import (
@@ -31,9 +40,13 @@ from .sync import (
 
 __all__ = (
     "Connector",
+    "ConnectorCapabilityError",
+    "ConnectorCommitResult",
     "ConnectorReadResult",
+    "ConnectorWriter",
     "DiscoveryPage",
     "PagedConnector",
+    "TransactionalConnectorWriter",
     "AzureBlobJsonConnector",
     "ConnectorRegistry",
     "ConnectorCapabilityRecord",

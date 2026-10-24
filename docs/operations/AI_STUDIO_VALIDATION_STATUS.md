@@ -1,5 +1,7 @@
 # AI Studio — estado de validación
 
+> **Withdrawn from Ronin Public v1 (2026-10-24).** This status is historical and does not qualify a Public product capability. Ronin Public does not mount AI Studio or invoke model providers.
+
 Fecha de la última validación: 2026-09-19.
 
 ## Validado en este workspace

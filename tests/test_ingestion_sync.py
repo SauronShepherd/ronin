@@ -9,7 +9,7 @@ from studio_connectors import (
     SqliteConnectorCheckpointStore,
     plan_sync,
 )
-from studio_connectors.contracts import ConnectorReadResult
+from studio_connectors.contracts import ConnectorReadResult, DiscoveryPage
 from studio_core import (
     AssetHandle,
     ConnectionId,
@@ -29,6 +29,14 @@ class _Connector:
 
 
 class _DiscoveringConnector(_Connector):
+    def __init__(self, connector_id: str, incremental: bool) -> None:
+        super().__init__(connector_id, incremental)
+        self.descriptor = ConnectorDescriptor(
+            connector_id,
+            1,
+            ConnectorCapabilities(discover=True, max_page_size=100),
+        )
+
     def discover(self, connection, secrets):
         del secrets
         return (
@@ -38,6 +46,36 @@ class _DiscoveringConnector(_Connector):
                 (FieldSchema("id", "integer", False),),
             ),
         )
+
+    def discover_page(self, connection, secrets, *, cursor=None, page_size=1000):
+        del cursor
+        assets = self.discover(connection, secrets)
+        return DiscoveryPage(assets[:page_size], None, False)
+
+
+class _PagedDiscoveringConnector(_DiscoveringConnector):
+    def __init__(self) -> None:
+        self.descriptor = ConnectorDescriptor(
+            "paged-db",
+            1,
+            ConnectorCapabilities(discover=True, max_page_size=2),
+        )
+
+    def discover_page(self, connection, secrets, *, cursor=None, page_size=1000):
+        del secrets
+        all_assets = tuple(
+            DiscoveredAsset(
+                AssetHandle(ConnectionId(connection.id), (), name),
+                "table",
+                (),
+            )
+            for name in ("orders", "products", "users")
+        )
+        offset = int(cursor or "0")
+        selected = all_assets[offset : offset + page_size]
+        next_offset = offset + len(selected)
+        truncated = next_offset < len(all_assets)
+        return DiscoveryPage(selected, str(next_offset) if truncated else None, truncated)
 
 
 def test_ingestion_sync_round_trips_canonically() -> None:
@@ -132,8 +170,8 @@ def test_ingestion_http_adapter_validates_and_delegates_preview() -> None:
         "asset/a",
         "conn/a",
     ]
-    assert adapter.preview(body, workspace_id="workspace/a")["checkpoint_identity"] == (
-        "workspace/a/cp/a"
+    assert adapter.preview(body, workspace_id="workspace/a")["checkpoint_identity"].startswith(
+        "ronin:v2:"
     )
     with pytest.raises(ValueError, match="invalid fields"):
         adapter.preview({**body, "extra": True}, workspace_id="workspace/a")
@@ -161,6 +199,8 @@ def test_ingestion_http_adapter_discovers_bounded_assets() -> None:
     assert result["schema"] == "ronin.connector-discovery/v1"
     assert workspaces == ["workspace/a"]
     assert result["count"] == 1
+    assert result["has_more"] is False
+    assert result["next_cursor"] is None
     assert result["items"] == [
         {
             "asset_ref": "conn/a::public.orders",
@@ -168,6 +208,89 @@ def test_ingestion_http_adapter_discovers_bounded_assets() -> None:
             "fields": [{"name": "id", "data_type": "integer", "nullable": False}],
         }
     ]
+
+
+def test_ingestion_http_adapter_pages_discovery_and_scopes_cursor() -> None:
+    connector = _PagedDiscoveringConnector()
+    adapter = IngestionHTTPAdapter(
+        ConnectorRegistry((connector,)),
+        object(),
+        lambda _workspace, _ref: type(
+            "Connection", (), {"id": "conn/a", "connector_id": "paged-db"}
+        )(),
+        lambda ref: ref,
+        lambda ref: ref,
+    )
+    request = {"connector_id": "paged-db", "connection_ref": "conn/a", "page_size": 2}
+
+    first = adapter.discover(request, workspace_id="workspace/a")
+
+    assert first["count"] == 2
+    assert first["has_more"] is True
+    assert first["items"][0]["asset_ref"] == "conn/a::orders"
+    cursor = first["next_cursor"]
+    assert isinstance(cursor, str)
+    second = adapter.discover({**request, "cursor": cursor}, workspace_id="workspace/a")
+    assert second["count"] == 1
+    assert second["has_more"] is False
+    assert second["next_cursor"] is None
+    assert second["items"][0]["asset_ref"] == "conn/a::users"
+
+    with pytest.raises(ValueError, match="different source scope"):
+        adapter.discover({**request, "cursor": cursor}, workspace_id="workspace/b")
+    with pytest.raises(ValueError, match="different source scope"):
+        adapter.discover(
+            {**request, "connection_ref": "conn/other", "cursor": cursor},
+            workspace_id="workspace/a",
+        )
+
+    with pytest.raises(ValueError, match="advertised limit"):
+        adapter.discover(
+            {**request, "page_size": 3},
+            workspace_id="workspace/a",
+        )
+
+    with pytest.raises(ValueError, match="must be an integer"):
+        adapter.discover(
+            {**request, "page_size": True},
+            workspace_id="workspace/a",
+        )
+
+
+def test_ingestion_http_adapter_rejects_non_advancing_discovery_cursor() -> None:
+    class _RepeatingConnector(_PagedDiscoveringConnector):
+        def discover_page(self, connection, secrets, *, cursor=None, page_size=1000):
+            del connection, secrets, page_size
+            return DiscoveryPage((), cursor or "same", True)
+
+    adapter = IngestionHTTPAdapter(
+        ConnectorRegistry((_RepeatingConnector(),)),
+        object(),
+        lambda _workspace, _ref: type(
+            "Connection", (), {"id": "conn/a", "connector_id": "paged-db"}
+        )(),
+        lambda ref: ref,
+        lambda ref: ref,
+    )
+    first = adapter.discover(
+        {"connector_id": "paged-db", "connection_ref": "conn/a"},
+        workspace_id="workspace/a",
+    )
+
+    with pytest.raises(ValueError, match="did not advance"):
+        adapter.discover(
+            {
+                "connector_id": "paged-db",
+                "connection_ref": "conn/a",
+                "cursor": first["next_cursor"],
+            },
+            workspace_id="workspace/a",
+        )
+
+
+def test_discovery_page_requires_cursor_when_truncated() -> None:
+    with pytest.raises(ValueError, match="must provide a continuation cursor"):
+        DiscoveryPage((), None, True)
 
 
 def test_ingestion_http_adapter_scopes_checkpoint_health_by_workspace() -> None:
@@ -204,7 +327,10 @@ def test_ingestion_http_adapter_scopes_checkpoint_health_by_workspace() -> None:
     result = adapter.plan(body, workspace_id="workspace/a")
     health = adapter.checkpoint_health({"checkpoint_identity": "cp/a"}, workspace_id="workspace/b")
 
-    assert identities == ["workspace/a/cp/a", "workspace/b/cp/a"]
+    assert len(identities) == 2
+    assert identities[0].startswith("ronin:v2:")
+    assert identities[1].startswith("ronin:v2:")
+    assert identities[0] != identities[1]
     assert result["checkpoint"]["identity"] == "cp/a"
     assert health["identity"] == "cp/a"
 
@@ -250,6 +376,13 @@ def test_ingestion_preview_scopes_checkpoint_read_and_hides_internal_identity() 
 
     assert identities == ["workspace/a/cp/a"]
     assert result["checkpoint"]["identity"] == "cp/a"
+
+
+def test_checkpoint_scope_encoding_cannot_alias_slash_delimited_pairs() -> None:
+    identity = IngestionHTTPAdapter._checkpoint_identity
+
+    assert identity("workspace", "checkpoint") == "workspace/checkpoint"
+    assert identity("workspace/a", "b/c") != identity("workspace/a/b", "c")
 
 
 def test_sync_holds_reference_barrier_through_artifact_and_checkpoint_commit() -> None:

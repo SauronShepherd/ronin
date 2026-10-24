@@ -1,13 +1,13 @@
 services:
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack@sha256:f3cb1a79f3add997575e859c3a2808e6dae4b0de836661de255baa2b576868f8
     ports:
-      - "4566:4566"
+      - "127.0.0.1:4566:4566"
     environment:
-      SERVICES: s3,lambda,sqs,dynamodb
+      SERVICES: s3
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
       AWS_DEFAULT_REGION: us-east-1
-      # Supply LOCALSTACK_AUTH_TOKEN outside source control when required.
-      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:-}
     volumes:
       - localstack-data:/var/lib/localstack
 volumes:

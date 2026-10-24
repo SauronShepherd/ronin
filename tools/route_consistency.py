@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Final
 
 try:
-    from studio_server import CONTROL_PLANE_ROUTES, OIDC_ADMIN_ROUTES, SUPPORTED_ROUTES
+    from studio_server import CONTROL_PLANE_ROUTES, SUPPORTED_ROUTES
 except ModuleNotFoundError as exc:  # pragma: no cover - environment diagnostic
     if exc.name == "studio_server":
         raise SystemExit(
@@ -33,7 +33,7 @@ def documented_routes(path: Path = OPENAPI_PATH) -> frozenset[tuple[str, str]]:
 
 
 def registered_routes() -> frozenset[tuple[str, str]]:
-    routes = set(SUPPORTED_ROUTES | CONTROL_PLANE_ROUTES | OIDC_ADMIN_ROUTES)
+    routes = set(SUPPORTED_ROUTES | CONTROL_PLANE_ROUTES)
     # Plugin routes are registered dynamically and therefore cannot be listed
     # in the static server registries. Compose the first-party ML plugin here
     # so the OpenAPI contract is checked against the same contribution source

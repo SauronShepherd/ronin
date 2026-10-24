@@ -1,5 +1,7 @@
 # Ronin Helm multi-user profile
 
+**Ronin Pro only.** This deployment profile is outside the Ronin Public v1 contract and is not part of Public v1 release qualification.
+
 The reference chart defaults to `server.profile: single-node`, SQLite and one
 replica. This is the safe local baseline.
 

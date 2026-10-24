@@ -132,7 +132,7 @@ coverage-t3:
 coverage-t4:
 	# Public v1 domain packages currently qualify at 65%; keep a five-point regression margin.
 	coverage report --fail-under=60 \
-		--include="*/studio_connectors/*,*/studio_finops/*,*/studio_genai/*,*/studio_lakehouse/*,*/studio_ml/*,*/studio_migration/*,*/studio_observability/*,*/studio_quality/*,*/studio_security/*,*/studio_semantic/*,*/studio_sql/*,*/studio_streaming/*"
+		--include="*/studio_connectors/*,*/studio_finops/*,*/studio_lakehouse/*,*/studio_ml/*,*/studio_migration/*,*/studio_observability/*,*/studio_quality/*,*/studio_security/*,*/studio_semantic/*,*/studio_sql/*,*/studio_streaming/*"
 
 coverage-broker:
 	# The Docker-authority broker currently measures 49%; keep a five-point regression margin.
@@ -164,7 +164,6 @@ coverage-storage-files:
 		--baseline=catalog.py=78.40 \
 		--baseline=connections.py=64.44 \
 		--baseline=environments.py=75.51 \
-		--baseline=genai.py=70.80 \
 		--baseline=local_files.py=77.22 \
 		--baseline=ml.py=72.19 \
 		--baseline=ontology.py=37.40 \
@@ -193,7 +192,6 @@ coverage-storage-files-full:
 		--baseline=catalog.py=78.40 \
 		--baseline=connections.py=64.44 \
 		--baseline=environments.py=75.51 \
-		--baseline=genai.py=70.80 \
 		--baseline=local_files.py=77.22 \
 		--baseline=ml.py=72.19 \
 		--baseline=postgres_ml.py=72.52 \

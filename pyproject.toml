@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ronin-studio"
 version = "0.0.0"
-description = "Open-source, local-first Data + AI platform with vendor-neutral execution contracts."
+description = "Open-source, local-first data and machine-learning platform with vendor-neutral execution contracts."
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -24,8 +24,6 @@ workspaces = "studio_plugin_workspaces.plugin:factory"
 logging = "studio_plugin_observability.plugins:logging_factory"
 monitoring = "studio_plugin_observability.plugins:monitoring_factory"
   govern_studio = "studio_synthetic_data.plugin:factory"
-  ai_studio = "studio_ai_studio.plugin:factory"
-  genai_studio = "studio_genai.plugin:factory"
 data_science_studio = "studio_ml.plugin:factory"
 cloud_studio = "studio_cloud.plugin:factory"
 
@@ -50,9 +48,6 @@ ml = [
   "numpy>=1.23,<2.4",
   "scikit-learn>=1.5,<2",
 ]
-security = [
-  "PyJWT[crypto]>=2.10,<3",
-]
 streaming = [
   "confluent-kafka>=2,<4",
 ]
@@ -74,6 +69,7 @@ package-dir = {"" = "python"}
 
 [tool.setuptools.packages.find]
 where = ["python"]
+exclude = ["studio_genai", "studio_genai.*", "studio_ai_studio", "studio_ai_studio.*"]
 
 [tool.setuptools.package-data]
 studio_storage = ["migrations/*.sql"]
@@ -93,13 +89,11 @@ studio_storage = ["migrations/*.sql"]
 "share/ronin/web/assets" = [
   "web/assets/ronin-logo-full.png",
   "web/assets/ronin-logo-mark.png",
-  "web/assets/throw-your-threads/environment-atlas.png",
-  "web/assets/throw-your-threads/character-sheet.png",
+  "web/assets/throw-your-threads/environment-atlas.webp",
+  "web/assets/throw-your-threads/character-sheet.webp",
 ]
 "share/ronin/web/js" = [
   "web/js/a11y.js",
-  "web/js/access-studio.js",
-  "web/js/ai-studio.js",
   "web/js/alerts-studio.js",
   "web/js/api.js",
   "web/js/app.js",
@@ -120,7 +114,6 @@ studio_storage = ["migrations/*.sql"]
   "web/js/ingestion-studio.js",
   "web/js/ml-studio-journey.js",
   "web/js/ml-features-studio.js",
-  "web/js/genai-studio.js",
   "web/js/notebook-studio.js",
   "web/js/performance-studio.js",
   "web/js/project-journey.js",
@@ -149,20 +142,36 @@ studio_storage = ["migrations/*.sql"]
 ]
 "share/ronin/agent-skills/ronin-core" = [
   "agent-skills/ronin-core/SKILL.md",
-  "agent-skills/ronin-core/agents/openai.yaml",
+]
+"share/ronin/agent-skills/ronin-core/agents" = ["agent-skills/ronin-core/agents/openai.yaml"]
+"share/ronin/agent-skills/ronin-core/references" = [
   "agent-skills/ronin-core/references/cli-contract.md",
+]
+"share/ronin/agent-skills/ronin-core/scripts" = [
   "agent-skills/ronin-core/scripts/preflight.py",
 ]
 "share/ronin/agent-skills/ronin-data-engineering" = [
   "agent-skills/ronin-data-engineering/SKILL.md",
+]
+"share/ronin/agent-skills/ronin-data-engineering/agents" = [
   "agent-skills/ronin-data-engineering/agents/openai.yaml",
+]
+"share/ronin/agent-skills/ronin-data-engineering/references" = [
   "agent-skills/ronin-data-engineering/references/workflows.md",
+]
+"share/ronin/agent-skills/ronin-data-engineering/scripts" = [
   "agent-skills/ronin-data-engineering/scripts/preflight.py",
 ]
 "share/ronin/agent-skills/ronin-machine-learning" = [
   "agent-skills/ronin-machine-learning/SKILL.md",
+]
+"share/ronin/agent-skills/ronin-machine-learning/agents" = [
   "agent-skills/ronin-machine-learning/agents/openai.yaml",
+]
+"share/ronin/agent-skills/ronin-machine-learning/references" = [
   "agent-skills/ronin-machine-learning/references/ml-contracts.md",
+]
+"share/ronin/agent-skills/ronin-machine-learning/scripts" = [
   "agent-skills/ronin-machine-learning/scripts/verify_openapi.py",
 ]
 [tool.ruff]
@@ -182,7 +191,6 @@ select = ["E", "F", "I", "B", "UP", "SIM", "S", "ASYNC", "C4", "PT", "RET", "ARG
 "python/studio_ml/postgres.py" = ["E501"]
 "python/studio_ml/registry_bundle.py" = ["E501"]
 "python/studio_core/plugins.py" = ["E501"]
-"python/studio_ai_studio/http_api.py" = ["E501"]
 "python/studio_synthetic_data/async_generation.py" = ["E501", "SIM105"]
 "python/studio_synthetic_data/engine.py" = ["E501"]
 "python/studio_synthetic_data/local_catalogs.py" = ["E501"]
@@ -199,8 +207,6 @@ packages = [
   "studio_connectors",
   "studio_core",
   "studio_finops",
-  "studio_genai",
-  "studio_ai_studio",
   "studio_graph",
   "studio_lakehouse",
   "studio_ml",
@@ -249,7 +255,6 @@ source = [
   "studio_connectors",
   "studio_core",
   "studio_finops",
-  "studio_genai",
   "studio_graph",
   "studio_lakehouse",
   "studio_ml",
@@ -316,7 +321,6 @@ pytest_add_cli_args_test_selection = [
   "tests/test_ontology_actions.py",
   "tests/test_ontology_runtime.py",
   "tests/test_quality_runtime.py",
-  "tests/test_genai_foundation.py",
   "tests/test_ml_foundation.py",
   "tests/test_portability.py",
   "tests/test_audit.py",
@@ -353,7 +357,6 @@ pytest_add_cli_args_test_selection = [
   "tests/test_ontology_graph_store.py",
   "tests/test_openlineage_export.py",
   "tests/test_reproducible_manifest.py",
-  "tests/test_role_assignments.py",
   "tests/test_roles.py",
   "tests/test_scheduler_branch_state.py",
   "tests/test_scheduler_branching.py",

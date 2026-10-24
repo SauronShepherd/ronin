@@ -7,7 +7,7 @@ import hashlib
 import json
 import mimetypes
 import tempfile
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -822,6 +822,32 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
     def _error(self, status: HTTPStatus, code: str, message: str) -> None:
         self._write_json(status, {"error": {"code": code, "message": message}})
 
+    def _write_plugin_result(self, payload: object) -> None:
+        """Keep plugin error envelopes from being reported as successful HTTP 200s."""
+        status = HTTPStatus.OK
+        if isinstance(payload, Mapping):
+            error = payload.get("error")
+            if isinstance(error, Mapping):
+                code = error.get("code")
+                if isinstance(code, str):
+                    if code in {"unauthorized", "authentication_required"}:
+                        status = HTTPStatus.UNAUTHORIZED
+                    elif code.startswith("forbidden"):
+                        status = HTTPStatus.FORBIDDEN
+                    elif code == "not_found" or code.endswith("_not_found"):
+                        status = HTTPStatus.NOT_FOUND
+                    elif code == "conflict" or code.endswith("_conflict"):
+                        status = HTTPStatus.CONFLICT
+                    elif code in {"unavailable", "not_configured", "provider_unavailable"}:
+                        status = HTTPStatus.SERVICE_UNAVAILABLE
+                    elif code.startswith(("invalid_", "missing_", "validation_")):
+                        status = HTTPStatus.BAD_REQUEST
+                    else:
+                        status = HTTPStatus.INTERNAL_SERVER_ERROR
+                else:
+                    status = HTTPStatus.INTERNAL_SERVER_ERROR
+        self._write_json(status, payload)
+
     def _discard_request_body(self) -> None:
         """Consume a bounded rejected body without decoding or validating it.
 
@@ -1258,7 +1284,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         payload = plugin_host.invoke_route(
                             "GET", urlsplit(self.path).path, query=query
                         )
-                        self._write_json(HTTPStatus.OK, payload)
+                        self._write_plugin_result(payload)
                         return
             if (
                 len(segments) == 7
@@ -1777,9 +1803,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     decisions[permission] = {
                         "allowed": decision.allowed,
                         "reason": decision.reason,
-                        "matched_roles": [
-                            getattr(role, "value", str(role)) for role in decision.matched_roles
-                        ],
+                        "matched_permissions": list(decision.matched_permissions),
                     }
                 self._write_json(
                     HTTPStatus.OK,
@@ -2931,7 +2955,6 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         mapped_permission = {
                             "projects:write": "project.write",
                             "workspaces:write": "workspace.write",
-                            "ai-studio:invoke": "workspace.read",
                             "synthetic:read": "project.read",
                             "ml-studio:read": "project.read",
                             "ml-studio:write": "project.write",
@@ -2969,7 +2992,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             body=body,
                             idempotency_key=self.headers.get("Idempotency-Key"),
                         )
-                        self._write_json(HTTPStatus.OK, payload)
+                        self._write_plugin_result(payload)
                         return
             if segments == ("v1", "workspaces"):
                 if query:
@@ -4102,8 +4125,6 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         mapped_permission = {
                             "projects:write": "project.write",
                             "workspaces:write": "workspace.write",
-                            "ai-studio:write": "workspace.write",
-                            "ai-studio:read": "workspace.read",
                         }.get(getattr(route, "permission", ""))
                         if workspace_value is None or mapped_permission is None:
                             self._error(
@@ -4133,8 +4154,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             urlsplit(self.path).path,
                             query=query,
                             body=self._read_json(),
+                            idempotency_key=self.headers.get("Idempotency-Key"),
                         )
-                        self._write_json(HTTPStatus.OK, payload)
+                        self._write_plugin_result(payload)
                         return
             if (
                 len(segments) == 7
@@ -4537,11 +4559,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             "workspaces:write": "workspace.write",
                         }.get(getattr(route, "permission", ""))
                         project_id = parameters.get("project_id")
-                        if (
-                            workspace_value is None
-                            or mapped_permission is None
-                            or project_id is None
-                        ):
+                        if workspace_value is None or mapped_permission is None:
                             self._error(
                                 HTTPStatus.FORBIDDEN,
                                 "plugin_permission_unmapped",
@@ -4564,9 +4582,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         ):
                             return
                         payload = plugin_host.invoke_route(
-                            "DELETE", urlsplit(self.path).path, query=query
+                            "DELETE",
+                            urlsplit(self.path).path,
+                            query=query,
+                            idempotency_key=self.headers.get("Idempotency-Key"),
                         )
-                        self._write_json(HTTPStatus.OK, payload)
+                        self._write_plugin_result(payload)
                         return
             if not self._registered_path(segments):
                 self._method_or_not_found("DELETE", segments)

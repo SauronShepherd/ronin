@@ -35,67 +35,6 @@ test('Cloud Studio validates a target and generates a reviewable plan', async ({
   await expect(page.locator('#cloud-result')).toContainText('resources');
 });
 
-test('Access Studio renders workspace role scope inventory', async ({ page }) => {
-  let roleAssigned = false;
-  let principal;
-  let group;
-  await page.route('**/v1/admin/security/principals**', async route => {
-    if (route.request().method() === 'PUT') {
-      expect(route.request().postDataJSON()).toEqual({ kind: 'user', display_name: 'Alice', issuer: 'oidc', subject: 'alice-sub', email: 'alice@example.test', active: true });
-      principal = { id: 'alice', kind: 'user', display_name: 'Alice' };
-      await route.fulfill({ json: principal });
-      return;
-    }
-    await route.fulfill({ json: { items: principal ? [principal] : [] } });
-  });
-  await page.route('**/v1/admin/security/principals/alice', async route => {
-    expect(route.request().method()).toBe('PUT');
-    expect(route.request().postDataJSON()).toEqual({ kind: 'user', display_name: 'Alice', issuer: 'oidc', subject: 'alice-sub', email: 'alice@example.test', active: true });
-    principal = { id: 'alice', kind: 'user', display_name: 'Alice' };
-    await route.fulfill({ json: principal });
-  });
-  await page.route('**/v1/admin/security/groups', async route => {
-    await route.fulfill({ json: { items: group ? [group] : [] } });
-  });
-  await page.route('**/v1/admin/security/role-bindings', async route => {
-    await route.fulfill({ json: { items: [
-      { workspace_id: 'workspace-1', subject_kind: 'principal', subject_id: 'alice', role: 'admin' },
-      ...(roleAssigned ? [{ workspace_id: 'workspace-1', subject_kind: 'principal', subject_id: 'alice', role: 'viewer' }] : []),
-    ] } });
-  });
-  await page.route('**/v1/admin/security/role-bindings/principal/alice/viewer', async route => {
-    expect(route.request().method()).toBe('PUT');
-    roleAssigned = true;
-    await route.fulfill({ json: { workspace_id: 'workspace-1', subject_kind: 'principal', subject_id: 'alice', role: 'viewer' } });
-  });
-  await page.route('**/v1/admin/security/groups/team', async route => {
-    expect(route.request().method()).toBe('PUT');
-    expect(route.request().postDataJSON()).toEqual({ name: 'Data Team' });
-    group = { id: 'team', name: 'Data Team' };
-    await route.fulfill({ json: group });
-  });
-  await page.goto('./#access');
-  await expect(page.locator('#role-name option')).toHaveCount(4);
-  await expect(page.locator('#group-form')).toBeVisible();
-  await page.locator('#user-id').fill('alice');
-  await page.locator('#user-display-name').fill('Alice');
-  await page.locator('#user-subject').fill('alice-sub');
-  await page.locator('#user-email').fill('alice@example.test');
-  await page.getByRole('button', { name: 'Create/update user' }).click();
-  await expect(page.locator('#access-inventory-output')).toContainText('alice');
-  await page.locator('#group-id').fill('team');
-  await page.locator('#group-name').fill('Data Team');
-  await page.getByRole('button', { name: 'Create/update group' }).click();
-  await expect(page.locator('#access-inventory-output')).toContainText('Data Team');
-  await expect(page.locator('#access-scope-table')).toContainText('workspace-1');
-  await expect(page.locator('#access-scope-table')).toContainText('principal:alice');
-  await expect(page.locator('#access-scope-table')).toContainText('admin');
-  await page.locator('#role-subject-id').fill('alice');
-  await page.locator('#role-name').selectOption('viewer');
-  await page.getByRole('button', { name: 'Assign role' }).click();
-  await expect(page.locator('#access-scope-table')).toContainText('viewer');
-});
-
 test('Workspace and project Studio journey covers environment, Bundle and archive actions', async ({ page }) => {
   let archived = false;
   await page.route('**/v1/workspaces', async route => {

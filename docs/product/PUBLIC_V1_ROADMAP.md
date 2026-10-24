@@ -2,6 +2,8 @@
 
 **Status:** implementation roadmap for the first complete public release
 
+**Scope amendment (2026-10-24):** Public v1 is single-operator and excludes in-product GenAI/RAG/agent execution. Ronin coding-agent skills are external-only. Multi-user identity, administration and deployment are Ronin Pro. These rules supersede the historical wave descriptions below.
+
 This roadmap replaces the earlier assumption that a durable notebook runner is sufficient for the first public version. The current execution/control-plane work is retained as foundation work.
 
 ## 1. Delivery model
@@ -21,7 +23,7 @@ Required work:
 - introduce production metadata-store abstraction while retaining SQLite local mode;
 - define audit event model;
 - define notification adapter contract;
-- define durable resource/evidence model shared by pipelines, data, ML and agents;
+- define durable resource/evidence model shared by pipelines, data and ML;
 - define plugin/adapter discovery and capability model;
 - preserve canonical JSON identity and existing durable/fencing invariants.
 
@@ -171,26 +173,9 @@ Required work:
 
 Exit: a Dataiku visual-ML fixture and a Databricks MLflow fixture can be imported, evaluated and operated in Ronin for the certified subset.
 
-## 9. Wave H — GenAI/RAG/agents
+## 9. Wave H — GenAI/RAG/agents (excluded from Public v1)
 
-Goal: satisfy the AI platform claim beyond classical ML.
-
-Required work:
-
-- model/provider registry;
-- prompt/version assets;
-- embedding provider abstraction;
-- vector-index abstraction;
-- retrieval pipelines;
-- RAG evaluation datasets and metrics;
-- tool/function registry;
-- agent/workflow execution;
-- permission-aware tools;
-- trace redaction;
-- token/latency/cost telemetry;
-- GenAI Lab web surface.
-
-Exit: one local/open model path and one external-provider adapter execute the same bounded RAG/agent reference journey.
+This wave is retired from the Public v1 build. Ronin must not invoke generative model providers or execute RAG pipelines, tools, or agents. Coding-agent skills are packaged as external instructions for agents to consume outside Ronin; they are not a Ronin runtime or Studio feature.
 
 ## 10. Wave I — Streaming and real-time
 
@@ -215,12 +200,12 @@ Goal: provide a unified operational and cost-control center.
 
 Required work:
 
-- telemetry normalization across jobs/tasks/connectors/ML/GenAI/streaming;
+- telemetry normalization across jobs/tasks/connectors/ML/streaming;
 - metrics and log/evidence views;
 - alert rule engine;
 - alert state transitions/deduplication;
 - notification adapters;
-- workspace/project/team/tag budgets;
+- workspace/project/tag budgets;
 - cost allocation;
 - provider usage ingestion;
 - estimated-cost model for local/self-hosted compute;
@@ -232,26 +217,22 @@ Required work:
 
 Exit: scheduled workloads expose health, failure alerts, resource attribution and budget state in one place.
 
-## 12. Wave K — Multi-user security and server deployment
+## 12. Wave K — Single-operator security and local deployment
 
-Goal: make the system safe for organizational use.
+Goal: make the local and single-host Public v1 profiles safe to operate. Multi-user identity, administration and server deployment are Ronin Pro scope.
 
 Required work:
 
-- OIDC/OAuth2-compatible authentication;
-- users/groups/service identities;
-- workspace/project roles and typed grants;
-- authorization enforcement across APIs and scheduler;
+- authenticated local control-plane access;
+- least-privilege authorization enforcement across APIs and scheduler;
 - audit log;
 - secret backend adapters;
 - security classifications/policy metadata;
-- production metadata store;
-- multiple workers;
-- Kubernetes reference deployment;
+- supported SQLite and single-host PostgreSQL metadata profiles;
 - backup/restore/migration procedures;
 - private vulnerability reporting channel before release.
 
-Exit: multi-user reference deployment survives restart/worker loss and preserves authorization/audit invariants.
+Exit: local and single-host Compose profiles preserve authorization, audit, secret-handling and recovery invariants. Multi-user and multi-worker qualification is deferred to Ronin Pro.
 
 ## 13. Wave L — Web Studio integration
 
@@ -265,8 +246,7 @@ Mandatory top-level navigation:
 - Notebooks / SQL;
 - Catalog;
 - Ontology / Knowledge Graph;
-- AI/ML Lab;
-- GenAI Lab;
+- Machine Learning Studio;
 - Models / Deployments;
 - Dashboards;
 - Monitoring & Alerts;
@@ -353,7 +333,7 @@ When choosing work, use this order:
 7. no silent fallback that changes semantics;
 8. one backend API contract shared by UI, CLI and SDK;
 9. do not add a new subsystem without catalog/lineage/observability hooks;
-10. do not mark Public v1 complete while any P1-P14 family in `PUBLIC_V1_SCOPE.md` lacks an end-to-end path.
+10. do not mark Public v1 complete while any active family (P1-P8 or P10-P14) in `PUBLIC_V1_SCOPE.md` lacks an end-to-end path.
 
 ## 17. Immediate next implementation sequence
 
@@ -372,4 +352,4 @@ The next concrete implementation sequence after this contract is merged is:
 11. data connectors/lakehouse/SQL execution path;
 12. web Studio shell using Ronin Brown tokens.
 
-This sequence deliberately turns existing infrastructure into a migration-capable platform before expanding into ML/GenAI and advanced UI surfaces.
+This sequence deliberately turns existing infrastructure into a migration-capable platform before expanding into machine learning and advanced UI surfaces.

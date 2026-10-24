@@ -9,6 +9,8 @@ import math
 import socket
 import time
 from collections.abc import Mapping
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from typing import Any
 from urllib.parse import quote, urlsplit
 
@@ -131,6 +133,27 @@ def _origin(url: str) -> tuple[str, str, int | None]:
     if port == (443 if scheme == "https" else 80):
         port = None
     return scheme, host, port
+
+
+def _retry_after_delay(value: str | None, fallback_seconds: float) -> float:
+    if value is None:
+        return fallback_seconds
+    try:
+        delay = float(value)
+    except ValueError:
+        try:
+            retry_at = parsedate_to_datetime(value)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError("HTTP Retry-After must be finite seconds or an HTTP date") from exc
+        if retry_at.tzinfo is None:
+            raise ValueError("HTTP Retry-After date must include a timezone") from None
+        delay = max(0.0, (retry_at - datetime.now(UTC)).total_seconds())
+    else:
+        if not math.isfinite(delay) or delay < 0:
+            raise ValueError("HTTP Retry-After seconds must be finite and non-negative")
+    if not math.isfinite(delay):
+        raise ValueError("HTTP Retry-After delay must be finite")
+    return min(delay, 60.0)
 
 
 class HttpJsonConnector:
@@ -294,11 +317,11 @@ class HttpJsonConnector:
                                 raise ValueError("HTTP redirects are disabled")
                             if (status == 429 or 500 <= status <= 599) and attempt < retries:
                                 retry_after = response.headers.get("retry-after")
-                                delay = (
-                                    float(retry_after) if retry_after else backoff * (2**attempt)
+                                delay = _retry_after_delay(
+                                    retry_after,
+                                    backoff * (2**attempt),
                                 )
                                 if delay > 0:
-                                    delay = min(delay, 60.0)
                                     if time.monotonic() + delay > deadline:
                                         raise ValueError(
                                             "HTTP JSON operation exceeded its time budget"

@@ -711,9 +711,6 @@ def test_step_01_compose_reaches_healthy_within_60s() -> None:
             "RONIN_RUNNER_BROKER_TOKEN": secrets.token_urlsafe(32),
             "RONIN_PORT": free_port(),
             "RONIN_POSTGRES_PORT": free_port(),
-            # Compose interpolates inactive AI profiles while resolving the whole file.
-            "RONIN_AI_MODEL_DIR": str(Path(__file__).resolve().parents[2]),
-            "RONIN_AI_VLLM_MODEL": "qualification-unused",
         }
     )
     prefix = [_DOCKER, "compose", "-p", project, "-f", "compose.yaml"]

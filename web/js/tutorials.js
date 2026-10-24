@@ -4,7 +4,7 @@ const tutorialCatalog = [
   {
     id: 'ronin-tour',
     title: 'Meet Ronin: the complete product tour',
-    subtitle: 'A friendly walk through the control plane, studios, data, AI and delivery.',
+    subtitle: 'A friendly walk through the control plane, studios, data, machine learning and delivery.',
     duration: '8 min',
     level: 'New builder',
     tags: ['overview', 'getting started', 'platform', 'navigation'],
@@ -50,16 +50,14 @@ const tutorialCatalog = [
     ]
   },
   {
-    id: 'ml-ai-studios',
-    title: 'ML & AI Studios',
-    subtitle: 'From features and experiments to governed GenAI and model delivery.',
+    id: 'machine-learning-studio',
+    title: 'Machine learning studio',
+    subtitle: 'From reusable features and experiments to governed model delivery.',
     duration: '6 min',
     level: 'Practitioner',
-    tags: ['machine learning', 'features', 'genai', 'models', 'experiments'],
+    tags: ['machine learning', 'features', 'models', 'experiments'],
     steps: [
       { selector: '.nav-item[href="#mlstudio"]', title: 'Train in ML Studio', body: 'Create a lab, compare candidates and keep model quality attached to the experiment that produced it.', placement: 'right' },
-      { selector: '.nav-item[href="#ai"]', title: 'Use AI Studio', body: 'AI Studio exposes model discovery and bounded invocation for practical, inspectable automations.', placement: 'right' },
-      { selector: '.nav-item[href="#genai"]', title: 'Ground GenAI work', body: 'GenAI Studio brings providers, prompts, indexes, tools, agents and RAG evaluations into one governed surface.', placement: 'right' },
       { selector: '.nav-item[href="#catalog"]', title: 'Make meaning discoverable', body: 'Catalog search connects people to governed assets and lineage context, so a useful feature is easier to find than to reinvent.', placement: 'right' }
     ]
   },

@@ -46,7 +46,7 @@ class StaticControlPlaneAuthorizer:
             return PolicyDecision(False, "workspace_not_configured")
         if requirement.permission not in self._permissions:
             return PolicyDecision(False, "permission_not_configured")
-        return PolicyDecision(True, "static_permission_allowed", ("admin",))
+        return PolicyDecision(True, "static_permission_allowed", (requirement.permission,))
 
 
 __all__ = ("StaticControlPlaneAuthenticator", "StaticControlPlaneAuthorizer")

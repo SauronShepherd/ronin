@@ -12,7 +12,7 @@ from studio_core import Grant, GrantSet, ResourceScope
 from studio_execution import DurableExecutionService
 from studio_lakehouse import write_parquet_rows
 from studio_orchestrator import AttemptId, Instant, JobId, LeaseToken, StoredExecutionEvent
-from studio_server import CONTROL_PLANE_ROUTES, OIDC_ADMIN_ROUTES, SUPPORTED_ROUTES, RoninHTTPServer
+from studio_server import CONTROL_PLANE_ROUTES, SUPPORTED_ROUTES, RoninHTTPServer
 from studio_sql import DuckDbSqlEngine
 from studio_storage import SqliteJobStore
 
@@ -36,10 +36,18 @@ def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
         for method in path_item
         if method in {"get", "post", "patch", "put", "delete"}
     }
-    assert documented_routes == SUPPORTED_ROUTES | CONTROL_PLANE_ROUTES | OIDC_ADMIN_ROUTES
+    assert documented_routes == SUPPORTED_ROUTES | CONTROL_PLANE_ROUTES
 
     states = document["components"]["schemas"]["Job"]["properties"]["state"]["enum"]
     assert set(states) == {state.value for state in SDKJobState}
+    assert set(document["components"]["schemas"]["Job"]["required"]) == {
+        "id",
+        "project_id",
+        "state",
+        "created_at",
+        "updated_at",
+        "failure_code",
+    }
     assert document["security"] == [{"bearerAuth": []}]
     event = document["components"]["schemas"]["JobEvent"]
     assert event["additionalProperties"] is False
@@ -83,6 +91,9 @@ def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempoten
             parameters={"limit": 7},
             idempotency_key="acceptance-k1",
         )
+        first_snapshot = client.get_job(first.id)
+        assert first_snapshot.project_id == "examples/demo"
+        assert first_snapshot.created_at == first_snapshot.updated_at
 
         run_id = store.get_run_id_for_job(JobId(first.id))
         assert run_id is not None

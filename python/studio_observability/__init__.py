@@ -25,6 +25,7 @@ from .notifications import (
     alert_notification,
     scheduler_notification,
 )
+from .otlp import OtlpExportError, OtlpExporterStats, OtlpHttpExporter, TraceSpan
 from .prometheus import prometheus_text
 from .quality import evaluate_quality_alerts, record_quality_metrics
 from .scheduler import SchedulerNotificationStore, persist_terminal_notification
@@ -48,12 +49,16 @@ __all__ = (
     "NotificationSink",
     "NotificationDispatcher",
     "NotificationDispatchResult",
+    "OtlpExportError",
+    "OtlpExporterStats",
+    "OtlpHttpExporter",
     "SqliteNotificationIntentStore",
     "Severity",
     "SqliteTelemetryStore",
     "SmtpNotificationError",
     "SmtpNotificationSink",
     "TelemetryEvent",
+    "TraceSpan",
     "WebhookNotificationError",
     "WebhookNotificationSink",
     "prometheus_text",

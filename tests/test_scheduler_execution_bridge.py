@@ -292,21 +292,6 @@ def test_adapter_controls_fail_closed(tmp_path: Path, controls: dict[str, object
                 "dataset_ref": "artifact://datasets/churn",
             },
         ),
-        (
-            "genai.run",
-            {
-                "provider_id": "openai-compatible",
-                "model_id": "demo",
-                "prompt_ref": "artifact://prompts/demo",
-            },
-            "genai.run.v1",
-            {
-                "provider_id": "openai-compatible",
-                "model_id": "demo",
-                "prompt_ref": "artifact://prompts/demo",
-                "max_tokens": 1024,
-            },
-        ),
     ],
 )
 def test_supported_migrated_operator_plans_a_durable_job(

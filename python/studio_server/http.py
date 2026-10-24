@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import hmac
 import json
+import logging
 import sys
 from collections.abc import Coroutine
 from concurrent.futures import Future
@@ -54,6 +55,7 @@ _MAX_LIST_LIMIT = 100
 _DEFAULT_LIST_LIMIT = 50
 _DEFAULT_SERVICE_TIMEOUT_SECONDS = 30.0
 _REQUEST_READ_TIMEOUT_SECONDS = 30.0
+_ACCESS_LOGGER = logging.getLogger("studio_server.http.access")
 _STUDIO_EXTENSIONS = frozenset({".html", ".css", ".js", ".json", ".png", ".webp", ".svg"})
 ML_PLUGIN_ROUTES = frozenset(
     {
@@ -140,7 +142,14 @@ def _request_identity(
 
 
 def _job_payload(job: Job) -> dict[str, object]:
-    return {"id": str(job.id), "state": job.state.value, "failure_code": job.failure_code}
+    return {
+        "id": str(job.id),
+        "project_id": job.project_id,
+        "state": job.state.value,
+        "created_at": str(job.created_at),
+        "updated_at": str(job.updated_at),
+        "failure_code": job.failure_code,
+    }
 
 
 def _page_payload(page: Page) -> dict[str, object]:
@@ -533,15 +542,70 @@ class _Handler(BaseHTTPRequestHandler):
     def setup(self) -> None:
         super().setup()
         self.connection.settimeout(_REQUEST_READ_TIMEOUT_SECONDS)
+        self._request_id = f"req-{uuid4().hex}"
+        self._response_bytes: int | None = None
 
     def log_message(self, _format: str, *args: object) -> None:
         del args
+
+    def log_request(self, code: int | str = "-", size: int | str = "-") -> None:
+        """Emit one redacted JSON access event for every completed response."""
+        try:
+            status_code = int(code)
+        except (TypeError, ValueError):
+            status_code = 0
+        outcome = "ERROR" if status_code >= 500 else "WARN" if status_code >= 400 else "OK"
+        level = (
+            logging.ERROR
+            if outcome == "ERROR"
+            else logging.WARNING
+            if outcome == "WARN"
+            else logging.INFO
+        )
+        request_path = urlsplit(self.path).path
+        if request_path.startswith("/v1/jobs/"):
+            segments = request_path.split("/")
+            request_path = (
+                "/v1/jobs/{job_id}/" + segments[4]
+                if len(segments) == 5 and segments[4] in {"events", "evidence", "results", "cancel"}
+                else "/v1/jobs/{job_id}"
+            )
+        elif request_path.startswith("/v1/workspaces/"):
+            request_path = "/v1/workspaces/{workspace_id}"
+        elif request_path.startswith("/v1/ml-studio/"):
+            request_path = "/v1/ml-studio"
+        elif request_path.startswith("/v1/") and request_path != "/v1/jobs":
+            request_path = "/v1/other"
+        elif request_path.startswith("/studio/"):
+            request_path = "/studio/{asset}"
+        response_bytes = getattr(self, "_response_bytes", None)
+        event = {
+            "timestamp": datetime.now(UTC)
+            .isoformat(timespec="milliseconds")
+            .replace("+00:00", "Z"),
+            "level": logging.getLevelName(level),
+            "outcome": outcome,
+            "event": "http.request",
+            "request_id": self._request_id,
+            "method": self.command,
+            "route": request_path,
+            "status_code": status_code,
+            "response_bytes": (
+                response_bytes
+                if response_bytes is not None
+                else size
+                if isinstance(size, int) and size >= 0
+                else None
+            ),
+        }
+        _ACCESS_LOGGER.log(level, json.dumps(event, separators=(",", ":"), ensure_ascii=False))
 
     def _ronin_server(self) -> RoninHTTPServer:
         return cast(RoninHTTPServer, self.server)
 
     def _write_json(self, status: HTTPStatus, payload: object) -> None:
         body = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        self._response_bytes = len(body)
         self.send_response(status)
         self._send_security_headers(api=True)
         self.send_header("Content-Type", "application/json")
@@ -577,6 +641,7 @@ class _Handler(BaseHTTPRequestHandler):
         except OSError:
             self._error(HTTPStatus.NOT_FOUND, "not_found", "Studio asset not found")
             return True
+        self._response_bytes = len(body)
         media_type = (
             "text/html"
             if asset_path.suffix == ".html"
@@ -603,7 +668,9 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header(
             "Cache-Control",
-            "no-cache" if asset_path.suffix in {".html", ".json"} else "public, max-age=3600",
+            "no-cache"
+            if asset_path.suffix in {".html", ".json", ".js", ".css"}
+            else "public, max-age=3600",
         )
         if asset_path.suffix == ".svg":
             self.send_header(
@@ -616,6 +683,7 @@ class _Handler(BaseHTTPRequestHandler):
         return True
 
     def _send_security_headers(self, *, api: bool) -> None:
+        self.send_header("X-Ronin-Request-Id", self._request_id)
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header(
             "Content-Security-Policy",

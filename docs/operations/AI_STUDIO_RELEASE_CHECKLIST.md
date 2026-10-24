@@ -1,5 +1,7 @@
 # AI Studio — release checklist
 
+> **Withdrawn from Ronin Public v1 (2026-10-24).** Historical only; AI Studio is not part of the Public release artifact or release gate.
+
 ## Automated gates
 
 - [ ] `ruff check python/studio_ai_studio tests/test_ai_studio_*.py`

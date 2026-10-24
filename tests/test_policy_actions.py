@@ -17,7 +17,7 @@ def test_policy_action_fails_closed_for_restricted_classification():
         action="block-new-work",
         resource_ref="asset:customers",
         authorize=lambda _actor, _requirement: PolicyDecision(
-            True, "role_permission_allowed", ("admin",)
+            True, "static_permission_allowed", ("workspace.read",)
         ),
         classification="restricted",
         classification_policy=ClassificationPolicy(
@@ -38,7 +38,9 @@ def test_policy_action_is_authorized_and_audit_ready():
         PolicyRequirement(WorkspaceId("ws"), "workspace.read", "job-1"),
         action="require-approval",
         resource_ref="job-1",
-        authorize=lambda _actor, _requirement: PolicyDecision(True, "role matched", ("owner",)),
+        authorize=lambda _actor, _requirement: PolicyDecision(
+            True, "static permission matched", ("workspace.read",)
+        ),
     )
     assert result.decision.allowed is True
     assert result.audit_action == "policy.require-approval"

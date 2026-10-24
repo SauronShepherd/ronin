@@ -281,7 +281,9 @@ class _Authorizer:
             or (str(requirement.workspace_id), requirement.permission) in self.allowed
         )
         return PolicyDecision(
-            allowed, "allowed" if allowed else "denied", ("admin",) if allowed else ()
+            allowed,
+            "allowed" if allowed else "denied",
+            (requirement.permission,) if allowed else (),
         )
 
 

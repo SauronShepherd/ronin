@@ -1,8 +1,10 @@
 # Machine Learning Studio — build plan de bajo nivel
 
+**Alcance Public v1 vigente (2026-10-24):** P9 GenAI queda fuera del producto; las coding-agent skills se consumen externamente. Multiusuario, su administración y despliegue pertenecen a Ronin Pro. El progreso agregado de release es 0% (0/13 familias Public v1 activas); las referencias históricas de este plan a 0/14 conservan el denominador anterior.
+
 ## Estado del plan
 
-**Estado actual verificado en la consolidación derivada de `main@e01bb411870e1c1661bea37d88247e8648606952`:** la implementación técnica del alcance provider-neutral está completada y los checks exact-head de CI, Docker, seguridad, web, cobertura y artefactos pasan. La auditoría del plan ejecutó también las superficies candidatas de PipelineIR v3, etapas plugin, deployment/serving, drift, suites de calidad, features, bundles y MLflow. El avance de release público sigue en **0% (0/14)** porque depende de recorridos de producto, proveedores externos y decisiones humanas que este repositorio no puede certificar. La limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado.
+**Estado actual verificado en la consolidación derivada de `main@e01bb411870e1c1661bea37d88247e8648606952`:** la implementación técnica del alcance provider-neutral está completada y los checks exact-head de CI, Docker, seguridad, web, cobertura y artefactos pasan. La auditoría del plan ejecutó también las superficies candidatas de PipelineIR v3, etapas plugin, deployment/serving, drift, suites de calidad, features, bundles y MLflow. El avance de release público sigue en **0% (0/13 familias activas)** porque depende de recorridos de producto, proveedores externos y decisiones humanas que este repositorio no puede certificar. La limpieza automática global de artefactos continúa deshabilitada. El límite de PipelineIR v2 es 24 nodos, las cuadrículas algoritmo×preprocesador se limitan a ocho combinaciones y clustering conserva su selector separado.
 
 ## 0. Principios de ejecución
 

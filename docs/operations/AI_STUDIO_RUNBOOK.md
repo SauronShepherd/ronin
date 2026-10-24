@@ -1,5 +1,7 @@
 # AI Studio — runbook operativo
 
+> **Withdrawn from Ronin Public v1 (2026-10-24).** This runbook is retained for history only. The Public product does not start or configure AI Studio/model providers.
+
 ## Arranque mínimo
 
 1. Instalar Ronin con el extra `data-plane` para HTTP.

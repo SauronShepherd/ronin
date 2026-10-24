@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import tomllib
 from pathlib import Path
@@ -72,11 +73,52 @@ def test_ml_studio_exposes_feature_definition_lifecycle() -> None:
         assert marker in source, f"ML feature lifecycle missing: {marker}"
 
 
-def test_ai_studio_exposes_provider_health_check() -> None:
+def test_public_studio_does_not_publish_model_invocation_or_genai_surfaces() -> None:
     root = Path(__file__).parents[1]
-    source = (root / "web/js/ai-studio.js").read_text(encoding="utf-8")
-    for marker in ("ai-health", "/ai-studio/health", "Check provider health"):
-        assert marker in source, f"AI health UI missing: {marker}"
+    routes = json.loads((root / "web/routes.json").read_text(encoding="utf-8"))
+    route_ids = {route["id"] for route in routes}
+    assert not {"ai", "genai", "access"} & route_ids
+
+    features = (root / "web/js/features.js").read_text(encoding="utf-8")
+    app = (root / "web/js/app.js").read_text(encoding="utf-8")
+    assert "ai-studio.js" not in features
+    assert "genai-studio.js" not in features
+    assert "nav.ai" not in app
+    assert "nav.genai" not in app
+    assert "nav.access" not in app
+    assert not (root / "web/js/access-studio.js").exists()
+
+    project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    plugins = project["project"]["entry-points"]["ronin.plugins.v1"]
+    assert "ai_studio" not in plugins
+    assert "genai_studio" not in plugins
+    packages = project["tool"]["setuptools"]["packages"]["find"]
+    assert "studio_genai" in packages["exclude"]
+    assert "studio_ai_studio" in packages["exclude"]
+    source = root / "python"
+    assert not list((source / "studio_genai").glob("*.py"))
+    assert not list((source / "studio_ai_studio").glob("*.py"))
+    assert not (source / "studio_core/genai.py").exists()
+    assert not (source / "studio_storage/genai.py").exists()
+    assert not (source / "studio_storage/genai_bundle.py").exists()
+    assert not list((source / "studio_storage/migrations").glob("genai_*.sql"))
+    assert "genai.run" not in (source / "studio_execution/scheduler_bridge.py").read_text(
+        encoding="utf-8"
+    )
+    assert "genai.run" not in (source / "studio_execution/scheduler_adapters.py").read_text(
+        encoding="utf-8"
+    )
+    assert "genai.run" not in (source / "studio_worker/runtime.py").read_text(encoding="utf-8")
+    assert "genai.read" not in (source / "studio_security/contracts.py").read_text(encoding="utf-8")
+    openapi = json.loads((root / "api/openapi-v1.json").read_text(encoding="utf-8"))
+    assert not any(path.startswith("/v1/admin/security/") for path in openapi["paths"])
+    assert not (source / "studio_server/oidc_admin.py").exists()
+    assert not (source / "studio_server/oidc_http.py").exists()
+    assert not (source / "studio_cli/oidc_serve.py").exists()
+    assert not (source / "studio_security/oidc.py").exists()
+    assert not (source / "studio_security/oidc_discovery.py").exists()
+    assert not (source / "studio_security/rbac.py").exists()
+    assert "oidc" not in (source / "studio_cli/entrypoint.py").read_text(encoding="utf-8").lower()
 
 
 def test_data_engineering_query_surface_renders_routing_evidence() -> None:
@@ -91,29 +133,3 @@ def test_environment_studio_exposes_deterministic_diff_preview() -> None:
     source = (root / "web/js/environment-studio.js").read_text(encoding="utf-8")
     for marker in ("environment-diff", "/diff`, definition", "JSON.parse"):
         assert marker in source, f"environment diff UI missing: {marker}"
-
-
-def test_genai_studio_exposes_discovery_and_health() -> None:
-    root = Path(__file__).parents[1]
-    source = (root / "web/js/genai-studio.js").read_text(encoding="utf-8")
-    for marker in (
-        "genai-discovery-form",
-        "/genai/providers",
-        "/genai/health",
-        "/genai/prompts",
-        "/genai/indexes",
-        "/genai/rag/evaluations",
-        "/genai/providers/",
-        "genai-qualification",
-        "/genai/agents/",
-        "/genai/runs/",
-        "/genai/agents/",
-        "genai-run",
-        "timeout_seconds",
-        "genai-cancel",
-        "cancel_requested",
-        "genai-evaluate",
-        "/genai/rag/evaluations",
-        "GenAI Studio",
-    ):
-        assert marker in source, f"GenAI Studio integration missing: {marker}"

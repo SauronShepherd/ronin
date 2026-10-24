@@ -31,16 +31,18 @@ Untracked qualification output directories are not release evidence.
 **Observed source head:** `bf4371f4a4c01900080cdb5441237b520713d9e3` (2026-10-23).
 **Release status:** **INCOMPLETE**.
 
-**Verified release progress:** **0% (0/14 P1–P14 capability families are
+**Scope amendment (2026-10-24):** P9 GenAI/RAG/in-product agents are excluded from Public v1; Ronin coding-agent skills are consumed externally. Multi-user identity, user/group administration and multi-user deployment belong to Ronin Pro. Dated evidence notes below preserve their original scope context; the current release denominator excludes these capabilities.
+
+**Verified release progress:** **0% (0/13 active Public v1 capability families are
 release-qualified).** A family counts only after its mandatory Public v1
 journey and applicable provider, security and exact-head evidence are complete.
-All 14 remain partial; this is a release-completion metric, not a measure of
-code already implemented.
+No active family is release-qualified; this is a release-completion metric, not a measure of
+code already implemented. P9 is out of scope.
 
-**Estimated build-plan implementation progress:** **~62%** across the 14
-capability families, based on implemented source paths and the remaining gaps in
-the capability matrix. This is a rounded engineering estimate, not a task-count
-or release qualification metric.
+**Estimated build-plan implementation progress:** **14% (provisional rebaseline)** across the 13 active
+capability families, based on the latest reviewed source-path assessment and the
+remaining gaps in the capability matrix. GenAI and multi-user Pro capabilities do
+not count. This is a rounded engineering estimate, not a task-count or release qualification metric.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
 
@@ -50,7 +52,8 @@ The source tree is the authority for implementation presence. The status ledger
 is intentionally conservative: a capability is `partial` until its mandatory
 Public v1 path is complete end to end. Historical CI/evidence files retain the
 candidate SHA they were generated for and are not promoted to current-head
-evidence.
+evidence. Older narrative entries that say `0/14` predate the 2026-10-24 scope
+amendment; the current denominator is `0/13`.
 
 ## Exact-head qualification snapshot
 
@@ -339,7 +342,7 @@ workspaces and generated reports are not release evidence.
 | Capability | Status | Current source truth |
 | --- | --- | --- |
 | Durable execution foundation | implemented | Job/Run/Attempt, SQLite durability, leases/heartbeat/fencing/reclaim/resume, cancellation, evidence, local/container worker, HTTP/CLI/SDK foundation |
-| Workspace/project/source control | partial | workspace/project persistence, authenticated create/read/update/archive workspace and project lifecycles with idempotency, audit and active-project filtering, project manifest, reproducible secret-free deployment manifest with canonical identity, Git identity, environment/deployment bindings, Studio and SDK journeys covering project creation, environment binding, Bundle export/archive, audited/idempotent governed pipeline execution and project-scoped permission inspection; full Public v1 APIs/UI and membership remain |
+| Workspace/project/source control | partial | workspace/project persistence, authenticated create/read/update/archive workspace and project lifecycles with idempotency, audit and active-project filtering, project manifest, reproducible secret-free deployment manifest with canonical identity, Git identity, environment/deployment bindings, Studio and SDK journeys covering project creation, environment binding, Bundle export/archive, audited/idempotent governed pipeline execution and project-scoped permission inspection; full Public v1 APIs/UI remain. Multi-user membership belongs to Ronin Pro. |
 | Connectors/ingestion | partial | connection/discovery/checkpoint contracts, governed local CSV/JSONL, bounded HTTP/PostgreSQL, S3-compatible including Apache Ozone, Azure Blob and JDBC profiles, public capability/plan/preview/checkpoint-health API, Studio actions and SDK parity; production driver qualification and broader incremental coverage remain |
 | Lakehouse/SQL | partial | bounded Arrow/Parquet open-data and streaming publication paths, provider-neutral SQL/table contracts, optional local DuckDB engine with bounded relation lifecycle, shared query lifecycle adapter, provider-neutral query-engine contracts/discovery/local transport/Trino HTTP transport, QueryFlux discovery and QueryFlux-to-Trino lifecycle adapters, bounded project-scoped fail-closed read-only SQL HTTP adapter/route, and optional Iceberg/Delta adapters exist; external QueryFlux and remote/catalog qualification, full format features, and broader SQL service remain |
 | Data Engineering Studio | partial | notebook/pipeline execution foundations, durable SQL editor revisions/history/bounded export, parameter schemas, pipeline revision comparison/archive, and an authenticated pipeline-revision-to-workflow-run creation route with deterministic idempotency exist; worker/evidence lineage, complete CRUD and complete Web Studio remain |
@@ -349,13 +352,13 @@ workspaces and generated reports are not release evidence.
 | Graph intelligence/RQL | partial | bounded read-only RQL SELECT filtering, one-hop typed traversal, and typed property joins over materialized KnowledgeGraph views exist; planning, provider execution and public API exposure remain |
 | Data quality/contracts | partial | versioned definitions/results, all built-in checks, injected SQL/Python/referential checks, quality gates, scheduler release enforcement, quality-to-common-alert transition evaluation, authenticated contract read/replace and run/history/state APIs, pyronin SDK parity including contract authoring, and Quality Studio contract authoring, validation, dry-run, evidence/history and blocking-policy controls exist; provider qualification remains |
 | AI/ML/MLOps | partial | experiment/run/model/evaluation provenance, deterministic tabular training, canonical Lab/pipeline digest pinning for scheduled ML runs, digest-verified inference, champion serving resolution, deterministic trial comparison, bounded numeric drift summaries, explicit feature-level threshold assessments, versioned feature definitions with dataset snapshots, workspace-scoped HTTP routes and pyronin SDK parity exist; broader feature engineering, algorithms, MLflow and network serving remain |
-| GenAI/RAG/agents | partial | provider/prompt/vector/RAG/tool/agent contracts, OpenAI-compatible runtime, deterministic retrieval, bounded agents, deterministic per-example RAG scoring, aggregate reports, telemetry callbacks and GenAI definition Bundle export/import exist; judge-provider evaluation and production qualification remain |
+| GenAI/RAG/agent runtime | out of scope | Public v1 ships no model/provider invocation, RAG, tools, or in-product agent runtime/API/Studio. Coding-agent skills are installed for external agent use only. |
 | Semantic models/dashboards | partial | safe semantic contracts, canonical persistence, parameterized metric compiler, calculated metrics, SQL metric runtime, bounded declared-column two-model JOIN execution, dashboard CRUD/execution, Studio and native semantic Bundle round-trips exist; multi-join planning, export/import API qualification and production surfaces remain |
 | Streaming/real-time | partial | Kafka polling, durable CAS checkpoints, micro-batch processing, Parquet sinks, event-time windows, stream tables, scheduler integration and bounded health/lag projection including unseen partitions exist; production qualification remains |
 | Observability/alerts/FinOps | partial | durable metrics/events, threshold alerts, SMTP/webhook notification adapters, durable delivery intents with retry/backoff, Prometheus export, instrumentation, usage pricing, actual-versus-estimated costs, non-ledger forecasts, anomaly hooks and budget gates exist; authenticated alert-rule/evaluation APIs, SDK parity, fail-closed alert operation validation and the Monitoring & Alerts Studio route are covered by static and Playwright smoke evidence; broader service adoption and production qualification remain |
-| Multi-user security/audit | partial | typed grants, bearer auth, transport policy, fail-closed classification-aware policy actions, secret resolver with injected external backends, OIDC users/groups/service identities, authenticated principal/group reads and role-binding administration with SQLite/PostgreSQL parity, public SDK parity, broad fail-closed mutation audit and append-only audit foundation exist; external provider qualification and production certification remain |
-| Local/Compose/Kubernetes | partial | local/Compose foundation, PostgreSQL metadata healthcheck, PostgreSQL JobStore adapter wired to the server, single-node real-PostgreSQL lifecycle qualification, SQLite backup/restore with path-bound artifact-tree manifests, PostgreSQL dump backup with checksum sidecar verification, S3 artifacts with retry/corruption checks, Kubernetes Job submit/status/cancel/log adapter, constrained single-replica Helm chart, and forward-only upgrade/failure recovery runbooks exist; PostgreSQL scheduler event-delivery, backfill, task-evidence and durable timeout intent/finalization methods exist, while the Compose profile still does not mount scheduler HTTP routes pending full conformance qualification. General production HA is outside the Public v1 contract. |
-| Ronin Bundle | partial | deterministic verified archive IO, project/connection/catalog/workflow/schedule/quality/ontology/semantic inventories, workflow/schedule export and verified planning, atomic SQLite/PostgreSQL workflow commits, plus GenAI definitions and ML experiment/run/registered-model metadata export/import exist; ML artifacts/data assets, broader PostgreSQL Bundle adapters, certification and public surfaces remain |
+| Security/authentication (single-operator) | partial | bearer auth, transport policy, fail-closed classification-aware policy actions, secret resolver ports, broad mutation audit and append-only audit foundation exist; external provider qualification and release evidence remain. OIDC, user/group administration and multi-user role management are Ronin Pro scope. |
+| Local/Compose operations | partial | local/Compose foundation, PostgreSQL metadata healthcheck, PostgreSQL JobStore adapter wired to the server, single-node real-PostgreSQL lifecycle qualification, SQLite backup/restore with path-bound artifact-tree manifests, PostgreSQL dump verification, S3 artifact retry/corruption checks, Kubernetes Job adapter and recovery runbooks exist; Kubernetes/server deployment and multi-user Helm are not Public v1 profiles. Scheduler conformance and backup/restore qualification remain incomplete. |
+| Ronin Bundle | partial | deterministic verified archive IO, project/connection/catalog/workflow/schedule/quality/ontology/semantic inventories, workflow/schedule export and verified planning, atomic SQLite/PostgreSQL workflow commits, and ML experiment/run/registered-model metadata export/import exist; ML artifacts/data assets, broader PostgreSQL Bundle adapters, certification and public surfaces remain |
 | Fabric migration | qualification pending | deterministic fixture discovery and fail-closed notebook-item translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
 | Databricks migration | qualification pending | deterministic fixture discovery and fail-closed notebook-job translation with dependency/schedule mapping and CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
 | Palantir Foundry/AIP migration | qualification pending | deterministic fixture discovery and fail-closed Python-function translation with CLI/report tests; authenticated discovery, canonical import/export integration, provider compatibility and certification remain |
@@ -394,13 +397,13 @@ These merges do **not** imply that their parent capability families are complete
 
 1. Keep this ledger and the active construction plan synchronized with repository truth.
 2. Broaden scheduler/operator conformance and qualify notification delivery in supported local/Compose profiles. The combined daemon→real PostgreSQL/Docker worker→terminal reconciliation journey now has exact-candidate Docker evidence. PostgreSQL event, backfill, task-evidence, dispatch replay, worker success and worker crash recovery also have focused evidence. Do not claim production HA.
-3. Extend native Bundle support to the next executable canonical metadata family, preferring workflow/pipeline persistence if its canonical snapshot/store contracts preserve identity without deployment locators; then quality/ontology/ML/GenAI as their contracts permit.
+3. Extend native Bundle support to the next executable canonical metadata family, preferring workflow/pipeline persistence if its canonical snapshot/store contracts preserve identity without deployment locators; then quality/ontology/ML as their contracts permit.
 4. Complete store ports for remaining domains; then implement PostgreSQL adapters and an S3-compatible artifact store without changing logical references.
 5. Implement the first open data path: Arrow/Parquet + reference open table profile + reference SQL engine, with catalog/lineage/quality hooks.
 6. Complete remote connectors and safe incremental checkpoint execution.
 7. Expand the Public v1 API and begin Web Studio against documented/generated clients.
-8. Complete quality runtime, ontology/KG actions/query, RQL, ML, GenAI, semantic/dashboard, streaming, observability/alerts/FinOps and multi-user identity.
-9. Add Kubernetes/Helm after the server metadata/object-store/identity profile is real.
+8. Complete quality runtime, ontology/KG actions/query, RQL, ML, semantic/dashboard, streaming and observability/alerts/FinOps.
+9. Keep multi-user identity, administration and Kubernetes multi-user deployment on the Ronin Pro roadmap.
 10. Build the four vendor migration profiles only against executable canonical target capabilities and certify them with exhaustive migration reports.
 11. Continue #102 coverage work: `coverage-release-gates` now applies a 90% line floor to the strict gate, exact-candidate aggregator, artifact identity, release evidence/emission, installed-artifact evidence, artifact/license qualification, SBOM generation, supply-chain evidence, and mutation-policy parser. Review future release-decision modules against this explicit list.
 12. Maintain exact-candidate qualification; the strict Docker/release acceptance gate must pass on its exact candidate. Public v1 remains incomplete until every mandatory family has its supported end-to-end path and the human-owned evidence is approved.

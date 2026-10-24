@@ -26,7 +26,6 @@ from studio_core import (
     environments,
     execute_ontology_action,
     freeze_value,
-    genai,
     materialize_object_type,
     ml,
     portability,
@@ -34,7 +33,6 @@ from studio_core import (
     quality,
     reproducible_manifest,
     resolve_link_type,
-    role_assignments,
     scheduler,
     scheduler_events,
     source_control,
@@ -51,7 +49,6 @@ from studio_core.ir import _node_semantic_payload
         (catalog._require_text, "field must be non-empty, trimmed, and single-line"),
         (connections._require_text, "field must be non-empty, trimmed, and single-line"),
         (environments._require_text, "field must be non-empty, trimmed, and single-line"),
-        (genai._text, "field must be non-empty, trimmed, and single-line"),
         (ml._text, "field must be non-empty, trimmed, and single-line"),
         (portability._require_text, "field must be non-empty, trimmed, and single-line"),
         (quality._require_text, "field must be non-empty, trimmed, and single-line"),
@@ -65,13 +62,6 @@ def test_shared_text_contracts_report_the_field_and_reject_empty_values(
 ) -> None:
     with pytest.raises(ValueError, match=rf"^{empty_message}$"):
         validator("", "field")
-
-
-def test_role_text_rejects_empty_and_non_string_values_with_stable_diagnostics() -> None:
-    with pytest.raises(ValueError, match=r"^field must be non-empty trimmed text$"):
-        role_assignments._text("", "field")
-    with pytest.raises(ValueError, match=r"^field must be non-empty trimmed text$"):
-        role_assignments._text(123, "field")
 
 
 def test_connection_text_and_option_key_diagnostics_are_exact() -> None:
@@ -94,33 +84,6 @@ def test_environment_text_and_safe_ref_diagnostics_are_exact() -> None:
         environments._safe_ref("Bearer opaque-token", "binding source_ref")
 
 
-def test_genai_text_and_pairs_contracts_are_exact() -> None:
-    with pytest.raises(ValueError, match=r"^field must be non-empty, trimmed, and single-line$"):
-        genai._text("", "field")
-    assert genai._pairs((("model", "gpt"),), "provider properties") == (("model", "gpt"),)
-    with pytest.raises(
-        ValueError, match=r"^provider properties must not contain credential-bearing keys$"
-    ):
-        genai._pairs((("API_KEY", "redacted"),), "provider properties")
-
-
-@pytest.mark.parametrize("value", ["line\nvalue", "line\rvalue", "nul\x00value"])
-def test_genai_text_rejects_each_control_character_with_exact_diagnostic(value: str) -> None:
-    with pytest.raises(ValueError, match=".") as error:
-        genai._text(value, "provider field")
-    assert str(error.value) == "provider field must be non-empty, trimmed, and single-line"
-
-
-def test_genai_pairs_preserves_sorted_values_and_duplicate_diagnostic() -> None:
-    assert genai._pairs((("z", "last"), ("a", "first")), "provider properties") == (
-        ("a", "first"),
-        ("z", "last"),
-    )
-    with pytest.raises(ValueError, match=".") as error:
-        genai._pairs((("key", "one"), ("key", "two")), "provider properties")
-    assert str(error.value) == "provider properties keys must be unique"
-
-
 @pytest.mark.parametrize(
     "validator",
     [
@@ -129,7 +92,6 @@ def test_genai_pairs_preserves_sorted_values_and_duplicate_diagnostic() -> None:
         catalog._require_text,
         connections._require_text,
         environments._require_text,
-        genai._text,
         ml._text,
         portability._require_text,
         quality._require_text,
@@ -152,12 +114,12 @@ def test_projects_and_workspaces_distinguish_trim_and_line_break_errors() -> Non
             validator("field\nvalue", "field")
 
 
-def test_reproducible_and_role_text_contracts_distinguish_trim_and_line_breaks() -> None:
-    for validator in (reproducible_manifest._text, role_assignments._text):
-        with pytest.raises(ValueError, match=r"^field must be non-empty trimmed text$"):
-            validator("", "field")
-        with pytest.raises(ValueError, match=r"^field must be single-line text$"):
-            validator("field\nvalue", "field")
+def test_reproducible_text_contract_distinguishes_trim_and_line_breaks() -> None:
+    validator = reproducible_manifest._text
+    with pytest.raises(ValueError, match=r"^field must be non-empty trimmed text$"):
+        validator("", "field")
+    with pytest.raises(ValueError, match=r"^field must be single-line text$"):
+        validator("field\nvalue", "field")
 
 
 def test_canonical_node_identity_includes_all_semantic_contract_fields() -> None:

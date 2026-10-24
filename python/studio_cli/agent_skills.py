@@ -112,6 +112,8 @@ def inspect_skill(path: Path) -> SkillInspection:
     files: list[str] = []
     if skill_path.is_dir():
         for item in sorted(skill_path.rglob("*")):
+            if "__pycache__" in item.parts or item.suffix in {".pyc", ".pyo"}:
+                continue
             if item.is_symlink():
                 errors.append(f"symlinks are not allowed: {item.relative_to(skill_path)}")
                 continue
@@ -151,7 +153,7 @@ def discover_skills(root: Path | None = None) -> tuple[SkillInspection, ...]:
     return tuple(
         inspect_skill(path)
         for path in sorted(skill_root.iterdir(), key=lambda item: item.name)
-        if path.is_dir() and not path.name.startswith(".")
+        if path.is_dir() and not path.name.startswith(".") and path.name != "dist"
     )
 
 

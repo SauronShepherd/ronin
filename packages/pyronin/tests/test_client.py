@@ -72,7 +72,14 @@ class _FlakyOpener:
 
 
 def _job_payload(state: str) -> dict[str, object]:
-    return {"id": "job/a", "state": state, "failure_code": None}
+    return {
+        "id": "job/a",
+        "project_id": "demo",
+        "state": state,
+        "created_at": "2026-09-07T06:00:00.000000Z",
+        "updated_at": "2026-09-07T06:00:00.000000Z",
+        "failure_code": None,
+    }
 
 
 def test_submit_status_cancel_events_and_wait(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -556,98 +563,6 @@ def test_environment_lifecycle_and_diff_use_canonical_paths() -> None:
     assert transport.calls[4][1].endswith("/env%2F1/diff")
 
 
-def test_role_binding_administration_is_typed_and_path_scoped() -> None:
-    transport = FakeTransport(
-        [
-            {
-                "items": [
-                    {
-                        "workspace_id": "ws-1",
-                        "subject_kind": "principal",
-                        "subject_id": "u/1",
-                        "role": "viewer",
-                    }
-                ]
-            },
-            {
-                "workspace_id": "ws-1",
-                "subject_kind": "principal",
-                "subject_id": "u/1",
-                "role": "editor",
-            },
-            {"removed": True},
-        ]
-    )
-    client = Ronin(transport=transport)
-    assert client.list_role_bindings()[0].role == "viewer"
-    assert client.put_role_binding("principal", "u/1", "editor").role == "editor"
-    assert client.delete_role_binding("principal", "u/1", "editor") is True
-    assert "/principal/u%2F1/editor" in transport.calls[1][1]
-
-
-def test_security_principal_and_group_reads_are_typed_and_path_scoped() -> None:
-    transport = FakeTransport(
-        [
-            {
-                "items": [
-                    {
-                        "id": "u/1",
-                        "kind": "user",
-                        "display_name": "Alice",
-                        "issuer": "oidc",
-                        "subject": "alice",
-                        "active": True,
-                    }
-                ]
-            },
-            {
-                "id": "u/1",
-                "kind": "user",
-                "display_name": "Alice",
-                "issuer": "oidc",
-                "subject": "alice",
-                "active": True,
-            },
-            {"items": [{"id": "team", "name": "Team"}]},
-            {"id": "team", "name": "Team"},
-        ]
-    )
-    client = Ronin(transport=transport)
-    assert client.list_security_principals()[0].id == "u/1"
-    assert client.get_security_principal("u/1").subject == "alice"
-    assert client.list_security_groups()[0].name == "Team"
-    assert client.get_security_group("team").name == "Team"
-    assert transport.calls[1][1] == "/v1/admin/security/principals/u%2F1"
-    assert transport.calls[3][1] == "/v1/admin/security/groups/team"
-
-
-def test_security_principal_group_and_membership_mutations_are_typed() -> None:
-    principal = {
-        "id": "u/1",
-        "kind": "user",
-        "display_name": "Alice",
-        "issuer": "oidc",
-        "subject": "alice",
-        "active": True,
-    }
-    transport = FakeTransport(
-        [
-            principal,
-            {"id": "team", "name": "Team"},
-            {"member": True},
-            {"items": [principal]},
-            {"member": False},
-        ]
-    )
-    client = Ronin(transport=transport)
-    assert client.put_security_principal("u/1", principal).id == "u/1"
-    assert client.put_security_group("team", "Team").name == "Team"
-    assert client.add_security_group_member("team", "u/1") is True
-    assert client.list_security_group_members("team")[0].id == "u/1"
-    assert client.remove_security_group_member("team", "u/1") is True
-    assert transport.calls[2][1].endswith("/groups/team/members/u%2F1")
-
-
 def test_catalog_assets_are_parsed_and_query_is_encoded() -> None:
     transport = FakeTransport(
         [{"items": [{"id": "asset-1", "kind": "table", "name": "orders", "tags": ["gold"]}]}]
@@ -1100,7 +1015,16 @@ def test_list_jobs_and_validation() -> None:
     transport = FakeTransport(
         [
             {
-                "items": [{"id": "job-1", "state": "failed", "failure_code": "x"}],
+                "items": [
+                    {
+                        "id": "job-1",
+                        "project_id": "demo",
+                        "state": "failed",
+                        "created_at": "2026-09-07T06:00:00.000000Z",
+                        "updated_at": "2026-09-07T06:00:02.000000Z",
+                        "failure_code": "x",
+                    }
+                ],
                 "next_cursor": "next-1",
             }
         ]
@@ -1108,6 +1032,9 @@ def test_list_jobs_and_validation() -> None:
     client = Ronin(transport=transport)
     page = client.list_jobs(project="demo", state=JobState.FAILED, limit=25, cursor="cursor-0")
     assert page.items[0].failure_code == "x"
+    assert page.items[0].project_id == "demo"
+    assert page.items[0].created_at == "2026-09-07T06:00:00.000000Z"
+    assert page.items[0].updated_at == "2026-09-07T06:00:02.000000Z"
     assert page.next_cursor == "next-1"
     assert transport.calls[0][4] == {
         "limit": "25",
@@ -1192,6 +1119,14 @@ def test_invalid_sql_results_fail_closed(payload: object) -> None:
         {"id": "", "state": "queued"},
         {"id": "job", "state": "unknown"},
         {"id": "job", "state": "failed", "failure_code": 7},
+        {
+            "id": "job",
+            "project_id": "demo",
+            "state": "queued",
+            "created_at": "not-an-instant",
+            "updated_at": "2026-09-07T06:00:00.000000Z",
+            "failure_code": None,
+        },
     ],
 )
 def test_invalid_job_payloads_fail_closed(payload: dict[str, object]) -> None:

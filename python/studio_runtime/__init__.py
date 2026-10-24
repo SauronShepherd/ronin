@@ -30,6 +30,8 @@ from studio_runtime.settings import (
     SecretReference,
 )
 
+_WITHDRAWN_PUBLIC_PLUGIN_ENTRYPOINTS = frozenset({"ai_studio", "genai_studio"})
+
 
 def _distribution_digest(distribution: importlib.metadata.Distribution) -> str | None:
     try:
@@ -108,6 +110,11 @@ def discover_plugins(
         else cast(Any, entry_points).get(group, ())
     )
     for entry_point in sorted(selected, key=lambda item: item.name):
+        # Old editable installs may retain entry-point metadata after a plugin
+        # has been withdrawn from Ronin Public. Skip those names before load:
+        # their modules are intentionally absent from the Public source tree.
+        if entry_point.name in _WITHDRAWN_PUBLIC_PLUGIN_ENTRYPOINTS:
+            continue
         try:
             factory = entry_point.load()
             plugin = factory()
@@ -167,9 +174,14 @@ class PluginHost:
         plugin_api: str = "1.0",
         services: Mapping[str, object] | None = None,
         settings_registry: PluginSettingsRegistry | None = None,
+        excluded_plugin_ids: frozenset[str] = frozenset(),
     ) -> PluginHost:
         manager = PluginManager(host_version=host_version, plugin_api=plugin_api)
-        records = discover_plugins(include_builtins=True)
+        records = tuple(
+            record
+            for record in discover_plugins(include_builtins=True)
+            if record.manifest.id not in excluded_plugin_ids
+        )
         settings = None
         if settings_registry is not None:
             settings = {

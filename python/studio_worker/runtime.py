@@ -104,7 +104,6 @@ class LocalWorkerRuntimeConfig:
     ml_lab: object | None = None
     ml_pipeline: object | None = None
     ml_rows: object | None = None
-    genai_runner: object | None = None
     semantic_refresh_runner: object | None = None
     pipeline_runner: object | None = None
 
@@ -369,7 +368,6 @@ class LocalWorkerRuntime:
             "connector.sync",
             "notification.send",
             "ml.run",
-            "genai.run",
             "semantic.refresh",
             "data-engineering.pipeline-run.v1",
         }:
@@ -403,10 +401,6 @@ class LocalWorkerRuntime:
             ):
                 raise UnsupportedSchedulerWorkload(
                     "ml.run scheduler execution requires runner, lab, pipeline, and rows"
-                )
-            if claim.job.target == "genai.run" and self.config.genai_runner is None:
-                raise UnsupportedSchedulerWorkload(
-                    "genai.run scheduler execution requires genai_runner"
                 )
             if (
                 claim.job.target == "semantic.refresh"
@@ -450,7 +444,6 @@ class LocalWorkerRuntime:
                         ml_lab=self.config.ml_lab,
                         ml_pipeline=self.config.ml_pipeline,
                         ml_rows=self.config.ml_rows,
-                        genai_runner=self.config.genai_runner,
                         semantic_refresh_runner=self.config.semantic_refresh_runner,
                         pipeline_runner=self.config.pipeline_runner,
                     ),
@@ -469,8 +462,6 @@ class LocalWorkerRuntime:
                     if claim.job.target == "notification.send"
                     else "scheduler.ml.error"
                     if claim.job.target == "ml.run"
-                    else "scheduler.genai.error"
-                    if claim.job.target == "genai.run"
                     else "scheduler.semantic.error"
                     if claim.job.target == "semantic.refresh"
                     else "scheduler.pipeline.error"
