@@ -21,6 +21,7 @@ from studio_graph import (
     GraphTraverse,
     NativeGraphProvider,
     RqlSyntaxError,
+    SqliteGraphReadSession,
     SqliteGraphStore,
     materialize_graph,
     parse_rql,
@@ -204,6 +205,97 @@ def test_sqlite_store_round_trips_snapshot_and_replaces_atomically(tmp_path: Pat
     assert store.scan_objects(snapshot.ontology_id, snapshot.ontology_version, "Order") == ()
 
 
+def test_sqlite_read_snapshot_does_not_mix_concurrent_replacement(tmp_path: Path) -> None:
+    store = SqliteGraphStore(tmp_path / "graph.sqlite")
+    original = _snapshot()
+    customer = original.objects[0]
+    original_order = original.objects[1]
+    replacement_order = GraphObject(
+        KnowledgeObjectRef("Order", (("id", "replacement"),)),
+        (("name", "replacement"),),
+    )
+    replacement = GraphSnapshot(
+        original.ontology_id,
+        original.ontology_version,
+        (customer, replacement_order),
+        (GraphLink("owns", customer.ref, replacement_order.ref),),
+    )
+    store.replace_snapshot(original)
+
+    with store.read_snapshot() as reader:
+        assert reader.scan_objects(original.ontology_id, original.ontology_version, "Customer") == (
+            customer,
+        )
+        store.replace_snapshot(replacement)
+        assert (
+            reader.get_object(original.ontology_id, original.ontology_version, original_order.ref)
+            == original_order
+        )
+        assert reader.neighbors(
+            original.ontology_id,
+            original.ontology_version,
+            customer.ref,
+            link_type="owns",
+            direction="out",
+        ) == (original_order,)
+
+    assert store.neighbors(
+        original.ontology_id,
+        original.ontology_version,
+        customer.ref,
+        link_type="owns",
+        direction="out",
+    ) == (replacement_order,)
+
+
+def test_native_graph_query_pins_snapshot_while_replacement_commits(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = SqliteGraphStore(tmp_path / "graph.sqlite")
+    original = _snapshot()
+    customer, original_order = original.objects
+    replacement_order = GraphObject(
+        KnowledgeObjectRef("Order", (("id", "replacement"),)),
+        (("name", "replacement"),),
+    )
+    replacement = GraphSnapshot(
+        original.ontology_id,
+        original.ontology_version,
+        (customer, replacement_order),
+        (GraphLink("owns", customer.ref, replacement_order.ref),),
+    )
+    store.replace_snapshot(original)
+    scan_objects = SqliteGraphReadSession.scan_objects
+
+    def replace_after_root_scan(
+        reader: SqliteGraphReadSession,
+        ontology_id: OntologyId,
+        ontology_version: str,
+        object_type: str,
+        *,
+        limit: int | None = None,
+    ) -> tuple[GraphObject, ...]:
+        objects = scan_objects(reader, ontology_id, ontology_version, object_type, limit=limit)
+        if object_type == "Customer":
+            store.replace_snapshot(replacement)
+        return objects
+
+    monkeypatch.setattr(SqliteGraphReadSession, "scan_objects", replace_after_root_scan)
+    result = NativeGraphProvider(store, original.ontology_id, original.ontology_version).execute(
+        GraphQueryIR(
+            "Customer",
+            traverse=GraphTraverse("owns", "out", 1),
+            return_fields=("name",),
+        )
+    )
+
+    assert result == GraphQueryResult(((("name", "A-9"),),))
+    assert (
+        store.get_object(original.ontology_id, original.ontology_version, original_order.ref)
+        is None
+    )
+
+
 def test_native_provider_executes_filters_and_bounded_traversal(tmp_path: Path) -> None:
     store = SqliteGraphStore(tmp_path / "graph.sqlite")
     snapshot = _snapshot()
@@ -311,10 +403,12 @@ def test_native_provider_batches_neighbors_and_applies_result_limit(tmp_path: Pa
     snapshot = _fanout_snapshot(5)
     store.replace_snapshot(snapshot)
     statements: list[str] = []
+    connections = []
     connect = store._connect
 
     def tracked_connect():
         connection = connect()
+        connections.append(connection)
         connection.set_trace_callback(statements.append)
         return connection
 
@@ -335,6 +429,7 @@ def test_native_provider_batches_neighbors_and_applies_result_limit(tmp_path: Pa
         statement for statement in statements if statement.lstrip().upper().startswith("SELECT")
     ]
     assert len(selects) == 2
+    assert len(connections) == 1
     assert result == GraphQueryResult(((("_key", "id=0"),),))
 
 

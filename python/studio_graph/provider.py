@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import AbstractContextManager
 from typing import Protocol, runtime_checkable
 
 from studio_core.ontology import KnowledgeObjectRef, OntologyId
@@ -16,14 +17,21 @@ from .contracts import (
 
 
 @runtime_checkable
-class GraphReadStore(Protocol):
+class GraphReadSession(Protocol):
+    def get_object(
+        self,
+        ontology_id: OntologyId,
+        ontology_version: str,
+        ref: KnowledgeObjectRef,
+    ) -> GraphObject | None: ...
+
     def scan_objects(
         self,
         ontology_id: OntologyId,
         ontology_version: str,
         object_type: str,
         *,
-        limit: int,
+        limit: int | None = None,
     ) -> tuple[GraphObject, ...]: ...
 
     def neighbors_many(
@@ -34,8 +42,13 @@ class GraphReadStore(Protocol):
         *,
         link_type: str,
         direction: str,
-        limit: int,
+        limit: int | None = None,
     ) -> tuple[GraphObject, ...]: ...
+
+
+@runtime_checkable
+class GraphReadStore(Protocol):
+    def read_snapshot(self) -> AbstractContextManager[GraphReadSession]: ...
 
 
 @runtime_checkable
@@ -105,7 +118,15 @@ class NativeGraphProvider:
         self._ontology_version = ontology_version
 
     def execute(self, query: GraphQueryIR) -> GraphQueryResult:
-        scanned = self._store.scan_objects(
+        with self._store.read_snapshot() as reader:
+            return self._execute_on_snapshot(reader, query)
+
+    def _execute_on_snapshot(
+        self,
+        reader: GraphReadSession,
+        query: GraphQueryIR,
+    ) -> GraphQueryResult:
+        scanned = reader.scan_objects(
             self._ontology_id,
             self._ontology_version,
             query.object_type,
@@ -125,7 +146,7 @@ class NativeGraphProvider:
             examined_edges = 0
             for _depth in range(query.traverse.depth):
                 next_frontier: dict[KnowledgeObjectRef, GraphObject] = {}
-                neighbors = self._store.neighbors_many(
+                neighbors = reader.neighbors_many(
                     self._ontology_id,
                     self._ontology_version,
                     tuple(sorted(frontier)),
@@ -173,6 +194,7 @@ class NativeGraphProvider:
 
 __all__ = (
     "GraphQueryProvider",
+    "GraphReadSession",
     "GraphReadStore",
     "GraphResourceBudgetExceeded",
     "NativeGraphProvider",

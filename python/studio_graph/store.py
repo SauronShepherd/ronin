@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 from studio_core.ontology import KnowledgeObjectRef, OntologyId
@@ -38,6 +40,8 @@ class SqliteGraphStore:
         path.parent.mkdir(parents=True, exist_ok=True)
         connection = self._connect()
         try:
+            connection.execute("PRAGMA journal_mode=WAL")
+            connection.execute("PRAGMA busy_timeout=5000")
             connection.executescript(
                 """
                 CREATE TABLE IF NOT EXISTS graph_objects (
@@ -77,7 +81,7 @@ class SqliteGraphStore:
             connection.close()
 
     def _connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(self._path)
+        return sqlite3.connect(self._path, timeout=5.0)
 
     def replace_snapshot(self, snapshot: GraphSnapshot) -> GraphSnapshot:
         connection = self._connect()
@@ -129,22 +133,104 @@ class SqliteGraphStore:
             tuple(sorted(properties.items())),
         )
 
+    @contextmanager
+    def read_snapshot(self) -> Iterator[SqliteGraphReadSession]:
+        """Hold one SQLite read transaction across every operation in a graph query."""
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN")
+            yield SqliteGraphReadSession(connection)
+        finally:
+            try:
+                connection.rollback()
+            finally:
+                connection.close()
+
     def get_object(
         self,
         ontology_id: OntologyId,
         ontology_version: str,
         ref: KnowledgeObjectRef,
     ) -> GraphObject | None:
-        connection = self._connect()
-        try:
-            row = connection.execute(
-                "SELECT properties_json FROM graph_objects WHERE ontology_id=? "
-                "AND ontology_version=? AND object_ref_json=?",
-                (ontology_id.value, ontology_version, _ref_json(ref)),
-            ).fetchone()
-            return None if row is None else self._object(_ref_json(ref), row[0])
-        finally:
-            connection.close()
+        with self.read_snapshot() as reader:
+            return reader.get_object(ontology_id, ontology_version, ref)
+
+    def scan_objects(
+        self,
+        ontology_id: OntologyId,
+        ontology_version: str,
+        object_type: str,
+        *,
+        limit: int | None = None,
+    ) -> tuple[GraphObject, ...]:
+        with self.read_snapshot() as reader:
+            return reader.scan_objects(
+                ontology_id,
+                ontology_version,
+                object_type,
+                limit=limit,
+            )
+
+    def neighbors_many(
+        self,
+        ontology_id: OntologyId,
+        ontology_version: str,
+        refs: tuple[KnowledgeObjectRef, ...],
+        *,
+        link_type: str,
+        direction: str,
+        limit: int | None = None,
+    ) -> tuple[GraphObject, ...]:
+        with self.read_snapshot() as reader:
+            return reader.neighbors_many(
+                ontology_id,
+                ontology_version,
+                refs,
+                link_type=link_type,
+                direction=direction,
+                limit=limit,
+            )
+
+    def neighbors(
+        self,
+        ontology_id: OntologyId,
+        ontology_version: str,
+        ref: KnowledgeObjectRef,
+        *,
+        link_type: str,
+        direction: str,
+        limit: int | None = None,
+    ) -> tuple[GraphObject, ...]:
+        with self.read_snapshot() as reader:
+            return reader.neighbors(
+                ontology_id,
+                ontology_version,
+                ref,
+                link_type=link_type,
+                direction=direction,
+                limit=limit,
+            )
+
+
+class SqliteGraphReadSession:
+    """Read one stable materialized graph generation on a shared SQLite connection."""
+
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
+
+    def get_object(
+        self,
+        ontology_id: OntologyId,
+        ontology_version: str,
+        ref: KnowledgeObjectRef,
+    ) -> GraphObject | None:
+        ref_json = _ref_json(ref)
+        row = self._connection.execute(
+            "SELECT properties_json FROM graph_objects WHERE ontology_id=? "
+            "AND ontology_version=? AND object_ref_json=?",
+            (ontology_id.value, ontology_version, ref_json),
+        ).fetchone()
+        return None if row is None else SqliteGraphStore._object(ref_json, row[0])
 
     def scan_objects(
         self,
@@ -158,20 +244,16 @@ class SqliteGraphStore:
             not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 1_000_001
         ):
             raise ValueError("graph object scan limit must be an integer between 1 and 1000001")
-        connection = self._connect()
-        try:
-            sql = (
-                "SELECT object_ref_json,properties_json FROM graph_objects WHERE ontology_id=? "
-                "AND ontology_version=? AND object_type=? ORDER BY object_ref_json"
-            )
-            params: tuple[object, ...] = (ontology_id.value, ontology_version, object_type)
-            if limit is not None:
-                sql += " LIMIT ?"
-                params += (limit,)
-            rows = connection.execute(sql, params).fetchall()
-            return tuple(self._object(row[0], row[1]) for row in rows)
-        finally:
-            connection.close()
+        sql = (
+            "SELECT object_ref_json,properties_json FROM graph_objects WHERE ontology_id=? "
+            "AND ontology_version=? AND object_type=? ORDER BY object_ref_json"
+        )
+        params: tuple[object, ...] = (ontology_id.value, ontology_version, object_type)
+        if limit is not None:
+            sql += " LIMIT ?"
+            params += (limit,)
+        rows = self._connection.execute(sql, params).fetchall()
+        return tuple(SqliteGraphStore._object(row[0], row[1]) for row in rows)
 
     def neighbors_many(
         self,
@@ -203,40 +285,36 @@ class SqliteGraphStore:
             order_by = "l.target_ref_json,l.source_ref_json"
 
         result: list[GraphObject] = []
-        connection = self._connect()
-        try:
-            for offset in range(0, len(ordered_refs), 500):
-                remaining = None if limit is None else limit - len(result)
-                if remaining == 0:
-                    break
-                chunk = ordered_refs[offset : offset + 500]
-                placeholders = ",".join("?" for _ in chunk)
-                # Identifiers are selected from the fixed direction allowlist; data stays bound.
-                sql = (
-                    "SELECT o.object_ref_json,o.properties_json FROM graph_links AS l "  # noqa: S608
-                    "LEFT JOIN graph_objects AS o ON o.ontology_id=l.ontology_id "
-                    "AND o.ontology_version=l.ontology_version "
-                    f"AND o.object_ref_json={target_column} "  # noqa: S608
-                    "WHERE l.ontology_id=? AND l.ontology_version=? AND l.link_type=? "
-                    f"AND {filter_column} IN ({placeholders}) ORDER BY {order_by}"  # noqa: S608
-                )  # noqa: S608
-                params: tuple[object, ...] = (
-                    ontology_id.value,
-                    ontology_version,
-                    link_type,
-                    *(_ref_json(ref) for ref in chunk),
-                )
-                if remaining is not None:
-                    sql += " LIMIT ?"
-                    params += (remaining,)
-                rows = connection.execute(sql, params).fetchall()
-                for row in rows:
-                    if row[0] is None or row[1] is None:
-                        raise RuntimeError("graph link references missing persisted object")
-                    result.append(self._object(row[0], row[1]))
-            return tuple(result)
-        finally:
-            connection.close()
+        for offset in range(0, len(ordered_refs), 500):
+            remaining = None if limit is None else limit - len(result)
+            if remaining == 0:
+                break
+            chunk = ordered_refs[offset : offset + 500]
+            placeholders = ",".join("?" for _ in chunk)
+            # Identifiers are selected from the fixed direction allowlist; data stays bound.
+            sql = (
+                "SELECT o.object_ref_json,o.properties_json FROM graph_links AS l "  # noqa: S608
+                "LEFT JOIN graph_objects AS o ON o.ontology_id=l.ontology_id "
+                "AND o.ontology_version=l.ontology_version "
+                f"AND o.object_ref_json={target_column} "  # noqa: S608
+                "WHERE l.ontology_id=? AND l.ontology_version=? AND l.link_type=? "
+                f"AND {filter_column} IN ({placeholders}) ORDER BY {order_by}"  # noqa: S608
+            )  # noqa: S608
+            params: tuple[object, ...] = (
+                ontology_id.value,
+                ontology_version,
+                link_type,
+                *(_ref_json(ref) for ref in chunk),
+            )
+            if remaining is not None:
+                sql += " LIMIT ?"
+                params += (remaining,)
+            rows = self._connection.execute(sql, params).fetchall()
+            for row in rows:
+                if row[0] is None or row[1] is None:
+                    raise RuntimeError("graph link references missing persisted object")
+                result.append(SqliteGraphStore._object(row[0], row[1]))
+        return tuple(result)
 
     def neighbors(
         self,
@@ -258,4 +336,4 @@ class SqliteGraphStore:
         )
 
 
-__all__ = ("SqliteGraphStore",)
+__all__ = ("SqliteGraphReadSession", "SqliteGraphStore")
