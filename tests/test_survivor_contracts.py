@@ -151,13 +151,13 @@ def test_ontology_link_resolution_is_sorted_and_action_write_receives_target() -
         "Customer",
         AssetRef(AssetId("customers"), AssetVersion("1")),
         ("id",),
-        (PropertyDefinition("id", "string", "id", True),),
+        (PropertyDefinition("id", "integer", "id", True),),
     )
     target_type = ObjectType(
         "Order",
         AssetRef(AssetId("orders"), AssetVersion("1")),
         ("customer_id",),
-        (PropertyDefinition("customer_id", "string", "customer_id", True),),
+        (PropertyDefinition("customer_id", "integer", "customer_id", True),),
     )
     sources = materialize_object_type(source_type, ({"id": 2}, {"id": 1}))
     targets = materialize_object_type(target_type, ({"customer_id": 1}, {"customer_id": 2}))

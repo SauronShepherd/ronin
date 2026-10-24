@@ -12,6 +12,11 @@ from .catalog import AssetRef
 from .grants import Requirement
 
 LinkCardinality: TypeAlias = Literal["one-to-one", "one-to-many", "many-to-one", "many-to-many"]
+OntologyDataType: TypeAlias = Literal["boolean", "integer", "number", "string"]
+OntologyScalar: TypeAlias = None | bool | int | float | str
+
+_ONTOLOGY_DATA_TYPES = frozenset({"boolean", "integer", "number", "string"})
+_MAX_EXACT_INTEGER = (2**53) - 1
 
 
 def _require_text(value: str, name: str) -> str:
@@ -34,14 +39,20 @@ class OntologyId:
 @dataclass(frozen=True, order=True, slots=True)
 class PropertyDefinition:
     name: str
-    data_type: str
+    data_type: OntologyDataType
     source_field: str
     required: bool = False
 
     def __post_init__(self) -> None:
         _require_text(self.name, "ontology property name")
+        if not isinstance(self.data_type, str):
+            raise ValueError("ontology property data_type must be a string")
         _require_text(self.data_type, "ontology property data_type")
+        if self.data_type not in _ONTOLOGY_DATA_TYPES:
+            raise ValueError("unsupported ontology property data_type")
         _require_text(self.source_field, "ontology property source_field")
+        if not isinstance(self.required, bool):
+            raise ValueError("ontology property required must be boolean")
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -68,7 +79,12 @@ class PropertyDefinition:
             raise ValueError("ontology property string fields are invalid")
         if not isinstance(required, bool):
             raise ValueError("ontology property required must be boolean")
-        return cls(cast(str, name), cast(str, data_type), cast(str, source_field), required)
+        return cls(
+            cast(str, name),
+            cast(OntologyDataType, data_type),
+            cast(str, source_field),
+            required,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,6 +104,11 @@ class ObjectType:
         source_fields = [item.source_field for item in properties]
         if len(names) != len(set(names)):
             raise ValueError("object property names must be unique")
+        source_types: dict[str, OntologyDataType] = {}
+        for item in properties:
+            existing_type = source_types.setdefault(item.source_field, item.data_type)
+            if existing_type != item.data_type:
+                raise ValueError("object properties sharing a source field must use one data_type")
         missing = set(keys) - set(source_fields)
         if missing:
             raise ValueError("object key_fields must be represented by properties")
@@ -130,7 +151,7 @@ class ObjectType:
 
 @dataclass(frozen=True, slots=True)
 class LinkType:
-    """Directed ontology link; cardinality describes source objects to target objects."""
+    """Directed link over ontology property names, source objects to target objects."""
 
     name: str
     source_type: str
@@ -306,6 +327,24 @@ class OntologyDefinition:
             raise ValueError("ontology link type names must be unique")
         if any(link.source_type not in known or link.target_type not in known for link in links):
             raise ValueError("ontology link references unknown object type")
+        object_by_name = {item.name: item for item in objects}
+        for link in links:
+            source_properties = {
+                item.name: item for item in object_by_name[link.source_type].properties
+            }
+            target_properties = {
+                item.name: item for item in object_by_name[link.target_type].properties
+            }
+            for source_field, target_field in zip(
+                link.source_fields, link.target_fields, strict=True
+            ):
+                if source_field not in source_properties or target_field not in target_properties:
+                    raise ValueError(f"ontology link {link.name} references unknown property")
+                if (
+                    source_properties[source_field].data_type
+                    != target_properties[target_field].data_type
+                ):
+                    raise ValueError(f"ontology link {link.name} joins incompatible property types")
         actions = tuple(sorted(self.actions, key=lambda item: item.name))
         if len(actions) != len({item.name for item in actions}):
             raise ValueError("ontology action names must be unique")
@@ -391,6 +430,59 @@ class KnowledgeObjectRef:
         if not key or len(key) != len({k for k, _ in key}):
             raise ValueError("knowledge object key must be non-empty and unique")
         object.__setattr__(self, "key", key)
+
+
+def _canonicalize_property_value(
+    property_definition: PropertyDefinition, value: object, *, field: str | None = None
+) -> OntologyScalar:
+    """Validate and normalize a source value against its declared ontology type."""
+
+    if value is None:
+        return None
+    field_name = property_definition.source_field if field is None else field
+    data_type = property_definition.data_type
+    if data_type == "string":
+        if not isinstance(value, str):
+            raise ValueError(f"field {field_name!r} must be a string")
+        return value
+    if data_type == "boolean":
+        if not isinstance(value, bool):
+            raise ValueError(f"field {field_name!r} must be a boolean")
+        return value
+    if data_type == "integer":
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise ValueError(f"field {field_name!r} must be an integer")
+        if abs(value) > _MAX_EXACT_INTEGER:
+            raise ValueError(f"field {field_name!r} integer exceeds the exact JSON range")
+        return value
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"field {field_name!r} must be a number")
+    if isinstance(value, int) and abs(value) > _MAX_EXACT_INTEGER:
+        raise ValueError(f"field {field_name!r} integer exceeds the exact JSON range")
+    normalized = float(value)
+    if normalized != normalized or normalized in (float("inf"), float("-inf")):
+        raise ValueError(f"field {field_name!r} must be a finite number")
+    return 0.0 if normalized == 0.0 else normalized
+
+
+def _typed_value_key(value: object) -> tuple[str, OntologyScalar]:
+    """Return an equality key that does not conflate booleans with integers."""
+
+    if value is None:
+        return ("null", None)
+    if isinstance(value, bool):
+        return ("boolean", value)
+    if isinstance(value, int):
+        if abs(value) > _MAX_EXACT_INTEGER:
+            raise ValueError("ontology integer values must fit the exact JSON range")
+        return ("integer", value)
+    if isinstance(value, float):
+        if value != value or value in (float("inf"), float("-inf")):
+            raise ValueError("ontology number values must be finite")
+        return ("number", value)
+    if isinstance(value, str):
+        return ("string", value)
+    raise TypeError("ontology values must be supported scalars")
 
 
 @dataclass(frozen=True, slots=True)
@@ -502,11 +594,33 @@ def materialize_object_type(
         ]
         if missing:
             raise ValueError(f"ontology row {index} is missing required fields: {missing}")
+        key_fields = set(object_type.key_fields)
+        null_required = [
+            item.source_field
+            for item in fields
+            if item.required
+            and item.source_field not in key_fields
+            and row.get(item.source_field) is None
+        ]
+        if null_required:
+            raise ValueError(f"ontology row {index} has null required fields: {null_required}")
+        normalized_values: dict[str, OntologyScalar] = {}
+        for item in fields:
+            if item.source_field in row:
+                try:
+                    normalized_values[item.name] = _canonicalize_property_value(
+                        item, row[item.source_field]
+                    )
+                except ValueError as error:
+                    raise ValueError(f"ontology row {index}: {error}") from error
+            else:
+                normalized_values[item.name] = None
         key_values = []
         for key in object_type.key_fields:
             if key not in row or row[key] is None:
                 raise ValueError(f"ontology row {index} has missing/null key field: {key}")
-            key_values.append((key, str(row[key])))
+            key_property = next(item for item in fields if item.source_field == key)
+            key_values.append((key, str(_canonicalize_property_value(key_property, row[key]))))
         ref = KnowledgeObjectRef(object_type.name, tuple(key_values))
         if ref in seen:
             raise ValueError(f"ontology object key is duplicated: {ref}")
@@ -514,7 +628,7 @@ def materialize_object_type(
         result.append(
             KnowledgeObject(
                 ref,
-                tuple((item.name, row.get(item.source_field)) for item in fields),
+                tuple((item.name, normalized_values[item.name]) for item in fields),
             )
         )
     return tuple(result)
@@ -540,9 +654,18 @@ def resolve_link_type(
     links: list[tuple[KnowledgeObjectRef, KnowledgeObjectRef]] = []
     for source, source_values in zip(source_objects, source_maps, strict=True):
         for target, target_values in zip(target_objects, target_maps, strict=True):
-            if all(
-                source_values.get(left) == target_values.get(right)
+            join_values = tuple(
+                (source_values.get(left), target_values.get(right))
                 for left, right in zip(link.source_fields, link.target_fields, strict=True)
+            )
+            if (
+                all(
+                    left is not None
+                    and right is not None
+                    and _typed_value_key(left) == _typed_value_key(right)
+                    for left, right in join_values
+                )
+                and source.ref != target.ref
             ):
                 links.append((source.ref, target.ref))
                 if len(links) > max_links:
@@ -566,6 +689,7 @@ __all__ = (
     "KnowledgeGraph",
     "KnowledgeObjectRef",
     "LinkCardinality",
+    "OntologyDataType",
     "LinkType",
     "ObjectType",
     "OntologyDefinition",

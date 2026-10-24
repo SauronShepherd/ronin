@@ -151,6 +151,15 @@ It MUST represent:
 
 The ontology layer defines real-world object types and link types. The knowledge graph materializes or virtually resolves object instances and relationships from governed data sources.
 
+Ontology properties use the closed scalar type set `string`, `boolean`, `integer`,
+and `number`. Materializers validate values against that declaration, reject
+ambiguous coercions (including booleans as integers), and normalize `number`
+values to finite floats; integer inputs must fit the exact JSON integer range.
+Link fields name ontology properties, and both ends must declare the same type.
+Null values do not form links; a missing optional join property behaves as
+null. Core ontology and Graph materialization must produce the same
+references, properties, and links.
+
 Ronin Graph Intelligence/RQL becomes one query/execution subsystem over this semantic foundation rather than the entire product.
 
 ### P7 — Data quality and contracts

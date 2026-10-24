@@ -335,7 +335,15 @@ def test_ontology_action_dispatch_denies_requirements_and_records_idempotent_exe
 
 
 def test_materialization_enforces_limits_and_preserves_properties() -> None:
-    obj = _object_type()
+    obj = ObjectType(
+        "Order",
+        AssetRef(AssetId("order"), AssetVersion("1")),
+        ("id",),
+        (
+            PropertyDefinition("id", "integer", "id", True),
+            PropertyDefinition("label", "string", "label"),
+        ),
+    )
     assert materialize_object_type(obj, ({"id": 1, "label": "one"},))[0].properties == (
         ("id", 1),
         ("label", "one"),

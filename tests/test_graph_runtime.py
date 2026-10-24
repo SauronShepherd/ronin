@@ -120,7 +120,7 @@ def test_materialization_uses_governed_keys_and_rejects_missing_required_fields(
                 AssetRef(AssetId("customers"), AssetVersion("v1")),
                 ("id",),
                 (
-                    PropertyDefinition("id", "string", "id", required=True),
+                    PropertyDefinition("id", "integer", "id", required=True),
                     PropertyDefinition("name", "string", "customer_name", required=True),
                 ),
             ),

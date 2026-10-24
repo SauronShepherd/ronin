@@ -1807,7 +1807,9 @@
         "__post_init__",
         "__post_init__",
         "__str__",
+        "_canonicalize_property_value",
         "_require_text",
+        "_typed_value_key",
         "asset_refs",
         "execute_ontology_action",
         "from_json",
@@ -3912,6 +3914,7 @@
         "_manifest_entry_digest",
         "_ordered_objects",
         "_payload_path",
+        "_plan_catalog_bundle_import_from_reader",
         "_require_active_workspace",
         "_revision_logical_ref",
         "_selected_catalog",
@@ -3938,7 +3941,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 33
+        "stores": 36
       },
       "package": "studio_execution",
       "path": "python/studio_execution/bundle_catalog.py",
@@ -3988,6 +3991,7 @@
         "_logical_ref",
         "_manifest_entry_digest",
         "_payload_path",
+        "_plan_connection_bundle_import_from_reader",
         "_portable_shape",
         "_require_active_workspace",
         "_secret_binding_requests",
@@ -4013,7 +4017,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 24
+        "stores": 27
       },
       "package": "studio_execution",
       "path": "python/studio_execution/bundle_connection.py",
@@ -4029,6 +4033,7 @@
       "functions": [
         "__post_init__",
         "_manifest_entry_digest",
+        "_plan_project_bundle_import_from_reader",
         "_require_active_target_workspace",
         "has_required_bindings",
         "plan_project_bundle_import",
@@ -4048,7 +4053,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 8
+        "stores": 11
       },
       "package": "studio_execution",
       "path": "python/studio_execution/bundle_import.py",
@@ -4205,7 +4210,7 @@
         "export_ontology_bundle",
         "import_ontology_bundle",
         "list_all",
-        "put"
+        "put_many"
       ],
       "imports": [
         "__future__",
@@ -4231,12 +4236,56 @@
     },
     {
       "classes": [
+        "StreamBundleImportPlan",
+        "StreamBundleImportReceipt",
+        "StreamBundleImportStore"
+      ],
+      "functions": [
+        "_binding_requests",
+        "_path",
+        "_remap_definition",
+        "build_stream_bundle",
+        "commit_stream_bundle_import",
+        "commit_stream_bundle_import",
+        "export_stream_bundle",
+        "list_definitions",
+        "mapped_ref",
+        "plan_stream_bundle_import",
+        "unresolved_bindings"
+      ],
+      "imports": [
+        "__future__",
+        "collections",
+        "dataclasses",
+        "hashlib",
+        "json",
+        "pathlib",
+        "studio_core",
+        "studio_storage",
+        "studio_streaming",
+        "typing"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 11
+      },
+      "package": "studio_execution",
+      "path": "python/studio_execution/bundle_streaming.py",
+      "routes": [],
+      "test": false
+    },
+    {
+      "classes": [
         "StagedWorkflowObject",
         "WorkflowBundleImportPlan",
         "WorkflowBundleInventory"
       ],
       "functions": [
         "_path",
+        "_plan_workflow_bundle_import_from_reader",
         "_ref",
         "build_workflow_bundle_inventory",
         "export_workflow_bundle",
@@ -4254,10 +4303,10 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 48,
+        "jobs": 51,
         "migrations": 0,
         "permissions": 0,
-        "stores": 15
+        "stores": 18
       },
       "package": "studio_execution",
       "path": "python/studio_execution/bundle_workflow.py",
@@ -5303,7 +5352,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 7
+        "stores": 9
       },
       "package": "studio_graph",
       "path": "python/studio_graph/__init__.py",
@@ -5357,7 +5406,6 @@
         "_graph_object",
         "_join_key",
         "_object_ref",
-        "_scalar",
         "_validate_cardinality",
         "materialize_graph"
       ],
@@ -5382,23 +5430,33 @@
     {
       "classes": [
         "GraphQueryProvider",
+        "GraphReadSession",
         "GraphReadStore",
+        "GraphResourceBudgetExceeded",
         "NativeGraphProvider"
       ],
       "functions": [
         "__init__",
+        "__init__",
+        "_check_deadline",
         "_compare",
+        "_execute_on_snapshot",
         "_key_text",
         "_matches",
         "execute",
         "execute",
-        "neighbors",
+        "get_object",
+        "neighbors_many",
+        "read_snapshot",
         "scan_objects"
       ],
       "imports": [
         "__future__",
+        "contextlib",
         "contracts",
+        "sqlite3",
         "studio_core",
+        "time",
         "typing"
       ],
       "markers": {
@@ -5406,7 +5464,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 8
+        "stores": 9
       },
       "package": "studio_graph",
       "path": "python/studio_graph/provider.py",
@@ -5420,14 +5478,14 @@
       "functions": [
         "_identifier",
         "_literal",
+        "_tokenize",
         "parse_rql"
       ],
       "imports": [
         "__future__",
         "contracts",
         "json",
-        "re",
-        "shlex"
+        "re"
       ],
       "markers": {
         "events": 0,
@@ -5443,33 +5501,44 @@
     },
     {
       "classes": [
+        "SqliteGraphReadSession",
         "SqliteGraphStore"
       ],
       "functions": [
+        "__init__",
         "__init__",
         "_connect",
         "_object",
         "_ref_from_json",
         "_ref_json",
         "get_object",
+        "get_object",
         "neighbors",
+        "neighbors",
+        "neighbors_many",
+        "neighbors_many",
+        "read_snapshot",
         "replace_snapshot",
+        "scan_objects",
         "scan_objects"
       ],
       "imports": [
         "__future__",
+        "collections",
+        "contextlib",
         "contracts",
         "json",
         "pathlib",
         "sqlite3",
-        "studio_core"
+        "studio_core",
+        "time"
       ],
       "markers": {
         "events": 0,
         "jobs": 0,
         "migrations": 2,
         "permissions": 0,
-        "stores": 9
+        "stores": 22
       },
       "package": "studio_graph",
       "path": "python/studio_graph/store.py",
@@ -7573,6 +7642,7 @@
         "PostgresMLLabStore"
       ],
       "functions": [
+        "_lock_feature_workspace",
         "get_drift_policy",
         "get_feature_definition",
         "get_lab",
@@ -7585,6 +7655,7 @@
         "migrate",
         "put_drift_policy",
         "put_feature_definition",
+        "put_feature_definition_in_transaction",
         "put_lab",
         "put_pipeline",
         "put_quality_suite"
@@ -7593,14 +7664,15 @@
         "__future__",
         "studio_core",
         "studio_ml",
-        "studio_storage"
+        "studio_storage",
+        "typing"
       ],
       "markers": {
-        "events": 0,
+        "events": 1,
         "jobs": 0,
         "migrations": 5,
         "permissions": 0,
-        "stores": 16
+        "stores": 17
       },
       "package": "studio_ml",
       "path": "python/studio_ml/postgres.py",
@@ -7695,7 +7767,9 @@
         "_commit_ml_registry_bundle_import",
         "_identity",
         "_path",
+        "_plan_ml_registry_bundle_import_from_reader",
         "commit_ml_registry_bundle_import",
+        "commit_registry_bundle_import",
         "export_ml_registry_bundle",
         "from_payload",
         "get_bytes_by_storage_ref",
@@ -7708,7 +7782,8 @@
         "put_experiment",
         "record_run",
         "register_model",
-        "to_payload"
+        "to_payload",
+        "validate_registry_bundle_import"
       ],
       "imports": [
         "__future__",
@@ -7729,7 +7804,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 11,
-        "stores": 56
+        "stores": 60
       },
       "package": "studio_ml",
       "path": "python/studio_ml/registry_bundle.py",
@@ -8054,6 +8129,7 @@
       "functions": [
         "__init__",
         "_connect",
+        "database_path",
         "get_drift_policy",
         "get_feature_definition",
         "get_lab",
@@ -8065,6 +8141,7 @@
         "list_quality_suites",
         "put_drift_policy",
         "put_feature_definition",
+        "put_feature_definition_in_transaction",
         "put_lab",
         "put_pipeline",
         "put_quality_suite"
@@ -8087,7 +8164,7 @@
         "jobs": 0,
         "migrations": 14,
         "permissions": 0,
-        "stores": 13
+        "stores": 17
       },
       "package": "studio_ml",
       "path": "python/studio_ml/sqlite.py",
@@ -10694,7 +10771,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 2,
-        "stores": 5
+        "stores": 7
       },
       "package": "studio_semantic",
       "path": "python/studio_semantic/__init__.py",
@@ -10704,11 +10781,13 @@
     {
       "classes": [
         "SemanticBundleImportPlan",
+        "SemanticBundleImportStore",
         "SemanticBundleStore"
       ],
       "functions": [
         "_path",
         "build_semantic_bundle",
+        "commit_bundle_import",
         "commit_semantic_bundle_import",
         "export_semantic_bundle",
         "list_dashboards",
@@ -10949,6 +11028,7 @@
       "functions": [
         "__init__",
         "_validate_project",
+        "commit_bundle_import",
         "get_dashboard",
         "get_model",
         "list_dashboards",
@@ -10958,6 +11038,7 @@
       ],
       "imports": [
         "__future__",
+        "contextlib",
         "contracts",
         "pathlib",
         "sqlite3"
@@ -10967,7 +11048,7 @@
         "jobs": 0,
         "migrations": 2,
         "permissions": 1,
-        "stores": 14
+        "stores": 15
       },
       "package": "studio_semantic",
       "path": "python/studio_semantic/store.py",
@@ -12072,10 +12153,17 @@
     },
     {
       "classes": [
+        "BundlePayloadReader",
         "VerifiedBundlePayload"
       ],
       "functions": [
-        "read_bundle_payload"
+        "__enter__",
+        "__exit__",
+        "__init__",
+        "close",
+        "manifest",
+        "read_bundle_payload",
+        "read_payload"
       ],
       "imports": [
         "__future__",
@@ -12084,6 +12172,7 @@
         "hashlib",
         "pathlib",
         "studio_core",
+        "types",
         "zipfile"
       ],
       "markers": {
@@ -12538,6 +12627,7 @@
         "_model_from_json",
         "_require_active_workspace",
         "_require_asset_ref",
+        "commit_registry_bundle_import",
         "get_champion_model",
         "get_deployment",
         "get_experiment",
@@ -12556,7 +12646,8 @@
         "record_evaluation",
         "record_run",
         "register_model",
-        "update_deployment"
+        "update_deployment",
+        "validate_registry_bundle_import"
       ],
       "imports": [
         "__future__",
@@ -12577,7 +12668,7 @@
         "jobs": 0,
         "migrations": 19,
         "permissions": 0,
-        "stores": 13
+        "stores": 26
       },
       "package": "studio_storage",
       "path": "python/studio_storage/ml.py",
@@ -12598,7 +12689,8 @@
         "list_versions",
         "migrate_ontology",
         "ontology_schema_version",
-        "put"
+        "put",
+        "put_many"
       ],
       "imports": [
         "__future__",
@@ -12871,6 +12963,7 @@
         "replace_connection",
         "replace_project",
         "search_assets",
+        "shares_database_with",
         "unregister_project",
         "update_workspace",
         "upstream"
@@ -12893,7 +12986,7 @@
         "jobs": 20,
         "migrations": 16,
         "permissions": 1,
-        "stores": 18
+        "stores": 21
       },
       "package": "studio_storage",
       "path": "python/studio_storage/postgres_core.py",
@@ -12957,6 +13050,7 @@
       "functions": [
         "_active",
         "_asset",
+        "commit_registry_bundle_import",
         "get_champion_model",
         "get_deployment",
         "get_experiment",
@@ -12973,7 +13067,8 @@
         "record_evaluation",
         "record_run",
         "register_model",
-        "update_deployment"
+        "update_deployment",
+        "validate_registry_bundle_import"
       ],
       "imports": [
         "__future__",
@@ -12991,7 +13086,7 @@
         "jobs": 0,
         "migrations": 5,
         "permissions": 0,
-        "stores": 12
+        "stores": 29
       },
       "package": "studio_storage",
       "path": "python/studio_storage/postgres_ml.py",
@@ -14116,29 +14211,40 @@
     },
     {
       "classes": [
-        "SqliteStreamCheckpointStore"
+        "SqliteStreamCheckpointStore",
+        "StreamDefinitionConflict"
       ],
       "functions": [
         "__init__",
         "_connect",
         "_from_json",
         "_json",
+        "_validate_project_id",
+        "_validate_stream_id",
+        "commit_stream_bundle_import",
         "compare_and_set",
-        "get"
+        "get",
+        "get_definition",
+        "list_definitions",
+        "runtime_stream_id"
       ],
       "imports": [
         "__future__",
+        "collections",
+        "contextlib",
         "contracts",
+        "hashlib",
         "json",
         "pathlib",
-        "sqlite3"
+        "sqlite3",
+        "studio_core"
       ],
       "markers": {
         "events": 0,
         "jobs": 0,
-        "migrations": 1,
+        "migrations": 3,
         "permissions": 0,
-        "stores": 11
+        "stores": 15
       },
       "package": "studio_streaming",
       "path": "python/studio_streaming/checkpoint.py",
@@ -14150,11 +14256,16 @@
         "StreamBatch",
         "StreamCheckpoint",
         "StreamCheckpointStore",
+        "StreamDefinition",
         "StreamPosition",
         "StreamRecord",
+        "StreamRuntimeBinding",
+        "StreamSchemaField",
         "StreamSink",
         "StreamSinkCommit",
-        "StreamSource"
+        "StreamSinkDefinition",
+        "StreamSource",
+        "StreamSourceDefinition"
       ],
       "functions": [
         "__post_init__",
@@ -14162,11 +14273,28 @@
         "__post_init__",
         "__post_init__",
         "__post_init__",
+        "__post_init__",
+        "__post_init__",
+        "__post_init__",
+        "__post_init__",
+        "__post_init__",
+        "_definition_text",
         "compare_and_set",
         "digest",
+        "from_json",
+        "from_payload",
+        "from_payload",
+        "from_payload",
+        "from_payload",
         "get",
         "offset_for",
         "poll",
+        "to_json",
+        "to_payload",
+        "to_payload",
+        "to_payload",
+        "to_payload",
+        "to_payload",
         "write"
       ],
       "imports": [
@@ -14174,6 +14302,7 @@
         "collections",
         "dataclasses",
         "hashlib",
+        "math",
         "studio_core",
         "typing"
       ],
@@ -14316,6 +14445,7 @@
       ],
       "imports": [
         "__future__",
+        "contextlib",
         "contracts",
         "json",
         "pathlib",
@@ -15763,6 +15893,7 @@
     {
       "classes": [],
       "functions": [
+        "test_postgres_bundle_late_binding_conflict_rolls_back_earlier_connection_insert",
         "test_postgres_bundle_multi_object_commit_is_atomic_and_idempotent"
       ],
       "imports": [
@@ -15778,8 +15909,8 @@
         "events": 0,
         "jobs": 0,
         "migrations": 0,
-        "permissions": 1,
-        "stores": 19
+        "permissions": 2,
+        "stores": 35
       },
       "package": null,
       "path": "tests/integration/test_postgres_bundle_real.py",
@@ -15899,17 +16030,26 @@
       "test": true
     },
     {
-      "classes": [],
+      "classes": [
+        "ImportCancelled"
+      ],
       "functions": [
+        "_create_registry_bundle_dataset",
         "cancel",
         "claim",
+        "import_bundle",
         "test_postgres_ml_lab_v1_round_trips_clustering_and_unknown_metadata",
         "test_postgres_ml_node_checkpoint_survives_service_reopen",
         "test_postgres_ml_reference_list_limits_fail_closed",
+        "test_postgres_ml_registry_bundle_feature_failure_rolls_back_experiment",
+        "test_postgres_ml_registry_bundle_is_atomic_concurrent_and_replayable",
+        "test_postgres_ml_registry_bundle_late_model_conflict_rolls_back_all_rows",
+        "test_postgres_ml_registry_bundle_missing_run_dataset_rolls_back_experiment",
         "test_postgres_ml_registry_round_trip_and_conflict_guards",
         "test_postgres_ml_rejects_mutation_for_archived_workspaces",
         "test_postgres_shared_job_claim_racing_cancel_finishes_without_deadlock",
-        "test_postgres_shared_job_store_claim_target_and_cancel_fence"
+        "test_postgres_shared_job_store_claim_target_and_cancel_fence",
+        "write_then_cancel"
       ],
       "imports": [
         "__future__",
@@ -15927,10 +16067,10 @@
       ],
       "markers": {
         "events": 0,
-        "jobs": 45,
+        "jobs": 46,
         "migrations": 0,
         "permissions": 0,
-        "stores": 102
+        "stores": 151
       },
       "package": null,
       "path": "tests/integration/test_postgres_ml_real.py",
@@ -17100,16 +17240,23 @@
       "classes": [],
       "functions": [
         "_files",
+        "fail_open",
         "test_bundle_bytes_are_deterministic_and_round_trip",
         "test_bundle_detects_payload_tampering",
+        "test_bundle_payload_reader_enforces_state_and_entry_limits",
+        "test_bundle_payload_reader_normalizes_archive_io_errors",
+        "test_bundle_payload_reader_rechecks_bytes_after_archive_verification",
+        "test_bundle_payload_rejects_invalid_read_request_before_verification",
         "test_bundle_rejects_duplicate_payload_paths",
         "test_bundle_rejects_path_traversal_member_before_extraction",
         "test_bundle_rejects_reserved_manifest_payload_path",
         "test_bundle_rejects_unmanifested_member",
-        "test_extract_requires_new_target_directory"
+        "test_extract_requires_new_target_directory",
+        "verification_must_not_run"
       ],
       "imports": [
         "__future__",
+        "io",
         "pathlib",
         "pytest",
         "studio_storage",
@@ -17139,7 +17286,8 @@
         "test_multi_object_commit_is_atomic_and_retry_safe",
         "test_multi_object_commit_rejects_unresolved_bindings_before_mutation",
         "test_multi_object_commit_rolls_back_all_objects_when_environment_is_missing",
-        "test_multi_object_commit_rolls_back_project_when_resolved_connection_conflicts"
+        "test_multi_object_commit_rolls_back_project_when_resolved_connection_conflicts",
+        "test_multi_object_storage_commit_rolls_back_connection_on_late_binding_conflict"
       ],
       "imports": [
         "__future__",
@@ -17155,7 +17303,7 @@
         "jobs": 0,
         "migrations": 2,
         "permissions": 1,
-        "stores": 39
+        "stores": 44
       },
       "package": null,
       "path": "tests/test_bundle_multi_object_commit.py",
@@ -17169,10 +17317,12 @@
         "_project",
         "_target",
         "_write_project_connection_bundle",
+        "count_verifications",
         "test_multi_object_plan_orders_dependencies_and_does_not_mutate_target",
         "test_multi_object_plan_rejects_cyclic_dependencies",
         "test_multi_object_plan_rejects_unknown_object_kind",
-        "test_multi_object_plan_reports_kind_specific_collisions"
+        "test_multi_object_plan_reports_kind_specific_collisions",
+        "test_multi_object_plan_verifies_archive_once_for_all_inventory_entries"
       ],
       "imports": [
         "__future__",
@@ -17309,11 +17459,16 @@
         "__init__",
         "_contract",
         "_ontology",
+        "_sqlite_ontology_store",
         "list_all",
         "list_contracts",
         "put",
         "put_contract",
         "put_contracts",
+        "put_many",
+        "test_ontology_bundle_import_is_atomic_on_late_definition_conflict",
+        "test_ontology_bundle_import_is_atomic_on_late_missing_asset",
+        "test_ontology_bundle_import_replays_exactly_on_sqlite",
         "test_ontology_bundle_rejects_inventory_media_type_drift",
         "test_ontology_bundle_round_trip_preserves_definition_identity",
         "test_quality_bundle_round_trip_preserves_contract_identity"
@@ -17331,9 +17486,9 @@
       "markers": {
         "events": 0,
         "jobs": 0,
-        "migrations": 0,
+        "migrations": 3,
         "permissions": 0,
-        "stores": 8
+        "stores": 37
       },
       "package": null,
       "path": "tests/test_bundle_quality_ontology.py",
@@ -18113,6 +18268,7 @@
         "test_invalid_resource_control_frames_fail_closed",
         "test_measurement_falls_back_without_lying_when_supervisor_cannot_run",
         "test_observed_resource_frame_is_strict_and_unit_normalized",
+        "test_posix_returncode_fallback_does_not_poll_and_reap_native_process",
         "test_resource_unavailability_reasons_are_explicit"
       ],
       "imports": [
@@ -18124,6 +18280,7 @@
         "studio_notebook",
         "studio_runners",
         "sys",
+        "types",
         "typing"
       ],
       "markers": {
@@ -19536,6 +19693,9 @@
     {
       "classes": [],
       "functions": [
+        "run",
+        "test_check_rejects_invalid_explicit_reference",
+        "test_check_uses_explicit_base_reference",
         "test_synchronize_rejects_invalid_sha",
         "test_synchronize_updates_machine_and_human_ledgers"
       ],
@@ -19544,6 +19704,7 @@
         "json",
         "pathlib",
         "pytest",
+        "subprocess",
         "tools"
       ],
       "markers": {
@@ -19861,14 +20022,31 @@
     {
       "classes": [],
       "functions": [
+        "_fanout_snapshot",
         "_snapshot",
+        "expensive_scan",
+        "replace_after_root_scan",
         "test_graph_contracts_reject_noncanonical_objects_and_dangling_links",
+        "test_graph_query_rejects_non_integer_execution_budgets",
+        "test_graph_store_chunks_large_frontiers_and_honors_global_neighbor_limit",
+        "test_graph_store_rejects_invalid_bounded_read_arguments",
+        "test_graph_traverse_rejects_non_integer_depth",
         "test_materialization_builds_virtual_links_and_checks_cardinality",
         "test_materialization_uses_governed_keys_and_rejects_missing_required_fields",
+        "test_native_graph_query_pins_snapshot_while_replacement_commits",
+        "test_native_provider_batches_neighbors_and_applies_result_limit",
+        "test_native_provider_counts_edges_even_when_result_limit_is_one",
+        "test_native_provider_enforces_node_budget_during_traversal",
         "test_native_provider_executes_filters_and_bounded_traversal",
+        "test_native_provider_hard_stops_when_node_scan_exceeds_budget",
+        "test_native_provider_interrupts_sqlite_work_at_query_deadline",
         "test_native_provider_rejects_missing_return_fields",
         "test_rql_parser_builds_bounded_query_and_rejects_unsupported_input",
-        "test_sqlite_store_round_trips_snapshot_and_replaces_atomically"
+        "test_rql_parser_preserves_quoted_scalar_types_and_rejects_joined_fields",
+        "test_rql_parser_rejects_oversized_text_and_token_count",
+        "test_sqlite_read_snapshot_does_not_mix_concurrent_replacement",
+        "test_sqlite_store_round_trips_snapshot_and_replaces_atomically",
+        "tracked_connect"
       ],
       "imports": [
         "pathlib",
@@ -19881,7 +20059,7 @@
         "jobs": 0,
         "migrations": 0,
         "permissions": 0,
-        "stores": 26
+        "stores": 99
       },
       "package": null,
       "path": "tests/test_graph_runtime.py",
@@ -20172,12 +20350,16 @@
       "classes": [],
       "functions": [
         "test_artifact_smoke_rejects_paths_outside_extraction_root",
-        "test_artifact_smoke_resolves_safe_posix_member_under_root"
+        "test_artifact_smoke_resolves_safe_posix_member_under_root",
+        "test_artifact_smoke_starts_without_source_tree_pythonpath"
       ],
       "imports": [
         "__future__",
+        "os",
         "pathlib",
         "pytest",
+        "subprocess",
+        "sys",
         "tools"
       ],
       "markers": {
@@ -22047,12 +22229,26 @@
       "test": true
     },
     {
-      "classes": [],
+      "classes": [
+        "CancelledFeatureStore"
+      ],
       "functions": [
         "_run",
         "_stores",
+        "import_bundle",
+        "put_feature_definition_in_transaction",
+        "test_cancelled_ml_registry_bundle_import_rolls_back_sqlite_metadata",
+        "test_concurrent_ml_registry_bundle_import_rolls_back_late_conflicting_bundle",
         "test_ml_parameters_reject_credential_bearing_keys",
+        "test_ml_registry_bundle_feature_conflict_rolls_back_registry_rows",
+        "test_ml_registry_bundle_late_model_conflict_rolls_back_all_sqlite_metadata",
+        "test_ml_registry_bundle_missing_feature_dataset_rolls_back_registry_rows",
+        "test_ml_registry_bundle_missing_run_dataset_rolls_back_all_sqlite_metadata",
+        "test_ml_registry_bundle_rejects_champion_without_passed_evaluation",
+        "test_ml_registry_bundle_rejects_feature_store_on_another_database_before_import",
+        "test_ml_registry_bundle_rejects_multiple_champion_versions_for_one_model",
         "test_ml_registry_bundle_round_trip_preserves_experiments_runs_and_models",
+        "test_ml_registry_bundle_wont_replace_an_existing_champion_version",
         "test_ml_registry_retention_limits_fail_closed",
         "test_ml_run_id_reuse_with_different_content_fails_closed",
         "test_model_promotion_archives_previous_champion_atomically",
@@ -22061,19 +22257,21 @@
       ],
       "imports": [
         "__future__",
+        "concurrent",
         "pathlib",
         "pytest",
         "studio_core",
         "studio_ml",
         "studio_orchestrator",
-        "studio_storage"
+        "studio_storage",
+        "threading"
       ],
       "markers": {
         "events": 0,
-        "jobs": 8,
-        "migrations": 3,
+        "jobs": 23,
+        "migrations": 13,
         "permissions": 0,
-        "stores": 59
+        "stores": 163
       },
       "package": null,
       "path": "tests/test_ml_foundation.py",
@@ -23247,6 +23445,33 @@
     {
       "classes": [],
       "functions": [
+        "_definitions",
+        "test_core_and_graph_runtimes_ignore_null_and_self_links_consistently",
+        "test_core_and_graph_runtimes_join_typed_property_aliases_consistently",
+        "test_core_and_graph_runtimes_use_source_to_target_cardinality",
+        "test_ontology_rejects_links_with_unknown_or_incompatible_properties"
+      ],
+      "imports": [
+        "__future__",
+        "pytest",
+        "studio_core",
+        "studio_graph"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 0
+      },
+      "package": null,
+      "path": "tests/test_ontology_cardinality_parity.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
         "test_knowledge_graph_store_round_trips_objects_and_links",
         "test_ontology_action_replay_is_durable_and_conflict_checked"
       ],
@@ -23301,7 +23526,9 @@
       "classes": [],
       "functions": [
         "_object_type",
+        "test_core_materialization_rejects_null_required_non_key_property",
         "test_knowledge_graph_limits_apply_to_object_and_neighbor_queries",
+        "test_link_resolution_uses_typed_values_and_never_joins_nulls",
         "test_link_type_rejects_unsupported_cardinality_and_unaligned_fields",
         "test_materialize_object_type_creates_stable_objects",
         "test_materialize_rejects_bounds_null_keys_and_preserves_optional_missing_values",
@@ -23310,8 +23537,9 @@
         "test_ontology_identifiers_reject_non_canonical_text",
         "test_ontology_link_resolution_returns_no_match",
         "test_ontology_materialization_and_link_limits_have_exact_contracts",
+        "test_ontology_property_types_are_closed_and_values_are_canonicalized",
+        "test_resolve_link_type_enforces_source_side_many_to_one_cardinality",
         "test_resolve_link_type_enforces_target_cardinality_and_returns_sorted_pairs",
-        "test_resolve_link_type_enforces_target_side_many_to_one_cardinality",
         "test_resolve_link_type_joins_references_and_enforces_cardinality",
         "test_resolve_link_type_rejects_bounds_and_mismatched_object_types",
         "test_resolve_link_type_rejects_source_mismatch_link_limit_and_one_to_one",
@@ -23347,7 +23575,7 @@
         "test_action_execution_without_idempotency_does_not_load_or_record_replay",
         "test_action_replay_returns_saved_result_before_authorization_or_write",
         "test_each_link_cardinality_accepts_a_single_matching_pair",
-        "test_materialization_accepts_limit_boundary_and_stringifies_key_values",
+        "test_materialization_accepts_limit_boundary_and_canonicalizes_integer_keys",
         "test_materialization_rejects_non_object_rows",
         "test_ontology_contracts_round_trip_nested_payloads_and_asset_refs",
         "write"
@@ -25133,6 +25361,36 @@
       },
       "package": null,
       "path": "tests/test_postgres_jobstore_contract.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "_unconnected_feature_store",
+        "_unconnected_store",
+        "test_postgres_bundle_feature_import_requires_same_database_and_writer",
+        "test_postgres_bundle_import_rejects_cross_database_features_before_connecting",
+        "test_postgres_bundle_validation_does_not_require_a_feature_store_without_features",
+        "unexpected_connection"
+      ],
+      "imports": [
+        "__future__",
+        "pytest",
+        "studio_core",
+        "studio_ml",
+        "studio_storage",
+        "types"
+      ],
+      "markers": {
+        "events": 0,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 0,
+        "stores": 57
+      },
+      "package": null,
+      "path": "tests/test_postgres_ml_bundle_import.py",
       "routes": [],
       "test": true
     },
@@ -27416,23 +27674,32 @@
     {
       "classes": [],
       "functions": [
+        "_dashboard",
         "_model",
+        "import_bundle",
+        "test_concurrent_conflicting_semantic_bundle_imports_have_one_winner",
+        "test_semantic_bundle_conflict_does_not_commit_earlier_model",
+        "test_semantic_bundle_import_rolls_back_models_when_dashboard_write_fails",
         "test_semantic_bundle_round_trip_is_deterministic",
         "test_semantic_models_are_durable_and_project_scoped",
         "test_semantic_store_rejects_invalid_project_id"
       ],
       "imports": [
         "__future__",
+        "concurrent",
+        "contextlib",
         "pathlib",
         "pytest",
-        "studio_semantic"
+        "sqlite3",
+        "studio_semantic",
+        "threading"
       ],
       "markers": {
         "events": 0,
-        "jobs": 0,
+        "jobs": 1,
         "migrations": 0,
         "permissions": 1,
-        "stores": 24
+        "stores": 45
       },
       "package": null,
       "path": "tests/test_semantic_store.py",
@@ -28074,6 +28341,39 @@
       },
       "package": null,
       "path": "tests/test_stream_table.py",
+      "routes": [],
+      "test": true
+    },
+    {
+      "classes": [],
+      "functions": [
+        "_bindings",
+        "_definition",
+        "test_stream_bundle_import_rolls_back_every_definition_on_late_resume_conflict",
+        "test_stream_bundle_requires_bindings_and_reset_then_uses_fresh_checkpoint",
+        "test_stream_bundle_resume_requires_matching_definition_and_keeps_offsets",
+        "test_stream_checkpoint_digest_corruption_fails_closed_on_read_and_resume",
+        "test_stream_definition_is_canonical_and_rejects_runtime_secrets",
+        "test_stream_runtime_checkpoints_are_scoped_by_project_and_definition"
+      ],
+      "imports": [
+        "__future__",
+        "contextlib",
+        "pathlib",
+        "pytest",
+        "sqlite3",
+        "studio_execution",
+        "studio_streaming"
+      ],
+      "markers": {
+        "events": 45,
+        "jobs": 0,
+        "migrations": 0,
+        "permissions": 1,
+        "stores": 39
+      },
+      "package": null,
+      "path": "tests/test_streaming_bundle.py",
       "routes": [],
       "test": true
     },
@@ -29344,11 +29644,11 @@
     }
   ],
   "marker_counts": {
-    "events": 3423,
-    "jobs": 13766,
-    "migrations": 1787,
-    "permissions": 2624,
-    "stores": 9399
+    "events": 3469,
+    "jobs": 13786,
+    "migrations": 1802,
+    "permissions": 2626,
+    "stores": 9880
   },
   "packages": {
     "studio_cli": 6,
@@ -29356,7 +29656,7 @@
     "studio_connectors": 12,
     "studio_core": 42,
     "studio_data_engineering": 22,
-    "studio_execution": 38,
+    "studio_execution": 39,
     "studio_finops": 4,
     "studio_graph": 6,
     "studio_kernel": 5,
@@ -29386,7 +29686,7 @@
     "studio_worker": 5
   },
   "python_source": "python",
-  "root": "repo-analysis-ml-candidate-grid",
+  "root": "repo-analysis",
   "routes": [
     {
       "file": "python/studio_cloud/plugin.py",
@@ -30106,8 +30406,8 @@
   "schema_version": 1,
   "summary": {
     "packages": 33,
-    "python_files": 811,
+    "python_files": 815,
     "routes": 102,
-    "test_files": 436
+    "test_files": 439
   }
 }

@@ -13,6 +13,7 @@ def test_artifact_retention_preview_is_read_only_and_reports_snapshot_quality(
 ) -> None:
     monkeypatch.setenv("RONIN_DB", str(tmp_path / "ronin.sqlite3"))
     monkeypatch.setenv("RONIN_STORAGE_BACKEND", "sqlite")
+    monkeypatch.setattr("studio_cli.retention._unreviewed_plugins", lambda _host: ())
 
     assert main(["artifacts", "retention", "preview"]) == 0
     result = json.loads(capsys.readouterr().out)
