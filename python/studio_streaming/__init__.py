@@ -1,15 +1,21 @@
 """Streaming and real-time micro-batch runtime for Ronin Public v1."""
 
-from .checkpoint import SqliteStreamCheckpointStore
+from .checkpoint import SqliteStreamCheckpointStore, StreamDefinitionConflict
 from .contracts import (
     StreamBatch,
     StreamCheckpoint,
     StreamCheckpointStore,
+    StreamDataType,
+    StreamDefinition,
     StreamPosition,
     StreamRecord,
+    StreamRuntimeBinding,
+    StreamSchemaField,
     StreamSink,
     StreamSinkCommit,
+    StreamSinkDefinition,
     StreamSource,
+    StreamSourceDefinition,
 )
 from .health import stream_health
 from .kafka import KafkaDependencyError, KafkaJsonSource
@@ -36,11 +42,18 @@ __all__ = (
     "StreamCheckpoint",
     "StreamCheckpointConflict",
     "StreamCheckpointStore",
+    "StreamDataType",
+    "StreamDefinition",
+    "StreamDefinitionConflict",
     "StreamPosition",
     "StreamRecord",
+    "StreamRuntimeBinding",
+    "StreamSchemaField",
+    "StreamSinkDefinition",
     "StreamSink",
     "StreamSinkCommit",
     "StreamSource",
+    "StreamSourceDefinition",
     "StreamTransform",
     "EventTimeWindow",
     "WindowedBatch",
