@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Barrier
 
 import pytest
 from studio_core import (
@@ -176,13 +178,112 @@ def test_ml_registry_bundle_round_trip_preserves_experiments_runs_and_models(
     assert plan.models == (model,)
     assert plan.evaluations == (evaluation,)
 
-    target, _catalog = _stores(tmp_path / "target.sqlite3")
+    target_path = tmp_path / "target.sqlite3"
+    target, _catalog = _stores(target_path)
     commit_ml_registry_bundle_import(bundle, _WS, target, now=_NOW)
-    commit_ml_registry_bundle_import(bundle, _WS, target, now=_NOW)
+    reopened_target = SqliteMLStore(target_path, migration_now=_NOW)
+    commit_ml_registry_bundle_import(bundle, _WS, reopened_target, now=_NOW)
     assert target.list_experiments(_WS) == (experiment,)
     assert target.list_runs(_WS) == (run,)
     assert target.list_models(_WS) == (model,)
     assert target.list_evaluations(_WS, model.model_id, model.version) == (evaluation,)
+
+
+def test_concurrent_ml_registry_bundle_import_rolls_back_late_conflicting_bundle(
+    tmp_path: Path,
+) -> None:
+    bundle_paths: list[Path] = []
+    for label in ("first", "second"):
+        source, _catalog = _stores(tmp_path / f"{label}-source.sqlite3")
+        experiment = Experiment(ExperimentId(f"exp-{label}"), label)
+        run = MLRunRecord(
+            MLRunId(f"run-{label}"),
+            experiment.id,
+            f"job-{label}/run-1/attempt-1",
+            f"git:{label}",
+            datasets=(_DATA,),
+        )
+        model = RegisteredModelVersion(
+            ModelId("concurrent-model"),
+            ModelVersion("1"),
+            run.id,
+            f"artifact://{label}",
+            f"sha256:{label}",
+            "sklearn",
+            ModelSignature((("x", "float64"),), (("prediction", "float64"),)),
+        )
+        source.put_experiment(_WS, experiment, now=_NOW)
+        source.record_run(_WS, run, now=_NOW)
+        source.register_model(_WS, model, now=_NOW)
+        bundle_path = tmp_path / f"{label}.roninbundle"
+        export_ml_registry_bundle(_WS, source, bundle_path)
+        bundle_paths.append(bundle_path)
+
+    target, _catalog = _stores(tmp_path / "target.sqlite3")
+    start = Barrier(3)
+
+    def import_bundle(path: Path) -> str:
+        start.wait(timeout=5)
+        try:
+            commit_ml_registry_bundle_import(path, _WS, target, now=_NOW)
+        except MLConflict:
+            return "conflict"
+        return "imported"
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(import_bundle, path) for path in bundle_paths]
+        start.wait(timeout=5)
+        outcomes = tuple(sorted(future.result(timeout=10) for future in futures))
+
+    assert outcomes == ("conflict", "imported")
+    assert len(target.list_experiments(_WS)) == 1
+    assert len(target.list_runs(_WS)) == 1
+    models = target.list_models(_WS)
+    runs = target.list_runs(_WS)
+    assert len(models) == 1
+    assert models[0].source_run_id == runs[0].id
+    assert runs[0].experiment_id == target.list_experiments(_WS)[0].id
+
+
+def test_cancelled_ml_registry_bundle_import_rolls_back_sqlite_metadata(
+    tmp_path: Path,
+) -> None:
+    source_path = tmp_path / "source.sqlite3"
+    source, _catalog = _stores(source_path)
+    source_feature_store = SqliteMLLabStore(source_path, migration_now=_NOW)
+    experiment = Experiment(ExperimentId("cancelled-import"), "Must roll back")
+    feature = FeatureDefinition(
+        "cancel-feature",
+        "Cancellation feature",
+        "project-1",
+        _DATA,
+        (FeatureSpec("amount", "numeric"),),
+    )
+    source.put_experiment(_WS, experiment, now=_NOW)
+    source_feature_store.put_feature_definition(_WS, feature)
+    bundle = tmp_path / "cancelled.roninbundle"
+    export_ml_registry_bundle(_WS, source, bundle, feature_store=source_feature_store)
+
+    target_path = tmp_path / "target.sqlite3"
+    target, _catalog = _stores(target_path)
+
+    class CancelledFeatureStore(SqliteMLLabStore):
+        def put_feature_definition_in_transaction(self, connection, workspace_id, definition):
+            del connection, workspace_id, definition
+            raise KeyboardInterrupt("simulated import cancellation")
+
+    interrupted_feature_store = CancelledFeatureStore(target_path, migration_now=_NOW)
+    with pytest.raises(KeyboardInterrupt, match="simulated import cancellation"):
+        commit_ml_registry_bundle_import(
+            bundle,
+            _WS,
+            target,
+            now=_NOW,
+            feature_store=interrupted_feature_store,
+        )
+
+    assert target.list_experiments(_WS) == ()
+    assert interrupted_feature_store.list_feature_definitions(_WS) == ()
 
 
 def test_ml_registry_bundle_rejects_champion_without_passed_evaluation(

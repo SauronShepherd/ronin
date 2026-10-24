@@ -353,7 +353,7 @@ class SqliteMLStore:
                     )
 
             connection.execute("COMMIT")
-        except Exception:
+        except BaseException:
             if connection.in_transaction:
                 connection.execute("ROLLBACK")
             raise
