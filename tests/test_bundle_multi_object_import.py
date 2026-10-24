@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import studio_storage.bundle_payload as bundle_payload
 from studio_core import (
     ConnectionDefinition,
     ConnectionId,
@@ -145,6 +146,29 @@ def test_multi_object_plan_orders_dependencies_and_does_not_mutate_target(
     }
     assert workspaces.list_projects(_WS) == ()
     assert connections.list_connections(_WS) == ()
+
+
+def test_multi_object_plan_verifies_archive_once_for_all_inventory_entries(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = tmp_path / "multi.roninbundle"
+    _write_project_connection_bundle(bundle)
+    workspaces, connections = _target(tmp_path)
+    verify_payloads = bundle_payload._verify_payloads
+    verification_count = 0
+
+    def count_verifications(*args: object, **kwargs: object) -> None:
+        nonlocal verification_count
+        verification_count += 1
+        verify_payloads(*args, **kwargs)
+
+    monkeypatch.setattr(bundle_payload, "_verify_payloads", count_verifications)
+
+    plan = plan_multi_object_bundle_import(bundle, workspaces, connections, _WS)
+
+    assert len(plan.objects) == 2
+    assert verification_count == 1
 
 
 def test_multi_object_plan_reports_kind_specific_collisions(tmp_path: Path) -> None:
