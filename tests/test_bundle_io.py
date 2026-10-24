@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import zipfile
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -13,7 +14,7 @@ from studio_storage import (
     verify_bundle,
     write_bundle,
 )
-from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.bundle_payload import BundlePayloadReader, read_bundle_payload
 
 
 def _files() -> tuple[BundleFile, ...]:
@@ -70,6 +71,75 @@ def test_bundle_payload_rejects_invalid_read_request_before_verification(
 
     with pytest.raises(ValueError, match="max_bytes must be positive"):
         read_bundle_payload(path, "project/notebook.py", max_bytes=0)
+    with pytest.raises(BundleIntegrityError, match="manifest is not a payload"):
+        read_bundle_payload(path, BUNDLE_MANIFEST_PATH)
+
+
+def test_bundle_payload_reader_enforces_state_and_entry_limits(tmp_path: Path) -> None:
+    path = tmp_path / "bundle.roninbundle"
+    manifest = write_bundle(path, _files())
+    reader = BundlePayloadReader(path)
+
+    with pytest.raises(RuntimeError, match="not open"):
+        _ = reader.manifest
+    with pytest.raises(RuntimeError, match="not open"):
+        reader.read_payload("project/notebook.py")
+
+    with reader as opened:
+        assert opened.manifest == manifest
+        with pytest.raises(RuntimeError, match="re-entered"):
+            opened.__enter__()
+        with pytest.raises(ValueError, match="max_bytes must be positive"):
+            opened.read_payload("project/notebook.py", max_bytes=0)
+        with pytest.raises(BundleIntegrityError, match="manifest is not a payload"):
+            opened.read_payload(BUNDLE_MANIFEST_PATH)
+        with pytest.raises(BundleIntegrityError, match="not declared"):
+            opened.read_payload("missing.txt")
+        with pytest.raises(BundleIntegrityError, match="in-memory read limit"):
+            opened.read_payload("project/notebook.py", max_bytes=1)
+
+    with pytest.raises(RuntimeError, match="not open"):
+        reader.read_payload("project/notebook.py")
+    with pytest.raises(RuntimeError, match="not open"):
+        _ = reader.manifest
+    reader.close()
+
+
+def test_bundle_payload_reader_normalizes_archive_io_errors(tmp_path: Path) -> None:
+    with (
+        pytest.raises(BundleIntegrityError, match="archive is unreadable"),
+        BundlePayloadReader(tmp_path / "missing.roninbundle"),
+    ):
+        pytest.fail("missing archive must not open")
+
+    path = tmp_path / "bundle.roninbundle"
+    write_bundle(path, _files())
+    with BundlePayloadReader(path) as reader:
+        assert reader._archive is not None
+
+        def fail_open(*_args: object, **_kwargs: object) -> None:
+            raise OSError("read failed")
+
+        reader._archive.open = fail_open  # type: ignore[method-assign]
+        with pytest.raises(BundleIntegrityError, match="archive is unreadable"):
+            reader.read_payload("project/notebook.py")
+
+
+def test_bundle_payload_reader_rechecks_bytes_after_archive_verification(tmp_path: Path) -> None:
+    path = tmp_path / "bundle.roninbundle"
+    write_bundle(path, _files())
+    with BundlePayloadReader(path) as reader:
+        assert reader._archive is not None
+        reader._archive.open = lambda *_args, **_kwargs: BytesIO(b"x" * 64)  # type: ignore[method-assign]
+        with pytest.raises(BundleIntegrityError, match="expanded beyond its declared limit"):
+            reader.read_payload("project/notebook.py")
+
+    with BundlePayloadReader(path) as reader:
+        assert reader._archive is not None
+        entry_bytes = b"x" * len(b"print('hello')\n")
+        reader._archive.open = lambda *_args, **_kwargs: BytesIO(entry_bytes)  # type: ignore[method-assign]
+        with pytest.raises(BundleIntegrityError, match="changed during verified read"):
+            reader.read_payload("project/notebook.py")
 
 
 def test_bundle_detects_payload_tampering(tmp_path: Path) -> None:
@@ -86,6 +156,11 @@ def test_bundle_detects_payload_tampering(tmp_path: Path) -> None:
 
     with pytest.raises(BundleIntegrityError, match="digest"):
         verify_bundle(tampered)
+    with (
+        pytest.raises(BundleIntegrityError, match="digest"),
+        BundlePayloadReader(tampered),
+    ):
+        pytest.fail("tampered archive must fail during reader verification")
 
 
 def test_bundle_rejects_unmanifested_member(tmp_path: Path) -> None:
