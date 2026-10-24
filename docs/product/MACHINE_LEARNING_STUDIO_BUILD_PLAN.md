@@ -1114,7 +1114,10 @@ dataset ausente y cancelación durante la escritura; la suite relacionada pasó
 41/41 localmente en Windows/Python 3.13, conectada a PostgreSQL en Docker y con
 `ResourceWarning` como error. Ruff, formato, mypy, architecture gate y
 consistencia del ledger también pasan; la cualificación exact-head de este
-candidato sigue pendiente.
+candidato sigue pendiente. El primer workflow exact-head ejecutó 3929 pruebas
+(14 omitidas), pero detectó que `postgres_ml.py` mejoró a 76.16% y superó el
+margen del ratchet frente a 72.52%; el baseline se actualizó a 74.07% y debe
+volver a cualificarse.
 
 El flujo síncrono de ejecución acepta ahora de forma coherente la opción
 `register` que ya consumía internamente el camino de clustering. El handler
