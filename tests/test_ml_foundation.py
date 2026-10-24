@@ -38,7 +38,7 @@ from studio_ml import (
     resolve_champion_model,
 )
 from studio_orchestrator import Instant
-from studio_storage.catalog import SqliteCatalogStore
+from studio_storage.catalog import CatalogAssetNotFound, SqliteCatalogStore
 from studio_storage.ml import MLConflict, SqliteMLStore
 from studio_storage.workspaces import SqliteWorkspaceStore
 
@@ -381,6 +381,85 @@ def test_ml_registry_bundle_late_model_conflict_rolls_back_all_sqlite_metadata(
         target.list_runs(_WS),
         target.list_models(_WS),
     ) == before
+
+
+def test_ml_registry_bundle_missing_run_dataset_rolls_back_all_sqlite_metadata(
+    tmp_path: Path,
+) -> None:
+    source, source_catalog = _stores(tmp_path / "source.sqlite3")
+    missing_in_target = AssetRef(AssetId("dataset-2"), AssetVersion("v1"))
+    source_catalog.create_asset(
+        _WS, CatalogAsset(AssetId("dataset-2"), "dataset", "additional"), now=_NOW
+    )
+    source_catalog.put_revision(
+        _WS, AssetRevision(missing_in_target, content_digest="sha256:data-2"), now=_NOW
+    )
+    experiment = Experiment(ExperimentId("late-dataset-experiment"), "Imported")
+    run = MLRunRecord(
+        MLRunId("late-dataset-run"),
+        experiment.id,
+        "job-late/run-1/attempt-1",
+        "git:late",
+        datasets=(missing_in_target,),
+    )
+    source.put_experiment(_WS, experiment, now=_NOW)
+    source.record_run(_WS, run, now=_NOW)
+    bundle = tmp_path / "missing-run-dataset.roninbundle"
+    export_ml_registry_bundle(_WS, source, bundle)
+
+    target, _target_catalog = _stores(tmp_path / "target.sqlite3")
+    with pytest.raises(CatalogAssetNotFound, match="dataset-2@v1"):
+        commit_ml_registry_bundle_import(bundle, _WS, target, now=_NOW)
+
+    assert target.list_experiments(_WS) == ()
+    assert target.list_runs(_WS) == ()
+    assert target.list_models(_WS) == ()
+
+
+def test_ml_registry_bundle_missing_feature_dataset_rolls_back_registry_rows(
+    tmp_path: Path,
+) -> None:
+    source_path = tmp_path / "source.sqlite3"
+    source, source_catalog = _stores(source_path)
+    source_features = SqliteMLLabStore(source_path, migration_now=_NOW)
+    missing_in_target = AssetRef(AssetId("dataset-feature-only"), AssetVersion("v1"))
+    source_catalog.create_asset(
+        _WS,
+        CatalogAsset(AssetId("dataset-feature-only"), "dataset", "feature-only"),
+        now=_NOW,
+    )
+    source_catalog.put_revision(
+        _WS,
+        AssetRevision(missing_in_target, content_digest="sha256:feature-only"),
+        now=_NOW,
+    )
+    experiment = Experiment(ExperimentId("feature-dataset-experiment"), "Imported")
+    feature = FeatureDefinition(
+        "feature-missing-target-data",
+        "Feature with external dataset",
+        "project-1",
+        missing_in_target,
+        (FeatureSpec("amount", "numeric"),),
+    )
+    source.put_experiment(_WS, experiment, now=_NOW)
+    source_features.put_feature_definition(_WS, feature)
+    bundle = tmp_path / "missing-feature-dataset.roninbundle"
+    export_ml_registry_bundle(_WS, source, bundle, feature_store=source_features)
+
+    target_path = tmp_path / "target.sqlite3"
+    target, _target_catalog = _stores(target_path)
+    target_features = SqliteMLLabStore(target_path, migration_now=_NOW)
+    with pytest.raises(CatalogAssetNotFound, match="dataset-feature-only@v1"):
+        commit_ml_registry_bundle_import(
+            bundle,
+            _WS,
+            target,
+            now=_NOW,
+            feature_store=target_features,
+        )
+
+    assert target.list_experiments(_WS) == ()
+    assert target_features.list_feature_definitions(_WS) == ()
 
 
 def test_ml_registry_bundle_feature_conflict_rolls_back_registry_rows(
