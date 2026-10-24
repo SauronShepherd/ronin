@@ -153,20 +153,21 @@ def test_resolve_link_type_enforces_target_cardinality_and_returns_sorted_pairs(
             PropertyDefinition("order_id", "string", "order_id", True),
         ),
     )
-    sources = materialize_object_type(
-        source_type, ({"customer_id": 1, "source_id": "s1"}, {"customer_id": 1, "source_id": "s2"})
-    )
+    sources = materialize_object_type(source_type, ({"customer_id": 1, "source_id": "s1"},))
     targets = materialize_object_type(
-        target_type, ({"customer_id": 1, "order_id": "a"}, {"customer_id": 2, "order_id": "b"})
+        target_type, ({"customer_id": 1, "order_id": "a"}, {"customer_id": 1, "order_id": "b"})
     )
     link = LinkType(
         "orders", "Customer", "Order", "one-to-many", ("customer_id",), ("customer_id",)
     )
     pairs = resolve_link_type(link, sources, targets)
+    assert len(pairs) == 2
     assert pairs == tuple(sorted(pairs, key=lambda pair: (pair[0], pair[1])))
-    duplicate_target = materialize_object_type(target_type, ({"customer_id": 1, "order_id": "c"},))
-    with pytest.raises(ValueError, match="source-side cardinality"):
-        resolve_link_type(link, sources, targets[:1] + duplicate_target)
+    duplicate_source = materialize_object_type(
+        source_type, ({"customer_id": 1, "source_id": "s2"},)
+    )
+    with pytest.raises(ValueError, match="target-side cardinality"):
+        resolve_link_type(link, sources + duplicate_source, targets[:1])
 
 
 def test_resolve_link_type_rejects_source_mismatch_link_limit_and_one_to_one() -> None:
@@ -197,7 +198,7 @@ def test_resolve_link_type_rejects_source_mismatch_link_limit_and_one_to_one() -
         resolve_link_type(one_to_one, source, targets)
 
 
-def test_resolve_link_type_enforces_target_side_many_to_one_cardinality() -> None:
+def test_resolve_link_type_enforces_source_side_many_to_one_cardinality() -> None:
     source_type = ObjectType(
         "Customer",
         AssetRef(AssetId("customers"), AssetVersion("1")),
@@ -224,8 +225,12 @@ def test_resolve_link_type_enforces_target_side_many_to_one_cardinality() -> Non
     link = LinkType(
         "account", "Customer", "Account", "many-to-one", ("customer_id",), ("customer_id",)
     )
-    with pytest.raises(ValueError, match="target-side cardinality"):
-        resolve_link_type(link, sources, targets)
+    assert len(resolve_link_type(link, sources, targets)) == 2
+    duplicate_target = materialize_object_type(
+        target_type, ({"customer_id": 1, "account_id": "a"}, {"customer_id": 1, "account_id": "b"})
+    )
+    with pytest.raises(ValueError, match="source-side cardinality"):
+        resolve_link_type(link, sources[:1], duplicate_target)
 
 
 def test_resolve_link_type_returns_empty_for_nonmatching_values_and_honors_exact_limit() -> None:
