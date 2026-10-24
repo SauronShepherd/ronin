@@ -4,6 +4,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+import studio_storage.bundle_payload as bundle_payload
 from studio_storage import (
     BUNDLE_MANIFEST_PATH,
     BundleFile,
@@ -12,6 +13,7 @@ from studio_storage import (
     verify_bundle,
     write_bundle,
 )
+from studio_storage.bundle_payload import read_bundle_payload
 
 
 def _files() -> tuple[BundleFile, ...]:
@@ -52,6 +54,22 @@ def test_bundle_rejects_duplicate_payload_paths() -> None:
 def test_bundle_rejects_reserved_manifest_payload_path() -> None:
     with pytest.raises(ValueError, match="reserved"):
         BundleFile(BUNDLE_MANIFEST_PATH, "application/json", b"{}")
+
+
+def test_bundle_payload_rejects_invalid_read_request_before_verification(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "bundle.roninbundle"
+    write_bundle(path, _files())
+
+    def verification_must_not_run(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("invalid payload request must fail before archive verification")
+
+    monkeypatch.setattr(bundle_payload, "_verify_payloads", verification_must_not_run)
+
+    with pytest.raises(ValueError, match="max_bytes must be positive"):
+        read_bundle_payload(path, "project/notebook.py", max_bytes=0)
 
 
 def test_bundle_detects_payload_tampering(tmp_path: Path) -> None:

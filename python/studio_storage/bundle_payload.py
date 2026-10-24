@@ -154,8 +154,13 @@ def read_bundle_payload(
 ) -> VerifiedBundlePayload:
     """Verify the entire archive, then read one manifest-declared payload bounded in memory."""
 
+    if max_bytes <= 0:
+        raise ValueError("bundle payload max_bytes must be positive")
+    requested = _archive_path(entry_path)
+    if requested == BUNDLE_MANIFEST_PATH:
+        raise BundleIntegrityError("bundle manifest is not a payload entry")
     with BundlePayloadReader(path, limits=limits) as reader:
-        return reader.read_payload(entry_path, max_bytes=max_bytes)
+        return reader.read_payload(requested, max_bytes=max_bytes)
 
 
 __all__ = ("BundlePayloadReader", "VerifiedBundlePayload", "read_bundle_payload")
