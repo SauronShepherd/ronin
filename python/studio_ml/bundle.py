@@ -17,7 +17,7 @@ from studio_core.bundle_inventory import (
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.portability import RoninBundleManifest
 from studio_storage.bundle import BundleFile, write_bundle
-from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.bundle_payload import BundlePayloadReader
 
 from .domain import Lab, PipelineIR
 
@@ -78,24 +78,25 @@ def export_ml_bundle(
 
 
 def plan_ml_bundle_import(path: Path) -> MLBundleImportPlan:
-    inventory_payload = read_bundle_payload(path, BUNDLE_INVENTORY_PATH)
-    if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
-        raise ValueError("ML Bundle inventory has unsupported media type")
-    inventory = BundleInventory.from_payload(json.loads(inventory_payload.file.data))
-    labs: list[Lab] = []
-    pipelines: list[tuple[str, PipelineIR]] = []
-    for item in inventory.objects:
-        payload = read_bundle_payload(path, item.path)
-        if payload.manifest != inventory_payload.manifest:
-            raise ValueError("ML Bundle changed while import plan was constructed")
-        if item.kind == "ml_lab" and payload.file.media_type == LAB_MEDIA_TYPE:
-            labs.append(Lab.from_json(payload.file.data.decode("utf-8")))
-        elif item.kind == "ml_pipeline" and payload.file.media_type == PIPELINE_MEDIA_TYPE:
-            lab_id = item.logical_ref.rsplit("/", 1)[-1]
-            pipelines.append((lab_id, PipelineIR.from_json(payload.file.data.decode("utf-8"))))
-        else:
-            raise ValueError("unsupported ML Bundle object or media type")
-    return MLBundleImportPlan(inventory, tuple(labs), tuple(pipelines))
+    with BundlePayloadReader(path) as reader:
+        inventory_payload = reader.read_payload(BUNDLE_INVENTORY_PATH)
+        if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
+            raise ValueError("ML Bundle inventory has unsupported media type")
+        inventory = BundleInventory.from_payload(json.loads(inventory_payload.file.data))
+        labs: list[Lab] = []
+        pipelines: list[tuple[str, PipelineIR]] = []
+        for item in inventory.objects:
+            payload = reader.read_payload(item.path)
+            if payload.manifest != inventory_payload.manifest:
+                raise ValueError("ML Bundle changed while import plan was constructed")
+            if item.kind == "ml_lab" and payload.file.media_type == LAB_MEDIA_TYPE:
+                labs.append(Lab.from_json(payload.file.data.decode("utf-8")))
+            elif item.kind == "ml_pipeline" and payload.file.media_type == PIPELINE_MEDIA_TYPE:
+                lab_id = item.logical_ref.rsplit("/", 1)[-1]
+                pipelines.append((lab_id, PipelineIR.from_json(payload.file.data.decode("utf-8"))))
+            else:
+                raise ValueError("unsupported ML Bundle object or media type")
+        return MLBundleImportPlan(inventory, tuple(labs), tuple(pipelines))
 
 
 def commit_ml_bundle_import(

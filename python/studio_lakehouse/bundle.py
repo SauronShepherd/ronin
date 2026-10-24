@@ -15,7 +15,7 @@ from studio_core.bundle_inventory import (
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.portability import RoninBundleManifest
 from studio_storage.bundle import BundleFile, write_bundle
-from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.bundle_payload import BundlePayloadReader
 
 from .tables import TableMetadata
 
@@ -46,33 +46,34 @@ def export_table_metadata_bundle(
 def import_table_metadata_bundle(
     path: Path, *, remap_location: Callable[[TableMetadata], str] | None = None
 ) -> tuple[TableMetadata, ...]:
-    inventory_file = read_bundle_payload(path, BUNDLE_INVENTORY_PATH)
-    if inventory_file.file.media_type != INVENTORY_MEDIA_TYPE:
-        raise ValueError("lakehouse Bundle inventory has unsupported media type")
-    inventory = BundleInventory.from_payload(json.loads(inventory_file.file.data))
-    tables = []
-    for item in inventory.objects:
-        if item.kind != "table_metadata":
-            raise ValueError("unsupported lakehouse Bundle object")
-        payload = read_bundle_payload(path, item.path)
-        if (
-            payload.manifest != inventory_file.manifest
-            or payload.file.media_type != TABLE_MEDIA_TYPE
-        ):
-            raise ValueError("lakehouse Bundle integrity or media type mismatch")
-        table = TableMetadata.from_json(payload.file.data.decode())
-        if remap_location is not None:
-            table = TableMetadata(
-                table.identifier,
-                table.format,
-                remap_location(table),
-                table.managed,
-                table.schema,
-                table.partition_spec,
-                table.properties,
-            )
-        tables.append(table)
-    return tuple(tables)
+    with BundlePayloadReader(path) as reader:
+        inventory_file = reader.read_payload(BUNDLE_INVENTORY_PATH)
+        if inventory_file.file.media_type != INVENTORY_MEDIA_TYPE:
+            raise ValueError("lakehouse Bundle inventory has unsupported media type")
+        inventory = BundleInventory.from_payload(json.loads(inventory_file.file.data))
+        tables = []
+        for item in inventory.objects:
+            if item.kind != "table_metadata":
+                raise ValueError("unsupported lakehouse Bundle object")
+            payload = reader.read_payload(item.path)
+            if (
+                payload.manifest != inventory_file.manifest
+                or payload.file.media_type != TABLE_MEDIA_TYPE
+            ):
+                raise ValueError("lakehouse Bundle integrity or media type mismatch")
+            table = TableMetadata.from_json(payload.file.data.decode())
+            if remap_location is not None:
+                table = TableMetadata(
+                    table.identifier,
+                    table.format,
+                    remap_location(table),
+                    table.managed,
+                    table.schema,
+                    table.partition_spec,
+                    table.properties,
+                )
+            tables.append(table)
+        return tuple(tables)
 
 
 __all__ = ("export_table_metadata_bundle", "import_table_metadata_bundle")

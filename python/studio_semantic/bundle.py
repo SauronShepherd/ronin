@@ -16,7 +16,7 @@ from studio_core.bundle_inventory import (
 from studio_core.canonical_json import encode as encode_canonical_json
 from studio_core.portability import RoninBundleManifest
 from studio_storage.bundle import BundleFile, write_bundle
-from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.bundle_payload import BundlePayloadReader
 
 from .contracts import DashboardDefinition, SemanticModel
 
@@ -76,23 +76,24 @@ def export_semantic_bundle(
 
 
 def plan_semantic_bundle_import(path: Path) -> SemanticBundleImportPlan:
-    inventory_payload = read_bundle_payload(path, BUNDLE_INVENTORY_PATH)
-    if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
-        raise ValueError("semantic Bundle inventory has unsupported media type")
-    inventory = BundleInventory.from_payload(json.loads(inventory_payload.file.data))
-    models: list[SemanticModel] = []
-    dashboards: list[DashboardDefinition] = []
-    for item in inventory.objects:
-        payload = read_bundle_payload(path, item.path)
-        if payload.manifest != inventory_payload.manifest:
-            raise ValueError("semantic Bundle changed while import plan was constructed")
-        if item.kind == "model" and payload.file.media_type == MODEL_MEDIA_TYPE:
-            models.append(SemanticModel.from_json(payload.file.data.decode("utf-8")))
-        elif item.kind == "dashboard" and payload.file.media_type == DASHBOARD_MEDIA_TYPE:
-            dashboards.append(DashboardDefinition.from_payload(json.loads(payload.file.data)))
-        else:
-            raise ValueError("unsupported semantic Bundle object")
-    return SemanticBundleImportPlan(inventory, tuple(models), tuple(dashboards))
+    with BundlePayloadReader(path) as reader:
+        inventory_payload = reader.read_payload(BUNDLE_INVENTORY_PATH)
+        if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
+            raise ValueError("semantic Bundle inventory has unsupported media type")
+        inventory = BundleInventory.from_payload(json.loads(inventory_payload.file.data))
+        models: list[SemanticModel] = []
+        dashboards: list[DashboardDefinition] = []
+        for item in inventory.objects:
+            payload = reader.read_payload(item.path)
+            if payload.manifest != inventory_payload.manifest:
+                raise ValueError("semantic Bundle changed while import plan was constructed")
+            if item.kind == "model" and payload.file.media_type == MODEL_MEDIA_TYPE:
+                models.append(SemanticModel.from_json(payload.file.data.decode("utf-8")))
+            elif item.kind == "dashboard" and payload.file.media_type == DASHBOARD_MEDIA_TYPE:
+                dashboards.append(DashboardDefinition.from_payload(json.loads(payload.file.data)))
+            else:
+                raise ValueError("unsupported semantic Bundle object")
+        return SemanticBundleImportPlan(inventory, tuple(models), tuple(dashboards))
 
 
 def commit_semantic_bundle_import(

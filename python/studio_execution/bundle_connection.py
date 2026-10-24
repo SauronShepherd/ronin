@@ -23,7 +23,7 @@ from studio_storage.bundle import (
     BundleReadLimits,
     write_bundle,
 )
-from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.bundle_payload import BundlePayloadReader
 from studio_storage.ports import ConnectionStore, WorkspaceStore
 
 CONNECTION_BUNDLE_MEDIA_TYPE = "application/vnd.ronin.connection+json"
@@ -196,11 +196,27 @@ def plan_connection_bundle_import(
     """Verify and classify one native connection Bundle without mutating target state."""
 
     _require_active_workspace(workspace_store, workspace_id)
-    inventory_payload = read_bundle_payload(
-        bundle_path,
+    with BundlePayloadReader(bundle_path, limits=limits) as reader:
+        return _plan_connection_bundle_import_from_reader(
+            reader,
+            connection_store,
+            workspace_id,
+            max_inventory_bytes=max_inventory_bytes,
+            max_connection_bytes=max_connection_bytes,
+        )
+
+
+def _plan_connection_bundle_import_from_reader(
+    reader: BundlePayloadReader,
+    connection_store: ConnectionStore,
+    workspace_id: WorkspaceId,
+    *,
+    max_inventory_bytes: int,
+    max_connection_bytes: int,
+) -> ConnectionBundleImportPlan:
+    inventory_payload = reader.read_payload(
         BUNDLE_INVENTORY_PATH,
         max_bytes=max_inventory_bytes,
-        limits=limits,
     )
     if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
         raise UnsupportedConnectionBundle("Bundle inventory has unsupported media type")
@@ -218,12 +234,7 @@ def plan_connection_bundle_import(
             "native connection importer does not support semantic object dependencies"
         )
 
-    connection_payload = read_bundle_payload(
-        bundle_path,
-        item.path,
-        max_bytes=max_connection_bytes,
-        limits=limits,
-    )
+    connection_payload = reader.read_payload(item.path, max_bytes=max_connection_bytes)
     if connection_payload.manifest != inventory_payload.manifest:
         raise BundleIntegrityError("Bundle changed while connection import plan was constructed")
     if connection_payload.file.media_type != CONNECTION_BUNDLE_MEDIA_TYPE:

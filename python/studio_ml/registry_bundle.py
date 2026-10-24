@@ -28,7 +28,7 @@ from studio_core.ml import (
 from studio_core.portability import RoninBundleManifest
 from studio_orchestrator import Instant
 from studio_storage.bundle import BundleFile, write_bundle
-from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.bundle_payload import BundlePayloadReader
 from studio_storage.ports import ArtifactReferenceBarrier
 
 from .domain import FeatureDefinition
@@ -295,7 +295,14 @@ def _identity(kind: str, value: object) -> str:
 
 
 def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
-    inventory_payload = read_bundle_payload(path, BUNDLE_INVENTORY_PATH)
+    with BundlePayloadReader(path) as reader:
+        return _plan_ml_registry_bundle_import_from_reader(reader)
+
+
+def _plan_ml_registry_bundle_import_from_reader(
+    reader: BundlePayloadReader,
+) -> MLRegistryBundleImportPlan:
+    inventory_payload = reader.read_payload(BUNDLE_INVENTORY_PATH)
     inventory = BundleInventory.from_payload(decode_canonical_json(inventory_payload.file.data))
     experiments: list[Experiment] = []
     runs: list[MLRunRecord] = []
@@ -304,7 +311,7 @@ def plan_ml_registry_bundle_import(path: Path) -> MLRegistryBundleImportPlan:
     features: list[FeatureDefinition] = []
     evaluations: list[ModelEvaluation] = []
     for item in inventory.objects:
-        payload = read_bundle_payload(path, item.path)
+        payload = reader.read_payload(item.path)
         if payload.manifest != inventory_payload.manifest:
             raise ValueError("ML registry Bundle changed while import plan was constructed")
         kind = item.kind.removeprefix("ml_")
