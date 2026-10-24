@@ -276,6 +276,11 @@ class PostgresMetadataStore:
             application_name=self._application_name,
         )
 
+    def shares_database_with(self, other: object) -> bool:
+        """Return whether another PostgreSQL metadata adapter uses this DSN."""
+
+        return isinstance(other, PostgresMetadataStore) and self._dsn == other._dsn
+
     def migrate(self) -> None:
         connection = self._connect()
         try:

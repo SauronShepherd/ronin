@@ -92,6 +92,214 @@ class PostgresMLStore(PostgresMetadataStore):
         if cursor.fetchone() is None:
             raise CatalogAssetNotFound(f"{ref.asset_id}@{ref.version}")
 
+    def validate_registry_bundle_import(
+        self,
+        *,
+        feature_definitions: tuple[object, ...],
+        feature_store: object | None,
+    ) -> None:
+        """Require feature writes to use this PostgreSQL transaction and database."""
+
+        if not feature_definitions:
+            return
+        feature_writer = getattr(feature_store, "put_feature_definition_in_transaction", None)
+        if not callable(feature_writer) or not isinstance(feature_store, PostgresMetadataStore):
+            raise ValueError(
+                "atomic ML Bundle feature import requires a PostgreSQL transaction-aware feature store"
+            )
+        if not self.shares_database_with(feature_store):
+            raise ValueError("atomic ML Bundle stores must share one PostgreSQL database")
+
+    def commit_registry_bundle_import(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        experiments: tuple[Experiment, ...],
+        runs: tuple[MLRunRecord, ...],
+        models: tuple[RegisteredModelVersion, ...],
+        evaluations: tuple[ModelEvaluation, ...],
+        feature_definitions: tuple[object, ...] = (),
+        feature_store: object | None = None,
+        now: Instant | str,
+    ) -> None:
+        """Atomically import registry metadata and features in PostgreSQL.
+
+        The workspace row lock serializes exact replays and conflicting Bundle
+        imports for one workspace. Feature definitions are written with this
+        connection so a late conflict rolls back every registry object too.
+        """
+
+        now = Instant(now)
+        self.validate_registry_bundle_import(
+            feature_definitions=feature_definitions,
+            feature_store=feature_store,
+        )
+        feature_writer = getattr(feature_store, "put_feature_definition_in_transaction", None)
+
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT archived_at FROM ronin_workspaces WHERE workspace_id=%s FOR UPDATE",
+                    (str(workspace_id),),
+                )
+                workspace = cursor.fetchone()
+                if workspace is None:
+                    raise WorkspaceNotFound(str(workspace_id))
+                if workspace["archived_at"] is not None:
+                    raise MLConflict("cannot mutate ML state in an archived workspace")
+
+                for experiment in experiments:
+                    payload = experiment.to_json()
+                    cursor.execute(
+                        "SELECT experiment_json FROM ronin_ml_experiments "
+                        "WHERE workspace_id=%s AND experiment_id=%s",
+                        (str(workspace_id), str(experiment.id)),
+                    )
+                    existing = cursor.fetchone()
+                    if existing is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_ml_experiments "
+                            "(workspace_id,experiment_id,experiment_json,created_at,updated_at) "
+                            "VALUES (%s,%s,%s,%s,%s)",
+                            (str(workspace_id), str(experiment.id), payload, str(now), str(now)),
+                        )
+                    elif existing["experiment_json"] != payload:
+                        raise ValueError(
+                            "experiment id already exists with a different definition: "
+                            f"{experiment.id}"
+                        )
+
+                if feature_definitions:
+                    if not callable(feature_writer):
+                        raise ValueError(
+                            "atomic ML Bundle feature store lost its transaction writer"
+                        )
+                    for definition in feature_definitions:
+                        dataset = getattr(definition, "dataset", None)
+                        if not isinstance(dataset, AssetRef):
+                            raise ValueError(
+                                "ML Bundle feature definition has an invalid dataset ref"
+                            )
+                        self._asset(cursor, workspace_id, dataset)
+                        feature_writer(cursor, workspace_id, definition)
+
+                for run in runs:
+                    payload = run.to_json()
+                    cursor.execute(
+                        "SELECT 1 FROM ronin_ml_experiments "
+                        "WHERE workspace_id=%s AND experiment_id=%s",
+                        (str(workspace_id), str(run.experiment_id)),
+                    )
+                    if cursor.fetchone() is None:
+                        raise KeyError(str(run.experiment_id))
+                    for ref in run.datasets:
+                        self._asset(cursor, workspace_id, ref)
+                    cursor.execute(
+                        "SELECT run_json FROM ronin_ml_runs WHERE workspace_id=%s AND ml_run_id=%s",
+                        (str(workspace_id), str(run.id)),
+                    )
+                    existing = cursor.fetchone()
+                    if existing is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_ml_runs "
+                            "(workspace_id,ml_run_id,experiment_id,run_json,created_at) "
+                            "VALUES (%s,%s,%s,%s,%s)",
+                            (
+                                str(workspace_id),
+                                str(run.id),
+                                str(run.experiment_id),
+                                payload,
+                                str(now),
+                            ),
+                        )
+                    elif existing["run_json"] != payload:
+                        raise MLConflict(f"ML run id already exists: {run.id}")
+
+                for model in models:
+                    payload = model.to_json()
+                    cursor.execute(
+                        "SELECT 1 FROM ronin_ml_runs WHERE workspace_id=%s AND ml_run_id=%s",
+                        (str(workspace_id), str(model.source_run_id)),
+                    )
+                    if cursor.fetchone() is None:
+                        raise KeyError(str(model.source_run_id))
+                    if model.stage == "champion":
+                        cursor.execute(
+                            "SELECT version FROM ronin_ml_models "
+                            "WHERE workspace_id=%s AND model_id=%s AND stage='champion' FOR UPDATE",
+                            (str(workspace_id), str(model.model_id)),
+                        )
+                        champion = cursor.fetchone()
+                        if champion is not None and champion["version"] != str(model.version):
+                            raise MLConflict(
+                                f"model already has a different champion version: {model.model_id}"
+                            )
+                    cursor.execute(
+                        "SELECT model_json FROM ronin_ml_models "
+                        "WHERE workspace_id=%s AND model_id=%s AND version=%s",
+                        (str(workspace_id), str(model.model_id), str(model.version)),
+                    )
+                    existing = cursor.fetchone()
+                    if existing is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_ml_models "
+                            "(workspace_id,model_id,version,source_ml_run_id,stage,model_json,"
+                            "created_at,updated_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                            (
+                                str(workspace_id),
+                                str(model.model_id),
+                                str(model.version),
+                                str(model.source_run_id),
+                                model.stage,
+                                payload,
+                                str(now),
+                                str(now),
+                            ),
+                        )
+                    elif existing["model_json"] != payload:
+                        raise MLConflict(
+                            f"model version already exists: {model.model_id}@{model.version}"
+                        )
+
+                for evaluation in evaluations:
+                    self._asset(cursor, workspace_id, evaluation.dataset)
+                    key = (str(workspace_id), str(evaluation.model_id), str(evaluation.version))
+                    cursor.execute(
+                        "SELECT 1 FROM ronin_ml_models "
+                        "WHERE workspace_id=%s AND model_id=%s AND version=%s",
+                        key,
+                    )
+                    if cursor.fetchone() is None:
+                        raise KeyError(f"{evaluation.model_id}@{evaluation.version}")
+                    payload = evaluation.to_json()
+                    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+                    cursor.execute(
+                        "SELECT evaluation_json FROM ronin_ml_evaluations "
+                        "WHERE workspace_id=%s AND model_id=%s AND version=%s "
+                        "AND evaluation_digest=%s",
+                        (*key, digest),
+                    )
+                    existing = cursor.fetchone()
+                    if existing is None:
+                        cursor.execute(
+                            "INSERT INTO ronin_ml_evaluations "
+                            "(workspace_id,model_id,version,evaluation_digest,evaluation_json,created_at) "
+                            "VALUES (%s,%s,%s,%s,%s,%s)",
+                            (*key, digest, payload, str(now)),
+                        )
+                    elif existing["evaluation_json"] != payload:
+                        raise MLConflict(
+                            "model evaluation digest collision: "
+                            f"{evaluation.model_id}@{evaluation.version}"
+                        )
+            connection.commit()
+        except BaseException:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
     def put_experiment(
         self, workspace_id: WorkspaceId, experiment: Experiment, *, now: Instant | str
     ) -> Experiment:
