@@ -22,22 +22,34 @@ class GraphReadStore(Protocol):
         ontology_id: OntologyId,
         ontology_version: str,
         object_type: str,
+        *,
+        limit: int,
     ) -> tuple[GraphObject, ...]: ...
 
-    def neighbors(
+    def neighbors_many(
         self,
         ontology_id: OntologyId,
         ontology_version: str,
-        ref: KnowledgeObjectRef,
+        refs: tuple[KnowledgeObjectRef, ...],
         *,
         link_type: str,
         direction: str,
+        limit: int,
     ) -> tuple[GraphObject, ...]: ...
 
 
 @runtime_checkable
 class GraphQueryProvider(Protocol):
     def execute(self, query: GraphQueryIR) -> GraphQueryResult: ...
+
+
+class GraphResourceBudgetExceeded(RuntimeError):
+    """Raised when graph execution reaches a work budget before producing results."""
+
+    def __init__(self, budget: str, limit: int) -> None:
+        self.budget = budget
+        self.limit = limit
+        super().__init__(f"graph query exceeded {budget} budget of {limit}")
 
 
 def _compare(left: GraphScalar, filter_: GraphFilter) -> bool:
@@ -93,15 +105,16 @@ class NativeGraphProvider:
         self._ontology_version = ontology_version
 
     def execute(self, query: GraphQueryIR) -> GraphQueryResult:
-        initial = tuple(
-            item
-            for item in self._store.scan_objects(
-                self._ontology_id,
-                self._ontology_version,
-                query.object_type,
-            )
-            if _matches(item, query.filters)
+        scanned = self._store.scan_objects(
+            self._ontology_id,
+            self._ontology_version,
+            query.object_type,
+            limit=query.max_examined_nodes + 1,
         )
+        if len(scanned) > query.max_examined_nodes:
+            raise GraphResourceBudgetExceeded("node", query.max_examined_nodes)
+        examined_nodes = len(scanned)
+        initial = tuple(item for item in scanned if _matches(item, query.filters))
         selected: dict[KnowledgeObjectRef, GraphObject]
         if query.traverse is None:
             selected = {item.ref: item for item in initial}
@@ -109,21 +122,29 @@ class NativeGraphProvider:
             visited = {item.ref for item in initial}
             frontier = {item.ref: item for item in initial}
             reached: dict[KnowledgeObjectRef, GraphObject] = {}
+            examined_edges = 0
             for _depth in range(query.traverse.depth):
                 next_frontier: dict[KnowledgeObjectRef, GraphObject] = {}
-                for item in frontier.values():
-                    for neighbor in self._store.neighbors(
-                        self._ontology_id,
-                        self._ontology_version,
-                        item.ref,
-                        link_type=query.traverse.link_type,
-                        direction=query.traverse.direction,
-                    ):
-                        if neighbor.ref in visited:
-                            continue
-                        visited.add(neighbor.ref)
-                        reached[neighbor.ref] = neighbor
-                        next_frontier[neighbor.ref] = neighbor
+                neighbors = self._store.neighbors_many(
+                    self._ontology_id,
+                    self._ontology_version,
+                    tuple(sorted(frontier)),
+                    link_type=query.traverse.link_type,
+                    direction=query.traverse.direction,
+                    limit=query.max_examined_edges - examined_edges + 1,
+                )
+                examined_edges += len(neighbors)
+                if examined_edges > query.max_examined_edges:
+                    raise GraphResourceBudgetExceeded("edge", query.max_examined_edges)
+                for neighbor in neighbors:
+                    if neighbor.ref in visited:
+                        continue
+                    examined_nodes += 1
+                    if examined_nodes > query.max_examined_nodes:
+                        raise GraphResourceBudgetExceeded("node", query.max_examined_nodes)
+                    visited.add(neighbor.ref)
+                    reached[neighbor.ref] = neighbor
+                    next_frontier[neighbor.ref] = neighbor
                 frontier = next_frontier
                 if not frontier:
                     break
@@ -150,4 +171,9 @@ class NativeGraphProvider:
         return GraphQueryResult(tuple(rows))
 
 
-__all__ = ("GraphQueryProvider", "GraphReadStore", "NativeGraphProvider")
+__all__ = (
+    "GraphQueryProvider",
+    "GraphReadStore",
+    "GraphResourceBudgetExceeded",
+    "NativeGraphProvider",
+)

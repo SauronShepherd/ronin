@@ -13,7 +13,12 @@ from .contracts import (
     TraverseDirection,
 )
 from .materialize import GraphMaterializationError, materialize_graph
-from .provider import GraphQueryProvider, GraphReadStore, NativeGraphProvider
+from .provider import (
+    GraphQueryProvider,
+    GraphReadStore,
+    GraphResourceBudgetExceeded,
+    NativeGraphProvider,
+)
 from .rql import RqlSyntaxError, parse_rql
 from .store import SqliteGraphStore
 
@@ -27,6 +32,7 @@ __all__ = (
     "GraphQueryProvider",
     "GraphQueryResult",
     "GraphReadStore",
+    "GraphResourceBudgetExceeded",
     "GraphScalar",
     "GraphSnapshot",
     "GraphTraverse",

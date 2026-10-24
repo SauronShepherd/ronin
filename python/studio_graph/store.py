@@ -50,6 +50,8 @@ class SqliteGraphStore:
                 );
                 CREATE INDEX IF NOT EXISTS graph_objects_type_idx
                     ON graph_objects(ontology_id, ontology_version, object_type);
+                CREATE INDEX IF NOT EXISTS graph_objects_type_ref_idx
+                    ON graph_objects(ontology_id, ontology_version, object_type, object_ref_json);
                 CREATE TABLE IF NOT EXISTS graph_links (
                     ontology_id TEXT NOT NULL,
                     ontology_version TEXT NOT NULL,
@@ -64,6 +66,10 @@ class SqliteGraphStore:
                     ON graph_links(ontology_id, ontology_version, link_type, source_ref_json);
                 CREATE INDEX IF NOT EXISTS graph_links_target_idx
                     ON graph_links(ontology_id, ontology_version, link_type, target_ref_json);
+                CREATE INDEX IF NOT EXISTS graph_links_target_source_idx
+                    ON graph_links(
+                        ontology_id, ontology_version, link_type, target_ref_json, source_ref_json
+                    );
                 """
             )
             connection.commit()
@@ -145,15 +151,90 @@ class SqliteGraphStore:
         ontology_id: OntologyId,
         ontology_version: str,
         object_type: str,
+        *,
+        limit: int | None = None,
     ) -> tuple[GraphObject, ...]:
+        if limit is not None and (
+            not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 1_000_001
+        ):
+            raise ValueError("graph object scan limit must be an integer between 1 and 1000001")
         connection = self._connect()
         try:
-            rows = connection.execute(
+            sql = (
                 "SELECT object_ref_json,properties_json FROM graph_objects WHERE ontology_id=? "
-                "AND ontology_version=? AND object_type=? ORDER BY object_ref_json",
-                (ontology_id.value, ontology_version, object_type),
-            ).fetchall()
+                "AND ontology_version=? AND object_type=? ORDER BY object_ref_json"
+            )
+            params: tuple[object, ...] = (ontology_id.value, ontology_version, object_type)
+            if limit is not None:
+                sql += " LIMIT ?"
+                params += (limit,)
+            rows = connection.execute(sql, params).fetchall()
             return tuple(self._object(row[0], row[1]) for row in rows)
+        finally:
+            connection.close()
+
+    def neighbors_many(
+        self,
+        ontology_id: OntologyId,
+        ontology_version: str,
+        refs: tuple[KnowledgeObjectRef, ...],
+        *,
+        link_type: str,
+        direction: str,
+        limit: int | None = None,
+    ) -> tuple[GraphObject, ...]:
+        if direction not in {"out", "in"}:
+            raise ValueError("graph neighbor direction must be out or in")
+        if limit is not None and (
+            not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 1_000_001
+        ):
+            raise ValueError("graph neighbor limit must be an integer between 1 and 1000001")
+        if not refs:
+            return ()
+
+        ordered_refs = tuple(sorted(set(refs), key=_ref_json))
+        if direction == "out":
+            filter_column = "l.source_ref_json"
+            target_column = "l.target_ref_json"
+            order_by = "l.source_ref_json,l.target_ref_json"
+        else:
+            filter_column = "l.target_ref_json"
+            target_column = "l.source_ref_json"
+            order_by = "l.target_ref_json,l.source_ref_json"
+
+        result: list[GraphObject] = []
+        connection = self._connect()
+        try:
+            for offset in range(0, len(ordered_refs), 500):
+                remaining = None if limit is None else limit - len(result)
+                if remaining == 0:
+                    break
+                chunk = ordered_refs[offset : offset + 500]
+                placeholders = ",".join("?" for _ in chunk)
+                # Identifiers are selected from the fixed direction allowlist; data stays bound.
+                sql = (
+                    "SELECT o.object_ref_json,o.properties_json FROM graph_links AS l "  # noqa: S608
+                    "LEFT JOIN graph_objects AS o ON o.ontology_id=l.ontology_id "
+                    "AND o.ontology_version=l.ontology_version "
+                    f"AND o.object_ref_json={target_column} "  # noqa: S608
+                    "WHERE l.ontology_id=? AND l.ontology_version=? AND l.link_type=? "
+                    f"AND {filter_column} IN ({placeholders}) ORDER BY {order_by}"  # noqa: S608
+                )  # noqa: S608
+                params: tuple[object, ...] = (
+                    ontology_id.value,
+                    ontology_version,
+                    link_type,
+                    *(_ref_json(ref) for ref in chunk),
+                )
+                if remaining is not None:
+                    sql += " LIMIT ?"
+                    params += (remaining,)
+                rows = connection.execute(sql, params).fetchall()
+                for row in rows:
+                    if row[0] is None or row[1] is None:
+                        raise RuntimeError("graph link references missing persisted object")
+                    result.append(self._object(row[0], row[1]))
+            return tuple(result)
         finally:
             connection.close()
 
@@ -165,38 +246,16 @@ class SqliteGraphStore:
         *,
         link_type: str,
         direction: str,
+        limit: int | None = None,
     ) -> tuple[GraphObject, ...]:
-        if direction not in {"out", "in"}:
-            raise ValueError("graph neighbor direction must be out or in")
-        connection = self._connect()
-        try:
-            if direction == "out":
-                rows = connection.execute(
-                    "SELECT target_ref_json FROM graph_links WHERE ontology_id=? "
-                    "AND ontology_version=? AND link_type=? AND source_ref_json=? "
-                    "ORDER BY target_ref_json",
-                    (ontology_id.value, ontology_version, link_type, _ref_json(ref)),
-                ).fetchall()
-            else:
-                rows = connection.execute(
-                    "SELECT source_ref_json FROM graph_links WHERE ontology_id=? "
-                    "AND ontology_version=? AND link_type=? AND target_ref_json=? "
-                    "ORDER BY source_ref_json",
-                    (ontology_id.value, ontology_version, link_type, _ref_json(ref)),
-                ).fetchall()
-            result: list[GraphObject] = []
-            for (target_ref_json,) in rows:
-                row = connection.execute(
-                    "SELECT properties_json FROM graph_objects WHERE ontology_id=? "
-                    "AND ontology_version=? AND object_ref_json=?",
-                    (ontology_id.value, ontology_version, target_ref_json),
-                ).fetchone()
-                if row is None:
-                    raise RuntimeError("graph link references missing persisted object")
-                result.append(self._object(target_ref_json, row[0]))
-            return tuple(result)
-        finally:
-            connection.close()
+        return self.neighbors_many(
+            ontology_id,
+            ontology_version,
+            (ref,),
+            link_type=link_type,
+            direction=direction,
+            limit=limit,
+        )
 
 
 __all__ = ("SqliteGraphStore",)
