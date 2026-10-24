@@ -53,9 +53,9 @@ ronin-bundle/
 
 Secrets are never embedded. Connection definitions carry portable metadata and secret references only.
 
-Ronin Public v1 bundles contain no GenAI, RAG, prompt, retrieval, or agent
-runtime assets. Coding-agent skills are distributed and consumed externally;
-they are not Ronin Bundle content.
+Ronin bundles contain no GenAI, RAG, prompt, retrieval, or agent-runtime assets.
+Coding-agent skills are distributed and consumed externally; they are not Ronin
+Bundle content.
 
 Identity-bearing JSON uses Ronin's canonical JSON contract.
 

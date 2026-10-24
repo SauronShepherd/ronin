@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-24T12:01:24+00:00",
-  "observed_main_sha": "29dd455d4ba80d546e830571f2139228d29c6594",
+  "observed_at": "2026-10-24T14:16:12+00:00",
+  "observed_main_sha": "0b32db1c83e681a08e8118e23c0e4b744b3929a5",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -10,14 +10,14 @@
     "complete": 0,
     "total": 13,
     "percent": 0,
-    "definition": "A family counts only when its mandatory Public v1 journey and applicable provider, security, and exact-candidate evidence are complete. P9 GenAI is out of scope; multi-user identity and administration belong to Ronin Pro.",
+    "definition": "A family counts only when its mandatory Public v1 journey and applicable provider, security, and exact-candidate evidence are complete. P9 GenAI is excluded from the Public v1 denominator and from every Ronin product tier; multi-user identity and administration belong to Ronin Pro.",
     "release_ready": false
   },
   "local_verification": {
-    "observed_at": "2026-10-11",
-    "candidate_sha": "dfdb1045de2e997caa191ba81a8ec640c1dd04bd",
-    "command": "python -m pytest -q",
-    "result": "2266 passed, 15 skipped",
+    "observed_at": "2026-10-24",
+    "candidate_sha": "a50eb184f98b8332102d3805f8fb0befae214775",
+    "command": "$env:PATH = \"$PWD\\.venv\\Scripts;$env:PATH\"; .venv\\Scripts\\python.exe -m pytest -q",
+    "result": "3921 passed, 66 skipped in 315.96s (Windows; environment-dependent tests are qualified in CI where configured)",
     "qualification_claimed": false,
     "mutation_campaign": {
       "status": "historical_frozen",
@@ -52,7 +52,7 @@
     "partial",
     "qualification_pending"
   ],
-  "release_rule": "Ronin Public v1 remains incomplete while any active Public v1 capability family (P1-P8 or P10-P14) lacks an end-to-end supported path; P9 GenAI and multi-user Pro capabilities are excluded.",
+  "release_rule": "Ronin Public v1 remains incomplete while any active Public v1 capability family (P1-P8 or P10-P14) lacks an end-to-end supported path; P9 GenAI is excluded from every Ronin product tier and from the Public v1 release denominator; multi-user Pro capabilities are excluded.",
   "capabilities": [
     {
       "id": "execution-foundation",
@@ -92,12 +92,12 @@
     {
       "id": "p6-ontology-knowledge-graph",
       "status": "partial",
-      "summary": "Ontology object/property/link/action schemas and persistence, bounded stable-key object-instance materialization, deterministic declared-link resolution with cardinality checks, bounded object-type/neighbor graph queries, SQLite graph persistence, durable idempotent action replay with conflict detection, authorized injected action dispatch, and authenticated public graph query/object/neighbor/action routes exist; provider production qualification remains incomplete."
+      "summary": "Ontology object/property/link/action schemas and persistence, declared property-type validation, bounded stable-key materialization, deterministic typed and null-safe link resolution with cardinality checks, bounded graph queries, SQLite graph persistence, durable idempotent action replay, authorized injected action dispatch, and authenticated graph routes exist; full asset-family integration, event certification, and provider production qualification remain incomplete."
     },
     {
       "id": "graph-intelligence-rql",
       "status": "partial",
-      "summary": "A bounded, read-only RQL SELECT parser/executor now supports ontology-type filtering, equality predicates, explicit result limits, bounded multi-hop typed traversal, and typed property joins over materialized KnowledgeGraph views, with authenticated public query/object/neighbor routes; provider execution and production qualification remain incomplete."
+      "summary": "A bounded read-only RQL SELECT parser/executor supports ontology-type filtering, equality predicates, explicit result limits, bounded multi-hop traversal, and typed property joins. Joins keep boolean, integer, and number values distinct and do not match null or missing values. Authenticated query/object/neighbor routes exist; provider execution and production qualification remain incomplete."
     },
     {
       "id": "p7-data-quality-contracts",
@@ -112,7 +112,7 @@
     {
       "id": "p9-genai-rag-agents",
       "status": "out_of_scope",
-      "summary": "Explicitly excluded from Ronin Public v1: no in-product model/provider invocation, prompts, embeddings, vector retrieval, RAG, tools, or agent runtime/API/Studio. Coding-agent skills are distributed for external agents and do not execute inside Ronin."
+      "summary": "Excluded from every Ronin product tier: no in-product model/provider invocation, prompts, embeddings, vector retrieval, RAG, tools, or agent execution/API/Studio. Coding-agent skills are external instructions consumed outside Ronin and add no runtime capability."
     },
     {
       "id": "p10-semantic-models-dashboards",

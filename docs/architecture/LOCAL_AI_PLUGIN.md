@@ -1,8 +1,8 @@
 # Ronin AI Studio plugin
 
-> **Withdrawn from Ronin Public v1 (2026-10-24).** Historical design only; do not wire or expose a model-provider runtime in the Public product. Coding-agent skills remain external.
+> **Withdrawn from Ronin (2026-10-24).** Historical design only; do not wire or expose a model-provider runtime in any product tier. Coding-agent skills remain external.
 
-## Decision
+## Retired historical proposal
 
 `studio_ai_studio` is the community plugin for discovering and exposing local
 inference servers through one policy-aware OpenAI-compatible surface. It does

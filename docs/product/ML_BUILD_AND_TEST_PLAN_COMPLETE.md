@@ -1,7 +1,7 @@
 # Plan completo de implementación y validación de Machine Learning Studio
 
 > **Alcance rebaselined (2026-10-24):** Este documento conserva instrucciones
-> históricas de GenAI que ya no se ejecutan. Ronin Public v1 no incluye modelos
+> históricas de GenAI que ya no se ejecutan. Ningún nivel de Ronin incluye modelos
 > generativos, RAG ni agentes; los pasos de esas capacidades están retirados.
 > El alcance actual y sus pruebas están definidos por
 > [`PUBLIC_V1_BUILD_PLAN.md`](PUBLIC_V1_BUILD_PLAN.md).

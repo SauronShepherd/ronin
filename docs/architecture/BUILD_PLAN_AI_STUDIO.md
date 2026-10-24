@@ -1,10 +1,8 @@
 # Ronin AI Studio — build plan completo v1
 
-> **Retirado de Ronin Public v1 (2026-10-24).** Este plan queda archivado como contexto histórico y no debe ejecutarse. Public v1 no incluye invocación de modelos/proveedores; las coding-agent skills se consumen fuera de Ronin.
+> **Retirado de Ronin (2026-10-24).** Este plan queda archivado como contexto histórico y no debe ejecutarse. Ningún nivel de Ronin incluye invocación de modelos/proveedores; las coding-agent skills se consumen fuera del producto.
 
-Este plan implementa `AI_STUDIO_PROPOSAL.md` sin reescritura big-bang. Cada
-fase debe dejar Ronin arrancable, actualiza el inventario de plugins y tiene
-tests de contrato, negativos y rollback.
+Este plan histórico describía una posible implementación de `AI_STUDIO_PROPOSAL.md`. Sus fases son sólo contexto y no deben ejecutarse; ningún nivel de Ronin incluye un runtime de proveedores/modelos.
 
 ## 0. Reglas de construcción
 

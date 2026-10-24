@@ -4,7 +4,7 @@
 **Supersedes for release gating:** `V01_SCOPE.md`  
 **Does not erase:** the v0.1 execution foundation; that work becomes the execution/control-plane substrate of the larger platform.
 
-**Scope amendment (2026-10-24):** Ronin Public v1 is single-operator. Multi-user identity and administration belong to Ronin Pro. Public v1 has no in-product GenAI/model-provider invocation, RAG, or agent runtime; Ronin coding-agent skills are installed for agents to consume externally. P9 is excluded from Public v1 release gating.
+**Scope amendment (2026-10-24):** Ronin is single-operator in Public v1; multi-user identity and administration belong to Ronin Pro. No Ronin product tier provides in-product GenAI/model-provider invocation, RAG, or agent execution. Ronin coding-agent skills are external instructions consumed by coding agents outside the product; they do not add a model runtime, provider connection, API, Studio surface, or agent-execution capability to Ronin. P9 is excluded from Public v1 release gating.
 
 ## 1. Release principle
 
@@ -193,9 +193,9 @@ Public v1 MUST provide a usable AI/ML lifecycle:
 - HTTP serving contract or pluggable serving adapter;
 - lineage from data -> run -> model -> deployment.
 
-### P9 — GenAI, RAG and agents (excluded from Public v1)
+### P9 — GenAI, RAG and agents (excluded from Ronin)
 
-Public v1 MUST NOT ship in-product generative model/provider invocation, prompts, embeddings, vector indexes, retrieval, RAG evaluation, tool registries, or agent execution. Ronin coding-agent skills are external instructions consumed by coding agents; they do not add a model runtime, provider connection, API, Studio surface, or agent execution capability to Ronin. This capability family is excluded from the Public v1 progress denominator and release gate.
+Ronin MUST NOT ship in-product generative model/provider invocation, prompts, embeddings, vector indexes, retrieval, RAG evaluation, tool registries, or agent execution in any product tier. Ronin coding-agent skills are external instructions consumed by coding agents outside the product. This capability family is excluded from the Public v1 progress denominator and release gate.
 
 ### P10 — Semantic models, metrics and dashboards
 
