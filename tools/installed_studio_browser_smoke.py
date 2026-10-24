@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import json
+import sys
 import tarfile
 import tempfile
 import zipfile
@@ -15,7 +16,16 @@ from threading import Thread
 from typing import cast
 
 from playwright.sync_api import sync_playwright
-from studio_cli.agent_skills import discover_skills
+
+try:
+    from studio_cli.agent_skills import discover_skills
+except ModuleNotFoundError as exc:
+    if exc.name != "studio_cli":
+        raise
+    # CI runs this artifact checker before installing the built wheel. Use the
+    # repository validator against the skill files extracted from the artifact.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
+    from studio_cli.agent_skills import discover_skills
 
 # mypy: ignore-errors
 
