@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-24T09:06:07+00:00",
+  "observed_at": "2026-10-24T09:11:44+00:00",
   "observed_main_sha": "3ede5f8142a84ef97cc8055553e49b0652e8d8fc",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",

@@ -33,7 +33,7 @@ two PostgreSQL-dependent tests were skipped without a local DSN, and strict
 acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
-**Observed source head:** `7f6d16dcd24cf1ed2af0a5fc2cb1cff7d0c1ecd9` (2026-10-24).
+**Observed source head:** `3ede5f8142a84ef97cc8055553e49b0652e8d8fc` (2026-10-24).
 **Release status:** **INCOMPLETE**.
 
 **Scope amendment (2026-10-24):** P9 GenAI/RAG/in-product agents are excluded from Public v1; Ronin coding-agent skills are consumed externally. Multi-user identity, user/group administration and multi-user deployment belong to Ronin Pro. Dated evidence notes below preserve their original scope context; the current release denominator excludes these capabilities.
