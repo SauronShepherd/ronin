@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sqlite3
+import time
 from contextlib import AbstractContextManager
 from typing import Protocol, runtime_checkable
 
@@ -48,7 +50,9 @@ class GraphReadSession(Protocol):
 
 @runtime_checkable
 class GraphReadStore(Protocol):
-    def read_snapshot(self) -> AbstractContextManager[GraphReadSession]: ...
+    def read_snapshot(
+        self, *, timeout_ms: int = 5_000
+    ) -> AbstractContextManager[GraphReadSession]: ...
 
 
 @runtime_checkable
@@ -118,13 +122,26 @@ class NativeGraphProvider:
         self._ontology_version = ontology_version
 
     def execute(self, query: GraphQueryIR) -> GraphQueryResult:
-        with self._store.read_snapshot() as reader:
-            return self._execute_on_snapshot(reader, query)
+        deadline = time.monotonic() + query.timeout_ms / 1000
+        try:
+            with self._store.read_snapshot(timeout_ms=query.timeout_ms) as reader:
+                self._check_deadline(deadline, query.timeout_ms)
+                return self._execute_on_snapshot(reader, query, deadline)
+        except sqlite3.OperationalError as exc:
+            if "interrupted" in str(exc).lower() and time.monotonic() >= deadline:
+                raise GraphResourceBudgetExceeded("deadline", query.timeout_ms) from exc
+            raise
+
+    @staticmethod
+    def _check_deadline(deadline: float, timeout_ms: int) -> None:
+        if time.monotonic() >= deadline:
+            raise GraphResourceBudgetExceeded("deadline", timeout_ms)
 
     def _execute_on_snapshot(
         self,
         reader: GraphReadSession,
         query: GraphQueryIR,
+        deadline: float,
     ) -> GraphQueryResult:
         scanned = reader.scan_objects(
             self._ontology_id,
@@ -132,10 +149,16 @@ class NativeGraphProvider:
             query.object_type,
             limit=query.max_examined_nodes + 1,
         )
+        self._check_deadline(deadline, query.timeout_ms)
         if len(scanned) > query.max_examined_nodes:
             raise GraphResourceBudgetExceeded("node", query.max_examined_nodes)
         examined_nodes = len(scanned)
-        initial = tuple(item for item in scanned if _matches(item, query.filters))
+        initial_items = []
+        for item in scanned:
+            self._check_deadline(deadline, query.timeout_ms)
+            if _matches(item, query.filters):
+                initial_items.append(item)
+        initial = tuple(initial_items)
         selected: dict[KnowledgeObjectRef, GraphObject]
         if query.traverse is None:
             selected = {item.ref: item for item in initial}
@@ -145,6 +168,7 @@ class NativeGraphProvider:
             reached: dict[KnowledgeObjectRef, GraphObject] = {}
             examined_edges = 0
             for _depth in range(query.traverse.depth):
+                self._check_deadline(deadline, query.timeout_ms)
                 next_frontier: dict[KnowledgeObjectRef, GraphObject] = {}
                 neighbors = reader.neighbors_many(
                     self._ontology_id,
@@ -154,10 +178,12 @@ class NativeGraphProvider:
                     direction=query.traverse.direction,
                     limit=query.max_examined_edges - examined_edges + 1,
                 )
+                self._check_deadline(deadline, query.timeout_ms)
                 examined_edges += len(neighbors)
                 if examined_edges > query.max_examined_edges:
                     raise GraphResourceBudgetExceeded("edge", query.max_examined_edges)
                 for neighbor in neighbors:
+                    self._check_deadline(deadline, query.timeout_ms)
                     if neighbor.ref in visited:
                         continue
                     examined_nodes += 1
@@ -172,7 +198,10 @@ class NativeGraphProvider:
             selected = reached
 
         rows: list[tuple[tuple[str, GraphScalar], ...]] = []
-        for item in sorted(selected.values(), key=lambda value: value.ref):
+        ordered_items = sorted(selected.values(), key=lambda value: value.ref)
+        self._check_deadline(deadline, query.timeout_ms)
+        for item in ordered_items:
+            self._check_deadline(deadline, query.timeout_ms)
             properties = dict(item.properties)
             row: list[tuple[str, GraphScalar]] = []
             for field in query.return_fields:

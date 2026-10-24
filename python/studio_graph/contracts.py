@@ -117,6 +117,7 @@ class GraphQueryIR:
     limit: int = 1000
     max_examined_nodes: int = 100_000
     max_examined_edges: int = 1_000_000
+    timeout_ms: int = 5_000
 
     def __post_init__(self) -> None:
         _text(self.object_type, "graph query object_type")
@@ -143,6 +144,10 @@ class GraphQueryIR:
             raise ValueError("graph max_examined_edges must be an integer")
         if self.max_examined_edges < 1 or self.max_examined_edges > 1_000_000:
             raise ValueError("graph max_examined_edges must be between 1 and 1000000")
+        if not isinstance(self.timeout_ms, int) or isinstance(self.timeout_ms, bool):
+            raise ValueError("graph query timeout_ms must be an integer")
+        if self.timeout_ms < 1 or self.timeout_ms > 60_000:
+            raise ValueError("graph query timeout_ms must be between 1 and 60000")
 
 
 @dataclass(frozen=True, slots=True)
