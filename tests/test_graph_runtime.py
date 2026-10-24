@@ -58,6 +58,41 @@ def test_rql_parser_builds_bounded_query_and_rejects_unsupported_input() -> None
             parse_rql(text)
 
 
+def test_rql_parser_preserves_quoted_scalar_types_and_rejects_joined_fields() -> None:
+    quoted_true = parse_rql('MATCH Customer WHERE name = "true" RETURN name')
+    quoted_null = parse_rql('MATCH Customer WHERE name = "null" RETURN name')
+    single_quoted = parse_rql("MATCH Customer WHERE name = 'hello world' RETURN name")
+    escaped_quote = parse_rql('MATCH Customer WHERE name = "say \\"true\\"" RETURN name')
+    bare_true = parse_rql("MATCH Customer WHERE active = true RETURN name")
+    separated_fields = parse_rql("MATCH Customer RETURN name , _key")
+    unicode_literal = parse_rql('MATCH Customer WHERE name = "café" RETURN name')
+
+    assert quoted_true.filters[0].value == "true"
+    assert isinstance(quoted_true.filters[0].value, str)
+    assert quoted_null.filters[0].value == "null"
+    assert isinstance(quoted_null.filters[0].value, str)
+    assert single_quoted.filters[0].value == "hello world"
+    assert escaped_quote.filters[0].value == 'say "true"'
+    assert unicode_literal.filters[0].value == "café"
+    assert bare_true.filters[0].value is True
+    assert separated_fields.return_fields == ("name", "_key")
+    with pytest.raises(RqlSyntaxError, match="invalid return field"):
+        parse_rql("MATCH Customer RETURN name _key")
+    with pytest.raises(RqlSyntaxError, match="quoted RQL string is invalid"):
+        parse_rql('MATCH Customer WHERE name = "bad\\q" RETURN name')
+
+
+def test_rql_parser_rejects_oversized_text_and_token_count() -> None:
+    with pytest.raises(RqlSyntaxError, match="byte limit"):
+        parse_rql("x" * 65_537)
+    with pytest.raises(RqlSyntaxError, match="byte limit"):
+        parse_rql("é" * 32_769)
+    with pytest.raises(RqlSyntaxError, match="token limit"):
+        parse_rql("MATCH Customer RETURN name " + "field " * 4096)
+    with pytest.raises(RqlSyntaxError, match="valid Unicode"):
+        parse_rql('MATCH Customer WHERE name = "' + "\ud800" + '" RETURN name')
+
+
 def test_graph_contracts_reject_noncanonical_objects_and_dangling_links() -> None:
     ref = KnowledgeObjectRef("Customer", (("id", "1"),))
     with pytest.raises(ValueError, match="property names must be unique"):
