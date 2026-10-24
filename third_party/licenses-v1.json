@@ -1,6 +1,6 @@
 {
   "lock_file": "requirements-dev.lock",
-  "lock_sha256": "f1a6c90dcab9365ab14f95a4e22638326f3c127c93747f55f1ffb2df6bf4fda0",
+  "lock_sha256": "8a23cd3c5e13b3e915abc6cc07453a9e2198d6ddf549fbba82e8032c70cd30ec",
   "packages": [
     {
       "declared_license": "BSD-3-Clause",
@@ -596,10 +596,10 @@
         "LICENSE"
       ],
       "direct": true,
-      "evidence_sha256": "415f36a02b698cc3bc5473c9e7fd26111316d1fbdfd74dd3e97ffd6d98d866ac",
+      "evidence_sha256": "01597562c0894e54ccd93a1361e5b377d2f2949555a28ce3a2202d49c9807088",
       "license_files": [
         {
-          "path": "setuptools-84.0.0.dist-info/licenses/LICENSE",
+          "path": "setuptools-84.2.1.dist-info/licenses/LICENSE",
           "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741"
         },
         {
@@ -631,15 +631,15 @@
           "sha256": "09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46"
         },
         {
-          "path": "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE",
+          "path": "setuptools/_vendor/packaging-26.3.dist-info/licenses/LICENSE",
           "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48"
         },
         {
-          "path": "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.APACHE",
+          "path": "setuptools/_vendor/packaging-26.3.dist-info/licenses/LICENSE.APACHE",
           "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
         },
         {
-          "path": "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.BSD",
+          "path": "setuptools/_vendor/packaging-26.3.dist-info/licenses/LICENSE.BSD",
           "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5"
         },
         {
@@ -669,7 +669,7 @@
       ],
       "package": "setuptools",
       "source": "https://github.com/pypa/setuptools",
-      "version": "84.0.0"
+      "version": "84.2.1"
     },
     {
       "declared_license": "Apache 2.0",
