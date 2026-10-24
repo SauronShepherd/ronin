@@ -6,12 +6,11 @@ import hashlib
 from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Protocol
 from urllib.parse import urlsplit
 
 from .canonical_json import encode as encode_canonical_json
-from .openlineage import JsonValue
+from .openlineage import JsonValue, _is_valid_iso8601_timestamp
 
 OPENLINEAGE_API_VERSION = "1.0"
 SUPPORTED_OPENLINEAGE_SCHEMA_VERSIONS = frozenset({OPENLINEAGE_API_VERSION})
@@ -163,14 +162,8 @@ def validate_openlineage_event(event: Mapping[str, JsonValue]) -> None:
     if schema_version not in SUPPORTED_OPENLINEAGE_SCHEMA_VERSIONS:
         raise ValueError("OpenLineage schemaVersion is unsupported")
     event_time = event.get("eventTime")
-    if not isinstance(event_time, str):
-        raise ValueError("OpenLineage eventTime must be an ISO 8601 timestamp")
-    try:
-        parsed_event_time = datetime.fromisoformat(event_time.replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise ValueError("OpenLineage eventTime must be an ISO 8601 timestamp") from exc
-    if parsed_event_time.tzinfo is None:
-        raise ValueError("OpenLineage eventTime must include a timezone")
+    if not _is_valid_iso8601_timestamp(event_time):
+        raise ValueError("OpenLineage eventTime must be a timezone-aware ISO 8601 timestamp")
     if "eventType" in event:
         required_run_fields = {"eventType", "run", "job"}
         if not required_run_fields <= set(event):

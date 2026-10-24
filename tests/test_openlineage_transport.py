@@ -274,7 +274,7 @@ def test_openlineage_validation_messages_are_stable() -> None:
         ({**EVENT, "eventType": "UNKNOWN"}, "OpenLineage event type is unsupported"),
         (
             {**EVENT, "eventTime": "not-a-timestampZ"},
-            "OpenLineage eventTime must be an ISO 8601 timestamp",
+            "OpenLineage eventTime must be a timezone-aware ISO 8601 timestamp",
         ),
         ({**EVENT, "run": []}, "OpenLineage run and job must be objects"),
         ({**EVENT, "run": {}}, "OpenLineage run.runId is required"),
@@ -349,7 +349,11 @@ def test_transport_receipt_is_stable_and_digest_changes_with_event_content() -> 
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
-        ("eventTime", "2026-09-21T00:00:00", "OpenLineage eventTime must include a timezone"),
+        (
+            "eventTime",
+            "2026-09-21T00:00:00",
+            "OpenLineage eventTime must be a timezone-aware ISO 8601 timestamp",
+        ),
         ("run", [], "OpenLineage run and job must be objects"),
         ("job", [], "OpenLineage run and job must be objects"),
         ("run", {"runId": "  "}, "OpenLineage run.runId is required"),

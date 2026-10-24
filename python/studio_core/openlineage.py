@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import re
 from typing import TypeAlias
 
 from .catalog import LineageEdge
@@ -22,6 +22,43 @@ OPENLINEAGE_COLUMN_LINEAGE_SCHEMA = (
 OPENLINEAGE_LINEAGE_FACET_SCHEMA = (
     "https://openlineage.io/spec/facets/1-0-0/LineageFacet.json#/$defs/LineageDatasetFacet"
 )
+_TIMESTAMP_PATTERN = re.compile(
+    r"(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T"
+    r"(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})"
+    r"(?:\.\d+)?(?P<zone>Z|[+-]\d{2}:\d{2})"
+)
+
+
+def _is_valid_iso8601_timestamp(value: object, *, require_utc: bool = False) -> bool:
+    if not isinstance(value, str):
+        return False
+    match = _TIMESTAMP_PATTERN.fullmatch(value)
+    if match is None:
+        return False
+    year = int(match["year"])
+    month = int(match["month"])
+    day = int(match["day"])
+    hour = int(match["hour"])
+    minute = int(match["minute"])
+    second = int(match["second"])
+    zone = match["zone"]
+    if year == 0 or not 1 <= month <= 12 or not 0 <= hour <= 23:
+        return False
+    if not 0 <= minute <= 59 or not 0 <= second <= 59:
+        return False
+    month_lengths = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+    leap_year = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+    max_day = 29 if month == 2 and leap_year else month_lengths[month - 1]
+    if not 1 <= day <= max_day:
+        return False
+    if zone != "Z":
+        offset_hour = int(zone[1:3])
+        offset_minute = int(zone[4:6])
+        if offset_hour > 14 or offset_minute > 59:
+            return False
+        if offset_hour == 14 and offset_minute != 0:
+            return False
+    return not (require_utc and zone not in {"Z", "+00:00"})
 
 
 def lineage_event_payload(
@@ -37,20 +74,17 @@ def lineage_event_payload(
     schema validation remain deployment concerns.
     """
     if (
-        not namespace
+        not isinstance(namespace, str)
+        or not namespace
         or namespace != namespace.strip()
         or any(ord(character) < 0x20 or ord(character) == 0x7F for character in namespace)
     ):
         raise ValueError("namespace must be non-empty and single-line")
-    try:
-        parsed_event_time = datetime.fromisoformat(event_time.replace("Z", "+00:00"))
-    except (AttributeError, ValueError) as exc:
-        raise ValueError("event_time must be a valid UTC timestamp") from exc
     if (
-        not event_time
+        not isinstance(event_time, str)
+        or not event_time
         or event_time != event_time.strip()
-        or parsed_event_time.tzinfo is None
-        or parsed_event_time.utcoffset() != UTC.utcoffset(parsed_event_time)
+        or not _is_valid_iso8601_timestamp(event_time, require_utc=True)
     ):
         raise ValueError("event_time must be a valid UTC timestamp")
     timestamp = event_time
@@ -88,6 +122,8 @@ def lineage_event_payload(
             "schemaURL": OPENLINEAGE_DATASET_EVENT_SCHEMA,
         }
 
+    if job_name is not None and not isinstance(job_name, str):
+        raise ValueError("job_name must be a string when provided")
     if job_name and (
         not job_name.strip()
         or job_name != job_name.strip()
