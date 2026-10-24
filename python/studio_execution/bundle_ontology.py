@@ -25,9 +25,13 @@ ONTOLOGY_MEDIA_TYPE = "application/vnd.ronin.ontology-definition+json"
 
 class OntologyBundleStore(Protocol):
     def list_all(self, workspace_id: WorkspaceId) -> tuple[OntologyDefinition, ...]: ...
-    def put(
-        self, workspace_id: WorkspaceId, ontology: OntologyDefinition, *, now: Instant | str
-    ) -> OntologyDefinition: ...
+    def put_many(
+        self,
+        workspace_id: WorkspaceId,
+        ontologies: tuple[OntologyDefinition, ...],
+        *,
+        now: Instant | str,
+    ) -> tuple[OntologyDefinition, ...]: ...
 
 
 def _path(ref: str) -> str:
@@ -79,9 +83,7 @@ def import_ontology_bundle(
             ):
                 raise ValueError("ontology Bundle integrity or media type mismatch")
             values.append(OntologyDefinition.from_json(payload.file.data.decode("utf-8")))
-    for value in values:
-        store.put(workspace_id, value, now=now)
-    return tuple(values)
+    return store.put_many(workspace_id, tuple(values), now=now)
 
 
 __all__ = ("export_ontology_bundle", "import_ontology_bundle")

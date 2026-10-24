@@ -84,8 +84,19 @@ class SqliteOntologyStore:
         *,
         now: Instant | str,
     ) -> OntologyDefinition:
+        return self.put_many(workspace_id, (ontology,), now=now)[0]
+
+    def put_many(
+        self,
+        workspace_id: WorkspaceId,
+        ontologies: tuple[OntologyDefinition, ...],
+        *,
+        now: Instant | str,
+    ) -> tuple[OntologyDefinition, ...]:
+        """Persist ontology definitions atomically, allowing exact replays."""
+
         now = Instant(now)
-        payload = ontology.to_json()
+        entries = tuple((ontology, ontology.to_json()) for ontology in ontologies)
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
@@ -96,36 +107,36 @@ class SqliteOntologyStore:
                 raise WorkspaceNotFound(str(workspace_id))
             if workspace["archived_at"] is not None:
                 raise OntologyConflict("cannot mutate ontology state in an archived workspace")
-            for ref in ontology.asset_refs():
-                revision = connection.execute(
-                    "SELECT 1 FROM catalog_asset_revisions WHERE workspace_id=? "
-                    "AND asset_id=? AND version=?",
-                    (str(workspace_id), str(ref.asset_id), str(ref.version)),
+            for ontology, payload in entries:
+                for ref in ontology.asset_refs():
+                    revision = connection.execute(
+                        "SELECT 1 FROM catalog_asset_revisions WHERE workspace_id=? "
+                        "AND asset_id=? AND version=?",
+                        (str(workspace_id), str(ref.asset_id), str(ref.version)),
+                    ).fetchone()
+                    if revision is None:
+                        raise CatalogAssetNotFound(f"{ref.asset_id}@{ref.version}")
+                existing = connection.execute(
+                    "SELECT definition_json FROM ontologies WHERE workspace_id=? "
+                    "AND ontology_id=? AND version=?",
+                    (str(workspace_id), str(ontology.id), ontology.version),
                 ).fetchone()
-                if revision is None:
-                    raise CatalogAssetNotFound(f"{ref.asset_id}@{ref.version}")
-            existing = connection.execute(
-                "SELECT definition_json FROM ontologies WHERE workspace_id=? "
-                "AND ontology_id=? AND version=?",
-                (str(workspace_id), str(ontology.id), ontology.version),
-            ).fetchone()
-            if existing is not None:
-                if existing["definition_json"] == payload:
-                    connection.execute("COMMIT")
-                    return ontology
-                raise OntologyConflict(
-                    f"ontology version already exists with different content: "
-                    f"{ontology.id}@{ontology.version}"
+                if existing is not None:
+                    if existing["definition_json"] == payload:
+                        continue
+                    raise OntologyConflict(
+                        f"ontology version already exists with different content: "
+                        f"{ontology.id}@{ontology.version}"
+                    )
+                connection.execute(
+                    "INSERT INTO ontologies("
+                    "workspace_id,ontology_id,version,definition_json,created_at) "
+                    "VALUES (?,?,?,?,?)",
+                    (str(workspace_id), str(ontology.id), ontology.version, payload, now),
                 )
-            connection.execute(
-                "INSERT INTO ontologies("
-                "workspace_id,ontology_id,version,definition_json,created_at) "
-                "VALUES (?,?,?,?,?)",
-                (str(workspace_id), str(ontology.id), ontology.version, payload, now),
-            )
             connection.execute("COMMIT")
-            return ontology
-        except Exception:
+            return tuple(ontology for ontology, _payload in entries)
+        except BaseException:
             if connection.in_transaction:
                 connection.execute("ROLLBACK")
             raise
