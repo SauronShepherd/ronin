@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-24T14:16:12+00:00",
-  "observed_main_sha": "0b32db1c83e681a08e8118e23c0e4b744b3929a5",
+  "observed_at": "2026-10-24T14:43:59+00:00",
+  "observed_main_sha": "4e63e69334a2ae55ce6bc1c2656742193cb919bb",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -15,9 +15,9 @@
   },
   "local_verification": {
     "observed_at": "2026-10-24",
-    "candidate_sha": "a50eb184f98b8332102d3805f8fb0befae214775",
+    "candidate_sha": "462983fd2703119f55c197470830aa1b65c5aa0d",
     "command": "$env:PATH = \"$PWD\\.venv\\Scripts;$env:PATH\"; .venv\\Scripts\\python.exe -m pytest -q",
-    "result": "3921 passed, 66 skipped in 315.96s (Windows; environment-dependent tests are qualified in CI where configured)",
+    "result": "3922 passed, 66 skipped in 616.61s (Windows; environment-dependent tests are qualified in CI where configured)",
     "qualification_claimed": false,
     "mutation_campaign": {
       "status": "historical_frozen",
@@ -92,12 +92,12 @@
     {
       "id": "p6-ontology-knowledge-graph",
       "status": "partial",
-      "summary": "Ontology object/property/link/action schemas and persistence, declared property-type validation, bounded stable-key materialization, deterministic typed and null-safe link resolution with cardinality checks, bounded graph queries, SQLite graph persistence, durable idempotent action replay, authorized injected action dispatch, and authenticated graph routes exist; full asset-family integration, event certification, and provider production qualification remain incomplete."
+      "summary": "Ontology schemas and persistence, declared property-type validation, bounded materialization, deterministic typed/null-safe link resolution, bounded graph queries, SQLite graph persistence, idempotent action replay, authorized action dispatch, authenticated graph routes, and type-aware equality/inequality filters exist; full asset-family integration, event certification, and provider production qualification remain incomplete."
     },
     {
       "id": "graph-intelligence-rql",
       "status": "partial",
-      "summary": "A bounded read-only RQL SELECT parser/executor supports ontology-type filtering, equality predicates, explicit result limits, bounded multi-hop traversal, and typed property joins. Joins keep boolean, integer, and number values distinct and do not match null or missing values. Authenticated query/object/neighbor routes exist; provider execution and production qualification remain incomplete."
+      "summary": "Bounded read-only RQL supports typed property joins and type-aware graph equality/inequality filters; boolean, integer, and number values remain distinct, joins exclude null/missing values, and explicit null filters preserve null equality. Authenticated query/object/neighbor routes exist; provider execution and production qualification remain incomplete."
     },
     {
       "id": "p7-data-quality-contracts",
