@@ -398,6 +398,38 @@ def test_native_provider_enforces_node_budget_during_traversal(tmp_path: Path) -
         provider.execute(query)
 
 
+def test_native_provider_interrupts_sqlite_work_at_query_deadline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = SqliteGraphStore(tmp_path / "graph.sqlite")
+    snapshot = _snapshot()
+    store.replace_snapshot(snapshot)
+
+    def expensive_scan(
+        reader: SqliteGraphReadSession,
+        ontology_id: OntologyId,
+        ontology_version: str,
+        object_type: str,
+        *,
+        limit: int | None = None,
+    ) -> tuple[GraphObject, ...]:
+        assert ontology_id == snapshot.ontology_id
+        assert ontology_version == snapshot.ontology_version
+        assert object_type == "Customer"
+        assert limit == 100_001
+        reader._connection.execute(
+            "WITH RECURSIVE counter(value) AS (VALUES (0) UNION ALL "
+            "SELECT value + 1 FROM counter WHERE value < 10000000) SELECT MAX(value) FROM counter"
+        ).fetchall()
+        return ()
+
+    monkeypatch.setattr(SqliteGraphReadSession, "scan_objects", expensive_scan)
+    provider = NativeGraphProvider(store, snapshot.ontology_id, snapshot.ontology_version)
+
+    with pytest.raises(GraphResourceBudgetExceeded, match="deadline budget of 1"):
+        provider.execute(GraphQueryIR("Customer", return_fields=("_type",), timeout_ms=1))
+
+
 def test_native_provider_batches_neighbors_and_applies_result_limit(tmp_path: Path) -> None:
     store = SqliteGraphStore(tmp_path / "graph.sqlite")
     snapshot = _fanout_snapshot(5)
@@ -406,8 +438,8 @@ def test_native_provider_batches_neighbors_and_applies_result_limit(tmp_path: Pa
     connections = []
     connect = store._connect
 
-    def tracked_connect():
-        connection = connect()
+    def tracked_connect(*, timeout: float = 5.0):
+        connection = connect(timeout=timeout)
         connections.append(connection)
         connection.set_trace_callback(statements.append)
         return connection
@@ -515,6 +547,8 @@ def test_graph_store_rejects_invalid_bounded_read_arguments(tmp_path: Path) -> N
             {"max_examined_edges": 1_000_001},
             "graph max_examined_edges must be between 1 and 1000000",
         ),
+        ({"timeout_ms": True}, "graph query timeout_ms must be an integer"),
+        ({"timeout_ms": 60_001}, "graph query timeout_ms must be between 1 and 60000"),
     ],
 )
 def test_graph_query_rejects_non_integer_execution_budgets(

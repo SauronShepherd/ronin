@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -80,8 +81,8 @@ class SqliteGraphStore:
         finally:
             connection.close()
 
-    def _connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(self._path, timeout=5.0)
+    def _connect(self, *, timeout: float = 5.0) -> sqlite3.Connection:
+        return sqlite3.connect(self._path, timeout=timeout)
 
     def replace_snapshot(self, snapshot: GraphSnapshot) -> GraphSnapshot:
         connection = self._connect()
@@ -134,10 +135,19 @@ class SqliteGraphStore:
         )
 
     @contextmanager
-    def read_snapshot(self) -> Iterator[SqliteGraphReadSession]:
+    def read_snapshot(self, *, timeout_ms: int = 5_000) -> Iterator[SqliteGraphReadSession]:
         """Hold one SQLite read transaction across every operation in a graph query."""
-        connection = self._connect()
+        if (
+            not isinstance(timeout_ms, int)
+            or isinstance(timeout_ms, bool)
+            or timeout_ms < 1
+            or timeout_ms > 60_000
+        ):
+            raise ValueError("graph read timeout_ms must be an integer between 1 and 60000")
+        connection = self._connect(timeout=timeout_ms / 1000)
         try:
+            deadline = time.monotonic() + timeout_ms / 1000
+            connection.set_progress_handler(lambda: time.monotonic() >= deadline, 1_000)
             connection.execute("BEGIN")
             yield SqliteGraphReadSession(connection)
         finally:
