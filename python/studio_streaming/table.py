@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from .contracts import StreamBatch, StreamRecord
@@ -13,7 +14,7 @@ class SqliteStreamTable:
     def __init__(self, path: Path) -> None:
         self._path = path
         path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(path) as connection:
+        with closing(sqlite3.connect(path)) as connection, connection:
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS stream_table ("
                 "stream_id TEXT NOT NULL, partition_id INTEGER NOT NULL, "
@@ -26,7 +27,7 @@ class SqliteStreamTable:
     def append(self, stream_id: str, batch: StreamBatch) -> int:
         if not stream_id or stream_id != stream_id.strip():
             raise ValueError("stream_id must be non-empty and trimmed")
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             inserted = 0
             for record in batch.records:
                 cursor = connection.execute(
@@ -47,7 +48,7 @@ class SqliteStreamTable:
     def read(self, stream_id: str, *, limit: int = 10_000) -> tuple[StreamRecord, ...]:
         if limit < 1 or limit > 100_000:
             raise ValueError("stream table read limit must be between 1 and 100000")
-        with sqlite3.connect(self._path) as connection:
+        with closing(sqlite3.connect(self._path)) as connection, connection:
             rows = connection.execute(
                 "SELECT partition_id,offset_value,timestamp_ms,key_value,value_json "
                 "FROM stream_table WHERE stream_id=? "

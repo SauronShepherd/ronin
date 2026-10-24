@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-24T07:33:29+00:00",
-  "observed_main_sha": "7f6d16dcd24cf1ed2af0a5fc2cb1cff7d0c1ecd9",
+  "observed_at": "2026-10-24T09:06:07+00:00",
+  "observed_main_sha": "3ede5f8142a84ef97cc8055553e49b0652e8d8fc",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -122,7 +122,7 @@
     {
       "id": "p11-streaming-real-time",
       "status": "partial",
-      "summary": "Kafka JSON polling with Ronin-owned offsets, durable SQLite compare-and-set checkpoints, checkpoint-safe micro-batch processing, identity transforms, idempotent Parquet sinks, bounded deterministic event-time windows with watermark/late-record classification, idempotent durable SQLite stream-table storage, deterministic stream-record to scheduler-event inbox integration, and project-scoped bounded health/lag projection including unseen partitions exist; production qualification remains incomplete."
+      "summary": "Kafka JSON polling with Ronin-owned offsets, durable SQLite compare-and-set checkpoints, checkpoint-safe micro-batch processing, identity transforms, idempotent Parquet sinks, bounded deterministic event-time windows with watermark/late-record classification, idempotent durable SQLite stream-table storage, deterministic stream-record to scheduler-event inbox integration, project-scoped bounded health/lag projection including unseen partitions, and canonical stream-definition Bundles with explicit connection/storage/runtime remaps and reset/resume checkpoint identity exist; runtime API wiring and production qualification remain incomplete."
     },
     {
       "id": "p12-observability-alerts-finops",
@@ -142,7 +142,7 @@
     {
       "id": "ronin-bundle",
       "status": "partial",
-      "summary": "Deterministic verified archive IO, shared verified archive reading across importers, semantic inventory, native project/connection round-trips with explicit runtime/secret remapping, atomic multi-object project+connection commit, workflow/schedule round-trips, quality-contract portability, governed ontology-definition portability, atomic SQLite semantic model/dashboard imports with exact replay, ML lab/pipeline and experiment/run/registered-model metadata portability, lakehouse table-metadata portability, and explicit catalog asset/revision/lineage selected-subgraph export/planning/atomic commit exist; PostgreSQL adapters for several domains, cross-domain import recovery, full native certification and public API surfaces remain incomplete."
+      "summary": "Deterministic verified archive IO, shared verified archive reading across importers, semantic inventory, native project/connection round-trips with explicit runtime/secret remapping, atomic multi-object project+connection commit, workflow/schedule round-trips, quality-contract portability, governed ontology-definition portability, atomic SQLite semantic model/dashboard imports with exact replay, canonical stream-definition portability with explicit binding remaps and checkpoint reset/resume policy, ML lab/pipeline and experiment/run/registered-model metadata portability, lakehouse table-metadata portability, and explicit catalog asset/revision/lineage selected-subgraph export/planning/atomic commit exist; PostgreSQL adapters for several domains, cross-domain import recovery, full native certification and public API surfaces remain incomplete."
     },
     {
       "id": "migration-microsoft-fabric",
@@ -237,7 +237,7 @@
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
     "Continue #102: coverage-release-gates applies a 90% line floor to 11 release-decision modules: strict gate (94%), aggregator (100%), artifact identity (96%), release evidence (91%), evidence emission (100%), installed-artifact evidence (96%), artifact qualification (96%), license qualification (97%), SBOM generation (96%), supply-chain evidence (97%), and mutation policy (97%). Review future decision modules against the policy.",
     "Qualify PostgreSQL event/backfill/run/task-evidence adapters together, then qualify full daemon/controller recovery, restart behavior in the supported Compose profile, and broader operator/notification conformance. General production HA is outside the Public v1 contract.",
-    "Extend native Bundle support to the next executable canonical metadata family, preferring workflow/pipeline persistence if its canonical snapshot/store contracts preserve identity without deployment locators; then quality/ontology/ML as their contracts permit.",
+    "Complete remaining native Bundle work: durable import receipts and replay, PostgreSQL adapters for remaining domains, cross-domain rollback/recovery, and API/CLI/Studio flows; extend ML artifact portability only where canonical execution contracts preserve identity without deployment locators.",
     "Finish storage ports for remaining domains, then qualify the wired PostgreSQL JobStore and the existing S3-compatible artifact adapter.",
     "Implement Arrow/Parquet, a reference open lakehouse table profile and a reference SQL engine before broad vendor migration adapters.",
     "Complete remote connectors and safe incremental checkpoint execution.",
