@@ -84,6 +84,8 @@ def test_rql_parser_preserves_quoted_scalar_types_and_rejects_joined_fields() ->
 
 def test_rql_parser_rejects_oversized_text_and_token_count() -> None:
     with pytest.raises(RqlSyntaxError, match="byte limit"):
+        parse_rql("x" * 65_537)
+    with pytest.raises(RqlSyntaxError, match="byte limit"):
         parse_rql("é" * 32_769)
     with pytest.raises(RqlSyntaxError, match="token limit"):
         parse_rql("MATCH Customer RETURN name " + "field " * 4096)

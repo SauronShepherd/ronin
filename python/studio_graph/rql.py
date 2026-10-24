@@ -99,11 +99,13 @@ def _literal(token: str) -> GraphScalar:
 def parse_rql(text: str) -> GraphQueryIR:
     if not text or not text.strip():
         raise RqlSyntaxError("RQL query must be non-empty")
+    if len(text) > _MAX_QUERY_BYTES:
+        raise RqlSyntaxError(f"RQL query exceeds {_MAX_QUERY_BYTES}-byte limit")
     try:
         encoded_length = len(text.encode("utf-8"))
     except UnicodeEncodeError:
         raise RqlSyntaxError("RQL query must contain valid Unicode") from None
-    if len(text) > _MAX_QUERY_BYTES or encoded_length > _MAX_QUERY_BYTES:
+    if encoded_length > _MAX_QUERY_BYTES:
         raise RqlSyntaxError(f"RQL query exceeds {_MAX_QUERY_BYTES}-byte limit")
     tokens = _tokenize(text)
     if len(tokens) > _MAX_QUERY_TOKENS:
