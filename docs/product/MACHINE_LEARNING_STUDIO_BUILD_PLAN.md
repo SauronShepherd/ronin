@@ -1104,6 +1104,18 @@ referencias y los commits de registry/features, evitando que la retención
 observe una importación a medias. SQLite y el modo metadata-only conservan la
 operación sin barrera.
 
+La importación del registry es ahora atómica tanto en SQLite como en
+PostgreSQL: experiments, runs, modelos, evaluaciones y definiciones de features
+comparten la misma transacción. PostgreSQL bloquea la fila del workspace para
+serializar reintentos concurrentes y exige que el store de features pertenezca
+al mismo DSN. Los tests reales con PostgreSQL cubren replay concurrente,
+reapertura del store y rollback ante conflictos tardíos de modelo/feature,
+dataset ausente y cancelación durante la escritura; la suite relacionada pasó
+41/41 localmente en Windows/Python 3.13, conectada a PostgreSQL en Docker y con
+`ResourceWarning` como error. Ruff, formato, mypy, architecture gate y
+consistencia del ledger también pasan; la cualificación exact-head de este
+candidato sigue pendiente.
+
 El flujo síncrono de ejecución acepta ahora de forma coherente la opción
 `register` que ya consumía internamente el camino de clustering. El handler
 valida el shape exacto y limita `model_id`, `version`, `run_id`,

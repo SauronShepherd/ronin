@@ -17,21 +17,22 @@ bundle manifest, object media types and every artifact digest before any registr
 mutation. An import containing artifact objects requires a destination artifact
 store; bytes are written content-addressably and model/run references are
 remapped to the destination storage references before registry writes. SQLite
-imports commit experiments, runs, model versions, evaluations and feature
-definitions in one database transaction; exact replays are idempotent, while a
-conflict rolls the metadata transaction back. Feature definitions require a
-transaction-aware feature store on the same SQLite database and an existing
-workspace-scoped catalog revision for each referenced dataset. Stores without
-an atomic import adapter fail closed. A model marked `champion` is accepted only
-when the Bundle contains a passed evaluation for that exact model version; an
-import cannot introduce a second champion for the same model identity.
+and PostgreSQL imports commit experiments, runs, model versions, evaluations
+and feature definitions in one database transaction; exact replays are
+idempotent, while any conflict rolls back the metadata transaction. Feature
+definitions require a transaction-aware feature store on the same database and
+an existing workspace-scoped catalog revision for each referenced dataset.
+PostgreSQL import locks the workspace row to serialize concurrent Bundle
+imports and verifies both adapters use the same DSN. Stores without an atomic
+import adapter fail closed. A model marked `champion` is accepted only when the
+Bundle contains a passed evaluation for that exact model version; an import
+cannot introduce a second champion for the same model identity.
 
-Artifact bytes are materialized before the SQLite metadata transaction because
-the artifact store has a separate durability boundary. If metadata commit later
-fails, content-addressed bytes may remain unreferenced; the import does not
-publish partial registry metadata, and normal artifact retention can collect
-unreferenced objects. PostgreSQL ML registry Bundle import remains unavailable
-until its atomic adapter is implemented.
+Artifact bytes are materialized before the SQLite or PostgreSQL metadata
+transaction because the artifact store has a separate durability boundary. If
+metadata commit later fails, content-addressed bytes may remain unreferenced;
+the import does not publish partial registry metadata, and normal artifact
+retention can collect unreferenced objects.
 
 Metadata-only bundles remain supported for references intentionally managed by an
 external artifact provider. They do not claim to be self-contained and must be

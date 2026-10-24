@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from studio_core import WorkspaceId
 from studio_storage.postgres_core import PostgresMetadataStore
+from studio_storage.workspaces import WorkspaceNotFound
 
 from studio_ml.domain import FeatureDefinition, Lab, PipelineIR
 from studio_ml.drift import DriftPolicy
@@ -64,6 +67,17 @@ class PostgresMLLabStore(PostgresMetadataStore, MLLabStore, FeatureDefinitionSto
             raise
         finally:
             connection.close()
+
+    @staticmethod
+    def _lock_feature_workspace(cursor: Any, workspace_id: WorkspaceId) -> None:
+        """Serialize feature-version checks for one workspace across writers."""
+
+        cursor.execute(
+            "SELECT workspace_id FROM ronin_workspaces WHERE workspace_id=%s FOR UPDATE",
+            (str(workspace_id),),
+        )
+        if cursor.fetchone() is None:
+            raise WorkspaceNotFound(str(workspace_id))
 
     def put_lab(self, workspace_id: WorkspaceId, lab: Lab) -> Lab:
         payload = lab.to_json()
@@ -166,6 +180,7 @@ class PostgresMLLabStore(PostgresMetadataStore, MLLabStore, FeatureDefinitionSto
         payload = definition.to_json()
         try:
             with connection.cursor() as cursor:
+                self._lock_feature_workspace(cursor, workspace_id)
                 cursor.execute(
                     "SELECT feature_json FROM ronin_ml_studio_features "
                     "WHERE workspace_id=%s AND feature_id=%s AND version=%s FOR UPDATE",
@@ -201,6 +216,46 @@ class PostgresMLLabStore(PostgresMetadataStore, MLLabStore, FeatureDefinitionSto
             raise
         finally:
             connection.close()
+
+    def put_feature_definition_in_transaction(
+        self, cursor: Any, workspace_id: WorkspaceId, definition: FeatureDefinition
+    ) -> FeatureDefinition:
+        """Write a feature definition using the caller's PostgreSQL transaction."""
+
+        # A unique key prevents duplicates but cannot preserve version order
+        # unless all writers serialize before reading the current maximum.
+        self._lock_feature_workspace(cursor, workspace_id)
+
+        key = (str(workspace_id), definition.id, definition.version)
+        payload = definition.to_json()
+        cursor.execute(
+            "SELECT feature_json FROM ronin_ml_studio_features "
+            "WHERE workspace_id=%s AND feature_id=%s AND version=%s FOR UPDATE",
+            key,
+        )
+        row = cursor.fetchone()
+        if row is not None:
+            if row["feature_json"] != payload:
+                raise FeatureDefinitionConflict(
+                    f"feature definition version already exists: {definition.id}/{definition.version}"
+                )
+            return definition
+        cursor.execute(
+            "SELECT MAX(version) AS version FROM ronin_ml_studio_features "
+            "WHERE workspace_id=%s AND feature_id=%s",
+            key[:2],
+        )
+        latest = cursor.fetchone()["version"]
+        if latest is not None and definition.version <= int(latest):
+            raise FeatureDefinitionConflict(
+                f"feature definition version must advance: {definition.id}/{latest}"
+            )
+        cursor.execute(
+            "INSERT INTO ronin_ml_studio_features "
+            "(workspace_id,feature_id,version,feature_json) VALUES (%s,%s,%s,%s)",
+            (*key, payload),
+        )
+        return definition
 
     def get_feature_definition(
         self, workspace_id: WorkspaceId, feature_id: str, version: int | None = None

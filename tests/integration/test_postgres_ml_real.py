@@ -29,9 +29,14 @@ from studio_core.ml import (
     RegisteredModelVersion,
 )
 from studio_execution import DurableExecutionService
-from studio_ml.domain import FeatureSpec, Lab
+from studio_ml.domain import FeatureDefinition, FeatureSpec, Lab
 from studio_ml.orchestration import ExecutionSnapshot, JobStoreExecutionStore
 from studio_ml.postgres import PostgresMLLabStore
+from studio_ml.registry_bundle import (
+    commit_ml_registry_bundle_import,
+    export_ml_registry_bundle,
+)
+from studio_ml.services import FeatureDefinitionConflict
 from studio_orchestrator import Instant, Job, JobId, JobState, Run, RunId, RunState
 from studio_storage import PostgresJobReadPort, PostgresMetadataStore, PostgresMLStore
 from studio_storage.catalog import CatalogAssetNotFound
@@ -402,3 +407,296 @@ def test_postgres_shared_job_claim_racing_cancel_finishes_without_deadlock() -> 
             assert status.state == "cancelled"
     finally:
         asyncio.run(service.aclose())
+
+
+def _create_registry_bundle_dataset(
+    store: PostgresMetadataStore,
+    workspace_id: WorkspaceId,
+    suffix: str,
+) -> AssetRef:
+    ref = AssetRef(AssetId(f"bundle-dataset-{suffix}"), AssetVersion("v1"))
+    store.create_asset(
+        workspace_id,
+        CatalogAsset(ref.asset_id, "dataset", "ML Bundle dataset"),
+        now=NOW,
+    )
+    store.put_revision(
+        workspace_id,
+        AssetRevision(ref, content_digest="e" * 64),
+        now=NOW,
+    )
+    return ref
+
+
+def test_postgres_ml_registry_bundle_is_atomic_concurrent_and_replayable(tmp_path) -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    suffix = uuid4().hex
+    source_id = WorkspaceId(f"bundle-source-{suffix}")
+    target_id = WorkspaceId(f"bundle-target-{suffix}")
+    source = PostgresMLStore(dsn, application_name="ronin-ml-bundle-source")
+    target = PostgresMLStore(dsn, application_name="ronin-ml-bundle-target")
+    source_features = PostgresMLLabStore(dsn, application_name="ronin-ml-bundle-source-features")
+    target_features = PostgresMLLabStore(dsn, application_name="ronin-ml-bundle-target-features")
+    source.create_workspace(Workspace(source_id, "ML Bundle source"), now=NOW)
+    target.create_workspace(Workspace(target_id, "ML Bundle target"), now=NOW)
+    source_ref = _create_registry_bundle_dataset(source, source_id, suffix)
+    _create_registry_bundle_dataset(target, target_id, suffix)
+
+    experiment = Experiment(ExperimentId(f"bundle-experiment-{suffix}"), "ML Bundle")
+    source.put_experiment(source_id, experiment, now=NOW)
+    run = MLRunRecord(
+        MLRunId(f"bundle-run-{suffix}"),
+        experiment.id,
+        f"execution://bundle/{suffix}",
+        "revision-bundle",
+        (source_ref,),
+        metrics=(MetricValue("accuracy", 0.97),),
+    )
+    source.record_run(source_id, run, now=NOW)
+    model = RegisteredModelVersion(
+        ModelId(f"bundle-model-{suffix}"),
+        ModelVersion("1"),
+        run.id,
+        f"artifact://bundle/{suffix}",
+        "f" * 64,
+        "scikit-learn",
+        ModelSignature((("feature", "float"),), (("prediction", "float"),)),
+        stage="champion",
+    )
+    source.register_model(source_id, model, now=NOW)
+    evaluation = ModelEvaluation(
+        model.model_id,
+        model.version,
+        source_ref,
+        "passed",
+        (MetricValue("accuracy", 0.97),),
+        f"execution://evaluation/{suffix}",
+    )
+    source.record_evaluation(source_id, evaluation, now=NOW)
+    feature = FeatureDefinition(
+        f"bundle-feature-{suffix}",
+        "Bundle feature",
+        f"project-{suffix}",
+        source_ref,
+        (FeatureSpec("feature", "numeric"),),
+    )
+    source_features.put_feature_definition(source_id, feature)
+    bundle = tmp_path / f"ml-registry-{suffix}.ronin-bundle.zip"
+    export_ml_registry_bundle(source_id, source, bundle, feature_store=source_features)
+
+    barrier = Barrier(3)
+
+    def import_bundle() -> None:
+        barrier.wait(timeout=10)
+        commit_ml_registry_bundle_import(
+            bundle,
+            target_id,
+            target,
+            now=NOW,
+            feature_store=target_features,
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        imports = (pool.submit(import_bundle), pool.submit(import_bundle))
+        barrier.wait(timeout=10)
+        for future in imports:
+            future.result(timeout=15)
+
+    reopened = PostgresMLStore(dsn, application_name="ronin-ml-bundle-replay")
+    reopened_features = PostgresMLLabStore(dsn, application_name="ronin-ml-bundle-replay-features")
+    commit_ml_registry_bundle_import(
+        bundle,
+        target_id,
+        reopened,
+        now=NOW,
+        feature_store=reopened_features,
+    )
+    assert reopened.list_experiments(target_id) == (experiment,)
+    assert reopened.list_runs(target_id) == (run,)
+    assert reopened.list_models(target_id) == (model,)
+    assert reopened.list_evaluations(target_id, model.model_id, model.version) == (evaluation,)
+    assert reopened_features.list_feature_definitions(target_id) == (feature,)
+
+
+def test_postgres_ml_registry_bundle_late_model_conflict_rolls_back_all_rows(tmp_path) -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    suffix = uuid4().hex
+    source_id = WorkspaceId(f"bundle-conflict-source-{suffix}")
+    target_id = WorkspaceId(f"bundle-conflict-target-{suffix}")
+    source = PostgresMLStore(dsn, application_name="ronin-ml-bundle-conflict-source")
+    target = PostgresMLStore(dsn, application_name="ronin-ml-bundle-conflict-target")
+    source.create_workspace(Workspace(source_id, "Bundle conflict source"), now=NOW)
+    target.create_workspace(Workspace(target_id, "Bundle conflict target"), now=NOW)
+    source_ref = _create_registry_bundle_dataset(source, source_id, suffix)
+    _create_registry_bundle_dataset(target, target_id, suffix)
+
+    imported_experiment = Experiment(ExperimentId(f"new-experiment-{suffix}"), "Imported")
+    source.put_experiment(source_id, imported_experiment, now=NOW)
+    imported_run = MLRunRecord(
+        MLRunId(f"new-run-{suffix}"),
+        imported_experiment.id,
+        f"execution://new/{suffix}",
+        "revision-new",
+        (source_ref,),
+    )
+    source.record_run(source_id, imported_run, now=NOW)
+    model_id = ModelId(f"conflicting-model-{suffix}")
+    source_model = RegisteredModelVersion(
+        model_id,
+        ModelVersion("1"),
+        imported_run.id,
+        f"artifact://source/{suffix}",
+        "a" * 64,
+        "scikit-learn",
+        ModelSignature((("feature", "float"),), (("prediction", "float"),)),
+    )
+    source.register_model(source_id, source_model, now=NOW)
+    bundle = tmp_path / f"ml-registry-conflict-{suffix}.ronin-bundle.zip"
+    export_ml_registry_bundle(source_id, source, bundle)
+
+    existing_experiment = Experiment(ExperimentId(f"existing-experiment-{suffix}"), "Existing")
+    target.put_experiment(target_id, existing_experiment, now=NOW)
+    existing_run = MLRunRecord(
+        MLRunId(f"existing-run-{suffix}"),
+        existing_experiment.id,
+        f"execution://existing/{suffix}",
+        "revision-existing",
+        (source_ref,),
+    )
+    target.record_run(target_id, existing_run, now=NOW)
+    existing_model = RegisteredModelVersion(
+        model_id,
+        ModelVersion("1"),
+        existing_run.id,
+        f"artifact://target/{suffix}",
+        "b" * 64,
+        "scikit-learn",
+        source_model.signature,
+    )
+    target.register_model(target_id, existing_model, now=NOW)
+
+    with pytest.raises(MLConflict, match="model version already exists"):
+        commit_ml_registry_bundle_import(bundle, target_id, target, now=NOW)
+
+    assert target.get_experiment(target_id, imported_experiment.id) is None
+    assert target.get_run(target_id, imported_run.id) is None
+    assert target.get_model(target_id, model_id, ModelVersion("1")) == existing_model
+
+
+def test_postgres_ml_registry_bundle_missing_run_dataset_rolls_back_experiment(tmp_path) -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    suffix = uuid4().hex
+    source_id = WorkspaceId(f"bundle-missing-source-{suffix}")
+    target_id = WorkspaceId(f"bundle-missing-target-{suffix}")
+    source = PostgresMLStore(dsn, application_name="ronin-ml-bundle-missing-source")
+    target = PostgresMLStore(dsn, application_name="ronin-ml-bundle-missing-target")
+    source.create_workspace(Workspace(source_id, "Bundle missing source"), now=NOW)
+    target.create_workspace(Workspace(target_id, "Bundle missing target"), now=NOW)
+    source_ref = _create_registry_bundle_dataset(source, source_id, suffix)
+    experiment = Experiment(ExperimentId(f"missing-dataset-experiment-{suffix}"), "Imported")
+    source.put_experiment(source_id, experiment, now=NOW)
+    run = MLRunRecord(
+        MLRunId(f"missing-dataset-run-{suffix}"),
+        experiment.id,
+        f"execution://missing-dataset/{suffix}",
+        "revision-missing",
+        (source_ref,),
+    )
+    source.record_run(source_id, run, now=NOW)
+    bundle = tmp_path / f"ml-registry-missing-dataset-{suffix}.ronin-bundle.zip"
+    export_ml_registry_bundle(source_id, source, bundle)
+
+    with pytest.raises(CatalogAssetNotFound):
+        commit_ml_registry_bundle_import(bundle, target_id, target, now=NOW)
+
+    assert target.get_experiment(target_id, experiment.id) is None
+    assert target.get_run(target_id, run.id) is None
+
+
+@pytest.mark.parametrize(
+    "cancel_after_write",
+    [False, True],
+    ids=("feature-conflict", "cancel-after-feature-write"),
+)
+def test_postgres_ml_registry_bundle_feature_failure_rolls_back_experiment(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+    cancel_after_write: bool,
+) -> None:
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    suffix = uuid4().hex
+    source_id = WorkspaceId(f"bundle-feature-source-{suffix}")
+    target_id = WorkspaceId(f"bundle-feature-target-{suffix}")
+    source = PostgresMLStore(dsn, application_name="ronin-ml-bundle-feature-source")
+    target = PostgresMLStore(dsn, application_name="ronin-ml-bundle-feature-target")
+    source_features = PostgresMLLabStore(
+        dsn, application_name="ronin-ml-bundle-feature-source-store"
+    )
+    target_features = PostgresMLLabStore(
+        dsn, application_name="ronin-ml-bundle-feature-target-store"
+    )
+    source.create_workspace(Workspace(source_id, "Bundle feature source"), now=NOW)
+    target.create_workspace(Workspace(target_id, "Bundle feature target"), now=NOW)
+    source_ref = _create_registry_bundle_dataset(source, source_id, suffix)
+    target_ref = _create_registry_bundle_dataset(target, target_id, suffix)
+
+    experiment = Experiment(ExperimentId(f"feature-conflict-experiment-{suffix}"), "Imported")
+    source.put_experiment(source_id, experiment, now=NOW)
+    source_feature = FeatureDefinition(
+        f"feature-conflict-{suffix}",
+        "Source feature",
+        f"project-{suffix}",
+        source_ref,
+        (FeatureSpec("feature", "numeric"),),
+    )
+    source_features.put_feature_definition(source_id, source_feature)
+    bundle = tmp_path / f"ml-registry-feature-conflict-{suffix}.ronin-bundle.zip"
+    export_ml_registry_bundle(source_id, source, bundle, feature_store=source_features)
+
+    existing_feature = FeatureDefinition(
+        source_feature.id,
+        "Target feature",
+        source_feature.project_id,
+        target_ref,
+        source_feature.features,
+        version=source_feature.version,
+    )
+    if cancel_after_write:
+
+        class ImportCancelled(BaseException):
+            pass
+
+        write_feature = target_features.put_feature_definition_in_transaction
+
+        def write_then_cancel(cursor, workspace_id, definition):
+            write_feature(cursor, workspace_id, definition)
+            raise ImportCancelled
+
+        monkeypatch.setattr(
+            target_features,
+            "put_feature_definition_in_transaction",
+            write_then_cancel,
+        )
+        with pytest.raises(ImportCancelled):
+            commit_ml_registry_bundle_import(
+                bundle,
+                target_id,
+                target,
+                now=NOW,
+                feature_store=target_features,
+            )
+        expected_features = ()
+    else:
+        target_features.put_feature_definition(target_id, existing_feature)
+        with pytest.raises(FeatureDefinitionConflict, match="version already exists"):
+            commit_ml_registry_bundle_import(
+                bundle,
+                target_id,
+                target,
+                now=NOW,
+                feature_store=target_features,
+            )
+        expected_features = (existing_feature,)
+
+    assert target.get_experiment(target_id, experiment.id) is None
+    assert target_features.list_feature_definitions(target_id) == expected_features
