@@ -15,7 +15,7 @@ from studio_core.bundle_inventory import (
 )
 from studio_core.portability import BindingRequest, RoninBundleManifest
 from studio_storage.bundle import DEFAULT_BUNDLE_READ_LIMITS, BundleIntegrityError, BundleReadLimits
-from studio_storage.bundle_payload import read_bundle_payload
+from studio_storage.bundle_payload import BundlePayloadReader
 from studio_storage.ports import ConnectionStore, WorkspaceStore
 
 from .bundle_connection import CONNECTION_BUNDLE_MEDIA_TYPE
@@ -234,64 +234,62 @@ def plan_multi_object_bundle_import(
     """Verify, topologically order, and classify supported native Bundle objects."""
 
     _require_active_workspace(workspace_store, workspace_id)
-    inventory_payload = read_bundle_payload(
-        bundle_path,
-        BUNDLE_INVENTORY_PATH,
-        max_bytes=max_inventory_bytes,
-        limits=limits,
-    )
-    if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
-        raise UnsupportedMultiObjectBundle("Bundle inventory has unsupported media type")
-    try:
-        inventory = BundleInventory.from_json(inventory_payload.file.data.decode("utf-8"))
-    except (UnicodeDecodeError, ValueError) as exc:
-        raise UnsupportedMultiObjectBundle("Bundle semantic inventory is invalid") from exc
-
-    staged: list[StagedBundleObject] = []
-    for item in _ordered_inventory_objects(inventory):
-        payload = read_bundle_payload(
-            bundle_path,
-            item.path,
-            max_bytes=max_object_bytes,
-            limits=limits,
+    with BundlePayloadReader(bundle_path, limits=limits) as reader:
+        inventory_payload = reader.read_payload(
+            BUNDLE_INVENTORY_PATH,
+            max_bytes=max_inventory_bytes,
         )
-        if payload.manifest != inventory_payload.manifest:
-            raise BundleIntegrityError("Bundle changed while staged import plan was constructed")
-        digest = _manifest_entry_digest(inventory_payload.manifest, item.path)
-        if item.kind == "project":
-            if payload.file.media_type != PROJECT_BUNDLE_MEDIA_TYPE:
-                raise UnsupportedMultiObjectBundle("project object has unsupported media type")
-            staged.append(
-                _stage_project(
-                    item,
-                    payload.file.data,
-                    workspace_store,
-                    workspace_id,
-                    digest,
-                )
-            )
-        elif item.kind == "connection":
-            if payload.file.media_type != CONNECTION_BUNDLE_MEDIA_TYPE:
-                raise UnsupportedMultiObjectBundle("connection object has unsupported media type")
-            staged.append(
-                _stage_connection(
-                    item,
-                    payload.file.data,
-                    connection_store,
-                    workspace_id,
-                    digest,
-                )
-            )
-        else:
-            raise UnsupportedMultiObjectBundle(
-                f"unsupported native Bundle object kind: {item.kind}"
-            )
+        if inventory_payload.file.media_type != INVENTORY_MEDIA_TYPE:
+            raise UnsupportedMultiObjectBundle("Bundle inventory has unsupported media type")
+        try:
+            inventory = BundleInventory.from_json(inventory_payload.file.data.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError) as exc:
+            raise UnsupportedMultiObjectBundle("Bundle semantic inventory is invalid") from exc
 
-    return MultiObjectBundleImportPlan(
-        inventory_payload.manifest.digest,
-        inventory.digest,
-        tuple(staged),
-    )
+        staged: list[StagedBundleObject] = []
+        for item in _ordered_inventory_objects(inventory):
+            payload = reader.read_payload(item.path, max_bytes=max_object_bytes)
+            if payload.manifest != inventory_payload.manifest:
+                raise BundleIntegrityError(
+                    "Bundle changed while staged import plan was constructed"
+                )
+            digest = _manifest_entry_digest(inventory_payload.manifest, item.path)
+            if item.kind == "project":
+                if payload.file.media_type != PROJECT_BUNDLE_MEDIA_TYPE:
+                    raise UnsupportedMultiObjectBundle("project object has unsupported media type")
+                staged.append(
+                    _stage_project(
+                        item,
+                        payload.file.data,
+                        workspace_store,
+                        workspace_id,
+                        digest,
+                    )
+                )
+            elif item.kind == "connection":
+                if payload.file.media_type != CONNECTION_BUNDLE_MEDIA_TYPE:
+                    raise UnsupportedMultiObjectBundle(
+                        "connection object has unsupported media type"
+                    )
+                staged.append(
+                    _stage_connection(
+                        item,
+                        payload.file.data,
+                        connection_store,
+                        workspace_id,
+                        digest,
+                    )
+                )
+            else:
+                raise UnsupportedMultiObjectBundle(
+                    f"unsupported native Bundle object kind: {item.kind}"
+                )
+
+        return MultiObjectBundleImportPlan(
+            inventory_payload.manifest.digest,
+            inventory.digest,
+            tuple(staged),
+        )
 
 
 __all__ = (
