@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-24T14:43:59+00:00",
-  "observed_main_sha": "4e63e69334a2ae55ce6bc1c2656742193cb919bb",
+  "observed_at": "2026-10-24T15:18:05+00:00",
+  "observed_main_sha": "11295e3d2c904ae300598d9592ea8a1eebf29c3d",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -15,9 +15,9 @@
   },
   "local_verification": {
     "observed_at": "2026-10-24",
-    "candidate_sha": "462983fd2703119f55c197470830aa1b65c5aa0d",
+    "candidate_sha": "1dd96301aa0b311b2fc19852d07ff67b5ea2040e",
     "command": "$env:PATH = \"$PWD\\.venv\\Scripts;$env:PATH\"; .venv\\Scripts\\python.exe -m pytest -q",
-    "result": "3922 passed, 66 skipped in 616.61s (Windows; environment-dependent tests are qualified in CI where configured)",
+    "result": "3954 passed, 66 skipped in 489.21s (Windows; environment-dependent tests are qualified in exact-head CI where configured)",
     "qualification_claimed": false,
     "mutation_campaign": {
       "status": "historical_frozen",
@@ -87,7 +87,7 @@
     {
       "id": "p6-catalog-lineage",
       "status": "partial",
-      "summary": "Governed asset CRUD/revisions, versioned sensitivity and ownership metadata, glossary term authoring, bounded project-scoped catalog search, declared/observed lineage persistence with HTTP navigation, OpenLineage export plus bounded HTTP transport, and explicit selected-subgraph Bundle export/planning/atomic import exist; event standard certification and complete asset-family integration remain incomplete."
+      "summary": "Governed asset CRUD/revisions, versioned sensitivity and ownership metadata, glossary term authoring, bounded project-scoped catalog search, declared/observed lineage persistence with HTTP navigation, and selected-subgraph Bundle export/planning/atomic import exist. OpenLineage export emits observed RunEvents with standard column-lineage output facets and declared DatasetEvents with lineage facets; event validation is timezone-aware and schema/facet aware, payloads are capped at 1 MiB, duplicate suppression is bounded, and HTTP delivery rejects redirects and closes responses. Consumer/provider certification and complete asset-family integration remain incomplete."
     },
     {
       "id": "p6-ontology-knowledge-graph",
