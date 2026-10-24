@@ -2,6 +2,7 @@
 
 from .bundle import (
     SemanticBundleImportPlan,
+    SemanticBundleImportStore,
     build_semantic_bundle,
     commit_semantic_bundle_import,
     export_semantic_bundle,
@@ -50,6 +51,7 @@ __all__ = (
     "compile_join_query",
     "SemanticHTTPAdapter",
     "SemanticBundleImportPlan",
+    "SemanticBundleImportStore",
     "build_semantic_bundle",
     "commit_semantic_bundle_import",
     "export_semantic_bundle",

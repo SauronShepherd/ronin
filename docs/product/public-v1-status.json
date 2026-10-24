@@ -142,7 +142,7 @@
     {
       "id": "ronin-bundle",
       "status": "partial",
-      "summary": "Deterministic verified archive IO, semantic inventory, native project/connection round-trips with explicit runtime/secret remapping, atomic multi-object project+connection commit, workflow/schedule round-trips, quality-contract portability, governed ontology-definition portability, semantic model/dashboard portability, ML lab/pipeline and experiment/run/registered-model metadata portability, lakehouse table-metadata portability, and explicit catalog asset/revision/lineage selected-subgraph export/planning/atomic commit exist; PostgreSQL bundle adapters, full native certification and public API surfaces remain incomplete."
+      "summary": "Deterministic verified archive IO, shared verified archive reading across importers, semantic inventory, native project/connection round-trips with explicit runtime/secret remapping, atomic multi-object project+connection commit, workflow/schedule round-trips, quality-contract portability, governed ontology-definition portability, atomic SQLite semantic model/dashboard imports with exact replay, ML lab/pipeline and experiment/run/registered-model metadata portability, lakehouse table-metadata portability, and explicit catalog asset/revision/lineage selected-subgraph export/planning/atomic commit exist; PostgreSQL adapters for several domains, cross-domain import recovery, full native certification and public API surfaces remain incomplete."
     },
     {
       "id": "migration-microsoft-fabric",
