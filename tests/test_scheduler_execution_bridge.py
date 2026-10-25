@@ -248,6 +248,7 @@ def test_adapter_controls_fail_closed(tmp_path: Path, controls: dict[str, object
                 "destination_ref": "artifact://orders",
                 "checkpoint_ref": "checkpoint://orders",
                 "mode": "incremental",
+                "workspace_id": "workspace-1",
             },
         ),
         (

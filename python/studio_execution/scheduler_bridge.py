@@ -299,6 +299,10 @@ def plan_scheduler_execution(
     current = Instant(now)
     node = _node_payload_for_claim(claim, workflow_run)
     target, parameters = _operator_payload(node)
+    if target == "connector.sync.v1":
+        # The worker resolves connections and checkpoints under the claimed
+        # workspace. Carry the scheduler's trusted scope in the durable Job.
+        parameters = {**parameters, "workspace_id": str(claim.workspace_id)}
     controls = _execution_controls(cast(Mapping[str, object], node["params"]))
     if controls:
         parameters = {**parameters, **controls}
