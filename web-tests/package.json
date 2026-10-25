@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "playwright test",
+    "test:live": "playwright test tests/ingestion-live.spec.mjs --workers=1",
     "test:headed": "playwright test --headed --workers=1",
     "test:debug": "playwright test --debug"
   },

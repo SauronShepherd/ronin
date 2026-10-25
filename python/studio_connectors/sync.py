@@ -14,6 +14,24 @@ from studio_storage.ports import ArtifactReferenceBarrier
 from .contracts import ConnectorReadResult
 
 
+def scoped_checkpoint_identity(workspace_id: str, identity: str) -> str:
+    """Return a stable checkpoint key that cannot alias across workspace scopes."""
+    if (
+        not isinstance(workspace_id, str)
+        or not workspace_id
+        or workspace_id != workspace_id.strip()
+        or not isinstance(identity, str)
+        or not identity
+        or identity != identity.strip()
+    ):
+        raise ValueError("workspace_id and checkpoint identity must be non-empty and trimmed")
+    if "/" not in workspace_id and "/" not in identity:
+        # Preserve unambiguous legacy keys so existing checkpoint rows remain readable.
+        return f"{workspace_id}/{identity}"
+    identity_bytes = encode({"workspace_id": workspace_id, "identity": identity})
+    return f"ronin:v2:{hashlib.sha256(identity_bytes).hexdigest()}"
+
+
 class ArtifactDestinationWriter:
     """Write connector rows as one verified content-addressed JSON artifact."""
 
@@ -264,15 +282,13 @@ class IngestionSyncService:
         self,
         definition: IngestionSyncDefinition,
         *,
+        workspace_id: str,
         connection: object,
         asset: object,
         secrets: object,
         limit: int = 100,
-        checkpoint_identity: str | None = None,
     ) -> dict[str, object]:
-        scoped_identity = (
-            definition.checkpoint_identity if checkpoint_identity is None else checkpoint_identity
-        )
+        scoped_identity = scoped_checkpoint_identity(workspace_id, definition.checkpoint_identity)
         health = self._checkpoints.health(scoped_identity)
         plan = self._registry.plan_sync(definition, checkpoint_present=health.present)
         result = self._registry.preview(
@@ -297,6 +313,7 @@ class IngestionSyncService:
         self,
         definition: IngestionSyncDefinition,
         *,
+        workspace_id: str,
         connection: object,
         asset: object,
         secrets: object,
@@ -305,10 +322,11 @@ class IngestionSyncService:
     ) -> dict[str, object]:
         """Read, durably write the destination, then advance the checkpoint."""
 
-        health = self._checkpoints.health(definition.checkpoint_identity)
-        expected = self._checkpoints.get(definition.checkpoint_identity)
+        scoped_identity = scoped_checkpoint_identity(workspace_id, definition.checkpoint_identity)
+        health = self._checkpoints.health(scoped_identity)
+        expected = self._checkpoints.get(scoped_identity)
         plan = self._registry.plan_sync(definition, checkpoint_present=health.present)
-        fence = self._checkpoints.acquire(definition.checkpoint_identity)
+        fence = self._checkpoints.acquire(scoped_identity)
         result = self._registry.read(
             definition.connector_id,
             connection,
@@ -326,7 +344,7 @@ class IngestionSyncService:
                 fence=fence,
             )
             evidence = self._checkpoints.commit_output_then_checkpoint(
-                definition.checkpoint_identity,
+                scoped_identity,
                 expected,
                 result.checkpoint,
                 output_id=output_id,
@@ -334,11 +352,14 @@ class IngestionSyncService:
                 fence=fence,
                 output_committed=True,
             )
+        checkpoint_payload = evidence.to_payload()
+        if isinstance(checkpoint_payload, dict) and "identity" in checkpoint_payload:
+            checkpoint_payload["identity"] = definition.checkpoint_identity
         return {
             "schema": "ronin.ingestion-sync-result/v1",
             "plan": plan.to_payload(),
             "rows_written": len(result.rows),
-            "checkpoint": evidence.to_payload(),
+            "checkpoint": checkpoint_payload,
         }
 
 
@@ -348,4 +369,5 @@ __all__ = (
     "IngestionSyncPlan",
     "IngestionSyncService",
     "plan_sync",
+    "scoped_checkpoint_identity",
 )

@@ -2,7 +2,6 @@ import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.RONIN_STUDIO_E2E_URL || 'http://127.0.0.1:8099/web/';
 const slowMo = Number(process.env.RONIN_UI_SLOW_MO_MS || 0);
-const token = process.env.RONIN_STUDIO_E2E_TOKEN || 'job-token';
 
 export default defineConfig({
   testDir: './tests',
@@ -19,7 +18,6 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     launchOptions: { slowMo },
-    extraHTTPHeaders: { Authorization: `Bearer ${token}` },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: process.env.RONIN_STUDIO_E2E_URL

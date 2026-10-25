@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import base64
 import binascii
-import hashlib
 from collections.abc import Callable, Mapping
 from typing import Protocol, cast
 
@@ -14,7 +13,7 @@ from studio_storage.ports import ArtifactReferenceBarrier
 from studio_storage.secrets import SecretResolver
 
 from .registry import ConnectorRegistry
-from .sync import IngestionSyncDefinition, IngestionSyncService
+from .sync import IngestionSyncDefinition, IngestionSyncService, scoped_checkpoint_identity
 
 
 class _Health(Protocol):
@@ -217,12 +216,10 @@ class IngestionHTTPAdapter:
         definition = self._definition(body)
         return self._service.preview(
             definition,
+            workspace_id=workspace_id,
             connection=self._connection(workspace_id, definition.connection_ref),
             asset=self._asset(definition.asset_ref),
             secrets=self._secrets(definition.connection_ref),
-            checkpoint_identity=self._checkpoint_identity(
-                workspace_id, definition.checkpoint_identity
-            ),
         )
 
     def plan(self, body: object, *, workspace_id: str) -> dict[str, object]:
@@ -247,18 +244,7 @@ class IngestionHTTPAdapter:
 
     @staticmethod
     def _checkpoint_identity(workspace_id: str, identity: str) -> str:
-        if (
-            not workspace_id.strip()
-            or workspace_id != workspace_id.strip()
-            or not identity.strip()
-            or identity != identity.strip()
-        ):
-            raise ValueError("workspace_id and checkpoint identity must be non-empty and trimmed")
-        if "/" not in workspace_id and "/" not in identity:
-            # Keep collision-free legacy keys readable when the separator is unambiguous.
-            return f"{workspace_id}/{identity}"
-        identity_bytes = encode({"workspace_id": workspace_id, "identity": identity})
-        return f"ronin:v2:{hashlib.sha256(identity_bytes).hexdigest()}"
+        return scoped_checkpoint_identity(workspace_id, identity)
 
     @staticmethod
     def _definition(body: object) -> IngestionSyncDefinition:

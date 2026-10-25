@@ -161,11 +161,14 @@ def execute_scheduler_job(
                 connector_asset,
                 connector_secrets,
                 connector_destination,
+                workspace_id,
             )
         ):
             raise UnsupportedSchedulerWorkload(
-                "connector.sync requires service, source context, and destination"
+                "connector.sync requires service, workspace scope, source context, and destination"
             )
+        if not isinstance(workspace_id, str) or not workspace_id.strip():
+            raise UnsupportedSchedulerWorkload("connector.sync workspace scope is invalid")
         connector_sync_service = cast(Any, connector_sync_service)
         try:
             payload = json.loads(job.parameters_json)
@@ -182,6 +185,7 @@ def execute_scheduler_job(
             raise UnsupportedSchedulerWorkload("connector.sync parameters are invalid") from exc
         result = connector_sync_service.execute(
             definition,
+            workspace_id=workspace_id,
             connection=connector_connection,
             asset=connector_asset,
             secrets=connector_secrets,

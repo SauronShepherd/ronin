@@ -1,11 +1,18 @@
 import {get, post} from './api.js';
-import {json, page} from './dom.js';
+import {esc, json, page} from './dom.js';
 
 let discoveryController = null;
 let discoveryRequestId = 0;
 let discoveryCursor = null;
 let discoveryPageNumber = 0;
 let discoverySourceKey = '';
+
+function workspaceQuery(path) {
+  const workspaceId = document.querySelector('#ingestion-workspace')?.value.trim();
+  if (!workspaceId) throw new Error('Workspace ID is required.');
+  sessionStorage.setItem('ronin.workspace', workspaceId);
+  return `${path}?workspace_id=${encodeURIComponent(workspaceId)}`;
+}
 
 export async function ingestionStudio() {
   stopDiscoveryRequest();
@@ -14,6 +21,7 @@ export async function ingestionStudio() {
   discoverySourceKey = '';
 
   const view = document.querySelector('#view');
+  const workspaceId = globalThis.roninStudioContext?.workspace || sessionStorage.getItem('ronin.workspace') || 'default';
   view.innerHTML = `${page('Ingestion Studio', 'DATA PLANE')}
     <section class="panel">
       <h2>Connector capabilities</h2>
@@ -24,6 +32,7 @@ export async function ingestionStudio() {
       <p class="muted">Load one bounded page at a time. Ronin keeps only the current page and its continuation cursor.</p>
       <form id="ingestion-discover-form">
         <div class="grid three">
+          <label>Workspace ID<input class="field" id="ingestion-workspace" name="workspace_id" value="${esc(workspaceId)}" required></label>
           <label>Connector ID<input class="field" name="connector_id" value="postgres" required></label>
           <label>Connection reference<input class="field" name="connection_ref" placeholder="connection ID" required></label>
           <label>Page size<input class="field" name="page_size" type="number" min="1" max="1000" value="100" required></label>
@@ -71,11 +80,13 @@ function discoveryInputs() {
   const connectorId = form.elements.connector_id.value.trim();
   const connectionRef = form.elements.connection_ref.value.trim();
   const pageSize = Number(form.elements.page_size.value);
+  const workspaceId = form.elements.workspace_id.value.trim();
+  if (!workspaceId) throw new Error('Workspace ID is required.');
   if (!connectorId || !connectionRef) throw new Error('Connector ID and connection are required.');
   if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000) {
     throw new Error('Page size must be an integer between 1 and 1000.');
   }
-  return {connectorId, connectionRef, pageSize};
+  return {workspaceId, connectorId, connectionRef, pageSize};
 }
 
 function updateDiscoveryControls({loading, hasMore}) {
@@ -129,7 +140,7 @@ async function loadDiscoveryPage({restart}) {
   if (!restart && discoveryCursor) body.cursor = discoveryCursor;
 
   try {
-    const data = await post('/v1/platform/connectors/discover', body, {
+    const data = await post(workspaceQuery('/v1/platform/connectors/discover'), body, {
       signal: controller.signal,
     });
     if (requestId !== discoveryRequestId) return;
@@ -173,7 +184,7 @@ document.addEventListener('submit', async event => {
   const result = document.querySelector('#ingestion-preview-result');
   try {
     const payload = JSON.parse(document.querySelector('#ingestion-definition').value);
-    result.textContent = json(await post('/v1/platform/connectors/preview', payload));
+    result.textContent = json(await post(workspaceQuery('/v1/platform/connectors/preview'), payload));
   } catch (error) {
     result.textContent = `Preview failed: ${error.message}`;
   }
@@ -198,13 +209,13 @@ document.addEventListener('click', async event => {
   const result = document.querySelector('#ingestion-preview-result');
   try {
     const definition = JSON.parse(document.querySelector('#ingestion-definition').value);
-    const path = button.id === 'ingestion-plan-button'
+    const endpoint = button.id === 'ingestion-plan-button'
       ? '/v1/platform/connectors/plan'
       : '/v1/platform/connectors/checkpoint-health';
     const payload = button.id === 'ingestion-plan-button'
       ? definition
       : {checkpoint_identity: definition.checkpoint_identity};
-    result.textContent = json(await post(path, payload));
+    result.textContent = json(await post(workspaceQuery(endpoint), payload));
   } catch (error) {
     result.textContent = `Operation failed: ${error.message}`;
   }

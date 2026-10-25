@@ -36,6 +36,7 @@ from .sync import (
     IngestionSyncPlan,
     IngestionSyncService,
     plan_sync,
+    scoped_checkpoint_identity,
 )
 
 __all__ = (
@@ -70,4 +71,5 @@ __all__ = (
     "IngestionSyncPlan",
     "IngestionSyncService",
     "plan_sync",
+    "scoped_checkpoint_identity",
 )

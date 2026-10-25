@@ -75,6 +75,53 @@ def test_scheduler_dispatch_rejects_unqualified_family() -> None:
         execute_scheduler_job(_job("ml.run"))
 
 
+def test_connector_sync_scheduler_requires_and_forwards_workspace_scope() -> None:
+    seen: dict[str, object] = {}
+
+    class SyncService:
+        def execute(self, definition, *, workspace_id, **kwargs):
+            seen.update({"definition": definition, "workspace_id": workspace_id, **kwargs})
+            return {"schema": "ronin.ingestion-sync-result/v1"}
+
+    dependencies = {
+        "connector_sync_service": SyncService(),
+        "connector_connection": object(),
+        "connector_asset": object(),
+        "connector_secrets": object(),
+        "connector_destination": object(),
+    }
+    with pytest.raises(UnsupportedSchedulerWorkload, match="workspace scope"):
+        execute_scheduler_job(
+            _job(
+                "connector.sync",
+                {
+                    "connector_id": "postgres",
+                    "source_ref": "conn-1::public.orders",
+                    "destination_ref": "artifact://orders",
+                    "checkpoint_ref": "orders",
+                },
+            ),
+            **dependencies,
+        )
+
+    result = execute_scheduler_job(
+        _job(
+            "connector.sync",
+            {
+                "connector_id": "postgres",
+                "source_ref": "conn-1::public.orders",
+                "destination_ref": "artifact://orders",
+                "checkpoint_ref": "orders",
+            },
+        ),
+        workspace_id="workspace-a",
+        **dependencies,
+    )
+    assert result.family == "connector"
+    assert seen["workspace_id"] == "workspace-a"
+    assert seen["definition"].checkpoint_identity == "orders"
+
+
 @pytest.mark.parametrize("identifier", ["", " ", "\t"])
 def test_scheduler_dispatch_rejects_blank_ml_identifiers(identifier: str) -> None:
     class Runner:

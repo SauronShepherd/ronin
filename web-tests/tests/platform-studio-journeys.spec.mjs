@@ -160,7 +160,8 @@ test('Ingestion Studio pages source discovery and keeps sync preview controls', 
     await route.fulfill({ json: { items: [] } });
   });
   const discoveryRequests = [];
-  await page.route('**/v1/platform/connectors/discover', async route => {
+  await page.route('**/v1/platform/connectors/discover**', async route => {
+    expect(new URL(route.request().url()).searchParams.get('workspace_id')).toBe('default');
     const body = route.request().postDataJSON();
     discoveryRequests.push(body);
     if (!body.cursor) {
@@ -181,11 +182,17 @@ test('Ingestion Studio pages source discovery and keeps sync preview controls', 
       next_cursor: null,
     } });
   });
-  await page.route('**/v1/platform/connectors/plan', async route => {
+  await page.route('**/v1/platform/connectors/plan**', async route => {
+    expect(new URL(route.request().url()).searchParams.get('workspace_id')).toBe('default');
     expect(route.request().postDataJSON().checkpoint_identity).toBe('preview-1');
     await route.fulfill({ json: { plan: { mode: 'snapshot' }, checkpoint: { present: false } } });
   });
-  await page.route('**/v1/platform/connectors/checkpoint-health', async route => {
+  await page.route('**/v1/platform/connectors/preview**', async route => {
+    expect(new URL(route.request().url()).searchParams.get('workspace_id')).toBe('default');
+    await route.fulfill({ json: { preview: 'source preview ok' } });
+  });
+  await page.route('**/v1/platform/connectors/checkpoint-health**', async route => {
+    expect(new URL(route.request().url()).searchParams.get('workspace_id')).toBe('default');
     expect(route.request().postDataJSON()).toEqual({ checkpoint_identity: 'preview-1' });
     await route.fulfill({ json: { identity: 'preview-1', present: false } });
   });
@@ -201,6 +208,8 @@ test('Ingestion Studio pages source discovery and keeps sync preview controls', 
     { connector_id: 'postgres', connection_ref: 'conn-1', page_size: 100 },
     { connector_id: 'postgres', connection_ref: 'conn-1', page_size: 100, cursor: 'opaque-page-two' },
   ]);
+  await page.getByRole('button', { name: 'Preview source' }).click();
+  await expect(page.locator('#ingestion-preview-result')).toContainText('source preview ok');
   await page.getByRole('button', { name: 'Plan sync' }).click();
   await expect(page.locator('#ingestion-preview-result')).toContainText('snapshot');
   await page.getByRole('button', { name: 'Checkpoint health' }).click();
@@ -213,7 +222,7 @@ test('Ingestion Studio stops requesting discovery pages when cancelled', async (
   const started = new Promise(resolve => { requestStarted = resolve; });
   let releaseRequest;
   const pendingResponse = new Promise(resolve => { releaseRequest = resolve; });
-  await page.route('**/v1/platform/connectors/discover', async route => {
+  await page.route('**/v1/platform/connectors/discover**', async route => {
     requestStarted();
     await pendingResponse;
     try {
@@ -240,7 +249,7 @@ test('Ingestion Studio stops requesting discovery pages when cancelled', async (
 
 test('Ingestion Studio rejects a malformed discovery page', async ({ page }) => {
   await page.route('**/v1/platform/connectors', route => route.fulfill({ json: { items: [] } }));
-  await page.route('**/v1/platform/connectors/discover', route => route.fulfill({ json: {
+  await page.route('**/v1/platform/connectors/discover**', route => route.fulfill({ json: {
     schema: 'ronin.connector-discovery/v1',
     items: [],
     count: 1,

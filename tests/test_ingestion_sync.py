@@ -147,12 +147,12 @@ def test_ingestion_http_adapter_validates_and_delegates_preview() -> None:
     )
 
     class _Service:
-        def preview(self, definition, *, connection, asset, secrets, checkpoint_identity):
+        def preview(self, definition, *, workspace_id, connection, asset, secrets):
             return {
                 "schema": "ronin.ingestion-preview/v1",
                 "definition_id": definition.id,
                 "resolved": [connection[1:], asset[1], secrets[1]],
-                "checkpoint_identity": checkpoint_identity,
+                "workspace_id": workspace_id,
             }
 
     adapter._service = _Service()
@@ -170,9 +170,7 @@ def test_ingestion_http_adapter_validates_and_delegates_preview() -> None:
         "asset/a",
         "conn/a",
     ]
-    assert adapter.preview(body, workspace_id="workspace/a")["checkpoint_identity"].startswith(
-        "ronin:v2:"
-    )
+    assert adapter.preview(body, workspace_id="workspace/a")["workspace_id"] == "workspace/a"
     with pytest.raises(ValueError, match="invalid fields"):
         adapter.preview({**body, "extra": True}, workspace_id="workspace/a")
 
@@ -368,13 +366,13 @@ def test_ingestion_preview_scopes_checkpoint_read_and_hides_internal_identity() 
     )
     result = IngestionSyncService(_Registry(), _Checkpoints()).preview(
         definition,
+        workspace_id="workspace/a",
         connection=object(),
         asset=object(),
         secrets=object(),
-        checkpoint_identity="workspace/a/cp/a",
     )
 
-    assert identities == ["workspace/a/cp/a"]
+    assert identities == [IngestionHTTPAdapter._checkpoint_identity("workspace/a", "cp/a")]
     assert result["checkpoint"]["identity"] == "cp/a"
 
 
@@ -387,6 +385,7 @@ def test_checkpoint_scope_encoding_cannot_alias_slash_delimited_pairs() -> None:
 
 def test_sync_holds_reference_barrier_through_artifact_and_checkpoint_commit() -> None:
     events: list[str] = []
+    identities: list[str] = []
 
     class _Barrier:
         @contextmanager
@@ -419,21 +418,24 @@ def test_sync_holds_reference_barrier_through_artifact_and_checkpoint_commit() -
             return ConnectorReadResult((), (), SourceCheckpoint("snapshot", "next"))
 
     class _Checkpoints:
-        def health(self, _identity):
+        def health(self, identity):
+            identities.append(identity)
             return _Health()
 
-        def get(self, _identity):
-            return None
+        def get(self, identity):
+            identities.append(identity)
 
-        def acquire(self, _identity):
+        def acquire(self, identity):
+            identities.append(identity)
             return 1
 
-        def commit_output_then_checkpoint(self, *_args, **_kwargs):
+        def commit_output_then_checkpoint(self, identity, *_args, **_kwargs):
+            identities.append(identity)
             events.append("reference")
 
             class _Evidence:
                 def to_payload(self):
-                    return {"committed": True}
+                    return {"committed": True, "identity": identity}
 
             return _Evidence()
 
@@ -449,6 +451,7 @@ def test_sync_holds_reference_barrier_through_artifact_and_checkpoint_commit() -
     )
     result = service.execute(
         IngestionSyncDefinition("sync/a", "connector", "conn/a", "asset/a", "dest/a", "cp/a"),
+        workspace_id="workspace/a",
         connection=object(),
         asset=object(),
         secrets=object(),
@@ -456,4 +459,16 @@ def test_sync_holds_reference_barrier_through_artifact_and_checkpoint_commit() -
     )
 
     assert result["rows_written"] == 0
+    assert result["checkpoint"]["identity"] == "cp/a"
     assert events == ["lock", "artifact", "reference", "unlock"]
+    assert identities == [IngestionHTTPAdapter._checkpoint_identity("workspace/a", "cp/a")] * 4
+
+
+@pytest.mark.parametrize(
+    ("workspace_id", "identity"), [("", "cp"), ("workspace", " "), (" ws", "cp")]
+)
+def test_checkpoint_scope_encoding_rejects_untrimmed_components(
+    workspace_id: str, identity: str
+) -> None:
+    with pytest.raises(ValueError, match="non-empty and trimmed"):
+        IngestionHTTPAdapter._checkpoint_identity(workspace_id, identity)
