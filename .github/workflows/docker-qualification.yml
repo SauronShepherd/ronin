@@ -74,7 +74,7 @@ jobs:
           AWS_ACCESS_KEY_ID: test
           AWS_SECRET_ACCESS_KEY: test
           AWS_DEFAULT_REGION: us-east-1
-        run: python -m pytest -q tests/integration/test_ml_s3_artifact_store_real.py
+        run: python -m pytest -q tests/integration/test_ml_s3_artifact_store_real.py tests/integration/test_s3_json_connector_real.py
       - name: Upload general qualification evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

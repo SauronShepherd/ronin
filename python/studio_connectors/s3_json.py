@@ -18,7 +18,7 @@ from studio_core import (
 )
 from studio_storage.secrets import SecretResolver
 
-from .contracts import ConnectorReadResult, DiscoveryPage
+from .contracts import ConnectorCommitResult, ConnectorReadResult, DiscoveryPage
 
 
 def _boto3() -> Any:
@@ -35,12 +35,21 @@ def _fields(rows: tuple[dict[str, object], ...]) -> tuple[FieldSchema, ...]:
 
 
 class S3JsonConnector:
-    """Discover and read JSON or JSONL objects from an S3-compatible bucket."""
+    """Read S3 JSON/JSONL objects and publish bounded at-least-once sink writes."""
+
+    MAX_OBJECT_BYTES = 10 * 1024 * 1024
+    MAX_BATCH_SIZE = 10_000
 
     descriptor = ConnectorDescriptor(
         "s3.json",
         1,
-        ConnectorCapabilities(discover=True, read=True, max_page_size=10_000),
+        ConnectorCapabilities(
+            discover=True,
+            read=True,
+            write=True,
+            max_page_size=10_000,
+            max_batch_size=MAX_BATCH_SIZE,
+        ),
     )
 
     def __init__(self, *, client: Any | None = None) -> None:
@@ -167,8 +176,8 @@ class S3JsonConnector:
         if prefix and not key.startswith(prefix.rstrip("/") + "/"):
             raise ValueError("S3 asset is outside the configured prefix")
         response = self._client_for(connection).get_object(Bucket=bucket, Key=key)
-        body = response["Body"].read(10 * 1024 * 1024 + 1)
-        if len(body) > 10 * 1024 * 1024:
+        body = response["Body"].read(self.MAX_OBJECT_BYTES + 1)
+        if len(body) > self.MAX_OBJECT_BYTES:
             raise ValueError("S3 JSON object exceeds configured byte limit")
         try:
             if key.lower().endswith(".jsonl"):
@@ -191,6 +200,156 @@ class S3JsonConnector:
             _fields(rows if rows else tuple(dict(item) for item in payload)),
             rows,
             SourceCheckpoint("snapshot", checkpoint_value),
+        )
+
+    def write(
+        self,
+        connection: ConnectionDefinition,
+        asset: AssetHandle,
+        result: ConnectorReadResult,
+        secrets: SecretResolver,
+        *,
+        idempotency_key: str,
+    ) -> ConnectorCommitResult:
+        """Replace one JSON/JSONL object; retries are at-least-once, never transactional.
+
+        A stable caller key is echoed in the commit receipt and a hash is stored as
+        object metadata for diagnostics. S3-compatible PUT does not enforce that key,
+        so this adapter makes no exactly-once or provider-idempotency claim.
+        """
+
+        del secrets
+        if asset.connection_id != connection.id:
+            raise ValueError("S3 asset handle does not belong to the connection")
+        if (
+            not isinstance(idempotency_key, str)
+            or not idempotency_key
+            or idempotency_key != idempotency_key.strip()
+            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in idempotency_key)
+        ):
+            raise ValueError("idempotency_key must be non-empty trimmed text")
+        try:
+            idempotency_key_bytes = idempotency_key.encode("utf-8")
+        except UnicodeEncodeError as exc:
+            raise ValueError("idempotency_key must contain valid UTF-8 text") from exc
+        if len(idempotency_key_bytes) > 1024:
+            raise ValueError("idempotency_key must be at most 1024 bytes")
+        if len(result.rows) > self.MAX_BATCH_SIZE:
+            raise ValueError("S3 JSON write exceeds configured row limit")
+
+        bucket, prefix = self._config(connection)
+        parts = (*asset.namespace, asset.name)
+        if any(
+            not part
+            or part in {".", ".."}
+            or "/" in part
+            or "\\" in part
+            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in part)
+            for part in parts
+        ):
+            raise ValueError("S3 asset path contains an unsafe component")
+        key = "/".join(parts)
+        if prefix and not key.startswith(prefix.rstrip("/") + "/"):
+            raise ValueError("S3 asset is outside the configured prefix")
+        try:
+            key_bytes = key.encode("utf-8")
+            output_id = f"s3://{bucket}/{key}"
+            output_id_bytes = output_id.encode("utf-8")
+        except UnicodeEncodeError as exc:
+            raise ValueError("S3 asset path must contain valid UTF-8 text") from exc
+        if len(key_bytes) > 1024:
+            raise ValueError("S3 object key exceeds the 1024-byte provider limit")
+        if len(output_id_bytes) > 1024:
+            raise ValueError("S3 output id exceeds the 1024-byte connector receipt limit")
+        if any(ord(character) < 0x20 or ord(character) == 0x7F for character in output_id):
+            raise ValueError("S3 output id must not contain control characters")
+
+        suffix = asset.name.lower()
+        if suffix.endswith(".jsonl"):
+            media_type = "application/x-ndjson"
+            jsonl = True
+        elif suffix.endswith(".json"):
+            media_type = "application/json"
+            jsonl = False
+        else:
+            raise ValueError("S3 JSON sink only supports .json and .jsonl assets")
+
+        encoder = json.JSONEncoder(
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+        chunks: list[bytes] = []
+        size_bytes = 0
+
+        def append_text(value: str) -> None:
+            nonlocal size_bytes
+            encoded = value.encode("utf-8")
+            size_bytes += len(encoded)
+            if size_bytes > self.MAX_OBJECT_BYTES:
+                raise ValueError("S3 JSON write exceeds configured byte limit")
+            chunks.append(encoded)
+
+        try:
+            if jsonl:
+                for row in result.rows:
+                    for piece in encoder.iterencode(row):
+                        append_text(piece)
+                    append_text("\n")
+            else:
+                append_text("[")
+                for index, row in enumerate(result.rows):
+                    if index:
+                        append_text(",")
+                    for piece in encoder.iterencode(row):
+                        append_text(piece)
+                append_text("]")
+        except (TypeError, ValueError, UnicodeEncodeError) as exc:
+            if isinstance(exc, ValueError) and str(exc).startswith("S3 JSON write exceeds"):
+                raise
+            raise ValueError("S3 JSON rows must contain valid, finite JSON values") from exc
+
+        payload = b"".join(chunks)
+        digest = hashlib.sha256(payload).hexdigest()
+        response = self._client_for(connection).put_object(
+            Bucket=bucket,
+            Key=key,
+            Body=payload,
+            ContentType=media_type,
+            Metadata={
+                "ronin-idempotency-key-sha256": hashlib.sha256(idempotency_key_bytes).hexdigest(),
+                "ronin-output-sha256": digest,
+            },
+        )
+        commit_id = ""
+        if isinstance(response, Mapping):
+            version_id = response.get("VersionId")
+            etag = response.get("ETag")
+            if isinstance(version_id, str) and version_id:
+                commit_id = version_id
+            elif isinstance(etag, str) and etag:
+                commit_id = etag.strip('"')
+        try:
+            commit_id_bytes = commit_id.encode("utf-8")
+        except UnicodeEncodeError:
+            commit_id_bytes = b""
+        if (
+            not commit_id
+            or not commit_id_bytes
+            or commit_id != commit_id.strip()
+            or len(commit_id_bytes) > 1024
+            or any(ord(character) < 0x20 or ord(character) == 0x7F for character in commit_id)
+        ):
+            commit_id = f"sha256:{digest}"
+        return ConnectorCommitResult(
+            idempotency_key=idempotency_key,
+            commit_id=commit_id,
+            output_id=output_id,
+            output_digest=digest,
+            transactional=False,
+            idempotency_enforced=False,
+            delivery_semantics="at_least_once",
         )
 
 
