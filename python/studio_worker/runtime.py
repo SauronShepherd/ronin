@@ -14,9 +14,25 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from time import monotonic
 
-from studio_core import RuntimeCapability, RuntimeCatalog, RuntimeProfile
+from studio_connectors import (
+    ArtifactDestinationWriter,
+    IngestionSyncService,
+    PostgresConnectorCheckpointStore,
+    SqliteConnectorCheckpointStore,
+    builtin_connector_registry,
+)
+from studio_core import (
+    AssetHandle,
+    ConnectionDefinition,
+    ConnectionId,
+    RuntimeCapability,
+    RuntimeCatalog,
+    RuntimeProfile,
+    WorkspaceId,
+)
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import (
+    ConnectionService,
     DurableExecutionService,
     UnsupportedSchedulerWorkload,
     WorkerPollResult,
@@ -50,12 +66,18 @@ from studio_runners import (
 from studio_sql import SqlEngine
 from studio_storage import (
     ArtifactStore,
+    CompositeSecretResolver,
+    EnvironmentSecretResolver,
     LocalArtifactStore,
     PostgresArtifactReferenceBarrier,
     PostgresJobReadPort,
+    PostgresMetadataStore,
     S3ArtifactStore,
+    SqliteConnectionStore,
     SqliteJobStore,
+    SqliteWorkspaceStore,
 )
+from studio_storage.ports import ArtifactReferenceBarrier
 
 from .execution import DurableWorkerExecution, WorkerExecutionOutcome, utc_now
 from .preparation import (
@@ -98,6 +120,7 @@ class LocalWorkerRuntimeConfig:
     connector_asset: object | None = None
     connector_secrets: object | None = None
     connector_destination: object | None = None
+    connector_workspace_id: str | None = None
     notification_sink: object | None = None
     notification_artifacts: ArtifactStore | None = None
     ml_runner: object | None = None
@@ -116,6 +139,11 @@ class LocalWorkerRuntimeConfig:
             not self.postgres_dsn or self.postgres_dsn != self.postgres_dsn.strip()
         ):
             raise ValueError("postgres_dsn must be non-empty and trimmed")
+        if self.connector_workspace_id is not None and (
+            not self.connector_workspace_id
+            or self.connector_workspace_id != self.connector_workspace_id.strip()
+        ):
+            raise ValueError("connector_workspace_id must be non-empty and trimmed")
         if self.lease_seconds < 2:
             raise ValueError("lease_seconds must be at least 2")
         if not 0 < self.heartbeat_interval_seconds < self.lease_seconds:
@@ -160,6 +188,75 @@ def runtime_catalog_for_image(image: str) -> RuntimeCatalog:
     return RuntimeCatalog((profile,))
 
 
+def _connector_sync_dependencies(
+    config: LocalWorkerRuntimeConfig,
+    artifact_store: ArtifactStore,
+    artifact_reference_barrier: ArtifactReferenceBarrier | None,
+    migration_now: Instant,
+) -> tuple[object, object, object, object, object] | None:
+    """Build workspace-bound ingestion dependencies for the single-workspace worker profile."""
+
+    workspace_id = config.connector_workspace_id
+    if workspace_id is None:
+        return None
+    if config.postgres_dsn is not None:
+        metadata_store = PostgresMetadataStore(
+            config.postgres_dsn, application_name="ronin-worker-connectors"
+        )
+        connection_service = ConnectionService(metadata_store, metadata_store)
+        checkpoints: PostgresConnectorCheckpointStore | SqliteConnectorCheckpointStore = (
+            PostgresConnectorCheckpointStore(config.postgres_dsn)
+        )
+    else:
+        workspaces = SqliteWorkspaceStore(config.database_path, migration_now=migration_now)
+        connections = SqliteConnectionStore(config.database_path, migration_now=migration_now)
+        connection_service = ConnectionService(workspaces, connections)
+        checkpoints = SqliteConnectorCheckpointStore(config.database_path)
+
+    secrets = CompositeSecretResolver(environment=EnvironmentSecretResolver())
+    sync_service = IngestionSyncService(
+        builtin_connector_registry(),
+        checkpoints,
+        artifact_reference_barrier=artifact_reference_barrier,
+    )
+
+    def resolve_connection(requested_workspace: str, reference: str) -> ConnectionDefinition:
+        if requested_workspace != workspace_id:
+            raise ValueError("connector sync workspace does not match the configured worker scope")
+        return connection_service.get(WorkspaceId(workspace_id), ConnectionId(reference))
+
+    def resolve_asset(connection: ConnectionDefinition, reference: str) -> AssetHandle:
+        separator = (
+            "/"
+            if connection.connector_id
+            in {
+                "azure.blob.json",
+                "http.json",
+                "ozone.s3.json",
+                "s3.json",
+            }
+            else "."
+        )
+        components = tuple(reference.split(separator))
+        if not components or any(
+            not component or component in {".", ".."} or "\\" in component
+            for component in components
+        ):
+            raise ValueError("connector sync asset reference has invalid components")
+        return AssetHandle(connection.id, components[:-1], components[-1])
+
+    def resolve_secrets(_reference: str) -> CompositeSecretResolver:
+        return secrets
+
+    return (
+        sync_service,
+        resolve_connection,
+        resolve_asset,
+        resolve_secrets,
+        ArtifactDestinationWriter(artifact_store),
+    )
+
+
 def artifact_store_from_environment(config: LocalWorkerRuntimeConfig) -> ArtifactStore:
     """Build the configured artifact backend without silently degrading storage."""
 
@@ -201,6 +298,7 @@ class LocalWorkerRuntime:
     ) -> None:
         self.config = config
         self._now = now
+        config.paths.data_dir.mkdir(parents=True, exist_ok=True)
         self._policy = policy or SessionPolicy()
         self._runner = command_runner or AsyncioCommandRunner()
         self._engine_path = engine_path
@@ -210,7 +308,26 @@ class LocalWorkerRuntime:
             if config.postgres_dsn is not None
             else None
         )
-        config.paths.data_dir.mkdir(parents=True, exist_ok=True)
+        self._connector_sync_service = config.connector_sync_service
+        self._connector_connection = config.connector_connection
+        self._connector_asset = config.connector_asset
+        self._connector_secrets = config.connector_secrets
+        self._connector_destination = config.connector_destination
+        if self._connector_sync_service is None:
+            connector_dependencies = _connector_sync_dependencies(
+                config,
+                self._artifact_store,
+                self._artifact_reference_barrier,
+                migration_now,
+            )
+            if connector_dependencies is not None:
+                (
+                    self._connector_sync_service,
+                    self._connector_connection,
+                    self._connector_asset,
+                    self._connector_secrets,
+                    self._connector_destination,
+                ) = connector_dependencies
         store = (
             PostgresJobReadPort(config.postgres_dsn, application_name="ronin-worker")
             if config.postgres_dsn is not None
@@ -366,6 +483,7 @@ class LocalWorkerRuntime:
             "graph.query",
             "quality.gate",
             "connector.sync",
+            "connector.sync.v1",
             "notification.send",
             "ml.run",
             "semantic.refresh",
@@ -383,7 +501,9 @@ class LocalWorkerRuntime:
                 raise UnsupportedSchedulerWorkload(
                     "quality.gate scheduler execution requires scheduler_quality_adapter"
                 )
-            if claim.job.target == "connector.sync" and self.config.connector_sync_service is None:
+            if claim.job.target in {"connector.sync", "connector.sync.v1"} and (
+                self._connector_sync_service is None
+            ):
                 raise UnsupportedSchedulerWorkload(
                     "connector.sync scheduler execution requires connector_sync_service"
                 )
@@ -432,11 +552,11 @@ class LocalWorkerRuntime:
                         workspace_id=workspace_id,
                         run_id=str(claim.run.id),
                         now=self._now(),
-                        connector_sync_service=self.config.connector_sync_service,
-                        connector_connection=self.config.connector_connection,
-                        connector_asset=self.config.connector_asset,
-                        connector_secrets=self.config.connector_secrets,
-                        connector_destination=self.config.connector_destination,
+                        connector_sync_service=self._connector_sync_service,
+                        connector_connection=self._connector_connection,
+                        connector_asset=self._connector_asset,
+                        connector_secrets=self._connector_secrets,
+                        connector_destination=self._connector_destination,
                         notification_sink=self.config.notification_sink,
                         notification_artifacts=self.config.notification_artifacts,
                         notification_now=self._now(),
@@ -457,7 +577,7 @@ class LocalWorkerRuntime:
                     else "scheduler.quality.error"
                     if claim.job.target == "quality.gate"
                     else "scheduler.connector.error"
-                    if claim.job.target == "connector.sync"
+                    if claim.job.target in {"connector.sync", "connector.sync.v1"}
                     else "scheduler.notification.error"
                     if claim.job.target == "notification.send"
                     else "scheduler.ml.error"

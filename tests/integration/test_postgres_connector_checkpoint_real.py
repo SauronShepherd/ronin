@@ -9,11 +9,31 @@ from uuid import uuid4
 
 import pytest
 from studio_cli.local_composed import build_local_composed_from_env
-from studio_connectors import CheckpointFenceConflict, PostgresConnectorCheckpointStore
+from studio_connectors import (
+    CheckpointFenceConflict,
+    IngestionSyncDefinition,
+    PostgresConnectorCheckpointStore,
+)
 from studio_connectors.http import IngestionHTTPAdapter
-from studio_core import SourceCheckpoint
+from studio_connectors.sync import scoped_checkpoint_identity
+from studio_core import (
+    ConnectionDefinition,
+    ConnectionId,
+    SecretRef,
+    SourceCheckpoint,
+    Workspace,
+    WorkspaceId,
+)
+from studio_execution import ConnectionService
+from studio_orchestrator import Instant
 from studio_server.control_plane import WorkspaceProjectHTTPServer
-from studio_storage import discover_connector_artifact_references
+from studio_storage import (
+    LocalArtifactStore,
+    PostgresMetadataStore,
+    discover_connector_artifact_references,
+)
+from studio_worker import LocalWorkerRuntimeConfig, WorkerPaths
+from studio_worker.runtime import _connector_sync_dependencies
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
@@ -136,3 +156,119 @@ def test_postgres_local_composition_mounts_shared_connector_ingestion(
         assert adapter._service._artifact_reference_barrier is not None
     finally:
         composition.stop()
+
+
+def test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpoint(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    psycopg = pytest.importorskip("psycopg")
+    from psycopg import sql
+    from psycopg.conninfo import conninfo_to_dict
+
+    dsn = os.environ["RONIN_POSTGRES_TEST_DSN"]
+    connection_parameters = conninfo_to_dict(dsn)
+    if not connection_parameters.get("password"):
+        pytest.skip("real connector worker qualification requires password authentication")
+    source_schema = f"sync_test_{uuid4().hex}"
+    workspace_id = WorkspaceId(f"worker-sync-{uuid4().hex}")
+    connection_id = ConnectionId(f"source-{uuid4().hex}")
+    metadata = PostgresMetadataStore(dsn, application_name="ronin-test-connector-worker")
+    source_user = str(connection_parameters.get("user") or "postgres")
+    source_password = str(connection_parameters["password"])
+    monkeypatch.setenv("RONIN_SYNC_SOURCE_USER", source_user)
+    monkeypatch.setenv("RONIN_SYNC_SOURCE_PASSWORD", source_password)
+    with psycopg.connect(dsn) as database, database.cursor() as cursor:
+        cursor.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(source_schema)))
+        cursor.execute(
+            sql.SQL("CREATE TABLE {}.records (id integer PRIMARY KEY, email text NOT NULL)").format(
+                sql.Identifier(source_schema)
+            )
+        )
+        cursor.execute(
+            sql.SQL("INSERT INTO {}.records VALUES (1, %s), (2, %s)").format(
+                sql.Identifier(source_schema)
+            ),
+            ("a@example.test", "b@example.test"),
+        )
+
+    try:
+        now = Instant("2026-10-25T00:00:00.000000Z")
+        metadata.create_workspace(Workspace(workspace_id, "Worker sync qualification"), now=now)
+        connection = ConnectionDefinition(
+            connection_id,
+            "PostgreSQL source",
+            "postgresql",
+            (
+                ("connect_timeout", "5"),
+                ("database", str(connection_parameters["dbname"])),
+                ("host", str(connection_parameters.get("host") or "127.0.0.1")),
+                ("port", str(connection_parameters.get("port") or "5432")),
+                ("schema", source_schema),
+            ),
+            (
+                ("password", SecretRef("secret://env/RONIN_SYNC_SOURCE_PASSWORD")),
+                ("user", SecretRef("secret://env/RONIN_SYNC_SOURCE_USER")),
+            ),
+        )
+        ConnectionService(metadata, metadata).create(workspace_id, connection, now=now)
+        config = LocalWorkerRuntimeConfig(
+            paths=WorkerPaths(tmp_path, tmp_path / "worker-data"),
+            owner="postgres-sync-worker-test",
+            image="sha256:" + "a" * 64,
+            postgres_dsn=dsn,
+            connector_workspace_id=str(workspace_id),
+        )
+        artifacts = LocalArtifactStore(tmp_path / "artifacts")
+        dependencies = _connector_sync_dependencies(config, artifacts, None, now)
+        assert dependencies is not None
+        service, resolve_connection, resolve_asset, resolve_secrets, destination = dependencies
+        asset_ref = f"{source_schema}.records"
+        definition = IngestionSyncDefinition(
+            id=f"sync-{uuid4().hex}",
+            connector_id="postgresql",
+            connection_ref=str(connection_id),
+            asset_ref=asset_ref,
+            destination_ref="artifact://qualification/postgres-sync",
+            checkpoint_identity=f"checkpoint-{uuid4().hex}",
+            mode="snapshot",
+        )
+        connection = resolve_connection(str(workspace_id), definition.connection_ref)
+        asset = resolve_asset(connection, definition.asset_ref)
+        secret_resolver = resolve_secrets(definition.connection_ref)
+        first = service.execute(
+            definition,
+            workspace_id=str(workspace_id),
+            connection=connection,
+            asset=asset,
+            secrets=secret_resolver,
+            destination=destination,
+        )
+        scoped_identity = scoped_checkpoint_identity(
+            str(workspace_id), definition.checkpoint_identity
+        )
+        checkpoint_store = PostgresConnectorCheckpointStore(dsn)
+        first_evidence = checkpoint_store.get_evidence(scoped_identity)
+        assert first["rows_written"] == 2
+        assert first_evidence is not None
+        assert checkpoint_store.health(scoped_identity).output_committed
+        first_output = artifacts.get_bytes_by_storage_ref(
+            first_evidence.output_id, digest=first_evidence.output_digest
+        )
+        assert b"a@example.test" in first_output
+        assert b"b@example.test" in first_output
+
+        second = service.execute(
+            definition,
+            workspace_id=str(workspace_id),
+            connection=connection,
+            asset=asset,
+            secrets=secret_resolver,
+            destination=destination,
+        )
+        assert second["rows_written"] == 0
+        assert checkpoint_store.get(scoped_identity) is not None
+    finally:
+        with psycopg.connect(dsn) as database, database.cursor() as cursor:
+            cursor.execute(
+                sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(source_schema))
+            )

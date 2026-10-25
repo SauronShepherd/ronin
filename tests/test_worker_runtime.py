@@ -5,6 +5,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import pytest
+from studio_core import ConnectionDefinition, ConnectionId, Workspace, WorkspaceId
 from studio_kernel import CancellationSignal
 from studio_orchestrator import (
     AttemptId,
@@ -20,7 +21,12 @@ from studio_orchestrator import (
 )
 from studio_runners import CommandOutcome
 from studio_server import WorkerPollResult
-from studio_storage import LocalArtifactStore, SqliteJobStore
+from studio_storage import (
+    LocalArtifactStore,
+    SqliteConnectionStore,
+    SqliteJobStore,
+    SqliteWorkspaceStore,
+)
 from studio_worker import (
     LocalWorkerRuntime,
     LocalWorkerRuntimeConfig,
@@ -28,6 +34,7 @@ from studio_worker import (
     artifact_store_from_environment,
     runtime_catalog_for_image,
 )
+from studio_worker.runtime import _connector_sync_dependencies
 
 START = Instant("2026-09-06T18:30:00.000000Z")
 AFTER_EXPIRY = Instant("2026-09-06T18:30:31.000000Z")
@@ -68,6 +75,38 @@ def _config(tmp_path: Path, *, poll_seconds: float = 1.0) -> LocalWorkerRuntimeC
         heartbeat_interval_seconds=10.0,
         poll_seconds=poll_seconds,
     )
+
+
+def test_connector_worker_dependencies_are_limited_to_configured_workspace(
+    tmp_path: Path,
+) -> None:
+    config = replace(_config(tmp_path), connector_workspace_id="workspace-a")
+    workspaces = SqliteWorkspaceStore(config.database_path, migration_now=START)
+    connections = SqliteConnectionStore(config.database_path, migration_now=START)
+    workspace_id = WorkspaceId("workspace-a")
+    workspaces.create_workspace(Workspace(workspace_id, "Workspace A"), now=START)
+    source = ConnectionDefinition(
+        ConnectionId("source-db"), "Source database", "postgresql", (("database", "source"),)
+    )
+    connections.create_connection(workspace_id, source, now=START)
+
+    dependencies = _connector_sync_dependencies(
+        config, LocalArtifactStore(tmp_path / "artifacts"), None, START
+    )
+    assert dependencies is not None
+    _service, resolve_connection, resolve_asset, resolve_secrets, _destination = dependencies
+    connection_resolver = resolve_connection
+    asset_resolver = resolve_asset
+
+    resolved = connection_resolver("workspace-a", "source-db")
+    assert resolved == source
+    handle = asset_resolver(resolved, "public.orders")
+    assert handle.connection_id == source.id
+    assert handle.namespace == ("public",)
+    assert handle.name == "orders"
+    assert resolve_secrets("source-db").resolve
+    with pytest.raises(ValueError, match="configured worker scope"):
+        connection_resolver("workspace-b", "source-db")
 
 
 @dataclass

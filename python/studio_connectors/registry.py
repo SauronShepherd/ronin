@@ -6,7 +6,12 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import cast
 
-from studio_core import AssetHandle, ConnectionDefinition, ConnectorCapabilities
+from studio_core import (
+    AssetHandle,
+    ConnectionDefinition,
+    ConnectorCapabilities,
+    SourceCheckpoint,
+)
 from studio_storage.secrets import SecretResolver
 
 from .contracts import (
@@ -245,6 +250,34 @@ class ConnectorRegistry:
             cast(AssetHandle, asset),
             cast(SecretResolver, secrets),
             limit=limit,
+        )
+        if not isinstance(result, ConnectorReadResult):
+            raise TypeError("connector read must return ConnectorReadResult")
+        return result
+
+    def read(
+        self,
+        connector_id: str,
+        connection: object,
+        asset: object,
+        secrets: object,
+        *,
+        limit: int = 10_000,
+        checkpoint: SourceCheckpoint | None = None,
+    ) -> ConnectorReadResult:
+        """Read a bounded sync batch and pass its checkpoint to the connector."""
+
+        if limit < 1 or limit > 100_000:
+            raise ValueError("connector read limit must be between 1 and 100000")
+        connector = self.require(connector_id)
+        if not connector.descriptor.capabilities.read:
+            raise ValueError(f"connector does not advertise read capability: {connector_id}")
+        result = connector.read(
+            cast(ConnectionDefinition, connection),
+            cast(AssetHandle, asset),
+            cast(SecretResolver, secrets),
+            limit=limit,
+            checkpoint=checkpoint,
         )
         if not isinstance(result, ConnectorReadResult):
             raise TypeError("connector read must return ConnectorReadResult")

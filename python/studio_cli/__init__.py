@@ -819,6 +819,7 @@ def _worker_config_from_environment() -> LocalWorkerRuntimeConfig:
         image=_env("RONIN_IMAGE"),
         database_name=database.name,
         postgres_dsn=postgres_dsn,
+        connector_workspace_id=os.environ.get("RONIN_WORKSPACE_ID"),
     )
 
 

@@ -237,14 +237,14 @@ def test_adapter_controls_fail_closed(tmp_path: Path, controls: dict[str, object
             "connector.sync",
             {
                 "connector_id": "orders-api",
-                "source_ref": "source://orders",
+                "source_ref": "orders-connection::public.orders",
                 "destination_ref": "artifact://orders",
                 "checkpoint_ref": "checkpoint://orders",
             },
             "connector.sync.v1",
             {
                 "connector_id": "orders-api",
-                "source_ref": "source://orders",
+                "source_ref": "orders-connection::public.orders",
                 "destination_ref": "artifact://orders",
                 "checkpoint_ref": "checkpoint://orders",
                 "mode": "incremental",

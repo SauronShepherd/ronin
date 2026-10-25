@@ -77,6 +77,9 @@ def test_scheduler_dispatch_rejects_unqualified_family() -> None:
 
 def test_connector_sync_scheduler_requires_and_forwards_workspace_scope() -> None:
     seen: dict[str, object] = {}
+    connection = object()
+    asset = object()
+    secrets = object()
 
     class SyncService:
         def execute(self, definition, *, workspace_id, **kwargs):
@@ -85,15 +88,20 @@ def test_connector_sync_scheduler_requires_and_forwards_workspace_scope() -> Non
 
     dependencies = {
         "connector_sync_service": SyncService(),
-        "connector_connection": object(),
-        "connector_asset": object(),
-        "connector_secrets": object(),
+        "connector_connection": lambda workspace, reference: (
+            seen.update({"resolved_workspace": workspace, "connection_ref": reference})
+            or connection
+        ),
+        "connector_asset": lambda resolved_connection, reference: (
+            seen.update({"asset_connection": resolved_connection, "asset_ref": reference}) or asset
+        ),
+        "connector_secrets": lambda reference: seen.update({"secrets_ref": reference}) or secrets,
         "connector_destination": object(),
     }
     with pytest.raises(UnsupportedSchedulerWorkload, match="workspace scope"):
         execute_scheduler_job(
             _job(
-                "connector.sync",
+                "connector.sync.v1",
                 {
                     "connector_id": "postgres",
                     "source_ref": "conn-1::public.orders",
@@ -106,7 +114,7 @@ def test_connector_sync_scheduler_requires_and_forwards_workspace_scope() -> Non
 
     result = execute_scheduler_job(
         _job(
-            "connector.sync",
+            "connector.sync.v1",
             {
                 "connector_id": "postgres",
                 "source_ref": "conn-1::public.orders",
@@ -120,6 +128,16 @@ def test_connector_sync_scheduler_requires_and_forwards_workspace_scope() -> Non
     assert result.family == "connector"
     assert seen["workspace_id"] == "workspace-a"
     assert seen["definition"].checkpoint_identity == "orders"
+    assert seen["definition"].connection_ref == "conn-1"
+    assert seen["definition"].asset_ref == "public.orders"
+    assert seen["resolved_workspace"] == "workspace-a"
+    assert seen["connection_ref"] == "conn-1"
+    assert seen["asset_connection"] is connection
+    assert seen["asset_ref"] == "public.orders"
+    assert seen["secrets_ref"] == "conn-1"
+    assert seen["connection"] is connection
+    assert seen["asset"] is asset
+    assert seen["secrets"] is secrets
 
 
 @pytest.mark.parametrize("identifier", ["", " ", "\t"])

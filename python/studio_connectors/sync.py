@@ -8,6 +8,7 @@ from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from typing import Protocol, cast
 
+from studio_core import SourceCheckpoint
 from studio_core.canonical_json import decode, encode
 from studio_storage.ports import ArtifactReferenceBarrier
 
@@ -75,15 +76,15 @@ class ArtifactDestinationWriter:
 class _CheckpointStore(Protocol):
     def health(self, identity: str) -> _Health: ...
 
-    def get(self, identity: str) -> object | None: ...
+    def get(self, identity: str) -> SourceCheckpoint | None: ...
 
     def acquire(self, identity: str) -> int: ...
 
     def commit_output_then_checkpoint(
         self,
         identity: str,
-        expected: object | None,
-        next_checkpoint: object,
+        expected: SourceCheckpoint | None,
+        next_checkpoint: SourceCheckpoint,
         *,
         output_id: str,
         output_digest: str,
@@ -93,12 +94,17 @@ class _CheckpointStore(Protocol):
 
 
 class _ArtifactRef(Protocol):
-    storage_ref: str
-    digest: str
+    @property
+    def storage_ref(self) -> str: ...
+
+    @property
+    def digest(self) -> str: ...
 
 
 class _ArtifactStore(Protocol):
-    def put_bytes(self, *, role: str, data: bytes, media_type: str) -> _ArtifactRef: ...
+    def put_bytes(
+        self, *, role: str, data: bytes, media_type: str | None = None
+    ) -> _ArtifactRef: ...
 
 
 class _Evidence(Protocol):
@@ -132,7 +138,7 @@ class _SyncRegistry(Protocol):
         secrets: object,
         *,
         limit: int = 10_000,
-        checkpoint: object | None = None,
+        checkpoint: SourceCheckpoint | None = None,
     ) -> ConnectorReadResult: ...
 
 

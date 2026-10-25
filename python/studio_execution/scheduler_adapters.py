@@ -152,7 +152,7 @@ def execute_scheduler_job(
         if not isinstance(result, dict):
             raise UnsupportedSchedulerWorkload("quality adapter returned an invalid result")
         return SchedulerWorkloadResult(family="quality", quality=result)
-    if job.target == "connector.sync":
+    if job.target in {"connector.sync", "connector.sync.v1"}:
         if any(
             value is None
             for value in (
@@ -172,23 +172,44 @@ def execute_scheduler_job(
         connector_sync_service = cast(Any, connector_sync_service)
         try:
             payload = json.loads(job.parameters_json)
+            source_ref = payload["source_ref"]
+            if not isinstance(source_ref, str) or source_ref.count("::") != 1:
+                raise ValueError("source_ref must be connection_id::qualified_asset_name")
+            connection_ref, asset_ref = source_ref.split("::", 1)
+            if not connection_ref or not asset_ref:
+                raise ValueError("source_ref must contain a connection and an asset")
             definition = IngestionSyncDefinition(
                 id=payload["connector_id"],
                 connector_id=payload["connector_id"],
-                connection_ref=payload["source_ref"],
-                asset_ref=payload["source_ref"],
+                connection_ref=connection_ref,
+                asset_ref=asset_ref,
                 destination_ref=payload["destination_ref"],
                 checkpoint_identity=payload["checkpoint_ref"],
                 mode=payload.get("mode", "incremental"),
             )
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise UnsupportedSchedulerWorkload("connector.sync parameters are invalid") from exc
+        connection = (
+            connector_connection(workspace_id, definition.connection_ref)
+            if callable(connector_connection)
+            else connector_connection
+        )
+        asset = (
+            connector_asset(connection, definition.asset_ref)
+            if callable(connector_asset)
+            else connector_asset
+        )
+        secrets = (
+            connector_secrets(definition.connection_ref)
+            if callable(connector_secrets)
+            else connector_secrets
+        )
         result = connector_sync_service.execute(
             definition,
             workspace_id=workspace_id,
-            connection=connector_connection,
-            asset=connector_asset,
-            secrets=connector_secrets,
+            connection=connection,
+            asset=asset,
+            secrets=secrets,
             destination=connector_destination,
         )
         if not isinstance(result, dict):
