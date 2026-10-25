@@ -155,9 +155,31 @@ test('Notebook Studio edits, creates and executes a bounded notebook', async ({ 
   await expect(page.locator('#notebook-run')).toContainText('cancelling');
 });
 
-test('Ingestion Studio exposes sync plan and checkpoint health', async ({ page }) => {
+test('Ingestion Studio pages source discovery and keeps sync preview controls', async ({ page }) => {
   await page.route('**/v1/platform/connectors', async route => {
     await route.fulfill({ json: { items: [] } });
+  });
+  const discoveryRequests = [];
+  await page.route('**/v1/platform/connectors/discover', async route => {
+    const body = route.request().postDataJSON();
+    discoveryRequests.push(body);
+    if (!body.cursor) {
+      await route.fulfill({ json: {
+        schema: 'ronin.connector-discovery/v1',
+        items: [{ asset_ref: 'conn-1::public.orders' }],
+        count: 1,
+        has_more: true,
+        next_cursor: 'opaque-page-two',
+      } });
+      return;
+    }
+    await route.fulfill({ json: {
+      schema: 'ronin.connector-discovery/v1',
+      items: [{ asset_ref: 'conn-1::public.users' }],
+      count: 1,
+      has_more: false,
+      next_cursor: null,
+    } });
   });
   await page.route('**/v1/platform/connectors/plan', async route => {
     expect(route.request().postDataJSON().checkpoint_identity).toBe('preview-1');
@@ -168,10 +190,97 @@ test('Ingestion Studio exposes sync plan and checkpoint health', async ({ page }
     await route.fulfill({ json: { identity: 'preview-1', present: false } });
   });
   await page.goto('./#ingestion');
+  await page.locator('[name="connection_ref"]').fill('conn-1');
+  await page.getByRole('button', { name: 'Discover assets' }).click();
+  await expect(page.locator('#ingestion-discovery-status')).toContainText('Page 1 loaded');
+  await expect(page.locator('#ingestion-discovery-result')).toContainText('public.orders');
+  await page.getByRole('button', { name: 'Load next page' }).click();
+  await expect(page.locator('#ingestion-discovery-status')).toContainText('discovery complete');
+  await expect(page.locator('#ingestion-discovery-result')).toContainText('public.users');
+  expect(discoveryRequests).toEqual([
+    { connector_id: 'postgres', connection_ref: 'conn-1', page_size: 100 },
+    { connector_id: 'postgres', connection_ref: 'conn-1', page_size: 100, cursor: 'opaque-page-two' },
+  ]);
   await page.getByRole('button', { name: 'Plan sync' }).click();
   await expect(page.locator('#ingestion-preview-result')).toContainText('snapshot');
   await page.getByRole('button', { name: 'Checkpoint health' }).click();
   await expect(page.locator('#ingestion-preview-result')).toContainText('preview-1');
+});
+
+test('Ingestion Studio stops requesting discovery pages when cancelled', async ({ page }) => {
+  await page.route('**/v1/platform/connectors', route => route.fulfill({ json: { items: [] } }));
+  let requestStarted;
+  const started = new Promise(resolve => { requestStarted = resolve; });
+  let releaseRequest;
+  const pendingResponse = new Promise(resolve => { releaseRequest = resolve; });
+  await page.route('**/v1/platform/connectors/discover', async route => {
+    requestStarted();
+    await pendingResponse;
+    try {
+      await route.fulfill({ json: {
+        schema: 'ronin.connector-discovery/v1',
+        items: [],
+        count: 0,
+        has_more: false,
+        next_cursor: null,
+      } });
+    } catch {
+      // The browser intentionally aborts this in-flight read-only request.
+    }
+  });
+  await page.goto('./#ingestion');
+  await page.locator('[name="connection_ref"]').fill('conn-1');
+  await page.getByRole('button', { name: 'Discover assets' }).click();
+  await started;
+  await page.getByRole('button', { name: 'Stop discovery' }).click();
+  await expect(page.locator('#ingestion-discovery-status')).toContainText('Stopped this request.');
+  await expect(page.getByRole('button', { name: 'Load next page' })).toBeDisabled();
+  releaseRequest();
+});
+
+test('Ingestion Studio rejects a malformed discovery page', async ({ page }) => {
+  await page.route('**/v1/platform/connectors', route => route.fulfill({ json: { items: [] } }));
+  await page.route('**/v1/platform/connectors/discover', route => route.fulfill({ json: {
+    schema: 'ronin.connector-discovery/v1',
+    items: [],
+    count: 1,
+    has_more: false,
+    next_cursor: null,
+  } }));
+  await page.goto('./#ingestion');
+  await page.locator('[name="connection_ref"]').fill('conn-1');
+  await page.getByRole('button', { name: 'Discover assets' }).click();
+  await expect(page.locator('#ingestion-discovery-status')).toContainText('invalid page');
+  await expect(page.getByRole('button', { name: 'Load next page' })).toBeDisabled();
+});
+
+test('Migration Studio creates one session per submit', async ({ page }) => {
+  let createCount = 0;
+  await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/migration/sessions', async route => {
+    if (route.request().method() === 'POST') {
+      createCount += 1;
+      await route.fulfill({ json: { id: 'migration-once', state: 'created' } });
+      return;
+    }
+    await route.fulfill({ json: { items: [] } });
+  });
+  await page.goto('./#migration');
+  await page.getByRole('button', { name: 'Create session' }).click();
+  await expect(page.locator('#migration-cockpit-control-result')).toContainText('migration-once');
+  expect(createCount).toBe(1);
+});
+
+test('SQL Studio sends one workspace-scoped request per submit', async ({ page }) => {
+  let queryCount = 0;
+  await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/sql/query', async route => {
+    queryCount += 1;
+    expect(route.request().postDataJSON()).toMatchObject({sql: 'SELECT 1 AS value', max_rows: 1000});
+    await route.fulfill({ json: { columns: [{ name: 'value' }], rows: [[1]], row_count: 1 } });
+  });
+  await page.goto('./#sql');
+  await page.getByRole('button', { name: 'Run SQL' }).click();
+  await expect(page.locator('#sql-result')).toContainText('row_count');
+  expect(queryCount).toBe(1);
 });
 
 test('Data Engineering Studio executes a bounded read-only SQL query', async ({ page }) => {
