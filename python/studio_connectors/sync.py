@@ -260,7 +260,7 @@ class IngestionSyncDefinition:
 
 
 class IngestionSyncService:
-    """Bounded preview service; destination writes remain an explicit next step."""
+    """Build bounded previews and commit sync output before advancing checkpoints."""
 
     def __init__(
         self,
