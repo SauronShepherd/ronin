@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import subprocess
 import sys
 import time
@@ -165,6 +166,15 @@ while True:
             str(claim.attempt_id),
         ],
         cwd=Path(__file__).resolve().parents[1],
+        env={
+            **os.environ,
+            "PYTHONPATH": os.pathsep.join(
+                [
+                    str(Path(__file__).resolve().parents[1] / "python"),
+                    *([os.environ["PYTHONPATH"]] if os.environ.get("PYTHONPATH") else []),
+                ]
+            ),
+        },
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,

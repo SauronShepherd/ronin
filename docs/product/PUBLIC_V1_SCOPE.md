@@ -223,6 +223,8 @@ Required minimum:
 - event-triggered workflows;
 - real-time health and lag metrics.
 
+A distributed Flink adapter is optional and is not part of the Public v1 minimum. It becomes a release gate only if Ronin publicly advertises that profile as supported.
+
 ### P12 — Observability, Alerts and FinOps Control Center
 
 Public v1 MUST expose one control center for platform operations and cost governance.
@@ -282,7 +284,7 @@ The first public release MUST implement the migration contract in `PLATFORM_PORT
 
 - Microsoft Fabric;
 - Databricks;
-- Palantir Foundry/AIP;
+- Palantir Foundry data/Ontology only; exclude AIP generative models, prompts, agents, tools, and provider invocation;
 - Dataiku DSS.
 
 A migration is not considered successful merely because files were copied. The imported project must be inspectable, executable for the certified subset, schedulable, observable, governed and exportable through Ronin's canonical bundle.

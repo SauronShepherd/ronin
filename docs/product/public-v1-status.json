@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-24T15:51:13+00:00",
-  "observed_main_sha": "94d8ae2eb9d73f1e367cb7437873650381e90ad2",
+  "observed_at": "2026-10-25T07:14:17+00:00",
+  "observed_main_sha": "4686571b403d1499ffbd8f15fce4b01f650b99e8",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -17,7 +17,7 @@
     "observed_at": "2026-10-24",
     "candidate_sha": "b8e6d7834692e35688054f50655f8f73733d34cb",
     "command": "$env:PATH = \"$PWD\\.venv\\Scripts;$env:PATH\"; .venv\\Scripts\\python.exe -m pytest -q",
-    "result": "3962 passed, 66 skipped in 447.66s (Windows; Docker/PostgreSQL and platform/provider cases are qualified in dedicated CI jobs where configured)",
+    "result": "3962 passed, 66 skipped in 447.66s (Windows; this is local evidence only, not release qualification. Docker/PostgreSQL and platform/provider workflow evidence is tracked separately against its own SHA and must not be attributed to this candidate.)",
     "qualification_claimed": false,
     "mutation_campaign": {
       "status": "historical_frozen",

@@ -237,9 +237,22 @@ def _docker_qualification_ready() -> bool:
 
 def _ronin(*args: str) -> subprocess.CompletedProcess[str]:
     assert _RONIN is not None, "installed ronin console entry point is required"
+    env = os.environ.copy()
+    source_paths = (
+        Path(__file__).resolve().parents[2] / "python",
+        Path(__file__).resolve().parents[2] / "packages" / "pyronin" / "src",
+    )
+    existing_pythonpath = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = os.pathsep.join(
+        [
+            *(str(path) for path in source_paths),
+            *([existing_pythonpath] if existing_pythonpath else []),
+        ]
+    )
     return subprocess.run(  # noqa: S603
         (_RONIN, *args),
         cwd=Path.cwd(),
+        env=env,
         text=True,
         capture_output=True,
         check=False,
