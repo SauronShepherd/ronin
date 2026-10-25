@@ -14,28 +14,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from time import monotonic
 
-from studio_connectors import (
-    ArtifactDestinationWriter,
-    IngestionSyncService,
-    PostgresConnectorCheckpointStore,
-    SqliteConnectorCheckpointStore,
-    builtin_connector_registry,
-)
-from studio_core import (
-    AssetHandle,
-    ConnectionDefinition,
-    ConnectionId,
-    RuntimeCapability,
-    RuntimeCatalog,
-    RuntimeProfile,
-    WorkspaceId,
-)
+from studio_core import RuntimeCapability, RuntimeCatalog, RuntimeProfile
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import (
-    ConnectionService,
     DurableExecutionService,
     UnsupportedSchedulerWorkload,
     WorkerPollResult,
+    build_connector_sync_dependencies,
     execute_scheduler_job,
 )
 from studio_kernel import (
@@ -66,18 +51,12 @@ from studio_runners import (
 from studio_sql import SqlEngine
 from studio_storage import (
     ArtifactStore,
-    CompositeSecretResolver,
-    EnvironmentSecretResolver,
     LocalArtifactStore,
     PostgresArtifactReferenceBarrier,
     PostgresJobReadPort,
-    PostgresMetadataStore,
     S3ArtifactStore,
-    SqliteConnectionStore,
     SqliteJobStore,
-    SqliteWorkspaceStore,
 )
-from studio_storage.ports import ArtifactReferenceBarrier
 
 from .execution import DurableWorkerExecution, WorkerExecutionOutcome, utc_now
 from .preparation import (
@@ -188,75 +167,6 @@ def runtime_catalog_for_image(image: str) -> RuntimeCatalog:
     return RuntimeCatalog((profile,))
 
 
-def _connector_sync_dependencies(
-    config: LocalWorkerRuntimeConfig,
-    artifact_store: ArtifactStore,
-    artifact_reference_barrier: ArtifactReferenceBarrier | None,
-    migration_now: Instant,
-) -> tuple[object, object, object, object, object] | None:
-    """Build workspace-bound ingestion dependencies for the single-workspace worker profile."""
-
-    workspace_id = config.connector_workspace_id
-    if workspace_id is None:
-        return None
-    if config.postgres_dsn is not None:
-        metadata_store = PostgresMetadataStore(
-            config.postgres_dsn, application_name="ronin-worker-connectors"
-        )
-        connection_service = ConnectionService(metadata_store, metadata_store)
-        checkpoints: PostgresConnectorCheckpointStore | SqliteConnectorCheckpointStore = (
-            PostgresConnectorCheckpointStore(config.postgres_dsn)
-        )
-    else:
-        workspaces = SqliteWorkspaceStore(config.database_path, migration_now=migration_now)
-        connections = SqliteConnectionStore(config.database_path, migration_now=migration_now)
-        connection_service = ConnectionService(workspaces, connections)
-        checkpoints = SqliteConnectorCheckpointStore(config.database_path)
-
-    secrets = CompositeSecretResolver(environment=EnvironmentSecretResolver())
-    sync_service = IngestionSyncService(
-        builtin_connector_registry(),
-        checkpoints,
-        artifact_reference_barrier=artifact_reference_barrier,
-    )
-
-    def resolve_connection(requested_workspace: str, reference: str) -> ConnectionDefinition:
-        if requested_workspace != workspace_id:
-            raise ValueError("connector sync workspace does not match the configured worker scope")
-        return connection_service.get(WorkspaceId(workspace_id), ConnectionId(reference))
-
-    def resolve_asset(connection: ConnectionDefinition, reference: str) -> AssetHandle:
-        separator = (
-            "/"
-            if connection.connector_id
-            in {
-                "azure.blob.json",
-                "http.json",
-                "ozone.s3.json",
-                "s3.json",
-            }
-            else "."
-        )
-        components = tuple(reference.split(separator))
-        if not components or any(
-            not component or component in {".", ".."} or "\\" in component
-            for component in components
-        ):
-            raise ValueError("connector sync asset reference has invalid components")
-        return AssetHandle(connection.id, components[:-1], components[-1])
-
-    def resolve_secrets(_reference: str) -> CompositeSecretResolver:
-        return secrets
-
-    return (
-        sync_service,
-        resolve_connection,
-        resolve_asset,
-        resolve_secrets,
-        ArtifactDestinationWriter(artifact_store),
-    )
-
-
 def artifact_store_from_environment(config: LocalWorkerRuntimeConfig) -> ArtifactStore:
     """Build the configured artifact backend without silently degrading storage."""
 
@@ -313,21 +223,20 @@ class LocalWorkerRuntime:
         self._connector_asset = config.connector_asset
         self._connector_secrets = config.connector_secrets
         self._connector_destination = config.connector_destination
-        if self._connector_sync_service is None:
-            connector_dependencies = _connector_sync_dependencies(
-                config,
-                self._artifact_store,
-                self._artifact_reference_barrier,
-                migration_now,
+        if self._connector_sync_service is None and config.connector_workspace_id is not None:
+            connector_dependencies = build_connector_sync_dependencies(
+                workspace_id=config.connector_workspace_id,
+                postgres_dsn=config.postgres_dsn,
+                database_path=config.database_path,
+                artifact_store=self._artifact_store,
+                artifact_reference_barrier=self._artifact_reference_barrier,
+                migration_now=migration_now,
             )
-            if connector_dependencies is not None:
-                (
-                    self._connector_sync_service,
-                    self._connector_connection,
-                    self._connector_asset,
-                    self._connector_secrets,
-                    self._connector_destination,
-                ) = connector_dependencies
+            self._connector_sync_service = connector_dependencies.service
+            self._connector_connection = connector_dependencies.connection
+            self._connector_asset = connector_dependencies.asset
+            self._connector_secrets = connector_dependencies.secrets
+            self._connector_destination = connector_dependencies.destination
         store = (
             PostgresJobReadPort(config.postgres_dsn, application_name="ronin-worker")
             if config.postgres_dsn is not None

@@ -24,7 +24,7 @@ from studio_core import (
     Workspace,
     WorkspaceId,
 )
-from studio_execution import ConnectionService
+from studio_execution import ConnectionService, build_connector_sync_dependencies
 from studio_orchestrator import Instant
 from studio_server.control_plane import WorkspaceProjectHTTPServer
 from studio_storage import (
@@ -33,7 +33,6 @@ from studio_storage import (
     discover_connector_artifact_references,
 )
 from studio_worker import LocalWorkerRuntimeConfig, WorkerPaths
-from studio_worker.runtime import _connector_sync_dependencies
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("RONIN_POSTGRES_TEST_DSN"),
@@ -219,9 +218,14 @@ def test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpo
             connector_workspace_id=str(workspace_id),
         )
         artifacts = LocalArtifactStore(tmp_path / "artifacts")
-        dependencies = _connector_sync_dependencies(config, artifacts, None, now)
-        assert dependencies is not None
-        service, resolve_connection, resolve_asset, resolve_secrets, destination = dependencies
+        dependencies = build_connector_sync_dependencies(
+            workspace_id=str(workspace_id),
+            postgres_dsn=dsn,
+            database_path=config.database_path,
+            artifact_store=artifacts,
+            artifact_reference_barrier=None,
+            migration_now=now,
+        )
         asset_ref = f"{source_schema}.records"
         definition = IngestionSyncDefinition(
             id=f"sync-{uuid4().hex}",
@@ -232,16 +236,16 @@ def test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpo
             checkpoint_identity=f"checkpoint-{uuid4().hex}",
             mode="snapshot",
         )
-        connection = resolve_connection(str(workspace_id), definition.connection_ref)
-        asset = resolve_asset(connection, definition.asset_ref)
-        secret_resolver = resolve_secrets(definition.connection_ref)
-        first = service.execute(
+        connection = dependencies.connection(str(workspace_id), definition.connection_ref)
+        asset = dependencies.asset(connection, definition.asset_ref)
+        secret_resolver = dependencies.secrets(definition.connection_ref)
+        first = dependencies.service.execute(
             definition,
             workspace_id=str(workspace_id),
             connection=connection,
             asset=asset,
             secrets=secret_resolver,
-            destination=destination,
+            destination=dependencies.destination,
         )
         scoped_identity = scoped_checkpoint_identity(
             str(workspace_id), definition.checkpoint_identity
@@ -257,13 +261,13 @@ def test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpo
         assert b"a@example.test" in first_output
         assert b"b@example.test" in first_output
 
-        second = service.execute(
+        second = dependencies.service.execute(
             definition,
             workspace_id=str(workspace_id),
             connection=connection,
             asset=asset,
             secrets=secret_resolver,
-            destination=destination,
+            destination=dependencies.destination,
         )
         assert second["rows_written"] == 0
         assert checkpoint_store.get(scoped_identity) is not None

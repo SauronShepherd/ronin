@@ -49,6 +49,7 @@ from .connection_service import (
     ConnectionServiceError,
     ConnectionServiceNotFound,
 )
+from .connector_sync import ConnectorSyncDependencies, build_connector_sync_dependencies
 from .environment_service import (
     DeploymentBindingService,
     EnvironmentDiff,
@@ -366,6 +367,8 @@ __all__ = (
     "ConnectionServiceConflict",
     "ConnectionServiceError",
     "ConnectionServiceNotFound",
+    "ConnectorSyncDependencies",
+    "build_connector_sync_dependencies",
     "GitCheckoutResult",
     "GitSourceAdapter",
     "GitSourceError",

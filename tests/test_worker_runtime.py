@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from studio_core import ConnectionDefinition, ConnectionId, Workspace, WorkspaceId
+from studio_execution import build_connector_sync_dependencies
 from studio_kernel import CancellationSignal
 from studio_orchestrator import (
     AttemptId,
@@ -34,7 +35,6 @@ from studio_worker import (
     artifact_store_from_environment,
     runtime_catalog_for_image,
 )
-from studio_worker.runtime import _connector_sync_dependencies
 
 START = Instant("2026-09-06T18:30:00.000000Z")
 AFTER_EXPIRY = Instant("2026-09-06T18:30:31.000000Z")
@@ -90,13 +90,16 @@ def test_connector_worker_dependencies_are_limited_to_configured_workspace(
     )
     connections.create_connection(workspace_id, source, now=START)
 
-    dependencies = _connector_sync_dependencies(
-        config, LocalArtifactStore(tmp_path / "artifacts"), None, START
+    dependencies = build_connector_sync_dependencies(
+        workspace_id="workspace-a",
+        postgres_dsn=None,
+        database_path=config.database_path,
+        artifact_store=LocalArtifactStore(tmp_path / "artifacts"),
+        artifact_reference_barrier=None,
+        migration_now=START,
     )
-    assert dependencies is not None
-    _service, resolve_connection, resolve_asset, resolve_secrets, _destination = dependencies
-    connection_resolver = resolve_connection
-    asset_resolver = resolve_asset
+    connection_resolver = dependencies.connection
+    asset_resolver = dependencies.asset
 
     resolved = connection_resolver("workspace-a", "source-db")
     assert resolved == source
@@ -104,7 +107,7 @@ def test_connector_worker_dependencies_are_limited_to_configured_workspace(
     assert handle.connection_id == source.id
     assert handle.namespace == ("public",)
     assert handle.name == "orders"
-    assert resolve_secrets("source-db").resolve
+    assert dependencies.secrets("source-db").resolve
     with pytest.raises(ValueError, match="configured worker scope"):
         connection_resolver("workspace-b", "source-db")
 
