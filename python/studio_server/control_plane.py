@@ -75,6 +75,7 @@ from studio_execution import (
 from studio_orchestrator import Instant
 from studio_quality.http import QualityHTTPAdapter
 from studio_security import Actor, Permission, PolicyDecision, PolicyRequirement
+from studio_sql import SqlResultLimitError, SqlTimeoutError
 from studio_storage.bundle import BundleFile, write_bundle
 from studio_storage.bundle_payload import read_bundle_payload
 from studio_storage.scheduler_backfill import BackfillId, BackfillRequest
@@ -1135,10 +1136,23 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
             )
         elif isinstance(exc, ml_backend_not_found):
             self._error(HTTPStatus.NOT_FOUND, "ml_backend_not_found", str(exc))
-        elif isinstance(exc, TimeoutError):
+        elif isinstance(exc, SqlResultLimitError):
             self._error(
-                HTTPStatus.REQUEST_TIMEOUT, "request_timeout", "request body read timed out"
+                HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                "sql_result_too_large",
+                "SQL result exceeds the configured size limit",
             )
+        elif isinstance(exc, TimeoutError):
+            if isinstance(exc, SqlTimeoutError):
+                self._error(
+                    HTTPStatus.REQUEST_TIMEOUT,
+                    "sql_timeout",
+                    "SQL query exceeded its execution time limit",
+                )
+            else:
+                self._error(
+                    HTTPStatus.REQUEST_TIMEOUT, "request_timeout", "request body read timed out"
+                )
         elif isinstance(exc, (TypeError, ValueError)):
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
         else:

@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import re
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from threading import Event, Lock, Timer
 from typing import Any
 
 from .contracts import (
@@ -14,9 +16,12 @@ from .contracts import (
     SqlExecutionError,
     SqlQueryResult,
     SqlRelationUnavailableError,
+    SqlResultLimitError,
+    SqlTimeoutError,
     SqlValidationError,
     validate_read_only_select,
 )
+from .wire import sql_wire_value
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _MAX_SQL_BYTES = 1024 * 1024
@@ -285,6 +290,8 @@ class DuckDbSqlEngine:
         parameters: tuple[object, ...] = (),
         *,
         max_rows: int = 10_000,
+        timeout_ms: int = 5_000,
+        max_result_bytes: int = 1_048_576,
     ) -> SqlQueryResult:
         self._require_open()
         validate_read_only_select(sql)
@@ -294,20 +301,107 @@ class DuckDbSqlEngine:
             raise SqlValidationError("SQL external filesystem and network access is disabled")
         if max_rows < 1:
             raise SqlValidationError("max_rows must be positive")
+        if not 1 <= timeout_ms <= 60_000:
+            raise SqlValidationError("timeout_ms must be between 1 and 60000")
+        if not 1 <= max_result_bytes <= 10_485_760:
+            raise SqlValidationError("max_result_bytes must be between 1 and 10485760")
         _validate_relation_sources(sql, {name.casefold() for name in self.list_relations()})
 
+        timed_out = Event()
+        state_lock = Lock()
+        execution_active = True
+
+        def interrupt_if_active() -> None:
+            nonlocal execution_active
+            with state_lock:
+                if execution_active:
+                    timed_out.set()
+                    try:
+                        self._connection.interrupt()
+                    except Exception:
+                        # The deadline remains authoritative even if a backend
+                        # cannot interrupt cooperatively; it must never report
+                        # a late result as successful.
+                        return
+
+        deadline = Timer(timeout_ms / 1000, interrupt_if_active)
+        deadline.daemon = True
+        deadline.start()
         try:
             cursor = self._connection.execute(sql, parameters)
+            description = cursor.description or ()
+            columns = tuple(SqlColumn(item[0], str(item[1])) for item in description)
+            base_payload = {
+                "columns": [
+                    {"name": column.name, "type_name": column.type_name} for column in columns
+                ],
+                "rows": [],
+                "row_count": 0,
+                "max_rows": max_rows,
+                "max_result_bytes": max_result_bytes,
+            }
+            base_size = len(
+                json.dumps(base_payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            )
+            if base_size > max_result_bytes:
+                raise SqlResultLimitError(
+                    "SQL result metadata exceeds max_result_bytes; request a smaller result"
+                )
+            row_json_size = 0
+            collected_rows: list[tuple[object, ...]] = []
+            while True:
+                row = cursor.fetchone()
+                if row is None:
+                    break
+                if len(collected_rows) >= max_rows:
+                    raise SqlValidationError(
+                        "SQL result exceeds max_rows; use a more selective query"
+                    )
+                for value in row:
+                    if isinstance(value, str) and len(value) > max_result_bytes:
+                        raise SqlResultLimitError(
+                            "SQL result exceeds max_result_bytes; select fewer or smaller values"
+                        )
+                    if (
+                        isinstance(value, (bytes, bytearray, memoryview))
+                        and len(value) > max_result_bytes
+                    ):
+                        raise SqlResultLimitError(
+                            "SQL result exceeds max_result_bytes; select fewer or smaller values"
+                        )
+                wire_row = [sql_wire_value(value) for value in row]
+                encoded_row_size = len(
+                    json.dumps(wire_row, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+                )
+                next_row_count = len(collected_rows) + 1
+                next_rows_size = row_json_size + (1 if collected_rows else 0) + encoded_row_size
+                exact_size = (
+                    base_size - len("[]") - len("0") + next_rows_size + len(str(next_row_count))
+                )
+                if exact_size > max_result_bytes:
+                    raise SqlResultLimitError(
+                        "SQL result exceeds max_result_bytes; select fewer or smaller values"
+                    )
+                collected_rows.append(tuple(row))
+                row_json_size = next_rows_size
+            rows = tuple(collected_rows)
         except Exception as exc:
+            if timed_out.is_set():
+                raise SqlTimeoutError("SQL query exceeded its execution time limit") from exc
+            if isinstance(exc, (SqlResultLimitError, SqlValidationError)):
+                raise
             message = str(exc).lower()
             if "table with name" in message or "does not exist" in message:
                 raise SqlRelationUnavailableError("requested SQL relation is unavailable") from exc
             if "binder error" in message or "column" in message:
                 raise SqlValidationError("SQL query references an invalid column") from exc
             raise SqlExecutionError("SQL backend execution failed") from exc
-        description = cursor.description or ()
-        columns = tuple(SqlColumn(item[0], str(item[1])) for item in description)
-        rows = tuple(tuple(row) for row in cursor.fetchmany(max_rows + 1))
+        finally:
+            with state_lock:
+                execution_active = False
+            deadline.cancel()
+        if timed_out.is_set():
+            raise SqlTimeoutError("SQL query exceeded its execution time limit")
         if len(rows) > max_rows:
             raise SqlValidationError("SQL result exceeds max_rows; use a more selective query")
         return SqlQueryResult(columns, rows)
@@ -374,9 +468,17 @@ class ProjectScopedDuckDbSqlEngine:
         parameters: tuple[object, ...] = (),
         *,
         max_rows: int = 10_000,
+        timeout_ms: int = 5_000,
+        max_result_bytes: int = 1_048_576,
     ) -> SqlQueryResult:
         with self._project_engine(project) as engine:
-            return engine.execute(sql, parameters, max_rows=max_rows)
+            return engine.execute(
+                sql,
+                parameters,
+                max_rows=max_rows,
+                timeout_ms=timeout_ms,
+                max_result_bytes=max_result_bytes,
+            )
 
     def close(self) -> None:
         with self._lock:

@@ -33,6 +33,7 @@ from studio_ml.domain import PipelineIR
 from studio_ml.orchestration import JobStoreExecutionStore
 from studio_orchestrator import Instant
 from studio_server import LocalServerComposition
+from studio_sql import SqlTimeoutError
 from studio_storage import (
     ArtifactRef,
     LocalArtifactStore,
@@ -66,9 +67,11 @@ def _unused_port() -> int:
         return int(listener.getsockname()[1])
 
 
-def _sql_request(address: tuple[str, int], project_id: str, sql: str) -> tuple[int, object]:
+def _sql_request(
+    address: tuple[str, int], project_id: str, sql: str, **limits: int
+) -> tuple[int, object]:
     connection = http.client.HTTPConnection(*address, timeout=5)
-    body = json.dumps({"sql": sql}, separators=(",", ":"))
+    body = json.dumps({"sql": sql, **limits}, separators=(",", ":"))
     try:
         connection.request(
             "POST",
@@ -203,6 +206,33 @@ def test_local_composed_sql_route_executes_scoped_queries_and_closes_engine(
         )
         assert status == 200
         assert typed["rows"] == [["12.34"]]
+
+        status, oversized = _sql_request(
+            server.server_address,
+            "project-1",
+            "SELECT REPEAT('x', 512)",
+            max_result_bytes=128,
+        )
+        assert status == 413
+        assert oversized["error"]["code"] == "sql_result_too_large"
+
+        original_reader = server.sql_reader
+
+        class TimedOutSqlReader:
+            def query(self, _project_id: str, _body: object) -> dict[str, object]:
+                raise SqlTimeoutError("SQL query exceeded its execution time limit")
+
+            def close(self) -> None:
+                return None
+
+        server.sql_reader = TimedOutSqlReader()
+        try:
+            status, timed_out = _sql_request(server.server_address, "project-1", "SELECT 1")
+            assert status == 408
+            assert timed_out["error"]["code"] == "sql_timeout"
+            assert timed_out["error"]["message"] == "SQL query exceeded its execution time limit"
+        finally:
+            server.sql_reader = original_reader
     finally:
         composition.stop()
     assert engine._closed

@@ -23,6 +23,10 @@ class SqlTimeoutError(TimeoutError):
     """The SQL backend exceeded its execution deadline."""
 
 
+class SqlResultLimitError(ValueError):
+    """The serialized SQL result exceeds its configured response budget."""
+
+
 _READ_ONLY_SELECT = re.compile(r"^SELECT\b", re.IGNORECASE)
 
 
@@ -77,6 +81,8 @@ class SqlEngine(Protocol):
         parameters: tuple[object, ...] = (),
         *,
         max_rows: int = 10_000,
+        timeout_ms: int = 5_000,
+        max_result_bytes: int = 1_048_576,
     ) -> SqlQueryResult: ...
 
     def close(self) -> None: ...
@@ -87,6 +93,7 @@ __all__ = (
     "SqlEngine",
     "SqlExecutionError",
     "SqlQueryResult",
+    "SqlResultLimitError",
     "SqlRelationUnavailableError",
     "SqlTimeoutError",
     "SqlValidationError",

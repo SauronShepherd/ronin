@@ -2,6 +2,8 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
+from threading import Event
+from types import SimpleNamespace
 
 import pytest
 import studio_sql.duckdb_engine as duckdb_engine_module
@@ -12,6 +14,8 @@ from studio_sql import (
     DuckDbSqlEngine,
     ProjectScopedDuckDbSqlEngine,
     SqlRelationUnavailableError,
+    SqlResultLimitError,
+    SqlTimeoutError,
     SqlValidationError,
 )
 from studio_storage import SqliteCatalogStore, SqliteWorkspaceStore
@@ -102,6 +106,57 @@ def test_duckdb_reference_engine_queries_registered_parquet(tmp_path: Path) -> N
 
     assert tuple(column.name for column in result.columns) == ("group", "total")
     assert result.rows == (("a", 5), ("b", 7))
+
+
+def test_duckdb_engine_interrupts_a_query_at_its_execution_deadline(monkeypatch) -> None:
+    entered = Event()
+    interrupted = Event()
+
+    class Cursor:
+        description = (("value", "INTEGER"),)
+
+        def fetchall(self):
+            return []
+
+        def fetchmany(self, _limit):
+            return [(1,)]
+
+    class Connection:
+        def execute(self, sql, _parameters=()):
+            if "information_schema.tables" in sql:
+                return Cursor()
+            if sql.startswith("SELECT"):
+                entered.set()
+                if not interrupted.wait(timeout=1):
+                    raise AssertionError("execution deadline did not interrupt the query")
+                raise RuntimeError("interrupted")
+            return Cursor()
+
+        def interrupt(self):
+            interrupted.set()
+
+        def close(self):
+            return None
+
+    connection = Connection()
+    monkeypatch.setattr(
+        duckdb_engine_module,
+        "_duckdb",
+        lambda: SimpleNamespace(connect=lambda **_kwargs: connection),
+    )
+    engine = DuckDbSqlEngine()
+    try:
+        with pytest.raises(SqlTimeoutError, match="execution time limit"):
+            engine.execute("SELECT 1", timeout_ms=25)
+        assert entered.is_set()
+        assert interrupted.is_set()
+    finally:
+        engine.close()
+
+
+def test_duckdb_engine_stops_fetching_when_serialized_result_exceeds_budget() -> None:
+    with DuckDbSqlEngine() as engine, pytest.raises(SqlResultLimitError, match="max_result_bytes"):
+        engine.execute("SELECT REPEAT('x', 512)", max_result_bytes=128)
 
 
 def test_sql_reference_engine_bounds_materialized_results(tmp_path: Path) -> None:
