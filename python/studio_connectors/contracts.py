@@ -52,8 +52,11 @@ class ConnectorReadResult:
     fields: tuple[FieldSchema, ...]
     rows: tuple[dict[str, object], ...]
     checkpoint: SourceCheckpoint | None = None
+    has_more: bool = False
 
     def __post_init__(self) -> None:
+        if not isinstance(self.has_more, bool):
+            raise ValueError("connector result has_more must be boolean")
         field_names = tuple(field.name for field in self.fields)
         if len(field_names) != len(set(field_names)):
             raise ValueError("connector result field names must be unique")
