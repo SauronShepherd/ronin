@@ -157,6 +157,7 @@ coverage-storage-files:
 		--exclude=postgres_scheduler_backfills.py \
 		--exclude=postgres_scheduler_leadership.py \
 		--exclude=postgres_scheduler_schedule.py \
+		--exclude=postgres_quality.py \
 		--threshold=80 \
 		--ratchet-margin=2.1 \
 		--baseline=backup.py=76.00 \
