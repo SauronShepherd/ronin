@@ -153,6 +153,10 @@ def _operator_payload(node: Mapping[str, object]) -> tuple[str, dict[str, object
             raise ValueError("connector.sync connector_id must be non-empty")
         if not isinstance(source_ref, str) or not source_ref.strip():
             raise ValueError("connector.sync source_ref must be non-empty")
+        if source_ref.count("::") != 1 or any(not part for part in source_ref.split("::", 1)):
+            raise ValueError(
+                "connector.sync source_ref must use connection_id::qualified_asset_name"
+            )
         if not isinstance(destination_ref, str) or not destination_ref.strip():
             raise ValueError("connector.sync destination_ref must be non-empty")
         if not isinstance(checkpoint_ref, str) or not checkpoint_ref.strip():
@@ -299,6 +303,10 @@ def plan_scheduler_execution(
     current = Instant(now)
     node = _node_payload_for_claim(claim, workflow_run)
     target, parameters = _operator_payload(node)
+    if target == "connector.sync.v1":
+        # The worker resolves connections and checkpoints under the claimed
+        # workspace. Carry the scheduler's trusted scope in the durable Job.
+        parameters = {**parameters, "workspace_id": str(claim.workspace_id)}
     controls = _execution_controls(cast(Mapping[str, object], node["params"]))
     if controls:
         parameters = {**parameters, **controls}

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, cast
 
-from studio_connectors import IngestionSyncDefinition
+from studio_connectors import IngestionSyncCancelled, IngestionSyncDefinition
+from studio_core import AssetId, AssetRef
 from studio_observability import NotificationIntent
 from studio_orchestrator import Instant, Job
 from studio_quality import resolve_quality_rows
@@ -18,6 +20,10 @@ from .scheduler_sql import SchedulerSqlResult, execute_scheduler_sql
 
 class UnsupportedSchedulerWorkload(RuntimeError):
     """Raised when a scheduler workload has no qualified runtime adapter."""
+
+
+class SchedulerWorkloadCancelled(RuntimeError):
+    """Raised when a scheduler workload observes a durable cancellation request."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,6 +88,7 @@ def execute_scheduler_job(
     connector_asset: Any | None = None,
     connector_secrets: Any | None = None,
     connector_destination: Any | None = None,
+    cancellation_requested: Callable[[], bool] | None = None,
     notification_sink: Any | None = None,
     notification_artifacts: ArtifactStore | None = None,
     notification_now: Instant | str | None = None,
@@ -152,7 +159,7 @@ def execute_scheduler_job(
         if not isinstance(result, dict):
             raise UnsupportedSchedulerWorkload("quality adapter returned an invalid result")
         return SchedulerWorkloadResult(family="quality", quality=result)
-    if job.target == "connector.sync":
+    if job.target in {"connector.sync", "connector.sync.v1"}:
         if any(
             value is None
             for value in (
@@ -161,32 +168,78 @@ def execute_scheduler_job(
                 connector_asset,
                 connector_secrets,
                 connector_destination,
+                workspace_id,
             )
         ):
             raise UnsupportedSchedulerWorkload(
-                "connector.sync requires service, source context, and destination"
+                "connector.sync requires service, workspace scope, source context, and destination"
             )
+        if not isinstance(workspace_id, str) or not workspace_id.strip():
+            raise UnsupportedSchedulerWorkload("connector.sync workspace scope is invalid")
         connector_sync_service = cast(Any, connector_sync_service)
         try:
             payload = json.loads(job.parameters_json)
+            source_ref = payload["source_ref"]
+            if not isinstance(source_ref, str) or source_ref.count("::") != 1:
+                raise ValueError("source_ref must be connection_id::qualified_asset_name")
+            connection_ref, asset_ref = source_ref.split("::", 1)
+            if not connection_ref or not asset_ref:
+                raise ValueError("source_ref must contain a connection and an asset")
             definition = IngestionSyncDefinition(
                 id=payload["connector_id"],
                 connector_id=payload["connector_id"],
-                connection_ref=payload["source_ref"],
-                asset_ref=payload["source_ref"],
+                connection_ref=connection_ref,
+                asset_ref=asset_ref,
                 destination_ref=payload["destination_ref"],
                 checkpoint_identity=payload["checkpoint_ref"],
                 mode=payload.get("mode", "incremental"),
+                source_revision_ref=(
+                    AssetRef.from_payload(payload["source_revision_ref"])
+                    if "source_revision_ref" in payload
+                    else None
+                ),
+                destination_asset_id=(
+                    AssetId(payload["destination_asset_id"])
+                    if "destination_asset_id" in payload
+                    else None
+                ),
             )
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise UnsupportedSchedulerWorkload("connector.sync parameters are invalid") from exc
-        result = connector_sync_service.execute(
-            definition,
-            connection=connector_connection,
-            asset=connector_asset,
-            secrets=connector_secrets,
-            destination=connector_destination,
+        connection = (
+            connector_connection(workspace_id, definition.connection_ref)
+            if callable(connector_connection)
+            else connector_connection
         )
+        asset = (
+            connector_asset(connection, definition.asset_ref)
+            if callable(connector_asset)
+            else connector_asset
+        )
+        secrets = (
+            connector_secrets(definition.connection_ref)
+            if callable(connector_secrets)
+            else connector_secrets
+        )
+        sync_options = (
+            {"cancellation_requested": cancellation_requested}
+            if cancellation_requested is not None
+            else {}
+        )
+        try:
+            result = connector_sync_service.execute(
+                definition,
+                workspace_id=workspace_id,
+                connection=connection,
+                asset=asset,
+                secrets=secrets,
+                destination=connector_destination,
+                execution_ref=run_id,
+                now=None if now is None else str(now),
+                **sync_options,
+            )
+        except IngestionSyncCancelled as exc:
+            raise SchedulerWorkloadCancelled(str(exc)) from exc
         if not isinstance(result, dict):
             raise UnsupportedSchedulerWorkload("connector sync returned an invalid result")
         return SchedulerWorkloadResult(family="connector", connector=result)

@@ -6,6 +6,7 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
+from typing import cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, OpenerDirector, Request, build_opener
@@ -317,6 +318,97 @@ class ControlPlaneClient:
                 payload={"checkpoint_identity": identity},
             )
         )
+
+    def connector_sync_submit(
+        self,
+        workspace_id: str,
+        project_id: str,
+        definition: dict[str, object],
+        *,
+        idempotency_key: str,
+    ) -> dict[str, object]:
+        if not workspace_id or workspace_id != workspace_id.strip():
+            raise ValueError("workspace_id must be non-empty and trimmed")
+        if not project_id or project_id != project_id.strip():
+            raise ValueError("project_id must be non-empty and trimmed")
+        if not isinstance(definition, dict) or not definition:
+            raise ValueError("definition must be a non-empty object")
+        if (
+            not isinstance(idempotency_key, str)
+            or not idempotency_key
+            or idempotency_key != idempotency_key.strip()
+            or len(idempotency_key.encode("utf-8")) > 256
+        ):
+            raise ValueError("idempotency_key must be non-empty, trimmed, and at most 256 bytes")
+        payload = _connector_result(
+            self.request(
+                "POST",
+                "/v1/platform/connectors/syncs",
+                query={"workspace_id": workspace_id},
+                payload={"project_id": project_id, "definition": definition},
+                idempotency_key=idempotency_key,
+            )
+        )
+        state = payload.get("state")
+        if (
+            not isinstance(payload.get("id"), str)
+            or not payload["id"]
+            or not isinstance(state, str)
+            or state not in {"queued", "running", "succeeded", "failed"}
+        ):
+            raise ControlPlaneError("Ronin connector sync submission response is invalid")
+        return payload
+
+    def connector_sync_status(
+        self, workspace_id: str, project_id: str, job_id: str
+    ) -> dict[str, object]:
+        if not workspace_id or workspace_id != workspace_id.strip():
+            raise ValueError("workspace_id must be non-empty and trimmed")
+        if not project_id or project_id != project_id.strip():
+            raise ValueError("project_id must be non-empty and trimmed")
+        if not job_id or job_id != job_id.strip():
+            raise ValueError("job_id must be non-empty and trimmed")
+        payload = _connector_result(
+            self.request(
+                "GET",
+                f"/v1/platform/connectors/syncs/{quote(job_id, safe='')}/status",
+                query={"workspace_id": workspace_id, "project_id": project_id},
+            )
+        )
+        lineage = payload.get("lineage")
+        if (
+            not all(isinstance(payload.get(key), dict) for key in ("job", "events", "evidence"))
+            or not isinstance(lineage, dict)
+            or lineage.get("status") not in {"pending", "available", "unavailable", "not_recorded"}
+            or not isinstance(lineage.get("items"), list)
+            or not isinstance(lineage.get("truncated"), bool)
+        ):
+            raise ControlPlaneError("Ronin connector sync status response is invalid")
+        job = cast(dict[str, object], payload["job"])
+        if job.get("id") != job_id or not isinstance(job.get("state"), str):
+            raise ControlPlaneError("Ronin connector sync status job is invalid")
+        return payload
+
+    def connector_sync_cancel(
+        self, workspace_id: str, project_id: str, job_id: str
+    ) -> dict[str, object]:
+        if not workspace_id or workspace_id != workspace_id.strip():
+            raise ValueError("workspace_id must be non-empty and trimmed")
+        if not project_id or project_id != project_id.strip():
+            raise ValueError("project_id must be non-empty and trimmed")
+        if not job_id or job_id != job_id.strip():
+            raise ValueError("job_id must be non-empty and trimmed")
+        payload = _connector_result(
+            self.request(
+                "POST",
+                f"/v1/platform/connectors/syncs/{quote(job_id, safe='')}/cancel",
+                query={"workspace_id": workspace_id, "project_id": project_id},
+                payload={},
+            )
+        )
+        if payload.get("id") != job_id or not isinstance(payload.get("state"), str):
+            raise ControlPlaneError("Ronin connector sync cancellation response is invalid")
+        return payload
 
 
 def _connector_result(payload: object) -> dict[str, object]:

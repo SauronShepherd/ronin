@@ -1,14 +1,20 @@
 from __future__ import annotations
 
 import asyncio
+import threading
+import time
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import pytest
+from studio_connectors import IngestionSyncCancelled
+from studio_core import ConnectionDefinition, ConnectionId, Workspace, WorkspaceId
+from studio_execution import build_connector_sync_dependencies
 from studio_kernel import CancellationSignal
 from studio_orchestrator import (
     AttemptId,
     AttemptLimitExceeded,
+    AttemptState,
     Instant,
     Job,
     JobId,
@@ -20,7 +26,12 @@ from studio_orchestrator import (
 )
 from studio_runners import CommandOutcome
 from studio_server import WorkerPollResult
-from studio_storage import LocalArtifactStore, SqliteJobStore
+from studio_storage import (
+    LocalArtifactStore,
+    SqliteConnectionStore,
+    SqliteJobStore,
+    SqliteWorkspaceStore,
+)
 from studio_worker import (
     LocalWorkerRuntime,
     LocalWorkerRuntimeConfig,
@@ -70,6 +81,41 @@ def _config(tmp_path: Path, *, poll_seconds: float = 1.0) -> LocalWorkerRuntimeC
     )
 
 
+def test_connector_worker_dependencies_are_limited_to_configured_workspace(
+    tmp_path: Path,
+) -> None:
+    config = replace(_config(tmp_path), connector_workspace_id="workspace-a")
+    workspaces = SqliteWorkspaceStore(config.database_path, migration_now=START)
+    connections = SqliteConnectionStore(config.database_path, migration_now=START)
+    workspace_id = WorkspaceId("workspace-a")
+    workspaces.create_workspace(Workspace(workspace_id, "Workspace A"), now=START)
+    source = ConnectionDefinition(
+        ConnectionId("source-db"), "Source database", "postgresql", (("database", "source"),)
+    )
+    connections.create_connection(workspace_id, source, now=START)
+
+    dependencies = build_connector_sync_dependencies(
+        workspace_id="workspace-a",
+        postgres_dsn=None,
+        database_path=config.database_path,
+        artifact_store=LocalArtifactStore(tmp_path / "artifacts"),
+        artifact_reference_barrier=None,
+        migration_now=START,
+    )
+    connection_resolver = dependencies.connection
+    asset_resolver = dependencies.asset
+
+    resolved = connection_resolver("workspace-a", "source-db")
+    assert resolved == source
+    handle = asset_resolver(resolved, "public.orders")
+    assert handle.connection_id == source.id
+    assert handle.namespace == ("public",)
+    assert handle.name == "orders"
+    assert dependencies.secrets("source-db").resolve
+    with pytest.raises(ValueError, match="configured worker scope"):
+        connection_resolver("workspace-b", "source-db")
+
+
 @dataclass
 class _Clock:
     value: Instant
@@ -108,6 +154,75 @@ class _Runner:
 def _seed(config: LocalWorkerRuntimeConfig) -> None:
     store = SqliteJobStore(config.database_path, migration_now=START)
     store.create_job(_job(), _run())
+
+
+def test_connector_sync_cancellation_is_projected_to_durable_job_and_run(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        config = replace(
+            _config(tmp_path),
+            cancellation_poll_seconds=0.01,
+        )
+        job = replace(
+            _job(),
+            target="connector.sync.v1",
+            parameters_json=(
+                '{"workspace_id":"workspace-a","connector_id":"fixture",'
+                '"source_ref":"connection-a::public.orders",'
+                '"destination_ref":"artifact/orders","checkpoint_ref":"orders-v1",'
+                '"mode":"snapshot"}'
+            ),
+        )
+        store = SqliteJobStore(config.database_path, migration_now=START)
+        store.create_job(job, _run())
+        source_read_started = threading.Event()
+
+        class _BlockingSync:
+            def execute(self, *_args, cancellation_requested=None, **_kwargs):
+                source_read_started.set()
+                deadline = time.monotonic() + 5
+                while time.monotonic() < deadline:
+                    if cancellation_requested is not None and cancellation_requested():
+                        raise IngestionSyncCancelled("cancelled by test")
+                    time.sleep(0.005)
+                raise TimeoutError("worker did not observe the durable cancellation request")
+
+        async with LocalWorkerRuntime(
+            replace(
+                config,
+                connector_sync_service=_BlockingSync(),
+                connector_connection=lambda _workspace, _reference: object(),
+                connector_asset=lambda _connection, _reference: object(),
+                connector_secrets=object(),
+                connector_destination=object(),
+            ),
+            migration_now=START,
+            engine_path="docker",
+            now=_Clock(START),
+        ) as runtime:
+            task = asyncio.create_task(
+                runtime.run_once(
+                    attempt_id=AttemptId("attempt-cancel-connector"),
+                    lease_token=LeaseToken("lease-cancel-connector"),
+                )
+            )
+            assert await asyncio.to_thread(source_read_started.wait, 5)
+            requested = store.request_cancel(JobId(str(job.id)), now=START)
+            assert requested.state is JobState.CANCELLING
+            outcome = await asyncio.wait_for(task, timeout=5)
+
+        persisted = SqliteJobStore(config.database_path, migration_now=START)
+        current = persisted.get_job(job.id)
+        assert current is not None
+        assert current.state is JobState.CANCELLED
+        assert outcome.execution is not None
+        assert outcome.execution.state is AttemptState.CANCELLED
+        assert not persisted.read_evidence(RunId("run-runtime"))
+        events = persisted.read_events(RunId("run-runtime"), since=0)
+        assert tuple(event.kind for event in events) == ("worker.attempt.cancelled",)
+
+    asyncio.run(scenario())
 
 
 def test_runtime_config_and_catalog_fail_closed(tmp_path: Path) -> None:

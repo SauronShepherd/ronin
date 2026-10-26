@@ -4,14 +4,46 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from typing import Protocol, cast
 
+from studio_core import (
+    AssetId,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
+    LineageEdge,
+    SourceCheckpoint,
+    WorkspaceId,
+)
 from studio_core.canonical_json import decode, encode
 from studio_storage.ports import ArtifactReferenceBarrier
 
 from .contracts import ConnectorReadResult
+
+
+class IngestionSyncCancelled(RuntimeError):
+    """Raised when a durable sync is cancelled before its output/checkpoint commit."""
+
+
+def scoped_checkpoint_identity(workspace_id: str, identity: str) -> str:
+    """Return a stable checkpoint key that cannot alias across workspace scopes."""
+    if (
+        not isinstance(workspace_id, str)
+        or not workspace_id
+        or workspace_id != workspace_id.strip()
+        or not isinstance(identity, str)
+        or not identity
+        or identity != identity.strip()
+    ):
+        raise ValueError("workspace_id and checkpoint identity must be non-empty and trimmed")
+    if "/" not in workspace_id and "/" not in identity:
+        # Preserve unambiguous legacy keys so existing checkpoint rows remain readable.
+        return f"{workspace_id}/{identity}"
+    identity_bytes = encode({"workspace_id": workspace_id, "identity": identity})
+    return f"ronin:v2:{hashlib.sha256(identity_bytes).hexdigest()}"
 
 
 class ArtifactDestinationWriter:
@@ -57,30 +89,43 @@ class ArtifactDestinationWriter:
 class _CheckpointStore(Protocol):
     def health(self, identity: str) -> _Health: ...
 
-    def get(self, identity: str) -> object | None: ...
+    def get(self, identity: str) -> SourceCheckpoint | None: ...
 
     def acquire(self, identity: str) -> int: ...
 
     def commit_output_then_checkpoint(
         self,
         identity: str,
-        expected: object | None,
-        next_checkpoint: object,
+        expected: SourceCheckpoint | None,
+        next_checkpoint: SourceCheckpoint,
         *,
         output_id: str,
         output_digest: str,
         fence: int,
         output_committed: bool,
+        catalog_commit: tuple[
+            WorkspaceId,
+            AssetRevision,
+            LineageEdge,
+            str,
+            tuple[str, str, str],
+        ]
+        | None = None,
     ) -> _Evidence: ...
 
 
 class _ArtifactRef(Protocol):
-    storage_ref: str
-    digest: str
+    @property
+    def storage_ref(self) -> str: ...
+
+    @property
+    def digest(self) -> str: ...
 
 
 class _ArtifactStore(Protocol):
-    def put_bytes(self, *, role: str, data: bytes, media_type: str) -> _ArtifactRef: ...
+    def put_bytes(
+        self, *, role: str, data: bytes, media_type: str | None = None
+    ) -> _ArtifactRef: ...
 
 
 class _Evidence(Protocol):
@@ -114,7 +159,7 @@ class _SyncRegistry(Protocol):
         secrets: object,
         *,
         limit: int = 10_000,
-        checkpoint: object | None = None,
+        checkpoint: SourceCheckpoint | None = None,
     ) -> ConnectorReadResult: ...
 
 
@@ -187,6 +232,8 @@ class IngestionSyncDefinition:
     checkpoint_identity: str
     mode: str = "snapshot"
     schema: str = "ronin.ingestion-sync/v1"
+    source_revision_ref: AssetRef | None = None
+    destination_asset_id: AssetId | None = None
 
     def __post_init__(self) -> None:
         for value, name in (
@@ -203,9 +250,13 @@ class IngestionSyncDefinition:
             raise ValueError("sync mode must be snapshot or incremental")
         if self.schema != "ronin.ingestion-sync/v1":
             raise ValueError("unsupported ingestion sync schema")
+        if (self.source_revision_ref is None) != (self.destination_asset_id is None):
+            raise ValueError(
+                "governed sync requires both source_revision_ref and destination_asset_id"
+            )
 
-    def to_payload(self) -> dict[str, str]:
-        return {
+    def to_payload(self) -> dict[str, object]:
+        payload: dict[str, object] = {
             "schema": self.schema,
             "id": self.id,
             "connector_id": self.connector_id,
@@ -215,9 +266,13 @@ class IngestionSyncDefinition:
             "checkpoint_identity": self.checkpoint_identity,
             "mode": self.mode,
         }
+        if self.source_revision_ref is not None and self.destination_asset_id is not None:
+            payload["source_revision_ref"] = self.source_revision_ref.to_payload()
+            payload["destination_asset_id"] = self.destination_asset_id.value
+        return payload
 
     def to_bytes(self) -> bytes:
-        return encode(self.to_payload())
+        return cast(bytes, encode(self.to_payload()))
 
     @classmethod
     def from_bytes(cls, payload: bytes) -> IngestionSyncDefinition:
@@ -232,17 +287,38 @@ class IngestionSyncDefinition:
             "checkpoint_identity",
             "mode",
         }
-        if (
-            not isinstance(value, dict)
-            or set(value) != expected
-            or not all(isinstance(value[key], str) for key in expected)
-        ):
+        if not isinstance(value, dict) or frozenset(value) not in {
+            frozenset(expected),
+            frozenset(expected | {"source_revision_ref", "destination_asset_id"}),
+        }:
             raise ValueError("ingestion sync definition has invalid shape")
-        return cls(**cast(dict[str, str], value))
+        if not all(isinstance(value[key], str) for key in expected):
+            raise ValueError("ingestion sync definition has invalid shape")
+        values = cast(dict[str, object], value)
+        source_ref_value = values.get("source_revision_ref")
+        destination_asset_value = values.get("destination_asset_id")
+        if source_ref_value is not None:
+            values["source_revision_ref"] = AssetRef.from_payload(source_ref_value)
+        if destination_asset_value is not None:
+            if not isinstance(destination_asset_value, str):
+                raise ValueError("destination_asset_id must be text")
+            values["destination_asset_id"] = AssetId(destination_asset_value)
+        return cls(
+            id=cast(str, values["id"]),
+            connector_id=cast(str, values["connector_id"]),
+            connection_ref=cast(str, values["connection_ref"]),
+            asset_ref=cast(str, values["asset_ref"]),
+            destination_ref=cast(str, values["destination_ref"]),
+            checkpoint_identity=cast(str, values["checkpoint_identity"]),
+            mode=cast(str, values["mode"]),
+            schema=cast(str, values["schema"]),
+            source_revision_ref=cast(AssetRef | None, values.get("source_revision_ref")),
+            destination_asset_id=cast(AssetId | None, values.get("destination_asset_id")),
+        )
 
 
 class IngestionSyncService:
-    """Bounded preview service; destination writes remain an explicit next step."""
+    """Build bounded previews and commit sync output before advancing checkpoints."""
 
     def __init__(
         self,
@@ -257,22 +333,20 @@ class IngestionSyncService:
 
     def _writer_lease(self) -> AbstractContextManager[None]:
         if self._artifact_reference_barrier is None:
-            return nullcontext()
-        return self._artifact_reference_barrier.writer()
+            return cast(AbstractContextManager[None], nullcontext())
+        return cast(AbstractContextManager[None], self._artifact_reference_barrier.writer())
 
     def preview(
         self,
         definition: IngestionSyncDefinition,
         *,
+        workspace_id: str,
         connection: object,
         asset: object,
         secrets: object,
         limit: int = 100,
-        checkpoint_identity: str | None = None,
     ) -> dict[str, object]:
-        scoped_identity = (
-            definition.checkpoint_identity if checkpoint_identity is None else checkpoint_identity
-        )
+        scoped_identity = scoped_checkpoint_identity(workspace_id, definition.checkpoint_identity)
         health = self._checkpoints.health(scoped_identity)
         plan = self._registry.plan_sync(definition, checkpoint_present=health.present)
         result = self._registry.preview(
@@ -297,18 +371,28 @@ class IngestionSyncService:
         self,
         definition: IngestionSyncDefinition,
         *,
+        workspace_id: str,
         connection: object,
         asset: object,
         secrets: object,
         destination: _DestinationWriter,
         limit: int = 10_000,
+        cancellation_requested: Callable[[], bool] | None = None,
+        execution_ref: str | None = None,
+        now: str | None = None,
     ) -> dict[str, object]:
         """Read, durably write the destination, then advance the checkpoint."""
 
-        health = self._checkpoints.health(definition.checkpoint_identity)
-        expected = self._checkpoints.get(definition.checkpoint_identity)
+        def ensure_not_cancelled() -> None:
+            if cancellation_requested is not None and cancellation_requested():
+                raise IngestionSyncCancelled("connector sync cancellation was requested")
+
+        ensure_not_cancelled()
+        scoped_identity = scoped_checkpoint_identity(workspace_id, definition.checkpoint_identity)
+        health = self._checkpoints.health(scoped_identity)
+        expected = self._checkpoints.get(scoped_identity)
         plan = self._registry.plan_sync(definition, checkpoint_present=health.present)
-        fence = self._checkpoints.acquire(definition.checkpoint_identity)
+        fence = self._checkpoints.acquire(scoped_identity)
         result = self._registry.read(
             definition.connector_id,
             connection,
@@ -317,29 +401,95 @@ class IngestionSyncService:
             limit=limit,
             checkpoint=expected,
         )
+        ensure_not_cancelled()
         if result.checkpoint is None:
             raise ValueError("connector sync execution must return a next checkpoint")
         with self._writer_lease():
+            ensure_not_cancelled()
             output_id, output_digest = destination.write(
                 definition.destination_ref,
                 result,
                 fence=fence,
             )
+            # If cancellation arrives during the output write, leave the content-addressed
+            # object unreferenced for retention and do not advance the source checkpoint.
+            ensure_not_cancelled()
+            catalog_commit = None
+            lineage: LineageEdge | None = None
+            if (
+                definition.source_revision_ref is not None
+                and definition.destination_asset_id is not None
+            ):
+                if not execution_ref or not execution_ref.strip() or now is None:
+                    raise ValueError("governed sync requires a durable execution_ref and timestamp")
+                if len(output_digest) != 64 or any(
+                    character not in "0123456789abcdef" for character in output_digest
+                ):
+                    raise ValueError("governed sync output digest must be lowercase SHA-256 hex")
+                target_ref = AssetRef(
+                    definition.destination_asset_id,
+                    AssetVersion(f"sha256:{output_digest}"),
+                )
+                schema_bytes = encode(
+                    [
+                        {
+                            "name": field.name,
+                            "data_type": field.data_type,
+                            "nullable": field.nullable,
+                        }
+                        for field in result.fields
+                    ]
+                )
+                revision = AssetRevision(
+                    target_ref,
+                    schema_digest=hashlib.sha256(schema_bytes).hexdigest(),
+                    content_digest=output_digest,
+                    metadata=(("sync_id", definition.id),),
+                )
+                lineage = LineageEdge(
+                    definition.source_revision_ref,
+                    target_ref,
+                    operation="write",
+                    mode="observed",
+                    execution_ref=execution_ref,
+                )
+                catalog_commit = (
+                    WorkspaceId(workspace_id),
+                    revision,
+                    lineage,
+                    now,
+                    (
+                        definition.connector_id,
+                        definition.connection_ref,
+                        (
+                            definition.asset_ref.split("::", 1)[1]
+                            if definition.asset_ref.startswith(f"{definition.connection_ref}::")
+                            else definition.asset_ref
+                        ),
+                    ),
+                )
             evidence = self._checkpoints.commit_output_then_checkpoint(
-                definition.checkpoint_identity,
+                scoped_identity,
                 expected,
                 result.checkpoint,
                 output_id=output_id,
                 output_digest=output_digest,
                 fence=fence,
                 output_committed=True,
+                catalog_commit=catalog_commit,
             )
-        return {
+        checkpoint_payload = evidence.to_payload()
+        if isinstance(checkpoint_payload, dict) and "identity" in checkpoint_payload:
+            checkpoint_payload["identity"] = definition.checkpoint_identity
+        response: dict[str, object] = {
             "schema": "ronin.ingestion-sync-result/v1",
             "plan": plan.to_payload(),
             "rows_written": len(result.rows),
-            "checkpoint": evidence.to_payload(),
+            "checkpoint": checkpoint_payload,
         }
+        if lineage is not None:
+            response["lineage"] = lineage.to_payload()
+        return response
 
 
 __all__ = (
@@ -348,4 +498,5 @@ __all__ = (
     "IngestionSyncPlan",
     "IngestionSyncService",
     "plan_sync",
+    "scoped_checkpoint_identity",
 )

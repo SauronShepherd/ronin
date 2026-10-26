@@ -860,6 +860,45 @@ def test_connector_capabilities_and_preview_are_public_sdk_contracts() -> None:
     assert transport.calls[1][4] == {"workspace_id": "workspace-a"}
 
 
+def test_connector_discovery_sdk_supports_scoped_pagination() -> None:
+    transport = FakeTransport(
+        [
+            {
+                "schema": "ronin.connector-discovery/v1",
+                "items": [{"asset_ref": "conn-1::orders"}],
+                "count": 1,
+                "has_more": True,
+                "next_cursor": "opaque-next",
+            }
+        ]
+    )
+    page = Ronin(transport=transport).discover_connector(
+        "workspace-a",
+        "postgres",
+        "conn-1",
+        cursor="opaque-current",
+        page_size=25,
+    )
+
+    assert page["has_more"] is True
+    assert transport.calls[0][2] == {
+        "connector_id": "postgres",
+        "connection_ref": "conn-1",
+        "cursor": "opaque-current",
+        "page_size": 25,
+    }
+
+
+def test_connector_discovery_sdk_rejects_invalid_page_before_transport() -> None:
+    transport = FakeTransport([])
+    client = Ronin(transport=transport)
+
+    with pytest.raises(ValueError, match="page_size"):
+        client.discover_connector("workspace-a", "postgres", "conn-1", page_size=True)
+
+    assert transport.calls == []
+
+
 def test_project_permission_inspection_is_resource_scoped() -> None:
     transport = FakeTransport(
         [
@@ -929,6 +968,76 @@ def test_connector_plan_and_checkpoint_health_are_public_sdk_contracts() -> None
     assert transport.calls[0][1] == "/v1/platform/connectors/plan"
     assert transport.calls[0][4] == {"workspace_id": "workspace-a"}
     assert transport.calls[1][2] == {"checkpoint_identity": "sync-1"}
+
+
+def test_durable_connector_sync_submit_status_cancel_are_public_sdk_contracts() -> None:
+    transport = FakeTransport(
+        [
+            {"id": "job-1", "state": "queued"},
+            {
+                "job": {"id": "job-1", "state": "running"},
+                "events": {"items": [], "next_since": None},
+                "evidence": {"items": []},
+                "lineage": {"status": "pending", "items": [], "truncated": False},
+            },
+            {"id": "job-1", "state": "cancellation_requested"},
+        ]
+    )
+    client = Ronin(transport=transport)
+    definition = {
+        "id": "orders-sync",
+        "connector_id": "postgres",
+        "connection_ref": "conn-1",
+        "asset_ref": "conn-1::public.orders",
+        "destination_ref": "artifact://orders",
+        "checkpoint_identity": "orders-v1",
+        "mode": "incremental",
+    }
+
+    submitted = client.submit_connector_sync(
+        "workspace-a",
+        "project-1",
+        definition,
+        idempotency_key="orders-run-1",
+    )
+    status = client.connector_sync_status("workspace-a", "project-1", "job-1")
+    cancelled = client.cancel_connector_sync("workspace-a", "project-1", "job-1")
+
+    assert submitted["state"] == "queued"
+    assert status["job"]["state"] == "running"
+    assert cancelled["state"] == "cancellation_requested"
+    assert transport.calls[0] == (
+        "POST",
+        "/v1/platform/connectors/syncs",
+        {"project_id": "project-1", "definition": definition},
+        {"Idempotency-Key": "orders-run-1"},
+        {"workspace_id": "workspace-a"},
+    )
+    assert transport.calls[1][0:2] == (
+        "GET",
+        "/v1/platform/connectors/syncs/job-1/status",
+    )
+    assert transport.calls[1][4] == {
+        "workspace_id": "workspace-a",
+        "project_id": "project-1",
+    }
+    assert transport.calls[2][0:2] == (
+        "POST",
+        "/v1/platform/connectors/syncs/job-1/cancel",
+    )
+    assert transport.calls[2][2] == {}
+
+
+def test_submit_connector_sync_requires_idempotency_key_before_transport() -> None:
+    transport = FakeTransport([])
+    client = Ronin(transport=transport)
+
+    with pytest.raises(ValueError, match="idempotency_key"):
+        client.submit_connector_sync(
+            "workspace-a", "project-1", {"id": "sync-1"}, idempotency_key=" "
+        )
+
+    assert transport.calls == []
 
 
 def test_plugin_client_invokes_advertised_operation() -> None:

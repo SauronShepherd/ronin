@@ -315,7 +315,9 @@ def build_local_composed_from_env() -> LocalServerComposition:
         if postgres_dsn is None
         else None
     )
-    catalog_reader = cast(Any, catalog_store) if postgres_dsn is None else None
+    # Both the SQLite catalog store and the PostgreSQL scheduler metadata store
+    # implement the governed catalog reader contract used by the HTTP API.
+    catalog_reader = cast(Any, catalog_store)
     semantic_reader = None
     try:
         semantic_reader = SemanticHTTPAdapter(
@@ -409,6 +411,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         feature_definition_service=FeatureDefinitionService(cast(Any, ml_lab_store)),
         connector_registry=connector_registry,
         ingestion_adapter=ingestion_adapter,
+        durable_jobs=job_server.application,
         plugin_host=plugin_host,
         plugin_routes_enabled=plugin_routes_enabled,
     )

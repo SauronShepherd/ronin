@@ -25,6 +25,7 @@
 }
 .breadcrumb { font-weight: 800; letter-spacing: -.01em; flex: 1; }
 .connection-form { display: flex; gap: .55rem; max-width: 680px; }
+.connection-form input { flex: 1 1 10rem; min-width: 0; }
 .connection-form input { min-width: 150px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .58rem .7rem; background: var(--surface-raised); color: var(--ink); }
 .connection-form input::placeholder { color: #9b8879; }
 .icon-button { padding: .52rem .7rem; }
@@ -35,13 +36,21 @@
 .grid { display: grid; gap: 1rem; }
 .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .app-shell { grid-template-columns: 78px 1fr; height: 100dvh; }
   .nav-label, .rail-subtitle { display: none; }
-  .connection-form { display: none; }
+  .topbar { flex-wrap: wrap; }
+  .connection-form { display: flex; flex: 1 0 100%; order: 3; max-width: none; }
+  .connection-form input { min-width: 0; }
+  .connection-help { order: 2; }
   .app-main { height: 100dvh; }
   .app-main main { max-height: calc(100dvh - 64px); padding: 1.25rem; }
   .grid.two, .grid.three { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .connection-form { flex-direction: column; align-items: stretch; gap: .4rem; }
+  .connection-form input { width: 100%; min-height: 2.5rem; }
+  .connection-form .button { width: 100%; min-height: 2.5rem; }
 }
 @media (max-width: 520px) {
   .app-shell { grid-template-columns: 1fr; height: 100dvh; }

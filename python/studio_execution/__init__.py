@@ -49,6 +49,7 @@ from .connection_service import (
     ConnectionServiceError,
     ConnectionServiceNotFound,
 )
+from .connector_sync import ConnectorSyncDependencies, build_connector_sync_dependencies
 from .environment_service import (
     DeploymentBindingService,
     EnvironmentDiff,
@@ -62,6 +63,7 @@ from .git_source import GitCheckoutResult, GitSourceAdapter, GitSourceError
 from .kubernetes import KubernetesExecutionAdapter, KubernetesManifestError, render_job
 from .ontology_http import GraphStore, OntologyHTTPAdapter, OntologyStore
 from .scheduler_adapters import (
+    SchedulerWorkloadCancelled,
     SchedulerWorkloadResult,
     UnsupportedSchedulerWorkload,
     execute_scheduler_job,
@@ -135,6 +137,11 @@ class DurableExecutionService:
         """Read current durable job status without blocking the event loop."""
 
         return await self._store.get_job(job_id)
+
+    async def run_id_for_job(self, job_id: JobId) -> RunId | None:
+        """Return the latest durable Run identity associated with a Job."""
+
+        return await self._store.get_run_id_for_job(job_id)
 
     async def list_jobs(
         self,
@@ -366,6 +373,8 @@ __all__ = (
     "ConnectionServiceConflict",
     "ConnectionServiceError",
     "ConnectionServiceNotFound",
+    "ConnectorSyncDependencies",
+    "build_connector_sync_dependencies",
     "GitCheckoutResult",
     "GitSourceAdapter",
     "GitSourceError",
@@ -374,6 +383,7 @@ __all__ = (
     "SchedulerSqlResult",
     "execute_scheduler_sql",
     "SchedulerWorkloadResult",
+    "SchedulerWorkloadCancelled",
     "UnsupportedSchedulerWorkload",
     "execute_scheduler_job",
 )

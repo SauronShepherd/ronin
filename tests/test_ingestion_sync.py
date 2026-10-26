@@ -1,10 +1,14 @@
+import base64
 from contextlib import contextmanager
+from threading import Event
 
 import pytest
 from studio_connectors import (
     ConnectorRegistry,
     IngestionHTTPAdapter,
+    IngestionSyncCancelled,
     IngestionSyncDefinition,
+    IngestionSyncPlan,
     IngestionSyncService,
     SqliteConnectorCheckpointStore,
     plan_sync,
@@ -12,13 +16,24 @@ from studio_connectors import (
 from studio_connectors.contracts import ConnectorReadResult, DiscoveryPage
 from studio_core import (
     AssetHandle,
+    AssetId,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
+    CatalogAsset,
     ConnectionId,
     ConnectorCapabilities,
     ConnectorDescriptor,
     DiscoveredAsset,
     FieldSchema,
     SourceCheckpoint,
+    Workspace,
+    WorkspaceId,
 )
+from studio_core.canonical_json import decode, encode
+from studio_orchestrator import Instant
+from studio_storage.catalog import SqliteCatalogStore
+from studio_storage.workspaces import SqliteWorkspaceStore
 
 
 class _Connector:
@@ -55,6 +70,7 @@ class _DiscoveringConnector(_Connector):
 
 class _PagedDiscoveringConnector(_DiscoveringConnector):
     def __init__(self) -> None:
+        self.discover_page_calls = 0
         self.descriptor = ConnectorDescriptor(
             "paged-db",
             1,
@@ -63,6 +79,7 @@ class _PagedDiscoveringConnector(_DiscoveringConnector):
 
     def discover_page(self, connection, secrets, *, cursor=None, page_size=1000):
         del secrets
+        self.discover_page_calls += 1
         all_assets = tuple(
             DiscoveredAsset(
                 AssetHandle(ConnectionId(connection.id), (), name),
@@ -89,6 +106,90 @@ def test_ingestion_sync_round_trips_canonically() -> None:
         "incremental",
     )
     assert IngestionSyncDefinition.from_bytes(definition.to_bytes()) == definition
+    governed = IngestionSyncDefinition(
+        "sync/governed",
+        "postgres",
+        "conn/main",
+        "table/customers",
+        "artifact/customers",
+        "project/customers",
+        source_revision_ref=AssetRef(AssetId("source"), AssetVersion("v1")),
+        destination_asset_id=AssetId("target"),
+    )
+    assert IngestionSyncDefinition.from_bytes(governed.to_bytes()) == governed
+
+
+def test_governed_sync_commits_destination_revision_lineage_and_checkpoint(tmp_path) -> None:
+    now = Instant("2026-10-25T12:00:00.000000Z")
+    workspace = WorkspaceId("workspace-sync")
+    path = tmp_path / "shared.sqlite3"
+    SqliteWorkspaceStore(path, migration_now=now).create_workspace(
+        Workspace(workspace, "Sync workspace"), now=now
+    )
+    catalog = SqliteCatalogStore(path, migration_now=now)
+    source_id, target_id = AssetId("source"), AssetId("target")
+    source_ref = AssetRef(source_id, AssetVersion("source-v1"))
+    catalog.create_asset(
+        workspace,
+        CatalogAsset(
+            source_id,
+            "table",
+            "Source",
+            properties=(
+                ("ronin.connector_id", "connector"),
+                ("ronin.connection_ref", "connection"),
+                ("ronin.asset_ref", "asset"),
+            ),
+        ),
+        now=str(now),
+    )
+    catalog.create_asset(workspace, CatalogAsset(target_id, "table", "Target"), now=now)
+    catalog.put_revision(workspace, AssetRevision(source_ref), now=now)
+
+    class Registry:
+        def plan_sync(self, _definition, *, checkpoint_present):
+            assert checkpoint_present is False
+            return IngestionSyncPlan("sync", "connector", "snapshot", "checkpoint", False)
+
+        def read(self, *_args, **_kwargs):
+            return ConnectorReadResult(
+                (FieldSchema("id", "integer", False),),
+                ({"id": 1},),
+                SourceCheckpoint("snapshot", "next"),
+            )
+
+    class Destination:
+        def write(self, *_args, **_kwargs):
+            return "artifact:sync-output", "a" * 64
+
+    destination_id = target_id
+    definition = IngestionSyncDefinition(
+        "sync/governed",
+        "connector",
+        "connection",
+        "asset",
+        "destination",
+        "checkpoint",
+        source_revision_ref=source_ref,
+        destination_asset_id=destination_id,
+    )
+    checkpoints = SqliteConnectorCheckpointStore(path)
+    result = IngestionSyncService(Registry(), checkpoints).execute(
+        definition,
+        workspace_id=str(workspace),
+        connection=object(),
+        asset=object(),
+        secrets=object(),
+        destination=Destination(),
+        execution_ref="run/durable-1",
+        now=str(now),
+    )
+    target_ref = AssetRef(target_id, AssetVersion("sha256:" + "a" * 64))
+    edges = catalog.upstream(workspace, target_ref)
+    assert result["lineage"] == edges[0].to_payload()
+    assert edges[0].execution_ref == "run/durable-1"
+    assert catalog.get_revision(workspace, target_ref) is not None
+    assert checkpoints.get("workspace-sync/checkpoint") == SourceCheckpoint("snapshot", "next")
 
 
 def test_ingestion_sync_rejects_invalid_mode() -> None:
@@ -144,15 +245,16 @@ def test_ingestion_http_adapter_validates_and_delegates_preview() -> None:
         lambda workspace, ref: ("connection", workspace, ref),
         lambda ref: ("asset", ref),
         lambda ref: ("secrets", ref),
+        cursor_signing_key=b"t" * 32,
     )
 
     class _Service:
-        def preview(self, definition, *, connection, asset, secrets, checkpoint_identity):
+        def preview(self, definition, *, workspace_id, connection, asset, secrets):
             return {
                 "schema": "ronin.ingestion-preview/v1",
                 "definition_id": definition.id,
                 "resolved": [connection[1:], asset[1], secrets[1]],
-                "checkpoint_identity": checkpoint_identity,
+                "workspace_id": workspace_id,
             }
 
     adapter._service = _Service()
@@ -170,9 +272,7 @@ def test_ingestion_http_adapter_validates_and_delegates_preview() -> None:
         "asset/a",
         "conn/a",
     ]
-    assert adapter.preview(body, workspace_id="workspace/a")["checkpoint_identity"].startswith(
-        "ronin:v2:"
-    )
+    assert adapter.preview(body, workspace_id="workspace/a")["workspace_id"] == "workspace/a"
     with pytest.raises(ValueError, match="invalid fields"):
         adapter.preview({**body, "extra": True}, workspace_id="workspace/a")
 
@@ -189,6 +289,7 @@ def test_ingestion_http_adapter_discovers_bounded_assets() -> None:
         ),
         lambda ref: ref,
         lambda ref: ref,
+        cursor_signing_key=b"t" * 32,
     )
 
     result = adapter.discover(
@@ -220,6 +321,7 @@ def test_ingestion_http_adapter_pages_discovery_and_scopes_cursor() -> None:
         )(),
         lambda ref: ref,
         lambda ref: ref,
+        cursor_signing_key=b"t" * 32,
     )
     request = {"connector_id": "paged-db", "connection_ref": "conn/a", "page_size": 2}
 
@@ -257,6 +359,47 @@ def test_ingestion_http_adapter_pages_discovery_and_scopes_cursor() -> None:
         )
 
 
+def test_discovery_rejects_foreign_cursor_before_secret_resolution_or_provider_io() -> None:
+    connector = _PagedDiscoveringConnector()
+    secret_resolutions: list[str] = []
+    adapter = IngestionHTTPAdapter(
+        ConnectorRegistry((connector,)),
+        object(),
+        lambda _workspace, _ref: type(
+            "Connection", (), {"id": "conn/a", "connector_id": "paged-db"}
+        )(),
+        lambda ref: ref,
+        lambda ref: secret_resolutions.append(ref) or ref,
+        cursor_signing_key=b"t" * 32,
+    )
+    request = {"connector_id": "paged-db", "connection_ref": "conn/a", "page_size": 2}
+    first = adapter.discover(request, workspace_id="workspace/a")
+    assert secret_resolutions == ["conn/a"]
+    calls_before = connector.discover_page_calls
+    cursor = first["next_cursor"]
+    assert isinstance(cursor, str)
+
+    raw_cursor = base64.urlsafe_b64decode(cursor + "=" * (-len(cursor) % 4))
+    payload = decode(raw_cursor[:-32])
+    payload["provider_cursor"] = "999"
+    tampered_cursor = (
+        base64.urlsafe_b64encode(encode(payload) + raw_cursor[-32:]).decode("ascii").rstrip("=")
+    )
+    with pytest.raises(ValueError, match="signature is invalid"):
+        adapter.discover({**request, "cursor": tampered_cursor}, workspace_id="workspace/a")
+    assert secret_resolutions == ["conn/a"]
+    assert connector.discover_page_calls == calls_before
+
+    with pytest.raises(ValueError, match="different source scope"):
+        adapter.discover(
+            {**request, "cursor": cursor},
+            workspace_id="workspace/b",
+        )
+
+    assert secret_resolutions == ["conn/a"]
+    assert connector.discover_page_calls == calls_before
+
+
 def test_ingestion_http_adapter_rejects_non_advancing_discovery_cursor() -> None:
     class _RepeatingConnector(_PagedDiscoveringConnector):
         def discover_page(self, connection, secrets, *, cursor=None, page_size=1000):
@@ -271,6 +414,7 @@ def test_ingestion_http_adapter_rejects_non_advancing_discovery_cursor() -> None
         )(),
         lambda ref: ref,
         lambda ref: ref,
+        cursor_signing_key=b"t" * 32,
     )
     first = adapter.discover(
         {"connector_id": "paged-db", "connection_ref": "conn/a"},
@@ -313,6 +457,7 @@ def test_ingestion_http_adapter_scopes_checkpoint_health_by_workspace() -> None:
         lambda _workspace, _ref: None,
         lambda ref: ref,
         lambda ref: ref,
+        cursor_signing_key=b"t" * 32,
     )
     body = {
         "id": "sync/a",
@@ -368,13 +513,13 @@ def test_ingestion_preview_scopes_checkpoint_read_and_hides_internal_identity() 
     )
     result = IngestionSyncService(_Registry(), _Checkpoints()).preview(
         definition,
+        workspace_id="workspace/a",
         connection=object(),
         asset=object(),
         secrets=object(),
-        checkpoint_identity="workspace/a/cp/a",
     )
 
-    assert identities == ["workspace/a/cp/a"]
+    assert identities == [IngestionHTTPAdapter._checkpoint_identity("workspace/a", "cp/a")]
     assert result["checkpoint"]["identity"] == "cp/a"
 
 
@@ -387,6 +532,7 @@ def test_checkpoint_scope_encoding_cannot_alias_slash_delimited_pairs() -> None:
 
 def test_sync_holds_reference_barrier_through_artifact_and_checkpoint_commit() -> None:
     events: list[str] = []
+    identities: list[str] = []
 
     class _Barrier:
         @contextmanager
@@ -419,21 +565,24 @@ def test_sync_holds_reference_barrier_through_artifact_and_checkpoint_commit() -
             return ConnectorReadResult((), (), SourceCheckpoint("snapshot", "next"))
 
     class _Checkpoints:
-        def health(self, _identity):
+        def health(self, identity):
+            identities.append(identity)
             return _Health()
 
-        def get(self, _identity):
-            return None
+        def get(self, identity):
+            identities.append(identity)
 
-        def acquire(self, _identity):
+        def acquire(self, identity):
+            identities.append(identity)
             return 1
 
-        def commit_output_then_checkpoint(self, *_args, **_kwargs):
+        def commit_output_then_checkpoint(self, identity, *_args, **_kwargs):
+            identities.append(identity)
             events.append("reference")
 
             class _Evidence:
                 def to_payload(self):
-                    return {"committed": True}
+                    return {"committed": True, "identity": identity}
 
             return _Evidence()
 
@@ -449,6 +598,7 @@ def test_sync_holds_reference_barrier_through_artifact_and_checkpoint_commit() -
     )
     result = service.execute(
         IngestionSyncDefinition("sync/a", "connector", "conn/a", "asset/a", "dest/a", "cp/a"),
+        workspace_id="workspace/a",
         connection=object(),
         asset=object(),
         secrets=object(),
@@ -456,4 +606,82 @@ def test_sync_holds_reference_barrier_through_artifact_and_checkpoint_commit() -
     )
 
     assert result["rows_written"] == 0
+    assert result["checkpoint"]["identity"] == "cp/a"
     assert events == ["lock", "artifact", "reference", "unlock"]
+    assert identities == [IngestionHTTPAdapter._checkpoint_identity("workspace/a", "cp/a")] * 4
+
+
+@pytest.mark.parametrize("cancel_stage", ["before_read", "after_read", "during_write"])
+def test_sync_cancellation_does_not_advance_checkpoint(tmp_path, cancel_stage: str) -> None:
+    cancellation = Event()
+    if cancel_stage == "before_read":
+        cancellation.set()
+    commits: list[str] = []
+    writes: list[str] = []
+    reads: list[str] = []
+    acquires: list[str] = []
+
+    class _Registry:
+        def plan_sync(self, definition, *, checkpoint_present):
+            assert checkpoint_present is False
+            return IngestionSyncPlan(
+                definition.id,
+                definition.connector_id,
+                definition.mode,
+                definition.checkpoint_identity,
+                False,
+            )
+
+        def read(self, *_args, **_kwargs):
+            reads.append("read")
+            if cancel_stage == "after_read":
+                cancellation.set()
+            return ConnectorReadResult((), (), SourceCheckpoint("snapshot", "next"))
+
+    class _Checkpoints(SqliteConnectorCheckpointStore):
+        def acquire(self, identity):
+            acquires.append(identity)
+            return super().acquire(identity)
+
+        def commit_output_then_checkpoint(self, *args, **kwargs):
+            commits.append("checkpoint")
+            return super().commit_output_then_checkpoint(*args, **kwargs)
+
+    class _Destination:
+        def write(self, *_args, **_kwargs):
+            writes.append("output")
+            if cancel_stage == "during_write":
+                cancellation.set()
+            return "artifact-id", "a" * 64
+
+    checkpoints = _Checkpoints(tmp_path / "checkpoints.sqlite")
+    service = IngestionSyncService(_Registry(), checkpoints)
+
+    with pytest.raises(IngestionSyncCancelled, match="cancellation was requested"):
+        service.execute(
+            IngestionSyncDefinition("sync/a", "connector", "conn/a", "asset/a", "dest/a", "cp/a"),
+            workspace_id="workspace/a",
+            connection=object(),
+            asset=object(),
+            secrets=object(),
+            destination=_Destination(),
+            cancellation_requested=cancellation.is_set,
+        )
+
+    identity = IngestionHTTPAdapter._checkpoint_identity("workspace/a", "cp/a")
+    assert checkpoints.get(identity) is None
+    assert checkpoints.health(identity).output_committed is False
+    assert reads == ([] if cancel_stage == "before_read" else ["read"])
+    assert acquires == ([] if cancel_stage == "before_read" else [identity])
+    assert writes == ([] if cancel_stage != "during_write" else ["output"])
+    assert commits == []
+
+
+@pytest.mark.parametrize(
+    ("workspace_id", "identity"), [("", "cp"), ("workspace", " "), (" ws", "cp")]
+)
+def test_checkpoint_scope_encoding_rejects_untrimmed_components(
+    workspace_id: str, identity: str
+) -> None:
+    with pytest.raises(ValueError, match="non-empty and trimmed"):
+        IngestionHTTPAdapter._checkpoint_identity(workspace_id, identity)

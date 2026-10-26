@@ -93,7 +93,11 @@ def check() -> None:
         raise SystemExit(f"missing Studio surface declaration: {MAP}")
     if unknown:
         raise SystemExit("Studio invokes unpublished routes: " + ", ".join(unknown))
-    required = ("/v1/jobs", "/v1/workspaces", "/v1/sql")
+    required = (
+        "/v1/jobs",
+        "/v1/workspaces",
+        "/v1/workspaces/{id}/projects/{id}/sql/query",
+    )
     if not all(route in declared_map() for route in required):
         raise SystemExit("SCREEN_API_MAP.md is missing a required first-slice operation")
     matched = {

@@ -107,6 +107,12 @@ or an invalid provider continuation value fails closed. A connector that claims
 discovery but cannot produce bounded pages is unavailable through this public
 route rather than being allowed to materialize an unbounded response.
 
+Built-in S3 and Azure Blob discovery advertise a 1,000-item provider page cap.
+The legacy Python `discover()` convenience method also stops after at most 100
+provider pages or 10,000 matching assets and fails with guidance to use paginated
+discovery instead of returning a silently truncated inventory. This bounded
+fallback is not a substitute for continuing the public cursor page by page.
+
 Ingestion checkpoint storage keys preserve the legacy `workspace/identity`
 form only when neither component contains `/`. If either component contains a
 slash, the adapter derives a deterministic `ronin:v2` key from the structured

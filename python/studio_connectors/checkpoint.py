@@ -3,12 +3,20 @@
 from __future__ import annotations
 
 import hashlib
+import secrets
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
 
-from studio_core import CheckpointStrategy, SourceCheckpoint
+from studio_core import (
+    AssetRevision,
+    CatalogAsset,
+    CheckpointStrategy,
+    LineageEdge,
+    SourceCheckpoint,
+    WorkspaceId,
+)
 
 
 class CheckpointFenceConflict(RuntimeError):
@@ -71,6 +79,10 @@ class SqliteConnectorCheckpointStore:
                 "digest TEXT NOT NULL, previous_digest TEXT, fence INTEGER NOT NULL, "
                 "output_id TEXT, output_digest TEXT)"
             )
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS connector_discovery_cursor_keys ("
+                "key_id INTEGER PRIMARY KEY CHECK (key_id = 1), signing_key BLOB NOT NULL)"
+            )
             columns = {
                 row[1] for row in connection.execute("PRAGMA table_info(connector_checkpoints)")
             }
@@ -82,6 +94,27 @@ class SqliteConnectorCheckpointStore:
     def get(self, identity: str) -> SourceCheckpoint | None:
         row = self._row(identity)
         return None if row is None else SourceCheckpoint(cast(CheckpointStrategy, row[0]), row[1])
+
+    def get_or_create_discovery_cursor_key(self) -> bytes:
+        """Return the database-shared HMAC key used to authenticate discovery cursors."""
+        with sqlite3.connect(self._path, isolation_level=None) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT signing_key FROM connector_discovery_cursor_keys WHERE key_id=1"
+            ).fetchone()
+            if row is None:
+                key = secrets.token_bytes(32)
+                connection.execute(
+                    "INSERT INTO connector_discovery_cursor_keys(key_id,signing_key) VALUES(1,?)",
+                    (key,),
+                )
+                connection.execute("COMMIT")
+                return key
+            key = row[0]
+            connection.execute("COMMIT")
+        if not isinstance(key, bytes) or len(key) != 32:
+            raise ValueError("stored connector discovery cursor key is invalid")
+        return key
 
     def get_evidence(self, identity: str) -> CheckpointEvidence | None:
         self._validate_identity(identity)
@@ -160,6 +193,14 @@ class SqliteConnectorCheckpointStore:
         output_digest: str,
         fence: int,
         output_committed: bool,
+        catalog_commit: tuple[
+            WorkspaceId,
+            AssetRevision,
+            LineageEdge,
+            str,
+            tuple[str, str, str],
+        ]
+        | None = None,
     ) -> CheckpointEvidence:
         self._validate_identity(identity)
         self._validate_output(output_id, "output_id")
@@ -196,6 +237,22 @@ class SqliteConnectorCheckpointStore:
             if expected is not None and previous_digest != self._digest(expected):
                 connection.rollback()
                 raise CheckpointFenceConflict("checkpoint CAS precondition failed")
+            if catalog_commit is not None:
+                (
+                    workspace_id,
+                    revision,
+                    edge,
+                    catalog_now,
+                    source_binding,
+                ) = catalog_commit
+                self._commit_catalog_records(
+                    connection,
+                    workspace_id,
+                    revision,
+                    edge,
+                    catalog_now,
+                    source_binding,
+                )
             connection.execute(
                 "UPDATE connector_checkpoints SET strategy=?,value=?,digest=?,previous_digest=?,"
                 "output_id=?,output_digest=? WHERE identity=? AND fence=? AND digest=?",
@@ -220,6 +277,102 @@ class SqliteConnectorCheckpointStore:
             output_digest,
             fence,
         )
+
+    @staticmethod
+    def _commit_catalog_records(
+        connection: sqlite3.Connection,
+        workspace_id: WorkspaceId,
+        revision: AssetRevision,
+        edge: LineageEdge,
+        now: str,
+        source_binding: tuple[str, str, str],
+    ) -> None:
+        """Persist sync revision and lineage in the same transaction as its checkpoint."""
+        if not now or now != now.strip():
+            raise ValueError("catalog commit timestamp must be non-empty and trimmed")
+        workspace = connection.execute(
+            "SELECT archived_at FROM workspaces WHERE workspace_id=?", (str(workspace_id),)
+        ).fetchone()
+        if workspace is None or workspace[0] is not None:
+            raise CheckpointFenceConflict("catalog workspace is missing or archived")
+        if revision.ref != edge.target or edge.mode != "observed":
+            raise ValueError("connector lineage must target the committed revision as observed")
+        for ref in (edge.source, edge.target):
+            asset = connection.execute(
+                "SELECT 1 FROM catalog_assets WHERE workspace_id=? AND asset_id=?",
+                (str(workspace_id), str(ref.asset_id)),
+            ).fetchone()
+            if asset is None:
+                raise ValueError(f"connector lineage asset does not exist: {ref.asset_id}")
+        source_definition = connection.execute(
+            "SELECT definition_json FROM catalog_assets WHERE workspace_id=? AND asset_id=?",
+            (str(workspace_id), str(edge.source.asset_id)),
+        ).fetchone()
+        source_asset = CatalogAsset.from_json(source_definition[0])
+        expected_binding = dict(
+            zip(
+                ("ronin.connector_id", "ronin.connection_ref", "ronin.asset_ref"),
+                source_binding,
+                strict=True,
+            )
+        )
+        if any(
+            dict(source_asset.properties).get(key) != value
+            for key, value in expected_binding.items()
+        ):
+            raise ValueError("connector sync source does not match the governed catalog binding")
+        revision_payload = revision.to_json()
+        existing_revision = connection.execute(
+            "SELECT revision_json FROM catalog_asset_revisions "
+            "WHERE workspace_id=? AND asset_id=? AND version=?",
+            (str(workspace_id), str(revision.ref.asset_id), str(revision.ref.version)),
+        ).fetchone()
+        if existing_revision is not None and existing_revision[0] != revision_payload:
+            raise ValueError("connector destination revision conflicts with existing content")
+        if existing_revision is None:
+            connection.execute(
+                "INSERT INTO catalog_asset_revisions("
+                "workspace_id,asset_id,version,revision_json,created_at) "
+                "VALUES (?,?,?,?,?)",
+                (
+                    str(workspace_id),
+                    str(revision.ref.asset_id),
+                    str(revision.ref.version),
+                    revision_payload,
+                    now,
+                ),
+            )
+        source_revision = connection.execute(
+            "SELECT 1 FROM catalog_asset_revisions "
+            "WHERE workspace_id=? AND asset_id=? AND version=?",
+            (str(workspace_id), str(edge.source.asset_id), str(edge.source.version)),
+        ).fetchone()
+        if source_revision is None:
+            raise ValueError("connector lineage source revision does not exist")
+        edge_payload = edge.to_json()
+        existing_edge = connection.execute(
+            "SELECT edge_json FROM lineage_edges WHERE workspace_id=? AND edge_digest=?",
+            (str(workspace_id), edge.digest),
+        ).fetchone()
+        if existing_edge is not None and existing_edge[0] != edge_payload:
+            raise ValueError("connector lineage digest conflicts with existing content")
+        if existing_edge is None:
+            connection.execute(
+                "INSERT INTO lineage_edges("
+                "workspace_id,edge_digest,source_asset_id,source_version,"
+                "target_asset_id,target_version,edge_json,created_at) "
+                "VALUES (?,?,?,?,?,?,?,?)",
+                (
+                    str(workspace_id),
+                    edge.digest,
+                    str(edge.source.asset_id),
+                    str(edge.source.version),
+                    str(edge.target.asset_id),
+                    str(edge.target.version),
+                    edge_payload,
+                    now,
+                ),
+            )
 
     def _row(self, identity: str) -> tuple[str, str] | None:
         self._validate_identity(identity)
@@ -274,6 +427,10 @@ class PostgresConnectorCheckpointStore:
                     "digest TEXT NOT NULL, previous_digest TEXT, fence BIGINT NOT NULL, "
                     "output_id TEXT, output_digest TEXT)"
                 )
+                cursor.execute(
+                    "CREATE TABLE IF NOT EXISTS ronin_connector_discovery_cursor_keys ("
+                    "key_id SMALLINT PRIMARY KEY CHECK (key_id = 1), signing_key BYTEA NOT NULL)"
+                )
             connection.commit()
         except Exception:
             connection.rollback()
@@ -291,6 +448,31 @@ class PostgresConnectorCheckpointStore:
             row_factory=dict_row,
             application_name=self._application_name,
         )
+
+    def get_or_create_discovery_cursor_key(self) -> bytes:
+        """Return the database-shared HMAC key used to authenticate discovery cursors."""
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO ronin_connector_discovery_cursor_keys(key_id,signing_key) "
+                    "VALUES(1,%s) ON CONFLICT (key_id) DO NOTHING",
+                    (secrets.token_bytes(32),),
+                )
+                cursor.execute(
+                    "SELECT signing_key FROM ronin_connector_discovery_cursor_keys WHERE key_id=1"
+                )
+                row = cursor.fetchone()
+            connection.commit()
+            key = row["signing_key"] if row is not None else None
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+        if not isinstance(key, bytes) or len(key) != 32:
+            raise ValueError("stored connector discovery cursor key is invalid")
+        return key
 
     def get(self, identity: str) -> SourceCheckpoint | None:
         row = self._row(identity)
@@ -406,6 +588,14 @@ class PostgresConnectorCheckpointStore:
         output_digest: str,
         fence: int,
         output_committed: bool,
+        catalog_commit: tuple[
+            WorkspaceId,
+            AssetRevision,
+            LineageEdge,
+            str,
+            tuple[str, str, str],
+        ]
+        | None = None,
     ) -> CheckpointEvidence:
         SqliteConnectorCheckpointStore._validate_identity(identity)
         SqliteConnectorCheckpointStore._validate_output(output_id, "output_id")
@@ -443,6 +633,8 @@ class PostgresConnectorCheckpointStore:
                     )
                 if expected is not None and previous_digest != self._digest(expected):
                     raise CheckpointFenceConflict("checkpoint CAS precondition failed")
+                if catalog_commit is not None:
+                    self._commit_catalog_records(connection, *catalog_commit)
                 cursor.execute(
                     "UPDATE ronin_connector_checkpoints SET strategy=%s,value=%s,digest=%s,"
                     "previous_digest=%s,output_id=%s,output_digest=%s "
@@ -470,6 +662,115 @@ class PostgresConnectorCheckpointStore:
             raise
         finally:
             connection.close()
+
+    @staticmethod
+    def _commit_catalog_records(
+        connection: Any,
+        workspace_id: WorkspaceId,
+        revision: AssetRevision,
+        edge: LineageEdge,
+        now: str,
+        source_binding: tuple[str, str, str],
+    ) -> None:
+        """Persist governed sync records inside the checkpoint transaction."""
+        if not now or now != now.strip():
+            raise ValueError("catalog commit timestamp must be non-empty and trimmed")
+        if revision.ref != edge.target or edge.mode != "observed":
+            raise ValueError("connector lineage must target the committed revision as observed")
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT archived_at FROM ronin_workspaces WHERE workspace_id=%s FOR SHARE",
+                (str(workspace_id),),
+            )
+            workspace = cursor.fetchone()
+            if workspace is None or workspace["archived_at"] is not None:
+                raise CheckpointFenceConflict("catalog workspace is missing or archived")
+            for ref in (edge.source, edge.target):
+                cursor.execute(
+                    "SELECT 1 FROM ronin_catalog_assets WHERE workspace_id=%s AND asset_id=%s",
+                    (str(workspace_id), str(ref.asset_id)),
+                )
+                if cursor.fetchone() is None:
+                    raise ValueError(f"connector lineage asset does not exist: {ref.asset_id}")
+            cursor.execute(
+                "SELECT definition_json FROM ronin_catalog_assets "
+                "WHERE workspace_id=%s AND asset_id=%s",
+                (str(workspace_id), str(edge.source.asset_id)),
+            )
+            source_definition = cursor.fetchone()
+            source_asset = CatalogAsset.from_json(source_definition["definition_json"])
+            expected_binding = dict(
+                zip(
+                    ("ronin.connector_id", "ronin.connection_ref", "ronin.asset_ref"),
+                    source_binding,
+                    strict=True,
+                )
+            )
+            if any(
+                dict(source_asset.properties).get(key) != value
+                for key, value in expected_binding.items()
+            ):
+                raise ValueError(
+                    "connector sync source does not match the governed catalog binding"
+                )
+            revision_payload = revision.to_json()
+            cursor.execute(
+                "SELECT revision_json FROM ronin_catalog_revisions "
+                "WHERE workspace_id=%s AND asset_id=%s AND version=%s FOR UPDATE",
+                (str(workspace_id), str(revision.ref.asset_id), str(revision.ref.version)),
+            )
+            existing_revision = cursor.fetchone()
+            if (
+                existing_revision is not None
+                and existing_revision["revision_json"] != revision_payload
+            ):
+                raise ValueError("connector destination revision conflicts with existing content")
+            if existing_revision is None:
+                cursor.execute(
+                    "INSERT INTO ronin_catalog_revisions("
+                    "workspace_id,asset_id,version,revision_json,created_at) "
+                    "VALUES (%s,%s,%s,%s,%s)",
+                    (
+                        str(workspace_id),
+                        str(revision.ref.asset_id),
+                        str(revision.ref.version),
+                        revision_payload,
+                        str(now),
+                    ),
+                )
+            cursor.execute(
+                "SELECT 1 FROM ronin_catalog_revisions "
+                "WHERE workspace_id=%s AND asset_id=%s AND version=%s",
+                (str(workspace_id), str(edge.source.asset_id), str(edge.source.version)),
+            )
+            if cursor.fetchone() is None:
+                raise ValueError("connector lineage source revision does not exist")
+            edge_payload = edge.to_json()
+            cursor.execute(
+                "SELECT edge_json FROM ronin_lineage_edges "
+                "WHERE workspace_id=%s AND edge_digest=%s FOR UPDATE",
+                (str(workspace_id), edge.digest),
+            )
+            existing_edge = cursor.fetchone()
+            if existing_edge is not None and existing_edge["edge_json"] != edge_payload:
+                raise ValueError("connector lineage digest conflicts with existing content")
+            if existing_edge is None:
+                cursor.execute(
+                    "INSERT INTO ronin_lineage_edges("
+                    "workspace_id,edge_digest,source_asset_id,source_version,"
+                    "target_asset_id,target_version,edge_json,created_at) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (
+                        str(workspace_id),
+                        edge.digest,
+                        str(edge.source.asset_id),
+                        str(edge.source.version),
+                        str(edge.target.asset_id),
+                        str(edge.target.version),
+                        edge_payload,
+                        str(now),
+                    ),
+                )
 
     def _row(self, identity: str) -> tuple[str, str] | None:
         self._validate_identity(identity)

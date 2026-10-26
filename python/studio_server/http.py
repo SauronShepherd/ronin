@@ -289,6 +289,13 @@ class DurableHTTPApplication:
     def get_job(self, job_id: str) -> Job | None:
         return cast(Job | None, self._loop.call(self._service.status(JobId(job_id))))
 
+    def run_id_for_job(self, job_id: str) -> str | None:
+        run_id = cast(
+            RunId | None,
+            self._loop.call(self._service.run_id_for_job(JobId(job_id))),
+        )
+        return None if run_id is None else str(run_id)
+
     def submit(
         self,
         payload: object,

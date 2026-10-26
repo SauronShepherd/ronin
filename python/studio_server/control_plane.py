@@ -94,6 +94,9 @@ CONTROL_PLANE_ROUTES = frozenset(
         ("POST", "/v1/platform/connectors/preview"),
         ("POST", "/v1/platform/connectors/plan"),
         ("POST", "/v1/platform/connectors/checkpoint-health"),
+        ("POST", "/v1/platform/connectors/syncs"),
+        ("GET", "/v1/platform/connectors/syncs/{job_id}/status"),
+        ("POST", "/v1/platform/connectors/syncs/{job_id}/cancel"),
         ("GET", "/v1/platform/ui-manifest"),
         ("GET", "/v1/platform/logs"),
         ("GET", "/v1/platform/traces"),
@@ -403,6 +406,8 @@ class OntologyReader(Protocol):
 class CatalogReader(Protocol):
     def list_assets(self, workspace_id: WorkspaceId) -> tuple[CatalogAsset, ...]: ...
 
+    def get_asset(self, workspace_id: WorkspaceId, asset_id: AssetId) -> CatalogAsset | None: ...
+
     def search_assets(
         self, workspace_id: WorkspaceId, query: str, *, limit: int = 100
     ) -> tuple[CatalogAsset, ...]: ...
@@ -424,6 +429,15 @@ class CatalogReader(Protocol):
     def upstream(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[LineageEdge, ...]: ...
 
     def downstream(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[LineageEdge, ...]: ...
+
+    def downstream_for_execution(
+        self,
+        workspace_id: WorkspaceId,
+        ref: AssetRef,
+        execution_ref: str,
+        *,
+        limit: int = 100,
+    ) -> tuple[LineageEdge, ...]: ...
 
     def list_lineage(
         self, workspace_id: WorkspaceId, *, limit: int = 1000
@@ -756,6 +770,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         plugin_host: PluginDiagnostics | None = None,
         connector_registry: ConnectorCapabilityPort | None = None,
         ingestion_adapter: object | None = None,
+        durable_jobs: object | None = None,
         plugin_routes_enabled: bool = False,
         studio_root: Path | None = None,
         request_timeout_seconds: float = 15.0,
@@ -790,6 +805,7 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.plugin_host = plugin_host
         self.connector_registry = connector_registry
         self.ingestion_adapter = ingestion_adapter
+        self.durable_jobs = durable_jobs
         self.plugin_routes_enabled = plugin_routes_enabled
         self.studio_root = studio_root.resolve() if studio_root is not None else None
         self.request_timeout_seconds = request_timeout_seconds
@@ -1115,6 +1131,97 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     self._method_or_not_found("GET", segments)
                     return
                 self._write_json(HTTPStatus.OK, {"items": [item.to_payload() for item in items]})
+                return
+            if (
+                len(segments) == 6
+                and segments[:4] == ("v1", "platform", "connectors", "syncs")
+                and segments[5] == "status"
+            ):
+                params = parse_qs(query or "", keep_blank_values=True)
+                workspace_values = params.pop("workspace_id", [])
+                project_values = params.pop("project_id", [])
+                if params or len(workspace_values) != 1 or len(project_values) != 1:
+                    raise ValueError("connector sync status requires workspace_id and project_id")
+                workspace_id = WorkspaceId(workspace_values[0])
+                sync_project_id = ProjectId(project_values[0])
+                if not self._authorize(actor, workspace_id, "scheduler.read"):
+                    return
+                self._server().project_service.get(workspace_id, sync_project_id)
+                jobs = cast(Any, self._server().durable_jobs)
+                if jobs is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "durable job service is not configured",
+                    )
+                    return
+                job = jobs.get_job(unquote(segments[4]))
+                if job is None:
+                    self._error(
+                        HTTPStatus.NOT_FOUND, "not_found", "connector sync job does not exist"
+                    )
+                    return
+                job_parameters = json.loads(job.parameters_json)
+                if (
+                    job.target != "connector.sync.v1"
+                    or job.project_id != str(sync_project_id)
+                    or job_parameters.get("workspace_id") != str(workspace_id)
+                ):
+                    self._error(
+                        HTTPStatus.NOT_FOUND, "not_found", "connector sync job does not exist"
+                    )
+                    return
+                lineage_payload: dict[str, object] = {
+                    "status": "unavailable",
+                    "items": [],
+                    "truncated": False,
+                }
+                job_status = jobs.status(str(job.id))
+                job_state = job_status.get("state") if isinstance(job_status, dict) else None
+                catalog_reader = self._server().catalog_reader
+                run_id_for_job = getattr(jobs, "run_id_for_job", None)
+                source_revision_value = job_parameters.get("source_revision_ref")
+                lineage_reader = getattr(catalog_reader, "downstream_for_execution", None)
+                if source_revision_value is not None and callable(lineage_reader):
+                    lineage_payload["status"] = "pending"
+                if (
+                    source_revision_value is not None
+                    and callable(lineage_reader)
+                    and job_state in {"failed", "cancelled"}
+                ):
+                    lineage_payload["status"] = "not_recorded"
+                if (
+                    catalog_reader is not None
+                    and callable(run_id_for_job)
+                    and callable(lineage_reader)
+                    and source_revision_value is not None
+                    and job_state == "succeeded"
+                ):
+                    source_revision_ref = AssetRef.from_payload(source_revision_value)
+                    execution_ref = run_id_for_job(str(job.id))
+                    if execution_ref is not None:
+                        edges = lineage_reader(
+                            workspace_id,
+                            source_revision_ref,
+                            execution_ref,
+                            limit=101,
+                        )
+                        lineage_payload = {
+                            "status": "available",
+                            "items": [edge.to_payload() for edge in edges[:100]],
+                            "truncated": len(edges) > 100,
+                        }
+                    else:
+                        lineage_payload["status"] = "unavailable"
+                self._write_json(
+                    HTTPStatus.OK,
+                    {
+                        "job": job_status,
+                        "events": jobs.events(str(job.id), since=None, limit="100"),
+                        "evidence": jobs.evidence(str(job.id)),
+                        "lineage": lineage_payload,
+                    },
+                )
                 return
             if (
                 len(segments) == 7
@@ -2899,6 +3006,195 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     discover(self._read_json(), workspace_id=str(connector_workspace_id)),
                 )
                 return
+            if segments == ("v1", "platform", "connectors", "syncs"):
+                connector_workspace_id = self._connector_workspace(actor, query)
+                if connector_workspace_id is None:
+                    return
+                if not self._authorize(actor, connector_workspace_id, "scheduler.write"):
+                    return
+                if not self.headers.get("Idempotency-Key", "").strip():
+                    raise ValueError("Idempotency-Key header is required")
+                payload = self._read_json()
+                if not isinstance(payload, dict) or set(payload) != {"project_id", "definition"}:
+                    raise ValueError("connector sync request requires project_id and definition")
+                submit_project_id = ProjectId(payload["project_id"])
+                self._server().project_service.get(connector_workspace_id, submit_project_id)
+                adapter = self._server().ingestion_adapter
+                plan = getattr(adapter, "plan", None) if adapter is not None else None
+                validate_definition = (
+                    getattr(adapter, "validate_definition", None) if adapter is not None else None
+                )
+                jobs = cast(Any, self._server().durable_jobs)
+                if not callable(plan) or not callable(validate_definition) or jobs is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "connectors_unavailable",
+                        "durable connector sync is not configured",
+                    )
+                    return
+                definition = validate_definition(payload["definition"])
+                if not isinstance(definition, dict):
+                    raise TypeError("connector definition validator returned an invalid result")
+                string_fields = (
+                    "id",
+                    "connector_id",
+                    "connection_ref",
+                    "asset_ref",
+                    "destination_ref",
+                    "checkpoint_identity",
+                    "mode",
+                )
+                if any(
+                    not isinstance(definition.get(key), str) or not definition[key].strip()
+                    for key in string_fields
+                ):
+                    raise ValueError("connector definition validator returned invalid text fields")
+                connector_id = cast(str, definition["connector_id"])
+                connection_ref = cast(str, definition["connection_ref"])
+                physical_asset_ref = cast(str, definition["asset_ref"])
+                if not physical_asset_ref.startswith(f"{connection_ref}::"):
+                    raise ValueError("asset_ref must belong to the selected connection")
+                source_revision_value = definition.get("source_revision_ref")
+                destination_asset_value = definition.get("destination_asset_id")
+                if (source_revision_value is None) != (destination_asset_value is None):
+                    raise ValueError(
+                        "governed sync requires source_revision_ref and destination_asset_id"
+                    )
+                if source_revision_value is None:
+                    raise ValueError(
+                        "durable connector sync requires governed source and destination refs"
+                    )
+                if source_revision_value is not None:
+                    if not isinstance(destination_asset_value, str):
+                        raise ValueError("destination_asset_id must be text")
+                    source_revision_ref = AssetRef.from_payload(source_revision_value)
+                    catalog_reader = self._server().catalog_reader
+                    if catalog_reader is None:
+                        self._error(
+                            HTTPStatus.SERVICE_UNAVAILABLE,
+                            "catalog_unavailable",
+                            "governed connector sync requires catalog storage",
+                        )
+                        return
+                    if (
+                        catalog_reader.get_revision(connector_workspace_id, source_revision_ref)
+                        is None
+                    ):
+                        raise ValueError(
+                            "source_revision_ref does not identify a governed revision"
+                        )
+                    source_asset = catalog_reader.get_asset(
+                        connector_workspace_id, source_revision_ref.asset_id
+                    )
+                    source_properties = (
+                        dict(source_asset.properties) if source_asset is not None else {}
+                    )
+                    expected_source_binding = {
+                        "ronin.connector_id": connector_id,
+                        "ronin.connection_ref": connection_ref,
+                        "ronin.asset_ref": physical_asset_ref.split("::", 1)[1],
+                    }
+                    if any(
+                        source_properties.get(key) != value
+                        for key, value in expected_source_binding.items()
+                    ):
+                        raise ValueError(
+                            "source catalog asset is not bound to this connector, "
+                            "connection, and physical asset"
+                        )
+                    if (
+                        catalog_reader.get_asset(
+                            connector_workspace_id, AssetId(destination_asset_value)
+                        )
+                        is None
+                    ):
+                        raise ValueError("destination_asset_id does not identify a governed asset")
+                plan(definition, workspace_id=str(connector_workspace_id))
+                if not self._audit_mutation(
+                    actor,
+                    "connector.sync.submit",
+                    connector_workspace_id,
+                    {
+                        "project_id": str(submit_project_id),
+                        "connector_id": connector_id,
+                        "sync_id": definition["id"],
+                    },
+                ):
+                    return
+                source_ref = physical_asset_ref
+                job_parameters: dict[str, object] = {
+                    "workspace_id": str(connector_workspace_id),
+                    "connector_id": connector_id,
+                    "source_ref": source_ref,
+                    "destination_ref": definition["destination_ref"],
+                    "checkpoint_ref": definition["checkpoint_identity"],
+                    "mode": definition["mode"],
+                }
+                if source_revision_value is not None:
+                    job_parameters["source_revision_ref"] = source_revision_ref.to_payload()
+                    job_parameters["destination_asset_id"] = destination_asset_value
+                status, job_payload = jobs.submit(
+                    {
+                        "project": str(submit_project_id),
+                        "target": "connector.sync.v1",
+                        "parameters": job_parameters,
+                    },
+                    idempotency_key=self.headers.get("Idempotency-Key"),
+                )
+                self._write_json(status, job_payload)
+                return
+            if (
+                len(segments) == 6
+                and segments[:4] == ("v1", "platform", "connectors", "syncs")
+                and segments[5] == "cancel"
+            ):
+                params = parse_qs(query or "", keep_blank_values=True)
+                workspace_values = params.pop("workspace_id", [])
+                project_values = params.pop("project_id", [])
+                if params or len(workspace_values) != 1 or len(project_values) != 1:
+                    raise ValueError(
+                        "connector sync cancellation requires workspace_id and project_id"
+                    )
+                cancel_workspace_id = WorkspaceId(workspace_values[0])
+                cancel_project_id = ProjectId(project_values[0])
+                if not self._authorize(actor, cancel_workspace_id, "scheduler.write"):
+                    return
+                if self._read_json() != {}:
+                    raise ValueError("connector sync cancellation body must be an empty object")
+                self._server().project_service.get(cancel_workspace_id, cancel_project_id)
+                jobs = cast(Any, self._server().durable_jobs)
+                if jobs is None:
+                    self._error(
+                        HTTPStatus.SERVICE_UNAVAILABLE,
+                        "scheduler_unavailable",
+                        "durable job service is not configured",
+                    )
+                    return
+                job = jobs.get_job(unquote(segments[4]))
+                if job is None:
+                    self._error(
+                        HTTPStatus.NOT_FOUND, "not_found", "connector sync job does not exist"
+                    )
+                    return
+                if job.target != "connector.sync.v1" or job.project_id != str(cancel_project_id):
+                    self._error(
+                        HTTPStatus.NOT_FOUND, "not_found", "connector sync job does not exist"
+                    )
+                    return
+                if json.loads(job.parameters_json).get("workspace_id") != str(cancel_workspace_id):
+                    self._error(
+                        HTTPStatus.NOT_FOUND, "not_found", "connector sync job does not exist"
+                    )
+                    return
+                if not self._audit_mutation(
+                    actor,
+                    "connector.sync.cancel",
+                    cancel_workspace_id,
+                    {"project_id": str(cancel_project_id), "job_id": str(job.id)},
+                ):
+                    return
+                self._write_json(HTTPStatus.OK, jobs.cancel(str(job.id)))
+                return
             if segments == ("v1", "platform", "connectors", "preview"):
                 connector_workspace_id = self._connector_workspace(actor, query)
                 if connector_workspace_id is None:
@@ -4600,9 +4896,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if query:
                     raise ValueError("project unregister does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
-                project_id = ProjectId(segments[4])
+                unregistered_project_id = ProjectId(segments[4])
                 if not self._authorize(
-                    actor, workspace_id, "project.write", resource_ref=str(project_id)
+                    actor, workspace_id, "project.write", resource_ref=str(unregistered_project_id)
                 ):
                     return
                 if (
@@ -4614,12 +4910,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor,
                     "project.unregister",
                     workspace_id,
-                    {"resource": str(project_id)},
+                    {"resource": str(unregistered_project_id)},
                 ):
                     return
-                self._server().project_service.unregister(workspace_id, project_id)
+                self._server().project_service.unregister(workspace_id, unregistered_project_id)
                 self._write_json(
-                    HTTPStatus.OK, {"unregistered": True, "project_id": str(project_id)}
+                    HTTPStatus.OK,
+                    {"unregistered": True, "project_id": str(unregistered_project_id)},
                 )
                 return
             self._method_or_not_found("DELETE", segments)

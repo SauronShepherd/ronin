@@ -93,6 +93,7 @@ def test_build_local_composed_from_env_creates_two_surface_composition(
     assert composition.control_plane_server.data_engineering_reader is not None
     assert composition.control_plane_server.connector_registry is not None
     assert composition.control_plane_server.ingestion_adapter is not None
+    assert composition.control_plane_server.durable_jobs is composition.job_server.application
     workspace = composition.control_plane_server.workspace_service.get(WorkspaceId("workspace-1"))
     assert workspace.name == "Local workspace"
     assert composition.control_plane_server.plugin_routes_enabled

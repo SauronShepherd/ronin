@@ -139,7 +139,7 @@ test('Notebook Studio edits, creates and executes a bounded notebook', async ({ 
   await page.getByRole('button', { name: 'etl (r1)' }).click();
   const documentField = page.locator('#notebook-editor textarea[name="document"]');
   await documentField.fill('{"schema":"ronin.notebook/v1","cells":[{"id":"cell-1","source":"SELECT 2"}]}');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.locator('#notebook-editor [data-notebook-action="save"]').click();
   await expect(page.locator('#notebook-result')).toContainText('"revision": 2');
   await page.locator('#notebook-editor input[name="id"]').fill('new-notebook');
   await page.locator('#notebook-editor input[name="revision"]').fill('1');
@@ -155,23 +155,197 @@ test('Notebook Studio edits, creates and executes a bounded notebook', async ({ 
   await expect(page.locator('#notebook-run')).toContainText('cancelling');
 });
 
-test('Ingestion Studio exposes sync plan and checkpoint health', async ({ page }) => {
+test('Ingestion Studio pages source discovery and keeps sync preview controls', async ({ page }) => {
   await page.route('**/v1/platform/connectors', async route => {
     await route.fulfill({ json: { items: [] } });
   });
-  await page.route('**/v1/platform/connectors/plan', async route => {
+  const discoveryRequests = [];
+  await page.route('**/v1/platform/connectors/discover**', async route => {
+    expect(new URL(route.request().url()).searchParams.get('workspace_id')).toBe('default');
+    const body = route.request().postDataJSON();
+    discoveryRequests.push(body);
+    if (!body.cursor) {
+      await route.fulfill({ json: {
+        schema: 'ronin.connector-discovery/v1',
+        items: [{ asset_ref: 'conn-1::public.orders' }],
+        count: 1,
+        has_more: true,
+        next_cursor: 'opaque-page-two',
+      } });
+      return;
+    }
+    await route.fulfill({ json: {
+      schema: 'ronin.connector-discovery/v1',
+      items: [{ asset_ref: 'conn-1::public.users' }],
+      count: 1,
+      has_more: false,
+      next_cursor: null,
+    } });
+  });
+  await page.route('**/v1/platform/connectors/plan**', async route => {
+    expect(new URL(route.request().url()).searchParams.get('workspace_id')).toBe('default');
     expect(route.request().postDataJSON().checkpoint_identity).toBe('preview-1');
     await route.fulfill({ json: { plan: { mode: 'snapshot' }, checkpoint: { present: false } } });
   });
-  await page.route('**/v1/platform/connectors/checkpoint-health', async route => {
+  await page.route('**/v1/platform/connectors/preview**', async route => {
+    expect(new URL(route.request().url()).searchParams.get('workspace_id')).toBe('default');
+    await route.fulfill({ json: { preview: 'source preview ok' } });
+  });
+  await page.route('**/v1/platform/connectors/checkpoint-health**', async route => {
+    expect(new URL(route.request().url()).searchParams.get('workspace_id')).toBe('default');
     expect(route.request().postDataJSON()).toEqual({ checkpoint_identity: 'preview-1' });
     await route.fulfill({ json: { identity: 'preview-1', present: false } });
   });
   await page.goto('./#ingestion');
+  await page.locator('[name="connection_ref"]').fill('conn-1');
+  await page.getByRole('button', { name: 'Discover assets' }).click();
+  await expect(page.locator('#ingestion-discovery-status')).toContainText('Page 1 loaded');
+  await expect(page.locator('#ingestion-discovery-result')).toContainText('public.orders');
+  await page.getByRole('button', { name: 'Load next page' }).click();
+  await expect(page.locator('#ingestion-discovery-status')).toContainText('discovery complete');
+  await expect(page.locator('#ingestion-discovery-result')).toContainText('public.users');
+  expect(discoveryRequests).toEqual([
+    { connector_id: 'postgres', connection_ref: 'conn-1', page_size: 100 },
+    { connector_id: 'postgres', connection_ref: 'conn-1', page_size: 100, cursor: 'opaque-page-two' },
+  ]);
+  await page.getByRole('button', { name: 'Preview source' }).click();
+  await expect(page.locator('#ingestion-preview-result')).toContainText('source preview ok');
   await page.getByRole('button', { name: 'Plan sync' }).click();
   await expect(page.locator('#ingestion-preview-result')).toContainText('snapshot');
   await page.getByRole('button', { name: 'Checkpoint health' }).click();
   await expect(page.locator('#ingestion-preview-result')).toContainText('preview-1');
+});
+
+test('Ingestion Studio submits and monitors a scoped durable connector sync', async ({ page }) => {
+  await page.route('**/v1/platform/connectors', route => route.fulfill({ json: { items: [] } }));
+  let submitted;
+  await page.route('**/v1/platform/connectors/syncs?**', async route => {
+    submitted = route.request();
+    expect(submitted.headers()['idempotency-key']).toMatch(/^ingestion-/);
+    await route.fulfill({ status: 201, json: { id: 'job-sync-42', state: 'queued' } });
+  });
+  await page.route('**/v1/platform/connectors/syncs/job-sync-42/status?**', async route => {
+    const url = new URL(route.request().url());
+    expect(url.searchParams.get('workspace_id')).toBe('default');
+    expect(url.searchParams.get('project_id')).toBe('default');
+    await route.fulfill({ json: {
+      job: { id: 'job-sync-42', state: 'succeeded' },
+      events: { items: [{ kind: 'worker.attempt.succeeded' }], next_since: null },
+      evidence: { items: [{ digest: 'evidence-digest' }] },
+      lineage: { status: 'available', items: [{ source: { asset_id: 'source-orders', version: 'v3' }, target: { asset_id: 'curated-orders', version: 'sha256:' + 'a'.repeat(64) }, operation: 'write', mode: 'observed', execution_ref: 'run-sync-42' }], truncated: false },
+    } });
+  });
+  await page.goto('./#ingestion');
+  const definition = {
+    id: 'orders-sync', connector_id: 'postgres', connection_ref: 'conn-1',
+    asset_ref: 'conn-1::public.orders', destination_ref: 'asset://warehouse/orders',
+    checkpoint_identity: 'orders-v1', mode: 'incremental',
+    source_revision_ref: { asset_id: 'source-orders', version: 'v3' },
+    destination_asset_id: 'curated-orders',
+  };
+  await page.locator('#ingestion-definition').fill(JSON.stringify(definition));
+  await page.getByRole('button', { name: 'Run durable sync' }).click();
+  await expect(page.locator('#ingestion-sync-status')).toContainText('submitted');
+  await expect(page.locator('#ingestion-sync-status')).toContainText('succeeded');
+  await expect(page.locator('#ingestion-sync-evidence')).toContainText('worker.attempt.succeeded');
+  await expect(page.locator('#ingestion-sync-evidence')).toContainText('evidence-digest');
+  await expect(page.locator('#ingestion-sync-lineage')).toContainText('run-sync-42', { timeout: 5000 });
+  expect(submitted.postDataJSON()).toEqual({ project_id: 'default', definition });
+  await page.screenshot({ path: 'test-results/ingestion-sync-desktop.png', fullPage: true });
+});
+
+test('Ingestion Studio requires governed refs before submitting a durable sync', async ({ page }) => {
+  await page.route('**/v1/platform/connectors', route => route.fulfill({ json: { items: [] } }));
+  let submitted = false;
+  await page.route('**/v1/platform/connectors/syncs?**', async route => {
+    submitted = true;
+    await route.fulfill({ status: 201, json: { id: 'unexpected', state: 'queued' } });
+  });
+  await page.goto('./#ingestion');
+  await page.locator('#ingestion-definition').fill(JSON.stringify({
+    id: 'orders-sync', connector_id: 'postgres', connection_ref: 'conn-1',
+    asset_ref: 'conn-1::public.orders', destination_ref: 'asset://warehouse/orders',
+    checkpoint_identity: 'orders-v1', mode: 'snapshot',
+  }));
+  await page.getByRole('button', { name: 'Run durable sync' }).click();
+  await expect(page.locator('#ingestion-sync-status')).toContainText('requires an existing governed source revision and destination asset');
+  expect(submitted).toBe(false);
+});
+
+test('Ingestion Studio stops requesting discovery pages when cancelled', async ({ page }) => {
+  await page.route('**/v1/platform/connectors', route => route.fulfill({ json: { items: [] } }));
+  let requestStarted;
+  const started = new Promise(resolve => { requestStarted = resolve; });
+  let releaseRequest;
+  const pendingResponse = new Promise(resolve => { releaseRequest = resolve; });
+  await page.route('**/v1/platform/connectors/discover**', async route => {
+    requestStarted();
+    await pendingResponse;
+    try {
+      await route.fulfill({ json: {
+        schema: 'ronin.connector-discovery/v1',
+        items: [],
+        count: 0,
+        has_more: false,
+        next_cursor: null,
+      } });
+    } catch {
+      // The browser intentionally aborts this in-flight read-only request.
+    }
+  });
+  await page.goto('./#ingestion');
+  await page.locator('[name="connection_ref"]').fill('conn-1');
+  await page.getByRole('button', { name: 'Discover assets' }).click();
+  await started;
+  await page.getByRole('button', { name: 'Stop discovery' }).click();
+  await expect(page.locator('#ingestion-discovery-status')).toContainText('Stopped this request.');
+  await expect(page.getByRole('button', { name: 'Load next page' })).toBeDisabled();
+  releaseRequest();
+});
+
+test('Ingestion Studio rejects a malformed discovery page', async ({ page }) => {
+  await page.route('**/v1/platform/connectors', route => route.fulfill({ json: { items: [] } }));
+  await page.route('**/v1/platform/connectors/discover**', route => route.fulfill({ json: {
+    schema: 'ronin.connector-discovery/v1',
+    items: [],
+    count: 1,
+    has_more: false,
+    next_cursor: null,
+  } }));
+  await page.goto('./#ingestion');
+  await page.locator('[name="connection_ref"]').fill('conn-1');
+  await page.getByRole('button', { name: 'Discover assets' }).click();
+  await expect(page.locator('#ingestion-discovery-status')).toContainText('invalid page');
+  await expect(page.getByRole('button', { name: 'Load next page' })).toBeDisabled();
+});
+
+test('Migration Studio creates one session per submit', async ({ page }) => {
+  let createCount = 0;
+  await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/migration/sessions', async route => {
+    if (route.request().method() === 'POST') {
+      createCount += 1;
+      await route.fulfill({ json: { id: 'migration-once', state: 'created' } });
+      return;
+    }
+    await route.fulfill({ json: { items: [] } });
+  });
+  await page.goto('./#migration');
+  await page.getByRole('button', { name: 'Create session' }).click();
+  await expect(page.locator('#migration-cockpit-control-result')).toContainText('migration-once');
+  expect(createCount).toBe(1);
+});
+
+test('SQL Studio sends one workspace-scoped request per submit', async ({ page }) => {
+  let queryCount = 0;
+  await page.route('**/v1/workspaces/default/projects/examples%2Fdemo/sql/query', async route => {
+    queryCount += 1;
+    expect(route.request().postDataJSON()).toMatchObject({sql: 'SELECT 1 AS value', max_rows: 1000});
+    await route.fulfill({ json: { columns: [{ name: 'value' }], rows: [[1]], row_count: 1 } });
+  });
+  await page.goto('./#sql');
+  await page.getByRole('button', { name: 'Run SQL' }).click();
+  await expect(page.locator('#sql-result')).toContainText('row_count');
+  expect(queryCount).toBe(1);
 });
 
 test('Data Engineering Studio executes a bounded read-only SQL query', async ({ page }) => {

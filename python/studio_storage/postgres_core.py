@@ -1355,5 +1355,37 @@ class PostgresMetadataStore:
         finally:
             connection.close()
 
+    def downstream_for_execution(
+        self,
+        workspace_id: WorkspaceId,
+        ref: AssetRef,
+        execution_ref: str,
+        *,
+        limit: int = 100,
+    ) -> tuple[LineageEdge, ...]:
+        if not execution_ref or execution_ref != execution_ref.strip():
+            raise ValueError("lineage execution ref must be non-empty and trimmed")
+        if not 1 <= limit <= 1000:
+            raise ValueError("lineage execution limit must be between 1 and 1000")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT edge_json FROM ronin_lineage_edges WHERE workspace_id=%s "
+                    "AND source_asset_id=%s AND source_version=%s "
+                    "AND (edge_json::jsonb ->> 'execution_ref')=%s "
+                    "ORDER BY edge_digest LIMIT %s",
+                    (
+                        str(workspace_id),
+                        str(ref.asset_id),
+                        str(ref.version),
+                        execution_ref,
+                        limit,
+                    ),
+                )
+                return tuple(LineageEdge.from_json(row["edge_json"]) for row in cursor.fetchall())
+        finally:
+            connection.close()
+
 
 __all__ = ("PostgresDependencyError", "PostgresMetadataStore")

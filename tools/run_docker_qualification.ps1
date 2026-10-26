@@ -12,6 +12,18 @@ if (-not (Test-Path -LiteralPath $python -PathType Leaf)) {
     $python = (Get-Command python -ErrorAction Stop).Source
 }
 
+# Pytest's conftest adds the source tree to the parent process's sys.path, but
+# real-worker qualification starts fresh Python subprocesses. Export checkout
+# paths so those children import the exact source under qualification as well.
+$pythonPathEntries = @(
+    (Join-Path (Get-Location) "python")
+    (Join-Path (Get-Location) "packages\pyronin\src")
+)
+if ($env:PYTHONPATH) {
+    $pythonPathEntries += $env:PYTHONPATH
+}
+$env:PYTHONPATH = [string]::Join([IO.Path]::PathSeparator, $pythonPathEntries)
+
 docker build --file docker/Dockerfile --tag $ImageTag .
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
