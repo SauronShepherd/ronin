@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 
@@ -28,3 +29,31 @@ def test_public_v1_ledgers_share_observed_sha() -> None:
 def test_status_check_is_fail_closed_for_divergence() -> None:
     tool = _status_tool()
     tool.check()
+
+
+def test_pull_request_status_check_uses_base_sha_not_synthetic_merge_head(
+    monkeypatch, tmp_path
+) -> None:
+    tool = _status_tool()
+    event_path = tmp_path / "event.json"
+    event_path.write_text(
+        json.dumps({"pull_request": {"base": {"sha": "a" * 40}}}), encoding="utf-8"
+    )
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+    monkeypatch.setattr(tool, "_read_observed", lambda: ("a" * 40, "a" * 40))
+    observed: list[list[str]] = []
+
+    def run(args, **_kwargs):
+        observed.append(args)
+
+        class Result:
+            returncode = 0
+            stdout = "0\n"
+
+        return Result()
+
+    monkeypatch.setattr(tool.subprocess, "run", run)
+    tool.check()
+
+    assert ["git", "rev-list", "--count", "--no-merges", f"{'a' * 40}..{'a' * 40}"] in observed

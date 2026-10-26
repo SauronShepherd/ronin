@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 from datetime import UTC, datetime
@@ -51,13 +52,43 @@ def check(reference_sha: str | None = None) -> None:
         raise SystemExit("Public v1 status ledgers disagree on observed source SHA")
     reference_name = "HEAD" if reference_sha is None else "reference"
     if reference_sha is None:
-        reference_sha = subprocess.run(  # noqa: S603, S607 - fixed Git executable
-            ["git", "rev-parse", "HEAD"],  # noqa: S607 - fixed Git executable
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout.strip()
+        event_name = os.environ.get("GITHUB_EVENT_NAME")
+        event_path = os.environ.get("GITHUB_EVENT_PATH")
+        if event_name == "pull_request" and event_path:
+            try:
+                event = json.loads(Path(event_path).read_text(encoding="utf-8"))
+                reference_sha = event["pull_request"]["base"]["sha"]
+            except (OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
+                raise SystemExit(
+                    "pull request event has no valid base SHA for status check"
+                ) from exc
+            reference_name = "pull request base"
+        else:
+            branch = subprocess.run(
+                ["git", "branch", "--show-current"],  # noqa: S607 - fixed Git executable
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout.strip()
+            if branch and branch != "main":
+                main_ref = subprocess.run(
+                    ["git", "rev-parse", "--verify", "refs/remotes/origin/main"],  # noqa: S607
+                    cwd=ROOT,
+                    capture_output=True,
+                    text=True,
+                )
+                if main_ref.returncode == 0:
+                    reference_sha = main_ref.stdout.strip()
+                    reference_name = "origin/main"
+            if reference_sha is None:
+                reference_sha = subprocess.run(  # noqa: S603, S607 - fixed Git executable
+                    ["git", "rev-parse", "HEAD"],  # noqa: S607
+                    cwd=ROOT,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                ).stdout.strip()
     if not SHA_PATTERN.fullmatch(reference_sha):
         raise SystemExit("Git returned an invalid status reference SHA")
     distance = subprocess.run(  # noqa: S603, S607 - fixed Git executable and validated SHA inputs
