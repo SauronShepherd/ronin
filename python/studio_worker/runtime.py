@@ -6,6 +6,7 @@ import asyncio
 import logging
 import os
 import signal
+import threading
 import uuid
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -18,6 +19,7 @@ from studio_core import RuntimeCapability, RuntimeCatalog, RuntimeProfile
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import (
     DurableExecutionService,
+    SchedulerWorkloadCancelled,
     UnsupportedSchedulerWorkload,
     WorkerPollResult,
     build_connector_sync_dependencies,
@@ -36,6 +38,7 @@ from studio_orchestrator import (
     ClaimedRun,
     Instant,
     Job,
+    JobState,
     LeaseToken,
     RunId,
     StoredExecutionEvent,
@@ -58,7 +61,12 @@ from studio_storage import (
     SqliteJobStore,
 )
 
-from .execution import DurableWorkerExecution, WorkerExecutionOutcome, utc_now
+from .execution import (
+    DurableWorkerExecution,
+    WorkerExecutionError,
+    WorkerExecutionOutcome,
+    utc_now,
+)
 from .preparation import (
     LOCAL_DOCKER_PROFILE,
     WorkerPaths,
@@ -86,6 +94,7 @@ class LocalWorkerRuntimeConfig:
     lease_seconds: int = 30
     heartbeat_interval_seconds: float = 10.0
     poll_seconds: float = 1.0
+    cancellation_poll_seconds: float = 0.25
     store_max_workers: int = 4
     store_max_in_flight: int = 8
     artifact_max_workers: int = 2
@@ -129,6 +138,8 @@ class LocalWorkerRuntimeConfig:
             raise ValueError("heartbeat interval must be positive and shorter than the lease")
         if self.poll_seconds <= 0:
             raise ValueError("poll_seconds must be positive")
+        if not 0 < self.cancellation_poll_seconds <= 60:
+            raise ValueError("cancellation_poll_seconds must be greater than 0 and at most 60")
         if self.store_max_workers < 1 or self.store_max_in_flight < self.store_max_workers:
             raise ValueError("invalid bounded JobStore executor limits")
         if self.artifact_max_workers < 1 or self.artifact_max_in_flight < self.artifact_max_workers:
@@ -445,39 +456,76 @@ class LocalWorkerRuntime:
                 raise UnsupportedSchedulerWorkload(
                     "data-engineering.pipeline-run.v1 scheduler execution requires pipeline_runner"
                 )
+            cancellation_watch: asyncio.Task[None] | None = None
             try:
+                is_connector_sync = claim.job.target in {"connector.sync", "connector.sync.v1"}
+                cancellation_requested = threading.Event()
+                cancellation_watch_failures: list[Exception] = []
+                cancellation_watch = (
+                    asyncio.create_task(
+                        self._watch_connector_sync_cancellation(
+                            claim, cancellation_requested, cancellation_watch_failures
+                        )
+                    )
+                    if is_connector_sync
+                    else None
+                )
                 parameters = decode_canonical_json(claim.job.parameters_json)
                 workspace_id = (
                     parameters.get("workspace_id") if isinstance(parameters, dict) else None
                 )
-                result = await loop.run_in_executor(
-                    self._preparation_executor,
-                    lambda: execute_scheduler_job(
-                        claim.job,
-                        sql_engine=self.config.scheduler_sql_engine,
-                        graph_adapter=self.config.scheduler_graph_adapter,
-                        quality_adapter=self.config.scheduler_quality_adapter,
-                        artifact_store=self._artifact_store,
-                        workspace_id=workspace_id,
-                        run_id=str(claim.run.id),
-                        now=self._now(),
-                        connector_sync_service=self._connector_sync_service,
-                        connector_connection=self._connector_connection,
-                        connector_asset=self._connector_asset,
-                        connector_secrets=self._connector_secrets,
-                        connector_destination=self._connector_destination,
-                        notification_sink=self.config.notification_sink,
-                        notification_artifacts=self.config.notification_artifacts,
-                        notification_now=self._now(),
-                        ml_runner=self.config.ml_runner,
-                        ml_lab=self.config.ml_lab,
-                        ml_pipeline=self.config.ml_pipeline,
-                        ml_rows=self.config.ml_rows,
-                        semantic_refresh_runner=self.config.semantic_refresh_runner,
-                        pipeline_runner=self.config.pipeline_runner,
-                    ),
-                )
+                try:
+                    result = await loop.run_in_executor(
+                        self._preparation_executor,
+                        lambda: execute_scheduler_job(
+                            claim.job,
+                            sql_engine=self.config.scheduler_sql_engine,
+                            graph_adapter=self.config.scheduler_graph_adapter,
+                            quality_adapter=self.config.scheduler_quality_adapter,
+                            artifact_store=self._artifact_store,
+                            workspace_id=workspace_id,
+                            run_id=str(claim.run.id),
+                            now=self._now(),
+                            connector_sync_service=self._connector_sync_service,
+                            connector_connection=self._connector_connection,
+                            connector_asset=self._connector_asset,
+                            connector_secrets=self._connector_secrets,
+                            connector_destination=self._connector_destination,
+                            cancellation_requested=(
+                                cancellation_requested.is_set if is_connector_sync else None
+                            ),
+                            notification_sink=self.config.notification_sink,
+                            notification_artifacts=self.config.notification_artifacts,
+                            notification_now=self._now(),
+                            ml_runner=self.config.ml_runner,
+                            ml_lab=self.config.ml_lab,
+                            ml_pipeline=self.config.ml_pipeline,
+                            ml_rows=self.config.ml_rows,
+                            semantic_refresh_runner=self.config.semantic_refresh_runner,
+                            pipeline_runner=self.config.pipeline_runner,
+                        ),
+                    )
+                except SchedulerWorkloadCancelled:
+                    await self._stop_cancellation_watch(cancellation_watch)
+                    if cancellation_watch_failures:
+                        raise WorkerExecutionError(
+                            "could not confirm connector sync cancellation state"
+                        ) from cancellation_watch_failures[0]
+                    if not cancellation_requested.is_set():
+                        raise
+                    await self._complete_connector_sync_cancellation(claim)
+                    return WorkerExecutionOutcome(AttemptState.CANCELLED, (), ())
+                await self._stop_cancellation_watch(cancellation_watch)
+                if cancellation_watch_failures:
+                    _LOGGER.warning(
+                        "connector sync cancellation monitor failed after workload completion "
+                        "(job_id=%s, run_id=%s, failure_type=%s)",
+                        claim.job.id,
+                        claim.run.id,
+                        type(cancellation_watch_failures[0]).__name__,
+                    )
             except Exception:
+                await self._stop_cancellation_watch(cancellation_watch)
                 failure_code = (
                     "scheduler.sql.error"
                     if claim.job.target == "sql.query"
@@ -565,6 +613,64 @@ class LocalWorkerRuntime:
             artifact_reference_barrier=self._artifact_reference_barrier,
         )
         return await worker.run(claim, request, identities)
+
+    async def _watch_connector_sync_cancellation(
+        self,
+        claim: ClaimedRun,
+        cancellation_requested: threading.Event,
+        failures: list[Exception],
+    ) -> None:
+        """Bridge durable Job cancellation to the sync's thread-safe safe points."""
+
+        try:
+            while True:
+                job = await self._service.status(claim.job.id)
+                if job is None:
+                    raise WorkerExecutionError("connector sync Job disappeared while running")
+                if job.state in {JobState.CANCELLING, JobState.CANCELLED}:
+                    cancellation_requested.set()
+                    return
+                await asyncio.sleep(self.config.cancellation_poll_seconds)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            cancellation_requested.set()
+            failures.append(exc)
+
+    @staticmethod
+    async def _stop_cancellation_watch(task: asyncio.Task[None] | None) -> None:
+        if task is None:
+            return
+        if not task.done():
+            task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
+
+    async def _complete_connector_sync_cancellation(self, claim: ClaimedRun) -> None:
+        now = self._now()
+        await self._service.worker_append_events(
+            claim.attempt_id,
+            (
+                StoredExecutionEvent(
+                    attempt_id=claim.attempt_id,
+                    sequence=0,
+                    kind="worker.attempt.cancelled",
+                    message="connector sync cancelled before checkpoint advancement",
+                    occurred_at=now,
+                ),
+            ),
+            owner=self.config.owner,
+            lease_token=claim.lease_token,
+            now=now,
+        )
+        await self._service.worker_complete_attempt(
+            claim.attempt_id,
+            state=AttemptState.CANCELLED,
+            failure_code=None,
+            owner=self.config.owner,
+            lease_token=claim.lease_token,
+            now=self._now(),
+        )
 
     async def _abandon_claim(self, claim: ClaimedRun) -> None:
         """Release one live claim immediately while preserving fencing semantics."""

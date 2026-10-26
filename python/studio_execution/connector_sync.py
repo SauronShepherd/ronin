@@ -28,6 +28,7 @@ from studio_storage import (
     SqliteConnectionStore,
     SqliteWorkspaceStore,
 )
+from studio_storage.catalog import SqliteCatalogStore
 from studio_storage.ports import ArtifactReferenceBarrier
 
 from .connection_service import ConnectionService
@@ -68,6 +69,9 @@ def build_connector_sync_dependencies(
     else:
         workspaces = SqliteWorkspaceStore(database_path, migration_now=migration_now)
         connections = SqliteConnectionStore(database_path, migration_now=migration_now)
+        # The worker may run independently of the HTTP composition. Ensure the
+        # shared SQLite database has governed catalog tables before sync commit.
+        SqliteCatalogStore(database_path, migration_now=migration_now)
         connection_service = ConnectionService(workspaces, connections)
         checkpoints = SqliteConnectorCheckpointStore(database_path)
 

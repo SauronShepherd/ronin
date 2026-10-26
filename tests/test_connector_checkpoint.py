@@ -7,8 +7,140 @@ from studio_connectors import (
     CheckpointFenceConflict,
     SqliteConnectorCheckpointStore,
 )
-from studio_core import SourceCheckpoint
+from studio_core import (
+    AssetId,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
+    CatalogAsset,
+    LineageEdge,
+    SourceCheckpoint,
+    Workspace,
+    WorkspaceId,
+)
+from studio_orchestrator import Instant
 from studio_storage import discover_connector_artifact_references
+from studio_storage.catalog import SqliteCatalogStore
+from studio_storage.workspaces import SqliteWorkspaceStore
+
+
+def test_sqlite_discovery_cursor_signing_key_is_persistent_and_shared(tmp_path) -> None:
+    path = tmp_path / "checkpoints.sqlite3"
+    first_store = SqliteConnectorCheckpointStore(path)
+    first_key = first_store.get_or_create_discovery_cursor_key()
+
+    reopened_store = SqliteConnectorCheckpointStore(path)
+
+    assert len(first_key) == 32
+    assert reopened_store.get_or_create_discovery_cursor_key() == first_key
+
+
+def test_checkpoint_catalog_lineage_and_destination_revision_commit_atomically(tmp_path) -> None:
+    path = tmp_path / "shared.sqlite3"
+    now = Instant("2026-10-25T12:00:00.000000Z")
+    workspace = WorkspaceId("workspace-sync")
+    source_id, target_id = AssetId("source"), AssetId("target")
+    source_ref = AssetRef(source_id, AssetVersion("source-v1"))
+    target_ref = AssetRef(target_id, AssetVersion("sha256:" + "a" * 64))
+    SqliteWorkspaceStore(path, migration_now=now).create_workspace(
+        Workspace(workspace, "Sync workspace"), now=now
+    )
+    catalog = SqliteCatalogStore(path, migration_now=now)
+    catalog.create_asset(
+        workspace,
+        CatalogAsset(
+            source_id,
+            "table",
+            "Source",
+            properties=(
+                ("ronin.connector_id", "postgres"),
+                ("ronin.connection_ref", "connection-1"),
+                ("ronin.asset_ref", "connection-1::table"),
+            ),
+        ),
+        now=now,
+    )
+    catalog.create_asset(workspace, CatalogAsset(target_id, "table", "Target"), now=now)
+    catalog.put_revision(workspace, AssetRevision(source_ref), now=now)
+    edge = LineageEdge(
+        source_ref, target_ref, operation="write", mode="observed", execution_ref="run-1"
+    )
+    checkpoints = SqliteConnectorCheckpointStore(path)
+    identity = "workspace-sync/checkpoint"
+    fence = checkpoints.acquire(identity)
+    result = checkpoints.commit_output_then_checkpoint(
+        identity,
+        None,
+        SourceCheckpoint("snapshot", "next"),
+        output_id="artifact:sync-output",
+        output_digest="a" * 64,
+        fence=fence,
+        output_committed=True,
+        catalog_commit=(
+            workspace,
+            AssetRevision(target_ref, content_digest="a" * 64),
+            edge,
+            str(now),
+            ("postgres", "connection-1", "connection-1::table"),
+        ),
+    )
+    assert checkpoints.get(identity) == SourceCheckpoint("snapshot", "next")
+    assert catalog.get_revision(workspace, target_ref) is not None
+    assert catalog.upstream(workspace, target_ref) == (edge,)
+    assert result.output_digest == "a" * 64
+
+
+def test_checkpoint_catalog_failure_rolls_back_revision_lineage_and_checkpoint(tmp_path) -> None:
+    path = tmp_path / "shared.sqlite3"
+    now = Instant("2026-10-25T12:00:00.000000Z")
+    workspace = WorkspaceId("workspace-sync")
+    source_ref = AssetRef(AssetId("missing-source"), AssetVersion("v1"))
+    target_ref = AssetRef(AssetId("target"), AssetVersion("sha256:" + "b" * 64))
+    SqliteWorkspaceStore(path, migration_now=now).create_workspace(
+        Workspace(workspace, "Sync workspace"), now=now
+    )
+    catalog = SqliteCatalogStore(path, migration_now=now)
+    catalog.create_asset(
+        workspace,
+        CatalogAsset(
+            source_ref.asset_id,
+            "table",
+            "Source",
+            properties=(
+                ("ronin.connector_id", "postgres"),
+                ("ronin.connection_ref", "connection-1"),
+                ("ronin.asset_ref", "connection-1::table"),
+            ),
+        ),
+        now=now,
+    )
+    catalog.create_asset(workspace, CatalogAsset(target_ref.asset_id, "table", "Target"), now=now)
+    checkpoints = SqliteConnectorCheckpointStore(path)
+    identity = "workspace-sync/checkpoint"
+    fence = checkpoints.acquire(identity)
+    edge = LineageEdge(
+        source_ref, target_ref, operation="write", mode="observed", execution_ref="run-1"
+    )
+    with pytest.raises(ValueError, match="source revision does not exist"):
+        checkpoints.commit_output_then_checkpoint(
+            identity,
+            None,
+            SourceCheckpoint("snapshot", "next"),
+            output_id="artifact:sync-output",
+            output_digest="b" * 64,
+            fence=fence,
+            output_committed=True,
+            catalog_commit=(
+                workspace,
+                AssetRevision(target_ref, content_digest="b" * 64),
+                edge,
+                str(now),
+                ("postgres", "connection-1", "connection-1::table"),
+            ),
+        )
+    assert checkpoints.get(identity) is None
+    assert catalog.get_revision(workspace, target_ref) is None
+    assert catalog.upstream(workspace, target_ref) == ()
 
 
 def test_checkpoint_commit_is_fenced_and_records_output(tmp_path) -> None:

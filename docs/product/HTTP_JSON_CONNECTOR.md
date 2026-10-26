@@ -17,7 +17,60 @@ ronin connectors plan --connector-id http.json \
   --connection-ref conn-1 --asset-ref conn-1::orders \
   --destination-ref local/orders --checkpoint-identity orders-v1 --mode snapshot
 ronin connectors checkpoint-health --checkpoint-identity orders-v1
+ronin connectors sync-submit --workspace-id workspace-1 --project-id project-1 \
+  --definition-file ./orders-sync.json --idempotency-key orders-run-001
+ronin connectors sync-status --workspace-id workspace-1 --project-id project-1 \
+  --job-id 01H...
+ronin connectors sync-cancel --workspace-id workspace-1 --project-id project-1 \
+  --job-id 01H...
 ```
+
+`sync-submit` accepts a UTF-8 JSON object file no larger than 1 MiB and requires
+an explicit idempotency key so a caller can safely retry after a lost response.
+Durable submissions must identify governed catalog revisions for both ends of
+the operation. The source catalog asset must carry these non-secret properties
+that bind it to the physical connector source:
+
+```json
+{
+  "ronin.connector_id": "http.json",
+  "ronin.connection_ref": "conn-1",
+  "ronin.asset_ref": "orders"
+}
+```
+
+The definition includes `source_revision_ref` (`asset_id` and `version`) and
+`destination_asset_id`; both catalog assets and the source revision must already
+exist in the selected workspace. For example:
+
+```json
+{
+  "id": "orders-sync",
+  "connector_id": "http.json",
+  "connection_ref": "conn-1",
+  "asset_ref": "conn-1::orders",
+  "destination_ref": "local/orders",
+  "checkpoint_identity": "orders-v1",
+  "mode": "snapshot",
+  "source_revision_ref": {"asset_id": "source-orders", "version": "v3"},
+  "destination_asset_id": "curated-orders"
+}
+```
+
+The worker creates the destination revision from the committed output digest,
+records an `observed` `write` lineage edge with the durable Run ID, and advances
+the checkpoint in one SQLite or PostgreSQL transaction. The output artifact is
+written first; if the metadata transaction fails, it remains an unreferenced
+artifact eligible for retention cleanup and the checkpoint does not advance.
+Status and cancellation require both workspace and project IDs; the server
+checks them against the durable job before returning events/evidence or
+requesting cancellation. A running `ronin worker` with matching storage must
+process queued jobs.
+
+Sync status also reports lineage for the latest successful Run. It filters
+downstream edges by the governed source revision and Run ID, returns at most
+100 edges with a truncation flag, and lets Ingestion Studio show evidence and
+lineage in separate panels.
 
 `RONIN_CONTROL_PLANE_URL` defaults to `http://127.0.0.1:8081`; the job API
 continues to use `RONIN_URL` (default `http://127.0.0.1:8080`).

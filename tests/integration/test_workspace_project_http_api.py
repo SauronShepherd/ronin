@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import http.client
 import json
 from collections.abc import Iterator
@@ -7,10 +8,25 @@ from contextlib import contextmanager
 from pathlib import Path
 from threading import Thread
 
+from studio_connectors import (
+    ArtifactDestinationWriter,
+    ConnectorRegistry,
+    IngestionSyncService,
+    SqliteConnectorCheckpointStore,
+)
+from studio_connectors.contracts import ConnectorReadResult
 from studio_core import (
+    AssetHandle,
     AssetId,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
     CatalogAsset,
+    ConnectionId,
+    ConnectorCapabilities,
+    ConnectorDescriptor,
     ExecutionProfile,
+    FieldSchema,
     GlossaryTerm,
     GlossaryTermId,
     OwnershipMetadata,
@@ -20,11 +36,13 @@ from studio_core import (
     RepositoryBinding,
     RuntimeProfileRef,
     SensitivityMetadata,
+    SourceCheckpoint,
     Workspace,
     WorkspaceId,
 )
 from studio_core.plugins import PluginManager, PluginRecord
-from studio_execution import ProjectService, WorkspaceService
+from studio_execution import DurableExecutionService, ProjectService, WorkspaceService
+from studio_orchestrator import AttemptId, Instant, LeaseToken
 from studio_plugin_observability import LocalObservabilityBuffer, LoggingPlugin, MonitoringPlugin
 from studio_plugin_workspaces import WorkspacesPlugin
 from studio_runtime import PluginHost
@@ -34,7 +52,12 @@ from studio_server import (
     ControlPlaneUnavailable,
     WorkspaceProjectHTTPServer,
 )
+from studio_server.http import DurableHTTPApplication
+from studio_storage import LocalArtifactStore, SqliteJobStore
+from studio_storage.catalog import SqliteCatalogStore
+from studio_storage.workspaces import SqliteWorkspaceStore
 from studio_synthetic_data.plugin import SyntheticDataStudioPlugin
+from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPaths
 
 _WS_A = WorkspaceId("workspace-a")
 _WS_B = WorkspaceId("workspace-b")
@@ -112,6 +135,88 @@ class _DiscoveryAdapter:
             "items": [{"asset_ref": "conn-1::orders", "kind": "json", "fields": []}],
             "count": 1,
         }
+
+
+class _SyncAdapter:
+    def __init__(self) -> None:
+        self.plans = 0
+
+    def plan(self, body: object, *, workspace_id: str) -> dict[str, object]:
+        self.plans += 1
+        assert workspace_id == "workspace-a"
+        assert isinstance(body, dict)
+        return {"plan": {"mode": body["mode"]}}
+
+    def validate_definition(self, body: object) -> dict[str, object]:
+        assert isinstance(body, dict)
+        result: dict[str, object] = {
+            key: body[key]
+            for key in (
+                "id",
+                "connector_id",
+                "connection_ref",
+                "asset_ref",
+                "destination_ref",
+                "checkpoint_identity",
+                "mode",
+            )
+        }
+        for key in ("source_revision_ref", "destination_asset_id"):
+            if key in body:
+                result[key] = body[key]
+        return result
+
+
+class _WorkerConnector:
+    descriptor = ConnectorDescriptor("postgres", 1, ConnectorCapabilities(read=True))
+
+    def read(self, connection, asset, secrets, *, limit, checkpoint):
+        del connection, asset, secrets, checkpoint
+        assert limit == 10_000
+        return ConnectorReadResult(
+            fields=(FieldSchema("id", "integer", nullable=False),),
+            rows=({"id": 42},),
+            checkpoint=SourceCheckpoint("cursor", "42"),
+        )
+
+
+class _DurableJobs:
+    def __init__(self) -> None:
+        self.submissions = []
+        self.job = None
+        self.state = "succeeded"
+
+    def submit(self, payload: object, *, idempotency_key: str | None):
+        self.submissions.append((payload, idempotency_key))
+        params = payload["parameters"]
+        self.job = type(
+            "Job",
+            (),
+            {
+                "id": "job-sync-1",
+                "target": payload["target"],
+                "project_id": payload["project"],
+                "parameters_json": json.dumps(params),
+            },
+        )()
+        return 201, {"id": "job-sync-1", "state": "queued"}
+
+    def get_job(self, job_id: str):
+        return self.job if self.job is not None and job_id == "job-sync-1" else None
+
+    def status(self, job_id: str):
+        return {"id": job_id, "state": self.state}
+
+    def events(self, job_id: str, *, since, limit):
+        del job_id, since, limit
+        return {"items": [{"kind": "worker.attempt.succeeded"}], "next_since": None}
+
+    def evidence(self, job_id: str):
+        del job_id
+        return {"items": [{"digest": "abc"}]}
+
+    def cancel(self, job_id: str):
+        return {"id": job_id, "state": "cancellation_requested"}
 
 
 class _Workflow:
@@ -287,10 +392,10 @@ class _Authorizer:
         )
 
 
-def _manifest(name: str = "Project") -> ProjectManifest:
+def _manifest(name: str = "Project", project_id: ProjectId = _PROJECT) -> ProjectManifest:
     return ProjectManifest.from_project(
         Project(
-            _PROJECT,
+            project_id,
             name,
             (
                 RepositoryBinding(
@@ -318,6 +423,7 @@ def _server(
     feature_definition_service=None,
     data_engineering_reader=None,
     ingestion_adapter=None,
+    durable_jobs=None,
 ) -> Iterator[tuple[str, int]]:
     server = WorkspaceProjectHTTPServer(
         ("127.0.0.1", 0),
@@ -337,6 +443,7 @@ def _server(
         feature_definition_service=feature_definition_service,
         data_engineering_reader=data_engineering_reader,
         ingestion_adapter=ingestion_adapter,
+        durable_jobs=durable_jobs,
         request_timeout_seconds=1.0,
     )
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -521,6 +628,438 @@ def test_connector_discovery_is_denied_before_adapter_side_effect() -> None:
     assert status == 403
     assert payload["error"]["code"] == "forbidden"
     assert adapter.calls == 0
+
+
+def test_connector_sync_submits_validated_idempotent_durable_job_and_reads_evidence() -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    store.workspaces[_WS_B] = Workspace(_WS_B, "B")
+    store.projects[(_WS_A, _PROJECT)] = _manifest()
+    project_b = ProjectId("project-2")
+    store.projects[(_WS_A, project_b)] = _manifest("Project B", project_b)
+    store.projects[(_WS_B, _PROJECT)] = _manifest()
+    adapter = _SyncAdapter()
+    jobs = _DurableJobs()
+    definition = {
+        "id": "orders-sync",
+        "connector_id": "postgres",
+        "connection_ref": "conn-1",
+        "asset_ref": "conn-1::public.orders",
+        "destination_ref": "asset://warehouse/orders",
+        "checkpoint_identity": "orders-v1",
+        "mode": "incremental",
+        "source_revision_ref": {
+            "asset_id": "source-orders",
+            "version": "source-v1",
+        },
+        "destination_asset_id": "target-orders",
+    }
+    source_ref = AssetRef(AssetId("source-orders"), AssetVersion("source-v1"))
+
+    class Catalog:
+        def get_revision(self, workspace_id, ref):
+            return object() if workspace_id == _WS_A and ref == source_ref else None
+
+        def get_asset(self, workspace_id, asset_id):
+            if workspace_id != _WS_A:
+                return None
+            if asset_id == source_ref.asset_id:
+                return CatalogAsset(
+                    asset_id,
+                    "table",
+                    "Source orders",
+                    properties=(
+                        ("ronin.connector_id", "postgres"),
+                        ("ronin.connection_ref", "conn-1"),
+                        ("ronin.asset_ref", "public.orders"),
+                    ),
+                )
+            if asset_id == AssetId("target-orders"):
+                return CatalogAsset(asset_id, "table", "Target orders")
+            return None
+
+        def downstream_for_execution(self, workspace_id, ref, execution_ref, *, limit=100):
+            del workspace_id, ref, execution_ref, limit
+            return ()
+
+    with _server(
+        store,
+        _Authorizer(),
+        ingestion_adapter=adapter,
+        durable_jobs=jobs,
+        catalog_reader=Catalog(),
+    ) as address:
+        status, submitted = _request(
+            address,
+            "POST",
+            "/v1/platform/connectors/syncs?workspace_id=workspace-a",
+            body=_json_body({"project_id": "project-1", "definition": definition}),
+            headers={"Idempotency-Key": "orders-sync-once"},
+        )
+        assert status == 201
+        assert submitted == {"id": "job-sync-1", "state": "queued"}
+        payload, key = jobs.submissions[0]
+        assert key == "orders-sync-once"
+        assert payload["target"] == "connector.sync.v1"
+        assert payload["parameters"] == {
+            "workspace_id": "workspace-a",
+            "connector_id": "postgres",
+            "source_ref": "conn-1::public.orders",
+            "destination_ref": "asset://warehouse/orders",
+            "checkpoint_ref": "orders-v1",
+            "mode": "incremental",
+            "source_revision_ref": source_ref.to_payload(),
+            "destination_asset_id": "target-orders",
+        }
+        status, result = _request(
+            address,
+            "GET",
+            "/v1/platform/connectors/syncs/job-sync-1/status?workspace_id=workspace-a&project_id=project-1",
+        )
+        cancel_status, cancellation = _request(
+            address,
+            "POST",
+            "/v1/platform/connectors/syncs/job-sync-1/cancel?workspace_id=workspace-a&project_id=project-1",
+            body=_json_body({}),
+        )
+        foreign_status, foreign = _request(
+            address,
+            "GET",
+            "/v1/platform/connectors/syncs/job-sync-1/status?workspace_id=workspace-b&project_id=project-1",
+        )
+        foreign_cancel_status, foreign_cancel = _request(
+            address,
+            "POST",
+            "/v1/platform/connectors/syncs/job-sync-1/cancel?workspace_id=workspace-b&project_id=project-1",
+            body=_json_body({}),
+        )
+        wrong_project_status, wrong_project = _request(
+            address,
+            "GET",
+            "/v1/platform/connectors/syncs/job-sync-1/status?workspace_id=workspace-a&project_id=project-2",
+        )
+        jobs.state = "failed"
+        failed_status, failed_result = _request(
+            address,
+            "GET",
+            "/v1/platform/connectors/syncs/job-sync-1/status?workspace_id=workspace-a&project_id=project-1",
+        )
+    assert status == 200
+    assert result["job"]["state"] == "succeeded"
+    assert result["events"]["items"][0]["kind"] == "worker.attempt.succeeded"
+    assert result["evidence"]["items"][0]["digest"] == "abc"
+    assert cancel_status == 200
+    assert cancellation["state"] == "cancellation_requested"
+    assert foreign_status == 404
+    assert foreign["error"]["code"] == "not_found"
+    assert foreign_cancel_status == 404
+    assert foreign_cancel["error"]["code"] == "not_found"
+    assert wrong_project_status == 404
+    assert wrong_project["error"]["code"] == "not_found"
+    assert failed_status == 200
+    assert failed_result["lineage"] == {
+        "status": "not_recorded",
+        "items": [],
+        "truncated": False,
+    }
+    assert adapter.plans == 1
+
+
+def test_governed_connector_sync_validates_and_persists_catalog_refs() -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    store.projects[(_WS_A, _PROJECT)] = _manifest()
+    source_ref = AssetRef.from_payload({"asset_id": "source", "version": "source-v1"})
+
+    class Catalog:
+        def __init__(self, physical_asset_ref="public.orders"):
+            self.physical_asset_ref = physical_asset_ref
+
+        def get_revision(self, workspace_id, ref):
+            assert workspace_id == _WS_A
+            return object() if ref == source_ref else None
+
+        def get_asset(self, workspace_id, asset_id):
+            assert workspace_id == _WS_A
+            if asset_id == source_ref.asset_id:
+                return CatalogAsset(
+                    asset_id,
+                    "table",
+                    "Source",
+                    properties=(
+                        ("ronin.connector_id", "postgres"),
+                        ("ronin.connection_ref", "conn-1"),
+                        ("ronin.asset_ref", self.physical_asset_ref),
+                    ),
+                )
+            if asset_id == AssetId("target"):
+                return CatalogAsset(asset_id, "table", "Target")
+            return None
+
+    definition = {
+        "id": "governed-sync",
+        "connector_id": "postgres",
+        "connection_ref": "conn-1",
+        "asset_ref": "conn-1::public.orders",
+        "destination_ref": "artifact://warehouse/orders",
+        "checkpoint_identity": "orders-v1",
+        "mode": "snapshot",
+        "source_revision_ref": source_ref.to_payload(),
+        "destination_asset_id": "target",
+    }
+    jobs = _DurableJobs()
+    with _server(
+        store,
+        _Authorizer(),
+        ingestion_adapter=_SyncAdapter(),
+        durable_jobs=jobs,
+        catalog_reader=Catalog(),
+    ) as address:
+        status, _ = _request(
+            address,
+            "POST",
+            "/v1/platform/connectors/syncs?workspace_id=workspace-a",
+            body=_json_body({"project_id": "project-1", "definition": definition}),
+            headers={"Idempotency-Key": "governed-sync-once"},
+        )
+    assert status == 201
+    parameters = jobs.submissions[0][0]["parameters"]
+    assert parameters["source_revision_ref"] == source_ref.to_payload()
+    assert parameters["destination_asset_id"] == "target"
+
+    rejected_jobs = _DurableJobs()
+    with _server(
+        store,
+        _Authorizer(),
+        ingestion_adapter=_SyncAdapter(),
+        durable_jobs=rejected_jobs,
+        catalog_reader=Catalog("public.other"),
+    ) as address:
+        mismatch_status, mismatch = _request(
+            address,
+            "POST",
+            "/v1/platform/connectors/syncs?workspace_id=workspace-a",
+            body=_json_body({"project_id": "project-1", "definition": definition}),
+            headers={"Idempotency-Key": "mismatched-source"},
+        )
+        missing_definition = {
+            **definition,
+            "source_revision_ref": {"asset_id": "missing", "version": "v0"},
+        }
+        missing_status, missing = _request(
+            address,
+            "POST",
+            "/v1/platform/connectors/syncs?workspace_id=workspace-a",
+            body=_json_body({"project_id": "project-1", "definition": missing_definition}),
+            headers={"Idempotency-Key": "missing-source-revision"},
+        )
+    assert mismatch_status == 400
+    assert "not bound" in mismatch["error"]["message"]
+    assert missing_status == 400
+    assert "does not identify" in missing["error"]["message"]
+    assert rejected_jobs.submissions == []
+
+
+def test_connector_sync_rejects_scope_and_missing_idempotency_before_job_creation() -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    store.projects[(_WS_A, _PROJECT)] = _manifest()
+    adapter = _SyncAdapter()
+    jobs = _DurableJobs()
+    body = _json_body(
+        {
+            "project_id": "project-1",
+            "definition": {
+                "id": "orders-sync",
+                "connector_id": "postgres",
+                "connection_ref": "conn-1",
+                "asset_ref": "other-connection::public.orders",
+                "destination_ref": "target",
+                "checkpoint_identity": "orders-v1",
+                "mode": "snapshot",
+            },
+        }
+    )
+    with _server(store, _Authorizer(), ingestion_adapter=adapter, durable_jobs=jobs) as address:
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/platform/connectors/syncs?workspace_id=workspace-a",
+            body=body,
+            headers={"Idempotency-Key": "bad-source"},
+        )
+        assert status == 400
+        assert payload["error"]["code"] == "invalid_request"
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/platform/connectors/syncs?workspace_id=workspace-a",
+            body=body,
+        )
+        assert status == 400
+        assert payload["error"]["code"] == "invalid_request"
+        assert jobs.submissions == []
+        assert adapter.plans == 0
+
+
+def test_connector_sync_authorization_precedes_definition_validation_and_job_creation() -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    adapter = _SyncAdapter()
+    jobs = _DurableJobs()
+    with _server(
+        store,
+        _Authorizer(allowed={("workspace-a", "workspace.read")}),
+        ingestion_adapter=adapter,
+        durable_jobs=jobs,
+    ) as address:
+        status, payload = _request(
+            address,
+            "POST",
+            "/v1/platform/connectors/syncs?workspace_id=workspace-a",
+            body=_json_body({"broken": True}),
+            headers={"Idempotency-Key": "denied"},
+        )
+    assert status == 403
+    assert payload["error"]["code"] == "forbidden"
+    assert adapter.plans == 0
+    assert jobs.submissions == []
+
+
+def test_connector_sync_is_persisted_by_the_real_durable_job_service(tmp_path: Path) -> None:
+    store = _Store()
+    store.workspaces[_WS_A] = Workspace(_WS_A, "A")
+    store.projects[(_WS_A, _PROJECT)] = _manifest()
+    paths = WorkerPaths(tmp_path / "workspace", tmp_path / "data")
+    database = paths.data_dir / "ronin.sqlite3"
+    checkpoint_store = SqliteConnectorCheckpointStore(database)
+    now = Instant(_NOW)
+    SqliteWorkspaceStore(database, migration_now=now).create_workspace(
+        Workspace(_WS_A, "A"), now=now
+    )
+    catalog = SqliteCatalogStore(database, migration_now=now)
+    source_catalog_id = AssetId("connector-source-orders")
+    destination_catalog_id = AssetId("connector-target-orders")
+    source_catalog_ref = AssetRef(source_catalog_id, AssetVersion("source-v1"))
+    catalog.create_asset(
+        _WS_A,
+        CatalogAsset(
+            source_catalog_id,
+            "table",
+            "Source orders",
+            properties=(
+                ("ronin.connector_id", "postgres"),
+                ("ronin.connection_ref", "conn-1"),
+                ("ronin.asset_ref", "public.orders"),
+            ),
+        ),
+        now=now,
+    )
+    catalog.create_asset(
+        _WS_A, CatalogAsset(destination_catalog_id, "table", "Target orders"), now=now
+    )
+    catalog.put_revision(_WS_A, AssetRevision(source_catalog_ref), now=now)
+    artifacts = LocalArtifactStore(paths.data_dir / "artifacts")
+    application = DurableHTTPApplication(
+        DurableExecutionService(
+            SqliteJobStore(database, migration_now=_NOW),
+        )
+    )
+    definition = {
+        "id": "orders-sync",
+        "connector_id": "postgres",
+        "connection_ref": "conn-1",
+        "asset_ref": "conn-1::public.orders",
+        "destination_ref": "asset://warehouse/orders",
+        "checkpoint_identity": "orders-v1",
+        "mode": "snapshot",
+        "source_revision_ref": source_catalog_ref.to_payload(),
+        "destination_asset_id": str(destination_catalog_id),
+    }
+    try:
+        with _server(
+            store,
+            _Authorizer(),
+            ingestion_adapter=_SyncAdapter(),
+            durable_jobs=application,
+            catalog_reader=catalog,
+        ) as address:
+            first_status, first = _request(
+                address,
+                "POST",
+                "/v1/platform/connectors/syncs?workspace_id=workspace-a",
+                body=_json_body({"project_id": "project-1", "definition": definition}),
+                headers={"Idempotency-Key": "real-orders-sync"},
+            )
+            retry_status, retry = _request(
+                address,
+                "POST",
+                "/v1/platform/connectors/syncs?workspace_id=workspace-a",
+                body=_json_body({"project_id": "project-1", "definition": definition}),
+                headers={"Idempotency-Key": "real-orders-sync"},
+            )
+            registry = ConnectorRegistry((_WorkerConnector(),))
+            sync_service = IngestionSyncService(registry, checkpoint_store)
+
+            async def execute_durable_job() -> str:
+                config = LocalWorkerRuntimeConfig(
+                    paths=paths,
+                    owner="connector-sync-integration-worker",
+                    image=f"sha256:{'a' * 64}",
+                    database_name="ronin.sqlite3",
+                    connector_sync_service=sync_service,
+                    connector_connection=lambda workspace_id, connection_ref: (
+                        workspace_id,
+                        connection_ref,
+                    ),
+                    connector_asset=lambda connection, asset_ref: AssetHandle(
+                        ConnectionId(connection[1]),
+                        tuple(asset_ref.split(".")[:-1]),
+                        asset_ref.split(".")[-1],
+                    ),
+                    connector_secrets=object(),
+                    connector_destination=ArtifactDestinationWriter(artifacts),
+                )
+                async with LocalWorkerRuntime(
+                    config,
+                    migration_now=Instant(_NOW),
+                    artifact_store=artifacts,
+                ) as runtime:
+                    outcome = await runtime.run_once(
+                        attempt_id=AttemptId("attempt-connector-sync-real"),
+                        lease_token=LeaseToken("lease-connector-sync-real"),
+                    )
+                assert outcome.execution is not None
+                return outcome.execution.state.value
+
+            worker_state = asyncio.run(execute_durable_job())
+            status, job = _request(
+                address,
+                "GET",
+                f"/v1/platform/connectors/syncs/{first['id']}/status?workspace_id=workspace-a&project_id=project-1",
+            )
+        assert first_status == 201
+        assert retry_status == 200
+        assert retry["id"] == first["id"]
+        assert status == 200
+        assert worker_state == "succeeded"
+        assert job["job"]["state"] == "succeeded"
+        assert job["evidence"]["items"]
+        assert checkpoint_store.get("workspace-a/orders-v1") == SourceCheckpoint("cursor", "42")
+        destination_revisions = catalog.list_revisions(_WS_A, destination_catalog_id)
+        assert len(destination_revisions) == 1
+        lineage = catalog.upstream(_WS_A, destination_revisions[0].ref)
+        assert len(lineage) == 1
+        assert lineage[0].source == source_catalog_ref
+        assert lineage[0].mode == "observed"
+        assert job["lineage"] == {
+            "status": "available",
+            "items": [lineage[0].to_payload()],
+            "truncated": False,
+        }
+        assert lineage[0].execution_ref == application.run_id_for_job(first["id"])
+    finally:
+        application.close()
 
 
 def test_platform_ui_manifest_exposes_ready_plugin_navigation() -> None:

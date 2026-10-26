@@ -22,7 +22,7 @@ are not exposed in the Public Studio or its API.
 | Semantic Studio | `#semantic` | `/v1/workspaces/{id}/projects/{id}/semantic/*` | Available |
 | Catalog | `#catalog` | `/v1/workspaces/{id}/catalog/assets` | Available |
 | Data Engineering | `#data` | `/v1/data-engineering/*`, `/v1/workspaces/{id}/connections*` | Available |
-| Ingestion Studio | `#ingestion` | `/v1/platform/connectors/*` | Available |
+| Ingestion Studio | `#ingestion` | `/v1/platform/connectors/*` including durable sync submit, scoped status/events/evidence and cancellation | Available |
 | Notebook Studio | `#notebooks` | Project notebook APIs and `/v1/jobs*` | Available |
 | Streaming | `#streaming` | `/v1/workspaces/{id}/streams/{id}/health` | Available |
 | Graphs | `#graphs` | `/v1/workspaces/{id}/graphs/{id}/*` | Available |

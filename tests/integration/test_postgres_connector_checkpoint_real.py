@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import json
 import os
 import socket
 from concurrent.futures import ThreadPoolExecutor
+from http.client import HTTPConnection
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from uuid import uuid4
 
 import pytest
@@ -17,8 +19,14 @@ from studio_connectors import (
 from studio_connectors.http import IngestionHTTPAdapter
 from studio_connectors.sync import scoped_checkpoint_identity
 from studio_core import (
+    AssetId,
+    AssetRef,
+    AssetRevision,
+    AssetVersion,
+    CatalogAsset,
     ConnectionDefinition,
     ConnectionId,
+    LineageEdge,
     SecretRef,
     SourceCheckpoint,
     Workspace,
@@ -94,6 +102,9 @@ def test_postgres_connector_checkpoint_fencing_inventory_and_restart() -> None:
         output_committed=True,
     )
     reopened = PostgresConnectorCheckpointStore(os.environ["RONIN_POSTGRES_TEST_DSN"])
+    assert (
+        reopened.get_or_create_discovery_cursor_key() == store.get_or_create_discovery_cursor_key()
+    )
     assert reopened.get(identity) == next_checkpoint
     assert reopened.health(identity).output_committed
     evidence = reopened.get_evidence(identity)
@@ -131,9 +142,14 @@ def test_postgres_local_composition_mounts_shared_connector_ingestion(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     job_port, control_plane_port = _available_tcp_ports(2)
+    workspace_id = f"workspace-{uuid4().hex}"
     monkeypatch.setenv("RONIN_DB", str(tmp_path / "ronin.sqlite3"))
-    monkeypatch.setenv("RONIN_WORKSPACE_ID", f"workspace-{uuid4().hex}")
+    monkeypatch.setenv("RONIN_WORKSPACE_ID", workspace_id)
     monkeypatch.setenv("RONIN_CONTROL_PLANE_TOKEN", "control-token")
+    monkeypatch.setenv(
+        "RONIN_CONTROL_PLANE_PERMISSIONS",
+        "scheduler.read,scheduler.write,workspace.read,workspace.write,project.read",
+    )
     monkeypatch.setenv("RONIN_TOKEN", "job-token")
     monkeypatch.setenv("RONIN_PORT", str(job_port))
     monkeypatch.setenv("RONIN_CONTROL_PLANE_PORT", str(control_plane_port))
@@ -149,6 +165,47 @@ def test_postgres_local_composition_mounts_shared_connector_ingestion(
     composition = build_local_composed_from_env()
     try:
         control_plane = cast(WorkspaceProjectHTTPServer, composition.control_plane_server)
+        assert control_plane.catalog_reader is not None
+        catalog = cast(Any, control_plane.catalog_reader)
+        source_ref = AssetRef(AssetId(f"source-{uuid4().hex}"), AssetVersion("revision-1"))
+        target_ref = AssetRef(AssetId(f"target-{uuid4().hex}"), AssetVersion("revision-1"))
+        now = Instant("2026-10-25T00:00:00.000000Z")
+        for ref, name in ((source_ref, "source"), (target_ref, "target")):
+            catalog.create_asset(
+                WorkspaceId(workspace_id),
+                CatalogAsset(ref.asset_id, "dataset", name),
+                now=now,
+            )
+            catalog.put_revision(
+                WorkspaceId(workspace_id),
+                AssetRevision(ref, content_digest="a" * 64),
+                now=now,
+            )
+        edge = LineageEdge(
+            source_ref,
+            target_ref,
+            operation="write",
+            mode="observed",
+            execution_ref="run:qualification-sync",
+        )
+        catalog.put_lineage(WorkspaceId(workspace_id), edge, now=now)
+        assert catalog.downstream_for_execution(
+            WorkspaceId(workspace_id), source_ref, "run:qualification-sync"
+        ) == (edge,)
+        composition.start()
+        connection = HTTPConnection("127.0.0.1", control_plane.server_address[1], timeout=5)
+        try:
+            connection.request(
+                "GET",
+                f"/v1/workspaces/{workspace_id}/catalog/lineage/"
+                f"{target_ref.asset_id}/{target_ref.version}",
+                headers={"Authorization": "Bearer control-token"},
+            )
+            response = connection.getresponse()
+            assert response.status == 200
+            assert json.loads(response.read()) == {"items": [edge.to_payload()]}
+        finally:
+            connection.close()
         adapter = cast(IngestionHTTPAdapter | None, control_plane.ingestion_adapter)
         assert adapter is not None
         assert isinstance(adapter._checkpoints, PostgresConnectorCheckpointStore)
@@ -193,6 +250,30 @@ def test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpo
     try:
         now = Instant("2026-10-25T00:00:00.000000Z")
         metadata.create_workspace(Workspace(workspace_id, "Worker sync qualification"), now=now)
+        source_catalog_id = AssetId(f"catalog-source-{uuid4().hex}")
+        destination_catalog_id = AssetId(f"catalog-target-{uuid4().hex}")
+        source_catalog_ref = AssetRef(source_catalog_id, AssetVersion("source-v1"))
+        physical_asset_ref = f"{source_schema}.records"
+        metadata.create_asset(
+            workspace_id,
+            CatalogAsset(
+                source_catalog_id,
+                "table",
+                "Governed source",
+                properties=(
+                    ("ronin.connector_id", "postgresql"),
+                    ("ronin.connection_ref", str(connection_id)),
+                    ("ronin.asset_ref", physical_asset_ref),
+                ),
+            ),
+            now=now,
+        )
+        metadata.create_asset(
+            workspace_id,
+            CatalogAsset(destination_catalog_id, "table", "Synced destination"),
+            now=now,
+        )
+        metadata.put_revision(workspace_id, AssetRevision(source_catalog_ref), now=now)
         connection = ConnectionDefinition(
             connection_id,
             "PostgreSQL source",
@@ -226,15 +307,16 @@ def test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpo
             artifact_reference_barrier=None,
             migration_now=now,
         )
-        asset_ref = f"{source_schema}.records"
         definition = IngestionSyncDefinition(
             id=f"sync-{uuid4().hex}",
             connector_id="postgresql",
             connection_ref=str(connection_id),
-            asset_ref=asset_ref,
+            asset_ref=physical_asset_ref,
             destination_ref="artifact://qualification/postgres-sync",
             checkpoint_identity=f"checkpoint-{uuid4().hex}",
             mode="snapshot",
+            source_revision_ref=source_catalog_ref,
+            destination_asset_id=destination_catalog_id,
         )
         connection = dependencies.connection(str(workspace_id), definition.connection_ref)
         asset = dependencies.asset(connection, definition.asset_ref)
@@ -246,6 +328,8 @@ def test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpo
             asset=asset,
             secrets=secret_resolver,
             destination=dependencies.destination,
+            execution_ref=f"run-{uuid4().hex}",
+            now=str(now),
         )
         scoped_identity = scoped_checkpoint_identity(
             str(workspace_id), definition.checkpoint_identity
@@ -260,6 +344,62 @@ def test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpo
         )
         assert b"a@example.test" in first_output
         assert b"b@example.test" in first_output
+        target_revision = next(
+            revision
+            for revision in metadata.list_revisions(workspace_id, destination_catalog_id)
+            if revision.content_digest == first_evidence.output_digest
+        )
+        observed_lineage = metadata.upstream(workspace_id, target_revision.ref)
+        assert len(observed_lineage) == 1
+        assert observed_lineage[0].source == source_catalog_ref
+        assert observed_lineage[0].mode == "observed"
+
+        unversioned_source_id = AssetId(f"catalog-unversioned-{uuid4().hex}")
+        metadata.create_asset(
+            workspace_id,
+            CatalogAsset(
+                unversioned_source_id,
+                "table",
+                "Source without a governed revision",
+                properties=(
+                    ("ronin.connector_id", "postgresql"),
+                    ("ronin.connection_ref", str(connection_id)),
+                    ("ronin.asset_ref", physical_asset_ref),
+                ),
+            ),
+            now=now,
+        )
+        revisions_before_rollback = metadata.list_revisions(workspace_id, destination_catalog_id)
+        invalid_definition = IngestionSyncDefinition(
+            id=f"sync-{uuid4().hex}",
+            connector_id="postgresql",
+            connection_ref=str(connection_id),
+            asset_ref=physical_asset_ref,
+            destination_ref="artifact://qualification/postgres-sync-rollback",
+            checkpoint_identity=f"checkpoint-{uuid4().hex}",
+            mode="snapshot",
+            source_revision_ref=AssetRef(unversioned_source_id, AssetVersion("missing-v1")),
+            destination_asset_id=destination_catalog_id,
+        )
+        with pytest.raises(ValueError, match="source revision does not exist"):
+            dependencies.service.execute(
+                invalid_definition,
+                workspace_id=str(workspace_id),
+                connection=connection,
+                asset=asset,
+                secrets=secret_resolver,
+                destination=dependencies.destination,
+                execution_ref=f"run-{uuid4().hex}",
+                now=str(now),
+            )
+        invalid_identity = scoped_checkpoint_identity(
+            str(workspace_id), invalid_definition.checkpoint_identity
+        )
+        assert checkpoint_store.get(invalid_identity) is None
+        assert (
+            metadata.list_revisions(workspace_id, destination_catalog_id)
+            == revisions_before_rollback
+        )
 
         second = dependencies.service.execute(
             definition,
@@ -268,6 +408,8 @@ def test_postgres_connector_sync_worker_reads_writes_and_advances_scoped_checkpo
             asset=asset,
             secrets=secret_resolver,
             destination=dependencies.destination,
+            execution_ref=f"run-{uuid4().hex}",
+            now=str(now),
         )
         assert second["rows_written"] == 0
         assert checkpoint_store.get(scoped_identity) is not None

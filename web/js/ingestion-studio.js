@@ -6,6 +6,8 @@ let discoveryRequestId = 0;
 let discoveryCursor = null;
 let discoveryPageNumber = 0;
 let discoverySourceKey = '';
+let activeSyncTimer = null;
+let activeSyncScope = null;
 
 function workspaceQuery(path) {
   const workspaceId = document.querySelector('#ingestion-workspace')?.value.trim();
@@ -15,6 +17,9 @@ function workspaceQuery(path) {
 }
 
 export async function ingestionStudio() {
+  if (activeSyncTimer) clearTimeout(activeSyncTimer);
+  activeSyncTimer = null;
+  activeSyncScope = null;
   stopDiscoveryRequest();
   discoveryCursor = null;
   discoveryPageNumber = 0;
@@ -49,14 +54,21 @@ export async function ingestionStudio() {
     <section class="panel">
       <h2>Ingestion sync</h2>
       <form id="ingestion-preview-form">
-        <label>Definition JSON<textarea id="ingestion-definition" class="field sql-editor" rows="10" required>{"id":"preview-1","connector_id":"http-json","connection_ref":"connection://demo","asset_ref":"asset://demo","destination_ref":"asset://preview","checkpoint_identity":"preview-1","mode":"snapshot"}</textarea></label>
+        <div class="grid three">
+          <label>Project ID<input class="field" id="ingestion-project" value="${esc(globalThis.roninStudioContext?.project || 'default')}" required></label>
+        </div>
+        <p class="muted">A sync runs as a durable background job. Keep a Ronin worker running with the same storage configuration to process queued jobs.</p>
+        <p class="muted">Durable sync also needs an existing governed source revision and destination asset. Bind the source catalog asset with the properties <code>ronin.connector_id</code>, <code>ronin.connection_ref</code> and <code>ronin.asset_ref</code>; the worker records observed lineage with its Run ID.</p>
+        <label>Definition JSON<textarea id="ingestion-definition" class="field sql-editor" rows="10" required>{"id":"preview-1","connector_id":"http.json","connection_ref":"connection://demo","asset_ref":"connection://demo::orders","destination_ref":"asset://preview","checkpoint_identity":"preview-1","mode":"snapshot","source_revision_ref":{"asset_id":"governed-source","version":"v1"},"destination_asset_id":"governed-target"}</textarea></label>
         <div class="toolbar">
           <button class="button" type="button" id="ingestion-plan-button">Plan sync</button>
           <button class="button" type="button" id="ingestion-health-button">Checkpoint health</button>
+          <button class="button primary" type="button" id="ingestion-sync-button">Run durable sync</button>
           <button class="button primary">Preview source</button>
         </div>
       </form>
       <pre id="ingestion-preview-result" class="code" aria-live="polite">No operation requested.</pre>
+      <section aria-labelledby="ingestion-sync-title"><h3 id="ingestion-sync-title">Sync job</h3><p id="ingestion-sync-status" role="status" aria-live="polite">No sync submitted.</p><button class="button" type="button" id="ingestion-sync-cancel" hidden>Cancel sync</button><h4>Run events and evidence</h4><pre id="ingestion-sync-evidence" class="code">Job events and evidence will appear here.</pre><h4>Recorded lineage</h4><pre id="ingestion-sync-lineage" class="code" aria-live="polite">Lineage will appear after the run commits.</pre></section>
     </section>`;
 
   try {
@@ -205,6 +217,46 @@ document.addEventListener('click', async event => {
     return;
   }
   const button = target.closest('#ingestion-plan-button, #ingestion-health-button');
+  if (target.closest('#ingestion-sync-button')) {
+    const result = document.querySelector('#ingestion-sync-status');
+    const evidence = document.querySelector('#ingestion-sync-evidence');
+    const workspaceId = document.querySelector('#ingestion-workspace')?.value.trim();
+    const projectId = document.querySelector('#ingestion-project')?.value.trim();
+    const buttonElement = target.closest('#ingestion-sync-button');
+    try {
+      const definition = JSON.parse(document.querySelector('#ingestion-definition').value);
+      if (!workspaceId || !projectId) throw new Error('Workspace ID and Project ID are required.');
+      if (!definition || typeof definition !== 'object' || Array.isArray(definition)) throw new Error('The sync definition must be a JSON object.');
+      if (!definition.id || !definition.connector_id || !definition.connection_ref || !definition.asset_ref || !definition.destination_ref || !definition.checkpoint_identity || !['snapshot', 'incremental'].includes(definition.mode)) throw new Error('Complete the sync definition before running it.');
+      if (!definition.source_revision_ref?.asset_id || !definition.source_revision_ref?.version || !definition.destination_asset_id) throw new Error('Durable sync requires an existing governed source revision and destination asset.');
+      buttonElement.disabled = true;
+      const query = `?workspace_id=${encodeURIComponent(workspaceId)}`;
+      const job = await post(`/v1/platform/connectors/syncs${query}`, {project_id: projectId, definition}, {headers: {'Idempotency-Key': `ingestion-${globalThis.crypto.randomUUID()}`}});
+      activeSyncScope = {jobId: job.id, workspaceId, projectId};
+      document.querySelector('#ingestion-sync-cancel').hidden = false;
+      result.textContent = `Sync job ${job.id} submitted (${job.state}).`;
+      evidence.textContent = json(job);
+      monitorSync({jobId: job.id, workspaceId, projectId, result, evidence, lineage: document.querySelector('#ingestion-sync-lineage')});
+    } catch (error) {
+      result.textContent = `Sync submission failed: ${error.message}`;
+    } finally {
+      buttonElement.disabled = false;
+    }
+    return;
+  }
+  if (target.closest('#ingestion-sync-cancel')) {
+    if (!activeSyncScope) return;
+    const {jobId, workspaceId, projectId} = activeSyncScope;
+    const status = document.querySelector('#ingestion-sync-status');
+    try {
+      const query = `workspace_id=${encodeURIComponent(workspaceId)}&project_id=${encodeURIComponent(projectId)}`;
+      const state = await post(`/v1/platform/connectors/syncs/${encodeURIComponent(jobId)}/cancel?${query}`, {});
+      status.textContent = `Sync job ${jobId}: ${state.state || 'cancellation requested'}.`;
+    } catch (error) {
+      status.textContent = `Could not cancel sync job ${jobId}: ${error.message}`;
+    }
+    return;
+  }
   if (!button) return;
   const result = document.querySelector('#ingestion-preview-result');
   try {
@@ -220,3 +272,40 @@ document.addEventListener('click', async event => {
     result.textContent = `Operation failed: ${error.message}`;
   }
 });
+
+function monitorSync({jobId, workspaceId, projectId, result, evidence, lineage}) {
+  if (activeSyncTimer) clearTimeout(activeSyncTimer);
+  let polls = 0;
+  const poll = async () => {
+    polls += 1;
+    try {
+      const query = `workspace_id=${encodeURIComponent(workspaceId)}&project_id=${encodeURIComponent(projectId)}`;
+      const state = await get(`/v1/platform/connectors/syncs/${encodeURIComponent(jobId)}/status?${query}`);
+      result.textContent = `Sync job ${jobId}: ${state.job?.state || 'unknown'}${state.job?.failure_code ? ` · ${state.job.failure_code}` : ''}.`;
+      evidence.textContent = json({events: state.events, evidence: state.evidence});
+      if (state.lineage?.status === 'unavailable') {
+        lineage.textContent = 'Lineage is unavailable for this sync.';
+      } else if (state.lineage?.status === 'not_recorded') {
+        lineage.textContent = 'No lineage was recorded because this sync did not succeed.';
+      } else if (state.lineage?.truncated) {
+        lineage.textContent = `${json(state.lineage)}\nLineage is truncated to the first 100 edges.`;
+      } else if (state.lineage?.items?.length) {
+        lineage.textContent = json(state.lineage);
+      } else if (state.job?.state === 'succeeded') {
+        lineage.textContent = 'The run succeeded but no lineage edge was returned.';
+      } else {
+        lineage.textContent = 'Lineage will appear after the run commits.';
+      }
+      if (['succeeded', 'failed', 'cancelled'].includes(state.job?.state)) {
+        activeSyncTimer = null;
+        document.querySelector('#ingestion-sync-cancel').hidden = true;
+        return;
+      }
+    } catch (error) {
+      result.textContent = `Could not refresh sync job ${jobId}: ${error.message}`;
+    }
+    if (polls < 180) activeSyncTimer = setTimeout(poll, 2000);
+    else result.textContent += ' Polling stopped after 6 minutes; the durable job continues on the worker.';
+  };
+  activeSyncTimer = setTimeout(poll, 1000);
+}

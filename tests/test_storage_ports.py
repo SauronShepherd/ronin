@@ -9,6 +9,7 @@ from studio_core import (
     AssetRevision,
     AssetVersion,
     CatalogAsset,
+    LineageEdge,
     Workspace,
     WorkspaceId,
 )
@@ -61,6 +62,45 @@ def test_sqlite_catalog_lists_every_asset_revision(tmp_path: Path) -> None:
         catalog.put_revision(workspace_id, revision, now=NOW)
 
     assert catalog.list_revisions(workspace_id, asset.id) == revisions
+
+
+def test_sqlite_catalog_filters_lineage_by_execution_with_a_bound(tmp_path: Path) -> None:
+    database = tmp_path / "ronin.db"
+    workspaces = SqliteWorkspaceStore(database, migration_now=NOW)
+    catalog = SqliteCatalogStore(database, migration_now=NOW)
+    workspace_id = WorkspaceId("lineage-execution-ws")
+    workspaces.create_workspace(Workspace(workspace_id, "Lineage execution"), now=NOW)
+    source = AssetRef(AssetId("source"), AssetVersion("v1"))
+    target_one = AssetRef(AssetId("target-one"), AssetVersion("v1"))
+    target_two = AssetRef(AssetId("target-two"), AssetVersion("v1"))
+    for ref in (source, target_one, target_two):
+        catalog.create_asset(
+            workspace_id,
+            CatalogAsset(ref.asset_id, "table", str(ref.asset_id)),
+            now=NOW,
+        )
+        catalog.put_revision(workspace_id, AssetRevision(ref), now=NOW)
+    first = LineageEdge(
+        source,
+        target_one,
+        operation="write",
+        mode="observed",
+        execution_ref="run-one",
+    )
+    second = LineageEdge(
+        source,
+        target_two,
+        operation="write",
+        mode="observed",
+        execution_ref="run-two",
+    )
+    catalog.put_lineage(workspace_id, first, now=NOW)
+    catalog.put_lineage(workspace_id, second, now=NOW)
+
+    assert catalog.downstream_for_execution(workspace_id, source, "run-one") == (first,)
+    assert catalog.downstream_for_execution(workspace_id, source, "run-two") == (second,)
+    with pytest.raises(ValueError, match="limit"):
+        catalog.downstream_for_execution(workspace_id, source, "run-one", limit=0)
 
 
 def test_sqlite_catalog_retention_limits_fail_closed(tmp_path: Path) -> None:

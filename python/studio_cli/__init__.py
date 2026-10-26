@@ -96,7 +96,16 @@ def _parser() -> argparse.ArgumentParser:
     connectors = commands.add_parser("connectors", help="inspect and plan connector ingestion")
     connectors.add_argument(
         "connectors_command",
-        choices=("capabilities", "discover", "preview", "plan", "checkpoint-health"),
+        choices=(
+            "capabilities",
+            "discover",
+            "preview",
+            "plan",
+            "checkpoint-health",
+            "sync-submit",
+            "sync-status",
+            "sync-cancel",
+        ),
     )
     connectors.add_argument("--connector-id")
     connectors.add_argument("--connection-ref")
@@ -107,6 +116,10 @@ def _parser() -> argparse.ArgumentParser:
     connectors.add_argument("--checkpoint-identity")
     connectors.add_argument("--mode", choices=("snapshot", "incremental"), default="snapshot")
     connectors.add_argument("--workspace-id", default=os.environ.get("RONIN_WORKSPACE_ID"))
+    connectors.add_argument("--project-id")
+    connectors.add_argument("--job-id")
+    connectors.add_argument("--definition-file", type=Path)
+    connectors.add_argument("--idempotency-key")
     plugins = commands.add_parser("plugins", help="inspect installed Ronin plugins")
     plugins.add_argument(
         "plugins_command", choices=("list", "surfaces", "validate", "lock", "rollback")
@@ -570,6 +583,47 @@ def _connectors(namespace: argparse.Namespace) -> int:
             cursor=cast(str | None, namespace.cursor),
             page_size=cast(int | None, namespace.page_size),
         )
+    elif command == "sync-submit":
+        project_id = cast(str | None, namespace.project_id)
+        definition_file = cast(Path | None, namespace.definition_file)
+        idempotency_key = cast(str | None, namespace.idempotency_key)
+        if project_id is None:
+            raise CliError("connectors sync-submit requires --project-id")
+        if definition_file is None:
+            raise CliError("connectors sync-submit requires --definition-file")
+        if idempotency_key is None:
+            raise CliError("connectors sync-submit requires --idempotency-key")
+        try:
+            if definition_file.stat().st_size > 1024 * 1024:
+                raise CliError("connector definition file exceeds the 1 MiB CLI limit")
+            definition = json.loads(definition_file.read_text(encoding="utf-8"))
+        except OSError as exc:
+            raise CliError(f"cannot read connector definition file: {exc}") from exc
+        except json.JSONDecodeError as exc:
+            raise CliError("connector definition file must contain valid JSON") from exc
+        except UnicodeDecodeError as exc:
+            raise CliError("connector definition file must use UTF-8 encoding") from exc
+        if not isinstance(definition, dict):
+            raise CliError("connector definition file must contain a JSON object")
+        result = client.connector_sync_submit(
+            cast(str, workspace_id),
+            project_id,
+            definition,
+            idempotency_key=idempotency_key,
+        )
+    elif command in {"sync-status", "sync-cancel"}:
+        project_id = cast(str | None, namespace.project_id)
+        job_id = cast(str | None, namespace.job_id)
+        if project_id is None:
+            raise CliError(f"connectors {command} requires --project-id")
+        if job_id is None:
+            raise CliError(f"connectors {command} requires --job-id")
+        operation = (
+            client.connector_sync_status
+            if command == "sync-status"
+            else client.connector_sync_cancel
+        )
+        result = operation(cast(str, workspace_id), project_id, job_id)
     elif command == "checkpoint-health":
         identity = cast(str | None, namespace.checkpoint_identity)
         if identity is None:

@@ -137,7 +137,7 @@
         "operationId": "previewConnectorIngestion",
         "description": "Preview a bounded connector read and return its sync plan and checkpoint health. In the local SQLite profile, asset_ref uses connection_id::qualified_asset_name (for example conn-1::public.orders).",
         "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["connector_id", "connection_ref", "asset_ref", "destination_ref", "checkpoint_identity", "mode"], "properties": {"connector_id": {"type": "string", "minLength": 1}, "connection_ref": {"type": "string", "minLength": 1}, "asset_ref": {"type": "string", "minLength": 1}, "destination_ref": {"type": "string", "minLength": 1}, "checkpoint_identity": {"type": "string", "minLength": 1}, "mode": {"type": "string", "enum": ["snapshot", "incremental"]}}}}}},
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["connector_id", "connection_ref", "asset_ref", "destination_ref", "checkpoint_identity", "mode"], "properties": {"connector_id": {"type": "string", "minLength": 1}, "connection_ref": {"type": "string", "minLength": 1}, "asset_ref": {"type": "string", "minLength": 1}, "destination_ref": {"type": "string", "minLength": 1}, "checkpoint_identity": {"type": "string", "minLength": 1}, "mode": {"type": "string", "enum": ["snapshot", "incremental"]}, "source_revision_ref": {"type": "object", "additionalProperties": false, "required": ["asset_id", "version"], "properties": {"asset_id": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}}}, "destination_asset_id": {"type": "string", "minLength": 1}}}}}},
         "responses": {
           "200": {"description": "Bounded ingestion preview", "content": {"application/json": {"schema": {"type": "object"}}}},
           "400": {"$ref": "#/components/responses/Error"},
@@ -152,7 +152,7 @@
         "operationId": "planConnectorIngestion",
         "description": "Validate and plan a bounded connector sync without reading source data. In the local SQLite profile, asset_ref uses connection_id::qualified_asset_name (for example conn-1::public.orders).",
         "parameters": [{"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["connector_id", "connection_ref", "asset_ref", "destination_ref", "checkpoint_identity", "mode"], "properties": {"connector_id": {"type": "string", "minLength": 1}, "connection_ref": {"type": "string", "minLength": 1}, "asset_ref": {"type": "string", "minLength": 1}, "destination_ref": {"type": "string", "minLength": 1}, "checkpoint_identity": {"type": "string", "minLength": 1}, "mode": {"type": "string", "enum": ["snapshot", "incremental"]}}}}}},
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["connector_id", "connection_ref", "asset_ref", "destination_ref", "checkpoint_identity", "mode"], "properties": {"connector_id": {"type": "string", "minLength": 1}, "connection_ref": {"type": "string", "minLength": 1}, "asset_ref": {"type": "string", "minLength": 1}, "destination_ref": {"type": "string", "minLength": 1}, "checkpoint_identity": {"type": "string", "minLength": 1}, "mode": {"type": "string", "enum": ["snapshot", "incremental"]}, "source_revision_ref": {"type": "object", "additionalProperties": false, "required": ["asset_id", "version"], "properties": {"asset_id": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}}}, "destination_asset_id": {"type": "string", "minLength": 1}}}}}},
         "responses": {
           "200": {"description": "Connector sync plan and checkpoint health", "content": {"application/json": {"schema": {"type": "object"}}}},
           "400": {"$ref": "#/components/responses/Error"},
@@ -175,6 +175,47 @@
           "403": {"$ref": "#/components/responses/Error"},
           "503": {"$ref": "#/components/responses/Error"}
         }
+      }
+    },
+    "/v1/platform/connectors/syncs": {
+      "post": {
+        "operationId": "submitConnectorSync",
+        "description": "Validate a connector sync definition and enqueue a durable connector.sync.v1 job for the selected project. Durable submissions require an existing governed source revision, an existing governed destination asset, and a source asset binding matching connector_id, connection_ref, and the qualified physical asset. The job is idempotent and exposes status, events, evidence, and observed lineage through the scoped status and catalog routes.",
+        "parameters": [
+          {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}},
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "minLength": 1, "maxLength": 256}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["project_id", "definition"], "properties": {"project_id": {"type": "string", "minLength": 1}, "definition": {"type": "object", "additionalProperties": false, "required": ["id", "connector_id", "connection_ref", "asset_ref", "destination_ref", "checkpoint_identity", "mode", "source_revision_ref", "destination_asset_id"], "properties": {"id": {"type": "string", "minLength": 1}, "connector_id": {"type": "string", "minLength": 1}, "connection_ref": {"type": "string", "minLength": 1}, "asset_ref": {"type": "string", "minLength": 1}, "destination_ref": {"type": "string", "minLength": 1}, "checkpoint_identity": {"type": "string", "minLength": 1}, "mode": {"type": "string", "enum": ["snapshot", "incremental"]}, "source_revision_ref": {"type": "object", "additionalProperties": false, "required": ["asset_id", "version"], "properties": {"asset_id": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}}}, "destination_asset_id": {"type": "string", "minLength": 1}}}}}}}},
+        "responses": {
+          "201": {"description": "Durable connector sync job created", "content": {"application/json": {"schema": {"type": "object", "required": ["id", "state"], "properties": {"id": {"type": "string"}, "state": {"type": "string"}}}}}},
+          "200": {"description": "Existing idempotent job returned", "content": {"application/json": {"schema": {"type": "object"}}}},
+          "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}
+        }
+      }
+    },
+    "/v1/platform/connectors/syncs/{job_id}/status": {
+      "get": {
+        "operationId": "getConnectorSyncStatus",
+        "description": "Read scoped connector job status, recent events, durable evidence, and lineage committed by the latest Run.",
+        "parameters": [
+          {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1}},
+          {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}},
+          {"name": "project_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}
+        ],
+        "responses": {"200": {"description": "Scoped connector job status, events, evidence, and committed lineage", "content": {"application/json": {"schema": {"type": "object", "required": ["job", "events", "evidence", "lineage"], "properties": {"job": {"type": ["object", "null"]}, "events": {"type": ["object", "null"]}, "evidence": {"type": ["object", "null"]}, "lineage": {"type": "object", "required": ["status", "items", "truncated"], "properties": {"status": {"type": "string", "enum": ["pending", "available", "unavailable", "not_recorded"]}, "items": {"type": "array", "items": {"type": "object"}}, "truncated": {"type": "boolean"}}}}}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
+      }
+    },
+    "/v1/platform/connectors/syncs/{job_id}/cancel": {
+      "post": {
+        "operationId": "cancelConnectorSync",
+        "description": "Cancel a connector sync job after scheduler permission and workspace/project/job scope checks.",
+        "parameters": [
+          {"name": "job_id", "in": "path", "required": true, "schema": {"type": "string", "minLength": 1}},
+          {"name": "workspace_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}},
+          {"name": "project_id", "in": "query", "required": true, "schema": {"type": "string", "minLength": 1}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "maxProperties": 0}}}},
+        "responses": {"200": {"description": "Cancellation result", "content": {"application/json": {"schema": {"type": "object"}}}}, "400": {"$ref": "#/components/responses/Error"}, "401": {"$ref": "#/components/responses/Error"}, "403": {"$ref": "#/components/responses/Error"}, "404": {"$ref": "#/components/responses/Error"}, "503": {"$ref": "#/components/responses/Error"}}
       }
     },
     "/v1/platform/ui-manifest": {

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import base64
 import binascii
+import hashlib
+import hmac
 from collections.abc import Callable, Mapping
 from typing import Protocol, cast
 
@@ -25,10 +27,14 @@ class _Health(Protocol):
 class _CheckpointStore(Protocol):
     def health(self, identity: str) -> _Health: ...
 
+    def get_or_create_discovery_cursor_key(self) -> bytes: ...
+
 
 class IngestionHTTPAdapter:
-    _CURSOR_SCHEMA = "ronin.connector-discovery-cursor/v1"
+    _CURSOR_SCHEMA = "ronin.connector-discovery-cursor/v2"
     _MAX_CURSOR_LENGTH = 16_384
+    _CURSOR_SIGNATURE_BYTES = hashlib.sha256().digest_size
+    _CURSOR_DOMAIN = b"ronin-connector-discovery-cursor-v2\0"
 
     def __init__(
         self,
@@ -39,18 +45,26 @@ class IngestionHTTPAdapter:
         secrets_resolver: Callable[[str], SecretResolver],
         *,
         artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
+        cursor_signing_key: bytes | None = None,
     ) -> None:
         self._registry = registry
         self._service = IngestionSyncService(
             registry, checkpoints, artifact_reference_barrier=artifact_reference_barrier
         )
         self._checkpoints = cast(_CheckpointStore, checkpoints)
+        self._cursor_signing_key = (
+            self._checkpoints.get_or_create_discovery_cursor_key()
+            if cursor_signing_key is None
+            else cursor_signing_key
+        )
+        if not isinstance(self._cursor_signing_key, bytes) or len(self._cursor_signing_key) != 32:
+            raise ValueError("connector discovery cursor signing key must contain 32 bytes")
         self._connection = connection_resolver
         self._asset = asset_resolver
         self._secrets = secrets_resolver
 
     def capabilities(self) -> dict[str, object]:
-        return self._registry.capability_payload()
+        return cast(dict[str, object], self._registry.capability_payload())
 
     def discover(self, body: object, *, workspace_id: str) -> dict[str, object]:
         required = {"connector_id", "connection_ref"}
@@ -71,7 +85,6 @@ class IngestionHTTPAdapter:
         connection = self._connection(workspace_id, connection_ref)
         if getattr(connection, "connector_id", connector_id) != connector_id:
             raise ValueError("connection connector_id does not match connector_id")
-        secrets = self._secrets(connection_ref)
         cursor_value = body.get("cursor")
         page_size_value = body.get("page_size")
         if cursor_value is not None and (
@@ -102,7 +115,11 @@ class IngestionHTTPAdapter:
             connector_id=connector_id,
             connection_ref=connection_ref,
             connection_id=str(connection.id),
+            page_size=page_size,
         )
+        # Validate the request's scoped continuation before invoking any secret
+        # resolver or provider code. The route authorizes the workspace first.
+        secrets = self._secrets(connection_ref)
         page = discover_page(
             connection,
             secrets,
@@ -121,6 +138,7 @@ class IngestionHTTPAdapter:
                 connector_id=connector_id,
                 connection_ref=connection_ref,
                 connection_id=str(connection.id),
+                page_size=page_size,
             )
             if page.truncated and page.next_cursor is not None
             else None
@@ -149,57 +167,78 @@ class IngestionHTTPAdapter:
             **page_metadata,
         }
 
-    @classmethod
     def _encode_discovery_cursor(
-        cls,
+        self,
         provider_cursor: str,
         *,
         workspace_id: str,
         connector_id: str,
         connection_ref: str,
         connection_id: str,
+        page_size: int,
     ) -> str:
         payload = encode(
             {
-                "schema": cls._CURSOR_SCHEMA,
+                "schema": self._CURSOR_SCHEMA,
                 "workspace_id": workspace_id,
                 "connector_id": connector_id,
                 "connection_ref": connection_ref,
                 "connection_id": connection_id,
                 "provider_cursor": provider_cursor,
+                "page_size": page_size,
             }
         )
-        cursor = base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
-        if len(cursor) > cls._MAX_CURSOR_LENGTH:
+        signature = hmac.new(
+            self._cursor_signing_key,
+            self._CURSOR_DOMAIN + payload,
+            hashlib.sha256,
+        ).digest()
+        cursor = base64.urlsafe_b64encode(payload + signature).decode("ascii").rstrip("=")
+        if len(cursor) > self._MAX_CURSOR_LENGTH:
             raise ValueError("connector discovery cursor is too large")
         return cursor
 
-    @classmethod
     def _decode_discovery_cursor(
-        cls,
+        self,
         cursor: str | None,
         *,
         workspace_id: str,
         connector_id: str,
         connection_ref: str,
         connection_id: str,
+        page_size: int,
     ) -> str | None:
         if cursor is None:
             return None
-        if len(cursor) > cls._MAX_CURSOR_LENGTH:
+        if len(cursor) > self._MAX_CURSOR_LENGTH:
             raise ValueError("connector discovery cursor is too large")
         try:
             padding = "=" * (-len(cursor) % 4)
             raw = base64.b64decode(cursor + padding, altchars=b"-_", validate=True)
-            payload = decode(raw)
+            if len(raw) <= self._CURSOR_SIGNATURE_BYTES:
+                raise ValueError("cursor is shorter than its signature")
+            payload_bytes = raw[: -self._CURSOR_SIGNATURE_BYTES]
+            signature = raw[-self._CURSOR_SIGNATURE_BYTES :]
         except (binascii.Error, UnicodeDecodeError, ValueError) as exc:
             raise ValueError("connector discovery cursor is invalid") from exc
+        expected_signature = hmac.new(
+            self._cursor_signing_key,
+            self._CURSOR_DOMAIN + payload_bytes,
+            hashlib.sha256,
+        ).digest()
+        if not hmac.compare_digest(signature, expected_signature):
+            raise ValueError("connector discovery cursor signature is invalid")
+        try:
+            payload = decode(payload_bytes)
+        except (UnicodeDecodeError, ValueError) as exc:
+            raise ValueError("connector discovery cursor is invalid") from exc
         expected = {
-            "schema": cls._CURSOR_SCHEMA,
+            "schema": self._CURSOR_SCHEMA,
             "workspace_id": workspace_id,
             "connector_id": connector_id,
             "connection_ref": connection_ref,
             "connection_id": connection_id,
+            "page_size": page_size,
         }
         if not isinstance(payload, dict) or any(
             payload.get(key) != value for key, value in expected.items()
@@ -214,12 +253,15 @@ class IngestionHTTPAdapter:
 
     def preview(self, body: object, *, workspace_id: str) -> dict[str, object]:
         definition = self._definition(body)
-        return self._service.preview(
-            definition,
-            workspace_id=workspace_id,
-            connection=self._connection(workspace_id, definition.connection_ref),
-            asset=self._asset(definition.asset_ref),
-            secrets=self._secrets(definition.connection_ref),
+        return cast(
+            dict[str, object],
+            self._service.preview(
+                definition,
+                workspace_id=workspace_id,
+                connection=self._connection(workspace_id, definition.connection_ref),
+                asset=self._asset(definition.asset_ref),
+                secrets=self._secrets(definition.connection_ref),
+            ),
         )
 
     def plan(self, body: object, *, workspace_id: str) -> dict[str, object]:
@@ -227,6 +269,26 @@ class IngestionHTTPAdapter:
         checkpoint = self._checkpoint_health(workspace_id, definition.checkpoint_identity)
         plan = self._registry.plan_sync(definition, checkpoint_present=bool(checkpoint["present"]))
         return {"plan": plan.to_payload(), "checkpoint": checkpoint}
+
+    def validate_definition(self, body: object) -> dict[str, object]:
+        """Validate a sync request and return the stable fields used by Job submission."""
+        definition = self._definition(body)
+        result: dict[str, object] = {
+            "id": definition.id,
+            "connector_id": definition.connector_id,
+            "connection_ref": definition.connection_ref,
+            "asset_ref": definition.asset_ref,
+            "destination_ref": definition.destination_ref,
+            "checkpoint_identity": definition.checkpoint_identity,
+            "mode": definition.mode,
+        }
+        if (
+            definition.source_revision_ref is not None
+            and definition.destination_asset_id is not None
+        ):
+            result["source_revision_ref"] = definition.source_revision_ref.to_payload()
+            result["destination_asset_id"] = definition.destination_asset_id.value
+        return result
 
     def checkpoint_health(self, body: object, *, workspace_id: str) -> dict[str, object]:
         if not isinstance(body, Mapping) or set(body) != {"checkpoint_identity"}:
@@ -244,7 +306,7 @@ class IngestionHTTPAdapter:
 
     @staticmethod
     def _checkpoint_identity(workspace_id: str, identity: str) -> str:
-        return scoped_checkpoint_identity(workspace_id, identity)
+        return cast(str, scoped_checkpoint_identity(workspace_id, identity))
 
     @staticmethod
     def _definition(body: object) -> IngestionSyncDefinition:
@@ -259,7 +321,8 @@ class IngestionHTTPAdapter:
             "checkpoint_identity",
             "mode",
         }
-        if set(body) != expected:
+        optional = {"source_revision_ref", "destination_asset_id"}
+        if set(body) not in (expected, expected | optional):
             raise ValueError("ingestion sync body has invalid fields")
         canonical_body = {"schema": "ronin.ingestion-sync/v1", **dict(body)}
         return IngestionSyncDefinition.from_bytes(encode(canonical_body))

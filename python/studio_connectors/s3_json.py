@@ -39,6 +39,9 @@ class S3JsonConnector:
 
     MAX_OBJECT_BYTES = 10 * 1024 * 1024
     MAX_BATCH_SIZE = 10_000
+    MAX_PAGE_SIZE = 1_000
+    MAX_DISCOVERY_PAGES = 100
+    MAX_DISCOVERED_ASSETS = 10_000
 
     descriptor = ConnectorDescriptor(
         "s3.json",
@@ -47,7 +50,7 @@ class S3JsonConnector:
             discover=True,
             read=True,
             write=True,
-            max_page_size=10_000,
+            max_page_size=MAX_PAGE_SIZE,
             max_batch_size=MAX_BATCH_SIZE,
         ),
     )
@@ -88,30 +91,30 @@ class S3JsonConnector:
     def discover(
         self, connection: ConnectionDefinition, secrets: SecretResolver
     ) -> tuple[DiscoveredAsset, ...]:
-        del secrets
-        bucket, prefix = self._config(connection)
-        client = self._client_for(connection)
+        cursor: str | None = None
         assets: list[DiscoveredAsset] = []
-        token: str | None = None
-        while True:
-            request = {"Bucket": bucket, "Prefix": prefix}
-            if token:
-                request["ContinuationToken"] = token
-            page = client.list_objects_v2(**request)
-            for item in page.get("Contents", ()):
-                key = str(item.get("Key", ""))
-                if key and not key.endswith("/") and key.lower().endswith((".json", ".jsonl")):
-                    parts = tuple(part for part in key.split("/") if part)
-                    assets.append(
-                        DiscoveredAsset(
-                            AssetHandle(connection.id, parts[:-1], parts[-1]), "object", ()
-                        )
-                    )
-            if not page.get("IsTruncated"):
+        for page_number in range(1, self.MAX_DISCOVERY_PAGES + 1):
+            page = self.discover_page(
+                connection,
+                secrets,
+                cursor=cursor,
+                page_size=self.MAX_PAGE_SIZE,
+            )
+            assets.extend(page.items)
+            if len(assets) > self.MAX_DISCOVERED_ASSETS:
+                raise ValueError(
+                    "S3 discovery exceeded the asset limit; use paginated connector discovery"
+                )
+            if not page.truncated:
                 break
-            token = page.get("NextContinuationToken")
-            if not token:
-                raise ValueError("S3 listing was truncated without a continuation token")
+            if page_number == self.MAX_DISCOVERY_PAGES:
+                raise ValueError(
+                    "S3 discovery exceeded the provider request limit; "
+                    "use paginated connector discovery"
+                )
+            if page.next_cursor == cursor:
+                raise ValueError("S3 discovery cursor did not advance")
+            cursor = page.next_cursor
         return tuple(sorted(assets, key=lambda item: item.handle.qualified_name))
 
     def discover_page(
@@ -124,13 +127,21 @@ class S3JsonConnector:
     ) -> DiscoveryPage[DiscoveredAsset]:
         """Discover one bounded S3 page; ``cursor`` is opaque to callers."""
         del secrets
-        if page_size < 1 or page_size > 10_000:
-            raise ValueError("S3 discovery page_size must be between 1 and 10000")
+        if (
+            not isinstance(page_size, int)
+            or isinstance(page_size, bool)
+            or page_size < 1
+            or page_size > self.MAX_PAGE_SIZE
+        ):
+            raise ValueError(f"S3 discovery page_size must be between 1 and {self.MAX_PAGE_SIZE}")
         bucket, prefix = self._config(connection)
         request: dict[str, object] = {"Bucket": bucket, "Prefix": prefix, "MaxKeys": page_size}
         if cursor is not None:
             request["ContinuationToken"] = cursor
         page = self._client_for(connection).list_objects_v2(**request)
+        contents = page.get("Contents", ())
+        if len(contents) > page_size:
+            raise ValueError("S3 provider returned more objects than the requested page size")
         assets = tuple(
             DiscoveredAsset(
                 AssetHandle(
@@ -141,7 +152,7 @@ class S3JsonConnector:
                 "object",
                 (),
             )
-            for item in page.get("Contents", ())
+            for item in contents
             if str(item.get("Key", "")).lower().endswith((".json", ".jsonl"))
             and not str(item.get("Key", "")).endswith("/")
         )

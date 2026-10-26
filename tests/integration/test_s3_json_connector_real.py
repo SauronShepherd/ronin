@@ -87,6 +87,8 @@ def test_s3_json_sink_put_read_and_retry_round_trip() -> None:
         stored = client.get_object(Bucket=bucket, Key=f"{prefix}/output.json")["Body"].read()
         metadata = client.head_object(Bucket=bucket, Key=f"{prefix}/output.json")["Metadata"]
         readback = connector.read(connection, asset, resolver, limit=10)
+        discovery_page = connector.discover_page(connection, resolver, page_size=1000)
+        discovered_assets = connector.discover(connection, resolver)
 
         assert retry.output_id == f"s3://{bucket}/{prefix}/output.json"
         assert retry.output_digest == hashlib.sha256(stored).hexdigest()
@@ -98,6 +100,9 @@ def test_s3_json_sink_put_read_and_retry_round_trip() -> None:
         assert metadata["ronin-idempotency-key-sha256"]
         assert "qualification-retry-1" not in repr(metadata)
         assert readback.rows == result.rows
+        assert len(discovery_page.items) == 1
+        assert discovery_page.items[0].handle == asset
+        assert discovered_assets == discovery_page.items
     finally:
         if bucket_created:
             client.delete_object(Bucket=bucket, Key=f"{prefix}/output.json")

@@ -5,9 +5,14 @@ plane. Serve it from the Ronin server at `/studio/`.
 
 ## Connecting
 
-Enter the HTTP(S) base URL of the Ronin control plane and a bearer token with
-the required project grants. The URL is remembered locally; the bearer token
-is kept only in browser `sessionStorage` and is cleared when the session ends.
+The API is the Ronin server that stores and operates on workspace and project
+data. Leave the URL blank when the same server is serving Studio. Otherwise,
+enter the HTTP(S) base URL supplied by your Ronin administrator. The URL is
+remembered in browser `localStorage`; enter the bearer access token supplied
+by your administrator when authentication is required. Leave it blank only if
+your deployment allows unauthenticated access. The token is kept only in browser
+`sessionStorage`; leaving the token field blank removes the active token. Use a trusted HTTPS server when
+entering a token because Studio sends it to the configured URL.
 
 The UI uses these authenticated v1 routes:
 

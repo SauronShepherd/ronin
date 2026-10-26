@@ -33,10 +33,14 @@ def _azure() -> Any:
 class AzureBlobJsonConnector:
     """Discover and read JSON or JSONL blobs from an Azure container."""
 
+    MAX_PAGE_SIZE = 1_000
+    MAX_DISCOVERY_PAGES = 100
+    MAX_DISCOVERED_ASSETS = 10_000
+
     descriptor = ConnectorDescriptor(
         "azure.blob.json",
         1,
-        ConnectorCapabilities(discover=True, read=True, max_page_size=10_000),
+        ConnectorCapabilities(discover=True, read=True, max_page_size=MAX_PAGE_SIZE),
     )
 
     def __init__(self, *, container_client: Any | None = None) -> None:
@@ -80,13 +84,41 @@ class AzureBlobJsonConnector:
         self, connection: ConnectionDefinition, secrets: SecretResolver
     ) -> tuple[DiscoveredAsset, ...]:
         _, prefix = self._config(connection)
-        assets = []
-        for blob in self._container_client(connection, secrets).list_blobs(name_starts_with=prefix):
-            name = str(blob.name)
-            if name.lower().endswith((".json", ".jsonl")):
-                parts = tuple(part for part in name.split("/") if part)
-                assets.append(
-                    DiscoveredAsset(AssetHandle(connection.id, parts[:-1], parts[-1]), "blob", ())
+        listing = self._container_client(connection, secrets).list_blobs(name_starts_with=prefix)
+        if not hasattr(listing, "by_page"):
+            raise RuntimeError("Azure Blob listing does not expose paginated iteration")
+        pages = listing.by_page(results_per_page=self.MAX_PAGE_SIZE)
+        page_iterator = iter(pages)
+        assets: list[DiscoveredAsset] = []
+        for page_number in range(1, self.MAX_DISCOVERY_PAGES + 1):
+            try:
+                page = tuple(next(page_iterator))
+            except StopIteration:
+                break
+            if len(page) > self.MAX_PAGE_SIZE:
+                raise ValueError(
+                    "Azure Blob provider returned more blobs than the requested page size"
+                )
+            for blob in page:
+                name = str(blob.name)
+                if name.lower().endswith((".json", ".jsonl")):
+                    parts = tuple(part for part in name.split("/") if part)
+                    assets.append(
+                        DiscoveredAsset(
+                            AssetHandle(connection.id, parts[:-1], parts[-1]), "blob", ()
+                        )
+                    )
+            if len(assets) > self.MAX_DISCOVERED_ASSETS:
+                raise ValueError(
+                    "Azure Blob discovery exceeded the asset limit; "
+                    "use paginated connector discovery"
+                )
+            if not getattr(pages, "continuation_token", None):
+                break
+            if page_number == self.MAX_DISCOVERY_PAGES:
+                raise ValueError(
+                    "Azure Blob discovery exceeded the provider request limit; "
+                    "use paginated connector discovery"
                 )
         return tuple(sorted(assets, key=lambda item: item.handle.qualified_name))
 
@@ -99,8 +131,15 @@ class AzureBlobJsonConnector:
         page_size: int = 1000,
     ) -> DiscoveryPage[DiscoveredAsset]:
         """Discover one bounded Azure page using the SDK's opaque continuation token."""
-        if page_size < 1 or page_size > 10_000:
-            raise ValueError("Azure discovery page_size must be between 1 and 10000")
+        if (
+            not isinstance(page_size, int)
+            or isinstance(page_size, bool)
+            or page_size < 1
+            or page_size > self.MAX_PAGE_SIZE
+        ):
+            raise ValueError(
+                f"Azure discovery page_size must be between 1 and {self.MAX_PAGE_SIZE}"
+            )
         _, prefix = self._config(connection)
         listing = self._container_client(connection, secrets).list_blobs(name_starts_with=prefix)
         if not hasattr(listing, "by_page"):
@@ -120,6 +159,8 @@ class AzureBlobJsonConnector:
                 assets.append(
                     DiscoveredAsset(AssetHandle(connection.id, parts[:-1], parts[-1]), "blob", ())
                 )
+        if len(page) > page_size:
+            raise ValueError("Azure Blob provider returned more blobs than the requested page size")
         truncated = bool(next_cursor)
         return DiscoveryPage(
             tuple(sorted(assets, key=lambda item: item.handle.qualified_name)),

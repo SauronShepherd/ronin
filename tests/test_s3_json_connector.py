@@ -32,9 +32,11 @@ class _S3:
     def __init__(self, *, put_response: dict[str, str] | None = None) -> None:
         self.objects: dict[tuple[str, str], dict[str, object]] = {}
         self.puts: list[dict[str, object]] = []
+        self.list_requests: list[dict[str, object]] = []
         self.put_response = {"ETag": '"committed-etag"'} if put_response is None else put_response
 
-    def list_objects_v2(self, **_kwargs: object) -> dict[str, object]:
+    def list_objects_v2(self, **kwargs: object) -> dict[str, object]:
+        self.list_requests.append(dict(kwargs))
         return {"Contents": [{"Key": "raw/events.json"}, {"Key": "raw/readme.txt"}]}
 
     def get_object(self, **kwargs: object) -> dict[str, object]:
@@ -67,6 +69,36 @@ def test_s3_json_discovers_and_snapshot_reads() -> None:
     )
     assert result.rows == ({"id": 1},)
     assert unchanged.rows == ()
+
+
+def test_s3_json_discovery_obeys_provider_page_limit() -> None:
+    client = _S3()
+    connector = S3JsonConnector(client=client)
+    connection = _connection()
+    resolver = EnvironmentSecretResolver({})
+
+    assert connector.descriptor.capabilities.max_page_size == 1000
+    with pytest.raises(ValueError, match="between 1 and 1000"):
+        connector.discover_page(connection, resolver, page_size=1001)
+    assert client.list_requests == []
+
+    connector.discover_page(connection, resolver, page_size=1000)
+    assert client.list_requests[0]["MaxKeys"] == 1000
+
+
+def test_s3_json_legacy_discover_stops_after_bounded_provider_requests() -> None:
+    class _EndlessS3(_S3):
+        def list_objects_v2(self, **kwargs: object) -> dict[str, object]:
+            self.list_requests.append(dict(kwargs))
+            prior = kwargs.get("ContinuationToken")
+            next_token = str(int(prior or "0") + 1)
+            return {"Contents": [], "IsTruncated": True, "NextContinuationToken": next_token}
+
+    client = _EndlessS3()
+    connector = S3JsonConnector(client=client)
+    with pytest.raises(ValueError, match="provider request limit"):
+        connector.discover(_connection(), EnvironmentSecretResolver({}))
+    assert len(client.list_requests) == connector.MAX_DISCOVERY_PAGES
 
 
 def test_s3_json_rejects_unsafe_prefix_and_checkpoint() -> None:

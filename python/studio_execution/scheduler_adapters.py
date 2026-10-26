@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, cast
 
-from studio_connectors import IngestionSyncDefinition
+from studio_connectors import IngestionSyncCancelled, IngestionSyncDefinition
+from studio_core import AssetId, AssetRef
 from studio_observability import NotificationIntent
 from studio_orchestrator import Instant, Job
 from studio_quality import resolve_quality_rows
@@ -18,6 +20,10 @@ from .scheduler_sql import SchedulerSqlResult, execute_scheduler_sql
 
 class UnsupportedSchedulerWorkload(RuntimeError):
     """Raised when a scheduler workload has no qualified runtime adapter."""
+
+
+class SchedulerWorkloadCancelled(RuntimeError):
+    """Raised when a scheduler workload observes a durable cancellation request."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,6 +88,7 @@ def execute_scheduler_job(
     connector_asset: Any | None = None,
     connector_secrets: Any | None = None,
     connector_destination: Any | None = None,
+    cancellation_requested: Callable[[], bool] | None = None,
     notification_sink: Any | None = None,
     notification_artifacts: ArtifactStore | None = None,
     notification_now: Instant | str | None = None,
@@ -186,6 +193,16 @@ def execute_scheduler_job(
                 destination_ref=payload["destination_ref"],
                 checkpoint_identity=payload["checkpoint_ref"],
                 mode=payload.get("mode", "incremental"),
+                source_revision_ref=(
+                    AssetRef.from_payload(payload["source_revision_ref"])
+                    if "source_revision_ref" in payload
+                    else None
+                ),
+                destination_asset_id=(
+                    AssetId(payload["destination_asset_id"])
+                    if "destination_asset_id" in payload
+                    else None
+                ),
             )
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise UnsupportedSchedulerWorkload("connector.sync parameters are invalid") from exc
@@ -204,14 +221,25 @@ def execute_scheduler_job(
             if callable(connector_secrets)
             else connector_secrets
         )
-        result = connector_sync_service.execute(
-            definition,
-            workspace_id=workspace_id,
-            connection=connection,
-            asset=asset,
-            secrets=secrets,
-            destination=connector_destination,
+        sync_options = (
+            {"cancellation_requested": cancellation_requested}
+            if cancellation_requested is not None
+            else {}
         )
+        try:
+            result = connector_sync_service.execute(
+                definition,
+                workspace_id=workspace_id,
+                connection=connection,
+                asset=asset,
+                secrets=secrets,
+                destination=connector_destination,
+                execution_ref=run_id,
+                now=None if now is None else str(now),
+                **sync_options,
+            )
+        except IngestionSyncCancelled as exc:
+            raise SchedulerWorkloadCancelled(str(exc)) from exc
         if not isinstance(result, dict):
             raise UnsupportedSchedulerWorkload("connector sync returned an invalid result")
         return SchedulerWorkloadResult(family="connector", connector=result)

@@ -216,6 +216,62 @@ test('Ingestion Studio pages source discovery and keeps sync preview controls', 
   await expect(page.locator('#ingestion-preview-result')).toContainText('preview-1');
 });
 
+test('Ingestion Studio submits and monitors a scoped durable connector sync', async ({ page }) => {
+  await page.route('**/v1/platform/connectors', route => route.fulfill({ json: { items: [] } }));
+  let submitted;
+  await page.route('**/v1/platform/connectors/syncs?**', async route => {
+    submitted = route.request();
+    expect(submitted.headers()['idempotency-key']).toMatch(/^ingestion-/);
+    await route.fulfill({ status: 201, json: { id: 'job-sync-42', state: 'queued' } });
+  });
+  await page.route('**/v1/platform/connectors/syncs/job-sync-42/status?**', async route => {
+    const url = new URL(route.request().url());
+    expect(url.searchParams.get('workspace_id')).toBe('default');
+    expect(url.searchParams.get('project_id')).toBe('default');
+    await route.fulfill({ json: {
+      job: { id: 'job-sync-42', state: 'succeeded' },
+      events: { items: [{ kind: 'worker.attempt.succeeded' }], next_since: null },
+      evidence: { items: [{ digest: 'evidence-digest' }] },
+      lineage: { status: 'available', items: [{ source: { asset_id: 'source-orders', version: 'v3' }, target: { asset_id: 'curated-orders', version: 'sha256:' + 'a'.repeat(64) }, operation: 'write', mode: 'observed', execution_ref: 'run-sync-42' }], truncated: false },
+    } });
+  });
+  await page.goto('./#ingestion');
+  const definition = {
+    id: 'orders-sync', connector_id: 'postgres', connection_ref: 'conn-1',
+    asset_ref: 'conn-1::public.orders', destination_ref: 'asset://warehouse/orders',
+    checkpoint_identity: 'orders-v1', mode: 'incremental',
+    source_revision_ref: { asset_id: 'source-orders', version: 'v3' },
+    destination_asset_id: 'curated-orders',
+  };
+  await page.locator('#ingestion-definition').fill(JSON.stringify(definition));
+  await page.getByRole('button', { name: 'Run durable sync' }).click();
+  await expect(page.locator('#ingestion-sync-status')).toContainText('submitted');
+  await expect(page.locator('#ingestion-sync-status')).toContainText('succeeded');
+  await expect(page.locator('#ingestion-sync-evidence')).toContainText('worker.attempt.succeeded');
+  await expect(page.locator('#ingestion-sync-evidence')).toContainText('evidence-digest');
+  await expect(page.locator('#ingestion-sync-lineage')).toContainText('run-sync-42', { timeout: 5000 });
+  expect(submitted.postDataJSON()).toEqual({ project_id: 'default', definition });
+  await page.screenshot({ path: 'test-results/ingestion-sync-desktop.png', fullPage: true });
+});
+
+test('Ingestion Studio requires governed refs before submitting a durable sync', async ({ page }) => {
+  await page.route('**/v1/platform/connectors', route => route.fulfill({ json: { items: [] } }));
+  let submitted = false;
+  await page.route('**/v1/platform/connectors/syncs?**', async route => {
+    submitted = true;
+    await route.fulfill({ status: 201, json: { id: 'unexpected', state: 'queued' } });
+  });
+  await page.goto('./#ingestion');
+  await page.locator('#ingestion-definition').fill(JSON.stringify({
+    id: 'orders-sync', connector_id: 'postgres', connection_ref: 'conn-1',
+    asset_ref: 'conn-1::public.orders', destination_ref: 'asset://warehouse/orders',
+    checkpoint_identity: 'orders-v1', mode: 'snapshot',
+  }));
+  await page.getByRole('button', { name: 'Run durable sync' }).click();
+  await expect(page.locator('#ingestion-sync-status')).toContainText('requires an existing governed source revision and destination asset');
+  expect(submitted).toBe(false);
+});
+
 test('Ingestion Studio stops requesting discovery pages when cancelled', async ({ page }) => {
   await page.route('**/v1/platform/connectors', route => route.fulfill({ json: { items: [] } }));
   let requestStarted;

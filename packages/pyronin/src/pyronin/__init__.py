@@ -3034,18 +3034,58 @@ class Ronin:
         return workspace_id
 
     def discover_connector(
-        self, workspace_id: str, connector_id: str, connection_ref: str
+        self,
+        workspace_id: str,
+        connector_id: str,
+        connection_ref: str,
+        *,
+        cursor: str | None = None,
+        page_size: int | None = None,
     ) -> Mapping[str, object]:
         """Discover bounded source assets within an authorized workspace."""
         workspace = self._connector_workspace(workspace_id)
+        if not isinstance(connector_id, str) or not connector_id.strip():
+            raise ValueError("connector_id must be non-empty")
+        if not isinstance(connection_ref, str) or not connection_ref.strip():
+            raise ValueError("connection_ref must be non-empty")
+        _validate_cursor(cursor, name="connector discovery cursor")
+        if page_size is not None and (
+            not isinstance(page_size, int)
+            or isinstance(page_size, bool)
+            or not 1 <= page_size <= 10_000
+        ):
+            raise ValueError("page_size must be an integer between 1 and 10000")
+        body: dict[str, object] = {
+            "connector_id": connector_id,
+            "connection_ref": connection_ref,
+        }
+        if cursor is not None:
+            body["cursor"] = cursor
+        if page_size is not None:
+            body["page_size"] = page_size
         payload = self._transport.request(
             "POST",
             "/v1/platform/connectors/discover",
             query={"workspace_id": workspace},
-            payload={"connector_id": connector_id, "connection_ref": connection_ref},
+            payload=body,
         )
         if not isinstance(payload, dict) or payload.get("schema") != "ronin.connector-discovery/v1":
             raise ProtocolError("connector discovery response has an invalid schema")
+        items = payload.get("items")
+        count = payload.get("count")
+        has_more = payload.get("has_more")
+        next_cursor = payload.get("next_cursor")
+        if (
+            not isinstance(items, list)
+            or not isinstance(count, int)
+            or isinstance(count, bool)
+            or count != len(items)
+            or not isinstance(has_more, bool)
+        ):
+            raise ProtocolError("connector discovery response has invalid page metadata")
+        _parse_cursor(next_cursor, name="next_cursor", nullable=not has_more)
+        if has_more and next_cursor is None:
+            raise ProtocolError("connector discovery response is missing its next cursor")
         return payload
 
     def preview_connector(
@@ -3099,6 +3139,96 @@ class Ronin:
         )
         if not isinstance(payload, dict) or payload.get("identity") != checkpoint_identity:
             raise ProtocolError("connector checkpoint health response has invalid identity")
+        return payload
+
+    def submit_connector_sync(
+        self,
+        workspace_id: str,
+        project_id: str,
+        definition: Mapping[str, object],
+        *,
+        idempotency_key: str,
+    ) -> Mapping[str, object]:
+        """Submit a workspace-scoped durable connector sync."""
+        workspace = self._connector_workspace(workspace_id)
+        if not isinstance(project_id, str) or not project_id.strip():
+            raise ValueError("project_id must be non-empty")
+        if not isinstance(definition, Mapping) or not definition:
+            raise ValueError("definition must be a non-empty mapping")
+        if (
+            not isinstance(idempotency_key, str)
+            or not idempotency_key
+            or idempotency_key != idempotency_key.strip()
+            or len(idempotency_key.encode("utf-8")) > 256
+        ):
+            raise ValueError("idempotency_key must be non-empty, trimmed, and at most 256 bytes")
+        payload = self._transport.request(
+            "POST",
+            "/v1/platform/connectors/syncs",
+            query={"workspace_id": workspace},
+            headers={"Idempotency-Key": idempotency_key},
+            payload={"project_id": project_id, "definition": dict(definition)},
+        )
+        state = payload.get("state") if isinstance(payload, dict) else None
+        if (
+            not isinstance(payload, dict)
+            or not isinstance(payload.get("id"), str)
+            or not payload.get("id")
+            or not isinstance(state, str)
+            or state not in {"queued", "running", "succeeded", "failed"}
+        ):
+            raise ProtocolError("connector sync submission response is invalid")
+        return payload
+
+    def connector_sync_status(
+        self, workspace_id: str, project_id: str, job_id: str
+    ) -> Mapping[str, object]:
+        workspace = self._connector_workspace(workspace_id)
+        if not isinstance(project_id, str) or not project_id.strip():
+            raise ValueError("project_id must be non-empty")
+        if not isinstance(job_id, str) or not job_id.strip():
+            raise ValueError("job_id must be non-empty")
+        payload = self._transport.request(
+            "GET",
+            f"/v1/platform/connectors/syncs/{quote(job_id, safe='')}/status",
+            query={"workspace_id": workspace, "project_id": project_id},
+        )
+        lineage = payload.get("lineage") if isinstance(payload, dict) else None
+        if (
+            not isinstance(payload, dict)
+            or not isinstance(payload.get("job"), dict)
+            or not isinstance(payload.get("events"), dict)
+            or not isinstance(payload.get("evidence"), dict)
+            or not isinstance(lineage, dict)
+            or lineage.get("status") not in {"pending", "available", "unavailable", "not_recorded"}
+            or not isinstance(lineage.get("items"), list)
+            or not isinstance(lineage.get("truncated"), bool)
+            or payload["job"].get("id") != job_id
+            or not isinstance(payload["job"].get("state"), str)
+        ):
+            raise ProtocolError("connector sync status response is invalid")
+        return payload
+
+    def cancel_connector_sync(
+        self, workspace_id: str, project_id: str, job_id: str
+    ) -> Mapping[str, object]:
+        workspace = self._connector_workspace(workspace_id)
+        if not isinstance(project_id, str) or not project_id.strip():
+            raise ValueError("project_id must be non-empty")
+        if not isinstance(job_id, str) or not job_id.strip():
+            raise ValueError("job_id must be non-empty")
+        payload = self._transport.request(
+            "POST",
+            f"/v1/platform/connectors/syncs/{quote(job_id, safe='')}/cancel",
+            query={"workspace_id": workspace, "project_id": project_id},
+            payload={},
+        )
+        if (
+            not isinstance(payload, dict)
+            or payload.get("id") != job_id
+            or not isinstance(payload.get("state"), str)
+        ):
+            raise ProtocolError("connector sync cancellation response is invalid")
         return payload
 
     def plugin(self, namespace: str) -> PluginClient:

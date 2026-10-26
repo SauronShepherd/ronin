@@ -597,6 +597,37 @@ class SqliteCatalogStore:
         finally:
             connection.close()
 
+    def downstream_for_execution(
+        self,
+        workspace_id: WorkspaceId,
+        ref: AssetRef,
+        execution_ref: str,
+        *,
+        limit: int = 100,
+    ) -> tuple[LineageEdge, ...]:
+        if not execution_ref or execution_ref != execution_ref.strip():
+            raise ValueError("lineage execution ref must be non-empty and trimmed")
+        if not 1 <= limit <= 1000:
+            raise ValueError("lineage execution limit must be between 1 and 1000")
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT edge_json FROM lineage_edges WHERE workspace_id=? "
+                "AND source_asset_id=? AND source_version=? "
+                "AND json_extract(edge_json, '$.execution_ref')=? "
+                "ORDER BY edge_digest LIMIT ?",
+                (
+                    str(workspace_id),
+                    str(ref.asset_id),
+                    str(ref.version),
+                    execution_ref,
+                    limit,
+                ),
+            ).fetchall()
+            return tuple(LineageEdge.from_json(row["edge_json"]) for row in rows)
+        finally:
+            connection.close()
+
     def list_lineage(
         self, workspace_id: WorkspaceId, *, limit: int = 1000
     ) -> tuple[LineageEdge, ...]:

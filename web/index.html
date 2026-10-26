@@ -20,12 +20,16 @@
         <header class="topbar">
           <div class="breadcrumb" id="breadcrumb">Overview</div>
           <form id="connection-form" class="connection-form" novalidate>
-            <label class="sr-only" for="api-url">API URL</label>
-            <input id="api-url" type="url" value="" placeholder="Same-origin API" autocomplete="url">
-            <label class="sr-only" for="api-token">Bearer token</label>
-            <input id="api-token" type="password" placeholder="Bearer token" autocomplete="off">
-            <button class="button primary" type="submit">Connect</button>
+            <label class="sr-only" for="api-url">Ronin API server URL</label>
+            <input id="api-url" type="url" value="" placeholder="API server URL (optional)" autocomplete="url" title="Leave blank to use the API serving this Studio">
+            <label class="sr-only" for="api-token">Ronin access token</label>
+            <input id="api-token" type="password" placeholder="Access token (if required)" autocomplete="off" title="A bearer token from your Ronin administrator">
+            <button class="button primary" type="submit">Save connection</button>
           </form>
+          <details class="connection-help">
+            <summary aria-label="Explain the API connection">?</summary>
+            <p><strong>What is this?</strong> Studio needs a running Ronin API server to load or change project data. Leave the URL blank when the API serves this page. Enter the token supplied by your Ronin administrator when authentication is required; leave it blank only when your deployment allows unauthenticated access. The URL is remembered in this browser; the token stays for this session only and is sent to the configured server. Use a trusted HTTPS server when entering a token.</p>
+          </details>
           <button class="icon-button" data-action="open-command" aria-label="Open command menu">⌘K</button>
         </header>
         <main id="main" tabindex="-1"><div id="view"></div></main>

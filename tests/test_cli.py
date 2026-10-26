@@ -146,6 +146,84 @@ def test_connectors_plan_requires_complete_definition(monkeypatch, capsys) -> No
     assert "requires --connection-ref" in capsys.readouterr().err
 
 
+def test_connectors_sync_submit_reads_bounded_definition_and_requires_key(
+    monkeypatch, capsys, tmp_path
+) -> None:
+    definition = {
+        "id": "orders-sync",
+        "connector_id": "postgres",
+        "connection_ref": "conn-1",
+        "asset_ref": "conn-1::public.orders",
+        "destination_ref": "artifact://orders",
+        "checkpoint_identity": "orders-v1",
+        "mode": "incremental",
+    }
+    definition_file = tmp_path / "definition.json"
+    definition_file.write_text(json.dumps(definition), encoding="utf-8")
+
+    class _Client:
+        def connector_sync_submit(self, workspace_id, project_id, payload, *, idempotency_key):
+            assert workspace_id == "workspace-a"
+            assert project_id == "project-1"
+            assert payload == definition
+            assert idempotency_key == "orders-run-1"
+            return {"id": "job-1", "state": "queued"}
+
+    monkeypatch.setattr("studio_cli._control_plane_client", lambda: _Client())
+    assert (
+        main(
+            [
+                "connectors",
+                "sync-submit",
+                "--workspace-id",
+                "workspace-a",
+                "--project-id",
+                "project-1",
+                "--definition-file",
+                str(definition_file),
+                "--idempotency-key",
+                "orders-run-1",
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out) == {"id": "job-1", "state": "queued"}
+
+
+@pytest.mark.parametrize("command", ["sync-status", "sync-cancel"])
+def test_connectors_sync_status_and_cancel_forward_resource_scope(
+    monkeypatch, capsys, command
+) -> None:
+    class _Client:
+        def connector_sync_status(self, workspace_id, project_id, job_id):
+            assert (workspace_id, project_id, job_id) == ("workspace-a", "project-1", "job-1")
+            return {"job": {"id": job_id, "state": "succeeded"}}
+
+        def connector_sync_cancel(self, workspace_id, project_id, job_id):
+            assert (workspace_id, project_id, job_id) == ("workspace-a", "project-1", "job-1")
+            return {"id": job_id, "state": "cancellation_requested"}
+
+    monkeypatch.setattr("studio_cli._control_plane_client", lambda: _Client())
+    assert (
+        main(
+            [
+                "connectors",
+                command,
+                "--workspace-id",
+                "workspace-a",
+                "--project-id",
+                "project-1",
+                "--job-id",
+                "job-1",
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out)["job" if command == "sync-status" else "id"] == (
+        {"id": "job-1", "state": "succeeded"} if command == "sync-status" else "job-1"
+    )
+
+
 def test_doctor_all_still_requires_docker(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         "studio_cli.shutil.which",

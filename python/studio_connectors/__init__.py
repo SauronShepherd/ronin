@@ -32,6 +32,7 @@ from .registry import ConnectorCapabilityRecord, ConnectorRegistry, builtin_conn
 from .s3_json import S3JsonConnector
 from .sync import (
     ArtifactDestinationWriter,
+    IngestionSyncCancelled,
     IngestionSyncDefinition,
     IngestionSyncPlan,
     IngestionSyncService,
@@ -67,6 +68,7 @@ __all__ = (
     "S3JsonConnector",
     "OzoneJsonConnector",
     "IngestionSyncDefinition",
+    "IngestionSyncCancelled",
     "ArtifactDestinationWriter",
     "IngestionSyncPlan",
     "IngestionSyncService",

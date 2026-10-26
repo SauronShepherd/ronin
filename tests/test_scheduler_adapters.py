@@ -4,9 +4,11 @@ import json
 from types import SimpleNamespace
 
 import pytest
+from studio_connectors import IngestionSyncCancelled
 from studio_core import WorkspaceId
 from studio_core.catalog import AssetId, AssetRef, AssetVersion
 from studio_execution import (
+    SchedulerWorkloadCancelled,
     UnsupportedSchedulerWorkload,
     execute_scheduler_job,
 )
@@ -138,6 +140,34 @@ def test_connector_sync_scheduler_requires_and_forwards_workspace_scope() -> Non
     assert seen["connection"] is connection
     assert seen["asset"] is asset
     assert seen["secrets"] is secrets
+
+
+def test_connector_sync_scheduler_maps_cooperative_cancellation() -> None:
+    class SyncService:
+        def execute(self, *_args, cancellation_requested=None, **_kwargs):
+            assert cancellation_requested is not None
+            assert cancellation_requested()
+            raise IngestionSyncCancelled("cancelled at sync safe point")
+
+    with pytest.raises(SchedulerWorkloadCancelled, match="safe point"):
+        execute_scheduler_job(
+            _job(
+                "connector.sync.v1",
+                {
+                    "connector_id": "postgres",
+                    "source_ref": "conn-1::public.orders",
+                    "destination_ref": "artifact://orders",
+                    "checkpoint_ref": "orders",
+                },
+            ),
+            connector_sync_service=SyncService(),
+            connector_connection=object(),
+            connector_asset=object(),
+            connector_secrets=object(),
+            connector_destination=object(),
+            workspace_id="workspace-a",
+            cancellation_requested=lambda: True,
+        )
 
 
 @pytest.mark.parametrize("identifier", ["", " ", "\t"])

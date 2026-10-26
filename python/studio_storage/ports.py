@@ -244,6 +244,15 @@ class CatalogStore(Protocol):
 
     def downstream(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[LineageEdge, ...]: ...
 
+    def downstream_for_execution(
+        self,
+        workspace_id: WorkspaceId,
+        ref: AssetRef,
+        execution_ref: str,
+        *,
+        limit: int = 100,
+    ) -> tuple[LineageEdge, ...]: ...
+
 
 __all__ = (
     "ArtifactStore",
