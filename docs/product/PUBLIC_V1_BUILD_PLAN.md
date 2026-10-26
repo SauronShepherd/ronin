@@ -22,6 +22,8 @@ La portada y §44 de `RONIN_PUBLIC_V1_100_PERCENT_BUILD_PLAN.md` son la referenc
 
 El candidato incorpora búsqueda y paginación gobernada de catálogo, stores SQLite/PostgreSQL para Quality, evaluación durable, historial, señales/alertas e integración HTTP/Studio. La suite completa local pasó **4.097 tests y omitió 24** en 337,92 s con PostgreSQL 16 en Docker; el gate Docker real pasó **23/23** y la aceptación estricta v0.1 **15/15**. La corrida con cobertura también pasó 4.097/24; el gate agregado cumple sus pisos, mientras que el ratchet por archivo de almacenamiento exige elevar `catalog.py` y `postgres_core.py` a las coberturas medidas. La corrida de cobertura emitió 679 `ResourceWarning` de Python 3.13 y su causa se está revisando. Estas pruebas no convierten el candidato en evidencia exact-head ni release qualification.
 
+**Follow-up SQL del candidato (2026-10-26):** `68519402` centraliza la validación del subset SQL read-only `SELECT` para que `SqlHTTPAdapter` y DuckDB rechacen de la misma forma CTE/`WITH`, `VALUES`, `EXPLAIN`, SQL sin trim y sentencias múltiples. La suite focalizada pasó 26 tests; Ruff, formato y mypy de `python/studio_sql` pasaron. Esta corrección de contrato no implementa paginación, cancelación, explain ni evidencia de revisiones; RPV1-304/P3 sigue parcial. No se repitió la suite global después de este commit, no cambia `main@29ed2666` y no incrementa release progress. La iteración integral limpia continúa en 0/10.
+
 **Estado del producto:** 0/13 familias Public v1 release-qualified (0%, NO-GO). **Implementación global:** no calculable. **Iteraciones limpias consecutivas tras la última modificación:** 0/10; la reconciliación y los gates siguen encontrando puntos que corregir o confirmar.
 
 ## Propósito y límites
