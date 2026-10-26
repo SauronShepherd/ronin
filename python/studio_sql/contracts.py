@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
@@ -20,6 +21,21 @@ class SqlExecutionError(RuntimeError):
 
 class SqlTimeoutError(TimeoutError):
     """The SQL backend exceeded its execution deadline."""
+
+
+_READ_ONLY_SELECT = re.compile(r"^SELECT\b", re.IGNORECASE)
+
+
+def validate_read_only_select(sql: str) -> None:
+    """Enforce the supported statement subset on every SQL execution path.
+
+    CTEs, VALUES and EXPLAIN can be added when the shared contract and all
+    exposed engines implement the same semantics.
+    """
+    if not sql or sql != sql.strip():
+        raise SqlValidationError("SQL text must be non-empty and trimmed")
+    if ";" in sql or not _READ_ONLY_SELECT.match(sql):
+        raise SqlValidationError("SQL engine accepts one read-only SELECT statement")
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,4 +90,5 @@ __all__ = (
     "SqlRelationUnavailableError",
     "SqlTimeoutError",
     "SqlValidationError",
+    "validate_read_only_select",
 )

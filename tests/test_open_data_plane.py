@@ -126,6 +126,13 @@ def test_sql_reference_engine_rejects_mutating_or_multiple_statements() -> None:
         with pytest.raises(ValueError, match="read-only SELECT"):
             engine.execute("SELECT 1; SELECT 2")
         for query in (
+            "WITH rows AS (SELECT 1) SELECT * FROM rows",
+            "VALUES (1)",
+            "EXPLAIN SELECT 1",
+        ):
+            with pytest.raises(ValueError, match="read-only SELECT"):
+                engine.execute(query)
+        for query in (
             "SELECT * FROM read_parquet('outside.parquet')",
             "SELECT * FROM read_csv('outside.csv')",
             "SELECT * FROM 'https://example.invalid/data.parquet'",

@@ -39,3 +39,23 @@ def test_sql_http_adapter_rejects_invalid_requests(body: object) -> None:
 def test_sql_http_adapter_rejects_mutating_statements(sql: str) -> None:
     with pytest.raises(ValueError, match="read-only"):
         SqlHTTPAdapter(Engine()).query("project-1", {"sql": sql})
+
+
+@pytest.mark.parametrize(
+    "sql", ["WITH rows AS (SELECT 1) SELECT * FROM rows", "VALUES (1)", "EXPLAIN SELECT 1"]
+)
+def test_sql_http_adapter_rejects_statement_forms_outside_shared_engine_contract(
+    sql: str,
+) -> None:
+    engine = Engine()
+    with pytest.raises(ValueError, match="read-only SELECT"):
+        SqlHTTPAdapter(engine).query("project-1", {"sql": sql})
+    assert engine.request is None
+
+
+@pytest.mark.parametrize("sql", [" SELECT 1", "SELECT 1 ", "SELECT 1; SELECT 2"])
+def test_sql_http_adapter_rejects_untrimmed_or_multi_statement_sql(sql: str) -> None:
+    engine = Engine()
+    with pytest.raises(ValueError, match="(trimmed|read-only SELECT)"):
+        SqlHTTPAdapter(engine).query("project-1", {"sql": sql})
+    assert engine.request is None

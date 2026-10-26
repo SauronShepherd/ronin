@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Protocol
 
-from .contracts import SqlQueryResult
+from .contracts import SqlQueryResult, validate_read_only_select
 
 
 class SqlQueryEngine(Protocol):
@@ -31,11 +31,9 @@ class SqlHTTPAdapter:
         if not isinstance(body, Mapping):
             raise ValueError("SQL query body must be an object")
         sql = body.get("sql")
-        if not isinstance(sql, str) or not sql.strip():
+        if not isinstance(sql, str):
             raise ValueError("SQL query body requires non-empty sql")
-        statement = sql.lstrip().split(None, 1)[0].upper().rstrip(";")
-        if statement not in {"SELECT", "WITH", "VALUES", "EXPLAIN"}:
-            raise ValueError("SQL service is read-only and accepts query statements only")
+        validate_read_only_select(sql)
         max_rows = body.get("max_rows", 10_000)
         if (
             not isinstance(max_rows, int)
