@@ -1,5 +1,7 @@
+from dataclasses import replace
 from pathlib import Path
 
+import pytest
 from studio_core import (
     AssetRef,
     DataContract,
@@ -40,7 +42,14 @@ def test_quality_run_is_consumable_by_common_alert_engine(tmp_path):
     record_quality_metrics(run, telemetry.record_metric, observed_at="2026-01-01T00:00:00.000000Z")
     transition = evaluate_alert(
         telemetry,
-        AlertRule("quality", "quality failures", "quality.run.failure", "gte", 1.0),
+        AlertRule(
+            "quality",
+            "quality failures",
+            "quality.run.failure",
+            "gte",
+            1.0,
+            (("asset", "orders@v1"),),
+        ),
         now="2026-01-01T00:00:00.000000Z",
     )
     assert transition.changed is True
@@ -95,6 +104,41 @@ def test_quality_alert_adapter_returns_matching_transition_and_resolves(tmp_path
     assert resolved[0].changed
     assert resolved[0].current is not None
     assert resolved[0].current.status == "resolved"
+
+
+def test_quality_metric_batches_are_idempotent_and_workspace_scoped(tmp_path):
+    workspace = WorkspaceId("workspace-a")
+    asset = AssetRef("orders", "v1")
+    quality_store = _QualityStore(
+        DataContract(
+            asset,
+            "backward",
+            (QualityRule(QualityRuleId("rule-1"), "null", "id", field="id"),),
+        )
+    )
+    run = execute_quality(
+        quality_store,
+        workspace,
+        asset,
+        [{"id": None}],
+        run_id=QualityRunId("shared-run"),
+        now="2026-01-01T00:00:00Z",
+    )
+    points = record_quality_metrics(
+        run,
+        lambda _point: None,
+        observed_at="2026-01-01T00:00:00.000000Z",
+    )
+    telemetry = SqliteTelemetryStore(Path(tmp_path / "obs.sqlite"))
+
+    assert telemetry.record_quality_metrics_once("workspace-a", "shared-run", points)
+    assert not telemetry.record_quality_metrics_once("workspace-a", "shared-run", points)
+    assert telemetry.record_quality_metrics_once("workspace-b", "shared-run", points)
+    assert len(telemetry.list_metrics()) == len(points) * 2
+
+    conflicting_points = (*points[:-1], replace(points[-1], value=0.5))
+    with pytest.raises(ValueError, match="identity conflicts"):
+        telemetry.record_quality_metrics_once("workspace-a", "shared-run", conflicting_points)
 
 
 class _QualityStore:

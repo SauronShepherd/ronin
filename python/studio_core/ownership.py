@@ -27,8 +27,8 @@ class OwnershipMetadata:
     lifecycle: str = "active"
 
     def __post_init__(self) -> None:
-        if self.version < 1:
-            raise ValueError("ownership metadata version must be positive")
+        if not isinstance(self.version, int) or isinstance(self.version, bool) or self.version < 1:
+            raise ValueError("ownership metadata version must be a positive integer")
         owner = self.owner_ref.strip()
         if not owner:
             raise ValueError("owner_ref must be non-empty")

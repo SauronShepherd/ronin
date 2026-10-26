@@ -40,8 +40,8 @@ class SensitivityMetadata:
     inherited_from: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        if self.version < 1:
-            raise ValueError("sensitivity metadata version must be positive")
+        if not isinstance(self.version, int) or isinstance(self.version, bool) or self.version < 1:
+            raise ValueError("sensitivity metadata version must be a positive integer")
         object.__setattr__(self, "explicit", _labels(self.explicit, "explicit labels"))
         object.__setattr__(self, "inherited", _labels(self.inherited, "inherited labels"))
         sources = tuple(sorted(source.strip() for source in self.inherited_from))

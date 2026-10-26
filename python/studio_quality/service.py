@@ -10,7 +10,12 @@ from typing import Protocol, runtime_checkable
 from studio_core import AssetRef, DataContract, QualityRule, QualityRun, QualityRunId, WorkspaceId
 from studio_orchestrator import Instant
 
-from .evaluator import blocking_failures, evaluate_contract
+from .evaluator import (
+    DEFAULT_QUALITY_EVALUATION_BUDGET,
+    QualityEvaluationBudget,
+    blocking_failures,
+    evaluate_contract,
+)
 
 
 class QualityContractNotFound(KeyError):
@@ -45,6 +50,14 @@ class QualityExecutionBlocked(RuntimeError):
 
 
 @dataclass(frozen=True, slots=True)
+class QualityExecutionOutcome:
+    """Recorded quality evidence and the contract-aware release decision."""
+
+    run: QualityRun
+    gate_passed: bool
+
+
+@dataclass(frozen=True, slots=True)
 class QualityAlertSignal:
     """Provider-neutral metric projection for quality alert evaluation."""
 
@@ -60,15 +73,19 @@ def quality_alert_signals(run: QualityRun) -> tuple[QualityAlertSignal, ...]:
         QualityAlertSignal(
             "quality.rule.failure",
             1.0 if result.status in {"failed", "error"} else 0.0,
-            (("asset", str(run.asset)), ("rule_id", result.rule_id.value)),
+            (
+                ("asset", f"{run.asset.asset_id}@{run.asset.version}"),
+                ("rule_id", result.rule_id.value),
+                ("run_id", run.id.value),
+            ),
         )
         for result in run.results
     ]
     signals.append(
         QualityAlertSignal(
             "quality.run.failure",
-            1.0 if run.status in {"failed", "error"} else 0.0,
-            (("asset", str(run.asset)), ("run_id", run.id.value)),
+            1.0 if run.status in {"failed", "error", "unknown"} else 0.0,
+            (("asset", f"{run.asset.asset_id}@{run.asset.version}"), ("run_id", run.id.value)),
         )
     )
     return tuple(signals)
@@ -77,25 +94,39 @@ def quality_alert_signals(run: QualityRun) -> tuple[QualityAlertSignal, ...]:
 def quality_state_summary(runs: tuple[QualityRun, ...]) -> dict[str, object]:
     """Project immutable quality history into catalog-safe state."""
 
-    ordered = tuple(sorted(runs, key=lambda item: item.id.value))
-    latest = ordered[-1] if ordered else None
+    # Durable adapters return runs in persisted chronology, with run ID as a
+    # deterministic tie-breaker. IDs are identities, not timestamps.
+    latest = runs[-1] if runs else None
     return {
         "latest_run_id": latest.id.value if latest is not None else None,
         "latest_status": latest.status if latest is not None else "unknown",
-        "latest_run": None if latest is None else latest.to_payload(),
-        "run_count": len(ordered),
+        "latest_run": None if latest is None else quality_run_payload(latest),
+        "run_count": len(runs),
         "history": [
-            {"run_id": run.id.value, "status": run.status, "asset": run.asset.to_payload()}
-            for run in ordered
+            {
+                "run_id": run.id.value,
+                "status": run.status,
+                "asset": run.asset.to_payload(),
+            }
+            for run in runs
         ],
     }
+
+
+def quality_run_payload(run: QualityRun) -> dict[str, object]:
+    """Expose the derived aggregate status without changing durable run JSON."""
+    return {**run.to_payload(), "status": run.status}
 
 
 def quality_gate(contract: DataContract, run: QualityRun) -> bool:
     """Return whether a recorded quality run may release dependent work."""
     if run.asset != contract.asset:
         raise ValueError("quality run asset does not match contract asset")
-    if run.status == "error":
+    expected_rules = {rule.id for rule in contract.rules}
+    actual_rules = {result.rule_id for result in run.results}
+    if expected_rules != actual_rules:
+        return False
+    if run.status in {"error", "unknown"}:
         return False
     return not blocking_failures(contract, run)
 
@@ -106,6 +137,58 @@ def list_quality_runs(
     """Return durable quality evidence for one governed asset revision."""
 
     return store.list_runs(workspace_id, asset)
+
+
+def execute_quality_with_gate(
+    store: QualityExecutionStore,
+    workspace_id: WorkspaceId,
+    asset: AssetRef,
+    rows: Sequence[Mapping[str, object]],
+    *,
+    run_id: QualityRunId,
+    expected_contract_digest: str | None = None,
+    execution_ref: str | None = None,
+    now: Instant | str,
+    evaluation_time: datetime | None = None,
+    reference_values: Callable[[QualityRule], Sequence[object]] | None = None,
+    custom_sql: Callable[[QualityRule, Sequence[Mapping[str, object]]], bool] | None = None,
+    custom_python: Callable[[QualityRule, Sequence[Mapping[str, object]]], bool] | None = None,
+    enforce_blocking: bool = False,
+    budget: QualityEvaluationBudget = DEFAULT_QUALITY_EVALUATION_BUDGET,
+) -> QualityExecutionOutcome:
+    """Evaluate, record and return the gate decision for the same contract snapshot."""
+
+    contract = store.get_contract(workspace_id, asset)
+    if contract is None:
+        raise QualityContractNotFound(f"{asset.asset_id}@{asset.version}")
+    if expected_contract_digest is not None:
+        if (
+            not isinstance(expected_contract_digest, str)
+            or len(expected_contract_digest) != 64
+            or any(char not in "0123456789abcdef" for char in expected_contract_digest)
+        ):
+            raise ValueError("expected quality contract digest must be a lowercase SHA-256 digest")
+        if contract.digest != expected_contract_digest:
+            raise QualityContractDigestMismatch(
+                f"quality contract digest mismatch for {asset.asset_id}@{asset.version}"
+            )
+    budget.validate(contract, rows)
+    run = evaluate_contract(
+        contract,
+        rows,
+        run_id=run_id,
+        execution_ref=execution_ref,
+        now=evaluation_time,
+        reference_values=reference_values,
+        custom_sql=custom_sql,
+        custom_python=custom_python,
+        budget=budget,
+    )
+    recorded = store.record_run(workspace_id, run, now=now)
+    gate_passed = quality_gate(contract, recorded)
+    if enforce_blocking and not gate_passed:
+        raise QualityExecutionBlocked(recorded)
+    return QualityExecutionOutcome(recorded, gate_passed)
 
 
 def execute_quality(
@@ -123,46 +206,38 @@ def execute_quality(
     custom_sql: Callable[[QualityRule, Sequence[Mapping[str, object]]], bool] | None = None,
     custom_python: Callable[[QualityRule, Sequence[Mapping[str, object]]], bool] | None = None,
     enforce_blocking: bool = False,
+    budget: QualityEvaluationBudget = DEFAULT_QUALITY_EVALUATION_BUDGET,
 ) -> QualityRun:
-    """Evaluate persisted contract, record immutable evidence, then optionally gate."""
-
-    contract = store.get_contract(workspace_id, asset)
-    if contract is None:
-        raise QualityContractNotFound(f"{asset.asset_id}@{asset.version}")
-    if expected_contract_digest is not None:
-        if (
-            not isinstance(expected_contract_digest, str)
-            or len(expected_contract_digest) != 64
-            or any(char not in "0123456789abcdef" for char in expected_contract_digest)
-        ):
-            raise ValueError("expected quality contract digest must be a lowercase SHA-256 digest")
-        if contract.digest != expected_contract_digest:
-            raise QualityContractDigestMismatch(
-                f"quality contract digest mismatch for {asset.asset_id}@{asset.version}"
-            )
-    run = evaluate_contract(
-        contract,
+    """Compatibility wrapper returning the recorded run."""
+    return execute_quality_with_gate(
+        store,
+        workspace_id,
+        asset,
         rows,
         run_id=run_id,
+        expected_contract_digest=expected_contract_digest,
         execution_ref=execution_ref,
-        now=evaluation_time,
+        now=now,
+        evaluation_time=evaluation_time,
         reference_values=reference_values,
         custom_sql=custom_sql,
         custom_python=custom_python,
-    )
-    recorded = store.record_run(workspace_id, run, now=now)
-    if enforce_blocking and not quality_gate(contract, recorded):
-        raise QualityExecutionBlocked(recorded)
-    return recorded
+        enforce_blocking=enforce_blocking,
+        budget=budget,
+    ).run
 
 
 __all__ = (
     "QualityContractNotFound",
     "QualityExecutionBlocked",
+    "QualityExecutionOutcome",
     "QualityExecutionStore",
+    "QualityEvaluationBudget",
     "QualityAlertSignal",
     "execute_quality",
+    "execute_quality_with_gate",
     "quality_gate",
+    "quality_run_payload",
     "list_quality_runs",
     "quality_alert_signals",
     "quality_state_summary",

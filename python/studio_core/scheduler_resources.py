@@ -32,6 +32,8 @@ class ResourcePoolDefinition:
 
     def __post_init__(self) -> None:
         _require_pool_name(self.name)
+        if not isinstance(self.capacity, int) or isinstance(self.capacity, bool):
+            raise ValueError("resource pool capacity must be an integer")
         if self.capacity < 1:
             raise ValueError("resource pool capacity must be positive")
 

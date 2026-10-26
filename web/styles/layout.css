@@ -24,10 +24,8 @@
   position: sticky; top: 0; z-index: 2; backdrop-filter: blur(14px);
 }
 .breadcrumb { font-weight: 800; letter-spacing: -.01em; flex: 1; }
-.connection-form { display: flex; gap: .55rem; max-width: 680px; }
-.connection-form input { flex: 1 1 10rem; min-width: 0; }
-.connection-form input { min-width: 150px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .58rem .7rem; background: var(--surface-raised); color: var(--ink); }
-.connection-form input::placeholder { color: #9b8879; }
+.connection-open { display: inline-flex; align-items: center; gap: .55rem; white-space: nowrap; }
+.connection-open svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .icon-button { padding: .52rem .7rem; }
 .app-main main { max-width: 1540px; width: 100%; min-height: 0; max-height: calc(100vh - 64px); margin: 0 auto; padding: 2.2rem clamp(1rem, 3vw, 2.8rem); overflow: auto; scrollbar-gutter: stable; }
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.6rem; }
@@ -39,18 +37,13 @@
 @media (max-width: 1024px) {
   .app-shell { grid-template-columns: 78px 1fr; height: 100dvh; }
   .nav-label, .rail-subtitle { display: none; }
-  .topbar { flex-wrap: wrap; }
-  .connection-form { display: flex; flex: 1 0 100%; order: 3; max-width: none; }
-  .connection-form input { min-width: 0; }
-  .connection-help { order: 2; }
   .app-main { height: 100dvh; }
   .app-main main { max-height: calc(100dvh - 64px); padding: 1.25rem; }
   .grid.two, .grid.three { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
-  .connection-form { flex-direction: column; align-items: stretch; gap: .4rem; }
-  .connection-form input { width: 100%; min-height: 2.5rem; }
-  .connection-form .button { width: 100%; min-height: 2.5rem; }
+  .connection-open span { display: none; }
+  .connection-open { min-width: 2.6rem; justify-content: center; }
 }
 @media (max-width: 520px) {
   .app-shell { grid-template-columns: 1fr; height: 100dvh; }
@@ -61,6 +54,7 @@
   .app-main main { max-height: calc(100dvh - 62px); padding: 1rem; }
   .page-header { display: block; }
   .page-actions { margin-top: 1rem; }
+  .connection-open span { display: none; }
 }
 .rail .muted { color: #d7c4b1; }
 
@@ -132,13 +126,13 @@
 .rail-toggle:hover { color: #fffdf9; background: rgb(255 248 239 / 16%); border-color: var(--gold); }
 .rail-toggle-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .rail-toggle-icon, .rail-toggle-icon svg { display: block; width: 1.1rem; height: 1.1rem; }
-.rail-toggle-icon svg { transition: transform .2s ease; }
+.rail-toggle-icon svg { transform: rotate(0deg); transition: transform .2s ease; }
 .sidebar-collapsed .rail-head { grid-template-columns: 1fr; justify-items: center; }
 .sidebar-collapsed .rail-brand { width: 100%; padding: .42rem; }
 .sidebar-collapsed .rail-logo-full { display: none; }
 .sidebar-collapsed .rail-logo-mark { display: block; }
 .sidebar-collapsed .rail-toggle { width: 100%; }
-.sidebar-collapsed .rail-toggle-icon svg { transform: rotate(180deg); }
+.sidebar-collapsed .rail-toggle-icon svg { transform: rotate(90deg); }
 .rail-subtitle { padding-inline: .4rem; }
 .nav-item { gap: .65rem; }
 .nav-icon { display: grid; place-items: center; flex: 0 0 1.2rem; width: 1.2rem; height: 1.2rem; color: #e5c49a; }
@@ -147,6 +141,25 @@
 .sidebar-collapsed .nav-item { justify-content: center; gap: 0; padding-inline: 0; }
 .sidebar-collapsed .nav-icon { flex-basis: 1.35rem; width: 1.35rem; height: 1.35rem; }
 .sidebar-collapsed .nav-icon svg { width: 1.22rem; height: 1.22rem; }
+.nav-sections { display: grid; gap: .72rem; }
+.nav-section { min-width: 0; }
+.nav-section-title { margin: 0 .5rem .28rem; color: #d6b995; font-size: .66rem; line-height: 1.4; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.nav-section .nav-group { display: grid; gap: .3rem; }
+.sidebar-collapsed .nav-section-title { display: none; }
+.sidebar-collapsed .nav-section + .nav-section { padding-top: .38rem; border-top: 1px solid rgb(239 211 169 / 18%); }
+.connection-dialog { width: min(34rem, calc(100vw - 2rem)); max-height: min(90dvh, 48rem); overflow: auto; padding: 0; }
+.connection-settings { display: grid; gap: .42rem; padding: 1.35rem; }
+.connection-dialog-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+.connection-dialog-heading h2 { margin: .1rem 0 .35rem; color: var(--cocoa); }
+.connection-close { flex: none; padding: .2rem .58rem; font-size: 1.5rem; line-height: 1.2; }
+.connection-explanation, .connection-default, .connection-help, .connection-save-note { margin: .2rem 0 .5rem; color: var(--muted); }
+.connection-default { padding: .75rem .85rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-muted); color: var(--cocoa-soft); }
+.connection-settings label:not(.connection-clear-token) { display: grid; gap: .25rem; font-weight: 700; color: var(--cocoa); }
+.connection-settings .field { width: 100%; min-width: 0; }
+.connection-help { margin: -.25rem 0 .2rem; font-size: .82rem; }
+.connection-clear-token { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .88rem; }
+.connection-save-note { margin: -.2rem 0 0; font-size: .8rem; }
+.connection-settings .dialog-actions { margin-top: .45rem; }
 .rail-head { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: .2rem; }
 .rail-brand { padding-inline: .1rem; }
 .rail-toggle { position: static; justify-self: end; width: 2.25rem; min-height: 2.15rem; }
@@ -158,7 +171,8 @@
   .app-main { min-width: 0; height: 100dvh; }
   .rail { position: fixed; inset: auto 0 0; height: 66px; z-index: 3; padding: .42rem; }
   .rail-head, .rail-subtitle { display: none; }
-  .nav-group { display: flex; justify-content: flex-start; gap: .25rem; padding-inline: .1rem; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+  .nav-sections { display: flex; justify-content: flex-start; gap: .25rem; padding-inline: .1rem; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+  .nav-section, .nav-section .nav-group { display: contents; }
   .nav-item { flex: 0 0 44px; justify-content: center; min-width: 44px; height: 46px; padding: .5rem; }
   .nav-label { display: none !important; }
   .nav-icon { flex-basis: 1.35rem; width: 1.35rem; height: 1.35rem; }

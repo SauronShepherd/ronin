@@ -171,3 +171,4 @@ code { background: var(--surface-muted); border-color: var(--line); color: var(-
   #quality-form > #quality-execution-ref { grid-column: span 2; }
   #quality-form > .checkbox, #quality-form > textarea { grid-column: span 2; }
 }
+.connection-error{margin:0;padding:.65rem .8rem;border:1px solid rgb(147 70 58 / 38%);border-radius:9px;background:var(--red-bg);color:var(--red)}.connection-error[hidden]{display:none}

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import os
+from hashlib import sha256
 from pathlib import Path
+from threading import Lock
 from typing import Any, cast
 
 from studio_connectors import (
@@ -17,6 +19,7 @@ from studio_core import (
     ConnectionDefinition,
     ConnectionId,
     GrantSet,
+    QualityRun,
     Workspace,
     WorkspaceId,
 )
@@ -42,6 +45,12 @@ from studio_execution import (
 from studio_finops import SqliteFinOpsStore
 from studio_ml import FeatureDefinitionService, PostgresMLLabStore
 from studio_ml.sqlite import SqliteMLLabStore
+from studio_observability import (
+    AlertHTTPAdapter,
+    SqliteTelemetryStore,
+    evaluate_quality_alerts,
+    record_quality_metrics,
+)
 from studio_orchestrator import Instant
 from studio_plugin_observability import LocalObservabilityBuffer
 from studio_runtime import PluginAuditSink, PluginHost, PluginLock, PluginLockError
@@ -64,6 +73,7 @@ from studio_storage import (
     PostgresAuditStore,
     PostgresJobReadPort,
     PostgresMLStore,
+    PostgresQualityStore,
     PostgresSchedulerSnapshotStore,
     SqliteAuditStore,
     SqliteCatalogStore,
@@ -177,6 +187,34 @@ def _workflow_reader_for_backend(
             return None
         return PostgresWorkflowHTTPAdapter(cast(Any, scheduler), now=now)
     return SqliteWorkflowHTTPAdapter(cast(Any, scheduler), now=now)
+
+
+def _catalog_reader_for_backend(catalog_store: Any) -> Any | None:
+    """Expose catalog routes only when the selected store has their full contract."""
+    required = (
+        "list_assets",
+        "search_assets",
+        "list_assets_page",
+        "search_assets_page",
+        "create_asset",
+        "replace_asset",
+        "list_revisions",
+        "get_revision",
+        "upstream",
+        "downstream",
+        "list_lineage",
+        "put_sensitivity",
+        "get_sensitivity",
+        "list_sensitivity_versions",
+        "put_ownership",
+        "get_ownership",
+        "list_ownership_versions",
+    )
+    return (
+        catalog_store
+        if all(callable(getattr(catalog_store, name, None)) for name in required)
+        else None
+    )
 
 
 def build_local_composed_from_env() -> LocalServerComposition:
@@ -315,9 +353,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         if postgres_dsn is None
         else None
     )
-    # Both the SQLite catalog store and the PostgreSQL scheduler metadata store
-    # implement the governed catalog reader contract used by the HTTP API.
-    catalog_reader = cast(Any, catalog_store)
+    catalog_reader = _catalog_reader_for_backend(catalog_store)
     semantic_reader = None
     try:
         semantic_reader = SemanticHTTPAdapter(
@@ -371,11 +407,46 @@ def build_local_composed_from_env() -> LocalServerComposition:
         lambda _reference: secrets_resolver,
         artifact_reference_barrier=artifact_reference_barrier,
     )
-    quality_reader = (
-        QualityHTTPAdapter(SqliteQualityStore(database, migration_now=now))
+    quality_store = (
+        SqliteQualityStore(database, migration_now=now)
         if postgres_dsn is None
-        else None
+        else PostgresQualityStore(catalog_store)
     )
+    telemetry_store = SqliteTelemetryStore(database)
+    telemetry_stores: dict[str, SqliteTelemetryStore] = {str(workspace_id): telemetry_store}
+    telemetry_stores_lock = Lock()
+
+    def telemetry_for_workspace(workspace_key: str) -> SqliteTelemetryStore:
+        with telemetry_stores_lock:
+            store = telemetry_stores.get(workspace_key)
+            if store is None:
+                digest = sha256(workspace_key.encode("utf-8")).hexdigest()
+                store = SqliteTelemetryStore(
+                    database.parent
+                    / f"{database.stem}.workspace-observability"
+                    / f"{digest}.sqlite3"
+                )
+                telemetry_stores[workspace_key] = store
+            return store
+
+    def record_quality_alerts(
+        scoped_workspace_id: WorkspaceId, run: QualityRun, observed_at: Instant
+    ) -> None:
+        workspace_telemetry = telemetry_for_workspace(str(scoped_workspace_id))
+        points = record_quality_metrics(run, lambda _point: None, observed_at=observed_at)
+        workspace_telemetry.record_quality_metrics_once(
+            str(scoped_workspace_id), str(run.id), points
+        )
+        evaluate_quality_alerts(
+            run,
+            workspace_telemetry,
+            workspace_telemetry.list_alert_rules(),
+            observed_at=observed_at,
+            record_metric=lambda _point: None,
+        )
+
+    quality_reader = QualityHTTPAdapter(quality_store, on_run=record_quality_alerts)
+    alert_reader = AlertHTTPAdapter(telemetry_for_workspace)
     finops_reader = SqliteFinOpsStore(database) if postgres_dsn is None else None
     data_engineering_reader = (
         _LocalDataEngineeringRevisions(SqliteRevisionStore(database), database.parent / "artifacts")
@@ -406,6 +477,7 @@ def build_local_composed_from_env() -> LocalServerComposition:
         connection_service=connection_service,
         binding_service=binding_service,
         quality_reader=quality_reader,
+        alert_reader=alert_reader,
         finops_reader=finops_reader,
         data_engineering_reader=data_engineering_reader,
         feature_definition_service=FeatureDefinitionService(cast(Any, ml_lab_store)),

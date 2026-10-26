@@ -1,8 +1,13 @@
 import { get, post } from './api.js';
 import { esc, json, page } from './dom.js';
 
+let catalogPageCursor = null;
+let catalogPreviousCursors = [];
+
 function render() {
   if (location.hash.slice(1) !== 'catalog') return;
+  catalogPageCursor = null;
+  catalogPreviousCursors = [];
   const view = document.querySelector('#view');
   if (!view) return;
   view.innerHTML = `${page('Catalog', 'GOVERNANCE')}<section class="panel">
@@ -15,21 +20,62 @@ function render() {
   </section>`;
 }
 
+async function showCatalogPage(form, cursor = null) {
+  const result = document.querySelector('#catalog-result');
+  if (!result) return false;
+  const workspace = encodeURIComponent(form.elements.workspace.value.trim());
+  const query = form.elements.query.value.trim();
+  const params = new URLSearchParams({ limit: '50' });
+  if (query) params.set('q', query);
+  if (cursor) params.set('cursor', cursor);
+  result.textContent = 'Loading catalog assets…';
+  try {
+    const payload = await get(`/v1/workspaces/${workspace}/catalog/assets?${params}`);
+    const items = payload.items || [];
+    const table = items.length
+      ? `<div class="table-wrap"><table><caption class="sr-only">Catalog assets</caption><thead><tr><th>Name</th><th>Kind</th><th>Tags</th><th>Classifications</th></tr></thead><tbody>${items.map(item => `<tr><td>${esc(item.name)}</td><td>${esc(item.kind)}</td><td>${esc((item.tags || []).join(', '))}</td><td>${esc((item.classifications || []).join(', '))}</td></tr>`).join('')}</tbody></table></div>`
+      : '<div class="empty">No governed assets matched the query.</div>';
+    const previous = catalogPreviousCursors.length
+      ? '<button class="button" type="button" data-action="catalog-previous">Previous page</button>'
+      : '';
+    const next = typeof payload.next_cursor === 'string' && payload.next_cursor
+      ? `<button class="button" type="button" data-action="catalog-next" data-cursor="${esc(payload.next_cursor)}">Next page</button>`
+      : '';
+    result.innerHTML = `${table}${previous || next ? `<div class="toolbar">${previous}${next}</div>` : ''}`;
+    catalogPageCursor = cursor;
+    return true;
+  } catch (error) {
+    result.textContent = `Catalog lookup failed: ${error.message}`;
+    return false;
+  }
+}
+
 document.addEventListener('submit', async event => {
   const form = event.target;
   if (!(form instanceof HTMLFormElement) || form.id !== 'catalog-search-form') return;
   event.preventDefault();
-  const data = new FormData(form);
-  const result = document.querySelector('#catalog-result');
-  result.textContent = 'Loading…';
-  try {
-    const workspace = encodeURIComponent(String(data.get('workspace')));
-    const query = String(data.get('query') || '').trim();
-    const suffix = query ? `?q=${encodeURIComponent(query)}&limit=100` : '?limit=100';
-    const payload = await get(`/v1/workspaces/${workspace}/catalog/assets${suffix}`);
-    const items = payload.items || [];
-    result.innerHTML = items.length ? `<div class="table-wrap"><table><caption class="sr-only">Catalog assets</caption><thead><tr><th>Name</th><th>Kind</th><th>Tags</th><th>Classifications</th></tr></thead><tbody>${items.map(item => `<tr><td>${esc(item.name)}</td><td>${esc(item.kind)}</td><td>${esc((item.tags || []).join(', '))}</td><td>${esc((item.classifications || []).join(', '))}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No governed assets matched the query.</div>';
-  } catch (error) { result.textContent = `Catalog lookup failed: ${error.message}`; }
+  catalogPageCursor = null;
+  catalogPreviousCursors = [];
+  await showCatalogPage(form);
+});
+
+document.addEventListener('click', async event => {
+  const button = event.target.closest('[data-action="catalog-next"], [data-action="catalog-previous"]');
+  if (!button) return;
+  const form = document.querySelector('#catalog-search-form');
+  if (!form) return;
+  button.disabled = true;
+  if (button.dataset.action === 'catalog-next') {
+    const nextCursor = button.dataset.cursor || null;
+    const previousCursor = catalogPageCursor;
+    catalogPreviousCursors.push(previousCursor);
+    if (!(await showCatalogPage(form, nextCursor))) catalogPreviousCursors.pop();
+    return;
+  }
+  const previousCursor = catalogPreviousCursors.pop();
+  if (!(await showCatalogPage(form, previousCursor ?? null)) && previousCursor !== undefined) {
+    catalogPreviousCursors.push(previousCursor);
+  }
 });
 
 document.addEventListener('submit', async event => {

@@ -88,6 +88,7 @@ PROJECT_DEPENDENCIES: dict[str, frozenset[str]] = {
             "studio_security",
             "studio_runtime",
             "studio_plugin_observability",
+            "studio_observability",
             "studio_finops",
             "studio_ml",
             "studio_semantic",

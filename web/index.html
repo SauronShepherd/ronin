@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="RONIN Studio control plane">
+    <meta name="description" content="RONIN Studio — open data and AI workflows">
     <title>RONIN Studio</title>
     <link rel="icon" href="./assets/ronin-logo-mark.png">
     <link rel="stylesheet" href="./styles/tokens.css">
@@ -19,23 +19,44 @@
       <div class="app-main">
         <header class="topbar">
           <div class="breadcrumb" id="breadcrumb">Overview</div>
-          <form id="connection-form" class="connection-form" novalidate>
-            <label class="sr-only" for="api-url">Ronin API server URL</label>
-            <input id="api-url" type="url" value="" placeholder="API server URL (optional)" autocomplete="url" title="Leave blank to use the API serving this Studio">
-            <label class="sr-only" for="api-token">Ronin access token</label>
-            <input id="api-token" type="password" placeholder="Access token (if required)" autocomplete="off" title="A bearer token from your Ronin administrator">
-            <button class="button primary" type="submit">Save connection</button>
-          </form>
-          <details class="connection-help">
-            <summary aria-label="Explain the API connection">?</summary>
-            <p><strong>What is this?</strong> Studio needs a running Ronin API server to load or change project data. Leave the URL blank when the API serves this page. Enter the token supplied by your Ronin administrator when authentication is required; leave it blank only when your deployment allows unauthenticated access. The URL is remembered in this browser; the token stays for this session only and is sent to the configured server. Use a trusted HTTPS server when entering a token.</p>
-          </details>
+          <button class="button connection-open" type="button" data-action="open-connection" aria-label="Server connection" aria-haspopup="dialog" aria-controls="connection-dialog">
+            <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M3 5.5h14v9H3zM6 8.5h.01M9 8.5h.01M6 11.5h8"/></svg>
+            <span>Server connection</span>
+          </button>
           <button class="icon-button" data-action="open-command" aria-label="Open command menu">⌘K</button>
         </header>
         <main id="main" tabindex="0"><div id="view"></div></main>
       </div>
     </div>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <dialog id="connection-dialog" class="dialog connection-dialog" aria-labelledby="connection-title">
+      <form id="connection-form" class="connection-settings" novalidate>
+        <div class="connection-dialog-heading">
+          <div>
+            <p class="eyebrow">RONIN SETUP</p>
+            <h2 id="connection-title">Where does Ronin run?</h2>
+          </div>
+          <button class="icon-button connection-close" type="button" data-action="close-connection" aria-label="Close server settings">×</button>
+        </div>
+        <p class="connection-explanation">This page is where you work. The Ronin server stores your workspace and runs its operations. They normally connect automatically, so you do not need to know how that connection works.</p>
+        <p class="connection-default"><strong>Most people do not need to change anything.</strong> Leave the fields empty to use the Ronin server that opened this page.</p>
+        <label>Server address <span class="muted">(optional)</span>
+          <input id="api-url" class="field" type="url" placeholder="Use the server for this page" autocomplete="url" aria-describedby="api-url-help">
+        </label>
+        <p id="api-url-help" class="connection-help">Only enter a different address if your administrator gave you one.</p>
+        <label>Access key <span class="muted">(optional)</span>
+          <input id="api-token" class="field" type="password" placeholder="Only if your administrator gave you one" autocomplete="new-password" aria-describedby="api-token-help">
+        </label>
+        <p id="api-token-help" class="connection-help">Only enter a key if your administrator gave you one. Leave it empty to keep a key already saved for this tab.</p>
+        <label class="connection-clear-token"><input id="api-token-clear" type="checkbox"> Remove the saved access key from this tab</label>
+        <div class="dialog-actions">
+          <button class="button" type="button" data-action="close-connection">Cancel</button>
+          <button class="button primary" type="submit">Save connection</button>
+        </div>
+        <p class="connection-save-note">Saving applies these details to the next request. The page will show whether that request succeeds. Access keys require HTTPS; plain HTTP is allowed only on this computer (localhost).</p>
+        <p id="connection-error" class="connection-error" role="alert" hidden></p>
+      </form>
+    </dialog>
     <dialog id="confirm-dialog" class="dialog">
       <form method="dialog">
         <h2 id="confirm-title">Confirm action</h2>

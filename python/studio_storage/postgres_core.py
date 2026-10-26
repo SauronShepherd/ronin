@@ -15,11 +15,14 @@ from studio_core import (
     AssetRef,
     AssetRevision,
     CatalogAsset,
+    CatalogAssetPage,
     ConnectionDefinition,
     ConnectionId,
     LineageEdge,
+    OwnershipMetadata,
     ProjectId,
     ProjectManifest,
+    SensitivityMetadata,
     Workspace,
     WorkspaceId,
 )
@@ -35,6 +38,11 @@ from .bundle_multi_import_port import MultiObjectBundleImportCommit, MultiObject
 from .catalog import CatalogAssetNotFound, CatalogConflict
 from .connections import ConnectionConflict, ConnectionNotFound
 from .environments import EnvironmentConflict, EnvironmentNotFound
+from .pagination import (
+    decode_catalog_asset_cursor,
+    encode_catalog_asset_cursor,
+    validate_limit,
+)
 from .workspaces import (
     ProjectRegistrationConflict,
     WorkspaceConflict,
@@ -44,6 +52,36 @@ from .workspaces import (
 
 class PostgresDependencyError(RuntimeError):
     """Raised when psycopg is not installed for the server metadata profile."""
+
+
+_VERSIONED_CATALOG_METADATA_SQL = {
+    "sensitivity": {
+        "existing": "SELECT metadata_json FROM ronin_catalog_asset_sensitivity "
+        "WHERE workspace_id=%s AND asset_id=%s AND version=%s FOR UPDATE",
+        "insert": "INSERT INTO ronin_catalog_asset_sensitivity "
+        "(workspace_id,asset_id,version,metadata_json,created_at) "
+        "VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+        "version": "SELECT metadata_json FROM ronin_catalog_asset_sensitivity "
+        "WHERE workspace_id=%s AND asset_id=%s AND version=%s",
+        "latest": "SELECT metadata_json FROM ronin_catalog_asset_sensitivity "
+        "WHERE workspace_id=%s AND asset_id=%s ORDER BY version DESC LIMIT 1",
+        "list": "SELECT metadata_json FROM ronin_catalog_asset_sensitivity "
+        "WHERE workspace_id=%s AND asset_id=%s ORDER BY version",
+    },
+    "ownership": {
+        "existing": "SELECT metadata_json FROM ronin_catalog_asset_ownership "
+        "WHERE workspace_id=%s AND asset_id=%s AND version=%s FOR UPDATE",
+        "insert": "INSERT INTO ronin_catalog_asset_ownership "
+        "(workspace_id,asset_id,version,metadata_json,created_at) "
+        "VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+        "version": "SELECT metadata_json FROM ronin_catalog_asset_ownership "
+        "WHERE workspace_id=%s AND asset_id=%s AND version=%s",
+        "latest": "SELECT metadata_json FROM ronin_catalog_asset_ownership "
+        "WHERE workspace_id=%s AND asset_id=%s ORDER BY version DESC LIMIT 1",
+        "list": "SELECT metadata_json FROM ronin_catalog_asset_ownership "
+        "WHERE workspace_id=%s AND asset_id=%s ORDER BY version",
+    },
+}
 
 
 def _psycopg() -> tuple[Any, Any]:
@@ -128,6 +166,30 @@ CREATE TABLE IF NOT EXISTS ronin_catalog_revisions (
     FOREIGN KEY(workspace_id, asset_id)
         REFERENCES ronin_catalog_assets(workspace_id, asset_id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS ronin_catalog_asset_sensitivity (
+    workspace_id TEXT NOT NULL,
+    asset_id TEXT NOT NULL,
+    version INTEGER NOT NULL CHECK(version > 0),
+    metadata_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY(workspace_id, asset_id, version),
+    FOREIGN KEY (workspace_id, asset_id)
+        REFERENCES ronin_catalog_assets(workspace_id, asset_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS ronin_catalog_sensitivity_latest_idx
+    ON ronin_catalog_asset_sensitivity(workspace_id, asset_id, version DESC);
+CREATE TABLE IF NOT EXISTS ronin_catalog_asset_ownership (
+    workspace_id TEXT NOT NULL,
+    asset_id TEXT NOT NULL,
+    version INTEGER NOT NULL CHECK(version > 0),
+    metadata_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY(workspace_id, asset_id, version),
+    FOREIGN KEY (workspace_id, asset_id)
+        REFERENCES ronin_catalog_assets(workspace_id, asset_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS ronin_catalog_ownership_latest_idx
+    ON ronin_catalog_asset_ownership(workspace_id, asset_id, version DESC);
 CREATE TABLE IF NOT EXISTS ronin_lineage_edges (
     workspace_id TEXT NOT NULL REFERENCES ronin_workspaces(workspace_id) ON DELETE CASCADE,
     edge_digest TEXT NOT NULL,
@@ -885,6 +947,180 @@ class PostgresMetadataStore:
         finally:
             connection.close()
 
+    def _put_versioned_catalog_metadata(
+        self,
+        workspace_id: WorkspaceId,
+        asset_id: AssetId,
+        metadata: SensitivityMetadata | OwnershipMetadata,
+        *,
+        kind: str,
+        now: Instant | str,
+    ) -> None:
+        statements = _VERSIONED_CATALOG_METADATA_SQL.get(kind)
+        if statements is None:
+            raise ValueError("unsupported catalog metadata table")
+        current = Instant(now)
+        payload = metadata.to_json()
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                self._require_active_workspace(cursor, workspace_id)
+                cursor.execute(
+                    "SELECT 1 FROM ronin_catalog_assets "
+                    "WHERE workspace_id=%s AND asset_id=%s FOR UPDATE",
+                    (str(workspace_id), str(asset_id)),
+                )
+                if cursor.fetchone() is None:
+                    raise CatalogAssetNotFound(str(asset_id))
+                cursor.execute(
+                    statements["existing"],
+                    (str(workspace_id), str(asset_id), metadata.version),
+                )
+                existing = cursor.fetchone()
+                if existing is not None:
+                    if existing["metadata_json"] != payload:
+                        raise CatalogConflict(
+                            f"{kind} version already exists with different metadata"
+                        )
+                    connection.commit()
+                    return
+                cursor.execute(
+                    statements["insert"],
+                    (str(workspace_id), str(asset_id), metadata.version, payload, str(current)),
+                )
+                if cursor.rowcount == 0:
+                    cursor.execute(
+                        statements["version"],
+                        (str(workspace_id), str(asset_id), metadata.version),
+                    )
+                    raced = cursor.fetchone()
+                    if raced is None or raced["metadata_json"] != payload:
+                        raise CatalogConflict(
+                            f"{kind} version already exists with different metadata"
+                        )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def _get_versioned_catalog_metadata_json(
+        self,
+        workspace_id: WorkspaceId,
+        asset_id: AssetId,
+        *,
+        kind: str,
+        version: int | None,
+    ) -> str | None:
+        statements = _VERSIONED_CATALOG_METADATA_SQL.get(kind)
+        if statements is None:
+            raise ValueError("unsupported catalog metadata table")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                if version is None:
+                    cursor.execute(statements["latest"], (str(workspace_id), str(asset_id)))
+                else:
+                    cursor.execute(
+                        statements["version"],
+                        (str(workspace_id), str(asset_id), version),
+                    )
+                row = cursor.fetchone()
+                return None if row is None else str(row["metadata_json"])
+        finally:
+            connection.close()
+
+    def _list_versioned_catalog_metadata_json(
+        self, workspace_id: WorkspaceId, asset_id: AssetId, *, kind: str
+    ) -> tuple[str, ...]:
+        statements = _VERSIONED_CATALOG_METADATA_SQL.get(kind)
+        if statements is None:
+            raise ValueError("unsupported catalog metadata table")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(statements["list"], (str(workspace_id), str(asset_id)))
+                return tuple(str(row["metadata_json"]) for row in cursor.fetchall())
+        finally:
+            connection.close()
+
+    def put_sensitivity(
+        self,
+        workspace_id: WorkspaceId,
+        asset_id: AssetId,
+        metadata: SensitivityMetadata,
+        *,
+        now: Instant | str,
+    ) -> SensitivityMetadata:
+        self._put_versioned_catalog_metadata(
+            workspace_id,
+            asset_id,
+            metadata,
+            kind="sensitivity",
+            now=now,
+        )
+        return metadata
+
+    def get_sensitivity(
+        self, workspace_id: WorkspaceId, asset_id: AssetId, *, version: int | None = None
+    ) -> SensitivityMetadata | None:
+        payload = self._get_versioned_catalog_metadata_json(
+            workspace_id,
+            asset_id,
+            kind="sensitivity",
+            version=version,
+        )
+        return None if payload is None else SensitivityMetadata.from_json(payload)
+
+    def list_sensitivity_versions(
+        self, workspace_id: WorkspaceId, asset_id: AssetId
+    ) -> tuple[SensitivityMetadata, ...]:
+        return tuple(
+            SensitivityMetadata.from_json(payload)
+            for payload in self._list_versioned_catalog_metadata_json(
+                workspace_id, asset_id, kind="sensitivity"
+            )
+        )
+
+    def put_ownership(
+        self,
+        workspace_id: WorkspaceId,
+        asset_id: AssetId,
+        metadata: OwnershipMetadata,
+        *,
+        now: Instant | str,
+    ) -> OwnershipMetadata:
+        self._put_versioned_catalog_metadata(
+            workspace_id,
+            asset_id,
+            metadata,
+            kind="ownership",
+            now=now,
+        )
+        return metadata
+
+    def get_ownership(
+        self, workspace_id: WorkspaceId, asset_id: AssetId, *, version: int | None = None
+    ) -> OwnershipMetadata | None:
+        payload = self._get_versioned_catalog_metadata_json(
+            workspace_id,
+            asset_id,
+            kind="ownership",
+            version=version,
+        )
+        return None if payload is None else OwnershipMetadata.from_json(payload)
+
+    def list_ownership_versions(
+        self, workspace_id: WorkspaceId, asset_id: AssetId
+    ) -> tuple[OwnershipMetadata, ...]:
+        return tuple(
+            OwnershipMetadata.from_json(payload)
+            for payload in self._list_versioned_catalog_metadata_json(
+                workspace_id, asset_id, kind="ownership"
+            )
+        )
+
     def list_assets(
         self, workspace_id: WorkspaceId, *, limit: int | None = None
     ) -> tuple[CatalogAsset, ...]:
@@ -907,6 +1143,89 @@ class PostgresMetadataStore:
                     raise ValueError("catalog asset inventory exceeded its bound")
                 return tuple(CatalogAsset.from_json(row["definition_json"]) for row in rows)
         finally:
+            connection.close()
+
+    def list_assets_page(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> CatalogAssetPage:
+        return self._assets_page(workspace_id, query="", limit=limit, cursor=cursor)
+
+    def search_assets_page(
+        self,
+        workspace_id: WorkspaceId,
+        query: str,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> CatalogAssetPage:
+        term = query.strip().casefold()
+        if not term:
+            raise ValueError("catalog search query must not be empty")
+        return self._assets_page(workspace_id, query=term, limit=limit, cursor=cursor)
+
+    def _assets_page(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        query: str,
+        limit: int,
+        cursor: str | None,
+    ) -> CatalogAssetPage:
+        validate_limit(limit)
+        after_asset_id = (
+            ""
+            if cursor is None
+            else decode_catalog_asset_cursor(cursor, workspace_id=str(workspace_id), query=query)
+        )
+        matches: list[CatalogAsset] = []
+        connection = self._connect()
+        db_cursor = connection.cursor(name="ronin_catalog_assets_page")
+        try:
+            db_cursor.execute(
+                "SELECT asset_id,definition_json FROM ronin_catalog_assets "
+                "WHERE workspace_id=%s AND asset_id>%s ORDER BY asset_id",
+                (str(workspace_id), after_asset_id),
+            )
+            while len(matches) <= limit:
+                rows = db_cursor.fetchmany(128)
+                if not rows:
+                    break
+                for row in rows:
+                    asset = CatalogAsset.from_json(row["definition_json"])
+                    if query:
+                        haystack = " ".join(
+                            (
+                                str(asset.id),
+                                asset.kind,
+                                asset.name,
+                                *asset.tags,
+                                *asset.classifications,
+                            )
+                        ).casefold()
+                        if query not in haystack:
+                            continue
+                    matches.append(asset)
+                    if len(matches) > limit:
+                        break
+            has_more = len(matches) > limit
+            page_items = tuple(matches[:limit])
+            next_cursor = (
+                encode_catalog_asset_cursor(
+                    workspace_id=str(workspace_id),
+                    query=query,
+                    after_asset_id=str(page_items[-1].id),
+                )
+                if has_more
+                else None
+            )
+            return CatalogAssetPage(page_items, next_cursor)
+        finally:
+            db_cursor.close()
+            connection.rollback()
             connection.close()
 
     def healthcheck(self) -> bool:
@@ -932,14 +1251,33 @@ class PostgresMetadataStore:
             raise ValueError("catalog search query must not be empty")
         if limit < 1 or limit > 1_000:
             raise ValueError("catalog search limit must be between 1 and 1000")
-        matches = []
-        for asset in self.list_assets(workspace_id):
-            haystack = " ".join(
-                (str(asset.id), asset.kind, asset.name, *asset.tags, *asset.classifications)
-            ).casefold()
-            if term in haystack:
-                matches.append(asset)
-        return tuple(matches[:limit])
+        matches: list[CatalogAsset] = []
+        connection = self._connect()
+        cursor = connection.cursor(name="ronin_catalog_asset_search")
+        try:
+            cursor.execute(
+                "SELECT definition_json FROM ronin_catalog_assets "
+                "WHERE workspace_id=%s ORDER BY asset_id",
+                (str(workspace_id),),
+            )
+            while len(matches) < limit:
+                rows = cursor.fetchmany(128)
+                if not rows:
+                    break
+                for row in rows:
+                    asset = CatalogAsset.from_json(row["definition_json"])
+                    haystack = " ".join(
+                        (str(asset.id), asset.kind, asset.name, *asset.tags, *asset.classifications)
+                    ).casefold()
+                    if term in haystack:
+                        matches.append(asset)
+                        if len(matches) == limit:
+                            break
+            return tuple(matches)
+        finally:
+            cursor.close()
+            connection.rollback()
+            connection.close()
 
     def put_revision(
         self, workspace_id: WorkspaceId, revision: AssetRevision, *, now: Instant | str
@@ -1382,6 +1720,23 @@ class PostgresMetadataStore:
                         execution_ref,
                         limit,
                     ),
+                )
+                return tuple(LineageEdge.from_json(row["edge_json"]) for row in cursor.fetchall())
+        finally:
+            connection.close()
+
+    def list_lineage(
+        self, workspace_id: WorkspaceId, *, limit: int = 1000
+    ) -> tuple[LineageEdge, ...]:
+        if limit < 1 or limit > 10_000:
+            raise ValueError("lineage limit must be between 1 and 10000")
+        connection = self._connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT edge_json FROM ronin_lineage_edges WHERE workspace_id=%s "
+                    "ORDER BY edge_digest LIMIT %s",
+                    (str(workspace_id), limit),
                 )
                 return tuple(LineageEdge.from_json(row["edge_json"]) for row in cursor.fetchall())
         finally:

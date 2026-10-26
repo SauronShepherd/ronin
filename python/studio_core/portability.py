@@ -91,6 +91,8 @@ class BundleEntry:
         _require_text(self.media_type, "bundle entry media_type")
         _require_text(self.digest_algorithm, "bundle entry digest_algorithm")
         _require_text(self.digest, "bundle entry digest")
+        if not isinstance(self.size_bytes, int) or isinstance(self.size_bytes, bool):
+            raise ValueError("bundle entry size_bytes must be an integer")
         if self.size_bytes < 0:
             raise ValueError("bundle entry size_bytes must be non-negative")
 

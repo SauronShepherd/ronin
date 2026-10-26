@@ -22,6 +22,7 @@ from studio_core import (
     AssetRevision,
     AssetVersion,
     CatalogAsset,
+    CatalogAssetPage,
     ConnectionId,
     ConnectorCapabilities,
     ConnectorDescriptor,
@@ -308,14 +309,29 @@ class _CatalogGovernance:
         self.sensitivity = {}
         self.ownership = {}
         self.assets = {}
+        self.last_asset_limit = None
+        self.last_asset_cursor = None
 
-    def list_assets(self, workspace_id):
+    def list_assets(self, workspace_id, *, limit=None):
         del workspace_id
+        self.last_asset_limit = limit
         return ()
 
     def search_assets(self, workspace_id, query, *, limit=100):
         del workspace_id, query, limit
         return ()
+
+    def list_assets_page(self, workspace_id, *, limit=50, cursor=None):
+        del workspace_id
+        self.last_asset_limit = limit
+        self.last_asset_cursor = cursor
+        return CatalogAssetPage((), None)
+
+    def search_assets_page(self, workspace_id, query, *, limit=50, cursor=None):
+        del workspace_id, query
+        self.last_asset_limit = limit
+        self.last_asset_cursor = cursor
+        return CatalogAssetPage((), None)
 
     def put_sensitivity(self, workspace_id, asset_id, metadata, *, now):
         del now
@@ -1262,6 +1278,42 @@ def test_catalog_asset_create_and_replace_routes_validate_path_identity() -> Non
         )
     assert status == 400
     assert payload["error"]["code"] == "invalid_request"
+
+
+def test_catalog_asset_listing_passes_the_http_bound_to_storage() -> None:
+    store = _Store()
+    catalog = _CatalogGovernance()
+    with _server(store, _Authorizer(), catalog_reader=catalog) as address:
+        status, payload = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/catalog/assets?limit=17",
+        )
+    assert status == 200
+    assert payload == {"items": [], "next_cursor": None}
+    assert catalog.last_asset_limit == 17
+
+
+def test_catalog_asset_listing_passes_cursor_and_rejects_invalid_query() -> None:
+    store = _Store()
+    catalog = _CatalogGovernance()
+    with _server(store, _Authorizer(), catalog_reader=catalog) as address:
+        status, payload = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/catalog/assets?q=orders&limit=9&cursor=opaque",
+        )
+        assert status == 200
+        assert payload == {"items": [], "next_cursor": None}
+        assert catalog.last_asset_cursor == "opaque"
+
+        status, payload = _request(
+            address,
+            "GET",
+            f"/v1/workspaces/{_WS_A}/catalog/assets?limit=9&limit=10",
+        )
+    assert status == 400
+    assert payload["error"]["message"] == "catalog query parameters are invalid"
 
 
 def test_catalog_lineage_route_requires_explicit_supported_direction() -> None:

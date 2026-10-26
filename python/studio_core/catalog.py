@@ -258,6 +258,24 @@ class CatalogAsset:
 
 
 @dataclass(frozen=True, slots=True)
+class CatalogAssetPage:
+    """Bounded, ordered catalog response with an opaque continuation cursor."""
+
+    items: tuple[CatalogAsset, ...]
+    next_cursor: str | None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.items, tuple) or any(
+            not isinstance(asset, CatalogAsset) for asset in self.items
+        ):
+            raise ValueError("catalog page items must be a tuple of catalog assets")
+        if self.next_cursor is not None and (
+            not isinstance(self.next_cursor, str) or not self.next_cursor
+        ):
+            raise ValueError("catalog page cursor must be non-empty when present")
+
+
+@dataclass(frozen=True, slots=True)
 class AssetRevision:
     """Version-addressable metadata about one committed asset state/snapshot."""
 

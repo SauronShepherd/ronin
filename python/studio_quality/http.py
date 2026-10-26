@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import cast
 
-from studio_core import AssetRef, DataContract, QualityRunId, WorkspaceId
+from studio_core import AssetRef, DataContract, QualityRun, QualityRunId, WorkspaceId
 from studio_orchestrator import Instant
 
+from .evaluator import DEFAULT_QUALITY_EVALUATION_BUDGET, QualityEvaluationBudget
 from .service import (
+    QualityExecutionBlocked,
     QualityExecutionStore,
-    execute_quality,
+    execute_quality_with_gate,
     list_quality_runs,
+    quality_run_payload,
     quality_state_summary,
 )
 
@@ -19,8 +22,16 @@ from .service import (
 class QualityHTTPAdapter:
     """Translate bounded public quality payloads into the quality service."""
 
-    def __init__(self, store: QualityExecutionStore) -> None:
+    def __init__(
+        self,
+        store: QualityExecutionStore,
+        *,
+        budget: QualityEvaluationBudget = DEFAULT_QUALITY_EVALUATION_BUDGET,
+        on_run: Callable[[WorkspaceId, QualityRun, Instant], object] | None = None,
+    ) -> None:
         self._store = store
+        self._budget = budget
+        self._on_run = on_run
 
     def get_contract(
         self, workspace_id: WorkspaceId, payload: Mapping[str, object]
@@ -50,6 +61,7 @@ class QualityHTTPAdapter:
         rows = payload["rows"]
         if not isinstance(rows, list) or not all(isinstance(row, Mapping) for row in rows):
             raise ValueError("quality rows must be an array of objects")
+        self._budget.validate_rows(rows)
         run_id = payload["run_id"]
         if not isinstance(run_id, str) or not run_id.strip():
             raise ValueError("quality run_id must be a non-empty string")
@@ -69,7 +81,7 @@ class QualityHTTPAdapter:
         ):
             raise ValueError("quality contract_digest must be a lowercase SHA-256 digest")
         asset = AssetRef.from_payload(payload["asset"])
-        run = execute_quality(
+        outcome = execute_quality_with_gate(
             self._store,
             workspace_id,
             asset,
@@ -78,16 +90,26 @@ class QualityHTTPAdapter:
             expected_contract_digest=expected_contract_digest,
             execution_ref=execution_ref,
             now=now,
-            enforce_blocking=enforce_blocking,
+            budget=self._budget,
         )
-        return {"run": run.to_payload(), "gate_passed": run.status == "passed"}
+        if self._on_run is not None:
+            get_run_created_at = getattr(self._store, "get_run_created_at", None)
+            if not callable(get_run_created_at):
+                raise TypeError("quality alert integration requires a durable run timestamp reader")
+            observed_at = get_run_created_at(workspace_id, outcome.run.id)
+            if observed_at is None:
+                raise RuntimeError("recorded quality run is missing its durable timestamp")
+            self._on_run(workspace_id, outcome.run, observed_at)
+        if enforce_blocking and not outcome.gate_passed:
+            raise QualityExecutionBlocked(outcome.run)
+        return {"run": quality_run_payload(outcome.run), "gate_passed": outcome.gate_passed}
 
     def history(
         self, workspace_id: WorkspaceId, payload: Mapping[str, object]
     ) -> tuple[dict[str, object], ...]:
         asset = AssetRef.from_payload(payload)
         return tuple(
-            run.to_payload() for run in list_quality_runs(self._store, workspace_id, asset)
+            quality_run_payload(run) for run in list_quality_runs(self._store, workspace_id, asset)
         )
 
     def state(self, workspace_id: WorkspaceId, payload: Mapping[str, object]) -> dict[str, object]:

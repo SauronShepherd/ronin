@@ -36,6 +36,13 @@ class SqliteTelemetryStore:
                 );
                 CREATE INDEX IF NOT EXISTS telemetry_metrics_name_time_idx
                     ON telemetry_metrics(name, observed_at);
+                CREATE TABLE IF NOT EXISTS quality_metric_batches (
+                    workspace_id TEXT NOT NULL,
+                    quality_run_id TEXT NOT NULL,
+                    batch_digest TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    PRIMARY KEY(workspace_id, quality_run_id)
+                );
                 CREATE TABLE IF NOT EXISTS telemetry_events (
                     event_id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
@@ -247,6 +254,79 @@ class SqliteTelemetryStore:
             )
             connection.commit()
             return point
+        finally:
+            connection.close()
+
+    def record_quality_metrics_once(
+        self,
+        workspace_id: str,
+        run_id: str,
+        points: tuple[MetricPoint, ...],
+    ) -> bool:
+        """Atomically persist one workspace-scoped quality metric batch per run ID."""
+        if not points or len(points) > 101:
+            raise ValueError("quality metric batch must contain between 1 and 101 points")
+        run_id_text = run_id
+        observed_at = points[0].observed_at
+        if any(point.observed_at != observed_at for point in points):
+            raise ValueError("quality metric batch points must share one observation time")
+        if any(dict(point.attributes).get("run_id") != run_id_text for point in points):
+            raise ValueError("quality metric batch points must identify the same quality run")
+        point_ids = tuple(
+            "metric-"
+            + hashlib.sha256(f"{workspace_id}\n{self._metric_id(point)}".encode()).hexdigest()
+            for point in points
+        )
+        batch_digest = hashlib.sha256(
+            json.dumps(
+                {
+                    "workspace_id": workspace_id,
+                    "quality_run_id": run_id_text,
+                    "metric_ids": point_ids,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            existing = connection.execute(
+                "SELECT batch_digest FROM quality_metric_batches "
+                "WHERE workspace_id=? AND quality_run_id=?",
+                (workspace_id, run_id_text),
+            ).fetchone()
+            if existing is not None:
+                if existing[0] != batch_digest:
+                    raise ValueError("quality metric batch identity conflicts with prior evidence")
+                connection.execute("COMMIT")
+                return False
+            connection.execute(
+                "INSERT INTO quality_metric_batches("
+                "workspace_id,quality_run_id,batch_digest,created_at) VALUES (?,?,?,?)",
+                (workspace_id, run_id_text, batch_digest, str(observed_at)),
+            )
+            for point, metric_id in zip(points, point_ids, strict=True):
+                connection.execute(
+                    "INSERT OR IGNORE INTO telemetry_metrics("
+                    "metric_id,name,value,unit,kind,observed_at,attributes_json) "
+                    "VALUES (?,?,?,?,?,?,?)",
+                    (
+                        metric_id,
+                        point.name,
+                        point.value,
+                        point.unit,
+                        point.kind,
+                        str(point.observed_at),
+                        self._attributes_json(point.attributes),
+                    ),
+                )
+            connection.execute("COMMIT")
+            return True
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
         finally:
             connection.close()
 

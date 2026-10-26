@@ -6,7 +6,11 @@ import time
 from types import SimpleNamespace
 
 import pytest
-from studio_cli.local_composed import _workflow_reader_for_backend, build_local_composed_from_env
+from studio_cli.local_composed import (
+    _catalog_reader_for_backend,
+    _workflow_reader_for_backend,
+    build_local_composed_from_env,
+)
 from studio_core import AssetId, ConnectionDefinition, ConnectionId, WorkspaceId
 from studio_core.canonical_json import decode as decode_canonical_json
 from studio_execution import PostgresWorkflowHTTPAdapter, SqliteWorkflowHTTPAdapter
@@ -75,6 +79,20 @@ def test_workflow_routes_use_the_complete_sqlite_scheduler_contract(tmp_path) ->
     assert isinstance(reader, SqliteWorkflowHTTPAdapter)
 
 
+def test_catalog_routes_require_the_complete_store_contract(tmp_path) -> None:
+    complete = object.__new__(PostgresSchedulerSnapshotStore)
+    assert _catalog_reader_for_backend(complete) is complete
+    assert (
+        _catalog_reader_for_backend(SimpleNamespace(list_assets=lambda *_args, **_kwargs: ()))
+        is None
+    )
+
+    sqlite_store = SqliteCatalogStore(
+        tmp_path / "catalog.sqlite3", migration_now="2026-10-17T00:00:00.000000Z"
+    )
+    assert _catalog_reader_for_backend(sqlite_store) is sqlite_store
+
+
 def test_build_local_composed_from_env_creates_two_surface_composition(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
@@ -94,6 +112,7 @@ def test_build_local_composed_from_env_creates_two_surface_composition(
     assert composition.control_plane_server.connector_registry is not None
     assert composition.control_plane_server.ingestion_adapter is not None
     assert composition.control_plane_server.durable_jobs is composition.job_server.application
+    assert composition.control_plane_server.alert_reader is not None
     workspace = composition.control_plane_server.workspace_service.get(WorkspaceId("workspace-1"))
     assert workspace.name == "Local workspace"
     assert composition.control_plane_server.plugin_routes_enabled

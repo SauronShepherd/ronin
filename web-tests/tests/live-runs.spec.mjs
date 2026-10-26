@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 const liveUrl = process.env.RONIN_STUDIO_E2E_URL;
 const token = process.env.RONIN_STUDIO_E2E_TOKEN;
 
-test('live Runs connects without submitting a connection and retains the project filter', async ({ page }) => {
+test('live Runs saves server settings and retains the project filter', async ({ page }) => {
   test.skip(!liveUrl || !token, 'requires a running Ronin API and RONIN_STUDIO_E2E_TOKEN');
 
   const apiOrigin = new URL(liveUrl).origin;
@@ -22,9 +22,10 @@ test('live Runs connects without submitting a connection and retains the project
   page.on('pageerror', error => pageErrors.push(error.message));
 
   await page.goto(new URL('/studio/#runs', apiOrigin).toString(), { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'Server connection' }).click();
   await page.locator('#api-url').fill(apiOrigin);
   await page.locator('#api-token').fill(token);
-  await page.getByRole('button', { name: 'Connect' }).click();
+  await page.getByRole('button', { name: 'Save connection' }).click();
   await expect(page.locator('#run-result')).toContainText('Enter a project ID to load runs');
   expect(jobResponses).toEqual([]);
   await page.locator('#run-project').fill('examples/demo');

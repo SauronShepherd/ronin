@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import cast
 
 import pytest
 from studio_data_engineering import (
@@ -33,6 +34,65 @@ def test_outbox_is_idempotent_and_publishable(tmp_path: Path) -> None:
     assert store.mark_published("event-1") is True
     assert store.mark_published("event-1") is False
     assert store.pending_events() == ()
+
+
+def test_outbox_filters_multiple_event_types_with_a_shared_limit(tmp_path: Path) -> None:
+    store = SqliteCompilationStore(tmp_path / "ronin.db")
+    for event_id, event_type in (
+        ("event-a", "lineage.run.v1"),
+        ("event-b", "lineage.dataset.v1"),
+        ("event-c", "unrelated.v1"),
+    ):
+        store.enqueue(
+            event_id=event_id,
+            event_type=event_type,
+            aggregate_key="aggregate",
+            payload={"id": event_id},
+        )
+
+    pending = store.pending_events(limit=1, event_type=("lineage.run.v1", "lineage.dataset.v1"))
+    assert len(pending) == 1
+    assert pending[0]["event_id"] == "event-a"
+    assert store.pending_events(event_type=("lineage.dataset.v1",))[0]["event_id"] == "event-b"
+
+
+def test_outbox_pending_queries_use_bounded_lookup_indexes(tmp_path: Path) -> None:
+    store = SqliteCompilationStore(tmp_path / "ronin.db")
+    connection = store._connect()
+    try:
+        unfiltered = connection.execute(
+            "EXPLAIN QUERY PLAN SELECT event_id,event_type,aggregate_key,payload_json "
+            "FROM de_outbox WHERE published_at IS NULL "
+            "ORDER BY created_at,event_id LIMIT ?",
+            (100,),
+        ).fetchall()
+        filtered = connection.execute(
+            "EXPLAIN QUERY PLAN SELECT event_id,event_type,aggregate_key,payload_json "
+            "FROM de_outbox WHERE published_at IS NULL AND event_type=? "
+            "ORDER BY created_at,event_id LIMIT ?",
+            ("openlineage.run-event.v1", 100),
+        ).fetchall()
+    finally:
+        connection.close()
+
+    assert any("de_outbox_pending_order_idx" in str(row[3]) for row in unfiltered)
+    assert any("de_outbox_pending_type_idx" in str(row[3]) for row in filtered)
+
+
+@pytest.mark.parametrize(
+    "event_types",
+    [
+        (),
+        ("lineage.run.v1", "lineage.run.v1"),
+        ("lineage.run.v1", " "),
+        cast(tuple[str, ...], (1,)),
+        tuple(f"event-{index}" for index in range(17)),
+    ],
+)
+def test_outbox_rejects_invalid_event_type_filters(tmp_path: Path, event_types) -> None:
+    store = SqliteCompilationStore(tmp_path / "ronin.db")
+    with pytest.raises(ValueError, match="event type filters"):
+        store.pending_events(event_type=event_types)
 
 
 def test_latest_report_query_returns_ir_digest(tmp_path: Path) -> None:

@@ -302,7 +302,10 @@ def test_real_docker_worker_executes_demo_against_postgres(tmp_path: Path) -> No
                 cpus="0.5",
                 memory="128m",
                 pids=32,
-                timeout_seconds=10.0,
+                # PostgreSQL-backed execution makes several round trips from
+                # the isolated cell container. Keep a firm bound while
+                # allowing slow Docker hosts to complete the real workload.
+                timeout_seconds=45.0,
             ),
             heartbeat_interval_seconds=10.0,
         )

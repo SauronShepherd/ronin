@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import math
+import time
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from typing import TypeAlias, cast
@@ -19,6 +22,73 @@ from studio_core import (
 from .sandbox import evaluate_python_predicate
 
 Row: TypeAlias = Mapping[str, object]
+
+
+@dataclass(frozen=True, slots=True)
+class QualityEvaluationBudget:
+    """Hard input bounds and a cooperative wall-time budget for evaluation."""
+
+    max_rows: int = 10_000
+    max_row_bytes: int = 64 * 1024
+    max_total_bytes: int = 4 * 1024 * 1024
+    max_cells: int = 250_000
+    max_rules: int = 100
+    max_wall_time_seconds: float = 30.0
+
+    def __post_init__(self) -> None:
+        for name in ("max_rows", "max_row_bytes", "max_total_bytes", "max_cells", "max_rules"):
+            value = getattr(self, name)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+                raise ValueError(f"quality budget {name} must be a positive integer")
+        if (
+            not isinstance(self.max_wall_time_seconds, (int, float))
+            or isinstance(self.max_wall_time_seconds, bool)
+            or not math.isfinite(self.max_wall_time_seconds)
+            or self.max_wall_time_seconds <= 0
+            or self.max_wall_time_seconds > 300
+        ):
+            raise ValueError("quality budget max_wall_time_seconds must be between 0 and 300")
+
+    def validate_rows(self, rows: Sequence[Row]) -> None:
+        if len(rows) > self.max_rows:
+            raise ValueError(f"quality row budget exceeded: maximum is {self.max_rows}")
+        total_bytes = 0
+        total_cells = 0
+        for index, row in enumerate(rows):
+            if not isinstance(row, Mapping) or not all(isinstance(key, str) for key in row):
+                raise ValueError("quality rows must be objects with string keys")
+            total_cells += len(row)
+            if total_cells > self.max_cells:
+                raise ValueError(f"quality cell budget exceeded: maximum is {self.max_cells}")
+            try:
+                encoded = json.dumps(
+                    dict(row),
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=True,
+                    default=str,
+                ).encode("utf-8")
+            except (RecursionError, TypeError, ValueError, UnicodeEncodeError) as exc:
+                raise ValueError(f"quality row {index} is not valid bounded JSON data") from exc
+            if len(encoded) > self.max_row_bytes:
+                raise ValueError(
+                    f"quality row byte budget exceeded at row {index}: maximum is "
+                    f"{self.max_row_bytes}"
+                )
+            total_bytes += len(encoded)
+            if total_bytes > self.max_total_bytes:
+                raise ValueError(
+                    f"quality total input byte budget exceeded: maximum is {self.max_total_bytes}"
+                )
+
+    def validate(self, contract: DataContract, rows: Sequence[Row]) -> None:
+        self.validate_rows(rows)
+        if len(contract.rules) > self.max_rules:
+            raise ValueError(f"quality rule budget exceeded: maximum is {self.max_rules}")
+
+
+DEFAULT_QUALITY_EVALUATION_BUDGET = QualityEvaluationBudget()
 
 
 def _parameters(rule: QualityRule) -> dict[str, str]:
@@ -245,24 +315,31 @@ def evaluate_rule(
     reference_values: Callable[[QualityRule], Sequence[object]] | None = None,
     custom_sql: Callable[[QualityRule, Sequence[Row]], bool] | None = None,
     custom_python: Callable[[QualityRule, Sequence[Row]], bool] | None = None,
+    budget: QualityEvaluationBudget = DEFAULT_QUALITY_EVALUATION_BUDGET,
+    deadline: float | None = None,
+    _inputs_validated: bool = False,
 ) -> QualityResult:
     """Evaluate one built-in rule; unsupported executable kinds report typed errors."""
 
     current = (now or datetime.now(UTC)).astimezone(UTC)
     try:
+        if not _inputs_validated:
+            budget.validate_rows(rows)
+        if deadline is not None and time.monotonic() >= deadline:
+            raise ValueError("quality evaluation exceeded wall-time budget")
         if rule.kind == "null":
-            return _evaluate_null(rule, rows)
-        if rule.kind == "unique":
-            return _evaluate_unique(rule, rows)
-        if rule.kind == "range":
-            return _evaluate_range(rule, rows)
-        if rule.kind == "domain":
-            return _evaluate_domain(rule, rows)
-        if rule.kind == "row_count":
-            return _evaluate_row_count(rule, rows)
-        if rule.kind == "freshness":
-            return _evaluate_freshness(rule, rows, now=current, contract=contract)
-        if rule.kind == "referential":
+            result = _evaluate_null(rule, rows)
+        elif rule.kind == "unique":
+            result = _evaluate_unique(rule, rows)
+        elif rule.kind == "range":
+            result = _evaluate_range(rule, rows)
+        elif rule.kind == "domain":
+            result = _evaluate_domain(rule, rows)
+        elif rule.kind == "row_count":
+            result = _evaluate_row_count(rule, rows)
+        elif rule.kind == "freshness":
+            result = _evaluate_freshness(rule, rows, now=current, contract=contract)
+        elif rule.kind == "referential":
             if reference_values is None:
                 return _error(rule, "referential rules require a reference-dataset resolver")
             values = _field_values(rule, rows)
@@ -273,42 +350,51 @@ def evaluate_rule(
                 ("reference_count", str(len(references))),
             )
             if violations == 0:
-                return _passed(rule, observed)
-            return _failed(
-                rule, observed, f"found {violations} value(s) missing from reference data"
-            )
-        if rule.kind == "custom_sql":
+                result = _passed(rule, observed)
+            else:
+                result = _failed(
+                    rule, observed, f"found {violations} value(s) missing from reference data"
+                )
+        elif rule.kind == "custom_sql":
             if custom_sql is None:
                 return _error(rule, "custom_sql execution is not enabled in the built-in evaluator")
             passed = custom_sql(rule, rows)
             custom_observed: tuple[tuple[str, str], ...] = (
                 ("predicate_passed", str(bool(passed)).lower()),
             )
-            return (
+            result = (
                 _passed(rule, custom_observed)
                 if passed
                 else _failed(rule, custom_observed, "custom SQL predicate failed")
             )
-        if rule.kind == "custom_python":
+        elif rule.kind == "custom_python":
             expression = _parameters(rule).get("expression")
             if custom_python is None and expression is None:
                 return _error(
                     rule, "custom_python execution is not enabled in the built-in evaluator"
                 )
-            passed = (
-                evaluate_python_predicate(cast(str, expression), rows)
-                if custom_python is None
-                else custom_python(rule, rows)
-            )
+            if custom_python is None:
+                remaining = 10.0 if deadline is None else min(10.0, deadline - time.monotonic())
+                if remaining <= 0:
+                    raise ValueError("quality evaluation exceeded wall-time budget")
+                passed = evaluate_python_predicate(
+                    cast(str, expression), rows, timeout_seconds=remaining, max_rows=budget.max_rows
+                )
+            else:
+                passed = custom_python(rule, rows)
             python_observed: tuple[tuple[str, str], ...] = (
                 ("predicate_passed", str(bool(passed)).lower()),
             )
-            return (
+            result = (
                 _passed(rule, python_observed)
                 if passed
                 else _failed(rule, python_observed, "custom Python predicate failed")
             )
-        return _error(rule, f"unsupported quality rule kind: {rule.kind}")
+        else:
+            return _error(rule, f"unsupported quality rule kind: {rule.kind}")
+        if deadline is not None and time.monotonic() >= deadline:
+            return _error(rule, "quality evaluation exceeded wall-time budget")
+        return result
     except (TypeError, ValueError) as exc:
         return _error(rule, str(exc))
 
@@ -323,21 +409,29 @@ def evaluate_contract(
     reference_values: Callable[[QualityRule], Sequence[object]] | None = None,
     custom_sql: Callable[[QualityRule, Sequence[Row]], bool] | None = None,
     custom_python: Callable[[QualityRule, Sequence[Row]], bool] | None = None,
+    budget: QualityEvaluationBudget = DEFAULT_QUALITY_EVALUATION_BUDGET,
 ) -> QualityRun:
     """Evaluate all contract rules deterministically into one immutable QualityRun."""
 
-    results = tuple(
-        evaluate_rule(
-            rule,
-            rows,
-            contract=contract,
-            now=now,
-            reference_values=reference_values,
-            custom_sql=custom_sql,
-            custom_python=custom_python,
+    budget.validate(contract, rows)
+    deadline = time.monotonic() + budget.max_wall_time_seconds
+    results_list: list[QualityResult] = []
+    for rule in contract.rules:
+        results_list.append(
+            evaluate_rule(
+                rule,
+                rows,
+                contract=contract,
+                now=now,
+                reference_values=reference_values,
+                custom_sql=custom_sql,
+                custom_python=custom_python,
+                budget=budget,
+                deadline=deadline,
+                _inputs_validated=True,
+            )
         )
-        for rule in contract.rules
-    )
+    results = tuple(results_list)
     return QualityRun(run_id, contract.asset, execution_ref, results)
 
 
@@ -352,4 +446,11 @@ def blocking_failures(contract: DataContract, run: QualityRun) -> tuple[QualityR
     )
 
 
-__all__ = ("Row", "blocking_failures", "evaluate_contract", "evaluate_rule")
+__all__ = (
+    "DEFAULT_QUALITY_EVALUATION_BUDGET",
+    "QualityEvaluationBudget",
+    "Row",
+    "blocking_failures",
+    "evaluate_contract",
+    "evaluate_rule",
+)

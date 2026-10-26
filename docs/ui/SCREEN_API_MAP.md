@@ -18,7 +18,7 @@ are not exposed in the Public Studio or its API.
 | Synthetic Data | `#synthetic` | `/v1/synthetic-data-studio/*` | Available |
 | Machine Learning Studio | `#mlstudio` | `/v1/ml-studio/*` | Available |
 | Workflows | `#workflows` | `/v1/workspaces/{id}/schedules*`, `/event-triggers*`, `/backfills*`, `/workflow-runs*` | Available |
-| SQL | `#sql` | `/v1/workspaces/{id}/projects/{id}/sql/query` | Available |
+| SQL | `#sql` | `POST /v1/sql` (bounded read-only SQL); `/v1/workspaces/{id}/projects/{id}/sql/query` | Available |
 | Semantic Studio | `#semantic` | `/v1/workspaces/{id}/projects/{id}/semantic/*` | Available |
 | Catalog | `#catalog` | `/v1/workspaces/{id}/catalog/assets` | Available |
 | Data Engineering | `#data` | `/v1/data-engineering/*`, `/v1/workspaces/{id}/connections*` | Available |

@@ -253,6 +253,17 @@ class SqliteQualityStore:
         finally:
             connection.close()
 
+    def get_run_created_at(self, workspace_id: WorkspaceId, run_id: QualityRunId) -> Instant | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT created_at FROM quality_runs WHERE workspace_id=? AND quality_run_id=?",
+                (str(workspace_id), str(run_id)),
+            ).fetchone()
+            return None if row is None else Instant(row["created_at"])
+        finally:
+            connection.close()
+
     def list_runs(self, workspace_id: WorkspaceId, ref: AssetRef) -> tuple[QualityRun, ...]:
         connection = self._connect()
         try:
