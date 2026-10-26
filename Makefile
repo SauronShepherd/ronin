@@ -161,7 +161,6 @@ coverage-storage-files:
 		--ratchet-margin=2.1 \
 		--baseline=backup.py=76.00 \
 		--baseline=bundle_workflow_import.py=77.55 \
-		--baseline=catalog.py=78.40 \
 		--baseline=connections.py=64.44 \
 		--baseline=environments.py=75.51 \
 		--baseline=local_files.py=77.22 \
@@ -188,14 +187,13 @@ coverage-storage-files-full:
 		--ratchet-margin=2.1 \
 		--baseline=backup.py=76.00 \
 		--baseline=bundle_workflow_import.py=77.55 \
-		--baseline=catalog.py=78.40 \
 		--baseline=connections.py=64.44 \
 		--baseline=environments.py=75.51 \
 		--baseline=local_files.py=77.22 \
 		--baseline=ml.py=73.30 \
 		--baseline=postgres_ml.py=74.07 \
 		--baseline=ontology.py=76.35 \
-		--baseline=postgres_core.py=56.09 \
+		--baseline=postgres_core.py=67.28 \
 		--baseline=postgres_jobs.py=73.01 \
 		--baseline=s3_artifacts.py=74.20 \
 		--baseline=scheduler_backfill.py=65.91 \

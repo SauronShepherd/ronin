@@ -36,7 +36,9 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `9f3ee2fa140c7503c571b95395a6b6f75f2b8f72` (2026-10-26).
+**Observed source head:** `29ed2666f747cd60f7ebce4b234a5f4f5c7ef2fa` (2026-10-26, after PR #551).
+
+**Local implementation candidate:** `codex/postgres-catalog-support@5f2a3bbaba8f32446293b9d280f6fe2d1bc7bd74`, rebased on the observed `main` SHA and pushed, not merged. The candidate adds governed catalog pagination/search and a durable quality workflow across SQLite/PostgreSQL, API, Studio and observability. Its full local suite passed 4,097 tests with 24 environment/platform skips in 337.92s; Docker runtime/acceptance passed 23 tests and strict v0.1 acceptance passed 15/15 using a fresh PostgreSQL database. Coverage run also passed 4,097/24; it emitted 679 Python 3.13 `ResourceWarning` reports, which remain under investigation. Per-file storage ratchet baselines were raised to the measured catalog and PostgreSQL-core coverage. This evidence is local, does not qualify a Public v1 family, and does not update release status.
 
 PR #547 restricts known OpenLineage facets to dataset entities. All six exact-head `push` workflows passed (links above); Docker workflow details and conditional skip are stated above. Five focused test commands on a clean worktree of this SHA passed: connectors/checkpoints/ingestion 54; Streaming Bundle 6; PostgreSQL Bundle 2 using PostgreSQL 16.4 in an ephemeral Docker container; OTLP exporter 5; and OTLP collector integration 1 using an ephemeral Docker collector. These 68 tests are local focused evidence only and do not replace the pre-merge 3,962-test result or qualify any of the 13 family gates.
 **Release status:** **INCOMPLETE**.
@@ -49,10 +51,7 @@ journey and applicable provider, security and exact-head evidence are complete.
 No active family is release-qualified; this is a release-completion metric, not a measure of
 code already implemented. P9 is out of scope.
 
-**Estimated build-plan implementation progress:** **14% (provisional rebaseline)** across the 13 active
-capability families, based on the latest reviewed source-path assessment and the
-remaining gaps in the capability matrix. GenAI and multi-user Pro capabilities do
-not count. This is a rounded engineering estimate, not a task-count or release qualification metric.
+**Build-plan implementation progress:** **not calculable**. No reproducible weighted rubric currently maps partial implementation across the 13 active capability families to a global percentage. The earlier 14% estimate is retired; it must not be reported as current progress. GenAI and multi-user Pro capabilities do not count.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-26T13:34:01+00:00",
-  "observed_main_sha": "9f3ee2fa140c7503c571b95395a6b6f75f2b8f72",
+  "observed_at": "2026-10-26T18:52:18+00:00",
+  "observed_main_sha": "29ed2666f747cd60f7ebce4b234a5f4f5c7ef2fa",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -14,10 +14,10 @@
     "release_ready": false
   },
   "local_verification": {
-    "observed_at": "2026-10-24",
-    "candidate_sha": "b8e6d7834692e35688054f50655f8f73733d34cb",
-    "command": "$env:PATH = \"$PWD\\.venv\\Scripts;$env:PATH\"; .venv\\Scripts\\python.exe -m pytest -q",
-    "result": "3962 passed, 66 skipped in 447.66s (Windows; this is local evidence only, not release qualification. Docker/PostgreSQL and platform/provider workflow evidence is tracked separately against its own SHA and must not be attributed to this candidate.)",
+    "observed_at": "2026-10-26",
+    "candidate_sha": "5f2a3bbaba8f32446293b9d280f6fe2d1bc7bd74",
+    "command": "$env:RONIN_TEST_POSTGRES_DSN=postgresql://…/ronin; $env:RONIN_POSTGRES_TEST_DSN=postgresql://…/ronin; python -m pytest -q --ignore=tests/perf",
+    "result": "4097 passed, 24 skipped in 337.92s (Windows/Python 3.13; PostgreSQL 16 in Docker; platform, external-service, and dedicated-Docker skips remain. Separate Docker gate: 23 passed; strict v0.1 acceptance: 15/15. This is local candidate evidence only.)",
     "qualification_claimed": false,
     "mutation_campaign": {
       "status": "historical_frozen",
