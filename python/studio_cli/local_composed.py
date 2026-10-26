@@ -64,7 +64,7 @@ from studio_server import (
     StaticControlPlaneAuthorizer,
     WorkspaceProjectHTTPServer,
 )
-from studio_sql import ProjectScopedDuckDbSqlEngine
+from studio_sql import DuckDbDependencyError, ProjectScopedDuckDbSqlEngine, SqlHTTPAdapter
 from studio_storage import (
     CompositeSecretResolver,
     EnvironmentSecretResolver,
@@ -457,36 +457,49 @@ def build_local_composed_from_env() -> LocalServerComposition:
             artifact_reference_barrier,
         )
     )
-    control_server = WorkspaceProjectHTTPServer(
-        (_env("RONIN_HOST", "127.0.0.1"), _port("RONIN_CONTROL_PLANE_PORT", "8081")),
-        workspace_service,
-        project_service,
-        authenticator=StaticControlPlaneAuthenticator(control_token),
-        authorizer=StaticControlPlaneAuthorizer(workspace_id, permissions),
-        workflow_reader=_workflow_reader_for_backend(scheduler, now=now, postgres_dsn=postgres_dsn),
-        workflow_canceller=(
-            WorkflowCancellationHTTPAdapter(scheduler, job_service)
-            if postgres_dsn is not None
-            else None
-        ),
-        graph_query_reader=cast(Any, graph_adapter),
-        ontology_reader=graph_adapter,
-        catalog_reader=catalog_reader,
-        semantic_reader=semantic_reader,
-        environment_service=environment_service,
-        connection_service=connection_service,
-        binding_service=binding_service,
-        quality_reader=quality_reader,
-        alert_reader=alert_reader,
-        finops_reader=finops_reader,
-        data_engineering_reader=data_engineering_reader,
-        feature_definition_service=FeatureDefinitionService(cast(Any, ml_lab_store)),
-        connector_registry=connector_registry,
-        ingestion_adapter=ingestion_adapter,
-        durable_jobs=job_server.application,
-        plugin_host=plugin_host,
-        plugin_routes_enabled=plugin_routes_enabled,
-    )
+    try:
+        sql_engine = ProjectScopedDuckDbSqlEngine()
+        sql_reader = SqlHTTPAdapter(sql_engine)
+    except DuckDbDependencyError:
+        sql_reader = None
+    try:
+        control_server = WorkspaceProjectHTTPServer(
+            (_env("RONIN_HOST", "127.0.0.1"), _port("RONIN_CONTROL_PLANE_PORT", "8081")),
+            workspace_service,
+            project_service,
+            authenticator=StaticControlPlaneAuthenticator(control_token),
+            authorizer=StaticControlPlaneAuthorizer(workspace_id, permissions),
+            workflow_reader=_workflow_reader_for_backend(
+                scheduler, now=now, postgres_dsn=postgres_dsn
+            ),
+            workflow_canceller=(
+                WorkflowCancellationHTTPAdapter(scheduler, job_service)
+                if postgres_dsn is not None
+                else None
+            ),
+            graph_query_reader=cast(Any, graph_adapter),
+            ontology_reader=graph_adapter,
+            catalog_reader=catalog_reader,
+            semantic_reader=semantic_reader,
+            sql_reader=sql_reader,
+            environment_service=environment_service,
+            connection_service=connection_service,
+            binding_service=binding_service,
+            quality_reader=quality_reader,
+            alert_reader=alert_reader,
+            finops_reader=finops_reader,
+            data_engineering_reader=data_engineering_reader,
+            feature_definition_service=FeatureDefinitionService(cast(Any, ml_lab_store)),
+            connector_registry=connector_registry,
+            ingestion_adapter=ingestion_adapter,
+            durable_jobs=job_server.application,
+            plugin_host=plugin_host,
+            plugin_routes_enabled=plugin_routes_enabled,
+        )
+    except Exception:
+        if sql_reader is not None:
+            sql_reader.close()
+        raise
     return LocalServerComposition(job_server, control_server, plugin_host=plugin_host)
 
 

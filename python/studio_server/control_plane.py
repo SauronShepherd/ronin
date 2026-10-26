@@ -853,6 +853,14 @@ class WorkspaceProjectHTTPServer(ThreadingHTTPServer):
         self.audit_mutation = audit_mutation
         super().__init__(server_address, _WorkspaceProjectHandler)
 
+    def server_close(self) -> None:
+        try:
+            super().server_close()
+        finally:
+            close = getattr(self.sql_reader, "close", None)
+            if callable(close):
+                close()
+
 
 class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
     # Requests may be rejected before their body is parsed (auth/readiness).
@@ -3568,6 +3576,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor, workspace_id, "project.read", resource_ref=project_id
                 ):
                     return
+                self._server().project_service.get(workspace_id, ProjectId(project_id))
                 self._write_json(HTTPStatus.OK, sql_reader.query(project_id, self._read_json()))
                 return
             if (
