@@ -15,10 +15,10 @@ from .contracts import (
     SqlQueryResult,
     SqlRelationUnavailableError,
     SqlValidationError,
+    validate_read_only_select,
 )
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-_SELECT_START = re.compile(r"^SELECT\b", re.IGNORECASE)
 _MAX_SQL_BYTES = 1024 * 1024
 _UNSAFE_SQL = re.compile(
     r"\b(?:read_(?:parquet|csv|json|blob)|http(?:fs|_get)?|sqlite_scan|postgres_scan|"
@@ -287,12 +287,9 @@ class DuckDbSqlEngine:
         max_rows: int = 10_000,
     ) -> SqlQueryResult:
         self._require_open()
-        if not sql or sql != sql.strip():
-            raise SqlValidationError("SQL text must be non-empty and trimmed")
+        validate_read_only_select(sql)
         if len(sql.encode("utf-8")) > _MAX_SQL_BYTES:
             raise SqlValidationError("SQL text exceeds the configured byte limit")
-        if ";" in sql or not _SELECT_START.match(sql):
-            raise SqlValidationError("SQL engine accepts one read-only SELECT statement")
         if _UNSAFE_SQL.search(sql):
             raise SqlValidationError("SQL external filesystem and network access is disabled")
         if max_rows < 1:

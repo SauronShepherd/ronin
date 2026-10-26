@@ -1,7 +1,6 @@
 // Source locale for Ronin Studio. IDs are stable API/UI contracts; copy is replaceable.
 const messages = Object.freeze({
   "app.name": "RONIN Studio",
-  "app.controlPlane": "Control plane",
   "nav.home": "Overview",
   "nav.runs": "Runs",
   "nav.workspaces": "Workspaces",

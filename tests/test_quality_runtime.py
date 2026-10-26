@@ -11,7 +11,14 @@ from studio_core import (
     QualityRunId,
     WorkspaceId,
 )
-from studio_quality import blocking_failures, evaluate_contract, list_quality_runs
+from studio_quality import (
+    QualityEvaluationBudget,
+    blocking_failures,
+    evaluate_contract,
+    list_quality_runs,
+    quality_gate,
+    quality_state_summary,
+)
 
 _REF = AssetRef(AssetId("asset-1"), AssetVersion("v1"))
 
@@ -122,6 +129,74 @@ def test_blocking_failure_is_reported() -> None:
     assert tuple(result.rule_id.value for result in blocking_failures(contract, run)) == (
         "not-null",
     )
+
+
+def test_quality_gate_fails_closed_when_a_declared_rule_has_no_result() -> None:
+    contract = DataContract(
+        _REF,
+        "exact",
+        (
+            QualityRule(QualityRuleId("blocking"), "null", "Blocking", blocking=True, field="id"),
+            QualityRule(QualityRuleId("advisory"), "null", "Advisory", field="id"),
+        ),
+    )
+    incomplete = evaluate_contract(
+        DataContract(_REF, "exact", (contract.rules[1],)),
+        ({"id": 1},),
+        run_id=QualityRunId("incomplete"),
+    )
+    # The run is nominally passed, but omitting a declared blocking check must
+    # never be accepted as evidence that the contract passed.
+    assert incomplete.status == "passed"
+    assert quality_gate(contract, incomplete) is False
+
+
+def test_quality_evaluator_enforces_rule_and_row_byte_budgets() -> None:
+    contract = DataContract(
+        _REF,
+        "exact",
+        (
+            QualityRule(QualityRuleId("one"), "row_count", "One"),
+            QualityRule(QualityRuleId("two"), "row_count", "Two"),
+        ),
+    )
+    with pytest.raises(ValueError, match="rule budget exceeded"):
+        evaluate_contract(
+            contract,
+            ({},),
+            run_id=QualityRunId("too-many-rules"),
+            budget=QualityEvaluationBudget(max_rules=1),
+        )
+
+    one_rule = DataContract(_REF, "exact", (contract.rules[0],))
+    with pytest.raises(ValueError, match="row byte budget exceeded"):
+        evaluate_contract(
+            one_rule,
+            ({"payload": "x" * 32},),
+            run_id=QualityRunId("too-large-row"),
+            budget=QualityEvaluationBudget(max_row_bytes=16),
+        )
+
+    with pytest.raises(ValueError, match="cell budget exceeded"):
+        evaluate_contract(
+            one_rule,
+            ({"left": 1, "right": 2},),
+            run_id=QualityRunId("too-many-cells"),
+            budget=QualityEvaluationBudget(max_cells=1),
+        )
+
+
+def test_quality_state_uses_persisted_order_instead_of_sorting_run_ids() -> None:
+    contract = DataContract(
+        _REF, "exact", (QualityRule(QualityRuleId("rows"), "row_count", "Rows"),)
+    )
+    older = evaluate_contract(contract, ({},), run_id=QualityRunId("z-older"))
+    newer = evaluate_contract(contract, ({},), run_id=QualityRunId("a-newer"))
+
+    state = quality_state_summary((older, newer))
+
+    assert state["latest_run_id"] == "a-newer"
+    assert [run["run_id"] for run in state["history"]] == ["z-older", "a-newer"]
 
 
 def test_freshness_uses_contract_default() -> None:

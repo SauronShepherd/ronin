@@ -5,7 +5,8 @@ const slowMo = Number(process.env.RONIN_UI_SLOW_MO_MS || 0);
 
 export default defineConfig({
   testDir: './tests',
-  timeout: 30_000,
+  // Include browser/page fixture startup in the budget on slower CI and local hosts.
+  timeout: 60_000,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

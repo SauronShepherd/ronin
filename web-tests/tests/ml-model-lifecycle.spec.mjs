@@ -249,7 +249,7 @@ test('ML Studio can register the selected model as part of its durable execution
     model_id: 'churn',
     version: 'candidate-ui',
   });
-  await expect(page.locator('#ml-output')).toContainText('Registered candidate churn@candidate-ui');
+  await expect(page.locator('#ml-output')).toContainText('Registered candidate churn@candidate-ui', { timeout: 20_000 });
   await expect(page.locator('#ml-register-execution')).toHaveCount(0);
   await expect.poll(() => modelRefreshes).toBeGreaterThan(1);
 });

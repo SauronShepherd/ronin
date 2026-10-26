@@ -11,6 +11,7 @@ from studio_core import (
     AssetRef,
     AssetRevision,
     CatalogAsset,
+    CatalogAssetPage,
     LineageEdge,
     OwnershipMetadata,
     SensitivityMetadata,
@@ -18,6 +19,11 @@ from studio_core import (
 )
 from studio_orchestrator import Instant
 
+from .pagination import (
+    decode_catalog_asset_cursor,
+    encode_catalog_asset_cursor,
+    validate_limit,
+)
 from .sqlite import execute_migration_script, open_database
 from .workspaces import WorkspaceNotFound, migrate_workspaces
 
@@ -356,6 +362,76 @@ class SqliteCatalogStore:
         finally:
             connection.close()
 
+    def list_assets_page(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> CatalogAssetPage:
+        return self._assets_page(workspace_id, query="", limit=limit, cursor=cursor)
+
+    def search_assets_page(
+        self,
+        workspace_id: WorkspaceId,
+        query: str,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> CatalogAssetPage:
+        term = query.strip().casefold()
+        if not term:
+            raise ValueError("catalog search query must not be empty")
+        return self._assets_page(workspace_id, query=term, limit=limit, cursor=cursor)
+
+    def _assets_page(
+        self,
+        workspace_id: WorkspaceId,
+        *,
+        query: str,
+        limit: int,
+        cursor: str | None,
+    ) -> CatalogAssetPage:
+        validate_limit(limit)
+        after_asset_id = (
+            ""
+            if cursor is None
+            else decode_catalog_asset_cursor(cursor, workspace_id=str(workspace_id), query=query)
+        )
+        matches: list[CatalogAsset] = []
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT asset_id,definition_json FROM catalog_assets "
+                "WHERE workspace_id=? AND asset_id>? ORDER BY asset_id",
+                (str(workspace_id), after_asset_id),
+            )
+            for row in rows:
+                asset = CatalogAsset.from_json(row["definition_json"])
+                if query:
+                    haystack = " ".join(
+                        (str(asset.id), asset.kind, asset.name, *asset.tags, *asset.classifications)
+                    ).casefold()
+                    if query not in haystack:
+                        continue
+                matches.append(asset)
+                if len(matches) > limit:
+                    break
+            has_more = len(matches) > limit
+            page_items = tuple(matches[:limit])
+            next_cursor = (
+                encode_catalog_asset_cursor(
+                    workspace_id=str(workspace_id),
+                    query=query,
+                    after_asset_id=str(page_items[-1].id),
+                )
+                if has_more
+                else None
+            )
+            return CatalogAssetPage(page_items, next_cursor)
+        finally:
+            connection.close()
+
     def search_assets(
         self, workspace_id: WorkspaceId, query: str, *, limit: int = 100
     ) -> tuple[CatalogAsset, ...]:
@@ -364,14 +440,25 @@ class SqliteCatalogStore:
             raise ValueError("catalog search query must not be empty")
         if limit < 1 or limit > 1_000:
             raise ValueError("catalog search limit must be between 1 and 1000")
-        matches = []
-        for asset in self.list_assets(workspace_id):
-            haystack = " ".join(
-                (str(asset.id), asset.kind, asset.name, *asset.tags, *asset.classifications)
-            ).casefold()
-            if term in haystack:
-                matches.append(asset)
-        return tuple(matches[:limit])
+        matches: list[CatalogAsset] = []
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                "SELECT definition_json FROM catalog_assets WHERE workspace_id=? ORDER BY asset_id",
+                (str(workspace_id),),
+            )
+            for row in rows:
+                asset = CatalogAsset.from_json(row["definition_json"])
+                haystack = " ".join(
+                    (str(asset.id), asset.kind, asset.name, *asset.tags, *asset.classifications)
+                ).casefold()
+                if term in haystack:
+                    matches.append(asset)
+                    if len(matches) == limit:
+                        break
+            return tuple(matches)
+        finally:
+            connection.close()
 
     def put_revision(
         self, workspace_id: WorkspaceId, revision: AssetRevision, *, now: Instant | str

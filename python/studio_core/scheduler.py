@@ -77,6 +77,10 @@ class RetryPolicy:
     exponential_backoff: bool = False
 
     def __post_init__(self) -> None:
+        if not isinstance(self.max_attempts, int) or isinstance(self.max_attempts, bool):
+            raise ValueError("max_attempts must be an integer")
+        if not isinstance(self.delay_seconds, int) or isinstance(self.delay_seconds, bool):
+            raise ValueError("delay_seconds must be an integer")
         if self.max_attempts < 1:
             raise ValueError("max_attempts must be positive")
         if self.delay_seconds < 0:
@@ -119,8 +123,11 @@ class TaskPolicy:
     pool: str | None = None
 
     def __post_init__(self) -> None:
-        if self.timeout_seconds is not None and self.timeout_seconds < 1:
-            raise ValueError("task timeout_seconds must be positive")
+        if self.timeout_seconds is not None:
+            if not isinstance(self.timeout_seconds, int) or isinstance(self.timeout_seconds, bool):
+                raise ValueError("task timeout_seconds must be an integer")
+            if self.timeout_seconds < 1:
+                raise ValueError("task timeout_seconds must be positive")
         if self.pool is not None:
             _require_text(self.pool, "task pool")
 
@@ -168,8 +175,11 @@ class WorkflowDefinition:
 
     def __post_init__(self) -> None:
         _require_text(self.name, "workflow name")
-        if self.max_concurrency is not None and self.max_concurrency < 1:
-            raise ValueError("workflow max_concurrency must be positive")
+        if self.max_concurrency is not None:
+            if not isinstance(self.max_concurrency, int) or isinstance(self.max_concurrency, bool):
+                raise ValueError("workflow max_concurrency must be an integer")
+            if self.max_concurrency < 1:
+                raise ValueError("workflow max_concurrency must be positive")
         node_ids = {node.id for node in self.pipeline.nodes}
         policies = tuple(sorted(self.task_policies, key=lambda policy: policy.node_id.value))
         policy_ids = [policy.node_id for policy in policies]
@@ -414,5 +424,7 @@ class TaskRun:
             "blocked",
         }:
             raise ValueError("unsupported task run state")
+        if not isinstance(self.attempt_count, int) or isinstance(self.attempt_count, bool):
+            raise ValueError("task attempt_count must be an integer")
         if self.attempt_count < 0:
             raise ValueError("task attempt_count must be non-negative")

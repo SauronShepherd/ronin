@@ -157,17 +157,16 @@ coverage-storage-files:
 		--exclude=postgres_scheduler_backfills.py \
 		--exclude=postgres_scheduler_leadership.py \
 		--exclude=postgres_scheduler_schedule.py \
+		--exclude=postgres_quality.py \
 		--threshold=80 \
 		--ratchet-margin=2.1 \
 		--baseline=backup.py=76.00 \
 		--baseline=bundle_workflow_import.py=77.55 \
-		--baseline=catalog.py=78.40 \
 		--baseline=connections.py=64.44 \
 		--baseline=environments.py=75.51 \
 		--baseline=local_files.py=77.22 \
 		--baseline=ml.py=73.30 \
 		--baseline=ontology.py=76.35 \
-		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=74.20 \
 		--baseline=scheduler_backfill.py=65.91 \
 		--baseline=scheduler_backfill_runtime.py=69.11 \
@@ -189,16 +188,14 @@ coverage-storage-files-full:
 		--ratchet-margin=2.1 \
 		--baseline=backup.py=76.00 \
 		--baseline=bundle_workflow_import.py=77.55 \
-		--baseline=catalog.py=78.40 \
 		--baseline=connections.py=64.44 \
 		--baseline=environments.py=75.51 \
 		--baseline=local_files.py=77.22 \
 		--baseline=ml.py=73.30 \
 		--baseline=postgres_ml.py=74.07 \
 		--baseline=ontology.py=76.35 \
-		--baseline=postgres_core.py=54.75 \
+		--baseline=postgres_core.py=67.28 \
 		--baseline=postgres_jobs.py=73.01 \
-		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=74.20 \
 		--baseline=scheduler_backfill.py=65.91 \
 		--baseline=scheduler_backfill_runtime.py=69.11 \

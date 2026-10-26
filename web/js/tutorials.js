@@ -4,19 +4,19 @@ const tutorialCatalog = [
   {
     id: 'ronin-tour',
     title: 'Meet Ronin: the complete product tour',
-    subtitle: 'A friendly walk through the control plane, studios, data, machine learning and delivery.',
+    subtitle: 'A friendly walk through Ronin Studio, data, machine learning and delivery.',
     duration: '8 min',
     level: 'New builder',
     tags: ['overview', 'getting started', 'platform', 'navigation'],
     steps: [
-      { selector: '.rail-brand', title: 'Welcome to the dojo', body: "Hi, I’m Ronin. I’m a lordless data dog: no vendor throne, just a very good nose for useful workflows. This is your open Data + AI control plane.", placement: 'right' },
+      { selector: '.rail-brand', title: 'Welcome to the dojo', body: "Hi, I’m Ronin. I’m a lordless data dog: no vendor throne, just a very good nose for useful workflows. This is your open Data + AI workspace.", placement: 'right' },
       { selector: '.nav-item[href="#workspaces"]', title: 'Start with a workspace', body: 'Workspaces keep teams, projects and permissions together. Think of them as tidy dojo rooms: every experiment knows where it belongs.', placement: 'right' },
       { selector: '.nav-item[href="#data"]', title: 'Shape and move data', body: 'Data Engineering gives you connectors, pipelines, previews and SQL. Build a path once, inspect it, then run it with evidence attached.', placement: 'right' },
       { selector: '.nav-item[href="#mlstudio"]', title: 'Turn data into models', body: 'Machine Learning Studio is the training yard: labs, features, experiments, comparisons, model cards and promotion gates in one trail.', placement: 'right' },
       { selector: '.nav-item[href="#synthetic"]', title: 'Create safe practice data', body: 'Synthetic Data Studio helps teams explore realistic data without passing sensitive records around. More learning, fewer awkward permissions meetings.', placement: 'right' },
       { selector: '.nav-item[href="#quality"]', title: 'Guard the quality gates', body: 'Quality Studio makes contracts and checks visible. Ronin will happily bark before a bad dataset reaches production.', placement: 'right' },
       { selector: '.nav-item[href="#migration"]', title: 'Migrate with evidence', body: 'Migration Studio takes you from discovery to scope, blueprint, generated code, validation and promotion. Every important decision can be reviewed.', placement: 'right' },
-      { selector: '#api-url', title: 'Connect your control plane', body: 'Use the top bar to point Studio at the API. The browser keeps the URL locally and the bearer token in session storage. In a static preview, a friendly “API unavailable” message is expected until the control plane is running.', placement: 'bottom' },
+      { selector: '[data-action="open-connection"]', title: 'The server behind the screen', body: 'This page is the dashboard; the Ronin server stores workspace data and runs operations. The API is simply the private link between them. Usually you do nothing here: Ronin uses the server that opened this page. Only change the optional address or access key if your administrator gave you different details.', placement: 'bottom' },
       { selector: '[data-action="open-command"]', title: 'Keep your paws on the keyboard', body: 'The command entry is your shortcut door. Use it when you know the destination and want to skip the scenic route.', placement: 'bottom' },
       { selector: '#tutorial-library', title: 'Choose your next trail', body: 'That’s the whole map. Pick a focused tutorial whenever you want a deeper lesson, and leave any tour at any time with Close or Escape.', placement: 'top' }
     ]
@@ -200,7 +200,6 @@ function targetFor(step) {
   };
   if (visible(target)) return target;
   if (step.selector === '.rail-brand' && visible(document.querySelector('.tutorial-hero-art'))) return document.querySelector('.tutorial-hero-art');
-  if (step.selector === '#api-url' && visible(document.querySelector('[data-action="open-command"]'))) return document.querySelector('[data-action="open-command"]');
   return ['.page-header', '#tutorial-hero', '.topbar', '#view', '.app-main']
     .map(selector => document.querySelector(selector)).find(visible) || document.querySelector('.app-main');
 }

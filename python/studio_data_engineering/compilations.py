@@ -12,6 +12,8 @@ from studio_storage.sqlite import open_database
 
 from .compiler import CompilationReport
 
+_MAX_EVENT_TYPE_FILTERS = 16
+
 
 class SqliteCompilationStore:
     def __init__(self, path: Path) -> None:
@@ -38,6 +40,14 @@ class SqliteCompilationStore:
             "event_id TEXT PRIMARY KEY, event_type TEXT NOT NULL, aggregate_key TEXT NOT NULL,"
             "payload_json TEXT NOT NULL, published_at TEXT NULL, created_at TEXT NOT NULL "
             "DEFAULT CURRENT_TIMESTAMP)"
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS de_outbox_pending_order_idx "
+            "ON de_outbox(published_at,created_at,event_id)"
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS de_outbox_pending_type_idx "
+            "ON de_outbox(event_type,published_at,created_at,event_id)"
         )
 
     def save_report(
@@ -134,16 +144,48 @@ class SqliteCompilationStore:
         finally:
             connection.close()
 
-    def pending_events(self, *, limit: int = 100) -> tuple[dict[str, object], ...]:
+    def pending_events(
+        self, *, limit: int = 100, event_type: str | tuple[str, ...] | None = None
+    ) -> tuple[dict[str, object], ...]:
         if limit < 1 or limit > 1000:
             raise ValueError("limit must be between 1 and 1000")
+        event_types = (event_type,) if isinstance(event_type, str) else event_type
+        if event_types is not None:
+            if (
+                not event_types
+                or len(event_types) > _MAX_EVENT_TYPE_FILTERS
+                or any(
+                    not isinstance(item, str) or not item or item != item.strip()
+                    for item in event_types
+                )
+            ):
+                raise ValueError(
+                    "event type filters must be non-empty, trimmed strings "
+                    f"(maximum {_MAX_EVENT_TYPE_FILTERS})"
+                )
+            if len(set(event_types)) != len(event_types):
+                raise ValueError("event type filters must be unique")
         connection = self._connect()
         try:
-            rows = connection.execute(
-                "SELECT event_id,event_type,aggregate_key,payload_json FROM de_outbox "
-                "WHERE published_at IS NULL ORDER BY created_at,event_id LIMIT ?",
-                (limit,),
-            ).fetchall()
+            if event_types is None:
+                rows = connection.execute(
+                    "SELECT event_id,event_type,aggregate_key,payload_json,created_at "
+                    "FROM de_outbox "
+                    "WHERE published_at IS NULL ORDER BY created_at,event_id LIMIT ?",
+                    (limit,),
+                ).fetchall()
+            else:
+                rows = []
+                for selected_type in event_types:
+                    rows.extend(
+                        connection.execute(
+                            "SELECT event_id,event_type,aggregate_key,payload_json,created_at "
+                            "FROM de_outbox WHERE published_at IS NULL AND event_type=? "
+                            "ORDER BY created_at,event_id LIMIT ?",
+                            (selected_type, limit),
+                        ).fetchall()
+                    )
+                rows = sorted(rows, key=lambda row: (row["created_at"], row["event_id"]))[:limit]
             return tuple(
                 {
                     "event_id": row["event_id"],

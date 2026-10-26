@@ -115,8 +115,10 @@ class ConnectorCapabilities:
             ("max_page_size", self.max_page_size),
             ("max_batch_size", self.max_batch_size),
         ):
-            if value is not None and value < 1:
-                raise ValueError(f"{name} must be positive when provided")
+            if value is not None and (
+                not isinstance(value, int) or isinstance(value, bool) or value < 1
+            ):
+                raise ValueError(f"{name} must be a positive integer when provided")
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,6 +131,8 @@ class ConnectorDescriptor:
 
     def __post_init__(self) -> None:
         _require_text(self.connector_id, "connector id")
+        if not isinstance(self.contract_version, int) or isinstance(self.contract_version, bool):
+            raise ValueError("connector contract version must be an integer")
         if self.contract_version < 1:
             raise ValueError("connector contract version must be positive")
 

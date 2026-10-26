@@ -13,7 +13,15 @@ from .execution_bridge import (
     submit_pipeline_plan,
 )
 from .ide import IdeCell, IdeSession, execute_ide_session
-from .lineage import LineageCatalog, publish_lineage_event, record_pipeline_lineage
+from .lineage import (
+    LineageCatalog,
+    LineageOutbox,
+    enqueue_lineage_event,
+    publish_lineage_event,
+    publish_pending_lineage_events,
+    record_pipeline_lineage,
+    record_pipeline_lineage_and_enqueue,
+)
 from .pipeline_contracts import PipelineParameter, PipelineParameterSchema
 from .plugin import DataEnginerringStudioPlugin, factory
 from .postgres_revisions import PostgresRevisionDependencyError, PostgresRevisionStore
@@ -59,8 +67,12 @@ __all__ = (
     "publish_pending_compilation_events",
     "PipelineExecutionPlan",
     "LineageCatalog",
+    "LineageOutbox",
     "record_pipeline_lineage",
+    "record_pipeline_lineage_and_enqueue",
     "publish_lineage_event",
+    "enqueue_lineage_event",
+    "publish_pending_lineage_events",
     "IdeCell",
     "IdeSession",
     "execute_ide_session",

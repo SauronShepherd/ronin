@@ -145,6 +145,8 @@ def test_event_requires_versioned_type_and_valid_identity() -> None:
         replace(event, occurred_at="2026-01-01T00:00:00+00:00").validate()
     with pytest.raises(PluginEventError, match="schema_version"):
         replace(event, schema_version=0).validate()
+    with pytest.raises(PluginEventError, match="schema_version.*integer"):
+        replace(event, schema_version=True).validate()
 
 
 def test_new_event_preserves_causation_and_digest_binds_it() -> None:
@@ -204,6 +206,8 @@ def test_event_schema_registry_rejects_invalid_duplicates_and_sorts_items() -> N
         schemas.register(PluginEventSchema("broken.v0", 0))
     with pytest.raises(PluginEventError, match="positive versioned"):
         schemas.register(PluginEventSchema("broken.v1", 2))
+    with pytest.raises(PluginEventError, match="integer"):
+        schemas.register(PluginEventSchema("broken.vTrue", True))
     assert tuple(schema.event_type for schema in schemas.items) == (
         "a.first.v1",
         "z.last.v1",

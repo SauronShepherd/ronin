@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal, TypeAlias, cast
@@ -134,10 +135,19 @@ class MetricValue:
 
     def __post_init__(self) -> None:
         _text(self.name, "metric name")
+        if not isinstance(self.step, int) or isinstance(self.step, bool):
+            raise ValueError("metric step must be an integer")
         if self.step < 0:
             raise ValueError("metric step must be non-negative")
-        if self.value != self.value or self.value in (float("inf"), float("-inf")):
+        if not isinstance(self.value, (int, float)) or isinstance(self.value, bool):
+            raise ValueError("metric value must be numeric")
+        try:
+            numeric_value = float(self.value)
+        except OverflowError as exc:
+            raise ValueError("metric value must be finite") from exc
+        if not math.isfinite(numeric_value):
             raise ValueError("metric value must be finite")
+        object.__setattr__(self, "value", numeric_value)
 
     def to_payload(self) -> dict[str, object]:
         return {"name": self.name, "value": self.value, "step": self.step}

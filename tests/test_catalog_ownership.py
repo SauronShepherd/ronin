@@ -31,3 +31,8 @@ def test_catalog_ownership_is_versioned_and_idempotent(tmp_path: Path) -> None:
             OwnershipMetadata(1, "group/other"),
             now=now,
         )
+
+
+def test_ownership_metadata_rejects_boolean_version() -> None:
+    with pytest.raises(ValueError, match="positive integer"):
+        OwnershipMetadata(True, "group/data")

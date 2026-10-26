@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Protocol
 
-from .contracts import SqlQueryResult
+from .contracts import SqlQueryResult, validate_read_only_select
+from .wire import sql_wire_value
 
 
 class SqlQueryEngine(Protocol):
@@ -25,17 +26,21 @@ class SqlHTTPAdapter:
     def __init__(self, engine: SqlQueryEngine) -> None:
         self._engine = engine
 
+    def close(self) -> None:
+        """Close an owned engine when the hosting HTTP server shuts down."""
+        close = getattr(self._engine, "close", None)
+        if callable(close):
+            close()
+
     def query(self, project_id: str, body: object) -> dict[str, object]:
         if not project_id or project_id != project_id.strip():
             raise ValueError("SQL project_id must be non-empty and trimmed")
         if not isinstance(body, Mapping):
             raise ValueError("SQL query body must be an object")
         sql = body.get("sql")
-        if not isinstance(sql, str) or not sql.strip():
+        if not isinstance(sql, str):
             raise ValueError("SQL query body requires non-empty sql")
-        statement = sql.lstrip().split(None, 1)[0].upper().rstrip(";")
-        if statement not in {"SELECT", "WITH", "VALUES", "EXPLAIN"}:
-            raise ValueError("SQL service is read-only and accepts query statements only")
+        validate_read_only_select(sql)
         max_rows = body.get("max_rows", 10_000)
         if (
             not isinstance(max_rows, int)
@@ -51,7 +56,7 @@ class SqlHTTPAdapter:
             "columns": [
                 {"name": column.name, "type_name": column.type_name} for column in result.columns
             ],
-            "rows": [list(row) for row in result.rows],
+            "rows": [[sql_wire_value(value) for value in row] for row in result.rows],
             "row_count": len(result.rows),
             "max_rows": max_rows,
         }

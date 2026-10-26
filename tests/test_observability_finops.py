@@ -281,6 +281,31 @@ def test_alert_http_adapter_acknowledges_active_instance(tmp_path: Path) -> None
     assert result["state"]["acknowledged_at"] == str(_T2)
 
 
+def test_alert_http_adapter_keeps_workspace_state_separate(tmp_path: Path) -> None:
+    first_workspace = "workspace-first"
+    second_workspace = "workspace-second"
+    first_store = SqliteTelemetryStore(tmp_path / "first.sqlite")
+    second_store = SqliteTelemetryStore(tmp_path / "second.sqlite")
+    first_store.put_alert_rule(AlertRule("first", "First", "queue", "gt", 2.0))
+    second_store.put_alert_rule(AlertRule("second", "Second", "queue", "gt", 2.0))
+    first_store.record_metric(MetricPoint("queue", 3.0, "items", "gauge", _T0))
+    stores = {first_workspace: first_store, second_workspace: second_store}
+    adapter = AlertHTTPAdapter(stores.__getitem__)
+
+    assert [item["id"] for item in adapter.list_rules(workspace_id=first_workspace)["items"]] == [
+        "first"
+    ]
+    assert [item["id"] for item in adapter.list_rules(workspace_id=second_workspace)["items"]] == [
+        "second"
+    ]
+    first = adapter.evaluate({"rule_id": "first"}, now=_T1, workspace_id=first_workspace)
+    second = adapter.evaluate({"rule_id": "second"}, now=_T1, workspace_id=second_workspace)
+    assert first["state"]["status"] == "open"
+    assert second["state"] is None
+    assert len(adapter.list_instances(workspace_id=first_workspace)["items"]) == 1
+    assert adapter.list_instances(workspace_id=second_workspace)["items"] == []
+
+
 def test_alert_instances_are_listed_with_a_bound(tmp_path: Path) -> None:
     store = SqliteTelemetryStore(tmp_path / "telemetry.sqlite")
     rule = store.put_alert_rule(AlertRule("inventory", "Inventory", "metric", "gt", 1.0))
