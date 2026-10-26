@@ -36,7 +36,7 @@
 .grid { display: grid; gap: 1rem; }
 .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .app-shell { grid-template-columns: 78px 1fr; height: 100dvh; }
   .nav-label, .rail-subtitle { display: none; }
   .topbar { flex-wrap: wrap; }

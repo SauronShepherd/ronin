@@ -179,7 +179,7 @@ coverage-storage-files:
 		--baseline=scheduler_leadership.py=76.28 \
 		--baseline=scheduler_schedule.py=74.00 \
 		--baseline=scheduler_timeout.py=66.70 \
-		--baseline=sqlite.py=79.12 \
+		--baseline=sqlite.py=81.82 \
 		--baseline=workspaces.py=65.10
 
 coverage-storage-files-full:
@@ -196,7 +196,7 @@ coverage-storage-files-full:
 		--baseline=ml.py=73.30 \
 		--baseline=postgres_ml.py=74.07 \
 		--baseline=ontology.py=76.35 \
-		--baseline=postgres_core.py=50.68 \
+		--baseline=postgres_core.py=54.75 \
 		--baseline=postgres_jobs.py=73.01 \
 		--baseline=quality.py=31.00 \
 		--baseline=s3_artifacts.py=74.20 \
@@ -210,6 +210,6 @@ coverage-storage-files-full:
 		--baseline=scheduler_leadership.py=76.28 \
 		--baseline=scheduler_schedule.py=74.00 \
 		--baseline=scheduler_timeout.py=66.70 \
-		--baseline=sqlite.py=79.12 \
+		--baseline=sqlite.py=81.82 \
 		--baseline=workspaces.py=65.10
 	@rm -f coverage-storage.json

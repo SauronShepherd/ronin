@@ -1143,10 +1143,10 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if params or len(workspace_values) != 1 or len(project_values) != 1:
                     raise ValueError("connector sync status requires workspace_id and project_id")
                 workspace_id = WorkspaceId(workspace_values[0])
-                project_id = ProjectId(project_values[0])
+                sync_project_id = ProjectId(project_values[0])
                 if not self._authorize(actor, workspace_id, "scheduler.read"):
                     return
-                self._server().project_service.get(workspace_id, project_id)
+                self._server().project_service.get(workspace_id, sync_project_id)
                 jobs = cast(Any, self._server().durable_jobs)
                 if jobs is None:
                     self._error(
@@ -1164,7 +1164,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 job_parameters = json.loads(job.parameters_json)
                 if (
                     job.target != "connector.sync.v1"
-                    or job.project_id != str(project_id)
+                    or job.project_id != str(sync_project_id)
                     or job_parameters.get("workspace_id") != str(workspace_id)
                 ):
                     self._error(
@@ -3017,8 +3017,8 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 payload = self._read_json()
                 if not isinstance(payload, dict) or set(payload) != {"project_id", "definition"}:
                     raise ValueError("connector sync request requires project_id and definition")
-                project_id = ProjectId(payload["project_id"])
-                self._server().project_service.get(connector_workspace_id, project_id)
+                submit_project_id = ProjectId(payload["project_id"])
+                self._server().project_service.get(connector_workspace_id, submit_project_id)
                 adapter = self._server().ingestion_adapter
                 plan = getattr(adapter, "plan", None) if adapter is not None else None
                 validate_definition = (
@@ -3115,7 +3115,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     "connector.sync.submit",
                     connector_workspace_id,
                     {
-                        "project_id": str(project_id),
+                        "project_id": str(submit_project_id),
                         "connector_id": connector_id,
                         "sync_id": definition["id"],
                     },
@@ -3135,7 +3135,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     job_parameters["destination_asset_id"] = destination_asset_value
                 status, job_payload = jobs.submit(
                     {
-                        "project": str(project_id),
+                        "project": str(submit_project_id),
                         "target": "connector.sync.v1",
                         "parameters": job_parameters,
                     },
@@ -3156,12 +3156,12 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         "connector sync cancellation requires workspace_id and project_id"
                     )
                 cancel_workspace_id = WorkspaceId(workspace_values[0])
-                project_id = ProjectId(project_values[0])
+                cancel_project_id = ProjectId(project_values[0])
                 if not self._authorize(actor, cancel_workspace_id, "scheduler.write"):
                     return
                 if self._read_json() != {}:
                     raise ValueError("connector sync cancellation body must be an empty object")
-                self._server().project_service.get(cancel_workspace_id, project_id)
+                self._server().project_service.get(cancel_workspace_id, cancel_project_id)
                 jobs = cast(Any, self._server().durable_jobs)
                 if jobs is None:
                     self._error(
@@ -3176,7 +3176,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                         HTTPStatus.NOT_FOUND, "not_found", "connector sync job does not exist"
                     )
                     return
-                if job.target != "connector.sync.v1" or job.project_id != str(project_id):
+                if job.target != "connector.sync.v1" or job.project_id != str(cancel_project_id):
                     self._error(
                         HTTPStatus.NOT_FOUND, "not_found", "connector sync job does not exist"
                     )
@@ -3190,7 +3190,7 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor,
                     "connector.sync.cancel",
                     cancel_workspace_id,
-                    {"project_id": str(project_id), "job_id": str(job.id)},
+                    {"project_id": str(cancel_project_id), "job_id": str(job.id)},
                 ):
                     return
                 self._write_json(HTTPStatus.OK, jobs.cancel(str(job.id)))
@@ -4896,9 +4896,9 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                 if query:
                     raise ValueError("project unregister does not accept query parameters")
                 workspace_id = WorkspaceId(segments[2])
-                project_id = ProjectId(segments[4])
+                unregistered_project_id = ProjectId(segments[4])
                 if not self._authorize(
-                    actor, workspace_id, "project.write", resource_ref=str(project_id)
+                    actor, workspace_id, "project.write", resource_ref=str(unregistered_project_id)
                 ):
                     return
                 if (
@@ -4910,12 +4910,13 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                     actor,
                     "project.unregister",
                     workspace_id,
-                    {"resource": str(project_id)},
+                    {"resource": str(unregistered_project_id)},
                 ):
                     return
-                self._server().project_service.unregister(workspace_id, project_id)
+                self._server().project_service.unregister(workspace_id, unregistered_project_id)
                 self._write_json(
-                    HTTPStatus.OK, {"unregistered": True, "project_id": str(project_id)}
+                    HTTPStatus.OK,
+                    {"unregistered": True, "project_id": str(unregistered_project_id)},
                 )
                 return
             self._method_or_not_found("DELETE", segments)
