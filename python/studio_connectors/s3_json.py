@@ -19,6 +19,7 @@ from studio_core import (
 from studio_storage.secrets import SecretResolver
 
 from .contracts import ConnectorCommitResult, ConnectorReadResult, DiscoveryPage
+from .json_compatible import json_compatible
 
 
 def _boto3() -> Any:
@@ -305,7 +306,7 @@ class S3JsonConnector:
         try:
             if jsonl:
                 for row in result.rows:
-                    for piece in encoder.iterencode(row):
+                    for piece in encoder.iterencode(json_compatible(dict(row))):
                         append_text(piece)
                     append_text("\n")
             else:
@@ -313,7 +314,7 @@ class S3JsonConnector:
                 for index, row in enumerate(result.rows):
                     if index:
                         append_text(",")
-                    for piece in encoder.iterencode(row):
+                    for piece in encoder.iterencode(json_compatible(dict(row))):
                         append_text(piece)
                 append_text("]")
         except (TypeError, ValueError, UnicodeEncodeError) as exc:

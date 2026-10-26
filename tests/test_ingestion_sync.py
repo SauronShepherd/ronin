@@ -212,6 +212,148 @@ def test_incremental_sync_plan_requires_capability_and_checkpoint() -> None:
     ).requires_checkpoint
 
 
+def test_ingestion_sync_commits_bounded_batches_and_resumes_after_page_budget() -> None:
+    from hashlib import sha256
+    from types import SimpleNamespace
+
+    class Registry:
+        read_positions: list[int] = []
+
+        def plan_sync(self, definition, *, checkpoint_present):
+            return plan_sync(
+                definition, incremental_capable=True, checkpoint_present=checkpoint_present
+            )
+
+        def read(self, _connector, _connection, _asset, _secrets, *, checkpoint, limit):
+            assert limit == 1
+            position = 0 if checkpoint is None else int(checkpoint.value)
+            self.read_positions.append(position)
+            next_position = position + 1
+            return ConnectorReadResult(
+                (FieldSchema("id", "integer", False),),
+                ({"id": next_position},),
+                SourceCheckpoint("watermark", str(next_position)),
+                has_more=next_position < 4,
+            )
+
+    class Checkpoints:
+        current = None
+
+        def health(self, _identity):
+            return SimpleNamespace(present=self.current is not None)
+
+        def get(self, _identity):
+            return self.current
+
+        def acquire(self, _identity):
+            return 1
+
+        def commit_output_then_checkpoint(self, _identity, expected, next_checkpoint, **_kwargs):
+            assert self.current == expected
+            self.current = next_checkpoint
+
+            class Evidence:
+                def to_payload(self):
+                    return {"identity": "workspace/checkpoint", "digest": next_checkpoint.digest}
+
+            return Evidence()
+
+    class Destination:
+        outputs: list[int] = []
+
+        def write(self, _destination_ref, result, *, fence):
+            assert fence == 1
+            row_id = result.rows[0]["id"]
+            self.outputs.append(row_id)
+            return f"artifact-{row_id}", sha256(str(row_id).encode()).hexdigest()
+
+    registry = Registry()
+    checkpoints = Checkpoints()
+    destination = Destination()
+    service = IngestionSyncService(registry, checkpoints, max_batches=2)
+    definition = IngestionSyncDefinition(
+        "sync-pages", "connector", "connection", "asset", "destination", "checkpoint"
+    )
+
+    first = service.execute(
+        definition,
+        workspace_id="workspace",
+        connection=object(),
+        asset=object(),
+        secrets=object(),
+        destination=destination,
+        limit=1,
+    )
+    assert first["rows_written"] == 2
+    assert first["batches"] == 2
+    assert first["has_more"] is True
+    assert checkpoints.current == SourceCheckpoint("watermark", "2")
+
+    second = service.execute(
+        definition,
+        workspace_id="workspace",
+        connection=object(),
+        asset=object(),
+        secrets=object(),
+        destination=destination,
+        limit=1,
+    )
+    assert second["rows_written"] == 2
+    assert second["batches"] == 2
+    assert second["has_more"] is False
+    assert checkpoints.current == SourceCheckpoint("watermark", "4")
+    assert registry.read_positions == [0, 1, 2, 3]
+    assert destination.outputs == [1, 2, 3, 4]
+
+
+def test_ingestion_sync_rejects_unbounded_or_invalid_batch_configuration() -> None:
+    with pytest.raises(ValueError, match="max_batches"):
+        IngestionSyncService(object(), object(), max_batches=True)
+    with pytest.raises(ValueError, match="limit"):
+        IngestionSyncService(object(), object()).execute(
+            IngestionSyncDefinition("sync", "connector", "connection", "asset", "dest", "cp"),
+            workspace_id="workspace",
+            connection=object(),
+            asset=object(),
+            secrets=object(),
+            destination=object(),
+            limit=0,
+        )
+
+
+def test_connector_json_projection_preserves_database_scalar_precision() -> None:
+    from datetime import UTC, date, datetime
+    from decimal import Decimal
+    from uuid import UUID
+
+    from studio_connectors.json_compatible import json_compatible
+
+    assert json_compatible(
+        {
+            "id": 2**62,
+            "amount": Decimal("12345678901234567890.1234567890"),
+            "observed_at": datetime(2026, 1, 2, tzinfo=UTC),
+            "day": date(2026, 1, 2),
+            "uuid": UUID(int=1),
+            "raw": b"data",
+        }
+    ) == {
+        "id": str(2**62),
+        "amount": "12345678901234567890.1234567890",
+        "observed_at": "2026-01-02T00:00:00+00:00",
+        "day": "2026-01-02",
+        "uuid": "00000000-0000-0000-0000-000000000001",
+        "raw": "ZGF0YQ",
+    }
+    with pytest.raises(ValueError, match="non-finite"):
+        json_compatible(float("nan"))
+    nested = 1
+    for _ in range(66):
+        nested = [nested]
+    with pytest.raises(ValueError, match="nesting depth"):
+        json_compatible(nested)
+
+
 def test_incremental_plan_rejects_checkpoint_fence_without_durable_output(tmp_path) -> None:
     registry = ConnectorRegistry((_Connector("postgres", True),))
     store = SqliteConnectorCheckpointStore(tmp_path / "checkpoints.sqlite")

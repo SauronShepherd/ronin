@@ -22,6 +22,7 @@ from studio_core.canonical_json import decode, encode
 from studio_storage.ports import ArtifactReferenceBarrier
 
 from .contracts import ConnectorReadResult
+from .json_compatible import json_compatible
 
 
 class IngestionSyncCancelled(RuntimeError):
@@ -72,7 +73,7 @@ class ArtifactDestinationWriter:
                     {"name": field.name, "data_type": field.data_type, "nullable": field.nullable}
                     for field in result.fields
                 ],
-                "rows": [dict(row) for row in result.rows],
+                "rows": [json_compatible(dict(row)) for row in result.rows],
             },
             ensure_ascii=False,
             sort_keys=True,
@@ -326,10 +327,18 @@ class IngestionSyncService:
         checkpoints: object,
         *,
         artifact_reference_barrier: ArtifactReferenceBarrier | None = None,
+        max_batches: int = 100,
     ) -> None:
+        if (
+            not isinstance(max_batches, int)
+            or isinstance(max_batches, bool)
+            or not 1 <= max_batches <= 1000
+        ):
+            raise ValueError("max_batches must be an integer between 1 and 1000")
         self._registry = cast(_SyncRegistry, registry)
         self._checkpoints = cast(_CheckpointStore, checkpoints)
         self._artifact_reference_barrier = artifact_reference_barrier
+        self._max_batches = max_batches
 
     def _writer_lease(self) -> AbstractContextManager[None]:
         if self._artifact_reference_barrier is None:
@@ -362,7 +371,7 @@ class IngestionSyncService:
                 {"name": field.name, "data_type": field.data_type, "nullable": field.nullable}
                 for field in result.fields
             ],
-            "rows": [dict(row) for row in result.rows],
+            "rows": [json_compatible(dict(row)) for row in result.rows],
             "row_count": len(result.rows),
             "checkpoint": checkpoint,
         }
@@ -381,7 +390,10 @@ class IngestionSyncService:
         execution_ref: str | None = None,
         now: str | None = None,
     ) -> dict[str, object]:
-        """Read, durably write the destination, then advance the checkpoint."""
+        """Read bounded batches, commit each output, then advance its checkpoint."""
+
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 100_000:
+            raise ValueError("sync limit must be an integer between 1 and 100000")
 
         def ensure_not_cancelled() -> None:
             if cancellation_requested is not None and cancellation_requested():
@@ -393,102 +405,133 @@ class IngestionSyncService:
         expected = self._checkpoints.get(scoped_identity)
         plan = self._registry.plan_sync(definition, checkpoint_present=health.present)
         fence = self._checkpoints.acquire(scoped_identity)
-        result = self._registry.read(
-            definition.connector_id,
-            connection,
-            asset,
-            secrets,
-            limit=limit,
-            checkpoint=expected,
-        )
-        ensure_not_cancelled()
-        if result.checkpoint is None:
-            raise ValueError("connector sync execution must return a next checkpoint")
-        with self._writer_lease():
+        total_rows = 0
+        batch_count = 0
+        latest_evidence: _Evidence | None = None
+        lineages: list[LineageEdge] = []
+        has_more = False
+        for _ in range(self._max_batches):
             ensure_not_cancelled()
-            output_id, output_digest = destination.write(
-                definition.destination_ref,
-                result,
-                fence=fence,
+            result = self._registry.read(
+                definition.connector_id,
+                connection,
+                asset,
+                secrets,
+                limit=limit,
+                checkpoint=expected,
             )
-            # If cancellation arrives during the output write, leave the content-addressed
-            # object unreferenced for retention and do not advance the source checkpoint.
             ensure_not_cancelled()
-            catalog_commit = None
-            lineage: LineageEdge | None = None
-            if (
-                definition.source_revision_ref is not None
-                and definition.destination_asset_id is not None
+            if result.checkpoint is None:
+                raise ValueError("connector sync execution must return a next checkpoint")
+            if result.has_more and (
+                not result.rows
+                or (expected is not None and result.checkpoint.digest == expected.digest)
             ):
-                if not execution_ref or not execution_ref.strip() or now is None:
-                    raise ValueError("governed sync requires a durable execution_ref and timestamp")
-                if len(output_digest) != 64 or any(
-                    character not in "0123456789abcdef" for character in output_digest
+                raise ValueError("connector sync batch did not advance its continuation checkpoint")
+            with self._writer_lease():
+                ensure_not_cancelled()
+                output_id, output_digest = destination.write(
+                    definition.destination_ref,
+                    result,
+                    fence=fence,
+                )
+                # If cancellation arrives during the output write, leave the content-addressed
+                # object unreferenced for retention and do not advance the source checkpoint.
+                ensure_not_cancelled()
+                catalog_commit = None
+                lineage: LineageEdge | None = None
+                if (
+                    definition.source_revision_ref is not None
+                    and definition.destination_asset_id is not None
                 ):
-                    raise ValueError("governed sync output digest must be lowercase SHA-256 hex")
-                target_ref = AssetRef(
-                    definition.destination_asset_id,
-                    AssetVersion(f"sha256:{output_digest}"),
-                )
-                schema_bytes = encode(
-                    [
-                        {
-                            "name": field.name,
-                            "data_type": field.data_type,
-                            "nullable": field.nullable,
-                        }
-                        for field in result.fields
-                    ]
-                )
-                revision = AssetRevision(
-                    target_ref,
-                    schema_digest=hashlib.sha256(schema_bytes).hexdigest(),
-                    content_digest=output_digest,
-                    metadata=(("sync_id", definition.id),),
-                )
-                lineage = LineageEdge(
-                    definition.source_revision_ref,
-                    target_ref,
-                    operation="write",
-                    mode="observed",
-                    execution_ref=execution_ref,
-                )
-                catalog_commit = (
-                    WorkspaceId(workspace_id),
-                    revision,
-                    lineage,
-                    now,
-                    (
-                        definition.connector_id,
-                        definition.connection_ref,
+                    if not execution_ref or not execution_ref.strip() or now is None:
+                        raise ValueError(
+                            "governed sync requires a durable execution_ref and timestamp"
+                        )
+                    if len(output_digest) != 64 or any(
+                        character not in "0123456789abcdef" for character in output_digest
+                    ):
+                        raise ValueError(
+                            "governed sync output digest must be lowercase SHA-256 hex"
+                        )
+                    target_ref = AssetRef(
+                        definition.destination_asset_id,
+                        AssetVersion(f"sha256:{output_digest}"),
+                    )
+                    schema_bytes = encode(
+                        [
+                            {
+                                "name": field.name,
+                                "data_type": field.data_type,
+                                "nullable": field.nullable,
+                            }
+                            for field in result.fields
+                        ]
+                    )
+                    revision = AssetRevision(
+                        target_ref,
+                        schema_digest=hashlib.sha256(schema_bytes).hexdigest(),
+                        content_digest=output_digest,
+                        metadata=(("sync_id", definition.id),),
+                    )
+                    lineage = LineageEdge(
+                        definition.source_revision_ref,
+                        target_ref,
+                        operation="write",
+                        mode="observed",
+                        execution_ref=execution_ref,
+                    )
+                    catalog_commit = (
+                        WorkspaceId(workspace_id),
+                        revision,
+                        lineage,
+                        now,
                         (
-                            definition.asset_ref.split("::", 1)[1]
-                            if definition.asset_ref.startswith(f"{definition.connection_ref}::")
-                            else definition.asset_ref
+                            definition.connector_id,
+                            definition.connection_ref,
+                            (
+                                definition.asset_ref.split("::", 1)[1]
+                                if definition.asset_ref.startswith(f"{definition.connection_ref}::")
+                                else definition.asset_ref
+                            ),
                         ),
-                    ),
+                    )
+                latest_evidence = self._checkpoints.commit_output_then_checkpoint(
+                    scoped_identity,
+                    expected,
+                    result.checkpoint,
+                    output_id=output_id,
+                    output_digest=output_digest,
+                    fence=fence,
+                    output_committed=True,
+                    catalog_commit=catalog_commit,
                 )
-            evidence = self._checkpoints.commit_output_then_checkpoint(
-                scoped_identity,
-                expected,
-                result.checkpoint,
-                output_id=output_id,
-                output_digest=output_digest,
-                fence=fence,
-                output_committed=True,
-                catalog_commit=catalog_commit,
-            )
-        checkpoint_payload = evidence.to_payload()
+            expected = result.checkpoint
+            total_rows += len(result.rows)
+            batch_count += 1
+            if lineage is not None:
+                lineages.append(lineage)
+            has_more = result.has_more
+            if not has_more:
+                break
+
+        if latest_evidence is None:
+            raise ValueError("connector sync did not commit any output batch")
+        checkpoint_payload = latest_evidence.to_payload()
         if isinstance(checkpoint_payload, dict) and "identity" in checkpoint_payload:
             checkpoint_payload["identity"] = definition.checkpoint_identity
         response: dict[str, object] = {
             "schema": "ronin.ingestion-sync-result/v1",
             "plan": plan.to_payload(),
-            "rows_written": len(result.rows),
+            "rows_written": total_rows,
+            "batches": batch_count,
+            "has_more": has_more,
             "checkpoint": checkpoint_payload,
         }
-        if lineage is not None:
-            response["lineage"] = lineage.to_payload()
+        if lineages:
+            response["lineage"] = lineages[-1].to_payload()
+            if len(lineages) > 1:
+                response["lineages"] = [lineage.to_payload() for lineage in lineages]
         return response
 
 

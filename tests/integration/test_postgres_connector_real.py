@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import os
 from urllib.parse import urlsplit
+from uuid import uuid4
 
 import pytest
 from studio_connectors.postgres import PostgresConnector
-from studio_core import ConnectionDefinition, ConnectionId, SecretRef
+from studio_core import AssetHandle, ConnectionDefinition, ConnectionId, SecretRef
 from studio_storage import EnvironmentSecretResolver
 
 
@@ -25,6 +26,7 @@ def test_postgres_connector_real_schema_null_timezone_and_large_value() -> None:
     if not dsn:
         pytest.skip("set RONIN_CONNECTOR_POSTGRES_DSN for real PostgreSQL qualification")
     psycopg = pytest.importorskip("psycopg")
+
     parsed = urlsplit(dsn)
     user = parsed.username or ""
     password = parsed.password or ""
@@ -63,3 +65,86 @@ def test_postgres_connector_real_schema_null_timezone_and_large_value() -> None:
     assert result.checkpoint is not None
     unchanged = connector.read(connection, asset, resolver, checkpoint=result.checkpoint)
     assert unchanged.rows == ()
+
+
+def test_postgres_connector_real_watermark_pages_same_timestamp_without_loss() -> None:
+    dsn = _dsn()
+    if not dsn:
+        pytest.skip("set RONIN_CONNECTOR_POSTGRES_DSN for real PostgreSQL qualification")
+    psycopg = pytest.importorskip("psycopg")
+    from psycopg import sql
+
+    parsed = urlsplit(dsn)
+    connection = ConnectionDefinition(
+        ConnectionId("real-postgres-incremental"),
+        "PostgreSQL incremental qualification",
+        "postgresql",
+        options=(
+            ("host", parsed.hostname or "localhost"),
+            ("port", str(parsed.port or 5432)),
+            ("database", (parsed.path or "/postgres").lstrip("/")),
+            ("incremental_column", "observed_at"),
+            ("tie_breaker_columns", "id"),
+        ),
+        secret_refs=(
+            ("user", SecretRef("secret://env/PG_QUAL_USER")),
+            ("password", SecretRef("secret://env/PG_QUAL_PASSWORD")),
+        ),
+    )
+    resolver = EnvironmentSecretResolver(
+        {"PG_QUAL_USER": parsed.username or "", "PG_QUAL_PASSWORD": parsed.password or ""}
+    )
+    table = f"ronin_incremental_{uuid4().hex}"
+    with psycopg.connect(dsn) as database, database.cursor() as cursor:
+        cursor.execute(
+            sql.SQL(
+                "CREATE TABLE {} "
+                "(observed_at timestamptz NOT NULL, id bigint NOT NULL PRIMARY KEY, "
+                "amount numeric(40,10) NOT NULL)"
+            ).format(sql.Identifier(table))
+        )
+        cursor.execute(
+            sql.SQL("INSERT INTO {} VALUES (%s, %s, %s), (%s, %s, %s), (%s, %s, %s)").format(
+                sql.Identifier(table)
+            ),
+            (
+                "2026-01-02T03:04:05+00:00",
+                1,
+                "12345678901234567890.1234567890",
+                "2026-01-02T03:04:05+00:00",
+                2,
+                "2.25",
+                "2026-01-02T03:04:05+00:00",
+                3,
+                "3.50",
+            ),
+        )
+    try:
+        asset = AssetHandle(connection.id, ("public",), table)
+        connector = PostgresConnector()
+        first = connector.read(connection, asset, resolver, limit=2)
+        assert [row["id"] for row in first.rows] == [1, 2]
+        assert first.has_more is True
+        assert str(first.rows[0]["amount"]) == "12345678901234567890.1234567890"
+
+        second = connector.read(connection, asset, resolver, limit=2, checkpoint=first.checkpoint)
+        assert [row["id"] for row in second.rows] == [3]
+        assert second.has_more is False
+
+        repeated = connector.read(
+            connection, asset, resolver, limit=2, checkpoint=second.checkpoint
+        )
+        assert repeated.rows == ()
+        assert repeated.checkpoint == second.checkpoint
+
+        with psycopg.connect(dsn) as database, database.cursor() as cursor:
+            cursor.execute(
+                sql.SQL("ALTER TABLE {} ADD COLUMN added_after_checkpoint text").format(
+                    sql.Identifier(table)
+                )
+            )
+        with pytest.raises(ValueError, match="schema changed"):
+            connector.read(connection, asset, resolver, checkpoint=second.checkpoint)
+    finally:
+        with psycopg.connect(dsn) as database, database.cursor() as cursor:
+            cursor.execute(sql.SQL("DROP TABLE IF EXISTS {}").format(sql.Identifier(table)))
