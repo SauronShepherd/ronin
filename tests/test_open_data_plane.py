@@ -1,8 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 
 import pytest
+import studio_sql.duckdb_engine as duckdb_engine_module
 from studio_core import AssetId, Workspace, WorkspaceId
 from studio_execution.lakehouse import write_governed_parquet
 from studio_lakehouse import inspect_parquet, read_parquet_rows, write_parquet_rows
@@ -10,6 +12,7 @@ from studio_sql import (
     DuckDbSqlEngine,
     ProjectScopedDuckDbSqlEngine,
     SqlRelationUnavailableError,
+    SqlValidationError,
 )
 from studio_storage import SqliteCatalogStore, SqliteWorkspaceStore
 
@@ -132,6 +135,37 @@ def test_sql_reference_engine_rejects_mutating_or_multiple_statements() -> None:
                 engine.execute(query)
 
 
+def test_sql_reference_engine_rejects_direct_and_nested_file_relations(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "private.parquet"
+    write_parquet_rows(path, ({"secret": "not a relation"},))
+
+    with DuckDbSqlEngine() as engine:
+        engine.register_parquet("approved_events", str(path))
+        assert engine.execute("SELECT secret FROM approved_events").rows == (("not a relation",),)
+        for query in (
+            f"SELECT * FROM '{path}'",  # noqa: S608 - deliberately untrusted SQL input.
+            f"SELECT * FROM '{tmp_path / '*.parquet'}'",  # noqa: S608 - path source regression.
+            f"SELECT * FROM (SELECT * FROM '{path}') AS nested",  # noqa: S608 - nested source regression.
+            f"SELECT * FROM approved_events, '{path}'",  # noqa: S608 - comma-source regression.
+            f"SELECT * FROM approved_events JOIN read_parquet('{path}') AS nested ON true",  # noqa: S608 - table-function regression.
+            f"SELECT * FROM approved_events JOIN approved_events AS second ON true, '{path}'",  # noqa: S608 - comma source after JOIN.
+            f"SELECT * FROM approved_events UNION SELECT * FROM '{path}'",  # noqa: S608 - compound query regression.
+            "SELECT * FROM read_csv_auto('private.csv')",
+        ):
+            with pytest.raises(SqlValidationError):
+                engine.execute(query)
+
+
+def test_sql_reference_engine_ignores_relation_keywords_in_literals_and_comments() -> None:
+    with DuckDbSqlEngine() as engine:
+        result = engine.execute("SELECT 'FROM private.parquet' AS note -- JOIN secret")
+        dollar_quoted = engine.execute("SELECT $$FROM private.parquet$$ AS note")
+    assert result.rows == (("FROM private.parquet",),)
+    assert dollar_quoted.rows == (("FROM private.parquet",),)
+
+
 def test_project_scoped_sql_engines_isolate_relation_collisions(tmp_path: Path) -> None:
     first = tmp_path / "first.parquet"
     second = tmp_path / "second.parquet"
@@ -145,6 +179,41 @@ def test_project_scoped_sql_engines_isolate_relation_collisions(tmp_path: Path) 
         assert engine.execute("project-b", "SELECT value FROM events").rows == ((2,),)
         with pytest.raises(SqlRelationUnavailableError):
             engine.execute("project-c", "SELECT value FROM events")
+
+
+def test_project_scoped_sql_engine_reuses_and_closes_each_connection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    created: list[DuckDbSqlEngine] = []
+    closed: list[DuckDbSqlEngine] = []
+    original_engine = duckdb_engine_module.DuckDbSqlEngine
+
+    class RecordingEngine(original_engine):
+        def __init__(self) -> None:
+            super().__init__()
+            created.append(self)
+
+        def close(self) -> None:
+            closed.append(self)
+            super().close()
+
+    monkeypatch.setattr(duckdb_engine_module, "DuckDbSqlEngine", RecordingEngine)
+    with ProjectScopedDuckDbSqlEngine() as engine:
+        assert engine.execute("project-a", "SELECT 1").rows == ((1,),)
+        assert engine.execute("project-a", "SELECT 2").rows == ((2,),)
+        assert engine.execute("project-b", "SELECT 3").rows == ((3,),)
+        assert len(created) == 2
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            results = list(
+                executor.map(
+                    lambda value: engine.execute("project-a", "SELECT ?", (value,)).rows[0][0],
+                    range(24),
+                )
+            )
+        assert results == list(range(24))
+        assert len(created) == 2
+    assert len(closed) == 2
+    assert {id(item) for item in closed} == {id(item) for item in created}
 
 
 def test_governed_parquet_write_commits_content_addressed_catalog_revision(
