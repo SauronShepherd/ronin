@@ -9,12 +9,13 @@ from urllib.parse import urlsplit
 
 import pytest
 from studio_data_engineering import QueryEngineRuntimeProvider, execute_query
-from studio_query_engine import QueryRequest, TrinoHttpTransport
 from studio_query_engine import (
     DiscoveredEngine,
     EngineCapabilities,
     EngineHandshake,
     QueryExecutionPolicy,
+    QueryRequest,
+    TrinoHttpTransport,
 )
 from studio_storage import LocalArtifactStore
 
