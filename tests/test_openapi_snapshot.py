@@ -15,11 +15,17 @@ def test_queryflux_execution_route_and_result_budgets_are_documented() -> None:
 
     root = Path(__file__).parents[1]
     document = json.loads((root / "api/openapi-v1.json").read_text(encoding="utf-8"))
-    operation = document["paths"]["/v1/data-engineering/queryflux/execute"]["post"]
+    operation = document["paths"][
+        "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute"
+    ]["post"]
     request = document["components"]["schemas"]["QueryFluxExecuteRequest"]
 
     assert operation["operationId"] == "executeQueryFlux"
     assert operation["description"].find("data-engineering:execute") >= 0
+    assert [item["name"] for item in operation["parameters"]] == [
+        "workspace_id",
+        "project_id",
+    ]
     assert operation["requestBody"]["content"]["application/json"]["schema"]["$ref"] == (
         "#/components/schemas/QueryFluxExecuteRequest"
     )
@@ -30,6 +36,7 @@ def test_queryflux_execution_route_and_result_budgets_are_documented() -> None:
         "default": 1048576,
     }
     assert request["properties"]["max_rows"]["maximum"] == 1000000
+    assert "project_id" not in request["properties"]
     sql_request = document["components"]["schemas"]["SqlRequest"]
     assert sql_request["properties"]["timeout_ms"] == {
         "type": "integer",

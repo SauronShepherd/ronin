@@ -36,7 +36,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `c4feab43e1e78285bb11eed4ed38e38aa8931463` (2026-10-27).
+**Observed source head:** `10070287136eff8893518f76a3e00de32f85a3e1` (2026-10-27).
 
 PR #552 merged at 19:41:11 UTC. Required PR checks passed; all six exact-head push workflows on the merge SHA passed (CI 40388942726, Docker 40388942459, Web 40388942544, Release 40388943097, Security 40388942691, Status consistency 40388942624). `mutation` and release publish/verdict jobs were skipped by policy and are not passes. The remote feature branch was deleted; local main is aligned with origin/main.
 
@@ -62,6 +62,8 @@ No active family is release-qualified; this is a release-completion metric, not 
 code already implemented. P9 is out of scope.
 
 **Build-plan implementation progress:** **not calculable**. No reproducible weighted rubric currently maps partial implementation across the 13 active capability families to a global percentage. The earlier 14% estimate is retired; it must not be reported as current progress. GenAI and multi-user Pro capabilities do not count.
+
+PR [#557](https://github.com/SauronShepherd/ronin/pull/557) integrated the QueryFlux SQL result-byte limit and OpenAPI route parity. All required PR checks passed; mutation was skipped by policy. Six post-merge exact-SHA workflows passed on the merge commit: CI 40444233807, Docker 40444233763, Web 40444233747, Release 40444233740, Security 40444233748 and Status consistency 40444233746. Local verification of this merge SHA passed **4,090 tests with 74 environment/platform skips** and performance tests **3/3**. This does not qualify P3 or any release family.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
 

@@ -134,7 +134,7 @@ class DataEnginerringStudioPlugin:
         )
         context.contributions.add_route(
             "POST",
-            "/v1/data-engineering/queryflux/execute",
+            "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute",
             context.plugin_id,
             self.queryflux_execute,
             permission="data-engineering:execute",
@@ -409,7 +409,14 @@ class DataEnginerringStudioPlugin:
             "translation_policies": translation_policies,
         }
 
-    def queryflux_execute(self, *, body: object | None = None, **_kwargs: Any) -> dict[str, object]:
+    def queryflux_execute(
+        self,
+        *,
+        workspace_id: str,
+        project_id: str,
+        body: object | None = None,
+        **_kwargs: Any,
+    ) -> dict[str, object]:
         """Execute one authorized QueryFlux query and persist durable evidence."""
 
         self._assert_ready()
@@ -432,13 +439,12 @@ class DataEnginerringStudioPlugin:
             "max_rows",
             "max_result_bytes",
             "engine",
-            "project_id",
             "run_id",
             "attempt_id",
         }
         if set(body) - allowed:
             raise ValueError("queryflux execution body contains unknown fields")
-        required = ("sql", "profile", "engine", "project_id", "run_id", "attempt_id")
+        required = ("sql", "profile", "engine", "run_id", "attempt_id")
         if any(
             not isinstance(body.get(name), str)
             or not body[name]
@@ -449,6 +455,17 @@ class DataEnginerringStudioPlugin:
         ):
             raise ValueError(
                 "queryflux execution identifiers must be trimmed single-line text up to 512 chars"
+            )
+        if any(
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            or len(value) > 512
+            or any(char in value for char in "\r\n\x00")
+            for value in (workspace_id, project_id)
+        ):
+            raise ValueError(
+                "queryflux route identifiers must be trimmed single-line text up to 512 chars"
             )
         if not isinstance(body.get("sql"), str) or not str(body["sql"]).strip():
             raise ValueError("queryflux execution requires non-empty SQL text")
@@ -475,7 +492,7 @@ class DataEnginerringStudioPlugin:
             cast(Any, self._queryflux_evidence_store),
             request,
             engine=cast(str, body["engine"]),
-            project_id=cast(str, body["project_id"]),
+            project_id=project_id,
             run_id=cast(str, body["run_id"]),
             attempt_id=cast(str, body["attempt_id"]),
             evidence_reference_store=cast(Any, self._queryflux_evidence_reference_store),

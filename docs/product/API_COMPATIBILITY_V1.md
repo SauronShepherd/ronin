@@ -102,7 +102,9 @@ decimals and UUID-like values are strings, and binary values are standard Base64
 strings. Non-finite numeric results are rejected, and raw engine diagnostics are
 never returned to clients.
 
-The plugin route `POST /v1/data-engineering/queryflux/execute` accepts an
+The plugin route
+`POST /v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute`
+binds execution to an existing project in the authorized workspace and accepts an
 optional `parameters` array using the same tagged scalar forms and limits,
 `max_rows` (`1..1000000`, default `1000`), and `max_result_bytes`
 (`1..10485760`, default `1048576`). Its shared `QueryRequest` accepts only the

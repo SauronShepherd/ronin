@@ -3295,7 +3295,7 @@
         {
           "function": "context.plugin_id",
           "method": "POST",
-          "path": "/v1/data-engineering/queryflux/execute"
+          "path": "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute"
         },
         {
           "function": "context.plugin_id",
@@ -29840,7 +29840,7 @@
       "function": "context.plugin_id",
       "method": "POST",
       "package": "studio_data_engineering",
-      "path": "/v1/data-engineering/queryflux/execute"
+      "path": "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute"
     },
     {
       "file": "python/studio_data_engineering/plugin.py",

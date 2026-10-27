@@ -3360,8 +3360,41 @@ class _WorkspaceProjectHandler(BaseHTTPRequestHandler):
                             )
                             return
                         workspace_id = WorkspaceId(workspace_value)
-                        if not self._authorize(actor, workspace_id, mapped_permission):
+                        project_id = parameters.get("project_id")
+                        project_scoped_execute = (
+                            permission == "data-engineering:execute"
+                            and getattr(route, "path", "")
+                            == (
+                                "/v1/workspaces/{workspace_id}/projects/{project_id}/"
+                                "data-engineering/queryflux/execute"
+                            )
+                        )
+                        if project_scoped_execute and project_id is None:
+                            self._error(
+                                HTTPStatus.FORBIDDEN,
+                                "plugin_project_scope_required",
+                                "data engineering execution requires a project-scoped route",
+                            )
                             return
+                        if not self._authorize(
+                            actor,
+                            workspace_id,
+                            mapped_permission,
+                            resource_ref=project_id if project_scoped_execute else None,
+                        ):
+                            return
+                        if project_scoped_execute and project_id is not None:
+                            try:
+                                self._server().project_service.get(
+                                    workspace_id, ProjectId(project_id)
+                                )
+                            except WorkspaceServiceNotFound:
+                                self._error(
+                                    HTTPStatus.NOT_FOUND,
+                                    "project_not_found",
+                                    "project not found in the authorized workspace",
+                                )
+                                return
                         body = self._read_json()
                         if not self._audit_mutation(
                             actor,
