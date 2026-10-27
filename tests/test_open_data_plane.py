@@ -108,6 +108,22 @@ def test_duckdb_reference_engine_queries_registered_parquet(tmp_path: Path) -> N
     assert result.rows == (("a", 5), ("b", 7))
 
 
+def test_duckdb_accepts_normalized_sql_scalar_bindings() -> None:
+    with DuckDbSqlEngine() as engine:
+        result = engine.execute(
+            "SELECT ? AS nullable, ? AS enabled, ? AS count, ? AS ratio, ? AS label",
+            (None, True, 12, 1.25, "events"),
+        )
+    assert tuple(column.name for column in result.columns) == (
+        "nullable",
+        "enabled",
+        "count",
+        "ratio",
+        "label",
+    )
+    assert result.rows == ((None, True, 12, 1.25, "events"),)
+
+
 def test_duckdb_engine_interrupts_a_query_at_its_execution_deadline(monkeypatch) -> None:
     entered = Event()
     interrupted = Event()

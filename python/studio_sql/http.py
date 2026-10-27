@@ -6,7 +6,12 @@ import json
 from collections.abc import Mapping
 from typing import Protocol
 
-from .contracts import SqlQueryResult, SqlResultLimitError, validate_read_only_select
+from .contracts import (
+    SqlQueryResult,
+    SqlResultLimitError,
+    normalize_sql_parameters,
+    validate_read_only_select,
+)
 from .wire import sql_wire_value
 
 
@@ -65,13 +70,11 @@ class SqlHTTPAdapter:
             or not 1 <= max_result_bytes <= 10_485_760
         ):
             raise ValueError("SQL max_result_bytes must be between 1 and 10485760")
-        raw_parameters = body.get("parameters", [])
-        if not isinstance(raw_parameters, list):
-            raise ValueError("SQL parameters must be an array")
+        parameters = normalize_sql_parameters(body.get("parameters", []))
         result = self._engine.execute(
             project_id,
             sql,
-            tuple(raw_parameters),
+            parameters,
             max_rows=max_rows,
             timeout_ms=timeout_ms,
             max_result_bytes=max_result_bytes,

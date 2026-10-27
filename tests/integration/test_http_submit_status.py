@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 from threading import Thread
-from urllib.request import urlopen
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 import pytest
 from pyronin import APIError, HTTPTransport, Ronin
@@ -49,6 +51,16 @@ def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
         "failure_code",
     }
     assert document["security"] == [{"bearerAuth": []}]
+    sql_parameters = document["components"]["schemas"]["SqlRequest"]["properties"]["parameters"]
+    assert sql_parameters["maxItems"] == 1000
+    legacy_sql_parameter = document["components"]["schemas"]["SqlLegacyParameter"]
+    assert len(legacy_sql_parameter["anyOf"]) == 5
+    typed_sql_parameter = document["components"]["schemas"]["SqlTypedParameter"]
+    assert len(typed_sql_parameter["oneOf"]) == 5
+    assert all(
+        item["additionalProperties"] is False and item["required"] == ["type", "value"]
+        for item in typed_sql_parameter["oneOf"]
+    )
     event = document["components"]["schemas"]["JobEvent"]
     assert event["additionalProperties"] is False
     assert set(event["required"]) == {
@@ -59,6 +71,69 @@ def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
         "message",
         "occurred_at",
     }
+
+
+def test_http_sql_accepts_typed_bindings_and_rejects_type_mismatches(tmp_path: Path) -> None:
+    store = SqliteJobStore(tmp_path / "sql.db", migration_now=_MIGRATION_NOW)
+    service = DurableExecutionService(store, max_workers=1, max_in_flight=2)
+    engine = DuckDbSqlEngine()
+    server = RoninHTTPServer(
+        ("127.0.0.1", 0), service, token=_AUTHORIZATION, grants=_GRANTS, sql_engine=engine
+    )
+    server_thread = Thread(target=server.serve_forever, name="ronin-sql-types-test", daemon=True)
+    server_thread.start()
+
+    try:
+        body = json.dumps(
+            {
+                "project": "typed-bindings",
+                "sql": "SELECT ?, ?, ?, ?, ?",
+                "parameters": [
+                    {"type": "null", "value": None},
+                    {"type": "boolean", "value": True},
+                    {"type": "integer", "value": 12},
+                    {"type": "float", "value": 1.25},
+                    {"type": "string", "value": "ronin"},
+                ],
+            }
+        ).encode()
+        request = Request(
+            f"http://127.0.0.1:{server.server_port}/v1/sql",
+            data=body,
+            headers={
+                "Authorization": f"Bearer {_AUTHORIZATION}",
+                "Content-Type": "application/json",
+            },
+        )
+        with urlopen(request) as response:  # noqa: S310 - fixed loopback test server
+            payload = json.loads(response.read())
+        assert payload["rows"] == [[None, True, 12, 1.25, "ronin"]]
+
+        invalid = json.dumps(
+            {
+                "project": "typed-bindings",
+                "sql": "SELECT ?",
+                "parameters": [{"type": "integer", "value": True}],
+            }
+        ).encode()
+        invalid_request = Request(
+            f"http://127.0.0.1:{server.server_port}/v1/sql",
+            data=invalid,
+            headers={
+                "Authorization": f"Bearer {_AUTHORIZATION}",
+                "Content-Type": "application/json",
+            },
+        )
+        with pytest.raises(HTTPError) as error:
+            urlopen(invalid_request)  # noqa: S310 - fixed loopback test server
+        assert error.value.code == 400
+        assert "type" in json.loads(error.value.read())["error"]["message"]
+    finally:
+        server.shutdown()
+        server.server_close()
+        server_thread.join(timeout=5)
+        engine.close()
+        asyncio.run(service.aclose())
 
 
 def test_real_http_sqlite_and_pyronin_submit_list_status_events_cancel_idempotency(

@@ -36,7 +36,7 @@ acceptance passed 15/15. The global sweep remains disabled until writers and
 retention share a cross-store consistency barrier.
 Untracked qualification output directories are not release evidence.
 PR #527 added atomic, exact-replay SQLite ML Registry Bundle imports. PR #528 extends that transaction guarantee to PostgreSQL, including feature definitions, and merged at `main@72a89d06eaf33f604a613376e630a01c5b163dfd`. Its required exact-head CI, Docker/PostgreSQL coverage, Security, Release and Status gates passed; mutation remained skipped. The first coverage run executed 3929 tests (14 skipped) and prompted the documented ratchet update before the successful rerun. PR #529 then fixed a POSIX child-watcher/Popen polling race that caused synthetic exit code 255 in CI 3.12 and the real Docker worker. Local Windows Docker/PostgreSQL focused coverage passed (11 passed, 1 POSIX-only skip); PR CI and all six post-merge exact-head workflows passed on `main@313b8b87670e3f5cad8d641eeeb4f29cf0c31d63`.
-**Observed source head:** `993f519e02e611a951b258bb266979fa747e7bbf` (2026-10-27).
+**Observed source head:** `8b56095c3ef94bdcd148b311b8b1014a66fee593` (2026-10-27).
 
 PR #552 merged at 19:41:11 UTC. Required PR checks passed; all six exact-head push workflows on the merge SHA passed (CI 40388942726, Docker 40388942459, Web 40388942544, Release 40388943097, Security 40388942691, Status consistency 40388942624). `mutation` and release publish/verdict jobs were skipped by policy and are not passes. The remote feature branch was deleted; local main is aligned with origin/main.
 
@@ -64,6 +64,35 @@ code already implemented. P9 is out of scope.
 **Build-plan implementation progress:** **not calculable**. No reproducible weighted rubric currently maps partial implementation across the 13 active capability families to a global percentage. The earlier 14% estimate is retired; it must not be reported as current progress. GenAI and multi-user Pro capabilities do not count.
 
 This document records implementation state only. It does not claim test execution, legal review, human decisions, release qualification or operational evidence that does not exist.
+
+### SQL typed scalar-binding candidate (2026-10-27)
+
+The current candidate makes typed SQL scalar bindings explicit and consistent
+across `DurableHTTPApplication.sql` and `SqlHTTPAdapter`: `null`, `boolean`,
+signed 64-bit `integer`, finite `float`, and bounded `string`. Unknown fields,
+unsupported types, type mismatches, non-finite floats, out-of-range integers,
+more than 1,000 parameters, and strings over 512 KiB fail before engine execution.
+Existing untagged JSON scalars remain accepted and are normalized to preserve
+Public v1 client compatibility. OpenAPI and API compatibility documentation
+describe both forms. Local focused tests cover the live HTTP route and DuckDB
+binding behavior; remote engine parameter parity is still unqualified.
+
+The current-code/API/ledger focused suites pass 61 tests. The whole local
+Python run reported 4,072 passed, 72 skipped and one failure caused by the
+OpenAPI hash becoming stale after the schema edit. The snapshot was updated and
+the focused suite, including `test_openapi_snapshot`, passes; the whole suite
+was not rerun after the final schema and string-limit refinement. Local Docker
+qualification passed 21 tests and strict v0.1 acceptance 15/15; two PostgreSQL
+worker tests skipped because no DSN was configured. That image was built before
+the final schema/string-limit refinement and does not cover SQL bindings;
+exact-head PR CI remains required.
+
+This slice does not close RPV1-304/P3: pagination, durable cancellation,
+explain, catalog-backed asset registration, source revisions in query evidence,
+CPU budgets, engine-neutral provider semantics, complete journeys and provider
+qualification remain open. Release progress remains **0/13 (0%, NO-GO)**;
+global implementation progress is **not calculable**. Integral clean review
+streak after this code change: **0/10**.
 
 ## Reading this snapshot
 

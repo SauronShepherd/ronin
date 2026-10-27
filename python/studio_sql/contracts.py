@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
@@ -28,6 +29,79 @@ class SqlResultLimitError(ValueError):
 
 
 _READ_ONLY_SELECT = re.compile(r"^SELECT\b", re.IGNORECASE)
+_MAX_SQL_PARAMETER_COUNT = 1_000
+_MAX_SQL_PARAMETER_TEXT_LENGTH = 524_288
+_SQL_PARAMETER_TYPES = frozenset({"null", "boolean", "integer", "float", "string"})
+
+
+def normalize_sql_parameters(value: object) -> tuple[object, ...]:
+    """Validate SQL scalar bindings and normalize tagged or legacy JSON values.
+
+    Tagged values use ``{"type": ..., "value": ...}`` so clients can state
+    the intended SQL scalar type explicitly. Existing JSON scalar bindings
+    remain accepted for v1 compatibility and retain their JSON-derived type.
+    """
+    if not isinstance(value, list):
+        raise SqlValidationError("SQL parameters must be an array")
+    if len(value) > _MAX_SQL_PARAMETER_COUNT:
+        raise SqlValidationError("SQL parameters exceed the configured count limit")
+
+    normalized: list[object] = []
+    for index, parameter in enumerate(value):
+        if isinstance(parameter, dict):
+            if set(parameter) != {"type", "value"}:
+                raise SqlValidationError(f"SQL parameter {index} must contain only type and value")
+            kind = parameter.get("type")
+            item = parameter.get("value")
+            if not isinstance(kind, str) or kind not in _SQL_PARAMETER_TYPES:
+                raise SqlValidationError(f"SQL parameter {index} has an unsupported type")
+            if kind == "null":
+                if item is not None:
+                    raise SqlValidationError(f"SQL parameter {index} does not match its type")
+            elif kind == "boolean":
+                if not isinstance(item, bool):
+                    raise SqlValidationError(f"SQL parameter {index} does not match its type")
+            elif kind == "integer":
+                if isinstance(item, bool) or not isinstance(item, int):
+                    raise SqlValidationError(f"SQL parameter {index} does not match its type")
+                if not -(2**63) <= item < 2**63:
+                    raise SqlValidationError(
+                        f"SQL parameter {index} is outside the signed 64-bit range"
+                    )
+            elif kind == "float":
+                if isinstance(item, bool) or not isinstance(item, (int, float)):
+                    raise SqlValidationError(f"SQL parameter {index} must be a finite float")
+                try:
+                    item = float(item)
+                except OverflowError as exc:
+                    raise SqlValidationError(
+                        f"SQL parameter {index} must be a finite float"
+                    ) from exc
+                if not math.isfinite(item):
+                    raise SqlValidationError(f"SQL parameter {index} must be a finite float")
+            elif kind == "string":
+                if not isinstance(item, str):
+                    raise SqlValidationError(f"SQL parameter {index} does not match its type")
+                if len(item) > _MAX_SQL_PARAMETER_TEXT_LENGTH:
+                    raise SqlValidationError(f"SQL parameter {index} exceeds the text limit")
+            normalized.append(item)
+            continue
+
+        if parameter is None or isinstance(parameter, (bool, str)):
+            if isinstance(parameter, str) and len(parameter) > _MAX_SQL_PARAMETER_TEXT_LENGTH:
+                raise SqlValidationError(f"SQL parameter {index} exceeds the text limit")
+            normalized.append(parameter)
+        elif isinstance(parameter, int):
+            if not -(2**63) <= parameter < 2**63:
+                raise SqlValidationError(
+                    f"SQL parameter {index} is outside the signed 64-bit range"
+                )
+            normalized.append(parameter)
+        elif isinstance(parameter, float) and math.isfinite(parameter):
+            normalized.append(parameter)
+        else:
+            raise SqlValidationError(f"SQL parameter {index} must be a finite JSON scalar")
+    return tuple(normalized)
 
 
 def validate_read_only_select(sql: str) -> None:
@@ -97,5 +171,6 @@ __all__ = (
     "SqlRelationUnavailableError",
     "SqlTimeoutError",
     "SqlValidationError",
+    "normalize_sql_parameters",
     "validate_read_only_select",
 )

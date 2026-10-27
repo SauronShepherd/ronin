@@ -86,8 +86,13 @@ Before stable v1, incompatible removals/renames/type changes or required-request
 
 `POST /v1/jobs` accepts only `project`, `target`, and optional `parameters`; unknown request fields are rejected. `parameters` is intentionally extensible JSON object data and is not interpreted as protocol field expansion.
 
-`POST /v1/sql` accepts `project`, `sql`, optional scalar `parameters`, and optional
-`max_rows` (`1..10000`). The request requires the project's `read` grant. The
+`POST /v1/sql` accepts `project`, `sql`, optional `parameters`, and optional
+`max_rows` (`1..10000`). Each binding may be a legacy JSON scalar or a tagged
+`{"type": "integer", "value": 42}` object. Tagged parameter types are `null`,
+`boolean`, signed 64-bit `integer`, finite `float`, and `string`; each object is
+closed to exactly `type` and `value`. At most 1,000 parameters are accepted and
+strings are bounded to 512 KiB. Legacy scalars remain supported for v1 clients and
+are normalized using their JSON type. The request requires the project's `read` grant. The
 reference DuckDB service accepts one read-only `SELECT` statement, bounds SQL text
 to 1 MiB, and rejects mutating or multi-statement input. Deployments without a
 configured SQL engine return `404 sql_unavailable`. SQL result rows use JSON-safe
