@@ -130,7 +130,9 @@ def test_configured_queryflux_capabilities_are_handshake_bound(tmp_path) -> None
     execute_route = next(
         route
         for route in registry.routes
-        if route.method == "POST" and route.path == "/v1/data-engineering/queryflux/execute"
+        if route.method == "POST"
+        and route.path
+        == "/v1/workspaces/{workspace_id}/projects/{project_id}/data-engineering/queryflux/execute"
     )
     assert execute_route.permission == "data-engineering:execute"
     plugin.startup()
@@ -207,16 +209,17 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
     )
     plugin.startup()
     result = plugin.queryflux_execute(
+        workspace_id="workspace-1",
+        project_id="project-1",
         body={
             "sql": "SELECT 1",
             "profile": "queryflux",
             "engine": "duckdb",
-            "project_id": "project-1",
             "run_id": "run-1",
             "attempt_id": "attempt-1",
             "parameters": [{"type": "integer", "value": 7}],
             "max_result_bytes": 2048,
-        }
+        },
     )
     assert result["status"] == "succeeded"
     assert result["rows"] == [[1]]
