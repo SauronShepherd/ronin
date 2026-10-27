@@ -71,7 +71,7 @@ La revisión de esta versión documental acaba de encontrar y corregir estado ob
 
 ## 46. Candidato SQL: parámetros escalares tipados (2026-10-27)
 
-**Commit de código:** `codex/sql-typed-bindings@1f8e931f5b1078bf814e41b45c0ca0370759f753` (basado en `main@8b56095c3ef94bdcd148b311b8b1014a66fee593`).
+**Commits de código:** implementación `1f8e931f5b1078bf814e41b45c0ca0370759f753` y fix de esquema/límites `c4bc2587b0ea0fde0eac7f91a8b95d85fc95914f`; PR [#555](https://github.com/SauronShepherd/ronin/pull/555) apunta actualmente al segundo commit.
 
 La rama de trabajo parte de `main@8b56095c3ef94bdcd148b311b8b1014a66fee593`, después del merge documental #554. Añade `normalize_sql_parameters` al contrato compartido y lo aplica tanto a la ruta HTTP SQL durable como al `SqlHTTPAdapter`. Los clientes pueden enviar `{type, value}` para `null`, `boolean`, `integer` signed 64-bit, `float` finito y `string` de hasta 512 KiB; se rechazan campos extra, tipos incompatibles, floats no finitos, enteros fuera de rango, más de 1.000 bindings y strings mayores al límite antes de llamar al engine. Se mantiene la forma escalar JSON anterior por compatibilidad v1 y se normaliza con el tipo JSON recibido. OpenAPI y `API_COMPATIBILITY_V1.md` especifican ambas formas.
 
