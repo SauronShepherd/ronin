@@ -8,6 +8,9 @@ const SQL_HISTORY_KEY = 'ronin.data-engineering.sql-history.v1';
 let sqlHistory = [];
 const SQL_SAVED_KEY = 'ronin.data-engineering.saved-queries.v1';
 let savedSql = [];
+let queryFluxCapabilities = null;
+let queryFluxResultState = null;
+let lastSqlResult = null;
 try { const stored = JSON.parse(localStorage.getItem(SQL_HISTORY_KEY) || '[]'); if (Array.isArray(stored)) sqlHistory = stored.filter(entry => entry && typeof entry.sql === 'string' && typeof entry.profile === 'string').slice(0, 10); } catch { sqlHistory = []; }
 try { const stored = JSON.parse(localStorage.getItem(SQL_SAVED_KEY) || '[]'); if (Array.isArray(stored)) savedSql = stored.filter(entry => entry && typeof entry.name === 'string' && typeof entry.sql === 'string' && typeof entry.profile === 'string').slice(0, 20); } catch { savedSql = []; }
 function pipelineDocument() {
@@ -110,8 +113,49 @@ function render() {
 }
 function addSqlContractFields() {
   const grid = document.querySelector('#de-sql-form .grid.three');
-  if (!grid || grid.querySelector('[name="dialect"]')) return;
-  grid.insertAdjacentHTML('beforeend', '<label>Dialect<select class="field" name="dialect"><option value="ansi">ANSI SQL</option><option value="duckdb">DuckDB</option></select></label><label>Translation policy<select class="field" name="translation_policy"><option value="strict">Strict</option><option value="best_effort">Best effort</option></select></label><label>Execution time limit (ms)<input class="field" name="timeout_ms" type="number" min="1" max="60000" value="5000" required></label><label>Maximum result size (bytes)<input class="field" name="max_result_bytes" type="number" min="1" max="10485760" value="1048576" required></label>');
+  if (!grid || grid.querySelector('[name="max_rows"]')) return;
+  grid.insertAdjacentHTML('beforeend', '<label data-queryflux-only hidden>Translation policy<select class="field" name="translation_policy"><option value="native_only">Native only</option></select></label><label data-sql-local-only>Execution time limit (ms)<input class="field" name="timeout_ms" type="number" min="1" max="60000" value="5000" required></label><label>Maximum rows<input class="field" name="max_rows" type="number" min="1" max="10000" value="1000" required></label><label>Maximum result size (bytes)<input class="field" name="max_result_bytes" type="number" min="1" max="10485760" value="1048576" required></label><label data-queryflux-only hidden>QueryFlux engine<select class="field" name="queryflux_engine" required></select></label><label data-queryflux-only hidden>QueryFlux page size<input class="field" name="page_size" type="number" min="1" max="10000" value="100" required></label>');
+  const result = document.querySelector('#de-sql-result');
+  if (result && !document.querySelector('#de-queryflux-next-page')) {
+    const next = document.createElement('button');
+    next.id = 'de-queryflux-next-page';
+    next.className = 'button';
+    next.type = 'button';
+    next.dataset.action = 'de-queryflux-next-page';
+    next.textContent = 'Load next results page';
+    next.hidden = true;
+    result.insertAdjacentElement('afterend', next);
+  }
+  updateQueryProfileControls();
+}
+
+function updateQueryProfileControls() {
+  const form = document.querySelector('#de-sql-form');
+  if (!form) return;
+  const isQueryFlux = form.querySelector('[name="profile"]')?.value === 'queryflux';
+  form.querySelectorAll('[data-queryflux-only]').forEach(label => { label.hidden = !isQueryFlux; });
+  form.querySelectorAll('[data-sql-local-only]').forEach(label => { label.hidden = isQueryFlux; });
+  const engine = form.querySelector('[name="queryflux_engine"]');
+  const allowedEngines = Array.isArray(queryFluxCapabilities?.allowed_engines)
+    ? queryFluxCapabilities.allowed_engines.filter(value => typeof value === 'string')
+    : [];
+  if (engine) {
+    const previous = engine.value;
+    engine.replaceChildren(...allowedEngines.map(value => new Option(value, value)));
+    if (allowedEngines.includes(previous)) engine.value = previous;
+  }
+  const translation = form.querySelector('[name="translation_policy"]');
+  if (translation && isQueryFlux && Array.isArray(queryFluxCapabilities?.translation_policies)) {
+    const allowed = queryFluxCapabilities.translation_policies.filter(value => typeof value === 'string');
+    const previous = translation.value;
+    translation.replaceChildren(...allowed.map(value => new Option(value.replaceAll('_', ' '), value)));
+    translation.value = allowed.includes(previous) ? previous : (allowed[0] || 'native_only');
+  }
+  const execute = form.querySelector('[data-action="de-sql-execute"]');
+  if (execute) {
+    execute.disabled = isQueryFlux && allowedEngines.length === 0;
+    execute.title = execute.disabled ? 'QueryFlux has no authorized engine configured.' : '';
+  }
 }
 function renderSqlHistory() {
   const history = document.querySelector('#de-sql-history');
@@ -129,12 +173,121 @@ function addSqlHistoryPanel() {
   renderSqlHistory();
 }
 function renderSavedSql() { const out = document.querySelector('#de-sql-saved'); if (out) out.innerHTML = savedSql.map((entry, index) => `<button class="button" type="button" data-sql-saved-index="${index}">${entry.name}</button>`).join(' ') || '<span class="muted">No saved queries.</span>'; }
+
+function renderQueryFluxResult() {
+  const out = document.querySelector('#de-sql-result');
+  const next = document.querySelector('#de-queryflux-next-page');
+  if (!out || !queryFluxResultState) return;
+  const state = queryFluxResultState;
+  out.textContent = json({
+    status: state.status,
+    selected_engine: state.selectedEngine,
+    rows_loaded: state.rows.length,
+    row_count: state.rowCount,
+    columns: state.columns,
+    rows: state.rows,
+    evidence: state.evidence,
+    run_id: state.runId,
+    attempt_id: state.attemptId,
+  });
+  if (next) {
+    next.hidden = !state.nextCursor;
+    next.disabled = false;
+    next.textContent = state.nextCursor
+      ? `Load next results page (${state.rows.length} of ${state.rowCount} rows loaded)`
+      : 'All result rows loaded';
+  }
+  lastSqlResult = { columns: state.columns, rows: state.rows };
+}
+
+async function loadQueryFluxNextPage() {
+  const state = queryFluxResultState;
+  if (!state?.nextCursor) return;
+  const next = document.querySelector('#de-queryflux-next-page');
+  if (next) { next.disabled = true; next.textContent = 'Loading results…'; }
+  try {
+    const page = await get(`${state.endpoint}?page_size=${state.pageSize}&cursor=${encodeURIComponent(state.nextCursor)}`);
+    if (JSON.stringify(page.columns) !== JSON.stringify(state.columns)) {
+      throw new Error('QueryFlux returned inconsistent result columns between pages');
+    }
+    if (page.row_count !== state.rowCount || !Array.isArray(page.rows)) {
+      throw new Error('QueryFlux returned an inconsistent result page');
+    }
+    state.rows.push(...page.rows);
+    state.nextCursor = page.next_cursor || null;
+    renderQueryFluxResult();
+  } catch (error) {
+    if (next) { next.disabled = false; next.textContent = 'Retry loading results'; }
+    throw error;
+  }
+}
+
+function queryFluxIdentifier() {
+  if (typeof crypto?.randomUUID !== 'function') {
+    throw new Error('Secure random IDs are unavailable; open Ronin over localhost or HTTPS.');
+  }
+  return crypto.randomUUID();
+}
+
+function queryFluxResultsEndpoint(workspace, project, runId, attemptId) {
+  return `/v1/workspaces/${encodeURIComponent(workspace)}/projects/${encodeURIComponent(project)}/data-engineering/queryflux/executions/${encodeURIComponent(runId)}/${encodeURIComponent(attemptId)}/results`;
+}
+
+async function executeQueryFlux(data, out) {
+  const workspace = String(data.get('workspace')).trim();
+  const project = String(data.get('project')).trim();
+  const engine = String(data.get('queryflux_engine') || '').trim();
+  if (!workspace || !project) throw new Error('Workspace and project are required for QueryFlux.');
+  if (!engine) throw new Error('No QueryFlux engine is authorized. Check the QueryFlux status panel.');
+  const runId = queryFluxIdentifier();
+  const attemptId = queryFluxIdentifier();
+  const endpoint = queryFluxResultsEndpoint(workspace, project, runId, attemptId);
+  const pageSize = Number(data.get('page_size'));
+  const result = await post(
+    `/v1/workspaces/${encodeURIComponent(workspace)}/projects/${encodeURIComponent(project)}/data-engineering/queryflux/execute`,
+    {
+      sql: String(data.get('sql')),
+      profile: 'queryflux',
+      engine,
+      run_id: runId,
+      attempt_id: attemptId,
+      max_rows: Number(data.get('max_rows')),
+      page_size: pageSize,
+      max_result_bytes: Number(data.get('max_result_bytes')),
+      translation_policy: String(data.get('translation_policy')),
+      parameters: [],
+    },
+  );
+  queryFluxResultState = {
+    endpoint,
+    runId,
+    attemptId,
+    pageSize,
+    nextCursor: result.next_cursor || null,
+    rowCount: result.row_count || 0,
+    columns: result.columns || [],
+    rows: result.rows || [],
+    status: result.status,
+    selectedEngine: result.selected_engine,
+    evidence: result.evidence,
+  };
+  renderQueryFluxResult();
+  if (!queryFluxResultState.nextCursor) {
+    const next = document.querySelector('#de-queryflux-next-page');
+    if (next) next.hidden = true;
+  }
+  out.dataset.runId = runId;
+}
+
+document.addEventListener('change', event => {
+  if (event.target.matches('#de-sql-form [name="profile"]')) updateQueryProfileControls();
+});
 document.addEventListener('click', async event => {
   const action = event.target.closest('[data-action]')?.dataset.action;
   const historyIndex = event.target.closest('[data-sql-history-index]')?.dataset.sqlHistoryIndex;
-  if (historyIndex !== undefined) { const entry = sqlHistory[Number(historyIndex)]; if (entry) { const form = document.querySelector('#de-sql-form'); form.querySelector('[name="sql"]').value = entry.sql; form.querySelector('[name="profile"]').value = entry.profile; form.querySelector('[name="dialect"]').value = entry.dialect || 'ansi'; form.querySelector('[name="translation_policy"]').value = entry.translation_policy || 'strict'; } return; }
+  if (historyIndex !== undefined) { const entry = sqlHistory[Number(historyIndex)]; if (entry) { const form = document.querySelector('#de-sql-form'); form.querySelector('[name="sql"]').value = entry.sql; form.querySelector('[name="profile"]').value = entry.profile; form.querySelector('[name="translation_policy"]').value = entry.translation_policy || 'native_only'; updateQueryProfileControls(); } return; }
   const savedIndex = event.target.closest('[data-sql-saved-index]')?.dataset.sqlSavedIndex;
-  if (savedIndex !== undefined) { const entry = savedSql[Number(savedIndex)]; if (entry) { const form = document.querySelector('#de-sql-form'); form.querySelector('[name="sql"]').value = entry.sql; form.querySelector('[name="profile"]').value = entry.profile; form.querySelector('[name="dialect"]').value = entry.dialect || 'ansi'; form.querySelector('[name="translation_policy"]').value = entry.translation_policy || 'strict'; } return; }
+  if (savedIndex !== undefined) { const entry = savedSql[Number(savedIndex)]; if (entry) { const form = document.querySelector('#de-sql-form'); form.querySelector('[name="sql"]').value = entry.sql; form.querySelector('[name="profile"]').value = entry.profile; form.querySelector('[name="translation_policy"]').value = entry.translation_policy || 'native_only'; updateQueryProfileControls(); } return; }
   if (!action || !action.startsWith('de-')) return;
   if (action === 'de-load-revision') {
     const out = document.querySelector('#de-pipeline-visual-result');
@@ -233,13 +386,48 @@ document.addEventListener('click', async event => {
   }
   const out = document.querySelector(action === 'de-health' || action === 'de-runtimes' ? '#de-health-result' : action.startsWith('de-sql-') ? '#de-sql-result' : '#de-pipeline-result');
   try {
-    if (action === 'de-sql-save') { const name = document.querySelector('#de-sql-save-name').value.trim(); const form = document.querySelector('#de-sql-form'); const sql = form.querySelector('[name="sql"]').value; const profile = form.querySelector('[name="profile"]').value; const dialect = form.querySelector('[name="dialect"]').value; const translation_policy = form.querySelector('[name="translation_policy"]').value; if (!name || !sql.trim()) throw new Error('Query name and SQL are required'); savedSql = [{ name, sql, profile, dialect, translation_policy }, ...savedSql.filter(entry => entry.name !== name)].slice(0, 20); localStorage.setItem(SQL_SAVED_KEY, JSON.stringify(savedSql)); renderSavedSql(); document.querySelector('#de-sql-result').textContent = `Saved query: ${name}`; return; }
+    if (action === 'de-sql-save') { const name = document.querySelector('#de-sql-save-name').value.trim(); const form = document.querySelector('#de-sql-form'); const sql = form.querySelector('[name="sql"]').value; const profile = form.querySelector('[name="profile"]').value; const dialect = form.querySelector('[name="dialect"]')?.value || ''; const translation_policy = form.querySelector('[name="translation_policy"]')?.value || 'native_only'; if (!name || !sql.trim()) throw new Error('Query name and SQL are required'); savedSql = [{ name, sql, profile, dialect, translation_policy }, ...savedSql.filter(entry => entry.name !== name)].slice(0, 20); localStorage.setItem(SQL_SAVED_KEY, JSON.stringify(savedSql)); renderSavedSql(); document.querySelector('#de-sql-result').textContent = `Saved query: ${name}`; return; }
     if (action === 'de-queryflux-capabilities') {
       await loadQueryFluxCapabilities();
       return;
     }
+    if (action === 'de-queryflux-next-page') {
+      await loadQueryFluxNextPage();
+      return;
+    }
     if (action === 'de-health') out.textContent = json(await get('/v1/data-engineering/health'));
-    else if (action === 'de-sql-execute' || action === 'de-sql-export') { const data = new FormData(document.querySelector('#de-sql-form')); const workspace = encodeURIComponent(data.get('workspace')); const project = encodeURIComponent(data.get('project')); const result = await post(`/v1/workspaces/${workspace}/projects/${project}/sql/query`, { sql: data.get('sql'), max_rows: 1000, timeout_ms: Number(data.get('timeout_ms')), max_result_bytes: Number(data.get('max_result_bytes')), profile: data.get('profile'), translation_policy: data.get('translation_policy'), dialect: data.get('dialect') }); const entry = { sql: String(data.get('sql')), profile: String(data.get('profile')), dialect: String(data.get('dialect')), translation_policy: String(data.get('translation_policy')) }; sqlHistory = [entry, ...sqlHistory.filter(item => item.sql !== entry.sql || item.profile !== entry.profile || item.dialect !== entry.dialect || item.translation_policy !== entry.translation_policy) ].slice(0, 10); localStorage.setItem(SQL_HISTORY_KEY, JSON.stringify(sqlHistory)); renderSqlHistory(); if (action === 'de-sql-export') { const columns = (result.columns || []).map(column => typeof column === 'string' ? column : column.name); const rows = result.rows || []; out.textContent = [columns.map(csvField).join(','), ...rows.map(row => row.map(csvField).join(','))].join('\r\n'); } else showQueryEvidence(out, result); }
+    else if (action === 'de-sql-export') {
+      if (queryFluxResultState?.nextCursor) {
+        throw new Error('Load every QueryFlux results page before exporting the complete CSV.');
+      }
+      if (!lastSqlResult) throw new Error('Execute a query before exporting its results.');
+      const columns = (lastSqlResult.columns || []).map(column => typeof column === 'string' ? column : column.name);
+      const rows = lastSqlResult.rows || [];
+      out.textContent = [columns.map(csvField).join(','), ...rows.map(row => row.map(csvField).join(','))].join('\r\n');
+    }
+    else if (action === 'de-sql-execute') {
+      const form = document.querySelector('#de-sql-form');
+      const data = new FormData(form);
+      const profile = String(data.get('profile'));
+      queryFluxResultState = null;
+      lastSqlResult = null;
+      const nextPageButton = document.querySelector('#de-queryflux-next-page');
+      if (nextPageButton) nextPageButton.hidden = true;
+      out.textContent = 'Executing bounded query…';
+      if (profile === 'queryflux') {
+        await executeQueryFlux(data, out);
+      } else {
+        const workspace = encodeURIComponent(data.get('workspace'));
+        const project = encodeURIComponent(data.get('project'));
+        const result = await post(`/v1/workspaces/${workspace}/projects/${project}/sql/query`, { sql: data.get('sql'), max_rows: Number(data.get('max_rows')), timeout_ms: Number(data.get('timeout_ms')), max_result_bytes: Number(data.get('max_result_bytes')) });
+        lastSqlResult = result;
+        showQueryEvidence(out, result);
+      }
+      const entry = { sql: String(data.get('sql')), profile, dialect: String(data.get('dialect') || ''), translation_policy: String(data.get('translation_policy') || 'native_only') };
+      sqlHistory = [entry, ...sqlHistory.filter(item => item.sql !== entry.sql || item.profile !== entry.profile || item.dialect !== entry.dialect || item.translation_policy !== entry.translation_policy) ].slice(0, 10);
+      localStorage.setItem(SQL_HISTORY_KEY, JSON.stringify(sqlHistory));
+      renderSqlHistory();
+    }
     else if (action === 'de-runtimes') out.textContent = json(await get('/v1/data-engineering/runtimes'));
     else if (action === 'de-run' || action === 'de-run-inspect') { const data = new FormData(document.querySelector('#de-pipeline-form')); const workspace = encodeURIComponent(data.get('workspace')); const project = encodeURIComponent(data.get('project')); const pipeline = encodeURIComponent(data.get('pipeline_id')); if (action === 'de-run') { const parameters = JSON.parse(data.get('pipeline')); const result = await post(`/v1/workspaces/${workspace}/projects/${project}/pipelines/${pipeline}/runs`, { revision_key: data.get('revision_key'), ir_digest: data.get('ir_digest'), runtime: data.get('runtime'), parameters: { pipeline: parameters } }); if (result.id) document.querySelector('[name="run_id"]').value = result.id; out.textContent = json(result); } else { const runId = String(data.get('run_id') || '').trim(); if (!runId) throw new Error('Enter a workflow run ID'); showPipelineRunEvidence(out, runId, await get(`/v1/workspaces/${workspace}/workflow-runs/${encodeURIComponent(runId)}`)); } }
     else if (action === 'de-archive') { const data = new FormData(document.querySelector('#de-pipeline-form')); if (!confirm(`Archive pipeline ${data.get('pipeline_id')}?`)) return; out.textContent = json(await post(`/v1/workspaces/${encodeURIComponent(data.get('workspace'))}/projects/${encodeURIComponent(data.get('project'))}/pipelines/${encodeURIComponent(data.get('pipeline_id'))}/archive`, {})); }
@@ -267,6 +455,8 @@ async function loadQueryFluxCapabilities() {
   if (!result || !status) return;
   try {
     const payload = await get('/v1/data-engineering/queryflux/capabilities');
+    queryFluxCapabilities = payload;
+    updateQueryProfileControls();
     const state = payload.status || (payload.healthy === true ? 'ready' : 'degraded');
     const capabilities = Object.entries(payload.capabilities || {})
       .filter(([, enabled]) => enabled === true)
@@ -280,6 +470,8 @@ async function loadQueryFluxCapabilities() {
       translation_policies: payload.translation_policies || ['native_only', 'best_effort'],
     });
   } catch (error) {
+    queryFluxCapabilities = null;
+    updateQueryProfileControls();
     status.textContent = 'QueryFlux: degraded';
     result.textContent = `QueryFlux capability check failed: ${error.message}`;
   }

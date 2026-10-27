@@ -67,6 +67,18 @@ class _ThreeRowTransport(_Transport):
         return status, next(self.pages), "next-2" if status.state == "running" else None
 
 
+class _FailedAfterRowsTransport(_Transport):
+    def __init__(self) -> None:
+        super().__init__([QueryStatus("failed", "provider query failed")])
+
+    def poll(self, _handle, _next_uri):
+        return (
+            QueryStatus("failed", "provider query failed"),
+            QueryResultPage(("id",), ((1,),)),
+            None,
+        )
+
+
 class _MismatchedTransport(_Transport):
     def submit(self, _request: QueryRequest) -> tuple[QueryHandle, str]:
         return QueryHandle("ronin-q-1", "other-provider", "other-q-1"), "next-1"
@@ -182,6 +194,29 @@ def test_execute_query_accumulates_bounded_pages(tmp_path: Path) -> None:
 
     assert result.page is not None
     assert result.page.rows == ((1,), (2,))
+
+
+def test_execute_query_does_not_return_or_persist_partial_rows_on_failure(
+    tmp_path: Path,
+) -> None:
+    store = LocalArtifactStore(tmp_path / "artifacts")
+    result = execute_query(
+        _provider(),
+        _FailedAfterRowsTransport(),
+        store,
+        QueryRequest("SELECT id", "local"),
+        engine="duckdb",
+        project_id="project-1",
+        run_id="run-failed",
+        attempt_id="attempt-failed",
+    )
+
+    evidence = json.loads(store.get_bytes(result.evidence_artifact))
+    assert result.status.state == "failed"
+    assert result.page is None
+    assert result.row_count == 0
+    assert result.next_cursor is None
+    assert evidence["output"] == {"columns": [], "row_count": 0, "rows": []}
 
 
 def test_execute_query_persists_full_result_and_returns_a_durable_page_cursor(

@@ -181,6 +181,9 @@ def execute_query(
         columns = None
         rows = []
 
+    if status.state != "succeeded":
+        columns = None
+        rows.clear()
     result_page = QueryResultPage(columns or (), tuple(rows)) if columns is not None else None
     finished = clock()
 

@@ -46,6 +46,13 @@ def test_sql_http_adapter_passes_a_valid_execution_timeout() -> None:
     assert result["max_result_bytes"] == 512
 
 
+def test_sql_http_adapter_rejects_unimplemented_profile_fields() -> None:
+    engine = Engine()
+    with pytest.raises(ValueError, match="unknown fields"):
+        SqlHTTPAdapter(engine).query("project-1", {"sql": "SELECT 1", "profile": "queryflux"})
+    assert engine.request is None
+
+
 def test_sql_http_adapter_normalizes_explicitly_typed_bindings() -> None:
     engine = Engine()
     SqlHTTPAdapter(engine).query(

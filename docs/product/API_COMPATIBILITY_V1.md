@@ -129,6 +129,12 @@ content-addressed evidence artifact, so they remain stable after server restart
 and are authorized against the same project. Cursor reuse with another query
 attempt or evidence digest fails closed. Each response is bounded by the shared
 10 MiB result budget; a single row that cannot fit fails with a validation error.
+The Data Engineering Studio QueryFlux profile uses this project-scoped execution
+route, obtains engine choices from `GET /v1/data-engineering/queryflux/capabilities`,
+and loads later pages from the evidence route. Its CSV export operates on loaded
+query rows and refuses to imply completeness while a next page is still available.
+The local SQL route accepts only its documented SQL fields; QueryFlux profile and
+translation options are not silently ignored by that route.
 
 `POST /v1/platform/connectors/discover` accepts optional `page_size` and opaque
 `cursor` fields. Its response always contains `schema`, `items`, `count`,

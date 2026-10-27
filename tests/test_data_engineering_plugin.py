@@ -139,6 +139,7 @@ def test_configured_queryflux_capabilities_are_handshake_bound(tmp_path) -> None
     capabilities = plugin.queryflux_capabilities()
     assert capabilities["status"] == "ready"
     assert capabilities["provider_version"] == "qf-1.2"
+    assert capabilities["allowed_engines"] == ["duckdb"]
     assert capabilities["translation_policies"] == ["native_only", "best_effort"]
     assert capabilities["capabilities"]["strict_translation"] is False
 

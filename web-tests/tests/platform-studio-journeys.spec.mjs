@@ -360,7 +360,7 @@ test('Data Engineering Studio executes a bounded read-only SQL query', async ({ 
     expect(body.max_rows).toBe(1000);
     expect(body.timeout_ms).toBe(5000);
     expect(body.max_result_bytes).toBe(1048576);
-    expect(body.dialect).toBe('ansi');
+    expect(body.dialect).toBeUndefined();
     await route.fulfill({ json: { columns: [{ name: 'value', type_name: 'INTEGER' }], rows: [[1]], row_count: 1 } });
   });
   await page.goto('./#data');

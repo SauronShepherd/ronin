@@ -400,6 +400,7 @@ class DataEnginerringStudioPlugin:
                 "provider": "queryflux",
                 "status": "not_configured",
                 "target": "provider-neutral query engine",
+                "allowed_engines": [],
                 "capabilities": {
                     "routing_trace": True,
                     "bounded_preview": True,
@@ -419,6 +420,11 @@ class DataEnginerringStudioPlugin:
             "provider_version": handshake.version,
             "status": "ready" if self._queryflux_runtime.is_healthy() else "degraded",
             "target": "provider-neutral query engine",
+            "allowed_engines": list(
+                self._queryflux_runtime.allowed_engines("queryflux")
+                if "queryflux" in self._queryflux_runtime.profiles()
+                else ()
+            ),
             "capabilities": {**dict(capability_values), "stable_result_paging": True},
             "translation_policies": translation_policies,
         }
@@ -471,6 +477,8 @@ class DataEnginerringStudioPlugin:
             raise ValueError(
                 "queryflux execution identifiers must be trimmed single-line text up to 512 chars"
             )
+        if body.get("profile") != "queryflux":
+            raise ValueError("queryflux execution profile must be queryflux")
         if any(
             not isinstance(value, str)
             or not value

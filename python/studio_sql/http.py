@@ -45,6 +45,8 @@ class SqlHTTPAdapter:
             raise ValueError("SQL project_id must be non-empty and trimmed")
         if not isinstance(body, Mapping):
             raise ValueError("SQL query body must be an object")
+        if set(body) - {"sql", "parameters", "max_rows", "timeout_ms", "max_result_bytes"}:
+            raise ValueError("SQL query body contains unknown fields")
         sql = body.get("sql")
         if not isinstance(sql, str):
             raise ValueError("SQL query body requires non-empty sql")
