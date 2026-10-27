@@ -244,6 +244,19 @@ def test_sql_reference_engine_ignores_relation_keywords_in_literals_and_comments
     assert dollar_quoted.rows == (("FROM private.parquet",),)
 
 
+def test_sql_engine_explain_returns_bounded_plan_rows() -> None:
+    with DuckDbSqlEngine() as engine:
+        explained = engine.explain("SELECT 1")
+
+    assert explained.rows
+    assert all(len(row) == 2 for row in explained.rows)
+
+
+def test_sql_engine_explain_rejects_unbounded_output() -> None:
+    with DuckDbSqlEngine() as engine, pytest.raises(SqlResultLimitError, match="explain"):
+        engine.explain("SELECT 1", max_bytes=1)
+
+
 def test_project_scoped_sql_engines_isolate_relation_collisions(tmp_path: Path) -> None:
     first = tmp_path / "first.parquet"
     second = tmp_path / "second.parquet"

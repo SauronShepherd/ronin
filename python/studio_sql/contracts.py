@@ -28,6 +28,10 @@ class SqlResultLimitError(ValueError):
     """The serialized SQL result exceeds its configured response budget."""
 
 
+class SqlExplainUnsupportedError(SqlExecutionError):
+    """The selected SQL provider does not expose the explain capability."""
+
+
 _READ_ONLY_SELECT = re.compile(r"^SELECT\b", re.IGNORECASE)
 _MAX_SQL_PARAMETER_COUNT = 1_000
 _MAX_SQL_PARAMETER_TEXT_LENGTH = 524_288
@@ -139,6 +143,21 @@ class SqlQueryResult:
             raise ValueError("SQL result rows must match result column width")
 
 
+@dataclass(frozen=True, slots=True)
+class SqlExplainResult:
+    """Bounded, provider-neutral explain output.
+
+    Providers return already-sanitized textual plan rows. The contract never
+    exposes filesystem paths, credentials, or backend connection details.
+    """
+
+    rows: tuple[tuple[str, str], ...]
+
+    def __post_init__(self) -> None:
+        if any(len(row) != 2 or any(not isinstance(value, str) for value in row) for row in self.rows):
+            raise ValueError("SQL explain rows must contain two text values")
+
+
 @runtime_checkable
 class SqlEngine(Protocol):
     """Minimal synchronous SQL engine contract; async/service layers wrap this boundary."""
@@ -159,6 +178,14 @@ class SqlEngine(Protocol):
         max_result_bytes: int = 1_048_576,
     ) -> SqlQueryResult: ...
 
+    def explain(
+        self,
+        sql: str,
+        parameters: tuple[object, ...] = (),
+        *,
+        max_bytes: int = 262_144,
+    ) -> SqlExplainResult: ...
+
     def close(self) -> None: ...
 
 
@@ -166,6 +193,8 @@ __all__ = (
     "SqlColumn",
     "SqlEngine",
     "SqlExecutionError",
+    "SqlExplainResult",
+    "SqlExplainUnsupportedError",
     "SqlQueryResult",
     "SqlResultLimitError",
     "SqlRelationUnavailableError",

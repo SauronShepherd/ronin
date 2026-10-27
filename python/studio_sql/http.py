@@ -7,6 +7,7 @@ from collections.abc import Mapping
 from typing import Protocol
 
 from .contracts import (
+    SqlExplainResult,
     SqlQueryResult,
     SqlResultLimitError,
     normalize_sql_parameters,
@@ -26,6 +27,15 @@ class SqlQueryEngine(Protocol):
         timeout_ms: int = 5_000,
         max_result_bytes: int = 1_048_576,
     ) -> SqlQueryResult: ...
+
+    def explain(
+        self,
+        project_id: str,
+        sql: str,
+        parameters: tuple[object, ...] = (),
+        *,
+        max_bytes: int = 262_144,
+    ) -> SqlExplainResult: ...
 
 
 class SqlHTTPAdapter:
@@ -98,6 +108,27 @@ class SqlHTTPAdapter:
                 "SQL result exceeds max_result_bytes; select fewer or smaller values"
             )
         return payload
+
+    def explain(self, project_id: str, body: object) -> dict[str, object]:
+        """Return sanitized provider-neutral plan rows, failing closed by capability."""
+        if not project_id or project_id != project_id.strip():
+            raise ValueError("SQL project_id must be non-empty and trimmed")
+        if not isinstance(body, Mapping) or set(body) - {"sql", "parameters", "max_bytes"}:
+            raise ValueError("SQL explain body contains unknown fields")
+        sql = body.get("sql")
+        if not isinstance(sql, str):
+            raise ValueError("SQL explain body requires non-empty sql")
+        validate_read_only_select(sql)
+        max_bytes = body.get("max_bytes", 262_144)
+        if isinstance(max_bytes, bool) or not isinstance(max_bytes, int) or not 1 <= max_bytes <= 1_048_576:
+            raise ValueError("SQL explain max_bytes is outside the configured bound")
+        result = self._engine.explain(
+            project_id,
+            sql,
+            normalize_sql_parameters(body.get("parameters", [])),
+            max_bytes=max_bytes,
+        )
+        return {"rows": [[key, value] for key, value in result.rows], "max_bytes": max_bytes}
 
 
 __all__ = ("SqlHTTPAdapter", "SqlQueryEngine")

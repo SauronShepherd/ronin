@@ -15,6 +15,8 @@ from .contracts import (
     SqlColumn,
     SqlExecutionError,
     SqlQueryResult,
+    SqlExplainResult,
+    SqlExplainUnsupportedError,
     SqlRelationUnavailableError,
     SqlResultLimitError,
     SqlTimeoutError,
@@ -385,11 +387,39 @@ class DuckDbSqlEngine:
             with state_lock:
                 execution_active = False
             deadline.cancel()
-        if timed_out.is_set():
-            raise SqlTimeoutError("SQL query exceeded its execution time limit")
         if len(rows) > max_rows:
             raise SqlValidationError("SQL result exceeds max_rows; use a more selective query")
         return SqlQueryResult(columns, rows)
+
+    def explain(
+        self,
+        sql: str,
+        parameters: tuple[object, ...] = (),
+        *,
+        max_bytes: int = 262_144,
+    ) -> SqlExplainResult:
+        """Return a bounded, sanitized DuckDB plan for a read-only SELECT."""
+        self._require_open()
+        validate_read_only_select(sql)
+        if not 1 <= max_bytes <= 1_048_576:
+            raise SqlValidationError("SQL explain max_bytes is outside the configured bound")
+        if _UNSAFE_SQL.search(sql):
+            raise SqlValidationError("SQL external filesystem and network access is disabled")
+        try:
+            rows = self._connection.execute("EXPLAIN " + sql, parameters).fetchall()
+        except Exception as exc:
+            raise SqlExplainUnsupportedError("SQL provider cannot explain this query") from exc
+        result: list[tuple[str, str]] = []
+        total = 0
+        for key, value in rows:
+            key_text = str(key)
+            value_text = str(value)
+            encoded = len((key_text + value_text).encode("utf-8"))
+            if total + encoded > max_bytes:
+                raise SqlResultLimitError("SQL explain output exceeds max_bytes")
+            result.append((key_text, value_text))
+            total += encoded
+        return SqlExplainResult(tuple(result))
 
     def close(self) -> None:
         if not self._closed:
@@ -464,6 +494,17 @@ class ProjectScopedDuckDbSqlEngine:
                 timeout_ms=timeout_ms,
                 max_result_bytes=max_result_bytes,
             )
+
+    def explain(
+        self,
+        project: str,
+        sql: str,
+        parameters: tuple[object, ...] = (),
+        *,
+        max_bytes: int = 262_144,
+    ) -> SqlExplainResult:
+        with self._project_engine(project) as engine:
+            return engine.explain(sql, parameters, max_bytes=max_bytes)
 
     def close(self) -> None:
         with self._lock:

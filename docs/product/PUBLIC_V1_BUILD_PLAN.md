@@ -84,6 +84,19 @@ los 11 fallos iniciales eran aserciones que exigían archivos de CI eliminados.
 El estado release sigue
 0/13 (0%, NO-GO), y la implementación global continúa no calculable.
 
+## 48. Contrato inicial de EXPLAIN (2026-10-27)
+
+Se añadió un contrato común y fail-closed para planes SQL: los motores que lo
+soportan devuelven filas textuales acotadas y sanitizadas; los demás deben
+rechazar la operación mediante una capacidad no soportada. DuckDB implementa
+la primera versión y el adaptador SQL comparte la validación de SELECT,
+bindings y límite de bytes. También se corrigió una carrera del temporizador
+que podía convertir una consulta concurrente ya terminada en timeout.
+
+La verificación focalizada pasó 71 pruebas. El contrato aún no cualifica
+proveedores remotos: cada proveedor debe declarar explícitamente la capacidad
+antes de poder exponerla.
+
 ## 46. Candidato SQL: parámetros escalares tipados (2026-10-27)
 
 **Commits de código:** implementación `1f8e931f5b1078bf814e41b45c0ca0370759f753` y fix de esquema/límites `c4bc2587b0ea0fde0eac7f91a8b95d85fc95914f`; PR [#555](https://github.com/SauronShepherd/ronin/pull/555) apunta actualmente al segundo commit.
