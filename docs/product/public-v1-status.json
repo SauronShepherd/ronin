@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-26T18:52:18+00:00",
-  "observed_main_sha": "29ed2666f747cd60f7ebce4b234a5f4f5c7ef2fa",
+  "observed_at": "2026-10-26T19:49:47+00:00",
+  "observed_main_sha": "94ac3006456886fac366ab0dcca0a6f5f51f7829",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -72,7 +72,7 @@
     {
       "id": "p3-lakehouse-sql",
       "status": "partial",
-      "summary": "Bounded Arrow/Parquet open-data and streaming publication paths, provider-neutral SQL/table contracts, optional local DuckDB engine with bounded relation lifecycle, shared query lifecycle adapter, provider-neutral query-engine contracts with discovery, local transport and Trino HTTP submit/poll/cancel transport, QueryFlux discovery and QueryFlux-to-Trino lifecycle adapters, bounded project-scoped fail-closed read-only SQL HTTP adapter/route, and optional Iceberg/Delta create-append-overwrite-read-inspect-delete adapters exist; external QueryFlux qualification, remote/catalog qualification, full format features, and broader SQL service remain incomplete."
+      "summary": "Bounded Arrow/Parquet open-data paths, provider-neutral SQL/table contracts, optional local DuckDB with project-scoped relation lifecycle, shared read-only SELECT grammar, typed result serialization and a project-checked SQL API/Studio route exist. Explicit query time/byte budgets, pagination, client cancellation, explain, governed asset registration, source-revision evidence, external QueryFlux/remote qualification, broader format support and full SQL service remain incomplete."
     },
     {
       "id": "p4-data-engineering-studio",
@@ -167,7 +167,7 @@
     {
       "id": "web-studio",
       "status": "partial",
-      "summary": "Authenticated static Studio shell supports job listing, detail status, events, evidence, cancellation, navigation, packaged asset delivery, project-scoped read-only SQL, workspace creation, project creation/listing/archive, environment binding/editing, resource-scoped project permission inspection, Bundle actions, governed pipeline execution and a Monitoring & Alerts route backed by alert APIs; 77 Playwright route/accessibility/history/domain-journey checks pass; authoring editors, domain workflows, and complete Public v1 journeys remain incomplete."
+      "summary": "Authenticated static Studio shell supports job listing/detail/events/evidence/cancellation, navigation, packaged assets, project-scoped read-only SQL with a local backend, workspace/project and environment operations, resource-scoped permission inspection, Bundle actions, governed pipeline execution and Monitoring & Alerts backed by APIs. Authoring editors, domain workflows and complete Public v1 journeys remain incomplete."
     },
     {
       "id": "public-v1-release-qualification",
@@ -231,7 +231,8 @@
     286,
     287,
     288,
-    389
+    389,
+    552
   ],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
