@@ -43,3 +43,8 @@ def test_invalid_cursors_fail_closed(cursor: str) -> None:
 def test_rows_must_match_the_persisted_column_shape() -> None:
     with pytest.raises(ValueError, match="width"):
         page_query_result(columns=["id"], rows=[[1, 2]], digest="a" * 64)
+
+
+def test_result_digest_must_be_a_lowercase_sha256() -> None:
+    with pytest.raises(ValueError, match="digest"):
+        page_query_result(columns=["id"], rows=[], digest="z" * 64)

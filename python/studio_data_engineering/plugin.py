@@ -564,7 +564,7 @@ class DataEnginerringStudioPlugin:
         raw_cursor = params.get("cursor", [None])[0]
         cursor = raw_cursor if raw_cursor else None
         raw_page_size = params.get("page_size", ["1000"])[0]
-        if not raw_page_size.isdigit():
+        if not raw_page_size.isascii() or not raw_page_size.isdigit():
             raise ValueError("page_size must be an integer")
         page_size = int(raw_page_size)
         reference = get_reference(
@@ -576,7 +576,12 @@ class DataEnginerringStudioPlugin:
             return _plugin_error("query_results_not_found", "QueryFlux results do not exist")
         digest = reference.get("digest")
         storage_ref = reference.get("storage_ref")
-        if not isinstance(digest, str) or not isinstance(storage_ref, str) or len(digest) != 64:
+        if (
+            not isinstance(digest, str)
+            or len(digest) != 64
+            or any(character not in "0123456789abcdef" for character in digest)
+            or not isinstance(storage_ref, str)
+        ):
             raise RuntimeError("stored QueryFlux evidence reference is invalid")
         try:
             evidence_bytes = get_bytes(storage_ref, digest=digest)
@@ -597,14 +602,25 @@ class DataEnginerringStudioPlugin:
                 "query_results_conflict", "results are available only for successful queries"
             )
         output = evidence.get("output")
-        if not isinstance(output, dict) or output.get("row_count") != len(output.get("rows", [])):
+        if not isinstance(output, dict):
+            raise RuntimeError("stored QueryFlux result output is invalid")
+        result_rows = output.get("rows")
+        result_row_count = output.get("row_count")
+        if (
+            not isinstance(result_rows, list)
+            or isinstance(result_row_count, bool)
+            or not isinstance(result_row_count, int)
+            or result_row_count != len(result_rows)
+        ):
             raise RuntimeError("stored QueryFlux result rows are invalid")
-        return page_query_result(
-            columns=output.get("columns"),
-            rows=output.get("rows"),
-            digest=digest,
-            cursor=cursor,
-            page_size=page_size,
+        return dict(
+            page_query_result(
+                columns=output.get("columns"),
+                rows=result_rows,
+                digest=digest,
+                cursor=cursor,
+                page_size=page_size,
+            )
         )
 
     def health(self, **_kwargs: Any) -> dict[str, object]:

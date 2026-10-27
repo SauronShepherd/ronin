@@ -5,12 +5,20 @@ from __future__ import annotations
 import base64
 import json
 import re
+from typing import TypedDict, cast
 
 from studio_query_engine import MAX_RESULT_BYTES
 
 _CURSOR_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 _MAX_PAGE_SIZE = 10_000
 _PAGE_RESPONSE_OVERHEAD_BYTES = 512
+
+
+class QueryResultPagePayload(TypedDict):
+    columns: list[str]
+    rows: list[list[object]]
+    row_count: int
+    next_cursor: str | None
 
 
 def encode_result_cursor(*, digest: str, offset: int) -> str:
@@ -55,9 +63,11 @@ def page_query_result(
     digest: str,
     cursor: str | None = None,
     page_size: int = 1_000,
-) -> dict[str, object]:
+) -> QueryResultPagePayload:
     """Return a deterministic page from a validated content-addressed result."""
 
+    if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise ValueError("result digest is invalid")
     if (
         isinstance(page_size, bool)
         or not isinstance(page_size, int)
@@ -105,11 +115,16 @@ def page_query_result(
         end = candidate_end
     next_cursor = encode_result_cursor(digest=digest, offset=end) if end < len(rows) else None
     return {
-        "columns": columns,
+        "columns": cast(list[str], columns),
         "rows": selected,
         "row_count": len(rows),
         "next_cursor": next_cursor,
     }
 
 
-__all__ = ("decode_result_cursor", "encode_result_cursor", "page_query_result")
+__all__ = (
+    "QueryResultPagePayload",
+    "decode_result_cursor",
+    "encode_result_cursor",
+    "page_query_result",
+)
