@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-26T19:49:47+00:00",
-  "observed_main_sha": "94ac3006456886fac366ab0dcca0a6f5f51f7829",
+  "observed_at": "2026-10-27T01:25:53+00:00",
+  "observed_main_sha": "993f519e02e611a951b258bb266979fa747e7bbf",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -72,7 +72,7 @@
     {
       "id": "p3-lakehouse-sql",
       "status": "partial",
-      "summary": "Bounded Arrow/Parquet open-data paths, provider-neutral SQL/table contracts, optional local DuckDB with project-scoped relation lifecycle, shared read-only SELECT grammar, typed result serialization and a project-checked SQL API/Studio route exist. Explicit query time/byte budgets, pagination, client cancellation, explain, governed asset registration, source-revision evidence, external QueryFlux/remote qualification, broader format support and full SQL service remain incomplete."
+      "summary": "Bounded Arrow/Parquet open-data paths, provider-neutral SQL/table contracts, optional local DuckDB with project-scoped relation lifecycle, shared read-only SELECT grammar, typed results and project-checked SQL API/Studio routes with execution-time and serialized-result-byte budgets exist. Stable pagination, explicit client cancellation, explain, governed asset registration, source-revision evidence, engine-neutral semantics, external QueryFlux/remote qualification, broader format support and full SQL service remain incomplete."
     },
     {
       "id": "p4-data-engineering-studio",
@@ -232,7 +232,8 @@
     287,
     288,
     389,
-    552
+    552,
+    553
   ],
   "next_critical_path": [
     "Keep construction/status docs synchronized with PUBLIC_V1_SCOPE.md.",
