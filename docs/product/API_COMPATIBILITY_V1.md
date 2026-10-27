@@ -87,7 +87,8 @@ Before stable v1, incompatible removals/renames/type changes or required-request
 `POST /v1/jobs` accepts only `project`, `target`, and optional `parameters`; unknown request fields are rejected. `parameters` is intentionally extensible JSON object data and is not interpreted as protocol field expansion.
 
 `POST /v1/sql` accepts `project`, `sql`, optional `parameters`, and optional
-`max_rows` (`1..10000`). Each binding may be a legacy JSON scalar or a tagged
+`max_rows` (`1..10000`), `timeout_ms` (`1..60000`, default `5000`), and
+`max_result_bytes` (`1..10485760`, default `1048576`). Each binding may be a legacy JSON scalar or a tagged
 `{"type": "integer", "value": 42}` object. Tagged parameter types are `null`,
 `boolean`, signed 64-bit `integer`, finite `float`, and `string`; each object is
 closed to exactly `type` and `value`. At most 1,000 parameters are accepted and
@@ -100,6 +101,17 @@ scalars: UTC timestamps are RFC 3339 strings with `Z`, dates/times use ISO 8601,
 decimals and UUID-like values are strings, and binary values are standard Base64
 strings. Non-finite numeric results are rejected, and raw engine diagnostics are
 never returned to clients.
+
+The plugin route `POST /v1/data-engineering/queryflux/execute` accepts an
+optional `parameters` array using the same tagged scalar forms and limits. Its
+shared `QueryRequest` accepts only the common read-only `SELECT` grammar and
+includes typed bindings in its canonical request digest; the durable evidence
+artifact stores that digest, not the bound values. The selected engine must
+explicitly advertise `parameter_binding: true` or authorization fails before
+submission. The Trino transport uses `EXECUTE IMMEDIATE ... USING`; string
+values are UTF-8/base64 encoded before they are placed in SQL expressions. This
+plugin route is dynamically contributed and is not currently described by the
+static core OpenAPI document, so route-schema parity remains open.
 
 `POST /v1/platform/connectors/discover` accepts optional `page_size` and opaque
 `cursor` fields. Its response always contains `schema`, `items`, `count`,

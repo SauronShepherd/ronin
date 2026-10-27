@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from contextlib import contextmanager
 from pathlib import Path
@@ -61,7 +62,12 @@ class _MismatchedTransport(_Transport):
 def _provider() -> QueryEngineRuntimeProvider:
     return QueryEngineRuntimeProvider(
         DiscoveredEngine(
-            EngineHandshake("provider", "1", EngineCapabilities((("cancel", True),)), True),
+            EngineHandshake(
+                "provider",
+                "1",
+                EngineCapabilities((("cancel", True), ("parameter_binding", True))),
+                True,
+            ),
             ("duckdb",),
             "ready",
         ),
@@ -71,11 +77,12 @@ def _provider() -> QueryEngineRuntimeProvider:
 
 def test_execute_query_persists_final_attempt_evidence(tmp_path: Path) -> None:
     store = LocalArtifactStore(tmp_path / "artifacts")
+    request = QueryRequest("SELECT ?", "local", parameters=(11,))
     result = execute_query(
         _provider(),
         _Transport([QueryStatus("running"), QueryStatus("succeeded")]),
         store,
-        QueryRequest("SELECT 1", "local"),
+        request,
         engine="duckdb",
         project_id="project-1",
         run_id="run-1",
@@ -88,6 +95,11 @@ def test_execute_query_persists_final_attempt_evidence(tmp_path: Path) -> None:
     assert result.page.rows == ((1,),)
     assert payload["attempt_id"] == "attempt-1"
     assert payload["output"]["row_count"] == 1
+    assert (
+        payload["query_evidence"]["request_digest"]
+        == hashlib.sha256(request.canonical_json().encode("utf-8")).hexdigest()
+    )
+    assert '"value":"11"' not in json.dumps(payload["query_evidence"])
 
 
 def test_execute_query_rejects_transport_provider_mismatch(tmp_path: Path) -> None:

@@ -22,7 +22,11 @@ from studio_storage import LocalArtifactStore
 
 
 class _QueryFluxTransport:
+    def __init__(self) -> None:
+        self.submitted_request = None
+
     def submit(self, _request):
+        self.submitted_request = _request
         return QueryHandle("q-1", "queryflux", "provider-q-1"), "next-1"
 
     def poll(self, _handle, _next_uri):
@@ -169,7 +173,12 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
         registry.add_permission(permission, plugin.manifest.id)
     provider = QueryEngineRuntimeProvider(
         DiscoveredEngine(
-            EngineHandshake("queryflux", "qf-1.2", EngineCapabilities((("cancel", True),)), True),
+            EngineHandshake(
+                "queryflux",
+                "qf-1.2",
+                EngineCapabilities((("cancel", True), ("parameter_binding", True))),
+                True,
+            ),
             ("duckdb",),
             "ready",
         ),
@@ -177,6 +186,7 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
     )
     store = LocalArtifactStore(tmp_path / "artifacts")
     references = SqliteQueryEvidenceReferenceStore(tmp_path / "ronin.db")
+    transport = _QueryFluxTransport()
     plugin.register(
         PluginContext(
             plugin.manifest.id,
@@ -184,7 +194,7 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
             {
                 "artifact_store": store,
                 "queryflux_runtime_provider": provider,
-                "queryflux_transport": _QueryFluxTransport(),
+                "queryflux_transport": transport,
                 "queryflux_evidence_reference_store": references,
             },
         )
@@ -198,11 +208,13 @@ def test_configured_queryflux_execution_returns_and_persists_evidence(tmp_path) 
             "project_id": "project-1",
             "run_id": "run-1",
             "attempt_id": "attempt-1",
+            "parameters": [{"type": "integer", "value": 7}],
         }
     )
     assert result["status"] == "succeeded"
     assert result["rows"] == [[1]]
     assert result["evidence"]["digest"]
+    assert transport.submitted_request.parameters == (7,)
     records = references.list_evidence_references()
     assert len(records) == 1
     assert records[0]["storage_ref"] == result["evidence"]["storage_ref"]

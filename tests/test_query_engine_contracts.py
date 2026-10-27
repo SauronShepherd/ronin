@@ -41,6 +41,41 @@ def test_query_engine_contract_is_provider_neutral_and_canonical() -> None:
     assert request.canonical_json().startswith('{"max_rows":5')
 
 
+def test_query_request_canonicalizes_and_validates_scalar_parameters() -> None:
+    request = QueryRequest(
+        "SELECT ?, ?, ?, ?, ?",
+        "local",
+        parameters=(
+            {"type": "null", "value": None},
+            {"type": "boolean", "value": True},
+            {"type": "integer", "value": 2**63 - 1},
+            {"type": "float", "value": 1},
+            {"type": "string", "value": "O'Reilly"},
+        ),
+    )
+
+    assert request.parameters == (None, True, 2**63 - 1, 1.0, "O'Reilly")
+    assert '"value":"9223372036854775807"' in request.canonical_json()
+    assert "O'Reilly" in request.canonical_json()
+    assert QueryRequest("SELECT ?", "local", parameters=(1,)).canonical_json() != (
+        QueryRequest("SELECT ?", "local", parameters=(2,)).canonical_json()
+    )
+
+
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        (object(),),
+        ({"type": "integer", "value": True},),
+        ({"type": "float", "value": float("inf")},),
+        ({"type": "integer", "value": 2**63},),
+    ],
+)
+def test_query_request_rejects_unsupported_or_mismatched_parameters(parameters) -> None:
+    with pytest.raises(ValueError, match="SQL parameter"):
+        QueryRequest("SELECT ?", "local", parameters=parameters)
+
+
 def test_query_result_and_status_are_bounded_and_shape_checked() -> None:
     result = QueryResultPage(("id", "name"), ((1, "one"),), "page-2")
     assert result.next_page_token == "page-2"  # noqa: S105 - pagination token fixture

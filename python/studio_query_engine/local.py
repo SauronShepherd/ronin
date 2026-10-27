@@ -62,7 +62,11 @@ class LocalSqlTransport:
             return QueryStatus("succeeded", provider_query_id=handle.provider_query_id), None, None
         pending.executed = True
         try:
-            result = self._engine.execute(pending.request.sql, max_rows=pending.request.max_rows)
+            result = self._engine.execute(
+                pending.request.sql,
+                pending.request.parameters,
+                max_rows=pending.request.max_rows,
+            )
         except Exception as exc:
             return (
                 QueryStatus("failed", str(exc)[:4_000], provider_query_id=handle.provider_query_id),
