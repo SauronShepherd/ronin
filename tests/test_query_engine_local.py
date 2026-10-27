@@ -15,7 +15,7 @@ from studio_sql import (
 
 class FakeSqlEngine:
     def __init__(self) -> None:
-        self.calls: list[tuple[str, int]] = []
+        self.calls: list[tuple[str, tuple[object, ...], int]] = []
 
     def register_parquet(self, name: str, path: str) -> None:
         del name, path
@@ -27,8 +27,7 @@ class FakeSqlEngine:
         *,
         max_rows: int = 10_000,
     ) -> SqlQueryResult:
-        assert parameters == ()
-        self.calls.append((sql, max_rows))
+        self.calls.append((sql, parameters, max_rows))
         if sql == "SELECT bad":
             raise SqlValidationError("invalid column")
         return SqlQueryResult((SqlColumn("value", "INTEGER"),), ((1,), (2,)))
@@ -40,7 +39,7 @@ class FakeSqlEngine:
 def test_local_transport_executes_shared_contract() -> None:
     engine = FakeSqlEngine()
     transport = LocalSqlTransport(engine)
-    request = QueryRequest("SELECT value", "local", max_rows=7)
+    request = QueryRequest("SELECT value", "local", max_rows=7, parameters=("bound",))
 
     handle, next_uri = transport.submit(request)
     status, page, following = transport.poll(handle, next_uri)
@@ -50,7 +49,25 @@ def test_local_transport_executes_shared_contract() -> None:
     assert page.columns == ("value",)
     assert page.rows == ((1,), (2,))
     assert following is None
-    assert engine.calls == [("SELECT value", 7)]
+    assert engine.calls == [("SELECT value", ("bound",), 7)]
+
+
+def test_local_transport_binds_typed_scalar_in_duckdb() -> None:
+    request = QueryRequest(
+        "SELECT ?, ?, ?, ?",
+        "local",
+        parameters=(None, True, 42, "bound value"),
+    )
+
+    with DuckDbSqlEngine() as engine:
+        transport = LocalSqlTransport(engine)
+        handle, next_uri = transport.submit(request)
+        status, page, following = transport.poll(handle, next_uri)
+
+    assert status.state == "succeeded"
+    assert page is not None
+    assert page.rows == ((None, True, 42, "bound value"),)
+    assert following is None
 
 
 def test_local_transport_normalizes_sql_failures_and_cancellation() -> None:

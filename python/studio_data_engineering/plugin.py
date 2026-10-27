@@ -426,6 +426,7 @@ class DataEnginerringStudioPlugin:
             raise ValueError("queryflux execution body must be an object")
         allowed = {
             "sql",
+            "parameters",
             "profile",
             "translation_policy",
             "max_rows",
@@ -444,6 +445,9 @@ class DataEnginerringStudioPlugin:
         max_rows = body.get("max_rows", 1_000)
         if isinstance(max_rows, bool) or not isinstance(max_rows, int):
             raise ValueError("max_rows must be an integer")
+        parameters = body.get("parameters", [])
+        if not isinstance(parameters, list):
+            raise ValueError("parameters must be an array")
         request = QueryRequest(
             cast(str, body["sql"]),
             cast(str, body["profile"]),
@@ -452,6 +456,7 @@ class DataEnginerringStudioPlugin:
                 str(body.get("translation_policy", "native_only")),
             ),
             max_rows,
+            tuple(parameters),
         )
         result = execute_query(
             self._queryflux_runtime,

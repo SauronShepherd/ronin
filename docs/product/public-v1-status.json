@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-10-27T01:45:59+00:00",
-  "observed_main_sha": "8b56095c3ef94bdcd148b311b8b1014a66fee593",
+  "observed_at": "2026-10-27T02:17:38+00:00",
+  "observed_main_sha": "f2328de87f6159f9b6db75b14fdc57d5fd4f0a8c",
   "observed_workspace_state": "observed main SHA; generated outputs are excluded from release evidence",
   "release_status": "incomplete",
   "qualification_status": "blocked",
@@ -72,7 +72,7 @@
     {
       "id": "p3-lakehouse-sql",
       "status": "partial",
-      "summary": "Bounded Arrow/Parquet open-data paths, provider-neutral SQL/table contracts, optional local DuckDB with project-scoped relation lifecycle, shared read-only SELECT grammar, typed results and project-checked SQL API/Studio routes with execution-time and serialized-result-byte budgets exist. This candidate adds shared typed scalar bindings for null, boolean, signed 64-bit integer, finite float and string while retaining bounded legacy JSON scalar compatibility. Stable pagination, explicit client cancellation, explain, governed asset registration, source-revision evidence, engine-neutral remote binding semantics, external QueryFlux/remote qualification, broader format support and full SQL service remain incomplete."
+      "summary": "Bounded Arrow/Parquet open-data paths, provider-neutral SQL/table contracts, optional local DuckDB with project-scoped relation lifecycle, shared read-only SELECT grammar, typed results and project-checked SQL API/Studio routes with execution-time and serialized-result-byte budgets exist. Shared typed scalar bindings cover null, boolean, signed 64-bit integer, finite float and bounded string across SQL and query-engine request contracts; local DuckDB and the Trino transport implement bindings, while QueryFlux authorization requires an explicit parameter_binding capability. Local DuckDB and fake-HTTP Trino tests pass; live provider qualification remains incomplete. Stable pagination, explicit client cancellation, explain, governed asset registration, source-revision evidence, CPU budgets, broader format support and the full SQL service remain incomplete."
     },
     {
       "id": "p4-data-engineering-studio",

@@ -73,6 +73,8 @@ class QueryExecutionPolicy:
             and capabilities.get("translation") is not True
         ):
             raise PermissionError("translation is not qualified by the selected engine")
+        if request.parameters and capabilities.get("parameter_binding") is not True:
+            raise PermissionError("typed parameter binding is not qualified by the selected engine")
         return engine
 
 
