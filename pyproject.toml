@@ -117,6 +117,7 @@ studio_storage = ["migrations/*.sql"]
   "web/js/notebook-studio.js",
   "web/js/performance-studio.js",
   "web/js/project-journey.js",
+  "web/js/queryflux-studio.js",
   "web/js/quality-studio.js",
   "web/js/semantic-studio.js",
   "web/js/streaming-studio.js",

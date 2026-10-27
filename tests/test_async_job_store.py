@@ -12,6 +12,7 @@ from studio_storage.async_store import BoundedAsyncJobStore, StorageBackpressure
 class _BlockingStore:
     def __init__(self) -> None:
         self.started = Event()
+        self.heartbeat_started = Event()
         self.release = Event()
         self.finished = Event()
         self.worker_thread_id: int | None = None
@@ -36,6 +37,7 @@ class _BlockingStore:
         now: Instant,
     ) -> bool:
         self.heartbeat_thread_id = get_ident()
+        self.heartbeat_started.set()
         return (
             owner == "worker-1"
             and lease_token == LeaseToken("lease-1")
@@ -87,24 +89,27 @@ def test_heartbeat_progresses_while_unrelated_store_io_is_blocked() -> None:
         loop_thread_id = get_ident()
         async with _async_store(store, max_workers=2, max_in_flight=2) as async_store:
             blocked = asyncio.create_task(async_store.get_job(JobId("job-1")))
-            await asyncio.to_thread(store.started.wait, 1)
+            try:
+                assert await asyncio.to_thread(store.started.wait, 1)
+                heartbeat_task = asyncio.create_task(
+                    async_store.heartbeat(
+                        AttemptId("attempt-1"),
+                        owner="worker-1",
+                        lease_token=LeaseToken("lease-1"),
+                        expires_at=Instant("2026-09-06T09:00:30.000000Z"),
+                        now=Instant("2026-09-06T09:00:10.000000Z"),
+                    )
+                )
+                assert await asyncio.to_thread(store.heartbeat_started.wait, 1)
+                heartbeat = await asyncio.wait_for(heartbeat_task, timeout=2)
 
-            heartbeat = await asyncio.wait_for(
-                async_store.heartbeat(
-                    AttemptId("attempt-1"),
-                    owner="worker-1",
-                    lease_token=LeaseToken("lease-1"),
-                    expires_at=Instant("2026-09-06T09:00:30.000000Z"),
-                    now=Instant("2026-09-06T09:00:10.000000Z"),
-                ),
-                timeout=0.25,
-            )
-
-            assert heartbeat is True
-            assert store.heartbeat_thread_id is not None
-            assert store.heartbeat_thread_id != loop_thread_id
-            store.release.set()
-            await blocked
+                assert heartbeat is True
+                assert not blocked.done()
+                assert store.heartbeat_thread_id is not None
+                assert store.heartbeat_thread_id != loop_thread_id
+            finally:
+                store.release.set()
+                await blocked
 
     asyncio.run(scenario())
 

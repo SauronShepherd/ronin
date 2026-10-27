@@ -22,69 +22,15 @@ def test_duplicate_reservation_workflow_is_removed() -> None:
     assert not (ROOT / ".github" / "workflows" / "reserve-names.yml").exists()
 
 
-def test_prerelease_publishing_actions_are_immutable() -> None:
-    workflow = _workflow("publish-prerelease.yml")
-
-    assert "actions/checkout@v" not in workflow
-    assert "pypa/gh-action-pypi-publish@release/v1" not in workflow
-    assert "pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33" in workflow
-    assert "release-evidence" in workflow
-    assert "vMAJOR.MINOR.PATCHaN" in workflow
-
-
-def test_name_reservation_requires_explicit_non_release_confirmation() -> None:
-    workflow = _workflow("publish-prerelease.yml")
-
-    assert "reserve_confirmation:" in workflow
-    assert "I_UNDERSTAND_RESERVED_ONLY" in workflow
-    assert "inputs.reserve_confirmation == 'I_UNDERSTAND_RESERVED_ONLY'" in workflow
-
-
-def test_tag_publication_requires_exact_aggregate_release_verdict() -> None:
-    workflow = _workflow("publish-prerelease.yml")
-
-    assert "authoritative-release-verdict:" in workflow
-    assert "actions/workflows/release-evidence.yml/runs?head_sha=${GITHUB_SHA}" in workflow
-    assert "name: exact-release-verdict" in workflow
-    assert 'verdict.get("schema") != "ronin.release-verdict/v1"' in workflow
-    assert 'verdict.get("commit") != os.environ["EXPECTED_COMMIT"]' in workflow
-    assert 'verdict.get("status") != "passed"' in workflow
-    for gate in (
-        '"ci"',
-        '"security"',
-        '"status-consistency"',
-        '"docker-qualification"',
-        '"browser"',
-        '"a11y"',
-        '"installed-artifact"',
-        '"sbom-provenance"',
-        '"license"',
-        '"artifact-identity"',
+def test_validation_workflows_are_removed_from_the_repository() -> None:
+    workflows = ROOT / ".github" / "workflows"
+    assert [path.name for path in workflows.glob("*.yml")] == ["publish-dockerhub.yml"]
+    for name in (
+        "ci.yml",
+        "docker-qualification.yml",
+        "release-evidence.yml",
+        "release-qualification.yml",
+        "security.yml",
+        "web-qualification.yml",
     ):
-        assert gate in workflow
-    assert "- authoritative-release-verdict" in workflow
-
-
-def test_release_evidence_does_not_require_historical_mutation_run() -> None:
-    workflow = _workflow("release-evidence.yml")
-
-    assert "mutation_run_id:" not in workflow
-    assert "mutation-evidence" not in workflow
-    assert "path: evidence/mutation" not in workflow
-
-
-def test_ci_mutation_job_is_permanently_disabled() -> None:
-    workflow = _workflow("ci.yml")
-
-    assert "# Permanently disabled; see docs/quality/MUTATION_CAMPAIGN_FINAL.md." in workflow
-    assert "if: ${{ false }}" in workflow
-
-
-def test_ci_retains_changed_surface_manifest_for_review() -> None:
-    workflow = _workflow("ci.yml")
-
-    assert "Build changed-surface manifest" in workflow
-    assert "github.event.pull_request.base.sha" in workflow
-    assert 'git rev-parse "$GITHUB_SHA^"' in workflow
-    assert "tools.changed_surface" in workflow
-    assert "name: changed-surface-manifest" in workflow
+        assert not (workflows / name).exists()

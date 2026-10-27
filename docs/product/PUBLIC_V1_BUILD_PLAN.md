@@ -69,6 +69,21 @@ El porcentaje global de implementación sigue **no calculable**; Public v1 conti
 
 La revisión de esta versión documental acaba de encontrar y corregir estado obsoleto; el contador de iteraciones integrales limpias queda en **0/10**. La evidencia local no se suma a los gates exact-head y ninguna familia se cuenta como completa por tener pruebas SQL verdes.
 
+## 47. Iteración de consolidación local-only (2026-10-27)
+
+Se retiraron los workflows de validación, seguridad, cualificación y evidencia
+de GitHub Actions por decisión explícita del usuario. Se conserva únicamente el
+publicador manual de alias de Docker Hub, que no ejecuta validaciones. Los
+contratos de pruebas se actualizaron para verificar este modelo y el módulo
+`queryflux-studio.js` quedó incluido en el paquete web.
+
+La verificación focalizada pasó 30 pruebas Python, la auditoría estructural web
+sin fallos y 3 journeys Playwright de QueryFlux. La suite Python completa pasó
+4.102 pruebas y omitió 74 después de corregir los contratos obsoletos de workflows;
+los 11 fallos iniciales eran aserciones que exigían archivos de CI eliminados.
+El estado release sigue
+0/13 (0%, NO-GO), y la implementación global continúa no calculable.
+
 ## 46. Candidato SQL: parámetros escalares tipados (2026-10-27)
 
 **Commits de código:** implementación `1f8e931f5b1078bf814e41b45c0ca0370759f753` y fix de esquema/límites `c4bc2587b0ea0fde0eac7f91a8b95d85fc95914f`; PR [#555](https://github.com/SauronShepherd/ronin/pull/555) apunta actualmente al segundo commit.

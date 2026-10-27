@@ -48,7 +48,7 @@ service, or a particular operating system.
 6. Make readiness, degradation, saturation, and failure distinguishable.
 7. Make operational behavior testable without a model server or GPU.
 8. Make a real runtime optional for development while retaining deterministic
-   fake and contract test suites in CI.
+   fake and contract test suites locally.
 
 ### 2.2 Non-goals
 
@@ -454,7 +454,7 @@ docker compose --profile ai-vllm up -d ai-vllm
 
 Model directories and vLLM model identifiers are explicit environment inputs.
 Services do not mount the Docker socket. Health checks are separate from
-capacity checks. CI uses fakes and contract tests when no model server or GPU
+capacity checks. Local qualification uses fakes and contract tests when no model server or GPU
 is available; real-runtime jobs must report their model, image digest, host,
 and smoke-test artifact.
 

@@ -2,7 +2,7 @@
 
 This repository contains changes that span more than one product area. A
 review or release claim must therefore use the gate for the affected subsystem
-instead of treating an unrelated green workflow as qualification.
+instead of treating unrelated historical automation as qualification.
 
 The machine-readable inventory is produced with:
 
@@ -36,7 +36,7 @@ separate from immutable semantic release identities.
 1. The base and head must be recorded before reviewing the diff.
 2. Every changed path must map to one subsystem; ambiguity is a failure.
 3. Each non-empty subsystem must have at least one executable gate above.
-4. A green workflow is evidence only for the subsystem and candidate it
+4. A test report is evidence only for the subsystem and candidate it
    actually exercised.
 5. Release and publication changes require exact source/artifact binding and
    cannot be hidden under a narrower change title.

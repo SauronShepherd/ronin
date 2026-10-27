@@ -88,10 +88,11 @@ Ronin's dominant identity is brown, with gold/amber accents and charcoal/ivory n
 
 ## Qualification status
 
-GitHub Actions and automated qualification are active for the current construction
-branch. Exact-head qualification may be claimed only when the relevant workflow
-has completed for that SHA; a green workflow does not waive incomplete product
-capabilities, legal review, or repository administration.
+Ronin has no continuous integration. Pushes and pull requests do not run GitHub
+Actions checks. Validation is performed locally from a clean checkout; record
+the exact commit, commands, environment, results, skips, and artifact digests.
+Previously recorded workflow results are historical and apply only to their
+recorded SHAs.
 
 The Public v1 product gate is broader than the older 15-step local execution journey. Missing any mandatory capability family means Public v1 remains incomplete.
 
@@ -99,7 +100,8 @@ The current Public v1 status snapshot is recorded in
 `docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md` and synchronized with the
 machine-readable `docs/product/public-v1-status.json`. Verify the snapshot
 against the current checkout with `python tools/generate_public_v1_status.py
---check`; only cite workflow results for the exact SHA they tested.
+--check`; do not treat historical workflow results as evidence for the current
+checkout.
 
 ## Alpha / unstable
 
@@ -134,7 +136,7 @@ Contributors building toward Public v1 should start with `PUBLIC_V1_SCOPE.md`, `
 
 For current Compose startup, token/authentication, readiness, Docker access, cleanup and local operator flow, use `docs/product/COMPOSE_QUICKSTART_V01.md`.
 
-For contributor-environment issues, verify that dependencies came from `requirements-dev.lock`, the checkout is clean, the expected Python version is active, Docker is available where required and no disabled workflow was accidentally reactivated.
+For contributor-environment issues, verify that dependencies came from `requirements-dev.lock`, the checkout is clean, the expected Python version is active, Docker is available where required, and checks were run locally from the intended checkout.
 
 If a documented command has been source-reviewed but not rerun for the exact
 current SHA, treat it as implementation documentation rather than current

@@ -561,7 +561,7 @@ def worker_restart_journey(tmp_path_factory: pytest.TempPathFactory) -> dict[str
     )
     try:
         # Docker Desktop on Windows has materially higher cold-start latency
-        # than the Linux CI runner used by the qualification workflow. Keep
+        # than a Linux runtime used by the qualification workflow. Keep
         # the Linux bound strict while allowing the same behavioral assertion
         # to observe the child after its three persisted cells are written.
         _wait_for_path(marker, first, timeout=120.0 if os.name == "nt" else 20.0)

@@ -284,7 +284,7 @@ The backup utility creates a PostgreSQL dump with metadata identifying source da
 
 ### 13.4 Qualification
 
-`tools/run_docker_qualification.ps1` builds the image, resolves its immutable image ID, sets explicit real-Docker qualification variables and runs container executor, worker runtime and end-to-end journey tests. CI runs PostgreSQL-backed tests and uploads evidence. Real Docker qualification is opt-in because it creates containers on the host.
+`tools/run_docker_qualification.ps1` builds the image, resolves its immutable image ID, sets explicit real-Docker qualification variables and runs container executor, worker runtime and end-to-end journey tests. PostgreSQL-backed tests and evidence collection are run locally as documented in the qualification guide. Real Docker qualification is opt-in because it creates containers on the host.
 
 ## 14. Test and verification specification
 
@@ -314,7 +314,7 @@ Relevant implementation areas:
 - `python/studio_ml`: ML domain and PostgreSQL adapters;
 - `python/studio_core/plugins.py`: plugin context and lifecycle contracts;
 - `tools/run_docker_qualification.ps1`: real-image qualification;
-- `.github/workflows/docker-qualification.yml`: CI qualification;
+- Local Docker/PostgreSQL qualification: `tools/run_docker_qualification.ps1` and the commands in `docs/DEVELOPMENT_QUALIFICATION.md`;
 - `tests/integration`: real PostgreSQL and Docker integration;
 - `tests/e2e`: user-journey verification;
 - `docs/architecture/docker-postgres-appliance.md`: operator runbook.

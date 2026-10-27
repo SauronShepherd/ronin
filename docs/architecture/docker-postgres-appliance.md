@@ -87,7 +87,7 @@ Implementado en esta fase:
 - autoridad Docker confinada al runner-broker;
 - pruebas de topología y configuración.
 
-La cualificación local del appliance queda completada: la imagen se construye, PostgreSQL, server, runner-broker y worker arrancan con Compose, el server responde `200 {"status":"ready"}`, los adaptadores PostgreSQL se inicializan correctamente y la cualificación Docker real pasa tanto para ejecución como para recuperación tras `SIGKILL`. El journey v0.1 completo también queda verificado contra la imagen inmutable construida localmente. La cualificación CI con PostgreSQL/Docker real y la ejecución de studios que requieran imágenes externas siguen siendo gates de infraestructura separados.
+La cualificación local del appliance se ejecuta manualmente: la imagen se construye, PostgreSQL, server, runner-broker y worker arrancan con Compose, el server responde `200 {"status":"ready"}`, los adaptadores PostgreSQL se inicializan correctamente y las pruebas Docker reales comprueban ejecución y recuperación tras `SIGKILL`. Los resultados se registran para el SHA exacto; esta guía no declara que el checkout actual esté cualificado.
 
 La misma cualificación Docker se puede repetir localmente con:
 
@@ -95,6 +95,5 @@ La misma cualificación Docker se puede repetir localmente con:
 ./tools/run_docker_qualification.ps1
 ```
 
-El workflow equivalente está en `.github/workflows/docker-qualification.yml` y
-ejecuta PostgreSQL real, la suite de storage y los escenarios Docker con una
-imagen identificada por digest.
+El comando local equivalente ejecuta PostgreSQL real, la suite de storage y
+los escenarios Docker con una imagen identificada por digest.

@@ -26,7 +26,7 @@ Terraform or OpenTofu against localhost.
 Snapshots are stored as atomic JSON files under `RONIN_CLOUD_STUDIO_SNAPSHOTS` (default
 `.ronin/cloud-studio`) and are addressed by workspace name through the snapshot API routes.
 The browser editor can also import and download standalone topology JSON files.
-`tools/cloud_studio_web_audit.mjs` provides a browserless CI audit for required controls,
+`tools/cloud_studio_web_audit.mjs` provides a browserless local audit for required controls,
 accessibility attributes, interaction handlers, and JavaScript syntax.
 `tools/cloud_studio_e2e.py` runs a real Chromium headless smoke test covering drag/drop,
 zoom, inspector editing, auto-layout, and JSON download.
@@ -66,7 +66,7 @@ Floci compose service with `terraform init`, `terraform validate`, and `terrafor
 The smoke run has been verified end-to-end with Floci 2.1.0 and `hashicorp/aws` 6.65.0,
 including `terraform destroy`; the final state was empty.
 
-External Terraform workspaces accept `TF_PLUGIN_CACHE_DIR` to reuse a CI-local provider
+External Terraform workspaces accept `TF_PLUGIN_CACHE_DIR` to reuse a local provider
 cache. Commands have bounded timeouts and return captured stdout/stderr on non-zero exit;
 timeouts raise an explicit error instead of leaving the API request hanging indefinitely.
 

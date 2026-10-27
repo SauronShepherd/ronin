@@ -60,6 +60,7 @@ def test_project_configuration_preserves_validation_contract() -> None:
             "context-bar",
             "debugger-studio",
             "data-engineering-studio",
+            "queryflux-studio",
             "deployment-studio",
             "dom",
             "features",

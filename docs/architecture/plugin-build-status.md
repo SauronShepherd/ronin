@@ -57,7 +57,7 @@ perfil local. No representan funcionalidades comerciales incompletas.
 | 11. Plugin externo de referencia | Wheel externo, entry point y clean-room discovery | `examples/ronin-plugin-tutorial`, `tests/test_plugin_clean_room.py` | Cerrada |
 | 12. Workers enterprise | Contrato de worker reusable; conectores cloud comerciales excluidos | `python/studio_core/plugin_workers.py`, documentación de límites | Cerrada para Ronin |
 | 13. Packaging/distribución | Wheel, entry points, metadata y configuración de tooling | `pyproject.toml`, build wheel, clean-room test | Cerrada |
-| 14. CI/CD gates | Lint, tests, boundaries, OpenAPI y packaging gates | `tools/architecture_gate.py`, suite global | Cerrada |
+| 14. Local quality gates | Lint, tests, boundaries, OpenAPI y packaging gates ejecutados por contributors | `tools/architecture_gate.py`, suite global | Cerrada |
 | 15. Operación | Diagnósticos, readiness, observabilidad local y runbook base | `PluginHost`, control plane, `docs/plugin-authoring` | Cerrada |
 | 16. Documentación | Guía de autoría, inventario, appliance y esta matriz | `docs/plugin-authoring/README.md`, `docs/architecture` | Cerrada |
 
@@ -74,8 +74,8 @@ No se implementan aquí:
 
 - licenciamiento, feature policy o plugins privados de Ronin Pro;
 - conectores empresariales cloud, Databricks, Snowflake o Fabric;
-- despliegue multi-nodo y cualificación PostgreSQL/Docker en CI corporativa;
-- CI externo, SBOM o publicación en un registry corporativo.
+- despliegue multi-nodo y cualificación PostgreSQL/Docker en infraestructura corporativa;
+- validación remota, SBOM o publicación en un registry corporativo.
 
 Esos elementos pertenecen al repositorio comercial Ronin Pro o a la infraestructura de
 despliegue. Ronin expone los ports y contratos necesarios para que Pro los implemente sin

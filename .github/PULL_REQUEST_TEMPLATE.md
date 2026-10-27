@@ -12,11 +12,11 @@ State any effect on HTTP/OpenAPI/CLI/SDK compatibility, durable state, canonical
 
 ## Evidence actually obtained
 
-List only checks, inspections, or qualification that were actually performed. Do not claim CI, tests, Docker, coverage, mutation, or release evidence if they were not run.
+List the exact local commands, inspections, or qualification actually performed, with the tested commit, environment, results, skips, and artifact digests. Do not claim checks that were not run.
 
 ## Known validation gaps
 
-State what remains unverified, especially when the relevant GitHub Actions or automated tests have not completed for the exact candidate SHA.
+State what remains unverified, including provider, browser, accessibility, Docker, and manual visual checks that were not run.
 
 ## Architecture / security invariants
 

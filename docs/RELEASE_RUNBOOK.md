@@ -1,6 +1,6 @@
 # Ronin release runbook
 
-This runbook describes the intended v0.1 release sequence for the independent Ronin project. It does not claim that current `main` is release-ready. Required automated qualification is presently disabled and must be restored before publication.
+This runbook describes the intended v0.1 release sequence for the independent Ronin project. Ronin intentionally has no continuous integration: all qualification is run and recorded manually on the exact candidate. This runbook does not claim that current `main` is release-ready.
 
 ## Release identity
 
@@ -12,7 +12,7 @@ Do not rebuild between qualification and publication. Wheel, sdist, container im
 
 Before a v0.1 release-readiness claim:
 
-1. Required CI, Security, Docker, release qualification, and prerelease publication automation must be restored or replaced by equivalent enforceable automation under maintainer authorization (#199).
+1. The maintainer must complete the manual qualification sequence below and record each command, environment, result, skip, candidate SHA, and artifact digest in one candidate-bound report. No workflow result is required or produced.
 2. The frozen v0.1 journey must execute 15/15 on one exact candidate SHA with zero skip, xfail, failure, error, missing, or unexpected result (#57/#202/#96).
 3. The exact `pyronin` artifact intended for publication must be clean-installed and qualified outside the checkout, then published unchanged (#95).
 4. Direct and transitive dependency/license evidence must be generated from the exact resolved environment and reviewed; NOTICE/attribution decisions must be evidence-based (#58).
@@ -31,16 +31,16 @@ If any precondition is unmet, stop and record the blocker. Do not weaken a gate 
 
 ## Qualification sequence
 
-When automation is restored, the required sequence is:
+Run and record each applicable step locally against the same candidate SHA:
 
-1. source/unit/integration qualification and architecture gates;
-2. Security qualification including secret/dependency scanning and candidate-history coverage;
-3. real-Docker qualification for worker/container/runtime invariants;
-4. strict frozen v0.1 acceptance with all 15 named steps executed;
-5. exact installed-artifact qualification for `pyronin` outside the checkout;
-6. license/NOTICE/attribution qualification bound to exact dependency and artifact evidence;
-7. release artifact identity, SBOM, provenance, and attestation generation;
-8. publication only after all required evidence refers to the same candidate SHA and exact artifacts.
+1. Run source, unit, integration, formatting, lint, typing, architecture, and OpenAPI checks using the local commands in `CONTRIBUTING.md` and `DEVELOPMENT_QUALIFICATION.md`.
+2. Run local secret/dependency scans and review the candidate's complete diff and history.
+3. Run the real-Docker qualification script for worker/container/runtime invariants and PostgreSQL-backed storage.
+4. Run the frozen v0.1 acceptance journey; all 15 named steps must execute with no skip, xfail, failure, error, missing, or unexpected result.
+5. Build the exact `pyronin` artifact once and qualify the installed artifact outside the checkout.
+6. Complete license/NOTICE/attribution review using the exact resolved dependencies and built artifacts.
+7. Generate artifact identity, SBOM, provenance, and any required attestations locally; record their hashes and source SHA.
+8. Publish only after every report is manually reviewed and binds to the same candidate SHA and exact artifacts.
 
 Historical runs from earlier SHAs are context, not qualification for the current candidate.
 
@@ -81,6 +81,6 @@ After publication, verify that:
 ## Current code-only state
 
 This runbook is an operational contract, not evidence that current `main` has
-passed every release gate. The qualification workflows are active and exact-SHA
-runs are retained, but do not make a release-readiness claim until #199 and its
-dependent qualification blockers are resolved with complete evidence.
+passed every release gate. There are no qualification workflows. Do not make a
+release-readiness claim until every manual gate above is complete with candidate-
+bound evidence and the maintainer has recorded the release decision.

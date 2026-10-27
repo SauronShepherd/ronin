@@ -17,12 +17,13 @@ Docker is required for the supported local container journey. Go 1.22 or newer i
 
 Storage coverage has two explicit modes: `make coverage-storage-files` is the portable gate and excludes only PostgreSQL adapter files; `make coverage-storage-files-full` runs the same unchanged baselines for PostgreSQL-backed qualification. The portable gate does not lower or replace the infrastructure-backed baselines.
 
-## Current validation policy
+## Local-only validation policy
 
-GitHub Actions and the repository qualification workflows are active for the
-current construction branch. Treat a check as evidence only for the exact
-commit it executed; a green check does not by itself constitute release or
-Public v1 approval.
+The project intentionally has no continuous-integration service. Pushes and
+pull requests do not launch automated checks. Run the relevant commands from
+the exact checkout being reviewed, and report the commit SHA, operating system,
+Python/Node/Docker versions, commands, results, skips, and generated artifact
+digests. Historical workflow results are not current validation evidence.
 
 Useful repository commands include:
 
@@ -34,7 +35,10 @@ make architecture
 make gates-negative
 ```
 
-`make test`, coverage, mutation, Docker qualification, release qualification, and CI-derived evidence are separate validation surfaces. Under the current code-only policy, a contribution must state exactly which checks were actually executed and must not claim checks that were not run.
+`make test`, coverage, Docker qualification, browser tests, and release evidence
+are separate local validation surfaces. Run only the surfaces relevant to the
+change and state exactly what ran; do not claim that a check passed when it was
+skipped or not run. Mutation testing is retired and must not be started.
 
 The pure-domain architecture boundary is executable in `tools/architecture_gate.py`. Preserve the package layering and fail-closed invariants documented under `docs/product/` and `docs/architecture/`.
 

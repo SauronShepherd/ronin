@@ -184,7 +184,7 @@ def test_public_studio_does_not_publish_multiuser_access_administration() -> Non
 
 
 def test_data_engineering_studio_exposes_queryflux_health_and_capabilities() -> None:
-    source = (Path(__file__).parents[1] / "web" / "js" / "data-engineering-studio.js").read_text(
+    source = (Path(__file__).parents[1] / "web" / "js" / "queryflux-studio.js").read_text(
         encoding="utf-8"
     )
     for marker in (

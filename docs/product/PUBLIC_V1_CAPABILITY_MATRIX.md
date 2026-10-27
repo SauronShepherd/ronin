@@ -1,6 +1,8 @@
 # Ronin Public v1 capability matrix
 
-**Estado actual (2026-10-27):** `main@cca60214044402867094335a2c999a50c3c7fda7`, tras integrar PR #561. Los seis workflows post-merge exact-SHA terminaron `success`: CI 40452266063, Docker 40452265954, Web 40452266016, Release 40452265985, Security 40452265996 y Status consistency 40452266002. `mutation` se omitió por política; no cuenta como PASS. Public v1 sigue incompleto, 0/13 release-qualified.
+**Límites de alcance:** multiusuario pertenece a Ronin Pro y no forma parte de Public v1. Ronin no integra capacidades GenAI; los coding agents se usan fuera del producto mediante skills. No contar estas capacidades como huecos de release.
+
+**Estado actual (2026-10-27):** `main@3f73d21d977caca2156febe7f3fc8ac96e866600` (PR #563). Los seis workflows post-merge exact-SHA terminaron `success` inicialmente, pero un run programado posterior en el mismo SHA falló en el límite de tamaño de `web/js/data-engineering-studio.js` y por un timeout demasiado estricto en una prueba asíncrona. Esos resultados describen el estado histórico de ese commit; la decisión vigente del usuario es retirar CI. Los cambios locales que eliminan workflows y corrigen ambos hallazgos aún requieren revisión y cualificación manual; no cuentan como integrados ni verificados. Public v1 sigue incompleto, 0/13 release-qualified.
 
 **Status authority:** [`PUBLIC_V1_SCOPE.md`](PUBLIC_V1_SCOPE.md) and the
 machine-readable [`public-v1-status.json`](public-v1-status.json).

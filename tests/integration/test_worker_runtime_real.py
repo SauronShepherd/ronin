@@ -28,7 +28,7 @@ from studio_worker import LocalWorkerRuntime, LocalWorkerRuntimeConfig, WorkerPa
 
 if os.environ.get("RONIN_REAL_DOCKER_QUALIFICATION") != "1":
     pytest.skip(
-        "real Docker qualification runs only in the dedicated CI job",
+        "real Docker qualification is opt-in; run tools/run_docker_qualification.ps1 locally",
         allow_module_level=True,
     )
 

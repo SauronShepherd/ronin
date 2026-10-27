@@ -21,51 +21,8 @@ def test_docker_image_normalizes_windows_line_endings_for_linux_entrypoint() -> 
     assert "sed -i 's/\\r$//' /usr/local/bin/ronin-container-entrypoint" in dockerfile
 
 
-def test_ci_docker_qualification_declares_postgres_and_real_worker_gate() -> None:
-    workflow = (ROOT / ".github" / "workflows" / "docker-qualification.yml").read_text(
-        encoding="utf-8"
-    )
-
-    assert "postgres:16" in workflow
-    assert "RONIN_POSTGRES_TEST_DSN" in workflow
-    assert "RONIN_TEST_POSTGRES_DSN" in workflow
-    assert 'RONIN_REAL_DOCKER_QUALIFICATION: "1"' in workflow
-    assert "tests/integration/test_worker_runtime_real.py" in workflow
-
-
-def test_ci_docker_qualification_fans_out_and_aggregates_every_lane() -> None:
-    workflow = (ROOT / ".github" / "workflows" / "docker-qualification.yml").read_text(
-        encoding="utf-8"
-    )
-
-    assert "jobs:\n  non-docker-qualification:" in workflow
-    assert "  postgres-storage-coverage:" in workflow
-    assert "  docker-runtime-acceptance:" in workflow
-    assert (
-        "    needs:\n"
-        "      - non-docker-qualification\n"
-        "      - postgres-storage-coverage\n"
-        "      - docker-runtime-acceptance\n"
-    ) in workflow
-    assert 'test "$GENERAL_RESULT" = success' in workflow
-    assert 'test "$STORAGE_RESULT" = success' in workflow
-    assert 'test "$RUNTIME_RESULT" = success' in workflow
-    assert "name: docker-qualification-evidence" in workflow
-
-
-def test_release_acceptance_runs_on_tag_commit_without_cross_workflow_artifact_assumptions() -> (
-    None
-):
-    workflow = (ROOT / ".github" / "workflows" / "publish-prerelease.yml").read_text(
-        encoding="utf-8"
-    )
-    assert (
-        "python -m pytest tests/e2e -m e2e -v --junitxml=acceptance-evidence/v01-acceptance.xml"
-        in workflow
-    )
-    assert "python -m tools.v01_acceptance_gate" in workflow
-    assert "docker-qualification-${{ github.sha }}" not in workflow
-    assert "v01-acceptance-provenance.json" not in workflow
+def test_ci_docker_qualification_workflow_is_removed() -> None:
+    assert not (ROOT / ".github" / "workflows" / "docker-qualification.yml").exists()
 
 
 def test_dockerhub_publisher_restricts_mutable_aliases() -> None:

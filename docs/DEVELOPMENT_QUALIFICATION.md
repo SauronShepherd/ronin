@@ -94,9 +94,9 @@ must not be claimed until its reference artifacts and review policy exist.
 
 ## Release evidence
 
-The release qualification workflow creates the exact wheel/sdist identity,
-SPDX SBOM, installed-artifact evidence bundle, and fail-closed verdict. Local
-evidence can be checked with:
+Run release qualification locally to create the exact wheel/sdist identity,
+SPDX SBOM, installed-artifact evidence bundle, and fail-closed verdict. Validate
+the resulting local evidence with:
 
 ```text
 python -m tools.release_evidence validate <bundle.json>

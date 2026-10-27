@@ -101,14 +101,12 @@ The command also accepts `fabric`, `dataiku`, and `foundry`. It inventories sour
 
 ## Current qualification status
 
-GitHub Actions and automated qualification are active for the current construction branch. The exact-head workflows cover CI, security, Docker, status consistency and release packaging; a green workflow run is evidence for that SHA only and does not by itself make Public v1 release-ready.
+Ronin does not use continuous integration. GitHub Actions do not run tests, security scans, Docker qualification, or release qualification on pushes or pull requests. Contributors run the documented checks locally and report the exact commands, commit, results, skips, environment, and artifact digests. The manual Docker Hub alias publisher is separate from validation.
 
 The Public v1 gate is intentionally much broader than the earlier 15-step local execution journey. A missing mandatory capability family means Public v1 is incomplete regardless of how mature the foundation is.
 
-The current checkout is an uncommitted workspace snapshot (the local `master`
-branch has no commits). Therefore any SHA, CI run, Docker result or release
-qualification mentioned in historical documents is evidence for that historical
-candidate only. The source-of-truth status ledger is
+Historical workflow results belong only to the exact commits recorded in those
+documents; they do not qualify current `main`. The source-of-truth status ledger is
 [`docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md`](docs/product/PUBLIC_V1_IMPLEMENTATION_STATUS.md).
 
 ## Documentation
@@ -146,7 +144,7 @@ python -m pip install --require-hashes -r requirements-dev.lock
 python -m pip install -e . --no-deps
 ```
 
-Repository validation commands and the current qualification policy are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). Local/static evidence must be reported exactly, and workflow evidence must identify the exact candidate SHA; neither replaces the remaining product, provider-certification, legal or administrative release decisions.
+Repository validation commands and the local-only qualification policy are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md). Report local evidence with the exact candidate SHA, commands, environment, results, skips, and artifact digests. This evidence does not replace the remaining product, provider-certification, legal, or administrative release decisions.
 
 ## Layout
 
