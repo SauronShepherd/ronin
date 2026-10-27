@@ -41,6 +41,46 @@ def test_delta_delete_removes_only_a_table_inside_the_warehouse(tmp_path) -> Non
         store.delete_table(identifier)
 
 
+def test_delta_inspect_reads_schema_from_log_without_materializing_rows(
+    tmp_path, monkeypatch
+) -> None:
+    from types import SimpleNamespace
+
+    import studio_lakehouse.delta as delta
+
+    fields = [SimpleNamespace(name="event_id", type="int64", nullable=False)]
+    table = SimpleNamespace(
+        schema=lambda: SimpleNamespace(to_pyarrow=lambda: fields),
+        metadata=lambda: SimpleNamespace(configuration={"delta.appendOnly": "true"}),
+        version=lambda: 7,
+        to_pyarrow_table=lambda: pytest.fail("inspect must not materialize Delta rows"),
+    )
+    monkeypatch.setattr(delta, "_deltalake", lambda: SimpleNamespace(DeltaTable=lambda *_a: table))
+
+    state = DeltaTableStore(tmp_path).inspect(OpenTableIdentifier(("analytics",), "events"))
+
+    assert state.version == "7"
+    assert state.fields[0].name == "event_id"
+    assert state.fields[0].data_type == "int64"
+    assert state.fields[0].nullable is False
+    assert state.properties == (("delta.appendOnly", "true"),)
+
+
+def test_delta_inspect_fails_closed_without_metadata_schema(tmp_path, monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    import studio_lakehouse.delta as delta
+
+    table = SimpleNamespace(
+        metadata=lambda: SimpleNamespace(configuration={}),
+        to_pyarrow_table=lambda: pytest.fail("inspect must not fall back to a full scan"),
+    )
+    monkeypatch.setattr(delta, "_deltalake", lambda: SimpleNamespace(DeltaTable=lambda *_a: table))
+
+    with pytest.raises(delta.DeltaCapabilityError, match="metadata-only schema inspection"):
+        DeltaTableStore(tmp_path).inspect(OpenTableIdentifier(("analytics",), "events"))
+
+
 def test_delta_store_validates_projection_and_version_before_optional_dependency_loading(
     tmp_path,
 ) -> None:
