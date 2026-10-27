@@ -570,7 +570,9 @@ class DataEnginerringStudioPlugin:
         if any(len(values) != 1 for values in params.values()):
             raise ValueError("QueryFlux result parameters must not be repeated")
         raw_cursor = params.get("cursor", [None])[0]
-        cursor = raw_cursor if raw_cursor else None
+        if "cursor" in params and not raw_cursor:
+            raise ValueError("cursor must be non-empty when provided")
+        cursor = raw_cursor
         raw_page_size = params.get("page_size", ["1000"])[0]
         if not raw_page_size.isascii() or not raw_page_size.isdigit():
             raise ValueError("page_size must be an integer")
