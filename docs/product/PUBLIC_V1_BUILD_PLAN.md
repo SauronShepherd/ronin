@@ -6,7 +6,7 @@
 **Arquitectura y portabilidad:** [`../architecture/`](../architecture/) y [`PLATFORM_PORTABILITY_V1.md`](PLATFORM_PORTABILITY_V1.md).
 **Snapshot previo a PR #552 (2026-10-26):** `main@29ed2666f747cd60f7ebce4b234a5f4f5c7ef2fa`, tras PR #551. Los seis workflows post-merge exact-SHA terminaron `success`: [CI](https://github.com/SauronShepherd/ronin/actions/runs/40342944267), [Docker](https://github.com/SauronShepherd/ronin/actions/runs/40342944407), [Web](https://github.com/SauronShepherd/ronin/actions/runs/40342944749), [Release](https://github.com/SauronShepherd/ronin/actions/runs/40342944525), [Security](https://github.com/SauronShepherd/ronin/actions/runs/40342944595) y [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/40342944302). Se conserva como corte histórico; el snapshot vigente está registrado abajo.
 
-**Snapshot vigente de main (2026-10-26):** `main@94ac3006456886fac366ab0dcca0a6f5f51f7829`, merge de PR #552. Los seis workflows post-merge exact-SHA terminaron `success`: [CI](https://github.com/SauronShepherd/ronin/actions/runs/40388942726), [Docker](https://github.com/SauronShepherd/ronin/actions/runs/40388942459), [Web](https://github.com/SauronShepherd/ronin/actions/runs/40388942544), [Release](https://github.com/SauronShepherd/ronin/actions/runs/40388943097), [Security](https://github.com/SauronShepherd/ronin/actions/runs/40388942691) y [Status consistency](https://github.com/SauronShepherd/ronin/actions/runs/40388942624). Los checks requeridos de PR pasaron; `mutation` y los jobs de publicación/veredicto de release fueron omitidos y no cuentan como PASS. Estos gates no cualifican 13/13 familias ni declaran un release.
+**Snapshot histórico anterior (2026-10-26):** `main@94ac3006456886fac366ab0dcca0a6f5f51f7829`, merge de PR #552. Los seis workflows post-merge exact-SHA terminaron `success`; `mutation` y los jobs de publicación/veredicto de release se omitieron por política. El snapshot vigente queda registrado en §45.
 
 **Snapshot histórico (2026-10-25):** `main@4686571b403d1499ffbd8f15fce4b01f650b99e8` incorporó PR #547, que restringe los facets conocidos de OpenLineage a entidades dataset. Los seis workflows `push` exact-head de GitHub Actions terminaron `success` (enlaces arriba). Sobre un worktree limpio de ese SHA pasaron cinco suites focalizadas (54 connectors/checkpoints/ingestion, 6 Streaming Bundle, 2 PostgreSQL Bundle con PostgreSQL 16.4 en Docker, 5 OTLP exporter y 1 OTLP collector real en Docker). La qualification de CI además pasó `postgres-storage-coverage` (4.014/14; en esta lane se omitió el test del connector PostgreSQL real por falta de DSN), `non-docker-qualification` (4.015/11; configuró la DSN y ejecutó dicho test), el worker Docker real (8 tests), el gate strict frozen v0.1 (15/15) y una prueba LocalStack (1). Las dos suites son independientes y solapadas; no sumar sus conteos. La suite local de 3.962 tests corresponde al code tree previo `b8e6d783...`, no al merge SHA. Los checks verdes no cualifican una familia; P6 sigue parcial y Public v1 incompleto.
 **Snapshot anterior verificado:** `main@4e63e69334a2ae55ce6bc1c2656742193cb919bb` (2026-10-24, tras PR #542; los seis workflows post-merge exact-head pasaron). PR #539 añadió validación de tipos y claves de igualdad tipada para ontology y enlaces de Knowledge Graph; PR #540 hizo los joins RQL tipados y null-safe; PR #542 extendió la comparación tipada a filtros `=`/`!=` del proveedor Graph, evitando que booleanos y enteros coincidan por coerción. La suite completa local pasó **3.922 tests y omitió 66** en Windows; ontology/KG/RQL focalizado pasó 107 tests, mypy, Ruff y formato pasaron. `mutation` quedó skipped por política.
@@ -18,7 +18,7 @@
 
 **Progreso de release: 0% (0 de 13 familias activas release-qualified).** El porcentaje cuenta una familia sólo cuando su journey obligatorio Public v1, la evidencia de proveedor/seguridad aplicable y la evidencia exact-head están completas. Ninguna familia activa está cualificada; la implementación existente y los slices ya integrados no se cuentan como familias terminadas. P9 está fuera de alcance. El porcentaje se recalcula desde la columna `Release-qualified` de la [matriz de capacidades](PUBLIC_V1_CAPABILITY_MATRIX.md), no desde commits, líneas de código ni pruebas aisladas. Estado del producto: **INCOMPLETE**.
 
-## Reconciliación de la revisión actual (2026-10-26)
+## Reconciliación tras integrar PR #552 (2026-10-26; sustituida por §45)
 
 **Snapshot actualizado:** `main@94ac3006456886fac366ab0dcca0a6f5f51f7829`, merge de PR #552. La PR se integró a las 19:41:11 UTC; la rama remota se eliminó. Sus checks requeridos pasaron: CI Python 3.11/3.12, Docker/PostgreSQL, Web, Security, Release packaging y status consistency. Los seis workflows post-merge exact-SHA en `94ac3006` terminaron `success` (runs 40388942726, 40388942459, 40388942544, 40388942691, 40388943097 y 40388942624). `mutation` y la publicación/veredicto de release quedaron omitidos por política; no cuentan como PASS. Esto no convierte el SHA en candidato release cualificado: el progreso de release sigue en 0/13.
 
@@ -28,9 +28,46 @@ El candidato incorpora búsqueda y paginación gobernada de catálogo, stores SQ
 
 **SQL integrado por PR #552 (2026-10-26):** la gramática compartida de `SqlHTTPAdapter` y DuckDB acepta únicamente SELECT de una sentencia y con trim; el endpoint local-composed ejecuta en un engine por proyecto, comprueba el proyecto antes de asignar namespace y cierra los engines al apagar el servidor. Los checks PR y post-merge pasaron en los SHAs indicados arriba. RPV1-304/P3 sigue parcial: el endpoint aún no implementa paginación, explain, cancelación por cliente, registro gobernado de assets ni evidencia de revisiones.
 
-**Siguiente slice SQL en curso (base `94ac3006`, no integrado):** añadir presupuestos HTTP explícitos de tiempo de ejecución y bytes de resultado, exponerlos en los dos formularios SQL de Studio y documentar el contrato/408 en OpenAPI. Se mantiene el alcance conservador y la familia P3 partial; el slice no implementa límites de CPU, paginación, explain, cancelación explícita, asset registry, query evidence ni qualification completa. Las pruebas locales de esta rama se registrarán solo después de finalizar y ejecutar los checks indicados; no son evidencia del SHA main.
+**Slice de presupuesto SQL integrado posteriormente por PR #553:** añade límites HTTP de tiempo de ejecución y bytes serializados de resultado, interrupción por deadline en DuckDB, controles en ambos formularios SQL y respuestas documentadas HTTP 408/413. La evidencia y los límites pendientes se registran en §45.
 
 **Estado del producto:** 0/13 familias Public v1 release-qualified (0%, NO-GO). **Implementación global:** no calculable. **Iteraciones limpias consecutivas tras la última modificación:** 0/10; la reconciliación y los gates siguen encontrando puntos que corregir o confirmar.
+
+## 45. Estado vigente tras integrar PR #553 (2026-10-27)
+
+### Fuente y workflows exact-SHA
+
+`origin/main` y el checkout local están en `993f519e02e611a951b258bb266979fa747e7bbf`, merge commit de PR [#553](https://github.com/SauronShepherd/ronin/pull/553), integrada el 2026-10-27 a las 01:20 UTC. La rama remota se eliminó y las tres ramas locales antiguas de OpenLineage se retiraron tras confirmar que sus cambios de código están en main y sus notas de estado quedaron supersedidas.
+
+Todos los checks requeridos de PR #553 pasaron: Python 3.11/3.12, Docker runtime y qualification/PostgreSQL, artefactos Python, Web, Security, Release, Status consistency, calidad, dependencias, gates negativos, verificación y testkit. `mutation` quedó `skipped` por política y no cuenta como PASS. Los seis workflows post-merge exact-head en `993f519e` terminaron `success`: CI [40431944304](https://github.com/SauronShepherd/ronin/actions/runs/40431944304), Docker [40431944221](https://github.com/SauronShepherd/ronin/actions/runs/40431944221), Web [40431944227](https://github.com/SauronShepherd/ronin/actions/runs/40431944227), Release [40431944217](https://github.com/SauronShepherd/ronin/actions/runs/40431944217), Security [40431944259](https://github.com/SauronShepherd/ronin/actions/runs/40431944259) y Status consistency [40431944380](https://github.com/SauronShepherd/ronin/actions/runs/40431944380). Son señales de CI para este SHA, no qualification de una familia ni aprobación de release.
+
+### SQL integrado y evidencia
+
+PR #553 añade `timeout_ms` (1–60.000; default 5.000) y `max_result_bytes` (1–10.485.760; default 1 MiB) al contrato SQL. DuckDB interrumpe consultas que exceden el deadline y limita el tamaño al recolectar filas; el adaptador comprueba además el payload serializado completo. Los errores se convierten en HTTP 408 `sql_timeout` y HTTP 413 `sql_result_too_large`; OpenAPI y las dos superficies de Studio envían los límites. La suite focalizada de API/SQL/composición pasó 85 pruebas. Playwright pasó 96 y omitió 3 por dependencias de API/servicios externos. El gate Docker de worker pasó 8/8 con una base PostgreSQL fresca; frozen v0.1 pasó 16 y omitió 3 por la configuración de Spark externa.
+
+La suite Python local completa ejecutó 4.111 pruebas, omitió 22 y reportó tres fallos de sincronización documental; se corrigieron los dos ledgers y las pruebas afectadas pasaron 6/6, pero no se repitió localmente la suite global completa después de esa corrección. La ejecución exact-head de CI tras la corrección pasó en Python 3.11 y 3.12, y la qualification Docker exact-head pasó. `tests/perf` pasó 3/3. Ruff, formato, mypy focalizado, hash OpenAPI y los gates locales de cobertura pasaron. Los 22 skips locales y los skips de Playwright/frozen acceptance permanecen skips, no éxitos. Estas pruebas y los workflows verdes no completan P3.
+
+### Comandos reproducibles y límite del registro local
+
+Los comandos focalizados y sus resultados son:
+
+```powershell
+python -m pytest -q tests/test_sql_http.py tests/test_open_data_plane.py tests/test_local_composed.py tests/integration/test_workspace_project_http_api.py
+# 85 passed
+npm --prefix web-tests test
+# 96 passed, 3 skipped
+python -m pytest -q tests/perf
+# 3 passed
+python -m pytest -q tests/test_public_v1_status.py tests/test_public_capability_matrix.py
+# 6 passed al corregir las aserciones documentales
+```
+
+El Docker CI exact-head con sus comandos/configuración y artefactos se conserva en [el run Docker de PR #553](https://github.com/SauronShepherd/ronin/actions/runs/40396332178); sus pasos `Run real Docker qualification` y `Run strict frozen v0.1 acceptance` son la evidencia reproducible de 8/8 y 16/3. El script local correspondiente es `tools/run_docker_qualification.ps1`. El resumen del intento local global (4.111/22/3) no conservó la línea de comando completa ni el artefacto de salida; por eso se informa como observación local, no como evidencia reproducible. El entorno local registrado fue Windows, Python 3.13.15 y PostgreSQL en Docker; versiones locales de Node/Chromium no quedaron anotadas. Los skips requieren servicios o configuración externa.
+
+### Progreso y trabajo pendiente
+
+El porcentaje global de implementación sigue **no calculable**; Public v1 continúa **0/13 familias release-qualified (0%, NO-GO)**. RPV1-304/P3 sigue `partial`: faltan paginación estable, explain con salida sin rutas/secretos, cancelación explícita y durable, registro gobernado de assets y revisiones de fuentes en `query_evidence`, un contrato engine-neutral con semántica compartida y journeys completos API/Studio para success/error/cancel/timeout/restart. También faltan límites de CPU, qualification de motores/proveedores aplicables y la evidencia obligatoria de las otras familias.
+
+La revisión de esta versión documental acaba de encontrar y corregir estado obsoleto; el contador de iteraciones integrales limpias queda en **0/10**. La evidencia local no se suma a los gates exact-head y ninguna familia se cuenta como completa por tener pruebas SQL verdes.
 
 ## Propósito y límites
 
