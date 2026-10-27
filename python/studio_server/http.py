@@ -43,6 +43,7 @@ from studio_sql import (
     SqlEngine,
     SqlExecutionError,
     SqlRelationUnavailableError,
+    SqlResultLimitError,
     SqlTimeoutError,
     normalize_sql_parameters,
 )
@@ -442,6 +443,8 @@ class DurableHTTPApplication:
             "sql",
             "parameters",
             "max_rows",
+            "timeout_ms",
+            "max_result_bytes",
             "profile",
             "translation_policy",
         }:
@@ -450,20 +453,26 @@ class DurableHTTPApplication:
         project = payload.get("project")
         parameters = payload.get("parameters", [])
         max_rows = payload.get("max_rows", 10_000)
+        timeout_ms = payload.get("timeout_ms", 5_000)
+        max_result_bytes = payload.get("max_result_bytes", 1_048_576)
         profile = payload.get("profile", "local")
         translation_policy = payload.get("translation_policy", "native_only")
         if not isinstance(sql, str) or not sql.strip() or sql != sql.strip():
             raise ValueError("sql must be non-empty and trimmed")
         if not isinstance(project, str) or not project.strip() or project != project.strip():
             raise ValueError("project must be non-empty and trimmed")
-        if profile not in {"local", "queryflux"}:
+        if not isinstance(profile, str) or profile not in {"local", "queryflux"}:
             raise ValueError("profile is unsupported")
-        if translation_policy not in {"native_only", "best_effort", "strict"}:
+        if not isinstance(translation_policy, str) or translation_policy not in {
+            "native_only",
+            "best_effort",
+            "strict",
+        }:
             raise ValueError("translation_policy is unsupported")
         if profile != "local":
-            raise LookupError("requested query engine profile is not configured")
+            raise ValueError("requested query engine profile is not supported")
         if translation_policy != "native_only":
-            raise LookupError("requested translation policy is not qualified")
+            raise ValueError("requested translation policy is not supported")
         normalized_parameters = normalize_sql_parameters(parameters)
         if (
             not isinstance(max_rows, int)
@@ -471,16 +480,39 @@ class DurableHTTPApplication:
             or not 1 <= max_rows <= 10_000
         ):
             raise ValueError("max_rows must be between 1 and 10000")
+        if (
+            not isinstance(timeout_ms, int)
+            or isinstance(timeout_ms, bool)
+            or not 1 <= timeout_ms <= 60_000
+        ):
+            raise ValueError("timeout_ms must be between 1 and 60000")
+        if (
+            not isinstance(max_result_bytes, int)
+            or isinstance(max_result_bytes, bool)
+            or not 1 <= max_result_bytes <= 10_485_760
+        ):
+            raise ValueError("max_result_bytes must be between 1 and 10485760")
         try:
             if isinstance(self._sql_engine, ProjectScopedDuckDbSqlEngine):
                 result = self._sql_engine.execute(
-                    project, sql, normalized_parameters, max_rows=max_rows
+                    project,
+                    sql,
+                    normalized_parameters,
+                    max_rows=max_rows,
+                    timeout_ms=timeout_ms,
+                    max_result_bytes=max_result_bytes,
                 )
             else:
-                result = self._sql_engine.execute(sql, normalized_parameters, max_rows=max_rows)
+                result = self._sql_engine.execute(
+                    sql,
+                    normalized_parameters,
+                    max_rows=max_rows,
+                    timeout_ms=timeout_ms,
+                    max_result_bytes=max_result_bytes,
+                )
         except (SqlRelationUnavailableError, SqlExecutionError, SqlTimeoutError):
             raise
-        return {
+        response = {
             "columns": [
                 {"name": column.name, "type": column.type_name} for column in result.columns
             ],
@@ -496,6 +528,14 @@ class DurableHTTPApplication:
                 "translation_policy": translation_policy,
             },
         }
+        encoded_size = len(
+            json.dumps(response, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        )
+        if encoded_size > max_result_bytes:
+            raise SqlResultLimitError(
+                "SQL result exceeds max_result_bytes; select fewer or smaller values"
+            )
+        return response
 
 
 class RoninHTTPServer(ThreadingHTTPServer):
@@ -845,6 +885,9 @@ class _Handler(BaseHTTPRequestHandler):
                 return
             except SqlTimeoutError as exc:
                 self._error(HTTPStatus.GATEWAY_TIMEOUT, "sql_timeout", str(exc))
+                return
+            except SqlResultLimitError as exc:
+                self._error(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, "sql_result_too_large", str(exc))
                 return
             except SqlExecutionError:
                 self._error(

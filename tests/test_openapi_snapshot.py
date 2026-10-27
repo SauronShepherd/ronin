@@ -57,6 +57,14 @@ def test_queryflux_execution_route_and_result_budgets_are_documented() -> None:
     }
     assert sql_request["properties"]["max_result_bytes"]["maximum"] == 10485760
     assert sql_request["properties"]["profile"]["enum"] == ["local"]
+    sql_operation = document["paths"]["/v1/sql"]["post"]
+    assert "413" in sql_operation["responses"]
+    sql_result = document["components"]["schemas"]["SqlResult"]
+    assert sql_result["additionalProperties"] is False
+    assert sql_result["properties"]["query_evidence"]["$ref"] == (
+        "#/components/schemas/SqlQueryEvidence"
+    )
+    assert "routing_trace" in document["components"]["schemas"]["SqlQueryEvidence"]["required"]
     project_sql = document["paths"][
         "/v1/workspaces/{workspace_id}/projects/{project_id}/sql/query"
     ]["post"]["requestBody"]["content"]["application/json"]["schema"]

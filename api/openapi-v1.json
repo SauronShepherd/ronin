@@ -315,6 +315,7 @@
           "401": {"$ref": "#/components/responses/Error"},
           "403": {"$ref": "#/components/responses/Error"},
           "404": {"$ref": "#/components/responses/Error"},
+          "413": {"$ref": "#/components/responses/Error"},
           "500": {"$ref": "#/components/responses/Error"},
           "503": {"$ref": "#/components/responses/Error"},
           "504": {"$ref": "#/components/responses/Error"}
@@ -1416,7 +1417,19 @@
         "type": "object", "additionalProperties": false, "required": ["columns", "rows"],
         "properties": {
           "columns": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name", "type"], "properties": {"name": {"type": "string"}, "type": {"type": "string"}}}},
-          "rows": {"type": "array", "items": {"type": "array", "items": {"$ref": "#/components/schemas/SqlWireScalar"}}}
+          "rows": {"type": "array", "items": {"type": "array", "items": {"$ref": "#/components/schemas/SqlWireScalar"}}},
+          "query_evidence": {"$ref": "#/components/schemas/SqlQueryEvidence"}
+        }
+      },
+      "SqlQueryEvidence": {
+        "type": "object", "additionalProperties": false,
+        "required": ["provider_id", "provider_version", "selected_engine", "routing_trace", "translation_policy"],
+        "properties": {
+          "provider_id": {"type": "string", "const": "ronin-local-sql"},
+          "provider_version": {"type": "string", "const": "1"},
+          "selected_engine": {"type": "string", "const": "duckdb"},
+          "routing_trace": {"type": "object", "additionalProperties": false, "required": ["profile", "selected_engine"], "properties": {"profile": {"type": "string", "const": "local"}, "selected_engine": {"type": "string", "const": "duckdb"}}},
+          "translation_policy": {"type": "string", "const": "native_only"}
         }
       },
       "SqlWireScalar": {
