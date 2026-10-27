@@ -10,6 +10,36 @@ def test_public_openapi_snapshot_is_current() -> None:
     assert len(check(root / "api/openapi-v1.json", root / "api/openapi-v1.sha256")) == 64
 
 
+def test_queryflux_execution_route_and_result_budgets_are_documented() -> None:
+    import json
+
+    root = Path(__file__).parents[1]
+    document = json.loads((root / "api/openapi-v1.json").read_text(encoding="utf-8"))
+    operation = document["paths"]["/v1/data-engineering/queryflux/execute"]["post"]
+    request = document["components"]["schemas"]["QueryFluxExecuteRequest"]
+
+    assert operation["operationId"] == "executeQueryFlux"
+    assert operation["description"].find("data-engineering:execute") >= 0
+    assert operation["requestBody"]["content"]["application/json"]["schema"]["$ref"] == (
+        "#/components/schemas/QueryFluxExecuteRequest"
+    )
+    assert request["properties"]["max_result_bytes"] == {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10485760,
+        "default": 1048576,
+    }
+    assert request["properties"]["max_rows"]["maximum"] == 1000000
+    sql_request = document["components"]["schemas"]["SqlRequest"]
+    assert sql_request["properties"]["timeout_ms"] == {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 60000,
+        "default": 5000,
+    }
+    assert sql_request["properties"]["max_result_bytes"]["maximum"] == 10485760
+
+
 def test_ml_lab_openapi_schema_matches_v1_contract() -> None:
     import json
 

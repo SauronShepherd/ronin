@@ -38,7 +38,7 @@ def test_query_engine_contract_is_provider_neutral_and_canonical() -> None:
     assert capabilities.get("joins") is None
     assert handshake.to_payload()["provider_id"] == "local-duckdb"
     assert handshake.to_payload()["contract"] == f"{QUERY_ENGINE_NAMESPACE}/{QUERY_ENGINE_VERSION}"
-    assert request.canonical_json().startswith('{"max_rows":5')
+    assert request.canonical_json().startswith('{"max_result_bytes":1048576')
 
 
 def test_query_request_canonicalizes_and_validates_scalar_parameters() -> None:
@@ -88,6 +88,19 @@ def test_query_result_and_status_are_bounded_and_shape_checked() -> None:
         QueryRequest("SELECT 1", "local", max_rows=0)
     with pytest.raises(ValueError, match="integer"):
         QueryRequest("SELECT 1", "local", max_rows=True)
+    with pytest.raises(ValueError, match="max_result_bytes"):
+        QueryRequest("SELECT 1", "local", max_result_bytes=0)
+    with pytest.raises(ValueError, match="max_result_bytes"):
+        QueryRequest("SELECT 1", "local", max_result_bytes=True)
+
+
+def test_query_request_result_byte_budget_is_part_of_canonical_identity() -> None:
+    default = QueryRequest("SELECT 1", "local")
+    bounded = QueryRequest("SELECT 1", "local", max_result_bytes=64)
+
+    assert default.max_result_bytes == 1_048_576
+    assert '"max_result_bytes":64' in bounded.canonical_json()
+    assert default.canonical_json() != bounded.canonical_json()
 
 
 def test_query_evidence_rejects_duplicate_timings() -> None:

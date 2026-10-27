@@ -13,7 +13,7 @@ from studio_core.plugins import (
     PluginManifest,
     SurfaceContribution,
 )
-from studio_query_engine import QueryRequest
+from studio_query_engine import DEFAULT_MAX_RESULT_BYTES, QueryRequest
 
 from .compilations import SqliteCompilationStore
 from .compiler import compile_pipeline
@@ -430,6 +430,7 @@ class DataEnginerringStudioPlugin:
             "profile",
             "translation_policy",
             "max_rows",
+            "max_result_bytes",
             "engine",
             "project_id",
             "run_id",
@@ -439,9 +440,18 @@ class DataEnginerringStudioPlugin:
             raise ValueError("queryflux execution body contains unknown fields")
         required = ("sql", "profile", "engine", "project_id", "run_id", "attempt_id")
         if any(
-            not isinstance(body.get(name), str) or not str(body[name]).strip() for name in required
+            not isinstance(body.get(name), str)
+            or not body[name]
+            or body[name] != body[name].strip()
+            or len(body[name]) > 512
+            or any(char in body[name] for char in "\r\n\x00")
+            for name in required[1:]
         ):
-            raise ValueError("queryflux execution requires non-empty text fields")
+            raise ValueError(
+                "queryflux execution identifiers must be trimmed single-line text up to 512 chars"
+            )
+        if not isinstance(body.get("sql"), str) or not str(body["sql"]).strip():
+            raise ValueError("queryflux execution requires non-empty SQL text")
         max_rows = body.get("max_rows", 1_000)
         if isinstance(max_rows, bool) or not isinstance(max_rows, int):
             raise ValueError("max_rows must be an integer")
@@ -457,6 +467,7 @@ class DataEnginerringStudioPlugin:
             ),
             max_rows,
             tuple(parameters),
+            max_result_bytes=body.get("max_result_bytes", DEFAULT_MAX_RESULT_BYTES),
         )
         result = execute_query(
             self._queryflux_runtime,

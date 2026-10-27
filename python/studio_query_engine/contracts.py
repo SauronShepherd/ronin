@@ -16,6 +16,8 @@ TranslationPolicy = Literal["native_only", "best_effort", "strict"]
 # may add fields in their own payloads, but must not replace this identity.
 QUERY_ENGINE_NAMESPACE = "ronin.query-engine"
 QUERY_ENGINE_VERSION = "v1"
+DEFAULT_MAX_RESULT_BYTES = 1_048_576
+MAX_RESULT_BYTES = 10_485_760
 
 
 def _text(value: str, name: str, *, maximum: int = 512) -> str:
@@ -113,6 +115,7 @@ class QueryRequest:
     translation_policy: TranslationPolicy = "native_only"
     max_rows: int = 1_000
     parameters: tuple[object, ...] = ()
+    max_result_bytes: int = DEFAULT_MAX_RESULT_BYTES
 
     def __post_init__(self) -> None:
         _text(self.sql, "sql", maximum=1_000_000)
@@ -124,6 +127,10 @@ class QueryRequest:
             raise ValueError("max_rows must be an integer")
         if not 1 <= self.max_rows <= 1_000_000:
             raise ValueError("max_rows is outside the configured bound")
+        if isinstance(self.max_result_bytes, bool) or not isinstance(self.max_result_bytes, int):
+            raise ValueError("max_result_bytes must be an integer")
+        if not 1 <= self.max_result_bytes <= MAX_RESULT_BYTES:
+            raise ValueError("max_result_bytes is outside the configured bound")
         if not isinstance(self.parameters, (tuple, list)):
             raise ValueError("parameters must be an array")
         try:
@@ -138,6 +145,7 @@ class QueryRequest:
             "profile": self.profile,
             "translation_policy": self.translation_policy,
             "max_rows": self.max_rows,
+            "max_result_bytes": self.max_result_bytes,
             "parameters": [_parameter_payload(value) for value in self.parameters],
         }
 
@@ -298,6 +306,7 @@ class QueryEngineTransport(Protocol):
 
 __all__ = [
     "CancellationResult",
+    "DEFAULT_MAX_RESULT_BYTES",
     "EngineCapabilities",
     "EngineHandshake",
     "QueryEvidence",
@@ -307,6 +316,7 @@ __all__ = [
     "QueryResultPage",
     "QueryState",
     "QueryStatus",
+    "MAX_RESULT_BYTES",
     "TranslationPolicy",
     "QUERY_ENGINE_NAMESPACE",
     "QUERY_ENGINE_VERSION",

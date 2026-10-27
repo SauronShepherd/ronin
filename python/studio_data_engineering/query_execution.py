@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+import json
+import logging
 import time
 from collections.abc import Callable
 from contextlib import nullcontext
@@ -22,6 +24,8 @@ from studio_storage.ports import ArtifactReferenceBarrier
 
 from .evidence import EvidenceStore, persist_query_engine_evidence
 from .runtimes import QueryEngineRuntimeProvider
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class QueryTransport(Protocol):
@@ -84,6 +88,8 @@ def execute_query(
     status = QueryStatus("queued", provider_query_id=handle.provider_query_id)
     columns: tuple[str, ...] | None = None
     rows: list[tuple[object, ...]] = []
+    encoded_rows_bytes = 0
+    limit_failure: str | None = None
     for _ in range(max_polls):
         status, page, following_uri = transport.poll(handle, next_uri)
         if page is not None:
@@ -91,9 +97,61 @@ def execute_query(
                 columns = page.columns
             elif columns != page.columns:
                 raise RuntimeError("query transport returned inconsistent result columns")
-            remaining = request.max_rows - len(rows)
-            if remaining > 0:
-                rows.extend(page.rows[:remaining])
+            if len(rows) + len(page.rows) > request.max_rows:
+                limit_failure = "query result exceeds the configured row limit"
+            else:
+                columns_json = json.dumps(
+                    list(columns), ensure_ascii=False, separators=(",", ":")
+                ).encode("utf-8")
+                empty_result_bytes = len(b'{"columns":' + columns_json + b',"rows":[]') + len(
+                    b',"row_count":0}'
+                )
+                if empty_result_bytes > request.max_result_bytes:
+                    limit_failure = "query result exceeds the configured byte limit"
+                for row in page.rows:
+                    if limit_failure is not None:
+                        break
+                    try:
+                        encoded_row = json.dumps(
+                            list(row),
+                            ensure_ascii=False,
+                            allow_nan=False,
+                            separators=(",", ":"),
+                        ).encode("utf-8")
+                    except (TypeError, ValueError):
+                        limit_failure = "query result contains a value that is not JSON-safe"
+                        break
+                    next_count = len(rows) + 1
+                    next_rows_bytes = encoded_rows_bytes + len(encoded_row)
+                    if next_count > 1:
+                        next_rows_bytes += next_count - 1
+                    result_prefix = b'{"columns":' + columns_json + b',"rows":['
+                    result_suffix = b'],"row_count":' + str(next_count).encode("ascii") + b"}"
+                    if len(result_prefix) + next_rows_bytes + len(result_suffix) > (
+                        request.max_result_bytes
+                    ):
+                        limit_failure = "query result exceeds the configured byte limit"
+                        break
+                    rows.append(row)
+                    encoded_rows_bytes += len(encoded_row)
+        if limit_failure is not None:
+            if status.state in {"queued", "running"}:
+                try:
+                    cancellation = transport.cancel(handle)
+                    if not cancellation.cancelled:
+                        _LOGGER.warning(
+                            "query cancellation was not confirmed after a result limit failure"
+                        )
+                except Exception:
+                    _LOGGER.warning(
+                        "query cancellation was not confirmed after a result limit failure"
+                    )
+            status = QueryStatus(
+                "failed", limit_failure, provider_query_id=handle.provider_query_id
+            )
+            columns = None
+            rows.clear()
+            break
         if status.state in {"succeeded", "failed", "cancelled"}:
             break
         if following_uri is None:

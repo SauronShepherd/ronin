@@ -331,22 +331,6 @@ class DuckDbSqlEngine:
             cursor = self._connection.execute(sql, parameters)
             description = cursor.description or ()
             columns = tuple(SqlColumn(item[0], str(item[1])) for item in description)
-            base_payload = {
-                "columns": [
-                    {"name": column.name, "type_name": column.type_name} for column in columns
-                ],
-                "rows": [],
-                "row_count": 0,
-                "max_rows": max_rows,
-                "max_result_bytes": max_result_bytes,
-            }
-            base_size = len(
-                json.dumps(base_payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-            )
-            if base_size > max_result_bytes:
-                raise SqlResultLimitError(
-                    "SQL result metadata exceeds max_result_bytes; request a smaller result"
-                )
             row_json_size = 0
             collected_rows: list[tuple[object, ...]] = []
             while True:
@@ -375,9 +359,10 @@ class DuckDbSqlEngine:
                 )
                 next_row_count = len(collected_rows) + 1
                 next_rows_size = row_json_size + (1 if collected_rows else 0) + encoded_row_size
-                exact_size = (
-                    base_size - len("[]") - len("0") + next_rows_size + len(str(next_row_count))
-                )
+                # This engine-level budget bounds materialized row bytes. API
+                # adapters enforce the exact serialized response size after
+                # adding their own result metadata, which differs by surface.
+                exact_size = next_rows_size + len("[]") + len(str(next_row_count))
                 if exact_size > max_result_bytes:
                     raise SqlResultLimitError(
                         "SQL result exceeds max_result_bytes; select fewer or smaller values"

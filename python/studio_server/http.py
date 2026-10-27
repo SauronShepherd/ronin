@@ -110,7 +110,9 @@ SUPPORTED_ROUTES = (
             ("GET", "/v1/jobs/{job_id}/results"),
             ("POST", "/v1/jobs/{job_id}/cancel"),
             ("POST", "/v1/sql"),
+            # Public QueryFlux plugin routes; provider execution is optional.
             ("GET", "/v1/data-engineering/queryflux/capabilities"),
+            ("POST", "/v1/data-engineering/queryflux/execute"),
         }
     )
     | MIGRATION_ROUTES

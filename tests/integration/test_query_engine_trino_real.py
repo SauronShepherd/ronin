@@ -4,10 +4,19 @@ import json
 import os
 from collections.abc import Mapping
 from http.client import HTTPConnection
+from pathlib import Path
 from urllib.parse import urlsplit
 
 import pytest
+from studio_data_engineering import QueryEngineRuntimeProvider, execute_query
 from studio_query_engine import QueryRequest, TrinoHttpTransport
+from studio_query_engine import (
+    DiscoveredEngine,
+    EngineCapabilities,
+    EngineHandshake,
+    QueryExecutionPolicy,
+)
+from studio_storage import LocalArtifactStore
 
 _TRINO_URL = os.environ.get("RONIN_TRINO_TEST_URL")
 pytestmark = pytest.mark.skipif(
@@ -74,3 +83,64 @@ def test_trino_real_prepared_scalar_bindings() -> None:
     assert tuple(row for page in pages for row in page.rows) == (
         ("O'Reilly", 2**63 - 1, True, 2.5, None),
     )
+
+
+def test_trino_real_result_byte_budget_accepts_exact_limit_and_rejects_one_byte_less(
+    tmp_path: Path,
+) -> None:
+    assert _TRINO_URL is not None
+    base_url = _TRINO_URL if _TRINO_URL.endswith("/") else f"{_TRINO_URL}/"
+    transport = TrinoHttpTransport(_LocalTrinoHttpClient(), base_url=base_url)
+    provider = QueryEngineRuntimeProvider(
+        DiscoveredEngine(
+            EngineHandshake(
+                "trino",
+                "484",
+                EngineCapabilities((("cancel", True), ("parameter_binding", True))),
+                True,
+            ),
+            ("trino",),
+            "ready",
+        ),
+        QueryExecutionPolicy((("trino", ("trino",)),), required_capability="cancel"),
+    )
+    expected = {"columns": ["_col0"], "rows": [["ok"]], "row_count": 1}
+    exact_limit = len(json.dumps(expected, separators=(",", ":")).encode("utf-8"))
+
+    accepted = execute_query(
+        provider,
+        transport,
+        LocalArtifactStore(tmp_path / "accepted-artifacts"),
+        QueryRequest(
+            "SELECT CAST(? AS VARCHAR)",
+            "trino",
+            parameters=("ok",),
+            max_result_bytes=exact_limit,
+        ),
+        engine="trino",
+        project_id="qualification-project",
+        run_id="result-budget-accepted",
+        attempt_id="attempt-1",
+    )
+    rejected = execute_query(
+        provider,
+        transport,
+        LocalArtifactStore(tmp_path / "rejected-artifacts"),
+        QueryRequest(
+            "SELECT CAST(? AS VARCHAR)",
+            "trino",
+            parameters=("ok",),
+            max_result_bytes=exact_limit - 1,
+        ),
+        engine="trino",
+        project_id="qualification-project",
+        run_id="result-budget-rejected",
+        attempt_id="attempt-1",
+    )
+
+    assert accepted.status.state == "succeeded"
+    assert accepted.page is not None
+    assert accepted.page.rows == (("ok",),)
+    assert rejected.status.state == "failed"
+    assert rejected.status.message == "query result exceeds the configured byte limit"
+    assert rejected.page is None
