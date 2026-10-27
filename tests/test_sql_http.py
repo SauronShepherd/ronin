@@ -96,6 +96,18 @@ def test_sql_http_adapter_enforces_parameter_count_and_text_limits() -> None:
     assert engine.request is None
 
 
+def test_sql_http_adapter_accepts_exact_parameter_count_and_text_limits() -> None:
+    engine = Engine()
+    SqlHTTPAdapter(engine).query("project-1", {"sql": "SELECT 1", "parameters": [None] * 1000})
+    assert len(engine.request[2]) == 1000
+
+    maximum_text = "x" * 524_288
+    SqlHTTPAdapter(engine).query(
+        "project-1", {"sql": "SELECT ?", "parameters": [{"type": "string", "value": maximum_text}]}
+    )
+    assert engine.request[2] == (maximum_text,)
+
+
 def test_sql_http_adapter_rejects_results_over_the_serialized_byte_budget() -> None:
     class LargeResultEngine(Engine):
         def execute(

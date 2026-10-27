@@ -1305,7 +1305,7 @@
         "description": "Explicit SQL scalar binding. Float values must be finite. Legacy untagged scalar values remain accepted for compatibility."
       },
       "SqlLegacyParameter": {
-        "oneOf": [
+        "anyOf": [
           {"type": "null"},
           {"type": "boolean"},
           {"type": "integer", "minimum": -9223372036854775808, "maximum": 9223372036854775807},

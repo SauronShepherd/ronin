@@ -53,7 +53,8 @@ def test_openapi_routes_and_sdk_states_match_implemented_contract() -> None:
     assert document["security"] == [{"bearerAuth": []}]
     sql_parameters = document["components"]["schemas"]["SqlRequest"]["properties"]["parameters"]
     assert sql_parameters["maxItems"] == 1000
-    assert len(document["components"]["schemas"]["SqlLegacyParameter"]["oneOf"]) == 5
+    legacy_sql_parameter = document["components"]["schemas"]["SqlLegacyParameter"]
+    assert len(legacy_sql_parameter["anyOf"]) == 5
     typed_sql_parameter = document["components"]["schemas"]["SqlTypedParameter"]
     assert len(typed_sql_parameter["oneOf"]) == 5
     assert all(

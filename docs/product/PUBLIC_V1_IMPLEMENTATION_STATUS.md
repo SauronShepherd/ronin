@@ -77,7 +77,7 @@ Public v1 client compatibility. OpenAPI and API compatibility documentation
 describe both forms. Local focused tests cover the live HTTP route and DuckDB
 binding behavior; remote engine parameter parity is still unqualified.
 
-The current-code/API/ledger focused suites pass 60 tests. The whole local
+The current-code/API/ledger focused suites pass 61 tests. The whole local
 Python run reported 4,072 passed, 72 skipped and one failure caused by the
 OpenAPI hash becoming stale after the schema edit. The snapshot was updated and
 the focused suite, including `test_openapi_snapshot`, passes; the whole suite
