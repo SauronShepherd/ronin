@@ -44,6 +44,7 @@ from studio_sql import (
     SqlExecutionError,
     SqlRelationUnavailableError,
     SqlTimeoutError,
+    normalize_sql_parameters,
 )
 from studio_sql.wire import sql_wire_value
 from studio_storage import IdempotencyConflict, StorageBackpressureError
@@ -454,12 +455,7 @@ class DurableHTTPApplication:
             raise LookupError("requested query engine profile is not configured")
         if translation_policy != "native_only":
             raise LookupError("requested translation policy is not qualified")
-        if not isinstance(parameters, list):
-            raise ValueError("parameters must be a JSON array")
-        if not all(
-            isinstance(value, (bool, int, float, str)) or value is None for value in parameters
-        ):
-            raise ValueError("SQL parameters must be scalar JSON values")
+        normalized_parameters = normalize_sql_parameters(parameters)
         if (
             not isinstance(max_rows, int)
             or isinstance(max_rows, bool)
@@ -469,10 +465,10 @@ class DurableHTTPApplication:
         try:
             if isinstance(self._sql_engine, ProjectScopedDuckDbSqlEngine):
                 result = self._sql_engine.execute(
-                    project, sql, tuple(parameters), max_rows=max_rows
+                    project, sql, normalized_parameters, max_rows=max_rows
                 )
             else:
-                result = self._sql_engine.execute(sql, tuple(parameters), max_rows=max_rows)
+                result = self._sql_engine.execute(sql, normalized_parameters, max_rows=max_rows)
         except (SqlRelationUnavailableError, SqlExecutionError, SqlTimeoutError):
             raise
         return {

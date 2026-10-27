@@ -46,6 +46,56 @@ def test_sql_http_adapter_passes_a_valid_execution_timeout() -> None:
     assert result["max_result_bytes"] == 512
 
 
+def test_sql_http_adapter_normalizes_explicitly_typed_bindings() -> None:
+    engine = Engine()
+    SqlHTTPAdapter(engine).query(
+        "project-1",
+        {
+            "sql": "SELECT ?, ?, ?, ?, ?",
+            "parameters": [
+                {"type": "null", "value": None},
+                {"type": "boolean", "value": True},
+                {"type": "integer", "value": 12},
+                {"type": "float", "value": 12},
+                {"type": "string", "value": "12"},
+            ],
+        },
+    )
+    assert engine.request[2] == (None, True, 12, 12.0, "12")
+
+
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        {"type": "integer", "value": True},
+        {"type": "boolean", "value": 1},
+        {"type": "float", "value": float("inf")},
+        {"type": "binary", "value": "AA=="},
+        {"type": "string", "value": "x", "extra": 1},
+        {"type": "integer", "value": 2**63},
+    ],
+)
+def test_sql_http_adapter_rejects_ambiguous_or_unsupported_typed_bindings(
+    parameter: object,
+) -> None:
+    engine = Engine()
+    with pytest.raises(ValueError, match="SQL parameter"):
+        SqlHTTPAdapter(engine).query("project-1", {"sql": "SELECT ?", "parameters": [parameter]})
+    assert engine.request is None
+
+
+def test_sql_http_adapter_enforces_parameter_count_and_text_limits() -> None:
+    engine = Engine()
+    with pytest.raises(ValueError, match="count limit"):
+        SqlHTTPAdapter(engine).query("project-1", {"sql": "SELECT 1", "parameters": [None] * 1001})
+    with pytest.raises(ValueError, match="text limit"):
+        SqlHTTPAdapter(engine).query(
+            "project-1",
+            {"sql": "SELECT ?", "parameters": [{"type": "string", "value": "x" * 524_289}]},
+        )
+    assert engine.request is None
+
+
 def test_sql_http_adapter_rejects_results_over_the_serialized_byte_budget() -> None:
     class LargeResultEngine(Engine):
         def execute(

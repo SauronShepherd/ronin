@@ -1288,11 +1288,31 @@
         "properties": {
           "project": {"type": "string", "minLength": 1, "maxLength": 256},
           "sql": {"type": "string", "minLength": 1, "maxLength": 1048576},
-          "parameters": {"type": "array", "items": {"type": ["boolean", "integer", "number", "string", "null"]}, "default": []},
+          "parameters": {"type": "array", "maxItems": 1000, "items": {"oneOf": [{"$ref": "#/components/schemas/SqlTypedParameter"}, {"$ref": "#/components/schemas/SqlLegacyParameter"}]}, "default": []},
           "max_rows": {"type": "integer", "minimum": 1, "maximum": 10000, "default": 10000},
           "profile": {"type": "string", "enum": ["local", "queryflux"], "default": "local"},
           "translation_policy": {"type": "string", "enum": ["native_only", "best_effort", "strict"], "default": "native_only"}
         }
+      },
+      "SqlTypedParameter": {
+        "oneOf": [
+          {"type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": {"type": {"const": "null"}, "value": {"type": "null"}}},
+          {"type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": {"type": {"const": "boolean"}, "value": {"type": "boolean"}}},
+          {"type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": {"type": {"const": "integer"}, "value": {"type": "integer", "minimum": -9223372036854775808, "maximum": 9223372036854775807}}},
+          {"type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": {"type": {"const": "float"}, "value": {"type": "number"}}},
+          {"type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": {"type": {"const": "string"}, "value": {"type": "string", "maxLength": 524288}}}
+        ],
+        "description": "Explicit SQL scalar binding. Float values must be finite. Legacy untagged scalar values remain accepted for compatibility."
+      },
+      "SqlLegacyParameter": {
+        "oneOf": [
+          {"type": "null"},
+          {"type": "boolean"},
+          {"type": "integer", "minimum": -9223372036854775808, "maximum": 9223372036854775807},
+          {"type": "number", "description": "Must be finite."},
+          {"type": "string", "maxLength": 524288}
+        ],
+        "description": "Legacy JSON scalar binding retained for v1 compatibility."
       },
       "SqlResult": {
         "type": "object", "additionalProperties": false, "required": ["columns", "rows"],
